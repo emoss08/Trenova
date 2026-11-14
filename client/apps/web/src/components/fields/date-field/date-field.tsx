@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
@@ -9,6 +10,7 @@ import { dateTimeFormatter } from "@trenova/shared/i18n/format";
 import { CalendarIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
+import { fieldClearRevealClass } from "../field-clear-reveal";
 import { FieldWrapper } from "../field-components";
 import { AutoCompleteDatePicker } from "./date-picker";
 import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/variants/field";
@@ -97,7 +99,7 @@ function DateFieldControl({
             )}
             {clearable && dateValue && !isLocked && (
               <XCloseIcon
-                className="ml-auto h-4 w-4 cursor-pointer"
+                className={cn("ml-auto h-4 w-4 cursor-pointer", fieldClearRevealClass)}
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -130,6 +132,7 @@ export function DateField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   className,
   placeholder,
   clearable,
@@ -140,7 +143,7 @@ export function DateField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => {
         const dateValue = toUserWallClock(field.value);
         const isLocked = disabled || !!field.disabled || readOnly;
@@ -150,7 +153,7 @@ export function DateField<T extends FieldValues>({
             name={name}
             label={label}
             description={description}
-            required={!!rules?.required}
+            required={isRequired(rules, required)}
             error={fieldState.error?.message}
             className={className}
           >
@@ -160,7 +163,7 @@ export function DateField<T extends FieldValues>({
               readOnly={readOnly}
               isInvalid={fieldState.invalid}
               placeholder={placeholder}
-              clearable={clearable}
+              clearable={clearable ?? !isRequired(rules, required)}
               onSelect={(date) => {
                 if (isLocked) return;
                 field.onChange(fromUserWallClock(date) ?? null);
@@ -189,7 +192,7 @@ export interface DatePickerProps extends Omit<
 
 export type AutoCompleteDateFieldProps<T extends FieldValues> = Omit<
   DatePickerProps,
-  "date" | "setDate"
+  "date" | "setDate" | "required"
 > &
   FormControlProps<T> & {
     label?: string;
@@ -200,6 +203,7 @@ export function AutoCompleteDateField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   className,
   label,
   description,
@@ -216,7 +220,7 @@ export function AutoCompleteDateField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => {
         return (
           <FieldWrapper
@@ -225,12 +229,13 @@ export function AutoCompleteDateField<T extends FieldValues>({
             description={description}
             descriptionId={descriptionId}
             errorId={errorId}
-            required={!!rules?.required}
+            required={isRequired(rules, required)}
             error={fieldState.error?.message}
             className={className}
           >
             <AutoCompleteDatePicker
               {...props}
+              clearable={props.clearable ?? !isRequired(rules, required)}
               id={inputId}
               name={field.name}
               ref={field.ref}

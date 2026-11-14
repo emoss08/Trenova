@@ -90,7 +90,7 @@ export function DetentionTierEditor() {
                 label={t("From")}
                 placeholder="0"
                 sideText="min"
-                rules={{ required: true }}
+                required
                 description={t("Billable minute this rung starts at.")}
               />
             </FormControl>
@@ -111,7 +111,7 @@ export function DetentionTierEditor() {
                 label={t("Rate")}
                 placeholder="75.00"
                 sideText="$"
-                rules={{ required: true }}
+                required
                 description={t("Amount charged per unit inside this rung.")}
               />
             </FormControl>
@@ -121,7 +121,7 @@ export function DetentionTierEditor() {
                 name={`tiers.${index}.rateUnit`}
                 label={t("Unit")}
                 placeholder={t("Select unit")}
-                rules={{ required: true }}
+                required
                 options={RATE_UNIT_OPTIONS}
                 description={t("How the rate applies: per hour, per day, or flat.")}
               />

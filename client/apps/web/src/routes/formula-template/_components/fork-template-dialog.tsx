@@ -115,7 +115,7 @@ export function ForkTemplateDialog({
                 label={t("New template name")}
                 name="newName"
                 control={control}
-                rules={{ required: true }}
+                required
                 placeholder={t("Enter name for the forked template")}
               />
             </FormControl>

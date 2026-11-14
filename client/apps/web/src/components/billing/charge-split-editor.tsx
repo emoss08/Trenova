@@ -357,7 +357,7 @@ function SplitRows({
                 label={index === 0 ? t("Payer") : undefined}
                 placeholder={t("Select payer")}
                 disabled={disabled}
-                rules={{ required: true }}
+                required
                 onOptionChange={(option) =>
                   setValue(`${name}.${index}.billToCustomer`, snapshotFrom(option), {
                     shouldDirty: true,
@@ -374,7 +374,8 @@ function SplitRows({
                 sideText={method === "Amount" ? currencyCode : "%"}
                 stepper={false}
                 disabled={disabled}
-                rules={{ required: true, min: 0.01 }}
+                required
+                rules={{ min: 0.01 }}
               />
               <div className={cn("min-w-0", below)}>
                 <span className="flex h-7 min-w-0 items-center justify-end">

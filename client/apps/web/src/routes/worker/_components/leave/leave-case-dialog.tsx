@@ -148,7 +148,7 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   name="leaveType"
                   label={t("Type of leave")}
                   options={TYPE_OPTIONS}
-                  rules={{ required: true }}
+                  required
                   placeholder={t("Pick a leave type")}
                   description={t("The law or policy the leave falls under.")}
                 />
@@ -159,7 +159,7 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   name="frequency"
                   label={t("How it is taken")}
                   options={FREQUENCY_OPTIONS}
-                  rules={{ required: true }}
+                  required
                   placeholder={t("Pick a pattern")}
                   description={t(
                     "Continuous is one block of time; intermittent and reduced schedule are recorded day by day.",
@@ -186,7 +186,7 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                   description={t(
                     "The first day of the leave; the expected end cannot be before it.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -208,7 +208,7 @@ export function LeaveCaseDialog({ open, onOpenChange, workerId, leaveCase }: Lea
                     label={t("Requested on")}
                     placeholder={t("Date the driver asked")}
                     description={t("When the driver asked for the leave; defaults to today.")}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
               )}

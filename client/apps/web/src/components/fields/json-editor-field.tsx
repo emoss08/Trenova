@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { FieldWrapper } from "@/components/fields/field-components";
 import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
 import { useTheme } from "@trenova/shared/components/theme-provider";
@@ -26,6 +27,7 @@ export function JsonEditorField<T extends FieldValues>({
   description,
   control,
   rules,
+  required,
   disabled,
   className,
   editorClassName,
@@ -41,22 +43,21 @@ export function JsonEditorField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => (
         <FieldWrapper
           name={name}
           label={label}
           description={description}
           error={fieldState.error?.message}
-          required={!!rules?.required}
+          required={isRequired(rules, required)}
           className={className}
         >
           <div
             className={cn(
               "border-input overflow-hidden rounded-md border transition-all duration-200",
-"ui-container-focus-ring",
-              fieldState.invalid &&
-fieldInvalidClass,
+              "ui-container-focus-ring",
+              fieldState.invalid && fieldInvalidClass,
               disabled && "opacity-70",
               editorClassName,
             )}

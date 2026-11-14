@@ -254,7 +254,7 @@ function FieldsCatalog({
                   placeholder="PRO number"
                   disabled={disabled}
                   readOnly={disabled}
-                  rules={{ required: "Reference is required." }}
+                  required={"Reference is required."}
                 />
                 <NumberField
                   control={control}
@@ -270,7 +270,7 @@ function FieldsCatalog({
                   step={25}
                   disabled={disabled}
                   readOnly={disabled}
-                  rules={{ required: "Amount is required." }}
+                  required={"Amount is required."}
                 />
                 <TextareaField
                   control={control}
@@ -280,7 +280,7 @@ function FieldsCatalog({
                   placeholder="Enter driver instructions"
                   disabled={disabled}
                   readOnly={disabled}
-                  rules={{ required: "Instructions are required." }}
+                  required={"Instructions are required."}
                   presets={[
                     {
                       id: "dock",
@@ -297,7 +297,7 @@ function FieldsCatalog({
                   placeholder="Enter token"
                   disabled={disabled}
                   readOnly={disabled}
-                  rules={{ required: "Token is required." }}
+                  required={"Token is required."}
                 />
               </StorySection>
 
@@ -309,9 +309,9 @@ function FieldsCatalog({
                   description="Searchable command-backed select field."
                   placeholder="Select service"
                   options={selectOptions}
-                  isClearable
+                  clearable
                   isReadOnly={disabled}
-                  rules={{ required: "Service level is required." }}
+                  required={"Service level is required."}
                 />
                 <MultiSelectAutocompleteField<SelectOption, FieldStoryValues>
                   control={control}
@@ -326,7 +326,7 @@ function FieldsCatalog({
                   renderOption={DriverOptionRow}
                   disabled={disabled}
                   readOnly={disabled}
-                  rules={{ required: "At least one driver is required." }}
+                  required={"At least one driver is required."}
                 />
                 <CheckboxField
                   control={control}
@@ -344,7 +344,7 @@ function FieldsCatalog({
                   outlined
                   readOnly={disabled}
                   disabled={disabled}
-                  rules={{ required: "Auto-dispatch must be enabled." }}
+                  required={"Auto-dispatch must be enabled."}
                 />
               </StorySection>
 
@@ -358,7 +358,7 @@ function FieldsCatalog({
                   clearable
                   disabled={disabled}
                   readOnly={disabled}
-                  rules={{ required: "Date is required." }}
+                  required={"Date is required."}
                 />
                 <AutoCompleteDateField
                   control={control}
@@ -368,7 +368,7 @@ function FieldsCatalog({
                   placeholder="Tomorrow"
                   clearable
                   readOnly={disabled}
-                  rules={{ required: "Pickup date is required." }}
+                  required={"Pickup date is required."}
                 />
                 <AutoCompleteDateTimeField
                   control={control}
@@ -378,7 +378,7 @@ function FieldsCatalog({
                   placeholder="t 0800"
                   clearable
                   disabled={disabled}
-                  rules={{ required: "Appointment is required." }}
+                  required={"Appointment is required."}
                 />
                 <TimePickerFieldStory />
               </StorySection>
@@ -390,7 +390,7 @@ function FieldsCatalog({
                   label="Route Color"
                   description="Preset swatches plus custom value entry."
                   disabled={disabled}
-                  rules={{ required: "Color is required." }}
+                  required={"Color is required."}
                 />
                 <PhoneNumberField
                   control={control}
@@ -399,7 +399,7 @@ function FieldsCatalog({
                   description="US phone number formatting."
                   placeholder="(555) 555-5555"
                   disabled={disabled}
-                  rules={{ required: "Phone number is required." }}
+                  required={"Phone number is required."}
                 />
                 <JsonEditorField
                   control={control}
@@ -408,7 +408,7 @@ function FieldsCatalog({
                   description="CodeMirror JSON editor field."
                   disabled={disabled}
                   height="120px"
-                  rules={{ required: "JSON metadata is required." }}
+                  required={"JSON metadata is required."}
                 />
                 <AddressField<FieldStoryValues>
                   control={control}
@@ -416,7 +416,7 @@ function FieldsCatalog({
                   description="Address entry with Google lookup disabled by seeded query data."
                   disabled={disabled}
                   readOnly={disabled}
-                  rules={{ required: "Address is required." }}
+                  required={"Address is required."}
                 />
               </StorySection>
             </>

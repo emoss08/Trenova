@@ -47,7 +47,7 @@ func organizationResource() *permissionspec.ResourceDefinition {
 		DisplayName:        "Organization",
 		Description:        "Organization settings and configuration",
 		Category:           "Organization settings",
-		ReferenceView:      []string{"name", "logoUrl"},
+		ReferenceView:      []string{"name", "logoUrl", "iconUrl"},
 		Operations:         permissionspec.StandardOps,
 		DefaultSensitivity: permission.SensitivityRestricted,
 	}

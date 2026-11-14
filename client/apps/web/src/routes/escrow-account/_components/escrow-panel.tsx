@@ -113,7 +113,7 @@ function OpenEscrowPanel({
               label={t("Driver")}
               placeholder={t("Select owner-operator")}
               ownerOperatorsOnly
-              rules={{ required: true }}
+              required
               description={t(
                 "Only owner-operators are listed — contractors and drivers on an owner-operator pay profile.",
               )}

@@ -81,7 +81,7 @@ export function PTOPolicyForm({
               name="code"
               label={t("Code")}
               placeholder={t("e.g. STD-DRIVER")}
-              rules={{ required: true }}
+              required
               description={t("Short unique identifier. Uppercase letters, digits, and dashes.")}
             />
           </FormControl>
@@ -91,7 +91,7 @@ export function PTOPolicyForm({
               name="name"
               label={t("Name")}
               placeholder={t("e.g. Standard Driver")}
-              rules={{ required: true }}
+              required
               description={t("Shown on worker records, assignments and PTO reports.")}
             />
           </FormControl>
@@ -101,7 +101,7 @@ export function PTOPolicyForm({
               name="status"
               label={t("Status")}
               options={POLICY_STATUS_OPTIONS}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a status")}
               description={
                 isEdit && openAssignmentCount > 0
@@ -149,7 +149,7 @@ export function PTOPolicyForm({
               name="yearBasis"
               label={t("Policy year")}
               options={YEAR_BASIS_OPTIONS}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a year basis")}
               description={t(
                 "Carryover caps, expiries, and annual grants apply at the start of this year.",
@@ -318,7 +318,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             name={`rules.${index}.ptoType`}
             label={t("PTO type")}
             options={ptoTypeChoices}
-            rules={{ required: true }}
+            required
             placeholder={t("Select a PTO type")}
             description={t("The kind of time off this rule accrues and tracks a balance for.")}
           />
@@ -329,7 +329,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             name={`rules.${index}.accrualMethod`}
             label={t("Accrual")}
             options={ACCRUAL_METHOD_OPTIONS}
-            rules={{ required: true }}
+            required
             placeholder={t("Select an accrual method")}
             description={
               method === "PerPayPeriod"
@@ -383,7 +383,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             name={`rules.${index}.onTermination`}
             label={t("When employment ends")}
             options={TERMINATION_OPTIONS}
-            rules={{ required: true }}
+            required
             placeholder={t("Select an action")}
             description={t(
               "Paid-out balances count toward the PTO liability report; forfeited ones are written off on the termination date.",

@@ -34,7 +34,7 @@ export function LocationForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
@@ -45,7 +45,7 @@ export function LocationForm() {
           <FormControl cols="full">
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="name"
               label={t("Name")}
               placeholder={t("Name")}
@@ -56,7 +56,7 @@ export function LocationForm() {
           <FormControl cols="full">
             <LocationCategoryAutocompleteField
               control={control}
-              rules={{ required: true }}
+              required
               name="locationCategoryId"
               label={t("Location category")}
               placeholder={t("Location category")}
@@ -94,7 +94,7 @@ export function LocationForm() {
               <InputField
                 control={control}
                 name="city"
-                rules={{ required: true }}
+                required
                 label={t("City")}
                 placeholder={t("City")}
                 description={t(
@@ -115,7 +115,7 @@ export function LocationForm() {
             </FormControl>
             <FormControl cols="full">
               <InputField
-                rules={{ required: true }}
+                required
                 control={control}
                 name="postalCode"
                 label={t("Postal code")}
@@ -131,7 +131,7 @@ export function LocationForm() {
                 name="timezone"
                 label={t("Timezone")}
                 placeholder={t("Not set (UTC)")}
-                isClearable
+                clearable
                 description={t(
                   "Local clock for this location. Rating formulas read pickup and delivery hours, weekdays, and dates in this zone; without one they use UTC.",
                 )}

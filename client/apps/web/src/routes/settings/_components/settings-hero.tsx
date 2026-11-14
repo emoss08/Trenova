@@ -3,7 +3,12 @@ import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { user as userQueries, userOrganization } from "@/lib/queries/user";
 import { greetingPeriod, hourIn } from "@/lib/user-settings";
 import { useQuery } from "@tanstack/react-query";
-import { BellOff01Icon, Camera01Icon, ClockIcon } from "@trenova/shared/components/icons";
+import {
+  BellOff01Icon,
+  Camera01Icon,
+  ClockIcon,
+  Upload01Icon,
+} from "@trenova/shared/components/icons";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -89,7 +94,7 @@ export function SettingsHero({
 
   return (
     <div className="flex flex-wrap items-center gap-5 pt-1 pb-9 min-[620px]:flex-nowrap">
-      <div className="group/hero-avatar relative size-16 shrink-0">
+      <div className="group/hero-avatar relative size-16 shrink-0" {...picture.dropTarget}>
         <ResolvedUserAvatar
           userId={user?.id}
           name={user?.name}
@@ -101,10 +106,19 @@ export function SettingsHero({
         <button
           type="button"
           onClick={picture.openPicker}
+          onPointerEnter={picture.preload}
+          onFocus={picture.preload}
           aria-label={t("Change photo")}
-          className="ui-focus-ring bg-scrim text-foreground-on-solid absolute inset-0 grid place-items-center rounded-full opacity-0 transition-opacity duration-150 group-hover/hero-avatar:opacity-100 focus-visible:opacity-100"
+          className={cn(
+            "ui-focus-ring bg-scrim text-foreground-on-solid absolute inset-0 grid place-items-center rounded-full opacity-0 transition-opacity duration-150 group-hover/hero-avatar:opacity-100 focus-visible:opacity-100",
+            picture.dragging && "opacity-100",
+          )}
         >
-          <Camera01Icon className="size-4.5" />
+          {picture.dragging ? (
+            <Upload01Icon className="size-4.5" />
+          ) : (
+            <Camera01Icon className="size-4.5" />
+          )}
         </button>
       </div>
       <div className="min-w-0 flex-1">

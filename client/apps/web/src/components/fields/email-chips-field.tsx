@@ -1,3 +1,4 @@
+import { isRequired, withRequired, type FieldRequired } from "@trenova/shared/lib/field-rules";
 import { FieldWrapper } from "@/components/fields/field-components";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -28,6 +29,7 @@ export function EmailChipsField<T extends FieldValues>({
   description,
   placeholder,
   rules,
+  required,
   className,
 }: {
   control: Control<T>;
@@ -35,6 +37,7 @@ export function EmailChipsField<T extends FieldValues>({
   label?: string;
   description?: string;
   placeholder?: string;
+  required?: FieldRequired;
   rules?: RegisterOptions<T, FieldPath<T>>;
   className?: string;
 }) {
@@ -47,7 +50,7 @@ export function EmailChipsField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => {
         const emails: string[] = field.value ?? [];
 
@@ -82,7 +85,7 @@ export function EmailChipsField<T extends FieldValues>({
           <FieldWrapper
             name={name}
             label={label}
-            required={!!rules?.required}
+            required={isRequired(rules, required)}
             description={description}
             error={
               invalidDraft

@@ -62,7 +62,7 @@ export function TenderBounceDialog({
               control={control}
               name="reason"
               label={t("Reason")}
-              rules={{ required: true }}
+              required
               placeholder={t("e.g., Truck broke down before pickup")}
             />
           </div>

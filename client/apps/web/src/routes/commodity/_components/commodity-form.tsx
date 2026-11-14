@@ -25,7 +25,7 @@ export function CommodityForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
@@ -36,7 +36,7 @@ export function CommodityForm() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="name"
               label={t("Name")}
               placeholder={t("Name")}
@@ -47,7 +47,7 @@ export function CommodityForm() {
           <FormControl cols="full">
             <TextareaField
               control={control}
-              rules={{ required: true }}
+              required
               name="description"
               label={t("Description")}
               placeholder={t("Description")}
@@ -69,7 +69,7 @@ export function CommodityForm() {
               placeholder={t("Select freight class")}
               description={t("The NMFC freight classification for this commodity.")}
               options={freightClassChoices}
-              isClearable
+              clearable
             />
           </FormControl>
           <FormControl>

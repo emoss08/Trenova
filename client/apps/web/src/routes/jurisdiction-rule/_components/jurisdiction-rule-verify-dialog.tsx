@@ -105,7 +105,7 @@ export function JurisdictionRuleVerifyDialog({
                 name="verificationState"
                 label={t("Outcome")}
                 options={STATE_CHOICES}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl cols="full">
@@ -117,7 +117,7 @@ export function JurisdictionRuleVerifyDialog({
                   "At least 10 characters. The next person reading this row follows your note.",
                 )}
                 placeholder={t("Checked against the state permit office handbook, rev 2026-01")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl cols="full">

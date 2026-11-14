@@ -29,7 +29,7 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
         <SelectField
           control={control}
           options={equipmentStatusChoices}
-          rules={{ required: true }}
+          required
           name="status"
           label={t("Status")}
           placeholder={t("Status")}
@@ -39,7 +39,7 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="code"
           label={t("Code")}
           placeholder={t("Code")}
@@ -52,7 +52,7 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
           name="equipmentTypeId"
           control={control}
           label={t("Equipment type")}
-          rules={{ required: true }}
+          required
           placeholder={t("Equipment type")}
           description={t("The type of equipment the tractor is categorized under.")}
           extraSearchParams={{
@@ -65,7 +65,7 @@ function GeneralInformationSection({ control }: { control: Control<Tractor> }) {
           name="equipmentManufacturerId"
           control={control}
           label={t("Equip. manufacturer")}
-          rules={{ required: true }}
+          required
           placeholder={t("Equip. manufacturer")}
           description={t("The manufacturer of the tractor's equipment.")}
           extraSearchParams={{
@@ -209,7 +209,7 @@ function FuelTaxSection({ control }: { control: Control<Tractor> }) {
             control={control}
             name="fuelType"
             label={t("Fuel type")}
-            rules={{ required: true }}
+            required
             placeholder={t("Select a fuel type")}
             description={t(
               "The fuel this unit burns. Its miles land on this fuel type's lines of the quarterly IFTA return.",
@@ -245,7 +245,7 @@ function WorkerAssignmentSection({ control }: { control: Control<Tractor> }) {
             name="primaryWorkerId"
             control={control}
             label={t("Primary worker")}
-            rules={{ required: true }}
+            required
             placeholder={t("Select primary worker")}
             description={t("The primary worker assigned to this tractor.")}
           />

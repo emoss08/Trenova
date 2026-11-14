@@ -33,7 +33,7 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             name="type"
             label={t("Hold type")}
             placeholder={t("Select type")}
-            rules={{ required: true }}
+            required
             description={t(
               "Choose the hold category to drive default behavior, gating, and reporting.",
             )}
@@ -47,7 +47,7 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             name="code"
             label={t("Reason code")}
             placeholder="ELD_OOS"
-            rules={{ required: true }}
+            required
             maxLength={64}
             description={t(
               "Stable identifier used by rules, APIs, and search; prefer UPPER_SNAKE_CASE.",
@@ -61,7 +61,7 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
             name="label"
             label={t("Display name")}
             placeholder={t("ELD out of Service")}
-            rules={{ required: true }}
+            required
             maxLength={100}
             description={t("Human-friendly name shown in boards, forms, and customer portals.")}
             disabled={disabled}
@@ -89,7 +89,7 @@ export function HoldReasonForm({ disabled }: { disabled?: boolean }) {
               "Starting impact level applied when users select this reason; adjustable per hold.",
             )}
             options={holdSeverityChoices}
-            rules={{ required: true }}
+            required
             isReadOnly={disabled}
           />
         </FormControl>

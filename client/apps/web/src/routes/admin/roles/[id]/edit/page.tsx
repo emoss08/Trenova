@@ -186,7 +186,7 @@ export function RoleEditPage() {
                 <FormControl>
                   <InputField
                     control={control}
-                    rules={{ required: true }}
+                    required
                     name="name"
                     label={t("Name")}
                     placeholder={t("e.g., Dispatcher, Billing Clerk")}
@@ -196,7 +196,7 @@ export function RoleEditPage() {
                 <FormControl>
                   <SelectField
                     control={control}
-                    rules={{ required: true }}
+                    required
                     name="maxSensitivity"
                     label={t("Max sensitivity")}
                     description={t("Highest sensitivity level this role can access")}

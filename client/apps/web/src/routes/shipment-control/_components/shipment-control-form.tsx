@@ -357,7 +357,7 @@ function DetentionForm() {
               <FormControl className="min-h-[3em] max-w-[400px]">
                 <AccessorialChargeAutocompleteField
                   control={control}
-                  rules={{ required: trackDetentionTime }}
+                  required={trackDetentionTime}
                   name="detentionChargeId"
                   label={t("Detention charge")}
                   placeholder={t("Select detention charge code")}
@@ -368,7 +368,7 @@ function DetentionForm() {
               <FormControl className="min-h-[3em] max-w-[400px]">
                 <NumberField
                   control={control}
-                  rules={{ required: trackDetentionTime }}
+                  required={trackDetentionTime}
                   name="detentionThreshold"
                   label={t("Detention threshold")}
                   placeholder={t("Enter threshold in minutes")}

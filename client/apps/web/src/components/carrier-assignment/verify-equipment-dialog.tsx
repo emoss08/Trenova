@@ -257,7 +257,7 @@ export function VerifyEquipmentDialog({
                           name="vin"
                           label={t("VIN")}
                           placeholder={t("17-character VIN")}
-                          rules={{ required: true }}
+                          required
                           maxLength={VIN_LENGTH + 4}
                           autoComplete="off"
                           description={t(
@@ -275,7 +275,7 @@ export function VerifyEquipmentDialog({
                             name="plateNumber"
                             label={t("Plate number")}
                             placeholder={t("e.g., ABC-1234")}
-                            rules={{ required: true }}
+                            required
                             maxLength={PLATE_NUMBER_MAX_LENGTH}
                             autoComplete="off"
                           />
@@ -286,7 +286,7 @@ export function VerifyEquipmentDialog({
                             name="plateStateId"
                             label={t("Plate state")}
                             placeholder={t("State")}
-                            rules={{ required: true }}
+                            required
                             onOptionChange={(option) =>
                               setValue(
                                 "plateState",
@@ -305,7 +305,7 @@ export function VerifyEquipmentDialog({
                           name="unitNumber"
                           label={t("Unit number")}
                           placeholder={t("e.g., T-4521")}
-                          rules={{ required: true }}
+                          required
                           maxLength={UNIT_NUMBER_MAX_LENGTH}
                           autoComplete="off"
                           description={t(

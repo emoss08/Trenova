@@ -59,7 +59,7 @@ export function PartnerDetailsForm({
                 "Stable identifier used in EDI envelopes, searches, and cross-system references. Avoid changing it after documents are exchanged.",
               )}
               disabled={disabled || readOnlyInternalFields}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -72,7 +72,7 @@ export function PartnerDetailsForm({
                 "Display name for dispatch, billing, and support teams. Internal partner names are controlled by the organization connection.",
               )}
               disabled={disabled || readOnlyInternalFields}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -85,7 +85,7 @@ export function PartnerDetailsForm({
               )}
               options={statusChoices}
               isReadOnly={disabled}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -111,7 +111,7 @@ export function PartnerDetailsForm({
               )}
               options={partnerCountryOptions}
               isReadOnly={disabled}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -132,7 +132,7 @@ export function PartnerDetailsForm({
                 </span>
               )}
               isReadOnly={disabled}
-              isClearable
+              clearable
               placeholder={t("Select timezone")}
             />
           </FormControl>

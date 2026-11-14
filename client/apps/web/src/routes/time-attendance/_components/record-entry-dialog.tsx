@@ -180,7 +180,7 @@ export function RecordEntryDialog({
                   label={t("Started")}
                   placeholder={t("Pick a date and time")}
                   description={t("When the worker started, in your own time zone.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -190,7 +190,7 @@ export function RecordEntryDialog({
                   label={t("Finished")}
                   placeholder={t("Pick a date and time")}
                   description={t("When the worker finished; it has to be after the start.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl cols="full">
@@ -234,7 +234,7 @@ export function RecordEntryDialog({
                   name="reason"
                   label={entry ? "Why it is being corrected" : "Why it is being recorded by hand"}
                   placeholder={t("e.g. Missed clock-out")}
-                  rules={{ required: true }}
+                  required
                   description={t("Kept with the record and shown on the timesheet.")}
                 />
               </FormControl>

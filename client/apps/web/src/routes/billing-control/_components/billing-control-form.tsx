@@ -137,7 +137,7 @@ function InvoiceDefaultsCard() {
                 "Fallback payment term used when a customer billing profile does not define one.",
               )}
               options={paymentTermChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl cols="full">
@@ -196,7 +196,7 @@ function AutomationCard() {
                 "Controls whether eligible shipments are marked ready to bill automatically or only by user action.",
               )}
               options={readyToBillAssignmentModeChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -208,7 +208,7 @@ function AutomationCard() {
                 "Controls whether ready-to-bill shipments enter the billing queue automatically or only by user action.",
               )}
               options={billingQueueTransferModeChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           {transferMode === "AutomaticWhenReady" && (
@@ -222,7 +222,7 @@ function AutomationCard() {
                     "Defines how frequently the automatic billing queue transfer job runs.",
                   )}
                   options={transferScheduleChoices}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl className="max-w-[420px]">
@@ -233,7 +233,7 @@ function AutomationCard() {
                   description={t(
                     "Maximum number of ready items processed in a single automatic transfer batch.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
             </>
@@ -247,7 +247,7 @@ function AutomationCard() {
                 "Controls whether invoice drafts are created only by users or automatically when items are transferred.",
               )}
               options={invoiceDraftCreationModeChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -259,7 +259,7 @@ function AutomationCard() {
                 "Controls whether invoice posting always requires manual review or may auto-post when no blocking issues remain.",
               )}
               options={invoicePostingModeChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           {draftCreationMode === "AutomaticWhenTransferred" && (
@@ -272,7 +272,7 @@ function AutomationCard() {
                   description={t(
                     "Maximum number of invoice drafts created in a single automatic batch.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -338,7 +338,7 @@ function BillingQueueCard() {
                     : t("Every item waits for a biller to approve it.")
               }
               options={queueAutoApproveModeChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           {mode !== "Off" && (
@@ -395,7 +395,7 @@ function ExceptionPolicyCard() {
                 "Defines how missing shipment billing requirements affect readiness and billing progression.",
               )}
               options={enforcementLevelChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -407,7 +407,7 @@ function ExceptionPolicyCard() {
                 "Defines how rate-variance validation results affect invoice workflow progression.",
               )}
               options={enforcementLevelChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           {(shipmentRequirementEnforcement === "RequireReview" ||
@@ -421,7 +421,7 @@ function ExceptionPolicyCard() {
                   "Determines whether review-required billing exceptions stay with billing or are returned to operations.",
                 )}
                 options={billingExceptionDispositionChoices}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           )}
@@ -442,7 +442,7 @@ function ExceptionPolicyCard() {
               description={t(
                 "Tolerance percentage used when evaluating whether a rate variance can bypass review.",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -454,7 +454,7 @@ function ExceptionPolicyCard() {
                 "Controls whether review is skipped for rate variances that are within the configured tolerance.",
               )}
               options={rateVarianceAutoResolutionModeChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -505,7 +505,7 @@ export function LateChargesCard() {
                       )
               }
               options={lateChargeAssessmentModeChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -559,7 +559,7 @@ function RatingPolicyCard() {
                 "What happens to a shipment no rate agreement covers. Falling back to a formula template is exactly how rating worked before agreements existed.",
               )}
               options={unratedShipmentDispositionChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           {unratedShipmentDisposition === "FallbackFormulaTemplate" && (

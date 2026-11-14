@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type React from "react";
 import { cn } from "@trenova/shared/lib/utils";
@@ -21,7 +22,7 @@ export type TextareaPreset = {
   description: string;
 };
 
-type BaseTextareaFieldProps = Omit<TextareaProps, "name" | "bare"> & {
+type BaseTextareaFieldProps = Omit<TextareaProps, "name" | "bare" | "required"> & {
   label: string;
   description?: string;
   presets?: TextareaPreset[];
@@ -44,6 +45,7 @@ export function TextareaField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   className,
   disabled,
   autoComplete,
@@ -66,7 +68,7 @@ export function TextareaField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => {
         const textarea = (
           <Textarea
@@ -94,7 +96,7 @@ export function TextareaField<T extends FieldValues>({
             name={name}
             label={label}
             description={description}
-            required={!!rules?.required}
+            required={isRequired(rules, required)}
             error={fieldState.error?.message}
           >
             {footer !== undefined ? (

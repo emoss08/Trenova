@@ -290,7 +290,7 @@ export function CredentialFormDialog({
                   control={control}
                   name="credentialTypeId"
                   label={t("Credential type")}
-                  rules={{ required: true }}
+                  required
                   placeholder={t("Choose a credential type")}
                   disabled={lockType}
                   description={
@@ -314,7 +314,7 @@ export function CredentialFormDialog({
                       ? t("Your role does not include personal details.")
                       : t("The number printed on the card or certificate.")
                   }
-                  rules={{ required: requiresNumber }}
+                  required={requiresNumber}
                   disabled={numberWithheld}
                 />
               </FormControl>
@@ -343,7 +343,7 @@ export function CredentialFormDialog({
                   label={t("Expires")}
                   placeholder={t("Leave empty if it never expires")}
                   description={t("Drives the expiry warnings and the worker's compliance grade.")}
-                  rules={{ required: requiresExpiry }}
+                  required={requiresExpiry}
                 />
               </FormControl>
               <FormControl cols="full">

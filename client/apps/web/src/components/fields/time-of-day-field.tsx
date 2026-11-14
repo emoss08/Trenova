@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { ClockIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -43,6 +44,7 @@ export function TimeOfDayField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   label,
   description,
   className,
@@ -61,7 +63,7 @@ export function TimeOfDayField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => {
         const time = parseTimeOfDay(field.value as string | null | undefined);
         const date = time ? new Date(2000, 0, 1, time.hour, time.minute) : undefined;
@@ -83,7 +85,7 @@ export function TimeOfDayField<T extends FieldValues>({
             name={name}
             label={label}
             description={description}
-            required={!!rules?.required}
+            required={isRequired(rules, required)}
             error={fieldState.error?.message}
             htmlFor={inputId}
             descriptionId={descriptionId}

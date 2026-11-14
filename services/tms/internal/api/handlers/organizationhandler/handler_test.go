@@ -468,7 +468,7 @@ func TestOrganizationHandler_Update_BadJSON(t *testing.T) {
 	assert.True(t, ginCtx.ResponseCode() >= 400)
 }
 
-func TestOrganizationHandler_UploadLogo_Success(t *testing.T) {
+func TestOrganizationHandler_UploadBrandImage_StoresTheImageNamedInThePath(t *testing.T) {
 	t.Parallel()
 
 	orgID := testutil.TestOrgID
@@ -498,13 +498,13 @@ func TestOrganizationHandler_UploadLogo_Success(t *testing.T) {
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
-		WithPath("/api/v1/organizations/"+orgID.String()+"/logo").
+		WithPath("/api/v1/organizations/"+orgID.String()+"/branding/icon").
 		WithDefaultAuthContext().
 		WithMultipartForm(
 			nil,
 			testutil.MultipartFile{
 				FieldName: "file",
-				Filename:  "logo.png",
+				Filename:  "icon.png",
 				Data:      []byte("png-content"),
 			},
 		)
@@ -513,9 +513,45 @@ func TestOrganizationHandler_UploadLogo_Success(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Contains(t, resp["iconUrl"], "organization/icon")
+	assert.Equal(t, "", resp["logoUrl"])
 }
 
-func TestOrganizationHandler_GetLogoURL_Success(t *testing.T) {
+func TestOrganizationHandler_BrandImage_RefusesAnImageItDoesNotKnow(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name   string
+		method string
+	}{
+		{name: "upload", method: http.MethodPost},
+		{name: "delete", method: http.MethodDelete},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := tenantportsmock.NewMockOrganizationRepository(t)
+			handler := setupOrganizationHandler(t, repo, &mockStorageClient{})
+
+			ginCtx := testutil.NewGinTestContext().
+				WithMethod(tc.method).
+				WithPath("/api/v1/organizations/" + testutil.TestOrgID.String() + "/branding/banner").
+				WithDefaultAuthContext()
+
+			handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+			ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+			assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
+		})
+	}
+}
+
+func TestOrganizationHandler_GetBranding_ReturnsAURLOnlyForTheImagesStored(t *testing.T) {
 	t.Parallel()
 
 	orgID := testutil.TestOrgID
@@ -542,7 +578,7 @@ func TestOrganizationHandler_GetLogoURL_Success(t *testing.T) {
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
-		WithPath("/api/v1/organizations/" + orgID.String() + "/logo").
+		WithPath("/api/v1/organizations/" + orgID.String() + "/branding").
 		WithDefaultAuthContext()
 
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
@@ -552,10 +588,14 @@ func TestOrganizationHandler_GetLogoURL_Success(t *testing.T) {
 
 	var resp map[string]string
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.NotEmpty(t, resp["url"])
+	assert.Equal(
+		t,
+		map[string]string{"logoUrl": "https://example.test/logo.png", "iconUrl": ""},
+		resp,
+	)
 }
 
-func TestOrganizationHandler_DeleteLogo_Success(t *testing.T) {
+func TestOrganizationHandler_DeleteBrandImage_Success(t *testing.T) {
 	t.Parallel()
 
 	orgID := testutil.TestOrgID
@@ -577,8 +617,13 @@ func TestOrganizationHandler_DeleteLogo_Success(t *testing.T) {
 		LogoURL:        "org/logo/path.webp",
 		Version:        1,
 	}, nil)
-	repo.EXPECT().ClearLogoURL(mock.Anything, orgID, int64(1)).
-		RunAndReturn(func(_ context.Context, _ pulid.ID, _ int64) (*tenant.Organization, error) {
+	repo.EXPECT().ClearBrandImage(mock.Anything, orgID, tenant.BrandImageLogo, int64(1)).
+		RunAndReturn(func(
+			_ context.Context,
+			_ pulid.ID,
+			_ tenant.BrandImage,
+			_ int64,
+		) (*tenant.Organization, error) {
 			return &tenant.Organization{
 				ID:             orgID,
 				BusinessUnitID: testutil.TestBuID,
@@ -600,7 +645,7 @@ func TestOrganizationHandler_DeleteLogo_Success(t *testing.T) {
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
-		WithPath("/api/v1/organizations/" + orgID.String() + "/logo").
+		WithPath("/api/v1/organizations/" + orgID.String() + "/branding/logo").
 		WithDefaultAuthContext()
 
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
@@ -626,8 +671,9 @@ func TestOrganizationHandler_RejectsAnotherOrganizationID(t *testing.T) {
 	}{
 		{name: "get", method: http.MethodGet, path: ""},
 		{name: "update", method: http.MethodPut, path: "", body: map[string]any{"name": "Taken"}},
-		{name: "get logo", method: http.MethodGet, path: "/logo"},
-		{name: "delete logo", method: http.MethodDelete, path: "/logo"},
+		{name: "get branding", method: http.MethodGet, path: "/branding"},
+		{name: "delete logo", method: http.MethodDelete, path: "/branding/logo"},
+		{name: "delete icon", method: http.MethodDelete, path: "/branding/icon"},
 		{name: "get microsoft sso", method: http.MethodGet, path: "/microsoft-sso"},
 		{
 			name:   "upsert microsoft sso",

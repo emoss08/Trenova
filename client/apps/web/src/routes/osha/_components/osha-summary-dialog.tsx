@@ -117,7 +117,7 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
                   description={t(
                     "Average number of employees over the year, as OSHA Form 300A asks for it; required before the summary can be certified.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -129,7 +129,7 @@ export function OshaSummaryDialog({ open, onOpenChange, year, summary }: OshaSum
                   description={t(
                     "Hours every employee worked during the year; the incident and DART rates are calculated from it.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>

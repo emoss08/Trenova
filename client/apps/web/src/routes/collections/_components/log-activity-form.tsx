@@ -139,7 +139,7 @@ export function LogActivityForm({ customerId }: { customerId: string }) {
                 label={t("Promised amount")}
                 placeholder="0.00"
                 inputMode="decimal"
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl>
@@ -148,7 +148,7 @@ export function LogActivityForm({ customerId }: { customerId: string }) {
                 name="promisedOn"
                 label={t("Will pay by")}
                 placeholder={t("Choose a date")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           </>

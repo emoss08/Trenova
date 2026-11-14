@@ -97,7 +97,7 @@ export function MarkReviewedDialog({
                   name="note"
                   label={t("Review note")}
                   placeholder={t("What was checked and what was concluded")}
-                  rules={{ required: true }}
+                  required
                   maxLength={CARRIER_INTEL_NOTE_MAX_LENGTH}
                 />
               </FormControl>

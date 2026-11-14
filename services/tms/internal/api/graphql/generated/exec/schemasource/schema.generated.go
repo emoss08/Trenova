@@ -32930,6 +32930,7 @@ type Organization {
   scacCode: String!
   dotNumber: String!
   logoUrl: String!
+  iconUrl: String!
   bucketName: String!
   addressLine1: String!
   addressLine2: String!
@@ -32952,7 +32953,6 @@ input OrganizationInput {
   loginSlug: String
   scacCode: String!
   dotNumber: String!
-  logoUrl: String
   bucketName: String
   addressLine1: String!
   addressLine2: String

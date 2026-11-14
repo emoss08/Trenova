@@ -68,7 +68,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
         <FormControl>
           <SelectField
             control={control}
-            rules={{ required: true }}
+            required
             name="status"
             isReadOnly
             label={t("Status")}
@@ -81,7 +81,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
         <FormControl>
           <NumberField
             control={control}
-            rules={{ required: true }}
+            required
             name="year"
             label={t("Year")}
             placeholder="2025"
@@ -95,7 +95,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
         <FormControl cols="full">
           <InputField
             control={control}
-            rules={{ required: true }}
+            required
             name="name"
             label={t("Name")}
             placeholder={t("FY 2025")}
@@ -141,7 +141,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
         <FormGroup cols={2}>
           <FormControl>
             <AutoCompleteDateField
-              rules={{ required: true }}
+              required
               control={control}
               name="startDate"
               label={t("Start date")}
@@ -154,7 +154,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
 
           <FormControl>
             <AutoCompleteDateField
-              rules={{ required: true }}
+              required
               control={control}
               name="endDate"
               label={t("End date")}

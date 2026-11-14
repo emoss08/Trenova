@@ -81,7 +81,7 @@ function EditForm({ schedule, onClose }: { schedule: ConversationSchedule; onClo
               control={control}
               name="prompt"
               label={t("What to ask")}
-              rules={{ required: true }}
+              required
               maxLength={MAX_SCHEDULE_PROMPT}
             />
           </FormControl>

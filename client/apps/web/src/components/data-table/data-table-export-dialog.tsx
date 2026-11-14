@@ -369,12 +369,7 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
               ) : (
                 <>
                   <FormControl cols="full">
-                    <InputField
-                      name="name"
-                      control={control}
-                      label={t("Report name")}
-                      rules={{ required: true }}
-                    />
+                    <InputField name="name" control={control} label={t("Report name")} required />
                   </FormControl>
                   <FormControl cols="full">
                     <SegmentedField

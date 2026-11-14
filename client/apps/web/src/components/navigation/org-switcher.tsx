@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useSwitchOrganization } from "@/hooks/use-organization-switch";
-import { organization } from "@/lib/queries/organization";
+import { useOrganizationBranding } from "@/hooks/use-organization-branding";
 import { userOrganization } from "@/lib/queries/user";
 import { cn } from "@trenova/shared/lib/utils";
 import type { UserOrganization } from "@trenova/shared/types/organization";
@@ -23,13 +23,22 @@ import {
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
+/**
+ * The organization's mark in the switcher's 28 pixel tile: its icon, which fills the tile, or
+ * failing that its logo, fitted whole so a wide wordmark is small rather than cut off.
+ */
 function OrgLogo({
   logoURL,
+  whole,
   orgName,
   initials,
   isSwitching,
+  onLoadFailed,
 }: {
   logoURL?: string;
+  whole: boolean;
+  /** Told the address that did not load, so a fresh one can be read. */
+  onLoadFailed: (url: string) => void;
   orgName?: string;
   initials: string;
   isSwitching: boolean;
@@ -51,8 +60,11 @@ function OrgLogo({
       <LazyImage
         src={logoURL}
         alt={orgName ? t("{0} logo", orgName) : t("Organization logo")}
-        className="size-7 shrink-0 rounded-md object-cover"
-        onError={() => setImageLoadFailed(true)}
+        className={cn("size-7 shrink-0 rounded-md", whole ? "object-contain" : "object-cover")}
+        onError={() => {
+          setImageLoadFailed(true);
+          if (logoURL) onLoadFailed(logoURL);
+        }}
       />
     );
   }
@@ -86,19 +98,12 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
         .slice(0, 2)
     : "T";
 
-  const currentOrgLogoUrl = currentOrg?.logoUrl ?? "";
-  const hasAbsoluteLogoURL =
-    currentOrgLogoUrl.startsWith("http://") || currentOrgLogoUrl.startsWith("https://");
-  const shouldResolveLogo =
-    Boolean(currentOrg?.id) && Boolean(currentOrgLogoUrl) && !hasAbsoluteLogoURL;
+  const { branding, refresh: refreshBranding } = useOrganizationBranding(
+    currentOrg?.id,
+    Boolean(currentOrg?.iconUrl || currentOrg?.logoUrl),
+  );
 
-  const { data: resolvedLogoURL } = useQuery({
-    ...organization.logo(currentOrg?.id ?? ""),
-    enabled: shouldResolveLogo,
-    retry: false,
-  });
-
-  const logoURL = hasAbsoluteLogoURL ? currentOrgLogoUrl : resolvedLogoURL;
+  const logoURL = branding?.iconUrl || branding?.logoUrl || undefined;
 
   const handleSwitch = (org: UserOrganization) => {
     if (org.isCurrent || switchMutation.isPending) return;
@@ -122,6 +127,8 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
       <OrgLogo
         key={logoURL ?? "no-logo"}
         logoURL={logoURL}
+        whole={!branding?.iconUrl}
+        onLoadFailed={refreshBranding}
         orgName={currentOrg?.name}
         initials={orgInitials}
         isSwitching={switchMutation.isPending}
@@ -139,6 +146,8 @@ export function OrgSwitcher({ compact = false }: { compact?: boolean }) {
       <OrgLogo
         key={logoURL ?? "no-logo"}
         logoURL={logoURL}
+        whole={!branding?.iconUrl}
+        onLoadFailed={refreshBranding}
         orgName={currentOrg?.name}
         initials={orgInitials}
         isSwitching={switchMutation.isPending}

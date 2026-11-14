@@ -104,7 +104,7 @@ export function VoidExportDialog({ run, onOpenChange }: VoidExportDialogProps) {
                   description={t(
                     "Kept with the voided run so the reopened weeks can be explained later.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
             </FormGroup>

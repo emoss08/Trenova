@@ -185,7 +185,7 @@ export function MailboxFormDialog({
                 name="name"
                 label={t("Name")}
                 placeholder={t("Tenders")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl>
@@ -194,7 +194,7 @@ export function MailboxFormDialog({
                 name="address"
                 label={t("Address")}
                 placeholder="tenders@yourcompany.com"
-                rules={{ required: true }}
+                required
                 description={
                   provider === "Resend"
                     ? t(

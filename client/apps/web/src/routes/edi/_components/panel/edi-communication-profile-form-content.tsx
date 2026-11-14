@@ -39,7 +39,7 @@ export function OverviewTab() {
               label={t("Name")}
               placeholder={t("Profile name")}
               description={t("Unique name for this profile.")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -49,7 +49,7 @@ export function OverviewTab() {
               label={t("Method")}
               options={communicationProfileMethodOptions}
               description={t("The method used to communicate with the trading partner.")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -59,7 +59,7 @@ export function OverviewTab() {
               label={t("Status")}
               options={statusChoices}
               description={t("The status of this profile.")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>

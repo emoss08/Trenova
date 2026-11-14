@@ -1,6 +1,6 @@
-import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
-import { validateCroppableImage } from "@/lib/images/crop-image";
-import { IMAGE_UPLOAD_ACCEPT, profilePictureCropConfig } from "@/lib/images/upload-config";
+import { PROFILE_PICTURE } from "@/components/image-upload/image-spec";
+import { ProfilePicturePreview } from "@/components/image-upload/profile-picture-preview";
+import { useImageUpload, type ImageDropTarget } from "@/components/image-upload/use-image-upload";
 import { user } from "@/lib/queries/user";
 import { userService } from "@trenova/shared/services/user";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,12 +8,18 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { User } from "@trenova/shared/types/user";
-import { useCallback, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { useSettingsFeedback } from "./settings-feedback";
 
 export type ProfilePictureControls = {
   openPicker: () => void;
+  /** Reads the crop dialog's code ahead of the first picture; call it when the pointer arrives. */
+  preload: () => void;
+  /** Spread on the element that takes a dropped or pasted photo. */
+  dropTarget: ImageDropTarget;
+  /** Whether a file is being dragged over that element. */
+  dragging: boolean;
   remove: () => Promise<void>;
   removing: boolean;
   /** The hidden file input and the crop dialog; render once. */
@@ -25,10 +31,8 @@ export function useProfilePicture(): ProfilePictureControls {
   const t = useT();
   const queryClient = useQueryClient();
   const feedback = useSettingsFeedback();
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [cropOpen, setCropOpen] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const me = useAuthStore((state) => state.user);
 
   const sync = useCallback(
     async (updated: User) => {
@@ -46,36 +50,30 @@ export function useProfilePicture(): ProfilePictureControls {
     [queryClient],
   );
 
-  const onFile = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const selected = event.target.files?.[0];
-      event.target.value = "";
-      if (!selected) return;
-
-      try {
-        validateCroppableImage(selected, "profile pictures");
-        setPendingFile(selected);
-        setCropOpen(true);
-      } catch (error) {
-        toast.error(t("Unsupported profile picture"), {
-          description:
-            error instanceof Error
-              ? error.message
-              : translate("Please choose a JPG, PNG, or WEBP file."),
-        });
-      }
-    },
-    [t],
-  );
-
-  const upload = useCallback(
-    async (file: File) => {
+  const upload = useImageUpload({
+    spec: PROFILE_PICTURE,
+    preview: (
+      <ProfilePicturePreview
+        name={me?.name || me?.username || ""}
+        detail={me?.jobTitle || undefined}
+        handle={me?.username || undefined}
+      />
+    ),
+    title: t("Position your photo"),
+    confirmLabel: t("Save photo"),
+    onUpload: async (file) => {
       const updated = await userService.uploadMyProfilePicture(file);
       await sync(updated);
       feedback.message(t("Photo updated"));
     },
-    [feedback, sync, t],
-  );
+    // The photo's controls are an avatar and a button with no line of their own to say what
+    // was wrong with a file, so a toast does.
+    onProblem: (problem) => {
+      if (problem) {
+        toast.error(t("That file cannot be your photo"), { description: problem });
+      }
+    },
+  });
 
   const remove = useCallback(async () => {
     if (removing) return;
@@ -93,39 +91,13 @@ export function useProfilePicture(): ProfilePictureControls {
     }
   }, [feedback, removing, sync, t]);
 
-  const element = (
-    <>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={IMAGE_UPLOAD_ACCEPT}
-        className="hidden"
-        aria-hidden
-        tabIndex={-1}
-        onChange={onFile}
-      />
-      <ImageCropUploadDialog
-        open={cropOpen}
-        file={pendingFile}
-        title={t("Crop profile picture")}
-        description={t(
-          "Adjust your image before uploading. Profile pictures are cropped to a square.",
-        )}
-        {...profilePictureCropConfig}
-        confirmLabel={t("Upload picture")}
-        onClose={() => {
-          setCropOpen(false);
-          setPendingFile(null);
-        }}
-        onConfirm={upload}
-      />
-    </>
-  );
-
   return {
-    openPicker: () => inputRef.current?.click(),
+    openPicker: upload.openPicker,
+    preload: upload.preload,
+    dropTarget: upload.dropTarget,
+    dragging: upload.dragging,
     remove,
     removing,
-    element,
+    element: upload.element,
   };
 }

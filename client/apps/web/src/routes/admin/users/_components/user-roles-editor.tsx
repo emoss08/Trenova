@@ -295,7 +295,7 @@ function AssignRoleDialog({
                 disabled={isDisabled}
                 filterOption={filterAvailableRole}
                 noResultsMessage={t("No available roles found.")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl>

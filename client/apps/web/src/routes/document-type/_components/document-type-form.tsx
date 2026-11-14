@@ -18,7 +18,7 @@ export function DocumentTypeForm({ disabled }: { disabled?: boolean }) {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="code"
           label={t("Code")}
           placeholder={t("Code")}
@@ -30,7 +30,7 @@ export function DocumentTypeForm({ disabled }: { disabled?: boolean }) {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="name"
           label={t("Name")}
           placeholder={t("Name")}
@@ -42,7 +42,7 @@ export function DocumentTypeForm({ disabled }: { disabled?: boolean }) {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="documentClassification"
           label={t("Classification")}
           placeholder={t("Classification")}
@@ -54,7 +54,7 @@ export function DocumentTypeForm({ disabled }: { disabled?: boolean }) {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="documentCategory"
           label={t("Category")}
           placeholder={t("Category")}

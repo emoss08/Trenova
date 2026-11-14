@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Checkbox } from "@/components/animate-ui/components/base/checkbox";
 import { GLAccountAutocompleteField } from "@/components/autocomplete-fields";
+import { MultiCheckboxField } from "@/components/fields/multi-checkbox-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from "@trenova/shared/components/ui/card";
 import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import { Label } from "@trenova/shared/components/ui/label";
 import { usePermissions } from "@/hooks/use-permission";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import {
@@ -38,7 +37,7 @@ import { accountingControl } from "@/lib/queries/accounting-control";
 import { integration } from "@/lib/queries/integration";
 import { OANDAExchangeRatesIntegrationModal } from "@/routes/admin/integrations/_components/oanda/oanda-integration-modal";
 import { accountingControlService } from "@/services/accounting-control";
-import type { AccountingControl, JournalSourceEvent } from "@/types/accounting-control";
+import type { AccountingControl } from "@/types/accounting-control";
 import { accountingControlSchema } from "@/types/accounting-control";
 import { Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -87,7 +86,13 @@ export default function AccountingControlForm() {
 
   const onSubmit = useCallback(
     async (values: AccountingControl) => {
-      await mutateAsync(sanitizeAccountingControlForSubmit(values));
+      try {
+        await mutateAsync(sanitizeAccountingControlForSubmit(values));
+      } catch {
+        // The mutation has already put a refusal on the form (its fields and its alert) or
+        // in a toast. Left to escape, the same rejection is reported again as a failure of
+        // the app itself, which it is not.
+      }
     },
     [mutateAsync],
   );
@@ -134,7 +139,7 @@ function RecognitionPolicyCard() {
                 "Sets the organization’s primary accounting basis and constrains the valid recognition policies.",
               )}
               options={accountingBasisChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -146,7 +151,7 @@ function RecognitionPolicyCard() {
                 "Defines the event that recognizes revenue for organization-controlled accounting entries.",
               )}
               options={revenueRecognitionPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -158,7 +163,7 @@ function RecognitionPolicyCard() {
                 "Defines the event that recognizes expense for organization-controlled accounting entries.",
               )}
               options={expenseRecognitionPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -170,18 +175,8 @@ function RecognitionPolicyCard() {
 function JournalPolicyCard() {
   const t = useT();
 
-  const { control, getValues, setValue } = useFormContext<AccountingControl>();
+  const { control } = useFormContext<AccountingControl>();
   const journalPostingMode = useWatch({ control, name: "journalPostingMode" });
-  const autoPostSourceEvents = useWatch({ control, name: "autoPostSourceEvents" }) ?? [];
-
-  const toggleEvent = useCallback(
-    (value: JournalSourceEvent, checked: boolean) => {
-      const current = getValues("autoPostSourceEvents") ?? [];
-      const next = checked ? [...current, value] : current.filter((item) => item !== value);
-      setValue("autoPostSourceEvents", next, { shouldDirty: true });
-    },
-    [getValues, setValue],
-  );
 
   return (
     <Card>
@@ -204,36 +199,21 @@ function JournalPolicyCard() {
                 "Controls whether journals are created only by explicit user action or automatically from configured source events.",
               )}
               options={journalPostingModeChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           {journalPostingMode === "Automatic" && (
             <FormControl className="max-w-[720px]">
-              <div className="flex flex-col gap-3">
-                <Label className="text-sm font-medium">{t("Auto-post source events")}</Label>
-                <p className="text-muted-foreground text-sm">
-                  {t(
-                    "Select the posted business events that are allowed to generate journal entries automatically.",
-                  )}
-                </p>
-                <FormGroup cols={2}>
-                  {journalSourceEventChoices.map((option) => {
-                    const checked = autoPostSourceEvents.includes(option.value);
-
-                    return (
-                      <label key={option.value} className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={(nextChecked) =>
-                            toggleEvent(option.value, Boolean(nextChecked))
-                          }
-                        />
-                        <span>{t(option.label)}</span>
-                      </label>
-                    );
-                  })}
-                </FormGroup>
-              </div>
+              <MultiCheckboxField
+                control={control}
+                name="autoPostSourceEvents"
+                label={t("Auto-post source events")}
+                description={t(
+                  "Select the posted business events that are allowed to generate journal entries automatically.",
+                )}
+                options={journalSourceEventChoices}
+                emptyAs="array"
+              />
             </FormControl>
           )}
           <FormControl className="max-w-[420px]">
@@ -245,7 +225,7 @@ function JournalPolicyCard() {
                 "Defines whether users may create manual journals broadly, only for adjustments, or not at all.",
               )}
               options={manualJournalEntryPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -268,7 +248,7 @@ function JournalPolicyCard() {
                 "Defines whether posted journals can be reversed through workflow and, if allowed, where the reversal is booked.",
               )}
               options={journalReversalPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -507,7 +487,7 @@ function PeriodAndReconciliationCard() {
                 "Controls whether accounting periods are closed manually or by a scheduled system job.",
               )}
               options={periodCloseModeChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -530,7 +510,7 @@ function PeriodAndReconciliationCard() {
                 "Defines how the system handles posting attempts into a locked accounting period.",
               )}
               options={lockedPeriodPostingPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -542,7 +522,7 @@ function PeriodAndReconciliationCard() {
                 "Defines whether posting to a closed period requires reopening or is redirected to the next open period.",
               )}
               options={closedPeriodPostingPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -554,7 +534,7 @@ function PeriodAndReconciliationCard() {
                 "Controls whether reconciliation discrepancies are ignored, logged as warnings, or block posting.",
               )}
               options={reconciliationModeChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           {reconciliationMode !== "Disabled" && (
@@ -566,7 +546,7 @@ function PeriodAndReconciliationCard() {
                 description={t(
                   "Maximum allowed discrepancy amount before the configured reconciliation response applies.",
                 )}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           )}
@@ -671,7 +651,7 @@ function CurrencyAndAccountsCard() {
                   "Determines whether the organization operates in a single functional currency or supports foreign-currency transactions.",
                 )}
                 options={currencyModeChoices}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl className="max-w-[420px]">
@@ -683,7 +663,7 @@ function CurrencyAndAccountsCard() {
                   "Base currency used for organization accounting and financial reporting.",
                 )}
                 options={currencyChoices}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           </FormGroup>
@@ -704,7 +684,7 @@ function CurrencyAndAccountsCard() {
                       "Determines which date is used to select the exchange rate for multi-currency accounting.",
                     )}
                     options={exchangeRateDatePolicyChoices}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
                 <FormControl className="max-w-[420px]">
@@ -716,7 +696,7 @@ function CurrencyAndAccountsCard() {
                       "Controls whether users may override exchange rates and whether those overrides require approval.",
                     )}
                     options={exchangeRateOverridePolicyChoices}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
                 <FormControl className="max-w-[420px]">

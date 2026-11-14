@@ -116,7 +116,7 @@ export function RevokeOverrideDialog({
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("Why the override is no longer warranted")}
-                  rules={{ required: true }}
+                  required
                   maxLength={CARRIER_INTEL_NOTE_MAX_LENGTH}
                 />
               </FormControl>

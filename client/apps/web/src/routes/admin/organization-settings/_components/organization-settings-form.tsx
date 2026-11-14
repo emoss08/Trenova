@@ -4,21 +4,22 @@ import { InputField } from "@/components/fields/input-field";
 import { TimezoneField } from "@/components/fields/timezone-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
-import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
+import { CropResult } from "@/components/image-upload/crop-result";
+import type { ImageSpec } from "@/components/image-upload/image-spec";
+import { MAX_IMAGE_MEGABYTES } from "@/components/image-upload/image-file";
+import { useImageUpload } from "@/components/image-upload/use-image-upload";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
+import { useOrganizationBranding } from "@/hooks/use-organization-branding";
 import {
   organizationSettingsTabParser,
   type OrganizationSettingsTabValue,
 } from "@/hooks/use-organization-setting-state";
 import { updateOrganizationSettingsGraphQL } from "@/lib/graphql/organization";
-import { validateCroppableImage } from "@/lib/images/crop-image";
-import { IMAGE_UPLOAD_ACCEPT, organizationLogoCropConfig } from "@/lib/images/upload-config";
 import { organization } from "@/lib/queries/organization";
 import { userOrganization } from "@/lib/queries/user";
 import { organizationService } from "@/services/organization";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Button } from "@trenova/shared/components/ui/button";
 import {
   Card,
   CardContent,
@@ -32,10 +33,10 @@ import {
   type SegmentedControlItem,
 } from "@trenova/shared/components/ui/segmented-control";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
-import { isAbsoluteUrl } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import {
   organizationSettingsSchema,
+  type OrganizationBrandImage,
   type OrganizationSettings,
 } from "@trenova/shared/types/organization";
 import {
@@ -43,19 +44,14 @@ import {
   resolveOrganizationCapabilityPreset,
   type OrganizationCapabilityPreset,
 } from "@trenova/shared/types/organization-capability";
-import {
-  Building07Icon,
-  Shield01Icon,
-  Upload01Icon,
-  XCircleIcon,
-} from "@trenova/shared/components/icons";
+import { Building07Icon, Shield01Icon } from "@trenova/shared/components/icons";
+import { describeError } from "@trenova/shared/lib/error-presentation";
+import { mailingAddressLines } from "@trenova/shared/lib/mailing-address";
 import { useQueryState } from "nuqs";
-import type { ChangeEvent } from "react";
-import { Activity, useCallback, useMemo, useRef, useState } from "react";
+import { Activity, useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
-import { toast } from "@trenova/shared/components/ui/toast";
+import { BrandingPreview, type BrandImageSlot, type BrandMark } from "./branding-preview";
 import { SecurityAccessWorkspace } from "./security-access-workspace";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function OrganizationSettingsForm() {
   const t = useT();
@@ -64,7 +60,7 @@ export default function OrganizationSettingsForm() {
 
   if (!organizationId) {
     return (
-      <div className="text-muted-foreground py-8 text-sm">
+      <div className="py-8 text-sm text-muted-foreground">
         {t("No active organization found for this session.")}
       </div>
     );
@@ -99,31 +95,21 @@ function OrganizationSettingsTabs({ organizationId }: { organizationId: string }
     form,
     invalidateQueries: [
       organization.detail._def,
-      organization.logo._def,
+      organization.branding._def,
       userOrganization.all._def,
     ],
   });
 
-  const handleLogoUpdated = useCallback(
+  const handleBrandingUpdated = useCallback(
     async (updatedOrganization: OrganizationSettings) => {
       queryClient.setQueryData(organization.detail(organizationId).queryKey, updatedOrganization);
       reset(updatedOrganization);
-      const logoQueryKey = organization.logo(organizationId).queryKey;
-
-      if (updatedOrganization.logoUrl) {
-        await queryClient.invalidateQueries({
-          queryKey: logoQueryKey,
-        });
-      } else {
-        queryClient.removeQueries({
-          queryKey: logoQueryKey,
-          exact: true,
-        });
-      }
-
-      await queryClient.invalidateQueries({
-        queryKey: userOrganization.all._def,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: organization.branding(organizationId).queryKey,
+        }),
+        queryClient.invalidateQueries({ queryKey: userOrganization.all._def }),
+      ]);
     },
     [organizationId, queryClient, reset],
   );
@@ -155,7 +141,10 @@ function OrganizationSettingsTabs({ organizationId }: { organizationId: string }
         <Activity mode={tab === "general" ? "visible" : "hidden"}>
           <FormProvider {...form}>
             <Form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
-              <LogoForm organizationId={organizationId} onLogoUpdated={handleLogoUpdated} />
+              <BrandingForm
+                organizationId={organizationId}
+                onBrandingUpdated={handleBrandingUpdated}
+              />
               <GeneralForm />
               <OperatingModelForm />
               <ComplianceForm />
@@ -174,155 +163,253 @@ function OrganizationSettingsTabs({ organizationId }: { organizationId: string }
   );
 }
 
-function LogoForm({
+/**
+ * The logo is the organization's full mark, fitted whole at the top of what it sends, so it
+ * keeps its own shape. It may sit inside the frame with clear ground around it.
+ */
+const ORGANIZATION_LOGO: ImageSpec = {
+  mask: "rect",
+  frame: "source",
+  fit: "contain",
+  maxDimension: 1024,
+};
+
+/** The icon is the square mark the sidebar's tile draws, where a logo has no room. */
+const ORGANIZATION_ICON: ImageSpec = {
+  mask: "tile",
+  frame: "square",
+  fit: "contain",
+  maxDimension: 512,
+};
+
+/**
+ * One of the organization's pictures as the preview needs it: where it is read from, the crop
+ * flow that replaces it and the request that removes it. What goes wrong with either is told
+ * to the card, which says it under the preview.
+ */
+function useBrandImage({
   organizationId,
-  onLogoUpdated,
+  image,
+  spec,
+  url,
+  labels,
+  preview,
+  onUpdated,
+  onProblem,
+  onLoadFailed,
 }: {
   organizationId: string;
-  onLogoUpdated: (updatedOrganization: OrganizationSettings) => Promise<void>;
+  image: OrganizationBrandImage;
+  spec: ImageSpec;
+  /** Where the stored picture is read from; null when there is none. */
+  url: string | null;
+  labels: { upload: string; change: string; cropTitle: string };
+  /** The preview shown beside the crop dialog's stage. */
+  preview: ReactNode;
+  onUpdated: (updatedOrganization: OrganizationSettings) => Promise<void>;
+  onProblem: (problem: string | null) => void;
+  /** Told the address of a stored picture that did not load. */
+  onLoadFailed: (url: string) => void;
 }) {
   const t = useT();
+  const removal = useRef(false);
+  const [removing, setRemoving] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [isRemovingLogo, setIsRemovingLogo] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [isCropOpen, setIsCropOpen] = useState(false);
-  const { control } = useFormContext<OrganizationSettings>();
-  const rawLogoValue = useWatch({ control, name: "logoUrl" });
-
-  const { data: resolvedLogoURL } = useQuery({
-    ...organization.logo(organizationId),
-    enabled: Boolean(rawLogoValue),
-    retry: false,
+  const upload = useImageUpload({
+    spec,
+    preview,
+    title: labels.cropTitle,
+    confirmLabel: labels.upload,
+    disabled: removing,
+    onUpload: async (file) => {
+      await onUpdated(await organizationService.uploadBrandImage(organizationId, image, file));
+    },
+    onProblem,
   });
 
-  const displayLogoURL = useMemo(() => {
-    if (resolvedLogoURL) {
-      return resolvedLogoURL;
-    }
-
-    if (isAbsoluteUrl(rawLogoValue)) {
-      return rawLogoValue;
-    }
-
-    return null;
-  }, [rawLogoValue, resolvedLogoURL]);
-
-  const handleLogoFileChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = event.target.files?.[0];
-      event.target.value = "";
-      if (!selectedFile) {
-        return;
-      }
-
-      try {
-        validateCroppableImage(selectedFile, "logos");
-        setPendingFile(selectedFile);
-        setIsCropOpen(true);
-      } catch (error) {
-        toast.error(t("Unsupported logo file"), {
-          description:
-            error instanceof Error
-              ? error.message
-              : translate("Please choose a JPG, PNG, or WEBP file."),
-        });
-      }
-    },
-    [t],
-  );
-
-  const handleLogoUpload = useCallback(
-    async (file: File) => {
-      const updatedOrganization = await organizationService.uploadLogo(organizationId, file);
-      await onLogoUpdated(updatedOrganization);
-    },
-    [onLogoUpdated, organizationId],
-  );
-
-  const handleRemoveLogo = useCallback(async () => {
-    if (isRemovingLogo) {
-      return;
-    }
-
-    setIsRemovingLogo(true);
+  const remove = async () => {
+    if (removal.current) return;
+    removal.current = true;
+    setRemoving(true);
+    onProblem(null);
     try {
-      const updated = await organizationService.deleteLogo(organizationId);
-      await onLogoUpdated(updated);
+      await onUpdated(await organizationService.deleteBrandImage(organizationId, image));
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to remove logo";
-      toast.error(t("Failed to remove logo"), { description: message });
+      onProblem(describeError(error).detail ?? t("The picture could not be removed. Try again."));
+    } finally {
+      removal.current = false;
+      setRemoving(false);
     }
+  };
 
-    setIsRemovingLogo(false);
-  }, [isRemovingLogo, onLogoUpdated, organizationId, t]);
+  const slot: BrandImageSlot = {
+    mark: storedMark(url, onLoadFailed),
+    control: {
+      uploadLabel: labels.upload,
+      changeLabel: labels.change,
+      onChoose: upload.openPicker,
+      onIntent: upload.preload,
+      onRemove: () => void remove(),
+      removing,
+      dropTarget: upload.dropTarget,
+      dragging: upload.dragging,
+    },
+  };
+
+  return { slot, element: upload.element };
+}
+
+/**
+ * A stored picture, drawn from its signed address. The address lapses, so a picture that
+ * fails to load asks for a fresh one.
+ */
+function storedMark(
+  url: string | null,
+  onLoadFailed: (url: string) => void,
+): BrandMark | undefined {
+  return url
+    ? (className) => (
+        <img
+          src={url}
+          alt=""
+          draggable={false}
+          className={className}
+          onError={() => onLoadFailed(url)}
+        />
+      )
+    : undefined;
+}
+
+const LIVE_MARK: BrandImageSlot = { mark: (className) => <CropResult className={className} /> };
+
+function BrandingForm({
+  organizationId,
+  onBrandingUpdated,
+}: {
+  organizationId: string;
+  onBrandingUpdated: (updatedOrganization: OrganizationSettings) => Promise<void>;
+}) {
+  const t = useT();
+  const [problem, setProblem] = useState<string | null>(null);
+
+  const { control } = useFormContext<OrganizationSettings>();
+  const [name, line1, line2, city, postalCode, storedLogo, storedIcon] = useWatch({
+    control,
+    name: ["name", "addressLine1", "addressLine2", "city", "postalCode", "logoUrl", "iconUrl"],
+  });
+  const { data: detail } = useQuery(organization.detail(organizationId));
+
+  const { branding, refresh: refreshBranding } = useOrganizationBranding(
+    organizationId,
+    Boolean(storedLogo || storedIcon),
+  );
+
+  // The form says which pictures exist; the branding read only says where to fetch them, and
+  // may still hold the address of one that was just removed.
+  const logoURL = storedLogo ? branding?.logoUrl || null : null;
+  const iconURL = storedIcon ? branding?.iconUrl || null : null;
+
+  const lines = mailingAddressLines({
+    line1,
+    line2,
+    city,
+    state: detail?.state?.abbreviation,
+    postalCode,
+    country: detail?.state?.countryName,
+  });
+  const shown = (url: string | null): BrandImageSlot => ({
+    mark: storedMark(url, refreshBranding),
+  });
+
+  const logo = useBrandImage({
+    organizationId,
+    image: "logo",
+    spec: ORGANIZATION_LOGO,
+    url: logoURL,
+    labels: {
+      upload: t("Upload logo"),
+      change: t("Change logo"),
+      cropTitle: t("Position your logo"),
+    },
+    // An invoice carries the logo; so does the sidebar, until the organization has an icon.
+    preview: (
+      <BrandingPreview
+        className="flex-1"
+        name={name}
+        lines={lines}
+        logo={LIVE_MARK}
+        icon={shown(iconURL)}
+        surfaces={iconURL ? ["invoice"] : ["invoice", "sidebar"]}
+      />
+    ),
+    onUpdated: onBrandingUpdated,
+    onProblem: setProblem,
+    onLoadFailed: refreshBranding,
+  });
+
+  const icon = useBrandImage({
+    organizationId,
+    image: "icon",
+    spec: ORGANIZATION_ICON,
+    url: iconURL,
+    labels: {
+      upload: t("Upload icon"),
+      change: t("Change icon"),
+      cropTitle: t("Position your icon"),
+    },
+    preview: (
+      <BrandingPreview
+        className="flex-1"
+        name={name}
+        lines={lines}
+        logo={shown(logoURL)}
+        icon={LIVE_MARK}
+        surfaces={["sidebar"]}
+      />
+    ),
+    onUpdated: onBrandingUpdated,
+    onProblem: setProblem,
+    onLoadFailed: refreshBranding,
+  });
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>{t("Organization branding")}</CardTitle>
         <CardDescription>
-          {t("Upload and manage your organization logo used across the application.")}
+          {t(
+            "Your icon marks this organization in the sidebar, and your logo heads the documents and emails you send. Select either in the preview to change it.",
+          )}
         </CardDescription>
       </CardHeader>
-      <CardContent className="max-w-prose">
-        <div className="space-y-4">
-          <div className="bg-muted/40 relative flex h-24 w-24 items-center justify-center rounded-md border">
-            {displayLogoURL ? (
-              <img
-                src={displayLogoURL}
-                alt={t("Organization logo")}
-                className="h-full w-full rounded-md object-cover"
-              />
-            ) : (
-              <span className="text-muted-foreground text-xs">{t("No logo")}</span>
-            )}
-            {displayLogoURL ? (
-              <button
-                type="button"
-                onClick={handleRemoveLogo}
-                disabled={isRemovingLogo}
-                className="bg-background/95 text-foreground hover:bg-muted absolute top-0 right-0 z-10 inline-flex size-6 translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                aria-label={t("Remove logo")}
-                title={t("Remove logo")}
-              >
-                <XCircleIcon className="size-4" />
-              </button>
-            ) : null}
-          </div>
-
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isRemovingLogo}
-          >
-            <Upload01Icon className="size-4" />
-            {t("Upload logo")}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={IMAGE_UPLOAD_ACCEPT}
-            className="hidden"
-            onChange={handleLogoFileChange}
-          />
-        </div>
+      <CardContent className="flex max-w-4xl flex-col gap-2">
+        <BrandingPreview
+          className="h-80"
+          name={name}
+          lines={lines}
+          logo={logo.slot}
+          icon={icon.slot}
+        />
+        {problem ? (
+          <p role="alert" className="text-xs text-destructive">
+            {problem}
+          </p>
+        ) : (
+          <p className="text-xs text-foreground-subtle">
+            {iconURL
+              ? t(
+                  "PNG, JPG, WebP or SVG, up to {0} MB. You can also drop a file on either.",
+                  MAX_IMAGE_MEGABYTES,
+                )
+              : t(
+                  "PNG, JPG, WebP or SVG, up to {0} MB. Until you add an icon, the sidebar fits your logo in its place.",
+                  MAX_IMAGE_MEGABYTES,
+                )}
+          </p>
+        )}
+        {logo.element}
+        {icon.element}
       </CardContent>
-
-      <ImageCropUploadDialog
-        open={isCropOpen}
-        file={pendingFile}
-        title={t("Crop organization logo")}
-        description={t("Adjust the visible bounds before uploading your organization logo.")}
-        {...organizationLogoCropConfig}
-        confirmLabel={t("Upload logo")}
-        onClose={() => {
-          setIsCropOpen(false);
-          setPendingFile(null);
-        }}
-        onConfirm={handleLogoUpload}
-      />
     </Card>
   );
 }
@@ -348,7 +435,7 @@ function GeneralForm() {
             <InputField
               control={control}
               name="name"
-              rules={{ required: true }}
+              required
               label={t("Name")}
               placeholder={t("Enter organization name")}
             />
@@ -356,7 +443,7 @@ function GeneralForm() {
           <FormControl cols="full">
             <TimezoneField
               control={control}
-              rules={{ required: true }}
+              required
               name="timezone"
               label={t("Timezone")}
               placeholder={t("Select timezone")}
@@ -490,7 +577,7 @@ function ComplianceForm() {
             <InputField
               control={control}
               name="scacCode"
-              rules={{ required: true }}
+              required
               label={t("SCAC code")}
               placeholder={t("Enter SCAC code")}
             />
@@ -499,7 +586,7 @@ function ComplianceForm() {
             <InputField
               control={control}
               name="dotNumber"
-              rules={{ required: true }}
+              required
               label={t("DOT number")}
               placeholder={t("Enter DOT number")}
             />
@@ -537,7 +624,7 @@ function AddressForm() {
             <InputField
               control={control}
               name="addressLine1"
-              rules={{ required: true }}
+              required
               label={t("Address Line 1")}
               placeholder={t("Enter address")}
             />
@@ -554,7 +641,7 @@ function AddressForm() {
             <InputField
               control={control}
               name="city"
-              rules={{ required: true }}
+              required
               label={t("City")}
               placeholder={t("Enter city")}
             />
@@ -563,7 +650,7 @@ function AddressForm() {
             <UsStateAutocompleteField
               control={control}
               name="stateId"
-              rules={{ required: true }}
+              required
               label={t("State")}
               placeholder={t("State")}
             />
@@ -572,7 +659,7 @@ function AddressForm() {
             <InputField
               control={control}
               name="postalCode"
-              rules={{ required: true }}
+              required
               label={t("ZIP code")}
               placeholder={t("Enter ZIP code")}
             />

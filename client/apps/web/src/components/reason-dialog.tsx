@@ -104,7 +104,7 @@ export function ReasonDialog({
                   label={label ?? t("Reason")}
                   placeholder={placeholder}
                   rows={3}
-                  rules={{ required: !optional }}
+                  required={!optional}
                 />
               </FormControl>
             </FormGroup>

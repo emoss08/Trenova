@@ -123,7 +123,7 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                   description={t(
                     "What the recognition is for; it is shown with the title on the safety record.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -133,7 +133,7 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                   placeholder={t("MM/DD/YYYY")}
                   description={t("The day the achievement happened; it defaults to today.")}
                   label={t("When")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl cols="full">
@@ -145,7 +145,7 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
                   description={t(
                     "The headline on the record; it is also the subject of the driver's notification when shared.",
                   )}
-                  rules={{ required: true }}
+                  required
                   maxLength={120}
                 />
               </FormControl>

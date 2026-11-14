@@ -87,7 +87,7 @@ export function ChecklistTemplateForm({
               name="code"
               label={t("Code")}
               placeholder={t("e.g. DRIVER-ONBOARDING")}
-              rules={{ required: true }}
+              required
               description={t("Short unique identifier; saved in uppercase.")}
             />
           </FormControl>
@@ -97,7 +97,7 @@ export function ChecklistTemplateForm({
               name="name"
               label={t("Name")}
               placeholder={t("e.g. Driver onboarding")}
-              rules={{ required: true }}
+              required
               description={t(
                 "Shown on the worker's Checklist tab once a checklist is started from this template.",
               )}
@@ -109,7 +109,7 @@ export function ChecklistTemplateForm({
               name="kind"
               label={t("Kind")}
               options={KIND_OPTIONS}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a kind")}
               description={t("Onboarding completion marks the worker DQF-ready.")}
             />
@@ -120,7 +120,7 @@ export function ChecklistTemplateForm({
               name="trigger"
               label={t("Starts")}
               options={TRIGGER_OPTIONS}
-              rules={{ required: true }}
+              required
               placeholder={t("Select an event")}
               description={t("The employment event that starts this checklist for a worker.")}
             />
@@ -131,7 +131,7 @@ export function ChecklistTemplateForm({
               name="status"
               label={t("Status")}
               options={statusChoices}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a status")}
               description={
                 isEdit && openChecklistCount > 0
@@ -289,7 +289,7 @@ function ItemRow({
             name={`items.${index}.label`}
             label={t("Label")}
             placeholder={t("e.g. Fuel card issued")}
-            rules={{ required: true }}
+            required
             description={t("Shown as the line the owner ticks off on the worker's checklist.")}
           />
         </FormControl>
@@ -299,7 +299,7 @@ function ItemRow({
             name={`items.${index}.kind`}
             label={t("Kind")}
             options={ITEM_KIND_OPTIONS}
-            rules={{ required: true }}
+            required
             placeholder={t("Select a kind")}
             description={ITEM_KIND_HINT[kind ?? "Task"]}
           />
@@ -310,7 +310,7 @@ function ItemRow({
             name={`items.${index}.owner`}
             label={t("Owner")}
             options={OWNER_OPTIONS}
-            rules={{ required: true }}
+            required
             placeholder={t("Select a team")}
             description={t("The team responsible for getting this item done.")}
           />
@@ -321,7 +321,7 @@ function ItemRow({
               control={control}
               name={`items.${index}.credentialTypeId`}
               label={t("Credential type")}
-              rules={{ required: true }}
+              required
               placeholder={t("Which credential completes this item")}
               description={t(
                 "The item completes itself once the worker holds a valid credential of this type.",

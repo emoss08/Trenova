@@ -203,7 +203,7 @@ export function EmployerDialog({
                   description={t(
                     "The carrier or company as it appeared on the driver's application.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -275,7 +275,7 @@ export function EmployerDialog({
                   name="method"
                   label={t("Requested by")}
                   options={METHOD_OPTIONS}
-                  rules={{ required: true }}
+                  required
                   placeholder={t("Pick a method")}
                   description={t("How the request was, or will be, sent to the employer.")}
                 />
@@ -286,7 +286,7 @@ export function EmployerDialog({
                   name="status"
                   label={t("Status")}
                   options={STATUS_OPTIONS}
-                  rules={{ required: true }}
+                  required
                   placeholder={t("Pick a status")}
                   description={t(
                     "Where the request stands; anything past Pending needs the date it was sent.",
@@ -326,7 +326,7 @@ export function EmployerDialog({
                       description={t(
                         "Required for a received response; cannot be earlier than the request.",
                       )}
-                      rules={{ required: true }}
+                      required
                     />
                   </FormControl>
                   {wasDotRegulated ? (
@@ -360,7 +360,7 @@ export function EmployerDialog({
                         description={t(
                           "Accidents the employer reported for the driver's time there.",
                         )}
-                        rules={{ required: true }}
+                        required
                       />
                     </FormControl>
                   ) : null}

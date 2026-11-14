@@ -139,7 +139,7 @@ export function RecordResultDialog({
                       description={t(
                         "The breath alcohol concentration from the confirmation test; it decides the result on its own.",
                       )}
-                      rules={{ required: true }}
+                      required
                     />
                   </FormControl>
                   <FormControl cols="full">
@@ -168,7 +168,7 @@ export function RecordResultDialog({
                   description={t(
                     "A positive, refusal, adulterated or substituted result opens a violation and prohibits the driver at once.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>

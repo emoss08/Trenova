@@ -211,7 +211,7 @@ export function FieldWrapper({
         labelAction={labelAction}
         required={required}
         htmlFor={htmlFor}
-        className={className}
+        className={cn("group/field", className)}
         description={
           description || warning?.show ? (
             <FieldDescription description={description} warning={warning} id={descriptionId} />
@@ -225,7 +225,7 @@ export function FieldWrapper({
   }
 
   return (
-    <div className={cn("flex flex-col gap-0.5", className)}>
+    <div className={cn("group/field flex flex-col gap-0.5", className)}>
       {label && (
         <FieldWrapperInner className={hideLabel ? "sr-only" : undefined}>
           <FieldLabel label={label} required={required} htmlFor={htmlFor} />

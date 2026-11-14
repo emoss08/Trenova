@@ -672,6 +672,7 @@ export const REFERENCE_VIEWS = {
   organization: [
     "businessUnitId",
     "createdAt",
+    "iconUrl",
     "id",
     "logoUrl",
     "name",

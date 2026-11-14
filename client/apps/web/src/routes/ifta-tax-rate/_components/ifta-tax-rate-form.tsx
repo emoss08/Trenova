@@ -35,7 +35,7 @@ export function IftaTaxRateForm({ isEdit }: { isEdit: boolean }) {
               placeholder="2026"
               min={IFTA_MIN_YEAR}
               max={IFTA_MAX_YEAR}
-              rules={{ required: true }}
+              required
               description={t("The calendar year of the quarter the rate was published for.")}
             />
           </FormControl>
@@ -45,7 +45,7 @@ export function IftaTaxRateForm({ isEdit }: { isEdit: boolean }) {
               name="quarter"
               label={t("Quarter")}
               options={iftaQuarterChoices}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a quarter")}
               description={t(
                 "Rates change every quarter; the matrix is published shortly before each one.",
@@ -57,7 +57,7 @@ export function IftaTaxRateForm({ isEdit }: { isEdit: boolean }) {
               control={control}
               name="jurisdictionId"
               label={t("Jurisdiction")}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a jurisdiction")}
               description={t("The state or province that levies the tax.")}
             />
@@ -68,7 +68,7 @@ export function IftaTaxRateForm({ isEdit }: { isEdit: boolean }) {
               name="fuelType"
               label={t("Fuel type")}
               options={iftaFuelTypeChoices}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a fuel type")}
               description={t(
                 "The matrix lists a separate rate for each fuel; DEF, reefer and other never carry one.",
@@ -90,7 +90,7 @@ export function IftaTaxRateForm({ isEdit }: { isEdit: boolean }) {
               label={t("Rate per gallon")}
               placeholder="0.2000"
               inputMode="decimal"
-              rules={{ required: true }}
+              required
               description={t("Up to four decimals. Zero is a published rate, not a missing one.")}
             />
           </FormControl>

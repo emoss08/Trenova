@@ -173,7 +173,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="code"
                   label={t("Code")}
                   placeholder={t("e.g. MED-PPO")}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "A short tag that identifies the plan on lists and enrolments, up to 20 characters.",
                   )}
@@ -185,7 +185,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="name"
                   label={t("Name")}
                   placeholder={t("e.g. Medical PPO")}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "The plan name workers see when they are enrolled in it or decline it.",
                   )}
@@ -198,7 +198,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   label={t("Type")}
                   options={TYPE_OPTIONS}
                   placeholder={t("Pick a type")}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "The kind of cover this is; plans are grouped by it on the benefits page.",
                   )}
@@ -210,7 +210,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="planYear"
                   label={t("Plan year")}
                   placeholder={t("e.g. 2026")}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "The year this pricing applies to; set up next year's plan as a new row instead of editing this one.",
                   )}
@@ -222,7 +222,7 @@ export function BenefitPlanDialog({ open, onOpenChange, plan }: BenefitPlanDialo
                   name="payCodeId"
                   label={t("Pay code")}
                   placeholder={t("Select pay code")}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "The line a contribution shows up as on a settlement, so every deduction can be explained.",
                   )}

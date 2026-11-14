@@ -38,7 +38,7 @@ export function ProfileForm() {
               name="name"
               label={t("Name")}
               placeholder={t("Paperwork")}
-              rules={{ required: true }}
+              required
               maxLength={100}
             />
           </FormControl>

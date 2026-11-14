@@ -23023,24 +23023,6 @@
       "routes/admin"
     ]
   },
-  "Adjust the visible bounds before uploading your organization logo.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Adjust your image before uploading. Profile pictures are cropped to a square.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/settings"
-    ]
-  },
   "Adjusting": {
     "sites": 4,
     "scope": [
@@ -27334,7 +27316,6 @@
       "routes/driver-expense",
       "routes/driver-pay-event",
       "routes/escrow-account",
-      "routes/factoring-company",
       "routes/factoring-remittance",
       "routes/fuel-purchase",
       "routes/invoice",
@@ -27471,7 +27452,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring-company",
+      "apps/web/components",
       "template/invoice.pdf"
     ]
   },
@@ -41828,11 +41809,13 @@
     ]
   },
   "Background": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/components",
       "go/other"
     ]
   },
@@ -42021,8 +42004,8 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk",
-      "routes/factoring-company",
       "template/customer.statement.email",
       "template/customer.statement.pdf",
       "template/invoice.pdf"
@@ -43594,9 +43577,9 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "go/other",
       "routes/carrier-invoice-matching",
-      "routes/factoring-company",
       "routes/invoice-register",
       "routes/rate-agreement",
       "routes/shipment",
@@ -53796,6 +53779,15 @@
       "apps/web/components"
     ]
   },
+  "Change icon": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Change icon and color": {
     "sites": 2,
     "scope": [
@@ -53830,6 +53822,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Change logo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Change not found": {
@@ -55235,7 +55236,6 @@
       "routes/customer-statement",
       "routes/desk",
       "routes/edi",
-      "routes/factoring-company",
       "routes/invoice",
       "template/customer.statement.pdf",
       "template/invoice.pdf"
@@ -56601,6 +56601,15 @@
       "apps/web/components"
     ]
   },
+  "Choose a PNG, JPG, WebP or SVG picture.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Choose a SCIM directory before loading group mappings.": {
     "sites": 1,
     "scope": [
@@ -57356,6 +57365,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Choose another": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Choose another file": {
@@ -59901,7 +59919,7 @@
     ]
   },
   "Clear": {
-    "sites": 30,
+    "sites": 32,
     "scope": [
       "go",
       "ts"
@@ -66272,11 +66290,11 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "routes/agent-control",
       "routes/desk",
-      "routes/factoring-company",
       "routes/shipment",
       "template/invoice.pdf"
     ]
@@ -73766,24 +73784,6 @@
       "go/other"
     ]
   },
-  "Crop organization logo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Crop profile picture": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/settings"
-    ]
-  },
   "Cross Dock": {
     "sites": 1,
     "scope": [
@@ -76545,7 +76545,7 @@
     ]
   },
   "Dark": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -76602,6 +76602,15 @@
     "areas": [
       "apps/web/config",
       "routes/dash-control"
+    ]
+  },
+  "Dash is provided by your carrier. Routes, assignments and times shown here come from your carrier, not from Trenova. Don't use Dash while your vehicle is moving.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/routes"
     ]
   },
   "Dash message": {
@@ -82798,7 +82807,6 @@
       "routes/equipment-manufacturer",
       "routes/equipment-type",
       "routes/escrow-account",
-      "routes/factoring-company",
       "routes/fiscal-year",
       "routes/fleet-code",
       "routes/formula-library",
@@ -84370,8 +84378,8 @@
       "ts"
     ],
     "areas": [
-      "go/other",
-      "routes/factoring-company"
+      "apps/web/components",
+      "go/other"
     ]
   },
   "Detention, driver assist": {
@@ -89418,6 +89426,15 @@
       "routes/desk"
     ]
   },
+  "Drag to move the picture. Scroll or use the slider to zoom.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Drag to rearrange, resize from a widget's menu.": {
     "sites": 1,
     "scope": [
@@ -91652,7 +91669,6 @@
       "routes/desk",
       "routes/dispatch-console",
       "routes/factoring",
-      "routes/factoring-company",
       "routes/worker",
       "routes/worker-checklist-template",
       "template/customer.statement.pdf",
@@ -98802,6 +98818,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Enter Variance tolerance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-settlement-control"
     ]
   },
   "Enter ZIP code": {
@@ -110787,7 +110812,7 @@
       "routes/invoice"
     ]
   },
-  "Failed to generate organization logo URL": {
+  "Failed to generate organization image URL": {
     "sites": 1,
     "scope": [
       "go"
@@ -111087,7 +111112,7 @@
       "go/other"
     ]
   },
-  "Failed to process uploaded logo": {
+  "Failed to process uploaded image": {
     "sites": 1,
     "scope": [
       "go"
@@ -111258,15 +111283,6 @@
     ],
     "areas": [
       "routes/order"
-    ]
-  },
-  "Failed to remove logo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Failed to remove pay event": {
@@ -111756,7 +111772,7 @@
       "routes/worker"
     ]
   },
-  "Failed to upload organization logo": {
+  "Failed to upload organization image": {
     "sites": 1,
     "scope": [
       "go"
@@ -119474,7 +119490,6 @@
       "routes/carrier-invoice-matching",
       "routes/customer",
       "routes/desk",
-      "routes/factoring-company",
       "routes/shipment",
       "template/rateconfirmation.pdf"
     ]
@@ -129863,6 +129878,33 @@
       "routes/shipment"
     ]
   },
+  "Image file cannot be empty": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Image file exceeds maximum allowed size": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Image file is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Image quality": {
     "sites": 1,
     "scope": [
@@ -135094,7 +135136,7 @@
     ]
   },
   "Invoice": {
-    "sites": 57,
+    "sites": 58,
     "scope": [
       "go",
       "ts"
@@ -135105,13 +135147,13 @@
       "apps/web/hooks",
       "apps/web/lib",
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/ar-open-items",
       "routes/billing-queue",
       "routes/customer-payments",
       "routes/customer-statement",
       "routes/desk",
-      "routes/factoring-company",
       "routes/factoring-remittance",
       "routes/inbox",
       "routes/invoice",
@@ -137082,8 +137124,8 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "go/other",
-      "routes/factoring-company",
       "routes/pay-advance",
       "routes/shipment",
       "routes/worker",
@@ -146312,7 +146354,7 @@
     ]
   },
   "Light": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -146847,10 +146889,10 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "routes/desk",
-      "routes/factoring-company",
       "routes/shipment"
     ]
   },
@@ -151938,33 +151980,6 @@
       "go/other"
     ]
   },
-  "Logo file cannot be empty": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Logo file exceeds maximum allowed size": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Logo file is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "London (GMT)": {
     "sites": 2,
     "scope": [
@@ -152852,8 +152867,8 @@
       "ts"
     ],
     "areas": [
-      "go/other",
-      "routes/factoring-company"
+      "apps/web/components",
+      "go/other"
     ]
   },
   "Lumper receipt": {
@@ -172384,15 +172399,6 @@
       "routes/admin"
     ]
   },
-  "No logo": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No longer differs": {
     "sites": 1,
     "scope": [
@@ -189416,7 +189422,7 @@
       "go/other"
     ]
   },
-  "Only image files are allowed for organization logos": {
+  "Only image files are allowed for organization branding": {
     "sites": 1,
     "scope": [
       "go"
@@ -195097,6 +195103,15 @@
       "go/other"
     ]
   },
+  "Organization image not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Organization is required": {
     "sites": 133,
     "scope": [
@@ -195116,22 +195131,12 @@
     ]
   },
   "Organization logo": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/admin"
-    ]
-  },
-  "Organization logo not found": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
+      "apps/web/components"
     ]
   },
   "Organization minimum (USD)": {
@@ -197899,6 +197904,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "PNG, JPG, WebP or SVG, up to {0} MB. Until you add an icon, the sidebar fits your logo in its place.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "PNG, JPG, WebP or SVG, up to {0} MB. You can also drop a file on either.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "PO": {
@@ -206252,6 +206275,15 @@
       "routes/settings"
     ]
   },
+  "Picture position. The arrow keys move the picture.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Pie": {
     "sites": 2,
     "scope": [
@@ -207317,16 +207349,6 @@
       "routes/agent-control"
     ]
   },
-  "Please choose a JPG, PNG, or WEBP file.": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin",
-      "routes/settings"
-    ]
-  },
   "Please contact your IT administrator for assistance.": {
     "sites": 1,
     "scope": [
@@ -208346,6 +208368,33 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Position your icon": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Position your logo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Position your photo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "Positional arguments come before named ones": {
@@ -210057,12 +210106,13 @@
     ]
   },
   "Preview": {
-    "sites": 16,
+    "sites": 21,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/desk",
       "routes/formula-template",
       "routes/fuel-management",
@@ -210289,6 +210339,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Preview: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Previewed a change": {
@@ -215166,12 +215225,12 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
       "routes/billing-queue",
       "routes/desk",
-      "routes/factoring-company",
       "routes/fuel-purchase",
       "template/invoice.pdf"
     ]
@@ -216834,7 +216893,6 @@
       "routes/desk",
       "routes/detention-policy",
       "routes/dispatch-console",
-      "routes/factoring-company",
       "routes/ifta-return",
       "routes/ifta-tax-rate",
       "routes/inbox",
@@ -227157,7 +227215,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring-company",
+      "apps/web/components",
       "template/customer.statement.pdf",
       "template/invoice.pdf"
     ]
@@ -227546,7 +227604,7 @@
     ]
   },
   "Remove": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "ts"
     ],
@@ -227979,15 +228037,6 @@
     "areas": [
       "apps/web/components",
       "routes/agent-control"
-    ]
-  },
-  "Remove logo": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Remove measure filter": {
@@ -229224,12 +229273,13 @@
     ]
   },
   "Replace": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/agent-control",
       "routes/policies"
     ]
@@ -232416,7 +232466,7 @@
     ]
   },
   "Reset": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -237200,11 +237250,12 @@
     ]
   },
   "Rotate": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/edi"
     ]
@@ -240761,7 +240812,7 @@
       "ts"
     ],
     "areas": [
-      "routes/factoring-company"
+      "apps/web/components"
     ]
   },
   "Sample load": {
@@ -241621,6 +241672,15 @@
       "routes/shipment"
     ]
   },
+  "Save photo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
+    ]
+  },
   "Save rates": {
     "sites": 1,
     "scope": [
@@ -242374,7 +242434,7 @@
     ]
   },
   "Saving...": {
-    "sites": 59,
+    "sites": 60,
     "scope": [
       "ts"
     ],
@@ -247191,6 +247251,15 @@
       "routes/accounting-control"
     ]
   },
+  "Select Accounts payable account": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-settlement-control"
+    ]
+  },
   "Select Cash Account": {
     "sites": 1,
     "scope": [
@@ -247270,6 +247339,15 @@
     ],
     "areas": [
       "routes/cost-control"
+    ]
+  },
+  "Select Purchased transportation account": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-settlement-control"
     ]
   },
   "Select Service type": {
@@ -247945,15 +248023,6 @@
     "areas": [
       "routes/worker",
       "routes/worker-checklist-template"
-    ]
-  },
-  "Select an image to continue.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Select an invoice": {
@@ -249774,15 +249843,6 @@
     ],
     "areas": [
       "routes/random-testing"
-    ]
-  },
-  "Selected upload": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Selecting...": {
@@ -257377,12 +257437,12 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "routes/agent-control",
       "routes/desk",
       "routes/detention-intelligence",
-      "routes/factoring-company",
       "routes/invoice-register",
       "routes/shipment",
       "template/invoice.pdf"
@@ -259043,13 +259103,14 @@
     ]
   },
   "Sidebar": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/components",
+      "routes/admin",
       "routes/settings"
     ]
   },
@@ -267965,8 +268026,8 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "go/other",
-      "routes/factoring-company",
       "routes/invoice",
       "template/invoice.pdf"
     ]
@@ -273689,6 +273750,24 @@
       "go/other"
     ]
   },
+  "That file cannot be your photo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
+    ]
+  },
+  "That file could not be opened as a picture. Choose another one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "That file is too large; the limit is 32 MiB.": {
     "sites": 2,
     "scope": [
@@ -273958,6 +274037,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "That picture could not be prepared. Choose another one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "That picture is over {0} MB. Choose a smaller one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "That plan has not been decided yet": {
@@ -288304,6 +288401,15 @@
       "go/other"
     ]
   },
+  "The picture could not be removed. Try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The pieces between each separator": {
     "sites": 2,
     "scope": [
@@ -295585,6 +295691,15 @@
       "go/other"
     ]
   },
+  "The upload did not go through. Try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The upload is larger than {0} bytes": {
     "sites": 1,
     "scope": [
@@ -298964,12 +299079,13 @@
     ]
   },
   "This change could not be saved": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
+      "packages/shared/components",
       "routes/agent-control"
     ]
   },
@@ -304273,6 +304389,15 @@
       "apps/web/components"
     ]
   },
+  "This selection is small, so it may look soft where it is shown larger.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This sends no message, so there is nothing to reword": {
     "sites": 1,
     "scope": [
@@ -308881,7 +309006,6 @@
       "routes/customer-statement",
       "routes/desk",
       "routes/driver-pay-event",
-      "routes/factoring-company",
       "routes/formula-template",
       "routes/ifta-return",
       "routes/invoice",
@@ -316713,31 +316837,13 @@
       "go/other"
     ]
   },
-  "Unsupported logo file": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Unsupported logo file extension": {
+  "Unsupported image file extension": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Unsupported profile picture": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/settings"
     ]
   },
   "Unsupported profile picture file extension": {
@@ -317793,15 +317899,6 @@
       "apps/web/lib"
     ]
   },
-  "Upload and manage your organization logo used across the application.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Upload blocked": {
     "sites": 1,
     "scope": [
@@ -317899,8 +317996,17 @@
       "routes/edi"
     ]
   },
+  "Upload icon": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Upload logo": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -317933,15 +318039,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Upload picture": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/settings"
     ]
   },
   "Upload progress": {
@@ -340728,6 +340825,15 @@
       "routes/home"
     ]
   },
+  "Your icon marks this organization in the sidebar, and your logo heads the documents and emails you send. Select either in the preview to change it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Your invitation link looks fine, but we couldn't reach Dash just now. Check your connection and try again.": {
     "sites": 1,
     "scope": [
@@ -342047,8 +342153,17 @@
       "routes/rate-matrix"
     ]
   },
+  "Zoom": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Zoom in": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -342060,7 +342175,7 @@
     ]
   },
   "Zoom out": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -348439,6 +348554,15 @@
     ]
   },
   "icon": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "icon URL": {
     "sites": 1,
     "scope": [
       "go"

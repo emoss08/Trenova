@@ -76,7 +76,7 @@ export default function ShipmentGeneralInformation() {
           label={t("Temperature min")}
           placeholder={t("Enter temperature min")}
           sideText={t("°F")}
-          rules={{ required }}
+          required={required}
         />
       ),
     },
@@ -91,7 +91,7 @@ export default function ShipmentGeneralInformation() {
           description={t("The maximum temperature for the shipment.")}
           placeholder={t("Enter temperature max")}
           sideText={t("°F")}
-          rules={{ required }}
+          required={required}
         />
       ),
     },
@@ -169,7 +169,7 @@ export function BOLField() {
       control={control}
       name="bol"
       label={t("BOL")}
-      rules={{ required: bolRequired }}
+      required={bolRequired}
       description={t("The BOL is the bill of lading number for the shipment.")}
       placeholder={t("Enter BOL")}
       maxLength={100}

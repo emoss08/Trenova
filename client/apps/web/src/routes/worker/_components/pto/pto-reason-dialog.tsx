@@ -280,7 +280,7 @@ export function PTOReasonDialog({
               <FormControl cols="full">
                 <TextareaField
                   control={control}
-                  rules={{ required: mode === "reject" }}
+                  required={mode === "reject"}
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("e.g. No coverage for those dates")}

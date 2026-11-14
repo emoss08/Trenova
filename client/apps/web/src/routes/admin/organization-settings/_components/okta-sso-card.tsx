@@ -294,7 +294,7 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                               name="issuerUrl"
                               label={t("Okta domain")}
                               placeholder="https://your-domain.okta.com"
-                              rules={{ required: enabled }}
+                              required={enabled}
                             />
                           </FormControl>
                           <FormControl cols="full">
@@ -303,7 +303,7 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
                               name="clientId"
                               label={t("Client ID")}
                               placeholder={t("0oa...")}
-                              rules={{ required: enabled }}
+                              required={enabled}
                             />
                           </FormControl>
                           <FormControl cols="full">

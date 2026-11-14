@@ -1,3 +1,4 @@
+import { withRequired } from "@trenova/shared/lib/field-rules";
 import { timezoneGroupedChoices } from "@/lib/choices";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatTimezoneLabel } from "@trenova/shared/lib/timezones";
@@ -12,7 +13,7 @@ type TimezoneFieldProps<T extends FieldValues> = FormControlProps<T> & {
   label?: string;
   description?: React.ReactNode;
   placeholder?: string;
-  isClearable?: boolean;
+  clearable?: boolean;
   className?: string;
   triggerClassName?: string;
   layout?: FieldLayout;
@@ -31,10 +32,11 @@ export function TimezoneField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   label,
   description,
   placeholder,
-  isClearable,
+  clearable,
   className,
   triggerClassName,
   layout,
@@ -59,13 +61,13 @@ export function TimezoneField<T extends FieldValues>({
   return (
     <SelectField
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       name={name}
       label={label}
       description={description}
       placeholder={placeholder ?? t("Select timezone")}
       groups={groups}
-      isClearable={isClearable}
+      clearable={clearable}
       className={className}
       triggerClassName={triggerClassName}
       layout={layout}

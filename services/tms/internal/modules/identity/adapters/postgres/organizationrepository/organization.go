@@ -261,19 +261,25 @@ func keepStoredWhereZero(org, stored *tenant.Organization, written ...keel.Expr)
 	}
 }
 
-func (r *repository) ClearLogoURL(
+func (r *repository) ClearBrandImage(
 	ctx context.Context,
 	orgID pulid.ID,
+	image tenant.BrandImage,
 	version int64,
 ) (*tenant.Organization, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.Organization, error) {
 		o := tenantdb.Organizations
+		column := o.LogoURL
+		if image == tenant.BrandImageIcon {
+			column = o.IconURL
+		}
 		rows, err := o.Where(o.ID.Eq(orgID), o.Version.Eq(version)).
-			UpdateReturning(ctx, r.db.Keel(ctx), o.LogoURL.To(""))
+			UpdateReturning(ctx, r.db.Keel(ctx), column.To(""))
 		if err != nil {
 			r.l.Error(
-				"failed to clear organization logo URL",
+				"failed to clear organization brand image",
 				zap.String("orgID", orgID.String()),
+				zap.String("image", string(image)),
 				zap.Error(err),
 			)
 			return nil, err

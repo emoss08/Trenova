@@ -16,7 +16,7 @@ export function SCIMGroupMappingForm() {
         <FormControl cols="full">
           <InputField
             control={control}
-            rules={{ required: true }}
+            required
             name="externalGroupId"
             label={t("External group ID")}
             placeholder={t("00g1abcd2EFGH3ijk4l5")}
@@ -41,7 +41,7 @@ export function SCIMGroupMappingForm() {
             label={t("Role")}
             placeholder={t("Select role")}
             description={t("Application role assigned to users in this external group.")}
-            rules={{ required: true }}
+            required
           />
         </FormControl>
       </FormGroup>

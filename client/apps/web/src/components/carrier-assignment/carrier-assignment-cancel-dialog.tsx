@@ -83,7 +83,7 @@ export function CarrierAssignmentCancelDialog({
             control={control}
             name="reason"
             label={t("Reason")}
-            rules={{ required: true }}
+            required
             placeholder={t("e.g., Carrier failed to dispatch a truck")}
           />
           <DialogFooter>

@@ -100,7 +100,7 @@ export function ShipmentDuplicateDialog({
                 placeholder="1"
                 min={1}
                 max={20}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl>

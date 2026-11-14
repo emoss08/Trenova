@@ -192,7 +192,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     name="code"
                     label={t("Code")}
                     placeholder={t("e.g. DAY-A")}
-                    rules={{ required: true }}
+                    required
                     description={t(
                       "A short tag the board labels the shift with; it is stored in upper case.",
                     )}
@@ -204,7 +204,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     name="name"
                     label={t("Name")}
                     placeholder={t("e.g. Weekday days")}
-                    rules={{ required: true }}
+                    required
                     description={t(
                       "The name dispatchers and drivers see on the rota and on assignments.",
                     )}
@@ -270,7 +270,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     type="time"
                     step={300}
                     placeholder="06:00"
-                    rules={{ required: true }}
+                    required
                     description={t(
                       "The clock time each working day begins; the finish is worked out from the length.",
                     )}
@@ -285,7 +285,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     min={0.25}
                     max={24}
                     placeholder="10"
-                    rules={{ required: true }}
+                    required
                     description={t(
                       "How many hours each working day runs, in quarter-hour steps and at most a day.",
                     )}
@@ -299,7 +299,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     min={1}
                     max={8}
                     placeholder="1"
-                    rules={{ required: true }}
+                    required
                     description={t(
                       "1 works every week; 2 alternates, which is how an A/B pair is built from one shift.",
                     )}
@@ -312,7 +312,7 @@ export function ShiftTemplateDialog({ open, onOpenChange, template }: ShiftTempl
                     label={t("Status")}
                     options={STATUS_OPTIONS}
                     placeholder={t("Pick a status")}
-                    rules={{ required: true }}
+                    required
                     description={t(
                       "A retired shift cannot be assigned, and retiring is refused while anybody is still on it.",
                     )}

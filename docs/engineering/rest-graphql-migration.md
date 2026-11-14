@@ -910,9 +910,9 @@ before converting: other work may have changed them.
 ## organizationhandler
   GET /organizations/:id
   PUT /organizations/:id
-  DELETE /organizations/:id/logo
-  GET /organizations/:id/logo
-  POST /organizations/:id/logo
+  GET /organizations/:id/branding
+  DELETE /organizations/:id/branding/:image
+  POST /organizations/:id/branding/:image
   GET /organizations/:id/microsoft-sso
   PUT /organizations/:id/microsoft-sso
   GET /organizations/:id/okta-sso

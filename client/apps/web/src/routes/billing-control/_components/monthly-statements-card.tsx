@@ -59,8 +59,8 @@ export function MonthlyStatementsCard() {
                 )}
                 min={1}
                 max={MAX_STATEMENT_DAY}
+                required={t("Choose the day of the month to send statements on")}
                 rules={{
-                  required: t("Choose the day of the month to send statements on"),
                   min: { value: 1, message: t("Choose a day from 1 to 28") },
                   max: { value: MAX_STATEMENT_DAY, message: t("Choose a day from 1 to 28") },
                 }}

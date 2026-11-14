@@ -71,7 +71,7 @@ export function ZoneMemberEditor() {
               <FormControl>
                 <SelectField
                   control={control}
-                  rules={{ required: true }}
+                  required
                   name={`members.${index}.scopeType` as never}
                   label={t("Place type")}
                   placeholder={t("Select type")}
@@ -84,7 +84,7 @@ export function ZoneMemberEditor() {
                 <FormControl>
                   <UsStateAutocompleteField
                     control={control}
-                    rules={{ required: true }}
+                    required
                     name={`members.${index}.scopeValue` as never}
                     label={t("State")}
                     placeholder={t("State")}
@@ -95,7 +95,7 @@ export function ZoneMemberEditor() {
                 <FormControl>
                   <LocationAutocompleteField
                     control={control}
-                    rules={{ required: true }}
+                    required
                     name={`members.${index}.scopeValue` as never}
                     label={t("Location")}
                     placeholder={t("Location")}
@@ -106,7 +106,7 @@ export function ZoneMemberEditor() {
                 <FormControl>
                   <InputField
                     control={control}
-                    rules={{ required: true }}
+                    required
                     name={`members.${index}.scopeValue` as never}
                     label={scopeType === "Country" ? "Country" : "Postal"}
                     placeholder={scopeType === "Zip3" ? "606" : "60601"}
@@ -123,7 +123,7 @@ export function ZoneMemberEditor() {
                 <FormControl cols="full">
                   <InputField
                     control={control}
-                    rules={{ required: true }}
+                    required
                     name={`members.${index}.city` as never}
                     label={t("City")}
                     placeholder={t("Chicago")}

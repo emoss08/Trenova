@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  amountSeparators,
+  amountTextToMinor,
   currencySymbol,
   formatMinor,
   formatMinorAmount,
   isMinorAmountField,
+  minorToAmountText,
   parseAmountToMinor,
   withoutMinorSuffix,
 } from "../money";
@@ -70,5 +73,62 @@ describe("currencySymbol", () => {
     expect(currencySymbol()).toBe("$");
     expect(currencySymbol("USD")).toBe("$");
     expect(currencySymbol("EUR")).toBe("€");
+  });
+});
+
+describe("the text of an amount being typed", () => {
+  it("is read by its digits, so no cent is lost to a float", () => {
+    expect(amountTextToMinor("0.29")).toBe(29);
+    expect(amountTextToMinor("1.15")).toBe(115);
+    expect(amountTextToMinor("2582.22")).toBe(258_222);
+    expect(amountTextToMinor("650")).toBe(65_000);
+  });
+
+  it("is read as far as it has been typed", () => {
+    expect(amountTextToMinor("")).toBe(0);
+    expect(amountTextToMinor(".")).toBe(0);
+    expect(amountTextToMinor("-")).toBe(0);
+    expect(amountTextToMinor("12.")).toBe(1_200);
+    expect(amountTextToMinor("12.5")).toBe(1_250);
+    expect(amountTextToMinor(".5")).toBe(50);
+  });
+
+  it("keeps its sign, and never writes a negative zero", () => {
+    expect(amountTextToMinor("-10.50")).toBe(-1_050);
+    expect(Object.is(amountTextToMinor("-0.00"), 0)).toBe(true);
+  });
+
+  it("drops digits past the cents rather than rounding money nobody typed", () => {
+    expect(amountTextToMinor("1.239")).toBe(123);
+  });
+
+  it("is zero for an amount too large to hold exactly", () => {
+    expect(amountTextToMinor("99999999999999999999")).toBe(0);
+  });
+});
+
+describe("an amount as the text a field holds", () => {
+  it("always carries two decimals", () => {
+    expect(minorToAmountText(0)).toBe("0.00");
+    expect(minorToAmountText(5)).toBe("0.05");
+    expect(minorToAmountText(65_000)).toBe("650.00");
+    expect(minorToAmountText(258_222)).toBe("2582.22");
+  });
+
+  it("carries its sign, cents included", () => {
+    expect(minorToAmountText(-1_050)).toBe("-10.50");
+    expect(minorToAmountText(-5)).toBe("-0.05");
+  });
+
+  it("reads back to the amount it was written from", () => {
+    for (const minor of [0, 1, 29, 99, 100, 115, 258_222, -1, -1_050]) {
+      expect(amountTextToMinor(minorToAmountText(minor))).toBe(minor);
+    }
+  });
+});
+
+describe("amountSeparators", () => {
+  it("are the marks the reader's locale writes an amount with", () => {
+    expect(amountSeparators()).toEqual({ decimal: ".", group: "," });
   });
 });

@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   addDecimalStrings,
@@ -7,14 +7,21 @@ import {
   isDecimalString,
 } from "@trenova/shared/types/decimal";
 import type { FormControlProps } from "@trenova/shared/types/fields";
-import { ChevronDownIcon, ChevronUpIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Controller, type FieldPathValue, type FieldValues, type Path } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
+import { FieldClearButton } from "./field-clear-button";
+import { fieldEndSlotClass, fieldUnitYieldClass } from "./field-clear-reveal";
+import { FieldStepper } from "./field-stepper";
 import { FieldWrapper, type FieldLayout } from "./field-components";
 import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 
 type BaseNumberFieldProps = {
+  /**
+   * Whether the field can be emptied with the control at its end. A field that is not
+   * required can be, unless this says otherwise; a required one cannot.
+   */
+  clearable?: boolean;
   /** Maps a value that is not a plain number or decimal text in and out of the field. */
   codec?: NumberFieldCodec;
   label?: React.ReactNode;
@@ -126,6 +133,7 @@ function NumberFieldImpl<T extends FieldValues>({
   layout,
   endAddon,
   rules,
+  required,
   tabIndex,
   decimalScale = 0,
   fixedDecimalScale = false,
@@ -139,9 +147,9 @@ function NumberFieldImpl<T extends FieldValues>({
   stepper = true,
   valueType,
   codec,
+  clearable,
   ...props
 }: NumberFieldImplProps<T>) {
-  const t = useT();
   // What was typed into a codec field and the value it wrote. The value holds the
   // number so far (`2.` is still 2), so the text is shown back for as long as the
   // value is the one it wrote; a value set from outside replaces it.
@@ -155,7 +163,7 @@ function NumberFieldImpl<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => {
         // An untyped control (custom fields, dynamic rows) declares nothing, so
         // fall back to the kind the value already has and keep it that kind.
@@ -195,6 +203,17 @@ function NumberFieldImpl<T extends FieldValues>({
           field.onChange(direction === "max" ? Math.min(next, bound) : Math.max(next, bound));
         };
 
+        const empty = () => {
+          if (codec) write("");
+          else field.onChange(asString ? "" : null);
+        };
+        const clear =
+          (clearable ?? !isRequired(rules, required)) &&
+          !props.disabled &&
+          !props.readOnly &&
+          field.value != null &&
+          field.value !== "";
+
         return (
           <FieldWrapper
             name={name}
@@ -202,7 +221,7 @@ function NumberFieldImpl<T extends FieldValues>({
             hideLabel={hideLabel}
             labelAction={labelAction}
             description={description}
-            required={!!rules?.required}
+            required={isRequired(rules, required)}
             error={fieldState.error?.message}
             className={className}
             layout={layout}
@@ -256,38 +275,38 @@ function NumberFieldImpl<T extends FieldValues>({
                     props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
                     fieldState.invalid && fieldInvalidClass,
                     !stepper ? (sideText ? "pr-10" : "pr-2") : sideText ? "pr-16" : "pr-12",
+                    clear && !sideText && (stepper ? "pr-18" : "pr-8"),
                     className,
                     inputClassName,
                   )}
                 />
 
-                <div className="absolute top-px right-px bottom-px flex items-center gap-1 pr-0">
-                  {sideText && (
-                    <div className="pointer-events-none mr-2 text-xs text-muted-foreground select-none">
-                      {sideText}
+                <div className="absolute top-px right-px bottom-px flex items-center pr-0">
+                  {sideText ? (
+                    // The unit and the clear control share this place: the unit shows
+                    // until the field is hovered or focused, then gives way to it. The
+                    // control is the last thing before the field's edge (or its stepper):
+                    // the unit keeps its own inset, the control has almost none.
+                    <div className={cn(fieldEndSlotClass, "mr-0.5")}>
+                      <span
+                        className={cn(
+                          "pointer-events-none mr-1.5 text-xs text-muted-foreground select-none",
+                          clear && fieldUnitYieldClass,
+                        )}
+                      >
+                        {sideText}
+                      </span>
+                      {clear ? <FieldClearButton overUnit onClear={empty} /> : null}
                     </div>
-                  )}
+                  ) : clear ? (
+                    <FieldClearButton className="mr-0.5" onClear={empty} />
+                  ) : null}
                   {stepper ? (
-                    <div className="flex h-full flex-col items-stretch rounded-r-md border-l border-muted-foreground/20 bg-transparent">
-                      <button
-                        type="button"
-                        aria-label={t("Increment")}
-                        className="inline-flex h-7 w-6 flex-1 items-center justify-center border-b border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
-                        disabled={props.disabled || props.readOnly}
-                        onClick={() => stepBy(step, max, "max")}
-                      >
-                        <ChevronUpIcon className="h-3 w-3" />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={t("Decrement")}
-                        className="inline-flex h-7 w-6 flex-1 items-center justify-center text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
-                        disabled={props.disabled || props.readOnly}
-                        onClick={() => stepBy(-step, min, "min")}
-                      >
-                        <ChevronDownIcon className="h-3 w-3" />
-                      </button>
-                    </div>
+                    <FieldStepper
+                      disabled={props.disabled || props.readOnly}
+                      onIncrement={() => stepBy(step, max, "max")}
+                      onDecrement={() => stepBy(-step, min, "min")}
+                    />
                   ) : null}
                 </div>
               </div>

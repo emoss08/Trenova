@@ -32,7 +32,7 @@ export function CustomFieldDefinitionForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="resourceType"
           label={t("Resource type")}
           placeholder={t("Select resource type")}
@@ -43,7 +43,7 @@ export function CustomFieldDefinitionForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="fieldType"
           label={t("Field type")}
           placeholder={t("Select field type")}
@@ -54,7 +54,7 @@ export function CustomFieldDefinitionForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="name"
           label={t("Name")}
           placeholder="field_name"
@@ -65,7 +65,7 @@ export function CustomFieldDefinitionForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="label"
           label={t("Label")}
           placeholder={t("Display label")}

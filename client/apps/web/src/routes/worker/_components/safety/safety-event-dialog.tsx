@@ -238,7 +238,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   description={t(
                     "Sets which fields apply and what the points suggestion starts from.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -251,7 +251,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   description={t(
                     "Drives the suggested points; more severe events count for more on the scorecard.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -263,7 +263,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                     "Points roll off two years after this date, not after the date you record it.",
                   )}
                   label={t("When")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -288,7 +288,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   description={t(
                     "The narrative of the event as it will read in the driver's file and to an auditor.",
                   )}
-                  rules={{ required: true }}
+                  required
                   maxLength={4000}
                 />
               </FormControl>
@@ -305,7 +305,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                       description={t(
                         "Only a failed or out-of-service inspection carries points; a clean one records none.",
                       )}
-                      rules={{ required: true }}
+                      required
                     />
                   </FormControl>
                   <FormControl>
@@ -318,7 +318,7 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                       description={t(
                         "The North American Standard inspection level from the report, 1 to 6.",
                       )}
-                      isClearable
+                      clearable
                     />
                   </FormControl>
                 </>

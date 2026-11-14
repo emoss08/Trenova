@@ -174,7 +174,7 @@ function StoredMileageCard() {
               label={t("Stored distance units")}
               description={t("Unit used when storing reusable local mileage records.")}
               options={distanceProfileDistanceUnitChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -245,7 +245,7 @@ function ProfileAssignmentsCard() {
                 label={t(field.label)}
                 description={t(field.description)}
                 placeholder={t("Select distance profile")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           ))}

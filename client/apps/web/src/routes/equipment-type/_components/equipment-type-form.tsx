@@ -19,7 +19,7 @@ export function EquipTypeForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="status"
           label={t("Status")}
           placeholder={t("Status")}
@@ -30,7 +30,7 @@ export function EquipTypeForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="code"
           label={t("Code")}
           placeholder={t("Code")}
@@ -50,7 +50,7 @@ export function EquipTypeForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="class"
           label={t("Class")}
           placeholder={t("Class")}

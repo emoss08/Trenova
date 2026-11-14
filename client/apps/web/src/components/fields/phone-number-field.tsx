@@ -1,10 +1,11 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import { PhoneInput, type PhoneInputProps } from "@trenova/shared/components/ui/phone-input";
 import type React from "react";
 import { FieldWrapper, type FieldLayout } from "./field-components";
 
-type BasePhoneNumberFieldProps = Omit<PhoneInputProps, "name"> & {
+type BasePhoneNumberFieldProps = Omit<PhoneInputProps, "name" | "required"> & {
   label?: string;
   description?: React.ReactNode;
   inputClassProps?: string;
@@ -19,6 +20,7 @@ export function PhoneNumberField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   description,
   className,
   inputClassProps,
@@ -33,13 +35,13 @@ export function PhoneNumberField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => (
         <FieldWrapper
           name={name}
           label={label}
           description={description}
-          required={!!rules?.required}
+          required={isRequired(rules, required)}
           error={fieldState.error?.message}
           className={className}
           layout={layout}

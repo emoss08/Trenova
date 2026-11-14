@@ -34,7 +34,7 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
           <CustomerAutocompleteField
             control={control}
             name="customerId"
-            rules={{ required: true }}
+            required
             label={t("Customer")}
             placeholder={t("Select customer")}
           />
@@ -43,7 +43,7 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
           <ServiceTypeAutocompleteField
             control={control}
             name="serviceTypeId"
-            rules={{ required: true }}
+            required
             label={t("Service type")}
             placeholder={t("Select Service type")}
           />
@@ -52,7 +52,7 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
           <ShipmentTypeAutocompleteField
             control={control}
             name="shipmentTypeId"
-            rules={{ required: true }}
+            required
             label={t("Shipment type")}
             placeholder={t("Select shipment type")}
           />

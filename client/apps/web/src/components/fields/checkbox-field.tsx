@@ -1,3 +1,4 @@
+import { withRequired } from "@trenova/shared/lib/field-rules";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
@@ -6,7 +7,7 @@ import type { CheckboxProps } from "../animate-ui/primitives/base/checkbox";
 import { Label } from "@trenova/shared/components/ui/label";
 import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
 
-type BaseCheckboxFieldProps = Omit<CheckboxProps, "name"> & {
+type BaseCheckboxFieldProps = Omit<CheckboxProps, "name" | "required"> & {
   label: string;
   outlined?: boolean;
   description?: string;
@@ -21,6 +22,7 @@ export function CheckboxField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   outlined,
   "aria-describedby": ariaDescribedBy,
   ...props
@@ -34,7 +36,7 @@ export function CheckboxField<T extends FieldValues>({
     <Controller
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field: { value, onChange, disabled, onBlur, name, ref }, fieldState }) => (
         <div
           className={cn(

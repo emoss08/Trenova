@@ -18,7 +18,7 @@ export function ServiceTypeForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="status"
           label={t("Status")}
           placeholder={t("Status")}
@@ -29,7 +29,7 @@ export function ServiceTypeForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="code"
           label={t("Code")}
           placeholder={t("Code")}

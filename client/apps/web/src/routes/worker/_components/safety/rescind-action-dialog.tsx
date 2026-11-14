@@ -105,7 +105,7 @@ export function RescindActionDialog({
                   description={t(
                     "Saved on the rescinded row so an auditor can see why the action was withdrawn.",
                   )}
-                  rules={{ required: true }}
+                  required
                   maxLength={255}
                 />
               </FormControl>

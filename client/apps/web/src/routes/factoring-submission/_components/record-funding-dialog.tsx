@@ -171,12 +171,7 @@ function FundingForm({
           >
             <FormGroup cols={2}>
               <FormControl>
-                <DateField
-                  control={form.control}
-                  name="fundedOn"
-                  label={t("Funded on")}
-                  rules={{ required: true }}
-                />
+                <DateField control={form.control} name="fundedOn" label={t("Funded on")} required />
               </FormControl>
               <FormControl>
                 <InputField
@@ -289,7 +284,7 @@ function FundingItemRow({
                 control={form.control}
                 name={`items.${index}.advanceMinor`}
                 label={t("Advance paid")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl>
@@ -297,7 +292,7 @@ function FundingItemRow({
                 control={form.control}
                 name={`items.${index}.feeMinor`}
                 label={t("Fee kept")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           </>
@@ -308,7 +303,7 @@ function FundingItemRow({
               control={form.control}
               name={`items.${index}.reason`}
               label={t("Why the factor rejected it")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         ) : null}

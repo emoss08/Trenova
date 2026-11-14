@@ -119,7 +119,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               name="name"
               label={t("Name")}
               placeholder={t("Acme weekly chicago run")}
-              rules={{ required: true }}
+              required
               maxLength={100}
               description={t("A short name dispatchers will recognize in lists and history.")}
             />
@@ -130,7 +130,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               name="status"
               label={t("Status")}
               placeholder={t("Select status")}
-              rules={{ required: true }}
+              required
               options={statusChoices}
               description={t(
                 "Only Active series generate. Pause to hold the lane without losing its history.",
@@ -143,7 +143,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               name="sourceShipmentId"
               label={t("Source shipment")}
               placeholder={t("Search by Pro # or BOL...")}
-              rules={{ required: translate("Source shipment is required") }}
+              required={translate("Source shipment is required")}
               description={t(
                 "Every generated shipment copies this one's stops, commodities, and charges. Changing it does not touch shipments already generated.",
               )}
@@ -177,7 +177,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               name="timezone"
               label={t("Timezone")}
               placeholder={t("Select timezone")}
-              rules={{ required: true }}
+              required
               groups={timezoneGroupedChoices}
               renderOption={(option) => (
                 <span className="flex w-full items-center justify-between gap-3">
@@ -199,7 +199,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               label={t("Lead time")}
               placeholder="1"
               sideText="days"
-              rules={{ required: true }}
+              required
               min={0}
               max={60}
               description={t(
@@ -278,7 +278,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               name="exceptionPolicy"
               label={t("Exception policy")}
               placeholder={t("Select exception policy")}
-              rules={{ required: true }}
+              required
               options={recurringShipmentExceptionPolicyChoices}
               description={
                 hasBlockedDays

@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import type React from "react";
@@ -32,6 +33,7 @@ export function SegmentedField<T extends FieldValues, TValue extends string | nu
   name,
   control,
   rules,
+  required,
   label,
   description,
   options,
@@ -45,12 +47,12 @@ export function SegmentedField<T extends FieldValues, TValue extends string | nu
     <Controller
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => (
         <FieldWrapper
           name={name}
           label={label}
-          required={!!rules?.required}
+          required={isRequired(rules, required)}
           description={description}
           error={fieldState.error?.message}
           descriptionId={`${fieldId}-description`}

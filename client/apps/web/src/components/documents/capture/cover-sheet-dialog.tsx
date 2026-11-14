@@ -141,7 +141,7 @@ export function CoverSheetDialog({
                   min={1}
                   max={MAX_COVER_SHEETS}
                   step={1}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>

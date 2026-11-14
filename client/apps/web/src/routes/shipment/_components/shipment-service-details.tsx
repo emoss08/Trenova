@@ -52,7 +52,7 @@ function ShipmentServiceDetailsForm() {
         <ServiceTypeAutocompleteField
           control={control}
           name="serviceTypeId"
-          rules={{ required: true }}
+          required
           label={t("Service type")}
           placeholder={t("Select Service type")}
           description={t("Select the service type for the shipment.")}
@@ -65,7 +65,7 @@ function ShipmentServiceDetailsForm() {
         <ShipmentTypeAutocompleteField
           control={control}
           name="shipmentTypeId"
-          rules={{ required: true }}
+          required
           label={t("Shipment type")}
           placeholder={t("Select shipment type")}
           description={t("Select the shipment type for the shipment.")}
@@ -86,7 +86,7 @@ function ShipmentServiceDetailsForm() {
           extraSearchParams={{
             classes: [equipmentClassSchema.enum.Tractor],
           }}
-          rules={{ required }}
+          required={required}
           clearable
         />
       ),
@@ -107,7 +107,7 @@ function ShipmentServiceDetailsForm() {
           extraSearchParams={{
             classes: [equipmentClassSchema.enum.Trailer, equipmentClassSchema.enum.Container],
           }}
-          rules={{ required }}
+          required={required}
           clearable
         />
       ),

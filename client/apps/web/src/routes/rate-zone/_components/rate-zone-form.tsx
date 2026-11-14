@@ -23,7 +23,7 @@ export function RateZoneForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
@@ -36,7 +36,7 @@ export function RateZoneForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="kind"
               label={t("Zone kind")}
               placeholder={t("Select kind")}
@@ -49,7 +49,7 @@ export function RateZoneForm() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="code"
               label={t("Code")}
               placeholder={t("SE")}
@@ -59,7 +59,7 @@ export function RateZoneForm() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="name"
               label={t("Name")}
               placeholder={t("Southeast")}

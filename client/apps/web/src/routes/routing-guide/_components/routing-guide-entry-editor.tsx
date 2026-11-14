@@ -83,7 +83,7 @@ export function RoutingGuideEntryEditor() {
                 name={`entries.${index}.carrierId`}
                 label={t("Carrier")}
                 placeholder={t("Select carrier")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl>
@@ -92,7 +92,7 @@ export function RoutingGuideEntryEditor() {
                 name={`entries.${index}.rank`}
                 label={t("Rank")}
                 placeholder="1"
-                rules={{ required: true }}
+                required
                 description={t("Offer order — rank 1 is tendered first.")}
               />
             </FormControl>
@@ -105,7 +105,7 @@ export function RoutingGuideEntryEditor() {
                 name={`entries.${index}.rateMethod`}
                 label={t("Rate method")}
                 placeholder={t("Select method")}
-                rules={{ required: true }}
+                required
                 options={carrierRateMethodChoices}
               />
             </FormControl>
@@ -117,7 +117,7 @@ export function RoutingGuideEntryEditor() {
                 placeholder="1500.00"
                 sideText="$"
                 decimalScale={2}
-                rules={{ required: true }}
+                required
                 description={t("Flat total or per-mile rate offered.")}
               />
             </FormControl>
@@ -127,7 +127,7 @@ export function RoutingGuideEntryEditor() {
                 name={`entries.${index}.offerTtlSeconds`}
                 label={t("Offer expiry")}
                 placeholder={t("Select expiry")}
-                rules={{ required: true }}
+                required
                 options={ttlOptionsFor(
                   typeof entries[index]?.offerTtlSeconds === "number"
                     ? entries[index]?.offerTtlSeconds
@@ -142,7 +142,7 @@ export function RoutingGuideEntryEditor() {
                 name={`entries.${index}.channel`}
                 label={t("Channel")}
                 placeholder={t("Select channel")}
-                rules={{ required: true }}
+                required
                 options={tenderChannelChoices}
                 description={t("How the offer reaches the carrier.")}
               />

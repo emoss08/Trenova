@@ -68,7 +68,7 @@ export function PlatformFields({ catalog, savedAuth }: PlatformFieldsProps) {
       <SelectField<ProviderEditorValues>
         control={control}
         name="platform"
-        rules={{ required: true }}
+        required
         description={t("Where requests reach Claude.")}
         label={t("Platform")}
         placeholder={t("Platform")}
@@ -86,7 +86,7 @@ export function PlatformFields({ catalog, savedAuth }: PlatformFieldsProps) {
           <SelectField<ProviderEditorValues>
             control={control}
             name="platformSettings.auth"
-            rules={{ required: true }}
+            required
             description={t("How Trenova proves who it is to the platform.")}
             label={t("Sign in with")}
             placeholder={t("Sign in with")}

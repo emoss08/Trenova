@@ -57,7 +57,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               name="code"
               label={t("Code")}
               placeholder={t("e.g. DEFENSIVE")}
-              rules={{ required: true }}
+              required
               description={t("Short unique identifier. Letters, digits, dashes and underscores.")}
             />
           </FormControl>
@@ -67,7 +67,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               name="name"
               label={t("Name")}
               placeholder={t("e.g. Defensive Driving")}
-              rules={{ required: true }}
+              required
               description={t("Shown on the worker's training record and in Dash.")}
             />
           </FormControl>
@@ -77,7 +77,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               name="category"
               label={t("Category")}
               options={CATEGORY_OPTIONS}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a category")}
               description={t("Groups the course on worker records and in the course list.")}
             />
@@ -88,7 +88,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               name="status"
               label={t("Status")}
               options={statusChoices}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a status")}
               description={
                 isEdit && openRecordCount > 0
@@ -124,7 +124,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               name="delivery"
               label={t("Delivery")}
               options={DELIVERY_OPTIONS}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a delivery method")}
               description={TRAINING_DELIVERY_HINTS[delivery]}
             />
@@ -146,7 +146,7 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               name="contentUrl"
               label={t("Link")}
               placeholder="https://"
-              rules={{ required: delivery === "Online" }}
+              required={delivery === "Online"}
               description={
                 delivery === "Online"
                   ? "Opened from Dash. Required for online courses."

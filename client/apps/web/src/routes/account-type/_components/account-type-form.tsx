@@ -18,7 +18,7 @@ export function AccountTypeForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="status"
           label={t("Status")}
           placeholder={t("Status")}
@@ -29,7 +29,7 @@ export function AccountTypeForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="code"
           label={t("Code")}
           placeholder={t("Code")}
@@ -40,7 +40,7 @@ export function AccountTypeForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="name"
           label={t("Name")}
           placeholder={t("Name")}
@@ -51,7 +51,7 @@ export function AccountTypeForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="category"
           label={t("Category")}
           placeholder={t("Category")}

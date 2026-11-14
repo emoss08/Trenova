@@ -149,7 +149,7 @@ export function TriggerBlock({ fresh, events, sensitiveTools, toolTitle }: Trigg
             <InputField<AgentFormValues>
               control={control}
               name="cronExpression"
-              rules={{ required: true }}
+              required
               aria-label={t("Schedule")}
               className="w-40"
               inputClassProps={aicFieldTrigger}
@@ -183,7 +183,7 @@ export function TriggerBlock({ fresh, events, sensitiveTools, toolTitle }: Trigg
           <MultiCheckboxField<AgentFormValues, string>
             control={control}
             name="eventKinds"
-            rules={{ required: true }}
+            required
             label={t("Wakes on")}
             description={t(
               "Each event starts a run about the record it concerns. Repeats inside five minutes are merged.",
@@ -212,7 +212,7 @@ export function TriggerBlock({ fresh, events, sensitiveTools, toolTitle }: Trigg
             <NumberField<AgentFormValues, "maxConcurrentRuns">
               control={control}
               name="maxConcurrentRuns"
-              rules={{ required: true }}
+              required
               label={t("At most")}
               sideText={concurrent === 1 ? t("run at once") : t("runs at once")}
               min={1}
@@ -285,7 +285,12 @@ export function TriggerBlock({ fresh, events, sensitiveTools, toolTitle }: Trigg
         <Callout
           tone="w"
           action={
-            <Button type="button" variant="outline" size="sm" onClick={() => setAccessMode("Roles")}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setAccessMode("Roles")}
+            >
               {t("Limit to roles")}
             </Button>
           }

@@ -75,8 +75,12 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
               <th className="w-8 px-2 py-2 text-center text-xs font-medium">#</th>
               <th className="px-2 py-2 text-xs font-medium">{t("GL account")}</th>
               <th className="px-2 py-2 text-xs font-medium">{t("Memo")}</th>
-              <th className="w-28 px-2 py-2 text-right text-xs font-medium">{t("Debit")}</th>
-              <th className="w-28 px-2 py-2 text-right text-xs font-medium">{t("Credit")}</th>
+              <th className="w-32 py-2 pr-3.25 pl-2 text-right text-xs font-medium">
+                {t("Debit")}
+              </th>
+              <th className="w-32 py-2 pr-3.25 pl-2 text-right text-xs font-medium">
+                {t("Credit")}
+              </th>
               <th className="w-9 px-2 py-2" />
             </tr>
           </thead>
@@ -109,7 +113,8 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
                     name={`lines.${index}.debitAmount`}
                     aria-label={t("Line {0} debit amount", index + 1)}
                     className="h-8 text-xs"
-                    onValueCommit={clearOpposite(index, "creditAmount")}
+                    ledger
+                    onAmountChange={clearOpposite(index, "creditAmount")}
                   />
                 </td>
                 <td className="px-1 py-1.5">
@@ -118,7 +123,8 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
                     name={`lines.${index}.creditAmount`}
                     aria-label={t("Line {0} credit amount", index + 1)}
                     className="h-8 text-xs"
-                    onValueCommit={clearOpposite(index, "debitAmount")}
+                    ledger
+                    onAmountChange={clearOpposite(index, "debitAmount")}
                   />
                 </td>
                 <td className="flex items-center justify-center px-1 py-1.5 pt-4 text-center">
@@ -142,10 +148,10 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
               <td colSpan={3} className="px-3 py-2 text-right text-xs font-medium">
                 {t("Totals")}
               </td>
-              <td className="px-3 py-2 text-right">
+              <td className="py-2 pr-3.25 pl-2 text-right">
                 <AmountDisplay value={totalDebit} className="text-xs font-semibold" />
               </td>
-              <td className="px-3 py-2 text-right">
+              <td className="py-2 pr-3.25 pl-2 text-right">
                 <AmountDisplay value={totalCredit} className="text-xs font-semibold" />
               </td>
               <td />

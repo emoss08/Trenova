@@ -24,7 +24,7 @@ export function DistanceOverrideForm() {
       <FormControl>
         <LocationAutocompleteField
           control={control}
-          rules={{ required: true }}
+          required
           name="originLocationId"
           label={t("Origin location")}
           placeholder={t("Select origin location")}
@@ -34,7 +34,7 @@ export function DistanceOverrideForm() {
       <FormControl>
         <LocationAutocompleteField
           control={control}
-          rules={{ required: true }}
+          required
           name="destinationLocationId"
           label={t("Destination location")}
           placeholder={t("Select destination location")}
@@ -44,7 +44,7 @@ export function DistanceOverrideForm() {
       <FormControl>
         <NumberField
           control={control}
-          rules={{ required: true }}
+          required
           name="distance"
           label={t("Distance")}
           placeholder={t("Distance")}
@@ -87,7 +87,7 @@ export function DistanceOverrideForm() {
                 <div key={field.id} className="grid grid-cols-[1fr_auto] items-end gap-2">
                   <LocationAutocompleteField
                     control={control}
-                    rules={{ required: true }}
+                    required
                     name={`intermediateStops.${index}.locationId`}
                     label={t("Stop {0}", index + 1)}
                     placeholder={t("Select stop location")}

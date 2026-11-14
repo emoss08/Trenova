@@ -78,7 +78,7 @@ export function LinkCarrierDialog({
           name="carrierId"
           label={t("Carrier")}
           placeholder={t("Search by code or name")}
-          rules={{ required: true }}
+          required
         />
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

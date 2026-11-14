@@ -1,4 +1,5 @@
 "use no memo";
+import { isRequired, withRequired, type FieldRequired } from "@trenova/shared/lib/field-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -75,6 +76,7 @@ export interface MultiSelectAutocompleteProps<TOption>
 export interface MultiSelectAutocompleteFieldProps<TOption, TForm extends FieldValues> {
   name: FieldPath<TForm>;
   control: Control<TForm>;
+  required?: FieldRequired;
   rules?: RegisterOptions<TForm, Path<TForm>>;
   label?: string;
   description?: string;
@@ -713,6 +715,7 @@ export function MultiSelectAutocompleteField<TOption, TForm extends FieldValues>
   name,
   control,
   rules,
+  required,
   className,
   graphql,
   preload,
@@ -731,7 +734,7 @@ export function MultiSelectAutocompleteField<TOption, TForm extends FieldValues>
     <Controller<TForm>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field: { onChange, value, disabled: fieldDisabled }, fieldState }) => {
         const resolvedDisabled = disabled || fieldDisabled;
 
@@ -740,7 +743,7 @@ export function MultiSelectAutocompleteField<TOption, TForm extends FieldValues>
             name={name}
             label={label}
             description={description}
-            required={!!rules?.required}
+            required={isRequired(rules, required)}
             error={fieldState.error?.message}
             className={className}
           >

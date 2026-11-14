@@ -6629,7 +6629,6 @@ export type OrganizationInput = {
   city: string;
   dotNumber: string;
   loginSlug?: string | null | undefined;
-  logoUrl?: string | null | undefined;
   name: string;
   postalCode: string;
   scacCode: string;
@@ -18104,7 +18103,7 @@ export type RevokeApprovalDelegationMutation = { revokeApprovalDelegation: { id:
 
 export type OrganizationSettingsStateFieldsFragment = { id: string, name: string, abbreviation: string, countryName: string } & { ' $fragmentName'?: 'OrganizationSettingsStateFieldsFragment' };
 
-export type OrganizationSettingsFieldsFragment = { id: string, version: number, createdAt: number, updatedAt: number, bucketName: string, businessUnitId: string, loginSlug: string, name: string, scacCode: string, dotNumber: string, logoUrl: string, addressLine1: string, addressLine2: string, city: string, stateId: string, postalCode: string, timezone: string, taxId: string, brokerageEnabled: boolean, assetOperationsEnabled: boolean, state: { ' $fragmentRefs'?: { 'OrganizationSettingsStateFieldsFragment': OrganizationSettingsStateFieldsFragment } } | null } & { ' $fragmentName'?: 'OrganizationSettingsFieldsFragment' };
+export type OrganizationSettingsFieldsFragment = { id: string, version: number, createdAt: number, updatedAt: number, bucketName: string, businessUnitId: string, loginSlug: string, name: string, scacCode: string, dotNumber: string, logoUrl: string, iconUrl: string, addressLine1: string, addressLine2: string, city: string, stateId: string, postalCode: string, timezone: string, taxId: string, brokerageEnabled: boolean, assetOperationsEnabled: boolean, state: { ' $fragmentRefs'?: { 'OrganizationSettingsStateFieldsFragment': OrganizationSettingsStateFieldsFragment } } | null } & { ' $fragmentName'?: 'OrganizationSettingsFieldsFragment' };
 
 export type OrganizationSettingsQueryVariables = Exact<{
   id: string | number;
@@ -18668,7 +18667,7 @@ export type LocationCategoryReferenceFragment = { id: string, name: string, type
 
 export type ManualJournalReferenceFragment = { id: string, requestNumber: string, status: ManualJournalStatus, accountingDate: number } & { ' $fragmentName'?: 'ManualJournalReferenceFragment' };
 
-export type OrganizationReferenceFragment = { id: string, name: string, logoUrl: string } & { ' $fragmentName'?: 'OrganizationReferenceFragment' };
+export type OrganizationReferenceFragment = { id: string, name: string, logoUrl: string, iconUrl: string } & { ' $fragmentName'?: 'OrganizationReferenceFragment' };
 
 export type PtoPolicyReferenceFragment = { id: string, name: string, code: string, status: PtoPolicyStatus } & { ' $fragmentName'?: 'PtoPolicyReferenceFragment' };
 

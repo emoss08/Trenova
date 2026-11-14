@@ -169,7 +169,7 @@ export function CompleteTrainingDialog({
                   name="courseId"
                   label={t("Course")}
                   placeholder={t("Select a course")}
-                  rules={{ required: true }}
+                  required
                   disabled={Boolean(record)}
                   description={
                     record
@@ -184,7 +184,7 @@ export function CompleteTrainingDialog({
                   name="completedAt"
                   label={t("Completed")}
                   placeholder={t("Today")}
-                  rules={{ required: true }}
+                  required
                   description={t("The day the course was finished; any expiry is counted from it.")}
                 />
               </FormControl>
@@ -195,7 +195,7 @@ export function CompleteTrainingDialog({
                   label={t("Score")}
                   placeholder={scored ? "e.g. 92" : "Optional"}
                   sideText="%"
-                  rules={{ required: scored }}
+                  required={scored}
                   description={
                     projected === "pass"
                       ? "Passes."

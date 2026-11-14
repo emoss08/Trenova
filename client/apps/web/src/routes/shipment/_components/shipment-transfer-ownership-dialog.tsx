@@ -93,7 +93,7 @@ export function ShipmentTransferOwnershipDialog({
                 control={control}
                 name="ownerId"
                 label={t("New owner")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           </FormGroup>

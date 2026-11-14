@@ -151,7 +151,7 @@ export function CancelFactoringSubmissionDialog({
                   label={t("Reason")}
                   placeholder={t("Why this schedule will not be sent")}
                   rows={3}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
             </FormGroup>

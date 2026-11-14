@@ -23,7 +23,7 @@ export function CarrierRemittanceForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="paymentMethod"
               label={t("Payment method")}
               placeholder={t("Payment method")}
@@ -34,7 +34,7 @@ export function CarrierRemittanceForm() {
           <FormControl>
             <NumberField
               control={control}
-              rules={{ required: true }}
+              required
               name="paymentTermDays"
               label={t("Payment term days")}
               placeholder="30"

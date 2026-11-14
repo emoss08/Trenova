@@ -3,7 +3,7 @@ import { getOrganizationSettingsGraphQL } from "@/lib/graphql/organization";
 import { organization } from "./organization";
 
 const organizationServiceMocks = vi.hoisted(() => ({
-  getLogoURL: vi.fn(),
+  getBranding: vi.fn(),
   getMicrosoftSSOConfig: vi.fn(),
   getOktaSSOConfig: vi.fn(),
   getTenantLoginMetadata: vi.fn(),
@@ -43,6 +43,24 @@ describe("organization query keys", () => {
     expect(response).toEqual({ id: "org_1" });
     expect(getOrganizationSettingsGraphQLMock).toHaveBeenCalledWith("org_1", {
       signal: expect.any(AbortSignal),
+    });
+  });
+
+  it("reads an organization's branding in one request that can be cancelled", async () => {
+    const branding = { logoUrl: "https://storage.example.com/logo.webp?sig=a", iconUrl: "" };
+    organizationServiceMocks.getBranding.mockResolvedValueOnce(branding);
+    const signal = new AbortController().signal;
+
+    const query = organization.branding("org_1");
+    const response = await query.queryFn({
+      queryKey: query.queryKey,
+      signal,
+    } as unknown as Parameters<typeof query.queryFn>[0]);
+
+    expect(query.queryKey).toEqual(["organization", "branding", "branding", "org_1"]);
+    expect(response).toEqual(branding);
+    expect(organizationServiceMocks.getBranding).toHaveBeenCalledExactlyOnceWith("org_1", {
+      signal,
     });
   });
 });

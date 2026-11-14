@@ -101,7 +101,7 @@ export function AmendReturnDialog({ open, onOpenChange, ret, period }: AmendRetu
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("e.g. Two Oklahoma fuel receipts arrived after the filing")}
-                  rules={{ required: true }}
+                  required
                   maxLength={AMEND_REASON_MAX}
                   description={t(
                     "Between 10 and 500 characters, kept with the amendment as the record of why it exists.",

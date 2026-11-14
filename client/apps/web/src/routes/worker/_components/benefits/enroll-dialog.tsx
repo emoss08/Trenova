@@ -126,7 +126,7 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                   control={control}
                   name="benefitPlanId"
                   label={t("Plan")}
-                  rules={{ required: true }}
+                  required
                   placeholder={t("Pick a plan")}
                   description={t(
                     "The plan they are joining or declining; only plans open for enrollment are listed.",
@@ -149,7 +149,7 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                   control={control}
                   name="effectiveFrom"
                   label={t("Effective from")}
-                  rules={{ required: true }}
+                  required
                   placeholder={t("e.g. First of next month")}
                   description={t(
                     "The day the cover starts; the deduction is taken from the first settlement on or after it.",
@@ -173,7 +173,7 @@ export function EnrollDialog({ open, onOpenChange, workerId }: EnrollDialogProps
                     name="waivedReason"
                     label={t("Why")}
                     placeholder={t("e.g. Covered by a spouse's plan")}
-                    rules={{ required: true }}
+                    required
                     description={t(
                       "Kept on the enrollment as the record of why the cover was declined.",
                     )}

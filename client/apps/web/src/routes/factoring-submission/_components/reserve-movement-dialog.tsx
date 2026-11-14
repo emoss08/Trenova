@@ -245,19 +245,14 @@ function MovementForm({
           >
             <FormGroup cols={2}>
               <FormControl>
-                <DateField
-                  control={form.control}
-                  name="occurredOn"
-                  label={t("Date")}
-                  rules={{ required: true }}
-                />
+                <DateField control={form.control} name="occurredOn" label={t("Date")} required />
               </FormControl>
               <FormControl>
                 <InputField
                   control={form.control}
                   name="reason"
                   label={copy.reasonLabel}
-                  rules={{ required: needsReason }}
+                  required={needsReason}
                 />
               </FormControl>
               {takesCash ? (
@@ -279,7 +274,7 @@ function MovementForm({
                     control={form.control}
                     name="cashMinor"
                     label={copy.cashLabel}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
               ) : null}

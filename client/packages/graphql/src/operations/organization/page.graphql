@@ -17,6 +17,7 @@ fragment OrganizationSettingsFields on Organization {
   scacCode
   dotNumber
   logoUrl
+  iconUrl
   addressLine1
   addressLine2
   city

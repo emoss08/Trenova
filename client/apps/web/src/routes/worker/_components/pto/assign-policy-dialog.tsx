@@ -157,7 +157,7 @@ export function AssignPolicyDialog({
                   control={control}
                   name="ptoPolicyId"
                   label={t("Policy")}
-                  rules={{ required: true }}
+                  required
                   placeholder={t("Pick a policy")}
                   filterOption={hideCurrentPolicy}
                   description={t("Decides how time off accrues and which PTO types are tracked.")}
@@ -169,7 +169,7 @@ export function AssignPolicyDialog({
                   name="effectiveFrom"
                   label={t("Effective from")}
                   placeholder={t("Today")}
-                  rules={{ required: true }}
+                  required
                   description={
                     currentPolicyId
                       ? "The new policy applies from this date; it must be after the current assignment started."

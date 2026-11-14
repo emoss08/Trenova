@@ -292,7 +292,7 @@ function OverrideForm({ factoring }: { factoring: InvoiceFactoring }) {
                   label={t("Reason")}
                   placeholder={t("Why this invoice stays on your own receivables")}
                   rows={2}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
             ) : null}

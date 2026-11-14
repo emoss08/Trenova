@@ -130,7 +130,7 @@ export function CustomStepForm({
               control={control}
               name={`${base}.documentTypeId`}
               label={t("Document type")}
-              rules={{ required: true }}
+              required
               onOptionChange={(option) => {
                 if (option?.id) {
                   onDocumentPicked(option.id, option.label);

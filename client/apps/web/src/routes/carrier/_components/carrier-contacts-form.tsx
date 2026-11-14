@@ -63,7 +63,7 @@ export function CarrierContactsForm() {
                     name={`contacts.${index}.name`}
                     label={t("Name")}
                     placeholder={t("e.g., Jane Smith")}
-                    rules={{ required: true }}
+                    required
                     description={t("Contact's full name.")}
                     maxLength={255}
                   />

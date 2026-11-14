@@ -82,6 +82,7 @@ function CaseFormattingForm() {
             <SelectField
               control={control}
               name="codeCase"
+              required
               label={t("Code case")}
               description={t(
                 "Formatting applied to code fields (e.g., equipment codes, fleet codes).",
@@ -94,6 +95,7 @@ function CaseFormattingForm() {
               control={control}
               name="nameCase"
               label={t("Name case")}
+              required
               description={t(
                 "Formatting applied to name fields (e.g., commodity names, hazmat names).",
               )}
@@ -105,6 +107,7 @@ function CaseFormattingForm() {
               control={control}
               name="emailCase"
               label={t("Email case")}
+              required
               description={t("Formatting applied to email address fields.")}
               options={caseFormatChoices}
             />
@@ -114,6 +117,7 @@ function CaseFormattingForm() {
               control={control}
               name="cityCase"
               label={t("City case")}
+              required
               description={t("Formatting applied to city name fields.")}
               options={caseFormatChoices}
             />

@@ -1,3 +1,4 @@
+import { fieldClearRevealClass } from "../field-clear-reveal";
 import {
   autoUpdate,
   flip,
@@ -271,7 +272,7 @@ export function DateSuggestionInput({
   const listed = dropdownVisible && suggestions.length > 0;
 
   return (
-    <div ref={setReference} className="relative">
+    <div ref={setReference} className="group/field relative">
       <div className="relative">
         <Input
           placeholder={placeholder ?? t("Tomorrow")}
@@ -306,7 +307,10 @@ export function DateSuggestionInput({
             variant="ghost"
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleClear}
-            className="absolute top-1/2 right-8 size-5 -translate-y-1/2 text-muted-foreground [&>svg]:size-3"
+            className={cn(
+              "absolute top-1/2 right-8 size-5 -translate-y-1/2 text-muted-foreground [&>svg]:size-3",
+              fieldClearRevealClass,
+            )}
           >
             <span className="sr-only">{t("Clear date")}</span>
             <XCloseIcon className="size-4" />

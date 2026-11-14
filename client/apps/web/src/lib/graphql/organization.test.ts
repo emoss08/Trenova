@@ -93,7 +93,6 @@ describe("organization GraphQL helpers", () => {
           loginSlug: "acme-logistics",
           scacCode: "ACME",
           dotNumber: "1234567",
-          logoUrl: "organization/logo/acme.png",
           bucketName: "acme-bucket",
           addressLine1: "123 Main St",
           addressLine2: "Suite 200",

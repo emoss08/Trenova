@@ -169,7 +169,7 @@ export function InstantPayDialog({
                 control={control}
                 name="workerId"
                 label={t("Driver")}
-                rules={{ required: true }}
+                required
                 placeholder={t("Select a driver")}
               />
             </FormProvider>

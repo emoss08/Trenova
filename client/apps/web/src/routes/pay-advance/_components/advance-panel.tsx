@@ -107,7 +107,7 @@ function IssueAdvancePanel({
               name="workerId"
               label={t("Driver")}
               placeholder={t("Select driver")}
-              rules={{ required: true }}
+              required
               description={t(
                 "The driver receiving the advance; recovery is deducted from their next settlement.",
               )}
@@ -119,7 +119,7 @@ function IssueAdvancePanel({
               name="source"
               label={t("Source")}
               options={payAdvanceSourceChoices}
-              rules={{ required: true }}
+              required
               description={t(
                 "How the money was disbursed — cash, an EFS/Comdata money code, or a fuel card load.",
               )}
@@ -141,7 +141,7 @@ function IssueAdvancePanel({
               control={control}
               name="issuedDate"
               label={t("Issued date")}
-              rules={{ required: true }}
+              required
               description={t("The date the driver actually received the funds.")}
             />
           </FormControl>
@@ -153,7 +153,7 @@ function IssueAdvancePanel({
               decimalScale={2}
               fixedDecimalScale
               sideText={t("USD")}
-              rules={{ required: true }}
+              required
               description={t(
                 "The full amount advanced; it is recovered automatically from upcoming settlements.",
               )}

@@ -123,7 +123,7 @@ export function BillingQueueAssignDialog({
                 control={control}
                 name="billerId"
                 label={t("Biller")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           </FormGroup>

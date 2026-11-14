@@ -117,7 +117,7 @@ export function PTOFilterPopover({
                   name="startDate"
                   label={t("Start date")}
                   placeholder={t("Start date")}
-                  rules={{ required: true }}
+                  required
                   description={t("The earliest day of time off to include.")}
                 />
               </FormControl>
@@ -127,7 +127,7 @@ export function PTOFilterPopover({
                   name="endDate"
                   label={t("End date")}
                   placeholder={t("End date")}
-                  rules={{ required: true }}
+                  required
                   description={t("The latest day of time off to include.")}
                 />
               </FormControl>

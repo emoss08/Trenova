@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -180,6 +181,7 @@ export function ColorField<T extends FieldValues>({
   hideHeader = false,
   className,
   rules,
+  required,
   description,
   label,
   name,
@@ -192,13 +194,13 @@ export function ColorField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => (
         <FieldWrapper
           name={name}
           label={label}
           description={description}
-          required={!!rules?.required}
+          required={isRequired(rules, required)}
           error={fieldState.error?.message}
           className={className}
         >

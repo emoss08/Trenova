@@ -259,7 +259,7 @@ export function CronCadenceField<T extends FieldValues>({
           name={name}
           placeholder="0 8 * * 1"
           description={t("Five fields: minute, hour, day-of-month, month, day-of-week.")}
-          rules={{ required: translate("A schedule is required") }}
+          required={translate("A schedule is required")}
         />
       )}
     </div>

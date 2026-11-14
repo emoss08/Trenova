@@ -49,9 +49,6 @@ func (r *MutationResolver) UpdateOrganization(ctx context.Context, id string, in
 	if input.LoginSlug != nil {
 		entity.LoginSlug = *input.LoginSlug
 	}
-	if input.LogoURL != nil {
-		entity.LogoURL = *input.LogoURL
-	}
 	if input.BucketName != nil {
 		entity.BucketName = *input.BucketName
 	}

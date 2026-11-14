@@ -60,7 +60,6 @@ function toOrganizationInput(values: OrganizationSettings): OrganizationInput {
     loginSlug: values.loginSlug ?? null,
     scacCode: values.scacCode,
     dotNumber: values.dotNumber,
-    logoUrl: values.logoUrl ?? null,
     bucketName: values.bucketName ?? null,
     addressLine1: values.addressLine1,
     addressLine2: values.addressLine2 ?? null,

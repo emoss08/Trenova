@@ -271,7 +271,7 @@ function MappingEditor({
               control={control}
               label={t("Name")}
               placeholder={t("Reefer temperature capture")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -280,7 +280,7 @@ function MappingEditor({
               control={control}
               label={t("Template ID")}
               placeholder={t("Samsara form template id")}
-              rules={{ required: true }}
+              required
               description={t(
                 "Find this in Samsara under the driver form's settings, or from a form submission.",
               )}

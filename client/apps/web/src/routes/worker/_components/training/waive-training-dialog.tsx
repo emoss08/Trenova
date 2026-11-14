@@ -92,7 +92,7 @@ export function WaiveTrainingDialog({
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("e.g. Completed at previous carrier; certificate on file")}
-                  rules={{ required: true }}
+                  required
                   maxLength={255}
                   description={t("Kept on the record and in the audit log.")}
                 />

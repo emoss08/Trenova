@@ -220,12 +220,7 @@ function AssignCaseDialog({
         >
           <FormGroup cols={1} className="pb-4">
             <FormControl>
-              <UserAutocompleteField
-                control={control}
-                name="ownerId"
-                label={t("Owner")}
-                rules={{ required: true }}
-              />
+              <UserAutocompleteField control={control} name="ownerId" label={t("Owner")} required />
             </FormControl>
           </FormGroup>
           <DialogFooter>

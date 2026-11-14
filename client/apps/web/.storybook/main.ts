@@ -60,7 +60,7 @@ const config: StorybookConfig = {
           "@vis.gl/react-google-maps",
           "nuqs/adapters/react-router/v7",
           "react-error-boundary",
-          "react-image-crop",
+          "react-easy-crop",
           "react-lazy-load-image-component",
           "react-router",
           "zustand",

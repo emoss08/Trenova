@@ -58,7 +58,7 @@ export function UserForm(props: UserFormProps) {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="status"
           label={t("Status")}
           options={statusChoices}
@@ -67,7 +67,7 @@ export function UserForm(props: UserFormProps) {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="name"
           label={t("Full name")}
           placeholder={t("Enter their full name")}
@@ -76,7 +76,7 @@ export function UserForm(props: UserFormProps) {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="username"
           label={t("Username")}
           placeholder="johndoe"
@@ -87,7 +87,7 @@ export function UserForm(props: UserFormProps) {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="emailAddress"
           label={t("Email address")}
           type="email"
@@ -98,7 +98,7 @@ export function UserForm(props: UserFormProps) {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="timezone"
           label={t("Timezone")}
           placeholder={t("Select timezone")}
@@ -116,7 +116,7 @@ export function UserForm(props: UserFormProps) {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="timeFormat"
           label={t("Time format")}
           options={timeFormatOptions}
@@ -125,7 +125,7 @@ export function UserForm(props: UserFormProps) {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="locale"
           label={t("Language")}
           description={t("Menus, labels and the emails Trenova sends them.")}

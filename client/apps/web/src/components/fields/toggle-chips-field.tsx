@@ -1,3 +1,4 @@
+import { withRequired } from "@trenova/shared/lib/field-rules";
 import { CheckIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps } from "@trenova/shared/types/fields";
@@ -35,6 +36,7 @@ export function ToggleChipsField<T extends FieldValues, TValue extends string>({
   name,
   control,
   rules,
+  required,
   label,
   options,
   checkedTone = "neutral",
@@ -45,7 +47,7 @@ export function ToggleChipsField<T extends FieldValues, TValue extends string>({
     <Controller
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field: { value, onChange, disabled }, fieldState }) => {
         const chosen = (value as TValue[] | null | undefined) ?? [];
 

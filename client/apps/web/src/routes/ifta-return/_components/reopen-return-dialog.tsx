@@ -102,7 +102,7 @@ export function ReopenReturnDialog({ open, onOpenChange, ret, period }: ReopenRe
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("e.g. Oklahoma published its Q2 rate after we finalized")}
-                  rules={{ required: true }}
+                  required
                   maxLength={REOPEN_REASON_MAX}
                   description={t(
                     "Between 10 and 500 characters, kept with the return as the record of why it was unlocked.",

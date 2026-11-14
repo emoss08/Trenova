@@ -11,9 +11,9 @@ export const organization = createQueryKeys("organization", {
     queryKey: ["detail", organizationId],
     queryFn: async ({ signal }) => getOrganizationSettingsGraphQL(organizationId, { signal }),
   }),
-  logo: (organizationId: string) => ({
-    queryKey: ["logo", organizationId],
-    queryFn: async () => organizationService.getLogoURL(organizationId),
+  branding: (organizationId: string) => ({
+    queryKey: ["branding", organizationId],
+    queryFn: async ({ signal }) => organizationService.getBranding(organizationId, { signal }),
   }),
   microsoftSSO: (organizationId: string) => ({
     queryKey: ["microsoft-sso", organizationId],

@@ -254,7 +254,7 @@ function LaneRow({
         <FormControl cols={3}>
           <FormulaTemplateAutocompleteField
             control={control}
-            rules={{ required: true }}
+            required
             name={`rules.${index}.formulaTemplateId` as never}
             label={t("Tariff")}
             placeholder={t("Select the tariff that prices this lane")}

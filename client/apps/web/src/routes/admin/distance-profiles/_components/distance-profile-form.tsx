@@ -31,7 +31,7 @@ function ProfileDetailsSection({ control }: { control: Control<DistanceProfile> 
             label={t("Name")}
             placeholder={t("Default PC*Miler")}
             description={t("A clear name dispatch and rating teams can recognize.")}
-            rules={{ required: true }}
+            required
             maxLength={100}
           />
         </FormControl>
@@ -43,7 +43,7 @@ function ProfileDetailsSection({ control }: { control: Control<DistanceProfile> 
             placeholder={t("Status")}
             description={t("Inactive profiles cannot be used as the default.")}
             options={distanceProfileStatusChoices}
-            rules={{ required: true }}
+            required
           />
         </FormControl>
         <FormControl cols="full">
@@ -89,7 +89,7 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
             placeholder={t("Provider")}
             description={t("Distance profiles currently support PC*Miler routing policy.")}
             options={distanceProfileProviderChoices}
-            rules={{ required: true }}
+            required
             isReadOnly
           />
         </FormControl>
@@ -100,7 +100,7 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
             label={t("Data version")}
             placeholder={t("Current")}
             description={t("PC*Miler data version sent with Route Reports requests.")}
-            rules={{ required: true }}
+            required
             maxLength={50}
           />
         </FormControl>
@@ -112,7 +112,7 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
             placeholder={t("Region")}
             description={t("Routing data region used for all stops in this profile.")}
             options={distanceProfileRegionChoices}
-            rules={{ required: true }}
+            required
             isReadOnly
           />
         </FormControl>
@@ -124,7 +124,7 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
             placeholder={t("Routing type")}
             description={t("Controls how PC*Miler chooses roads for calculated distance.")}
             options={distanceProfileRoutingTypeChoices}
-            rules={{ required: true }}
+            required
           />
         </FormControl>
         <FormControl>
@@ -135,7 +135,7 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
             placeholder={t("Distance units")}
             description={t("Unit stored on shipment moves and returned in calculation summaries.")}
             options={distanceProfileDistanceUnitChoices}
-            rules={{ required: true }}
+            required
           />
         </FormControl>
         <FormControl>
@@ -146,7 +146,7 @@ function ProviderPolicySection({ control }: { control: Control<DistanceProfile> 
             placeholder={t("Location granularity")}
             description={t("Determines which location fields are sent to PC*Miler stops.")}
             options={distanceProfileLocationGranularityChoices}
-            rules={{ required: true }}
+            required
           />
         </FormControl>
         <FormControl cols="full">

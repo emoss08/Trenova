@@ -19,7 +19,7 @@ export function LocationCategoryForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="name"
           label={t("Name")}
           placeholder={t("Name")}
@@ -30,7 +30,7 @@ export function LocationCategoryForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="type"
           label={t("Type")}
           placeholder={t("Type")}
@@ -46,7 +46,7 @@ export function LocationCategoryForm() {
           placeholder={t("Facility type")}
           description={t("The facility type of the location category")}
           options={facilityTypeChoices}
-          isClearable
+          clearable
         />
       </FormControl>
       <FormControl>

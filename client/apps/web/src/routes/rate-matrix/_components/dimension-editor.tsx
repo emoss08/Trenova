@@ -90,7 +90,7 @@ export function DimensionEditor() {
               <FormControl>
                 <SelectField
                   control={control}
-                  rules={{ required: true }}
+                  required
                   name={`dimensions.${index}.kind` as never}
                   label={t("Dimension")}
                   placeholder={t("Select dimension")}
@@ -109,7 +109,7 @@ export function DimensionEditor() {
               <FormControl>
                 <SelectField
                   control={control}
-                  rules={{ required: true }}
+                  required
                   name={`dimensions.${index}.matchMode` as never}
                   label={t("Match mode")}
                   placeholder={t("Select match mode")}

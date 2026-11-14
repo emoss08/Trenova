@@ -26,7 +26,7 @@ export function CustomerForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
@@ -39,7 +39,7 @@ export function CustomerForm() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="code"
               label={t("Code")}
               placeholder={t("e.g., ACME")}
@@ -52,7 +52,7 @@ export function CustomerForm() {
           <FormControl cols="full">
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="name"
               label={t("Name")}
               placeholder={t("e.g., Acme Logistics Inc.")}
@@ -90,7 +90,7 @@ export function CustomerForm() {
             <InputField
               control={control}
               name="city"
-              rules={{ required: true }}
+              required
               label={t("City")}
               placeholder={t("City")}
               description={t(
@@ -111,7 +111,7 @@ export function CustomerForm() {
           </FormControl>
           <FormControl cols="full">
             <InputField
-              rules={{ required: true }}
+              required
               control={control}
               name="postalCode"
               label={t("Postal code")}
@@ -172,7 +172,7 @@ export function CustomerForm() {
               placeholder={t("e.g., 1234567")}
               inputMode="numeric"
               maxLength={12}
-              rules={{ required: brokerVettingEnabled }}
+              required={brokerVettingEnabled}
               description={t(
                 "USDOT number issued by the FMCSA. Required to vet the customer as a broker.",
               )}

@@ -23,7 +23,7 @@
     "oxfmt": "^0.76.0",
     "oxlint": "^1.91.0",
     "oxlint-tsgolint": "^7.0.2005",
-    "turbo": "^2.11.10"
+    "turbo": "^2.11.11"
   },
   "engines": {
     "node": "^26"

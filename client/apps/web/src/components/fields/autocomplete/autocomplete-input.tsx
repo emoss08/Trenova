@@ -1,3 +1,4 @@
+import { fieldClearRevealClass } from "../field-clear-reveal";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
@@ -141,15 +142,22 @@ export function AutocompleteInputActions({
   return (
     <div className="ml-auto flex items-center gap-1">
       {clearable && currentValue && !disabled && (
+        // Inside the trigger, which is itself a control: kept out of the accessibility
+        // tree so the picker is named for what it holds, not "… Clear". A keyboard
+        // empties it with Backspace or Delete on the trigger.
         <span
+          aria-hidden
+          title={t("Clear")}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
             handleClear();
           }}
-          className="text-muted-foreground hover:bg-muted-foreground/30 hover:text-foreground flex size-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-200 ease-in-out [&>svg]:size-3"
+          className={cn(
+            "text-muted-foreground hover:bg-muted-foreground/30 hover:text-foreground flex size-5 cursor-pointer items-center justify-center rounded-md [&>svg]:size-3",
+            fieldClearRevealClass,
+          )}
         >
-          <span className="sr-only">{t("Clear")}</span>
           <XCloseIcon className="size-4" />
         </span>
       )}

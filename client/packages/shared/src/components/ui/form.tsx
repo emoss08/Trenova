@@ -1,13 +1,16 @@
-import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
+import { AlertCircleIcon } from "@trenova/shared/components/icons";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   createFieldRegistry,
   FormFieldsProvider,
   useFormFieldRegistry,
 } from "@trenova/shared/lib/form-field-registry";
+import { refusalMessages } from "@trenova/shared/lib/form-refusal";
 import { cn } from "@trenova/shared/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useFormState, type Control } from "react-hook-form";
 
 export type GridCols = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 export type ColSpan = GridCols | "full" | "auto";
@@ -64,28 +67,62 @@ const colSpanClasses: Record<ColSpan, string> = {
   auto: "col-auto",
 } as const;
 
-// FormRootError surfaces errors the server reported against something the form has no
-// input for — a whole-object rejection, or a field this form does not render. Without
-// somewhere to show them the user gets a save that failed for no stated reason.
-//
-// Rendered by Form automatically. Export exists for layouts that need it placed
-// somewhere other than above the fields.
-export const FormRootError = React.memo(({ className }: { className?: string }) => {
+/**
+ * What the server said when it refused the save: every message, whether it landed on a field
+ * or on the form as a whole, in one alert at the head of the form, brought into view when it
+ * appears. A long settings page is saved from a dock at the bottom of the window, so a refusal
+ * shown only beside the fields it names, or only in a toast, leaves the person looking at a
+ * form that did not save for no reason they can see.
+ *
+ * It follows the form's errors through `useFormState`. Reading `formState` off the form
+ * object does not: that object is the same from one render to the next, so a memoized
+ * component holding it is never drawn again when an error is set, and the alert stayed
+ * empty.
+ *
+ * Rendered by Form automatically. Export exists for layouts that need it placed somewhere
+ * other than above the fields.
+ */
+export function FormRefusal({ className }: { className?: string }) {
   const form = useFormContext();
-  const message = form?.formState.errors.root?.message;
 
-  if (!message) {
+  return form ? <FormRefusalAlert control={form.control} className={className} /> : null;
+}
+
+function FormRefusalAlert({ control, className }: { control: Control; className?: string }) {
+  const t = useT();
+  const { errors } = useFormState({ control });
+  const messages = refusalMessages(errors);
+  const shown = messages.join("\n");
+  const alertRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (shown !== "") {
+      alertRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [shown]);
+
+  if (messages.length === 0) {
     return null;
   }
 
   return (
-    <Alert variant="destructive" size="sm" className={className}>
-      <AlertDescription>{message}</AlertDescription>
+    <Alert ref={alertRef} role="alert" variant="destructive" size="sm" className={className}>
+      <AlertCircleIcon />
+      <AlertTitle>{t("This change could not be saved")}</AlertTitle>
+      <AlertDescription>
+        {messages.length === 1 ? (
+          messages[0]
+        ) : (
+          <ul className="list-disc pl-4">
+            {messages.map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
+        )}
+      </AlertDescription>
     </Alert>
   );
-});
-
-FormRootError.displayName = "FormRootError";
+}
 
 export const Form = React.memo(({ className, onSubmit, children, ...props }: FormProps) => {
   const form = useFormContext();
@@ -114,7 +151,7 @@ export const Form = React.memo(({ className, onSubmit, children, ...props }: For
     // carrying min/max/step — so the browser refuses a submit it cannot even focus a
     // control to explain ("An invalid form control with name='' is not focusable").
     <form onSubmit={handleSubmit} className={className} noValidate {...props}>
-      <FormRootError className="mb-4" />
+      <FormRefusal className="mb-4" />
       {registry && registry !== enclosing ? (
         <FormFieldsProvider registry={registry}>{children}</FormFieldsProvider>
       ) : (

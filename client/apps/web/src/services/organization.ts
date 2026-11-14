@@ -22,11 +22,13 @@ import {
 import {
   microsoftSSOConfigSchema,
   oktaSSOConfigSchema,
-  organizationLogoUrlResponseSchema,
+  organizationBrandingSchema,
   organizationSettingsSchema,
   tenantLoginMetadataSchema,
   type MicrosoftSSOConfig,
   type OktaSSOConfig,
+  type OrganizationBrandImage,
+  type OrganizationBranding,
   type OrganizationSettings,
   type TenantLoginMetadata,
 } from "@trenova/shared/types/organization";
@@ -43,28 +45,30 @@ export class OrganizationService {
     return safeParse(organizationSettingsSchema, response, "OrganizationSettings");
   }
 
-  public async uploadLogo(organizationId: string, file: File) {
+  public async getBranding(organizationId: string, options?: { signal?: AbortSignal }) {
+    const response = await api.get<OrganizationBranding>(
+      `${this.base_url}/${organizationId}/branding`,
+      options,
+    );
+
+    return safeParse(organizationBrandingSchema, response, "OrganizationBranding");
+  }
+
+  public async uploadBrandImage(organizationId: string, image: OrganizationBrandImage, file: File) {
     const formData = new FormData();
     formData.append("file", file);
 
     const response = await api.upload<OrganizationSettings>(
-      `${this.base_url}/${organizationId}/logo`,
+      `${this.base_url}/${organizationId}/branding/${image}`,
       formData,
     );
 
     return safeParse(organizationSettingsSchema, response, "OrganizationSettings");
   }
 
-  public async getLogoURL(organizationId: string) {
-    const response = await api.get<{ url: string }>(`${this.base_url}/${organizationId}/logo`);
-
-    return (await safeParse(organizationLogoUrlResponseSchema, response, "OrganizationLogoUrl"))
-      .url;
-  }
-
-  public async deleteLogo(organizationId: string) {
+  public async deleteBrandImage(organizationId: string, image: OrganizationBrandImage) {
     const response = await api.delete<OrganizationSettings>(
-      `${this.base_url}/${organizationId}/logo`,
+      `${this.base_url}/${organizationId}/branding/${image}`,
     );
 
     return safeParse(organizationSettingsSchema, response, "OrganizationSettings");

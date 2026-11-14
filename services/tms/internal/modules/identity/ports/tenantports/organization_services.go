@@ -9,24 +9,27 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type UploadLogoRequest struct {
+type UploadBrandImageRequest struct {
 	TenantInfo     pagination.TenantInfo
 	OrganizationID pulid.ID
+	Image          tenant.BrandImage
 	File           *multipart.FileHeader
 }
 
-type GetLogoURLRequest struct {
+type GetBrandingRequest struct {
 	TenantInfo     pagination.TenantInfo
 	OrganizationID pulid.ID
 }
 
-type GetLogoURLResponse struct {
-	URL string `json:"url,omitempty"`
+type Branding struct {
+	LogoURL string `json:"logoUrl"`
+	IconURL string `json:"iconUrl"`
 }
 
-type DeleteLogoRequest struct {
+type DeleteBrandImageRequest struct {
 	TenantInfo     pagination.TenantInfo
 	OrganizationID pulid.ID
+	Image          tenant.BrandImage
 }
 
 type GetOrganizationsByIDsRequest struct {
@@ -75,13 +78,13 @@ type OrganizationService interface {
 		req *SelectOrganizationOptionsRequest,
 	) (*pagination.ListResult[*tenant.Organization], error)
 	Update(ctx context.Context, entity *tenant.Organization) (*tenant.Organization, error)
-	UploadLogo(
+	UploadBrandImage(
 		ctx context.Context,
-		req *UploadLogoRequest,
+		req *UploadBrandImageRequest,
 		userID pulid.ID,
 	) (*tenant.Organization, error)
-	GetLogoURL(ctx context.Context, req GetLogoURLRequest) (*GetLogoURLResponse, error)
-	DeleteLogo(ctx context.Context, req DeleteLogoRequest) (*tenant.Organization, error)
+	GetBranding(ctx context.Context, req GetBrandingRequest) (*Branding, error)
+	DeleteBrandImage(ctx context.Context, req DeleteBrandImageRequest) (*tenant.Organization, error)
 	GetMicrosoftSSOConfig(
 		ctx context.Context,
 		organizationID pulid.ID,

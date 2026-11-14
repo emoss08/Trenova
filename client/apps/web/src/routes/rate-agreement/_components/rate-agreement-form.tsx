@@ -48,7 +48,7 @@ export function RateAgreementForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="partyType"
               label={t("Party type")}
               placeholder={t("Select party type")}
@@ -63,7 +63,7 @@ export function RateAgreementForm() {
             <FormControl>
               <CarrierAutocompleteField
                 control={control}
-                rules={{ required: true }}
+                required
                 name="carrierId"
                 label={t("Carrier")}
                 placeholder={t("Select carrier")}
@@ -74,7 +74,7 @@ export function RateAgreementForm() {
             <FormControl>
               <CustomerAutocompleteField
                 control={control}
-                rules={{ required: true }}
+                required
                 name="customerId"
                 label={t("Customer")}
                 placeholder={t("Select customer")}
@@ -86,7 +86,7 @@ export function RateAgreementForm() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="code"
               label={t("Code")}
               placeholder={t("e.g., ACME-2026")}
@@ -98,7 +98,7 @@ export function RateAgreementForm() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="name"
               label={t("Name")}
               placeholder={t("e.g., Acme Freight Agreement")}
@@ -121,7 +121,7 @@ export function RateAgreementForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="agreementType"
               label={t("Agreement type")}
               placeholder={t("Select type")}
@@ -176,7 +176,7 @@ export function RateAgreementForm() {
           <FormControl>
             <AutoCompleteDateField
               control={control}
-              rules={{ required: true }}
+              required
               name="effectiveFrom"
               label={t("Effective From")}
               placeholder={t("Select start date")}
@@ -224,7 +224,7 @@ export function RateAgreementForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="currency"
               label={t("Currency")}
               placeholder={t("Select currency")}

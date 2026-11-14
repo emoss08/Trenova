@@ -63,7 +63,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
             name="customerId"
             label={t("Customer")}
             placeholder={t("Select customer")}
-            rules={{ required: true }}
+            required
           />
         </FormControl>
         <FormControl>
@@ -72,7 +72,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
             name="amount"
             label={t("Payment amount")}
             placeholder="0.00"
-            rules={{ required: true }}
+            required
             decimalScale={2}
             fixedDecimalScale
             sideText={t("USD")}
@@ -83,7 +83,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
             control={control}
             name="paymentMethod"
             label={t("Payment method")}
-            rules={{ required: true }}
+            required
             options={paymentMethodChoices}
           />
         </FormControl>
@@ -92,7 +92,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
             control={control}
             name="paymentDate"
             label={t("Payment date")}
-            rules={{ required: translate("Payment date is required") }}
+            required={translate("Payment date is required")}
             placeholder={t("Select date")}
             description={t("The date the funds were received.")}
           />
@@ -102,7 +102,7 @@ export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds
             control={control}
             name="accountingDate"
             label={t("Accounting date")}
-            rules={{ required: translate("Accounting date is required") }}
+            required={translate("Accounting date is required")}
             placeholder={t("Select date")}
             description={t("The GL date. It must fall within an open fiscal period.")}
           />

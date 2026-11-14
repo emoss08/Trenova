@@ -9,7 +9,9 @@ Lading studio (`/edi/lading/<partnerId>`), the integrations page with its accoun
 (`/admin/integrations?type=QuickBooksOnline`), the audit log (`/admin/audit-logs`, with its
 exports, legal holds and alerts; `node e2e/mock-api/audit-screenshots.mjs` shoots every state), the
 notification panel (the bell on any page; `node e2e/mock-api/notifications-screenshots.mjs` shoots
-every part of it) and
+every part of it), organization settings (`/admin/organization-settings`, whose logo and icon uploads are kept
+and served back), the freight outlook (`/dispatch/outlook`;
+`node e2e/mock-api/freight-outlook-screenshots.mjs` shoots it) and
 Data retention (`/organization/data-retention`) can be run, clicked through and screenshotted without Postgres, Redis,
 Temporal or an AI provider. It answers the REST session endpoints the app shell needs, every
 GraphQL operation those pages send, and the realtime stream, from a deterministic fixture.
@@ -674,6 +676,21 @@ about a record, Nova working, answering and previewing a cited record on hover, 
 and the 860px and 700px layouts. Its records live in `fixtures/palette.mjs` and its routes and
 operations in `handlers/palette.mjs`. It writes to `e2e/mock-api/screenshots/palette` by default.
 
+The freight outlook has its own walkthrough:
+
+```bash
+node e2e/mock-api/freight-outlook-screenshots.mjs [outDir] [name,name,...]
+```
+
+It captures the page in dark and light, the 48-hour reading, one area opened, a move hovered so
+the board draws it, the tour stopped on the track record, and the 1000px layout. The outlook is a
+two-day forecast for a carrier working Ohio and its neighbours, counted from the four-hour window
+that holds the current time: two areas short, four with drivers to spare, one move of each kind
+and one driver already on the way. Sending a driver and calling a send off are kept in the state.
+The fixture user has seen the tour, so it does not open by itself. Set `SCALE=2` for captures
+sharp enough to publish, and `VIEWPORT=1200x750 SIDEBAR=collapsed` for ones a page will show
+small (the marketing site's are taken this way). It writes to `e2e/mock-api/screenshots/freight-outlook` by default.
+
 ## Layout
 
 ```
@@ -689,6 +706,8 @@ fixtures/desk-edi-draft.mjs  The EDI connection drafts from Acme Retail Group's 
 fixtures/desk-edi.mjs    The EDI messages the EDI message card draws: X12, inspections, conversations
 fixtures/settings.mjs   The signed-in person's settings, sessions, sign-ins and teammates
 fixtures/palette.mjs  The command palette's customers, workers, shipments, documents and pins
+fixtures/freight-outlook.mjs  The freight outlook: areas, windows, moves, customer pace and the track record
+handlers/freightoutlook.mjs  The freight outlook's reads, sending a driver, calling it off, and page tours
 fixtures/triage.mjs   Triage's sources, messages, rules, templates and team, from the prototype
 fixtures/formula.mjs  Tariff sources for the templates, libraries and standards, the shipments and the team
 rules.mjs             The client's rules.wasm in Node: every check, test, bill and scaffold

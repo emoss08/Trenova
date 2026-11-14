@@ -39,14 +39,17 @@ function memoryStore(): KeyValueStore & { entries: Map<string, string> } {
 const SIDEBAR_KEY = sidebarPreferences.effective().queryKey;
 const ATTENTION_KEY = attention.summary().queryKey;
 const RECORD_KEY = ["shipment", "detail", "shp_1"];
-const LOGO_KEY = organization.logo("org_1").queryKey;
+const BRANDING_KEY = organization.branding("org_1").queryKey;
 
 function clientWithData(): QueryClient {
   const client = new QueryClient();
   client.setQueryData(SIDEBAR_KEY, { sections: ["dispatch"] });
   client.setQueryData(ATTENTION_KEY, { agentDecisions: 3 });
   client.setQueryData(RECORD_KEY, { proNumber: "S-1001", consignee: "Jane Doe" });
-  client.setQueryData(LOGO_KEY, "https://storage.example.com/logo.png?signature=abc");
+  client.setQueryData(BRANDING_KEY, {
+    logoUrl: "https://storage.example.com/logo.png?signature=abc",
+    iconUrl: "",
+  });
   return client;
 }
 
@@ -92,9 +95,9 @@ describe("isShellQuery", () => {
     expect(isShellQuery({ queryKey: homeLayout.effective().queryKey })).toBe(true);
   });
 
-  it("refuses records, and the logo's expiring storage URL", () => {
+  it("refuses records, and the branding's expiring storage URLs", () => {
     expect(isShellQuery({ queryKey: RECORD_KEY })).toBe(false);
-    expect(isShellQuery({ queryKey: LOGO_KEY })).toBe(false);
+    expect(isShellQuery({ queryKey: BRANDING_KEY })).toBe(false);
     expect(isShellQuery({ queryKey: ["attention"] })).toBe(false);
   });
 });

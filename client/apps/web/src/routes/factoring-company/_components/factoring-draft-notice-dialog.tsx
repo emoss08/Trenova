@@ -98,7 +98,7 @@ export function DraftNoticeDialog({
                   name="customerId"
                   label={t("Customer")}
                   placeholder={t("Select a customer")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>

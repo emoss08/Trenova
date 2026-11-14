@@ -691,11 +691,49 @@ hyphen.
   parent's gap, not with per-section `border-t pt-4`.
 - A settings page is stacked `Card`s and a `FormSaveDock`; the dock's label is
   "Save changes" and is not overridden.
+- A field is marked required with its `required` prop (`required`, `required={enabled}`, or
+  `required={t("Enter the six-digit code")}` for its own words), never through `rules`. A
+  field that is not required shows a clear control, so an optional choice can always be
+  taken back; `clearable={false}` turns that off for the rare field that must hold a value
+  without being required. The names are the same on every shared field: `required`,
+  `clearable`, `rules` for anything else.
+- The clear control shows only while its field is hovered or holds focus, and always on a
+  touch screen; at rest a field is its value. It sits hard against the field's right edge
+  (before the stepper, where there is one). A unit beside the value ("minutes", "%") shares
+  that place and gives way to the control, so the two are never side by side.
+- An amount of money is `MoneyField`: its currency's mark at the start, a stepper at the end,
+  and an empty field at 0, because a form cannot tell an amount nobody entered from a zero
+  somebody did (`showZero` where the zero is a figure). In a column of amounts (journal
+  lines) it is a `ledger` cell: digits against the right edge under a right-aligned heading
+  and total, with no mark, stepper, clear control or placeholder, and blank on the side a
+  line does not use. A 104px cell with all three controls showed "250.5" for 1,250.50.
 - A dialog, a sheet and a table panel all close the same way: footer right-aligned,
   Cancel (`outline`) then the primary (ink, or `destructive`). `DialogContent` takes
   `size` (`xs`…`2xl`) instead of an arbitrary `sm:max-w-[520px]`.
 - An inline callout is `<Alert variant size="sm">`, not a hand-tinted box.
   `bg-warning/10 rounded-md p-3` was written sixty times at fifteen opacities.
+- A picture someone uploads (a logo, an icon, a person's photo) goes through
+  `useImageUpload` (`components/image-upload/`): it takes a file from the picker, a drop or a
+  paste (PNG, JPG, WebP, or an SVG, which is drawn large before it is positioned), says what
+  was wrong with one it cannot use, and opens the crop dialog, where the picture is dragged,
+  zoomed and turned inside a fixed frame with the places that draw it shown live beside the
+  stage. The control that opens it is the picture itself, where it is seen: the avatar in a
+  profile's header, or the logo on the sample invoice and the icon in the sidebar of the
+  organization's `BrandingPreview`, each pressed to replace or remove it. A dashed outline
+  marks a picture that can be pressed. Don't put an upload button beside a picture that could
+  be the button. An `ImageSpec` says what the place needs: a round, tile or rectangular mask,
+  a square frame or the picture's own shape, whether the frame must stay filled (`cover`, a
+  photo) or the picture may sit whole inside it on clear ground (`contain`, a logo), and the
+  longest side of the uploaded file. `PROFILE_PICTURE` is the spec for a person's photo and
+  `ProfilePicturePreview` its preview. A preview is the real place, not a thumbnail: it puts
+  a `CropResult` wherever that place draws the picture, with that place's own classes. Don't
+  write another file input, drop zone or crop dialog for a picture. The dialog's code,
+  cropper included, loads when a picture is first offered, so import the spec and the hook,
+  never `image-crop-dialog` itself.
+- A preview of what an invoice will carry draws `SampleInvoice`
+  (`components/documents/sample-invoice.tsx`), the one drawing of the Ledger invoice template
+  in the app: the factoring company page fills in its remit-to, notice and payment box, and
+  the organization's branding its logo. Don't draw another invoice.
 
 ### Toasts
 
@@ -1057,6 +1095,13 @@ take the colour of whatever they sat in, so an action under a warning was amber 
 changed colour on hover. For another ink pass it in `className` (it wins over the variant's),
 use `quiet` for a muted control, `link` for an action or a place set in a line of text, and
 `ghostInvert` on a dark dock. Never rely on a parent's text colour reaching a button.
+
+A button that is working (`isLoading`) keeps the box it had at rest: it never changes width or
+height. Its content stays in place, hidden, and the spinner is laid over it, so nothing beside
+it moves when a request starts or settles. `loadingText` is what a screen reader is told and
+is not drawn, since words of another length could not fit the same box. A control built by
+hand that swaps its label for a spinner follows the same rule: keep the label in the layout
+(`invisible`) and overlay the spinner, never replace one with the other.
 
 ## The Desk's styles
 

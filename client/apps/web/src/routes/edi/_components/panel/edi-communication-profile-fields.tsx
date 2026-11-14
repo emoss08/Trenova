@@ -80,7 +80,7 @@ export function TransportProfileFields({
                 name="config.localAS2Id"
                 label={t("Local AS2 ID")}
                 placeholder="TRENOVA"
-                rules={{ required: true }}
+                required
                 description={t(
                   "Our AS2 identifier that the partner uses to address messages to us.",
                 )}
@@ -92,7 +92,7 @@ export function TransportProfileFields({
                 name="config.partnerAS2Id"
                 label={t("Partner AS2 ID")}
                 placeholder="PARTNERCO"
-                rules={{ required: true }}
+                required
                 description={t(
                   "The partner's AS2 identifier that we address outbound messages to.",
                 )}
@@ -104,7 +104,7 @@ export function TransportProfileFields({
                 name="config.endpointUrl"
                 label={t("Endpoint URL")}
                 placeholder="https://edi.partner.com/as2"
-                rules={{ required: true }}
+                required
                 description={t("The partner's HTTPS URL where we POST outbound AS2 messages.")}
               />
             </FormControl>
@@ -119,7 +119,7 @@ export function TransportProfileFields({
                 name="config.mdnMode"
                 label={t("MDN mode")}
                 options={mdnModeOptions}
-                rules={{ required: true }}
+                required
                 description={t(
                   "Synchronous MDNs return in the HTTP response; asynchronous MDNs post back to the return URL.",
                 )}
@@ -273,7 +273,7 @@ export function TransportProfileFields({
               name="config.providerName"
               label={t("Provider name")}
               placeholder={t("OpenText / SPS commerce")}
-              rules={{ required: true }}
+              required
               description={t("The name of the VAN provider hosting this mailbox.")}
             />
           </FormControl>
@@ -283,7 +283,7 @@ export function TransportProfileFields({
               name="config.mailboxId"
               label={t("Mailbox ID")}
               placeholder="MB123456"
-              rules={{ required: true }}
+              required
               description={t(
                 "The mailbox identifier assigned by the VAN provider for routing documents.",
               )}
@@ -383,7 +383,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               label={t("Host")}
               placeholder={t("sftp.partner.com")}
               description={t("The host name or IP address of the SFTP server.")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -393,7 +393,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               label={t("Port")}
               placeholder="22"
               description={t("The port number of the SFTP server.")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -403,7 +403,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               label={t("Username")}
               placeholder="trenova"
               description={t("The username for the SFTP server.")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -413,7 +413,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               label={t("Authentication")}
               options={sftpAuthModeOptions}
               description={t("The authentication mode for the SFTP server.")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl cols="full">
@@ -423,7 +423,7 @@ function SftpEndpointSections({ control, title }: ProfileFieldsProps & { title: 
               label={t("Known host key")}
               placeholder={t("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...")}
               description={t("The known host key for the SFTP server.")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -484,7 +484,7 @@ export function X12EnvelopeFields({ control }: ProfileFieldsProps) {
             name="config.environment"
             label={t("Environment")}
             options={environmentOptions}
-            rules={{ required: true }}
+            required
             description={t("Whether this profile reaches the partner's test or production system.")}
           />
         </FormControl>

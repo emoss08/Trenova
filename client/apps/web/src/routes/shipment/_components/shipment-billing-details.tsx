@@ -624,7 +624,7 @@ export default function ShipmentBillingDetails() {
         <CustomerAutocompleteField
           control={control}
           name="customerId"
-          rules={{ required: true }}
+          required
           label={t("Customer")}
           placeholder={t("Select customer")}
           description={t("Choose the customer who requested this shipment.")}
@@ -677,7 +677,7 @@ export default function ShipmentBillingDetails() {
           description={t(
             "The tariff that bills this shipment. Its inputs, below, are the values it rates with.",
           )}
-          rules={{ required: true }}
+          required
         />
       ),
     },

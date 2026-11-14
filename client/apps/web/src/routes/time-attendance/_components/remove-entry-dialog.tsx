@@ -119,7 +119,7 @@ export function RemoveEntryDialog({ entry, onOpenChange, onRemoved }: RemoveEntr
                   description={t(
                     "Kept in the audit trail so the missing hours can be explained later.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
             </FormGroup>

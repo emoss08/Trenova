@@ -119,7 +119,14 @@ function AboutCard({ user, picture }: { user: User | null; picture: ProfilePictu
               thumbnailUrl={user?.thumbnailUrl}
               className="size-9"
             />
-            <Button type="button" variant="outline" size="sm" onClick={picture.openPicker}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={picture.openPicker}
+              onPointerEnter={picture.preload}
+              onFocus={picture.preload}
+            >
               <Camera01Icon className="size-3.5" />
               {hasPhoto ? t("Change") : t("Upload")}
             </Button>

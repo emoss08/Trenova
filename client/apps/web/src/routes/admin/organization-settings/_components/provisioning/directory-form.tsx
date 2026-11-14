@@ -16,7 +16,7 @@ export function SCIMDirectoryForm() {
         <FormControl cols="full">
           <InputField
             control={control}
-            rules={{ required: true }}
+            required
             name="tenantSlug"
             label={t("Tenant slug")}
             placeholder="acme-directory"

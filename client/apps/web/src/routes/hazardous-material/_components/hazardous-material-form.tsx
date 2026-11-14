@@ -231,7 +231,7 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
@@ -245,7 +245,7 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
             ) : (
               <InputField
                 control={control}
-                rules={{ required: true }}
+                required
                 name="name"
                 label={t("Name")}
                 placeholder={t("Name")}
@@ -269,7 +269,7 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
           <FormControl cols="full">
             <TextareaField
               control={control}
-              rules={{ required: true }}
+              required
               name="description"
               label={t("Description")}
               placeholder={t("Description")}
@@ -288,7 +288,7 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="class"
               label={t("Class")}
               placeholder={t("Class")}
@@ -411,7 +411,7 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
             <FormControl cols="full">
               <InputField
                 control={control}
-                rules={{ required: isReportableQuantity }}
+                required={isReportableQuantity}
                 name="quantityThreshold"
                 label={t("Reportable quantity threshold")}
                 placeholder={t("e.g. 100 lbs")}

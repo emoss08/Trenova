@@ -106,7 +106,7 @@ export function EquipmentOverrideDialog({
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("e.g., Unit is leased on to the carrier; lease agreement on file")}
-                  rules={{ required: true }}
+                  required
                   maxLength={EQUIPMENT_OVERRIDE_REASON_MAX_LENGTH}
                 />
               </FormControl>

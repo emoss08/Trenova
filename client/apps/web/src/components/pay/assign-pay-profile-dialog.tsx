@@ -139,7 +139,7 @@ export function AssignPayProfileDialog({
                     name="workerId"
                     label={t("Driver")}
                     placeholder={t("Select driver")}
-                    rules={{ required: true }}
+                    required
                     description={t(
                       "The driver who will be paid under this profile from the effective date forward.",
                     )}
@@ -153,7 +153,7 @@ export function AssignPayProfileDialog({
                     name="payProfileId"
                     label={t("Pay profile")}
                     placeholder={t("Select pay profile")}
-                    rules={{ required: true }}
+                    required
                     description={t(
                       "Profiles are shared templates — set driver-specific rates below instead of cloning profiles.",
                     )}
@@ -165,7 +165,7 @@ export function AssignPayProfileDialog({
                   control={control}
                   name="effectiveFrom"
                   label={t("Effective From")}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "Pay for shipments delivered on or after this date uses this assignment.",
                   )}
@@ -178,7 +178,7 @@ export function AssignPayProfileDialog({
                   label={t("Split percent")}
                   sideText="%"
                   description={t("100 for solo drivers; 50 each for an even team split.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl className="col-span-2">

@@ -2057,6 +2057,7 @@ var Reads = map[string]Read{
 				{Name: "scacCode", Type: "String", Kind: "scalar", List: false, NonNull: true},
 				{Name: "dotNumber", Type: "String", Kind: "scalar", List: false, NonNull: true},
 				{Name: "logoUrl", Type: "String", Kind: "scalar", List: false, NonNull: true},
+				{Name: "iconUrl", Type: "String", Kind: "scalar", List: false, NonNull: true},
 				{Name: "bucketName", Type: "String", Kind: "scalar", List: false, NonNull: true},
 				{Name: "addressLine1", Type: "String", Kind: "scalar", List: false, NonNull: true},
 				{Name: "addressLine2", Type: "String", Kind: "scalar", List: false, NonNull: true},

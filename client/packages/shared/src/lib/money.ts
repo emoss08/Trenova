@@ -1,4 +1,4 @@
-import { numberFormatter } from "../i18n/format";
+import { intlLocale, numberFormatter } from "../i18n/format";
 import { formatCurrency } from "./utils";
 
 const AMOUNT_PATTERN = /^(\d+)(?:\.(\d{1,2}))?$/;
@@ -31,13 +31,76 @@ export function formatMinor(minor: number, currency?: string | null): string {
   return formatCurrency(minor / 100, currency || "USD");
 }
 
-/** The mark a currency is written with in the reader's locale ("$" for US dollars), for a field prefix. */
+const symbols = new Map<string, string>();
+
+/**
+ * The mark a currency is written with in the reader's locale ("$" for US dollars), for a
+ * field prefix. A form draws one per money field on every keystroke, so each locale and
+ * currency is worked out once.
+ */
 export function currencySymbol(currency?: string | null): string {
-  return (
-    numberFormatter({ style: "currency", currency: currency || "USD" })
-      .formatToParts(0)
-      .find((part) => part.type === "currency")?.value ?? ""
-  );
+  const code = currency || "USD";
+  const key = `${intlLocale()}|${code}`;
+  let symbol = symbols.get(key);
+  if (symbol === undefined) {
+    symbol =
+      numberFormatter({ style: "currency", currency: code })
+        .formatToParts(0)
+        .find((part) => part.type === "currency")?.value ?? "";
+    symbols.set(key, symbol);
+  }
+  return symbol;
+}
+
+export type AmountSeparators = { decimal: string; group: string };
+
+const separators = new Map<string, AmountSeparators>();
+
+/**
+ * How the reader's locale writes an amount: the mark before the cents and the mark between
+ * thousands ("." and "," in English, "," and "." in Spanish). A money field types and shows
+ * amounts with these, so a figure reads in the field as it does everywhere else on screen.
+ */
+export function amountSeparators(): AmountSeparators {
+  const locale = intlLocale();
+  let found = separators.get(locale);
+  if (!found) {
+    const parts = numberFormatter({ minimumFractionDigits: 2 }).formatToParts(1234567.89);
+    found = {
+      decimal: parts.find((part) => part.type === "decimal")?.value ?? ".",
+      group: parts.find((part) => part.type === "group")?.value ?? "",
+    };
+    separators.set(locale, found);
+  }
+  return found;
+}
+
+const AMOUNT_TEXT = /^(-?)(\d*)(?:\.(\d{0,2}))?/;
+
+/**
+ * Minor units from the plain text of a field being typed in ("12.5", "-3", "", "."), read
+ * from its digits and never through a float. Text with no digits yet is zero, and digits
+ * past the second decimal are dropped, as the field itself allows none.
+ */
+export function amountTextToMinor(text: string): number {
+  const match = AMOUNT_TEXT.exec(text.trim());
+  if (!match) {
+    return 0;
+  }
+  const [, sign, whole = "", fraction = ""] = match;
+  const minor = Number(whole || "0") * 100 + Number(fraction.padEnd(2, "0") || "0");
+  if (!Number.isSafeInteger(minor)) {
+    return 0;
+  }
+  return sign && minor !== 0 ? -minor : minor;
+}
+
+/** A minor-unit amount as the plain text a field holds ("12.50", "-3.00"), by its digits. */
+export function minorToAmountText(minor: number): string {
+  const magnitude = Math.abs(Math.trunc(minor));
+  const whole = Math.trunc(magnitude / 100);
+  const fraction = String(magnitude % 100).padStart(2, "0");
+  return `${minor < 0 ? "-" : ""}${whole}.${fraction}`; // i18n-ignore: a number's digits
 }
 
 /** A minor-unit amount as a plain amount with two decimals, for a value whose currency is unknown. */

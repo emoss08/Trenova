@@ -151,7 +151,7 @@ export function ProviderDetail({
             <InputField<{ key: string }>
               control={keyForm.control}
               name="key"
-              rules={{ required: true }}
+              required
               type="password"
               autoFocus
               autoComplete="new-password"

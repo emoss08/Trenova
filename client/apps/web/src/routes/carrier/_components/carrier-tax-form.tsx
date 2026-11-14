@@ -41,7 +41,7 @@ export function CarrierTaxForm() {
                 "Whether the tax ID is an employer identification number or a social security number.",
               )}
               options={carrierTaxIdTypeChoices}
-              isClearable
+              clearable
             />
           </FormControl>
           <FormControl>

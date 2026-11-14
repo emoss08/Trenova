@@ -403,7 +403,7 @@ export function AssignmentDialog({
                     name="tractorId"
                     label={t("Tractor")}
                     placeholder={t("Select tractor")}
-                    rules={{ required: true }}
+                    required
                     onOptionChange={handleTractorChange}
                   />
                 </FormControl>
@@ -422,7 +422,7 @@ export function AssignmentDialog({
                     name="primaryWorkerId"
                     label={t("Primary worker")}
                     placeholder={t("Select primary worker")}
-                    rules={{ required: true }}
+                    required
                     clearable
                   />
                 </FormControl>

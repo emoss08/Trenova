@@ -540,6 +540,7 @@ var organizationsTable = schema.Table{
 		{Name: "scac_code", Quoted: `"scac_code"`, Field: "ScacCode", Kind: schema.KindString, Flags: 0, Label: `SCAC Code`, JSON: `scacCode`},
 		{Name: "dot_number", Quoted: `"dot_number"`, Field: "DOTNumber", Kind: schema.KindString, Flags: 0, Label: `DOT Number`, JSON: `dotNumber`},
 		{Name: "logo_url", Quoted: `"logo_url"`, Field: "LogoURL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Logo URL`, JSON: `logoUrl`},
+		{Name: "icon_url", Quoted: `"icon_url"`, Field: "IconURL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Icon URL`, JSON: `iconUrl`},
 		{Name: "bucket_name", Quoted: `"bucket_name"`, Field: "BucketName", Kind: schema.KindString, Flags: 0, Label: `Bucket Name`, JSON: `bucketName`},
 		{Name: "address_line1", Quoted: `"address_line1"`, Field: "AddressLine1", Kind: schema.KindString, Flags: 0, Label: `Address Line 1`, JSON: `addressLine1`},
 		{Name: "address_line2", Quoted: `"address_line2"`, Field: "AddressLine2", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Address Line 2`, JSON: `addressLine2`},
@@ -561,14 +562,14 @@ var organizationsTable = schema.Table{
 	},
 	PK:           []int32{0},
 	Tenant:       []int32{2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:       []int32{1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:       []int32{1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
 	Returning:    nil,
-	Version:      19,
+	Version:      20,
 	AutoID:       0,
-	AutoCreate:   20,
-	AutoUpdate:   21,
+	AutoCreate:   21,
+	AutoUpdate:   22,
 	IDPrefix:     "org_",
 	New:          newOrganization,
 	NewN:         newNOrganization,
@@ -592,6 +593,7 @@ type OrganizationsTable struct {
 	ScacCode               keel.StringCol
 	DOTNumber              keel.StringCol
 	LogoURL                keel.StringCol
+	IconURL                keel.StringCol
 	BucketName             keel.StringCol
 	AddressLine1           keel.StringCol
 	AddressLine2           keel.StringCol
@@ -619,20 +621,21 @@ var Organizations = &OrganizationsTable{
 	ScacCode:               keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 5}},
 	DOTNumber:              keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 6}},
 	LogoURL:                keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 7}},
-	BucketName:             keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 8}},
-	AddressLine1:           keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 9}},
-	AddressLine2:           keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 10}},
-	City:                   keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 11}},
-	PostalCode:             keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 12}},
-	Timezone:               keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 13}},
-	Locale:                 keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 14}},
-	TaxID:                  keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 15}},
-	BrokerageEnabled:       keel.BoolCol{Col: keel.Col{Ref: &organizationsRef, Index: 16}},
-	AssetOperationsEnabled: keel.BoolCol{Col: keel.Col{Ref: &organizationsRef, Index: 17}},
-	Metadata:               keel.JSONBCol{Col: keel.Col{Ref: &organizationsRef, Index: 18}},
-	Version:                keel.Int64Col{Col: keel.Col{Ref: &organizationsRef, Index: 19}},
-	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &organizationsRef, Index: 20}},
-	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &organizationsRef, Index: 21}},
+	IconURL:                keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 8}},
+	BucketName:             keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 9}},
+	AddressLine1:           keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 10}},
+	AddressLine2:           keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 11}},
+	City:                   keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 12}},
+	PostalCode:             keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 13}},
+	Timezone:               keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 14}},
+	Locale:                 keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 15}},
+	TaxID:                  keel.StringCol{Col: keel.Col{Ref: &organizationsRef, Index: 16}},
+	BrokerageEnabled:       keel.BoolCol{Col: keel.Col{Ref: &organizationsRef, Index: 17}},
+	AssetOperationsEnabled: keel.BoolCol{Col: keel.Col{Ref: &organizationsRef, Index: 18}},
+	Metadata:               keel.JSONBCol{Col: keel.Col{Ref: &organizationsRef, Index: 19}},
+	Version:                keel.Int64Col{Col: keel.Col{Ref: &organizationsRef, Index: 20}},
+	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &organizationsRef, Index: 21}},
+	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &organizationsRef, Index: 22}},
 }
 
 // BuildOrganizations builds the table of organizations for ref. Generated relation and alias methods call it.
@@ -647,20 +650,21 @@ func BuildOrganizations(r *keel.Ref) *OrganizationsTable {
 		ScacCode:               keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		DOTNumber:              keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		LogoURL:                keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		BucketName:             keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		AddressLine1:           keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		AddressLine2:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		City:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		PostalCode:             keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		Timezone:               keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		Locale:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		TaxID:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		BrokerageEnabled:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
-		AssetOperationsEnabled: keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
-		Metadata:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 18}},
-		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		IconURL:                keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
+		BucketName:             keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
+		AddressLine1:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
+		AddressLine2:           keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
+		City:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
+		PostalCode:             keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		Timezone:               keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
+		Locale:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		TaxID:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
+		BrokerageEnabled:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
+		AssetOperationsEnabled: keel.BoolCol{Col: keel.Col{Ref: r, Index: 18}},
+		Metadata:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 19}},
+		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 	}
 }
 
@@ -1078,32 +1082,34 @@ func ptrOrganization(p unsafe.Pointer, c int32) any {
 	case 7:
 		return &r.LogoURL
 	case 8:
-		return &r.BucketName
+		return &r.IconURL
 	case 9:
-		return &r.AddressLine1
+		return &r.BucketName
 	case 10:
-		return &r.AddressLine2
+		return &r.AddressLine1
 	case 11:
-		return &r.City
+		return &r.AddressLine2
 	case 12:
-		return &r.PostalCode
+		return &r.City
 	case 13:
-		return &r.Timezone
+		return &r.PostalCode
 	case 14:
-		return &r.Locale
+		return &r.Timezone
 	case 15:
-		return &r.TaxID
+		return &r.Locale
 	case 16:
-		return &r.BrokerageEnabled
+		return &r.TaxID
 	case 17:
-		return &r.AssetOperationsEnabled
+		return &r.BrokerageEnabled
 	case 18:
-		return &r.Metadata
+		return &r.AssetOperationsEnabled
 	case 19:
-		return &r.Version
+		return &r.Metadata
 	case 20:
-		return &r.CreatedAt
+		return &r.Version
 	case 21:
+		return &r.CreatedAt
+	case 22:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -1135,41 +1141,46 @@ func valueOrganization(p unsafe.Pointer, c int32) any {
 		}
 		return r.LogoURL
 	case 8:
-		return r.BucketName
+		if r.IconURL == "" {
+			return nil
+		}
+		return r.IconURL
 	case 9:
-		return r.AddressLine1
+		return r.BucketName
 	case 10:
+		return r.AddressLine1
+	case 11:
 		if r.AddressLine2 == "" {
 			return nil
 		}
 		return r.AddressLine2
-	case 11:
-		return r.City
 	case 12:
-		return r.PostalCode
+		return r.City
 	case 13:
-		return r.Timezone
+		return r.PostalCode
 	case 14:
-		return r.Locale
+		return r.Timezone
 	case 15:
+		return r.Locale
+	case 16:
 		if r.TaxID == "" {
 			return nil
 		}
 		return r.TaxID
-	case 16:
-		return r.BrokerageEnabled
 	case 17:
-		return r.AssetOperationsEnabled
+		return r.BrokerageEnabled
 	case 18:
+		return r.AssetOperationsEnabled
+	case 19:
 		if r.Metadata == nil {
 			return nil
 		}
 		return *r.Metadata
-	case 19:
-		return r.Version
 	case 20:
-		return r.CreatedAt
+		return r.Version
 	case 21:
+		return r.CreatedAt
+	case 22:
 		return r.UpdatedAt
 	}
 	return nil

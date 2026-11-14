@@ -288,7 +288,7 @@ export function ExtensionDetail({
               <InputField
                 control={keyForm.control}
                 name="key"
-                rules={{ required: true }}
+                required
                 type="password"
                 autoFocus
                 autoComplete="new-password"

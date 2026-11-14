@@ -123,7 +123,7 @@ export function FuelPurchaseForm({
               control={control}
               name="tractorId"
               label={t("Tractor")}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a tractor")}
               description={t(
                 "The unit the fuel went into. Its miles and this fuel meet on the return.",
@@ -146,7 +146,7 @@ export function FuelPurchaseForm({
               control={control}
               name="purchasedAt"
               label={t("Purchased at")}
-              rules={{ required: true }}
+              required
               placeholder={t("Date and time of the purchase")}
               description={t(
                 "Decides which quarter the purchase falls in. Cannot be in the future.",
@@ -159,7 +159,7 @@ export function FuelPurchaseForm({
                 control={control}
                 name="jurisdictionId"
                 label={t("Jurisdiction")}
-                rules={{ required: true }}
+                required
                 placeholder={t("Select a jurisdiction")}
                 description={t(
                   "Where the pump was. This decides which line of the return gets the tax-paid credit.",
@@ -211,7 +211,7 @@ export function FuelPurchaseForm({
               name="fuelType"
               label={t("Fuel type")}
               options={iftaFuelTypeChoices}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a fuel type")}
               description={t("DEF, reefer and other non-IFTA products are tracked as spend only.")}
             />
@@ -222,7 +222,7 @@ export function FuelPurchaseForm({
               name="quantityUnit"
               label={t("Unit")}
               options={fuelQuantityUnitChoices}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a unit")}
               description={t("Litres are converted to US gallons for the return.")}
             />
@@ -236,7 +236,7 @@ export function FuelPurchaseForm({
               placeholder="120.500"
               decimalScale={3}
               thousandSeparator
-              rules={{ required: true }}
+              required
               description={
                 isLitre
                   ? t("As printed on the receipt, up to three decimals, in litres.")
@@ -265,7 +265,7 @@ export function FuelPurchaseForm({
               valueType="string"
               label={t("Total paid")}
               placeholder="469.83"
-              rules={{ required: true }}
+              required
               description={
                 showComputedHint
                   ? t("Differs from quantity × price ({0}).", computed)
@@ -294,7 +294,7 @@ export function FuelPurchaseForm({
               placeholder={t("USD")}
               description={t("Three-letter code. Canadian purchases are usually CAD.")}
               options={currencyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl cols="full">

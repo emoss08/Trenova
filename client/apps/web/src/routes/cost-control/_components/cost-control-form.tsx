@@ -238,7 +238,7 @@ function CostBasisCard() {
               description={t(
                 "Average fleet fuel efficiency used to convert diesel price per gallon into cost per mile.",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -381,7 +381,7 @@ function CategoryRow({ index, isLast }: { index: number; isLast: boolean }) {
               name={`categories.${index}.overrideRatePerMile`}
               label={t("Override rate per mile")}
               placeholder="0.00"
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         )}
@@ -481,7 +481,7 @@ function GLActualsCard() {
                   description={t(
                     "Number of trailing months of GL activity used to compute actual rates. Three months smooths lumpy maintenance spend.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl className="max-w-[420px]">

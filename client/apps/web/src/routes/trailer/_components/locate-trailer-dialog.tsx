@@ -106,7 +106,7 @@ export function LocateTrailerDialog({
                 name="newLocationId"
                 label={t("New location")}
                 placeholder={t("Select location")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           </FormGroup>

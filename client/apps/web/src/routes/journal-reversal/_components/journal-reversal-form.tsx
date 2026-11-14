@@ -36,7 +36,7 @@ export function JournalReversalForm({ entryNumber }: { entryNumber?: string } = 
                 control={control}
                 name="originalJournalEntryId"
                 label={t("Original journal entry")}
-                rules={{ required: true }}
+                required
                 placeholder={t("Search by entry number")}
                 description={t("The posted journal entry you want to reverse.")}
                 noResultsMessage={t("No posted entries are waiting to be reversed")}
@@ -48,7 +48,7 @@ export function JournalReversalForm({ entryNumber }: { entryNumber?: string } = 
               control={control}
               name="requestedAccountingDate"
               label={t("Requested accounting date")}
-              rules={{ required: true }}
+              required
               type="date"
               description={t("The date the reversal should be posted to the general ledger.")}
             />
@@ -66,7 +66,7 @@ export function JournalReversalForm({ entryNumber }: { entryNumber?: string } = 
               control={control}
               name="reasonCode"
               label={t("Reason code")}
-              rules={{ required: true }}
+              required
               placeholder={t("e.g., ERROR, DUPLICATE, ADJUSTMENT")}
               description={t("A short classification code for the reversal reason.")}
             />
@@ -77,7 +77,7 @@ export function JournalReversalForm({ entryNumber }: { entryNumber?: string } = 
             control={control}
             name="reasonText"
             label={t("Reason")}
-            rules={{ required: true }}
+            required
             placeholder={t("Provide a detailed reason for the reversal request")}
             description={t("A detailed explanation that will be recorded in the audit trail.")}
           />

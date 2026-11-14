@@ -278,7 +278,7 @@ export function AcknowledgeFactoringNoaDialog({
                   control={form.control}
                   name="acknowledgedAt"
                   label={t("Acknowledged on")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -303,7 +303,7 @@ export function AcknowledgeFactoringNoaDialog({
                         : t("Upload the signed copy below")
                   }
                   options={documentOptions}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl cols="full">
@@ -426,7 +426,7 @@ export function ReleaseFactoringNoaDialog({
                   label={t("Reason")}
                   placeholder={t("Why the factor no longer directs this customer's payments")}
                   rows={3}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
             </FormGroup>

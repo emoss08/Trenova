@@ -130,7 +130,7 @@ export function ItemNoteDialog({ open, onOpenChange, workerId, mode, item }: Ite
                   label={t("Note")}
                   placeholder={t("e.g. Completed at the previous terminal")}
                   description={t("Kept on the item so an auditor can see why it was not done.")}
-                  rules={{ required: true }}
+                  required
                   maxLength={500}
                 />
               </FormControl>

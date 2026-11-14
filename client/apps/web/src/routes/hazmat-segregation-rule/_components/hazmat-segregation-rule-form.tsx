@@ -32,7 +32,7 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="status"
           label={t("Status")}
           placeholder={t("Status")}
@@ -44,7 +44,7 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="name"
           label={t("Name")}
           placeholder={t("Name")}
@@ -65,7 +65,7 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="classA"
           label={t("Class A")}
           placeholder={t("Class A")}
@@ -77,7 +77,7 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="classB"
           label={t("Class B")}
           placeholder={t("Class B")}
@@ -109,7 +109,7 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
       <FormControl cols="full">
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="segregationType"
           label={t("Segregation type")}
           placeholder={t("Segregation type")}
@@ -123,7 +123,7 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           <FormControl>
             <NumberField
               control={control}
-              rules={{ required: showDistanceOptions }}
+              required={showDistanceOptions}
               name="minimumDistance"
               label={t("Minimum distance")}
               placeholder={t("Minimum distance")}
@@ -136,7 +136,7 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: showDistanceOptions }}
+              required={showDistanceOptions}
               name="distanceUnit"
               label={t("Distance unit")}
               placeholder={t("Distance unit")}
@@ -165,7 +165,7 @@ export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) 
             label={t("Exception notes")}
             placeholder={t("Exception notes")}
             description={t("Document exceptions or special cases")}
-            rules={{ required: hasExceptions }}
+            required={hasExceptions}
             disabled={disabled}
           />
         </FormControl>

@@ -42,7 +42,8 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
   component or hook. **Search before writing one**: `escapeRegExp` had been copied into five
   files. Existing helpers worth knowing: `useObjectUrl`, `useElementSize`/`useElementWidth`,
   `useDebounce`, `useSettledValue`, `useLatestCallback` (shared hooks); `usePermission`,
-  `useApiMutation`, `useCopyToClipboard`, `useSignOut` (web hooks); `apiUrl`/`apiEndpoint`,
+  `useApiMutation`, `useCopyToClipboard`, `useSignOut` (web hooks); `useImageUpload` for a logo, an
+  icon or a person's photo (`components/image-upload/`); `apiUrl`/`apiEndpoint`,
   `escapeRegExp`, `escapeHtml`, `cn`, `toSentenceFragment` (shared lib); `formatMinor`,
   `formatMinorAmount`, `isMinorAmountField` for `…Minor` money fields (`@trenova/shared/lib/money`).
 - **A module that pages share holds only what is light.** A key, a constant or a pure function
@@ -140,8 +141,42 @@ field components from `apps/web/src/components/fields/`; table panels through
 primary. Dialogs take `size`, never an arbitrary max-width. Settings pages are stacked
 `Card`s with a `FormSaveDock`.
 
+Every shared field takes what it is told as its own props, the same on all of them:
+`required` (true, a condition, or the words said when the field is empty) and `clearable`.
+`required` is the one way a field is marked required: the asterisk, the validation and
+whether the field can be emptied follow from it, so it is never written as
+`rules={{ required: true }}`. `rules` is only for what has no prop, such as a `min` or a
+`validate`. A field that is not required can be emptied by default; pass `clearable={false}`
+for one that must always hold a value without being marked required. Selects, pickers, dates, text
+inputs and number inputs all show the control (`FieldClearButton` on the typed ones). A
+select emptied of number options holds `null`, of text options an empty string; a number
+field holds `null`, a text field an empty string. A new shared field takes
+`FormControlProps` and folds the two together with `withRequired` and `isRequired`
+(`@trenova/shared/lib/field-rules`).
+
+The clear control is hidden until the field is hovered or holds focus (always shown on a touch
+screen): `FieldWrapper` is the `group/field`, and the control wears `fieldClearRevealClass`
+(`fields/field-clear-reveal.ts`). It is the last thing before the field's right edge. A field
+with a unit beside its value ("minutes", "%") puts the unit and the control in one place
+(`fieldEndSlotClass`), and the unit gives way while the control shows. A stepper is
+`FieldStepper`, on number and money fields alike.
+
+Money is `MoneyField`, held in minor units. It shows its currency's mark (`currency`, US
+dollars by default), a stepper and a clear control, and is drawn empty at 0 with its
+placeholder rather than claiming "0.00" was entered (`showZero` for a field where zero is a
+figure worth reading). In a column of amounts (a journal's debits and credits) it is a
+`ledger` cell: right-aligned digits and nothing else, blank when unused, with the heading and
+the total carrying the currency. Give the column the same right inset as its heading and total.
+
 A server field error lands on a field only while one is registered there; otherwise it goes
-to the form root. A component that shows the errors of fields it does not mount (a summary
+to the form root. `Form` says every message of a refused save in one alert at its head
+(`FormRefusal`), brought into view, so a long page saved from a dock never fails silently. A
+value the server validates must be a registered field to show its own error: a group of
+checkboxes is `MultiCheckboxField`, never bare `Checkbox`es driven by `useWatch` and
+`setValue` (accounting control's auto-post events were, and their errors reached only a toast).
+A component that reads a form's errors follows them with `useFormState`, never
+`form.formState` off the form object, which is the same object every render and so is
+memoized stale. A component that shows the errors of fields it does not mount (a summary
 card whose fields open in a dialog, like the shipment's move card) calls
 `useErrorSurface(control, prefix)`, so a refusal under `prefix` is set where it shows it.
 Only forms with a resolver honour a surface (`serverErrorTarget` in `lib/form-errors.ts`).

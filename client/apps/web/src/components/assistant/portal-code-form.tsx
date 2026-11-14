@@ -97,7 +97,7 @@ export function PortalCodeForm({
               spellCheck={false}
               maxLength={20}
               className="min-w-0 flex-1"
-              rules={{ required: true }}
+              required
             />
             <Button type="submit" size="sm" isLoading={isPending} loadingText={t("Sending")}>
               {t("Send code")}

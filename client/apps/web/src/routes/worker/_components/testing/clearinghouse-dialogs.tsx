@@ -137,7 +137,7 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   description={t(
                     "A full query needs the driver's specific consent; a limited query runs on the general consent on file.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -147,7 +147,7 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   label={t("Requested on")}
                   placeholder={t("MM/DD/YYYY")}
                   description={t("The date the query was submitted to the Clearinghouse.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -156,7 +156,7 @@ export function RecordQueryDialog({ open, onOpenChange, workerId }: RecordQueryD
                   name="consentObtainedAt"
                   label={t("Consent obtained")}
                   placeholder={t("MM/DD/YYYY")}
-                  rules={{ required: isFull }}
+                  required={isFull}
                   description={
                     isFull
                       ? "A full query cannot be run without the driver's consent."
@@ -301,7 +301,7 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                   description={t(
                     "Violations found or consent denied prohibits the driver from safety-sensitive duty at once.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -313,7 +313,7 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                   description={t(
                     "When the Clearinghouse returned the answer; the next annual query is due twelve months on.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               {foundViolations ? (
@@ -324,7 +324,7 @@ export function AnswerQueryDialog({ open, onOpenChange, workerId, query }: Answe
                     label={t("Violations returned")}
                     placeholder={t("e.g. 1")}
                     description={t("How many violations the Clearinghouse reported.")}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
               ) : null}

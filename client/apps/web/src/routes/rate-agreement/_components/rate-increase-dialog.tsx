@@ -312,7 +312,7 @@ export function RateIncreaseDialog({
                   control={form.control}
                   name="effectiveFrom"
                   label={t("Takes effect")}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "The announced date. Shipments before it keep pricing at the old rates.",
                   )}

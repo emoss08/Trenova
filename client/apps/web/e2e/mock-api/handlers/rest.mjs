@@ -21,10 +21,12 @@ import { FORMULA_NOVA_ROUTES } from "./formula-nova.mjs";
 import { CUSTOMER_TRACKING_ROUTES } from "./customertracking.mjs";
 import { LADING_ROUTES } from "./lading.mjs";
 import { INTEGRATION_ROUTES } from "./accounting.mjs";
+import { currentOrganization, ORGANIZATION_ROUTES } from "./organization.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
 const ROUTES = [
+  ...ORGANIZATION_ROUTES,
   ...INTEGRATION_ROUTES,
   ...CUSTOMER_TRACKING_ROUTES,
   ...LADING_ROUTES,
@@ -67,17 +69,7 @@ const ROUTES = [
   [
     "GET",
     /^\/api\/v1\/users\/me\/organizations\/?$/,
-    () => [
-      {
-        id: ORG.id,
-        name: ORG.name,
-        city: "Dallas",
-        state: "TX",
-        logoUrl: null,
-        isDefault: true,
-        isCurrent: true,
-      },
-    ],
+    (state) => [currentOrganization(state)],
   ],
   [
     "GET",

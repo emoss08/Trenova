@@ -22,7 +22,7 @@ export function WorkerHomeAddressField() {
     return (
       <AddressField
         control={control}
-        rules={{ required: true }}
+        required
         nameField={null}
         placeIdField="homePlaceId"
         latitudeField="homeLatitude"
@@ -39,7 +39,7 @@ export function WorkerHomeAddressField() {
   return (
     <InputField
       control={control}
-      rules={{ required: true }}
+      required
       name="addressLine1"
       label={t("Address Line 1")}
       placeholder={t("e.g. 1200 W Main St")}

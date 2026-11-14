@@ -90,7 +90,12 @@ type OrganizationRepository interface {
 	GetByLoginSlug(ctx context.Context, loginSlug string) (*tenant.Organization, error)
 	ListLoginSlugsByPrefix(ctx context.Context, prefix string) ([]string, error)
 	Update(ctx context.Context, entity *tenant.Organization) (*tenant.Organization, error)
-	ClearLogoURL(ctx context.Context, orgID pulid.ID, version int64) (*tenant.Organization, error)
+	ClearBrandImage(
+		ctx context.Context,
+		orgID pulid.ID,
+		image tenant.BrandImage,
+		version int64,
+	) (*tenant.Organization, error)
 	CountBrokerageDependencies(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

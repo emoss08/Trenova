@@ -396,7 +396,7 @@ function AlertsCard() {
               name="detentionAlertThresholdMinutes"
               label={t("Detention Threshold (minutes)")}
               disabled={!detentionAlerts}
-              rules={{ required: detentionAlerts }}
+              required={detentionAlerts}
               description={t(
                 "Dwell time beyond which a stop is flagged. 120 minutes is the common free-time convention.",
               )}

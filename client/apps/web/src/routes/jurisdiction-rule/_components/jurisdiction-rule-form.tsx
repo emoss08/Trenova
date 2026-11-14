@@ -44,7 +44,7 @@ export function JurisdictionRuleForm() {
               name="stateId"
               label={t("State")}
               placeholder={t("Select state")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -54,7 +54,7 @@ export function JurisdictionRuleForm() {
               label={t("Status")}
               description={t("Inactive and draft rules are not used by the permit engine.")}
               options={STATUS_CHOICES}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -72,7 +72,7 @@ export function JurisdictionRuleForm() {
               label={t("Max width")}
               sideText="ft"
               placeholder="8.5"
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -82,7 +82,7 @@ export function JurisdictionRuleForm() {
               label={t("Max height")}
               sideText="ft"
               placeholder="13.5"
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -92,7 +92,7 @@ export function JurisdictionRuleForm() {
               label={t("Max length")}
               sideText="ft"
               placeholder="53"
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -103,7 +103,7 @@ export function JurisdictionRuleForm() {
               sideText="lbs"
               thousandSeparator
               placeholder="80000"
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -150,7 +150,7 @@ export function JurisdictionRuleForm() {
               label={t("Lead time")}
               sideText="days"
               description={t("Quoting a pickup sooner than this is a missed appointment.")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -159,7 +159,7 @@ export function JurisdictionRuleForm() {
               name="permitValidityDays"
               label={t("Validity")}
               sideText="days"
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>

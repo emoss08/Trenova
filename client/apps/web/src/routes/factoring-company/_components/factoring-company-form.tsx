@@ -125,7 +125,7 @@ export function FactoringCompanyForm({
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
@@ -138,7 +138,7 @@ export function FactoringCompanyForm({
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="code"
               label={t("Code")}
               placeholder={t("e.g., RTSFIN")}
@@ -149,7 +149,7 @@ export function FactoringCompanyForm({
           <FormControl cols="full">
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="name"
               label={t("Name")}
               placeholder={t("e.g., RTS Financial Service, Inc.")}
@@ -190,7 +190,7 @@ export function FactoringCompanyForm({
           <FormControl cols="full">
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="addressLine1"
               label={t("Address line 1")}
               placeholder={t("e.g., PO Box 840267")}
@@ -209,7 +209,7 @@ export function FactoringCompanyForm({
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="city"
               label={t("City")}
               placeholder={t("City")}
@@ -237,7 +237,7 @@ export function FactoringCompanyForm({
           <FormControl cols="full">
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="postalCode"
               label={t("Postal code")}
               placeholder={t("e.g., 75284")}

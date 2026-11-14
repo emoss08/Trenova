@@ -124,7 +124,7 @@ function PayPeriodCard() {
               name="payPeriodFrequency"
               label={t("Frequency")}
               options={payPeriodFrequencyChoices}
-              rules={{ required: true }}
+              required
               description={t(
                 "How often drivers are settled — weekly is the industry norm for asset carriers.",
               )}
@@ -136,7 +136,7 @@ function PayPeriodCard() {
               name="periodEndDayOfWeek"
               label={t("Period end day")}
               options={weekdayChoices}
-              rules={{ required: true }}
+              required
               description={t("The pay period closes at the start of this day.")}
             />
           </FormControl>
@@ -146,7 +146,7 @@ function PayPeriodCard() {
               name="payDelayDays"
               label={t("Pay Delay (days)")}
               description={t("Days between the period end and the settlement pay date.")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -155,7 +155,7 @@ function PayPeriodCard() {
               name="payTrigger"
               label={t("Pay trigger")}
               options={settlementPayTriggerChoices}
-              rules={{ required: true }}
+              required
               description={t(
                 "The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load.",
               )}

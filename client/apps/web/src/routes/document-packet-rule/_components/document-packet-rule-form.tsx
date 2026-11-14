@@ -25,7 +25,7 @@ export function DocumentPacketRuleForm({ disabled }: { disabled?: boolean }) {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="resourceType"
               label={t("Resource type")}
               placeholder={t("Select resource type")}
@@ -37,7 +37,7 @@ export function DocumentPacketRuleForm({ disabled }: { disabled?: boolean }) {
           <FormControl>
             <DocumentTypeAutocompleteField
               control={control}
-              rules={{ required: true }}
+              required
               name="documentTypeId"
               label={t("Document type")}
               placeholder={t("Select document type")}

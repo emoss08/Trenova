@@ -142,7 +142,7 @@ export function HolidayDialog({
                   label={t("Name")}
                   placeholder={kind === "Blackout" ? "e.g. Peak season freeze" : "e.g. Labor Day"}
                   description={t("How the date is listed on the calendar.")}
-                  rules={{ required: true }}
+                  required
                   maxLength={100}
                 />
               </FormControl>
@@ -152,7 +152,7 @@ export function HolidayDialog({
                   name="holidayDate"
                   label={t("Date")}
                   placeholder={t("e.g. Jul 4")}
-                  rules={{ required: true }}
+                  required
                   description={
                     storedDate
                       ? recursAnnually
@@ -169,7 +169,7 @@ export function HolidayDialog({
                   label={t("Kind")}
                   options={KIND_OPTIONS}
                   placeholder={t("Choose a kind")}
-                  rules={{ required: true }}
+                  required
                   description={ORG_HOLIDAY_KIND_HINTS[kind ?? "Holiday"]}
                 />
               </FormControl>

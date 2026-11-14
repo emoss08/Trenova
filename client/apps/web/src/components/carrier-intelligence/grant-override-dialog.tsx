@@ -151,7 +151,7 @@ export function GrantOverrideDialog({
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("Why this carrier may be used despite the finding")}
-                  rules={{ required: true }}
+                  required
                   maxLength={CARRIER_INTEL_NOTE_MAX_LENGTH}
                 />
               </FormControl>
@@ -165,7 +165,7 @@ export function GrantOverrideDialog({
                       ? t("Override ends {0}", formatUnixDateTimeMedium(expiresAt))
                       : t("Choose when the override ends")
                   }
-                  rules={{ required: true }}
+                  required
                 />
                 <div className="flex flex-wrap gap-1 pt-1.5" role="group" aria-label={t("Presets")}>
                   {PRESET_DAYS.map((days) => (

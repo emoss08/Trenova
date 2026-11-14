@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
@@ -31,6 +32,7 @@ export function DatePickerField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   label,
   description,
   placeholder,
@@ -46,7 +48,7 @@ export function DatePickerField<T extends FieldValues>({
     <Controller
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => {
         const selected = toUserWallClock(typeof field.value === "number" ? field.value : null);
 
@@ -55,7 +57,7 @@ export function DatePickerField<T extends FieldValues>({
             name={name}
             label={label}
             description={description}
-            required={!!rules?.required}
+            required={isRequired(rules, required)}
             error={fieldState.error?.message}
             descriptionId={`${fieldId}-description`}
             errorId={`${fieldId}-error`}

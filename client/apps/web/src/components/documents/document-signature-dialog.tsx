@@ -129,7 +129,7 @@ export function DocumentSignatureDialog({
                   name="status"
                   label={t("Signature")}
                   options={options}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               {status === "Signed" ? (

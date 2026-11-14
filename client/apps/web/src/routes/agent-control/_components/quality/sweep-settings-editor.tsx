@@ -147,7 +147,7 @@ export function SweepSettingsEditor({ open, control, onClose }: SweepSettingsEdi
             description={t("Leave empty for the organization's timezone.")}
             placeholder={t("The organization's timezone")}
             triggerClassName={aicFieldTrigger}
-            isClearable
+            clearable
           />
           <PresetField
             control={form.control}

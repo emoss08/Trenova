@@ -200,7 +200,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                       name="rateAgreementId"
                       label={t("Agreement")}
                       placeholder={t("Select agreement")}
-                      rules={{ required: true }}
+                      required
                       description={t("The contract this sheet's lanes are imported into.")}
                     />
                   </FormControl>
@@ -209,7 +209,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                       control={form.control}
                       name="effectiveFrom"
                       label={t("Rates take effect")}
-                      rules={{ required: true }}
+                      required
                       description={t(
                         "The day the imported rates start pricing — the negotiated date, not the upload date.",
                       )}

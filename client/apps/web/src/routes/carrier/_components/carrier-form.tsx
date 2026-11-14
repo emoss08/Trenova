@@ -24,7 +24,7 @@ export function CarrierForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="status"
               label={t("Status")}
               placeholder={t("Status")}
@@ -37,7 +37,7 @@ export function CarrierForm() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="code"
               label={t("Code")}
               placeholder={t("e.g., SWFT")}
@@ -50,7 +50,7 @@ export function CarrierForm() {
           <FormControl cols="full">
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="name"
               label={t("Name")}
               placeholder={t("e.g., Swift Transportation Co.")}
@@ -75,7 +75,7 @@ export function CarrierForm() {
           <FormControl cols="full">
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="carrierType"
               label={t("Carrier type")}
               placeholder={t("Carrier type")}

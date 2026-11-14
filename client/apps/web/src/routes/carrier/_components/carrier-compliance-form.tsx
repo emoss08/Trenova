@@ -65,7 +65,7 @@ function CarrierInsurancePolicyEditor() {
                 name={`insurancePolicies.${index}.policyType`}
                 label={t("Policy type")}
                 placeholder={t("Select policy type")}
-                rules={{ required: true }}
+                required
                 options={carrierInsurancePolicyTypeChoices}
                 description={t("Coverage line this policy provides.")}
               />
@@ -76,7 +76,7 @@ function CarrierInsurancePolicyEditor() {
                 name={`insurancePolicies.${index}.policyNumber`}
                 label={t("Policy number")}
                 placeholder={t("e.g., AL-1234567")}
-                rules={{ required: true }}
+                required
                 description={t("Policy number as issued by the insurance provider.")}
                 maxLength={100}
               />
@@ -87,7 +87,7 @@ function CarrierInsurancePolicyEditor() {
                 name={`insurancePolicies.${index}.providerName`}
                 label={t("Provider")}
                 placeholder={t("e.g., Progressive Commercial")}
-                rules={{ required: true }}
+                required
                 description={t("Insurance company underwriting this policy.")}
                 maxLength={255}
               />
@@ -99,7 +99,7 @@ function CarrierInsurancePolicyEditor() {
                 label={t("Coverage amount")}
                 placeholder="1,000,000"
                 sideText="$"
-                rules={{ required: true }}
+                required
                 description={t("Coverage limit in dollars.")}
               />
             </FormControl>
@@ -109,7 +109,7 @@ function CarrierInsurancePolicyEditor() {
                 name={`insurancePolicies.${index}.effectiveDate`}
                 label={t("Effective date")}
                 placeholder={t("Effective date")}
-                rules={{ required: true }}
+                required
                 description={t("Date coverage under this policy begins.")}
               />
             </FormControl>
@@ -119,7 +119,7 @@ function CarrierInsurancePolicyEditor() {
                 name={`insurancePolicies.${index}.expirationDate`}
                 label={t("Expiration date")}
                 placeholder={t("Expiration date")}
-                rules={{ required: true }}
+                required
                 description={t("Date coverage under this policy ends.")}
               />
             </FormControl>
@@ -162,7 +162,7 @@ export function CarrierComplianceForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="complianceStatus"
               label={t("Compliance status")}
               placeholder={t("Compliance status")}
@@ -175,7 +175,7 @@ export function CarrierComplianceForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="safetyRating"
               label={t("Safety rating")}
               placeholder={t("Safety rating")}
@@ -196,7 +196,7 @@ export function CarrierComplianceForm() {
             <FormControl cols="full">
               <TextareaField
                 control={control}
-                rules={{ required: true }}
+                required
                 name="disqualifiedReason"
                 label={t("Disqualification reason")}
                 placeholder={t("Reason the carrier was disqualified")}

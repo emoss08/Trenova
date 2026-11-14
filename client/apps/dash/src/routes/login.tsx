@@ -184,6 +184,11 @@ export function DashLoginPage() {
             {t("Sign in to Trenova")}
           </a>
         </p>
+        <p className="mt-6 border-t border-border pt-4 text-center text-xs text-muted-foreground">
+          {t(
+            "Dash is provided by your carrier. Routes, assignments and times shown here come from your carrier, not from Trenova. Don't use Dash while your vehicle is moving.",
+          )}
+        </p>
       </m.div>
     </div>
   );

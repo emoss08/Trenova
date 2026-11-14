@@ -48,7 +48,7 @@ export function MemoryText() {
       <TextareaField<MemoryFormValues>
         control={control}
         name="content"
-        rules={{ required: true }}
+        required
         label={t("Memory")}
         placeholder={t("What should the agents know?")}
         autoFocus
@@ -132,7 +132,7 @@ function SubjectPicker({ subjectType }: { subjectType: AgentMemorySubjectType })
         <CustomerAutocompleteField
           control={control}
           name="subjectId"
-          rules={{ required: true }}
+          required
           label={t("Record")}
           placeholder={t("Which customer?")}
           triggerClassName={aicFieldTrigger}
@@ -144,7 +144,7 @@ function SubjectPicker({ subjectType }: { subjectType: AgentMemorySubjectType })
         <LocationAutocompleteField
           control={control}
           name="subjectId"
-          rules={{ required: true }}
+          required
           label={t("Record")}
           placeholder={t("Which location?")}
           triggerClassName={aicFieldTrigger}
@@ -156,7 +156,7 @@ function SubjectPicker({ subjectType }: { subjectType: AgentMemorySubjectType })
         <WorkerAutocompleteField
           control={control}
           name="subjectId"
-          rules={{ required: true }}
+          required
           label={t("Record")}
           placeholder={t("Which driver?")}
           triggerClassName={aicFieldTrigger}
@@ -168,7 +168,7 @@ function SubjectPicker({ subjectType }: { subjectType: AgentMemorySubjectType })
         <CarrierAutocompleteField
           control={control}
           name="subjectId"
-          rules={{ required: true }}
+          required
           label={t("Record")}
           placeholder={t("Which carrier?")}
           triggerClassName={aicFieldTrigger}

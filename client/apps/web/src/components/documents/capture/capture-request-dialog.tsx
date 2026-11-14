@@ -200,7 +200,7 @@ export function CaptureRequestDialog({
             name="deviceId"
             label={t("Computer")}
             placeholder={t("Choose a computer")}
-            rules={{ required: true }}
+            required
             clearable={false}
           />
         </FormControl>

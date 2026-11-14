@@ -152,7 +152,7 @@ export function IssueActionDialog({
                   description={t(
                     "Preset to the next rung from what is still active; choose another if the conduct warrants it.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               {meta.endsEmployment ? (
@@ -177,7 +177,7 @@ export function IssueActionDialog({
                   description={t(
                     "Sent to the driver in the notification and copied onto the timeline event for a suspension or termination.",
                   )}
-                  rules={{ required: true }}
+                  required
                   maxLength={4000}
                 />
               </FormControl>
@@ -203,7 +203,7 @@ export function IssueActionDialog({
                     description={t("How many days the driver is off duty for this suspension.")}
                     sideText="days"
                     min={1}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
               ) : null}

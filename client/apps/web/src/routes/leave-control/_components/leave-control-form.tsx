@@ -123,7 +123,7 @@ function MeasurementCard() {
               description={t(
                 "The twelve-month period every employee's entitlement is counted against.",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -162,7 +162,7 @@ function EntitlementCard() {
               description={t(
                 "Weeks of leave each eligible employee gets per period; the statute is a floor of twelve and a more generous figure is allowed.",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -174,7 +174,7 @@ function EntitlementCard() {
               description={t(
                 "Weeks allowed for military caregiver leave; twenty-six in a single twelve-month period under 29 CFR 825.127.",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -186,7 +186,7 @@ function EntitlementCard() {
               description={t(
                 "What one week of the entitlement converts to when leave is taken in hours.",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -220,7 +220,7 @@ function EligibilityCard() {
               description={t(
                 "Months since hire an employee needs before they qualify; twelve under 29 CFR 825.110(a), and they need not be consecutive.",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -232,7 +232,7 @@ function EligibilityCard() {
               description={t(
                 "Hours an employee must have worked in the prior twelve months; 1,250 under the statute, shown beside each case for the office to check.",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -244,7 +244,7 @@ function EligibilityCard() {
               description={t(
                 "Calendar days an employee has to return a medical certification once it is requested; at least fifteen under 29 CFR 825.305(b).",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>

@@ -252,7 +252,7 @@ function FactoringAgreementFields() {
               name="effectiveFrom"
               label={t("Starts")}
               description={t("The first day invoices are funded on these terms.")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -280,7 +280,7 @@ function FactoringAgreementFields() {
               decimalScale={2}
               min={0}
               max={100}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -293,7 +293,7 @@ function FactoringAgreementFields() {
               decimalScale={2}
               min={0}
               max={100}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -316,7 +316,7 @@ function FactoringAgreementFields() {
               decimalScale={0}
               min={0}
               max={MAX_CHARGEBACK_WINDOW_DAYS}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -326,7 +326,7 @@ function FactoringAgreementFields() {
               label={t("Recourse")}
               description={t("Who carries the loss when a customer never pays.")}
               options={recourseOptions}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -336,7 +336,7 @@ function FactoringAgreementFields() {
               label={t("Accounting treatment")}
               description={t("How funding is booked: a sale of the invoice, or a loan against it.")}
               options={treatmentOptions}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -419,7 +419,7 @@ function FactoringAgreementFields() {
               decimalScale={0}
               min={0}
               max={MAX_FUNDING_DAYS}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl>
@@ -430,7 +430,7 @@ function FactoringAgreementFields() {
               description={t(
                 "When the day's schedule of ready invoices is proposed, in your organization's time zone.",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl cols="full">

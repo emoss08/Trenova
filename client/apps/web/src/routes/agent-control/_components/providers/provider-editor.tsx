@@ -482,7 +482,7 @@ export function ProviderEditor({
             <SelectField<ProviderEditorValues>
               control={form.control}
               name="preset"
-              rules={{ required: true }}
+              required
               description={t("Where it runs. Choosing one fills in its usual settings.")}
               label={t("Provider")}
               placeholder={t("Choose a provider")}
@@ -495,7 +495,7 @@ export function ProviderEditor({
           <InputField<ProviderEditorValues>
             control={form.control}
             name="name"
-            rules={{ required: true }}
+            required
             description={t("What this provider is called across Trenova.")}
             label={t("Name")}
             autoFocus={create}
@@ -505,7 +505,7 @@ export function ProviderEditor({
           <SelectField<ProviderEditorValues>
             control={form.control}
             name="kind"
-            rules={{ required: true }}
+            required
             description={t("The API this endpoint speaks.")}
             label={t("Kind")}
             placeholder={t("Kind")}
@@ -780,7 +780,7 @@ export function ProviderEditor({
             <InputField<ProviderEditorValues>
               control={form.control}
               name="timeoutSeconds"
-              rules={{ required: true }}
+              required
               description={t("How long one call may run before it's abandoned.")}
               type="number"
               label={t("Timeout")}
@@ -793,7 +793,7 @@ export function ProviderEditor({
             <InputField<ProviderEditorValues>
               control={form.control}
               name="maxConcurrent"
-              rules={{ required: true }}
+              required
               description={t("How many calls it may handle at the same time.")}
               type="number"
               label={t("Concurrent calls")}
@@ -1687,7 +1687,7 @@ function AdvancedFields({ catalog }: { catalog: AIProviderCatalog }) {
         <SelectField<ProviderEditorValues>
           control={control}
           name="structuredOutputMode"
-          rules={{ required: true }}
+          required
           description={t("How the model is asked to return structured data.")}
           label={t("Structured output")}
           placeholder={t("Structured output")}
@@ -1697,7 +1697,7 @@ function AdvancedFields({ catalog }: { catalog: AIProviderCatalog }) {
         <InputField<ProviderEditorValues>
           control={control}
           name="maxTokens"
-          rules={{ required: true }}
+          required
           description={t("The longest reply the model may write.")}
           type="number"
           label={t("Most tokens per reply")}
@@ -1708,7 +1708,7 @@ function AdvancedFields({ catalog }: { catalog: AIProviderCatalog }) {
         <SelectField<ProviderEditorValues>
           control={control}
           name="reasoningEffort"
-          rules={{ required: true }}
+          required
           description={t("How much the model thinks before it answers.")}
           label={t("Reasoning")}
           placeholder={t("Reasoning")}
@@ -1719,7 +1719,7 @@ function AdvancedFields({ catalog }: { catalog: AIProviderCatalog }) {
           <SelectField<ProviderEditorValues>
             control={control}
             name="thinkingStyle"
-            rules={{ required: true }}
+            required
             description={t("How extended thinking is requested from the model.")}
             label={t("Thinking")}
             placeholder={t("Thinking")}
@@ -1737,13 +1737,13 @@ function AdvancedFields({ catalog }: { catalog: AIProviderCatalog }) {
             label={t("Vector size")}
             placeholder={t("Choose")}
             options={dimensions}
-            isClearable
+            clearable
             triggerClassName={aicFieldTrigger}
           />
           <SelectField<ProviderEditorValues>
             control={control}
             name="embeddingInputStyle"
-            rules={{ required: true }}
+            required
             description={t("How text is labelled when it's sent for embedding.")}
             label={t("Embedding input")}
             placeholder={t("Embedding input")}

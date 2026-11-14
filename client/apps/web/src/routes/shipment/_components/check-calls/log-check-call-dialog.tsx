@@ -172,7 +172,7 @@ export function LogCheckCallDialog({
                     name="shipmentMoveId"
                     label={t("Move")}
                     options={moveOptions}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
               ) : null}
@@ -200,7 +200,7 @@ export function LogCheckCallDialog({
                     label={t("Stop")}
                     options={stopOptions}
                     placeholder={t("Choose the stop")}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
               ) : null}
@@ -247,7 +247,7 @@ export function LogCheckCallDialog({
                     name="delayReason"
                     label={t("Why")}
                     maxLength={CHECK_CALL_LIMITS.delayReason}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
               ) : null}

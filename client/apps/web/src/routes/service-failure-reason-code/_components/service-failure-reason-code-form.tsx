@@ -39,7 +39,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             name="code"
             label={t("Reason code")}
             placeholder="LATE_DELIVERY"
-            rules={{ required: true }}
+            required
             maxLength={64}
             description={t("Stable identifier used for reporting, audit, and integrations.")}
             disabled={disabled}
@@ -51,7 +51,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             name="label"
             label={t("Display name")}
             placeholder={t("Late delivery")}
-            rules={{ required: true }}
+            required
             maxLength={120}
             description={t("Name shown to operations and billing users.")}
             disabled={disabled}
@@ -64,7 +64,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             label={t("Category")}
             placeholder={t("Select category")}
             options={serviceFailureReasonCategoryChoices}
-            rules={{ required: true }}
+            required
             isReadOnly={disabled}
           />
         </FormControl>
@@ -75,7 +75,7 @@ export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean 
             label={t("Applies To")}
             placeholder={t("Select stop type")}
             options={serviceFailureReasonCodeAppliesToChoices}
-            rules={{ required: true }}
+            required
             isReadOnly={disabled}
           />
         </FormControl>

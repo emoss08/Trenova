@@ -257,7 +257,7 @@ function ApproveEdited({ suggestion, busy, onClose, onApprove }: ApproveEditedPr
       <TextareaField<ApproveEditedValues>
         control={form.control}
         name="content"
-        rules={{ required: true }}
+        required
         label={t("Memory")}
         autoFocus
         maxLength={limit}

@@ -25,7 +25,7 @@ export function APIKeyForm() {
             label={t("Display name")}
             placeholder={t("Warehouse connector")}
             description={t("Used in the API keys table and audit trail.")}
-            rules={{ required: true }}
+            required
           />
         </FormControl>
         <FormControl>

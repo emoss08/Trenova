@@ -21,7 +21,10 @@ vi.mock("@/lib/queries/organization", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/queries/organization")>()),
   organization: {
     detail: (id: string) => ({ queryKey: ["organization", "detail", id], queryFn: mocks.detail }),
-    logo: (id: string) => ({ queryKey: ["organization", "logo", id], queryFn: async () => "" }),
+    branding: (id: string) => ({
+      queryKey: ["organization", "branding", id],
+      queryFn: async () => ({ logoUrl: "", iconUrl: "" }),
+    }),
   },
 }));
 vi.mock("@/hooks/use-permission", () => ({

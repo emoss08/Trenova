@@ -150,7 +150,7 @@ export function RecordTestDialog({
                   description={t(
                     "Reasonable suspicion and post-accident tests must say what prompted them.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -163,7 +163,7 @@ export function RecordTestDialog({
                   description={t(
                     "Drug results go through an MRO; alcohol results are graded by the concentration.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
 
@@ -177,7 +177,7 @@ export function RecordTestDialog({
                       "What the supervisor observed, or the accident that triggered the collection",
                     )}
                     description={t("Kept with the test as the documented basis for ordering it.")}
-                    rules={{ required: true }}
+                    required
                     maxLength={2000}
                   />
                 </FormControl>

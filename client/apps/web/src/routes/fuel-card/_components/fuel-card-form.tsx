@@ -59,7 +59,7 @@ export function FuelCardForm({ isEdit, cancelled = false, cancelReason }: FuelCa
               name="provider"
               label={t("Provider")}
               options={fuelCardProviderChoices}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a provider")}
               isReadOnly={locked}
               description={t(
@@ -84,7 +84,7 @@ export function FuelCardForm({ isEdit, cancelled = false, cancelReason }: FuelCa
               placeholder="4821"
               maxLength={4}
               inputMode="numeric"
-              rules={{ required: true }}
+              required
               readOnly={locked}
               description={t("The four digits printed at the end of the card number.")}
             />
@@ -96,7 +96,7 @@ export function FuelCardForm({ isEdit, cancelled = false, cancelReason }: FuelCa
               label={t("Label")}
               placeholder={t("e.g. Unit 118 card")}
               maxLength={100}
-              rules={{ required: true }}
+              required
               readOnly={locked}
               description={t("How the card is referred to in pickers and on purchases.")}
             />
@@ -107,7 +107,7 @@ export function FuelCardForm({ isEdit, cancelled = false, cancelReason }: FuelCa
               name="status"
               label={t("Status")}
               options={EDITABLE_STATUS_OPTIONS}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a status")}
               isReadOnly={locked}
               description={t(

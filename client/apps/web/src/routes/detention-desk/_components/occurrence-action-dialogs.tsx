@@ -92,7 +92,7 @@ export function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: Action
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("Select a coded reason")}
-                  rules={{ required: true }}
+                  required
                   options={detentionWaiverReasonChoices}
                   description={t("The coded reason waiver leakage is reported against.")}
                 />
@@ -105,7 +105,7 @@ export function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: Action
                   placeholder={t(
                     "Dock crew was short-staffed; customer asked for a one-time concession",
                   )}
-                  rules={{ required: true }}
+                  required
                   description={t("Context the next person reviewing this waiver will need.")}
                 />
               </FormControl>
@@ -175,7 +175,7 @@ export function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: Acti
                   placeholder={t(
                     "Customer claims the driver arrived 40 minutes later than our records show",
                   )}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "Their claim, verbatim where possible — it decides which evidence matters.",
                   )}

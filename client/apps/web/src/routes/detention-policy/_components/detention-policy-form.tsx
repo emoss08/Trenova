@@ -81,7 +81,7 @@ export function DetentionPolicyForm() {
               name="name"
               label={t("Name")}
               placeholder={t("Standard dry van detention")}
-              rules={{ required: true }}
+              required
               maxLength={100}
               description={t("Human-friendly name shown in lists, notices, and audit history.")}
             />
@@ -92,7 +92,7 @@ export function DetentionPolicyForm() {
               name="code"
               label={t("Code")}
               placeholder={t("DET-STD")}
-              rules={{ required: true }}
+              required
               maxLength={50}
               description={t("Short identifier quoted on notices and invoices.")}
             />
@@ -103,7 +103,7 @@ export function DetentionPolicyForm() {
               name="status"
               label={t("Status")}
               placeholder={t("Select status")}
-              rules={{ required: true }}
+              required
               options={detentionPolicyStatusChoices}
               description={t(
                 "Only Active policies participate in resolution; Draft lets you build and backtest safely.",
@@ -270,7 +270,7 @@ export function DetentionPolicyForm() {
               name="clockStartBasis"
               label={t("Clock starts at")}
               placeholder={t("Select clock basis")}
-              rules={{ required: true }}
+              required
               options={detentionClockStartBasisChoices}
               description={CLOCK_START_HELP[clockStartBasis ?? ""]}
             />
@@ -281,7 +281,7 @@ export function DetentionPolicyForm() {
               name="lateArrivalRule"
               label={t("If the driver arrives late")}
               placeholder={t("Select late arrival rule")}
-              rules={{ required: true }}
+              required
               options={detentionLateArrivalRuleChoices}
               description={LATE_ARRIVAL_HELP[lateArrivalRule ?? ""]}
             />
@@ -325,7 +325,7 @@ export function DetentionPolicyForm() {
               label={t("Free time")}
               placeholder="120"
               sideText="min"
-              rules={{ required: true }}
+              required
               description={t(
                 "Minutes the customer gets before charges begin. Industry standard is 120.",
               )}
@@ -395,7 +395,7 @@ export function DetentionPolicyForm() {
               name="roundingMode"
               label={t("Rounding")}
               placeholder={t("Select rounding mode")}
-              rules={{ required: true }}
+              required
               options={detentionRoundingModeChoices}
               description={t("How partial increments are billed once free time is exhausted.")}
             />
@@ -408,7 +408,7 @@ export function DetentionPolicyForm() {
                 label={t("Increment")}
                 placeholder="15"
                 sideText="min"
-                rules={{ required: true }}
+                required
                 description={t(
                   "The billing unit minutes are rounded onto. Typically 15, 30, or 60.",
                 )}
@@ -429,7 +429,7 @@ export function DetentionPolicyForm() {
               name="rateSource"
               label={t("Rate source")}
               placeholder={t("Select rate source")}
-              rules={{ required: true }}
+              required
               options={detentionRateSourceChoices}
               description={t(
                 "A flat hourly accessorial rate, or a graduated ladder that escalates with dwell.",
@@ -442,7 +442,7 @@ export function DetentionPolicyForm() {
               name="accessorialChargeId"
               label={t("Accessorial charge")}
               placeholder={t("Select accessorial charge")}
-              rules={{ required: true }}
+              required
               description={t(
                 "The billing code detention posts against. Its rate applies when the source is Flat.",
               )}
@@ -525,7 +525,7 @@ export function DetentionPolicyForm() {
                 name="layoverAccessorialChargeId"
                 label={t("Layover charge")}
                 placeholder={t("Select layover charge")}
-                rules={{ required: true }}
+                required
                 description={t(
                   "The billing code the stay converts to once the layover boundary is crossed.",
                 )}
@@ -548,7 +548,7 @@ export function DetentionPolicyForm() {
               name="notificationRequirement"
               label={t("Notice requirement")}
               placeholder={t("Select requirement")}
-              rules={{ required: true }}
+              required
               options={detentionNotificationRequirementChoices}
               description={t(
                 "Whether the contract obligates a written notice before detention can bill.",
@@ -563,7 +563,7 @@ export function DetentionPolicyForm() {
                   name="unnotifiedBehavior"
                   label={t("If the notice is missed")}
                   placeholder={t("Select behavior")}
-                  rules={{ required: true }}
+                  required
                   options={detentionUnnotifiedBehaviorChoices}
                   description={
                     notificationRequirement === "Required"

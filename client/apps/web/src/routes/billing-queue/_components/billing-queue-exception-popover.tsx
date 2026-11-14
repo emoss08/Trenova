@@ -157,7 +157,7 @@ export function BillingQueueExceptionPopover({
                 label={t("Reason")}
                 placeholder={t("Select reason...")}
                 options={REASON_OPTIONS}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl>
@@ -166,9 +166,7 @@ export function BillingQueueExceptionPopover({
                 name="exceptionNotes"
                 label={t("Notes")}
                 placeholder={t("Add notes...")}
-                rules={{
-                  required: targetStatus === "Exception",
-                }}
+                required={targetStatus === "Exception"}
               />
             </FormControl>
           </FormGroup>

@@ -168,7 +168,7 @@ export function PositionDialog({
                   name="code"
                   label={t("Code")}
                   placeholder={t("e.g. DRV-OTR")}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "A short identifier that must be unique across the organisation, whatever its case.",
                   )}
@@ -183,7 +183,7 @@ export function PositionDialog({
                   description={t(
                     "The name of the job as it appears on the chart and on each holder's record.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -194,7 +194,7 @@ export function PositionDialog({
                   options={DEPARTMENT_OPTIONS}
                   placeholder={t("Pick a department")}
                   description={t("The part of the business the position sits in.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -214,7 +214,7 @@ export function PositionDialog({
                   label={t("Reports to")}
                   options={reportsToOptions}
                   placeholder={t("Pick a position")}
-                  isClearable
+                  clearable
                   description={t(
                     "The position this one answers to; leave it empty for the top of the chart. A person's own manager is set on their record, because two people in the same position can report to different managers.",
                   )}

@@ -430,7 +430,7 @@ function DeliveryDialog({
                       name="sftpHost"
                       label={t("Host")}
                       placeholder="sftp.factor.com"
-                      rules={{ required: true }}
+                      required
                     />
                   </FormControl>
                   <FormControl>
@@ -440,7 +440,7 @@ function DeliveryDialog({
                       label={t("Port")}
                       min={1}
                       max={MAX_PORT}
-                      rules={{ required: true }}
+                      required
                     />
                   </FormControl>
                   <FormControl>
@@ -448,7 +448,7 @@ function DeliveryDialog({
                       control={control}
                       name="sftpUsername"
                       label={t("User name")}
-                      rules={{ required: true }}
+                      required
                     />
                   </FormControl>
                   <FormControl>
@@ -458,7 +458,7 @@ function DeliveryDialog({
                       label={t("Folder")}
                       placeholder="/incoming"
                       description={t("Each schedule is uploaded to a folder named for it inside.")}
-                      rules={{ required: true }}
+                      required
                     />
                   </FormControl>
                   <FormControl cols="full">
@@ -476,7 +476,7 @@ function DeliveryDialog({
                         name="sftpSecret"
                         label={t("Password")}
                         placeholder={secretKept ? t("Stored. Leave blank to keep it.") : undefined}
-                        rules={{ required: !secretKept }}
+                        required={!secretKept}
                       />
                     ) : (
                       <SensitiveTextareaField
@@ -488,7 +488,7 @@ function DeliveryDialog({
                             ? t("Stored. Leave blank to keep it.")
                             : "-----BEGIN OPENSSH PRIVATE KEY-----"
                         }
-                        rules={{ required: !secretKept }}
+                        required={!secretKept}
                       />
                     )}
                   </FormControl>
@@ -502,7 +502,7 @@ function DeliveryDialog({
                         "The server's public key from the factor, in known_hosts form. A server presenting any other key is refused.",
                       )}
                       rows={2}
-                      rules={{ required: true }}
+                      required
                     />
                   </FormControl>
                 </>

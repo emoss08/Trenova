@@ -126,7 +126,7 @@ export function BulkEditDialog({
                   label={t("Field")}
                   placeholder={fieldsQuery.isPending ? t("Loading fields...") : t("Choose a field")}
                   options={fields.map((entry) => ({ value: entry.name, label: t(entry.label) }))}
-                  rules={{ required: true }}
+                  required
                   onValueChange={() => setValue("value", "")}
                 />
               </FormControl>
@@ -144,7 +144,7 @@ export function BulkEditDialog({
                       renderOption={(option) => (
                         <span className="truncate">{recordOptionLabel(option)}</span>
                       )}
-                      rules={{ required: true }}
+                      required
                     />
                   ) : (
                     <SelectField
@@ -156,7 +156,7 @@ export function BulkEditDialog({
                         value: option.value,
                         label: t(option.label),
                       }))}
-                      rules={{ required: true }}
+                      required
                     />
                   )}
                 </FormControl>

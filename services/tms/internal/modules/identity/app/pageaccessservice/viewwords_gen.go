@@ -242,6 +242,7 @@ var viewWords = map[string][]viewWord{
 	"organization": {
 		{Label: "name", Fields: []string{"name"}},
 		{Label: "logo URL", Fields: []string{"logoUrl"}},
+		{Label: "icon URL", Fields: []string{"iconUrl"}},
 	},
 	"pay_advance": {
 		{Label: "reference", Fields: []string{"reference"}},

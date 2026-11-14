@@ -164,7 +164,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   description={t(
                     "A short identifier that must be unique across your pools; it is saved in upper case.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -174,7 +174,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   label={t("Name")}
                   placeholder={t("e.g. DOT safety-sensitive drivers")}
                   description={t("How the pool is referred to on rounds and reports.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl cols="full">
@@ -197,7 +197,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   description={t(
                     "Whether the pool is in use; an inactive pool stays on record with its past rounds.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -210,7 +210,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                   description={t(
                     "How often a round is drawn; each round takes its share of the annual rate.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -223,7 +223,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                     "Annual rate as a percentage of the pool; FMCSA requires at least {0}% for drugs (49 CFR 382.305).",
                     DOT_MINIMUM_DRUG_RATE,
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -236,7 +236,7 @@ export function RandomPoolDialog({ open, onOpenChange, pool }: RandomPoolDialogP
                     "Annual rate as a percentage of the pool; FMCSA requires at least {0}% for alcohol (49 CFR 382.305).",
                     DOT_MINIMUM_ALCOHOL_RATE,
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl cols="full">

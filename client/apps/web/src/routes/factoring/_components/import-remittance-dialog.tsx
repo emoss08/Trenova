@@ -234,7 +234,7 @@ function ImportSession({
                     name="factoringCompanyId"
                     label={t("Factor")}
                     placeholder={t("Select the factor")}
-                    rules={{ required: true }}
+                    required
                     disabled={busy || Boolean(factoringCompanyId)}
                   />
                 </FormControl>
@@ -244,7 +244,7 @@ function ImportSession({
                     name="defaultKind"
                     label={t("Report of")}
                     options={kindOptions}
-                    rules={{ required: true }}
+                    required
                     isReadOnly={busy}
                     description={t("What a line records when the file has no column saying so.")}
                   />

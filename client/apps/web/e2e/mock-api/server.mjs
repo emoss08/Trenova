@@ -22,7 +22,7 @@ function send(res, status, payload, headers = {}) {
   res.end(payload === undefined ? "" : JSON.stringify(payload));
 }
 
-/** A multipart form as the document upload route reads it: its text fields and the file's name, type and size. */
+/** A multipart form as the upload routes read it: its text fields and the file's name, type, size and bytes. */
 function parseMultipart(buffer, contentType) {
   const boundary = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(contentType);
   if (!boundary) return undefined;
@@ -40,7 +40,7 @@ function parseMultipart(buffer, contentType) {
       const name = /name="([^"]*)"/i.exec(head)?.[1];
       const fileName = /filename="([^"]*)"/i.exec(head)?.[1];
       if (fileName !== undefined) {
-        form.file = { name: fileName, type: /content-type:\s*([^\r\n]+)/i.exec(head)?.[1]?.trim() ?? "", size: content.length };
+        form.file = { name: fileName, type: /content-type:\s*([^\r\n]+)/i.exec(head)?.[1]?.trim() ?? "", size: content.length, content };
       } else if (name) {
         form.fields[name] = content.toString("utf8");
       }

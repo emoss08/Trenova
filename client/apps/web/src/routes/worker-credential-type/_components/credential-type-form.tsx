@@ -57,7 +57,7 @@ export function CredentialTypeForm({
               name="code"
               label={t("Code")}
               placeholder={t("e.g. HAZMAT")}
-              rules={{ required: true }}
+              required
               disabled={isSystem}
               description={t("Short unique identifier. Letters, digits, dashes and underscores.")}
             />
@@ -68,7 +68,7 @@ export function CredentialTypeForm({
               name="name"
               label={t("Name")}
               placeholder={t("e.g. Hazmat Endorsement")}
-              rules={{ required: true }}
+              required
               description={t(
                 "Shown on worker records, in credential pickers and on compliance reports.",
               )}
@@ -80,7 +80,7 @@ export function CredentialTypeForm({
               name="category"
               label={t("Category")}
               options={CATEGORY_OPTIONS}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a category")}
               description={t("Groups the credential on the worker's record and in the type list.")}
             />
@@ -91,7 +91,7 @@ export function CredentialTypeForm({
               name="status"
               label={t("Status")}
               options={statusChoices}
-              rules={{ required: true }}
+              required
               isReadOnly={Boolean(profileField)}
               placeholder={t("Select a status")}
               description={

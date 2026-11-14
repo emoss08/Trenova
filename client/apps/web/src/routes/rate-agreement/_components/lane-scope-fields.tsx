@@ -70,7 +70,7 @@ export function LaneScopeFields<T extends FieldValues>({
       <FormControl cols={scopeType === "Any" ? "full" : 1}>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name={names.scopeType as never}
           label={isOrigin ? t("Origin Scope") : t("Destination Scope")}
           placeholder={t("Select scope")}
@@ -85,7 +85,7 @@ export function LaneScopeFields<T extends FieldValues>({
         <FormControl>
           <RateZoneAutocompleteField
             control={control}
-            rules={{ required: true }}
+            required
             name={names.scopeValue as never}
             label={isOrigin ? t("Origin Zone") : t("Destination Zone")}
             placeholder={t("Select zone")}
@@ -98,7 +98,7 @@ export function LaneScopeFields<T extends FieldValues>({
         <FormControl>
           <UsStateAutocompleteField
             control={control}
-            rules={{ required: true }}
+            required
             name={names.scopeValue as never}
             label={isOrigin ? t("Origin State") : t("Destination State")}
             placeholder={t("Select state")}
@@ -111,7 +111,7 @@ export function LaneScopeFields<T extends FieldValues>({
         <FormControl>
           <LocationAutocompleteField
             control={control}
-            rules={{ required: true }}
+            required
             name={names.scopeValue as never}
             label={isOrigin ? t("Origin Location") : t("Destination Location")}
             placeholder={t("Select location")}
@@ -125,7 +125,7 @@ export function LaneScopeFields<T extends FieldValues>({
           <FormControl>
             <UsStateAutocompleteField
               control={control}
-              rules={{ required: true }}
+              required
               name={names.scopeValue as never}
               label={isOrigin ? t("Origin State") : t("Destination State")}
               placeholder={t("Select state")}
@@ -135,7 +135,7 @@ export function LaneScopeFields<T extends FieldValues>({
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name={names.city as never}
               label={isOrigin ? t("Origin City") : t("Destination City")}
               placeholder={t("City")}
@@ -151,7 +151,7 @@ export function LaneScopeFields<T extends FieldValues>({
         <FormControl>
           <InputField
             control={control}
-            rules={{ required: true }}
+            required
             name={names.scopeValue as never}
             label={
               scopeType === "Zip3"
@@ -176,7 +176,7 @@ export function LaneScopeFields<T extends FieldValues>({
         <FormControl>
           <InputField
             control={control}
-            rules={{ required: true }}
+            required
             name={names.scopeValue as never}
             label={isOrigin ? t("Origin Country") : t("Destination Country")}
             placeholder={t("USA")}
@@ -190,7 +190,7 @@ export function LaneScopeFields<T extends FieldValues>({
           <FormControl>
             <NumberField
               control={control}
-              rules={{ required: true }}
+              required
               name={names.radiusMeters as never}
               label={isOrigin ? t("Origin Radius") : t("Destination Radius")}
               placeholder="80000"
@@ -201,7 +201,7 @@ export function LaneScopeFields<T extends FieldValues>({
           <FormControl>
             <NumberField
               control={control}
-              rules={{ required: true }}
+              required
               name={names.latitude as never}
               label={isOrigin ? t("Origin Latitude") : t("Destination Latitude")}
               placeholder="32.7767"
@@ -211,7 +211,7 @@ export function LaneScopeFields<T extends FieldValues>({
           <FormControl>
             <NumberField
               control={control}
-              rules={{ required: true }}
+              required
               name={names.longitude as never}
               label={isOrigin ? t("Origin Longitude") : t("Destination Longitude")}
               placeholder="-96.7970"

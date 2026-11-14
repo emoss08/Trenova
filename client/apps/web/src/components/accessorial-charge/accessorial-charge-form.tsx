@@ -49,7 +49,7 @@ export function AccessorialChargeForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="status"
           label={t("Status")}
           placeholder={t("Status")}
@@ -62,7 +62,7 @@ export function AccessorialChargeForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="code"
           label={t("Code")}
           placeholder={t("Code")}
@@ -74,7 +74,7 @@ export function AccessorialChargeForm() {
       <FormControl cols="full">
         <TextareaField
           control={control}
-          rules={{ required: true }}
+          required
           name="description"
           label={t("Description")}
           placeholder={t("Description")}
@@ -86,7 +86,7 @@ export function AccessorialChargeForm() {
       <FormControl cols={methodIsPerUnit ? 1 : "full"}>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="method"
           label={t("Method")}
           placeholder={t("Method")}
@@ -100,7 +100,7 @@ export function AccessorialChargeForm() {
         <FormControl>
           <SelectField
             control={control}
-            rules={{ required: methodIsPerUnit }}
+            required={methodIsPerUnit}
             name="rateUnit"
             label={t("Rate unit")}
             placeholder={t("Rate unit")}
@@ -112,7 +112,7 @@ export function AccessorialChargeForm() {
       <FormControl cols="full">
         <NumberField
           control={control}
-          rules={{ required: true }}
+          required
           name="amount"
           label={t("Amount")}
           placeholder={t("Amount")}

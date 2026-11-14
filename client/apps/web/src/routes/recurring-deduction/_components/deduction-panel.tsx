@@ -191,7 +191,7 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             name="workerId"
             label={t("Driver")}
             placeholder={t("Select driver")}
-            rules={{ required: true }}
+            required
             description={t("The driver whose settlements this deduction is withheld from.")}
           />
         </FormControl>
@@ -202,7 +202,7 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             label={t("Pay code")}
             placeholder={t("Select pay code")}
             direction="Deduction"
-            rules={{ required: true }}
+            required
             description={t(
               "Deduction code that categorizes the withholding and routes it to the code's GL account when one is mapped.",
             )}
@@ -214,7 +214,7 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             name="frequency"
             label={t("Frequency")}
             options={recurringDeductionFrequencyChoices}
-            rules={{ required: true }}
+            required
             description={t(
               "Every settlement withholds each cycle; monthly withholds only on the first settlement of each month.",
             )}
@@ -227,7 +227,7 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
               name="status"
               label={t("Status")}
               options={recurringDeductionStatusChoices}
-              rules={{ required: true }}
+              required
               description={t(
                 "Pause to skip upcoming settlements without losing history; completed deductions stop permanently.",
               )}
@@ -240,7 +240,7 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             name="description"
             label={t("Description")}
             placeholder={t("e.g. Occupational accident insurance")}
-            rules={{ required: true }}
+            required
             description={t(
               "Shown verbatim on the driver's settlement statement, so make it recognizable.",
             )}
@@ -254,7 +254,7 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             decimalScale={2}
             fixedDecimalScale
             sideText={t("USD")}
-            rules={{ required: true }}
+            required
             description={t("The amount withheld each time the deduction applies to a settlement.")}
           />
         </FormControl>
@@ -274,7 +274,7 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
             control={control}
             name="startDate"
             label={t("Start date")}
-            rules={{ required: true }}
+            required
             description={t(
               "The deduction begins applying to settlements whose period ends after this date.",
             )}

@@ -20,7 +20,7 @@ export function EmailProfileForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="name"
           label={t("Profile name")}
           placeholder={t("Billing sender")}
@@ -31,7 +31,7 @@ export function EmailProfileForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="status"
           label={t("Status")}
           placeholder={t("Status")}
@@ -42,7 +42,7 @@ export function EmailProfileForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="provider"
           label={t("Provider")}
           placeholder={t("Provider")}
@@ -53,7 +53,7 @@ export function EmailProfileForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="senderName"
           label={t("Sender name")}
           placeholder={t("Trenova billing")}
@@ -64,7 +64,7 @@ export function EmailProfileForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="senderEmail"
           label={t("Sender email")}
           placeholder={t("billing@example.com")}

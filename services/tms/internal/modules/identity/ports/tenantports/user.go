@@ -21,6 +21,7 @@ type UserOrganizationResponse struct {
 	City      string   `json:"city"`
 	State     string   `json:"state"`
 	LogoURL   string   `json:"logoUrl"`
+	IconURL   string   `json:"iconUrl"`
 	IsDefault bool     `json:"isDefault"`
 	IsCurrent bool     `json:"isCurrent"`
 }

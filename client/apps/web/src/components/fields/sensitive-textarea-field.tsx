@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { cn } from "@trenova/shared/lib/utils";
 import { EyeIcon, EyeOffIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
@@ -13,6 +14,7 @@ export function SensitiveTextareaField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   className,
   disabled,
   placeholder,
@@ -29,13 +31,13 @@ export function SensitiveTextareaField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => (
         <FieldWrapper
           name={name}
           label={label}
           description={description}
-          required={!!rules?.required}
+          required={isRequired(rules, required)}
           error={fieldState.error?.message}
         >
           <div className="relative">

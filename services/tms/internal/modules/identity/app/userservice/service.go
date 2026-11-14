@@ -281,6 +281,7 @@ func (s *Service) GetOrganizations(
 			City:      r.Organization.City,
 			State:     organizationStateName(r.Organization),
 			LogoURL:   r.Organization.LogoURL,
+			IconURL:   r.Organization.IconURL,
 			IsDefault: r.IsDefault,
 			IsCurrent: r.OrganizationID == currentOrgID,
 		}

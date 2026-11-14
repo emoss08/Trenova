@@ -6,7 +6,6 @@ import {
 import { useChangedFieldNames } from "@/hooks/use-dirty-fields";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useFormFieldRegistry } from "@trenova/shared/lib/form-field-registry";
@@ -111,10 +110,11 @@ function SaveDockContent<T extends string = string>({
           type="submit"
           variant="ghostInvert"
           className="pr-2"
-          disabled={isSubmitting}
+          isLoading={isSubmitting}
+          loadingText={t("Saving...")}
           form={formId}
         >
-          {isSubmitting ? <Spinner /> : (saveButtonContent ?? t("Save changes"))}
+          {saveButtonContent ?? t("Save changes")}
         </Button>
       )}
     </ActionDock>

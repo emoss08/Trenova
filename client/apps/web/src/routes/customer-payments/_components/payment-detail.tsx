@@ -513,7 +513,7 @@ function ReversePaymentButton({ payment }: { payment: CustomerPaymentDetail }) {
               control={control}
               name="accountingDate"
               label={t("Accounting date")}
-              rules={{ required: true }}
+              required
             />
             <TextareaField
               control={control}

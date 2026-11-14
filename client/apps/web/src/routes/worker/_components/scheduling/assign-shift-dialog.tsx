@@ -155,7 +155,7 @@ export function AssignShiftDialog({
                   name="shiftTemplateId"
                   label={t("Shift")}
                   placeholder={t("Search shifts")}
-                  rules={{ required: true }}
+                  required
                   onOptionChange={(option) => setPreview(previewOf(option))}
                   description={t("Only shifts in force can be assigned.")}
                 />
@@ -200,7 +200,7 @@ export function AssignShiftDialog({
                   name="effectiveFrom"
                   label={t("Effective from")}
                   placeholder={t("Today")}
-                  rules={{ required: true }}
+                  required
                   description={t("The first day the worker is on this pattern.")}
                 />
               </FormControl>

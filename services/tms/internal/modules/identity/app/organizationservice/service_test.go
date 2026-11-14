@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -106,12 +107,13 @@ func (m *mockOrganizationRepo) Update(
 	return args.Get(0).(*tenant.Organization), args.Error(1)
 }
 
-func (m *mockOrganizationRepo) ClearLogoURL(
+func (m *mockOrganizationRepo) ClearBrandImage(
 	ctx context.Context,
 	orgID pulid.ID,
+	image tenant.BrandImage,
 	version int64,
 ) (*tenant.Organization, error) {
-	args := m.Called(ctx, orgID, version)
+	args := m.Called(ctx, orgID, image, version)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -240,12 +242,13 @@ func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	repo := new(mockOrganizationRepo)
 	svc := &service{
-		db:         dbtest.NopConnection{},
-		l:          zap.NewNop(),
-		repo:       repo,
-		storage:    &noopStorageClient{},
-		storageCfg: &storageconfig.Config{PresignedURLExpiry: 15 * time.Minute},
-		v:          NewValidator(ValidatorParams{DB: pgstubtest.NewConnection(t)}),
+		db:           dbtest.NopConnection{},
+		l:            zap.NewNop(),
+		repo:         repo,
+		storage:      &noopStorageClient{},
+		storageCfg:   &storageconfig.Config{PresignedURLExpiry: 15 * time.Minute},
+		v:            NewValidator(ValidatorParams{DB: pgstubtest.NewConnection(t)}),
+		auditService: &mocks.NoopAuditService{},
 	}
 	return &testDeps{repo: repo, svc: svc}
 }
@@ -517,36 +520,59 @@ func TestUpdate_RepoUniqueConstraintUnknownUnchanged(t *testing.T) {
 	deps.repo.AssertExpectations(t)
 }
 
-func TestDeleteLogo_Success(t *testing.T) {
+func TestDeleteBrandImage_ClearsOnlyTheImageNamed(t *testing.T) {
 	t.Parallel()
-	deps := setupTest(t)
-	ctx := t.Context()
-	org := newTestOrganization()
-	org.LogoURL = "org/logo/path.webp"
 
-	cleared := newTestOrganization()
-	cleared.ID = org.ID
-	cleared.Version = org.Version + 1
-	cleared.LogoURL = ""
+	cases := []struct {
+		name  string
+		image tenant.BrandImage
+	}{
+		{name: "logo", image: tenant.BrandImageLogo},
+		{name: "icon", image: tenant.BrandImageIcon},
+	}
 
-	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(org, nil)
-	deps.repo.On("ClearLogoURL", mock.Anything, org.ID, org.Version).Return(cleared, nil)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			deps := setupTest(t)
+			org := newTestOrganization()
+			org.LogoURL = "org/logo/path.webp"
+			org.IconURL = "org/icon/path.webp"
 
-	result, err := deps.svc.DeleteLogo(ctx, tenantports.DeleteLogoRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: org.ID,
-			BuID:  org.BusinessUnitID,
-		},
-		OrganizationID: org.ID,
-	})
+			cleared := *org
+			cleared.Version = org.Version + 1
+			cleared.SetBrandImageKey(tc.image, "")
 
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "", result.LogoURL)
-	deps.repo.AssertExpectations(t)
+			deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(org, nil)
+			deps.repo.On("ClearBrandImage", mock.Anything, org.ID, tc.image, org.Version).
+				Return(&cleared, nil)
+
+			result, err := deps.svc.DeleteBrandImage(
+				t.Context(),
+				tenantports.DeleteBrandImageRequest{
+					TenantInfo: pagination.TenantInfo{
+						OrgID: org.ID,
+						BuID:  org.BusinessUnitID,
+					},
+					OrganizationID: org.ID,
+					Image:          tc.image,
+				},
+			)
+
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			assert.Empty(t, result.BrandImageKey(tc.image))
+			if tc.image == tenant.BrandImageLogo {
+				assert.Equal(t, "org/icon/path.webp", result.IconURL)
+			} else {
+				assert.Equal(t, "org/logo/path.webp", result.LogoURL)
+			}
+			deps.repo.AssertExpectations(t)
+		})
+	}
 }
 
-func TestDeleteLogo_ExternalURL_Success(t *testing.T) {
+func TestDeleteBrandImage_ExternalURL_Success(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	ctx := t.Context()
@@ -559,20 +585,76 @@ func TestDeleteLogo_ExternalURL_Success(t *testing.T) {
 	cleared.LogoURL = ""
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(org, nil)
-	deps.repo.On("ClearLogoURL", mock.Anything, org.ID, org.Version).Return(cleared, nil)
+	deps.repo.On("ClearBrandImage", mock.Anything, org.ID, tenant.BrandImageLogo, org.Version).
+		Return(cleared, nil)
 
-	result, err := deps.svc.DeleteLogo(ctx, tenantports.DeleteLogoRequest{
+	result, err := deps.svc.DeleteBrandImage(ctx, tenantports.DeleteBrandImageRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: org.ID,
 			BuID:  org.BusinessUnitID,
 		},
 		OrganizationID: org.ID,
+		Image:          tenant.BrandImageLogo,
 	})
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, "", result.LogoURL)
 	deps.repo.AssertExpectations(t)
+}
+
+func TestDeleteBrandImage_WithNothingStoredChangesNothing(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	org := newTestOrganization()
+	org.LogoURL = "org/logo/path.webp"
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(org, nil)
+
+	result, err := deps.svc.DeleteBrandImage(t.Context(), tenantports.DeleteBrandImageRequest{
+		TenantInfo:     pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+		OrganizationID: org.ID,
+		Image:          tenant.BrandImageIcon,
+	})
+
+	require.NoError(t, err)
+	assert.Same(t, org, result)
+	deps.repo.AssertNotCalled(t, "ClearBrandImage")
+}
+
+func TestGetBranding_ReturnsAURLForEachImageStored(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	org := newTestOrganization()
+	org.LogoURL = "https://cdn.example.com/logo.webp"
+	org.IconURL = "org/icon/path.webp"
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(org, nil)
+
+	branding, err := deps.svc.GetBranding(t.Context(), tenantports.GetBrandingRequest{
+		TenantInfo:     pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+		OrganizationID: org.ID,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "https://cdn.example.com/logo.webp", branding.LogoURL)
+	assert.Equal(t, "https://example.test/logo.png", branding.IconURL)
+}
+
+func TestGetBranding_LeavesAnImageNeverUploadedEmpty(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	org := newTestOrganization()
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(org, nil)
+
+	branding, err := deps.svc.GetBranding(t.Context(), tenantports.GetBrandingRequest{
+		TenantInfo:     pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+		OrganizationID: org.ID,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, &tenantports.Branding{}, branding)
 }
 
 func TestNew(t *testing.T) {

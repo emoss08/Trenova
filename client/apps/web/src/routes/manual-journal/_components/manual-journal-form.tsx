@@ -114,7 +114,7 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
               control={control}
               name="description"
               label={t("Description")}
-              rules={{ required: translate("Description is required") }}
+              required={translate("Description is required")}
               disabled={!isDraft}
               description={t("A short summary that will appear on the posted journal entry.")}
               placeholder={t("e.g. Accrue December fuel invoices")}
@@ -137,7 +137,7 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
               control={control}
               name="accountingDate"
               label={t("Accounting date")}
-              rules={{ required: translate("Accounting date is required") }}
+              required={translate("Accounting date is required")}
               disabled={!isDraft}
               description={t(
                 "The GL date for this entry. It must fall within an open fiscal period.",

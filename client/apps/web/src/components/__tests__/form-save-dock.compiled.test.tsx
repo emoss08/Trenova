@@ -1,6 +1,6 @@
 import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { Controller, FormProvider, useForm, type UseFormReturn } from "react-hook-form";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { FormChangesFooter, FormPanelSection } from "@/components/form-changes";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { useAnyFieldDirty, useChangedFieldNames } from "@/hooks/use-dirty-fields";
@@ -225,5 +225,49 @@ describe("dirty field hooks under the React Compiler", () => {
     act(() => result.current.form.setValue("name", "North", { shouldDirty: true }));
 
     expect(result.current.dirty).toBe(false);
+  });
+});
+
+function SavingForm({ onSave }: { onSave: () => Promise<void> }) {
+  const form = useForm<Settings>({ defaultValues: SAVED });
+
+  return (
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(onSave)}>
+        <TextField name="name" label="Name" />
+        <FormSaveDock />
+      </form>
+    </FormProvider>
+  );
+}
+
+describe("FormSaveDock while a save is in flight", () => {
+  it("keeps the save button's label in place, so the dock does not change size", async () => {
+    let finish: () => void = () => undefined;
+    const onSave = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    render(<SavingForm onSave={onSave} />);
+
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "North" } });
+    const save = await screen.findByRole("button", { name: "Save changes" });
+    fireEvent.submit(save.closest("form")!);
+
+    const saving = await screen.findByRole("button", { name: "Saving..." });
+    expect(saving).toBe(save);
+    expect(saving).toBeDisabled();
+    expect(saving).toHaveAttribute("aria-busy", "true");
+    expect(saving).toHaveTextContent("Save changes");
+    expect(saving.querySelector('[data-slot="button-spinner"]')).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Reset" })).toBeDisabled();
+
+    await act(async () => finish());
+
+    await waitFor(() => expect(saveButton()).toBeEnabled());
+    expect(save.querySelector('[data-slot="button-spinner"]')).toBeNull();
+    expect(onSave).toHaveBeenCalledTimes(1);
   });
 });

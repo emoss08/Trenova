@@ -105,7 +105,7 @@ export function RejectDocumentDialog({
                   placeholder={t(
                     "What is wrong with it, such as an illegible signature or the wrong load",
                   )}
-                  rules={{ required: true }}
+                  required
                   maxLength={DOCUMENT_REJECTION_REASON_MAX_LENGTH}
                 />
               </FormControl>

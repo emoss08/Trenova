@@ -99,7 +99,7 @@ export function CancelFuelCardDialog({
                   name="reason"
                   label={t("Reason")}
                   placeholder={t("e.g. Reported lost by the driver on 14 May")}
-                  rules={{ required: true }}
+                  required
                   maxLength={500}
                   description={t(
                     "At least ten characters. Kept with the card as the record of why it was cancelled.",

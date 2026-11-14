@@ -23,7 +23,7 @@ export function ManualJournalsPage() {
       }}
     >
       <DataTable<ManualJournalRow>
-        name="ManualJournal"
+        name="Manual Journal"
         emptyTitle={t("No manual journals yet")}
         queryKey="manual-journal-list"
         columns={columns}

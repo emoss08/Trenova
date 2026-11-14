@@ -121,7 +121,7 @@ export function ResolveEventDialog({
                   label={t("Resolution")}
                   options={options}
                   placeholder={t("Choose a resolution")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>

@@ -2260,10 +2260,10 @@ writes:
     tools: [order_update_charge]
 
   # organization
-  "DELETE /api/v1/organizations/:id/logo":
+  "DELETE /api/v1/organizations/:id/branding/:image":
     exempt: configuration
-    reason: "The organization's logo on every document it sends."
-  "POST /api/v1/organizations/:id/logo":
+    reason: "The organization's logo on every document it sends, and its icon in the sidebar."
+  "POST /api/v1/organizations/:id/branding/:image":
     exempt: infrastructure
     reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
   "PUT /api/v1/organizations/:id/microsoft-sso":

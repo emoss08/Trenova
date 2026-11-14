@@ -68,7 +68,7 @@ export function OrderForm({ mode }: OrderFormProps) {
           <FormControl>
             <CustomerAutocompleteField<Order>
               control={control}
-              rules={{ required: true }}
+              required
               name="customerId"
               label={t("Customer")}
               placeholder={t("Select a customer")}
@@ -118,7 +118,7 @@ export function OrderForm({ mode }: OrderFormProps) {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="currencyCode"
               label={t("Currency")}
               placeholder={t("Select currency")}

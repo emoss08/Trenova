@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
@@ -17,7 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestUploadLogo_RefusesAnInfectedFileBeforeItIsStored(t *testing.T) {
+func TestUploadBrandImage_RefusesAnInfectedFileBeforeItIsStored(t *testing.T) {
 	t.Parallel()
 
 	gate := contentscanportsmock.NewInfectedGate("Png.Exploit.CVE_2026-1")
@@ -31,9 +32,10 @@ func TestUploadLogo_RefusesAnInfectedFileBeforeItIsStored(t *testing.T) {
 	content := []byte("\x89PNG\r\n\x1a\ninfected")
 	orgID := pulid.MustNew("org_")
 
-	org, err := svc.UploadLogo(t.Context(), &tenantports.UploadLogoRequest{
+	org, err := svc.UploadBrandImage(t.Context(), &tenantports.UploadBrandImageRequest{
 		TenantInfo:     pagination.TenantInfo{OrgID: orgID, BuID: pulid.MustNew("bu_")},
 		OrganizationID: orgID,
+		Image:          tenant.BrandImageLogo,
 		File:           storageutil.NewMockFileHeader("logo.png", content, "image/png"),
 	}, pulid.MustNew("usr_"))
 

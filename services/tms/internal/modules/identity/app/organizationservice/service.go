@@ -129,6 +129,7 @@ func (s *service) Update(
 				return err
 			}
 			entity.LogoURL = stored.LogoURL
+			entity.IconURL = stored.IconURL
 
 			updated, err := s.repo.Update(txCtx, entity)
 			if err != nil {
@@ -186,23 +187,25 @@ func mapOrganizationUniqueConstraint(err error) error {
 	return multiErr
 }
 
-func (s *service) UploadLogo(
+func (s *service) UploadBrandImage(
 	ctx context.Context,
-	req *tenantports.UploadLogoRequest,
+	req *tenantports.UploadBrandImageRequest,
 	userID pulid.ID,
 ) (*tenant.Organization, error) {
 	log := s.l.With(
-		zap.String("operation", "UploadLogo"),
+		zap.String("operation", "UploadBrandImage"),
+		zap.String("image", string(req.Image)),
 		zap.String("userID", req.TenantInfo.UserID.String()),
 	)
 
-	if multiErr := s.validateLogoFile(req.File); multiErr != nil {
+	if multiErr := s.validateBrandImageFile(req.File); multiErr != nil {
 		return nil, multiErr
 	}
 
 	content, err := fileutils.ReadMultipart(req.File)
 	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to process uploaded logo").WithInternal(err)
+		return nil, errortypes.NewDatabaseError("Failed to process uploaded image").
+			WithInternal(err)
 	}
 	if _, err = contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
 		TenantInfo: req.TenantInfo,
@@ -216,7 +219,7 @@ func (s *service) UploadLogo(
 	contentType := req.File.Header.Get("Content-Type")
 	key := fileutils.GenerateStoragePath(
 		req.OrganizationID.String(),
-		"organization/logo",
+		"organization/"+string(req.Image),
 		req.File.Filename,
 	)
 
@@ -227,11 +230,11 @@ func (s *service) UploadLogo(
 		Body:        bytes.NewReader(content),
 		Metadata: map[string]string{
 			"original_name": req.File.Filename,
-			"resource_type": "organization-logo",
+			"resource_type": "organization-" + string(req.Image),
 			"resource_id":   req.OrganizationID.String(),
 		},
 	}); err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to upload organization logo").
+		return nil, errortypes.NewDatabaseError("Failed to upload organization image").
 			WithInternal(err)
 	}
 
@@ -246,8 +249,9 @@ func (s *service) UploadLogo(
 		return nil, err
 	}
 
-	previousLogo := entity.LogoURL
-	entity.LogoURL = key
+	original := *entity
+	previousKey := entity.BrandImageKey(req.Image)
+	entity.SetBrandImageKey(req.Image, key)
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
@@ -255,15 +259,8 @@ func (s *service) UploadLogo(
 		return nil, err
 	}
 
-	if previousLogo != "" && !fileutils.IsExternalURL(previousLogo) && previousLogo != key {
-		if delErr := s.storage.Delete(ctx, previousLogo); delErr != nil {
-			s.l.Warn(
-				"failed to delete previous organization logo",
-				zap.String("orgID", req.OrganizationID.String()),
-				zap.String("logoKey", previousLogo),
-				zap.Error(delErr),
-			)
-		}
+	if previousKey != key {
+		s.deleteBrandImageObject(ctx, req.OrganizationID, req.Image, previousKey)
 	}
 
 	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
@@ -272,7 +269,7 @@ func (s *service) UploadLogo(
 		Operation:      permission.OpUpdate,
 		UserID:         userID,
 		CurrentState:   jsonutils.MustToJSON(updatedEntity),
-		PreviousState:  jsonutils.MustToJSON(entity),
+		PreviousState:  jsonutils.MustToJSON(&original),
 		OrganizationID: entity.ID,
 		BusinessUnitID: entity.BusinessUnitID,
 	}, auditservice.WithComment("Organization updated")); err != nil {
@@ -282,10 +279,10 @@ func (s *service) UploadLogo(
 	return updatedEntity, nil
 }
 
-func (s *service) GetLogoURL(
+func (s *service) GetBranding(
 	ctx context.Context,
-	req tenantports.GetLogoURLRequest,
-) (*tenantports.GetLogoURLResponse, error) {
+	req tenantports.GetBrandingRequest,
+) (*tenantports.Branding, error) {
 	entity, err := s.repo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.OrganizationID,
@@ -296,29 +293,38 @@ func (s *service) GetLogoURL(
 		return nil, err
 	}
 
-	if entity.LogoURL == "" {
-		return nil, errortypes.NewNotFoundError("Organization logo not found")
+	logoURL, err := s.brandImageURL(ctx, entity.LogoURL)
+	if err != nil {
+		return nil, err
+	}
+	iconURL, err := s.brandImageURL(ctx, entity.IconURL)
+	if err != nil {
+		return nil, err
 	}
 
-	if fileutils.IsExternalURL(entity.LogoURL) {
-		return &tenantports.GetLogoURLResponse{URL: entity.LogoURL}, nil
+	return &tenantports.Branding{LogoURL: logoURL, IconURL: iconURL}, nil
+}
+
+func (s *service) brandImageURL(ctx context.Context, key string) (string, error) {
+	if key == "" || fileutils.IsExternalURL(key) {
+		return key, nil
 	}
 
 	url, err := s.storage.GetPresignedURL(ctx, &kernelports.PresignedURLParams{
-		Key:    entity.LogoURL,
+		Key:    key,
 		Expiry: s.storageCfg.GetPresignedURLExpiry(),
 	})
 	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to generate organization logo URL").
+		return "", errortypes.NewDatabaseError("Failed to generate organization image URL").
 			WithInternal(err)
 	}
 
-	return &tenantports.GetLogoURLResponse{URL: url}, nil
+	return url, nil
 }
 
-func (s *service) DeleteLogo(
+func (s *service) DeleteBrandImage(
 	ctx context.Context,
-	req tenantports.DeleteLogoRequest,
+	req tenantports.DeleteBrandImageRequest,
 ) (*tenant.Organization, error) {
 	org, err := s.repo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: pagination.TenantInfo{
@@ -330,55 +336,80 @@ func (s *service) DeleteLogo(
 		return nil, err
 	}
 
-	if org.LogoURL == "" {
+	previousKey := org.BrandImageKey(req.Image)
+	if previousKey == "" {
 		return org, nil
 	}
 
-	previousLogo := org.LogoURL
-	updatedOrg, err := s.repo.ClearLogoURL(ctx, req.OrganizationID, org.Version)
+	updatedOrg, err := s.repo.ClearBrandImage(ctx, req.OrganizationID, req.Image, org.Version)
 	if err != nil {
 		return nil, err
 	}
 
-	if !fileutils.IsExternalURL(previousLogo) {
-		if delErr := s.storage.Delete(ctx, previousLogo); delErr != nil {
-			s.l.Warn(
-				"failed to delete organization logo object after clearing logo URL",
-				zap.String("orgID", req.OrganizationID.String()),
-				zap.String("logoKey", previousLogo),
-				zap.Error(delErr),
-			)
-		}
+	s.deleteBrandImageObject(ctx, req.OrganizationID, req.Image, previousKey)
+
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
+		Resource:       permission.ResourceOrganization,
+		ResourceID:     updatedOrg.GetResourceID(),
+		Operation:      permission.OpUpdate,
+		UserID:         req.TenantInfo.UserID,
+		CurrentState:   jsonutils.MustToJSON(updatedOrg),
+		PreviousState:  jsonutils.MustToJSON(org),
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+	}, auditservice.WithComment("Organization updated")); err != nil {
+		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 
 	return updatedOrg, nil
 }
 
-func (s *service) validateLogoFile(file *multipart.FileHeader) error {
+func (s *service) deleteBrandImageObject(
+	ctx context.Context,
+	orgID pulid.ID,
+	image tenant.BrandImage,
+	key string,
+) {
+	if key == "" || fileutils.IsExternalURL(key) {
+		return
+	}
+
+	if err := s.storage.Delete(ctx, key); err != nil {
+		s.l.Warn(
+			"failed to delete organization image object",
+			zap.String("orgID", orgID.String()),
+			zap.String("image", string(image)),
+			zap.String("key", key),
+			zap.Error(err),
+		)
+	}
+}
+
+func (s *service) validateBrandImageFile(file *multipart.FileHeader) error {
 	multiErr := errortypes.NewMultiError()
 	if file == nil {
-		multiErr.Add("file", errortypes.ErrRequired, "Logo file is required")
+		multiErr.Add("file", errortypes.ErrRequired, "Image file is required")
 		return multiErr.Err()
 	}
 
 	if file.Size == 0 {
-		multiErr.Add("file", errortypes.ErrRequired, "Logo file cannot be empty")
+		multiErr.Add("file", errortypes.ErrRequired, "Image file cannot be empty")
 	}
 
 	if file.Size > s.storageCfg.GetMaxFileSize() {
-		multiErr.Add("file", errortypes.ErrInvalidLength, "Logo file exceeds maximum allowed size")
+		multiErr.Add("file", errortypes.ErrInvalidLength, "Image file exceeds maximum allowed size")
 	}
 
 	if !fileutils.IsSupportedImageContentType(file.Header.Get("Content-Type")) {
 		multiErr.Add(
 			"file",
 			errortypes.ErrInvalidFormat,
-			"Only image files are allowed for organization logos",
+			"Only image files are allowed for organization branding",
 		)
 	}
 
 	if !fileutils.HasSupportedImageExtension(file.Filename) {
-		multiErr.Add("file", errortypes.ErrInvalidFormat, "Unsupported logo file extension")
+		multiErr.Add("file", errortypes.ErrInvalidFormat, "Unsupported image file extension")
 	}
 
 	return multiErr.Err()

@@ -49,7 +49,7 @@ export function InternalPartnerPairForm({
               description={t(
                 "Organization that will receive the connection request. The current organization is excluded from this list.",
               )}
-              rules={{ required: true }}
+              required
               extraSearchParams={{
                 scope: "business-unit",
                 excludeCurrent: "true",
@@ -118,7 +118,7 @@ function PartnerSideFields({
             description={t(
               "Stable code used to identify this organization in internal EDI routing and connection records.",
             )}
-            rules={{ required: true }}
+            required
           />
         </FormControl>
         <FormControl>
@@ -130,7 +130,7 @@ function PartnerSideFields({
             description={t(
               "Display name shown on the reciprocal partner record after the connection is accepted.",
             )}
-            rules={{ required: true }}
+            required
           />
         </FormControl>
         <FormControl>

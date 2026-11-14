@@ -70,12 +70,6 @@ export default function DispatchControlForm() {
     <FormProvider {...form}>
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4 pb-14">
-          {/* Auto-assignment, its costs and prices and every DOT check on this
-              page act on employed drivers. An organization that brokers all of
-              its freight keeps the page — service failure monitoring is about
-              the load, not the driver — with the driver-side cards withheld.
-              The values behind them are still submitted untouched, so nothing
-              is reset by passing through here. */}
           <CapabilityGate capability={OrganizationCapability.AssetOperations}>
             <AutoAssignmentForm />
             <EconomicsForm />

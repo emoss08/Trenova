@@ -453,7 +453,7 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="name"
               label={t("Name")}
               placeholder={t("Microsoft Entra ID")}
@@ -463,7 +463,7 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="slug"
               label={t("Slug")}
               placeholder="entra-id"
@@ -481,7 +481,7 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
           <FormControl cols="full">
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="oidcIssuerUrl"
               label={t("Issuer URL")}
               placeholder="https://login.microsoftonline.com/{tenant-id}/v2.0"
@@ -491,7 +491,7 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
           <FormControl cols="full">
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="oidcRedirectUrl"
               label={t("Redirect URI")}
               placeholder="https://app.example.com/auth/callback"
@@ -501,7 +501,7 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="oidcClientId"
               label={t("Client ID")}
               placeholder={t("Application client ID")}

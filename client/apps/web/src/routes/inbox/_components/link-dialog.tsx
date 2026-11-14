@@ -136,7 +136,7 @@ export function LinkMessageDialog({
                 placeholder={t(
                   "The PRO in the subject line matches, and the sender is their dispatcher",
                 )}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           </FormGroup>

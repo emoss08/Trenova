@@ -362,7 +362,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
                         name="provider"
                         label={t("Provider")}
                         options={fuelCardProviderChoices}
-                        rules={{ required: true }}
+                        required
                         placeholder={t("Select a provider")}
                         isReadOnly={busy}
                         description={t("Picks the column layout the statement is read with.")}
@@ -388,7 +388,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
                         label={t("Default fuel type")}
                         options={iftaFuelTypeChoices}
                         placeholder={t("Select a fuel type")}
-                        isClearable
+                        clearable
                         isReadOnly={busy}
                         description={t("Applied when the statement has no product column.")}
                       />
@@ -400,7 +400,7 @@ function ImportSession({ onOpenChange }: Pick<FuelPurchaseImportDialogProps, "on
                         label={t("Currency")}
                         placeholder={t("USD")}
                         maxLength={3}
-                        rules={{ required: true }}
+                        required
                         readOnly={busy}
                         description={t(
                           "Three-letter code for amounts the statement does not label.",

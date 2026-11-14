@@ -260,7 +260,7 @@ function DecideDialog({
                       : "e.g. The address needs a unit number"
                   }
                   description={t("Sent to the driver with the decision and kept on the request.")}
-                  rules={{ required: !approve }}
+                  required={!approve}
                 />
               </FormControl>
             </FormGroup>

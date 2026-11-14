@@ -1,3 +1,4 @@
+import { withRequired } from "@trenova/shared/lib/field-rules";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
@@ -9,7 +10,7 @@ import type { SwitchProps } from "../animate-ui/components/base/switch";
 import { InfoTooltip } from "../info-tooltip";
 import { RecommendedBadge } from "../recommended-badge";
 
-type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
+type BaseSwitchFieldProps = Omit<SwitchProps, "name" | "required"> & {
   label: string;
   description?: string | React.ReactNode;
   outlined?: boolean;
@@ -30,6 +31,7 @@ export function SwitchField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   outlined,
   recommended,
   readOnly,
@@ -50,7 +52,7 @@ export function SwitchField<T extends FieldValues>({
     <Controller
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field: { value, onChange, disabled, onBlur, name, ref }, fieldState }) => (
         <div
           className={cn(

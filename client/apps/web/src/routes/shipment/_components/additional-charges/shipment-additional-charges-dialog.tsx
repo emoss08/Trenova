@@ -124,7 +124,7 @@ export function AdditionalChargeDialog({
               name={`additionalCharges.${index}.accessorialChargeId`}
               label={t("Accessorial charge")}
               clearable
-              rules={{ required: true }}
+              required
               placeholder={t("Select accessorial charge")}
               description={t(
                 "Accessorial charges are additional fees charged for services such as detention, fuel surcharge, and more.",
@@ -137,7 +137,8 @@ export function AdditionalChargeDialog({
               control={control}
               name={`additionalCharges.${index}.unit`}
               label={t("Unit")}
-              rules={{ required: true, min: 1 }}
+              required
+              rules={{ min: 1 }}
               max={MAX_ADDITIONAL_CHARGE_UNIT}
               placeholder={t("Unit")}
               description={t(
@@ -152,7 +153,7 @@ export function AdditionalChargeDialog({
               name={`additionalCharges.${index}.method`}
               label={t("Method")}
               options={accessorialChargeMethodChoices}
-              rules={{ required: true }}
+              required
               placeholder={t("Select method")}
               description={t(
                 "Calculation method for this charge (flat rate, per mile, percentage of linehaul, etc.)",
@@ -165,7 +166,8 @@ export function AdditionalChargeDialog({
               name={`additionalCharges.${index}.amount`}
               label={t("Amount")}
               decimalScale={2}
-              rules={{ required: true, min: 1 }}
+              required
+              rules={{ min: 1 }}
               max={MAX_ADDITIONAL_CHARGE_RATE}
               placeholder={t("Amount")}
               sideText={t("USD")}

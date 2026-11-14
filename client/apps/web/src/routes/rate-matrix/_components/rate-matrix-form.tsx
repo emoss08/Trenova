@@ -27,7 +27,7 @@ export function RateMatrixForm() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="code"
               label={t("Code")}
               placeholder={t("LTL-2025-Q3")}
@@ -45,7 +45,7 @@ export function RateMatrixForm() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="name"
               label={t("Name")}
               placeholder={t("LTL base tariff, Q3 2025")}
@@ -74,7 +74,7 @@ export function RateMatrixForm() {
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="valueType"
               label={t("Value type")}
               placeholder={t("Select value type")}

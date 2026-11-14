@@ -69,7 +69,7 @@ export function IftaJurisdictionMileageForm({
               control={control}
               name="tractorId"
               label={t("Tractor")}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a tractor")}
               disabled={computed}
               description={t(
@@ -82,7 +82,7 @@ export function IftaJurisdictionMileageForm({
               control={control}
               name="jurisdictionId"
               label={t("Jurisdiction")}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a jurisdiction")}
               disabled={computed}
               description={t(
@@ -95,7 +95,7 @@ export function IftaJurisdictionMileageForm({
               control={control}
               name="traveledAt"
               label={t("Travelled on")}
-              rules={{ required: true }}
+              required
               placeholder={t("Day the miles were run")}
               readOnly={computed}
               description={t("Fixes the quarter the miles belong to. Cannot be in the future.")}
@@ -127,7 +127,7 @@ export function IftaJurisdictionMileageForm({
                 </span>
               }
               placeholder="412.50"
-              rules={{ required: true }}
+              required
               readOnly={computed}
               description={t(
                 "Above zero, up to two decimals, as read from the odometer or trip sheet.",

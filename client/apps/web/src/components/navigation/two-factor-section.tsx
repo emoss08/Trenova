@@ -289,7 +289,7 @@ function SetupDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
                   placeholder="123 456"
                   autoComplete="one-time-code"
                   inputMode="numeric"
-                  rules={{ required: t("Enter the six-digit code") }}
+                  required={t("Enter the six-digit code")}
                 />
               </FormControl>
             </FormGroup>
@@ -303,7 +303,7 @@ function SetupDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
                   name="password"
                   label={t("Current password")}
                   placeholder={t("Confirm it is you")}
-                  rules={{ required: t("Password is required") }}
+                  required={t("Password is required")}
                 />
               </FormControl>
             </FormGroup>
@@ -395,7 +395,7 @@ function DisableDialog({ open, onClose }: { open: boolean; onClose: () => void }
                 name="password"
                 label={t("Current password")}
                 placeholder={t("Enter your password")}
-                rules={{ required: t("Password is required") }}
+                required={t("Password is required")}
               />
             </FormControl>
             <FormControl>
@@ -406,7 +406,7 @@ function DisableDialog({ open, onClose }: { open: boolean; onClose: () => void }
                 placeholder="123 456"
                 autoComplete="one-time-code"
                 inputMode="numeric"
-                rules={{ required: t("Enter the six-digit code") }}
+                required={t("Enter the six-digit code")}
               />
             </FormControl>
           </FormGroup>
@@ -482,7 +482,7 @@ function RegenerateDialog({ open, onClose }: { open: boolean; onClose: () => voi
                   placeholder="123 456"
                   autoComplete="one-time-code"
                   inputMode="numeric"
-                  rules={{ required: t("Enter the six-digit code") }}
+                  required={t("Enter the six-digit code")}
                 />
               </FormControl>
             </FormGroup>

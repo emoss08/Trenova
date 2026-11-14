@@ -476,7 +476,7 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
             <SelectField<AgentFormValues>
               control={control}
               name="decisionTimeoutSeconds"
-              rules={{ required: true }}
+              required
               label={t("Proposals expire after")}
               description={t("An undecided proposal is withdrawn after this.")}
               triggerClassName={aicFieldTrigger}

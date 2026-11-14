@@ -386,7 +386,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                   name={`lines.${index}.carrierId`}
                   label={t("Carrier")}
                   placeholder={t("Select carrier")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -395,7 +395,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                   name={`lines.${index}.rateMethod`}
                   label={t("Rate method")}
                   placeholder={t("Select method")}
-                  rules={{ required: true }}
+                  required
                   options={carrierRateMethodChoices}
                 />
               </FormControl>
@@ -407,7 +407,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                   placeholder="1500.00"
                   sideText="$"
                   decimalScale={2}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -416,7 +416,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                   name={`lines.${index}.offerTtlSeconds`}
                   label={t("Offer expiry")}
                   placeholder={t("Select expiry")}
-                  rules={{ required: true }}
+                  required
                   options={offerTtlChoices}
                 />
               </FormControl>
@@ -426,7 +426,7 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
                   name={`lines.${index}.channel`}
                   label={t("Channel")}
                   placeholder={t("Select channel")}
-                  rules={{ required: true }}
+                  required
                   options={tenderChannelChoices}
                 />
               </FormControl>

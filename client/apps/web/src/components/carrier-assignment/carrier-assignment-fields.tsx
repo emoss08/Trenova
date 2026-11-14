@@ -155,7 +155,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             name="carrierId"
             label={t("Carrier")}
             placeholder={t("Select carrier")}
-            rules={{ required: true }}
+            required
             description={t("External carrier that will run this move.")}
           />
         </FormControl>
@@ -165,7 +165,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             name="rateMethod"
             label={t("Rate method")}
             placeholder={t("Select rate method")}
-            rules={{ required: true }}
+            required
             options={carrierRateMethodChoices}
             description={t("How the carrier's pay is calculated for this move.")}
           />
@@ -177,7 +177,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             label={t("Base rate")}
             placeholder="0.00"
             sideText="$"
-            rules={{ required: true }}
+            required
             decimalScale={4}
             thousandSeparator
             description={t("Flat amount, or the per-mile rate multiplied by the move distance.")}
@@ -300,7 +300,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
                   name={`accessorials.${index}.description`}
                   label={t("Description")}
                   placeholder={t("e.g., Lumper fee")}
-                  rules={{ required: true }}
+                  required
                   maxLength={255}
                   description={t("What the carrier is billing this charge for.")}
                 />
@@ -312,7 +312,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
                   label={t("Amount")}
                   placeholder="0.00"
                   sideText="$"
-                  rules={{ required: true }}
+                  required
                   decimalScale={4}
                   thousandSeparator
                   description={t("Amount the carrier bills for this charge.")}

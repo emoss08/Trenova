@@ -3,8 +3,19 @@ import { cva } from "class-variance-authority";
 const shape =
   "justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap ui-press [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
+/**
+ * A button that is working keeps the box it had at rest. Its content stays where it is and is
+ * only hidden, so it still sets the width and height, and the spinner is laid over it
+ * (`Button` adds `data-loading` and the `button-spinner` slot). Swapping the content for the
+ * spinner made every button shrink as it was pressed and spring back when the request
+ * settled, which moved whatever sat beside it. A bare text label is not an element, so it is
+ * hidden by its fill, which leaves `currentColor` alone for the spinner to draw in.
+ */
+const loading =
+  "relative data-loading:[-webkit-text-fill-color:transparent] data-loading:[&>*:not([data-slot=button-spinner])]:invisible";
+
 export const buttonVariants = cva(
-  "ui-focus-ring inline-flex shrink-0 cursor-pointer items-center outline-none select-none disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:bg-danger-subtle aria-invalid:[--ring:var(--ring-danger)]",
+  `ui-focus-ring inline-flex shrink-0 cursor-pointer items-center outline-none select-none disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger aria-invalid:bg-danger-subtle aria-invalid:[--ring:var(--ring-danger)] ${loading}`, // i18n-ignore: Tailwind classes
   {
     variants: {
       variant: {

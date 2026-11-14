@@ -551,7 +551,7 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
             name="cronExpression"
             placeholder="0 8 * * 1"
             description={t("Five fields: minute, hour, day-of-month, month, day-of-week.")}
-            rules={{ required: translate("A cron expression is required") }}
+            required={translate("A cron expression is required")}
           />
         </m.div>
       )}
@@ -644,7 +644,7 @@ function ScheduleForm({
             </span>
           )}
           placeholder={t("Organization default")}
-          isClearable
+          clearable
         />
         <CadenceSentence cronExpression={cronExpression} timezone={timezone} />
       </div>

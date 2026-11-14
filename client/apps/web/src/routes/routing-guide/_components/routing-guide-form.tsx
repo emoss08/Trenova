@@ -109,7 +109,7 @@ export function RoutingGuideForm() {
               name="name"
               label={t("Name")}
               placeholder={t("Dallas → atlanta dry van")}
-              rules={{ required: true }}
+              required
               maxLength={255}
               description={t("Shown wherever a tender references this guide.")}
             />
@@ -120,7 +120,7 @@ export function RoutingGuideForm() {
               name="status"
               label={t("Status")}
               placeholder={t("Select status")}
-              rules={{ required: true }}
+              required
               options={statusChoices}
               description={t("Only Active guides are matched when a move is tendered.")}
             />
@@ -161,7 +161,7 @@ export function RoutingGuideForm() {
                     name="originLocationId"
                     label={t("Origin location")}
                     placeholder={t("Select origin facility")}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
                 <FormControl>
@@ -170,7 +170,7 @@ export function RoutingGuideForm() {
                     name="destinationLocationId"
                     label={t("Destination location")}
                     placeholder={t("Select destination facility")}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
               </>
@@ -184,7 +184,7 @@ export function RoutingGuideForm() {
                     name="originCity"
                     label={t("Origin city")}
                     placeholder={t("Dallas")}
-                    rules={{ required: true }}
+                    required
                     maxLength={100}
                   />
                 </FormControl>
@@ -194,7 +194,7 @@ export function RoutingGuideForm() {
                     name="originState"
                     label={t("Origin state")}
                     placeholder={t("Select state")}
-                    rules={{ required: true }}
+                    required
                     options={usStateAbbreviationChoices}
                   />
                 </FormControl>
@@ -204,7 +204,7 @@ export function RoutingGuideForm() {
                     name="destinationCity"
                     label={t("Destination city")}
                     placeholder={t("Atlanta")}
-                    rules={{ required: true }}
+                    required
                     maxLength={100}
                   />
                 </FormControl>
@@ -214,7 +214,7 @@ export function RoutingGuideForm() {
                     name="destinationState"
                     label={t("Destination state")}
                     placeholder={t("Select state")}
-                    rules={{ required: true }}
+                    required
                     options={usStateAbbreviationChoices}
                   />
                 </FormControl>
@@ -229,7 +229,7 @@ export function RoutingGuideForm() {
                     name="originState"
                     label={t("Origin state")}
                     placeholder={t("Select state")}
-                    rules={{ required: true }}
+                    required
                     options={usStateAbbreviationChoices}
                   />
                 </FormControl>
@@ -239,7 +239,7 @@ export function RoutingGuideForm() {
                     name="destinationState"
                     label={t("Destination state")}
                     placeholder={t("Select state")}
-                    rules={{ required: true }}
+                    required
                     options={usStateAbbreviationChoices}
                   />
                 </FormControl>

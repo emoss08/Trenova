@@ -26151,6 +26151,7 @@ type Organization {
   city: String!
   createdAt: Timestamp!
   dotNumber: String!
+  iconUrl: String!
   id: ID!
   loginSlug: String!
   logoUrl: String!
@@ -26174,7 +26175,6 @@ input OrganizationInput {
   city: String!
   dotNumber: String!
   loginSlug: String
-  logoUrl: String
   name: String!
   postalCode: String!
   scacCode: String!

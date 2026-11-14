@@ -253,7 +253,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   label={t("Code")}
                   placeholder={t("e.g. HANDBOOK")}
                   description={t("A short reference for the policy; it is stored in upper case.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -265,7 +265,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   description={t(
                     "The name drivers see in their list of policies to read and sign.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl cols="full">
@@ -408,7 +408,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   name="versionLabel"
                   label={t("Version")}
                   placeholder={t("e.g. 2026.1")}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "What a signature records; a new version asks everybody to sign again, the same label keeps existing signatures.",
                   )}
@@ -421,7 +421,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   label={t("Applies to")}
                   options={AUDIENCE_OPTIONS}
                   placeholder={t("Choose who it binds")}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "Which worker types are asked to sign; a handbook for employees is not a contract term for an owner-operator.",
                   )}
@@ -433,7 +433,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   name="effectiveFrom"
                   label={t("Effective from")}
                   placeholder={t("e.g. Jan 1")}
-                  rules={{ required: true }}
+                  required
                   description={t("The day this version of the policy takes effect.")}
                 />
               </FormControl>
@@ -444,7 +444,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
                   label={t("Status")}
                   options={STATUS_OPTIONS}
                   placeholder={t("Choose a status")}
-                  rules={{ required: true }}
+                  required
                   description={t(
                     "Only a policy in force can be signed; a retired one is kept so old signatures still point at something.",
                   )}

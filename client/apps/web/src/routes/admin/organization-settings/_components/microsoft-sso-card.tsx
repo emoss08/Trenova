@@ -298,7 +298,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                               name="tenantId"
                               label={t("Directory (tenant) ID")}
                               placeholder="00000000-0000-0000-0000-000000000000"
-                              rules={{ required: enabled }}
+                              required={enabled}
                             />
                           </FormControl>
                           <FormControl cols="full">
@@ -307,7 +307,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                               name="clientId"
                               label={t("Application (client) ID")}
                               placeholder="00000000-0000-0000-0000-000000000000"
-                              rules={{ required: enabled }}
+                              required={enabled}
                             />
                           </FormControl>
                           <FormControl cols="full">

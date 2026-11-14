@@ -153,7 +153,7 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
             name="direction"
             label={t("Direction")}
             options={payCodeDirectionChoices}
-            rules={{ required: true }}
+            required
             isReadOnly={isEdit}
             description={t(
               "Earning codes add pay to settlements; deduction codes withhold it. Fixed after creation.",
@@ -166,7 +166,7 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
             name="code"
             label={t("Code")}
             placeholder={t("e.g. CHAINPAY")}
-            rules={{ required: true }}
+            required
             disabled={isSystem}
             description={t(
               "Short unique identifier shown on statements and reports; uppercase letters, digits, dashes, or underscores.",
@@ -179,7 +179,7 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
             name="name"
             label={t("Name")}
             placeholder={t("e.g. Chain-Up Pay")}
-            rules={{ required: true }}
+            required
             description={t("Human-readable label displayed next to the code throughout the app.")}
           />
         </FormControl>
@@ -190,7 +190,7 @@ function PayCodeForm({ isEdit, isSystem }: { isEdit: boolean; isSystem: boolean 
               name="status"
               label={t("Status")}
               options={statusChoices}
-              rules={{ required: true }}
+              required
               description={t(
                 "Inactive codes stay on historical records but disappear from new-entry dropdowns.",
               )}

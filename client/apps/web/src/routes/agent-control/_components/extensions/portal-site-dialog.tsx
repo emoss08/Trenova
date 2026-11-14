@@ -103,7 +103,7 @@ export function PortalSiteDialog({ open, onOpenChange, site }: PortalSiteDialogP
                   name="name"
                   label={t("Name")}
                   placeholder={t("e.g. Acme DC dock appointments")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -113,7 +113,7 @@ export function PortalSiteDialog({ open, onOpenChange, site }: PortalSiteDialogP
                   label={t("Start page")}
                   placeholder="https://portal.example.com/login"
                   description={t("Where the browser opens; it must be on one of the addresses.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl cols="full">

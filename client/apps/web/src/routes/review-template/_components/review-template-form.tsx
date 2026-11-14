@@ -42,7 +42,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
               name="code"
               label={t("Code")}
               placeholder={t("e.g. DRIVER-ANNUAL")}
-              rules={{ required: true }}
+              required
               description={t("Short unique identifier. Letters, digits, dashes and underscores.")}
             />
           </FormControl>
@@ -52,7 +52,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
               name="name"
               label={t("Name")}
               placeholder={t("e.g. Annual Driver Review")}
-              rules={{ required: true }}
+              required
               description={t("Shown when someone picks a template to start a review.")}
             />
           </FormControl>
@@ -62,7 +62,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
               name="status"
               label={t("Status")}
               options={statusChoices}
-              rules={{ required: true }}
+              required
               placeholder={t("Select a status")}
               description={
                 isEdit && openReviewCount > 0
@@ -164,7 +164,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
                     name={`items.${index}.key`}
                     label={t("Key")}
                     placeholder={t("e.g. safety")}
-                    rules={{ required: true }}
+                    required
                     description={t(
                       "Stable identifier kept on every review; must be unique within the template.",
                     )}
@@ -176,7 +176,7 @@ export function ReviewTemplateForm({ isEdit, openReviewCount = 0 }: ReviewTempla
                     name={`items.${index}.label`}
                     label={t("Label")}
                     placeholder={t("e.g. Safe driving")}
-                    rules={{ required: true }}
+                    required
                     description={t("Shown to the reviewer as the thing being scored.")}
                   />
                 </FormControl>

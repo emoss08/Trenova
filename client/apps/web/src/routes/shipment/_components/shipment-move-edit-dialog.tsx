@@ -202,7 +202,7 @@ function MoveEditor({
                   <SelectField
                     control={control}
                     name={`moves.${moveIndex}.status`}
-                    rules={{ required: true }}
+                    required
                     label={t("Status")}
                     description={t(
                       "Tracks where this move is in its lifecycle, from new through completion",
@@ -410,7 +410,7 @@ function StopCard({
             <LocationAutocompleteField
               control={control}
               name={`moves.${moveIndex}.stops.${stopIndex}.locationId`}
-              rules={{ required: true }}
+              required
               label={t("Location")}
               description={t("The facility, warehouse, or yard where the driver will stop")}
               placeholder={t("Search locations...")}
@@ -420,7 +420,7 @@ function StopCard({
             <SelectField
               control={control}
               name={`moves.${moveIndex}.stops.${stopIndex}.type`}
-              rules={{ required: true }}
+              required
               label={t("Stop type")}
               description={t(
                 "Defines the purpose of the stop — pickup, delivery, or a split operation",
@@ -466,7 +466,7 @@ function StopCard({
                 <SelectField
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.scheduleType`}
-                  rules={{ required: true }}
+                  required
                   label={t("Schedule type")}
                   description={t(
                     "How this stop is scheduled — an open arrival window or a fixed appointment time",
@@ -478,7 +478,7 @@ function StopCard({
                 <SelectField
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.handling`}
-                  rules={{ required: true }}
+                  required
                   label={t("Live or drop")}
                   description={t(
                     "Live holds the truck while the facility loads or unloads; a drop leaves or takes a trailer",
@@ -492,7 +492,7 @@ function StopCard({
                 <AutoCompleteDateTimeField
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.scheduledWindowStart`}
-                  rules={{ required: true }}
+                  required
                   label={startLabel}
                   description={t("The earliest time the driver is expected to arrive at this stop")}
                   placeholder={startPlaceholder}

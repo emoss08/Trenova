@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { Controller, type FieldValues } from "react-hook-form";
@@ -9,6 +10,7 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   className,
   label,
   description,
@@ -25,7 +27,7 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => {
         return (
           <FieldWrapper
@@ -34,12 +36,13 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
             description={description}
             descriptionId={descriptionId}
             errorId={errorId}
-            required={!!rules?.required}
+            required={isRequired(rules, required)}
             error={fieldState.error?.message}
             className={className}
           >
             <DateTimePicker
               {...props}
+              clearable={props.clearable ?? !isRequired(rules, required)}
               id={inputId}
               name={field.name}
               ref={field.ref}

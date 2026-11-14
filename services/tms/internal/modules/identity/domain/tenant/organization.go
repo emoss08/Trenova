@@ -31,6 +31,7 @@ type Organization struct {
 	ScacCode               string    `json:"scacCode"               keel:"scac_code"`
 	DOTNumber              string    `json:"dotNumber"              keel:"dot_number"`
 	LogoURL                string    `json:"logoUrl"                keel:"logo_url,nullzero"`
+	IconURL                string    `json:"iconUrl"                keel:"icon_url,nullzero"`
 	BucketName             string    `json:"bucketName"             keel:"bucket_name"`
 	AddressLine1           string    `json:"addressLine1"           keel:"address_line1"`
 	AddressLine2           string    `json:"addressLine2"           keel:"address_line2,nullzero"`

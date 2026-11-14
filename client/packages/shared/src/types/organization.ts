@@ -9,6 +9,7 @@ export const userOrganizationSchema = z.object({
   city: z.string().min(1, { error: () => translate("City is required") }),
   state: z.string().min(1, { error: () => translate("State is required") }),
   logoUrl: z.string().nullish(),
+  iconUrl: z.string().nullish(),
   isDefault: z.boolean(),
   isCurrent: z.boolean(),
 });
@@ -40,6 +41,7 @@ export const organizationSettingsSchema = z.object({
   scacCode: z.string().min(1, { error: () => translate("SCAC code is required") }),
   dotNumber: z.string().min(1, { error: () => translate("DOT number is required") }),
   logoUrl: z.string().nullish(),
+  iconUrl: z.string().nullish(),
   addressLine1: z.string().min(1, { error: () => translate("Address line 1 is required") }),
   addressLine2: z.string().nullish(),
   city: z.string().min(1, { error: () => translate("City is required") }),
@@ -86,11 +88,19 @@ export type OrganizationSelectOption = {
   } | null;
 };
 
-export const organizationLogoUrlResponseSchema = z.object({
-  url: z.string(),
+/**
+ * An organization's two pictures. The logo is its full mark, at the top of the documents and
+ * emails it sends; the icon is its square mark, drawn where a logo has no room.
+ */
+export type OrganizationBrandImage = "logo" | "icon";
+
+/** Where each picture can be read from; an empty string for one never uploaded. */
+export const organizationBrandingSchema = z.object({
+  logoUrl: z.string(),
+  iconUrl: z.string(),
 });
 
-export type OrganizationLogoUrlResponse = z.infer<typeof organizationLogoUrlResponseSchema>;
+export type OrganizationBranding = z.infer<typeof organizationBrandingSchema>;
 
 export const microsoftSSOConfigSchema = z.object({
   organizationId: z.string().optional().default(""),

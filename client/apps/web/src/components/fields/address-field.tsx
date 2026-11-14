@@ -1,3 +1,4 @@
+import { withRequired, type FieldRequired } from "@trenova/shared/lib/field-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import type { ApiRequestError } from "@trenova/shared/lib/api";
@@ -47,6 +48,7 @@ type AddressFieldProps<TForm extends FieldValues> = {
   description?: string;
   disabled?: boolean;
   readOnly?: boolean;
+  required?: FieldRequired;
   rules?: RegisterOptions<TForm, Path<TForm>>;
 };
 
@@ -68,6 +70,7 @@ export function AddressField<TForm extends FieldValues>({
   disabled = false,
   readOnly = false,
   rules,
+  required,
 }: AddressFieldProps<TForm>) {
   const t = useT();
 
@@ -217,7 +220,7 @@ export function AddressField<TForm extends FieldValues>({
       <div className="relative">
         <InputField
           control={control}
-          rules={rules}
+          rules={withRequired(rules, required)}
           name={addressLine1Field}
           label={label}
           placeholder={placeholder}

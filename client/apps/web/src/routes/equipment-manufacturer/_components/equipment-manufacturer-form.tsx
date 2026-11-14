@@ -17,7 +17,7 @@ export function EquipmentManufacturerForm() {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="status"
           label={t("Status")}
           placeholder={t("Status")}
@@ -28,7 +28,7 @@ export function EquipmentManufacturerForm() {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="name"
           label={t("Name")}
           placeholder={t("Name")}

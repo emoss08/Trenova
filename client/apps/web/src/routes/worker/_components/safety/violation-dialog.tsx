@@ -146,7 +146,7 @@ export function ViolationDialog({
                   description={t(
                     "The CSA category the violation is scored under; each BASIC has its own measure and threshold.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -164,7 +164,7 @@ export function ViolationDialog({
                   name="severityWeight"
                   placeholder={t("e.g. 5")}
                   label={t("Severity weight")}
-                  rules={{ required: true }}
+                  required
                   description={t("The FMCSA's published weight, 1 to 10.")}
                 />
               </FormControl>
@@ -175,7 +175,7 @@ export function ViolationDialog({
                   label={t("What was cited")}
                   placeholder={t("e.g. Brake out of adjustment on two axles")}
                   description={t("The violation as written on the inspection report.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl cols="full">

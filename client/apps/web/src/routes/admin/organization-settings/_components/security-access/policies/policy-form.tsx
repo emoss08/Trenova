@@ -44,7 +44,7 @@ export function AccessPolicyForm({
           <FormControl cols="full">
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="name"
               label={t("Policy name")}
               placeholder={t("Require managed devices for billing exports")}
@@ -55,7 +55,7 @@ export function AccessPolicyForm({
           <FormControl>
             <PermissionResourceAutocompleteField<AccessPolicyFormValues>
               control={control}
-              rules={{ required: true }}
+              required
               name="resource"
               resources={resources}
               disabled={resourcesLoading}
@@ -67,7 +67,7 @@ export function AccessPolicyForm({
           <FormControl>
             <PermissionOperationAutocompleteField<AccessPolicyFormValues>
               control={control}
-              rules={{ required: true }}
+              required
               name="operation"
               operations={availableOperations}
               disabled={operationsLoading || availableOperations.length === 0}
@@ -76,7 +76,7 @@ export function AccessPolicyForm({
           <FormControl>
             <SelectField
               control={control}
-              rules={{ required: true }}
+              required
               name="effect"
               label={t("Effect")}
               placeholder={t("Select effect")}
@@ -87,7 +87,8 @@ export function AccessPolicyForm({
           <FormControl>
             <NumberField
               control={control}
-              rules={{ required: true, min: 0 }}
+              required
+              rules={{ min: 0 }}
               name="priority"
               label={t("Priority")}
               placeholder="100"

@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type {
@@ -22,6 +23,7 @@ import {
   SelectCommandItem,
 } from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { fieldClearRevealClass } from "./field-clear-reveal";
 import { FieldWrapper, type FieldLayout } from "./field-components";
 import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/variants/field";
 
@@ -38,7 +40,11 @@ export type BaseSelectFieldProps = {
   className?: string;
   triggerClassName?: string;
   placeholder?: string;
-  isClearable?: boolean;
+  /**
+   * Whether the field can be emptied. A field that is not required can be, unless this says
+   * otherwise; a required one cannot.
+   */
+  clearable?: boolean;
   renderOption?: (option: SelectOption, searchValue: string) => React.ReactNode;
   onValueChange?: (value: string) => void;
   warning?: WarningProps;
@@ -54,6 +60,7 @@ export function SelectField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   className,
   triggerClassName,
   options,
@@ -61,7 +68,7 @@ export function SelectField<T extends FieldValues>({
   warning,
   placeholder,
   isReadOnly,
-  isClearable = false,
+  clearable,
   renderOption,
   onValueChange,
   layout,
@@ -76,6 +83,12 @@ export function SelectField<T extends FieldValues>({
     [options, groups],
   );
 
+  const canClear = (clearable ?? !isRequired(rules, required)) && !isReadOnly;
+  // What the form holds once the field is emptied: an empty string where the options are
+  // text, as an empty text field holds, and nothing where they are numbers, since an empty
+  // string is not a number and a form that checks for one refuses it.
+  const emptyValue = allOptions.some((option) => typeof option.value === "number") ? null : "";
+
   const optionMap = useMemo(
     () => new Map(allOptions.map((opt) => [String(opt.value).toLowerCase(), opt])),
     [allOptions],
@@ -85,24 +98,28 @@ export function SelectField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => {
         const selectedOption = allOptions.find((option) => option.value === field.value) || null;
         const color = selectedOption?.color;
 
         const handleClear = () => {
-          field.onChange("");
+          field.onChange(emptyValue);
           onValueChange?.("");
           setSearchValue("");
         };
 
+        // The list hands back an option's value as text. The form holds the option's own
+        // value, which may be a number (a weekday, 0 to 6): writing the text there left the
+        // field matching no option, so it drew blank, and failed the form's number check.
         const handleSelect = (currentValue: string) => {
-          if (!isClearable && currentValue === field.value) {
+          const picked = optionMap.get(currentValue.toLowerCase())?.value ?? currentValue;
+          const again = picked === field.value;
+          if (!canClear && again) {
             return;
           }
-          const nextValue = currentValue === field.value ? "" : currentValue;
-          field.onChange(nextValue);
-          onValueChange?.(nextValue);
+          field.onChange(again ? emptyValue : picked);
+          onValueChange?.(again ? "" : currentValue);
           setIsOpen(false);
         };
 
@@ -143,7 +160,7 @@ export function SelectField<T extends FieldValues>({
             labelAction={labelAction}
             description={description}
             warning={warning}
-            required={!!rules?.required}
+            required={isRequired(rules, required)}
             error={fieldState.error?.message}
             className={className}
             layout={layout}
@@ -172,7 +189,7 @@ export function SelectField<T extends FieldValues>({
                     <div
                       className={cn(
                         "text-foreground flex min-w-0 flex-1 items-center gap-x-1.5 truncate font-normal",
-                        !selectedOption?.value && "text-muted-foreground",
+                        !selectedOption && "text-muted-foreground",
                         fieldState.invalid && "text-destructive",
                       )}
                     >
@@ -194,8 +211,8 @@ export function SelectField<T extends FieldValues>({
                       </span>
                     </div>
                     <SelectInputActions
-                      clearable={isClearable}
-                      currentValue={field.value}
+                      clearable={canClear}
+                      hasValue={field.value !== "" && field.value != null}
                       handleClear={handleClear}
                       open={isOpen}
                     />
@@ -246,12 +263,13 @@ export function SelectField<T extends FieldValues>({
 
 function SelectInputActions({
   clearable,
-  currentValue,
+  hasValue,
   handleClear,
   open,
 }: {
   clearable: boolean;
-  currentValue: string | null | undefined;
+  /** Whether the field holds anything to clear. Zero is a value. */
+  hasValue: boolean;
   handleClear: () => void;
   open: boolean;
 }) {
@@ -259,16 +277,23 @@ function SelectInputActions({
 
   return (
     <div className="ml-auto flex items-center gap-1">
-      {clearable && currentValue && (
+      {clearable && hasValue && (
+        // The clear control sits inside the trigger, which is a button. Kept out of the
+        // accessibility tree, it does not rename that button ("Friday Clear"); a keyboard
+        // empties the field by picking the chosen option again.
         <span
+          aria-hidden
+          title={t("Clear")}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
             handleClear();
           }}
-          className="text-muted-foreground hover:bg-muted-foreground/30 hover:text-foreground flex size-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-200 ease-in-out [&>svg]:size-3"
+          className={cn(
+            "text-muted-foreground hover:bg-muted-foreground/30 hover:text-foreground flex size-5 cursor-pointer items-center justify-center rounded-md [&>svg]:size-3",
+            fieldClearRevealClass,
+          )}
         >
-          <span className="sr-only">{t("Clear")}</span>
           <XCloseIcon className="size-4" />
         </span>
       )}

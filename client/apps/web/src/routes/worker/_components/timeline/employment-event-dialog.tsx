@@ -313,7 +313,7 @@ function RecordSheet({
                   label={t("Event")}
                   placeholder={t("Select an event")}
                   options={kindOptions}
-                  rules={{ required: true }}
+                  required
                   description={meta.hint}
                 />
               </FormControl>
@@ -322,7 +322,7 @@ function RecordSheet({
                   control={control}
                   name="effectiveAt"
                   label={t("Effective")}
-                  rules={{ required: true }}
+                  required
                   placeholder={t("Today")}
                   description={t(
                     "Moves the worker to the new state from this date; the change cannot be replayed by editing it later.",
@@ -347,7 +347,7 @@ function RecordSheet({
                     name="leaveType"
                     label={t("Leave type")}
                     options={LEAVE_TYPE_OPTIONS}
-                    rules={{ required: true }}
+                    required
                     placeholder={t("Select a leave type")}
                     description={t("Shown on the worker's status while the leave is open.")}
                   />
@@ -361,7 +361,7 @@ function RecordSheet({
                       name="driverType"
                       label={t("Driver type")}
                       options={driverTypeChoices}
-                      isClearable
+                      clearable
                       placeholder={t("Select a driver type")}
                       description={currentDriverType(worker.driverType)}
                     />
@@ -372,7 +372,7 @@ function RecordSheet({
                       name="workerType"
                       label={t("Worker type")}
                       options={workerTypeChoices}
-                      isClearable
+                      clearable
                       placeholder={t("Select a worker type")}
                       description={currentWorkerType(worker.type)}
                     />
@@ -387,7 +387,7 @@ function RecordSheet({
                       name="rate"
                       label={t("New rate")}
                       placeholder={t("e.g. 0.62")}
-                      rules={{ required: true }}
+                      required
                       description={t(
                         "The new pay figure; it is recorded on the event exactly as typed.",
                       )}
@@ -410,7 +410,7 @@ function RecordSheet({
                   name="reason"
                   label={t("Reason")}
                   placeholder={requiresReason ? "e.g. Repeated no-shows" : "Optional"}
-                  rules={{ required: requiresReason }}
+                  required={requiresReason}
                   maxLength={255}
                   description={
                     requiresReason
@@ -537,7 +537,7 @@ function AmendSheet({
                   control={control}
                   name="effectiveAt"
                   label={t("Effective")}
-                  rules={{ required: true }}
+                  required
                   placeholder={t("Pick a date")}
                   description={t(
                     "Corrects the recorded date only; what the event already did is not replayed.",
@@ -570,7 +570,7 @@ function AmendSheet({
                   name="amendmentNote"
                   label={t("Why is this being amended?")}
                   placeholder={t("e.g. Wrong effective date was entered")}
-                  rules={{ required: true }}
+                  required
                   maxLength={255}
                   description={t(
                     "Kept alongside the original record as the reason for the correction.",

@@ -20,10 +20,19 @@ func NewMockOrganizationRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockOrganizationRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockOrganizationRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -41,48 +50,49 @@ func (_m *MockOrganizationRepository) EXPECT() *MockOrganizationRepository_Expec
 	return &MockOrganizationRepository_Expecter{mock: &_m.Mock}
 }
 
-// ClearLogoURL provides a mock function for the type MockOrganizationRepository
-func (_mock *MockOrganizationRepository) ClearLogoURL(ctx context.Context, orgID pulid.ID, version int64) (*tenant.Organization, error) {
-	ret := _mock.Called(ctx, orgID, version)
+// ClearBrandImage provides a mock function for the type MockOrganizationRepository
+func (_mock *MockOrganizationRepository) ClearBrandImage(ctx context.Context, orgID pulid.ID, image tenant.BrandImage, version int64) (*tenant.Organization, error) {
+	ret := _mock.Called(ctx, orgID, image, version)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ClearLogoURL")
+		panic("no return value specified for ClearBrandImage")
 	}
 
 	var r0 *tenant.Organization
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, int64) (*tenant.Organization, error)); ok {
-		return returnFunc(ctx, orgID, version)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, tenant.BrandImage, int64) (*tenant.Organization, error)); ok {
+		return returnFunc(ctx, orgID, image, version)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, int64) *tenant.Organization); ok {
-		r0 = returnFunc(ctx, orgID, version)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, tenant.BrandImage, int64) *tenant.Organization); ok {
+		r0 = returnFunc(ctx, orgID, image, version)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*tenant.Organization)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, int64) error); ok {
-		r1 = returnFunc(ctx, orgID, version)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, tenant.BrandImage, int64) error); ok {
+		r1 = returnFunc(ctx, orgID, image, version)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockOrganizationRepository_ClearLogoURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearLogoURL'
-type MockOrganizationRepository_ClearLogoURL_Call struct {
+// MockOrganizationRepository_ClearBrandImage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearBrandImage'
+type MockOrganizationRepository_ClearBrandImage_Call struct {
 	*mock.Call
 }
 
-// ClearLogoURL is a helper method to define mock.On call
+// ClearBrandImage is a helper method to define mock.On call
 //   - ctx context.Context
 //   - orgID pulid.ID
+//   - image tenant.BrandImage
 //   - version int64
-func (_e *MockOrganizationRepository_Expecter) ClearLogoURL(ctx any, orgID any, version any) *MockOrganizationRepository_ClearLogoURL_Call {
-	return &MockOrganizationRepository_ClearLogoURL_Call{Call: _e.mock.On("ClearLogoURL", ctx, orgID, version)}
+func (_e *MockOrganizationRepository_Expecter) ClearBrandImage(ctx any, orgID any, image any, version any) *MockOrganizationRepository_ClearBrandImage_Call {
+	return &MockOrganizationRepository_ClearBrandImage_Call{Call: _e.mock.On("ClearBrandImage", ctx, orgID, image, version)}
 }
 
-func (_c *MockOrganizationRepository_ClearLogoURL_Call) Run(run func(ctx context.Context, orgID pulid.ID, version int64)) *MockOrganizationRepository_ClearLogoURL_Call {
+func (_c *MockOrganizationRepository_ClearBrandImage_Call) Run(run func(ctx context.Context, orgID pulid.ID, image tenant.BrandImage, version int64)) *MockOrganizationRepository_ClearBrandImage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -92,25 +102,30 @@ func (_c *MockOrganizationRepository_ClearLogoURL_Call) Run(run func(ctx context
 		if args[1] != nil {
 			arg1 = args[1].(pulid.ID)
 		}
-		var arg2 int64
+		var arg2 tenant.BrandImage
 		if args[2] != nil {
-			arg2 = args[2].(int64)
+			arg2 = args[2].(tenant.BrandImage)
+		}
+		var arg3 int64
+		if args[3] != nil {
+			arg3 = args[3].(int64)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *MockOrganizationRepository_ClearLogoURL_Call) Return(organization *tenant.Organization, err error) *MockOrganizationRepository_ClearLogoURL_Call {
+func (_c *MockOrganizationRepository_ClearBrandImage_Call) Return(organization *tenant.Organization, err error) *MockOrganizationRepository_ClearBrandImage_Call {
 	_c.Call.Return(organization, err)
 	return _c
 }
 
-func (_c *MockOrganizationRepository_ClearLogoURL_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID, version int64) (*tenant.Organization, error)) *MockOrganizationRepository_ClearLogoURL_Call {
+func (_c *MockOrganizationRepository_ClearBrandImage_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID, image tenant.BrandImage, version int64) (*tenant.Organization, error)) *MockOrganizationRepository_ClearBrandImage_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -286,7 +301,7 @@ type MockOrganizationRepository_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetOrganizationByIDRequest
+//   - req tenantports.GetOrganizationByIDRequest
 func (_e *MockOrganizationRepository_Expecter) GetByID(ctx any, req any) *MockOrganizationRepository_GetByID_Call {
 	return &MockOrganizationRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
@@ -315,74 +330,6 @@ func (_c *MockOrganizationRepository_GetByID_Call) Return(organization *tenant.O
 }
 
 func (_c *MockOrganizationRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetOrganizationByIDRequest) (*tenant.Organization, error)) *MockOrganizationRepository_GetByID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetCapabilities provides a mock function for the type MockOrganizationRepository
-func (_mock *MockOrganizationRepository) GetCapabilities(ctx context.Context, req tenantports.GetOrganizationCapabilitiesRequest) (*tenantports.OrganizationCapabilities, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetCapabilities")
-	}
-
-	var r0 *tenantports.OrganizationCapabilities
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetOrganizationCapabilitiesRequest) (*tenantports.OrganizationCapabilities, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetOrganizationCapabilitiesRequest) *tenantports.OrganizationCapabilities); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenantports.OrganizationCapabilities)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.GetOrganizationCapabilitiesRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockOrganizationRepository_GetCapabilities_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCapabilities'
-type MockOrganizationRepository_GetCapabilities_Call struct {
-	*mock.Call
-}
-
-// GetCapabilities is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req repositories.GetOrganizationCapabilitiesRequest
-func (_e *MockOrganizationRepository_Expecter) GetCapabilities(ctx any, req any) *MockOrganizationRepository_GetCapabilities_Call {
-	return &MockOrganizationRepository_GetCapabilities_Call{Call: _e.mock.On("GetCapabilities", ctx, req)}
-}
-
-func (_c *MockOrganizationRepository_GetCapabilities_Call) Run(run func(ctx context.Context, req tenantports.GetOrganizationCapabilitiesRequest)) *MockOrganizationRepository_GetCapabilities_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 tenantports.GetOrganizationCapabilitiesRequest
-		if args[1] != nil {
-			arg1 = args[1].(tenantports.GetOrganizationCapabilitiesRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockOrganizationRepository_GetCapabilities_Call) Return(organizationCapabilities *tenantports.OrganizationCapabilities, err error) *MockOrganizationRepository_GetCapabilities_Call {
-	_c.Call.Return(organizationCapabilities, err)
-	return _c
-}
-
-func (_c *MockOrganizationRepository_GetCapabilities_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetOrganizationCapabilitiesRequest) (*tenantports.OrganizationCapabilities, error)) *MockOrganizationRepository_GetCapabilities_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -422,7 +369,7 @@ type MockOrganizationRepository_GetByIDs_Call struct {
 
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetOrganizationsByIDsRequest
+//   - req tenantports.GetOrganizationsByIDsQuery
 func (_e *MockOrganizationRepository_Expecter) GetByIDs(ctx any, req any) *MockOrganizationRepository_GetByIDs_Call {
 	return &MockOrganizationRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
@@ -519,6 +466,74 @@ func (_c *MockOrganizationRepository_GetByLoginSlug_Call) Return(organization *t
 }
 
 func (_c *MockOrganizationRepository_GetByLoginSlug_Call) RunAndReturn(run func(ctx context.Context, loginSlug string) (*tenant.Organization, error)) *MockOrganizationRepository_GetByLoginSlug_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCapabilities provides a mock function for the type MockOrganizationRepository
+func (_mock *MockOrganizationRepository) GetCapabilities(ctx context.Context, req tenantports.GetOrganizationCapabilitiesRequest) (*tenantports.OrganizationCapabilities, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCapabilities")
+	}
+
+	var r0 *tenantports.OrganizationCapabilities
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetOrganizationCapabilitiesRequest) (*tenantports.OrganizationCapabilities, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetOrganizationCapabilitiesRequest) *tenantports.OrganizationCapabilities); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*tenantports.OrganizationCapabilities)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.GetOrganizationCapabilitiesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationRepository_GetCapabilities_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCapabilities'
+type MockOrganizationRepository_GetCapabilities_Call struct {
+	*mock.Call
+}
+
+// GetCapabilities is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req tenantports.GetOrganizationCapabilitiesRequest
+func (_e *MockOrganizationRepository_Expecter) GetCapabilities(ctx any, req any) *MockOrganizationRepository_GetCapabilities_Call {
+	return &MockOrganizationRepository_GetCapabilities_Call{Call: _e.mock.On("GetCapabilities", ctx, req)}
+}
+
+func (_c *MockOrganizationRepository_GetCapabilities_Call) Run(run func(ctx context.Context, req tenantports.GetOrganizationCapabilitiesRequest)) *MockOrganizationRepository_GetCapabilities_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 tenantports.GetOrganizationCapabilitiesRequest
+		if args[1] != nil {
+			arg1 = args[1].(tenantports.GetOrganizationCapabilitiesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationRepository_GetCapabilities_Call) Return(organizationCapabilities *tenantports.OrganizationCapabilities, err error) *MockOrganizationRepository_GetCapabilities_Call {
+	_c.Call.Return(organizationCapabilities, err)
+	return _c
+}
+
+func (_c *MockOrganizationRepository_GetCapabilities_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetOrganizationCapabilitiesRequest) (*tenantports.OrganizationCapabilities, error)) *MockOrganizationRepository_GetCapabilities_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -626,7 +641,7 @@ type MockOrganizationRepository_SelectOptions_Call struct {
 
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.SelectOrganizationOptionsRequest
+//   - req *tenantports.SelectOrganizationOptionsRequest
 func (_e *MockOrganizationRepository_Expecter) SelectOptions(ctx any, req any) *MockOrganizationRepository_SelectOptions_Call {
 	return &MockOrganizationRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }

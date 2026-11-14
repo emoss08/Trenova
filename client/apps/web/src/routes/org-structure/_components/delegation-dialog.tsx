@@ -116,7 +116,7 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                   label={t("Who is covering")}
                   placeholder={t("Select a colleague")}
                   description={t("The colleague who approves in your place while the cover runs.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl cols="full">
@@ -129,7 +129,7 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                   description={t(
                     "Limits the cover to one kind of approval, or hands over all of them.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -139,7 +139,7 @@ export function DelegationDialog({ open, onOpenChange }: DelegationDialogProps) 
                   label={t("From")}
                   placeholder={t("e.g. Today")}
                   description={t("The first day they can approve on your behalf.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>

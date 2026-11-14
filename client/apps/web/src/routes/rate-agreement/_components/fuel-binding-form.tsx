@@ -65,7 +65,7 @@ export function FuelBindingForm() {
           <FormControl cols="full">
             <FuelSurchargeProgramAutocompleteField
               control={control}
-              rules={{ required: !waived }}
+              required={!waived}
               name="fuelBinding.fuelSurchargeProgramId"
               label={t("Fuel program")}
               placeholder={t("Select program")}

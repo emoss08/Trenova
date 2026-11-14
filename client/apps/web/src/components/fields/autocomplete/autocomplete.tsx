@@ -1,3 +1,4 @@
+import { isRequired, withRequired, type FieldRequired } from "@trenova/shared/lib/field-rules";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import {
   fetchGraphQLSelectedOption,
@@ -18,6 +19,7 @@ import { AutocompleteTrigger } from "./autocomplete-input";
 export interface AutocompleteFormControlProps<T extends FieldValues> {
   name: Path<T>;
   control: Control<T>;
+  required?: FieldRequired;
   rules?: RegisterOptions<T, Path<T>>;
 }
 
@@ -266,7 +268,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   );
 
   return (
-    <div className="relative">
+    <div className="group/field relative">
       <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger
           render={
@@ -332,6 +334,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
   name,
   control,
   rules,
+  required,
   className,
   preload,
   renderOption,
@@ -352,14 +355,14 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
     <Controller<TForm>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => {
         return (
           <FieldWrapper
             name={name}
             label={label}
             description={description}
-            required={!!rules?.required}
+            required={isRequired(rules, required)}
             error={fieldState.error?.message}
             className={className}
             layout={layout}
@@ -370,7 +373,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
               getOptionValue={getOptionValue}
               getDisplayValue={getDisplayValue}
               onOptionChange={onOptionChange}
-              clearable={clearable}
+              clearable={clearable ?? !isRequired(rules, required)}
               extraSearchParams={extraSearchParams}
               graphql={graphql}
               label={label}

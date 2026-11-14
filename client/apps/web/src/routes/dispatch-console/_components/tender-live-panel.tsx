@@ -104,7 +104,7 @@ function TenderCancelDialog({
               control={control}
               name="reason"
               label={t("Reason")}
-              rules={{ required: true }}
+              required
               placeholder={t("e.g., Covered internally with a company driver")}
             />
           </div>
@@ -207,7 +207,7 @@ function RecordResponseDialog({
                     "The rate the carrier asked for, in the offer's terms ({0}).",
                     formatOfferRate(offer.rate, offer.rateMethod),
                   )}
-                  rules={{ required: true }}
+                  required
                   inputMode="decimal"
                   autoComplete="off"
                   placeholder={t("e.g., 1850.00")}
@@ -225,7 +225,7 @@ function RecordResponseDialog({
                 control={control}
                 name="declineReason"
                 label={t("Decline reason")}
-                rules={{ required: true }}
+                required
                 placeholder={t("e.g., No truck available in the area")}
               />
             )}
@@ -305,7 +305,7 @@ function CounterDecisionDialog({
                 control={control}
                 name="declineReason"
                 label={t("Reason")}
-                rules={{ required: true }}
+                required
                 placeholder={t("e.g., Above what the customer pays on this lane")}
               />
             </div>

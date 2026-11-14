@@ -129,7 +129,7 @@ export function AssignTrainingDialog({
                   name="courseId"
                   label={t("Course")}
                   placeholder={t("Select a course")}
-                  rules={{ required: true }}
+                  required
                   filterOption={hideAssignedCourses}
                   noResultsMessage={t("Every active course is already assigned to this worker.")}
                   description={

@@ -155,7 +155,7 @@ export function DataTableSaveConfigDialog({
                 label={t("Name")}
                 placeholder={t("e.g., Active shipments this week")}
                 description={t("A descriptive name for this table configuration")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl cols="full">
@@ -165,7 +165,7 @@ export function DataTableSaveConfigDialog({
                 label={t("Description")}
                 placeholder={t("The description of the table configuration.")}
                 description={t("The description of the table configuration.")}
-                rules={{ required: false }}
+                required={false}
               />
             </FormControl>
             <FormControl cols="full">
@@ -182,7 +182,7 @@ export function DataTableSaveConfigDialog({
                       )
                 }
                 options={visibilityOptions}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl cols="full">
@@ -195,7 +195,7 @@ export function DataTableSaveConfigDialog({
                 description={t(
                   "When enabled, the system will automatically apply this table configuration to the table",
                 )}
-                rules={{ required: false }}
+                required={false}
               />
             </FormControl>
           </FormGroup>

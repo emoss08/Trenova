@@ -45,7 +45,7 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
             name="name"
             label={t("Name")}
             placeholder={t("Acme national DOE program")}
-            rules={{ required: true }}
+            required
             maxLength={100}
             description={t("Shown on customer profiles and the fuel dashboard.")}
             disabled={disabled}
@@ -57,7 +57,7 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
             name="code"
             label={t("Code")}
             placeholder={t("FSC-DOE-STD")}
-            rules={{ required: true }}
+            required
             maxLength={50}
             description={t("Short unique identifier for this program.")}
             disabled={disabled}
@@ -78,7 +78,7 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
             control={control}
             name="method"
             label={t("Method")}
-            rules={{ required: true }}
+            required
             options={fuelSurchargeMethodChoices}
             description={t(
               "Formula methods compute rates from parameters; table methods use explicit price bands.",
@@ -92,7 +92,7 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
             name="fuelIndexId"
             label={t("Fuel index")}
             placeholder={t("Select fuel index")}
-            rules={{ required: true }}
+            required
             description={t(
               "The weekly price series this program keys off (DOE region or custom index).",
             )}
@@ -104,7 +104,7 @@ export function ProgramForm({ disabled }: { disabled?: boolean }) {
             name="accessorialChargeId"
             label={t("Accessorial charge")}
             placeholder={t("Select accessorial charge")}
-            rules={{ required: true }}
+            required
             description={t("The catalog charge the generated fuel surcharge line posts against.")}
           />
         </FormControl>
@@ -169,7 +169,7 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
           name="pegPrice"
           label={t("Peg price")}
           placeholder="1.20"
-          rules={{ required: true }}
+          required
           decimalScale={4}
           sideText={t("$/gal")}
           description={t("Fuel price at which the surcharge is zero.")}
@@ -184,7 +184,7 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
               name="increment"
               label={t("Increment")}
               placeholder="0.05"
-              rules={{ required: true }}
+              required
               decimalScale={4}
               sideText={t("$/gal")}
               description={t("Price step above the peg that triggers a rate increase.")}
@@ -197,7 +197,7 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
               name="incrementRate"
               label={t("Rate per Increment")}
               placeholder="0.01"
-              rules={{ required: true }}
+              required
               decimalScale={4}
               sideText={t("$/mi")}
               description={t("Per-mile rate added for each full increment above the peg.")}
@@ -212,7 +212,7 @@ function MethodParameters({ disabled, method }: { disabled?: boolean; method: st
             name="milesPerGallon"
             label={t("Miles per gallon")}
             placeholder="6.5"
-            rules={{ required: true }}
+            required
             decimalScale={2}
             sideText="mpg"
             description={t("Fleet MPG divisor: rate = (price − peg) ÷ MPG.")}

@@ -71,7 +71,6 @@ func TestMutationResolver_UpdateOrganization_MapsInputToService(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	stateID := pulid.MustNew("us_")
 	loginSlug := "acme-logistics"
-	logoURL := "organization/logo/acme.png"
 	bucketName := "acme-bucket"
 	addressLine2 := "Suite 200"
 	taxID := "12-3456789"
@@ -95,7 +94,8 @@ func TestMutationResolver_UpdateOrganization_MapsInputToService(t *testing.T) {
 				entity.LoginSlug == loginSlug &&
 				entity.ScacCode == "ACME" &&
 				entity.DOTNumber == "1234567" &&
-				entity.LogoURL == logoURL &&
+				entity.LogoURL == "" &&
+				entity.IconURL == "" &&
 				entity.BucketName == bucketName &&
 				entity.AddressLine1 == "123 Main St" &&
 				entity.AddressLine2 == addressLine2 &&
@@ -127,7 +127,6 @@ func TestMutationResolver_UpdateOrganization_MapsInputToService(t *testing.T) {
 		LoginSlug:    &loginSlug,
 		SCACCode:     "ACME",
 		DOTNumber:    "1234567",
-		LogoURL:      &logoURL,
 		BucketName:   &bucketName,
 		AddressLine1: "123 Main St",
 		AddressLine2: &addressLine2,

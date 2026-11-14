@@ -36,7 +36,7 @@ export function JurisdictionRuleOverrideForm() {
               name="stateId"
               label={t("State")}
               placeholder={t("Select state")}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -150,7 +150,7 @@ export function JurisdictionRuleOverrideForm() {
               placeholder={t(
                 "Our trailer fleet and insurance terms are narrower than this state allows",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>

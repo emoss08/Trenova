@@ -1,5 +1,5 @@
 {
-  "version": "sha256:54fb3a526af97748cc4a59a6718cd3010448278d45542ce588c2a7d1a4e834a6",
+  "version": "sha256:d62b84315dad3f7f00402ae7b5d54f7ae274e47a665ae5da791e733af66a3492",
   "modules": [
     {
       "id": "home",
@@ -5797,7 +5797,7 @@
         "Organization"
       ],
       "description": "Manage your organization profile, compliance, and security settings",
-      "summary": "Organization settings holds the organization's profile and sign-in security, in two tabs: - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: five sub-tabs. **Overview** is the security briefing: what needs attention, the members without two-factor, failed sign-ins, API key hygiene, recent activity and the server's session limits. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds the **Access settings** and priority-ordered access policies, and **Activity** shows sign-ins, risk decisions, external identities and two-factor devices.\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.\n\nAn access policy narrows what roles allow, and it binds people, agents and API keys alike. It can ask for proof as well as name who it applies to: a policy that requires two-factor refuses anyone signed in without it, whether the policy allows or denies, and an agent working for them is held to the same sign-in. A policy that denies unless two-factor was used steps aside once it was. API keys and agents working alone have no sign-in to prove anything with, so a two-factor policy does not stop them: add a policy that denies them by principal type.",
+      "summary": "Organization settings holds the organization's profile and sign-in security, in two tabs: - **General**: the logo and icon (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: five sub-tabs. **Overview** is the security briefing: what needs attention, the members without two-factor, failed sign-ins, API key hygiene, recent activity and the server's session limits. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds the **Access settings** and priority-ordered access policies, and **Activity** shows sign-ins, risk decisions, external identities and two-factor devices.\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.\n\nAn access policy narrows what roles allow, and it binds people, agents and API keys alike. It can ask for proof as well as name who it applies to: a policy that requires two-factor refuses anyone signed in without it, whether the policy allows or denies, and an agent working for them is held to the same sign-in. A policy that denies unless two-factor was used steps aside once it was. API keys and agents working alone have no sign-in to prove anything with, so a two-factor policy does not stop them: add a policy that denies them by principal type.",
       "requires": [
         {
           "resource": "organization",
@@ -5838,16 +5838,24 @@
           ]
         },
         {
-          "title": "Change the organization logo",
+          "title": "Change the organization logo or icon",
           "keywords": [
             "upload logo",
             "company logo",
-            "branding"
+            "branding",
+            "icon",
+            "sidebar icon",
+            "crop logo",
+            "replace logo",
+            "remove logo",
+            "svg logo"
           ],
           "steps": [
             "Open [Organization settings](/admin/organization-settings) on the **General** tab.",
-            "In **Organization branding**, select **Upload logo** and choose an image.",
-            "Adjust the crop and select **Upload logo**. Use **Remove logo** to take it off."
+            "In **Organization branding**, the **Preview** shows your icon in the **Sidebar** and your logo at the top of an **Invoice**. Switch to the one you want to change.",
+            "Select the icon in the sidebar, or the logo on the invoice (a dashed outline marks each), and choose an image, or drop one onto it. PNG, JPG, WebP and SVG files up to 20 MB are accepted. Until you add an icon, the sidebar fits your logo into its square.",
+            "Drag the picture into place and zoom with the slider or the scroll wheel; the preview beside it shows the result as you move it. Select **Upload logo** or **Upload icon**.",
+            "To swap or take off a picture later, select it in the preview and choose **Replace** or **Remove**."
           ]
         },
         {

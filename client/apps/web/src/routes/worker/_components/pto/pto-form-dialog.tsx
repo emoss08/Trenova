@@ -321,7 +321,7 @@ export function PTOFormDialog({
                     control={control}
                     name="workerId"
                     label={t("Worker")}
-                    rules={{ required: true }}
+                    required
                     placeholder={t("Select worker")}
                     description={t("The worker taking time off.")}
                     disabled={isEdit || lockWorker}
@@ -332,7 +332,7 @@ export function PTOFormDialog({
                     control={control}
                     name="type"
                     label={t("Type")}
-                    rules={{ required: true }}
+                    required
                     options={ptoTypeChoices}
                     placeholder={t("Select type")}
                     description={t("Decides which balance the days are taken from.")}
@@ -343,7 +343,7 @@ export function PTOFormDialog({
                     control={control}
                     name="startDate"
                     label={t("First day")}
-                    rules={{ required: true }}
+                    required
                     placeholder={t("First day off")}
                     description={t("The first day off; weekends count only if the policy says so.")}
                   />
@@ -353,7 +353,7 @@ export function PTOFormDialog({
                     control={control}
                     name="endDate"
                     label={t("Last day")}
-                    rules={{ required: true }}
+                    required
                     placeholder={t("Last day off")}
                     description={t("The last day off, counted inclusively.")}
                   />
@@ -374,7 +374,7 @@ export function PTOFormDialog({
                     control={control}
                     name="reason"
                     label={t("Reason")}
-                    rules={{ required: true }}
+                    required
                     placeholder={t("e.g. Family wedding")}
                     maxLength={255}
                     description={t("Seen by whoever reviews the request.")}

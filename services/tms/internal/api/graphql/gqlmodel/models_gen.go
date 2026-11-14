@@ -8311,7 +8311,6 @@ type OrganizationInput struct {
 	LoginSlug              *string `json:"loginSlug,omitempty"`
 	SCACCode               string  `json:"scacCode"`
 	DOTNumber              string  `json:"dotNumber"`
-	LogoURL                *string `json:"logoUrl,omitempty"`
 	BucketName             *string `json:"bucketName,omitempty"`
 	AddressLine1           string  `json:"addressLine1"`
 	AddressLine2           *string `json:"addressLine2,omitempty"`

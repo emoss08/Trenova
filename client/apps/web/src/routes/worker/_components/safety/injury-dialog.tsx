@@ -252,7 +252,7 @@ export function InjuryDialog({
                   label={t("When it happened")}
                   placeholder={t("MM/DD/YYYY")}
                   description={t("Sets the log year the case is numbered in.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -273,7 +273,7 @@ export function InjuryDialog({
                   description={t(
                     "The narrative for the 301 incident report: what the employee was doing and how it happened.",
                   )}
-                  rules={{ required: true }}
+                  required
                   maxLength={4000}
                 />
               </FormControl>
@@ -316,7 +316,7 @@ export function InjuryDialog({
                   options={ILLNESS_OPTIONS}
                   placeholder={t("Pick a type")}
                   description={t("Which column of the 300 log the case is tallied in.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -329,7 +329,7 @@ export function InjuryDialog({
                   description={t(
                     "Feeds the classification suggestion; first aid alone does not make a case recordable.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -364,7 +364,7 @@ export function InjuryDialog({
                   description={t(
                     "The employer's judgement; suggested from treatment and days lost until you choose one yourself.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               {isEdit ? (
@@ -378,7 +378,7 @@ export function InjuryDialog({
                     description={t(
                       "An open case can still accrue days away or restricted; close it once the count is final.",
                     )}
-                    rules={{ required: true }}
+                    required
                   />
                 </FormControl>
               ) : null}
@@ -425,7 +425,7 @@ export function InjuryDialog({
                   description={t(
                     "Tracks the workers' compensation claim; the claim dates are dropped while it is not filed.",
                   )}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               {claimFiled ? (
@@ -437,7 +437,7 @@ export function InjuryDialog({
                       label={t("Claim filed")}
                       placeholder={t("MM/DD/YYYY")}
                       description={t("The date the claim was submitted to the carrier.")}
-                      rules={{ required: true }}
+                      required
                     />
                   </FormControl>
                   <FormControl>
@@ -466,7 +466,7 @@ export function InjuryDialog({
                         label={t("Claim closed")}
                         placeholder={t("MM/DD/YYYY")}
                         description={t("When the carrier closed the claim.")}
-                        rules={{ required: true }}
+                        required
                       />
                     </FormControl>
                   ) : null}

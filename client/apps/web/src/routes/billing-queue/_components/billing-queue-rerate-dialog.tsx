@@ -126,7 +126,7 @@ export function BillingQueueRerateDialog({
                   control={control}
                   name="formulaTemplateId"
                   label={t("Tariff")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>

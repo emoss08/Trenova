@@ -116,7 +116,7 @@ function CommodityDialog({
         label={label}
         placeholder="0"
         sideText="ft"
-        rules={{ required }}
+        required={required}
       />
     ),
   }));

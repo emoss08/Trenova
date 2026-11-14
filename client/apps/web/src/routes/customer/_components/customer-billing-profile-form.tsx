@@ -301,8 +301,8 @@ export function CustomerBillingProfileForm() {
                   ediPartner
                     ? t("Posted invoices are sent to {0} as an EDI 210.", ediPartner.name)
                     : t(
-                      "Sends posted invoices to the customer's EDI partner as an EDI 210. Link an active outbound partner with a 210 document profile first, or every send is refused as unconfigured.",
-                    )
+                        "Sends posted invoices to the customer's EDI partner as an EDI 210. Link an active outbound partner with a 210 document profile first, or every send is refused as unconfigured.",
+                      )
                 }
               />
             </div>
@@ -571,7 +571,7 @@ export function CustomerBillingProfileForm() {
                 name="billingProfile.fuelSurchargeProgramId"
                 label={t("Fuel surcharge program")}
                 placeholder={t("Select a program")}
-                rules={{ required: true }}
+                required
                 description={t(
                   "Every shipment for this customer gets the correct week's indexed surcharge from this program automatically.",
                 )}

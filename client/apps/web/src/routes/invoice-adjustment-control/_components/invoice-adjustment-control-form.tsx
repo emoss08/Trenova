@@ -112,7 +112,7 @@ function EligibilityCard() {
                 "Controls whether partially paid invoices can be adjusted and whether approval is required.",
               )}
               options={adjustmentEligibilityPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -124,7 +124,7 @@ function EligibilityCard() {
                 "Controls whether fully paid invoices may be adjusted through the formal adjustment workflow.",
               )}
               options={adjustmentEligibilityPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -136,7 +136,7 @@ function EligibilityCard() {
                 "Controls whether disputed invoices can be adjusted and whether approval is required.",
               )}
               options={adjustmentEligibilityPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -148,7 +148,7 @@ function EligibilityCard() {
                 "Defines whether adjustments use the original invoice accounting date when open or always book in the next open period.",
               )}
               options={adjustmentAccountingDatePolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[520px]">
@@ -160,7 +160,7 @@ function EligibilityCard() {
                 "Defines whether closed-period adjustments are disallowed, require reopen, or must post in the next open period with approval.",
               )}
               options={closedPeriodAdjustmentPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -171,7 +171,7 @@ function EligibilityCard() {
               description={t(
                 "Tolerance percentage used when comparing rerated replacement invoice economics to the superseded invoice.",
               )}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[520px]">
@@ -183,7 +183,7 @@ function EligibilityCard() {
                 "Defines when a replacement invoice must be reviewed after a credit and rebill workflow changes economic terms.",
               )}
               options={replacementInvoiceReviewPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -218,7 +218,7 @@ function DocumentationCard() {
                 "Determines whether a structured reason is mandatory before an adjustment can be completed.",
               )}
               options={requirementPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>
@@ -255,7 +255,7 @@ function ApprovalCard() {
                 "Defines whether standard invoice adjustments require approval always, never, or only above a configured threshold.",
               )}
               options={approvalPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           {standardApprovalPolicy === "AmountThreshold" && (
@@ -267,7 +267,7 @@ function ApprovalCard() {
                 description={t(
                   "Adjustment amount above which approval is required when the standard approval policy uses an amount threshold.",
                 )}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           )}
@@ -280,7 +280,7 @@ function ApprovalCard() {
                 "Defines whether write-offs are disallowed, always require approval, or require approval only above a threshold.",
               )}
               options={writeOffApprovalPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           {writeOffApprovalPolicy === "RequireApprovalAboveThreshold" && (
@@ -292,7 +292,7 @@ function ApprovalCard() {
                 description={t(
                   "Write-off amount above which approval is required when the write-off approval policy uses an amount threshold.",
                 )}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           )}
@@ -339,7 +339,7 @@ function CreditAndVisibilityCard() {
                 "Defines whether invoice adjustments may leave an unapplied customer credit balance.",
               )}
               options={customerCreditBalancePolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[420px]">
@@ -351,7 +351,7 @@ function CreditAndVisibilityCard() {
                 "Controls unapplied customer-credit outcomes caused by payment state and does not permit credit beyond true eligible invoice line or item scope.",
               )}
               options={overCreditPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
           <FormControl className="max-w-[520px]">
@@ -363,7 +363,7 @@ function CreditAndVisibilityCard() {
                 "Defines whether external customer-facing views show only the current invoice or also expose superseded invoices with status.",
               )}
               options={supersededInvoiceVisibilityPolicyChoices}
-              rules={{ required: true }}
+              required
             />
           </FormControl>
         </FormGroup>

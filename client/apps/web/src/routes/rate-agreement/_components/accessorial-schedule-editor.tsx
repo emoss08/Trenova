@@ -86,7 +86,7 @@ export function AccessorialScheduleEditor() {
               <FormControl>
                 <AccessorialChargeAutocompleteField
                   control={control}
-                  rules={{ required: true }}
+                  required
                   name={`accessorials.${index}.accessorialChargeId` as never}
                   label={t("Accessorial")}
                   placeholder={t("Charge")}
@@ -96,7 +96,7 @@ export function AccessorialScheduleEditor() {
               <FormControl>
                 <SelectField
                   control={control}
-                  rules={{ required: true }}
+                  required
                   name={`accessorials.${index}.method` as never}
                   label={t("Method")}
                   placeholder={t("Method")}
@@ -108,7 +108,7 @@ export function AccessorialScheduleEditor() {
                 <FormControl>
                   <SelectField
                     control={control}
-                    rules={{ required: true }}
+                    required
                     name={`accessorials.${index}.rateUnit` as never}
                     label={t("Rate unit")}
                     placeholder={t("Unit")}

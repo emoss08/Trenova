@@ -17,7 +17,7 @@ export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="name"
           label={t("Name")}
           placeholder={t("Enter role name")}
@@ -27,7 +27,7 @@ export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {
       <FormControl>
         <SelectField
           control={control}
-          rules={{ required: true }}
+          required
           name="maxSensitivity"
           label={t("Max sensitivity level")}
           options={fieldSensitivityChoices}
@@ -40,7 +40,7 @@ export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {
           name="coreResponsibility"
           label={t("Core responsibility")}
           options={coreResponsibilityChoices}
-          isClearable
+          clearable
           isReadOnly={isSystemRole}
           placeholder={t("Select responsibility...")}
         />

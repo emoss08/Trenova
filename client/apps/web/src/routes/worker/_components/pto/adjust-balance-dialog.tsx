@@ -130,7 +130,7 @@ export function AdjustBalanceDialog({
                   label={t("PTO type")}
                   placeholder={t("Pick a PTO type")}
                   options={ptoTypeChoices}
-                  rules={{ required: true }}
+                  required
                   description={t("The balance this correction is posted to.")}
                 />
               </FormControl>
@@ -140,7 +140,7 @@ export function AdjustBalanceDialog({
                   name="amountDays"
                   label={t("Amount (days)")}
                   placeholder={t("e.g. 2 or -1.5")}
-                  rules={{ required: true }}
+                  required
                   description={
                     current
                       ? preview
@@ -156,7 +156,7 @@ export function AdjustBalanceDialog({
                   name="effectiveAt"
                   label={t("Effective date")}
                   placeholder={t("Today")}
-                  rules={{ required: true }}
+                  required
                   description={t("The date the ledger shows the correction taking effect.")}
                 />
               </FormControl>
@@ -166,7 +166,7 @@ export function AdjustBalanceDialog({
                   name="note"
                   label={t("Reason")}
                   placeholder={t("e.g. Credited 2 days for holiday worked")}
-                  rules={{ required: true }}
+                  required
                   maxLength={255}
                   description={t(
                     "Why the balance is being corrected; it stays on the ledger entry.",

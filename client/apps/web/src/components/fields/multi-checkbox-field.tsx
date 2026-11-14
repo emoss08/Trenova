@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { Label } from "@trenova/shared/components/ui/label";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
@@ -17,6 +18,7 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
   name,
   control,
   rules,
+  required,
   label,
   description,
   options,
@@ -31,7 +33,7 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
     <Controller
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field: { value, onChange, disabled }, fieldState }) => {
         const selected = new Set<string>((value as string[] | null | undefined) ?? []);
 
@@ -47,7 +49,7 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
 
         return (
           <div className="flex w-full flex-col gap-1.5">
-            <Label htmlFor={groupId} className={cn(rules?.required && "required")}>
+            <Label htmlFor={groupId} className={cn(isRequired(rules, required) && "required")}>
               {label}
             </Label>
             <div id={groupId} className="grid grid-cols-2 gap-1.5" role="group" aria-label={label}>

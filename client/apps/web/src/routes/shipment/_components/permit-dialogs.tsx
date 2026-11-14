@@ -156,7 +156,7 @@ export function PermitRecordDialog({
                   "Exactly as printed on the permit — this is the number enforcement matches at an inspection.",
                 )}
                 placeholder={t("e.g. 2026-084311")}
-                rules={{ required: true }}
+                required
                 maxLength={100}
               />
             </FormControl>
@@ -169,7 +169,7 @@ export function PermitRecordDialog({
                   "The state that issued this permit. A permit covers one jurisdiction — record one per state on the route.",
                 )}
                 placeholder={t("Select issuing state")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
             <FormControl>
@@ -189,7 +189,7 @@ export function PermitRecordDialog({
                 label={t("Expires")}
                 description={t("Must still cover the final stop, not just dispatch.")}
                 placeholder={t("Select expiry date")}
-                rules={{ required: true }}
+                required
                 clearable
               />
             </FormControl>
@@ -325,7 +325,7 @@ export function PermitWaiveDialog({
                 label={t("Reason")}
                 description={t("At least 10 characters. Say what makes this movement acceptable.")}
                 placeholder={t("Escort booked and route surveyed with the state")}
-                rules={{ required: true }}
+                required
               />
             </FormControl>
           </FormGroup>

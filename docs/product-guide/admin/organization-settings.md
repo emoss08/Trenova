@@ -11,7 +11,7 @@ related:
 
 ## What it's for
 Organization settings holds the organization's profile and sign-in security, in two tabs:
-- **General**: the logo (**Organization branding**), **Organization details** (name, timezone and
+- **General**: the logo and icon (**Organization branding**), **Organization details** (name, timezone and
   tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT
   number and tax ID) and the **Registered address**.
 - **Security**: five sub-tabs. **Overview** is the security briefing: what needs attention, the
@@ -41,11 +41,18 @@ Keywords: company name, timezone, DOT number, SCAC, tax ID, address
    compliance** (**SCAC code**, **DOT number**, **Tax ID**) and the **Registered address**.
 3. Select **Save changes**.
 
-### Change the organization logo
-Keywords: upload logo, company logo, branding
+### Change the organization logo or icon
+Keywords: upload logo, company logo, branding, icon, sidebar icon, crop logo, replace logo, remove logo, svg logo
 1. Open [Organization settings](/admin/organization-settings) on the **General** tab.
-2. In **Organization branding**, select **Upload logo** and choose an image.
-3. Adjust the crop and select **Upload logo**. Use **Remove logo** to take it off.
+2. In **Organization branding**, the **Preview** shows your icon in the **Sidebar** and your
+   logo at the top of an **Invoice**. Switch to the one you want to change.
+3. Select the icon in the sidebar, or the logo on the invoice (a dashed outline marks each),
+   and choose an image, or drop one onto it. PNG, JPG, WebP and SVG files up to 20 MB are
+   accepted. Until you add an icon, the sidebar fits your logo into its square.
+4. Drag the picture into place and zoom with the slider or the scroll wheel; the preview beside
+   it shows the result as you move it. Select **Upload logo** or **Upload icon**.
+5. To swap or take off a picture later, select it in the preview and choose **Replace** or
+   **Remove**.
 
 ### Set the operating model
 Keywords: brokerage, asset carrier, hybrid, hide brokerage menus

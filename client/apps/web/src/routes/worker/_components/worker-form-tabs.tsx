@@ -41,7 +41,7 @@ export function GeneralTab() {
             <SelectField
               control={control}
               options={statusChoices}
-              rules={{ required: true }}
+              required
               name="status"
               label={t("Status")}
               placeholder={t("Set from the timeline")}
@@ -55,7 +55,7 @@ export function GeneralTab() {
             <SelectField
               control={control}
               options={workerTypeChoices}
-              rules={{ required: true }}
+              required
               name="type"
               label={t("Worker type")}
               placeholder={t("Employee or contractor")}
@@ -65,7 +65,7 @@ export function GeneralTab() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="firstName"
               label={t("First name")}
               placeholder={t("e.g. Maria")}
@@ -76,7 +76,7 @@ export function GeneralTab() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="lastName"
               label={t("Last name")}
               placeholder={t("e.g. Alvarez")}
@@ -88,7 +88,7 @@ export function GeneralTab() {
             <SelectField
               control={control}
               options={genderChoices}
-              rules={{ required: true }}
+              required
               name="gender"
               label={t("Gender")}
               placeholder={t("Pick a gender")}
@@ -99,7 +99,7 @@ export function GeneralTab() {
             <SelectField
               control={control}
               options={driverTypeChoices}
-              rules={{ required: true }}
+              required
               name="driverType"
               label={t("Driver type")}
               placeholder={t("Local, regional, OTR or team")}
@@ -153,7 +153,7 @@ export function GeneralTab() {
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="city"
               label={t("City")}
               placeholder={t("e.g. Joliet")}
@@ -166,7 +166,7 @@ export function GeneralTab() {
               control={control}
               name="stateId"
               label={t("State")}
-              rules={{ required: true }}
+              required
               placeholder={t("Search states")}
               description={t("U.S. state of residence.")}
             />
@@ -174,7 +174,7 @@ export function GeneralTab() {
           <FormControl cols="full">
             <InputField
               control={control}
-              rules={{ required: true }}
+              required
               name="postalCode"
               label={t("Postal code")}
               placeholder={t("e.g. 60432")}
@@ -271,7 +271,7 @@ export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps
               control={control}
               name="profile.dob"
               label={t("Date of birth")}
-              rules={{ required: !personalWithheld }}
+              required={!personalWithheld}
               description={
                 personalWithheld ? withheldDescription : t("Date of birth as shown on the license.")
               }
@@ -284,7 +284,7 @@ export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps
               control={control}
               name="profile.hireDate"
               label={t("Hire date")}
-              rules={{ required: true }}
+              required
               description={t("Date the worker was hired; tenure is counted from here.")}
               placeholder={t("MM/DD/YYYY")}
             />
@@ -310,7 +310,7 @@ export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps
           <FormControl>
             <InputField
               control={control}
-              rules={{ required: !personalWithheld }}
+              required={!personalWithheld}
               name="profile.licenseNumber"
               label={t("License number")}
               placeholder={personalWithheld ? t("Hidden") : t("e.g. A123-4567-8901")}
@@ -335,7 +335,7 @@ export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps
               control={control}
               name="profile.licenseExpiry"
               label={t("License expiry")}
-              rules={{ required: true }}
+              required
               description={t("When the CDL expires.")}
               placeholder={t("MM/DD/YYYY")}
             />
@@ -344,7 +344,7 @@ export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps
             <SelectField
               control={control}
               options={cdlClassChoices}
-              rules={{ required: true }}
+              required
               name="profile.cdlClass"
               label={t("CDL class")}
               placeholder={t("A, B or C")}
@@ -365,7 +365,7 @@ export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps
             <SelectField
               control={control}
               options={endorsementTypeChoices}
-              rules={{ required: true }}
+              required
               name="profile.endorsement"
               label={t("Endorsement")}
               placeholder={t("Pick an endorsement")}
@@ -378,7 +378,7 @@ export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps
                 control={control}
                 name="profile.hazmatExpiry"
                 label={t("Hazmat expiry")}
-                rules={{ required: requiresHazmatExpiry }}
+                required={requiresHazmatExpiry}
                 description={t("Expiration date of hazmat endorsement.")}
                 placeholder={t("MM/DD/YYYY")}
               />
@@ -452,7 +452,7 @@ export function ComplianceTab({ personalWithheld = false }: PersonalDetailsProps
             <SelectField
               control={control}
               options={complianceStatusChoices}
-              rules={{ required: true }}
+              required
               name="profile.complianceStatus"
               label={t("Compliance status")}
               placeholder={t("Pick a status")}

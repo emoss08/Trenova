@@ -1,3 +1,4 @@
+import { isRequired, withRequired } from "@trenova/shared/lib/field-rules";
 import { useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -10,6 +11,7 @@ export function SensitiveField<T extends FieldValues>({
   name,
   control,
   rules,
+  required,
   className,
   layout,
   ...props
@@ -27,13 +29,13 @@ export function SensitiveField<T extends FieldValues>({
     <Controller<T>
       name={name}
       control={control}
-      rules={rules}
+      rules={withRequired(rules, required)}
       render={({ field, fieldState }) => (
         <FieldWrapper
           name={name}
           label={label}
           description={description}
-          required={!!rules?.required}
+          required={isRequired(rules, required)}
           error={fieldState.error?.message}
           className={className}
           layout={layout}

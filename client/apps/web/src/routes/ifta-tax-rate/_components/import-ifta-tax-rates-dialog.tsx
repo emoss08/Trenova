@@ -151,7 +151,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                   placeholder="2026"
                   min={IFTA_MIN_YEAR}
                   max={IFTA_MAX_YEAR}
-                  rules={{ required: true }}
+                  required
                   description={t("Every row in the file is published for this year.")}
                 />
               </FormControl>
@@ -161,7 +161,7 @@ function ImportRatesSession({ onOpenChange }: Pick<ImportIftaTaxRatesDialogProps
                   name="quarter"
                   label={t("Quarter")}
                   options={iftaQuarterChoices}
-                  rules={{ required: true }}
+                  required
                   placeholder={t("Select a quarter")}
                   description={t("And this quarter. Changing either clears the preview.")}
                 />

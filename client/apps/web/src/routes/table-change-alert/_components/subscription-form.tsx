@@ -42,7 +42,7 @@ export function SubscriptionForm() {
         <FormControl>
           <InputField<TCASubscriptionFormValues>
             control={control}
-            rules={{ required: true }}
+            required
             name="name"
             label={t("Name")}
             placeholder={t("My shipment alerts")}
@@ -52,7 +52,7 @@ export function SubscriptionForm() {
         <FormControl>
           <SelectField<TCASubscriptionFormValues>
             control={control}
-            rules={{ required: true }}
+            required
             name="tableName"
             label={t("Table")}
             options={tableOptions}

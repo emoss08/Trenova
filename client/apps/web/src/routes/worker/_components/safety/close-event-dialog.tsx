@@ -94,7 +94,7 @@ export function CloseEventDialog({ open, onOpenChange, workerId, event }: CloseE
                   description={t(
                     "Kept on the event and in the audit log; a closed event cannot be deleted without reopening it first.",
                   )}
-                  rules={{ required: true }}
+                  required
                   maxLength={4000}
                 />
               </FormControl>

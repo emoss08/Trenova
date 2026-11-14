@@ -137,7 +137,7 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
                 name="name"
                 label={t("Name")}
                 placeholder={t("FCA Canadian diesel")}
-                rules={{ required: true }}
+                required
                 maxLength={100}
               />
             </FormControl>
@@ -147,7 +147,7 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
                 name="code"
                 label={t("Code")}
                 placeholder="FCA_CAD"
-                rules={{ required: true }}
+                required
                 maxLength={50}
                 description={t("Short unique identifier.")}
               />
@@ -177,7 +177,7 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
                 name="currency"
                 label={t("Currency")}
                 placeholder={t("USD")}
-                rules={{ required: true }}
+                required
                 maxLength={3}
                 description={t("3-letter ISO currency of the entered prices.")}
               />

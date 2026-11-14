@@ -101,7 +101,7 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
                   label={t("Day")}
                   placeholder={t("Day the leave was taken")}
                   description={t("The calendar day these hours belong to.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl>
@@ -111,7 +111,7 @@ export function LeaveDayDialog({ open, onOpenChange, workerId, leaveCase }: Leav
                   label={t("Hours")}
                   placeholder={t("e.g. 8")}
                   description={t("Hours of leave taken that day, more than zero and up to 24.")}
-                  rules={{ required: true }}
+                  required
                 />
               </FormControl>
               <FormControl cols="full">

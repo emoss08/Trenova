@@ -241,8 +241,8 @@ function ExportTrailForm({
       />
 
       <div className="grid grid-cols-2 gap-3">
-        <DateField control={control} name="from" label={t("From")} rules={{ required: true }} />
-        <DateField control={control} name="to" label={t("To")} rules={{ required: true }} />
+        <DateField control={control} name="from" label={t("From")} required />
+        <DateField control={control} name="to" label={t("To")} required />
       </div>
 
       <CheckboxField

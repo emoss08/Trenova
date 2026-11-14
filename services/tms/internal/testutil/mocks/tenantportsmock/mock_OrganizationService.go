@@ -20,10 +20,19 @@ func NewMockOrganizationService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockOrganizationService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockOrganizationService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -41,27 +50,27 @@ func (_m *MockOrganizationService) EXPECT() *MockOrganizationService_Expecter {
 	return &MockOrganizationService_Expecter{mock: &_m.Mock}
 }
 
-// DeleteLogo provides a mock function for the type MockOrganizationService
-func (_mock *MockOrganizationService) DeleteLogo(ctx context.Context, req tenantports.DeleteLogoRequest) (*tenant.Organization, error) {
+// DeleteBrandImage provides a mock function for the type MockOrganizationService
+func (_mock *MockOrganizationService) DeleteBrandImage(ctx context.Context, req tenantports.DeleteBrandImageRequest) (*tenant.Organization, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteLogo")
+		panic("no return value specified for DeleteBrandImage")
 	}
 
 	var r0 *tenant.Organization
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.DeleteLogoRequest) (*tenant.Organization, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.DeleteBrandImageRequest) (*tenant.Organization, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.DeleteLogoRequest) *tenant.Organization); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.DeleteBrandImageRequest) *tenant.Organization); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*tenant.Organization)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.DeleteLogoRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.DeleteBrandImageRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -69,27 +78,27 @@ func (_mock *MockOrganizationService) DeleteLogo(ctx context.Context, req tenant
 	return r0, r1
 }
 
-// MockOrganizationService_DeleteLogo_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteLogo'
-type MockOrganizationService_DeleteLogo_Call struct {
+// MockOrganizationService_DeleteBrandImage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteBrandImage'
+type MockOrganizationService_DeleteBrandImage_Call struct {
 	*mock.Call
 }
 
-// DeleteLogo is a helper method to define mock.On call
+// DeleteBrandImage is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req services.DeleteLogoRequest
-func (_e *MockOrganizationService_Expecter) DeleteLogo(ctx any, req any) *MockOrganizationService_DeleteLogo_Call {
-	return &MockOrganizationService_DeleteLogo_Call{Call: _e.mock.On("DeleteLogo", ctx, req)}
+//   - req tenantports.DeleteBrandImageRequest
+func (_e *MockOrganizationService_Expecter) DeleteBrandImage(ctx any, req any) *MockOrganizationService_DeleteBrandImage_Call {
+	return &MockOrganizationService_DeleteBrandImage_Call{Call: _e.mock.On("DeleteBrandImage", ctx, req)}
 }
 
-func (_c *MockOrganizationService_DeleteLogo_Call) Run(run func(ctx context.Context, req tenantports.DeleteLogoRequest)) *MockOrganizationService_DeleteLogo_Call {
+func (_c *MockOrganizationService_DeleteBrandImage_Call) Run(run func(ctx context.Context, req tenantports.DeleteBrandImageRequest)) *MockOrganizationService_DeleteBrandImage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 tenantports.DeleteLogoRequest
+		var arg1 tenantports.DeleteBrandImageRequest
 		if args[1] != nil {
-			arg1 = args[1].(tenantports.DeleteLogoRequest)
+			arg1 = args[1].(tenantports.DeleteBrandImageRequest)
 		}
 		run(
 			arg0,
@@ -99,12 +108,80 @@ func (_c *MockOrganizationService_DeleteLogo_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockOrganizationService_DeleteLogo_Call) Return(organization *tenant.Organization, err error) *MockOrganizationService_DeleteLogo_Call {
+func (_c *MockOrganizationService_DeleteBrandImage_Call) Return(organization *tenant.Organization, err error) *MockOrganizationService_DeleteBrandImage_Call {
 	_c.Call.Return(organization, err)
 	return _c
 }
 
-func (_c *MockOrganizationService_DeleteLogo_Call) RunAndReturn(run func(ctx context.Context, req tenantports.DeleteLogoRequest) (*tenant.Organization, error)) *MockOrganizationService_DeleteLogo_Call {
+func (_c *MockOrganizationService_DeleteBrandImage_Call) RunAndReturn(run func(ctx context.Context, req tenantports.DeleteBrandImageRequest) (*tenant.Organization, error)) *MockOrganizationService_DeleteBrandImage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetBranding provides a mock function for the type MockOrganizationService
+func (_mock *MockOrganizationService) GetBranding(ctx context.Context, req tenantports.GetBrandingRequest) (*tenantports.Branding, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBranding")
+	}
+
+	var r0 *tenantports.Branding
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetBrandingRequest) (*tenantports.Branding, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetBrandingRequest) *tenantports.Branding); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*tenantports.Branding)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.GetBrandingRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationService_GetBranding_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBranding'
+type MockOrganizationService_GetBranding_Call struct {
+	*mock.Call
+}
+
+// GetBranding is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req tenantports.GetBrandingRequest
+func (_e *MockOrganizationService_Expecter) GetBranding(ctx any, req any) *MockOrganizationService_GetBranding_Call {
+	return &MockOrganizationService_GetBranding_Call{Call: _e.mock.On("GetBranding", ctx, req)}
+}
+
+func (_c *MockOrganizationService_GetBranding_Call) Run(run func(ctx context.Context, req tenantports.GetBrandingRequest)) *MockOrganizationService_GetBranding_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 tenantports.GetBrandingRequest
+		if args[1] != nil {
+			arg1 = args[1].(tenantports.GetBrandingRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationService_GetBranding_Call) Return(branding *tenantports.Branding, err error) *MockOrganizationService_GetBranding_Call {
+	_c.Call.Return(branding, err)
+	return _c
+}
+
+func (_c *MockOrganizationService_GetBranding_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetBrandingRequest) (*tenantports.Branding, error)) *MockOrganizationService_GetBranding_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -144,7 +221,7 @@ type MockOrganizationService_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetOrganizationByIDRequest
+//   - req tenantports.GetOrganizationByIDRequest
 func (_e *MockOrganizationService_Expecter) GetByID(ctx any, req any) *MockOrganizationService_GetByID_Call {
 	return &MockOrganizationService_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
@@ -212,7 +289,7 @@ type MockOrganizationService_GetByIDs_Call struct {
 
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req services.GetOrganizationsByIDsRequest
+//   - req tenantports.GetOrganizationsByIDsRequest
 func (_e *MockOrganizationService_Expecter) GetByIDs(ctx any, req any) *MockOrganizationService_GetByIDs_Call {
 	return &MockOrganizationService_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
@@ -241,74 +318,6 @@ func (_c *MockOrganizationService_GetByIDs_Call) Return(organizations []*tenant.
 }
 
 func (_c *MockOrganizationService_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetOrganizationsByIDsRequest) ([]*tenant.Organization, error)) *MockOrganizationService_GetByIDs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetLogoURL provides a mock function for the type MockOrganizationService
-func (_mock *MockOrganizationService) GetLogoURL(ctx context.Context, req tenantports.GetLogoURLRequest) (*tenantports.GetLogoURLResponse, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetLogoURL")
-	}
-
-	var r0 *tenantports.GetLogoURLResponse
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetLogoURLRequest) (*tenantports.GetLogoURLResponse, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetLogoURLRequest) *tenantports.GetLogoURLResponse); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenantports.GetLogoURLResponse)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.GetLogoURLRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockOrganizationService_GetLogoURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLogoURL'
-type MockOrganizationService_GetLogoURL_Call struct {
-	*mock.Call
-}
-
-// GetLogoURL is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req services.GetLogoURLRequest
-func (_e *MockOrganizationService_Expecter) GetLogoURL(ctx any, req any) *MockOrganizationService_GetLogoURL_Call {
-	return &MockOrganizationService_GetLogoURL_Call{Call: _e.mock.On("GetLogoURL", ctx, req)}
-}
-
-func (_c *MockOrganizationService_GetLogoURL_Call) Run(run func(ctx context.Context, req tenantports.GetLogoURLRequest)) *MockOrganizationService_GetLogoURL_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 tenantports.GetLogoURLRequest
-		if args[1] != nil {
-			arg1 = args[1].(tenantports.GetLogoURLRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockOrganizationService_GetLogoURL_Call) Return(getLogoURLResponse *tenantports.GetLogoURLResponse, err error) *MockOrganizationService_GetLogoURL_Call {
-	_c.Call.Return(getLogoURLResponse, err)
-	return _c
-}
-
-func (_c *MockOrganizationService_GetLogoURL_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetLogoURLRequest) (*tenantports.GetLogoURLResponse, error)) *MockOrganizationService_GetLogoURL_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -484,7 +493,7 @@ type MockOrganizationService_SelectOptions_Call struct {
 
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.SelectOrganizationOptionsRequest
+//   - req *tenantports.SelectOrganizationOptionsRequest
 func (_e *MockOrganizationService_Expecter) SelectOptions(ctx any, req any) *MockOrganizationService_SelectOptions_Call {
 	return &MockOrganizationService_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
@@ -585,27 +594,27 @@ func (_c *MockOrganizationService_Update_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
-// UploadLogo provides a mock function for the type MockOrganizationService
-func (_mock *MockOrganizationService) UploadLogo(ctx context.Context, req *tenantports.UploadLogoRequest, userID pulid.ID) (*tenant.Organization, error) {
+// UploadBrandImage provides a mock function for the type MockOrganizationService
+func (_mock *MockOrganizationService) UploadBrandImage(ctx context.Context, req *tenantports.UploadBrandImageRequest, userID pulid.ID) (*tenant.Organization, error) {
 	ret := _mock.Called(ctx, req, userID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UploadLogo")
+		panic("no return value specified for UploadBrandImage")
 	}
 
 	var r0 *tenant.Organization
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenantports.UploadLogoRequest, pulid.ID) (*tenant.Organization, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenantports.UploadBrandImageRequest, pulid.ID) (*tenant.Organization, error)); ok {
 		return returnFunc(ctx, req, userID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenantports.UploadLogoRequest, pulid.ID) *tenant.Organization); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenantports.UploadBrandImageRequest, pulid.ID) *tenant.Organization); ok {
 		r0 = returnFunc(ctx, req, userID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*tenant.Organization)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenantports.UploadLogoRequest, pulid.ID) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenantports.UploadBrandImageRequest, pulid.ID) error); ok {
 		r1 = returnFunc(ctx, req, userID)
 	} else {
 		r1 = ret.Error(1)
@@ -613,28 +622,28 @@ func (_mock *MockOrganizationService) UploadLogo(ctx context.Context, req *tenan
 	return r0, r1
 }
 
-// MockOrganizationService_UploadLogo_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UploadLogo'
-type MockOrganizationService_UploadLogo_Call struct {
+// MockOrganizationService_UploadBrandImage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UploadBrandImage'
+type MockOrganizationService_UploadBrandImage_Call struct {
 	*mock.Call
 }
 
-// UploadLogo is a helper method to define mock.On call
+// UploadBrandImage is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.UploadLogoRequest
+//   - req *tenantports.UploadBrandImageRequest
 //   - userID pulid.ID
-func (_e *MockOrganizationService_Expecter) UploadLogo(ctx any, req any, userID any) *MockOrganizationService_UploadLogo_Call {
-	return &MockOrganizationService_UploadLogo_Call{Call: _e.mock.On("UploadLogo", ctx, req, userID)}
+func (_e *MockOrganizationService_Expecter) UploadBrandImage(ctx any, req any, userID any) *MockOrganizationService_UploadBrandImage_Call {
+	return &MockOrganizationService_UploadBrandImage_Call{Call: _e.mock.On("UploadBrandImage", ctx, req, userID)}
 }
 
-func (_c *MockOrganizationService_UploadLogo_Call) Run(run func(ctx context.Context, req *tenantports.UploadLogoRequest, userID pulid.ID)) *MockOrganizationService_UploadLogo_Call {
+func (_c *MockOrganizationService_UploadBrandImage_Call) Run(run func(ctx context.Context, req *tenantports.UploadBrandImageRequest, userID pulid.ID)) *MockOrganizationService_UploadBrandImage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *tenantports.UploadLogoRequest
+		var arg1 *tenantports.UploadBrandImageRequest
 		if args[1] != nil {
-			arg1 = args[1].(*tenantports.UploadLogoRequest)
+			arg1 = args[1].(*tenantports.UploadBrandImageRequest)
 		}
 		var arg2 pulid.ID
 		if args[2] != nil {
@@ -649,12 +658,12 @@ func (_c *MockOrganizationService_UploadLogo_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockOrganizationService_UploadLogo_Call) Return(organization *tenant.Organization, err error) *MockOrganizationService_UploadLogo_Call {
+func (_c *MockOrganizationService_UploadBrandImage_Call) Return(organization *tenant.Organization, err error) *MockOrganizationService_UploadBrandImage_Call {
 	_c.Call.Return(organization, err)
 	return _c
 }
 
-func (_c *MockOrganizationService_UploadLogo_Call) RunAndReturn(run func(ctx context.Context, req *tenantports.UploadLogoRequest, userID pulid.ID) (*tenant.Organization, error)) *MockOrganizationService_UploadLogo_Call {
+func (_c *MockOrganizationService_UploadBrandImage_Call) RunAndReturn(run func(ctx context.Context, req *tenantports.UploadBrandImageRequest, userID pulid.ID) (*tenant.Organization, error)) *MockOrganizationService_UploadBrandImage_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -695,7 +704,7 @@ type MockOrganizationService_UpsertMicrosoftSSOConfig_Call struct {
 // UpsertMicrosoftSSOConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-//   - config *services.MicrosoftSSOConfig
+//   - config *tenantports.MicrosoftSSOConfig
 func (_e *MockOrganizationService_Expecter) UpsertMicrosoftSSOConfig(ctx any, tenantInfo any, config any) *MockOrganizationService_UpsertMicrosoftSSOConfig_Call {
 	return &MockOrganizationService_UpsertMicrosoftSSOConfig_Call{Call: _e.mock.On("UpsertMicrosoftSSOConfig", ctx, tenantInfo, config)}
 }
@@ -769,7 +778,7 @@ type MockOrganizationService_UpsertOktaSSOConfig_Call struct {
 // UpsertOktaSSOConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-//   - config *services.OktaSSOConfig
+//   - config *tenantports.OktaSSOConfig
 func (_e *MockOrganizationService_Expecter) UpsertOktaSSOConfig(ctx any, tenantInfo any, config any) *MockOrganizationService_UpsertOktaSSOConfig_Call {
 	return &MockOrganizationService_UpsertOktaSSOConfig_Call{Call: _e.mock.On("UpsertOktaSSOConfig", ctx, tenantInfo, config)}
 }

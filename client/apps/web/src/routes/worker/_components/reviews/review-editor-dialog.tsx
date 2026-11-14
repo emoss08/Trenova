@@ -151,7 +151,7 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
                   name="templateId"
                   label={t("Template")}
                   placeholder={t("Select a template")}
-                  rules={{ required: true }}
+                  required
                   noResultsMessage={t(
                     "No active templates. Create one under Review Templates first.",
                   )}
@@ -168,7 +168,7 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
                   name="periodStart"
                   label={t("Period from")}
                   placeholder={t("A year ago")}
-                  rules={{ required: true }}
+                  required
                   description={t("The first day of the work being reviewed.")}
                 />
               </FormControl>
@@ -178,7 +178,7 @@ function StartReview({ open, onOpenChange, workerId }: ReviewEditorDialogProps) 
                   name="periodEnd"
                   label={t("Period to")}
                   placeholder={t("Today")}
-                  rules={{ required: true }}
+                  required
                   description={t("The last day being reviewed; it also dates the default title.")}
                 />
               </FormControl>

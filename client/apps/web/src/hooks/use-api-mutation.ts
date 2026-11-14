@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { isExplainedError } from "@trenova/shared/lib/explained-errors";
+import { SERVER_ERROR_TYPE } from "@trenova/shared/lib/form-refusal";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { RequestTimeoutError } from "@trenova/shared/lib/request-errors";
 import {
@@ -51,7 +52,11 @@ function applyFieldErrors<T extends FieldValues>(
   form: MutationFormTarget<T>,
   fieldErrors: ValidationError[],
 ): void {
-  const assigned = new Set<string>();
+  // The server may say several things about one field (a list that is empty and also lacks
+  // each entry it must hold). The field shows the first, as every other reader of the
+  // refusal does; the rest ride along under `types`, where the form's refusal alert finds
+  // them, so nothing the server said is lost between one refusal and the next.
+  const assigned = new Map<string, string[]>();
   // A Set both dedupes and preserves insertion order, so the joined message keeps the
   // server's ordering without an O(n) membership scan per error.
   const rootMessages = new Set<string>();
@@ -64,22 +69,32 @@ function applyFieldErrors<T extends FieldValues>(
       continue;
     }
 
-    if (assigned.has(path)) {
-      continue;
+    const messages = assigned.get(path) ?? [];
+    if (!messages.includes(fieldError.message)) {
+      messages.push(fieldError.message);
     }
-    assigned.add(path);
+    assigned.set(path, messages);
+  }
 
+  for (const [path, messages] of assigned) {
     try {
-      form.setError(path as Path<T>, { message: fieldError.message, type: "validation" });
+      form.setError(path as Path<T>, {
+        message: messages[0],
+        type: SERVER_ERROR_TYPE,
+        types:
+          messages.length > 1
+            ? Object.fromEntries(messages.map((message, index) => [`${index}`, message]))
+            : undefined,
+      });
     } catch (e) {
-      console.error(`Error setting form error for field ${fieldError.field}:`, e);
-      rootMessages.add(fieldError.message);
+      console.error(`Error setting form error for field ${path}:`, e);
+      for (const message of messages) rootMessages.add(message);
     }
   }
 
   if (rootMessages.size > 0) {
     const message = [...rootMessages].join(" ");
-    // Root is react-hook-form's channel for form-wide errors: FormRootError renders it,
+    // Root is react-hook-form's channel for form-wide errors: FormRefusal renders it,
     // and handleSubmit discards it on the next attempt so it cannot outlive the failure.
     // Setting these on their reported paths instead would land them on nodes no input
     // renders, where they are invisible AND block submission forever.
@@ -88,7 +103,7 @@ function applyFieldErrors<T extends FieldValues>(
     // and 23 of the forms reaching this code render their fields through a parent's
     // provider rather than their own. Render-tree topology must not decide whether the
     // user learns why the save failed.
-    form.setError("root", { message, type: "validation" });
+    form.setError("root", { message, type: SERVER_ERROR_TYPE });
     toast.error(translate("This change could not be saved"), { description: message });
   }
 }

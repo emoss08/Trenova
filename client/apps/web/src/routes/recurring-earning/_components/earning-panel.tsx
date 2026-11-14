@@ -184,7 +184,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             name="workerId"
             label={t("Driver")}
             placeholder={t("Select driver")}
-            rules={{ required: true }}
+            required
             description={t("The driver whose settlements this earning is added to.")}
           />
         </FormControl>
@@ -195,7 +195,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             label={t("Pay code")}
             placeholder={t("Select pay code")}
             direction="Earning"
-            rules={{ required: true }}
+            required
             description={t(
               "Earning code that categorizes the pay and routes it to the code's GL account when one is mapped.",
             )}
@@ -207,7 +207,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             name="frequency"
             label={t("Frequency")}
             options={recurringEarningFrequencyChoices}
-            rules={{ required: true }}
+            required
             description={t(
               "Every settlement pays each cycle; monthly pays only on the first settlement of each month.",
             )}
@@ -220,7 +220,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
               name="status"
               label={t("Status")}
               options={recurringEarningStatusChoices}
-              rules={{ required: true }}
+              required
               description={t(
                 "Pause to skip upcoming settlements without losing history; completed earnings stop permanently.",
               )}
@@ -233,7 +233,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             name="description"
             label={t("Description")}
             placeholder={t("e.g. OTR per diem — IRS substantiated M&IE")}
-            rules={{ required: true }}
+            required
             description={t(
               "Shown verbatim on the driver's settlement statement, so make it recognizable.",
             )}
@@ -247,7 +247,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             decimalScale={2}
             fixedDecimalScale
             sideText={t("USD")}
-            rules={{ required: true }}
+            required
             description={t("The amount added each time the earning applies to a settlement.")}
           />
         </FormControl>
@@ -267,7 +267,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
             control={control}
             name="startDate"
             label={t("Start date")}
-            rules={{ required: true }}
+            required
             description={t(
               "The earning begins applying to settlements whose period ends after this date.",
             )}

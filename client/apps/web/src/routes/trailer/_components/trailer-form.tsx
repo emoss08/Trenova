@@ -26,7 +26,7 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
         <SelectField
           control={control}
           options={equipmentStatusChoices}
-          rules={{ required: true }}
+          required
           name="status"
           label={t("Status")}
           placeholder={t("Status")}
@@ -36,7 +36,7 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          required
           name="code"
           label={t("Code")}
           placeholder={t("Code")}
@@ -49,7 +49,7 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
           name="equipmentTypeId"
           control={control}
           label={t("Equipment type")}
-          rules={{ required: true }}
+          required
           placeholder={t("Equipment type")}
           description={t("The type of equipment the trailer is categorized under.")}
           extraSearchParams={{
@@ -66,7 +66,7 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
           name="equipmentManufacturerId"
           control={control}
           label={t("Equip. manufacturer")}
-          rules={{ required: true }}
+          required
           placeholder={t("Equip. manufacturer")}
           description={t("The manufacturer of the trailer's equipment.")}
           extraSearchParams={{
@@ -79,7 +79,7 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
           control={control}
           name="model"
           label={t("Model")}
-          rules={{ required: true }}
+          required
           placeholder={t("Model")}
           description={t("The specific model of the trailer.")}
           maxLength={50}
@@ -90,7 +90,7 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
           control={control}
           name="make"
           label={t("Make")}
-          rules={{ required: true }}
+          required
           placeholder={t("Make")}
           description={t("The manufacturer of the trailer.")}
           maxLength={50}
@@ -101,7 +101,7 @@ function GeneralInformationSection({ control }: { control: Control<Trailer> }) {
           control={control}
           name="year"
           label={t("Year")}
-          rules={{ required: true }}
+          required
           placeholder={t("Year")}
           description={t("The production year of the trailer.")}
         />

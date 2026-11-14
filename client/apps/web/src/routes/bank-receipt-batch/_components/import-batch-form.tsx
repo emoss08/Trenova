@@ -60,7 +60,7 @@ export function ImportBatchForm() {
               name="source"
               label={t("Source")}
               placeholder={t("e.g. Chase, Wells Fargo")}
-              rules={{ required: translate("Source is required") }}
+              required={translate("Source is required")}
               description={t("The bank or institution this batch originates from.")}
               clearable
             />
@@ -70,7 +70,7 @@ export function ImportBatchForm() {
               control={control}
               name="reference"
               label={t("Reference")}
-              rules={{ required: translate("Reference is required") }}
+              required={translate("Reference is required")}
               placeholder={t("e.g. Statement 2026-04")}
               description={t("A unique identifier for this batch, such as a statement number.")}
             />

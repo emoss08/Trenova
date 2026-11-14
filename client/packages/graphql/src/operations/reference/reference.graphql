@@ -427,6 +427,7 @@ fragment OrganizationReference on Organization {
   id
   name
   logoUrl
+  iconUrl
 }
 
 fragment PTOPolicyReference on PTOPolicy {

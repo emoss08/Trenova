@@ -352,7 +352,7 @@ export function SplitMoveDialog({
                     <LocationAutocompleteField
                       control={control}
                       name="newDeliveryLocationId"
-                      rules={{ required: true }}
+                      required
                       label={t("Delivery location")}
                       placeholder={t("Select destination for the new move")}
                     />
@@ -371,7 +371,7 @@ export function SplitMoveDialog({
                     <AutoCompleteDateTimeField
                       control={control}
                       name="splitPickupScheduledWindowStart"
-                      rules={{ required: true }}
+                      required
                       label={t("Scheduled window start")}
                       placeholder={t("Scheduled window start")}
                     />
@@ -397,7 +397,7 @@ export function SplitMoveDialog({
                     <AutoCompleteDateTimeField
                       control={control}
                       name="newDeliveryScheduledWindowStart"
-                      rules={{ required: true }}
+                      required
                       label={t("Scheduled window start")}
                       placeholder={t("Scheduled window start")}
                     />

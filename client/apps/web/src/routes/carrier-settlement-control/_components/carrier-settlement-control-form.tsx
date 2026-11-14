@@ -152,8 +152,8 @@ function PayPeriodCard() {
               control={control}
               name="payDelayDays"
               label={t("Pay Delay (days)")}
-              description={t("Days between the period end and the settlement pay date.")}
               rules={{ required: true }}
+              description={t("Days between the period end and the settlement pay date.")}
             />
           </FormControl>
           <FormControl>
@@ -246,6 +246,7 @@ function MatchingCard() {
               control={control}
               name="varianceTolerance"
               label={t("Variance tolerance")}
+              placeholder={t("Enter Variance tolerance")}
               sideText={t("USD")}
               decimalScale={2}
               fixedDecimalScale
@@ -314,7 +315,7 @@ function PostingAccountsCard() {
               control={control}
               name="defaultApAccountId"
               label={t("Accounts payable account")}
-              clearable
+              placeholder={t("Select Accounts payable account")}
               description={t(
                 "The AP account credited when a settlement posts and debited when it is paid.",
               )}
@@ -325,7 +326,7 @@ function PostingAccountsCard() {
               control={control}
               name="defaultPurchasedTransportationAccountId"
               label={t("Purchased transportation account")}
-              clearable
+              placeholder={t("Select Purchased transportation account")}
               description={t(
                 "The expense account debited for carrier cost when a settlement posts.",
               )}

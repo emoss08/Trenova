@@ -39,7 +39,7 @@ func New(p Params) *Handler {
 	}
 }
 
-const maxLogoBodyBytes = 20 << 20
+const maxBrandImageBodyBytes = 20 << 20
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/organizations/")
@@ -53,21 +53,21 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
 		h.update,
 	)
-	api.POST(
-		"/:id/logo",
-		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
-		middleware.NewBodyLimit(maxLogoBodyBytes),
-		h.uploadLogo,
-	)
 	api.GET(
-		"/:id/logo",
+		"/:id/branding",
 		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpRead),
-		h.getLogoURL,
+		h.getBranding,
+	)
+	api.POST(
+		"/:id/branding/:image",
+		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
+		middleware.NewBodyLimit(maxBrandImageBodyBytes),
+		h.uploadBrandImage,
 	)
 	api.DELETE(
-		"/:id/logo",
+		"/:id/branding/:image",
 		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
-		h.deleteLogo,
+		h.deleteBrandImage,
 	)
 	api.GET(
 		"/:id/microsoft-sso",
@@ -184,24 +184,65 @@ func (h *Handler) update(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
-// @Summary Upload an organization logo
-// @ID uploadOrganizationLogo
+// @Summary Get the URLs of an organization's logo and icon
+// @ID getOrganizationBranding
 // @Tags Organizations
-// @Accept mpfd
 // @Produce json
 // @Param id path string true "Organization ID"
-// @Param file formData file true "Logo file"
-// @Success 200 {object} tenant.Organization
+// @Success 200 {object} tenantports.Branding
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
-// @Router /organizations/{id}/logo [post]
-func (h *Handler) uploadLogo(c *gin.Context) {
+// @Router /organizations/{id}/branding [get]
+func (h *Handler) getBranding(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	orgID, err := currentOrganizationParam(c, authCtx)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	resp, err := h.service.GetBranding(c.Request.Context(), tenantports.GetBrandingRequest{
+		TenantInfo:     pagination.FromAuth(authCtx),
+		OrganizationID: orgID,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	helpers.JSON(c, http.StatusOK, resp)
+}
+
+// @Summary Upload an organization's logo or icon
+// @ID uploadOrganizationBrandImage
+// @Tags Organizations
+// @Accept mpfd
+// @Produce json
+// @Param id path string true "Organization ID"
+// @Param image path string true "Which image: logo or icon"
+// @Param file formData file true "Image file"
+// @Success 200 {object} tenant.Organization
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /organizations/{id}/branding/{image} [post]
+func (h *Handler) uploadBrandImage(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	orgID, err := currentOrganizationParam(c, authCtx)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	image, err := tenant.ParseBrandImage(c.Param("image"))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -213,11 +254,12 @@ func (h *Handler) uploadLogo(c *gin.Context) {
 		return
 	}
 
-	updatedEntity, err := h.service.UploadLogo(
+	updatedEntity, err := h.service.UploadBrandImage(
 		c.Request.Context(),
-		&tenantports.UploadLogoRequest{
+		&tenantports.UploadBrandImageRequest{
 			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			OrganizationID: orgID,
+			Image:          image,
 			File:           file,
 		},
 		authCtx.UserID,
@@ -230,52 +272,21 @@ func (h *Handler) uploadLogo(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
-// @Summary Get organization logo URL
-// @ID getOrganizationLogoURL
+// @Summary Remove an organization's logo or icon
+// @ID deleteOrganizationBrandImage
 // @Tags Organizations
 // @Produce json
 // @Param id path string true "Organization ID"
-// @Success 200 {object} services.GetLogoURLResponse
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /organizations/{id}/logo [get]
-func (h *Handler) getLogoURL(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	orgID, err := currentOrganizationParam(c, authCtx)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	resp, err := h.service.GetLogoURL(c.Request.Context(), tenantports.GetLogoURLRequest{
-		TenantInfo:     pagination.FromAuth(authCtx),
-		OrganizationID: orgID,
-	})
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, resp)
-}
-
-// @Summary Delete an organization logo
-// @ID deleteOrganizationLogo
-// @Tags Organizations
-// @Produce json
-// @Param id path string true "Organization ID"
+// @Param image path string true "Which image: logo or icon"
 // @Success 200 {object} tenant.Organization
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
-// @Router /organizations/{id}/logo [delete]
-func (h *Handler) deleteLogo(c *gin.Context) {
+// @Router /organizations/{id}/branding/{image} [delete]
+func (h *Handler) deleteBrandImage(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	orgID, err := currentOrganizationParam(c, authCtx)
@@ -284,11 +295,18 @@ func (h *Handler) deleteLogo(c *gin.Context) {
 		return
 	}
 
-	updatedEntity, err := h.service.DeleteLogo(
+	image, err := tenant.ParseBrandImage(c.Param("image"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	updatedEntity, err := h.service.DeleteBrandImage(
 		c.Request.Context(),
-		tenantports.DeleteLogoRequest{
+		tenantports.DeleteBrandImageRequest{
 			TenantInfo:     pagination.FromAuthAsUser(authCtx),
 			OrganizationID: orgID,
+			Image:          image,
 		},
 	)
 	if err != nil {

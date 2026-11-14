@@ -32,7 +32,7 @@ export function PayProfileForm() {
             name="status"
             label={t("Status")}
             options={statusChoices}
-            rules={{ required: true }}
+            required
             description={t(
               "Inactive profiles keep their history but cannot be assigned to new drivers.",
             )}
@@ -44,7 +44,7 @@ export function PayProfileForm() {
             name="classification"
             label={t("Classification")}
             options={payeeClassificationChoices}
-            rules={{ required: true }}
+            required
             description={t("Determines W-2 vs 1099 treatment and GL expense account.")}
           />
         </FormControl>
@@ -54,7 +54,7 @@ export function PayProfileForm() {
             name="name"
             label={t("Name")}
             placeholder={t("e.g. OTR Company Driver - Standard")}
-            rules={{ required: true }}
+            required
             description={t(
               "A short, unique name dispatchers and payroll staff will recognize when assigning drivers.",
             )}
@@ -163,7 +163,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               name={`components.${index}.kind`}
               label={t("Component")}
               options={payComponentKindChoices}
-              rules={{ required: true }}
+              required
               description={t(
                 "What is being paid — linehaul, stop pay, detention, hazmat premium, and so on.",
               )}
@@ -175,7 +175,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               name={`components.${index}.method`}
               label={t("Method")}
               options={payCalcMethodChoices}
-              rules={{ required: true }}
+              required
               description={t(
                 "How the amount is calculated: per mile, percent of revenue, flat, per stop, or per hour.",
               )}
@@ -187,7 +187,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
               name={`components.${index}.rate`}
               label={isPercent ? "Percent of Revenue" : "Rate"}
               placeholder={isPercent ? "e.g. 27.5" : "e.g. 0.55"}
-              rules={{ required: true }}
+              required
               description={
                 isPerMile
                   ? "Base rate per mile; overridden by mileage bands below when present."
@@ -204,7 +204,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
                 name={`components.${index}.revenueBasis`}
                 label={t("Revenue basis")}
                 options={payRevenueBasisChoices}
-                rules={{ required: true }}
+                required
                 description={t(
                   "Which revenue the percentage applies to: linehaul only, linehaul plus fuel surcharge, or total.",
                 )}
