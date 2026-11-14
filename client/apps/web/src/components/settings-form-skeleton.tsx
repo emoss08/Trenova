@@ -16,6 +16,13 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
+import {
+  settingsPanelClass,
+  settingsSectionClass,
+  settingsSectionHeadClass,
+  settingsSectionsClass,
+  settingsTabRowClass,
+} from "./settings/settings-layout";
 
 /**
  * The loading state of a settings page: stacked `Card`s of fields, described section for section
@@ -288,6 +295,101 @@ export function SettingsSectionsSkeleton({
         <SettingsSectionSkeleton key={index} section={section} />
       ))}
     </>
+  );
+}
+
+/**
+ * One section of a tabbed settings page, as `SettingsSection` lays it out: the title and
+ * description on the left, the fields in a panel on the right. A group of one column stacks
+ * its fields at the panel's own gap, as fields placed straight in the panel do.
+ */
+export function SettingsSplitSectionSkeleton({ section }: { section: SettingsSectionSpec }) {
+  const groups = section.groups ?? [{ cols: section.cols, fields: section.fields ?? [] }];
+  const context: FieldContext = {
+    narrow: section.narrow ?? false,
+    switches: section.switches ?? "left",
+  };
+  const descriptionLines = section.description ?? 1;
+
+  return (
+    <div data-slot="settings-section-skeleton" className={settingsSectionClass}>
+      <div className={settingsSectionHeadClass}>
+        <span className="flex h-5.5 items-center">
+          <Skeleton className={cn("h-4", titleClasses[section.title ?? "md"])} />
+        </span>
+        {descriptionLines > 0 && (
+          <span className="flex flex-col">
+            {Array.from({ length: descriptionLines }, (_, line) => (
+              <span key={line} className="flex h-5 items-center">
+                <Skeleton
+                  className={cn("h-3.5", line === descriptionLines - 1 ? "w-2/3" : "w-full")}
+                />
+              </span>
+            ))}
+          </span>
+        )}
+      </div>
+      <Card>
+        <CardContent className={settingsPanelClass}>
+          {groups.map((group, index) =>
+            (group.cols ?? 1) === 1 ? (
+              resolveFields(group.fields, context).map((field, fieldIndex) => (
+                <div
+                  key={`${index}-${fieldIndex}`}
+                  data-slot="field-skeleton"
+                  data-kind={field.kind}
+                  className={cn(field.nested && "pl-10")}
+                >
+                  <FieldSkeleton field={field} switches={context.switches} />
+                </div>
+              ))
+            ) : (
+              <GroupSkeleton key={index} group={group} context={context} />
+            ),
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * The loading state of a tabbed settings page (`SettingsTabs`): the tab row, then the open
+ * tab's sections. The page passes the tabs it will show and the sections of the one that
+ * is open, so the form lands where the outline was.
+ */
+export function SettingsTabsSkeleton({
+  tabs,
+  sections,
+}: {
+  tabs: number;
+  sections: readonly SettingsSectionSpec[];
+}) {
+  const t = useT();
+
+  return (
+    <SkeletonRegion label={t("Loading settings")} className="flex flex-col gap-6">
+      {tabs > 1 && (
+        <div className={settingsTabRowClass}>
+          <div className="flex w-fit items-center gap-x-0.5 py-1">
+            {Array.from({ length: tabs }, (_, index) => (
+              <span
+                key={index}
+                data-slot="tab-skeleton"
+                className="flex h-9 items-center px-2.5 sm:h-8"
+              >
+                <Skeleton className="h-3.5 w-20" />
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className={settingsSectionsClass}>
+        {sections.map((section, index) => (
+          <SettingsSplitSectionSkeleton key={index} section={section} />
+        ))}
+      </div>
+    </SkeletonRegion>
   );
 }
 

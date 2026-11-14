@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DispatchStyle } from "@/lib/graphql/dispatch-style";
-import { LearnedStyleCard } from "../_components/learned-style-card";
+import { LearnedStyle } from "../_components/learned-style";
 
 const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
@@ -50,12 +50,12 @@ function renderCard() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <LearnedStyleCard />
+      <LearnedStyle />
     </QueryClientProvider>,
   );
 }
 
-describe("LearnedStyleCard", () => {
+describe("LearnedStyle", () => {
   beforeEach(() => {
     mocks.allowed = true;
   });

@@ -1,13 +1,7 @@
 import { MoneyField } from "@/components/fields/money-field";
 import { NumberField } from "@/components/fields/number-field";
+import { SettingsSection, SettingsSections } from "@/components/settings/settings-section";
 import { DISPATCH_PREFERENCE_META, type DispatchControl } from "@/types/dispatch-control";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useFormContext } from "react-hook-form";
@@ -17,21 +11,18 @@ import { useFormContext } from "react-hook-form";
  * a move uncovered costs. The planner picks the plan that costs least overall, so these are
  * the organization's real trade-offs, not relative weights.
  */
-export function EconomicsForm() {
+export function CostsTab() {
   const t = useT();
   const { control } = useFormContext<DispatchControl>();
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Costs and prices")}</CardTitle>
-        <CardDescription>
-          {t(
-            "The planner prices every driver for every move and picks the plan that costs least overall. Set what each thing costs your operation; a cost of $0 is ignored.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex max-w-prose flex-col gap-6">
+    <SettingsSections>
+      <SettingsSection
+        title={t("Costs and prices")}
+        description={t(
+          "The planner prices every driver for every move and picks the plan that costs least overall. Set what each thing costs your operation; a cost of $0 is ignored.",
+        )}
+      >
         <FormGroup cols={2}>
           <FormControl>
             <MoneyField
@@ -127,71 +118,69 @@ export function EconomicsForm() {
             />
           </FormControl>
         </FormGroup>
+      </SettingsSection>
 
-        <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold">{t("Preferences")}</h3>
-          <p className="text-muted-foreground text-xs">
-            {t(
-              "What the worst case of each costs against the best. A driver with no history counts as halfway.",
-            )}
-          </p>
-          <FormGroup cols={2}>
-            {DISPATCH_PREFERENCE_META.map((preference) => (
-              <FormControl key={preference.key}>
-                <MoneyField
-                  control={control}
-                  name={`economics.preferences.${preference.key}`}
-                  label={t(preference.label)}
-                  description={t(preference.description)}
-                />
-              </FormControl>
-            ))}
-          </FormGroup>
-        </div>
+      <SettingsSection
+        title={t("Preferences")}
+        description={t(
+          "What the worst case of each costs against the best. A driver with no history counts as halfway.",
+        )}
+      >
+        <FormGroup cols={2}>
+          {DISPATCH_PREFERENCE_META.map((preference) => (
+            <FormControl key={preference.key}>
+              <MoneyField
+                control={control}
+                name={`economics.preferences.${preference.key}`}
+                label={t(preference.label)}
+                description={t(preference.description)}
+              />
+            </FormControl>
+          ))}
+        </FormGroup>
+      </SettingsSection>
 
-        <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold">{t("Leaving a move uncovered")}</h3>
-          <p className="text-muted-foreground text-xs">
-            {t(
-              "A move goes uncovered only when every driver would cost more than this. When drivers are short, the moves that cost most to leave are covered first.",
-            )}
-          </p>
-          <FormGroup cols={2}>
-            <FormControl>
-              <NumberField
-                control={control}
-                name="economics.coverageMarginPercent"
-                label={t("Share of revenue (%)")}
-                description={t("The part of a move's revenue lost when it is not covered.")}
-              />
-            </FormControl>
-            <FormControl>
-              <MoneyField
-                control={control}
-                name="economics.coverageFloorCents"
-                label={t("At least")}
-                description={t("The least leaving any move uncovered costs.")}
-              />
-            </FormControl>
-            <FormControl>
-              <MoneyField
-                control={control}
-                name="economics.latePremiumCents"
-                label={t("Late premium")}
-                description={t("Added for a move whose pickup window has closed.")}
-              />
-            </FormControl>
-            <FormControl>
-              <MoneyField
-                control={control}
-                name="economics.dueNowPremiumCents"
-                label={t("Due now premium")}
-                description={t("Added for a move whose window is open or opens within 4 hours.")}
-              />
-            </FormControl>
-          </FormGroup>
-        </div>
-      </CardContent>
-    </Card>
+      <SettingsSection
+        title={t("Leaving a move uncovered")}
+        description={t(
+          "A move goes uncovered only when every driver would cost more than this. When drivers are short, the moves that cost most to leave are covered first.",
+        )}
+      >
+        <FormGroup cols={2}>
+          <FormControl>
+            <NumberField
+              control={control}
+              name="economics.coverageMarginPercent"
+              label={t("Share of revenue (%)")}
+              description={t("The part of a move's revenue lost when it is not covered.")}
+            />
+          </FormControl>
+          <FormControl>
+            <MoneyField
+              control={control}
+              name="economics.coverageFloorCents"
+              label={t("At least")}
+              description={t("The least leaving any move uncovered costs.")}
+            />
+          </FormControl>
+          <FormControl>
+            <MoneyField
+              control={control}
+              name="economics.latePremiumCents"
+              label={t("Late premium")}
+              description={t("Added for a move whose pickup window has closed.")}
+            />
+          </FormControl>
+          <FormControl>
+            <MoneyField
+              control={control}
+              name="economics.dueNowPremiumCents"
+              label={t("Due now premium")}
+              description={t("Added for a move whose window is open or opens within 4 hours.")}
+            />
+          </FormControl>
+        </FormGroup>
+      </SettingsSection>
+    </SettingsSections>
   );
 }

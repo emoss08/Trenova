@@ -8,7 +8,7 @@ import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { ReactNode } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FreightForecastCard } from "../_components/freight-forecast-card";
+import { FreightForecast } from "../_components/freight-forecast";
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
 
@@ -66,13 +66,13 @@ function renderCard({ anticipateFreight = false } = {}) {
   return render(
     <QueryClientProvider client={queryClient}>
       <Form anticipateFreight={anticipateFreight}>
-        <FreightForecastCard />
+        <FreightForecast />
       </Form>
     </QueryClientProvider>,
   );
 }
 
-describe("FreightForecastCard", () => {
+describe("FreightForecast", () => {
   afterEach(() => {
     cleanup();
     vi.useRealTimers();

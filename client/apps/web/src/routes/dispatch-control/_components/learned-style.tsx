@@ -19,13 +19,6 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -48,10 +41,11 @@ const COMPONENT_LABELS = defineLabels({
 });
 
 /**
- * How the organization's dispatchers weigh each preference against the costs set above,
- * learned from the drivers they assign against the plan, with a way to start over.
+ * How the organization's dispatchers weigh each preference against its costs, learned from
+ * the drivers they assign against the plan, with a way to start over. It draws no frame of
+ * its own: it sits in the Learning tab's panel, under the switch that turns learning on.
  */
-export function LearnedStyleCard() {
+export function LearnedStyle() {
   const t = useT();
   const { data, isPending, isError, refetch, isRefetching } = useQuery(dispatchStyle.get());
 
@@ -59,38 +53,26 @@ export function LearnedStyleCard() {
     return <LearnedStyleSkeleton />;
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Learned dispatch style")}</CardTitle>
-        <CardDescription>
-          {t(
-            "How your dispatchers weigh each preference against the costs above, learned from the driver they assign each time they take, change or pass over the plan's choice. The planner uses these weights while learning is on.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex max-w-prose flex-col gap-4">
-        {isError ? (
-          <Alert size="sm" variant="destructive">
-            <AlertDescription className="flex items-center justify-between gap-3">
-              <span>{t("The learned dispatch style could not be loaded.")}</span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                isLoading={isRefetching}
-                onClick={() => void refetch()}
-              >
-                {t("Try again")}
-              </Button>
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <LearnedStyleBody style={data} />
-        )}
-      </CardContent>
-    </Card>
-  );
+  if (isError) {
+    return (
+      <Alert size="sm" variant="destructive">
+        <AlertDescription className="flex items-center justify-between gap-3">
+          <span>{t("The learned dispatch style could not be loaded.")}</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            isLoading={isRefetching}
+            onClick={() => void refetch()}
+          >
+            {t("Try again")}
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return <LearnedStyleBody style={data} />;
 }
 
 function LearnedStyleBody({ style }: { style: DispatchStyle }) {

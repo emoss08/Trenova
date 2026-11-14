@@ -13,13 +13,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
@@ -30,9 +23,10 @@ import { FreightForecastSkeleton } from "./freight-forecast-skeleton";
 /**
  * How the organization's freight forecast did when it was last tested on its own history.
  * Anticipate freight acts only on a forecast that is Ready, so this is where a dispatcher
- * learns whether turning it on changes anything yet.
+ * learns whether turning it on changes anything yet. It draws no frame of its own: it sits
+ * in the Learning tab's panel.
  */
-export function FreightForecastCard() {
+export function FreightForecast() {
   const t = useT();
   const [refitPoll] = useState(() => createRefitPoll(false));
   const { data, isPending, isError, refetch, isRefetching } = useQuery({
@@ -44,38 +38,26 @@ export function FreightForecastCard() {
     return <FreightForecastSkeleton />;
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Freight forecast")}</CardTitle>
-        <CardDescription>
-          {t(
-            "Where freight usually appears, learned from your shipment history and tested every night on the weeks it has not seen. Anticipate freight changes plans only while the forecast is Ready.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex max-w-prose flex-col gap-4">
-        {isError ? (
-          <Alert size="sm" variant="destructive">
-            <AlertDescription className="flex items-center justify-between gap-3">
-              <span>{t("The freight forecast could not be loaded.")}</span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                isLoading={isRefetching}
-                onClick={() => void refetch()}
-              >
-                {t("Try again")}
-              </Button>
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <ForecastQualityBody quality={data} />
-        )}
-      </CardContent>
-    </Card>
-  );
+  if (isError) {
+    return (
+      <Alert size="sm" variant="destructive">
+        <AlertDescription className="flex items-center justify-between gap-3">
+          <span>{t("The freight forecast could not be loaded.")}</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            isLoading={isRefetching}
+            onClick={() => void refetch()}
+          >
+            {t("Try again")}
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return <ForecastQualityBody quality={data} />;
 }
 
 function ForecastQualityBody({ quality }: { quality: DispatchForecastQuality }) {

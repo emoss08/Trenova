@@ -1,5 +1,6 @@
+import { useSettingsTab } from "@/components/settings/settings-tab";
 import {
-  SettingsFormSkeleton,
+  SettingsTabsSkeleton,
   type SettingsSectionSpec,
 } from "@/components/settings-form-skeleton";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
@@ -7,58 +8,65 @@ import {
   hasOrganizationCapability,
   OrganizationCapability,
 } from "@trenova/shared/types/organization-capability";
-
-const assignmentSections: readonly SettingsSectionSpec[] = [
-  { title: "lg", fields: ["switch"] },
-  { title: "lg", description: 3, cols: 2, fields: [{ kind: "input", count: 14 }] },
-  { title: "lg", description: 2, fields: [{ kind: "input", count: 3 }] },
-  { title: "md", description: 2, fields: [{ kind: "input", count: 3 }] },
-];
-
-const monitoringSections: readonly SettingsSectionSpec[] = [
-  { title: "lg", fields: [{ kind: "input", narrow: false }] },
-  { fields: ["switch"] },
-  { narrow: true, fields: ["switch", { kind: "input", count: 2 }] },
-  { narrow: true, fields: [{ kind: "input", count: 9 }] },
-];
-
-const complianceSections: readonly SettingsSectionSpec[] = [
-  { title: "lg", fields: [{ kind: "switch", count: 5 }] },
-];
-
-const tenderSections: readonly SettingsSectionSpec[] = [
-  {
-    title: "lg",
-    description: 2,
-    fields: [
-      "switch",
-      { kind: "input", narrow: true },
-      "switch",
-      { kind: "input", count: 5, narrow: true },
-    ],
-  },
-];
+import { dispatchControlTabs, type DispatchControlTab } from "./dispatch-control-tabs";
 
 /**
- * The form's cards; assignment and DOT compliance only for an organization running a fleet,
- * carrier tenders only for a brokerage.
+ * Each tab's sections as the form draws them. A section whose fields wait on a switch is
+ * drawn as it stands with the switch off, since the outline cannot know the saved value.
+ */
+const TAB_SECTIONS: Record<DispatchControlTab, readonly SettingsSectionSpec[]> = {
+  assignment: [{ title: "lg", description: 4, fields: ["switch"] }],
+  costs: [
+    { title: "md", description: 4, cols: 2, fields: [{ kind: "input", count: 10 }] },
+    { title: "sm", description: 3, cols: 2, fields: [{ kind: "input", count: 7 }] },
+    { title: "lg", description: 4, cols: 2, fields: [{ kind: "input", count: 4 }] },
+  ],
+  learning: [
+    { title: "lg", description: 5, fields: ["switch", { kind: "input", count: 2 }] },
+    { title: "sm", description: 2, fields: [{ kind: "switch", count: 2 }] },
+    { title: "md", description: 5, fields: [{ kind: "input", count: 2 }] },
+  ],
+  monitoring: [
+    { title: "lg", description: 4, cols: 2, fields: ["input"] },
+    { title: "md", description: 5, fields: ["switch"] },
+    {
+      title: "md",
+      description: 6,
+      groups: [{ fields: ["switch"] }, { cols: 2, fields: [{ kind: "input", count: 2 }] }],
+    },
+  ],
+  exceptions: [
+    { title: "sm", description: 3, cols: 2, fields: [{ kind: "input", count: 3 }] },
+    { title: "sm", description: 3, cols: 2, fields: [{ kind: "input", count: 3 }] },
+    { title: "sm", description: 2, cols: 2, fields: ["input"] },
+    { title: "md", description: 3, cols: 2, fields: [{ kind: "input", count: 2 }] },
+  ],
+  tenders: [
+    { title: "md", description: 2, fields: ["switch"] },
+    { title: "md", description: 2, cols: 2, fields: ["input"] },
+  ],
+  compliance: [
+    { title: "lg", description: 4, fields: ["switch"] },
+    { title: "md", description: 3, fields: [{ kind: "switch", count: 4 }] },
+  ],
+};
+
+/**
+ * The form's tab row and the open tab's sections. Which tabs there are follows the
+ * organization, as in the form: a fleet's planning tabs, a brokerage's carrier tenders.
  */
 export function DispatchControlSkeleton() {
   const capabilities = useOrgCapabilities();
-  const runsAssets = hasOrganizationCapability(
-    capabilities,
-    OrganizationCapability.AssetOperations,
-  );
-  const brokers = hasOrganizationCapability(capabilities, OrganizationCapability.Brokerage);
+  const tabs = dispatchControlTabs({
+    runsAssets: hasOrganizationCapability(capabilities, OrganizationCapability.AssetOperations),
+    brokers: hasOrganizationCapability(capabilities, OrganizationCapability.Brokerage),
+  });
+  const [openTab] = useSettingsTab(tabs);
 
   return (
-    <SettingsFormSkeleton
-      sections={[
-        ...(runsAssets ? assignmentSections : []),
-        ...monitoringSections,
-        ...(brokers ? tenderSections : []),
-        ...(runsAssets ? complianceSections : []),
-      ]}
+    <SettingsTabsSkeleton
+      tabs={tabs.length}
+      sections={TAB_SECTIONS[openTab as DispatchControlTab] ?? []}
     />
   );
 }
