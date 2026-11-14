@@ -21,18 +21,18 @@ catalog:
   react-dom: ^19.3.1
   "@base-ui/react": ^1.9.0
   "@floating-ui/react-dom": ^2.1.9
-  "@tanstack/react-query": ^5.105.3
+  "@tanstack/react-query": ^5.107.1
   "@tanstack/react-table": ^9.3.1
   "@tanstack/table-core": "9.3.1"
   react-router: ^8.5.1
   react-hook-form: ^7.91.0
   react-error-boundary: ^6.1.6
-  zustand: ^5.0.16
-  motion: ^14.9.1
+  zustand: ^5.1.0
+  motion: ^14.12.0
   zod: "^4.6.7"
   # Toasts (ding): pinned exactly; a bump is read before it lands (design-system.md, "Toasts").
-  "@yusufceng1z/ding": "0.0.2"
-  "@yusufceng1z/ding-react": "0.0.2"
+  "@yusufceng1z/ding": "0.0.4"
+  "@yusufceng1z/ding-react": "0.0.4"
 minimumReleaseAgeExclude:
   - "@graphql-codegen/add@7.1.0"
   - "@graphql-codegen/cli@7.2.0"
