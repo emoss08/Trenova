@@ -401,6 +401,7 @@ One curve family and default speeds, declared in the `@theme` block, so a bare
 | `ease-settle` | things arriving: popovers, sheets, a sliding tab indicator |
 | `ease-spring` | a small overshoot, for the one thing that confirms an action |
 | `animate-rise` | content arriving in place |
+| `animate-slide-in` / `animate-slide-in-back` | a tab's content arriving from the side the person moved towards |
 | `animate-confirm` | a check landing, a copied tick |
 | `animate-fill` | a meter or progress bar filling to its value (`origin-left`) |
 
@@ -689,8 +690,24 @@ hyphen.
 
 - `FormSection` titles are `text-base` semibold sans. Separate sections with the
   parent's gap, not with per-section `border-t pt-4`.
-- A settings page is stacked `Card`s and a `FormSaveDock`; the dock's label is
-  "Save changes" and is not overridden.
+- A settings page is one centred column of `SettingsSection`s and a `FormSaveDock`
+  (`components/settings/`); the dock's label is "Save changes" and is not overridden. A
+  section is a title, a line on what it is for, and a list with **one setting to a row**: its
+  name and meaning on the left, one compact control at the end, so the right edge is a single
+  column of values and a list of amounts reads as a price list. Shared fields draw as rows
+  inside a section without being told to (`FieldLayoutProvider`; `layout="row"` anywhere
+  else): never a label stacked over a wide box, and never two columns of fields, whose
+  descriptions wrap to different heights and leave ragged rows. Dispatch control is the
+  reference. The control pages not yet moved are stacked `Card`s; move one when you touch it.
+- A setting that only applies while another is on (the fields under a switch) goes in
+  `SettingsNested` under that row: set in on its own ground, opening and closing with it. A
+  whole section that depends on one sits in `SettingsReveal`. Neither renders anything closed.
+- A settings page with several jobs splits them into `SettingsTabs`, one job to a tab, inside
+  the one form with the one save. Every tab stays mounted, so each field is registered and a
+  server error lands on it; a tab holding a field to fix wears a dot, and the page opens that
+  tab when a save is refused (`tabHoldingError`), so a refusal never fails out of sight. The
+  open tab lives in the address (`useSettingsTab`). What a tab only reports (what was
+  learned) is a `SettingsReadout`, read the first time the tab opens (`Kept`).
 - A field is marked required with its `required` prop (`required`, `required={enabled}`, or
   `required={t("Enter the six-digit code")}` for its own words), never through `rules`. A
   field that is not required shows a clear control, so an optional choice can always be
@@ -875,7 +892,9 @@ open as a grid of table rows and then jump into a layout that shared nothing wit
   its own while its `useQuery` answers draws the skeleton's body, not a spinner, so the
   code load and the data load look identical (`AnalyticsBodySkeleton` inside
   `AnalyticsTabSkeleton`).
-- A settings page is `SettingsFormSkeleton` described with the form's own sections and
+- A tabbed settings page is `SettingsTabsSkeleton`: its tab row and the open tab's sections,
+  one row to a setting (`dispatch-control/skeleton.tsx`). A settings page still on cards is
+  `SettingsFormSkeleton` described with the form's own sections and
   fields. A table inside a larger layout is `DataTableSkeleton` for that part only.
 - The skeleton's root carries `aria-busy` and an `aria-label` naming what loads; the
   placeholders sit under `aria-hidden`.

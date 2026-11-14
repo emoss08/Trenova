@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { WarningProps } from "@trenova/shared/types/fields";
-import React, { useMemo } from "react";
+import React, { createContext, use, useMemo } from "react";
 import { Label } from "@trenova/shared/components/ui/label";
 import {
   FieldNameProvider,
@@ -27,14 +27,17 @@ export function FieldDescription({
   description,
   warning,
   id,
+  className,
 }: {
   description?: string | React.ReactNode;
   warning?: WarningProps;
   id?: string;
+  /** Replaces the description's own type classes, where a layout sets it larger. */
+  className?: string;
 }) {
   if (warning?.show) {
     return (
-      <p id={id} className="text-2xs text-left text-warning-foreground">
+      <p id={id} className={cn("text-2xs text-left text-warning-foreground", className)}>
         {warning.message}
       </p>
     );
@@ -49,7 +52,7 @@ export function FieldDescription({
   }
 
   return (
-    <p id={id} className="text-2xs text-foreground/70 text-left">
+    <p id={id} className={cn("text-2xs text-foreground/70 text-left", className)}>
       {description}
     </p>
   );
@@ -75,10 +78,13 @@ type FieldWrapperProps = {
   /** The control's id, so the label names it. */
   htmlFor?: string;
   /**
-   * Where the label and description sit: above the control, or in a column
-   * beside it, for a settings form read down a list of rows.
+   * Where the label and description sit: above the control, in a column beside it, or as
+   * one row of a settings list. Left out, the field takes the layout of the list it is in
+   * (`FieldLayoutProvider`), and stacks anywhere else.
    */
   layout?: FieldLayout;
+  /** How wide the control is in a row: `compact` for a figure, `regular` for a choice. */
+  controlSize?: SettingControlSize;
   /** The form field's name; inside a form it registers the field and its label. */
   name?: string;
   /**
@@ -88,7 +94,93 @@ type FieldWrapperProps = {
   formatValue?: FieldValueFormat;
 };
 
-export type FieldLayout = "stacked" | "inline";
+export type FieldLayout = "stacked" | "inline" | "row";
+
+const FieldLayoutContext = createContext<FieldLayout | undefined>(undefined);
+
+/**
+ * Sets the layout of every field inside it that does not name one. A settings list is the
+ * caller: its fields are rows because of where they are, not because each one says so.
+ */
+export function FieldLayoutProvider({
+  layout,
+  children,
+}: {
+  layout: FieldLayout;
+  children: React.ReactNode;
+}) {
+  return <FieldLayoutContext value={layout}>{children}</FieldLayoutContext>;
+}
+
+/** The layout a field draws in: its own, else the one it is inside, else stacked. */
+export function useFieldLayout(layout?: FieldLayout): FieldLayout {
+  const inherited = use(FieldLayoutContext);
+
+  return layout ?? inherited ?? "stacked";
+}
+
+export type SettingControlSize = "auto" | "compact" | "regular";
+
+const SETTING_CONTROL_WIDTH: Record<SettingControlSize, string> = {
+  auto: "",
+  compact: "w-34",
+  regular: "w-52",
+};
+
+/** The type of a row's description: a size up from a stacked field's, on a reading measure. */
+export const settingRowDescriptionClass = "max-w-130 text-xs text-pretty text-muted-foreground";
+
+/**
+ * The row layout: one setting to a line of a settings list, its name and meaning on the
+ * left and its control at the end, so a list of them reads down one column of values. The
+ * row carries its own padding; the list only rules one off from the next.
+ */
+export function SettingRow({
+  label,
+  labelAction,
+  required,
+  description,
+  error,
+  htmlFor,
+  controlSize = "regular",
+  className,
+  children,
+}: {
+  label?: React.ReactNode;
+  /** A small control or badge beside the label. */
+  labelAction?: React.ReactNode;
+  required?: boolean;
+  description?: React.ReactNode;
+  error?: React.ReactNode;
+  /** The control's id, so the label names it. */
+  htmlFor?: string;
+  controlSize?: SettingControlSize;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      data-slot="setting-row"
+      className={cn("flex min-h-12 items-center gap-6 px-3.5 py-2.5", className)}
+    >
+      <div className="flex min-w-0 flex-1 flex-col gap-px">
+        {label && labelAction ? (
+          <div className="flex min-w-0 items-center gap-2">
+            <FieldLabel label={label} required={required} htmlFor={htmlFor} className="text-sm" />
+            {labelAction}
+          </div>
+        ) : (
+          <FieldLabel label={label} required={required} htmlFor={htmlFor} className="text-sm" />
+        )}
+        {description}
+        {error}
+      </div>
+      <div className={cn("flex shrink-0 flex-col", SETTING_CONTROL_WIDTH[controlSize])}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 /**
  * The inline layout's row: the label and its description in a column beside the control, for a
@@ -188,10 +280,12 @@ export function FieldWrapper({
   descriptionId,
   errorId,
   htmlFor,
-  layout = "stacked",
+  layout: ownLayout,
+  controlSize,
   name,
   formatValue,
 }: FieldWrapperProps) {
+  const layout = useFieldLayout(ownLayout);
   useFieldRegistration(name, label, formatValue);
   const control = name ? <FieldNameProvider name={name}>{children}</FieldNameProvider> : children;
   const descriptionElement = useMemo(() => {
@@ -203,6 +297,32 @@ export function FieldWrapper({
   const errorElement = useMemo(() => {
     return error ? <ErrorMessage formError={error} id={errorId} /> : null;
   }, [error, errorId]);
+
+  if (layout === "row") {
+    return (
+      <SettingRow
+        label={hideLabel ? undefined : label}
+        labelAction={labelAction}
+        required={required}
+        htmlFor={htmlFor}
+        controlSize={controlSize}
+        className={cn("group/field", className)}
+        description={
+          description || warning?.show ? (
+            <FieldDescription
+              description={description}
+              warning={warning}
+              id={descriptionId}
+              className={warning?.show ? "text-xs" : settingRowDescriptionClass}
+            />
+          ) : null
+        }
+        error={errorElement}
+      >
+        {control}
+      </SettingRow>
+    );
+  }
 
   if (layout === "inline") {
     return (

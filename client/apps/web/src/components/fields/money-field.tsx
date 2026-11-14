@@ -135,6 +135,7 @@ export function MoneyField<T extends FieldValues>({
             required={isRequired(rules, required)}
             error={fieldState.error?.message}
             layout={layout}
+            controlSize="compact"
             htmlFor={inputId}
             descriptionId={descriptionId}
             errorId={errorId}

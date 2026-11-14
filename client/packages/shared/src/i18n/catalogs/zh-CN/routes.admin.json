@@ -810,7 +810,6 @@
   "Minor units": "最小货币单位",
   "Minutes to count over": "计数的分钟数",
   "Monitor our own authority": "监控我方自身的运营许可",
-  "Monitoring": "监控",
   "Monitoring is billed per enrolled carrier each month. Review the estimate before enrolling these carriers.": "监控费用每月按已加入监控的承运商数量计费。请先查看费用估算，再加入这些承运商。",
   "Monitoring pauses when the monthly cap is reached. Lookups that would exceed the daily full profile cap fall back to a lighter lookup.": "达到每月上限时，监控会暂停。若查询将超过每日完整档案上限，则会改用较精简的查询方式。",
   "Month to date": "本月至今",

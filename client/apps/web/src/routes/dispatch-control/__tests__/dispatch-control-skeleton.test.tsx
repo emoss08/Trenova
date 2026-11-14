@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { OrganizationCapabilities } from "@trenova/shared/types/organization-capability";
 import type { User } from "@trenova/shared/types/user";
@@ -86,19 +87,36 @@ function signIn(capabilities: OrganizationCapabilities) {
   });
 }
 
-function cardCount(root: ParentNode) {
-  return root.querySelectorAll('[data-slot="card"]').length;
+type Outline = { tabs: number; sections: number };
+
+function skeletonOutline(searchParams = ""): Outline {
+  const { container } = render(
+    <NuqsTestingAdapter searchParams={searchParams}>
+      <DispatchControlSkeleton />
+    </NuqsTestingAdapter>,
+  );
+  return {
+    tabs: container.querySelectorAll('[data-slot="tab-skeleton"]').length,
+    sections: container.querySelectorAll('[data-slot="settings-section-skeleton"]').length,
+  };
 }
 
-async function loadedFormCardCount() {
+async function formOutline(searchParams = ""): Promise<Outline> {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const { container } = render(
-    <QueryClientProvider client={queryClient}>
-      <DispatchControlForm />
-    </QueryClientProvider>,
+    <NuqsTestingAdapter searchParams={searchParams}>
+      <QueryClientProvider client={queryClient}>
+        <DispatchControlForm />
+      </QueryClientProvider>
+    </NuqsTestingAdapter>,
   );
   await screen.findByText("Service failure monitoring");
-  return cardCount(container);
+  return {
+    tabs: container.querySelectorAll('[role="tab"]').length,
+    sections: container.querySelectorAll(
+      '[data-slot="tabs-content"]:not([hidden]) [data-slot="settings-section"]',
+    ).length,
+  };
 }
 
 describe("DispatchControlSkeleton", () => {
@@ -108,42 +126,56 @@ describe("DispatchControlSkeleton", () => {
   });
 
   // The fallback has to be the page the organization will see, or the layout jumps when the
-  // form lands: assignment, scoring and DOT compliance are only there for a fleet, and carrier
-  // tenders only for a brokerage.
-  it("draws every card the form shows an organization that runs a fleet and brokers", async () => {
+  // form lands: planning, its costs, what it learned and DOT compliance are only there for a
+  // fleet, and carrier tenders only for a brokerage.
+  it("draws every tab, and the open tab's sections, for an organization that runs a fleet and brokers", async () => {
     signIn({ brokerageEnabled: true, assetOperationsEnabled: true });
 
-    const { container: skeleton } = render(<DispatchControlSkeleton />);
-    expect(cardCount(skeleton)).toBe(10);
+    const outline = skeletonOutline();
+    expect(outline).toEqual({ tabs: 7, sections: 1 });
     cleanup();
 
-    expect(await loadedFormCardCount()).toBe(10);
+    expect(await formOutline()).toEqual(outline);
   });
 
-  it("leaves out the fleet's cards for a brokerage, as the form does", async () => {
+  it("leaves out the fleet's tabs for a brokerage, as the form does", async () => {
     signIn({ brokerageEnabled: true, assetOperationsEnabled: false });
 
-    const { container: skeleton } = render(<DispatchControlSkeleton />);
-    expect(cardCount(skeleton)).toBe(5);
+    const outline = skeletonOutline();
+    expect(outline).toEqual({ tabs: 3, sections: 3 });
     cleanup();
 
-    expect(await loadedFormCardCount()).toBe(5);
+    expect(await formOutline()).toEqual(outline);
   });
 
-  it("leaves out the carrier tenders card for a fleet that does not broker, as the form does", async () => {
+  it("leaves out the carrier tenders tab for a fleet that does not broker, as the form does", async () => {
     signIn({ brokerageEnabled: false, assetOperationsEnabled: true });
 
-    const { container: skeleton } = render(<DispatchControlSkeleton />);
-    expect(cardCount(skeleton)).toBe(9);
+    const outline = skeletonOutline();
+    expect(outline).toEqual({ tabs: 6, sections: 1 });
     cleanup();
 
-    expect(await loadedFormCardCount()).toBe(9);
+    expect(await formOutline()).toEqual(outline);
+  });
+
+  it("draws the tab the address opens, as the form does", async () => {
+    signIn({ brokerageEnabled: true, assetOperationsEnabled: true });
+
+    const outline = skeletonOutline("?tab=exceptions");
+    expect(outline).toEqual({ tabs: 7, sections: 4 });
+    cleanup();
+
+    expect(await formOutline("?tab=exceptions")).toEqual(outline);
   });
 
   it("is announced once as loading", () => {
     signIn({ brokerageEnabled: true, assetOperationsEnabled: true });
 
-    render(<DispatchControlSkeleton />);
+    render(
+      <NuqsTestingAdapter>
+        <DispatchControlSkeleton />
+      </NuqsTestingAdapter>,
+    );
 
     const root = screen.getByLabelText("Loading settings");
     expect(root).toHaveAttribute("aria-busy", "true");

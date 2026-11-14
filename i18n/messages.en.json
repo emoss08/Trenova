@@ -30094,6 +30094,15 @@
       "go/other"
     ]
   },
+  "An overdue exception escalates to its owner and the escalation contact until it is dealt with or the limit is reached.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "An override can only be stricter than the state limit": {
     "sites": 4,
     "scope": [
@@ -37542,7 +37551,7 @@
     ]
   },
   "Assignment": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -37550,6 +37559,7 @@
     "areas": [
       "go/other",
       "routes/bank-receipt-queue",
+      "routes/dispatch-control",
       "routes/fuel-card"
     ]
   },
@@ -37615,6 +37625,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Assignment rules": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Assignment was changed by someone else. Reload and try again": {
@@ -63970,7 +63989,7 @@
     ]
   },
   "Compliance": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -63984,6 +64003,7 @@
       "packages/shared/types",
       "routes/carrier",
       "routes/desk",
+      "routes/dispatch-control",
       "routes/insights",
       "routes/worker",
       "routes/worker-credential-type"
@@ -70842,6 +70862,15 @@
     ],
     "areas": [
       "routes/tender-offer-public"
+    ]
+  },
+  "Counter-offers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Counter-offers are turned off; accept or decline the offer": {
@@ -91940,6 +91969,15 @@
       "apps/web/types"
     ]
   },
+  "Due times": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Due today": {
     "sites": 2,
     "scope": [
@@ -101008,6 +101046,15 @@
       "routes/dispatch-control"
     ]
   },
+  "Escalation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Escalation contact": {
     "sites": 1,
     "scope": [
@@ -102789,7 +102836,7 @@
       "routes/admin"
     ]
   },
-  "Every exception on the watchtower has an owner and a due time. An overdue one escalates to its owner and the escalation contact until it is dealt with or the escalation limit is reached.": {
+  "Every exception on the watchtower has a due time, set by its severity when it is raised.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -104932,15 +104979,6 @@
       "go/other"
     ]
   },
-  "Exception queue": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-control"
-    ]
-  },
   "Exception reason": {
     "sites": 2,
     "scope": [
@@ -104997,7 +105035,7 @@
     ]
   },
   "Exceptions": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -105010,6 +105048,7 @@
       "routes/bank-receipt-batch",
       "routes/bank-receipt-queue",
       "routes/dispatch-console",
+      "routes/dispatch-control",
       "routes/home",
       "routes/reconciliation-summary",
       "routes/settlement-batch",
@@ -105389,6 +105428,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Exhausted tenders": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Exhibit {0}": {
@@ -123957,6 +124005,15 @@
       "routes/hazmat-segregation-rule"
     ]
   },
+  "Has fields to fix": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Has it now": {
     "sites": 1,
     "scope": [
@@ -126991,7 +127048,7 @@
       "routes/admin"
     ]
   },
-  "How a tender handles a carrier asking for a different rate, and what happens when every carrier has passed.": {
+  "How a tender handles a carrier asking for a different rate.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -127174,6 +127231,15 @@
     ]
   },
   "How far ahead the optimizer plans moves, from 1 to 336 hours.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "How far away and how far ahead the planner looks, and when a move with nobody on it becomes urgent.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -127509,6 +127575,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "How long past a stop's window or a delivery before the watchtower raises an exception.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "How long raw provider responses and snapshot history are kept.": {
@@ -128608,7 +128683,7 @@
       "routes/desk"
     ]
   },
-  "How your dispatchers weigh each preference against the costs above, learned from the driver they assign each time they take, change or pass over the plan's choice. The planner uses these weights while learning is on.": {
+  "How your dispatchers weigh each preference against your costs, learned from the driver they assign each time they take, change or pass over the plan's choice. The planner uses these weights while learning is on.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -143686,6 +143761,15 @@
       "routes/dispatch-control"
     ]
   },
+  "Late stops and paperwork": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Late with nobody on it": {
     "sites": 1,
     "scope": [
@@ -144243,12 +144327,13 @@
     ]
   },
   "Learning": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/dispatch-control"
     ]
   },
   "Learning from mentions": {
@@ -144307,7 +144392,7 @@
       "routes/agent-control"
     ]
   },
-  "Learns how much your dispatchers weigh each preference from the drivers they assign against the plan: the plan's driver, another it priced, or one it passed over. Shown and reset under Learned dispatch style.": {
+  "Learns how much your dispatchers weigh each preference from the drivers they assign against the plan: the plan's driver, another it priced, or one it passed over.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -149736,7 +149821,7 @@
     ]
   },
   "Loading settings": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -160907,12 +160992,13 @@
     ]
   },
   "Monitoring": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/dispatch-control"
     ]
   },
   "Monitoring enrollment": {
@@ -190635,6 +190721,15 @@
       "apps/web/components"
     ]
   },
+  "Open Assignment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Open Balance (Minor)": {
     "sites": 1,
     "scope": [
@@ -197678,12 +197773,13 @@
     ]
   },
   "Ownership": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/dispatch-control"
     ]
   },
   "Ownership Type": {
@@ -207120,6 +207216,15 @@
       "go/other"
     ]
   },
+  "Planner costs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Planning horizon (hours)": {
     "sites": 1,
     "scope": [
@@ -207145,6 +207250,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Planning limits": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Planning mode is required": {
@@ -208406,6 +208520,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "Positioning": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Positioning called off": {
@@ -313440,6 +313563,15 @@
       "routes/admin"
     ]
   },
+  "Turn on automated assignment to choose what the planner learns.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Turn on if the employer reported any accidents; the count is asked next.": {
     "sites": 1,
     "scope": [
@@ -326914,6 +327046,15 @@
       "routes/dispatch-control"
     ]
   },
+  "What a move must have, and a driver must be free of, before it is dispatched.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "What a performance review rates and how much each item counts. Items are copied onto every review, so editing a template never rewrites history.": {
     "sites": 2,
     "scope": [
@@ -327591,6 +327732,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "What happens when every carrier on a tender has passed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "What happens when the week's price hasn't published yet.": {
@@ -332178,6 +332328,15 @@
       "routes/hazardous-material"
     ]
   },
+  "Whether a plan looks past the move in front of it, to where it leaves the driver.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Whether an AP run for this period is already open.": {
     "sites": 1,
     "scope": [
@@ -333462,6 +333621,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Who an exception goes to when nothing else decides.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Who and when": {

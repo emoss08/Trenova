@@ -9,6 +9,7 @@ import { Controller, type FieldValues } from "react-hook-form";
 import type { SwitchProps } from "../animate-ui/components/base/switch";
 import { InfoTooltip } from "../info-tooltip";
 import { RecommendedBadge } from "../recommended-badge";
+import { SettingRow, settingRowDescriptionClass, useFieldLayout } from "./field-components";
 
 type BaseSwitchFieldProps = Omit<SwitchProps, "name" | "required"> & {
   label: string;
@@ -44,6 +45,7 @@ export function SwitchField<T extends FieldValues>({
   ...props
 }: SwitchFieldProps<T>) {
   useFieldRegistration(name, label);
+  const layout = useFieldLayout();
   const inputId = `switch-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
@@ -53,88 +55,110 @@ export function SwitchField<T extends FieldValues>({
       name={name}
       control={control}
       rules={withRequired(rules, required)}
-      render={({ field: { value, onChange, disabled, onBlur, name, ref }, fieldState }) => (
-        <div
-          className={cn(
-            "group relative flex w-full items-start gap-2 rounded-md border border-transparent p-2.5 transition-all duration-300 ease-in-out",
-            outlined &&
-              "border-input bg-field transition-[border-color,box-shadow,background-color] duration-200 ease-in-out has-data-checked:border-info has-data-checked:bg-info-subtle has-data-checked:text-info-foreground has-data-checked:ring-4 has-data-checked:ring-info/20 dark:has-data-checked:text-info-foreground",
-            fieldState.error && fieldInvalidClass,
-            warning?.show &&
-              "ui-focus-ring border-warning bg-warning-subtle ring-0 ring-warning placeholder:text-warning-foreground focus:outline-hidden",
-            className,
-          )}
-        >
-          {position === "left" && (
-            <Switch
-              readOnly={readOnly}
-              id={inputId}
-              aria-describedby={cn(
-                description && descriptionId,
-                fieldState.error && errorId,
-                ariaDescribedBy,
-              )}
-              ref={ref}
-              name={name}
-              onBlur={onBlur}
-              checked={value}
-              onCheckedChange={onChange}
-              disabled={disabled}
-              className="after:absolute after:inset-0"
-              onClick={(e) => e.stopPropagation()}
-              {...props}
-            />
-          )}
-
-          <div className={cn("grid grow gap-1", position === "left" ? "order-1" : "order-0")}>
-            <div className="flex items-center gap-2">
-              <Label htmlFor={inputId}>{label}</Label>
+      render={({ field: { value, onChange, disabled, onBlur, name, ref }, fieldState }) => {
+        const toggle = (
+          <Switch
+            readOnly={readOnly}
+            id={inputId}
+            aria-describedby={cn(
+              description && descriptionId,
+              fieldState.error && errorId,
+              ariaDescribedBy,
+            )}
+            ref={ref}
+            name={name}
+            onBlur={onBlur}
+            checked={value}
+            onCheckedChange={onChange}
+            disabled={disabled}
+            className="after:absolute after:inset-0"
+            onClick={(e) => e.stopPropagation()}
+            {...props}
+          />
+        );
+        const marks =
+          badges || recommended || tooltip ? (
+            <>
               {badges}
               {recommended && <RecommendedBadge size="sm" variant="warning" tooltip={tooltip} />}
               {!recommended && tooltip && <InfoTooltip label={label}>{tooltip}</InfoTooltip>}
-            </div>
-            {description && (
-              <p
-                id={descriptionId}
-                className={cn(
-                  "text-2xs text-muted-foreground",
-                  outlined &&
-                    "group-has-data-checked:text-info-foreground dark:group-has-data-checked:text-info-foreground",
-                  fieldState.error && "text-danger-foreground",
-                  warning?.show && "text-warning-foreground",
-                )}
-              >
-                {fieldState.error
-                  ? fieldState.error.message
-                  : warning?.show
-                    ? warning.message
-                    : description}
-              </p>
-            )}
-          </div>
+            </>
+          ) : null;
+        const note = fieldState.error
+          ? fieldState.error.message
+          : warning?.show
+            ? warning.message
+            : description;
 
-          {position === "right" && (
-            <Switch
-              readOnly={readOnly}
-              id={inputId}
-              aria-describedby={cn(
-                description && descriptionId,
-                fieldState.error && errorId,
-                ariaDescribedBy,
+        // One row of a settings list: the whole row is the switch's target, as the
+        // stacked form's box is.
+        if (layout === "row") {
+          return (
+            <SettingRow
+              label={label}
+              labelAction={marks}
+              htmlFor={inputId}
+              controlSize="auto"
+              className={cn("relative", className)}
+              description={
+                note ? (
+                  <p
+                    id={fieldState.error ? errorId : descriptionId}
+                    className={cn(
+                      settingRowDescriptionClass,
+                      fieldState.error && "text-danger-foreground",
+                      !fieldState.error && warning?.show && "text-warning-foreground",
+                    )}
+                  >
+                    {note}
+                  </p>
+                ) : null
+              }
+            >
+              {toggle}
+            </SettingRow>
+          );
+        }
+
+        return (
+          <div
+            className={cn(
+              "group relative flex w-full items-start gap-2 rounded-md border border-transparent p-2.5 transition-all duration-300 ease-in-out",
+              outlined &&
+                "border-input bg-field transition-[border-color,box-shadow,background-color] duration-200 ease-in-out has-data-checked:border-info has-data-checked:bg-info-subtle has-data-checked:text-info-foreground has-data-checked:ring-4 has-data-checked:ring-info/20 dark:has-data-checked:text-info-foreground",
+              fieldState.error && fieldInvalidClass,
+              warning?.show &&
+                "ui-focus-ring border-warning bg-warning-subtle ring-0 ring-warning placeholder:text-warning-foreground focus:outline-hidden",
+              className,
+            )}
+          >
+            {position === "left" && toggle}
+
+            <div className={cn("grid grow gap-1", position === "left" ? "order-1" : "order-0")}>
+              <div className="flex items-center gap-2">
+                <Label htmlFor={inputId}>{label}</Label>
+                {marks}
+              </div>
+              {description && (
+                <p
+                  id={descriptionId}
+                  className={cn(
+                    "text-2xs text-muted-foreground",
+                    outlined &&
+                      "group-has-data-checked:text-info-foreground dark:group-has-data-checked:text-info-foreground",
+                    fieldState.error && "text-danger-foreground",
+                    warning?.show && "text-warning-foreground",
+                  )}
+                >
+                  {note}
+                </p>
               )}
-              ref={ref}
-              name={name}
-              onBlur={onBlur}
-              checked={value}
-              onCheckedChange={onChange}
-              disabled={disabled}
-              className="after:absolute after:inset-0"
-              onClick={(e) => e.stopPropagation()}
-              {...props}
-            />
-          )}
-        </div>
-      )}
+            </div>
+
+            {position === "right" && toggle}
+          </div>
+        );
+      }}
     />
   );
 }

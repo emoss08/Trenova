@@ -48,7 +48,7 @@ Shipment event ─▶ ShipmentExceptionObserver ─▶ ReconcileSubject for that
 | Automatic sources and observer | `agent/app/watchtowershipment/shipment_exceptions.go`, `shipment_exception_observer.go` |
 | GraphQL | `watchtower.graphqls`, resolvers in `resolver/watchtowerresolver` |
 | Agent tools | `agent/app/agenttools/exceptiontools/exception_tools.go` |
-| Web | Desk watchtower (`routes/desk/_components/watchtower`), dispatch controls "Exception queue" card |
+| Web | Desk watchtower (`routes/desk/_components/watchtower`), dispatch controls "Exceptions" tab |
 
 ## The workflow
 
@@ -309,5 +309,5 @@ A source refresh that changes nothing about an item writes nothing and publishes
 (`Item.Unchanged`), and a sweep that resolves items whose source cleared publishes one bulk
 notice, so the queue never holds a version the server has moved past. "Ask about this" starts a conversation on the
 item's subject with the item attached as its page context (`desk-attached-page-store`).
-Dispatch controls carry an "Exception queue" card for the due times, escalation interval and
+Dispatch controls carry an "Exceptions" tab for the due times, escalation interval and
 cap, default owner, escalation contact and the two source graces.

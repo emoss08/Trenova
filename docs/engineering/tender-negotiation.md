@@ -174,4 +174,4 @@ needs approval, and for a bounce, the carrier unassigned and the carriers asked 
 - **Public offer page:** "Propose a different rate" appears only when `counterAllowed` (counter
   offers on, offer still `Sent`). The carrier is told the load is not theirs until the broker
   confirms.
-- **Dispatch controls:** the "Carrier tenders" card, shown to brokerages, holds the eight settings.
+- **Dispatch controls:** the "Carrier tenders" tab, shown to brokerages, holds the eight settings.

@@ -138,8 +138,17 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
 React Hook Form with a zod schema from `@trenova/shared/types/<entity>` and `zodResolver`;
 field components from `apps/web/src/components/fields/`; table panels through
 `FormCreatePanel`/`FormEditPanel`. Footers are right-aligned, Cancel (`outline`) then the
-primary. Dialogs take `size`, never an arbitrary max-width. Settings pages are stacked
-`Card`s with a `FormSaveDock`.
+primary. Dialogs take `size`, never an arbitrary max-width.
+
+A settings page is `SettingsSection`s in one centred column with a `FormSaveDock`
+(`components/settings/`; dispatch control is the reference). Put the shared fields straight
+inside a section, with no `FormControl`, `FormGroup` or `layout` prop: the section makes each
+one a row (name and meaning left, compact control right). Fields under a switch go in
+`SettingsNested show={…}`, a dependent section in `SettingsReveal`, a page with several jobs
+in `SettingsTabs` (define the tabs and the form fields each holds in a `<page>-tabs.ts` the
+skeleton also reads, and open the refused tab with `tabHoldingError` from both the submit's
+`catch` and `handleSubmit`'s invalid callback). Control pages still on stacked `Card`s are
+moved to this when touched.
 
 Every shared field takes what it is told as its own props, the same on all of them:
 `required` (true, a condition, or the words said when the field is empty) and `clearable`.

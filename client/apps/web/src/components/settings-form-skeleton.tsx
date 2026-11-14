@@ -17,7 +17,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import {
-  settingsPanelClass,
+  settingsColumnClass,
+  settingsListClass,
   settingsSectionClass,
   settingsSectionHeadClass,
   settingsSectionsClass,
@@ -298,65 +299,62 @@ export function SettingsSectionsSkeleton({
   );
 }
 
+/** The control at the end of a settings row: a switch, a figure's field or a choice's. */
+function RowControlSkeleton({ field }: { field: ResolvedField }) {
+  if (field.kind === "switch") {
+    return <Skeleton className="h-4.5 w-8 rounded-full" />;
+  }
+
+  return <Skeleton className={cn("h-7", field.narrow ? "w-34" : "w-52")} />;
+}
+
 /**
- * One section of a tabbed settings page, as `SettingsSection` lays it out: the title and
- * description on the left, the fields in a panel on the right. A group of one column stacks
- * its fields at the panel's own gap, as fields placed straight in the panel do.
+ * One section of a settings list page, as `SettingsSection` lays it out: its title and
+ * description, then a list with one setting to a row. `narrow` is a figure's compact field
+ * (a number, an amount); an input that is not narrow is a choice's wider one.
  */
-export function SettingsSplitSectionSkeleton({ section }: { section: SettingsSectionSpec }) {
-  const groups = section.groups ?? [{ cols: section.cols, fields: section.fields ?? [] }];
-  const context: FieldContext = {
-    narrow: section.narrow ?? false,
-    switches: section.switches ?? "left",
-  };
+export function SettingsListSectionSkeleton({ section }: { section: SettingsSectionSpec }) {
+  const groups = section.groups ?? [{ fields: section.fields ?? [] }];
+  const context: FieldContext = { narrow: section.narrow ?? false, switches: "right" };
+  const rows = groups.flatMap((group) => resolveFields(group.fields, context));
   const descriptionLines = section.description ?? 1;
 
   return (
     <div data-slot="settings-section-skeleton" className={settingsSectionClass}>
       <div className={settingsSectionHeadClass}>
-        <span className="flex h-5.5 items-center">
-          <Skeleton className={cn("h-4", titleClasses[section.title ?? "md"])} />
+        <span className="flex h-4.5 items-center">
+          <Skeleton className={cn("h-3.5", titleClasses[section.title ?? "md"])} />
         </span>
-        {descriptionLines > 0 && (
-          <span className="flex flex-col">
-            {Array.from({ length: descriptionLines }, (_, line) => (
-              <span key={line} className="flex h-5 items-center">
-                <Skeleton
-                  className={cn("h-3.5", line === descriptionLines - 1 ? "w-2/3" : "w-full")}
-                />
-              </span>
-            ))}
+        {Array.from({ length: descriptionLines }, (_, line) => (
+          <span key={line} className="flex h-4.5 items-center">
+            <Skeleton className={cn("h-3", line === descriptionLines - 1 ? "w-1/2" : "w-4/5")} />
           </span>
-        )}
+        ))}
       </div>
-      <Card>
-        <CardContent className={settingsPanelClass}>
-          {groups.map((group, index) =>
-            (group.cols ?? 1) === 1 ? (
-              resolveFields(group.fields, context).map((field, fieldIndex) => (
-                <div
-                  key={`${index}-${fieldIndex}`}
-                  data-slot="field-skeleton"
-                  data-kind={field.kind}
-                  className={cn(field.nested && "pl-10")}
-                >
-                  <FieldSkeleton field={field} switches={context.switches} />
-                </div>
-              ))
-            ) : (
-              <GroupSkeleton key={index} group={group} context={context} />
-            ),
-          )}
-        </CardContent>
-      </Card>
+      <div className={settingsListClass}>
+        {rows.map((field, index) => (
+          <div
+            key={index}
+            data-slot="field-skeleton"
+            data-kind={field.kind}
+            className="flex min-h-12 items-center gap-6 px-3.5 py-2.5"
+          >
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <Skeleton className="h-3.5 w-44" />
+              <Skeleton className="h-3 w-3/5" />
+            </div>
+            <RowControlSkeleton field={field} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 /**
  * The loading state of a tabbed settings page (`SettingsTabs`): the tab row, then the open
- * tab's sections. The page passes the tabs it will show and the sections of the one that
- * is open, so the form lands where the outline was.
+ * tab's sections, in the page's centred column. The page passes the tabs it will show and
+ * the sections of the one that is open, so the form lands where the outline was.
  */
 export function SettingsTabsSkeleton({
   tabs,
@@ -368,7 +366,10 @@ export function SettingsTabsSkeleton({
   const t = useT();
 
   return (
-    <SkeletonRegion label={t("Loading settings")} className="flex flex-col gap-6">
+    <SkeletonRegion
+      label={t("Loading settings")}
+      className={cn(settingsColumnClass, "flex flex-col gap-5")}
+    >
       {tabs > 1 && (
         <div className={settingsTabRowClass}>
           <div className="flex w-fit items-center gap-x-0.5 py-1">
@@ -386,7 +387,7 @@ export function SettingsTabsSkeleton({
       )}
       <div className={settingsSectionsClass}>
         {sections.map((section, index) => (
-          <SettingsSplitSectionSkeleton key={index} section={section} />
+          <SettingsListSectionSkeleton key={index} section={section} />
         ))}
       </div>
     </SkeletonRegion>

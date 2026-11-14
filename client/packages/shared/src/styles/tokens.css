@@ -1424,6 +1424,8 @@
   --animate-expand-in: expand-in 280ms var(--ease-settle) both;
   --animate-panel-in: panel-in 320ms var(--ease-settle) both;
   --animate-slide-in: slide-in 360ms var(--ease-settle) both;
+  /* The same arrival from the other side: a tab's content coming in from the tab to its left. */
+  --animate-slide-in-back: slide-in-back 360ms var(--ease-settle) both;
   --animate-pop-in: pop-in 200ms var(--ease-settle) both;
   --animate-leave: leave 320ms var(--ease-swift) both;
   --animate-success: success 360ms var(--ease-spring) both;

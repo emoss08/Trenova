@@ -1,8 +1,9 @@
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { useFormState } from "react-hook-form";
-import { settingsTabRowClass, settingsTabsClass } from "./settings-layout";
+import { settingsColumnClass, settingsTabRowClass, settingsTabsClass } from "./settings-layout";
 import type { SettingsTabSpec } from "./settings-tab";
 
 export type SettingsTab<TField extends string = string> = SettingsTabSpec<TField> & {
@@ -14,7 +15,8 @@ export type SettingsTab<TField extends string = string> = SettingsTabSpec<TField
  *
  * Every tab stays mounted, so each field is registered whichever tab is open: a server
  * error lands on its field, and a tab that holds a problem is marked. The page opens that
- * tab when a save is refused (`tabHoldingError`). A page with one tab draws no tab row.
+ * tab when a save is refused (`tabHoldingError`). A tab's content comes in from the side
+ * the person moved towards. A page with one tab draws no tab row.
  */
 export function SettingsTabs<TField extends string>({
   tabs,
@@ -29,14 +31,14 @@ export function SettingsTabs<TField extends string>({
   const { errors } = useFormState();
 
   if (tabs.length === 1) {
-    return <>{tabs[0].content}</>;
+    return <div className={settingsColumnClass}>{tabs[0].content}</div>;
   }
 
   return (
     <Tabs
       value={value}
       onValueChange={(next) => onValueChange(String(next))}
-      className={settingsTabsClass}
+      className={cn(settingsColumnClass, settingsTabsClass)}
     >
       <div className={settingsTabRowClass}>
         <TabsList variant="underline">
@@ -45,7 +47,7 @@ export function SettingsTabs<TField extends string>({
               {tab.label}
               {tab.fields.some((field) => field in errors) ? (
                 <>
-                  <span aria-hidden className="size-1.5 rounded-full bg-danger" />
+                  <span aria-hidden className="size-1.5 animate-rise rounded-full bg-danger" />
                   <span className="sr-only">{t("Has fields to fix")}</span>
                 </>
               ) : null}
@@ -54,7 +56,12 @@ export function SettingsTabs<TField extends string>({
         </TabsList>
       </div>
       {tabs.map((tab) => (
-        <TabsPanel key={tab.value} value={tab.value} keepMounted>
+        <TabsPanel
+          key={tab.value}
+          value={tab.value}
+          keepMounted
+          className="animate-slide-in data-[activation-direction=left]:animate-slide-in-back data-[activation-direction=none]:animate-none"
+        >
           {tab.content}
         </TabsPanel>
       ))}

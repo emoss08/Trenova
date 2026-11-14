@@ -810,7 +810,6 @@
   "Minor units": "Unidades menores",
   "Minutes to count over": "Minutos durante los que contar",
   "Monitor our own authority": "Supervisar nuestra propia autoridad operativa",
-  "Monitoring": "Monitoreo",
   "Monitoring is billed per enrolled carrier each month. Review the estimate before enrolling these carriers.": "El monitoreo se factura por transportista inscrito cada mes. Revise la estimación antes de inscribir a estos transportistas.",
   "Monitoring pauses when the monthly cap is reached. Lookups that would exceed the daily full profile cap fall back to a lighter lookup.": "El monitoreo se pausa cuando se alcanza el tope mensual. Las consultas que superarían el tope diario de perfil completo recurren a una consulta más ligera.",
   "Month to date": "Mes en curso",
