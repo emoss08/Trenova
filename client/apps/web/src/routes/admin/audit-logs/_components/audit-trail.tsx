@@ -21,7 +21,7 @@ import type {
   FieldFilter,
 } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import { parseAsArrayOf, parseAsString } from "nuqs";
+import { searchList, searchString } from "@trenova/shared/lib/router/search-codec";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { RequestEntries } from "./audit-entry-parts";
 import { AuditInspector } from "./audit-inspector";
@@ -49,7 +49,7 @@ const EMPTY_COLUMNS = [
   { label: "Via" },
 ] as const;
 
-const collapsedParser = parseAsArrayOf(parseAsString).withDefault([]);
+const collapsedParser = searchList(searchString).withDefault([]);
 
 function dayGroups(t: TranslateFn, timezone: string, entries: ReadonlyMap<string, number>) {
   const groups: DataTableGroup[] = [];

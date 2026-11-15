@@ -3,7 +3,7 @@ import { TestRouter } from "@trenova/shared/testing/test-router";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { hashKey, QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { parseAsInteger } from "nuqs";
+import { searchInteger } from "@trenova/shared/lib/router/search-codec";
 import React from "react";
 import { DataTable } from "../data-table";
 import { GROUP_TOGGLE_INTENT_DELAY_MS } from "../data-table-group-header";
@@ -859,7 +859,7 @@ describe("DataTable page sizes", () => {
 });
 
 function ShowAHundredRows() {
-  const [, setPageSize] = useSearchValue("pageSize", parseAsInteger);
+  const [, setPageSize] = useSearchValue("pageSize", searchInteger);
   return (
     <button type="button" onClick={() => void setPageSize(100)}>
       Show 100

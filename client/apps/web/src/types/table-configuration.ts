@@ -100,6 +100,12 @@ export const tableConfigSchema = z.object({
 export type TableConfig = z.infer<typeof tableConfigSchema>;
 
 /**
+ * What a table shows, as a view keeps it, short of how it is drawn: its filters, sort, page
+ * size and columns. Density and colour rules come from the person's view of the table.
+ */
+export type TableArrangement = Omit<TableConfig, "density" | "formatRules">;
+
+/**
  * How one person last arranged a table: its columns, density and colour rules, and
  * the saved view it was based on. Filters and sort live in the address instead.
  */

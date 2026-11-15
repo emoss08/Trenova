@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DataTable } from "../data-table";
-import { parseAsFieldFilters, parseAsFilterGroups } from "@/hooks/data-table/use-data-table-state";
+import { fieldFiltersCodec, filterGroupsCodec } from "@/hooks/data-table/use-data-table-state";
 import type { ColumnDef, FieldFilter } from "@trenova/shared/types/data-table";
 import { seedDataTableQueries } from "@/test/data-table-queries";
 
@@ -88,8 +88,8 @@ vi.mock("@trenova/shared/hooks/use-debounce", () => ({
 
 function ExternalFilterWriter({ fieldFilters }: { fieldFilters: FieldFilter[] }) {
   const [, setParams] = useSearchState({
-    fieldFilters: parseAsFieldFilters,
-    filterGroups: parseAsFilterGroups,
+    fieldFilters: fieldFiltersCodec,
+    filterGroups: filterGroupsCodec,
   });
   return (
     <>

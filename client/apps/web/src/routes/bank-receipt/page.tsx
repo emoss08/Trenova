@@ -30,14 +30,14 @@ import {
   Link01Icon,
   SearchLgIcon,
 } from "@trenova/shared/components/icons";
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 const bankReceiptSearchParams = {
-  item: parseAsString,
-  query: parseAsString.withDefault(""),
-  status: parseAsString,
+  item: searchString,
+  query: searchString.withDefault(""),
+  status: searchString,
 };
 
 const STATUS_FILTERS: Array<{ label: string; value: BankReceiptStatus }> = [

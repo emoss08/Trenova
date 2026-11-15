@@ -1,18 +1,25 @@
-import { INVOICE_DETAIL_TABS, type InvoiceDetailTab } from "@trenova/shared/types/invoice-detail-tab";
-import { parseAsBoolean, parseAsString, parseAsStringLiteral } from "nuqs";
+import {
+  INVOICE_DETAIL_TABS,
+  type InvoiceDetailTab,
+} from "@trenova/shared/types/invoice-detail-tab";
+import {
+  searchBoolean,
+  searchLiteral,
+  searchString,
+} from "@trenova/shared/lib/router/search-codec";
 
 export function isInvoiceDetailTab(value: unknown): value is InvoiceDetailTab {
   return typeof value === "string" && (INVOICE_DETAIL_TABS as readonly string[]).includes(value);
 }
 
 export const invoiceSearchParamsParser = {
-  item: parseAsString,
-  tab: parseAsStringLiteral(INVOICE_DETAIL_TABS).withDefault("overview"),
-  status: parseAsString,
-  query: parseAsString.withDefault(""),
-  billType: parseAsString,
-  scope: parseAsString,
-  dispute: parseAsBoolean.withDefault(false),
+  item: searchString,
+  tab: searchLiteral(INVOICE_DETAIL_TABS).withDefault("overview"),
+  status: searchString,
+  query: searchString.withDefault(""),
+  billType: searchString,
+  scope: searchString,
+  dispute: searchBoolean.withDefault(false),
 };
 
 export const invoiceSelectionSearchParamsParser = {

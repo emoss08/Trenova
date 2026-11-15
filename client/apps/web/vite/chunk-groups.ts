@@ -79,7 +79,7 @@ export const chunkGroups: Group[] = [
     "tiny-warning",
   ),
   group("floating-ui", "@floating-ui/*"),
-  group("store-utils", "zustand", "nuqs", "immer"),
+  group("store-utils", "zustand", "immer"),
   // TanStack Store is shared by Query's hotkeys and by Table. Claimed here first, it stays
   // out of the table chunk, which would otherwise be imported by every page for it.
   group(

@@ -19,7 +19,7 @@ import type { API_ENDPOINTS } from "@trenova/shared/types/server";
 import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { XCloseIcon } from "@trenova/shared/components/icons";
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
 import {
@@ -97,7 +97,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
   const pendingActionRef = useRef<CreatePanelSaveAction>(defaultAction);
   const hasFormTabs = formTabs.length > 0;
   const defaultTab = hasFormTabs ? formTabs[0].value : "details";
-  const [activeTab, setActiveTab] = useSearchValue("tab", parseAsString.withDefault(defaultTab));
+  const [activeTab, setActiveTab] = useSearchValue("tab", searchString.withDefault(defaultTab));
   const {
     formState: { isSubmitting },
     handleSubmit,

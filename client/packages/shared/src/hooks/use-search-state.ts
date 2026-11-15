@@ -5,22 +5,33 @@ import {
   useRouterState,
   type AnyRouter,
 } from "@tanstack/react-router";
-import type { Nullable, Options, UseQueryStatesKeysMap, Values } from "nuqs";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
+import type {
+  AnySearchCodec,
+  SearchCodec,
+  SearchCodecMap,
+  SearchCodecWithDefault,
+  SearchHistory,
+  SearchValues,
+} from "@trenova/shared/lib/router/search-codec";
 import { useCallback, useState } from "react";
 
 // The router owns the address: these hooks read the state a page keeps there from the router's
-// location and write it back through one navigation. nuqs's parsers are the codecs (how a value
-// is written and read back, its default); nothing else of nuqs runs.
+// location and write it back through one navigation. A codec (lib/router/search-codec) says how
+// each key's value is written and read back, and its default.
 
 /** How a write lands: a new history entry or the same one, and whether the page scrolls up. */
-export type SearchWriteOptions = Pick<Options, "history" | "scroll">;
+export interface SearchWriteOptions {
+  history?: SearchHistory;
+  scroll?: boolean;
+}
 
-type SearchMap = UseQueryStatesKeysMap;
+type SearchMap = SearchCodecMap;
+type Values<M extends SearchMap> = SearchValues<M>;
 
-/** The values a parser map reads from the address. */
+/** The values a codec map reads from the address. */
 export type SearchState<M extends SearchMap> = Values<M>;
-type Patch<M extends SearchMap> = Partial<Nullable<Values<M>>>;
+type Patch<M extends SearchMap> = Partial<{ [K in keyof M]: Values<M>[K] | null }>;
 
 /** What a write changes: some keys (null removes one), or a function of what the address holds. */
 export type SearchStateUpdate<M extends SearchMap> =
@@ -33,16 +44,9 @@ export type SetSearchState<M extends SearchMap> = (
   options?: SearchWriteOptions,
 ) => Promise<void>;
 
-type AnyParser = SearchMap[string] & {
-  history?: "push" | "replace";
-  scroll?: boolean;
-  clearOnDefault?: boolean;
-  defaultValue?: unknown;
-  eq?: (a: unknown, b: unknown) => boolean;
-  serialize: (value: never) => string;
-  parseServerSide?: (value: string | string[] | undefined) => unknown;
-  parse: (value: string) => unknown;
-};
+function defaultOf(codec: AnySearchCodec): unknown {
+  return "defaultValue" in codec ? codec.defaultValue : undefined;
+}
 
 function rawValue(value: unknown): string | undefined {
   if (typeof value === "string") return value;
@@ -51,12 +55,9 @@ function rawValue(value: unknown): string | undefined {
   return undefined;
 }
 
-function parseKey(parser: AnyParser, raw: string | undefined): unknown {
-  if (parser.parseServerSide) {
-    return parser.parseServerSide(raw);
-  }
-  const parsed = raw === undefined ? null : parser.parse(raw);
-  return parsed ?? parser.defaultValue ?? null;
+function parseKey(codec: AnySearchCodec, raw: string | undefined): unknown {
+  const parsed = raw === undefined ? null : codec.parse(raw);
+  return parsed ?? defaultOf(codec) ?? null;
 }
 
 /**
@@ -71,14 +72,14 @@ export function readSearchState<M extends SearchMap>(
   const record = search instanceof URLSearchParams ? Object.fromEntries(search) : search;
   const values: Record<string, unknown> = {};
   for (const [key, parser] of Object.entries(map)) {
-    values[key] = parseKey(parser as AnyParser, rawValue(record[key]));
+    values[key] = parseKey(parser, rawValue(record[key]));
   }
   return values as Values<M>;
 }
 
-function sameValue(parser: AnyParser, a: unknown, b: unknown): boolean {
+function sameValue(codec: AnySearchCodec, a: unknown, b: unknown): boolean {
   if (a === null || b === null || a === undefined || b === undefined) return a === b;
-  return parser.eq ? parser.eq(a, b) : a === b;
+  return codec.eq(a, b);
 }
 
 /**
@@ -92,21 +93,17 @@ function writeSearchState(
 ): Record<string, unknown> {
   const next = new Map(Object.entries(current));
   for (const [key, value] of Object.entries(patch)) {
-    const parser = map[key] as AnyParser | undefined;
-    if (value === null || value === undefined || !parser) {
+    const codec = map[key];
+    if (value === null || value === undefined || !codec) {
       next.delete(key);
       continue;
     }
-    const clearsDefault = parser.clearOnDefault ?? true;
-    if (
-      clearsDefault &&
-      parser.defaultValue !== undefined &&
-      sameValue(parser, value, parser.defaultValue)
-    ) {
+    const defaultValue = defaultOf(codec);
+    if (defaultValue !== undefined && sameValue(codec, value, defaultValue)) {
       next.delete(key);
       continue;
     }
-    const serialized = parser.serialize(value as never);
+    const serialized = codec.serialize(value);
     if (serialized === "") {
       next.delete(key);
     } else {
@@ -118,14 +115,7 @@ function writeSearchState(
 
 function historyOf(map: SearchMap, keys: string[], options: SearchWriteOptions | undefined) {
   if (options?.history) return options.history;
-  return keys.some((key) => (map[key] as AnyParser | undefined)?.history === "push")
-    ? "push"
-    : "replace";
-}
-
-function scrollOf(map: SearchMap, keys: string[], options: SearchWriteOptions | undefined) {
-  if (options?.scroll !== undefined) return options.scroll;
-  return keys.some((key) => (map[key] as AnyParser | undefined)?.scroll === true);
+  return keys.some((key) => map[key]?.history === "push") ? "push" : "replace";
 }
 
 /** Navigates to the current path with `search` as its query, keeping its hash and its state. */
@@ -247,7 +237,7 @@ export function useSearchState<M extends SearchMap>(
       return {
         search: writeSearchState(map, current, cleared),
         push: historyOf(map, keys, merged) === "push",
-        resetScroll: scrollOf(map, keys, merged),
+        resetScroll: merged.scroll ?? false,
       };
     });
   });
@@ -260,32 +250,23 @@ export type SetSearchValue<T> = (
   options?: SearchWriteOptions,
 ) => Promise<void>;
 
-/** What useSearchValue reads a key with: a nuqs parser, with or without a default. */
-interface SearchParser<T> {
-  parse: (value: string) => T | null;
-  serialize: (value: T) => string;
-}
-
 /** One key of the state a page keeps in the address; see useSearchState. */
 export function useSearchValue<T>(
   key: string,
-  parser: SearchParser<T> & { readonly defaultValue: NonNullable<T> },
+  codec: SearchCodecWithDefault<T>,
   options?: SearchWriteOptions,
-): [NonNullable<T>, SetSearchValue<NonNullable<T>>];
+): [T, SetSearchValue<T>];
 export function useSearchValue<T>(
   key: string,
-  parser: SearchParser<T>,
+  codec: SearchCodec<T>,
   options?: SearchWriteOptions,
 ): [T | null, SetSearchValue<T | null>];
 export function useSearchValue<T>(
   key: string,
-  parser: SearchParser<T>,
+  codec: SearchCodec<T> | SearchCodecWithDefault<T>,
   options?: SearchWriteOptions,
 ): [T | null, SetSearchValue<T | null>] {
-  const [values, setValues] = useSearchState(
-    { [key]: parser } as unknown as UseQueryStatesKeysMap,
-    options,
-  );
+  const [values, setValues] = useSearchState({ [key]: codec } as SearchCodecMap, options);
   const setValue = useCallback<SetSearchValue<T | null>>(
     (value, callOptions) =>
       setValues(

@@ -21,13 +21,12 @@ import type {
 } from "@trenova/shared/types/data-table";
 import type { ComposedTableQuery } from "@/types/table-query";
 import type {
-  ActiveTableView,
+  TableArrangement,
   TableConfig,
-  TableConfiguration,
-  TableDensity,
-  TableFormatRule,
   TableViewSource,
 } from "@/types/table-configuration";
+import { useDataTableView, useDataTableViewActions } from "./data-table-view-context";
+import type { DataTableViewState } from "./data-table-view-store";
 import { ChevronDownIcon, Download01Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { Fragment, lazy, Suspense, useState } from "react";
 import { DataTableViewers } from "@/components/presence/data-table-viewers";
@@ -107,25 +106,15 @@ type DataTableToolbarProps<TData extends Record<string, any>> = {
    * resource the server knows.
    */
   presenceResource?: string;
-  currentConfig: TableConfig;
+  /** What the table shows now: the filters, sort, page size and columns a view keeps. */
+  arrangement: TableArrangement;
   onApplyConfig?: (config: TableConfig, source?: TableViewSource) => void;
-  activeView?: ActiveTableView | null;
-  isViewDirty?: boolean;
-  onViewPersisted?: (config: TableConfiguration) => void;
-  onViewDeleted?: (id: string) => void;
-  formatRules?: TableFormatRule[];
-  onFormatRulesChange?: (rules: TableFormatRule[]) => void;
-  density?: TableDensity;
-  onDensityChange?: (density: TableDensity) => void;
   hasSavedLayout?: boolean;
   onResetLayout?: () => void;
   onFitColumns?: () => void;
-  highlightChanges?: boolean;
-  onHighlightChangesChange?: (on: boolean) => void;
-  showTotals?: boolean;
-  onShowTotalsChange?: (on: boolean) => void;
-  virtualized?: boolean;
-  onVirtualizedChange?: (on: boolean) => void;
+  canMarkChanges?: boolean;
+  canShowTotals?: boolean;
+  canVirtualize?: boolean;
   exportContext?: DataTableExportContext<TData>;
   slots?: DataTableToolbarSlots;
 };
@@ -145,25 +134,14 @@ export function DataTableToolbar<TData extends Record<string, any>>({
   addRecordActions = [],
   resource,
   presenceResource,
-  currentConfig,
+  arrangement,
   onApplyConfig,
-  activeView,
-  isViewDirty = false,
-  onViewPersisted,
-  onViewDeleted,
-  formatRules = [],
-  onFormatRulesChange,
-  density = "comfortable",
-  onDensityChange,
   hasSavedLayout,
   onResetLayout,
   onFitColumns,
-  highlightChanges,
-  onHighlightChangesChange,
-  showTotals,
-  onShowTotalsChange,
-  virtualized,
-  onVirtualizedChange,
+  canMarkChanges,
+  canShowTotals,
+  canVirtualize,
   exportContext,
   slots,
 }: DataTableToolbarProps<TData>) {
@@ -249,21 +227,13 @@ export function DataTableToolbar<TData extends Record<string, any>>({
             <Suspense fallback={<ToolbarButtonSkeleton />}>
               <DataTableDisplayMenu
                 table={table as Table<RowData>}
-                density={density}
-                onDensityChange={onDensityChange}
-                formatRuleCount={formatRules.length}
-                onEditFormatRules={
-                  onFormatRulesChange ? () => setFormatDialogOpen(true) : undefined
-                }
+                onEditFormatRules={() => setFormatDialogOpen(true)}
                 hasSavedLayout={hasSavedLayout}
                 onResetLayout={onResetLayout}
                 onFitColumns={onFitColumns}
-                highlightChanges={highlightChanges}
-                onHighlightChangesChange={onHighlightChangesChange}
-                showTotals={showTotals}
-                onShowTotalsChange={onShowTotalsChange}
-                virtualized={virtualized}
-                onVirtualizedChange={onVirtualizedChange}
+                canMarkChanges={canMarkChanges}
+                canShowTotals={canShowTotals}
+                canVirtualize={canVirtualize}
               />
             </Suspense>
           </div>
@@ -274,12 +244,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
                   resource={resource}
                   onApplyConfig={onApplyConfig}
                   onSaveConfig={() => setSaveDialogOpen(true)}
-                  currentConfig={currentConfig}
-                  activeViewId={activeView?.id ?? null}
-                  activeViewName={activeView?.name ?? null}
-                  isViewDirty={isViewDirty}
-                  onViewPersisted={onViewPersisted}
-                  onViewDeleted={onViewDeleted}
+                  arrangement={arrangement}
                 />
               )}
             </Suspense>
@@ -329,18 +294,14 @@ export function DataTableToolbar<TData extends Record<string, any>>({
           open={saveDialogOpen}
           onOpenChange={setSaveDialogOpen}
           resource={resource}
-          currentConfig={currentConfig}
-          onSaved={onViewPersisted}
+          arrangement={arrangement}
         />
       )}
-      {onFormatRulesChange && formatDialogOpen && (
+      {formatDialogOpen && (
         <Suspense fallback={null}>
-          <DataTableFormatBuilder
-            open={formatDialogOpen}
-            onOpenChange={setFormatDialogOpen}
+          <FormatRulesDialog
             columns={columns as unknown as ColumnDef<RowData>[]}
-            rules={formatRules}
-            onRulesChange={onFormatRulesChange}
+            onClose={() => setFormatDialogOpen(false)}
           />
         </Suspense>
       )}
@@ -360,5 +321,31 @@ export function DataTableToolbar<TData extends Record<string, any>>({
         </Suspense>
       )}
     </>
+  );
+}
+
+const selectFormatRules = (state: DataTableViewState) => state.formatRules;
+
+/** The colour rules being edited, read and written straight to the table's view. */
+function FormatRulesDialog({
+  columns,
+  onClose,
+}: {
+  columns: ColumnDef<RowData>[];
+  onClose: () => void;
+}) {
+  const rules = useDataTableView(selectFormatRules);
+  const { setFormatRules } = useDataTableViewActions();
+
+  return (
+    <DataTableFormatBuilder
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      columns={columns}
+      rules={rules}
+      onRulesChange={setFormatRules}
+    />
   );
 }

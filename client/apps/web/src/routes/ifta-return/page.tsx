@@ -4,14 +4,14 @@ import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { defaultIftaPeriod, periodFromSearch, type IftaPeriodKey } from "@/lib/ifta-return";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 import { lazy, useCallback, useMemo } from "react";
 import { IftaReturnSkeleton } from "./_components/ifta-return-skeleton";
 import { iftaPeriodQuery, iftaReturnForPeriodQuery } from "./_components/queries";
 
 const IftaReturnWorkspace = lazy(() => import("./_components/ifta-return-workspace"));
 
-const periodParsers = { year: parseAsString, quarter: parseAsString };
+const periodParsers = { year: searchString, quarter: searchString };
 
 function nowUnix(): number {
   return Math.floor(Date.now() / 1000);

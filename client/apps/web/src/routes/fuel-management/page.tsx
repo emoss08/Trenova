@@ -4,7 +4,7 @@ import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Dataflow02Icon, FuelIcon, Speedometer03Icon } from "@trenova/shared/components/icons";
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 import { lazy } from "react";
 import {
   FuelDashboardSkeleton,
@@ -19,7 +19,7 @@ const IndexSection = lazy(() => import("./_components/index-section"));
 export function FuelManagementPage() {
   const t = useT();
 
-  const [activeTab, setActiveTab] = useSearchValue("tab", parseAsString.withDefault("dashboard"));
+  const [activeTab, setActiveTab] = useSearchValue("tab", searchString.withDefault("dashboard"));
 
   return (
     <PageLayout

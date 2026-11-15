@@ -5,38 +5,45 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermission } from "@/hooks/use-permission";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import type { TableConfig, TableConfiguration, TableViewSource } from "@/types/table-configuration";
+import { isTableConfigEqual } from "@/lib/data-table";
+import type {
+  TableArrangement,
+  TableConfig,
+  TableConfiguration,
+  TableViewSource,
+} from "@/types/table-configuration";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { BookmarkIcon, PlusIcon, Users01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { DataTableConfigItem } from "./_components/data-table-config/data-table-config-item";
+import { useDataTableView, useTableConfig } from "./data-table-view-context";
+import type { DataTableViewState } from "./data-table-view-store";
+
+const selectActiveView = (state: DataTableViewState) => state.activeView;
 
 type DataTableConfigManagerProps = {
   resource: string;
   onApplyConfig: (config: TableConfig, source?: TableViewSource) => void;
   onSaveConfig: () => void;
-  currentConfig?: TableConfig;
-  activeViewId?: string | null;
-  activeViewName?: string | null;
-  isViewDirty?: boolean;
-  onViewPersisted?: (config: TableConfiguration) => void;
-  onViewDeleted?: (id: string) => void;
+  /** What the table shows now, which a view is compared against and saved as. */
+  arrangement: TableArrangement;
 };
 
 export default function DataTableConfigManager({
   resource,
   onApplyConfig,
   onSaveConfig,
-  currentConfig,
-  activeViewId = null,
-  activeViewName = null,
-  isViewDirty = false,
-  onViewPersisted,
-  onViewDeleted,
+  arrangement,
 }: DataTableConfigManagerProps) {
   const t = useT();
+  const activeView = useDataTableView(selectActiveView);
+  const currentConfig = useTableConfig(arrangement);
+  const activeViewId = activeView?.id ?? null;
+  const activeViewName = activeView?.name ?? null;
+  // The view the table was opened in, changed since: its filters, columns or drawing differ.
+  const isViewDirty = activeView ? !isTableConfigEqual(currentConfig, activeView.config) : false;
 
   const [open, setOpen] = useState(false);
   const currentUserId = useAuthStore((s) => s.user?.id);
@@ -74,8 +81,6 @@ export default function DataTableConfigManager({
       canEditSharedViews={canEditSharedViews}
       currentConfig={currentConfig}
       onApplyConfig={onApplyConfig}
-      onViewPersisted={onViewPersisted}
-      onViewDeleted={onViewDeleted}
       setOpen={setOpen}
     />
   );

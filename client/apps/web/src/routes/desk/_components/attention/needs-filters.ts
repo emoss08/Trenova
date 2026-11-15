@@ -2,7 +2,7 @@ import { humanizeCode } from "@/components/assistant/readable-values";
 import type { DeskAttentionFilter, DeskAttentionKind } from "@/lib/graphql/desk-attention";
 import type { WatchtowerSeverity, WatchtowerSourceKind } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { parseAsArrayOf, parseAsBoolean, parseAsString } from "nuqs";
+import { searchBoolean, searchList, searchString } from "@trenova/shared/lib/router/search-codec";
 import { SEVERITIES, severityLabel } from "../watchtower/severity";
 import type { NeedsLens } from "./lens";
 
@@ -14,15 +14,15 @@ import type { NeedsLens } from "./lens";
  * lens, and each lens is narrowed by them.
  */
 export const NEEDS_FILTER_ADDRESS = {
-  kinds: parseAsArrayOf(parseAsString, ",").withDefault([]),
-  severities: parseAsArrayOf(parseAsString, ",").withDefault([]),
-  q: parseAsString.withDefault(""),
-  unseen: parseAsBoolean.withDefault(false),
-  working: parseAsBoolean.withDefault(false),
+  kinds: searchList(searchString, ",").withDefault([]),
+  severities: searchList(searchString, ",").withDefault([]),
+  q: searchString.withDefault(""),
+  unseen: searchBoolean.withDefault(false),
+  working: searchBoolean.withDefault(false),
 };
 
 /** The item open beside the list, kept in the address so a link opens on it. */
-export const NEEDS_ITEM_ADDRESS = { item: parseAsString };
+export const NEEDS_ITEM_ADDRESS = { item: searchString };
 
 /** What the list is narrowed to, apart from its lens and whose cases it holds. */
 export type NeedsFilters = {

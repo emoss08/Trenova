@@ -6,7 +6,7 @@ import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet
 import type { LadingContext } from "@trenova/shared/edi/lading";
 import type { LadingProject } from "@trenova/shared/types/lading";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 import { LadingCreateProject } from "./lading-create-project";
 import { LadingStudioSkeleton } from "./lading-studio-skeleton";
 import { LadingWorkbench } from "./lading-workbench";
@@ -43,7 +43,7 @@ function ProjectStudio({
 }) {
   const t = useT();
   const { data: versions } = useSuspenseQuery(lading.versions(project.id));
-  const [requested, setRequested] = useSearchValue("version", parseAsString);
+  const [requested, setRequested] = useSearchValue("version", searchString);
   const picked = pickVersion(versions, requested, project.activeVersionId);
 
   if (!picked) {

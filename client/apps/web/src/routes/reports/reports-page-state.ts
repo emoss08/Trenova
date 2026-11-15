@@ -1,5 +1,5 @@
 import { REPORT_CATEGORY_CHOICES, REPORT_DEFINITION_STATUS_LABELS } from "@/types/report";
-import { parseAsString, parseAsStringLiteral } from "nuqs";
+import { searchLiteral, searchString } from "@trenova/shared/lib/router/search-codec";
 import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 export const reportTabs = ["library", "gallery", "dashboards"] as const;
@@ -18,11 +18,11 @@ export const reportStatusFilters = [
 export type ReportStatusFilter = (typeof reportStatusFilters)[number];
 
 export const reportsPageSearchParamsParser = {
-  tab: parseAsStringLiteral(reportTabs).withDefault("library"),
-  query: parseAsString.withDefault(""),
-  sortBy: parseAsStringLiteral(reportSortOrders).withDefault("name_asc"),
-  category: parseAsString.withDefault("all"),
-  status: parseAsStringLiteral(reportStatusFilters).withDefault("all"),
+  tab: searchLiteral(reportTabs).withDefault("library"),
+  query: searchString.withDefault(""),
+  sortBy: searchLiteral(reportSortOrders).withDefault("name_asc"),
+  category: searchString.withDefault("all"),
+  status: searchLiteral(reportStatusFilters).withDefault("all"),
 };
 
 export const LIBRARY_SORT_CHOICES: { value: ReportSortOrder; label: string }[] = [

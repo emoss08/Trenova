@@ -3,14 +3,19 @@ import {
   type FilterGroup,
   type SortField,
 } from "@trenova/shared/types/data-table";
-import { createParser, parseAsInteger, parseAsString, parseAsStringLiteral } from "nuqs";
+import {
+  searchCodec,
+  searchInteger,
+  searchLiteral,
+  searchString,
+} from "@trenova/shared/lib/router/search-codec";
 
 /**
  * A list of records kept in the address as JSON: an empty list is no value, and one that does
  * not read back (a link cut short, an edited address) is an empty list rather than an error.
  */
-function parseAsJsonList<T>() {
-  return createParser<T[]>({
+function jsonListCodec<T>() {
+  return searchCodec<T[]>({
     parse: (value) => {
       try {
         const parsed: unknown = JSON.parse(value);
@@ -24,18 +29,18 @@ function parseAsJsonList<T>() {
   }).withDefault([]);
 }
 
-const parseAsSortFields = parseAsJsonList<SortField>();
-export const parseAsFilterGroups = parseAsJsonList<FilterGroup>();
-export const parseAsFieldFilters = parseAsJsonList<FieldFilter>();
+const sortFieldsCodec = jsonListCodec<SortField>();
+export const filterGroupsCodec = jsonListCodec<FilterGroup>();
+export const fieldFiltersCodec = jsonListCodec<FieldFilter>();
 
 export const entitySearchParamsParser = {
-  entityId: parseAsString,
-  modalType: parseAsStringLiteral(["edit", "create"]),
+  entityId: searchString,
+  modalType: searchLiteral(["edit", "create"]),
 };
 
 export const panelSearchParamsParser = {
-  panelType: parseAsStringLiteral(["edit", "create"]),
-  panelEntityId: parseAsString,
+  panelType: searchLiteral(["edit", "create"]),
+  panelEntityId: searchString,
 };
 
 /** The sizes a table offers when it names none; the server serves at most 100 rows a page. */
@@ -43,8 +48,8 @@ export const DEFAULT_PAGE_SIZE_OPTIONS: readonly number[] = [25, 50, 100];
 const DEFAULT_PAGE_SIZE = 50;
 
 export const tablePaginationSearchParamsParser = {
-  pageIndex: parseAsInteger.withDefault(1),
-  pageSize: parseAsInteger.withDefault(DEFAULT_PAGE_SIZE),
+  pageIndex: searchInteger.withDefault(1),
+  pageSize: searchInteger.withDefault(DEFAULT_PAGE_SIZE),
 };
 
 /**
@@ -64,10 +69,10 @@ export function defaultPageSizeFor(pageSizeOptions?: readonly number[]): number 
 }
 
 export const tableFilterSearchParamsParser = {
-  query: parseAsString.withDefault(""),
-  fieldFilters: parseAsFieldFilters,
-  filterGroups: parseAsFilterGroups,
-  sort: parseAsSortFields,
+  query: searchString.withDefault(""),
+  fieldFilters: fieldFiltersCodec,
+  filterGroups: filterGroupsCodec,
+  sort: sortFieldsCodec,
 };
 
 export const searchParamsParser = {

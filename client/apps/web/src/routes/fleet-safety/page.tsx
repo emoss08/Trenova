@@ -7,7 +7,7 @@ import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { RadarIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
-import { parseAsStringLiteral } from "nuqs";
+import { searchLiteral } from "@trenova/shared/lib/router/search-codec";
 import { lazy } from "react";
 import { FleetSafetySkeleton } from "./_components/fleet-safety-skeleton";
 import { MyDotSkeleton } from "./_components/my-dot-skeleton";
@@ -23,7 +23,7 @@ const MyDotIntelligence = lazy(() =>
 const FLEET_SAFETY_VIEWS = ["fleet", "my-dot"] as const;
 type FleetSafetyView = (typeof FLEET_SAFETY_VIEWS)[number];
 
-const viewParser = parseAsStringLiteral(FLEET_SAFETY_VIEWS).withDefault("fleet");
+const viewParser = searchLiteral(FLEET_SAFETY_VIEWS).withDefault("fleet");
 
 // The page opens on twelve months across every terminal; that is the roll-up
 // it paints first, and the only one it can know before a filter is chosen.

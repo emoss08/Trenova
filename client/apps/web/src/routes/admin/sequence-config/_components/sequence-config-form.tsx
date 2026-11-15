@@ -13,13 +13,13 @@ import {
 } from "@/types/sequence-config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { parseAsStringLiteral } from "nuqs";
+import { searchLiteral } from "@trenova/shared/lib/router/search-codec";
 import { useCallback, useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { SequenceConfigPanel } from "./sequence-config-panel";
 import { SequenceConfigSidebar } from "./sequence-config-sidebar";
 
-const sectionParser = parseAsStringLiteral(sequenceTypes)
+const sectionParser = searchLiteral(sequenceTypes)
   .withOptions({ history: "push" })
   .withDefault(sequenceTypes[0]);
 

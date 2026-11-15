@@ -25,7 +25,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlugIcon, ScanSearchIcon } from "@trenova/shared/components/icons";
-import { parseAsStringLiteral } from "nuqs";
+import { searchLiteral } from "@trenova/shared/lib/router/search-codec";
 import { useCallback, useState, type ReactNode } from "react";
 import { IntelligenceEvents } from "./intelligence-events";
 import { IntelligenceFindings } from "./intelligence-findings";
@@ -43,7 +43,7 @@ export type CarrierIntelligenceTabProps = {
 const INTEL_VIEWS = ["findings", "profile", "sync", "timeline", "history"] as const;
 type IntelView = (typeof INTEL_VIEWS)[number];
 
-const intelViewParser = parseAsStringLiteral(INTEL_VIEWS).withDefault("findings");
+const intelViewParser = searchLiteral(INTEL_VIEWS).withDefault("findings");
 
 export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProps) {
   const t = useT();

@@ -31,7 +31,7 @@ import type {
   ShipmentBillingRequirement,
 } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { parseAsBoolean } from "nuqs";
+import { searchBoolean } from "@trenova/shared/lib/router/search-codec";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
@@ -136,7 +136,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
 
   const [isUploadOpen, setIsUploadOpen] = useSearchValue(
     "upload",
-    parseAsBoolean.withDefault(false),
+    searchBoolean.withDefault(false),
   );
 
   const [viewMode, setViewMode] = useLocalStorage<ViewMode>("documents-view-mode", "grid");

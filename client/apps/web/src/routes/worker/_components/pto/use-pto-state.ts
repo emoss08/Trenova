@@ -1,26 +1,22 @@
 import { getEndOfMonth, getStartOfMonth } from "@trenova/shared/lib/date";
 import { ptoFilterSchema } from "@trenova/shared/types/worker";
-import { parseAsJson, parseAsStringLiteral } from "nuqs";
+import { searchJson, searchLiteral } from "@trenova/shared/lib/router/search-codec";
 
 export const viewTypeChoices = ["chart", "calendar"] as const;
 export type PTOViewType = (typeof viewTypeChoices)[number];
 
+const ptoFilter = searchJson((value) => ptoFilterSchema.safeParse(value).data ?? null).withDefault({
+  startDate: getStartOfMonth(),
+  endDate: getEndOfMonth(),
+  type: undefined,
+  workerId: undefined,
+  fleetCodeId: undefined,
+});
+
 export const ptoSearchParamsParser = {
-  viewType: parseAsStringLiteral(viewTypeChoices).withDefault("chart"),
-  ptoOverviewFilters: parseAsJson(ptoFilterSchema).withDefault({
-    startDate: getStartOfMonth(),
-    endDate: getEndOfMonth(),
-    type: undefined,
-    workerId: undefined,
-    fleetCodeId: undefined,
-  }),
-  requestPTOFilters: parseAsJson(ptoFilterSchema).withDefault({
-    startDate: getStartOfMonth(),
-    endDate: getEndOfMonth(),
-    type: undefined,
-    workerId: undefined,
-    fleetCodeId: undefined,
-  }),
+  viewType: searchLiteral(viewTypeChoices).withDefault("chart"),
+  ptoOverviewFilters: ptoFilter,
+  requestPTOFilters: ptoFilter,
 };
 
 export const ptoViewTypeSearchParamsParser = {

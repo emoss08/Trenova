@@ -1,18 +1,18 @@
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
-import { parseAsInteger, parseAsStringLiteral } from "nuqs";
+import { searchInteger, searchLiteral } from "@trenova/shared/lib/router/search-codec";
 import { CLEARED_INBOX_STATE, inboxSearchParams, type InboxScope } from "./inbox/inbox-filters";
 
 export const MONITORING_TABS = ["inbox", "review", "enrollments", "usage"] as const;
 
 export type MonitoringTab = (typeof MONITORING_TABS)[number];
 
-export const monitoringTabParser = parseAsStringLiteral(MONITORING_TABS).withDefault("inbox");
+export const monitoringTabParser = searchLiteral(MONITORING_TABS).withDefault("inbox");
 
 export const monitoringPageSearchParams = {
   ...searchParamsParser,
   ...inboxSearchParams,
   tab: monitoringTabParser,
-  month: parseAsInteger,
+  month: searchInteger,
 };
 
 export const CLEARED_TAB_STATE = {

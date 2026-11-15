@@ -1,5 +1,9 @@
 import { useSearchState } from "@trenova/shared/hooks/use-search-state";
-import { parseAsBoolean, parseAsString, parseAsStringLiteral } from "nuqs";
+import {
+  searchBoolean,
+  searchLiteral,
+  searchString,
+} from "@trenova/shared/lib/router/search-codec";
 import { useCallback } from "react";
 
 const organizationSettingsTabValues = ["general", "security"] as const;
@@ -16,26 +20,26 @@ export type SecurityTabValue = (typeof securityTabValues)[number];
 export type OrganizationSettingsTabValue = (typeof organizationSettingsTabValues)[number];
 export type ActivityViewValue = (typeof activityViewValues)[number];
 
-export const activityViewParser = parseAsStringLiteral(activityViewValues)
+export const activityViewParser = searchLiteral(activityViewValues)
   .withDefault("auth")
   .withOptions({ history: "push" });
-export const directoryIdParser = parseAsString.withOptions({ history: "replace" });
-export const identityProviderSearchParser = parseAsString
+export const directoryIdParser = searchString.withOptions({ history: "replace" });
+export const identityProviderSearchParser = searchString
   .withDefault("")
   .withOptions({ history: "replace" });
 
 export const identityProviderPanelSearchParamsParser = {
-  editingProvider: parseAsString.withOptions({ history: "replace" }),
-  panelMode: parseAsStringLiteral(["create", "edit"] as const)
+  editingProvider: searchString.withOptions({ history: "replace" }),
+  panelMode: searchLiteral(["create", "edit"] as const)
     .withDefault("create")
     .withOptions({ history: "replace" }),
-  panelOpen: parseAsBoolean.withDefault(false).withOptions({ history: "replace" }),
+  panelOpen: searchBoolean.withDefault(false).withOptions({ history: "replace" }),
 };
 
 /** Every key the organization settings page keeps in the address. */
 const searchParamsParser = {
-  tab: parseAsStringLiteral(organizationSettingsTabValues).withDefault("general"),
-  securityTab: parseAsStringLiteral(securityTabValues)
+  tab: searchLiteral(organizationSettingsTabValues).withDefault("general"),
+  securityTab: searchLiteral(securityTabValues)
     .withDefault("overview")
     .withOptions({ history: "push" }),
   activityView: activityViewParser,

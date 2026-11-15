@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Monitor01Icon, Settings01Icon, Sliders01Icon } from "@trenova/shared/components/icons";
-import { parseAsStringLiteral } from "nuqs";
+import { searchLiteral } from "@trenova/shared/lib/router/search-codec";
 import { lazy } from "react";
 import { CaptureSettingsSkeleton } from "./skeleton";
 import { FleetPanel } from "./_components/fleet-panel";
@@ -33,7 +33,7 @@ export function CaptureAdminPage() {
   );
   const [requested, setTab] = useSearchValue(
     "tab",
-    parseAsStringLiteral(TABS).withDefault(visible[0] ?? "profiles"),
+    searchLiteral(TABS).withDefault(visible[0] ?? "profiles"),
   );
   const tab: CaptureTab = visible.includes(requested) ? requested : (visible[0] ?? "profiles");
 

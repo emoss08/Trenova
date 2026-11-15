@@ -7,6 +7,10 @@ import { countSelectedRows } from "@trenova/shared/lib/table-features";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import type { RowSelectionState } from "@tanstack/react-table";
+import { useDataTableView } from "./data-table-view-context";
+import type { DataTableViewState } from "./data-table-view-store";
+
+const selectSelectingAll = (state: DataTableViewState) => state.selectingAll;
 
 type DataTableSelectionBannerProps = {
   selection: TableAtomSource<RowSelectionState>;
@@ -15,7 +19,6 @@ type DataTableSelectionBannerProps = {
   /** False when totalCount is the server's estimate of a list too large to count. */
   totalCountExact?: boolean;
   maxSelectable: number;
-  isSelectingAll: boolean;
   onSelectAllMatching: () => void;
   onClearSelection: () => void;
   /** Edits every row the filters match on the server, however many there are. */
@@ -28,11 +31,11 @@ export function DataTableSelectionBanner({
   totalCount,
   totalCountExact = true,
   maxSelectable,
-  isSelectingAll,
   onSelectAllMatching,
   onClearSelection,
   onEditAllMatching,
 }: DataTableSelectionBannerProps) {
+  const isSelectingAll = useDataTableView(selectSelectingAll);
   const t = useT();
   const rt = useRichT();
   const allPageRowsSelected = useTableAtom(

@@ -1,7 +1,7 @@
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 
 export const invoiceAdjustmentBatchSearchParamsParser = {
-  item: parseAsString,
-  query: parseAsString.withDefault(""),
-  status: parseAsString,
+  item: searchString,
+  query: searchString.withDefault(""),
+  status: searchString,
 };

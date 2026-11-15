@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useDataTableViewActions } from "../../data-table-view-context";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -36,8 +37,6 @@ export function DataTableConfigItem({
   canEditSharedViews = false,
   currentConfig,
   onApplyConfig,
-  onViewPersisted,
-  onViewDeleted,
   setOpen,
 }: {
   config: TableConfiguration;
@@ -48,11 +47,10 @@ export function DataTableConfigItem({
   canEditSharedViews?: boolean;
   currentConfig?: TableConfig;
   onApplyConfig: (config: TableConfig, source?: TableViewSource) => void;
-  onViewPersisted?: (config: TableConfiguration) => void;
-  onViewDeleted?: (id: string) => void;
   setOpen: (open: boolean) => void;
 }) {
   const t = useT();
+  const { keepView, forgetActiveView } = useDataTableViewActions();
 
   const queryClient = useQueryClient();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -67,7 +65,7 @@ export function DataTableConfigItem({
     mutationFn: (id: string) => tableConfigurationService.delete(id),
     resourceName: "Table Configuration",
     onSuccess: () => {
-      onViewDeleted?.(config.id);
+      forgetActiveView(config.id);
     },
     onSettled: refetchConfigurations,
   });
@@ -99,7 +97,7 @@ export function DataTableConfigItem({
       }),
     resourceName: "Table Configuration",
     onSuccess: (updated: TableConfiguration) => {
-      onViewPersisted?.(updated);
+      keepView(updated);
     },
     onSettled: refetchConfigurations,
   });
@@ -163,7 +161,7 @@ export function DataTableConfigItem({
       <div className="flex shrink-0 items-center gap-1">
         {isActive && (
           <span
-            title={isViewDirty ? "Applied, with unsaved changes" : "Currently applied"}
+            title={isViewDirty ? t("Applied, with unsaved changes") : t("Currently applied")}
             className="flex items-center"
           >
             {isViewDirty ? (

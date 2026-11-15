@@ -16,13 +16,13 @@ import {
   RefreshCw02Icon,
   Settings01Icon,
 } from "@trenova/shared/components/icons";
-import { parseAsInteger } from "nuqs";
+import { searchInteger } from "@trenova/shared/lib/router/search-codec";
 const USAGE_MONTHS_BACK = 24;
 
 export function UsagePanel() {
   const t = useT();
   const now = useNowSeconds();
-  const [month, setMonth] = useSearchValue("month", parseAsInteger);
+  const [month, setMonth] = useSearchValue("month", searchInteger);
 
   const currentMonth = recentUsageMonths(now, 1)[0];
   const earliestMonth = shiftUsageMonth(currentMonth, -(USAGE_MONTHS_BACK - 1));

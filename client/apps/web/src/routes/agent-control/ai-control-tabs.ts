@@ -1,11 +1,11 @@
 import { appPath } from "@/lib/app-path";
 import {
-  parseAsArrayOf,
-  parseAsBoolean,
-  parseAsInteger,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs";
+  searchBoolean,
+  searchInteger,
+  searchList,
+  searchLiteral,
+  searchString,
+} from "@trenova/shared/lib/router/search-codec";
 
 export const aiControlTabValues = [
   "overview",
@@ -24,7 +24,7 @@ export type AIControlTab = (typeof aiControlTabValues)[number];
 
 export const AI_CONTROL_TAB_PARAM = "tab";
 
-export const aiControlTabParser = parseAsStringLiteral(aiControlTabValues)
+export const aiControlTabParser = searchLiteral(aiControlTabValues)
   .withOptions({ history: "push" })
   .withDefault("overview");
 
@@ -34,14 +34,14 @@ export type AgentFilter = (typeof agentFilters)[number];
 
 export const AGENT_FILTER_PARAM = "agents";
 
-export const agentFilterParser = parseAsStringLiteral(agentFilters)
+export const agentFilterParser = searchLiteral(agentFilters)
   .withOptions({ history: "replace" })
   .withDefault("all");
 
 /** The agent open in the Agents tab's sheet; a link from anywhere on the page opens one. */
 export const AGENT_OPEN_PARAM = "openAgent";
 
-export const agentOpenParser = parseAsString.withOptions({ history: "push" });
+export const agentOpenParser = searchString.withOptions({ history: "push" });
 
 export const AI_CONTROL_PATH = appPath("/admin/agent-control");
 
@@ -63,14 +63,14 @@ export const BUILDER_STARTS = ["chat", "scheduled", "event", "blank"] as const;
 export type BuilderStart = (typeof BUILDER_STARTS)[number];
 
 export const AGENT_EDIT_PARAM = "editAgent";
-export const agentEditParser = parseAsString.withOptions({ history: "push" });
+export const agentEditParser = searchString.withOptions({ history: "push" });
 
 /** An earlier version the builder loads as a draft when it opens, then drops from the address. */
 export const AGENT_RESTORE_PARAM = "restoreVersion";
-export const agentRestoreParser = parseAsInteger.withOptions({ history: "replace" });
+export const agentRestoreParser = searchInteger.withOptions({ history: "replace" });
 
 export const AGENT_NEW_PARAM = "newAgent";
-export const agentNewParser = parseAsStringLiteral(BUILDER_STARTS).withOptions({
+export const agentNewParser = searchLiteral(BUILDER_STARTS).withOptions({
   history: "push",
 });
 
@@ -86,7 +86,7 @@ export type ActivityView = (typeof activityViews)[number];
 
 export const ACTIVITY_VIEW_PARAM = "activity";
 
-export const activityViewParser = parseAsStringLiteral(activityViews)
+export const activityViewParser = searchLiteral(activityViews)
   .withOptions({ history: "replace" })
   .withDefault("runs");
 
@@ -96,14 +96,14 @@ export type SafetyView = (typeof safetyViews)[number];
 
 export const SAFETY_VIEW_PARAM = "safety";
 
-export const safetyViewParser = parseAsStringLiteral(safetyViews)
+export const safetyViewParser = searchLiteral(safetyViews)
   .withOptions({ history: "replace" })
   .withDefault("rules");
 
 /** The agents compared under Safety, kept in the address so a comparison can be shared. */
 export const SAFETY_AGENTS_PARAM = "safetyAgents";
 
-export const safetyAgentsParser = parseAsArrayOf(parseAsString)
+export const safetyAgentsParser = searchList(searchString)
   .withOptions({ history: "replace" })
   .withDefault([]);
 
@@ -118,7 +118,7 @@ export type QualityView = (typeof qualityViews)[number];
 export const QUALITY_VIEW_PARAM = "quality";
 
 /** No default: a link that names only a suite run opens its cases under Suite runs. */
-export const qualityViewParser = parseAsStringLiteral(qualityViews).withOptions({
+export const qualityViewParser = searchLiteral(qualityViews).withOptions({
   history: "replace",
 });
 
@@ -127,8 +127,8 @@ export const QUALITY_AGENT_PARAM = "agent";
 /** Opens one suite run's cases in place of the runs. */
 export const QUALITY_SUITE_RUN_PARAM = "suiteRun";
 
-export const qualityAgentParser = parseAsString.withOptions({ history: "push" });
-export const qualitySuiteRunParser = parseAsString.withOptions({ history: "push" });
+export const qualityAgentParser = searchString.withOptions({ history: "push" });
+export const qualitySuiteRunParser = searchString.withOptions({ history: "push" });
 
 /** Narrows Retrieval's failed items to one source; a source's row sets it. */
 export const RETRIEVAL_SOURCE_PARAM = "retrievalSource";
@@ -136,7 +136,7 @@ export const RETRIEVAL_SOURCE_PARAM = "retrievalSource";
 export const retrievalSourceValues = ["Memory", "Document", "InboundMessage"] as const;
 export type RetrievalSource = (typeof retrievalSourceValues)[number];
 
-export const retrievalSourceParser = parseAsStringLiteral(retrievalSourceValues).withOptions({
+export const retrievalSourceParser = searchLiteral(retrievalSourceValues).withOptions({
   history: "replace",
 });
 
@@ -149,7 +149,7 @@ export type AuditView = (typeof auditViews)[number];
 
 export const AUDIT_VIEW_PARAM = "audit";
 
-export const auditViewParser = parseAsStringLiteral(auditViews)
+export const auditViewParser = searchLiteral(auditViews)
   .withOptions({ history: "replace" })
   .withDefault("trail");
 
@@ -179,29 +179,29 @@ export type ExtractionView = (typeof extractionViews)[number];
 
 export const EXTRACTION_VIEW_PARAM = "extraction";
 
-export const extractionViewParser = parseAsStringLiteral(extractionViews)
+export const extractionViewParser = searchLiteral(extractionViews)
   .withOptions({ history: "replace" })
   .withDefault("accuracy");
 
 /** How far back Analytics looks, and what it puts side by side. */
 export const ANALYTICS_WINDOW_PARAM = "window";
-export const analyticsWindowParser = parseAsStringLiteral(["Day", "Week", "Month"] as const)
+export const analyticsWindowParser = searchLiteral(["Day", "Week", "Month"] as const)
   .withOptions({ history: "replace" })
   .withDefault("Month");
 
 export const ANALYTICS_COMPARE_PARAM = "compare";
-export const analyticsCompareParser = parseAsStringLiteral(["Model", "Provider"] as const)
+export const analyticsCompareParser = searchLiteral(["Model", "Provider"] as const)
   .withOptions({ history: "replace" })
   .withDefault("Model");
 
 /** Narrows Analytics to one agent's or one task's work. */
 export const ANALYTICS_AGENT_PARAM = "analyticsAgent";
-export const analyticsAgentParser = parseAsString.withOptions({
+export const analyticsAgentParser = searchString.withOptions({
   history: "replace",
 });
 
 export const ANALYTICS_TASK_PARAM = "analyticsTask";
-export const analyticsTaskParser = parseAsString.withOptions({ history: "replace" });
+export const analyticsTaskParser = searchString.withOptions({ history: "replace" });
 
 /**
  * The page's dialogs and sheets that are not a table's own panel, each opened
@@ -212,83 +212,82 @@ const dialogOptions = { history: "push" } as const;
 
 /** The overview's organization-wide settings editor. */
 export const POLICY_EDITOR_PARAM = "policy";
-export const policyEditorParser = parseAsBoolean.withOptions(dialogOptions);
+export const policyEditorParser = searchBoolean.withOptions(dialogOptions);
 
 /** The provider open in its editor; the provider's read sheet is the panel keys. */
 export const PROVIDER_EDITOR_PARAM = "editProvider";
-export const providerEditorParser = parseAsString.withOptions(dialogOptions);
+export const providerEditorParser = searchString.withOptions(dialogOptions);
 
 /** The extension open in its sheet, by type. */
 export const EXTENSION_OPEN_PARAM = "extension";
-export const extensionOpenParser = parseAsString.withOptions(dialogOptions);
+export const extensionOpenParser = searchString.withOptions(dialogOptions);
 
 /** The portal task open in the portal extension's history, from a link to it. */
 export const PORTAL_RUN_PARAM = "portalRun";
-export const portalRunParser = parseAsString.withOptions(dialogOptions);
+export const portalRunParser = searchString.withOptions(dialogOptions);
 
 /** The analysis open in Activity's analyses, from a link to it. */
 export const ANALYSIS_RUN_PARAM = "analysisRun";
-export const analysisRunParser = parseAsString.withOptions(dialogOptions);
+export const analysisRunParser = searchString.withOptions(dialogOptions);
 
 /** The web watch open in the web research extension's watches, from a link to it. */
 export const WEB_WATCH_PARAM = "webWatch";
-export const webWatchParser = parseAsString.withOptions(dialogOptions);
+export const webWatchParser = searchString.withOptions(dialogOptions);
 
 /** The agent open in Quality's sheet from the figures above the tables. */
 export const QUALITY_SHEET_PARAM = "qualitySheet";
-export const qualitySheetParser = parseAsString.withOptions(dialogOptions);
+export const qualitySheetParser = searchString.withOptions(dialogOptions);
 
 /** Quality's sweep settings editor. */
 export const SWEEP_SETTINGS_PARAM = "sweepSettings";
-export const sweepSettingsParser = parseAsBoolean.withOptions(dialogOptions);
+export const sweepSettingsParser = searchBoolean.withOptions(dialogOptions);
 
 /** The dialog that exports the audit trail, from either of its views. */
 export const AUDIT_EXPORT_PARAM = "exportTrail";
-export const auditExportParser = parseAsBoolean.withOptions(dialogOptions);
+export const auditExportParser = searchBoolean.withOptions(dialogOptions);
 
 /** The retrieval source asked to be indexed again. */
 export const REINDEX_PARAM = "reindex";
-export const reindexParser = parseAsStringLiteral(retrievalSourceValues).withOptions(dialogOptions);
+export const reindexParser = searchLiteral(retrievalSourceValues).withOptions(dialogOptions);
 
 /** The memory kind a first memory starts from, when there are none to list yet. */
 export const memoryStarterKinds = ["Instruction", "Fact", "Procedure"] as const;
 export type MemoryStarterKind = (typeof memoryStarterKinds)[number];
 
 export const MEMORY_STARTER_PARAM = "newMemory";
-export const memoryStarterParser =
-  parseAsStringLiteral(memoryStarterKinds).withOptions(dialogOptions);
+export const memoryStarterParser = searchLiteral(memoryStarterKinds).withOptions(dialogOptions);
 
 /** The agent's memory suggestion open to be reworded before it is approved. */
 export const MEMORY_SUGGESTION_PARAM = "suggestion";
-export const memorySuggestionParser = parseAsString.withOptions(dialogOptions);
+export const memorySuggestionParser = searchString.withOptions(dialogOptions);
 
 /** The evaluation open in its detail dialog. */
 export const EVALUATION_OPEN_PARAM = "evaluation";
-export const evaluationOpenParser = parseAsString.withOptions(dialogOptions);
+export const evaluationOpenParser = searchString.withOptions(dialogOptions);
 
 /** The run opened over a proposal's or an exception's sheet. */
 export const RUN_OPEN_PARAM = "run";
-export const runOpenParser = parseAsString.withOptions(dialogOptions);
+export const runOpenParser = searchString.withOptions(dialogOptions);
 
 /** The rule editor over a tool's sheet. */
 export const TOOL_RULE_EDIT_PARAM = "editRule";
-export const toolRuleEditParser = parseAsBoolean.withOptions(dialogOptions);
+export const toolRuleEditParser = searchBoolean.withOptions(dialogOptions);
 
 /** The agent builder's try panel. */
 export const AGENT_TRY_PARAM = "tryAgent";
-export const agentTryParser = parseAsBoolean.withOptions(dialogOptions);
+export const agentTryParser = searchBoolean.withOptions(dialogOptions);
 
 /** The agent builder's tool picker. */
 export const TOOL_PICKER_PARAM = "pickTools";
-export const toolPickerParser = parseAsBoolean.withOptions(dialogOptions);
+export const toolPickerParser = searchBoolean.withOptions(dialogOptions);
 
 /** The model or provider open in Analytics' sheet, by its series key. */
 export const ANALYTICS_SERIES_PARAM = "series";
-export const analyticsSeriesParser = parseAsString.withOptions(dialogOptions);
+export const analyticsSeriesParser = searchString.withOptions(dialogOptions);
 
 /** The tool whose failures for the open series are shown in Analytics' sheet. */
 export const ANALYTICS_TOOL_PARAM = "tool";
-export const analyticsToolParser = parseAsString.withOptions(dialogOptions);
+export const analyticsToolParser = searchString.withOptions(dialogOptions);
 
 export const aiControlDialogParsers = {
   [POLICY_EDITOR_PARAM]: policyEditorParser,

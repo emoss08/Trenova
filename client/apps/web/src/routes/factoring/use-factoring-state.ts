@@ -1,5 +1,5 @@
 import type { FactoringVerdict } from "@trenova/graphql/generated/graphql";
-import { parseAsString, parseAsStringLiteral } from "nuqs";
+import { searchLiteral, searchString } from "@trenova/shared/lib/router/search-codec";
 
 export const FACTORING_TABS = [
   "ready",
@@ -14,8 +14,8 @@ export type FactoringQueueTab = Exclude<FactoringTab, "schedules" | "remittances
 
 /** The workspace's tab, and the one factor it is narrowed to when a factor's page opened it. */
 export const factoringSearchParamsParser = {
-  view: parseAsStringLiteral(FACTORING_TABS).withDefault("ready"),
-  factor: parseAsString,
+  view: searchLiteral(FACTORING_TABS).withDefault("ready"),
+  factor: searchString,
 };
 
 export function factoringWorkspacePath(view: FactoringTab, factoringCompanyId?: string): string {

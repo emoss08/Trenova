@@ -2,7 +2,7 @@ import type {
   ShipmentQuickFilter,
   ShipmentQuickFilterInput,
 } from "@trenova/graphql/generated/graphql";
-import { createParser } from "nuqs";
+import { searchCodec } from "@trenova/shared/lib/router/search-codec";
 
 export type QuickFilterToken = ShipmentQuickFilterInput;
 
@@ -98,7 +98,7 @@ export function serializeQuickFilters(tokens: readonly QuickFilterToken[]): stri
   return tokens.length === 0 ? "" : JSON.stringify(tokens);
 }
 
-export const parseAsQuickFilters = createParser<QuickFilterToken[]>({
+export const quickFiltersCodec = searchCodec<QuickFilterToken[]>({
   parse: parseQuickFilters,
   serialize: serializeQuickFilters,
   eq: (a, b) => serializeQuickFilters(a) === serializeQuickFilters(b),

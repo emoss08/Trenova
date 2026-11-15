@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { BillingQueueStatus } from "@trenova/shared/types/billing-queue";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { parseAsBoolean } from "nuqs";
+import { searchBoolean } from "@trenova/shared/lib/router/search-codec";
 import { type ReactNode, lazy, Suspense } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { ShipmentFormSkeleton } from "../shipment-form-skeleton";
@@ -34,7 +34,7 @@ export function ShipmentForm() {
 
   const [loadPlannerOpen, setLoadPlannerOpen] = useSearchValue(
     "loadPlanner",
-    parseAsBoolean.withDefault(false),
+    searchBoolean.withDefault(false),
   );
 
   const { control } = useFormContext<Shipment>();

@@ -14,7 +14,7 @@ import {
   type DeskSortId,
 } from "@trenova/shared/lib/detention";
 import type { DeskEntry } from "@trenova/shared/types/detention";
-import { parseAsString, parseAsStringLiteral } from "nuqs";
+import { searchLiteral, searchString } from "@trenova/shared/lib/router/search-codec";
 import { useUrlSearch } from "@/hooks/use-url-search";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -31,10 +31,10 @@ const NO_ENTRIES: DeskEntry[] = [];
  * ticking clock does not: it is derived from the wall clock, not from state.
  */
 const deskParsers = {
-  lane: parseAsStringLiteral(DESK_FILTER_IDS).withDefault("all"),
-  sort: parseAsStringLiteral(DESK_SORT_IDS).withDefault("urgency"),
-  q: parseAsString.withDefault(""),
-  stop: parseAsString,
+  lane: searchLiteral(DESK_FILTER_IDS).withDefault("all"),
+  sort: searchLiteral(DESK_SORT_IDS).withDefault("urgency"),
+  q: searchString.withDefault(""),
+  stop: searchString,
 };
 
 // Working the lanes back and forth should not bury the browser's back button.

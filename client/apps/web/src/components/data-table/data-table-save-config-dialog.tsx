@@ -17,7 +17,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { tableConfigurationService } from "@/services/table-configuration";
 import {
   tableConfigurationFormSchema,
-  type TableConfig,
+  type TableArrangement,
   type TableConfiguration,
   type TableConfigurationFormValues,
 } from "@/types/table-configuration";
@@ -28,13 +28,14 @@ import { useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { SwitchField } from "../fields/switch-field";
 import { TextareaField } from "../fields/textarea-field";
+import { useDataTableViewActions, useTableConfig } from "./data-table-view-context";
 
 type DataTableSaveConfigDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   resource: string;
-  currentConfig: TableConfig;
-  onSaved?: (config: TableConfiguration) => void;
+  /** What the table shows now, saved as the view with the way the person draws it. */
+  arrangement: TableArrangement;
 };
 
 export function useVisibilityOptions(canShare: boolean) {
@@ -63,10 +64,11 @@ export function DataTableSaveConfigDialog({
   open,
   onOpenChange,
   resource,
-  currentConfig,
-  onSaved,
+  arrangement,
 }: DataTableSaveConfigDialogProps) {
   const t = useT();
+  const currentConfig = useTableConfig(arrangement);
+  const { keepView } = useDataTableViewActions();
 
   const queryClient = useQueryClient();
   const { allowed: canShare } = usePermission(Resource.TableConfiguration, Operation.Create);
@@ -120,7 +122,7 @@ export function DataTableSaveConfigDialog({
         queryKey: ["tableConfiguration"],
       });
 
-      onSaved?.(created);
+      keepView(created);
     },
   });
 

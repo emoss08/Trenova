@@ -3,7 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { CalendarIcon, Users01Icon } from "@trenova/shared/components/icons";
-import { parseAsStringLiteral } from "nuqs";
+import { searchLiteral } from "@trenova/shared/lib/router/search-codec";
 import { lazy } from "react";
 import { PTOBalanceSummaryCard } from "./pto/pto-balance-summary-card";
 import PTODataTable from "./pto/pto-table";
@@ -14,7 +14,7 @@ const tabValues = ["workers", "pto"] as const;
 
 export const WORKERS_PAGE_TAB_PARAM = "pageTab";
 
-export const workersPageTabParser = parseAsStringLiteral(tabValues)
+export const workersPageTabParser = searchLiteral(tabValues)
   .withOptions({
     history: "push",
   })

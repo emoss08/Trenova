@@ -24,7 +24,7 @@ import {
   type UserCreateFormValues,
   type UserEditFormValues,
 } from "@trenova/shared/types/user";
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 import { useMemo } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { UserForm, UserFormSkeleton } from "./user-form";
@@ -48,7 +48,7 @@ const EMPTY_EDIT_VALUES: UserEditFormValues = {
 };
 
 export function UserPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<UserRow>) {
-  const [panelEntityId] = useSearchValue("panelEntityId", parseAsString);
+  const [panelEntityId] = useSearchValue("panelEntityId", searchString);
   const editUserId = row?.id ?? panelEntityId ?? undefined;
 
   if (mode === "edit") {

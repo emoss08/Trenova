@@ -93,7 +93,7 @@ describe("composed views", () => {
       "Left out “near Dallas”. There is no location filter.",
     );
     const open = screen.getByRole("link", { name: /Open in Shipments/ });
-    // The address as the router writes it, brackets left readable as nuqs writes them.
+    // The address as the router writes it, brackets left readable.
     expect(open.getAttribute("href")).toBe("/shipment-management/shipments?fieldFilters=[]");
   });
 

@@ -1,5 +1,5 @@
 import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
-import { type ParserBuilder } from "nuqs";
+import { type SearchCodec } from "@trenova/shared/lib/router/search-codec";
 import { useCallback } from "react";
 
 /**
@@ -8,7 +8,7 @@ import { useCallback } from "react";
  */
 export function useAddressedFlag(
   key: string,
-  parser: ParserBuilder<boolean>,
+  parser: SearchCodec<boolean>,
 ): readonly [boolean, (open: boolean) => void] {
   const [value, setValue] = useSearchValue(key, parser);
   const setOpen = useCallback((open: boolean) => void setValue(open ? true : null), [setValue]);

@@ -29,7 +29,7 @@ import {
   Trash01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { type inferParserType } from "nuqs";
+import { type SearchValues } from "@trenova/shared/lib/router/search-codec";
 import { useState } from "react";
 import type { FieldValues } from "react-hook-form";
 import {
@@ -48,7 +48,7 @@ const BILLER_SELECT_OPTIONS = { resource: "USER" } satisfies GraphQLSelectOption
 
 const ALL = "all";
 
-export type QueueFilterValues = inferParserType<typeof queueSidebarSearchParamsParser>;
+export type QueueFilterValues = SearchValues<typeof queueSidebarSearchParamsParser>;
 
 export const CLEARED_QUEUE_FILTERS: QueueFilterValues = {
   status: null,

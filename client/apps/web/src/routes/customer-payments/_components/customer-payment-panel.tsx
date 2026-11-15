@@ -17,7 +17,7 @@ import {
 } from "@trenova/shared/types/customer-payment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 import { useCallback, useEffect, useMemo } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
@@ -25,8 +25,8 @@ import { PaymentDetail } from "./payment-detail";
 import { RecordPaymentForm } from "./record-payment-form";
 
 const prefillParamsParser = {
-  customerId: parseAsString,
-  invoiceIds: parseAsString,
+  customerId: searchString,
+  invoiceIds: searchString,
 };
 
 function buildDefaults(customerId: string): RecordPaymentFormValues {

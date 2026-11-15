@@ -33,7 +33,7 @@ describe("parseSearch", () => {
 });
 
 describe("stringifySearch", () => {
-  it("writes strings as they are, the way nuqs writes them", () => {
+  it("writes strings as they are, leaving commas, colons and slashes readable", () => {
     expect(
       stringifySearch({
         fieldFilters: "[]",

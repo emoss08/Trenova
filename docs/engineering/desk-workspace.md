@@ -168,9 +168,8 @@ that prevents it.
 - **Nothing moves under reduced motion** (the system's, or the Desk's `dk-calm`): the regions
   are left unnamed and the marker does not travel.
 - **The address is read from the router for the view and written through it.** The search and
-  the filters are written to the address without a navigation (nuqs), so the router's own copy
-  of the query goes stale; a change of view builds the next address from `window.location` and
-  not from `useSearchParams`, or it would drop them.
+  the filters are written through the router (`useSearchState`), so its location is the one
+  copy of the query and a change of view builds the next address from it.
 
 ## An item's panel
 
@@ -653,7 +652,7 @@ nothing.
   (`snoozeCase`), and the rail leaves a snoozed case out unless it waits on them again
   (`railCaseRows`). Accepting the risk is still how a condition is closed for good.
 - **The address says what is in front.** Needs you keeps its lens, its filters and the item
-  open beside the list in the address with `nuqs` (`NEEDS_ADDRESS` in `desk-needs.tsx`), written
+  open beside the list in the address with `useSearchState` (`NEEDS_ADDRESS` in `desk-needs.tsx`), written
   with `history: "replace"` as the person moves through the list, so a link opens on the same
   item. New Desk state that a link should carry goes in the address the same way.
 - **Share** in the top bar (`top/desk-share.tsx`) opens the app's one share dialog on the

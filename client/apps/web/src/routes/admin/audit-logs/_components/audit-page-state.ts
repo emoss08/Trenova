@@ -1,10 +1,14 @@
-import { parseAsInteger, parseAsString, parseAsStringLiteral } from "nuqs";
+import {
+  searchInteger,
+  searchLiteral,
+  searchString,
+} from "@trenova/shared/lib/router/search-codec";
 
 /** The page's views: the trail, or one of the tools kept beside it. */
 export const AUDIT_VIEWS = ["trail", "exports", "holds", "alerts"] as const;
 export type AuditView = (typeof AUDIT_VIEWS)[number];
 
-export const auditViewParser = parseAsStringLiteral(AUDIT_VIEWS)
+export const auditViewParser = searchLiteral(AUDIT_VIEWS)
   .withDefault("trail")
   .withOptions({ history: "push" });
 
@@ -13,7 +17,7 @@ export const AUDIT_WINDOWS = [1, 7, 30, 90] as const;
 export type AuditWindow = (typeof AUDIT_WINDOWS)[number];
 export const DEFAULT_AUDIT_WINDOW: AuditWindow = 7;
 
-export const auditWindowParser = parseAsInteger.withDefault(DEFAULT_AUDIT_WINDOW);
+export const auditWindowParser = searchInteger.withDefault(DEFAULT_AUDIT_WINDOW);
 
 export function auditWindowOf(value: number): AuditWindow {
   return (AUDIT_WINDOWS as readonly number[]).includes(value)
@@ -25,10 +29,10 @@ export function auditWindowOf(value: number): AuditWindow {
 export const AUDIT_QUICK_VIEWS = ["all", "changes", "security", "agents", "deletes"] as const;
 export type AuditQuickView = (typeof AUDIT_QUICK_VIEWS)[number];
 
-export const auditQuickViewParser = parseAsStringLiteral(AUDIT_QUICK_VIEWS).withDefault("all");
+export const auditQuickViewParser = searchLiteral(AUDIT_QUICK_VIEWS).withDefault("all");
 
 /** The entry open in the inspector; alert notifications link here with `?entry=`. */
-export const auditEntryParser = parseAsString;
+export const auditEntryParser = searchString;
 
 export const AUDIT_PARAMS = {
   view: "view",

@@ -21,12 +21,12 @@ import {
   Sliders01Icon,
 } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { useDataTableView, useDataTableViewActions } from "./data-table-view-context";
+import type { DataTableViewState } from "./data-table-view-store";
 
 type DataTableDisplayMenuProps = {
   table: Table<RowData>;
-  density?: TableDensity;
-  onDensityChange?: (density: TableDensity) => void;
-  formatRuleCount?: number;
   onEditFormatRules?: () => void;
   /** Whether this person has arranged the table their own way, so there is a layout to forget. */
   hasSavedLayout?: boolean;
@@ -34,14 +34,22 @@ type DataTableDisplayMenuProps = {
   /** Fits every column to its widest content on the page. */
   onFitColumns?: () => void;
   /** Whether rows changed since the person's last visit are marked. */
-  highlightChanges?: boolean;
-  onHighlightChangesChange?: (on: boolean) => void;
+  /** The table keeps a layout per person, so it can mark what changed since their last visit. */
+  canMarkChanges?: boolean;
   /** Whether the totals row shows; offered only on a table that has totals. */
-  showTotals?: boolean;
-  onShowTotalsChange?: (on: boolean) => void;
-  virtualized?: boolean;
-  onVirtualizedChange?: (on: boolean) => void;
+  /** A column on screen can be summed, so a totals row has something to say. */
+  canShowTotals?: boolean;
+  /** Rows are not grouped, so only those in view can be drawn. */
+  canVirtualize?: boolean;
 };
+
+const selectDisplay = (state: DataTableViewState) => ({
+  density: state.density,
+  formatRuleCount: state.formatRules.length,
+  showTotals: !state.hideTotals,
+  highlightChanges: state.markChangesSinceLastVisit,
+  virtualized: state.virtualized,
+});
 
 const DENSITY_OPTIONS: { value: TableDensity; label: string; icon: typeof Rows02Icon }[] = [
   { value: "comfortable", label: "Comfortable", icon: Rows02Icon },
@@ -123,21 +131,20 @@ function ActionRow({
 
 export default function DataTableDisplayMenu({
   table,
-  density = "comfortable",
-  onDensityChange,
-  formatRuleCount = 0,
   onEditFormatRules,
   hasSavedLayout = false,
   onResetLayout,
   onFitColumns,
-  highlightChanges = false,
-  onHighlightChangesChange,
-  showTotals = true,
-  onShowTotalsChange,
-  virtualized = false,
-  onVirtualizedChange,
+  canMarkChanges = false,
+  canShowTotals = false,
+  canVirtualize = false,
 }: DataTableDisplayMenuProps) {
   const t = useT();
+  const { density, formatRuleCount, showTotals, highlightChanges, virtualized } = useDataTableView(
+    useShallow(selectDisplay),
+  );
+  const { setDensity, setHideTotals, setMarkChangesSinceLastVisit, setVirtualized } =
+    useDataTableViewActions();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -151,12 +158,8 @@ export default function DataTableDisplayMenu({
     ? columns.filter((column) => labelOf(column).toLowerCase().includes(needle))
     : columns;
 
-  const hasRowOptions = !!(onShowTotalsChange || onHighlightChangesChange || onVirtualizedChange);
+  const hasRowOptions = canShowTotals || canMarkChanges || canVirtualize;
   const hasActions = !!(onEditFormatRules || onFitColumns || onResetLayout);
-
-  if (!onDensityChange && !hasActions && columns.length === 0) {
-    return null;
-  }
 
   const runAndClose = (action: () => void) => () => {
     setOpen(false);
@@ -180,21 +183,19 @@ export default function DataTableDisplayMenu({
         }
       />
       <PopoverContent align="end" className="w-80 gap-0 p-0">
-        {onDensityChange ? (
-          <Section title={t("Density")}>
-            <SegmentedControl
-              items={DENSITY_OPTIONS.map((option) => ({
-                value: option.value,
-                label: t(option.label),
-                icon: option.icon,
-              }))}
-              value={density}
-              onValueChange={onDensityChange}
-              fullWidth
-              aria-label={t("Row density")}
-            />
-          </Section>
-        ) : null}
+        <Section title={t("Density")}>
+          <SegmentedControl
+            items={DENSITY_OPTIONS.map((option) => ({
+              value: option.value,
+              label: t(option.label),
+              icon: option.icon,
+            }))}
+            value={density}
+            onValueChange={setDensity}
+            fullWidth
+            aria-label={t("Row density")}
+          />
+        </Section>
 
         {columns.length > 0 ? (
           <Section
@@ -253,26 +254,26 @@ export default function DataTableDisplayMenu({
         {hasRowOptions ? (
           <Section title={t("Rows")}>
             <div className="flex flex-col">
-              {onShowTotalsChange ? (
+              {canShowTotals ? (
                 <SwitchRow
                   label={t("Show totals")}
                   checked={showTotals}
-                  onCheckedChange={onShowTotalsChange}
+                  onCheckedChange={(on) => setHideTotals(!on)}
                 />
               ) : null}
-              {onHighlightChangesChange ? (
+              {canMarkChanges ? (
                 <SwitchRow
                   label={t("Mark changes since my last visit")}
                   checked={highlightChanges}
-                  onCheckedChange={onHighlightChangesChange}
+                  onCheckedChange={setMarkChangesSinceLastVisit}
                 />
               ) : null}
-              {onVirtualizedChange ? (
+              {canVirtualize ? (
                 <SwitchRow
                   label={t("Draw only rows in view")}
                   description={t("Faster on long pages; find in page sees only drawn rows.")}
                   checked={virtualized}
-                  onCheckedChange={onVirtualizedChange}
+                  onCheckedChange={setVirtualized}
                 />
               ) : null}
             </div>

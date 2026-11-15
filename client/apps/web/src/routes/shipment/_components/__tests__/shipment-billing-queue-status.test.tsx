@@ -23,7 +23,8 @@ describe("ShipmentBillingQueueStatus", () => {
     expect(screen.getByText("Sent back to ops")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /view in billing queue/i })).toHaveAttribute(
       "href",
-      "/billing/queue?query=PRO%201001%2FA&includeClosed=true",
+      // Written as the router writes a query: a space as "+", a slash left readable.
+      "/billing/queue?query=PRO+1001/A&includeClosed=true",
     );
   });
 

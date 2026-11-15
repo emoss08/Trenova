@@ -1,5 +1,5 @@
 import { appPath } from "@/lib/app-path";
-import { parseAsString, parseAsStringLiteral } from "nuqs";
+import { searchLiteral, searchString } from "@trenova/shared/lib/router/search-codec";
 
 export const FACTORING_COMPANIES_PATH = appPath("/billing/configuration-files/factoring-companies");
 
@@ -20,9 +20,9 @@ export type FactoringCompanyTab = (typeof FACTORING_COMPANY_TABS)[number];
  * picks that record out.
  */
 export const factoringCompanyPageParsers = {
-  tab: parseAsStringLiteral(FACTORING_COMPANY_TABS).withDefault("overview"),
-  agreement: parseAsString,
-  noa: parseAsString,
+  tab: searchLiteral(FACTORING_COMPANY_TABS).withDefault("overview"),
+  agreement: searchString,
+  noa: searchString,
 };
 
 export function factoringCompanyPath(

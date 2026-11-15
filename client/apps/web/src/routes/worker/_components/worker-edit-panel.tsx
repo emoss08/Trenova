@@ -47,7 +47,7 @@ import {
   Wallet02Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
 import {
@@ -154,7 +154,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
 
   // The panel opens on the overview because most visits are to read a worker,
   // not to edit one. Deep links that name a tab are unaffected.
-  const [activeTab, setActiveTab] = useSearchValue("tab", parseAsString.withDefault("overview"));
+  const [activeTab, setActiveTab] = useSearchValue("tab", searchString.withDefault("overview"));
 
   // The employment history used to be its own tab. Links and concerns still
   // name "timeline", so that value resolves to the Employment tab with the

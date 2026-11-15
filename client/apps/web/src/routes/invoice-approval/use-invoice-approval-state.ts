@@ -1,5 +1,5 @@
 import type { InvoiceAdjustmentKind } from "@trenova/graphql/generated/graphql";
-import { parseAsString, parseAsStringLiteral } from "nuqs";
+import { searchLiteral, searchString } from "@trenova/shared/lib/router/search-codec";
 
 export const invoiceAdjustmentKinds = [
   "CreditOnly",
@@ -9,7 +9,7 @@ export const invoiceAdjustmentKinds = [
 ] as const satisfies readonly InvoiceAdjustmentKind[];
 
 export const invoiceApprovalSearchParamsParser = {
-  item: parseAsString,
-  query: parseAsString.withDefault(""),
-  kind: parseAsStringLiteral(invoiceAdjustmentKinds),
+  item: searchString,
+  query: searchString.withDefault(""),
+  kind: searchLiteral(invoiceAdjustmentKinds),
 };

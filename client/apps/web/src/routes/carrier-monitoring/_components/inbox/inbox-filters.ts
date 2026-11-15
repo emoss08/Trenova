@@ -7,7 +7,7 @@ import type {
   CarrierIntelSeverity,
   FieldFilterInput,
 } from "@trenova/graphql/generated/graphql";
-import { parseAsArrayOf, parseAsString, parseAsStringLiteral } from "nuqs";
+import { searchList, searchLiteral, searchString } from "@trenova/shared/lib/router/search-codec";
 
 export const INBOX_SCOPES = ["attention", "acknowledged", "resolved", "all"] as const;
 export type InboxScope = (typeof INBOX_SCOPES)[number];
@@ -29,14 +29,14 @@ export const INBOX_FILTER_IDS = ["severity", "category", "source", "carrier"] as
 export type InboxFilterId = (typeof INBOX_FILTER_IDS)[number];
 
 export const inboxSearchParams = {
-  scope: parseAsStringLiteral(INBOX_SCOPES).withDefault("attention"),
-  q: parseAsString.withDefault(""),
-  severity: parseAsArrayOf(parseAsStringLiteral(CARRIER_INTEL_SEVERITIES)).withDefault([]),
-  category: parseAsArrayOf(parseAsStringLiteral(CARRIER_INTEL_SECTIONS)).withDefault([]),
-  source: parseAsArrayOf(parseAsStringLiteral(CARRIER_INTEL_EVENT_SOURCES)).withDefault([]),
-  carrier: parseAsString,
-  event: parseAsString,
-  group: parseAsStringLiteral(INBOX_GROUPINGS).withDefault("day"),
+  scope: searchLiteral(INBOX_SCOPES).withDefault("attention"),
+  q: searchString.withDefault(""),
+  severity: searchList(searchLiteral(CARRIER_INTEL_SEVERITIES)).withDefault([]),
+  category: searchList(searchLiteral(CARRIER_INTEL_SECTIONS)).withDefault([]),
+  source: searchList(searchLiteral(CARRIER_INTEL_EVENT_SOURCES)).withDefault([]),
+  carrier: searchString,
+  event: searchString,
+  group: searchLiteral(INBOX_GROUPINGS).withDefault("day"),
 };
 
 export const CLEARED_INBOX_FILTERS = {

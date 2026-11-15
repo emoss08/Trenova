@@ -15,12 +15,12 @@ import {
 import type { DispatchBoardInput } from "@trenova/graphql/generated/graphql";
 import { startOfDay } from "date-fns";
 import {
-  parseAsArrayOf,
-  parseAsBoolean,
-  parseAsNumberLiteral,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs";
+  searchBoolean,
+  searchList,
+  searchLiteral,
+  searchNumberLiteral,
+  searchString,
+} from "@trenova/shared/lib/router/search-codec";
 import { useUrlSearch } from "@/hooks/use-url-search";
 import { useCallback, useMemo } from "react";
 import {
@@ -76,28 +76,28 @@ export type QueueTab = (typeof QUEUE_TABS)[number];
  * come back, and the search and filters the server applies.
  */
 export const dispatchWindowParsers = {
-  at: parseAsString,
-  zoom: parseAsNumberLiteral(ZOOM_VALUES).withDefault(1),
-  covered: parseAsBoolean.withDefault(false),
-  search: parseAsString.withDefault(""),
-  fleets: parseAsArrayOf(parseAsString).withDefault([]),
-  customers: parseAsArrayOf(parseAsString).withDefault([]),
+  at: searchString,
+  zoom: searchNumberLiteral(ZOOM_VALUES).withDefault(1),
+  covered: searchBoolean.withDefault(false),
+  search: searchString.withDefault(""),
+  fleets: searchList(searchString).withDefault([]),
+  customers: searchList(searchString).withDefault([]),
 };
 
 export const dispatchSelectionParsers = {
-  move: parseAsString,
-  worker: parseAsString,
+  move: searchString,
+  worker: searchString,
 };
 
 export const dispatchViewParsers = {
-  mode: parseAsStringLiteral(CENTER_MODES).withDefault("queue"),
-  tab: parseAsStringLiteral(QUEUE_TABS).withDefault("moves"),
-  urgency: parseAsStringLiteral(URGENCY_ORDER),
+  mode: searchLiteral(CENTER_MODES).withDefault("queue"),
+  tab: searchLiteral(QUEUE_TABS).withDefault("moves"),
+  urgency: searchLiteral(URGENCY_ORDER),
 };
 
 export const dispatchRailParsers = {
-  capacity: parseAsStringLiteral(CAPACITY_FILTER_IDS).withDefault("all"),
-  q: parseAsString.withDefault(""),
+  capacity: searchLiteral(CAPACITY_FILTER_IDS).withDefault("all"),
+  q: searchString.withDefault(""),
 };
 
 // Paging a board back and forth should not bury the browser's back button under history.

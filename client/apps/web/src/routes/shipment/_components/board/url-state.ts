@@ -1,16 +1,16 @@
 import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { BOARD_GROUPINGS, type BoardGrouping } from "@/lib/shipment-board/grouping";
 import { TIMELINE_RANGES, TIMELINE_ROW_MODES } from "@/lib/shipment-board/timeline";
-import { applicableQuickFilters, parseAsQuickFilters } from "@/lib/shipment-board/quick-filters";
+import { applicableQuickFilters, quickFiltersCodec } from "@/lib/shipment-board/quick-filters";
 import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { useMemo } from "react";
 import {
-  createParser,
-  parseAsArrayOf,
-  parseAsBoolean,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs";
+  searchBoolean,
+  searchCodec,
+  searchList,
+  searchLiteral,
+  searchString,
+} from "@trenova/shared/lib/router/search-codec";
 
 export const BOARD_VIEWS = ["table", "timeline", "map"] as const;
 export type BoardView = (typeof BOARD_VIEWS)[number];
@@ -24,7 +24,7 @@ export const CAPACITY_KINDS = ["Driver", "Carrier"] as const;
    or `group=false`; they still open grouped by stage, or ungrouped. */
 const LEGACY_GROUPING: Record<string, BoardGrouping> = { true: "stage", false: "none" };
 
-export const parseAsBoardGrouping = createParser<BoardGrouping>({
+export const boardGroupingCodec = searchCodec<BoardGrouping>({
   parse: (value) =>
     LEGACY_GROUPING[value] ??
     ((BOARD_GROUPINGS as readonly string[]).includes(value) ? (value as BoardGrouping) : null),
@@ -40,17 +40,17 @@ export const parseAsBoardGrouping = createParser<BoardGrouping>({
  * same calendar day in the reader's time zone.
  */
 export const shipmentBoardParser = {
-  view: parseAsStringLiteral(BOARD_VIEWS).withDefault("table"),
-  group: parseAsBoardGrouping.withDefault("stage"),
-  panel: parseAsBoolean,
-  tab: parseAsStringLiteral(PANEL_TABS).withDefault("brief"),
-  qf: parseAsQuickFilters,
-  collapsed: parseAsArrayOf(parseAsString).withDefault([]),
-  expanded: parseAsString,
-  capacity: parseAsStringLiteral(CAPACITY_KINDS),
-  tl: parseAsStringLiteral(TIMELINE_RANGES).withDefault("day"),
-  tlday: parseAsString,
-  tlrows: parseAsStringLiteral(TIMELINE_ROW_MODES).withDefault("shipments"),
+  view: searchLiteral(BOARD_VIEWS).withDefault("table"),
+  group: boardGroupingCodec.withDefault("stage"),
+  panel: searchBoolean,
+  tab: searchLiteral(PANEL_TABS).withDefault("brief"),
+  qf: quickFiltersCodec,
+  collapsed: searchList(searchString).withDefault([]),
+  expanded: searchString,
+  capacity: searchLiteral(CAPACITY_KINDS),
+  tl: searchLiteral(TIMELINE_RANGES).withDefault("day"),
+  tlday: searchString,
+  tlrows: searchLiteral(TIMELINE_ROW_MODES).withDefault("shipments"),
 };
 
 /**

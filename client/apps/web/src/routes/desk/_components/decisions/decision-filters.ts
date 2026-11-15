@@ -1,6 +1,6 @@
 import { humanizeToolName } from "@/components/assistant/proposal-state";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 import type { PendingDecisionFilter } from "./use-pending-decisions";
 
 /** The group a plan is filed under, beside the groups named after one kind of write. */
@@ -17,9 +17,9 @@ export function changeLabel(t: TranslateFn, tool: string): string {
  * the other lenses keep them), one agent and one kind of change.
  */
 export const DECISION_ADDRESS = {
-  q: parseAsString.withDefault(""),
-  agent: parseAsString.withDefault(""),
-  change: parseAsString.withDefault(""),
+  q: searchString.withDefault(""),
+  agent: searchString.withDefault(""),
+  change: searchString.withDefault(""),
 };
 
 /** What the queue is narrowed to; an empty value is every agent, every kind of change, any words. */

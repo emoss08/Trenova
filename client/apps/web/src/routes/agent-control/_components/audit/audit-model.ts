@@ -15,7 +15,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
 import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
 import { endOfDay, startOfDay } from "date-fns";
-import { parseAsJson } from "nuqs";
+import { searchJson } from "@trenova/shared/lib/router/search-codec";
 import type { FieldFilter, FilterGroup, SortField } from "@trenova/shared/types/data-table";
 import { z } from "zod";
 import { translate } from "@trenova/shared/i18n/runtime";
@@ -80,7 +80,7 @@ export function parseAuditScope(value: unknown): AuditTrailScope | null {
 /** The address key the trail's scope is kept under; moving to another table clears it. */
 export const AUDIT_SCOPE_PARAM = "trailScope";
 
-export const auditScopeParser = parseAsJson(parseAuditScope)
+export const auditScopeParser = searchJson(parseAuditScope)
   .withOptions({ history: "replace" })
   .withDefault(DEFAULT_AUDIT_SCOPE);
 

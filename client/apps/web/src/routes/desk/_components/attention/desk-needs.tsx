@@ -10,7 +10,7 @@ import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { getStartOfDay, resolveUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { pendingFilter } from "../decisions/decision-filters";
@@ -60,7 +60,7 @@ export function DeskNeeds() {
   const queryClient = useQueryClient();
   // The lens is written beside the search and the filters, each change one navigation built
   // from the address as it stands, so a lens chosen while the search is written keeps it.
-  const [lensAddress, setLensAddress] = useSearchValue("lens", parseAsString);
+  const [lensAddress, setLensAddress] = useSearchValue("lens", searchString);
 
   const lenses = NEEDS_LENSES.filter((value) => (value === "Decisions" ? canDecide : canWatch));
   const asked = lensFromParam(lensAddress);

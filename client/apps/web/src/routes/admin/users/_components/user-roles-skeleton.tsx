@@ -3,13 +3,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableSkeleton } from "@trenova/shared/components/data-table/data-table-skeleton";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
-import { parseAsStringLiteral } from "nuqs";
+import { searchLiteral } from "@trenova/shared/lib/router/search-codec";
 
 export const USER_ROLES_TABS = ["users", "roles"] as const;
 
 export type UserRolesTab = (typeof USER_ROLES_TABS)[number];
 
-export const userRolesTabParser = parseAsStringLiteral(USER_ROLES_TABS).withDefault("users");
+export const userRolesTabParser = searchLiteral(USER_ROLES_TABS).withDefault("users");
 
 /**
  * The columns each tab's table draws, the selection column included, so the

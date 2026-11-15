@@ -2,12 +2,11 @@ import { resetMyTableLayout, saveMyTableLayout } from "@/lib/graphql/table-layou
 import { fromColumnPinningState } from "@/lib/data-table";
 import { tableLayout } from "@/lib/queries/table-layout";
 import { stableStringify } from "@/lib/stable-stringify";
-import {
-  tableLayoutSchema,
-  type TableDensity,
-  type TableFormatRule,
-  type TableLayout,
-} from "@/types/table-configuration";
+import type {
+  DataTableViewStore,
+  DataTableViewStoreState,
+} from "@/components/data-table/data-table-view-store";
+import { tableLayoutSchema, type TableLayout } from "@/types/table-configuration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { MyTableLayoutQuery } from "@trenova/graphql/generated/graphql";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
@@ -15,6 +14,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { Table } from "@trenova/shared/types/data-table";
 import type { RowData } from "@tanstack/react-table";
 import { useCallback, useEffect, useRef } from "react";
+import { shallow } from "zustand/shallow";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 /** How long a table sits still before its arrangement is kept. */
@@ -26,14 +26,20 @@ type UseDataTableLayoutOptions<TData extends RowData> = {
   /** The table's name; one layout is kept per person per name. Empty turns the feature off. */
   resource: string;
   table: Table<TData>;
-  density: TableDensity;
-  formatRules: TableFormatRule[];
-  activeViewId: string | null;
-  pinnedRowsCollapsed: boolean;
-  markChangesSinceLastVisit: boolean;
-  hideTotals: boolean;
-  virtualized: boolean;
+  /** The table's view store, whose arrangement is kept beside the table's own. */
+  viewStore: DataTableViewStore;
 };
+
+// The part of the view a saved layout keeps; any change to it is saved.
+const selectKept = (state: DataTableViewStoreState) => ({
+  density: state.density,
+  formatRules: state.formatRules,
+  activeViewId: state.activeView?.id ?? null,
+  pinnedRowsCollapsed: state.pinnedRowsCollapsed,
+  markChangesSinceLastVisit: state.markChangesSinceLastVisit,
+  hideTotals: state.hideTotals,
+  virtualized: state.virtualized,
+});
 
 export type DataTableLayoutState = {
   /** False until the person's saved layout has been asked for and answered (or failed). */
@@ -63,21 +69,15 @@ function clampWidths(sizing: Record<string, number>): Record<string, number> {
  * density, colour rules and the view it came from) on the server, so the table
  * opens the way they left it on any device.
  *
- * Nothing here renders the table: changes are heard from the table's store and the
- * shell's own state, gathered for a second of quiet, compared with what was last
+ * Nothing here renders the table: changes are heard from the table's store and the view
+ * store, outside React, gathered for a second of quiet, compared with what was last
  * kept and sent only when they differ. Saves and resets go out one after another,
  * so a reset never loses a race to a save sent before it.
  */
 export function useDataTableLayout<TData extends RowData>({
   resource,
   table,
-  density,
-  formatRules,
-  activeViewId,
-  pinnedRowsCollapsed,
-  markChangesSinceLastVisit,
-  hideTotals,
-  virtualized,
+  viewStore,
 }: UseDataTableLayoutOptions<TData>): DataTableLayoutState {
   const t = useT();
   const queryClient = useQueryClient();
@@ -104,20 +104,15 @@ export function useDataTableLayout<TData extends RowData>({
   const snapshot = useLatestCallback((): TableLayout => {
     const { atoms } = table;
     const sizing = atoms.columnSizing.get();
+    const kept = selectKept(viewStore.getState());
     return {
       columnVisibility: atoms.columnVisibility.get(),
       columnOrder: atoms.columnOrder.get(),
       columnSizing: clampWidths(sizing),
       columnPinning: fromColumnPinningState(atoms.columnPinning.get()),
-      density,
-      formatRules,
-      activeViewId,
+      ...kept,
       pinnedRowIds: atoms.rowPinning.get().top ?? [],
-      pinnedRowsCollapsed,
       lastSeenAt: lastSeenAtRef.current,
-      markChangesSinceLastVisit,
-      hideTotals,
-      virtualized,
     };
   });
 
@@ -171,18 +166,10 @@ export function useDataTableLayout<TData extends RowData>({
     return () => subscription.unsubscribe();
   }, [store, schedule]);
 
-  useEffect(() => {
-    schedule();
-  }, [
-    density,
-    formatRules,
-    activeViewId,
-    pinnedRowsCollapsed,
-    markChangesSinceLastVisit,
-    hideTotals,
-    virtualized,
-    schedule,
-  ]);
+  useEffect(
+    () => viewStore.subscribe(selectKept, schedule, { equalityFn: shallow }),
+    [viewStore, schedule],
+  );
 
   useEffect(() => {
     const onPageHide = () => flush(true);

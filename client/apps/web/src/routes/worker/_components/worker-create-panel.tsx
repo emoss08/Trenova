@@ -17,7 +17,7 @@ import {
   User01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { parseAsString } from "nuqs";
+import { searchString } from "@trenova/shared/lib/router/search-codec";
 import { useCallback, useEffect } from "react";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
 import { ComplianceTab, EmploymentTab, GeneralTab } from "./worker-form-tabs";
@@ -83,7 +83,7 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
 
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useSearchValue("tab", parseAsString.withDefault("general"));
+  const [activeTab, setActiveTab] = useSearchValue("tab", searchString.withDefault("general"));
 
   const {
     formState: { isSubmitting, errors },

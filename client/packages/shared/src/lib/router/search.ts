@@ -1,13 +1,13 @@
 /**
  * The query string as every router in the client reads and writes it: plain strings, one
- * value per key or a list for a repeated key, the way the server, nuqs and the links in
+ * value per key or a list for a repeated key, the way the server, the codecs and the links in
  * emails write them. The router's default would read `?id=00123` as the number 123 and
  * write a string that looks like a number back quoted, changing addresses people saved.
  */
 export type SearchRecord = Record<string, string | string[]>;
 
 // The characters a value cannot carry raw, and nothing more, so an address stays as
-// readable as nuqs writes it (commas, colons and slashes are left alone).
+// readable as a person would type it (commas, colons and slashes are left alone).
 function encodePart(input: string): string {
   return input
     .replace(/%/g, "%25")

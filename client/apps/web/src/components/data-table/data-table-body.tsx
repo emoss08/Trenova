@@ -8,9 +8,9 @@ import {
 import {
   columnCellStyle,
   columnHeaderLabel,
+  compileFormatRules,
   isChangedSince,
   pinnedCellClass,
-  type CompiledFormatRules,
 } from "@/lib/data-table";
 import { cn } from "@trenova/shared/lib/utils";
 import type {
@@ -36,6 +36,17 @@ import { DataTableVirtualRows, type VirtualRowSlot } from "./data-table-virtual-
 import { TABLE_BODY_CELL_CLASS } from "./data-table-chrome";
 import { DataTableGroupHeader, DataTableGroupHeaderSkeleton } from "./data-table-group-header";
 import { DataTablePinnedHeader } from "./data-table-pinned-header";
+import { useShallow } from "zustand/react/shallow";
+import { useDataTableView, useDataTableViewActions } from "./data-table-view-context";
+import type { DataTableViewState } from "./data-table-view-store";
+
+// What the body lays out by. A row's own "changed since the last visit" it reads itself.
+const selectBodyView = (state: DataTableViewState) => ({
+  pinnedRowsCollapsed: state.pinnedRowsCollapsed,
+  virtualized: state.virtualized,
+  density: state.density,
+  formatRules: state.formatRules,
+});
 
 const ROW_STAGGER_MS = 18;
 const ROW_ENTRANCE_ANIMATION = "rise";
@@ -108,8 +119,6 @@ type DataTableRowProps<TData extends RowData> = {
   isPinned: boolean;
   /** Whether the person can pin this table's rows, which puts pinning in the row's menu. */
   canPin: boolean;
-  /** Changed since the person last had the table open, and not opened since. */
-  unseen: boolean;
   /** Where the row sits among every row the filters match, counting the header as 1. */
   ariaRowIndex?: number;
   /** Whether rows can be ticked, so the row says whether it is. */
@@ -146,7 +155,6 @@ function DataTableRowInner<TData extends RowData>({
   changed,
   isPinned,
   canPin,
-  unseen,
   ariaRowIndex,
   selectable,
   measureRef,
@@ -158,6 +166,14 @@ function DataTableRowInner<TData extends RowData>({
   // row redraws only when its columns actually change.
   const cells = useTableAtom(row.table.store, () => row.getVisibleCells());
   const selected = useTableAtom(row.table.atoms.rowSelection, (selection) => !!selection[row.id]);
+  // Changed since the person last had the table open, and not opened since. Each row asks for
+  // its own answer, so opening one row redraws that row and no other.
+  const unseen = useDataTableView(
+    (state) =>
+      state.markChangesSinceLastVisit &&
+      !state.seenRowIds.has(row.id) &&
+      isChangedSince(row.original, state.changesSince),
+  );
   const cellSelection = useTableAtom(row.table.atoms.cellSelection, (ranges) =>
     ranges.length === 0 ? "" : rowCellSelectionKey(row),
   );
@@ -392,7 +408,6 @@ export function DataTableBody<TData extends Record<string, any>>({
   isLoading,
   contextMenuActions,
   onRowClick,
-  getFormatClass,
   grouping,
   loadingGroupKeys,
   onGroupToggleIntent,
@@ -401,18 +416,11 @@ export function DataTableBody<TData extends Record<string, any>>({
   isFirstPage = true,
   isLastPage = true,
   rowChanges,
-  pinnedRowsCollapsed = false,
-  onPinnedRowsCollapsedChange,
-  changesSince = 0,
-  seenRowIds,
   rowOffset = 0,
   pageSize = MAX_SKELETON_ROWS,
-  virtualized = false,
   tableRef,
-  estimatedRowHeight = 40,
 }: DataTableBodyProps<TData> & {
   isLoading?: boolean;
-  getFormatClass?: CompiledFormatRules<TData> | null;
   grouping?: DataTableGrouping<TData>;
   loadingGroupKeys?: readonly DataTableGroupKey[];
   /** The person is about to toggle this group: warm what the toggle will show. */
@@ -422,26 +430,26 @@ export function DataTableBody<TData extends Record<string, any>>({
   isFirstPage?: boolean;
   isLastPage?: boolean;
   rowChanges?: DataTableRowChanges;
-  pinnedRowsCollapsed?: boolean;
-  onPinnedRowsCollapsedChange?: (collapsed: boolean) => void;
-  /** Rows changed after this Unix second are marked; zero marks none. */
-  changesSince?: number;
-  seenRowIds?: ReadonlySet<string>;
   /** How many matching rows come before this page, so each row can say where it is. */
   rowOffset?: number;
   /** Rows a page holds. */
   pageSize?: number;
-  /**
-   * Draw only the page rows near the visible part of the table. Off by default, as
-   * the browser's find-in-page sees only drawn rows; ignored while rows are grouped.
-   */
-  virtualized?: boolean;
   /** The table element, so the window can find what scrolls it. */
   tableRef?: React.RefObject<HTMLTableElement | null>;
-  /** A row's height before it is measured. */
-  estimatedRowHeight?: number;
 }) {
   const t = useT();
+  // Drawing only the rows in view is the person's choice; off, the browser's find-in-page
+  // sees every row. It is ignored while rows are grouped.
+  const { pinnedRowsCollapsed, virtualized, density, formatRules } = useDataTableView(
+    useShallow(selectBodyView),
+  );
+  const { setPinnedRowsCollapsed } = useDataTableViewActions();
+  const getFormatClass = useMemo(
+    () => compileFormatRules<TData>(formatRules, table.getAllLeafColumns()),
+    [formatRules, table],
+  );
+  // A row's height before it is measured.
+  const estimatedRowHeight = density === "compact" ? 30 : 40;
   // Toggling a group is a person rearranging what is on screen, not a page arriving, so
   // from the first toggle on rows take their place without rising in.
   const collapsedKeys = grouping?.collapsedKeys;
@@ -658,9 +666,6 @@ export function DataTableBody<TData extends Record<string, any>>({
       isCursor={cursorRowId === row.id}
       isPinned={pinned}
       canPin={canPinRows}
-      unseen={
-        changesSince > 0 && !seenRowIds?.has(row.id) && isChangedSince(row.original, changesSince)
-      }
       changed={rowChanges?.ids.has(row.id) ? (rowChanges.version % 2 === 0 ? "a" : "b") : undefined}
       isExpanded={expandedRowId === row.id}
       selectable={enableSelection}
@@ -729,9 +734,9 @@ export function DataTableBody<TData extends Record<string, any>>({
           {pinnedRows.length > 0 ? (
             <DataTablePinnedHeader
               count={pinnedRows.length}
-              collapsed={!!pinnedRowsCollapsed}
+              collapsed={pinnedRowsCollapsed}
               colSpan={colSpan}
-              onToggle={() => onPinnedRowsCollapsedChange?.(!pinnedRowsCollapsed)}
+              onToggle={() => setPinnedRowsCollapsed(!pinnedRowsCollapsed)}
               onUnpinAll={() => table.setRowPinning({ top: [], bottom: [] })}
             />
           ) : null}

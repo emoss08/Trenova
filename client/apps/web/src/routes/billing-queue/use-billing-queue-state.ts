@@ -5,15 +5,15 @@ import {
 } from "@/lib/billing-queue-date-window";
 import { BILLING_QUEUE_OPEN_LANES } from "@trenova/shared/types/billing-queue";
 import {
-  createParser,
-  parseAsArrayOf,
-  parseAsBoolean,
-  parseAsInteger,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs";
+  searchBoolean,
+  searchCodec,
+  searchInteger,
+  searchList,
+  searchLiteral,
+  searchString,
+} from "@trenova/shared/lib/router/search-codec";
 
-const parseAsStringArray = createParser<string[]>({
+const stringArrayCodec = searchCodec<string[]>({
   parse: (value) => {
     if (!value) return [];
     try {
@@ -29,7 +29,7 @@ const parseAsStringArray = createParser<string[]>({
 }).withDefault([]);
 
 /** A billing queue date filter in the URL, `last:7` or `range:FROM:TO`. */
-const parseAsDateWindow = createParser<DateWindow>({
+const dateWindowCodec = searchCodec<DateWindow>({
   parse: (value) => parseDateWindow(value),
   serialize: (value) => serializeDateWindow(value),
 });
@@ -46,36 +46,36 @@ export const BILLING_QUEUE_VIEWS = ["shipments", "statements"] as const;
 export type BillingQueueView = (typeof BILLING_QUEUE_VIEWS)[number];
 
 export const queueSearchParamsParser = {
-  view: parseAsStringLiteral(BILLING_QUEUE_VIEWS).withDefault("shipments"),
-  item: parseAsString,
-  customer: parseAsString,
-  status: parseAsString,
-  query: parseAsString.withDefault(""),
-  billType: parseAsString,
-  billers: parseAsStringArray,
+  view: searchLiteral(BILLING_QUEUE_VIEWS).withDefault("shipments"),
+  item: searchString,
+  customer: searchString,
+  status: searchString,
+  query: searchString.withDefault(""),
+  billType: searchString,
+  billers: stringArrayCodec,
   /** Narrows the queue to the items billed to one customer, on any shipment. */
-  payer: parseAsString,
-  includeClosed: parseAsBoolean.withDefault(false),
-  preset: parseAsString,
+  payer: searchString,
+  includeClosed: searchBoolean.withDefault(false),
+  preset: searchString,
   /** The lanes the list shows; empty shows every open lane. */
-  lanes: parseAsArrayOf(parseAsStringLiteral(BILLING_QUEUE_OPEN_LANES)).withDefault([]),
-  minAmount: parseAsString,
-  maxAmount: parseAsString,
+  lanes: searchList(searchLiteral(BILLING_QUEUE_OPEN_LANES)).withDefault([]),
+  minAmount: searchString,
+  maxAmount: searchString,
   /** Only items queued before this Unix time; set by "older than N days". */
-  createdBefore: parseAsInteger,
+  createdBefore: searchInteger,
   /** Narrows the queue to one customer's shipments, whoever each bill goes to. */
-  shipmentCustomer: parseAsString,
+  shipmentCustomer: searchString,
   /** Only shipments delivered, picked up, or items queued within these windows. */
-  delivered: parseAsDateWindow,
-  pickedUp: parseAsDateWindow,
-  queued: parseAsDateWindow,
+  delivered: dateWindowCodec,
+  pickedUp: dateWindowCodec,
+  queued: dateWindowCodec,
   /**
    * The transfer run the bulk dialog is watching, while the dialog is open. It
    * lives in the URL so the toast announcing a finished transfer can link straight
    * back to its report, and so a refresh mid-run reattaches instead of losing sight
    * of it; closing the dialog drops it.
    */
-  transferRun: parseAsString,
+  transferRun: searchString,
 };
 
 export const queueViewSearchParamsParser = {

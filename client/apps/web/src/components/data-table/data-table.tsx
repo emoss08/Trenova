@@ -22,17 +22,14 @@ import {
   clampFittedWidth,
   columnFacetField,
   columnLayout,
-  compileFormatRules,
   emptyTableColumns,
   fromColumnPinningState,
   filterItemFromField,
   getFilterableFields,
-  isChangedSince,
   type FilterableField,
   isColumnResizable,
   measureColumnFits,
   DEFAULT_CREATE_ACTION_ID,
-  isTableConfigEqual,
   toColumnPinningState,
   updateSortField,
   withRequiredPinning,
@@ -45,10 +42,8 @@ import {
   fetchAllRows,
 } from "@/lib/data-table-export";
 import { Download01Icon, Edit05Icon, FilePlus02Icon } from "@trenova/shared/components/icons";
-import { BulkEditDialog } from "./bulk-edit/bulk-edit-dialog";
-import { BulkEditProgress } from "./bulk-edit/bulk-edit-progress";
+import { DataTableBulkEdit } from "./bulk-edit/data-table-bulk-edit";
 import type { BulkEditJob } from "@/lib/graphql/bulk-edit";
-import type { BulkEditSelectionInput } from "@trenova/graphql/generated/graphql";
 import {
   groupedScope,
   groupedSort,
@@ -61,11 +56,8 @@ import { bulkEdit } from "@/lib/queries/bulk-edit";
 import { tableConfiguration } from "@/lib/queries/table-configuration";
 import { stableStringify } from "@/lib/stable-stringify";
 import type {
-  ActiveTableView,
+  TableArrangement,
   TableConfig,
-  TableConfiguration,
-  TableDensity,
-  TableFormatRule,
   TableLayout,
   TableViewSource,
 } from "@/types/table-configuration";
@@ -81,7 +73,7 @@ import {
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { arrayMove, horizontalListSortingStrategy, SortableContext } from "@dnd-kit/sortable";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTable, type RowPinningState, type RowSelectionState } from "@tanstack/react-table";
+import { useTable, type RowSelectionState } from "@tanstack/react-table";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { Table, TableHeader, TableRow } from "@trenova/shared/components/ui/table";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -106,7 +98,7 @@ import type {
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useDataTableCellWrites } from "@/hooks/data-table/use-data-table-cell-writes";
 import { RecordPresence } from "@/components/presence/data-table-viewers";
-import { parseAsInteger } from "nuqs";
+import { searchInteger } from "@trenova/shared/lib/router/search-codec";
 import {
   Activity,
   useCallback,
@@ -117,6 +109,16 @@ import {
   useState,
 } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
+import { useLastSettled } from "@trenova/shared/hooks/use-last-settled";
+import { FIRST_PAGE_CURSOR, useCursorPages } from "@/hooks/data-table/use-cursor-pages";
+import { useStore } from "zustand";
+import { useShallow } from "zustand/react/shallow";
+import { DataTableViewProvider } from "./data-table-view-context";
+import {
+  createDataTableViewStore,
+  selectViewActions,
+  type DataTableViewState,
+} from "./data-table-view-store";
 import { DataTablePagination } from "./_components/data-table-pagination";
 import { DataTableBody } from "./data-table-body";
 import { DataTableChangesBanner } from "./data-table-changes-banner";
@@ -150,29 +152,27 @@ import { columnsOnPlan } from "./plan-columns";
 const BULK_SELECT_MAX = 1000;
 const COLUMN_DRAG_MODIFIERS = [restrictToHorizontalAxis];
 
-type CursorState = {
-  scopeKey: string;
-  cursors: Record<number, string | null>;
-  totalCount: number | null;
-  totalCountExact: boolean;
-};
-
-const EMPTY_CURSOR_STATE: CursorState = {
-  scopeKey: "",
-  cursors: { 0: null },
-  totalCount: null,
-  totalCountExact: true,
-};
 const EMPTY_PINNING = { left: [] as string[], right: [] as string[] };
 const EMPTY_GROUP_KEYS: DataTableGroupKey[] = [];
 const NO_ROW_ACTIONS: never[] = [];
 const NO_ROWS: never[] = [];
-const NO_ROW_PINNING: RowPinningState = { top: [], bottom: [] };
-const NO_SEEN_ROWS: ReadonlySet<string> = new Set();
 const NO_VALUES: readonly string[] = [];
 const NO_FILTER_FIELDS: DataTableFilterField[] = [];
 const NO_SCOPE_FILTERS: FieldFilter[] = [];
 const noop = () => {};
+
+const sameKeys = (a: readonly DataTableGroupKey[], b: readonly DataTableGroupKey[]) =>
+  a.length === b.length && a.every((key, index) => key === b[index]);
+
+// What the shell itself draws and fetches by. Everything else in the view is read by the part
+// of the table that draws it, so a change there redraws that part alone.
+const selectShell = (state: DataTableViewState) => ({
+  ready: state.ready,
+  density: state.density,
+  rowPinning: state.rowPinning,
+  pinnedRowsCollapsed: state.pinnedRowsCollapsed,
+  hideTotals: state.hideTotals,
+});
 
 export function DataTable<TData extends Record<string, any>>({
   columns: allColumns,
@@ -226,28 +226,24 @@ export function DataTable<TData extends Record<string, any>>({
   const canExport = enableExport && (resource ? permissions.canExport : true);
   const defaultPageSize = defaultPageSizeFor(pageSizeOptions);
   const tableSearchParamsParser = useMemo(
-    () => ({ ...searchParamsParser, pageSize: parseAsInteger.withDefault(defaultPageSize) }),
+    () => ({ ...searchParamsParser, pageSize: searchInteger.withDefault(defaultPageSize) }),
     [defaultPageSize],
   );
   const [searchParams, setSearchParams] = useSearchState(tableSearchParamsParser);
   const { pageIndex, query, fieldFilters, filterGroups, sort, panelType, panelEntityId } =
     searchParams;
   const pageSize = resolvePageSize(searchParams.pageSize, pageSizeOptions);
-  const [cursorState, setCursorState] = useState<CursorState>(EMPTY_CURSOR_STATE);
-  const [activeView, setActiveView] = useState<ActiveTableView | null>(null);
-  const [density, setDensity] = useState<TableDensity>(initialDensity);
-  const [formatRules, setFormatRules] = useState<TableFormatRule[]>([]);
-  const [isSelectingAll, setIsSelectingAll] = useState(false);
-  const [initialStateApplied, setInitialStateApplied] = useState(false);
-  const [rowPinning, setRowPinning] = useState<RowPinningState>(NO_ROW_PINNING);
-  const [pinnedRowsCollapsed, setPinnedRowsCollapsed] = useState(false);
-  // Rows changed after this moment (the person's last visit) are marked, until
-  // they open one or mark them all seen. Zero marks nothing: a first visit.
-  const [changesSince, setChangesSince] = useState(0);
-  const [markChangesSinceLastVisit, setMarkChangesSinceLastVisit] = useState(false);
-  const [seenRowIds, setSeenRowIds] = useState<ReadonlySet<string>>(NO_SEEN_ROWS);
-  const [hideTotals, setHideTotals] = useState(false);
-  const [virtualized, setVirtualized] = useState(false);
+  // The person's view of this table (its layout, the saved view it is in, what they are doing
+  // with its rows) lives in a store of its own; the address holds what a link carries.
+  const [viewStore] = useState(() => createDataTableViewStore(initialDensity));
+  const {
+    ready: initialStateApplied,
+    density,
+    rowPinning,
+    pinnedRowsCollapsed,
+    hideTotals,
+  } = useStore(viewStore, useShallow(selectShell));
+  const viewActions = useStore(viewStore, selectViewActions);
   const queryClient = useQueryClient();
   const selectedRowsMapRef = useRef(new Map<string, TData>());
 
@@ -443,10 +439,9 @@ export function DataTable<TData extends Record<string, any>>({
       }),
     [effectiveSort, fieldFilters, effectiveFilterGroups, graphql, pageSize, query, scopeFilters],
   );
-  const scopedCursorState =
-    cursorState.scopeKey === cursorScopeKey ? cursorState : EMPTY_CURSOR_STATE;
-  const currentCursor = scopedCursorState.cursors[zeroBasedPageIndex];
-  const canFetchPage = zeroBasedPageIndex === 0 || currentCursor !== undefined;
+  const cursorPages = useCursorPages(cursorScopeKey, zeroBasedPageIndex);
+  const currentCursor = cursorPages.cursor;
+  const canFetchPage = cursorPages.canFetch;
 
   const queryOptions = useMemo(
     () => ({
@@ -478,44 +473,10 @@ export function DataTable<TData extends Record<string, any>>({
     isPlaceholderData: dataQuery.isPlaceholderData,
   });
 
+  const learnCursorPage = cursorPages.learn;
   useEffect(() => {
-    const pageInfo = dataQuery.data?.pageInfo;
-    if (pageInfo?.mode !== "cursor") {
-      return;
-    }
-
-    const nextPageIndex = zeroBasedPageIndex + 1;
-    const nextCursor = pageInfo.hasNextPage && pageInfo.endCursor ? pageInfo.endCursor : null;
-    const pageTotalCount = pageInfo.totalCount ?? null;
-    const pageTotalExact = pageInfo.totalCountExact !== false;
-    setCursorState((current) => {
-      const inScope = current.scopeKey === cursorScopeKey;
-      const scoped = inScope ? current : EMPTY_CURSOR_STATE;
-      const totalCount = pageTotalCount ?? scoped.totalCount;
-      const totalCountExact = pageTotalCount !== null ? pageTotalExact : scoped.totalCountExact;
-      const cursorKnown = nextCursor === null || scoped.cursors[nextPageIndex] === nextCursor;
-      if (
-        inScope &&
-        cursorKnown &&
-        totalCount === scoped.totalCount &&
-        totalCountExact === scoped.totalCountExact
-      ) {
-        return current;
-      }
-
-      return {
-        scopeKey: cursorScopeKey,
-        cursors: cursorKnown
-          ? scoped.cursors
-          : {
-              ...scoped.cursors,
-              [nextPageIndex]: nextCursor,
-            },
-        totalCount,
-        totalCountExact,
-      };
-    });
-  }, [cursorScopeKey, dataQuery.data?.pageInfo, zeroBasedPageIndex]);
+    learnCursorPage(dataQuery.data?.pageInfo);
+  }, [learnCursorPage, dataQuery.data?.pageInfo]);
 
   useEffect(() => {
     if (canFetchPage || pageIndex === 1) {
@@ -526,19 +487,14 @@ export function DataTable<TData extends Record<string, any>>({
   }, [canFetchPage, pageIndex, setSearchParams]);
 
   const collapsedGroupKeys = grouping?.collapsedKeys ?? EMPTY_GROUP_KEYS;
-  const [settledCollapsedKeys, setSettledCollapsedKeys] = useState(collapsedGroupKeys);
   const groupOrderKey = grouping
     ? [grouping.field, ...(grouping.tieBreakers ?? []).map((entry) => entry.field)].join("\u0000")
     : "";
-  const [settledGroupOrderKey, setSettledGroupOrderKey] = useState(groupOrderKey);
-  const [settledPageSize, setSettledPageSize] = useState(pageSize);
-  useEffect(() => {
-    if (dataQuery.data && !dataQuery.isPlaceholderData) {
-      setSettledCollapsedKeys(collapsedGroupKeys);
-      setSettledGroupOrderKey(groupOrderKey);
-      setSettledPageSize(pageSize);
-    }
-  }, [collapsedGroupKeys, groupOrderKey, pageSize, dataQuery.data, dataQuery.isPlaceholderData]);
+  // What the rows on screen were drawn for, beside what has been asked for since.
+  const pageSettled = !!dataQuery.data && !dataQuery.isPlaceholderData;
+  const settledCollapsedKeys = useLastSettled(collapsedGroupKeys, pageSettled, sameKeys);
+  const settledGroupOrderKey = useLastSettled(groupOrderKey, pageSettled);
+  const settledPageSize = useLastSettled(pageSize, pageSettled);
   // The old page stands in while one of another size loads, and every figure the pager
   // shows is about to change, so both say so rather than swapping without warning.
   const resizingPage = dataQuery.isPlaceholderData && settledPageSize !== pageSize;
@@ -572,7 +528,7 @@ export function DataTable<TData extends Record<string, any>>({
         }),
       });
       // A toggle starts a new cursor scope, so the table asks for its first page.
-      const options = { ...scoped, cursor: EMPTY_CURSOR_STATE.cursors[0] };
+      const options = { ...scoped, cursor: FIRST_PAGE_CURSOR };
       const firstPage = { pageIndex: 0, pageSize };
       // The page size is in the key through `firstPage`, the same key the table's own
       // page query builds.
@@ -632,13 +588,13 @@ export function DataTable<TData extends Record<string, any>>({
   }, [currentPageResults, pinnedResults]);
   const currentPageRowCount = currentPageResults?.length ?? 0;
   const totalCount = cursorPageInfo
-    ? (cursorPageInfo.totalCount ?? scopedCursorState.totalCount)
+    ? (cursorPageInfo.totalCount ?? cursorPages.totalCount)
     : (dataQuery.data?.count ?? null);
   const totalCountExact =
     cursorPageInfo?.totalCount != null
       ? cursorPageInfo.totalCountExact !== false
       : cursorPageInfo
-        ? scopedCursorState.totalCountExact
+        ? cursorPages.totalCountExact
         : dataQuery.data?.totalCountExact !== false;
   const rowCount =
     totalCount ??
@@ -682,7 +638,7 @@ export function DataTable<TData extends Record<string, any>>({
         pagination,
         rowPinning,
       },
-      onRowPinningChange: setRowPinning,
+      onRowPinningChange: viewActions.setRowPinning,
       enableRowPinning: !!name,
       keepPinnedRows: true,
       // Cells are selected with Alt held, so a plain click still opens or expands
@@ -744,7 +700,7 @@ export function DataTable<TData extends Record<string, any>>({
   });
 
   const handleSelectAllMatching = useLatestCallback(async () => {
-    setIsSelectingAll(true);
+    viewActions.setSelectingAll(true);
     try {
       const rows = await fetchAllRows<TData>({
         graphql,
@@ -767,7 +723,7 @@ export function DataTable<TData extends Record<string, any>>({
           error instanceof Error ? error.message : translate("Could not load all matching rows."),
       });
     } finally {
-      setIsSelectingAll(false);
+      viewActions.setSelectingAll(false);
     }
   });
 
@@ -783,25 +739,14 @@ export function DataTable<TData extends Record<string, any>>({
     [currentPageResults],
   );
   const handleTogglePin = useLatestCallback((rowId: string) => {
-    setRowPinning((current) => {
-      if (current.top.includes(rowId)) {
-        return { ...current, top: current.top.filter((id) => id !== rowId) };
-      }
-      if (current.top.length >= MAX_PINNED_ROWS) return current;
-      return { ...current, top: [...current.top, rowId] };
-    });
+    viewActions.togglePinnedRow(rowId, MAX_PINNED_ROWS);
   });
 
   const openedRowId = keyboard?.cursorRowId ?? expansion?.expandedRowId ?? panelEntityId ?? null;
+  const markSeen = viewActions.markSeen;
   useEffect(() => {
-    if (!openedRowId) return;
-    setSeenRowIds((current) => {
-      if (current.has(openedRowId)) return current;
-      const next = new Set(current);
-      next.add(openedRowId);
-      return next;
-    });
-  }, [openedRowId]);
+    if (openedRowId) markSeen(openedRowId);
+  }, [markSeen, openedRowId]);
 
   const visibleLeafColumns = table.getVisibleLeafColumns();
   const aggregateFields = useMemo(
@@ -878,24 +823,6 @@ export function DataTable<TData extends Record<string, any>>({
   // With every group collapsed there are headers but no rows for a total to sit under.
   const showTotalsRow = !hideTotals && hasTotals && !isEmpty;
 
-  const showChanges = changesSince > 0 && markChangesSinceLastVisit;
-  const unseenCount = useMemo(() => {
-    if (!showChanges) return 0;
-    let count = 0;
-    for (const row of tableData) {
-      if (
-        isChangedSince(row, changesSince) &&
-        !seenRowIds.has((row as unknown as { id: string }).id)
-      ) {
-        count += 1;
-      }
-    }
-    return count;
-  }, [showChanges, tableData, changesSince, seenRowIds]);
-  const markAllSeen = useCallback(() => {
-    setChangesSince(Math.floor(Date.now() / 1000));
-    setSeenRowIds(NO_SEEN_ROWS);
-  }, []);
 
   const cursorRowIds = useMemo(() => {
     if (pinnedRowsCollapsed || pinnedRowIds.length === 0) return pageRowIds;
@@ -1007,10 +934,10 @@ export function DataTable<TData extends Record<string, any>>({
       table.setColumnOrder(newColumnOrder);
       table.setColumnSizing(newColumnSizing);
       table.setColumnPinning(toColumnPinningState(newColumnPinning));
-      setDensity(newDensity);
-      setFormatRules(newFormatRules);
+      viewActions.setDensity(newDensity);
+      viewActions.setFormatRules(newFormatRules);
 
-      setActiveView(
+      viewActions.setActiveView(
         source
           ? {
               id: source.id,
@@ -1035,20 +962,10 @@ export function DataTable<TData extends Record<string, any>>({
           : null,
       );
     },
-    [setSearchParams, applyFilterState, pageSize, table, initialColumnPinning],
+    [setSearchParams, applyFilterState, pageSize, table, initialColumnPinning, viewActions],
   );
 
-  const layout = useDataTableLayout({
-    resource: name,
-    table,
-    density,
-    formatRules,
-    activeViewId: activeView?.id ?? null,
-    pinnedRowsCollapsed,
-    markChangesSinceLastVisit,
-    hideTotals,
-    virtualized,
-  });
+  const layout = useDataTableLayout({ resource: name, table, viewStore });
 
   const restoreView = useLatestCallback(async (id: string) => {
     // Only a view that is really gone is dropped. A failed read leaves the person's view on,
@@ -1062,9 +979,9 @@ export function DataTable<TData extends Record<string, any>>({
       return;
     }
     if (view) {
-      setActiveView({ id: view.id, name: view.name, config: view.tableConfig });
+      viewActions.setActiveView({ id: view.id, name: view.name, config: view.tableConfig });
     } else {
-      setActiveView((current) => (current?.id === id ? null : current));
+      viewActions.forgetActiveView(id);
     }
   });
 
@@ -1075,16 +992,9 @@ export function DataTable<TData extends Record<string, any>>({
     table.setColumnPinning(
       toColumnPinningState(withRequiredPinning(saved.columnPinning, initialColumnPinning)),
     );
-    if (saved.density) setDensity(saved.density);
-    setFormatRules(saved.formatRules);
-    table.setRowPinning({ top: saved.pinnedRowIds, bottom: [] });
-    setPinnedRowsCollapsed(saved.pinnedRowsCollapsed);
-    setChangesSince(saved.lastSeenAt);
-    setMarkChangesSinceLastVisit(saved.markChangesSinceLastVisit);
-    setHideTotals(saved.hideTotals);
-    setVirtualized(saved.virtualized);
+    viewActions.applySavedLayout(saved);
     if (!saved.activeViewId) {
-      setActiveView(null);
+      viewActions.setActiveView(null);
     } else if (saved.activeViewId !== defaultConfig?.id) {
       void restoreView(saved.activeViewId);
     }
@@ -1109,7 +1019,7 @@ export function DataTable<TData extends Record<string, any>>({
     }
     const saved = layout.readSaved();
     if (saved) applyLayout(saved);
-    setInitialStateApplied(true);
+    viewActions.markReady();
     layout.arm();
   }, [
     initialStateApplied,
@@ -1123,6 +1033,7 @@ export function DataTable<TData extends Record<string, any>>({
     query,
     handleApplyConfig,
     applyLayout,
+    viewActions,
   ]);
 
   const handleResetLayout = useCallback(() => {
@@ -1133,14 +1044,7 @@ export function DataTable<TData extends Record<string, any>>({
       table.setColumnPinning(
         toColumnPinningState(withRequiredPinning(EMPTY_PINNING, initialColumnPinning)),
       );
-      setDensity(initialDensity);
-      setFormatRules([]);
-      table.setRowPinning({ top: [], bottom: [] });
-      setPinnedRowsCollapsed(false);
-      setMarkChangesSinceLastVisit(false);
-      setHideTotals(false);
-      setVirtualized(false);
-      setActiveView(null);
+      viewActions.resetLayout();
       if (defaultConfig?.tableConfig) {
         handleApplyConfig(defaultConfig.tableConfig, {
           id: defaultConfig.id,
@@ -1153,7 +1057,7 @@ export function DataTable<TData extends Record<string, any>>({
     table,
     initialColumnVisibility,
     initialColumnPinning,
-    initialDensity,
+    viewActions,
     defaultConfig,
     handleApplyConfig,
   ]);
@@ -1167,7 +1071,7 @@ export function DataTable<TData extends Record<string, any>>({
   // widths as they last settled, which is what a drag leaves behind.
   const liveColumnSizing = table.state.columnSizing ?? table.atoms.columnSizing.get();
 
-  const currentConfig = useMemo<TableConfig>(() => {
+  const arrangement = useMemo<TableArrangement>(() => {
     const columnVisibility: Record<string, boolean> = {};
     for (const col of table.getAllLeafColumns()) {
       columnVisibility[col.id] = liveColumnVisibility[col.id] ?? true;
@@ -1183,8 +1087,6 @@ export function DataTable<TData extends Record<string, any>>({
       columnOrder: liveColumnOrder,
       columnSizing: liveColumnSizing,
       columnPinning: fromColumnPinningState(liveColumnPinning),
-      density,
-      formatRules,
     };
   }, [
     fieldFilters,
@@ -1195,28 +1097,9 @@ export function DataTable<TData extends Record<string, any>>({
     liveColumnOrder,
     liveColumnSizing,
     liveColumnPinning,
-    density,
-    formatRules,
     table,
   ]);
 
-  const isViewDirty = useMemo(
-    () => (activeView ? !isTableConfigEqual(currentConfig, activeView.config) : false),
-    [activeView, currentConfig],
-  );
-
-  const handleViewPersisted = useCallback((config: TableConfiguration) => {
-    setActiveView({ id: config.id, name: config.name, config: config.tableConfig });
-  }, []);
-
-  const handleViewDeleted = useCallback((id: string) => {
-    setActiveView((current) => (current?.id === id ? null : current));
-  }, []);
-
-  const compiledFormatRules = useMemo(
-    () => compileFormatRules<TData>(formatRules, table.getAllLeafColumns()),
-    [formatRules, table],
-  );
 
   // Bulk edit is offered where the server has an editor for the table and the person
   // can change its rows; the server checks both again when the edit starts.
@@ -1227,14 +1110,12 @@ export function DataTable<TData extends Record<string, any>>({
     retry: false,
   });
   const canBulkEdit = (bulkEditFieldsQuery.data?.length ?? 0) > 0;
-  const [bulkEditSelection, setBulkEditSelection] = useState<BulkEditSelectionInput | null>(null);
-  const [bulkEditJobId, setBulkEditJobId] = useState<string | null>(null);
   const editSelectedRows = useLatestCallback(() => {
     const ids = Object.keys(selectionAtom.get()).filter((id) => selectionAtom.get()[id]);
-    if (ids.length > 0) setBulkEditSelection({ ids });
+    if (ids.length > 0) viewActions.openBulkEdit({ ids });
   });
   const editAllMatching = useLatestCallback(() => {
-    setBulkEditSelection({
+    viewActions.openBulkEdit({
       filter: {
         query: baseQueryOptions.query || undefined,
         fieldFilters: baseQueryOptions.fieldFilters ?? [],
@@ -1426,6 +1307,7 @@ export function DataTable<TData extends Record<string, any>>({
   );
 
   return (
+    <DataTableViewProvider store={viewStore}>
     <DataTableProvider
       isLoading={isLoadingPage}
       table={table}
@@ -1477,25 +1359,12 @@ export function DataTable<TData extends Record<string, any>>({
               addRecordActions={resolvedAddRecordActions}
               resource={name}
               presenceResource={resource}
-              currentConfig={currentConfig}
+              arrangement={arrangement}
               onApplyConfig={handleApplyConfig}
-              activeView={activeView}
-              isViewDirty={isViewDirty}
-              onViewPersisted={handleViewPersisted}
-              onViewDeleted={handleViewDeleted}
-              formatRules={formatRules}
-              onFormatRulesChange={setFormatRules}
-              density={density}
-              onDensityChange={setDensity}
               hasSavedLayout={layout.hasSavedLayout}
-              highlightChanges={markChangesSinceLastVisit}
-              showTotals={!hideTotals}
-              virtualized={virtualized}
-              onVirtualizedChange={name && !grouping ? setVirtualized : undefined}
-              onShowTotalsChange={
-                name && hasTotals ? (on: boolean) => setHideTotals(!on) : undefined
-              }
-              onHighlightChangesChange={name ? setMarkChangesSinceLastVisit : undefined}
+              canMarkChanges={!!name}
+              canShowTotals={!!name && hasTotals}
+              canVirtualize={!!name && !grouping}
               onFitColumns={fitColumns}
               onResetLayout={name ? handleResetLayout : undefined}
               exportContext={{
@@ -1514,9 +1383,7 @@ export function DataTable<TData extends Record<string, any>>({
               onClearQuery={() => handleSearchChange("")}
               extraChips={toolbar?.chips}
             />
-            {unseenCount > 0 && (
-              <DataTableChangesBanner count={unseenCount} onMarkAllSeen={markAllSeen} />
-            )}
+            <DataTableChangesBanner rows={tableData} />
             {enableRowSelection && totalCount != null && (
               <DataTableSelectionBanner
                 selection={selectionAtom}
@@ -1525,7 +1392,6 @@ export function DataTable<TData extends Record<string, any>>({
                 totalCountExact={totalCountExact}
                 maxSelectable={BULK_SELECT_MAX}
                 onEditAllMatching={canBulkEdit ? editAllMatching : undefined}
-                isSelectingAll={isSelectingAll}
                 onSelectAllMatching={handleSelectAllMatching}
                 onClearSelection={handleClearSelection}
               />
@@ -1651,7 +1517,6 @@ export function DataTable<TData extends Record<string, any>>({
                         isLoading={isLoadingPage}
                         contextMenuActions={contextMenuActions}
                         onRowClick={handleRowClick}
-                        getFormatClass={compiledFormatRules}
                         grouping={grouping}
                         loadingGroupKeys={loadingGroupKeys}
                         onGroupToggleIntent={prefetchGroupToggle}
@@ -1660,15 +1525,9 @@ export function DataTable<TData extends Record<string, any>>({
                         isFirstPage={zeroBasedPageIndex === 0}
                         isLastPage={!cursorPageInfo?.hasNextPage}
                         rowChanges={liveRefresh.changes}
-                        pinnedRowsCollapsed={pinnedRowsCollapsed}
-                        changesSince={showChanges ? changesSince : 0}
-                        seenRowIds={seenRowIds}
-                        onPinnedRowsCollapsedChange={setPinnedRowsCollapsed}
                         rowOffset={zeroBasedPageIndex * pageSize}
                         pageSize={pageSize}
-                        virtualized={virtualized}
                         tableRef={tableElementRef}
-                        estimatedRowHeight={density === "compact" ? 30 : 40}
                       />
                       {showTotalsRow ? (
                         <DataTableTotalsRow
@@ -1716,28 +1575,12 @@ export function DataTable<TData extends Record<string, any>>({
           </RecordPresence>
         )}
       </DataTablePanelWrapper>
-      {resource && bulkEditSelection ? (
-        <BulkEditDialog
-          open
-          onOpenChange={(open) => {
-            if (!open) setBulkEditSelection(null);
-          }}
-          resource={resource}
-          selection={bulkEditSelection}
-          onStarted={(job) => setBulkEditJobId(job.id)}
-        />
-      ) : null}
-      {bulkEditJobId ? (
-        <BulkEditProgress
-          jobId={bulkEditJobId}
-          onDismiss={() => setBulkEditJobId(null)}
-          onDone={handleBulkEditDone}
-        />
-      ) : null}
+      <DataTableBulkEdit resource={resource} onDone={handleBulkEditDone} />
       {enableRowSelection && resolvedDockActions.length > 0 && (
         <DataTableDock table={table} actions={resolvedDockActions} totals={selectionTotals} />
       )}
     </DataTableProvider>
+    </DataTableViewProvider>
   );
 }
 

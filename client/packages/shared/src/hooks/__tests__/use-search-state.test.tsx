@@ -8,29 +8,29 @@ import {
 } from "@tanstack/react-router";
 import { act, cleanup, render, renderHook, screen } from "@testing-library/react";
 import {
-  createParser,
-  parseAsBoolean,
-  parseAsInteger,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs";
+  searchBoolean,
+  searchCodec,
+  searchInteger,
+  searchLiteral,
+  searchString,
+} from "@trenova/shared/lib/router/search-codec";
 import { useEffect, type ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { readSearchState, useSearchState, useSearchValue } from "../use-search-state";
 
-const parseAsTags = createParser<string[]>({
+const tagsCodec = searchCodec<string[]>({
   parse: (value) => (value ? value.split("|") : []),
   serialize: (value) => value.join("|"),
   eq: (a, b) => a.join("|") === b.join("|"),
 }).withDefault([]);
 
 const table = {
-  pageIndex: parseAsInteger.withDefault(1),
-  query: parseAsString.withDefault(""),
-  open: parseAsBoolean.withDefault(false),
-  tab: parseAsStringLiteral(["general", "security"]).withOptions({ history: "push" }),
-  tags: parseAsTags,
-  panel: parseAsString,
+  pageIndex: searchInteger.withDefault(1),
+  query: searchString.withDefault(""),
+  open: searchBoolean.withDefault(false),
+  tab: searchLiteral(["general", "security"]).withOptions({ history: "push" }),
+  tags: tagsCodec,
+  panel: searchString,
 };
 
 function setup(initial: string) {
@@ -162,10 +162,10 @@ describe("two hooks writing in the same moment", () => {
       <TestRouter router={router}>{children}</TestRouter>
     );
     const board = renderHook(
-      () => useSearchValue("expanded", parseAsString.withOptions({ history: "push" })),
+      () => useSearchValue("expanded", searchString.withOptions({ history: "push" })),
       { wrapper },
     );
-    const panel = renderHook(() => useSearchState({ panel: parseAsString }), { wrapper });
+    const panel = renderHook(() => useSearchState({ panel: searchString }), { wrapper });
 
     await act(async () => {
       void board.result.current[1]("shp_1");
@@ -180,7 +180,7 @@ describe("two hooks writing in the same moment", () => {
 describe("useSearchValue", () => {
   it("reads and writes one key", async () => {
     const router = createTestRouter(undefined, ["/audit?window=7"]);
-    const { result } = renderHook(() => useSearchValue("window", parseAsInteger.withDefault(30)), {
+    const { result } = renderHook(() => useSearchValue("window", searchInteger.withDefault(30)), {
       wrapper: ({ children }) => <TestRouter router={router}>{children}</TestRouter>,
     });
 
