@@ -1,18 +1,20 @@
+import type {
+  AmendWorkerEmploymentEventInput,
+  AmendWorkerEmploymentEventMutation,
+  AmendWorkerEmploymentEventMutationVariables,
+  RecordWorkerEmploymentEventInput,
+  RecordWorkerEmploymentEventMutation,
+  RecordWorkerEmploymentEventMutationVariables,
+  WorkerEmploymentEventFieldsFragment,
+  WorkerEmploymentEventKind,
+  WorkerEmploymentEventsQuery,
+  WorkerEmploymentEventsQueryVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   AmendWorkerEmploymentEventDocument,
   RecordWorkerEmploymentEventDocument,
   WorkerEmploymentEventsDocument,
-  type AmendWorkerEmploymentEventInput,
-  type AmendWorkerEmploymentEventMutation,
-  type AmendWorkerEmploymentEventMutationVariables,
-  type RecordWorkerEmploymentEventInput,
-  type RecordWorkerEmploymentEventMutation,
-  type RecordWorkerEmploymentEventMutationVariables,
-  type WorkerEmploymentEventFieldsFragment,
-  type WorkerEmploymentEventKind,
-  type WorkerEmploymentEventsQuery,
-  type WorkerEmploymentEventsQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/worker-employment/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type WorkerEmploymentEventRow = WorkerEmploymentEventFieldsFragment;

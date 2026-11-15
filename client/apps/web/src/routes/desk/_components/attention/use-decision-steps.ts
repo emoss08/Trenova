@@ -4,7 +4,7 @@ import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
   PendingProposalFieldsFragmentDoc,
   PlanStepsDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/decisions";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { asAssistantProposal } from "../decisions/decision-presenters";
 

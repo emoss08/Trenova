@@ -15,12 +15,12 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
-import {
-  InvoiceTableDocument,
-  type DataTablePageInfoFieldsFragment,
-  type InvoiceTableQueryVariables,
-  type InvoiceTableRowFieldsFragment,
+import type {
+  DataTablePageInfoFieldsFragment,
+  InvoiceTableQueryVariables,
+  InvoiceTableRowFieldsFragment,
 } from "@trenova/graphql/generated/graphql";
+import { InvoiceTableDocument } from "@trenova/graphql/generated/documents/invoice/table";
 import { SelectionDock } from "@/components/selection-dock";
 import { useListSelection } from "@/hooks/use-list-selection";
 import { BULK_CONCURRENCY, notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";

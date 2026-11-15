@@ -1,8 +1,8 @@
+import type { FactoringCompanyInput } from "@trenova/graphql/generated/graphql";
 import {
   CreateFactoringCompanyDocument,
   UpdateFactoringCompanyDocument,
-  type FactoringCompanyInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/factoring-company/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { FactoringCompany } from "@/types/factoring-company";
 

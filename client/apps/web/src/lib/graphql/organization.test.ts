@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   OrganizationSettingsDocument,
   UpdateOrganizationSettingsDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/organization/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { OrganizationSettings } from "@trenova/shared/types/organization";
 import { getOrganizationSettingsGraphQL, updateOrganizationSettingsGraphQL } from "./organization";

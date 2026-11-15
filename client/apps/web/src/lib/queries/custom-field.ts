@@ -1,7 +1,7 @@
 import {
   CustomFieldFormFieldsDocument,
   CustomFieldResourceTypesDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/custom-field/form";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 

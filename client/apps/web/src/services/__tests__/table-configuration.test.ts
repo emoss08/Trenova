@@ -1,4 +1,6 @@
-import { TableConfigurationDetailDocument } from "@trenova/graphql/generated/graphql";
+import {
+  TableConfigurationDetailDocument,
+} from "@trenova/graphql/generated/documents/table-configuration/operations";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";

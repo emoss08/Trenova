@@ -1,10 +1,12 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AgentScorecardFieldsFragment,
+  AgentScorecardWindow,
+} from "@trenova/graphql/generated/graphql";
 import {
   AgentScorecardDocument,
   AgentScorecardFieldsFragmentDoc,
-  type AgentScorecardFieldsFragment,
-  type AgentScorecardWindow,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent-scorecard/scorecard";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type AgentScorecard = AgentScorecardFieldsFragment;

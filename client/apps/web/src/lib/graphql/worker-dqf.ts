@@ -1,3 +1,23 @@
+import type {
+  DeleteEmploymentVerificationMutation,
+  DeleteEmploymentVerificationMutationVariables,
+  DqfRetentionCandidatesQuery,
+  DqfRetentionCandidatesQueryVariables,
+  DriverQualificationFileQuery,
+  DriverQualificationFileQueryVariables,
+  MarkEmploymentVerificationRequestedMutation,
+  MarkEmploymentVerificationRequestedMutationVariables,
+  OutstandingEmploymentVerificationsQuery,
+  OutstandingEmploymentVerificationsQueryVariables,
+  RecordEmploymentVerificationFollowUpMutation,
+  RecordEmploymentVerificationFollowUpMutationVariables,
+  RecordEmploymentVerificationInput,
+  RecordEmploymentVerificationMutation,
+  RecordEmploymentVerificationMutationVariables,
+  UpdateEmploymentVerificationInput,
+  UpdateEmploymentVerificationMutation,
+  UpdateEmploymentVerificationMutationVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeleteEmploymentVerificationDocument,
   DqfRetentionCandidatesDocument,
@@ -7,25 +27,7 @@ import {
   RecordEmploymentVerificationDocument,
   RecordEmploymentVerificationFollowUpDocument,
   UpdateEmploymentVerificationDocument,
-  type DeleteEmploymentVerificationMutation,
-  type DeleteEmploymentVerificationMutationVariables,
-  type DqfRetentionCandidatesQuery,
-  type DqfRetentionCandidatesQueryVariables,
-  type DriverQualificationFileQuery,
-  type DriverQualificationFileQueryVariables,
-  type MarkEmploymentVerificationRequestedMutation,
-  type MarkEmploymentVerificationRequestedMutationVariables,
-  type OutstandingEmploymentVerificationsQuery,
-  type OutstandingEmploymentVerificationsQueryVariables,
-  type RecordEmploymentVerificationFollowUpMutation,
-  type RecordEmploymentVerificationFollowUpMutationVariables,
-  type RecordEmploymentVerificationInput,
-  type RecordEmploymentVerificationMutation,
-  type RecordEmploymentVerificationMutationVariables,
-  type UpdateEmploymentVerificationInput,
-  type UpdateEmploymentVerificationMutation,
-  type UpdateEmploymentVerificationMutationVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/worker-dqf/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DQFFile = DriverQualificationFileQuery["driverQualificationFile"];

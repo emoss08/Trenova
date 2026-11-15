@@ -1,17 +1,19 @@
+import type {
+  CreateUserInput,
+  CreateUserMutation,
+  CreateUserMutationVariables,
+  PatchUserMutation,
+  PatchUserMutationVariables,
+  TimeFormat as GraphQLTimeFormat,
+  UserDetailQuery,
+  UserDetailQueryVariables,
+  UserPatchInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   CreateUserDocument,
   PatchUserDocument,
   UserDetailDocument,
-  type CreateUserInput,
-  type CreateUserMutation,
-  type CreateUserMutationVariables,
-  type PatchUserMutation,
-  type PatchUserMutationVariables,
-  type TimeFormat as GraphQLTimeFormat,
-  type UserDetailQuery,
-  type UserDetailQueryVariables,
-  type UserPatchInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/user/detail";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@trenova/shared/i18n/generated/locales";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { rootField } from "@trenova/shared/lib/reference-access";

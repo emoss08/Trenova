@@ -1,13 +1,15 @@
+import type {
+  DeskCarrierCardQuery,
+  DeskCarrierEligibilityQuery,
+  DeskCarrierIntelQuery,
+  DeskCarrierSettlementsQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeskCarrierCardDocument,
   DeskCarrierEligibilityDocument,
   DeskCarrierIntelDocument,
   DeskCarrierSettlementsDocument,
-  type DeskCarrierCardQuery,
-  type DeskCarrierEligibilityQuery,
-  type DeskCarrierIntelQuery,
-  type DeskCarrierSettlementsQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/carrier-desk/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DeskCarrier = NonNullable<DeskCarrierCardQuery["carrier"]>;

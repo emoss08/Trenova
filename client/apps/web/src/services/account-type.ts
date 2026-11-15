@@ -1,11 +1,10 @@
+import type { AccountTypeInput, AccountTypePatchInput } from "@trenova/graphql/generated/graphql";
 import {
   BulkUpdateAccountTypeStatusDocument,
   CreateAccountTypeDocument,
   PatchAccountTypeDocument,
   UpdateAccountTypeDocument,
-  type AccountTypeInput,
-  type AccountTypePatchInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/account-type/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { AccountType, BulkUpdateAccountTypeStatusRequest } from "@/types/account-type";
 

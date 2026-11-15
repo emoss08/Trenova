@@ -1,9 +1,11 @@
+import type {
+  FuelIndexFieldsFragment,
+  FuelSurchargeProgramFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   FuelIndexTableDocument,
   FuelSurchargeProgramTableDocument,
-  type FuelIndexFieldsFragment,
-  type FuelSurchargeProgramFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/fuel-surcharge/operations";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
 export type FuelIndexRow = FuelIndexFieldsFragment;

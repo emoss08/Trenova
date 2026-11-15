@@ -1,12 +1,14 @@
+import type {
+  AccessorialChargeTableQuery,
+  AccessorialMethod,
+  EntityStatus,
+  TractorTableQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   AccessorialChargeTableDocument,
-  TractorTableDocument,
-  WorkerPtoTableDocument,
-  type AccessorialChargeTableQuery,
-  type AccessorialMethod,
-  type EntityStatus,
-  type TractorTableQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/accessorial-charge/table";
+import { TractorTableDocument } from "@trenova/graphql/generated/documents/equipment/table";
+import { WorkerPtoTableDocument } from "@trenova/graphql/generated/documents/worker/page";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type {
   ConnectionKeys,

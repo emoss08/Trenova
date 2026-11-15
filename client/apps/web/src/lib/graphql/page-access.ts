@@ -1,3 +1,10 @@
+import type {
+  PageAccessDecision,
+  PageAccessFieldsFragment,
+  PageAccessRequirementFieldsFragment,
+  PageAccessUse,
+  RoleResourceGuidesQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   PageAccessDocument,
   PageAccessFieldsFragmentDoc,
@@ -5,12 +12,7 @@ import {
   PageAccessRequirementFieldsFragmentDoc,
   PageAccessScreensDocument,
   RoleResourceGuidesDocument,
-  type PageAccessDecision,
-  type PageAccessFieldsFragment,
-  type PageAccessRequirementFieldsFragment,
-  type PageAccessUse,
-  type RoleResourceGuidesQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/page-access/page-access";
 import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
 import type { RoleDraft } from "@/lib/role-draft";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";

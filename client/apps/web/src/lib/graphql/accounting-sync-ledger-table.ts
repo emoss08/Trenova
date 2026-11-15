@@ -1,7 +1,7 @@
+import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import {
   AccountingSyncRecordTableDocument,
-  type AccountingSystem,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/accounting-sync/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 

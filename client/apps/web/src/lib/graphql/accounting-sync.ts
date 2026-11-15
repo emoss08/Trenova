@@ -1,4 +1,26 @@
 import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
+import type {
+  AccountingAppSettingsFieldsFragment,
+  AccountingConnectionFieldsFragment,
+  AccountingMappingFieldsFragment,
+  AccountingMappingFilterInput,
+  AccountingMappingTargetType,
+  AccountingPreparedCertificateFieldsFragment,
+  AccountingProviderProfileFieldsFragment,
+  AccountingWebhookSubscriptionSummaryFieldsFragment,
+  AccountingReferenceKind,
+  AccountingReferenceObjectFieldsFragment,
+  AccountingSystem,
+  ChooseAccountingCompanyInput,
+  CompleteAccountingAuthorizationInput,
+  ConfirmAccountingMappingInput,
+  ConnectAccountingWithCertificateInput,
+  CreateAccountingReferenceRecordInput,
+  RenewAccountingCertificateInput,
+  SaveAccountingAppInput,
+  SetAccountingMappingInput,
+  StartAccountingAuthorizationMutation,
+} from "@trenova/graphql/generated/graphql";
 import {
   AccountingAppSettingsFieldsFragmentDoc,
   AccountingConnectionFieldsFragmentDoc,
@@ -29,27 +51,7 @@ import {
   SaveAccountingAppDocument,
   SetAccountingMappingDocument,
   StartAccountingAuthorizationDocument,
-  type AccountingAppSettingsFieldsFragment,
-  type AccountingConnectionFieldsFragment,
-  type AccountingMappingFieldsFragment,
-  type AccountingMappingFilterInput,
-  type AccountingMappingTargetType,
-  type AccountingPreparedCertificateFieldsFragment,
-  type AccountingProviderProfileFieldsFragment,
-  type AccountingWebhookSubscriptionSummaryFieldsFragment,
-  type AccountingReferenceKind,
-  type AccountingReferenceObjectFieldsFragment,
-  type AccountingSystem,
-  type ChooseAccountingCompanyInput,
-  type CompleteAccountingAuthorizationInput,
-  type ConfirmAccountingMappingInput,
-  type ConnectAccountingWithCertificateInput,
-  type CreateAccountingReferenceRecordInput,
-  type RenewAccountingCertificateInput,
-  type SaveAccountingAppInput,
-  type SetAccountingMappingInput,
-  type StartAccountingAuthorizationMutation,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/accounting-sync/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { chunk } from "@trenova/shared/lib/utils";
 

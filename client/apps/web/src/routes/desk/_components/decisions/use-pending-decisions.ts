@@ -1,3 +1,8 @@
+import type {
+  PendingPlanFieldsFragment,
+  PendingProposalFieldsFragment,
+  PendingDecisionsInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   PendingDecisionsDocument,
   PendingDecisionSummaryDocument,
@@ -5,10 +10,7 @@ import {
   PendingProposalFieldsFragmentDoc,
   PlanStepsDocument,
   RecentDecisionsDocument,
-  type PendingPlanFieldsFragment,
-  type PendingProposalFieldsFragment,
-  type PendingDecisionsInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/decisions";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { ProposalHold } from "@/types/assistant";

@@ -1,4 +1,6 @@
-import { JournalReversalTableDocument } from "@trenova/graphql/generated/graphql";
+import {
+  JournalReversalTableDocument,
+} from "@trenova/graphql/generated/documents/journal-reversal/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 

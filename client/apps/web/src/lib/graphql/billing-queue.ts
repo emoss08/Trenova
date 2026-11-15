@@ -1,19 +1,25 @@
+import type {
+  BillingQueueFormulaTemplateQuery,
+  BillingQueueRateAgreementQuery,
+  BillingQueueShipmentQuery,
+  BillingQueueAssignInput,
+  BillingQueueItemsFilterInput,
+  BillingQueueItemsQuery,
+  BillingQueueUpdateStatusInput,
+  FieldFilterInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   AssignBillingQueueBillerDocument,
-  BillingQueueFormulaTemplateDocument,
+  UpdateBillingQueueStatusDocument,
+} from "@trenova/graphql/generated/documents/billing-queue/mutations";
+import {
   BillingQueueItemsDocument,
+} from "@trenova/graphql/generated/documents/billing-queue/queue";
+import {
+  BillingQueueFormulaTemplateDocument,
   BillingQueueRateAgreementDocument,
   BillingQueueShipmentDocument,
-  type BillingQueueFormulaTemplateQuery,
-  type BillingQueueRateAgreementQuery,
-  type BillingQueueShipmentQuery,
-  UpdateBillingQueueStatusDocument,
-  type BillingQueueAssignInput,
-  type BillingQueueItemsFilterInput,
-  type BillingQueueItemsQuery,
-  type BillingQueueUpdateStatusInput,
-  type FieldFilterInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/billing-queue/shipment";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { billingQueueItemSchema, type BillingQueueItem } from "@trenova/shared/types/billing-queue";

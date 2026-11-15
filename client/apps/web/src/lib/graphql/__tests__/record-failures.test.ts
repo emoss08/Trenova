@@ -1,4 +1,6 @@
-import { DeskRecordFailuresDocument } from "@trenova/graphql/generated/graphql";
+import {
+  DeskRecordFailuresDocument,
+} from "@trenova/graphql/generated/documents/service-failure/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchRecordFailures } from "../record-failures";

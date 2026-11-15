@@ -1,4 +1,9 @@
 import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
+import type {
+  AgentProfileFieldsFragment,
+  AgentProfileGuidanceFieldsFragment,
+  AgentProfileVersionFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   AddAgentOrganizationProfileGuidanceDocument,
   AddMyAgentProfileGuidanceDocument,
@@ -14,10 +19,7 @@ import {
   RegenerateMyAgentProfileDocument,
   RetireAgentOrganizationProfileGuidanceDocument,
   RetireMyAgentProfileGuidanceDocument,
-  type AgentProfileFieldsFragment,
-  type AgentProfileGuidanceFieldsFragment,
-  type AgentProfileVersionFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/profile";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type AgentProfileVersion = AgentProfileVersionFieldsFragment;

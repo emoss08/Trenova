@@ -1,8 +1,8 @@
+import type { OrganizationInput } from "@trenova/graphql/generated/graphql";
 import {
   OrganizationSettingsDocument,
   UpdateOrganizationSettingsDocument,
-  type OrganizationInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/organization/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {

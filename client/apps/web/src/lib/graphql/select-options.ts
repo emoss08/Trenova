@@ -1,9 +1,9 @@
-import {
-  SelectOptionsDocument,
-  type SelectOptionResource,
-  type SelectOptionsInput,
-  type SelectOptionsQuery,
+import type {
+  SelectOptionResource,
+  SelectOptionsInput,
+  SelectOptionsQuery,
 } from "@trenova/graphql/generated/graphql";
+import { SelectOptionsDocument } from "@trenova/graphql/generated/documents/select-options/options";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 

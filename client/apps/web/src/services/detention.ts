@@ -1,36 +1,42 @@
+import type {
+  ApproveDetentionOccurrenceMutation,
+  CreateDetentionPolicyMutation,
+  DeleteDetentionPolicyMutation,
+  DetentionBacktestMutation,
+  DetentionDeskQuery,
+  DetentionDisputePacketQuery,
+  DetentionOccurrenceDetailQuery,
+  DetentionPolicyInput,
+  DetentionPolicyPreviewQuery,
+  DetentionPolicyQuery,
+  DisputeDetentionOccurrenceMutation,
+  SendDetentionNoticeMutation,
+  ShipmentDetentionQuery,
+  StopScheduleType,
+  StopType,
+  UpdateDetentionPolicyMutation,
+  WaiveDetentionOccurrenceMutation,
+} from "@trenova/graphql/generated/graphql";
+import {
+  DetentionBacktestDocument,
+  DetentionPolicyPreviewDocument,
+} from "@trenova/graphql/generated/documents/detention/analytics";
 import {
   ApproveDetentionOccurrenceDocument,
-  CreateDetentionPolicyDocument,
-  DeleteDetentionPolicyDocument,
-  DetentionBacktestDocument,
   DetentionDeskDocument,
   DetentionDisputePacketDocument,
   DetentionOccurrenceDetailDocument,
-  DetentionPolicyDocument,
-  DetentionPolicyPreviewDocument,
   DisputeDetentionOccurrenceDocument,
   SendDetentionNoticeDocument,
   ShipmentDetentionDocument,
-  UpdateDetentionPolicyDocument,
   WaiveDetentionOccurrenceDocument,
-  type ApproveDetentionOccurrenceMutation,
-  type CreateDetentionPolicyMutation,
-  type DeleteDetentionPolicyMutation,
-  type DetentionBacktestMutation,
-  type DetentionDeskQuery,
-  type DetentionDisputePacketQuery,
-  type DetentionOccurrenceDetailQuery,
-  type DetentionPolicyInput,
-  type DetentionPolicyPreviewQuery,
-  type DetentionPolicyQuery,
-  type DisputeDetentionOccurrenceMutation,
-  type SendDetentionNoticeMutation,
-  type ShipmentDetentionQuery,
-  type StopScheduleType,
-  type StopType,
-  type UpdateDetentionPolicyMutation,
-  type WaiveDetentionOccurrenceMutation,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/detention/desk";
+import {
+  CreateDetentionPolicyDocument,
+  DeleteDetentionPolicyDocument,
+  DetentionPolicyDocument,
+  UpdateDetentionPolicyDocument,
+} from "@trenova/graphql/generated/documents/detention/table";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {

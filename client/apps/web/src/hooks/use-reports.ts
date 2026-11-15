@@ -1,19 +1,29 @@
 import type { ReportDefinitionInput } from "@/lib/graphql/reports";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  ReportDefinitionByIdQuery,
+  ReportDefinitionOptionFieldsFragment,
+  ReportDrillInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   DataTablePageInfoFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/equipment/table";
+import {
   ReportDashboardFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/reports/dashboards";
+import {
   ReportDefinitionFieldsFragmentDoc,
   ReportDefinitionOptionFieldsFragmentDoc,
   ReportDefinitionOptionsDocument,
+} from "@trenova/graphql/generated/documents/reports/definitions";
+import {
   ReportPreviewFieldsFragmentDoc,
-  ReportRunFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/reports/preview";
+import { ReportRunFieldsFragmentDoc } from "@trenova/graphql/generated/documents/reports/runs";
+import {
   ReportScheduleFieldsFragmentDoc,
-  ReportViewFieldsFragmentDoc,
-  type ReportDefinitionByIdQuery,
-  type ReportDefinitionOptionFieldsFragment,
-  type ReportDrillInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/reports/schedules";
+import { ReportViewFieldsFragmentDoc } from "@trenova/graphql/generated/documents/reports/views";
 import {
   cancelReportRun,
   createReportDashboard,

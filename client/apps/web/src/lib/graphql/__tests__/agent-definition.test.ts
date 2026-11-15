@@ -1,4 +1,5 @@
-import { AgentChoicesDocument, MyAgentsDocument } from "@trenova/graphql/generated/graphql";
+import { MyAgentsDocument } from "@trenova/graphql/generated/documents/agent/access";
+import { AgentChoicesDocument } from "@trenova/graphql/generated/documents/agent/definitions";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {

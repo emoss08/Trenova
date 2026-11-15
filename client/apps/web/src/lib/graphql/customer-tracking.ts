@@ -1,24 +1,28 @@
+import type {
+  CustomerStatusNotificationFieldsFragment,
+  CustomerStatusNotificationsQuery,
+  CustomerStatusNotificationsQueryVariables,
+  CustomerTrackingField,
+  CustomerTrackingLinkFieldsFragment,
+  CustomerTrackingLinksQuery,
+  CustomerTrackingLinksQueryVariables,
+  CustomerTrackingProfileFieldsFragment,
+  CustomerTrackingProfileQuery,
+  CustomerTrackingProfileQueryVariables,
+  IssueCustomerTrackingLinkMutation,
+  IssueCustomerTrackingLinkMutationVariables,
+  RevokeCustomerTrackingLinkMutation,
+  RevokeCustomerTrackingLinkMutationVariables,
+} from "@trenova/graphql/generated/graphql";
+import {
+  CustomerTrackingProfileDocument,
+} from "@trenova/graphql/generated/documents/customer/customer-tracking-profile";
 import {
   CustomerStatusNotificationsDocument,
   CustomerTrackingLinksDocument,
-  CustomerTrackingProfileDocument,
   IssueCustomerTrackingLinkDocument,
   RevokeCustomerTrackingLinkDocument,
-  type CustomerStatusNotificationFieldsFragment,
-  type CustomerStatusNotificationsQuery,
-  type CustomerStatusNotificationsQueryVariables,
-  type CustomerTrackingField,
-  type CustomerTrackingLinkFieldsFragment,
-  type CustomerTrackingLinksQuery,
-  type CustomerTrackingLinksQueryVariables,
-  type CustomerTrackingProfileFieldsFragment,
-  type CustomerTrackingProfileQuery,
-  type CustomerTrackingProfileQueryVariables,
-  type IssueCustomerTrackingLinkMutation,
-  type IssueCustomerTrackingLinkMutationVariables,
-  type RevokeCustomerTrackingLinkMutation,
-  type RevokeCustomerTrackingLinkMutationVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/shipment/customer-tracking";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type CustomerTrackingLinkRow = CustomerTrackingLinkFieldsFragment;

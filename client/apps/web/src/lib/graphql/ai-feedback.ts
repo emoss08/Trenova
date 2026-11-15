@@ -1,13 +1,15 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AiFeedbackReason,
+  AiFeedbackTargetType,
+  MyAiFeedbackFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   ClearMyAiFeedbackDocument,
   MyAiFeedbackDocument,
   MyAiFeedbackFieldsFragmentDoc,
   SetMyAiFeedbackDocument,
-  type AiFeedbackReason,
-  type AiFeedbackTargetType,
-  type MyAiFeedbackFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/ai-feedback/ai-feedback";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type AiFeedback = MyAiFeedbackFieldsFragment;

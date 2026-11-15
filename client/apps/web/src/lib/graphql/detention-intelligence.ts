@@ -1,14 +1,16 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  DetentionIntelligenceQuery,
+  DetentionIntelligenceTotalsFieldsFragment,
+  DetentionNarrativeSegmentFieldsFragment,
+  DetentionSplitFigureFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   DetentionIntelligenceDocument,
   DetentionIntelligenceTotalsFieldsFragmentDoc,
   DetentionNarrativeSegmentFieldsFragmentDoc,
   DetentionSplitFigureFieldsFragmentDoc,
-  type DetentionIntelligenceQuery,
-  type DetentionIntelligenceTotalsFieldsFragment,
-  type DetentionNarrativeSegmentFieldsFragment,
-  type DetentionSplitFigureFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/detention/analytics";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 type RawIntelligence = DetentionIntelligenceQuery["detentionIntelligence"];

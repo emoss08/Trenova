@@ -19,7 +19,9 @@ import {
   type SettlementBatchRow,
 } from "@/lib/graphql/driver-settlement";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
-import { SettlementBatchDetailDocument } from "@trenova/graphql/generated/graphql";
+import {
+  SettlementBatchDetailDocument,
+} from "@trenova/graphql/generated/documents/driver-settlement/operations";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type {
   DriverSettlementStatus,

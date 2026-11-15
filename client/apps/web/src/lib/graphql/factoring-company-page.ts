@@ -1,21 +1,25 @@
+import type {
+  FactoringVerdictTotalsFieldsFragment,
+  FactoringAgreementActivityQuery,
+  FactoringCompanyOverviewQuery,
+  FactoringCompanySchedulesQuery,
+  FactoringCustomerNoticeStage,
+  FactoringFundingPreviewInput,
+  FactoringFundingPreviewQuery,
+  FactoringReserveHistoryQuery,
+} from "@trenova/graphql/generated/graphql";
+import {
+  FactoringAgreementFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/factoring/agreements";
 import {
   FactoringAgreementActivityDocument,
-  FactoringAgreementFieldsFragmentDoc,
   FactoringVerdictTotalsFieldsFragmentDoc,
-  type FactoringVerdictTotalsFieldsFragment,
   FactoringCompanyCustomersDocument,
   FactoringCompanyOverviewDocument,
   FactoringCompanySchedulesDocument,
   FactoringFundingPreviewDocument,
   FactoringReserveHistoryDocument,
-  type FactoringAgreementActivityQuery,
-  type FactoringCompanyOverviewQuery,
-  type FactoringCompanySchedulesQuery,
-  type FactoringCustomerNoticeStage,
-  type FactoringFundingPreviewInput,
-  type FactoringFundingPreviewQuery,
-  type FactoringReserveHistoryQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/factoring/company-page";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";

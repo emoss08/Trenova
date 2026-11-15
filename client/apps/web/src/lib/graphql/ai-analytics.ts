@@ -1,3 +1,12 @@
+import type {
+  AgentAnalyticsQuery,
+  AgentAnalyticsToolFailuresQuery,
+  AiAnalyticsInput,
+  AiAnalyticsProviderFieldsFragment,
+  AiAnalyticsSegmentFieldsFragment,
+  AiAnalyticsSeriesFieldsFragment,
+  AiTask,
+} from "@trenova/graphql/generated/graphql";
 import {
   AgentAnalyticsDocument,
   AgentAnalyticsToolFailuresDocument,
@@ -5,14 +14,7 @@ import {
   AiAnalyticsSegmentFieldsFragmentDoc,
   AiAnalyticsSeriesFieldsFragmentDoc,
   RouteAiTaskDocument,
-  type AgentAnalyticsQuery,
-  type AgentAnalyticsToolFailuresQuery,
-  type AiAnalyticsInput,
-  type AiAnalyticsProviderFieldsFragment,
-  type AiAnalyticsSegmentFieldsFragment,
-  type AiAnalyticsSeriesFieldsFragment,
-  type AiTask,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/analytics";
 import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 

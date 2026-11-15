@@ -1,18 +1,22 @@
+import type {
+  AgentExceptionResolveInput,
+  AgentPlanDecisionInput,
+  AgentProposalDecisionInput,
+  DecideAgentProposalsInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   CommitMyDecisionNowDocument,
-  DecideAgentPlanDocument,
-  DecideAgentProposalDocument,
-  DecideAgentProposalsDocument,
   DecideMyPlanDocument,
   DecideMyProposalDocument,
   DecideMyProposalsDocument,
-  ResolveAgentExceptionDocument,
   UndoMyDecisionDocument,
-  type AgentExceptionResolveInput,
-  type AgentPlanDecisionInput,
-  type AgentProposalDecisionInput,
-  type DecideAgentProposalsInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/access";
+import { DecideAgentProposalsDocument } from "@trenova/graphql/generated/documents/agent/decisions";
+import {
+  ResolveAgentExceptionDocument,
+} from "@trenova/graphql/generated/documents/agent/exceptions";
+import { DecideAgentPlanDocument } from "@trenova/graphql/generated/documents/agent/plans";
+import { DecideAgentProposalDocument } from "@trenova/graphql/generated/documents/agent/proposals";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 /**

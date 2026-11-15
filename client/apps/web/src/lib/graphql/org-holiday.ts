@@ -1,19 +1,21 @@
+import type {
+  CreateOrgHolidayMutation,
+  CreateOrgHolidayMutationVariables,
+  DeleteOrgHolidayMutation,
+  DeleteOrgHolidayMutationVariables,
+  OrgHolidayFieldsFragment,
+  OrgHolidayInput,
+  OrgHolidaysQuery,
+  OrgHolidaysQueryVariables,
+  UpdateOrgHolidayMutation,
+  UpdateOrgHolidayMutationVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   CreateOrgHolidayDocument,
   DeleteOrgHolidayDocument,
   OrgHolidaysDocument,
   UpdateOrgHolidayDocument,
-  type CreateOrgHolidayMutation,
-  type CreateOrgHolidayMutationVariables,
-  type DeleteOrgHolidayMutation,
-  type DeleteOrgHolidayMutationVariables,
-  type OrgHolidayFieldsFragment,
-  type OrgHolidayInput,
-  type OrgHolidaysQuery,
-  type OrgHolidaysQueryVariables,
-  type UpdateOrgHolidayMutation,
-  type UpdateOrgHolidayMutationVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/org-holiday/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type OrgHolidayRow = OrgHolidayFieldsFragment;

@@ -1,5 +1,5 @@
 import persistedDocuments from "@trenova/graphql/generated/persisted-documents.json";
-import { WorkerTableDocument } from "@trenova/graphql/generated/graphql";
+import { WorkerTableDocument } from "@trenova/graphql/generated/documents/worker/page";
 import { workerSchema } from "@trenova/shared/types/worker";
 import { describe, expect, it } from "vitest";
 

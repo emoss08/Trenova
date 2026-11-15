@@ -1,8 +1,8 @@
+import type { LocationCategoryInput } from "@trenova/graphql/generated/graphql";
 import {
   CreateLocationCategoryDocument,
   UpdateLocationCategoryDocument,
-  type LocationCategoryInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/location-category/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { LocationCategory } from "@/types/location-category";
 

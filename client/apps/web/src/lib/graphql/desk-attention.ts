@@ -1,4 +1,14 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  DeskActivityEntryFieldsFragment,
+  DeskActivityOutcome,
+  DeskAttentionGroupFieldsFragment,
+  DeskLens,
+  DeskRecordFieldsFragment,
+  WatchtowerSeverity,
+  WatchtowerSourceKind,
+  WatchtowerItemFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeskActivityDocument,
   DeskActivityEntryDocument,
@@ -6,17 +16,11 @@ import {
   DeskAttentionDocument,
   DeskAttentionGroupFieldsFragmentDoc,
   DeskRecordFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/agent/desk-attention";
+import {
   WatchtowerAgentFieldsFragmentDoc,
   WatchtowerItemFieldsFragmentDoc,
-  type DeskActivityEntryFieldsFragment,
-  type DeskActivityOutcome,
-  type DeskAttentionGroupFieldsFragment,
-  type DeskLens,
-  type DeskRecordFieldsFragment,
-  type WatchtowerSeverity,
-  type WatchtowerSourceKind,
-  type WatchtowerItemFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/watchtower/watchtower";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { WatchtowerAgent } from "@/lib/graphql/watchtower";
 

@@ -170,6 +170,12 @@ export default defineConfig({
             message:
               'Import the query key factory from its own module (import { shipment } from "@/lib/queries/shipment"). An object merging every factory puts every factory, service and GraphQL document in the download of each page that imports it.',
           },
+          {
+            name: "@trenova/graphql/generated/graphql",
+            allowTypeImports: true,
+            message:
+              'Types only, with `import type`. Import a document from its own module (import { ShipmentTableDocument } from "@trenova/graphql/generated/documents/shipment/table"): the dev server cannot tree-shake, so any other import of this module loads every document the app has on every page. See docs/engineering/web-build.md.',
+          },
         ],
         patterns: [
           {

@@ -1,4 +1,13 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AiRetrievalIndexStatus,
+  AiRetrievalPauseReason,
+  AiRetrievalReindexEstimateQuery,
+  AiRetrievalSettingsPatchInput,
+  AiRetrievalSourceType,
+  AiRetrievalStatusFieldsFragment,
+  AiRetrievalUnavailableReason,
+} from "@trenova/graphql/generated/graphql";
 import {
   AiRetrievalFailedEntryTableDocument,
   AiRetrievalReindexEstimateDocument,
@@ -6,14 +15,7 @@ import {
   AiRetrievalStatusFieldsFragmentDoc,
   ReindexAiRetrievalSourceDocument,
   UpdateAiRetrievalSettingsDocument,
-  type AiRetrievalIndexStatus,
-  type AiRetrievalPauseReason,
-  type AiRetrievalReindexEstimateQuery,
-  type AiRetrievalSettingsPatchInput,
-  type AiRetrievalSourceType,
-  type AiRetrievalStatusFieldsFragment,
-  type AiRetrievalUnavailableReason,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/retrieval";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";

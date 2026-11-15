@@ -1,3 +1,10 @@
+import type {
+  CarrierIntelControlPatchInput,
+  CarrierIntelCostEstimateQuery,
+  CarrierIntelCostEstimateQueryVariables,
+  CarrierIntelMonitoringStatusQuery,
+  CarrierIntelUsageQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   CarrierIntelCostEstimateDocument,
   CarrierIntelMonitoringStatusDocument,
@@ -5,12 +12,7 @@ import {
   ResumeCarrierIntelMonitoringDocument,
   SwitchCarrierIntelProviderDocument,
   UpdateCarrierIntelControlDocument,
-  type CarrierIntelControlPatchInput,
-  type CarrierIntelCostEstimateQuery,
-  type CarrierIntelCostEstimateQueryVariables,
-  type CarrierIntelMonitoringStatusQuery,
-  type CarrierIntelUsageQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/carrier-intelligence/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { UnmaskFragments } from "@trenova/shared/types/graphql-connection";
 import type { CarrierIntelControl, CarrierIntelRuleDefinition } from "./carrier-intelligence";

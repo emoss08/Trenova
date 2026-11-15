@@ -1,4 +1,4 @@
-import { ServiceTypeTableDocument } from "@trenova/graphql/generated/graphql";
+import { ServiceTypeTableDocument } from "@trenova/graphql/generated/documents/service-type/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 

@@ -1,4 +1,4 @@
-import { EdiPartnerReadinessDocument } from "@trenova/graphql/generated/graphql";
+import { EdiPartnerReadinessDocument } from "@trenova/graphql/generated/documents/edi/readiness";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { ResultOf } from "@graphql-typed-document-node/core";
 

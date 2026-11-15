@@ -1,8 +1,8 @@
 import {
   EdiPartnerScorecardsDocument,
-  EdiSummaryDocument,
   EdiVolumeSeriesDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/edi/analytics";
+import { EdiSummaryDocument } from "@trenova/graphql/generated/documents/edi/summary";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { fetchDeskEdiPartner, fetchEdiPartnerMessages } from "@/lib/graphql/edi-partner-card";
 import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";

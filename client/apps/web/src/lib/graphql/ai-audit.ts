@@ -1,4 +1,18 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AiAuditChainStatusFieldsFragment,
+  AiAuditEventDetailFieldsFragment,
+  AiAuditEventKind,
+  AiAuditEventOutcome,
+  AiAuditEventRowFieldsFragment,
+  AiAuditExportDownloadMutation,
+  AiAuditExportFieldsFragment,
+  AiAuditExportFormat,
+  AiAuditExportStatus,
+  AiAuditVerificationStatus,
+  AuditLogTableRowFieldsFragment,
+  RequestAiAuditExportInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   AiAuditChainStatusDocument,
   AiAuditChainStatusFieldsFragmentDoc,
@@ -9,22 +23,12 @@ import {
   AiAuditExportDownloadDocument,
   AiAuditExportFieldsFragmentDoc,
   AiAuditExportTableDocument,
-  AuditLogTableRowFieldsFragmentDoc,
   RequestAiAuditExportDocument,
   VerifyAiAuditChainDocument,
-  type AiAuditChainStatusFieldsFragment,
-  type AiAuditEventDetailFieldsFragment,
-  type AiAuditEventKind,
-  type AiAuditEventOutcome,
-  type AiAuditEventRowFieldsFragment,
-  type AiAuditExportDownloadMutation,
-  type AiAuditExportFieldsFragment,
-  type AiAuditExportFormat,
-  type AiAuditExportStatus,
-  type AiAuditVerificationStatus,
-  type AuditLogTableRowFieldsFragment,
-  type RequestAiAuditExportInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/audit";
+import {
+  AuditLogTableRowFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/audit-log/table";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";

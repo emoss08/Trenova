@@ -1,8 +1,8 @@
+import type { MyTableLayoutQuery } from "@trenova/graphql/generated/graphql";
 import {
   ResetMyTableLayoutDocument,
   SaveMyTableLayoutDocument,
-  type MyTableLayoutQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/table-layout/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { TableLayout } from "@/types/table-configuration";
 

@@ -1,3 +1,11 @@
+import type {
+  AiCorrectionFieldResultFieldsFragment,
+  AiCorrectionTableRowFieldsFragment,
+  ExtractionAccuracyQuery,
+  ExtractionFieldAccuracyFieldsFragment,
+  ExtractionProviderTrendsQuery,
+  ExtractionWeekAccuracyFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   AiCorrectionDetailDocument,
   AiCorrectionDetailFieldsFragmentDoc,
@@ -8,13 +16,7 @@ import {
   ExtractionFieldAccuracyFieldsFragmentDoc,
   ExtractionProviderTrendsDocument,
   ExtractionWeekAccuracyFieldsFragmentDoc,
-  type AiCorrectionFieldResultFieldsFragment,
-  type AiCorrectionTableRowFieldsFragment,
-  type ExtractionAccuracyQuery,
-  type ExtractionFieldAccuracyFieldsFragment,
-  type ExtractionProviderTrendsQuery,
-  type ExtractionWeekAccuracyFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/extraction-accuracy/extraction-accuracy";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";

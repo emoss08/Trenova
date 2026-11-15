@@ -1,9 +1,11 @@
+import type {
+  IftaJurisdictionFieldsFragment,
+  IftaJurisdictionsQuery,
+  IftaJurisdictionsQueryVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   IftaJurisdictionsDocument,
-  type IftaJurisdictionFieldsFragment,
-  type IftaJurisdictionsQuery,
-  type IftaJurisdictionsQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/ifta-jurisdiction/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { queryOptions } from "@tanstack/react-query";
 

@@ -1,21 +1,27 @@
+import type {
+  AgentChoiceFieldsFragment,
+  AgentAccessMode,
+  AgentDefinitionCardFieldsFragment,
+  AgentMatchOutcome,
+  FieldFilterInput,
+  MyAgentFieldsFragment,
+  MyAgentOrigin,
+  MyAgentsInput,
+} from "@trenova/graphql/generated/graphql";
+import {
+  MyAgentFieldsFragmentDoc,
+  MyAgentMatchDocument,
+  MyAgentsDocument,
+} from "@trenova/graphql/generated/documents/agent/access";
 import {
   AgentChoiceFieldsFragmentDoc,
   AgentChoicesDocument,
   AgentDefinitionCardFieldsFragmentDoc,
   AgentDefinitionCardsDocument,
+} from "@trenova/graphql/generated/documents/agent/definitions";
+import {
   DataTablePageInfoFieldsFragmentDoc,
-  MyAgentFieldsFragmentDoc,
-  type AgentChoiceFieldsFragment,
-  MyAgentMatchDocument,
-  MyAgentsDocument,
-  type AgentAccessMode,
-  type AgentDefinitionCardFieldsFragment,
-  type AgentMatchOutcome,
-  type FieldFilterInput,
-  type MyAgentFieldsFragment,
-  type MyAgentOrigin,
-  type MyAgentsInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/equipment/table";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { rootField } from "@trenova/shared/lib/reference-access";

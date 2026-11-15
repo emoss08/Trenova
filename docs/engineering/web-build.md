@@ -65,6 +65,53 @@ Things that were on every page and are not any more, and how they were kept off:
   that service's own module, keeping its other exports with `importOriginal`. Taking it off
   the shell first cut the startup scripts from 617 to 532 kB gzip, and the budget fell to 544 kB.
 
+## Loading a page before its link is clicked
+
+Two layers:
+
+- **Pages, on prediction.** `watchLinks` (`@trenova/shared/lib/router/link-foresight`, started
+  by `predictLinksWhenIdle` in `main.tsx` after load, at idle time) hands every link to a
+  page of the app (`isPageLink`: same origin, the service worker's `routeRequest` answers it
+  with the shell, and the route it matches has no path params, so a list, a board, a settings
+  page, Home's shortcuts, the sidebar) to ForesightJS (`js.foresight`). ForesightJS predicts
+  the link from the pointer's path and from a touch, and the prediction runs
+  `router.preloadRoute` with the link's path, query and hash: the page's code, then its
+  loader, so its `prefetch` warms the data it opens with. No component opts in. A link stays
+  registered and may warm again after `PAGE_REWARM_MS`; a query still fresh is not fetched
+  again, and the query client keeps data this young when the page mounts.
+- **Everything else, on intent.** The router's `defaultPreload: "intent"` starts any link,
+  records included, on hover or focus.
+
+What it leaves out, and why. Each was in the first version and made the app slower than the
+preloading made it faster:
+
+- **Record links** (`/shipments/$id`). A list holds one per row, so they were most of the
+  links watched, and ForesightJS checks every watched link on every pointer move. Hover
+  already starts them, and after the first visit their code is loaded anyway.
+- **Tab and scroll prediction.** Tab prediction rebuilds the page's tab order after every
+  change to the document; focus preloads through the router already. Scroll prediction fires
+  for every link in the direction of travel.
+- **Work inside renders.** Changes to the document are gathered by a `MutationObserver` and
+  looked at when the browser is idle (at most `LINK_SCAN_IDLE_TIMEOUT_MS` later), never in
+  the commit that made them. Links are unregistered as they leave the document, since
+  ForesightJS keeps a detached element registered.
+
+A link whose query names a record (`?panelEntityId=ord_…`, a list with a record's panel
+open) is a record link too: `namesRecord` asks `containsRecordId` (`lib/record-ids.ts`). A
+route whose path holds a param that is not a record (an organization slug, a tab name) counts
+as a record here; if one appears, give `isPageLink` the rule rather than a list of routes.
+
+A preload never touches a query something on screen is reading (`pageLoader` skips it on
+`cause === "preload"`): hovering or predicting a link to the page you are on, or to one sharing
+its queries, used to refetch them and redraw every reader.
+
+Prediction runs in builds only (`predictLinksWhenIdle` returns at once under
+`import.meta.env.DEV`); judge it on a production build. The unbundled dev server serves a page as
+over a thousand separate modules (Shipments: about 1,450 before its table asks for data), so
+any preload in dev, hover or prediction, adds hundreds of module requests that queue behind
+the browser's few connections to the dev server. In a build the same preload is a few cached
+chunks and the page's data.
+
 `main.tsx` imports `@trenova/shared/styles/app.css` before anything else. A cascade layer is
 ranked by where its name first appears, and component stylesheets carry `@layer base` rules
 of their own; imported after the router, they put `base` below Tailwind's `theme`.
@@ -192,8 +239,14 @@ suites run by `pnpm test`):
 - `strip-fragment-text.mjs` replaces each fragment's GraphQL text with its name. The server
   only accepts persisted operations by hash, and nothing at runtime reads a fragment's text.
 - `split-documents.mjs` moves the documents out of `graphql.ts` into one module per operations
-  file (`src/generated/documents/<area>/<file>.ts`), re-exported from `graphql.ts`, so a route's
-  documents travel with it. It reads definitions with the GraphQL parser and fails loudly if
+  file (`src/generated/documents/<area>/<file>.ts`), so a route's documents travel with it.
+  Code imports a document from that module (`import { ShipmentTableDocument } from
+  "@trenova/graphql/generated/documents/shipment/table"`) and only types from `graphql.ts`, with
+  `import type` (`no-restricted-imports` with `allowTypeImports`). `graphql.ts` still re-exports
+  every document for `gql.ts`, so a value import of it, even `import { type X }`, which
+  `verbatimModuleSyntax` keeps as a module load, loads all ~260 document modules: a build
+  tree-shakes them, the dev server cannot, and they were a fifth of the modules every page
+  fetched in dev. It reads definitions with the GraphQL parser and fails loudly if
   the generator's output changes shape.
 
 The package declares `"sideEffects": false`. Import `getFragmentData` from

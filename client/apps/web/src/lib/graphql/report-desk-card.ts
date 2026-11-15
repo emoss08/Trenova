@@ -1,12 +1,14 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
-import {
-  DeskReportRunCardDocument,
-  ReportPreviewFieldsFragmentDoc,
-  ReportRunFieldsFragmentDoc,
-  type DeskReportRunCardQuery,
-  type ReportPreviewFieldsFragment,
-  type ReportRunFieldsFragment,
+import type {
+  DeskReportRunCardQuery,
+  ReportPreviewFieldsFragment,
+  ReportRunFieldsFragment,
 } from "@trenova/graphql/generated/graphql";
+import { DeskReportRunCardDocument } from "@trenova/graphql/generated/documents/reports/desk";
+import {
+  ReportPreviewFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/reports/preview";
+import { ReportRunFieldsFragmentDoc } from "@trenova/graphql/generated/documents/reports/runs";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 type RawCard = DeskReportRunCardQuery["reportRunDeskCard"];

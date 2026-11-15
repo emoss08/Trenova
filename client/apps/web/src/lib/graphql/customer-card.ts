@@ -1,9 +1,11 @@
+import type {
+  DeskCustomerCardQuery,
+  DeskCustomerRateAgreementsQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeskCustomerCardDocument,
   DeskCustomerRateAgreementsDocument,
-  type DeskCustomerCardQuery,
-  type DeskCustomerRateAgreementsQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/customer/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DeskCustomer = NonNullable<DeskCustomerCardQuery["customer"]>;

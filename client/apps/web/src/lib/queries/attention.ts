@@ -1,4 +1,4 @@
-import { AttentionSummaryDocument } from "@trenova/graphql/generated/graphql";
+import { AttentionSummaryDocument } from "@trenova/graphql/generated/documents/attention/summary";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 

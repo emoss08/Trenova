@@ -1,11 +1,13 @@
+import type {
+  WorkerOverviewQuery,
+  WorkerOverviewQueryVariables,
+  WorkerRosterAttentionQuery,
+  WorkerRosterAttentionQueryVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   WorkerOverviewDocument,
   WorkerRosterAttentionDocument,
-  type WorkerOverviewQuery,
-  type WorkerOverviewQueryVariables,
-  type WorkerRosterAttentionQuery,
-  type WorkerRosterAttentionQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/worker-overview/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type WorkerOverview = WorkerOverviewQuery["workerOverview"];

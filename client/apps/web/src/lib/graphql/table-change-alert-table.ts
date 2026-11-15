@@ -1,4 +1,6 @@
-import { TcaSubscriptionTableDocument } from "@trenova/graphql/generated/graphql";
+import {
+  TcaSubscriptionTableDocument,
+} from "@trenova/graphql/generated/documents/table-change-alert/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 

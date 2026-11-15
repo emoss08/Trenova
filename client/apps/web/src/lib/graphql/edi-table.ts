@@ -1,3 +1,4 @@
+import type { EdiTransferDirection } from "@trenova/graphql/generated/graphql";
 import {
   EdiCommunicationProfileTableDocument,
   EdiFlowInstanceTableDocument,
@@ -6,8 +7,7 @@ import {
   EdiMessageTableDocument,
   EdiPartnerTableDocument,
   EdiTransferTableDocument,
-  type EdiTransferDirection,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/edi/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow, DataTableRow } from "@trenova/shared/types/data-table";
 import { ediMappingResolutionSchema, loadTenderPayloadSchema } from "@trenova/shared/types/edi";

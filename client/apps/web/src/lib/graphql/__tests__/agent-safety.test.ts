@@ -3,7 +3,7 @@ import {
   AgentSafetySummaryDocument,
   AgentToolRuleTableDocument,
   AgentToolSafetyTableDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/safety";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {

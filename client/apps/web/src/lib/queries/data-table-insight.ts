@@ -1,10 +1,12 @@
+import type {
+  DataTableAggregateInput,
+  DataTableFacetInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   DataTableAggregatesDocument,
   DataTableFacetsDocument,
   DataTableInsightFieldsDocument,
-  type DataTableAggregateInput,
-  type DataTableFacetInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/data-table-insight/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 

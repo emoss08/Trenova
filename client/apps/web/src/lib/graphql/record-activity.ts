@@ -1,7 +1,7 @@
+import type { DeskRecordActivityQuery } from "@trenova/graphql/generated/graphql";
 import {
   DeskRecordActivityDocument,
-  type DeskRecordActivityQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/record-activity/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type ActivityEntry =

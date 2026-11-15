@@ -1,4 +1,9 @@
 import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
+import type {
+  RecordShareEmailStatus,
+  RecordShareFieldsFragment,
+  RecordShareUserFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   RecordShareCandidatesDocument,
   RecordShareFieldsFragmentDoc,
@@ -6,10 +11,7 @@ import {
   RecordSharesDocument,
   ShareRecordDocument,
   UnshareRecordDocument,
-  type RecordShareEmailStatus,
-  type RecordShareFieldsFragment,
-  type RecordShareUserFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/record-share/record-share";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type { RecordShareEmailStatus };

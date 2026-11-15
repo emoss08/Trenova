@@ -1,4 +1,12 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AgentLearningStatsQuery,
+  AgentMemoryInput,
+  AgentMemoryKind,
+  AgentMemoryStatus,
+  AgentMemoryTableRowFieldsFragment,
+  AgentMemoryUpkeepReason,
+} from "@trenova/graphql/generated/graphql";
 import {
   AgentLearningStatsDocument,
   AgentMemoryCountDocument,
@@ -13,13 +21,7 @@ import {
   ReviewAgentMemoryDocument,
   SetAgentMemoryStatusDocument,
   UpdateAgentMemoryDocument,
-  type AgentLearningStatsQuery,
-  type AgentMemoryInput,
-  type AgentMemoryKind,
-  type AgentMemoryStatus,
-  type AgentMemoryTableRowFieldsFragment,
-  type AgentMemoryUpkeepReason,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/memories";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import { rowTotalOf, type RowTotal } from "@trenova/shared/lib/row-total";

@@ -1,15 +1,17 @@
+import type {
+  ApplyCustomerPaymentInput,
+  CustomerPaymentDetailQuery,
+  CustomerPaymentTableQuery,
+  PostCustomerPaymentInput,
+  ReverseCustomerPaymentInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   ApplyUnappliedCustomerPaymentDocument,
   CustomerPaymentDetailDocument,
   CustomerPaymentTableDocument,
   PostAndApplyCustomerPaymentDocument,
   ReverseCustomerPaymentDocument,
-  type ApplyCustomerPaymentInput,
-  type CustomerPaymentDetailQuery,
-  type CustomerPaymentTableQuery,
-  type PostCustomerPaymentInput,
-  type ReverseCustomerPaymentInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/customer-payment/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 

@@ -1,4 +1,4 @@
-import { InvoiceRegisterDocument } from "@trenova/graphql/generated/graphql";
+import { InvoiceRegisterDocument } from "@trenova/graphql/generated/documents/invoice/register";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableRow } from "@trenova/shared/types/graphql-connection";
 

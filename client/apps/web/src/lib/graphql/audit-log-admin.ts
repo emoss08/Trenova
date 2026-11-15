@@ -1,3 +1,13 @@
+import type {
+  AuditAlertKind,
+  AuditAlertPoliciesQuery,
+  AuditChainStatusQuery,
+  AuditExportDownloadMutation,
+  AuditExportFormat,
+  PlaceAuditLegalHoldInput,
+  RequestAuditExportInput,
+  UpdateAuditAlertPolicyInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   AuditAlertPoliciesDocument,
   AuditChainStatusDocument,
@@ -8,15 +18,7 @@ import {
   ReleaseAuditLegalHoldDocument,
   RequestAuditExportDocument,
   UpdateAuditAlertPolicyDocument,
-  type AuditAlertKind,
-  type AuditAlertPoliciesQuery,
-  type AuditChainStatusQuery,
-  type AuditExportDownloadMutation,
-  type AuditExportFormat,
-  type PlaceAuditLegalHoldInput,
-  type RequestAuditExportInput,
-  type UpdateAuditAlertPolicyInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/audit-log/admin";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";

@@ -1,16 +1,18 @@
+import type {
+  CarrierIntelLookupInput,
+  CarrierIntelLookupQuery,
+  CarrierSourcingAutocompleteQuery,
+  CarrierSourcingSearchInput,
+  CarrierSourcingSearchQuery,
+  ImportSourcedCarrierInput,
+  ImportSourcedCarrierMutation,
+} from "@trenova/graphql/generated/graphql";
 import {
   CarrierIntelLookupDocument,
   CarrierSourcingAutocompleteDocument,
   CarrierSourcingSearchDocument,
   ImportSourcedCarrierDocument,
-  type CarrierIntelLookupInput,
-  type CarrierIntelLookupQuery,
-  type CarrierSourcingAutocompleteQuery,
-  type CarrierSourcingSearchInput,
-  type CarrierSourcingSearchQuery,
-  type ImportSourcedCarrierInput,
-  type ImportSourcedCarrierMutation,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/carrier-intelligence/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { UnmaskFragments } from "@trenova/shared/types/graphql-connection";
 

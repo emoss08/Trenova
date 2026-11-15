@@ -1,11 +1,25 @@
+import type {
+  SaveTelematicsFormMappingInput,
+  ShipmentFormSubmissionsQuery,
+  HosCertificationSummaryQuery,
+  ShipmentDriverFeasibilityQuery,
+  TelematicsStatusQuery,
+  TelematicsFormMappingsQuery,
+  VehicleInspectionsQuery,
+  WorkerFormSubmissionsQuery,
+  WorkerHosDailyLogsQuery,
+  WorkerHosLogsQuery,
+  VehiclePositionsQuery,
+  WorkerHosStateQuery,
+  WorkerHosStatesQuery,
+  WorkerHosViolationsQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeleteTelematicsFormMappingDocument,
   HosCertificationSummaryDocument,
-  type SaveTelematicsFormMappingInput,
   SaveTelematicsFormMappingDocument,
   ShipmentDriverFeasibilityDocument,
   ShipmentFormSubmissionsDocument,
-  type ShipmentFormSubmissionsQuery,
   TelematicsStatusDocument,
   WorkerHosDailyLogsDocument,
   WorkerHosLogsDocument,
@@ -13,22 +27,10 @@ import {
   WorkerHosStateDocument,
   WorkerHosStatesDocument,
   WorkerHosViolationsDocument,
-  type HosCertificationSummaryQuery,
-  type ShipmentDriverFeasibilityQuery,
-  type TelematicsStatusQuery,
   TelematicsFormMappingsDocument,
-  type TelematicsFormMappingsQuery,
   VehicleInspectionsDocument,
-  type VehicleInspectionsQuery,
   WorkerFormSubmissionsDocument,
-  type WorkerFormSubmissionsQuery,
-  type WorkerHosDailyLogsQuery,
-  type WorkerHosLogsQuery,
-  type VehiclePositionsQuery,
-  type WorkerHosStateQuery,
-  type WorkerHosStatesQuery,
-  type WorkerHosViolationsQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/telematics/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type VehiclePosition = VehiclePositionsQuery["vehiclePositions"][number];

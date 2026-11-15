@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CreateShipmentCommentDocument } from "@trenova/graphql/generated/graphql";
+import { CreateShipmentCommentDocument } from "@trenova/graphql/generated/documents/shipment/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { notification as notificationQueries } from "@trenova/shared/lib/queries/notification";
 import { notificationService } from "@trenova/shared/services/notification";

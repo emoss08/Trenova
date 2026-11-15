@@ -1,25 +1,27 @@
+import type {
+  CarrierTrackingLinkFieldsFragment,
+  CarrierTrackingLinkQuery,
+  CarrierTrackingLinkQueryVariables,
+  CheckCallFieldsFragment,
+  IssueCarrierTrackingLinkInput,
+  IssueCarrierTrackingLinkMutation,
+  IssueCarrierTrackingLinkMutationVariables,
+  LogCheckCallInput,
+  LogCheckCallMutation,
+  LogCheckCallMutationVariables,
+  RevokeCarrierTrackingLinkMutation,
+  RevokeCarrierTrackingLinkMutationVariables,
+  ShipmentCheckCallsQuery,
+  ShipmentCheckCallsQueryVariables,
+  TrackingEventOutcome,
+} from "@trenova/graphql/generated/graphql";
 import {
   CarrierTrackingLinkDocument,
   IssueCarrierTrackingLinkDocument,
   LogCheckCallDocument,
   RevokeCarrierTrackingLinkDocument,
   ShipmentCheckCallsDocument,
-  type CarrierTrackingLinkFieldsFragment,
-  type CarrierTrackingLinkQuery,
-  type CarrierTrackingLinkQueryVariables,
-  type CheckCallFieldsFragment,
-  type IssueCarrierTrackingLinkInput,
-  type IssueCarrierTrackingLinkMutation,
-  type IssueCarrierTrackingLinkMutationVariables,
-  type LogCheckCallInput,
-  type LogCheckCallMutation,
-  type LogCheckCallMutationVariables,
-  type RevokeCarrierTrackingLinkMutation,
-  type RevokeCarrierTrackingLinkMutationVariables,
-  type ShipmentCheckCallsQuery,
-  type ShipmentCheckCallsQueryVariables,
-  type TrackingEventOutcome,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/shipment/check-calls";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type CheckCallRow = CheckCallFieldsFragment;

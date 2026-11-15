@@ -1,8 +1,8 @@
+import type { HoldReasonInput } from "@trenova/graphql/generated/graphql";
 import {
   CreateHoldReasonDocument,
   UpdateHoldReasonDocument,
-  type HoldReasonInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/hold-reason/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { HoldReason } from "@/types/hold-reason";
 

@@ -108,7 +108,10 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
   trailing `{ signal }`.
 - **GraphQL**: operations live in `packages/graphql/src/operations/<area>/*.graphql`; run
   `pnpm --filter @trenova/graphql codegen` (or keep `pnpm dev` running). Documents are
-  hash-only at runtime. Wrappers in `apps/web/src/lib/graphql/<area>.ts` call
+  hash-only at runtime. Import a document from its own module
+  (`@trenova/graphql/generated/documents/<area>/<file>`, named after its `.graphql` file) and
+  types from `@trenova/graphql/generated/graphql` with `import type` only; anything else loads
+  every document on the dev server. Wrappers in `apps/web/src/lib/graphql/<area>.ts` call
   `requestGraphQL`.
 - **Pickers** (`Autocomplete`, `AutocompleteField`, `MultiSelectAutocomplete*`) take a
   `graphql` select-options source and nothing else; a module-level constant, since an inline

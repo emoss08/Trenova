@@ -1,11 +1,10 @@
+import type { FleetCodeInput, FleetCodePatchInput } from "@trenova/graphql/generated/graphql";
 import {
   BulkUpdateFleetCodeStatusDocument,
   CreateFleetCodeDocument,
   PatchFleetCodeDocument,
   UpdateFleetCodeDocument,
-  type FleetCodeInput,
-  type FleetCodePatchInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/fleet-code/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { BulkUpdateFleetCodeStatusRequest, FleetCode } from "@trenova/shared/types/fleet-code";
 

@@ -2,7 +2,7 @@ import {
   DeskLocationCardDocument,
   DeskLocationDwellDocument,
   DeskLocationPoliciesDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/location-desk/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchDeskLocation, fetchLocationDwell, fetchLocationPolicies } from "../location-card";

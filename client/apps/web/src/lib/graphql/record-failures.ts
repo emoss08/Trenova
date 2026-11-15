@@ -1,7 +1,7 @@
+import type { DeskRecordFailuresQuery } from "@trenova/graphql/generated/graphql";
 import {
   DeskRecordFailuresDocument,
-  type DeskRecordFailuresQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/service-failure/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type RecordFailure = DeskRecordFailuresQuery["serviceFailures"]["edges"][number]["node"];

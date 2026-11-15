@@ -1,3 +1,20 @@
+import type {
+  BillType,
+  FieldFilterInput,
+  ShipmentAdditionalChargeInput,
+  ShipmentCommentInput,
+  ShipmentCommentUpdateInput,
+  ShipmentCommentsFilterInput,
+  ShipmentCommodityInput,
+  ShipmentDuplicateInput,
+  ShipmentEventFieldsFragment,
+  ShipmentInput,
+  ShipmentLoadingOptimizationInput,
+  ShipmentMoveInput,
+  ShipmentPreviousRatesInput,
+  ShipmentQuickFilterInput,
+} from "@trenova/graphql/generated/graphql";
+import { ShipmentTimelineDocument } from "@trenova/graphql/generated/documents/shipment/board";
 import {
   AcknowledgeShipmentCommentDocument,
   ApproveShipmentRatingReviewDocument,
@@ -22,7 +39,6 @@ import {
   ShipmentCommentRepliesDocument,
   ShipmentCommentsDocument,
   ShipmentBoardTableDocument,
-  ShipmentTimelineDocument,
   ShipmentDetailDocument,
   ShipmentEventsDocument,
   ShipmentPageAnalyticsDocument,
@@ -37,21 +53,7 @@ import {
   UnresolveShipmentCommentDocument,
   UpdateShipmentCommentDocument,
   UpdateShipmentDocument,
-  type BillType,
-  type FieldFilterInput,
-  type ShipmentAdditionalChargeInput,
-  type ShipmentCommentInput,
-  type ShipmentCommentUpdateInput,
-  type ShipmentCommentsFilterInput,
-  type ShipmentCommodityInput,
-  type ShipmentDuplicateInput,
-  type ShipmentEventFieldsFragment,
-  type ShipmentInput,
-  type ShipmentLoadingOptimizationInput,
-  type ShipmentMoveInput,
-  type ShipmentPreviousRatesInput,
-  type ShipmentQuickFilterInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/shipment/page";
 import {
   hasAnyAllocations,
   nestChargeAllocations,

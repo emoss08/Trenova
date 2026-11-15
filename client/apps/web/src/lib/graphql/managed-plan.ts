@@ -1,4 +1,7 @@
-import { ManagedPlanDocument, type ManagedPlanQuery } from "@trenova/graphql/generated/graphql";
+import type { ManagedPlanQuery } from "@trenova/graphql/generated/graphql";
+import {
+  ManagedPlanDocument,
+} from "@trenova/graphql/generated/documents/managed-plan/managed-plan";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type ManagedPlan = ManagedPlanQuery["managedPlan"];

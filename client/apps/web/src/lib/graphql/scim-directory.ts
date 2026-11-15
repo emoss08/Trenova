@@ -2,7 +2,7 @@ import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
   ScimDirectoryFieldsFragmentDoc,
   ScimDirectoriesListDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/security-activity/scim-directories";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { SCIMDirectory } from "@trenova/shared/types/iam";
 

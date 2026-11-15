@@ -1,3 +1,25 @@
+import type {
+  LateChargeAssessmentInput,
+  LateChargeAssessmentResultFieldsFragment,
+  AccountingBriefingQuery,
+  ArAgingSummaryQuery,
+  ArAgingTrendQuery,
+  ArCashFlowForecastQuery,
+  ArCollectionsWorklistQuery,
+  ArCustomerLedgerQuery,
+  ArCustomerProfileQuery,
+  ArCustomerStatementQuery,
+  ArDashboardKpisQuery,
+  ArDsoTrendQuery,
+  ArOpenItemsQuery,
+  ArPaymentStatsQuery,
+  ArTopOverdueCustomersQuery,
+} from "@trenova/graphql/generated/graphql";
+import {
+  AssessLateChargesDocument,
+  LateChargeAssessmentResultFieldsFragmentDoc,
+  LateChargePreviewDocument,
+} from "@trenova/graphql/generated/documents/accounts-receivable/late-charges";
 import {
   AccountingBriefingDocument,
   ArAgingSummaryDocument,
@@ -12,25 +34,7 @@ import {
   ArOpenItemsDocument,
   ArPaymentStatsDocument,
   ArTopOverdueCustomersDocument,
-  AssessLateChargesDocument,
-  LateChargeAssessmentResultFieldsFragmentDoc,
-  LateChargePreviewDocument,
-  type LateChargeAssessmentInput,
-  type LateChargeAssessmentResultFieldsFragment,
-  type AccountingBriefingQuery,
-  type ArAgingSummaryQuery,
-  type ArAgingTrendQuery,
-  type ArCashFlowForecastQuery,
-  type ArCollectionsWorklistQuery,
-  type ArCustomerLedgerQuery,
-  type ArCustomerProfileQuery,
-  type ArCustomerStatementQuery,
-  type ArDashboardKpisQuery,
-  type ArDsoTrendQuery,
-  type ArOpenItemsQuery,
-  type ArPaymentStatsQuery,
-  type ArTopOverdueCustomersQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/accounts-receivable/operations";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 

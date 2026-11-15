@@ -1,4 +1,6 @@
-import { DataTableSeriesDocument } from "@trenova/graphql/generated/graphql";
+import {
+  DataTableSeriesDocument,
+} from "@trenova/graphql/generated/documents/data-table-insight/operations";
 import { createBatchLoader, type BatchLoader } from "@trenova/shared/lib/batch-loader";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";

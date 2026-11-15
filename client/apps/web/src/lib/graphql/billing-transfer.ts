@@ -1,21 +1,25 @@
+import type {
+  BillingTransferCandidateIdsQuery,
+  BillingTransferCandidatesQuery,
+  BillingTransferRunItemsQuery,
+  BillingTransferRunQuery,
+  BillingTransferRunScope,
+  BulkTransferShipmentsToBillingMutation,
+  ShipmentBillingTransferFailureCode,
+} from "@trenova/graphql/generated/graphql";
 import {
   BillingTransferCandidateIdsDocument,
   BillingTransferCandidatesDocument,
   BillingTransferRunDocument,
   BillingTransferRunItemsDocument,
-  BulkTransferShipmentsToBillingDocument,
   CancelBillingTransferRunDocument,
   MyActiveBillingTransferRunDocument,
   RetryBillingTransferRunDocument,
   StartBillingTransferRunDocument,
-  type BillingTransferCandidateIdsQuery,
-  type BillingTransferCandidatesQuery,
-  type BillingTransferRunItemsQuery,
-  type BillingTransferRunQuery,
-  type BillingTransferRunScope,
-  type BulkTransferShipmentsToBillingMutation,
-  type ShipmentBillingTransferFailureCode,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/billing-queue/transfer";
+import {
+  BulkTransferShipmentsToBillingDocument,
+} from "@trenova/graphql/generated/documents/shipment/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type BillingTransferCandidateStatus = "Completed" | "ReadyToInvoice";

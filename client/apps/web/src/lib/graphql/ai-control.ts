@@ -1,3 +1,13 @@
+import type {
+  AgentPromotionPreviewQuery,
+  AiAgentRosterQuery,
+  AiControlSummaryQuery,
+  AiControlTab,
+  AiProviderFailureFieldsFragment,
+  AiTuneUpFieldsFragment,
+  AiUsageDailyQuery,
+  WorkingAgentRunFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   AgentPromotionPreviewDocument,
   AiAgentRosterDocument,
@@ -11,17 +21,11 @@ import {
   AiUsageDailyDocument,
   DismissAiProviderFailureDocument,
   RestoreAiProviderFailureDocument,
-  type AgentPromotionPreviewQuery,
-  type AiAgentRosterQuery,
-  type AiControlSummaryQuery,
-  type AiControlTab,
-  type AiProviderFailureFieldsFragment,
-  type AiTuneUpFieldsFragment,
-  type AiUsageDailyQuery,
+} from "@trenova/graphql/generated/documents/agent/ai-control";
+import {
   WorkingAgentRunFieldsFragmentDoc,
   WorkingAgentRunsDocument,
-  type WorkingAgentRunFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/runs";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 

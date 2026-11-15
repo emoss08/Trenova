@@ -1,4 +1,5 @@
-import { DeskBoardCardDocument, type DeskBoardCardQuery } from "@trenova/graphql/generated/graphql";
+import type { DeskBoardCardQuery } from "@trenova/graphql/generated/graphql";
+import { DeskBoardCardDocument } from "@trenova/graphql/generated/documents/agent/desk-board";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import {
   analysisChartSchema,

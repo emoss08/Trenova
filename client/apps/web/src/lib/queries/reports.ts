@@ -1,21 +1,29 @@
 import type { ReportDefinitionInput } from "@/lib/graphql/reports";
+import type {
+  ReportDefinitionsTableQuery,
+  ReportDrillInput,
+} from "@trenova/graphql/generated/graphql";
 import {
-  CannedReportsDocument,
-  DrillThroughReportDocument,
-  PreviewReportDocument,
-  ReportCatalogDocument,
+  DataTablePageInfoFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/equipment/table";
+import { CannedReportsDocument } from "@trenova/graphql/generated/documents/reports/canned";
+import { ReportCatalogDocument } from "@trenova/graphql/generated/documents/reports/catalog";
+import {
   ReportDashboardByIdDocument,
   ReportDashboardsDocument,
+} from "@trenova/graphql/generated/documents/reports/dashboards";
+import {
   ReportDefinitionByIdDocument,
   ReportDefinitionRevisionsDocument,
-  DataTablePageInfoFieldsFragmentDoc,
   ReportDefinitionsTableDocument,
-  ReportRunByIdDocument,
-  ReportSchedulesDocument,
-  ReportViewsDocument,
-  type ReportDefinitionsTableQuery,
-  type ReportDrillInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/reports/definitions";
+import {
+  DrillThroughReportDocument,
+  PreviewReportDocument,
+} from "@trenova/graphql/generated/documents/reports/preview";
+import { ReportRunByIdDocument } from "@trenova/graphql/generated/documents/reports/runs";
+import { ReportSchedulesDocument } from "@trenova/graphql/generated/documents/reports/schedules";
+import { ReportViewsDocument } from "@trenova/graphql/generated/documents/reports/views";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { fetchReportRunDeskCard } from "@/lib/graphql/report-desk-card";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";

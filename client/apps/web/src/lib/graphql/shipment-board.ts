@@ -1,3 +1,22 @@
+import type {
+  CapacityUnitKind,
+  CapacityUnitMatchesQuery,
+  DecideShipmentSuggestionInput,
+  NotifyShipmentDelayInput,
+  ShipmentBoardCapabilitiesQuery,
+  ShipmentBoardGrouping,
+  ShipmentBoardGroupsQuery,
+  ShipmentBoardScopeInput,
+  ShipmentBriefingQuery,
+  ShipmentCapacityQuery,
+  ShipmentCoverageSuggestionsQuery,
+  ShipmentQuickFilterCountsQuery,
+  ShipmentStageSummaryQuery,
+  ShipmentSuggestionsQuery,
+  ShipmentWatchlistQuery,
+  TenderShipmentsInput,
+  TenderShipmentsMutation,
+} from "@trenova/graphql/generated/graphql";
 import {
   CapacityUnitMatchesDocument,
   DecideShipmentSuggestionDocument,
@@ -13,24 +32,7 @@ import {
   ShipmentWatchlistDocument,
   TenderShipmentsDocument,
   UndoShipmentSuggestionDecisionDocument,
-  type CapacityUnitKind,
-  type CapacityUnitMatchesQuery,
-  type DecideShipmentSuggestionInput,
-  type NotifyShipmentDelayInput,
-  type ShipmentBoardCapabilitiesQuery,
-  type ShipmentBoardGrouping,
-  type ShipmentBoardGroupsQuery,
-  type ShipmentBoardScopeInput,
-  type ShipmentBriefingQuery,
-  type ShipmentCapacityQuery,
-  type ShipmentCoverageSuggestionsQuery,
-  type ShipmentQuickFilterCountsQuery,
-  type ShipmentStageSummaryQuery,
-  type ShipmentSuggestionsQuery,
-  type ShipmentWatchlistQuery,
-  type TenderShipmentsInput,
-  type TenderShipmentsMutation,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/shipment/board";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 type RequestOptions = { signal?: AbortSignal };

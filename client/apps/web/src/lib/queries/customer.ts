@@ -1,6 +1,8 @@
 import { fetchCustomerRateAgreements, fetchDeskCustomer } from "@/lib/graphql/customer-card";
 import { getCustomerTrackingProfile } from "@/lib/graphql/customer-tracking";
-import { ShipmentCustomerBillingRulesDocument } from "@trenova/graphql/generated/graphql";
+import {
+  ShipmentCustomerBillingRulesDocument,
+} from "@trenova/graphql/generated/documents/customer/shipment-billing-rules";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 

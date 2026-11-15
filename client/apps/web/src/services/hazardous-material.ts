@@ -1,11 +1,13 @@
+import type {
+  HazardousMaterialInput,
+  HazardousMaterialPatchInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   BulkUpdateHazardousMaterialStatusDocument,
   CreateHazardousMaterialDocument,
   PatchHazardousMaterialDocument,
   UpdateHazardousMaterialDocument,
-  type HazardousMaterialInput,
-  type HazardousMaterialPatchInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/hazardous-material/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type {
   BulkUpdateHazardousMaterialStatusRequest,

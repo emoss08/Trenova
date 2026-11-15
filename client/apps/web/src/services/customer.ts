@@ -1,14 +1,16 @@
+import type {
+  CustomerBillingProfileInput,
+  CustomerEmailProfileInput,
+  CustomerInput,
+  CustomerPatchInput,
+  CustomerTrackingProfileInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   BulkUpdateCustomerStatusDocument,
   CreateCustomerDocument,
   PatchCustomerDocument,
   UpdateCustomerDocument,
-  type CustomerBillingProfileInput,
-  type CustomerEmailProfileInput,
-  type CustomerInput,
-  type CustomerPatchInput,
-  type CustomerTrackingProfileInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/customer/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { CustomerTrackingProfile } from "@trenova/shared/types/customer-tracking";
 import type {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UpdateShipmentDocument } from "@trenova/graphql/generated/graphql";
+import { UpdateShipmentDocument } from "@trenova/graphql/generated/documents/shipment/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { ShipmentUpdateInput } from "@trenova/shared/types/shipment";
 import { updateShipmentGraphQL } from "./shipment";

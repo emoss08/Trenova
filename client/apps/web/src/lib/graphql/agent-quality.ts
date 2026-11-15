@@ -1,4 +1,15 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AgentSuiteRunCaseTableQuery,
+  AgentQualityControlFieldsFragment,
+  AgentQualityOverviewQuery,
+  AgentQualityPointFieldsFragment,
+  AgentSuiteRunCaseFieldsFragment,
+  AgentSuiteRunFieldsFragment,
+  AgentSuiteRunStatus,
+  AgentWorstRatedAnswerFieldsFragment,
+  UpdateAgentQualityControlInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   AgentQualityAgentTableDocument,
   AgentQualityControlDocument,
@@ -8,8 +19,6 @@ import {
   AgentQualityPointFieldsFragmentDoc,
   AgentSuiteRunCaseTableDocument,
   AgentSuiteRunCaseFieldsFragmentDoc,
-  DataTablePageInfoFieldsFragmentDoc,
-  type AgentSuiteRunCaseTableQuery,
   AgentSuiteRunDocument,
   AgentSuiteRunFieldsFragmentDoc,
   AgentSuiteRunTableDocument,
@@ -17,15 +26,10 @@ import {
   AgentWorstRatedAnswerTableDocument,
   RunAgentSuiteDocument,
   UpdateAgentQualityControlDocument,
-  type AgentQualityControlFieldsFragment,
-  type AgentQualityOverviewQuery,
-  type AgentQualityPointFieldsFragment,
-  type AgentSuiteRunCaseFieldsFragment,
-  type AgentSuiteRunFieldsFragment,
-  type AgentSuiteRunStatus,
-  type AgentWorstRatedAnswerFieldsFragment,
-  type UpdateAgentQualityControlInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/quality";
+import {
+  DataTablePageInfoFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/equipment/table";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";

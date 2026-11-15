@@ -1,9 +1,13 @@
+import type {
+  DeskCarrierSettlementCardQuery,
+  DeskDriverSettlementCardQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeskCarrierSettlementCardDocument,
-  type DeskCarrierSettlementCardQuery,
+} from "@trenova/graphql/generated/documents/carrier-settlement/desk";
+import {
   DeskDriverSettlementCardDocument,
-  type DeskDriverSettlementCardQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/driver-settlement/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { rootField } from "@trenova/shared/lib/reference-access";
 

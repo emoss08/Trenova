@@ -1,4 +1,6 @@
-import { ServiceFailureReasonCodeTableDocument } from "@trenova/graphql/generated/graphql";
+import {
+  ServiceFailureReasonCodeTableDocument,
+} from "@trenova/graphql/generated/documents/service-failure-reason-code/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import { rootFields } from "@trenova/shared/lib/reference-access";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";

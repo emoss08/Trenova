@@ -1,11 +1,13 @@
+import type {
+  DeskTractorCardQuery,
+  DeskTractorInspectionsQuery,
+  DeskTractorPositionQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeskTractorCardDocument,
   DeskTractorInspectionsDocument,
   DeskTractorPositionDocument,
-  type DeskTractorCardQuery,
-  type DeskTractorInspectionsQuery,
-  type DeskTractorPositionQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/tractor/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DeskTractor = NonNullable<DeskTractorCardQuery["tractor"]>;

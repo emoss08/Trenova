@@ -1,10 +1,12 @@
+import type {
+  AccessorialChargeInput,
+  AccessorialChargePatchInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   CreateAccessorialChargeDocument,
   PatchAccessorialChargeDocument,
   UpdateAccessorialChargeDocument,
-  type AccessorialChargeInput,
-  type AccessorialChargePatchInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/accessorial-charge/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
 

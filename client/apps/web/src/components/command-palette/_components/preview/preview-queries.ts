@@ -6,11 +6,13 @@ import { invoice } from "@/lib/queries/invoice";
 import { shipment } from "@/lib/queries/shipment";
 import { telematics } from "@/lib/queries/telematics";
 import { documentService } from "@/services/document";
+import type {
+  CommandPaletteCustomerPreviewQuery,
+  CommandPaletteCustomerPreviewQueryVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   CommandPaletteCustomerPreviewDocument,
-  type CommandPaletteCustomerPreviewQuery,
-  type CommandPaletteCustomerPreviewQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/command-palette/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { Document } from "@trenova/shared/types/document";
 import type { QueryClient } from "@tanstack/react-query";

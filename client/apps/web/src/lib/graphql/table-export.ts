@@ -1,9 +1,11 @@
+import type {
+  ExportTableViewInput,
+  ScheduleTableViewInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   ExportTableViewDocument,
   ScheduleTableViewDocument,
-  type ExportTableViewInput,
-  type ScheduleTableViewInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/reports/table-export";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type TableExportOutcome = {

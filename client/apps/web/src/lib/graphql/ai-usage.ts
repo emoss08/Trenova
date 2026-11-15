@@ -1,4 +1,6 @@
-import { AiUsageSummaryDocument } from "@trenova/graphql/generated/graphql";
+import {
+  AiUsageSummaryDocument,
+} from "@trenova/graphql/generated/documents/ai-provider/usage-summary";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { AiUsageSummaryQuery } from "@trenova/graphql/generated/graphql";
 

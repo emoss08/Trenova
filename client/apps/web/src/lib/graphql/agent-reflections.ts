@@ -1,9 +1,9 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type { AgentReflectionRowFieldsFragment } from "@trenova/graphql/generated/graphql";
 import {
   AgentReflectionRowFieldsFragmentDoc,
   AgentReflectionsDocument,
-  type AgentReflectionRowFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/memories";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type AgentReflection = AgentReflectionRowFieldsFragment;

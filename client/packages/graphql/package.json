@@ -9,6 +9,7 @@
     "./fragment-data": "./src/fragment-data.ts",
     "./generated/persisted-documents.json": "./src/generated/persisted-documents.json",
     "./generated/graphql": "./src/generated/graphql.ts",
+    "./generated/documents/*": "./src/generated/documents/*.ts",
     "./generated/gql": "./src/generated/gql.ts",
     "./generated/fragment-masking": "./src/generated/fragment-masking.ts"
   },

@@ -1,13 +1,15 @@
+import type {
+  AgentCapabilitiesFieldsFragment,
+  AgentCapabilityMode,
+  AgentCapabilityToolFieldsFragment,
+  UpdateAgentCapabilitiesInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   AgentCapabilitiesDocument,
   AgentCapabilitiesFieldsFragmentDoc,
   AgentCapabilityToolFieldsFragmentDoc,
   UpdateAgentCapabilitiesDocument,
-  type AgentCapabilitiesFieldsFragment,
-  type AgentCapabilityMode,
-  type AgentCapabilityToolFieldsFragment,
-  type UpdateAgentCapabilitiesInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/capabilities";
 import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 

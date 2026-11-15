@@ -1,23 +1,25 @@
+import type {
+  DeleteSafetyViolationMutation,
+  DeleteSafetyViolationMutationVariables,
+  FleetSafetyInput,
+  FleetSafetyQuery,
+  FleetSafetyQueryVariables,
+  RecordSafetyViolationInput,
+  RecordSafetyViolationMutation,
+  RecordSafetyViolationMutationVariables,
+  UpdateSafetyViolationInput,
+  UpdateSafetyViolationMutation,
+  UpdateSafetyViolationMutationVariables,
+  WorkerSafetyViolationsQuery,
+  WorkerSafetyViolationsQueryVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeleteSafetyViolationDocument,
   FleetSafetyDocument,
   RecordSafetyViolationDocument,
   UpdateSafetyViolationDocument,
   WorkerSafetyViolationsDocument,
-  type DeleteSafetyViolationMutation,
-  type DeleteSafetyViolationMutationVariables,
-  type FleetSafetyInput,
-  type FleetSafetyQuery,
-  type FleetSafetyQueryVariables,
-  type RecordSafetyViolationInput,
-  type RecordSafetyViolationMutation,
-  type RecordSafetyViolationMutationVariables,
-  type UpdateSafetyViolationInput,
-  type UpdateSafetyViolationMutation,
-  type UpdateSafetyViolationMutationVariables,
-  type WorkerSafetyViolationsQuery,
-  type WorkerSafetyViolationsQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/fleet-safety/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type FleetSafetySummary = FleetSafetyQuery["fleetSafety"];

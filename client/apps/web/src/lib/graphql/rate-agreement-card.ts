@@ -1,4 +1,4 @@
-import { DeskRateAgreementPricingDocument } from "@trenova/graphql/generated/graphql";
+import { DeskRateAgreementPricingDocument } from "@trenova/graphql/generated/documents/rate/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 /** How much freight an agreement has priced: the loads it rated, and when it last rated one. */

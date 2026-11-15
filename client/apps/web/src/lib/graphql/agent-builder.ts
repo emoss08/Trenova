@@ -1,20 +1,24 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  DraftAgentFromDescriptionMutation,
+  TightenAgentInstructionsMutation,
+  AgentDefinitionVersionsQuery,
+  AgentInstructionLintQuery,
+  AgentShadowReportQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   AgentDefinitionCardDocument,
   AgentDraftingAvailableDocument,
   DraftAgentFromDescriptionDocument,
   TightenAgentInstructionsDocument,
-  type DraftAgentFromDescriptionMutation,
-  type TightenAgentInstructionsMutation,
-  AgentDefinitionCardFieldsFragmentDoc,
   AgentDefinitionVersionDraftDocument,
   AgentDefinitionVersionsDocument,
   AgentInstructionLintDocument,
   AgentShadowReportDocument,
-  type AgentDefinitionVersionsQuery,
-  type AgentInstructionLintQuery,
-  type AgentShadowReportQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/builder";
+import {
+  AgentDefinitionCardFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/agent/definitions";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { toAgentDefinitionRow, type AgentDefinitionRow } from "./agent-definition";
 

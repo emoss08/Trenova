@@ -1,13 +1,15 @@
+import type {
+  DeskWorkerCardQuery,
+  DeskWorkerCredentialsQuery,
+  DeskWorkerHosQuery,
+  DeskWorkerStandingQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeskWorkerCardDocument,
   DeskWorkerCredentialsDocument,
   DeskWorkerHosDocument,
   DeskWorkerStandingDocument,
-  type DeskWorkerCardQuery,
-  type DeskWorkerCredentialsQuery,
-  type DeskWorkerHosQuery,
-  type DeskWorkerStandingQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/worker-desk/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { typedCredentialSlots } from "./worker-credential";
 

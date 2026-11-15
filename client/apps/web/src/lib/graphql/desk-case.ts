@@ -1,4 +1,14 @@
 import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
+import type {
+  DeskCaseDecisionFieldsFragment,
+  DeskCaseDecisionPhase,
+  DeskCaseExhibitFieldsFragment,
+  DeskCaseQuery,
+  DeskCaseTone,
+} from "@trenova/graphql/generated/graphql";
+import {
+  DeskRecordFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/agent/desk-attention";
 import {
   AcceptDeskCaseRiskDocument,
   BringBackDeskCaseDocument,
@@ -9,16 +19,12 @@ import {
   DeskCaseDecisionFieldsFragmentDoc,
   DeskCaseDocument,
   DeskCaseExhibitFieldsFragmentDoc,
-  DeskRecordFieldsFragmentDoc,
   ReleaseDeskCaseDocument,
   UndoAgentDecisionDocument,
+} from "@trenova/graphql/generated/documents/agent/desk-case";
+import {
   WatchtowerAgentFieldsFragmentDoc,
-  type DeskCaseDecisionFieldsFragment,
-  type DeskCaseDecisionPhase,
-  type DeskCaseExhibitFieldsFragment,
-  type DeskCaseQuery,
-  type DeskCaseTone,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/watchtower/watchtower";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { ApprovalTarget } from "@/lib/graphql/agent-decisions";
 import type { DeskRecord } from "@/lib/graphql/desk-attention";

@@ -1,3 +1,14 @@
+import type {
+  EiaSeriesOptionsQuery,
+  FuelDashboardQuery,
+  FuelIndexInput,
+  FuelIndexPriceHistoryQuery,
+  FuelProgramCurrentRatesQuery,
+  FuelSurchargeProgramDetailQuery,
+  FuelSurchargeProgramInput,
+  GenerateFuelSurchargeTableQuery,
+  GenerateFuelTableInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   AddFuelIndexPriceDocument,
   CreateFuelIndexDocument,
@@ -14,16 +25,7 @@ import {
   UpdateFuelIndexDocument,
   UpdateFuelIndexPriceDocument,
   UpdateFuelSurchargeProgramDocument,
-  type EiaSeriesOptionsQuery,
-  type FuelDashboardQuery,
-  type FuelIndexInput,
-  type FuelIndexPriceHistoryQuery,
-  type FuelProgramCurrentRatesQuery,
-  type FuelSurchargeProgramDetailQuery,
-  type FuelSurchargeProgramInput,
-  type GenerateFuelSurchargeTableQuery,
-  type GenerateFuelTableInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/fuel-surcharge/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { FuelIndex, FuelSurchargeProgramFormValues } from "@/types/fuel-surcharge";
 

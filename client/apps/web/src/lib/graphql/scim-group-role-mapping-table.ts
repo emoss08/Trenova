@@ -1,4 +1,6 @@
-import { ScimGroupRoleMappingsTableDocument } from "@trenova/graphql/generated/graphql";
+import {
+  ScimGroupRoleMappingsTableDocument,
+} from "@trenova/graphql/generated/documents/scim-group-role-mapping/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 

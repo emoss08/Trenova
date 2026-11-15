@@ -1,3 +1,9 @@
+import type {
+  AgentAccessMode,
+  AgentAccessPreviewQuery,
+  AgentAudienceCoverage,
+  RoleAgentAccessFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   AgentAccessFieldsFragmentDoc,
   AgentAccessPreviewDocument,
@@ -8,11 +14,7 @@ import {
   SetAgentUnattendedRoleDocument,
   SetRoleAgentAccessDocument,
   SuggestedAgentAudienceDocument,
-  type AgentAccessMode,
-  type AgentAccessPreviewQuery,
-  type AgentAudienceCoverage,
-  type RoleAgentAccessFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/access";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { rootField } from "@trenova/shared/lib/reference-access";

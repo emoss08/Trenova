@@ -1,4 +1,13 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AgentMemoryKind,
+  AgentMemorySavingMode,
+  AgentMemoryScope,
+  AgentMemoryStatus,
+  AgentMemorySubjectType,
+  DeskMemoryFieldsFragment,
+  DeskMemorySettingsFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   ConfirmDeskMemoryDocument,
   CreateDeskMemoryDocument,
@@ -11,14 +20,7 @@ import {
   ReviseDeskMemoryDocument,
   SetDeskMemoryStatusDocument,
   SetMemorySavingModeDocument,
-  type AgentMemoryKind,
-  type AgentMemorySavingMode,
-  type AgentMemoryScope,
-  type AgentMemoryStatus,
-  type AgentMemorySubjectType,
-  type DeskMemoryFieldsFragment,
-  type DeskMemorySettingsFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/desk-memory";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 /** Every Desk memory read lives under this key, so one invalidation refreshes them all. */

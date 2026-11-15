@@ -1,3 +1,11 @@
+import type {
+  BulkWorkerPtoActionInput,
+  BulkWorkerPtoActionMutation,
+  BulkWorkerPtoActionMutationVariables,
+  CreateWorkerPtoInput,
+  UpdateWorkerPtoInput,
+  WorkerPatchInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   ApproveWorkerPtoDocument,
   BulkWorkerPtoActionDocument,
@@ -5,14 +13,8 @@ import {
   CreateWorkerPtoDocument,
   PatchWorkerDocument,
   RejectWorkerPtoDocument,
-  type BulkWorkerPtoActionInput,
-  type BulkWorkerPtoActionMutation,
-  type BulkWorkerPtoActionMutationVariables,
-  type CreateWorkerPtoInput,
-  type UpdateWorkerPtoInput,
   UpdateWorkerPtoDocument,
-  type WorkerPatchInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/worker/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { PTOBulkActionPayload, Worker, WorkerPTO } from "@trenova/shared/types/worker";
 

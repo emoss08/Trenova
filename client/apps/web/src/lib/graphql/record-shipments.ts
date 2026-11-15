@@ -1,8 +1,7 @@
+import type { DeskRecordShipmentsQuery, ShipmentsInput } from "@trenova/graphql/generated/graphql";
 import {
   DeskRecordShipmentsDocument,
-  type DeskRecordShipmentsQuery,
-  type ShipmentsInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/shipment/desk-record";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type RecordShipment = DeskRecordShipmentsQuery["shipments"]["edges"][number]["node"];

@@ -1,20 +1,22 @@
+import type {
+  CreateIftaMileageEntryMutation,
+  CreateIftaMileageEntryMutationVariables,
+  DeleteIftaMileageEntryMutation,
+  DeleteIftaMileageEntryMutationVariables,
+  IftaMileageEntryFieldsFragment,
+  IftaMileageEntryInput,
+  IftaMileageEntryQuery,
+  IftaMileageEntryQueryVariables,
+  UpdateIftaMileageEntryMutation,
+  UpdateIftaMileageEntryMutationVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   CreateIftaMileageEntryDocument,
   DeleteIftaMileageEntryDocument,
   IftaMileageEntryDocument,
   IftaMileageEntryTableDocument,
   UpdateIftaMileageEntryDocument,
-  type CreateIftaMileageEntryMutation,
-  type CreateIftaMileageEntryMutationVariables,
-  type DeleteIftaMileageEntryMutation,
-  type DeleteIftaMileageEntryMutationVariables,
-  type IftaMileageEntryFieldsFragment,
-  type IftaMileageEntryInput,
-  type IftaMileageEntryQuery,
-  type IftaMileageEntryQueryVariables,
-  type UpdateIftaMileageEntryMutation,
-  type UpdateIftaMileageEntryMutationVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/ifta-jurisdiction-mileage/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 

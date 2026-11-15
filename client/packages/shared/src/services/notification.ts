@@ -1,6 +1,14 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  MyNotificationListQuery,
+  MyNotificationUnreadCountQuery,
+  NotificationCountsQuery,
+  NotificationListQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   DataTablePageInfoFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/equipment/table";
+import {
   DismissAllNotificationsDocument,
   DismissMyNotificationsDocument,
   DismissNotificationsDocument,
@@ -17,11 +25,7 @@ import {
   RestoreNotificationsDocument,
   SnoozeNotificationsDocument,
   WakeNotificationsDocument,
-  type MyNotificationListQuery,
-  type MyNotificationUnreadCountQuery,
-  type NotificationCountsQuery,
-  type NotificationListQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/notification/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import type { GraphQLExecutableDocument } from "@trenova/shared/types/graphql";

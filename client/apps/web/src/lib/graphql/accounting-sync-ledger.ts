@@ -1,4 +1,20 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AccountingBackfillFieldsFragment,
+  AccountingSyncAttemptsQuery,
+  AccountingSyncRecordFieldsFragment,
+  AccountingSyncSummaryQuery,
+  AccountingSystem,
+  ChangeAccountingBackfillInput,
+  ChooseAccountingSyncModeInput,
+  EnableAccountingSyncInput,
+  PauseAccountingSyncInput,
+  ReleaseAccountingSyncInput,
+  RequestAccountingBackfillInput,
+  RetryAccountingSyncInput,
+  SkipAccountingSyncInput,
+  UpdateAccountingSyncSettingsInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   AccountingBackfillFieldsFragmentDoc,
   AccountingBackfillsDocument,
@@ -19,21 +35,7 @@ import {
   RetryAccountingSyncDocument,
   SkipAccountingSyncDocument,
   UpdateAccountingSyncSettingsDocument,
-  type AccountingBackfillFieldsFragment,
-  type AccountingSyncAttemptsQuery,
-  type AccountingSyncRecordFieldsFragment,
-  type AccountingSyncSummaryQuery,
-  type AccountingSystem,
-  type ChangeAccountingBackfillInput,
-  type ChooseAccountingSyncModeInput,
-  type EnableAccountingSyncInput,
-  type PauseAccountingSyncInput,
-  type ReleaseAccountingSyncInput,
-  type RequestAccountingBackfillInput,
-  type RetryAccountingSyncInput,
-  type SkipAccountingSyncInput,
-  type UpdateAccountingSyncSettingsInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/accounting-sync/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { AccountingConnection } from "./accounting-sync";
 

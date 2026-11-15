@@ -1,4 +1,8 @@
 import { type FragmentType, getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AuditOverviewQuery,
+  AuditReviewFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   AuditEntryReviewDocument,
   AuditOverviewDocument,
@@ -6,9 +10,7 @@ import {
   AuditReviewsDocument,
   MarkAuditReviewReviewedDocument,
   ReopenAuditReviewDocument,
-  type AuditOverviewQuery,
-  type AuditReviewFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/audit-log/overview";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 type RequestOptions = { signal?: AbortSignal };

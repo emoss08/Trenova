@@ -1,8 +1,8 @@
+import type { HazmatSegregationRuleInput } from "@trenova/graphql/generated/graphql";
 import {
   CreateHazmatSegregationRuleDocument,
   UpdateHazmatSegregationRuleDocument,
-  type HazmatSegregationRuleInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/hazmat-segregation-rule/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { HazmatSegregationRule } from "@/types/hazmat-segregation-rule";
 

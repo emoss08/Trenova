@@ -1,4 +1,6 @@
-import { DeskRecordShipmentsDocument } from "@trenova/graphql/generated/graphql";
+import {
+  DeskRecordShipmentsDocument,
+} from "@trenova/graphql/generated/documents/shipment/desk-record";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchRecordShipments } from "../record-shipments";

@@ -1,7 +1,7 @@
+import type { FormulaTemplateTablesQuery } from "@trenova/graphql/generated/graphql";
 import {
   FormulaTemplateTablesDocument,
-  type FormulaTemplateTablesQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/formula-template/tables";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type FormulaTemplateTable = NonNullable<

@@ -1,4 +1,18 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AgentToolRuleImpactFieldsFragment,
+  AgentToolRuleInput,
+  AgentAutonomyAnswer,
+  AgentEgressClass,
+  AgentExternalRead,
+  AgentReachWarningKind,
+  AgentSafetyHeaderFieldsFragment,
+  AgentSafetySummaryQuery,
+  AgentToolAutonomyFieldsFragment,
+  AgentToolKind,
+  AgentToolPolicyFieldsFragment,
+  AgentToolRuleTableQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   AgentSafetyDocument,
   AgentSafetyHeaderFieldsFragmentDoc,
@@ -6,25 +20,15 @@ import {
   AgentToolHoldersDocument,
   AgentToolSafetyRowFieldsFragmentDoc,
   AgentToolPolicyFieldsFragmentDoc,
-  DataTablePageInfoFieldsFragmentDoc,
   AgentToolRuleTableDocument,
   AgentToolRuleImpactDocument,
   AgentToolRuleImpactFieldsFragmentDoc,
   AgentToolSafetyTableDocument,
   SaveAgentToolRuleDocument,
-  type AgentToolRuleImpactFieldsFragment,
-  type AgentToolRuleInput,
-  type AgentAutonomyAnswer,
-  type AgentEgressClass,
-  type AgentExternalRead,
-  type AgentReachWarningKind,
-  type AgentSafetyHeaderFieldsFragment,
-  type AgentSafetySummaryQuery,
-  type AgentToolAutonomyFieldsFragment,
-  type AgentToolKind,
-  type AgentToolPolicyFieldsFragment,
-  type AgentToolRuleTableQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/safety";
+import {
+  DataTablePageInfoFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/equipment/table";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";

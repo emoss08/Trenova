@@ -4,7 +4,7 @@ import {
   InvoiceAdjustmentApprovalsDocument,
   InvoiceAdjustmentOperationsSummaryDocument,
   RejectInvoiceAdjustmentDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/invoice-adjustment/approvals";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {

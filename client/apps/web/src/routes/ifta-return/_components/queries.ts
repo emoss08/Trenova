@@ -13,7 +13,7 @@ import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
   IftaPeriodFieldsFragmentDoc,
   IftaReturnLineFieldsFragmentDoc,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/ifta-return/operations";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { apiProblem } from "@trenova/shared/types/errors";

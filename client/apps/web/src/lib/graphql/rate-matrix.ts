@@ -1,9 +1,11 @@
+import type {
+  RateMatrixRecordQuery,
+  RateMatrixVersionAxesQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   RateMatrixRecordDocument,
   RateMatrixVersionAxesDocument,
-  type RateMatrixRecordQuery,
-  type RateMatrixVersionAxesQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/rate/matrix-record";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 type Signal = { signal?: AbortSignal };

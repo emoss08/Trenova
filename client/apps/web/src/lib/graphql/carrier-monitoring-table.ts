@@ -1,12 +1,14 @@
+import type {
+  CarrierIntelEventCarrierSummaryQuery,
+  CarrierIntelEventFilterInput,
+  CarrierMonitoringEnrollmentFilterInput,
+  FieldFilterInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   CarrierIntelEventCarrierSummaryDocument,
   CarrierIntelEventInboxDocument,
   CarrierMonitoringEnrollmentTableDocument,
-  type CarrierIntelEventCarrierSummaryQuery,
-  type CarrierIntelEventFilterInput,
-  type CarrierMonitoringEnrollmentFilterInput,
-  type FieldFilterInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/carrier-intelligence/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";

@@ -3,7 +3,7 @@ import { assistant } from "@/lib/queries/assistant";
 import {
   AgentMemoryTableDocument,
   AgentReflectionsDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/memories";
 import { RESOURCE_QUERY_KEY_MAP, queryKeyPrefix } from "@trenova/shared/hooks/realtime-patching";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";

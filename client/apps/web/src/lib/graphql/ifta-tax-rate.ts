@@ -1,14 +1,16 @@
+import type {
+  DeleteIftaTaxRateMutation,
+  DeleteIftaTaxRateMutationVariables,
+  IftaTaxRateFieldsFragment,
+  IftaTaxRateInput,
+  UpsertIftaTaxRatesMutation,
+  UpsertIftaTaxRatesMutationVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeleteIftaTaxRateDocument,
   IftaTaxRateTableDocument,
   UpsertIftaTaxRatesDocument,
-  type DeleteIftaTaxRateMutation,
-  type DeleteIftaTaxRateMutationVariables,
-  type IftaTaxRateFieldsFragment,
-  type IftaTaxRateInput,
-  type UpsertIftaTaxRatesMutation,
-  type UpsertIftaTaxRatesMutationVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/ifta-tax-rate/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 

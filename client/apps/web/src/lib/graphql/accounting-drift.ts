@@ -1,4 +1,12 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AccountingDriftFindingFieldsFragment,
+  AccountingDriftFixPreviewQuery,
+  AccountingDriftOverviewFieldsFragment,
+  AccountingSystem,
+  DismissAccountingDriftInput,
+  ResolveAccountingDriftInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   AccountingDriftFindingDocument,
   AccountingDriftFindingFieldsFragmentDoc,
@@ -8,13 +16,7 @@ import {
   CheckAccountingDriftDocument,
   DismissAccountingDriftDocument,
   ResolveAccountingDriftDocument,
-  type AccountingDriftFindingFieldsFragment,
-  type AccountingDriftFixPreviewQuery,
-  type AccountingDriftOverviewFieldsFragment,
-  type AccountingSystem,
-  type DismissAccountingDriftInput,
-  type ResolveAccountingDriftInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/accounting-sync/drift";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type AccountingDriftFinding = AccountingDriftFindingFieldsFragment;

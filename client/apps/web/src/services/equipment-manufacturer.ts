@@ -1,11 +1,13 @@
+import type {
+  EquipmentManufacturerInput,
+  EquipmentManufacturerPatchInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   BulkUpdateEquipmentManufacturerStatusDocument,
   CreateEquipmentManufacturerDocument,
   PatchEquipmentManufacturerDocument,
   UpdateEquipmentManufacturerDocument,
-  type EquipmentManufacturerInput,
-  type EquipmentManufacturerPatchInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/equipment-manufacturer/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type {
   BulkUpdateEquipmentManufacturerStatusRequest,

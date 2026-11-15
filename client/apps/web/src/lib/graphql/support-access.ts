@@ -1,6 +1,15 @@
+import type {
+  CurrentSupportSessionQuery,
+  GrantSupportAccessInput,
+  SupportAccessActionFieldsFragment,
+  SupportAccessGrantFieldsFragment,
+  SupportAccessSettingsQuery,
+} from "@trenova/graphql/generated/graphql";
+import {
+  DataTablePageInfoFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/equipment/table";
 import {
   CurrentSupportSessionDocument,
-  DataTablePageInfoFieldsFragmentDoc,
   GrantSupportAccessDocument,
   RevokeSupportAccessDocument,
   SupportAccessActionFieldsFragmentDoc,
@@ -8,12 +17,7 @@ import {
   SupportAccessGrantFieldsFragmentDoc,
   SupportAccessGrantsDocument,
   SupportAccessSettingsDocument,
-  type CurrentSupportSessionQuery,
-  type GrantSupportAccessInput,
-  type SupportAccessActionFieldsFragment,
-  type SupportAccessGrantFieldsFragment,
-  type SupportAccessSettingsQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/support-access/support-access";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 

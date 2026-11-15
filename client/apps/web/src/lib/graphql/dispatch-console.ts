@@ -1,4 +1,28 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  DispatchAssignMoveInput,
+  DispatchAssignMovesMutation,
+  DispatchAssignMoveToCarrierInput,
+  DispatchAssignMoveToCarrierMutation,
+  DispatchAssignmentPreviewInput,
+  DispatchAssignmentPreviewQuery,
+  DispatchBoardInput,
+  DispatchBoardMoveFieldsFragment,
+  DispatchBoardQuery,
+  DispatchCarrierAssignmentPreviewInput,
+  DispatchCarrierAssignmentPreviewQuery,
+  DispatchDriverMovesInput,
+  DispatchDriverMovesQuery,
+  DispatchForecastQualityFieldsFragment,
+  DispatchMoveCandidatesInput,
+  DispatchCandidateFieldsFragment,
+  DispatchPlanAutoAssignMutation,
+  DispatchPlanInput,
+} from "@trenova/graphql/generated/graphql";
+import {
+  DispatchForecastQualityDocument,
+  DispatchForecastQualityFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/dispatch-console/freight-forecast";
 import {
   DispatchAssignMovesDocument,
   DispatchAssignMoveToCarrierDocument,
@@ -9,31 +33,11 @@ import {
   DispatchCancelCarrierAssignmentDocument,
   DispatchCarrierAssignmentPreviewDocument,
   DispatchDriverMovesDocument,
-  DispatchForecastQualityDocument,
-  DispatchForecastQualityFieldsFragmentDoc,
   DispatchMoveCandidatesDocument,
   DispatchMoveDocument,
   DispatchPlanAutoAssignDocument,
   DispatchUnassignMovesDocument,
-  type DispatchAssignMoveInput,
-  type DispatchAssignMovesMutation,
-  type DispatchAssignMoveToCarrierInput,
-  type DispatchAssignMoveToCarrierMutation,
-  type DispatchAssignmentPreviewInput,
-  type DispatchAssignmentPreviewQuery,
-  type DispatchBoardInput,
-  type DispatchBoardMoveFieldsFragment,
-  type DispatchBoardQuery,
-  type DispatchCarrierAssignmentPreviewInput,
-  type DispatchCarrierAssignmentPreviewQuery,
-  type DispatchDriverMovesInput,
-  type DispatchDriverMovesQuery,
-  type DispatchForecastQualityFieldsFragment,
-  type DispatchMoveCandidatesInput,
-  type DispatchCandidateFieldsFragment,
-  type DispatchPlanAutoAssignMutation,
-  type DispatchPlanInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/dispatch-console/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DispatchBoardMove = DispatchBoardMoveFieldsFragment;

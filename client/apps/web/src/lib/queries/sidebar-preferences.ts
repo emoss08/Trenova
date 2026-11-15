@@ -1,7 +1,7 @@
 import {
   SidebarCustomizationOptionsDocument,
   SidebarPreferencesDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/sidebar-preferences/preferences";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 

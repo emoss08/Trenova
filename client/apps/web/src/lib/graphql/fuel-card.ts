@@ -1,3 +1,22 @@
+import type {
+  AssignFuelCardInput,
+  AssignFuelCardMutation,
+  AssignFuelCardMutationVariables,
+  CancelFuelCardInput,
+  CancelFuelCardMutation,
+  CancelFuelCardMutationVariables,
+  CreateFuelCardMutation,
+  CreateFuelCardMutationVariables,
+  FuelCardFieldsFragment,
+  FuelCardInput,
+  FuelCardQuery,
+  FuelCardQueryVariables,
+  FuelCardProvider,
+  SyncFuelCardFeedMutation,
+  SyncFuelCardFeedMutationVariables,
+  UpdateFuelCardMutation,
+  UpdateFuelCardMutationVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   AssignFuelCardDocument,
   CancelFuelCardDocument,
@@ -6,24 +25,7 @@ import {
   FuelCardTableDocument,
   SyncFuelCardFeedDocument,
   UpdateFuelCardDocument,
-  type AssignFuelCardInput,
-  type AssignFuelCardMutation,
-  type AssignFuelCardMutationVariables,
-  type CancelFuelCardInput,
-  type CancelFuelCardMutation,
-  type CancelFuelCardMutationVariables,
-  type CreateFuelCardMutation,
-  type CreateFuelCardMutationVariables,
-  type FuelCardFieldsFragment,
-  type FuelCardInput,
-  type FuelCardQuery,
-  type FuelCardQueryVariables,
-  type FuelCardProvider,
-  type SyncFuelCardFeedMutation,
-  type SyncFuelCardFeedMutationVariables,
-  type UpdateFuelCardMutation,
-  type UpdateFuelCardMutationVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/fuel-card/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 

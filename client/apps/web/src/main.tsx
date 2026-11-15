@@ -7,6 +7,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
 import { installChunkRecovery } from "@/lib/chunk-recovery";
+import { predictLinksWhenIdle } from "@/lib/link-foresight";
 import { registerServiceWorker } from "@/lib/service-worker";
 import { preloadRulesWhenIdle } from "@trenova/shared/rules/preload";
 import { Providers } from "./providers";
@@ -29,3 +30,7 @@ registerServiceWorker(router);
 // After the page has loaded and the browser is idle, so the formula editor and the rate
 // screens find the rules module ready; never before first paint.
 preloadRulesWhenIdle();
+
+// Starts a page (code and data) while the pointer is still on its way to its link; records and
+// everything else start on hover or focus, the router's intent preload.
+predictLinksWhenIdle(router);

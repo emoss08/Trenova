@@ -1,8 +1,10 @@
 import {
   BillingTransferCandidateIdsDocument,
   BillingTransferCandidatesDocument,
+} from "@trenova/graphql/generated/documents/billing-queue/transfer";
+import {
   BulkTransferShipmentsToBillingDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/shipment/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {

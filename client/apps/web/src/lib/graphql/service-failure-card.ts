@@ -1,7 +1,7 @@
+import type { DeskServiceFailureCardQuery } from "@trenova/graphql/generated/graphql";
 import {
   DeskServiceFailureCardDocument,
-  type DeskServiceFailureCardQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/service-failure/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DeskServiceFailure = NonNullable<DeskServiceFailureCardQuery["serviceFailure"]>;

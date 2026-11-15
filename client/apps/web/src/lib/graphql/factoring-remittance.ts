@@ -1,30 +1,36 @@
+import type {
+  CreateFactoringRemittanceInput,
+  DiscardFactoringRemittanceInput,
+  FactoringRemittanceFieldsFragment,
+  FactoringRemittanceLineFieldsFragment,
+  FactoringRemittanceMatchStatus,
+  FactoringRemittancePlanQuery,
+  FactoringRemittanceStatus,
+  FactoringRemittanceVersionInput,
+  StageFactoringRemittanceInput,
+  UpdateFactoringRemittanceLineInput,
+} from "@trenova/graphql/generated/graphql";
+import {
+  FactoringPlannedMovementFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/factoring/ledger";
 import {
   ApplyFactoringRemittanceDocument,
   CreateFactoringRemittanceDocument,
   DiscardFactoringRemittanceDocument,
-  FactoringPlannedMovementFieldsFragmentDoc,
   FactoringRemittanceDetailDocument,
   FactoringRemittanceFieldsFragmentDoc,
   FactoringRemittanceLineFieldsFragmentDoc,
   FactoringRemittanceLinesDocument,
   FactoringRemittancePlanDocument,
   FactoringRemittanceTableDocument,
-  FactoringSubmissionTableDocument,
   FactoringRemittancesDocument,
   RematchFactoringRemittanceDocument,
   StageFactoringRemittanceDocument,
   UpdateFactoringRemittanceLineDocument,
-  type CreateFactoringRemittanceInput,
-  type DiscardFactoringRemittanceInput,
-  type FactoringRemittanceFieldsFragment,
-  type FactoringRemittanceLineFieldsFragment,
-  type FactoringRemittanceMatchStatus,
-  type FactoringRemittancePlanQuery,
-  type FactoringRemittanceStatus,
-  type FactoringRemittanceVersionInput,
-  type StageFactoringRemittanceInput,
-  type UpdateFactoringRemittanceLineInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/factoring/remittances";
+import {
+  FactoringSubmissionTableDocument,
+} from "@trenova/graphql/generated/documents/factoring/submissions";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";

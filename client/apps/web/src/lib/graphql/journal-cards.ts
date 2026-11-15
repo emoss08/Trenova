@@ -1,4 +1,12 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  DeskJournalCardEntryFieldsFragment,
+  DeskJournalCardLineFieldsFragment,
+  DeskJournalCardPeriodFieldsFragment,
+  DeskJournalCardPersonFieldsFragment,
+  DeskJournalEntryCardQuery,
+  DeskManualJournalCardQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeskJournalCardEntryFieldsFragmentDoc,
   DeskJournalCardLineFieldsFragmentDoc,
@@ -6,14 +14,10 @@ import {
   DeskJournalCardPersonFieldsFragmentDoc,
   DeskJournalCardPostingFieldsFragmentDoc,
   DeskJournalEntryCardDocument,
+} from "@trenova/graphql/generated/documents/journal-entry/desk";
+import {
   DeskManualJournalCardDocument,
-  type DeskJournalCardEntryFieldsFragment,
-  type DeskJournalCardLineFieldsFragment,
-  type DeskJournalCardPeriodFieldsFragment,
-  type DeskJournalCardPersonFieldsFragment,
-  type DeskJournalEntryCardQuery,
-  type DeskManualJournalCardQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/manual-journal/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type JournalCardLine = DeskJournalCardLineFieldsFragment;

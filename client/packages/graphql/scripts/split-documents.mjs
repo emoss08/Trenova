@@ -1,10 +1,13 @@
 // The client preset writes every document into graphql.ts, one module, and a module is never
 // split between chunks: the first page any user opened carried all of the app's documents,
 // because the shell needs a few of them. This moves the documents into one module per
-// operations file (src/generated/documents/<area>/<file>.ts) and has graphql.ts re-export
-// them, so every import keeps working and the bundler places each file's documents with the
-// routes that use them. Run after strip-fragment-text.mjs, which leaves every document a
-// one-line constant.
+// operations file (src/generated/documents/<area>/<file>.ts), so the bundler places each
+// file's documents with the routes that use them. Code imports a document from its own module
+// (@trenova/graphql/generated/documents/<area>/<file>) and only types from graphql.ts, with
+// `import type` (lint enforces it): the dev server cannot tree-shake, and a value import of
+// graphql.ts loaded every document on every page. graphql.ts still re-exports the documents
+// for gql.ts, which reads them off it. Run after strip-fragment-text.mjs, which leaves every
+// document a one-line constant.
 
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, posix, relative, resolve, sep } from "node:path";

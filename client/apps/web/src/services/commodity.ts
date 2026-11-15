@@ -1,12 +1,14 @@
+import type {
+  CommodityInput,
+  CommodityPatchInput,
+  FreightClass,
+} from "@trenova/graphql/generated/graphql";
 import {
   BulkUpdateCommodityStatusDocument,
   CreateCommodityDocument,
   PatchCommodityDocument,
   UpdateCommodityDocument,
-  type CommodityInput,
-  type CommodityPatchInput,
-  type FreightClass,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/commodity/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { BulkUpdateCommodityStatusRequest, Commodity } from "@trenova/shared/types/commodity";
 

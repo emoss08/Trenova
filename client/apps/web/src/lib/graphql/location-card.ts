@@ -1,11 +1,13 @@
+import type {
+  DeskLocationCardQuery,
+  DeskLocationDwellQuery,
+  DeskLocationPoliciesQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeskLocationCardDocument,
   DeskLocationDwellDocument,
   DeskLocationPoliciesDocument,
-  type DeskLocationCardQuery,
-  type DeskLocationDwellQuery,
-  type DeskLocationPoliciesQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/location-desk/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DeskLocation = NonNullable<DeskLocationCardQuery["location"]>;

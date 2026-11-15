@@ -1,3 +1,13 @@
+import type {
+  CreateTableConfigurationMutation,
+  DefaultTableConfigurationQuery,
+  SetDefaultTableConfigurationMutation,
+  SetOrgDefaultTableConfigurationMutation,
+  TableConfigurationDetailQuery,
+  TableConfigurationInput,
+  TableConfigurationTableQuery,
+  UpdateTableConfigurationMutation,
+} from "@trenova/graphql/generated/graphql";
 import {
   CreateTableConfigurationDocument,
   DefaultTableConfigurationDocument,
@@ -7,15 +17,7 @@ import {
   TableConfigurationDetailDocument,
   TableConfigurationTableDocument,
   UpdateTableConfigurationDocument,
-  type CreateTableConfigurationMutation,
-  type DefaultTableConfigurationQuery,
-  type SetDefaultTableConfigurationMutation,
-  type SetOrgDefaultTableConfigurationMutation,
-  type TableConfigurationDetailQuery,
-  type TableConfigurationInput,
-  type TableConfigurationTableQuery,
-  type UpdateTableConfigurationMutation,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/table-configuration/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {

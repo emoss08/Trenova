@@ -1,3 +1,22 @@
+import type {
+  CreateWorkerPolicyMutation,
+  CreateWorkerPolicyMutationVariables,
+  DecideProfileChangeInput,
+  DecideProfileChangeMutation,
+  DecideProfileChangeMutationVariables,
+  ProfileChangeFilterInput,
+  ProfileChangeRequestsQuery,
+  ProfileChangeRequestsQueryVariables,
+  UpdateWorkerPolicyMutation,
+  UpdateWorkerPolicyMutationVariables,
+  WorkerPoliciesQuery,
+  WorkerPoliciesQueryVariables,
+  WorkerPolicyAcknowledgementsQuery,
+  WorkerPolicyAcknowledgementsQueryVariables,
+  WorkerPolicyComplianceQuery,
+  WorkerPolicyComplianceQueryVariables,
+  WorkerPolicyInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   CreateWorkerPolicyDocument,
   DecideProfileChangeDocument,
@@ -6,24 +25,7 @@ import {
   WorkerPoliciesDocument,
   WorkerPolicyAcknowledgementsDocument,
   WorkerPolicyComplianceDocument,
-  type CreateWorkerPolicyMutation,
-  type CreateWorkerPolicyMutationVariables,
-  type DecideProfileChangeInput,
-  type DecideProfileChangeMutation,
-  type DecideProfileChangeMutationVariables,
-  type ProfileChangeFilterInput,
-  type ProfileChangeRequestsQuery,
-  type ProfileChangeRequestsQueryVariables,
-  type UpdateWorkerPolicyMutation,
-  type UpdateWorkerPolicyMutationVariables,
-  type WorkerPoliciesQuery,
-  type WorkerPoliciesQueryVariables,
-  type WorkerPolicyAcknowledgementsQuery,
-  type WorkerPolicyAcknowledgementsQueryVariables,
-  type WorkerPolicyComplianceQuery,
-  type WorkerPolicyComplianceQueryVariables,
-  type WorkerPolicyInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/self-service/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type WorkerPolicyRow = WorkerPoliciesQuery["workerPolicies"][number];

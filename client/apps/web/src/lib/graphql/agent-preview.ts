@@ -1,4 +1,11 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AgentPlanPreviewFieldsFragment,
+  AgentPreviewCoverage,
+  AgentPreviewMessageChannel,
+  AgentPreviewOperation,
+  AgentProposalPreviewFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   AgentPlanPreviewDocument,
   AgentPlanPreviewFieldsFragmentDoc,
@@ -7,12 +14,7 @@ import {
   AgentProposalPreviewsDocument,
   MyPlanPreviewDocument,
   MyProposalPreviewDocument,
-  type AgentPlanPreviewFieldsFragment,
-  type AgentPreviewCoverage,
-  type AgentPreviewMessageChannel,
-  type AgentPreviewOperation,
-  type AgentProposalPreviewFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/previews";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type { AgentPreviewCoverage, AgentPreviewMessageChannel, AgentPreviewOperation };

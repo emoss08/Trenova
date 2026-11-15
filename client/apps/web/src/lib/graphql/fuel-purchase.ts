@@ -1,20 +1,22 @@
+import type {
+  CreateFuelPurchaseMutation,
+  CreateFuelPurchaseMutationVariables,
+  DeleteFuelPurchaseMutation,
+  DeleteFuelPurchaseMutationVariables,
+  FuelPurchaseFieldsFragment,
+  FuelPurchaseInput,
+  FuelPurchaseQuery,
+  FuelPurchaseQueryVariables,
+  UpdateFuelPurchaseMutation,
+  UpdateFuelPurchaseMutationVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   CreateFuelPurchaseDocument,
   DeleteFuelPurchaseDocument,
   FuelPurchaseDocument,
   FuelPurchaseTableDocument,
   UpdateFuelPurchaseDocument,
-  type CreateFuelPurchaseMutation,
-  type CreateFuelPurchaseMutationVariables,
-  type DeleteFuelPurchaseMutation,
-  type DeleteFuelPurchaseMutationVariables,
-  type FuelPurchaseFieldsFragment,
-  type FuelPurchaseInput,
-  type FuelPurchaseQuery,
-  type FuelPurchaseQueryVariables,
-  type UpdateFuelPurchaseMutation,
-  type UpdateFuelPurchaseMutationVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/fuel-purchase/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 

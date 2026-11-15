@@ -1,7 +1,7 @@
+import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import {
   AccountingDriftFindingTableDocument,
-  type AccountingSystem,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/accounting-sync/drift";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 

@@ -1,13 +1,15 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  JournalReviewResultFieldsFragment,
+  JournalReviewSummaryQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   ApproveJournalEntriesDocument,
   JournalReviewResultFieldsFragmentDoc,
   JournalReviewSummaryDocument,
   JournalReviewTableDocument,
   PostJournalEntriesDocument,
-  type JournalReviewResultFieldsFragment,
-  type JournalReviewSummaryQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/journal-entry/review";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";

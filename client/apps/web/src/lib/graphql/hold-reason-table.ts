@@ -1,4 +1,4 @@
-import { HoldReasonTableDocument } from "@trenova/graphql/generated/graphql";
+import { HoldReasonTableDocument } from "@trenova/graphql/generated/documents/hold-reason/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import { isRecord } from "@trenova/shared/lib/utils";
 

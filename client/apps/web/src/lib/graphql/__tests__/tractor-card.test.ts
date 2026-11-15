@@ -2,7 +2,7 @@ import {
   DeskTractorCardDocument,
   DeskTractorInspectionsDocument,
   DeskTractorPositionDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/tractor/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchDeskTractor, fetchTractorInspections, fetchTractorPosition } from "../tractor-card";

@@ -1,10 +1,12 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  DeskInvoiceCardQuery,
+  DeskInvoiceNeighborFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeskInvoiceCardDocument,
-  type DeskInvoiceCardQuery,
   DeskInvoiceNeighborFragmentDoc,
-  type DeskInvoiceNeighborFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/invoice/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 type DeskInvoiceResponse = NonNullable<DeskInvoiceCardQuery["invoice"]>;

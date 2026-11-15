@@ -1,4 +1,4 @@
-import { DeskOrderCardDocument } from "@trenova/graphql/generated/graphql";
+import { DeskOrderCardDocument } from "@trenova/graphql/generated/documents/order-desk/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchDeskOrder } from "../order-card";

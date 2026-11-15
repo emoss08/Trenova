@@ -1,10 +1,12 @@
+import type {
+  PageTourViewFieldsFragment,
+  RecordPageTourInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   MyPageTourViewsDocument,
   PageTourViewFieldsFragmentDoc,
   RecordMyPageTourDocument,
-  type PageTourViewFieldsFragment,
-  type RecordPageTourInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/page-tour/page-tour";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 

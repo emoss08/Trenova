@@ -6,7 +6,7 @@ import {
   RegenerateAgentOrganizationProfileDocument,
   RegenerateMyAgentProfileDocument,
   RetireMyAgentProfileGuidanceDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/profile";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {

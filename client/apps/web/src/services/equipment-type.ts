@@ -1,14 +1,16 @@
+import type {
+  BulkUpdateEquipmentTypeStatusMutation,
+  CreateEquipmentTypeMutation,
+  EquipmentTypeInput,
+  PatchEquipmentTypeMutation,
+  UpdateEquipmentTypeMutation,
+} from "@trenova/graphql/generated/graphql";
 import {
   BulkUpdateEquipmentTypeStatusDocument,
   CreateEquipmentTypeDocument,
   PatchEquipmentTypeDocument,
   UpdateEquipmentTypeDocument,
-  type BulkUpdateEquipmentTypeStatusMutation,
-  type CreateEquipmentTypeMutation,
-  type EquipmentTypeInput,
-  type PatchEquipmentTypeMutation,
-  type UpdateEquipmentTypeMutation,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/equipment/table";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {

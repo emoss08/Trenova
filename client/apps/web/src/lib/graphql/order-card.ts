@@ -1,4 +1,5 @@
-import { DeskOrderCardDocument, type DeskOrderCardQuery } from "@trenova/graphql/generated/graphql";
+import type { DeskOrderCardQuery } from "@trenova/graphql/generated/graphql";
+import { DeskOrderCardDocument } from "@trenova/graphql/generated/documents/order-desk/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DeskOrder = NonNullable<DeskOrderCardQuery["order"]>;

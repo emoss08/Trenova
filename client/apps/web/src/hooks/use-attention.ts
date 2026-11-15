@@ -1,7 +1,7 @@
+import type { RecentActivityQuery } from "@trenova/graphql/generated/graphql";
 import {
   RecentActivityDocument,
-  type RecentActivityQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/audit-log/recent-activity";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { ATTENTION_ROWS_BY_KEY, type AttentionRowConfig } from "@/config/attention-rows";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";

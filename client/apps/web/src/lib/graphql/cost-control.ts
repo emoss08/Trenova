@@ -1,13 +1,15 @@
+import type {
+  CostCategoryUpdateInput,
+  CostingControlInput,
+  CostingControlPageQuery,
+  ResolvedCostProfilePageQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   CostingControlPageDocument,
   ResolvedCostProfilePageDocument,
   UpdateCostCategoryDocument,
   UpdateCostingControlDocument,
-  type CostCategoryUpdateInput,
-  type CostingControlInput,
-  type CostingControlPageQuery,
-  type ResolvedCostProfilePageQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/cost-control/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type CostingControl = CostingControlPageQuery["costingControl"];

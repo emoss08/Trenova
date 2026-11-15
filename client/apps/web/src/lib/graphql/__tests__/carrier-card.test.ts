@@ -3,7 +3,7 @@ import {
   DeskCarrierEligibilityDocument,
   DeskCarrierIntelDocument,
   DeskCarrierSettlementsDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/carrier-desk/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {

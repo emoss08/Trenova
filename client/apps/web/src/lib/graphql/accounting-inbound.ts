@@ -1,4 +1,11 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AccountingInboundApplyPreviewQuery,
+  AccountingInboundChangeFieldsFragment,
+  AccountingInboundOverviewQuery,
+  AccountingSystem,
+  IgnoreAccountingInboundChangeInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   AccountingInboundApplyPreviewDocument,
   AccountingInboundChangeDocument,
@@ -6,12 +13,7 @@ import {
   AccountingInboundOverviewDocument,
   ApplyAccountingInboundChangeDocument,
   IgnoreAccountingInboundChangeDocument,
-  type AccountingInboundApplyPreviewQuery,
-  type AccountingInboundChangeFieldsFragment,
-  type AccountingInboundOverviewQuery,
-  type AccountingSystem,
-  type IgnoreAccountingInboundChangeInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/accounting-sync/inbound";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type AccountingInboundChange = AccountingInboundChangeFieldsFragment;

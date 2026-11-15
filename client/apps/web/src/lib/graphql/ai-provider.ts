@@ -1,3 +1,15 @@
+import type {
+  AiProviderCardFieldsFragment,
+  AiProviderLimitFieldsFragment,
+  AiProviderDraftTestInput,
+  AiProviderEndpointInput,
+  AiProviderModelsQuery,
+  AiProviderPatchInput,
+  AiProviderRoutingDraftInput,
+  AiProviderUsageDailyQuery,
+  AiRoutePreviewQuery,
+  TestAiProviderDraftMutation,
+} from "@trenova/graphql/generated/graphql";
 import {
   AiProviderCardFieldsFragmentDoc,
   AiProviderCardsDocument,
@@ -10,17 +22,7 @@ import {
   PatchAiProviderDocument,
   ReorderAiProvidersDocument,
   TestAiProviderDraftDocument,
-  type AiProviderCardFieldsFragment,
-  type AiProviderLimitFieldsFragment,
-  type AiProviderDraftTestInput,
-  type AiProviderEndpointInput,
-  type AiProviderModelsQuery,
-  type AiProviderPatchInput,
-  type AiProviderRoutingDraftInput,
-  type AiProviderUsageDailyQuery,
-  type AiRoutePreviewQuery,
-  type TestAiProviderDraftMutation,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/ai-provider/providers";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 

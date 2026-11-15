@@ -1,3 +1,12 @@
+import type {
+  ApproveInvoiceAdjustmentMutation,
+  InvoiceAdjustmentApprovalDetailQuery,
+  InvoiceAdjustmentApprovalsQuery,
+  InvoiceAdjustmentKind,
+  InvoiceAdjustmentOperationsSummaryQuery,
+  InvoiceApprovalQueueItemFieldsFragment,
+  RejectInvoiceAdjustmentMutation,
+} from "@trenova/graphql/generated/graphql";
 import {
   ApproveInvoiceAdjustmentDocument,
   InvoiceAdjustmentApprovalDetailDocument,
@@ -5,14 +14,7 @@ import {
   InvoiceAdjustmentOperationsSummaryDocument,
   InvoiceApprovalQueueItemFieldsFragmentDoc,
   RejectInvoiceAdjustmentDocument,
-  type ApproveInvoiceAdjustmentMutation,
-  type InvoiceAdjustmentApprovalDetailQuery,
-  type InvoiceAdjustmentApprovalsQuery,
-  type InvoiceAdjustmentKind,
-  type InvoiceAdjustmentOperationsSummaryQuery,
-  type InvoiceApprovalQueueItemFieldsFragment,
-  type RejectInvoiceAdjustmentMutation,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/invoice-adjustment/approvals";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 

@@ -3,7 +3,7 @@ import {
   ShipmentCommentsDocument,
   ShipmentEventsDocument,
   UnassignedShipmentsDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/shipment/page";
 import {
   listShipmentCommentsGraphQL,
   listShipmentEventsGraphQL,

@@ -1,11 +1,13 @@
+import type {
+  MatchRoutingGuideInput,
+  MatchRoutingGuideQuery,
+  RoutingGuideOptionsQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   MatchRoutingGuideDocument,
   RoutingGuideOptionsDocument,
   RoutingGuideTableDocument,
-  type MatchRoutingGuideInput,
-  type MatchRoutingGuideQuery,
-  type RoutingGuideOptionsQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/routing-guide/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";

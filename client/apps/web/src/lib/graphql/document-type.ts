@@ -1,8 +1,8 @@
+import type { DocumentTypeInput } from "@trenova/graphql/generated/graphql";
 import {
   CreateDocumentTypeDocument,
   UpdateDocumentTypeDocument,
-  type DocumentTypeInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/document-type/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { DocumentType } from "@trenova/shared/types/document-type";
 

@@ -1,11 +1,13 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  DeskEdiPartnerCardQuery,
+  DeskEdiPartnerMessageFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeskEdiPartnerCardDocument,
   DeskEdiPartnerMessageFieldsFragmentDoc,
   DeskEdiPartnerMessagesDocument,
-  type DeskEdiPartnerCardQuery,
-  type DeskEdiPartnerMessageFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/edi/partner-desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 type RawEdiPartnerCard = DeskEdiPartnerCardQuery["ediPartnerCard"];

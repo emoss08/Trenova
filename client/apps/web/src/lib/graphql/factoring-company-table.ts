@@ -1,4 +1,6 @@
-import { FactoringCompanyTableDocument } from "@trenova/graphql/generated/graphql";
+import {
+  FactoringCompanyTableDocument,
+} from "@trenova/graphql/generated/documents/factoring-company/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
 export const factoringCompanyTableGraphQLConfig = defineDataTableGraphQLConfig({

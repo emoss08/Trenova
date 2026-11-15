@@ -1,12 +1,11 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type { BriefingFieldsFragment, BriefingRoleKey } from "@trenova/graphql/generated/graphql";
 import {
   BriefingFieldsFragmentDoc,
   MarkBriefingReadDocument,
   RegenerateBriefingDocument,
   TodaysBriefingDocument,
-  type BriefingFieldsFragment,
-  type BriefingRoleKey,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/briefing/briefing";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type Briefing = BriefingFieldsFragment;

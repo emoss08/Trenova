@@ -1,3 +1,10 @@
+import type {
+  AgentEvalCaseDetailFieldsFragment,
+  AgentEvalCaseStatus,
+  AgentEvalCaseTableRowFieldsFragment,
+  CreateAgentEvalCaseInput,
+  UpdateAgentEvalCaseInput,
+} from "@trenova/graphql/generated/graphql";
 import {
   AgentEvalCaseDetailDocument,
   AgentEvalCaseDetailFieldsFragmentDoc,
@@ -7,12 +14,7 @@ import {
   ReplayAgentEvalCaseDocument,
   SetAgentEvalCaseStatusDocument,
   UpdateAgentEvalCaseDocument,
-  type AgentEvalCaseDetailFieldsFragment,
-  type AgentEvalCaseStatus,
-  type AgentEvalCaseTableRowFieldsFragment,
-  type CreateAgentEvalCaseInput,
-  type UpdateAgentEvalCaseInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/eval-cases";
 import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";

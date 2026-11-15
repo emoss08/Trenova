@@ -1,7 +1,5 @@
-import {
-  DeskDetentionCardDocument,
-  type DeskDetentionCardQuery,
-} from "@trenova/graphql/generated/graphql";
+import type { DeskDetentionCardQuery } from "@trenova/graphql/generated/graphql";
+import { DeskDetentionCardDocument } from "@trenova/graphql/generated/documents/detention/card";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import {
   calculationTraceSchema,

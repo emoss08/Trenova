@@ -1,21 +1,25 @@
+import type {
+  HomeLayoutFieldsFragment,
+  HomeLayoutInput,
+  HomeLayoutPresetFieldsFragment,
+  HomeWidgetCatalogQuery,
+  HomeWidgetFieldsFragment,
+  HomeWidgetInput,
+  SaveHomeLayoutPresetInput,
+  UpdateHomeLayoutPresetInput,
+} from "@trenova/graphql/generated/graphql";
 import {
-  CreateHomeLayoutPresetDocument,
-  DeleteHomeLayoutPresetDocument,
   HomeLayoutFieldsFragmentDoc,
   HomeLayoutPresetFieldsFragmentDoc,
   HomeWidgetFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/home-layout/fragments";
+import {
+  CreateHomeLayoutPresetDocument,
+  DeleteHomeLayoutPresetDocument,
   ResetHomeLayoutDocument,
   UpdateHomeLayoutDocument,
   UpdateHomeLayoutPresetDocument,
-  type HomeLayoutFieldsFragment,
-  type HomeLayoutInput,
-  type HomeLayoutPresetFieldsFragment,
-  type HomeWidgetCatalogQuery,
-  type HomeWidgetFieldsFragment,
-  type HomeWidgetInput,
-  type SaveHomeLayoutPresetInput,
-  type UpdateHomeLayoutPresetInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/home-layout/mutations";
 import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 

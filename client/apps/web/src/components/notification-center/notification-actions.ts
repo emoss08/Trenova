@@ -1,7 +1,7 @@
 import {
   AcknowledgeWatchtowerItemDocument,
-  ApproveWorkerPtoDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/watchtower/watchtower";
+import { ApproveWorkerPtoDocument } from "@trenova/graphql/generated/documents/worker/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { NotificationRowAction } from "./notification-registry";
 

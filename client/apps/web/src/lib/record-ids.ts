@@ -6,6 +6,13 @@
  * left alone.
  */
 const ID = String.raw`(?<![\w:/.=?&#-])[a-z]{2,8}_[0-9A-HJKMNP-TV-Z]{26}(?!\w)`;
+const ANY_ID = /[a-z]_[0-9A-HJKMNP-TV-Z]{26}/u;
+
+/** Whether the text holds a record id anywhere, inside an address included (`?panelEntityId=…`). */
+export function containsRecordId(text: string): boolean {
+  return ANY_ID.test(text);
+}
+
 /** The marks a model wraps an id in: code ticks, bold. */
 const WRAP = "[`*_]*";
 /** What a model calls an id beside it: "ID", "id:", "invoiceId", "shipment ID". */
@@ -85,7 +92,7 @@ function withoutStatements(text: string): string {
  * that slips through, or one a summary carries for the agent, off the page.
  */
 export function withoutRecordIds(text: string): string {
-  if (!/[a-z]_[0-9A-HJKMNP-TV-Z]{26}/u.test(text)) {
+  if (!containsRecordId(text)) {
     return text;
   }
 

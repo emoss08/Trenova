@@ -1,16 +1,24 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  DeskFuelCardCardQuery,
+  DeskFuelCardPurchaseFieldsFragment,
+  DeskFuelPurchaseCardQuery,
+  FuelCardFieldsFragment,
+  FuelPurchaseFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   DeskFuelCardCardDocument,
   DeskFuelCardPurchaseFieldsFragmentDoc,
-  DeskFuelPurchaseCardDocument,
+} from "@trenova/graphql/generated/documents/fuel-card/desk";
+import {
   FuelCardFieldsFragmentDoc,
+} from "@trenova/graphql/generated/documents/fuel-card/operations";
+import {
+  DeskFuelPurchaseCardDocument,
+} from "@trenova/graphql/generated/documents/fuel-purchase/desk";
+import {
   FuelPurchaseFieldsFragmentDoc,
-  type DeskFuelCardCardQuery,
-  type DeskFuelCardPurchaseFieldsFragment,
-  type DeskFuelPurchaseCardQuery,
-  type FuelCardFieldsFragment,
-  type FuelPurchaseFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/fuel-purchase/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 type RawPurchaseCard = DeskFuelPurchaseCardQuery["fuelPurchaseDeskCard"];

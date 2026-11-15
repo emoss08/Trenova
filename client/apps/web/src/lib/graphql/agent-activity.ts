@@ -1,10 +1,10 @@
+import type { AgentActivitySummaryQuery } from "@trenova/graphql/generated/graphql";
 import {
-  AgentActivitySummaryDocument,
   AgentDefinitionCountDocument,
-  type AgentActivitySummaryQuery,
   AgentProposalCountDocument,
   AgentRunCountDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/definitions";
+import { AgentActivitySummaryDocument } from "@trenova/graphql/generated/documents/agent/runs";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { rowTotalOf, type RowTotal } from "@trenova/shared/lib/row-total";
 import { fetchActiveAgentMemoryCount } from "./agent-memories";

@@ -1,14 +1,14 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type { AgentRunTranscriptFieldsFragment } from "@trenova/graphql/generated/graphql";
+import { AgentExceptionTableDocument } from "@trenova/graphql/generated/documents/agent/exceptions";
+import { AgentPlanTableDocument } from "@trenova/graphql/generated/documents/agent/plans";
+import { AgentProposalTableDocument } from "@trenova/graphql/generated/documents/agent/proposals";
 import {
-  AgentExceptionTableDocument,
-  AgentPlanTableDocument,
-  AgentProposalTableDocument,
   AgentRunDetailDocument,
   AgentRunTableRowFieldsFragmentDoc,
   AgentRunTableDocument,
   AgentRunTranscriptFieldsFragmentDoc,
-  type AgentRunTranscriptFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/runs";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";

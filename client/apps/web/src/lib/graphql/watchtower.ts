@@ -1,4 +1,17 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  WatchtowerPlayQuery,
+  WatchtowerAgentFieldsFragment,
+  WatchtowerAgentStatus,
+  WatchtowerAgentStep,
+  WatchtowerCountsFieldsFragment,
+  WatchtowerItemFieldsFragment,
+  WatchtowerItemStatus,
+  WatchtowerItemsInput,
+  WatchtowerResolutionCode,
+  WatchtowerSeverity,
+  WatchtowerSourceKind,
+} from "@trenova/graphql/generated/graphql";
 import {
   HandOffWatchtowerItemDocument,
   MarkWatchtowerItemSeenDocument,
@@ -15,18 +28,7 @@ import {
   WatchtowerItemDetailDocument,
   WatchtowerItemFieldsFragmentDoc,
   WatchtowerPlayDocument,
-  type WatchtowerPlayQuery,
-  type WatchtowerAgentFieldsFragment,
-  type WatchtowerAgentStatus,
-  type WatchtowerAgentStep,
-  type WatchtowerCountsFieldsFragment,
-  type WatchtowerItemFieldsFragment,
-  type WatchtowerItemStatus,
-  type WatchtowerItemsInput,
-  type WatchtowerResolutionCode,
-  type WatchtowerSeverity,
-  type WatchtowerSourceKind,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/watchtower/watchtower";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type WatchtowerItem = WatchtowerItemFieldsFragment;

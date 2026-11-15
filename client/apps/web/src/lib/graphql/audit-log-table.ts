@@ -1,15 +1,17 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  AuditLogTableRowFieldsFragment,
+  AuditEntryDetailQuery,
+  AuditFieldHistoryQuery,
+  AuditRequestEntriesQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   AuditEntryDetailDocument,
   AuditLogTableRowFieldsFragmentDoc,
-  type AuditLogTableRowFieldsFragment,
   AuditFieldHistoryDocument,
   AuditLogTableDocument,
   AuditRequestEntriesDocument,
-  type AuditEntryDetailQuery,
-  type AuditFieldHistoryQuery,
-  type AuditRequestEntriesQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/audit-log/table";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";

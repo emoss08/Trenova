@@ -1,9 +1,11 @@
+import type {
+  SidebarCustomizationOptionsQuery,
+  SidebarPreferencesInput,
+  SidebarPreferencesQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   UpdateSidebarPreferencesDocument,
-  type SidebarCustomizationOptionsQuery,
-  type SidebarPreferencesInput,
-  type SidebarPreferencesQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/sidebar-preferences/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type EffectiveSidebarPreferences = SidebarPreferencesQuery["sidebarPreferences"];

@@ -1,4 +1,13 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type {
+  DispatchFreightAreaFieldsFragment,
+  DispatchFreightAreaQuery,
+  DispatchFreightMoveFieldsFragment,
+  DispatchFreightOutlookQuery,
+  DispatchFreightPaceFieldsFragment,
+  DispatchPositionDriverInput,
+  DispatchPositioningFieldsFragment,
+} from "@trenova/graphql/generated/graphql";
 import {
   DispatchCallOffPositioningDocument,
   DispatchForecastQualityFieldsFragmentDoc,
@@ -9,14 +18,7 @@ import {
   DispatchFreightPaceFieldsFragmentDoc,
   DispatchPositionDriverDocument,
   DispatchPositioningFieldsFragmentDoc,
-  type DispatchFreightAreaFieldsFragment,
-  type DispatchFreightAreaQuery,
-  type DispatchFreightMoveFieldsFragment,
-  type DispatchFreightOutlookQuery,
-  type DispatchFreightPaceFieldsFragment,
-  type DispatchPositionDriverInput,
-  type DispatchPositioningFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/dispatch-console/freight-forecast";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { DispatchForecastQuality } from "./dispatch-console";
 

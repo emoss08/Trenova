@@ -1,4 +1,6 @@
-import { LocationCategoryTableDocument } from "@trenova/graphql/generated/graphql";
+import {
+  LocationCategoryTableDocument,
+} from "@trenova/graphql/generated/documents/location-category/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import { rootFields } from "@trenova/shared/lib/reference-access";
 

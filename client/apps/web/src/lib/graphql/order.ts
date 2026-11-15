@@ -1,3 +1,17 @@
+import type {
+  AddOrderChargeMutation,
+  AttachOrderShipmentsMutation,
+  CancelOrderMutation,
+  CloseOrderMutation,
+  DetachOrderShipmentMutation,
+  OrderDetailQuery,
+  OrderInput,
+  RemoveOrderChargeMutation,
+  SetOrderChargeAllocationsMutation,
+  UpdateOrderChargeMutation,
+  ChargeAllocationInput,
+} from "@trenova/graphql/generated/graphql";
+import { OrderDetailDocument } from "@trenova/graphql/generated/documents/order/detail";
 import {
   AddOrderChargeDocument,
   AttachOrderShipmentsDocument,
@@ -5,23 +19,11 @@ import {
   CloseOrderDocument,
   CreateOrderDocument,
   DetachOrderShipmentDocument,
-  OrderDetailDocument,
   RemoveOrderChargeDocument,
   SetOrderChargeAllocationsDocument,
   UpdateOrderChargeDocument,
   UpdateOrderDocument,
-  type AddOrderChargeMutation,
-  type AttachOrderShipmentsMutation,
-  type CancelOrderMutation,
-  type CloseOrderMutation,
-  type DetachOrderShipmentMutation,
-  type OrderDetailQuery,
-  type OrderInput,
-  type RemoveOrderChargeMutation,
-  type SetOrderChargeAllocationsMutation,
-  type UpdateOrderChargeMutation,
-  type ChargeAllocationInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/order/mutations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { UnmaskFragments } from "@trenova/shared/types/graphql-connection";
 import type { OrderFormValues } from "@trenova/shared/types/order";

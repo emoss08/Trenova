@@ -1,10 +1,9 @@
+import type { BulkEditInput, BulkEditJobFieldsFragment } from "@trenova/graphql/generated/graphql";
 import {
   BulkEditJobFieldsFragmentDoc,
   StartBulkEditDocument,
   UndoMyBulkEditDocument,
-  type BulkEditInput,
-  type BulkEditJobFieldsFragment,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/bulk-edit/operations";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 

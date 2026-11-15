@@ -1,10 +1,10 @@
+import type { BulkEditInput } from "@trenova/graphql/generated/graphql";
 import {
   BulkEditFieldsDocument,
   BulkEditJobFieldsFragmentDoc,
   MyBulkEditDocument,
   PreviewBulkEditDocument,
-  type BulkEditInput,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/bulk-edit/operations";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";

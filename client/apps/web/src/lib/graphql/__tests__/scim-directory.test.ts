@@ -1,4 +1,6 @@
-import { ScimDirectoriesListDocument } from "@trenova/graphql/generated/graphql";
+import {
+  ScimDirectoriesListDocument,
+} from "@trenova/graphql/generated/documents/security-activity/scim-directories";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { listSCIMDirectoriesGraphQL } from "../scim-directory";

@@ -1,7 +1,5 @@
-import {
-  DeskTrailerCardDocument,
-  type DeskTrailerCardQuery,
-} from "@trenova/graphql/generated/graphql";
+import type { DeskTrailerCardQuery } from "@trenova/graphql/generated/graphql";
+import { DeskTrailerCardDocument } from "@trenova/graphql/generated/documents/trailer/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DeskTrailer = NonNullable<DeskTrailerCardQuery["trailer"]>;

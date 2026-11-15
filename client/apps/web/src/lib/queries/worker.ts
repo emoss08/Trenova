@@ -1,14 +1,16 @@
+import type {
+  UpcomingWorkerPtoQuery,
+  UpcomingWorkerPtoQueryVariables,
+  WorkerPtoChartDataQuery,
+  WorkerPtoChartDataQueryVariables,
+  WorkerPtoTableQuery,
+  WorkerPtoTableQueryVariables,
+} from "@trenova/graphql/generated/graphql";
 import {
   UpcomingWorkerPtoDocument,
   WorkerPtoChartDataDocument,
   WorkerPtoTableDocument,
-  type UpcomingWorkerPtoQuery,
-  type UpcomingWorkerPtoQueryVariables,
-  type WorkerPtoChartDataQuery,
-  type WorkerPtoChartDataQueryVariables,
-  type WorkerPtoTableQuery,
-  type WorkerPtoTableQueryVariables,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/worker/page";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import type {

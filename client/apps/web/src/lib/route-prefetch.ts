@@ -1,9 +1,10 @@
 import type { QueryClient, QueryFunctionContext, QueryKey } from "@tanstack/react-query";
 
-// Long enough to cover the gap between the loader firing a request and the page's own
-// useQuery subscribing to it, short enough that a page which opts into a shorter window
-// still sees live data on its next visit. Only applies to prefetchQuery's own decision to
-// fetch: an observer keeps whatever staleTime it declares.
+// Long enough to cover the gap between the loader (or a predicted link) firing a request and
+// the page's own useQuery subscribing to it, short enough that a page which opts into a
+// shorter window still sees live data on its next visit. prefetchQuery skips a fetch inside
+// it, and the query client's refetchOnMount keeps data this young when the page mounts
+// (`lib/query-client.ts`); an observer otherwise keeps whatever staleTime it declares.
 export const PREFETCH_STALE_TIME_MS = 5_000;
 
 // staleTime and retry may be functions of the query in TanStack's own option
@@ -85,13 +86,23 @@ function warm(queryClient: QueryClient, options: RoutePrefetchEntry): void {
   void started.catch(() => undefined);
 }
 
+function isOnScreen(queryClient: QueryClient, options: RoutePrefetchEntry): boolean {
+  const query = queryClient.getQueryCache().find({ queryKey: options.queryKey, exact: true });
+  return (query?.getObserversCount() ?? 0) > 0;
+}
+
 async function runPrefetch(
   queryClient: QueryClient,
   prefetch: RoutePrefetch,
   args: RoutePrefetchArgs,
+  cause: PageLoaderContext["cause"],
 ): Promise<void> {
   const list = await prefetch(args);
   for (const options of list) {
+    // A preload never touches a query something on screen is reading: that component keeps it
+    // live and refetches it when it should. Warming it anyway refetched the whole page a person
+    // was on whenever the pointer crossed a link to it, and redrew every reader of the result.
+    if (cause === "preload" && isOnScreen(queryClient, options)) continue;
     warm(queryClient, options);
   }
 }
@@ -110,6 +121,8 @@ export function pageLoader(prefetch: RoutePrefetch) {
       return;
     }
     const searchParams = new URLSearchParams(location.searchStr);
-    runPrefetch(context.queryClient, prefetch, { params, searchParams }).catch(() => undefined);
+    runPrefetch(context.queryClient, prefetch, { params, searchParams }, cause).catch(
+      () => undefined,
+    );
   };
 }

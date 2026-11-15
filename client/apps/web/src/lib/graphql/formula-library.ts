@@ -1,8 +1,10 @@
+import type { FormulaLibraryQuery } from "@trenova/graphql/generated/graphql";
 import {
   FormulaLibraryDocument,
+} from "@trenova/graphql/generated/documents/formula-library/record";
+import {
   FormulaLibraryTableDocument,
-  type FormulaLibraryQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/formula-library/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";

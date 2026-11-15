@@ -4,8 +4,7 @@
 // is imported only then, so nothing of it is in the startup bundle. A failure is logged and
 // forgotten; useRules() and loadRules() try again when something needs the module.
 
-const IDLE_TIMEOUT_MS = 10_000;
-const NO_IDLE_CALLBACK_DELAY_MS = 2_000;
+import { afterPageLoad, whenBrowserIdle } from "@trenova/shared/lib/when-page-settles";
 
 type PreloadEnvironment = {
   load: () => Promise<unknown>;
@@ -17,17 +16,8 @@ type PreloadEnvironment = {
 function browserEnvironment(): PreloadEnvironment {
   return {
     load: () => import("./load").then(({ loadRules }) => loadRules()),
-    whenIdle: (task) => {
-      if (typeof window.requestIdleCallback === "function") {
-        window.requestIdleCallback(task, { timeout: IDLE_TIMEOUT_MS });
-      } else {
-        window.setTimeout(task, NO_IDLE_CALLBACK_DELAY_MS);
-      }
-    },
-    whenLoaded: (task) => {
-      if (document.readyState === "complete") task();
-      else window.addEventListener("load", task, { once: true });
-    },
+    whenIdle: whenBrowserIdle,
+    whenLoaded: afterPageLoad,
     report: (error) =>
       console.error(
         "Could not preload the rules module; it loads again when a screen needs it:",

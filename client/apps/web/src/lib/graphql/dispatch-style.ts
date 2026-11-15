@@ -1,8 +1,8 @@
+import type { DispatchStyleQuery } from "@trenova/graphql/generated/graphql";
 import {
   DispatchStyleDocument,
   ResetDispatchStyleDocument,
-  type DispatchStyleQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/dispatch-control/dispatch-style";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DispatchStyle = DispatchStyleQuery["dispatchStyle"];

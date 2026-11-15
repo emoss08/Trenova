@@ -1,4 +1,6 @@
-import { MyTableLayoutDocument } from "@trenova/graphql/generated/graphql";
+import {
+  MyTableLayoutDocument,
+} from "@trenova/graphql/generated/documents/table-layout/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 

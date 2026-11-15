@@ -1,9 +1,11 @@
+import type {
+  AgentSuggestionOutcome,
+  AgentSuggestionSurface,
+} from "@trenova/graphql/generated/graphql";
 import {
   RecordMyAgentSuggestionDocument,
   SettleMyAgentSuggestionDocument,
-  type AgentSuggestionOutcome,
-  type AgentSuggestionSurface,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/agent/access";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type { AgentSuggestionOutcome, AgentSuggestionSurface };

@@ -1,9 +1,11 @@
+import type {
+  LiveTenderByMoveQuery,
+  TendersByShipmentQuery,
+} from "@trenova/graphql/generated/graphql";
 import {
   LiveTenderByMoveDocument,
   TendersByShipmentDocument,
-  type LiveTenderByMoveQuery,
-  type TendersByShipmentQuery,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/tender/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type LiveTender = NonNullable<LiveTenderByMoveQuery["liveTenderByMove"]>;

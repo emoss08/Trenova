@@ -1,4 +1,4 @@
-import { AgentMemoryUsageDocument } from "@trenova/graphql/generated/graphql";
+import { AgentMemoryUsageDocument } from "@trenova/graphql/generated/documents/agent/memories";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {

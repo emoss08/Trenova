@@ -3,7 +3,7 @@ import {
   ExternalIdentitiesTableDocument,
   MfaAuthenticatorsTableDocument,
   RiskDecisionsTableDocument,
-} from "@trenova/graphql/generated/graphql";
+} from "@trenova/graphql/generated/documents/security-activity/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 

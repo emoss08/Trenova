@@ -1,4 +1,4 @@
-import { DeskTrailerCardDocument } from "@trenova/graphql/generated/graphql";
+import { DeskTrailerCardDocument } from "@trenova/graphql/generated/documents/trailer/desk";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchDeskTrailer } from "../trailer-card";

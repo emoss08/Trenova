@@ -1,4 +1,4 @@
-import { ApiKeyTableDocument } from "@trenova/graphql/generated/graphql";
+import { ApiKeyTableDocument } from "@trenova/graphql/generated/documents/api-key/table";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
