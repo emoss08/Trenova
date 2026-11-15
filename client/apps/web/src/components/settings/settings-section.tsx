@@ -2,7 +2,6 @@ import { FieldLayoutProvider } from "@/components/fields/field-components";
 import { cn } from "@trenova/shared/lib/utils";
 import { useId, type ReactNode } from "react";
 import {
-  settingsColumnClass,
   settingsListClass,
   settingsNestedClass,
   settingsReadoutClass,
@@ -21,11 +20,6 @@ export function SettingsSections({
   children: ReactNode;
 }) {
   return <div className={cn(settingsSectionsClass, className)}>{children}</div>;
-}
-
-/** The centred column of a settings page that has no tabs; `SettingsTabs` draws its own. */
-export function SettingsColumn({ children }: { children: ReactNode }) {
-  return <div className={settingsColumnClass}>{children}</div>;
 }
 
 /**

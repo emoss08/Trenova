@@ -54,6 +54,7 @@ export function TendersTab() {
             }
             placeholder={marginsWithheld ? t("Hidden") : "10"}
             disabled={marginsWithheld}
+            required={counterOffersEnabled}
             sideText="%"
             decimalScale={4}
             allowNegative
@@ -75,6 +76,7 @@ export function TendersTab() {
             description={t(
               "A counter nobody answers in time lapses and the tender moves on to the next carrier.",
             )}
+            required={counterOffersEnabled}
             placeholder="60"
             sideText="minutes"
             min={5}

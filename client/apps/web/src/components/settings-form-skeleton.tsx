@@ -18,7 +18,9 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import {
   settingsColumnClass,
+  settingsFillClass,
   settingsListClass,
+  settingsScrollBodyClass,
   settingsSectionClass,
   settingsSectionHeadClass,
   settingsSectionsClass,
@@ -352,8 +354,8 @@ export function SettingsListSectionSkeleton({ section }: { section: SettingsSect
 }
 
 /**
- * The loading state of a tabbed settings page (`SettingsTabs`): the tab row, then the open
- * tab's sections, in the page's centred column. The page passes the tabs it will show and
+ * The loading state of a tabbed settings page (`SettingsTabs`): the tab row holding the top
+ * of the page's frame, then the open tab's sections in the centred column under it. The page passes the tabs it will show and
  * the sections of the one that is open, so the form lands where the outline was.
  */
 export function SettingsTabsSkeleton({
@@ -366,12 +368,9 @@ export function SettingsTabsSkeleton({
   const t = useT();
 
   return (
-    <SkeletonRegion
-      label={t("Loading settings")}
-      className={cn(settingsColumnClass, "flex flex-col gap-5")}
-    >
+    <SkeletonRegion label={t("Loading settings")} className={settingsFillClass}>
       {tabs > 1 && (
-        <div className={settingsTabRowClass}>
+        <div className={cn(settingsColumnClass, settingsTabRowClass)}>
           <div className="flex w-fit items-center gap-x-0.5 py-1">
             {Array.from({ length: tabs }, (_, index) => (
               <span
@@ -385,10 +384,12 @@ export function SettingsTabsSkeleton({
           </div>
         </div>
       )}
-      <div className={settingsSectionsClass}>
-        {sections.map((section, index) => (
-          <SettingsListSectionSkeleton key={index} section={section} />
-        ))}
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <div className={cn(settingsColumnClass, settingsScrollBodyClass, settingsSectionsClass)}>
+          {sections.map((section, index) => (
+            <SettingsListSectionSkeleton key={index} section={section} />
+          ))}
+        </div>
       </div>
     </SkeletonRegion>
   );

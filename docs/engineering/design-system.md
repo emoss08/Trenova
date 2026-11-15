@@ -726,6 +726,16 @@ hyphen.
   tab when a save is refused (`tabHoldingError`), so a refusal never fails out of sight. The
   open tab lives in the address (`useSettingsTab`). What a tab only reports (what was
   learned) is a `SettingsReadout`, read the first time the tab opens (`Kept`).
+- A tabbed settings page fills the page's frame (`PageLayout fill`, the form passing the
+  height on with `settingsFillClass`): the tab row holds its place and only the open tab's
+  settings scroll, in a `ScrollArea`, so the tabs are where they were however far down a
+  person has read. A tab opens at its top. A tab that is left goes off screen at once and
+  only the arriving one moves: the tab primitive keeps a left tab mounted until its
+  animations end, and an arrival animation on it showed two tabs' settings at once.
+- A region that scrolls is `ScrollArea`. Its bar is a hairline (a 4px thumb) and is there
+  only while there is somewhere to scroll to: the area measures that itself whenever its
+  content changes size, so never keep padding in it "for later" (room for a dock that is
+  not showing), which gives a bar to content that fits.
 - A field is marked required with its `required` prop (`required`, `required={enabled}`, or
   `required={t("Enter the six-digit code")}` for its own words), never through `rules`. A
   field that is not required shows a clear control, so an optional choice can always be

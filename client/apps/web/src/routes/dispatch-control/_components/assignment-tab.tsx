@@ -53,6 +53,7 @@ export function AssignmentTab() {
           <NumberField
             control={control}
             name="autoAssignConfidenceThreshold"
+            required={enableAutoAssignment}
             label={t("Auto-execute confidence threshold")}
             description={t(
               "Minimum confidence (0 to 1) an automatic assignment must reach before it executes without dispatcher review.",
@@ -81,15 +82,19 @@ export function AssignmentTab() {
           <NumberField
             control={control}
             name="autoAssignPlanningHorizonHours"
+            required
             label={t("Planning horizon (hours)")}
             description={t("How far ahead the optimizer plans moves, from 1 to 336 hours.")}
             placeholder="48"
+            min={0}
             sideText="hours"
           />
           <NumberField
             control={control}
             name="coverageRiskWindowHours"
             label={t("Coverage risk window (hours)")}
+            required
+            min={0}
             description={t(
               "A move this close to its start with nobody on it is raised to the watchtower and handed to the dispatch agent. Shorter than the planning horizon on purpose.",
             )}

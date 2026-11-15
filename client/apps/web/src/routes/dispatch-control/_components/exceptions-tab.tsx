@@ -27,6 +27,7 @@ export function ExceptionsTab() {
           label={t("Critical exceptions are due in")}
           placeholder="60"
           sideText="minutes"
+          required
           min={5}
           max={10080}
         />
@@ -36,6 +37,7 @@ export function ExceptionsTab() {
           label={t("Warnings are due in")}
           placeholder="240"
           sideText="minutes"
+          required
           min={5}
           max={10080}
         />
@@ -46,6 +48,7 @@ export function ExceptionsTab() {
           description={t("From 5 minutes to a week, counted from when the exception is raised.")}
           placeholder="1440"
           sideText="minutes"
+          required
           min={5}
           max={10080}
         />
@@ -66,6 +69,7 @@ export function ExceptionsTab() {
           )}
           placeholder="60"
           sideText="minutes"
+          required
           min={5}
           max={1440}
         />
@@ -76,6 +80,7 @@ export function ExceptionsTab() {
           description={t("0 turns escalation off; at most 10.")}
           placeholder="3"
           sideText="times"
+          required
           min={0}
           max={10}
         />
@@ -118,6 +123,7 @@ export function ExceptionsTab() {
           )}
           placeholder="30"
           sideText="minutes"
+          required
           min={0}
           max={1440}
         />
@@ -128,6 +134,7 @@ export function ExceptionsTab() {
           description={t("With no proof of delivery on file by then, POD missing is raised.")}
           placeholder="24"
           sideText="hours"
+          required
           min={1}
           max={720}
         />

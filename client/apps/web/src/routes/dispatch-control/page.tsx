@@ -11,6 +11,8 @@ export function DispatchControlPage() {
 
   return (
     <PageLayout
+      fill
+      className="pb-0"
       pageHeaderProps={{
         title: t("Dispatch control"),
         description: t("Configure and manage your dispatch control settings"),

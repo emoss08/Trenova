@@ -31,6 +31,7 @@ export function MonitoringTab() {
           control={control}
           name="recordServiceFailures"
           label={t("Record Service failures")}
+          required
           description={t("Choose which incident types should be captured as service failures.")}
           options={serviceIncidentTypeChoices}
         />
@@ -77,6 +78,7 @@ export function MonitoringTab() {
             control={control}
             name="checkCallIntervalHours"
             label={t("Check call window")}
+            required={enableCheckCallMonitoring}
             description={t(
               "How long a load may go without word from the carrier, from 1 to 72 hours. A customer can set its own window.",
             )}
@@ -111,6 +113,7 @@ export function MonitoringTab() {
           )}
           placeholder="60"
           sideText="minutes"
+          required
           min={0}
           max={1440}
         />
@@ -122,6 +125,7 @@ export function MonitoringTab() {
             "How long a stop takes once the truck is there, used to chain later stops, from 0 to 720 minutes.",
           )}
           placeholder="60"
+          required
           sideText="minutes"
           min={0}
           max={720}

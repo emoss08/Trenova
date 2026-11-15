@@ -1,4 +1,5 @@
 import { FormSaveDock } from "@/components/form-save-dock";
+import { settingsFillClass } from "@/components/settings/settings-layout";
 import { useSettingsTab, tabHoldingError } from "@/components/settings/settings-tab";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
@@ -14,7 +15,6 @@ import {
   hasOrganizationCapability,
   OrganizationCapability,
 } from "@trenova/shared/types/organization-capability";
-import type { ReactNode } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import {
   dispatchControlTabs,
@@ -80,7 +80,7 @@ export default function DispatchControlForm() {
     }
   };
 
-  const content = (tab: DispatchControlTab): ReactNode => {
+  const content = (tab: DispatchControlTab) => {
     switch (tab) {
       case "assignment":
         return <AssignmentTab />;
@@ -106,15 +106,13 @@ export default function DispatchControlForm() {
 
   return (
     <FormProvider {...form}>
-      <Form onSubmit={handleSubmit(onSubmit, openRefusedTab)}>
-        <div className="flex flex-col gap-4 pb-14">
-          <SettingsTabs
-            tabs={specs.map((spec) => ({ ...spec, content: content(spec.value) }))}
-            value={openTab}
-            onValueChange={selectTab}
-          />
-          <FormSaveDock saveButtonContent={t("Save changes")} />
-        </div>
+      <Form className={settingsFillClass} onSubmit={handleSubmit(onSubmit, openRefusedTab)}>
+        <SettingsTabs
+          tabs={specs.map((spec) => ({ ...spec, content: content(spec.value) }))}
+          value={openTab}
+          onValueChange={selectTab}
+        />
+        <FormSaveDock saveButtonContent={t("Save changes")} />
       </Form>
     </FormProvider>
   );

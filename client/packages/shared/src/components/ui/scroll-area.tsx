@@ -27,15 +27,28 @@ export type ScrollAreaMaskVariant =
   | "sidebar"
   | "warning";
 
+/** Whether there is anything to scroll to, each way. */
+type Scrollable = { x: boolean; y: boolean };
+
 export type ScrollAreaContextProps = {
   isTouch: boolean;
   type: "auto" | "always" | "scroll" | "hover";
+  scrollable: Scrollable;
 };
+
+const NOT_SCROLLABLE: Scrollable = { x: false, y: false };
 
 const ScrollAreaContext = React.createContext<ScrollAreaContextProps>({
   isTouch: false,
   type: "hover",
+  scrollable: NOT_SCROLLABLE,
 });
+
+/**
+ * The two values the overflow threshold alternates between. A thousandth of a pixel changes
+ * nothing a person could see; the change itself is the point (see `recount` below).
+ */
+const THRESHOLD_NUDGE = 0.001;
 
 const scrollMaskVariantClassNames: Record<ScrollAreaMaskVariant, string> = {
   background: "before:from-background after:from-background",
@@ -188,6 +201,14 @@ const ScrollArea = React.forwardRef<
       right: false,
     });
 
+    const [scrollable, setScrollable] = React.useState<Scrollable>(NOT_SCROLLABLE);
+    // The primitive measures what can be scrolled when the viewport is scrolled or resized,
+    // and not when the content inside it changes: a short tab opened after a long one kept
+    // the long one's bar, and a long one opened first had none until it was scrolled. It
+    // measures again when its overflow threshold changes, so each change in the content's
+    // size counts here and flips the threshold between two values no one can tell apart.
+    const [recount, setRecount] = React.useState(0);
+
     const viewportRef = React.useRef<HTMLDivElement>(null);
     const setViewport = React.useCallback(
       (node: HTMLDivElement | null) => {
@@ -217,6 +238,8 @@ const ScrollArea = React.forwardRef<
         left: scrollLeft > 0,
         right: scrollLeft + clientWidth < scrollWidth - 1,
       }));
+      const next = { x: scrollWidth - clientWidth > 1, y: scrollHeight - clientHeight > 1 };
+      setScrollable((prev) => (prev.x === next.x && prev.y === next.y ? prev : next));
     }, []);
 
     React.useEffect(() => {
@@ -230,6 +253,27 @@ const ScrollArea = React.forwardRef<
 
       const resizeObserver = new ResizeObserver(checkScrollability);
       resizeObserver.observe(element);
+
+      // What there is to scroll changes with the content, not only with the viewport: a
+      // list that grows, a tab that swaps. Each thing placed in the viewport is watched,
+      // and so is the list of them.
+      const contentChanged = () => {
+        checkScrollability();
+        setRecount((count) => count + 1);
+      };
+      const contentObserver = new ResizeObserver(contentChanged);
+      const watchContent = () => {
+        contentObserver.disconnect();
+        for (const child of element.children) {
+          contentObserver.observe(child);
+        }
+      };
+      const childObserver = new MutationObserver(() => {
+        watchContent();
+        contentChanged();
+      });
+      childObserver.observe(element, { childList: true });
+      watchContent();
 
       element.addEventListener("scroll", checkScrollability, {
         passive: true,
@@ -246,11 +290,13 @@ const ScrollArea = React.forwardRef<
       return () => {
         controller.abort();
         resizeObserver.disconnect();
+        contentObserver.disconnect();
+        childObserver.disconnect();
       };
     }, [checkScrollability, isTouch]);
 
     return (
-      <ScrollAreaContext.Provider value={{ isTouch, type }}>
+      <ScrollAreaContext.Provider value={{ isTouch, type, scrollable }}>
         {isTouch ? (
           <div
             ref={ref}
@@ -282,6 +328,7 @@ const ScrollArea = React.forwardRef<
             ref={ref}
             data-slot="scroll-area"
             className={cn(SCROLL_AREA_ROOT_CLASS, viewportClassName, className)}
+            overflowEdgeThreshold={recount % 2 === 0 ? 0 : THRESHOLD_NUDGE}
             {...props}
           >
             <ScrollAreaPrimitive.Viewport
@@ -321,21 +368,31 @@ const ScrollBar = React.forwardRef<
   React.ComponentRef<typeof ScrollAreaPrimitive.Scrollbar>,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Scrollbar>
 >(({ className, orientation = "vertical", ...props }, ref) => {
-  const { isTouch, type } = React.useContext(ScrollAreaContext);
+  const { isTouch, type, scrollable } = React.useContext(ScrollAreaContext);
 
   if (isTouch) return null;
+
+  // The bar is there only while there is somewhere to scroll to. The area measures that
+  // itself, on every change to its content, so the bar never outlives what it was for; it
+  // stays mounted so it is ready the moment the content outgrows the viewport.
+  const canScroll = orientation === "vertical" ? scrollable.y : scrollable.x;
 
   return (
     <ScrollAreaPrimitive.Scrollbar
       ref={ref}
       orientation={orientation}
+      keepMounted
       data-slot="scroll-area-scrollbar"
       className={cn(
-        "flex touch-none p-px transition-[colors,opacity] duration-150 ease-out select-none hover:bg-muted dark:hover:bg-muted/50",
-        orientation === "vertical" && "h-full w-2.5 border-l border-l-transparent",
-        orientation === "horizontal" && "h-2.5 flex-col border-t border-t-transparent px-1 pr-1.25",
+        // A hairline of a bar: a 4px thumb in a 6px track. The track reaches a little into
+        // the content (`after`) so the thumb is no harder to catch than a wider one.
+        "flex touch-none p-px transition-[colors,opacity] duration-150 ease-out select-none after:absolute after:content-[''] hover:bg-muted dark:hover:bg-muted/50",
+        orientation === "vertical" && "h-full w-1.5 after:inset-y-0 after:right-0 after:-left-1",
+        orientation === "horizontal" &&
+          "h-1.5 flex-col px-1 pr-1.25 after:inset-x-0 after:-top-1 after:bottom-0",
         type === "hover" && "opacity-0 data-[hovering]:opacity-100",
         type === "scroll" && "opacity-0 data-[scrolling]:opacity-100",
+        !canScroll && "hidden",
         className,
       )}
       {...props}
@@ -343,7 +400,7 @@ const ScrollBar = React.forwardRef<
       <ScrollAreaPrimitive.Thumb
         data-slot="scroll-area-thumb"
         className={cn(
-          "relative flex-1 rounded-full bg-border transition-[scale]",
+          "relative flex-1 rounded-full bg-border-strong transition-[scale]",
           orientation === "vertical" && "my-1 active:scale-y-95",
           orientation === "horizontal" && "active:scale-x-98",
         )}

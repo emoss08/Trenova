@@ -147,7 +147,9 @@ one a row (name and meaning left, compact control right). Fields under a switch 
 `SettingsNested show={…}`, a dependent section in `SettingsReveal`, a page with several jobs
 in `SettingsTabs` (define the tabs and the form fields each holds in a `<page>-tabs.ts` the
 skeleton also reads, and open the refused tab with `tabHoldingError` from both the submit's
-`catch` and `handleSubmit`'s invalid callback). Control pages still on stacked `Card`s are
+`catch` and `handleSubmit`'s invalid callback). A tabbed page is `PageLayout fill className="pb-0"`
+with `Form className={settingsFillClass}`, so the tab row holds its place and only the tab's
+settings scroll. Control pages still on stacked `Card`s are
 moved to this when touched.
 
 Every shared field takes what it is told as its own props, the same on all of them:
