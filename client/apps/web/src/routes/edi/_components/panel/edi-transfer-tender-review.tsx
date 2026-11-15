@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import type { EDITransferRow } from "@/lib/graphql/edi-table";
@@ -13,7 +14,6 @@ import {
   PackageIcon,
   RouteIcon,
 } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import {
   findMapping,
   formatAccessorialName,

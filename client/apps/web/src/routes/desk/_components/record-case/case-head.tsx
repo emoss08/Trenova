@@ -1,9 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { DeskCase } from "@/lib/graphql/desk-case";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 import { Fragment, type ReactNode } from "react";
-import { Link } from "react-router";
 import { dueTone } from "../attention/attention-row";
 import { formatCountdown, minutesLeft } from "../watchtower/lanes";
 import { badgeTone } from "./case-tone";

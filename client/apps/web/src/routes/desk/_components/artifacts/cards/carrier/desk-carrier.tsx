@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useCarrierIntelLabels } from "@/components/carrier-intelligence/use-carrier-intel-labels";
 import { recordPath } from "@/config/record-links";
 import { describeApiError } from "@/lib/api-error-message";
@@ -18,7 +19,6 @@ import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
 import { CardPagedList } from "../../record-card/card-paged-list";
 import { CardShipments } from "../../record-card/card-shipments";

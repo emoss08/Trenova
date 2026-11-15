@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-badges";
 import { recordPath } from "@/config/record-links";
 import { FACTORING_REMITTANCE_LINE_KIND_LABELS } from "@/lib/factoring-remittance";
@@ -6,7 +7,6 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDate, formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { Link } from "react-router";
 
 export function getFactoringRemittanceColumns(t: TranslateFn): ColumnDef<FactoringRemittanceRow>[] {
   return [

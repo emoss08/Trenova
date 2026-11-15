@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { SectionPanel } from "@/components/section-panel";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -7,8 +8,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { ArrowRightIcon, type IconComponent, Inbox01Icon } from "@trenova/shared/components/icons";
 import { createContext, useContext, type ReactNode } from "react";
-import { Link } from "react-router";
-
 /**
  * True while the canvas is in edit mode. The canvas's edit bar becomes every
  * tile's header, so the shell drops its own header and footer rather than

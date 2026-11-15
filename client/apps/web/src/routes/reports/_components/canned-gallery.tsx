@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { PlanLockedNotice } from "@trenova/shared/components/plan-locked";
@@ -12,7 +13,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { parseReportIR, type ReportParameterDef } from "@/types/report";
 import { PlayIcon, RulerIcon, TableIcon } from "@trenova/shared/components/icons";
 import { useId, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
   compareReportsBySort,
@@ -177,7 +178,7 @@ export function CannedGallery({
       { cannedKey: report.key },
       {
         onSuccess: (definition) => {
-          void navigate(`/reports/builder/${definition.id}`);
+          void navigate({ to: `/reports/builder/${definition.id}` });
         },
         onError: (error) =>
           toast.error(graphQLErrorMessage(error, t("Failed to customize the report"))),

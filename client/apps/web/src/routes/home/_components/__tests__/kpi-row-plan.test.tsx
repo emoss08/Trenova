@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { HomeWidget } from "@/lib/graphql/home-layout";
 import { defaultAnalyticsData } from "@/lib/shipment-analytics";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import type { HomeData } from "../use-home-data";
 import { KPIRowWidget, KPIWidget } from "../widgets/pulse-widgets";
@@ -47,7 +47,7 @@ function strip(metrics: string[], lockedMetrics: HomeWidget["lockedMetrics"] = [
 }
 
 function Wrapper({ children }: { children: ReactNode }) {
-  return <MemoryRouter>{children}</MemoryRouter>;
+  return <TestRouter>{children}</TestRouter>;
 }
 
 afterEach(cleanup);

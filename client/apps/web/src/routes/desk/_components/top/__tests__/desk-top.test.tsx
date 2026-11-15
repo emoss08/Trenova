@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useDeskMarginStore } from "@/stores/desk-margin-store";
@@ -49,7 +49,7 @@ function renderBar(
   const queryClient = new QueryClient();
   const bar = (changes: Partial<AssistantThread>) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskTop
           place="thread"
           thread={thread(changes)}
@@ -64,7 +64,7 @@ function renderBar(
           {...rail}
           {...handlers}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
   const { rerender } = render(bar(overrides));
@@ -276,7 +276,7 @@ describe("DeskTop rename", () => {
   it("names the Scheduled page and offers none of a conversation's controls there", () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskTop
             place="scheduled"
             thread={null}
@@ -296,7 +296,7 @@ describe("DeskTop rename", () => {
             onRename={vi.fn()}
             onOpenRail={vi.fn()}
           />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 
@@ -308,7 +308,7 @@ describe("DeskTop rename", () => {
 function renderPlace(place: "today" | "needs" | "handled", path = "/desk") {
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter initialEntries={[path]}>
+      <TestRouter initialEntries={[path]}>
         <DeskTop
           place={place}
           thread={null}
@@ -328,7 +328,7 @@ function renderPlace(place: "today" | "needs" | "handled", path = "/desk") {
           onRename={vi.fn()}
           onOpenRail={vi.fn()}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

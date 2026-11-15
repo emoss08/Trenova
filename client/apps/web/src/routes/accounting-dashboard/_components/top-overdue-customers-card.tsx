@@ -1,10 +1,10 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SectionPanel, SectionPanelLink } from "@/components/section-panel";
 import { ar } from "@/lib/queries/ar";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircleIcon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { PANEL_LIST_HEIGHT, PanelQuiet, RowsBodySkeleton } from "./dashboard-panel";
 
 const TOP_OVERDUE_LIMIT = 10;

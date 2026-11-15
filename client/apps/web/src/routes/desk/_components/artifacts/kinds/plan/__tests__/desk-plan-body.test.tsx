@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import {
   field,
   message,
@@ -16,7 +17,6 @@ import type {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskPlanBody } from "../desk-plan-body";
 
@@ -244,9 +244,9 @@ function renderPlan() {
   } as unknown as AssistantArtifact;
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskPlanBody artifact={artifact} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
   return client;

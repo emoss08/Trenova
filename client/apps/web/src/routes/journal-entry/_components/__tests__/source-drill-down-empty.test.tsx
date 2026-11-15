@@ -1,7 +1,6 @@
 import { cleanup, screen } from "@testing-library/react";
-import { Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PageLayoutStub, renderAccountingPage } from "@/test/accounting-page-mocks";
+import { PageLayoutStub, renderAccountingRoute } from "@/test/accounting-page-mocks";
 import { SourceDrillDownPage } from "../source-drill-down-page";
 
 const mocks = vi.hoisted(() => ({
@@ -31,11 +30,10 @@ afterEach(() => {
 
 describe("journal source drill-down empty state", () => {
   it("draws the postings it will show and names the source that has none", async () => {
-    renderAccountingPage(
-      <Routes>
-        <Route path="/journal/source/:type/:sourceId" element={<SourceDrillDownPage />} />
-      </Routes>,
-      ["/journal/source/invoice/inv_1"],
+    await renderAccountingRoute(
+      "/journal/source/$type/$sourceId",
+      SourceDrillDownPage,
+      "/journal/source/invoice/inv_1",
     );
 
     expect(await screen.findByText("Nothing posted")).toBeInTheDocument();

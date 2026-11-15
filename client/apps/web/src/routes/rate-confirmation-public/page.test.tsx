@@ -1,9 +1,8 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type { PublicRateConfirmation } from "@trenova/shared/types/rate-confirmation";
 import { RateConfirmationPublicPage } from "./page";
@@ -58,22 +57,19 @@ function apiError(status: number): ApiRequestError {
   return new ApiRequestError(status, { type: "about:blank", title: "Error", status });
 }
 
-function renderPage() {
+async function renderPage() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={["/rate-confirmation/tok_123"]}>
-          <Routes>
-            <Route path="/rate-confirmation/:token" element={children} />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>
-    );
-  }
-  return render(<RateConfirmationPublicPage />, { wrapper: Wrapper });
+  return renderAtRoutes(
+    [{ path: "/rate-confirmation/$token", component: RateConfirmationPublicPage }],
+    {
+      initialEntries: ["/rate-confirmation/tok_123"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      ),
+    },
+  );
 }
 
 describe("RateConfirmationPublicPage", () => {
@@ -85,7 +81,7 @@ describe("RateConfirmationPublicPage", () => {
   it("renders the frozen snapshot with signer inputs and a disabled confirm button", async () => {
     mocks.getPublicRateConfirmation.mockResolvedValue(publicView());
 
-    renderPage();
+    await renderPage();
 
     expect(
       await screen.findByText("Rate confirmation for Knight Logistics LLC"),
@@ -103,7 +99,7 @@ describe("RateConfirmationPublicPage", () => {
   it("shows the vague invalid-link state for a definitive 4xx preview rejection", async () => {
     mocks.getPublicRateConfirmation.mockRejectedValue(apiError(422));
 
-    renderPage();
+    await renderPage();
 
     expect(
       await screen.findByText("This rate confirmation link is no longer valid"),
@@ -116,7 +112,7 @@ describe("RateConfirmationPublicPage", () => {
       publicView({ status: "Confirmed", confirmed: true }),
     );
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText("Already confirmed")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Confirm rate/ })).not.toBeInTheDocument();
@@ -127,7 +123,7 @@ describe("RateConfirmationPublicPage", () => {
     mocks.confirmPublicRateConfirmation.mockResolvedValue(undefined);
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.type(await screen.findByLabelText(/Your name/), "Jane Smith");
     await user.type(screen.getByLabelText(/Title/), "Operations Manager");
@@ -147,7 +143,7 @@ describe("RateConfirmationPublicPage", () => {
     mocks.confirmPublicRateConfirmation.mockRejectedValue(apiError(429));
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.type(await screen.findByLabelText(/Your name/), "Jane Smith");
     await user.click(screen.getByRole("button", { name: /Confirm rate/ }));
@@ -162,7 +158,7 @@ describe("RateConfirmationPublicPage", () => {
       .mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.type(await screen.findByLabelText(/Your name/), "Jane Smith");
     await user.click(screen.getByRole("button", { name: /Confirm rate/ }));

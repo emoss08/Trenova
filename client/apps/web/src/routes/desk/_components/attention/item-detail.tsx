@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { ItemPanel } from "./panels/item-panel";
 import { AgentWorkBlock } from "./agent-work";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
@@ -23,7 +24,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatMinutesSpan, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { WatchtowerHandOff } from "../watchtower/hand-off-menu";
 import { formatCountdown, formatFactTime, minutesLeft } from "../watchtower/lanes";
 import type { WatchtowerActions } from "../watchtower/use-watchtower-actions";
@@ -457,7 +458,7 @@ export function ItemDetail({
             {isMessage && item.path !== "" && (
               <Button
                 variant={readable ? "secondary" : "default"}
-                onClick={() => void navigate(item.path)}
+                onClick={() => void navigate({ to: item.path })}
               >
                 <DeskIcon name="mail" size={13} />
                 {t("Open in Triage")}
@@ -467,7 +468,8 @@ export function ItemDetail({
             {record && readable && (
               <Button
                 onClick={() =>
-                  void navigate(casePath(record.kind, record.id), {
+                  void navigate({
+                    to: casePath(record.kind, record.id),
                     state: START_CASE,
                     viewTransition: true,
                   })

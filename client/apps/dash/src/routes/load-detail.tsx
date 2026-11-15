@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -12,7 +13,7 @@ import {
   NavigationPointer01Icon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { AssignmentResponseCard } from "../_components/assignment-response-card";
 import { useDashFeatures } from "../_components/use-dash-features";
 import { LoadPayChip, StopTimeline } from "../_components/load-card";
@@ -107,7 +108,7 @@ function PayEstimateCard({ shipmentId, moveId }: { shipmentId: string; moveId: s
 export function DashLoadDetailPage() {
   const t = useT();
 
-  const { assignmentId = "" } = useParams();
+  const { assignmentId = "" } = useParams({ strict: false });
   const { load, isPending } = useLoad(assignmentId);
   const features = useDashFeatures();
 

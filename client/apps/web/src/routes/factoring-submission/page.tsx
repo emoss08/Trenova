@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import {
   FactoringSubmissionItemStatusBadge,
   FactoringSubmissionStatusBadge,
@@ -40,7 +41,7 @@ import { formatUnixDateMedium, formatUnixDateTimeShort } from "@trenova/shared/l
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { undecidedItems } from "./_components/funding-schema";
 import { RecordFundingDialog } from "./_components/record-funding-dialog";
 import {
@@ -62,7 +63,7 @@ import { SubmissionItemActions } from "./_components/submission-item-actions";
  */
 export function FactoringSubmissionPage() {
   const t = useT();
-  const { id = "" } = useParams<{ id: string }>();
+  const { id = "" } = useParams({ strict: false });
   const { data, isLoading, error, refetch } = useQuery({
     ...factoringQueries.submission(id),
     enabled: id !== "",

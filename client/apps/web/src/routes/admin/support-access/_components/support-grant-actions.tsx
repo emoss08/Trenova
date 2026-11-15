@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { fetchSupportAccessActions } from "@/lib/graphql/support-access";
 import { supportAccess } from "@/lib/queries/support-access";
 import { withoutRecordIds } from "@/lib/record-ids";
@@ -5,7 +6,6 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
-import { Link } from "react-router";
 import { SupportActionsSkeleton } from "./support-grant-skeleton";
 
 /**

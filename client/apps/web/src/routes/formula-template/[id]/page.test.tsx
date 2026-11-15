@@ -1,10 +1,9 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
-import type { ReactNode } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FormulaStudioEditPage } from "./page";
 
@@ -83,22 +82,19 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
-function renderPage() {
+async function renderPage() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={["/formula-templates/ftmp_01/edit"]}>
-          <Routes>
-            <Route path="/formula-templates/:id/edit" element={children} />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>
-    );
-  }
-  render(<FormulaStudioEditPage />, { wrapper: Wrapper });
+  await renderAtRoutes(
+    [{ path: "/formula-templates/$id/edit", component: FormulaStudioEditPage }],
+    {
+      initialEntries: ["/formula-templates/ftmp_01/edit"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      ),
+    },
+  );
   return queryClient;
 }
 
@@ -121,7 +117,7 @@ describe("FormulaStudioEditPage", () => {
     mocks.update.mockResolvedValue(template({ source: EDITED_SOURCE, version: 2 }));
     const user = userEvent.setup();
 
-    const queryClient = renderPage();
+    const queryClient = await renderPage();
     const field = await editSource(user);
     await user.click(screen.getByRole("button", { name: "Save" }));
 
@@ -148,7 +144,7 @@ describe("FormulaStudioEditPage", () => {
     mocks.update.mockReturnValue(save.promise);
     const user = userEvent.setup();
 
-    const queryClient = renderPage();
+    const queryClient = await renderPage();
     const field = await editSource(user);
     await user.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(mocks.update).toHaveBeenCalledTimes(1));
@@ -171,7 +167,7 @@ describe("FormulaStudioEditPage", () => {
       .mockResolvedValueOnce(template({ source: `${EDITED_SOURCE}!`, version: 3 }));
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
     const field = await editSource(user);
     await user.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(mocks.get).toHaveBeenCalledTimes(2));
@@ -190,7 +186,7 @@ describe("FormulaStudioEditPage", () => {
       .mockResolvedValueOnce(template())
       .mockResolvedValueOnce(template({ source: ELSEWHERE_SOURCE, version: 3 }));
 
-    const queryClient = renderPage();
+    const queryClient = await renderPage();
     const field = await screen.findByLabelText<HTMLTextAreaElement>("Tariff source");
     expect(field.value).toBe(ORIGINAL_SOURCE);
 
@@ -206,7 +202,7 @@ describe("FormulaStudioEditPage", () => {
       .mockResolvedValue(template({ source: ELSEWHERE_SOURCE, version: 3 }));
     const user = userEvent.setup();
 
-    const queryClient = renderPage();
+    const queryClient = await renderPage();
     const field = await editSource(user);
     await queryClient.invalidateQueries();
 
@@ -221,7 +217,7 @@ describe("FormulaStudioEditPage", () => {
       .mockResolvedValue(template({ source: ELSEWHERE_SOURCE, version: 3 }));
     const user = userEvent.setup();
 
-    const queryClient = renderPage();
+    const queryClient = await renderPage();
     await editSource(user);
     await queryClient.invalidateQueries();
     await screen.findByText(NOTICE);
@@ -239,7 +235,7 @@ describe("FormulaStudioEditPage", () => {
       .mockResolvedValue(template({ source: ELSEWHERE_SOURCE, version: 3 }));
     const user = userEvent.setup();
 
-    const queryClient = renderPage();
+    const queryClient = await renderPage();
     const field = await editSource(user);
     await queryClient.invalidateQueries();
     await user.click(await screen.findByRole("button", { name: "Compare" }));
@@ -259,7 +255,7 @@ describe("FormulaStudioEditPage", () => {
     );
     const user = userEvent.setup();
 
-    const queryClient = renderPage();
+    const queryClient = await renderPage();
     const field = await editSource(user);
     await queryClient.invalidateQueries();
     await user.click(await screen.findByRole("button", { name: "Compare" }));

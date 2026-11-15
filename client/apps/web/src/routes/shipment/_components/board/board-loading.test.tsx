@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ShipmentBoardCapabilities } from "@/lib/graphql/shipment-board";
 import { BoardCapabilitiesProvider } from "@/lib/shipment-board/capabilities";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactElement } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ShipmentBriefing } from "./briefing/shipment-briefing";
 import { ShipmentBriefingSkeleton } from "./briefing/shipment-briefing-skeleton";
@@ -32,13 +32,13 @@ const CAPABILITIES: ShipmentBoardCapabilities = {
 function renderOnBoard(ui: ReactElement, { capabilities = CAPABILITIES, searchParams = "" } = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <NuqsTestingAdapter searchParams={searchParams}>
           <BoardCapabilitiesProvider value={capabilities}>{ui}</BoardCapabilitiesProvider>
         </NuqsTestingAdapter>
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

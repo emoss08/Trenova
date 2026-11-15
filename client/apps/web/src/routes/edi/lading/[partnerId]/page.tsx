@@ -5,14 +5,14 @@ import { edi } from "@/lib/queries/edi";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useQuery } from "@tanstack/react-query";
 import { lazy } from "react";
-import { useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { LadingStudioSkeleton } from "../_components/lading-studio-skeleton";
 
 const LadingStudio = lazy(() => import("../_components/lading-studio"));
 
 /** One partner's Lading project: its versions, files, samples, tests and releases. */
 export function LadingStudioPage() {
-  const { partnerId = "" } = useParams();
+  const { partnerId = "" } = useParams({ strict: false });
   const t = useT();
   const { data: partner } = useQuery(edi.partner(partnerId));
   useBreadcrumbLabel(partner?.name);

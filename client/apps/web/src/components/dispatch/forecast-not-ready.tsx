@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { ForecastChecked, ForecastHistoryMeters } from "@/components/dispatch/forecast-history";
 import { usePermission } from "@/hooks/use-permission";
 import { forecastStanding, forecastStandingCopy } from "@/lib/dispatch-forecast";
@@ -7,8 +8,6 @@ import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
-
 const DISPATCH_CONTROLS_PATH = "/admin/dispatch-controls/";
 
 /**

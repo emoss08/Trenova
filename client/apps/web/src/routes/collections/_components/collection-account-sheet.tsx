@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { UserAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
@@ -29,7 +30,6 @@ import type { CollectionAccountView, CollectionActivity } from "@/types/collecti
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Link } from "react-router";
 import { customerStatementPath } from "@/lib/ar-links";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { Mail01Icon } from "@trenova/shared/components/icons";

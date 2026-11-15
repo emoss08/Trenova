@@ -1,8 +1,8 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CannedGallery } from "../canned-gallery";
 import { DashboardGallery } from "../dashboard-gallery";
@@ -39,17 +39,19 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
-function renderWithin(ui: ReactElement) {
+async function renderWithin(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(
-    <MemoryRouter initialEntries={["/reports"]}>
-      <QueryClientProvider client={client}>
-        <Routes>
-          <Route path="/reports" element={ui} />
-          <Route path="/reports/builder" element={<p>builder opened</p>} />
-        </Routes>
-      </QueryClientProvider>
-    </MemoryRouter>,
+  await renderAtRoutes(
+    [
+      { path: "/reports", component: () => ui },
+      { path: "/reports/builder", component: () => <p>builder opened</p> },
+    ],
+    {
+      initialEntries: ["/reports"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    },
   );
 }
 
@@ -67,7 +69,7 @@ afterEach(() => {
 describe("reports empty states", () => {
   it("draws the library it will become and offers the builder when there are no reports", async () => {
     const user = userEvent.setup();
-    renderWithin(
+    await renderWithin(
       <ReportDefinitionGrid
         search=""
         sortBy="name_asc"
@@ -86,7 +88,7 @@ describe("reports empty states", () => {
   it("offers to clear the library's search and filters when they hide every report", async () => {
     const onClearFilters = vi.fn();
     const user = userEvent.setup();
-    renderWithin(
+    await renderWithin(
       <ReportDefinitionGrid
         search="zzz"
         sortBy="name_asc"
@@ -105,7 +107,7 @@ describe("reports empty states", () => {
   it("offers to clear the gallery's search when it hides every canned report", async () => {
     const onClearFilters = vi.fn();
     const user = userEvent.setup();
-    renderWithin(
+    await renderWithin(
       <CannedGallery
         search="zzz"
         sortBy="name_asc"
@@ -121,7 +123,7 @@ describe("reports empty states", () => {
 
   it("draws the dashboards it will become and offers to create the first", async () => {
     const user = userEvent.setup();
-    renderWithin(<DashboardGallery search="" sortBy="name_asc" onClearFilters={vi.fn()} />);
+    await renderWithin(<DashboardGallery search="" sortBy="name_asc" onClearFilters={vi.fn()} />);
 
     expect(screen.getByRole("heading", { name: "No dashboards yet" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "New dashboard" }));
@@ -131,7 +133,7 @@ describe("reports empty states", () => {
   it("offers to clear a dashboard search instead of creating", async () => {
     const onClearFilters = vi.fn();
     const user = userEvent.setup();
-    renderWithin(
+    await renderWithin(
       <DashboardGallery search="zzz" sortBy="name_asc" onClearFilters={onClearFilters} />,
     );
 
@@ -142,14 +144,14 @@ describe("reports empty states", () => {
   });
 
   // A failed load must not look like an empty library.
-  it("keeps the error notice apart from the empty sketch", () => {
+  it("keeps the error notice apart from the empty sketch", async () => {
     mocks.dashboards.mockReturnValue({
       data: undefined,
       isLoading: false,
       isError: true,
       error: new Error("boom"),
     });
-    renderWithin(<DashboardGallery search="" sortBy="name_asc" onClearFilters={vi.fn()} />);
+    await renderWithin(<DashboardGallery search="" sortBy="name_asc" onClearFilters={vi.fn()} />);
 
     expect(screen.getByText("Dashboards could not be loaded")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "No dashboards yet" })).not.toBeInTheDocument();

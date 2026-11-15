@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { formatMinutesOfDay } from "@/lib/factoring";
 import type { FactoringCompanyRecord } from "@/lib/graphql/factoring";
@@ -29,7 +30,7 @@ import { useNow } from "@trenova/shared/hooks/use-now";
 import { formatRelativeTime } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { factoringCompanyPath, type FactoringCompanyTab } from "../use-factoring-company-state";
 
 /** Up to two letters for the factor's mark: the first of its first two words. */
@@ -191,7 +192,7 @@ export function FactoringCompanyHeader({
               <DropdownMenuItem
                 title={t("Open in the factoring workspace")}
                 startContent={<LinkExternal01Icon className="size-3.5" />}
-                onClick={() => void navigate(factoringWorkspacePath("ready", company.id))}
+                onClick={() => void navigate({ to: factoringWorkspacePath("ready", company.id) })}
               />
               <DropdownMenuItem
                 title={t("Copy link")}

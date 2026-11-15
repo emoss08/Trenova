@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { useState } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   planPreview,
@@ -45,9 +45,9 @@ function openDialog(overrides: Partial<ReasonDialogRequest> = {}) {
 
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <ReasonDialog request={request} onClose={onClose} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 
@@ -159,9 +159,9 @@ function renderSwitching(
 
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <Surface />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

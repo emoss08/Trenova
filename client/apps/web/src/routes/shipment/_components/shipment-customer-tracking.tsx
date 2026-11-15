@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { LinkedRecordLink } from "@/components/linked-record-link";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -67,8 +68,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { lazy, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
-
 const CustomerTrackingPreview = lazy(() => import("./customer-tracking-preview"));
 
 function Section({

@@ -18,7 +18,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useCallback, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { LazyDeskWorkspace, preloadDeskWorkspace } from "./artifacts/desk-workspace-lazy";
 import { DeskCaseCard } from "./case/desk-case-card";
 import { useDeskCase } from "./case/use-desk-case";
@@ -94,7 +94,7 @@ export function DeskConversation({
     if (question !== "") {
       setOpeningQuestion({ threadId: next, text: question });
     }
-    void navigate(conversationPath(next));
+    void navigate({ to: conversationPath(next) });
   };
 
   // A page the agent opens takes the person out of the Desk; the conversation
@@ -185,7 +185,7 @@ export function DeskConversation({
     agent,
     agents: desk.agents,
     timezone,
-    onHandedOff: (next) => void navigate(conversationPath(next)),
+    onHandedOff: (next) => void navigate({ to: conversationPath(next) }),
     linkedChapterId,
     onLinkShown: onLinkedChapterShown,
   });

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CarrierIntelProfileView,
@@ -24,7 +25,6 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Building07Icon, PlugIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { MyDotSkeleton } from "./my-dot-skeleton";
 
 export const MY_DOT_PROFILE_SECTIONS = [

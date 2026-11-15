@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation } from "@trenova/shared/types/permission";
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { LinkedRecordLink } from "../linked-record-link";
 
@@ -12,11 +12,11 @@ afterEach(() => {
 
 function renderLink() {
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <LinkedRecordLink kind="customer" id="cus_01" extra={{ tab: "tracking" }} className="lnk">
         Acme Foods
       </LinkedRecordLink>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

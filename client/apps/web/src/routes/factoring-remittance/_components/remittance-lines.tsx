@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { FactoringRemittanceMatchBadge } from "@/components/factoring/factoring-badges";
 import { SectionPanel } from "@/components/section-panel";
 import { recordPath } from "@/config/record-links";
@@ -34,7 +35,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useState } from "react";
-import { Link } from "react-router";
 import { MatchItemDialog } from "./match-item-dialog";
 import { ReasonDialog } from "@/components/reason-dialog";
 import { useLineUpdate } from "./use-line-update";

@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { DeskActivityEntry } from "@/lib/graphql/desk-attention";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { NovaHandled } from "../nova-handled";
 
@@ -27,9 +27,9 @@ function entry(overrides: Partial<DeskActivityEntry>): DeskActivityEntry {
 
 function draw(entries: DeskActivityEntry[]) {
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <NovaHandled entries={entries} timezone="America/Chicago" />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

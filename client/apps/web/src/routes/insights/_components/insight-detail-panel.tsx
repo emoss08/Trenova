@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -34,7 +35,6 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { Link } from "react-router";
 import { CATEGORY_LABELS, SEVERITY_TONE } from "./insight-labels";
 import {
   buildTrend,

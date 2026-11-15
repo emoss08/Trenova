@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { InvoiceTableRowFieldsFragment } from "@trenova/graphql/generated/graphql";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -5,7 +6,6 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import userEvent from "@testing-library/user-event";
 import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import type { ReactElement } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { periodRange } from "@/lib/billing-schedule";
 import InvoiceDetailPane from "../invoice-detail-pane";
@@ -35,7 +35,7 @@ const PERIOD_END = 1_789_325_147;
 function renderWithin(ui: ReactElement, searchParams = "", onUrlUpdate?: OnUrlUpdateFunction) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <NuqsTestingAdapter
           hasMemory
@@ -46,7 +46,7 @@ function renderWithin(ui: ReactElement, searchParams = "", onUrlUpdate?: OnUrlUp
           {ui}
         </NuqsTestingAdapter>
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

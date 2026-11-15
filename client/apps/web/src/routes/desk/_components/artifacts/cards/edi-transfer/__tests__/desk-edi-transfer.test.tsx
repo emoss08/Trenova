@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { edi } from "@/lib/queries/edi";
 import { money } from "../../../record-card/record-card-values";
@@ -66,7 +66,7 @@ function draw(props: Partial<Parameters<typeof DeskEdiTransfer>[0]> = {}) {
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
   const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskEdiTransfer
           recordId="edilt_acme_88241"
           order={["edilt_acme_88199", "edilt_acme_88241", "edilt_acme_88240"]}
@@ -74,7 +74,7 @@ function draw(props: Partial<Parameters<typeof DeskEdiTransfer>[0]> = {}) {
           {...props}
           {...more}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
   const view = render(tree());
@@ -287,13 +287,13 @@ describe("DeskEdiTransfer", () => {
   it("has nowhere to go back to as an artifact", async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskEdiTransferArtifact
             recordId="edilt_acme_88240"
             artifact={{} as never}
             fallback={null}
           />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>,
     );
     await screen.findByRole("heading", { level: 2 });

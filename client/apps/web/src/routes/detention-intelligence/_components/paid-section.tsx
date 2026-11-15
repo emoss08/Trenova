@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import {
   HoverCardHeading,
   HoverCardRow,
@@ -19,7 +20,6 @@ import { EASE_SETTLE } from "@/lib/motion";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { m, useReducedMotionConfig } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
 import {
   DETENTION_DESK_PATH,
   DETENTION_POLICIES_PATH,

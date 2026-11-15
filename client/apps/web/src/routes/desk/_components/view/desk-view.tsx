@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { conversationPath } from "@/lib/conversation-path";
@@ -10,7 +11,7 @@ import { formatUnixDateTimeShort, resolveUserTimezone } from "@trenova/shared/li
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useEffect, useMemo } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { deskArtKind, deskArtKindName } from "../artifacts/desk-art-kinds";
 import { groupLineages } from "../artifacts/desk-lineage";
 import { ArtifactBody } from "../artifacts/desk-workspace";
@@ -148,7 +149,7 @@ export function DeskView({ threadId, slug }: { threadId: string; slug: string })
             previous={previous}
             versions={null}
             lineage={lineage}
-            onOpenArtifact={(id) => void navigate(viewPath(threadId, id))}
+            onOpenArtifact={(id) => void navigate({ to: viewPath(threadId, id) })}
           />
         </div>
       </article>

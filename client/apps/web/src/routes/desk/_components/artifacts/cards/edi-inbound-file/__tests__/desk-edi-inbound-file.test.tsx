@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskEdiInboundFile, DeskEdiInboundFileArtifact } from "../desk-edi-inbound-file";
 import { wireTransfer } from "../../edi-transfer/__tests__/fixtures";
@@ -85,7 +85,7 @@ function draw(props: Partial<Parameters<typeof DeskEdiInboundFile>[0]> = {}) {
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
   const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskEdiInboundFile
           recordId="ediinf_sim"
           order={["ediinf_bad", "ediinf_sim", "ediinf_acme"]}
@@ -93,7 +93,7 @@ function draw(props: Partial<Parameters<typeof DeskEdiInboundFile>[0]> = {}) {
           {...props}
           {...more}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
   const view = render(tree());
@@ -411,13 +411,13 @@ describe("DeskEdiInboundFile", () => {
   it("links to the file's own page, and as an artifact has nowhere to go back to", async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskEdiInboundFileArtifact
             recordId="ediinf_sim"
             artifact={{} as never}
             fallback={null}
           />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>,
     );
     await screen.findByRole("heading", { level: 2 });

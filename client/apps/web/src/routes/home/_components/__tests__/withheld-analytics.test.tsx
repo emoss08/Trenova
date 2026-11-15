@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import type { HomeWidget } from "@/lib/graphql/home-layout";
 import { LaneHeatmap } from "@/components/work-modules/lane-heatmap";
@@ -40,7 +40,7 @@ function widget(key: string): HomeWidget {
 }
 
 function Wrapper({ children }: { children: ReactNode }) {
-  return <MemoryRouter>{children}</MemoryRouter>;
+  return <TestRouter>{children}</TestRouter>;
 }
 
 // A shipment reader who cannot read customers, locations or workers sees each one's reference

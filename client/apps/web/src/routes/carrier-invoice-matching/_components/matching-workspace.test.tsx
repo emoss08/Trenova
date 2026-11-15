@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CarrierInvoiceMatchRow } from "@/lib/graphql/carrier-settlement";
 import MatchingWorkspace from "./matching-workspace";
@@ -101,9 +101,9 @@ function renderWorkspace() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <MatchingWorkspace />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

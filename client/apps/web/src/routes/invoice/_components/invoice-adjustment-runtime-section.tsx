@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -32,7 +33,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 const STATUS_BADGE_VARIANT: Record<InvoiceAdjustmentStatus, string> = {

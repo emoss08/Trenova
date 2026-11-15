@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -15,7 +16,6 @@ import {
   Lightbulb01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
 import type { WidgetProps } from "../widget-registry";
 import {

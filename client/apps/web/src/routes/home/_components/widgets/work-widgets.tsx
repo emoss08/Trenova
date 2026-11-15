@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ExceptionsList } from "@/components/work-modules/exceptions-list";
 import {
@@ -13,7 +14,7 @@ import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useCallback, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
 import type { WidgetProps } from "../widget-registry";
 
@@ -84,7 +85,7 @@ export function UnassignedWidget({ widget }: WidgetProps) {
   });
 
   const handleSelect = useCallback(
-    (shipmentId: string) => void navigate(shipmentHref(shipmentId)),
+    (shipmentId: string) => void navigate({ to: shipmentHref(shipmentId) }),
     [navigate],
   );
 
@@ -117,7 +118,7 @@ export function ExceptionsWidget({ widget }: WidgetProps) {
   const [count, setCount] = useState(0);
 
   const handleSelect = useCallback(
-    (shipmentId: string) => void navigate(shipmentHref(shipmentId)),
+    (shipmentId: string) => void navigate({ to: shipmentHref(shipmentId) }),
     [navigate],
   );
 

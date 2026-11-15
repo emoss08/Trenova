@@ -1,10 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
 import { ArrowRightIcon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
-
 /**
  * The page as it will look once a batch has been imported: four figures
  * across the top, the exception aging table on the left and the work items

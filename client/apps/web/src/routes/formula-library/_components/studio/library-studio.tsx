@@ -39,7 +39,7 @@ import type {
 } from "@trenova/shared/types/formula-library";
 import { Suspense, lazy, useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import "@/components/tariff-studio/tariff-studio.css";
 import { archiveLibraries } from "../archive-libraries";
 import { LibraryDetails } from "./library-details";
@@ -327,7 +327,7 @@ function LibraryStudioLayout({
       const [copy] = await formulaLibraryService.duplicate([library.id]);
       await invalidateFormulaLibrary(queryClient);
       toast.success(t("Duplicated as a draft"));
-      if (copy?.id) void navigate(formulaLibraryRoutes.edit(copy.id));
+      if (copy?.id) void navigate({ to: formulaLibraryRoutes.edit(copy.id) });
     } catch {
       toast.error(t("The library could not be duplicated"));
     }

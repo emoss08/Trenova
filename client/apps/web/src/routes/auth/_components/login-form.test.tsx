@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginForm } from "./login-form";
 import { AuthStageContext, type AuthStageControls } from "./stage/auth-stage-context";
@@ -100,7 +100,7 @@ function renderLoginForm(ui: ReactNode, initialEntry = "/login") {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[initialEntry]}>{ui}</MemoryRouter>
+      <TestRouter initialEntries={[initialEntry]}>{ui}</TestRouter>
     </QueryClientProvider>,
   );
 }

@@ -38,7 +38,7 @@ const board = lazyComponent(
   (module) => module.ShipmentBoard,
 );
 
-export const prefetch: RoutePrefetch = ({ request }) => {
+export const prefetch: RoutePrefetch = ({ searchParams }) => {
   void board.preload();
 
   const list: RoutePrefetchQuery[] = [
@@ -46,7 +46,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
     { ...tableConfiguration.default(SHIPMENT_TABLE_RESOURCE_NAME), staleTime: Infinity },
   ];
 
-  const { panelType, panelEntityId } = loadPanelSearch(request);
+  const { panelType, panelEntityId } = loadPanelSearch(searchParams);
   if (panelType) void preloadShipmentPanel();
   if (panelType === "edit" && panelEntityId) {
     list.push(shipmentPanelDetailQuery(panelEntityId));

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import {
@@ -27,7 +28,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { formatDistanceToNow, fromUnixTime } from "date-fns";
 import { ChevronRightIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { AuditEmpty } from "./audit-empty";
 
 const PAGE_SIZE = 20;
@@ -146,7 +147,7 @@ function AuditCard({ entry, canNavigate }: { entry: ActivityEntry; canNavigate: 
 
   const handleCardClick = () => {
     if (!hasDetails && canNavigate) {
-      void navigate(auditEntryUrl(entry.id));
+      void navigate({ to: auditEntryUrl(entry.id) });
     }
   };
 

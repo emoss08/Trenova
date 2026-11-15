@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { FactoringNoa } from "@/lib/graphql/factoring";
 import {
   createFactoringCompanyCustomersTableConfig,
@@ -5,7 +6,6 @@ import {
 } from "@/lib/graphql/factoring-company-page";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getFactoringCustomerColumns,
@@ -73,7 +73,7 @@ function cell(
 }
 
 function renderCell(node: ReactNode) {
-  return render(<MemoryRouter>{node}</MemoryRouter>);
+  return render(<TestRouter>{node}</TestRouter>);
 }
 
 describe("factoring customer columns", () => {

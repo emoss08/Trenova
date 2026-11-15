@@ -2,7 +2,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  RouterProvider,
+  type AnyRouter,
+} from "@tanstack/react-router";
+import { parseSearch, stringifySearch } from "@trenova/shared/lib/router/search";
 import { describe, expect, it, vi } from "vitest";
 import { IntakePage } from "../../page";
 
@@ -63,11 +72,17 @@ vi.mock("@/lib/queries/capture", () => ({
 
 const DEBOUNCE_SETTLED_MS = 600;
 
-function renderAt(initialEntries: string[]) {
-  const router = createMemoryRouter([{ path: "/intake", element: <IntakePage /> }], {
-    initialEntries,
-    initialIndex: initialEntries.length - 1,
+async function renderAt(initialEntries: string[]) {
+  const rootRoute = createRootRoute({ component: Outlet });
+  const router = createRouter({
+    routeTree: rootRoute.addChildren([
+      createRoute({ getParentRoute: () => rootRoute, path: "/intake", component: IntakePage }),
+    ]),
+    history: createMemoryHistory({ initialEntries, initialIndex: initialEntries.length - 1 }),
+    parseSearch,
+    stringifySearch,
   });
+  await router.load();
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
@@ -77,8 +92,8 @@ function renderAt(initialEntries: string[]) {
   return router;
 }
 
-function query(router: ReturnType<typeof createMemoryRouter>) {
-  return new URLSearchParams(router.state.location.search).get("q");
+function query(router: AnyRouter) {
+  return new URLSearchParams(router.state.location.searchStr).get("q");
 }
 
 async function settle() {
@@ -87,10 +102,10 @@ async function settle() {
 
 describe("IntakePage search", () => {
   it("shows what the address says after the address changes under it", async () => {
-    const router = renderAt(["/intake?q=acme"]);
+    const router = await renderAt(["/intake?q=acme"]);
     expect(screen.getByRole("textbox", { name: "Search" })).toHaveValue("acme");
 
-    await act(() => router.navigate("/intake"));
+    await act(() => router.navigate({ to: "/intake" }));
     await settle();
 
     expect(screen.getByRole("textbox", { name: "Search" })).toHaveValue("");
@@ -99,21 +114,21 @@ describe("IntakePage search", () => {
 
   it("undoes a search with Back", async () => {
     const user = userEvent.setup();
-    const router = renderAt(["/intake"]);
+    const router = await renderAt(["/intake"]);
 
     await user.type(screen.getByRole("textbox", { name: "Search" }), "acme");
     await waitFor(() => expect(query(router)).toBe("acme"));
 
-    await act(() => router.navigate(-1));
+    await act(async () => router.history.back());
     await settle();
 
-    expect(router.state.location.search).toBe("");
+    expect(router.state.location.searchStr).toBe("");
     expect(screen.getByRole("textbox", { name: "Search" })).toHaveValue("");
   });
 
   it("refines a search in place rather than adding a step for every pause", async () => {
     const user = userEvent.setup();
-    const router = renderAt(["/intake"]);
+    const router = await renderAt(["/intake"]);
     const box = screen.getByRole("textbox", { name: "Search" });
 
     await user.type(box, "acme");
@@ -121,7 +136,7 @@ describe("IntakePage search", () => {
     await user.type(box, " freight");
     await waitFor(() => expect(query(router)).toBe("acme freight"));
 
-    await act(() => router.navigate(-1));
+    await act(async () => router.history.back());
     await settle();
 
     expect(query(router)).toBeNull();
@@ -130,7 +145,7 @@ describe("IntakePage search", () => {
 
   it("says when nothing matches the search and clears it from there", async () => {
     const user = userEvent.setup();
-    const router = renderAt(["/intake?q=acme"]);
+    const router = await renderAt(["/intake?q=acme"]);
 
     expect(screen.getByText("No stack matches “acme”")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Clear the search" }));
@@ -142,14 +157,14 @@ describe("IntakePage search", () => {
 
   it("reaches the source and owner filters from the small-screen bar", async () => {
     const user = userEvent.setup();
-    const router = renderAt(["/intake"]);
+    const router = await renderAt(["/intake"]);
 
     await user.click(screen.getByRole("button", { name: "Filters" }));
     const sheet = await screen.findByRole("dialog", { name: "Views and filters" });
     await user.click(within(sheet).getByRole("button", { name: "Only mine" }));
 
     await waitFor(() =>
-      expect(new URLSearchParams(router.state.location.search).get("mine")).toBe("1"),
+      expect(new URLSearchParams(router.state.location.searchStr).get("mine")).toBe("1"),
     );
   });
 });

@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { setLocale } from "@trenova/shared/i18n/runtime";
 import { LazyMotion, MotionConfig, domMax } from "motion/react";
-import { MemoryRouter } from "react-router";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
@@ -122,7 +122,7 @@ function renderDialog(runId: string | null = null) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   render(
-    <MemoryRouter>
+    <TestRouter>
       <LazyMotion features={domMax}>
         <MotionConfig reducedMotion="always">
           <QueryClientProvider client={client}>
@@ -135,7 +135,7 @@ function renderDialog(runId: string | null = null) {
           </QueryClientProvider>
         </MotionConfig>
       </LazyMotion>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 
   return { onRunIdChange, onOpenChange, client };
@@ -461,7 +461,7 @@ describe("BulkBillingTransferDialog", () => {
     }
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <MemoryRouter>
+      <TestRouter>
         <LazyMotion features={domMax}>
           <MotionConfig reducedMotion="always">
             <QueryClientProvider client={client}>
@@ -469,7 +469,7 @@ describe("BulkBillingTransferDialog", () => {
             </QueryClientProvider>
           </MotionConfig>
         </LazyMotion>
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     await user.click(await screen.findByRole("button", { name: "Transfer more" }));

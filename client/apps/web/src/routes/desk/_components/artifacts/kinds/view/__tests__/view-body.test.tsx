@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AssistantArtifact } from "@/types/assistant";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { composedViewFrom } from "../../../artifact-payloads";
 import { asSentence, DeskViewBody } from "../desk-view-body";
@@ -77,9 +77,9 @@ describe("composed views", () => {
 
   it("draws the explanation, the bar, the rows, what was left out and the way in", () => {
     const { container } = render(
-      <MemoryRouter>
+      <TestRouter>
         <DeskViewBody artifact={counted} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
     expect(container.querySelector(".dk-ax-term")?.textContent).toBe("status equals InTransit");
     expect(container.querySelector(".dk-ax-vbar")?.textContent).toBe(
@@ -93,14 +93,15 @@ describe("composed views", () => {
       "Left out “near Dallas”. There is no location filter.",
     );
     const open = screen.getByRole("link", { name: /Open in Shipments/ });
-    expect(open.getAttribute("href")).toBe(base.path);
+    // The address as the router writes it, brackets left readable as nuqs writes them.
+    expect(open.getAttribute("href")).toBe("/shipment-management/shipments?fieldFilters=[]");
   });
 
   it("draws an older view with no count and no preview rows", () => {
     const { container } = render(
-      <MemoryRouter>
+      <TestRouter>
         <DeskViewBody artifact={view(base)} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
     expect(container.querySelector(".dk-ax-vbar b")).toBeNull();
     expect(container.querySelectorAll(".dk-ax-vrow")).toHaveLength(0);

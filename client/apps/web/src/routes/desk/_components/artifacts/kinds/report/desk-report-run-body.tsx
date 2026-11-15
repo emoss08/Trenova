@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { usePermission } from "@/hooks/use-permission";
@@ -17,7 +18,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Suspense, useMemo, type ReactNode } from "react";
-import { Link } from "react-router";
 import { artifactReaderOf, reportRunFrom, type ArtifactReader } from "../../artifact-payloads";
 import { ArtIcon } from "../../desk-art-kinds";
 import { cardDate, cardDay, cardMoment, cardTime } from "../../record-card/record-card-values";

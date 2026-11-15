@@ -3,7 +3,7 @@ import { attention } from "@/lib/queries/attention";
 import { homeLayout } from "@/lib/queries/home-layout";
 import { prefetch } from "@/routes/home/page";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import type { LoaderFunctionArgs } from "react-router";
+import type { RoutePrefetchArgs } from "@/lib/route-prefetch";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The manifest is GET /me/permissions over REST; the rate limiter's problem document
@@ -21,11 +21,7 @@ function answerManifestWith(response: Response) {
   );
 }
 
-const loaderArgs = {
-  request: new Request("http://localhost/"),
-  params: {},
-  context: undefined,
-} as unknown as LoaderFunctionArgs;
+const loaderArgs: RoutePrefetchArgs = { params: {}, searchParams: new URLSearchParams() };
 
 describe("home prefetch without a manifest loaded", () => {
   beforeEach(() => {

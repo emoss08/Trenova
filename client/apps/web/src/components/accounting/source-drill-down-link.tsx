@@ -1,5 +1,5 @@
+import { Link } from "@trenova/shared/components/link";
 import { LinkExternal01Icon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { recordPath } from "@/config/record-links";
 
 const SOURCE_ROUTE_MAP: Record<string, (id: string) => string> = {

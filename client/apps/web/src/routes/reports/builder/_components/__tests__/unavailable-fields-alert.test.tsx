@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import type { ReportIR } from "@/types/report";
 import { buildCatalogIndex } from "../builder-state";
@@ -12,9 +12,9 @@ const index = buildCatalogIndex(catalog);
 function renderAlert(ir: ReportIR) {
   const onChange = vi.fn();
   render(
-    <MemoryRouter>
+    <TestRouter>
       <UnavailableFieldsAlert index={index} ir={ir} onChange={onChange} />
-    </MemoryRouter>,
+    </TestRouter>,
   );
   return onChange;
 }
@@ -22,7 +22,7 @@ function renderAlert(ir: ReportIR) {
 describe("UnavailableFieldsAlert", () => {
   it("says nothing for a report the caller may run", () => {
     const { container } = render(
-      <MemoryRouter>
+      <TestRouter>
         <UnavailableFieldsAlert
           index={index}
           ir={{
@@ -31,7 +31,7 @@ describe("UnavailableFieldsAlert", () => {
           }}
           onChange={vi.fn()}
         />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     expect(container).toBeEmptyDOMElement();

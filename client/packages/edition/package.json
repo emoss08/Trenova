@@ -16,7 +16,7 @@
   },
   "peerDependencies": {
     "react": "catalog:",
-    "react-router": "catalog:"
+    "@tanstack/react-router": "catalog:"
   },
   "devDependencies": {
     "@trenova/config": "workspace:*",

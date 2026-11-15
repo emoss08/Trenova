@@ -1,119 +1,115 @@
 import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
-import { requireSession, revalidateOnPathChange } from "@trenova/shared/lib/session-loader";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
+import { gates, redirectTo, requireGuest, requireSession } from "@trenova/shared/lib/router/gates";
+import {
+  parseSearch,
+  stringifySearch,
+  validateSearchRecord,
+} from "@trenova/shared/lib/router/search";
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  lazyRouteComponent,
+  type ErrorComponentProps,
+} from "@tanstack/react-router";
 import { DashLayout } from "./_components/dash-layout";
 
-const dashProtectedLoader: LoaderFunction = () => requireSession("/dash/login");
+function DashRouteError(props: ErrorComponentProps) {
+  return <RouteErrorBoundary {...props} homePath="/dash" />;
+}
 
-const dashGuestLoader: LoaderFunction = async () => {
-  const { checkAuth } = useAuthStore.getState();
-  const isAuthenticated = await checkAuth();
+const rootRoute = createRootRoute({
+  validateSearch: validateSearchRecord,
+  pendingComponent: LoadingSkeleton,
+  pendingMs: 0,
+});
 
-  if (isAuthenticated) {
-    return redirect("/dash");
+const signedInRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "signed-in",
+  beforeLoad: gates(requireSession("/dash/login")),
+  component: DashLayout,
+});
+
+export const routeTree = rootRoute.addChildren([
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/dash/login",
+    beforeLoad: gates(requireGuest("/dash")),
+    component: lazyRouteComponent(() => import("./routes/login"), "DashLoginPage"),
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/dash/accept",
+    component: lazyRouteComponent(() => import("./routes/accept"), "DashAcceptPage"),
+  }),
+  signedInRoute.addChildren([
+    createRoute({
+      getParentRoute: () => signedInRoute,
+      path: "/dash",
+      component: lazyRouteComponent(() => import("./routes/home"), "DashHomePage"),
+    }),
+    createRoute({
+      getParentRoute: () => signedInRoute,
+      path: "/dash/loads",
+      component: lazyRouteComponent(() => import("./routes/loads"), "DashLoadsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => signedInRoute,
+      path: "/dash/loads/$assignmentId",
+      component: lazyRouteComponent(() => import("./routes/load-detail"), "DashLoadDetailPage"),
+    }),
+    createRoute({
+      getParentRoute: () => signedInRoute,
+      path: "/dash/pay",
+      component: lazyRouteComponent(() => import("./routes/pay"), "DashPayPage"),
+    }),
+    createRoute({
+      getParentRoute: () => signedInRoute,
+      path: "/dash/pay/$settlementId",
+      component: lazyRouteComponent(() => import("./routes/settlement"), "DashSettlementPage"),
+    }),
+    createRoute({
+      getParentRoute: () => signedInRoute,
+      path: "/dash/money",
+      component: lazyRouteComponent(() => import("./routes/money"), "DashMoneyPage"),
+    }),
+    createRoute({
+      getParentRoute: () => signedInRoute,
+      path: "/dash/hos",
+      component: lazyRouteComponent(() => import("./routes/hos"), "DashHosPage"),
+    }),
+    createRoute({
+      getParentRoute: () => signedInRoute,
+      path: "/dash/notifications",
+      component: lazyRouteComponent(
+        () => import("./routes/notifications"),
+        "DashNotificationsPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => signedInRoute,
+      path: "/dash/profile",
+      component: lazyRouteComponent(() => import("./routes/profile"), "DashProfilePage"),
+    }),
+    createRoute({
+      getParentRoute: () => signedInRoute,
+      path: "/dash/$",
+      beforeLoad: redirectTo("/dash"),
+    }),
+  ]),
+]);
+
+export const dashRouter = createRouter({
+  routeTree,
+  parseSearch,
+  stringifySearch,
+  defaultErrorComponent: DashRouteError,
+});
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof dashRouter;
   }
-
-  return null;
-};
-
-export const routes: RouteObject[] = [
-  {
-    errorElement: <RouteErrorBoundary homePath="/dash" />,
-    HydrateFallback: LoadingSkeleton,
-    children: [
-      {
-        path: "/dash/login",
-        loader: dashGuestLoader,
-        async lazy() {
-          const { DashLoginPage } = await import("./routes/login");
-          return { Component: DashLoginPage };
-        },
-      },
-      {
-        path: "/dash/accept",
-        async lazy() {
-          const { DashAcceptPage } = await import("./routes/accept");
-          return { Component: DashAcceptPage };
-        },
-      },
-      {
-        element: <DashLayout />,
-        loader: dashProtectedLoader,
-        shouldRevalidate: revalidateOnPathChange,
-        children: [
-          {
-            path: "/dash",
-            async lazy() {
-              const { DashHomePage } = await import("./routes/home");
-              return { Component: DashHomePage };
-            },
-          },
-          {
-            path: "/dash/loads",
-            async lazy() {
-              const { DashLoadsPage } = await import("./routes/loads");
-              return { Component: DashLoadsPage };
-            },
-          },
-          {
-            path: "/dash/loads/:assignmentId",
-            async lazy() {
-              const { DashLoadDetailPage } = await import("./routes/load-detail");
-              return { Component: DashLoadDetailPage };
-            },
-          },
-          {
-            path: "/dash/pay",
-            async lazy() {
-              const { DashPayPage } = await import("./routes/pay");
-              return { Component: DashPayPage };
-            },
-          },
-          {
-            path: "/dash/pay/:settlementId",
-            async lazy() {
-              const { DashSettlementPage } = await import("./routes/settlement");
-              return { Component: DashSettlementPage };
-            },
-          },
-          {
-            path: "/dash/money",
-            async lazy() {
-              const { DashMoneyPage } = await import("./routes/money");
-              return { Component: DashMoneyPage };
-            },
-          },
-          {
-            path: "/dash/hos",
-            async lazy() {
-              const { DashHosPage } = await import("./routes/hos");
-              return { Component: DashHosPage };
-            },
-          },
-          {
-            path: "/dash/notifications",
-            async lazy() {
-              const { DashNotificationsPage } = await import("./routes/notifications");
-              return { Component: DashNotificationsPage };
-            },
-          },
-          {
-            path: "/dash/profile",
-            async lazy() {
-              const { DashProfilePage } = await import("./routes/profile");
-              return { Component: DashProfilePage };
-            },
-          },
-          {
-            path: "/dash/*",
-            loader: () => redirect("/dash"),
-          },
-        ],
-      },
-    ],
-  },
-];
-
-export const dashRouter = createBrowserRouter(routes);
+}

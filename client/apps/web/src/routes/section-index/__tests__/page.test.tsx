@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { NavModule } from "@/config/navigation.types";
 import type { SidebarModuleView } from "@/components/navigation/sidebar-model";
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SectionIndexPage } from "../page";
 import { PAGE_DESCRIPTIONS } from "../page-descriptions.gen";
@@ -64,9 +64,9 @@ vi.mock("@/components/navigation/sidebar-layout", () => ({
 
 function renderAt(path: string) {
   return render(
-    <MemoryRouter initialEntries={[path]}>
+    <TestRouter initialEntries={[path]}>
       <SectionIndexPage />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

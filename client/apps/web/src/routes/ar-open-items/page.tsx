@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AgingDistributionBar,
@@ -22,7 +23,7 @@ import { CoinsHandIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { OpenItemsTable } from "./_components/open-items-table";
 
 type FilterValues = {
@@ -54,7 +55,7 @@ export function AROpenItemsPage() {
   const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  const [searchParams] = useSearchParams();
+  const [searchParams] = useQueryParams();
   const filterForm = useForm<FilterValues>({
     defaultValues: { customerId: searchParams.get("customerId") ?? "", asOfDate: null },
   });
@@ -120,9 +121,9 @@ export function AROpenItemsPage() {
   const handleApplyPayment = () => {
     if (!selection.singleCustomerId) return;
     const invoiceIds = selection.items.map((item) => item.invoiceId).join(",");
-    void navigate(
-      `/accounting/ar/payments?panelType=create&customerId=${selection.singleCustomerId}&invoiceIds=${invoiceIds}`,
-    );
+    void navigate({
+      to: `/accounting/ar/payments?panelType=create&customerId=${selection.singleCustomerId}&invoiceIds=${invoiceIds}`,
+    });
   };
 
   return (
@@ -133,7 +134,9 @@ export function AROpenItemsPage() {
         actions: canRecordPayment ? (
           <Button
             size="sm"
-            onClick={() => void navigate("/accounting/ar/payments?panelType=create")}
+            onClick={() =>
+              void navigate({ to: "/accounting/ar/payments", search: { panelType: "create" } })
+            }
           >
             <CoinsHandIcon className="size-4" />
             {t("Record payment")}

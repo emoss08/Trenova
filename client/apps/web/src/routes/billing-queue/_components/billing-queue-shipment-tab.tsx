@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { LinkedRecordLink } from "@/components/linked-record-link";
 import { recordPath } from "@/config/record-links";
 import { dwellText, shipmentMiles, stopRows, type StopRow } from "@/lib/billing-queue-stops";
@@ -14,7 +15,6 @@ import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import type { TariffWireValue } from "@trenova/shared/types/tariff";
-import { Link } from "react-router";
 import { BillingQueueRatedBy, ratedByName } from "./billing-queue-rated-by";
 import { BillingQueueShipmentTabSkeleton, STOP_GRID } from "./billing-queue-shipment-tab-skeleton";
 
@@ -259,10 +259,10 @@ function Load({
         <DescriptionItem label={t("Miles")} numeric valueClassName="font-mono">
           {miles.loaded || miles.empty
             ? t(
-              "{0} loaded · {1} empty",
-              miles.loaded.toLocaleString(),
-              miles.empty.toLocaleString(),
-            )
+                "{0} loaded · {1} empty",
+                miles.loaded.toLocaleString(),
+                miles.empty.toLocaleString(),
+              )
             : EMPTY}
         </DescriptionItem>
         {temperature ? (

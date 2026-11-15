@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { capture } from "@/lib/queries/capture";
 import { captureBatchesQuery } from "@/lib/queries/capture";
@@ -18,7 +19,6 @@ import { formatRowTotal, type RowTotal } from "@trenova/shared/lib/row-total";
 import { cn } from "@trenova/shared/lib/utils";
 import { ScanIcon, Sliders01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
 import { BatchList } from "./_components/batch-list";
 import { BatchWorkspace } from "./_components/batch-workspace";
 import { IntakeRail } from "./_components/intake-rail";
@@ -50,8 +50,8 @@ function waitingFilter(filter: IntakeFilter) {
   return countFilter({ ...filter, view: "waiting", query: "", received: "any" });
 }
 
-export const prefetch: RoutePrefetch = ({ request }) => {
-  const filter = parseIntakeFilter(new URL(request.url).searchParams);
+export const prefetch: RoutePrefetch = ({ searchParams }) => {
+  const filter = parseIntakeFilter(searchParams);
 
   return [captureBatchesQuery(batchFilter(filter)), capture.batchCount(countFilter(filter))];
 };
@@ -77,7 +77,7 @@ function useNow(): number {
 export function IntakePage() {
   const t = useT();
   const now = useNow();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useQueryParams();
 
   const filter = useMemo(() => parseIntakeFilter(searchParams), [searchParams]);
   const openId = searchParams.get("batch");
@@ -285,10 +285,7 @@ function NothingOpen({ waiting }: { waiting: RowTotal }) {
                 "{0, plural, one {# stack is waiting to be filed} other {# stacks are waiting to be filed}}",
                 waiting.count,
               )
-            : t(
-                "About {0} stacks are waiting to be filed",
-                formatRowTotal(waiting.count, false),
-              )}
+            : t("About {0} stacks are waiting to be filed", formatRowTotal(waiting.count, false))}
       </p>
       <p className="text-foreground-subtle max-w-xs text-xs leading-relaxed">
         {t(

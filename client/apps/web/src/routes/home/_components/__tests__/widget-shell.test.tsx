@@ -1,17 +1,17 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { WidgetEditingProvider, WidgetShell, type WidgetShellProps } from "../widget-shell";
 
 function renderShell(props: Partial<WidgetShellProps> = {}, editing = false) {
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <WidgetEditingProvider value={editing}>
         <WidgetShell title="Unassigned loads" {...props}>
           <p>Body</p>
         </WidgetShell>
       </WidgetEditingProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

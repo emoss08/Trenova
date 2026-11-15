@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { UserAutocompleteField, WorkerAutocompleteField } from "@/components/autocomplete-fields";
 import { usePermission } from "@/hooks/use-permission";
@@ -30,7 +31,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { workerRecordHref } from "@/lib/route-utils";
 

@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AssistantArtifact } from "@/types/assistant";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { entityCardFrom } from "../../../artifact-payloads";
 import { DeskRecordBody } from "../desk-record-body";
@@ -49,9 +49,9 @@ describe("record views", () => {
 
   it("draws a shipment as its route and its facts, values as written", () => {
     render(
-      <MemoryRouter>
+      <TestRouter>
         <DeskRecordBody artifact={shipment} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
     expect(screen.getByText("SEED-SHP-008")).toBeInTheDocument();
     expect(screen.getByText("Sunbelt Materials")).toBeInTheDocument();
@@ -83,9 +83,9 @@ describe("record views", () => {
     expect(parsed.view?.via.map((stop) => stop.city)).toEqual(["Denver, CO"]);
 
     const { container } = render(
-      <MemoryRouter>
+      <TestRouter>
         <DeskRecordBody artifact={split} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
     expect(screen.getByText("via Denver, CO")).toBeInTheDocument();
     const dot = container.querySelector(".dk-ax-via");

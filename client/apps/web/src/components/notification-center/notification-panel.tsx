@@ -26,7 +26,7 @@ import {
   type ReactNode,
   type Ref,
 } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { NotificationEmpty } from "./notification-empty";
 import { NotificationItem } from "./notification-item";
 import {
@@ -210,7 +210,7 @@ export default function NotificationPanel({
 
   const openSettings = () => {
     onClose();
-    void navigate(settingsPath("notifications"));
+    void navigate({ to: settingsPath("notifications") });
   };
 
   const canMarkAllDone = (lens === "forYou" || lens === "team") && (counts?.[lens] ?? 0) > 0;

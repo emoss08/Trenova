@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import type { AgentMemoryRow } from "@/lib/graphql/agent-memories";
 import type { AgentMemoryStatus } from "@trenova/graphql/generated/graphql";
@@ -5,7 +6,6 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
-import { Link } from "react-router";
 import {
   MemoryStatusBadge,
   OutsideContentBadge,

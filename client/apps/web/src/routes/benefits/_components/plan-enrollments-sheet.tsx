@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { BenefitEnrollmentListRow, BenefitPlanRow } from "@/lib/graphql/benefits";
@@ -24,7 +25,6 @@ import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { initials } from "@trenova/shared/lib/utils";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { planEnrollmentsQuery } from "./queries";
 import { workerRecordHref } from "@/lib/route-utils";

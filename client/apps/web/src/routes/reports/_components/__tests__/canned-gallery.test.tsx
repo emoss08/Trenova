@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CannedReport } from "@/lib/graphql/reports";
 import { CannedGallery, SHOW_ADD_ON_REPORTS_STORAGE_KEY } from "../canned-gallery";
@@ -45,7 +45,7 @@ function cannedReport(overrides: Partial<CannedReport> & { key: string; name: st
 function renderGallery({ search = "", category = "all" } = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <CannedGallery
           search={search}
@@ -54,7 +54,7 @@ function renderGallery({ search = "", category = "all" } = {}) {
           onClearFilters={vi.fn()}
         />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

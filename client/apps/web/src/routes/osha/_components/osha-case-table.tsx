@@ -38,7 +38,7 @@ import {
   User01Icon,
 } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { OshaEmptyLog } from "./osha-empty-log";
 import { FormMark } from "./osha-form-marks";
 
@@ -193,7 +193,8 @@ export function OshaCaseTable({
                     id: "worker",
                     label: t("Open worker"),
                     icon: User01Icon,
-                    onSelect: () => void navigate(workerRecordHref(entry.workerId, "safety")),
+                    onSelect: () =>
+                      void navigate({ to: workerRecordHref(entry.workerId, "safety") }),
                   },
                 ];
                 if (canUpdate) {

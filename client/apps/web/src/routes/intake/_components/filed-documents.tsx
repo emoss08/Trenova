@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { SectionPanel } from "@/components/section-panel";
 import { isRecordEntityType, recordPath } from "@/config/record-links";
 import { captureItemStatusAttrs, captureRecordKindLabel, isCaptureRecordKind } from "@/lib/capture";
@@ -7,7 +8,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { LinkExternal01Icon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 
 function RecordLink({ item }: { item: CaptureItem }) {
   const t = useT();

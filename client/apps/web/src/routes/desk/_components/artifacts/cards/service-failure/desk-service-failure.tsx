@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import type { DeskServiceFailure as DeskServiceFailureRecord } from "@/lib/graphql/service-failure-card";
 import { choiceLabel, serviceFailureSourceChoices, serviceFailureTypeChoices } from "@/lib/choices";
@@ -7,7 +8,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { CardActivity } from "../../record-card/card-activity";
 import { useCardAccess } from "../../record-card/card-access";
 import { CardFailures } from "../../record-card/card-failures";

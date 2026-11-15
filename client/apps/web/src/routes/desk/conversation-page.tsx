@@ -1,17 +1,18 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { DeskConversationSkeleton } from "@/components/desk-chat/desk-skeletons";
 import { useCallback, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { DeskConversation } from "./_components/desk-conversation";
 import { DeskMissingConversation } from "./_components/desk-missing-conversation";
 import { useDesk } from "./_components/desk-layout";
 
 export function DeskConversationPage() {
-  const { threadId } = useParams<{ threadId: string }>();
+  const { threadId } = useParams({ strict: false });
   const desk = useDesk();
   const thread = desk.activeThread?.id === threadId ? desk.activeThread : null;
 
   // A link to one artifact opens the conversation with that artifact beside it.
-  const [search, setSearch] = useSearchParams();
+  const [search, setSearch] = useQueryParams();
   const linkedArtifact = search.get("a");
   const { openArtifact } = desk;
   useEffect(() => {
@@ -19,21 +20,27 @@ export function DeskConversationPage() {
       return;
     }
     openArtifact(thread.id, linkedArtifact);
-    setSearch((current) => {
-      const next = new URLSearchParams(current);
-      next.delete("a");
-      return next;
-    }, { replace: true });
+    setSearch(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete("a");
+        return next;
+      },
+      { replace: true },
+    );
   }, [linkedArtifact, openArtifact, setSearch, thread]);
 
   // A link to one chapter opens the conversation scrolled to it.
   const linkedChapter = search.get("c");
   const chapterShown = useCallback(() => {
-    setSearch((current) => {
-      const next = new URLSearchParams(current);
-      next.delete("c");
-      return next;
-    }, { replace: true });
+    setSearch(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete("c");
+        return next;
+      },
+      { replace: true },
+    );
   }, [setSearch]);
 
   if (desk.isLoading) {

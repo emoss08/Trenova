@@ -13,7 +13,7 @@ import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { ArrowRightIcon, Upload01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { ImportBatchDialog } from "./_components/import-batch-dialog";
 
 const BATCH_COLUMNS = [
@@ -129,7 +129,7 @@ export function BankReceiptBatchPage() {
                   key={batch.id}
                   className="hover:bg-muted/40 cursor-pointer border-t transition-colors"
                   onClick={() =>
-                    void navigate(`/accounting/reconciliation/import-batches/${batch.id}`)
+                    void navigate({ to: `/accounting/reconciliation/import-batches/${batch.id}` })
                   }
                 >
                   <td className="px-3 py-2.5">

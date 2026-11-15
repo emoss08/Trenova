@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useRecentRecordsStore } from "@/stores/recent-records-store";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -5,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import { Profiler } from "react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { BASE_ONLY_UNAVAILABLE, seedPlan } from "@/test/plan";
@@ -120,11 +120,11 @@ function renderPalette(onCommit: () => void = () => undefined) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={["/billing/invoices"]}>
+      <TestRouter initialEntries={["/billing/invoices"]}>
         <Profiler id="palette" onRender={onCommit}>
           <CommandPalette />
         </Profiler>
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

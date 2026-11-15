@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { usePaletteIntentRunner } from "../use-palette-intents";
 
@@ -22,8 +22,8 @@ vi.mock("@/hooks/use-copy-to-clipboard", () => ({
   useCopyToClipboard: () => ({ copy, text: null, isCopied: false }),
 }));
 vi.mock("@/hooks/use-sign-out", () => ({ useSignOut: () => signOut }));
-vi.mock("react-router", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("react-router")>()),
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-router")>()),
   useNavigate: () => navigate,
 }));
 
@@ -38,7 +38,7 @@ function setup({ withFooter = false }: { withFooter?: boolean } = {}) {
       wrapper: ({ children }) => (
         <QueryClientProvider client={client}>
           <ThemeProvider defaultTheme="light" storageKey="palette-intents-test">
-            <MemoryRouter>{children}</MemoryRouter>
+            <TestRouter>{children}</TestRouter>
           </ThemeProvider>
         </QueryClientProvider>
       ),
@@ -114,7 +114,7 @@ describe("usePaletteIntentRunner", () => {
     run({ type: "navigate", href: "/hr/workers" });
 
     expect(close).toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith("/hr/workers");
+    expect(navigate).toHaveBeenCalledWith({ to: "/hr/workers" });
   });
 
   it("opens a new tab without handing the page a handle back to this one", () => {

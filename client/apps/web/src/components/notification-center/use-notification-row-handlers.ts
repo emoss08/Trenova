@@ -12,7 +12,7 @@ import { notificationPreferencesService } from "@trenova/shared/services/notific
 import type { Notification } from "@trenova/shared/types/notification";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { runNotificationAction, type NotificationWriteAction } from "./notification-actions";
 import { notificationPreferenceKey } from "./notification-registry";
 
@@ -152,7 +152,7 @@ export function useNotificationRowHandlers(onClose: () => void): {
         markRead.mutate([notification.id]);
       }
       onClose();
-      void navigate(href);
+      void navigate({ to: href });
     },
     read: (id) => markRead.mutate([id]),
     unread: (id) => markUnread.mutate([id]),

@@ -10,7 +10,7 @@ import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import {
   orderSchedules,
@@ -65,7 +65,7 @@ export function DeskScheduledPage() {
           : t("The answer will post in its conversation"),
         action: {
           label: t("Open"),
-          onClick: () => void navigate(conversationPath(schedule.threadId)),
+          onClick: () => void navigate({ to: conversationPath(schedule.threadId) }),
         },
       }),
   });
@@ -154,7 +154,10 @@ export function DeskScheduledPage() {
               },
             )}
           </p>
-          <Button className="mt-1 rounded-lg px-3.25" onClick={() => void navigate("/desk")}>
+          <Button
+            className="mt-1 rounded-lg px-3.25"
+            onClick={() => void navigate({ to: "/desk" })}
+          >
             {t("New conversation")}
           </Button>
         </div>

@@ -1,7 +1,8 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Metadata } from "@/components/metadata";
 import { useCallback, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { AuthShell } from "./_components/auth-shell";
 import {
   ResetPasswordDone,
@@ -18,13 +19,13 @@ export function ResetPasswordPage() {
   const t = useT();
 
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams] = useQueryParams();
   const token = searchParams.get("token") ?? "";
   const purpose = setPasswordPurpose(searchParams.get("purpose"));
   const [isDone, setIsDone] = useState(false);
 
   const goToSignIn = useCallback(() => {
-    void navigate("/login", { replace: true });
+    void navigate({ to: "/login", replace: true });
   }, [navigate]);
 
   return (

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { StatusDot, type StatusTone } from "@/components/carrier-intelligence/status-dot";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
@@ -14,7 +15,6 @@ import { formatRelativeTime } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { PlayIcon, Settings01Icon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { integrationSettingsPath, monitoringHealth } from "./monitoring-health";
 
 export type ProviderStatusProps = {

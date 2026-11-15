@@ -1,10 +1,10 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { carrierIntelProviderLabel } from "@/lib/carrier-intelligence";
 import { CARRIER_INTEL_INTEGRATIONS_PATH } from "@/lib/carrier-links";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { ArrowRightIcon, PlugIcon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 
 export function SourcingListSketch() {
   return (

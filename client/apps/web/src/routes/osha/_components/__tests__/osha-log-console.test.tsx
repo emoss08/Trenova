@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { recordPath } from "@/config/record-links";
 import OshaLogConsole from "../osha-log-console";
@@ -219,11 +219,11 @@ function renderConsole(fixtures: Fixtures = {}) {
   );
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <OshaLogConsole />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 
@@ -254,11 +254,11 @@ describe("OshaLogConsole", () => {
     mocks.fetchOshaSummaries.mockReturnValue(new Promise(() => {}));
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <MemoryRouter>
+      <TestRouter>
         <QueryClientProvider client={client}>
           <OshaLogConsole />
         </QueryClientProvider>
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     const loading = screen.getByLabelText("Loading the log");

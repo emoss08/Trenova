@@ -1,7 +1,6 @@
+import { Link } from "@trenova/shared/components/link";
 import type { Briefing } from "@/lib/graphql/briefing";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
-
 type HeadlineLink = Briefing["headlineLinks"][number];
 
 /**

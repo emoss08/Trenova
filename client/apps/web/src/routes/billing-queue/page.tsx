@@ -63,7 +63,7 @@ const EMPTY_STATEMENTS: OpenStatement[] = [];
 // fire on mount with nothing but the URL to go on, so the loader can reproduce their
 // keys exactly. The sidebar's search box is deferred, which on first render is the URL
 // value too.
-export const prefetch: RoutePrefetch = ({ request }) => {
+export const prefetch: RoutePrefetch = ({ searchParams }) => {
   const {
     view,
     item,
@@ -81,7 +81,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
     delivered,
     pickedUp,
     queued,
-  } = loadQueueSearch(request);
+  } = loadQueueSearch(searchParams);
 
   // The switch shows the statement count in both views, so the list is warmed
   // either way; only the statements view pays for the rest.

@@ -1,7 +1,7 @@
+import { Link } from "@trenova/shared/components/link";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { composedViewFrom, navigationFrom } from "../../artifact-payloads";
 import { ArtIcon } from "../../desk-art-kinds";
 import { Cell } from "../table/desk-table-body";

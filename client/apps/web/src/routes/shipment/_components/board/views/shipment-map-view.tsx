@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { PlugIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { ShipmentMapPanelBoundary } from "../../map/map-boundary";
 
@@ -28,7 +28,11 @@ export default function ShipmentMapView() {
             "Connect it to see trucks, lanes and geofences here. Table and Timeline work without it.",
           )}
         </p>
-        <Button variant="outline" size="sm" onClick={() => void navigate(INTEGRATIONS_PATH)}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void navigate({ to: INTEGRATIONS_PATH })}
+        >
           <PlugIcon className="size-3.5" />
           {t("Connect Google Maps")}
         </Button>

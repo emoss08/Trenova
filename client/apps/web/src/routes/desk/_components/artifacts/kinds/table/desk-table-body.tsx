@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { DisplayValue } from "@/components/assistant/display-value";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import {
@@ -16,7 +17,7 @@ import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import type { BillingQueueSummary } from "@trenova/shared/types/billing-queue";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import {
   reportPreviewFrom,
   tableViewFrom,
@@ -621,7 +622,7 @@ function TableBodyView({
                           : id && records
                             ? () => records.setInline(id)
                             : row.path !== ""
-                              ? () => void navigate(row.path)
+                              ? () => void navigate({ to: row.path })
                               : undefined
                       }
                     >

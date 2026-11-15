@@ -1,5 +1,5 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { useNow } from "@trenova/shared/hooks/use-now";
-import { useSearchParams } from "react-router";
 
 /** The query parameter that pins the stage's hour in development (`?hour=17:30`). */
 export const HOUR_OVERRIDE_PARAM = "hour";
@@ -31,7 +31,7 @@ export function parseHourOverride(value: string | null): number | null {
  * for the day to reach it; production builds ignore the parameter.
  */
 export function useLocalHour(): number {
-  const [searchParams] = useSearchParams();
+  const [searchParams] = useQueryParams();
   const date = new Date(useNow("minute") * 1000);
   const override = import.meta.env.DEV
     ? parseHourOverride(searchParams.get(HOUR_OVERRIDE_PARAM))

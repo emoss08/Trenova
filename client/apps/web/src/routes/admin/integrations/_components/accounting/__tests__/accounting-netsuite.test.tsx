@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type {
   AccountingAppSettings,
   AccountingConnection,
@@ -9,7 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountingIntegrationModal } from "../accounting-integration-modal";
 import { netSuiteVendor } from "../accounting-vendors";
@@ -166,7 +167,7 @@ function status(overrides: Partial<AccountingSyncStatus> = {}): AccountingSyncSt
 
 function LocationProbe() {
   const location = useLocation();
-  return <span data-testid="location">{`${location.pathname}${location.search}`}</span>;
+  return <span data-testid="location">{`${location.pathname}${location.searchStr}`}</span>;
 }
 
 function renderModal() {
@@ -174,27 +175,20 @@ function renderModal() {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
-    <MemoryRouter initialEntries={["/admin/integrations?type=NetSuite"]}>
+    <TestRouter initialEntries={["/admin/integrations?type=NetSuite"]}>
       <QueryClientProvider client={client}>
-        <Routes>
-          <Route
-            path="*"
-            element={
-              <>
-                <AccountingIntegrationModal
-                  vendor={netSuiteVendor}
-                  open
-                  onOpenChange={() => undefined}
-                  justConnected={false}
-                  onReviewed={() => undefined}
-                />
-                <LocationProbe />
-              </>
-            }
+        <>
+          <AccountingIntegrationModal
+            vendor={netSuiteVendor}
+            open
+            onOpenChange={() => undefined}
+            justConnected={false}
+            onReviewed={() => undefined}
           />
-        </Routes>
+          <LocationProbe />
+        </>
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

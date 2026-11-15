@@ -1,5 +1,6 @@
 import { queryClient } from "@/lib/query-client";
-import { routes } from "@/router";
+import { routeTree } from "@/router";
+import { gateOutcomeById } from "@/test/route-tree";
 import { publicConfigQueryOptions } from "@trenova/shared/hooks/use-public-config";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -7,8 +8,17 @@ import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { SELF_HOSTED_PUBLIC_CONFIG } from "@trenova/shared/types/platform";
 import { Resource, type PermissionManifest } from "@trenova/shared/types/permission";
 import { userSchema, type User } from "@trenova/shared/types/user";
-import { createMemoryRouter, type LoaderFunctionArgs, type RouteObject } from "react-router";
+import { createTestRouter } from "@trenova/shared/testing/test-router";
+import { isRedirect, type AnyRouter } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// The page modules are not under test, and loading them would pull every page's code into
+// this run; the gates and the router's rules for when they run are kept exactly as they are.
+vi.mock("@/lib/route-catalogs", () => ({ lazyPage: () => () => null }));
+vi.mock("@/lib/route-prefetch", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/route-prefetch")>()),
+  prefetchPage: () => () => undefined,
+}));
 
 // The session check is GET /users/me/. Every failure the server sends is an RFC 9457
 // problem document; the rate limiter's carries Retry-After.
@@ -46,37 +56,9 @@ function answerSessionCheckWith(outcome: Response | Error) {
   );
 }
 
-// The pathless layout every signed-in page sits under: the one that guards them all.
-function findSignedInLayout(entries: RouteObject[]): RouteObject | undefined {
-  for (const entry of entries) {
-    if (entry.children?.some((child) => child.path === "/")) {
-      return entry;
-    }
-    if (entry.children) {
-      const found = findSignedInLayout(entry.children);
-      if (found) {
-        return found;
-      }
-    }
-  }
-  return undefined;
-}
-
-async function runProtectedLoader(): Promise<{ value: unknown; thrown: unknown }> {
-  const layout = findSignedInLayout(routes);
-  if (typeof layout?.loader !== "function") {
-    throw new Error("the signed-in layout has no loader");
-  }
-  return Promise.resolve(
-    layout.loader({
-      request: new Request("http://localhost/shipments/management"),
-      params: {},
-      context: undefined,
-    } as unknown as LoaderFunctionArgs),
-  ).then(
-    (value) => ({ value, thrown: undefined }),
-    (thrown: unknown) => ({ value: undefined, thrown }),
-  );
+// The gate of the pathless layout every signed-in page sits under: the one that guards them all.
+async function runProtectedGate(): Promise<{ thrown: unknown }> {
+  return { thrown: await gateOutcomeById("/app", { pathname: "/shipments/management" }) };
 }
 
 function midSession() {
@@ -95,7 +77,7 @@ function coldLoad() {
   });
 }
 
-describe("protectedLoader", () => {
+describe("the signed-in session gate", () => {
   beforeEach(() => {
     queryClient.setQueryData(publicConfigQueryOptions.queryKey, SELF_HOSTED_PUBLIC_CONFIG);
     vi.spyOn(usePermissionStore.getState(), "clearPermissions").mockImplementation(() => {});
@@ -114,9 +96,8 @@ describe("protectedLoader", () => {
     coldLoad();
     answerSessionCheckWith(problemResponse(429, "rate-limit-exceeded", "Rate Limit Exceeded"));
 
-    const { value, thrown } = await runProtectedLoader();
+    const { thrown } = await runProtectedGate();
 
-    expect(value).toBeUndefined();
     expect(thrown).toBeInstanceOf(ApiRequestError);
     expect((thrown as ApiRequestError).status).toBe(429);
     expect((thrown as ApiRequestError).retryAfter).toBe(7);
@@ -127,9 +108,8 @@ describe("protectedLoader", () => {
     const failure = new TypeError("Failed to fetch");
     answerSessionCheckWith(failure);
 
-    const { value, thrown } = await runProtectedLoader();
+    const { thrown } = await runProtectedGate();
 
-    expect(value).toBeUndefined();
     expect(thrown).toBe(failure);
   });
 
@@ -137,10 +117,9 @@ describe("protectedLoader", () => {
     midSession();
     answerSessionCheckWith(problemResponse(429, "rate-limit-exceeded", "Rate Limit Exceeded"));
 
-    const { value, thrown } = await runProtectedLoader();
+    const { thrown } = await runProtectedGate();
 
     expect(thrown).toBeUndefined();
-    expect(value).toBeNull();
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
   });
 
@@ -155,21 +134,19 @@ describe("protectedLoader", () => {
       }),
     );
 
-    const { value, thrown } = await runProtectedLoader();
+    const { thrown } = await runProtectedGate();
 
     expect(thrown).toBeUndefined();
-    expect(value).toBeNull();
   });
 
   it("still sends an expired session to /login", async () => {
     midSession();
     answerSessionCheckWith(problemResponse(401, "authentication-error", "Authentication Failed"));
 
-    const { value, thrown } = await runProtectedLoader();
+    const { thrown } = await runProtectedGate();
 
-    expect(thrown).toBeUndefined();
-    expect(value).toBeInstanceOf(Response);
-    expect((value as Response).headers.get("Location")).toBe("/login");
+    expect(isRedirect(thrown)).toBe(true);
+    expect((thrown as { options: { href?: string } }).options.href).toBe("/login");
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
   });
 });
@@ -215,13 +192,8 @@ function manifestReadingEverything(): PermissionManifest {
   } as unknown as PermissionManifest;
 }
 
-// The page modules are not under test, and loading them would pull every page's code
-// into this run; the loaders and revalidation rules are kept exactly as the app has them.
-function withoutPages(entries: RouteObject[]): RouteObject[] {
-  return entries.map((entry) => {
-    const { lazy: _lazy, children, ...rest } = entry;
-    return (children ? { ...rest, children: withoutPages(children) } : rest) as RouteObject;
-  });
+function failedMatches(router: AnyRouter) {
+  return router.state.matches.filter((match) => match.status === "error");
 }
 
 describe("signed-in route revalidation", () => {
@@ -265,8 +237,8 @@ describe("signed-in route revalidation", () => {
   });
 
   async function startAt(path: string) {
-    const router = createMemoryRouter(withoutPages(routes), { initialEntries: [path] });
-    await vi.waitFor(() => expect(router.state.initialized).toBe(true));
+    const router = createTestRouter(routeTree, [path]);
+    await router.load();
     return router;
   }
 
@@ -279,57 +251,48 @@ describe("signed-in route revalidation", () => {
     expect(afterLoad).toBeGreaterThan(0);
 
     for (const status of ["paid", "void", "draft"]) {
-      await router.navigate(`/billing/invoices?status=${status}`);
+      await router.navigate({ href: `/billing/invoices?status=${status}` });
     }
 
-    expect(router.state.location.search).toBe("?status=draft");
-    expect(router.state.errors).toBeNull();
+    expect(router.state.location.searchStr).toBe("?status=draft");
+    expect(failedMatches(router)).toEqual([]);
     expect(sessionChecks).toBe(afterLoad);
-    router.dispose();
   });
 
   it("re-runs the session check when the path changes", async () => {
     const router = await startAt("/billing/invoices?status=open");
     const afterLoad = sessionChecks;
 
-    await router.navigate("/billing/pending-approvals");
+    await router.navigate({ href: "/billing/pending-approvals" });
 
     expect(router.state.location.pathname).toBe("/billing/pending-approvals");
     expect(sessionChecks).toBeGreaterThan(afterLoad);
-    router.dispose();
   });
 
   // Keys pressed faster than a navigation commits read the message that is still open, so
-  // each one navigates to the URL already shown. The router treats that like revalidate(),
-  // and re-running the session check on each kept a navigation pending for good.
+  // each one navigates to the URL already shown. Re-running the session check on each kept a
+  // navigation pending for good.
   it("does not re-run the session check when quick steps land on the URL already shown", async () => {
     const router = await startAt("/billing/invoices?status=open");
     const afterLoad = sessionChecks;
 
     for (let step = 0; step < 5; step += 1) {
-      await router.navigate("/billing/invoices?status=open");
+      await router.navigate({ href: "/billing/invoices?status=open" });
     }
 
-    expect(router.state.errors).toBeNull();
+    expect(failedMatches(router)).toEqual([]);
     expect(sessionChecks).toBe(afterLoad);
-    router.dispose();
   });
 
   it("guards Triage the same way", async () => {
-    const triage = [...withoutPages(routes)]
-      .flatMap(function flatten(entry): RouteObject[] {
-        return [entry, ...(entry.children ?? []).flatMap(flatten)];
-      })
-      .find((entry) => entry.path === "triage");
+    const router = await startAt("/desk/triage?message=msg_1");
+    const afterLoad = sessionChecks;
+    expect(afterLoad).toBeGreaterThan(0);
 
-    expect(
-      triage?.shouldRevalidate?.({
-        currentUrl: new URL("http://localhost/desk/triage?message=msg_1"),
-        nextUrl: new URL("http://localhost/desk/triage?message=msg_2"),
-        currentParams: {},
-        nextParams: {},
-        defaultShouldRevalidate: true,
-      }),
-    ).toBe(false);
+    await router.navigate({ href: "/desk/triage?message=msg_2" });
+
+    expect(router.state.location.searchStr).toBe("?message=msg_2");
+    expect(failedMatches(router)).toEqual([]);
+    expect(sessionChecks).toBe(afterLoad);
   });
 });

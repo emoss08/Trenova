@@ -1,5 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useGoToChords } from "../use-go-to-chords";
 
@@ -21,11 +22,9 @@ function Probe() {
 
 function renderProbe() {
   return render(
-    <MemoryRouter initialEntries={["/"]}>
-      <Routes>
-        <Route path="*" element={<Probe />} />
-      </Routes>
-    </MemoryRouter>,
+    <TestRouter initialEntries={["/"]}>
+      <Probe />
+    </TestRouter>,
   );
 }
 

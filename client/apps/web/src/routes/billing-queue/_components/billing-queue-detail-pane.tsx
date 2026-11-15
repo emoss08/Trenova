@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import AuditTab from "@/components/audit-tab";
 import { PlainBillingQueueStatusBadge } from "@trenova/shared/components/status-badge";
@@ -34,7 +35,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { lazy, Suspense, useId, useState } from "react";
-import { Link } from "react-router";
 import { billingQueueItemLabel } from "@/lib/billing-queue-label";
 import { shipmentDocumentsQuery } from "../billing-queue-queries";
 import { BillingQueueActionBar } from "./billing-queue-action-bar";

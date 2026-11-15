@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { DeviceList } from "@/components/capture/device-list";
 import { CaptureDownloadPanel } from "@/components/capture/download-panel";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
@@ -13,8 +14,6 @@ import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Key01Icon, Monitor01Icon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
-
 export const prefetch: RoutePrefetch = () => [
   capture.myDevices(null),
   capture.access(),

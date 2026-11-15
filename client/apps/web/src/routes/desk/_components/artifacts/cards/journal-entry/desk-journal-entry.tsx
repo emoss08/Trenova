@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -13,7 +14,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
-import { Link } from "react-router";
 import { CardActionButton } from "../../record-card/card-action";
 import {
   CardEquation,

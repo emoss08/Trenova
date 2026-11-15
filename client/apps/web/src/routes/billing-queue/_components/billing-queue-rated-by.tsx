@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import type { BillingQueueRateAgreement } from "@/lib/graphql/billing-queue";
 import { billingQueue } from "@/lib/queries/billing-queue";
@@ -19,7 +20,6 @@ import type {
 import type { TariffWireValue } from "@trenova/shared/types/tariff";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link } from "react-router";
 import { BillingQueueRatedBySkeleton } from "./billing-queue-rated-by-skeleton";
 
 const DATE = { month: "short", day: "numeric", year: "numeric" } as const;

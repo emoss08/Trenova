@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { Metadata } from "@/components/metadata";
 import { deskTitle } from "./top/desk-title";
 import "../_styles/desk-motion.css";
@@ -45,7 +46,7 @@ import {
 import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
 import { isTypingTarget } from "@/lib/dom";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
-import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
+import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 import {
   useStartConversation,
@@ -225,7 +226,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const t = useT();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { pathname, search } = useLocation();
+  const { pathname, searchStr: search } = useLocation();
   const pane = useDeskStore((state) => state.pane);
   const setPane = useDeskStore((state) => state.setPane);
   const setActiveArtifact = useDeskStore((state) => state.setActiveArtifact);
@@ -303,7 +304,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   // Settings open on the section a link asks for (`/desk?settings=checklists`
   // is where the retired case checklist page now sends people), else on the
   // first. The request is taken off the address once it has opened them.
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useQueryParams();
   const requestedSettings = searchParams.get("settings");
   const [settingsSection, setSettingsSection] = useState<DeskSettingsSection | null>(null);
   if (requestedSettings !== null && settingsSection === null) {
@@ -423,7 +424,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       null,
     );
     if (settings.start === "last" && latest !== null) {
-      void navigate(conversationPath(latest.id), { replace: true });
+      void navigate({ to: conversationPath(latest.id), replace: true });
     }
   }
 
@@ -438,7 +439,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
 
   const startConversation = useStartConversation({
     origin: "Desk",
-    onStarted: (thread) => void navigate(conversationPath(thread.id)),
+    onStarted: (thread) => void navigate({ to: conversationPath(thread.id) }),
   });
   const startMarginConversation = useStartConversation({
     origin: "Desk",
@@ -473,7 +474,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     mutationFn: (thread: AssistantThread) => assistantService.deleteThread(thread.id),
     onMutate: (thread) => {
       if (activeThreadId === thread.id) {
-        void navigate("/desk");
+        void navigate({ to: "/desk" });
       }
       holdThreadReads(thread.id);
       // Out of every page at once: a refresh reads only the pages in view, and
@@ -723,7 +724,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         // the key to the page. A new conversation opens in Nova's margin.
         event.preventDefault();
         if (useDeskMarginStore.getState().casePage !== null) {
-          void navigate("/desk");
+          void navigate({ to: "/desk" });
           return;
         }
         useDeskMarginStore.getState().openMargin(null);
@@ -923,9 +924,9 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             agents={agents}
             onOpenAgent={() => {
               if (activeThread && activeAgent) {
-                void navigate(
-                  `/desk/agents/${encodeURIComponent(activeAgent.id)}?from=${encodeURIComponent(activeThread.id)}`,
-                );
+                void navigate({
+                  to: `/desk/agents/${encodeURIComponent(activeAgent.id)}?from=${encodeURIComponent(activeThread.id)}`,
+                });
               }
             }}
             workspaceOpen={workspaceOpen}

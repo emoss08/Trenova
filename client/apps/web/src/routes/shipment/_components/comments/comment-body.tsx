@@ -3,7 +3,7 @@ import {
   CommentBodyRenderer,
   type CommentBodyEntityRefAttrs,
 } from "@trenova/shared/components/comment-body/comment-body";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import type { LocalShipmentComment } from "@/lib/shipment-comment-cache";
 
@@ -23,7 +23,7 @@ export function CommentBody({ comment }: { comment: LocalShipmentComment }) {
       const basePath = ENTITY_REF_BASE_PATHS[attrs.entityType];
       if (!basePath || !attrs.entityId) return;
       const params = new URLSearchParams({ panelType: "edit", panelEntityId: attrs.entityId });
-      void navigate(`${basePath}?${params.toString()}`);
+      void navigate({ to: `${basePath}?${params.toString()}` });
     },
     [navigate],
   );

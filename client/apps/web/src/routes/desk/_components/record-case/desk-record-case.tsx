@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { withoutRecordIds } from "@/lib/record-ids";
 import { recordSpace } from "@/stores/composer-draft-store";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -36,7 +37,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { Link, Navigate, useLocation } from "react-router";
+import { Navigate, useLocation } from "@tanstack/react-router";
 import { useClaimOnOpen } from "./use-claim-on-open";
 import { casePath, startsCase } from "../attention/attention-record";
 import { DeclineDialog } from "../attention/decline-dialog";
@@ -611,7 +612,11 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
                   "{0, plural, one {# other decision waits} other {# other decisions wait}} on this record.",
                   decision.others,
                 )}{" "}
-                <Link className="dk-w-alnk ui-focus-ring" to="/desk/needs?lens=decisions">
+                <Link
+                  className="dk-w-alnk ui-focus-ring"
+                  to="/desk/needs"
+                  search={{ lens: "decisions" }}
+                >
                   {t("See them in Needs you")}
                 </Link>
               </div>

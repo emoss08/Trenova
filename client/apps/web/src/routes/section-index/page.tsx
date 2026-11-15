@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { BetaTag } from "@/components/beta-tag";
 import { HoverGlideGroup } from "@/components/hover-glide";
 import { AttentionCountBadge } from "@/components/navigation/sidebar-chrome";
@@ -11,7 +12,7 @@ import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet
 import { NotFoundRoute } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useId } from "react";
-import { Link, useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { PAGE_DESCRIPTIONS } from "./page-descriptions.gen";
 
 const descriptions: Readonly<Record<string, string>> = PAGE_DESCRIPTIONS;

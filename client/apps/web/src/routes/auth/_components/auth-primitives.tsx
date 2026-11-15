@@ -1,10 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useReducedMotion } from "motion/react";
 import { ArrowLeftIcon } from "@trenova/shared/components/icons";
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { Link } from "react-router";
-
 const COUNT_DURATION_MS = 420;
 
 /**
@@ -111,7 +110,13 @@ export function AuthQuietButton({
 }
 
 /** The "← Back to …" action at the top of a screen off the main path. */
-export function AuthBackButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+export function AuthBackButton({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: ReactNode;
+}) {
   return (
     <button
       type="button"

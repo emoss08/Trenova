@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { describeApiError } from "@/lib/api-error-message";
 import type { InboundMessageDetail, TriageAction, TriageLoadDraft } from "@/lib/graphql/inbox";
@@ -14,7 +15,6 @@ import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
 import { useReducedMotion } from "motion/react";
 import { useEffect, useId, useState } from "react";
-import { Link } from "react-router";
 import { useTriageActions } from "../../use-triage-actions";
 import { useReaderPanel, useStepSubmit } from "../reader-panel";
 import { StepBody, StepError, StepFooter } from "./step-parts";

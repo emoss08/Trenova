@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { MessagePreview } from "@/components/assistant/proposal-preview/message-preview";
 import { MoneyPreview } from "@/components/assistant/proposal-preview/money-preview";
 import {
@@ -25,7 +26,6 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useId, useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import { CardIcon } from "../../record-card/record-card";
 import { cardMomentAfter, cardTime } from "../../record-card/record-card-values";
 import {

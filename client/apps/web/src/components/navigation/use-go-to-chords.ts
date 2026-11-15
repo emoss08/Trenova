@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { GO_CHORD_KEY, GO_CHORD_WINDOW_MS } from "@/components/navigation/rail-shortcuts";
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -38,7 +38,7 @@ export function useGoToChords(
         const path = targets.get(key);
         if (path) {
           event.preventDefault();
-          void navigate(path, { viewTransition });
+          void navigate({ to: path, viewTransition });
         }
         return;
       }

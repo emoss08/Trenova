@@ -1,5 +1,5 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { act, cleanup, render, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthStage, AuthStageCanvas } from "./auth-stage";
 import { useAuthStage, type AuthStageControls } from "./auth-stage-context";
@@ -47,7 +47,7 @@ function Probe({ onControls }: { onControls: (controls: AuthStageControls) => vo
 function renderStage(path = "/login") {
   const captured: { controls?: AuthStageControls } = {};
   const view = render(
-    <MemoryRouter initialEntries={[path]}>
+    <TestRouter initialEntries={[path]}>
       <AuthStage>
         <Probe
           onControls={(controls) => {
@@ -56,7 +56,7 @@ function renderStage(path = "/login") {
         />
         <AuthStageCanvas />
       </AuthStage>
-    </MemoryRouter>,
+    </TestRouter>,
   );
   return { ...view, controls: () => captured.controls as AuthStageControls };
 }

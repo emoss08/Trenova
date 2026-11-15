@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { OrderLegsSection } from "../order-legs-section";
@@ -67,9 +67,9 @@ function Harness() {
 function renderSection(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>{ui}</QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

@@ -1,49 +1,13 @@
-import { routes } from "@/router";
-import type { RouteHandle } from "@/types/router";
-import type { LoaderFunctionArgs, RouteObject } from "react-router";
-import { describe, expect, it, vi } from "vitest";
-
-vi.mock("@trenova/shared/lib/session-loader", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@trenova/shared/lib/session-loader")>()),
-  requireSession: async () => null,
-}));
-vi.mock("@/lib/onboarding-gate", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/onboarding-gate")>()),
-  resolveOnboardingRedirect: async () => null,
-}));
-vi.mock("@/lib/route-prefetch", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/route-prefetch")>()),
-  createPrefetchLoader: () => () => null,
-}));
-
-function find(entries: RouteObject[], path: string): RouteObject | undefined {
-  for (const entry of entries) {
-    if (entry.path === path) return entry;
-    const found = entry.children ? find(entry.children, path) : undefined;
-    if (found) return found;
-  }
-  return undefined;
-}
+import { gateOutcome, redirectTarget, routeAt } from "@/test/route-tree";
+import { describe, expect, it } from "vitest";
 
 async function locationFor(path: string, search = ""): Promise<string | null> {
-  const route = find(routes, path);
-  if (typeof route?.loader !== "function") throw new Error(`route ${path} has no loader`);
-  const result: unknown = await Promise.resolve(
-    route.loader({
-      request: new Request(`http://localhost${path}${search}`),
-      params: {},
-      context: undefined,
-    } as unknown as LoaderFunctionArgs),
-  ).catch((error: unknown) => error);
-  return result instanceof Response ? result.headers.get("Location") : null;
+  return redirectTarget(await gateOutcome(path, { search }));
 }
 
 describe("Settings route", () => {
   it("is a page of its own, framed as a room beside the module rail", () => {
-    const route = find(routes, "/settings");
-
-    expect(route).toBeDefined();
-    expect((route?.handle as RouteHandle | undefined)?.frame).toBe("room");
+    expect(routeAt("/settings").options.staticData?.frame).toBe("room");
   });
 
   it("sends a link from an email already sent to the notifications section", async () => {

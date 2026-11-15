@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
@@ -20,7 +21,6 @@ import { useQuery } from "@tanstack/react-query";
 import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useMemo } from "react";
-import { Link } from "react-router";
 import { invoiceReconciliationSearchParamsParser } from "./use-invoice-reconciliation-state";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 

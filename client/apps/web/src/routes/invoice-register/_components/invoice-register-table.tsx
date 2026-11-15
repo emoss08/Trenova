@@ -15,7 +15,7 @@ import {
   Truck01Icon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { shipmentPanelPath } from "@/lib/shipment-utils";
 import { getColumns } from "./invoice-register-columns";
 
@@ -28,7 +28,7 @@ export default function InvoiceRegisterTable() {
 
   const openInvoice = useCallback(
     (row: InvoiceRegisterRow) => {
-      void navigate(invoicePanelPath(row.id));
+      void navigate({ to: invoicePanelPath(row.id) });
     },
     [navigate],
   );

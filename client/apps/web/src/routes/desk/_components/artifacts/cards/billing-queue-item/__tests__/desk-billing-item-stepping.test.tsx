@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { installIntersectionObserver } from "@/test/intersection-observer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskBillingItem } from "../desk-billing-item";
 
@@ -73,9 +73,9 @@ describe("DeskBillingItem stepping", () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const card = (itemId: string) => (
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskBillingItem itemId={itemId} fallback={<p>Reading the item</p>} onSelect={vi.fn()} />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>
     );
     const { rerender } = render(card("bqi_1"));

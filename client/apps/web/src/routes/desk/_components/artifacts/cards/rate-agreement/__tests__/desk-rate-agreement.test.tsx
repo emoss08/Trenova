@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { ActivityEntry } from "@/lib/graphql/record-activity";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,7 +9,6 @@ import type {
   RateAgreementLaneSummary,
   RateAgreementRule,
 } from "@trenova/shared/types/rate";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskRateAgreement } from "../desk-rate-agreement";
 
@@ -212,7 +212,7 @@ function draw(props: Partial<Parameters<typeof DeskRateAgreement>[0]> = {}) {
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
   const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskRateAgreement
           recordId="ra_1"
           order={["ra_0", "ra_1"]}
@@ -220,7 +220,7 @@ function draw(props: Partial<Parameters<typeof DeskRateAgreement>[0]> = {}) {
           {...props}
           {...more}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
   const view = render(tree());

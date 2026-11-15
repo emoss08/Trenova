@@ -1,55 +1,59 @@
-import { routes } from "@/router";
+import { routeById } from "@/test/route-tree";
 import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
 import { DeskShellLayout } from "@/routes/desk/shell-layout";
+import { createTestRouter } from "@trenova/shared/testing/test-router";
 import { render, screen } from "@testing-library/react";
-import { isValidElement } from "react";
-import { createMemoryRouter, Outlet, RouterProvider, type RouteObject } from "react-router";
+import { createRootRoute, createRoute, Outlet, RouterProvider } from "@tanstack/react-router";
 import { describe, expect, it } from "vitest";
 
-function routeContaining(entries: RouteObject[], path: string): RouteObject | null {
-  for (const entry of entries) {
-    if (entry.children?.some((child) => child.path === path)) return entry;
-    if (entry.children) {
-      const found = routeContaining(entry.children, path);
-      if (found) return found;
-    }
-  }
-  return null;
-}
+// The shell's own timing, so the screen under test opens when the app's does.
+const shellPending = {
+  pendingMs: routeById("/deskShell").options.pendingMs,
+  pendingMinMs: routeById("/deskShell").options.pendingMinMs,
+};
 
 function AppWideFallback() {
   return <p>App-wide loading card</p>;
 }
 
-describe("Desk first load", () => {
-  it("gives the Desk shell its own hydrate fallback", () => {
-    const shell = routeContaining(routes, "/desk");
+// The app's first-load shape: an app-wide card at the root, the Desk shell with its own
+// loading screen, and a session gate that has not answered yet.
+function deskStillOpening(path: string) {
+  const rootRoute = createRootRoute({ component: Outlet, pendingComponent: AppWideFallback });
+  const shell = createRoute({
+    getParentRoute: () => rootRoute,
+    id: "deskShell",
+    component: Outlet,
+    pendingComponent: DeskLoadingScreen,
+    ...shellPending,
+    beforeLoad: () => new Promise<void>(() => undefined),
+  });
+  const routeTree = rootRoute.addChildren([
+    shell.addChildren([
+      createRoute({
+        getParentRoute: () => shell,
+        path: "/desk/$",
+        component: () => <p>The Desk</p>,
+      }),
+    ]),
+  ]);
+  const router = createTestRouter(routeTree, [path]);
+  void router.load();
+  render(<RouterProvider router={router} />);
+}
 
-    expect(shell).not.toBeNull();
-    expect(isValidElement(shell?.element) && shell.element.type).toBe(DeskShellLayout);
-    expect(shell?.HydrateFallback).toBe(DeskLoadingScreen);
+describe("Desk first load", () => {
+  it("gives the Desk shell its own loading screen, drawn at once", () => {
+    const shell = routeById("/deskShell");
+
+    expect(shell.options.component).toBe(DeskShellLayout);
+    expect(shell.options.pendingComponent).toBe(DeskLoadingScreen);
+    expect(shell.options.pendingMs).toBe(0);
+    expect(shell.options.pendingMinMs).toBe(0);
   });
 
-  it("shows the Desk's own frame rather than the app-wide card while its loaders run", async () => {
-    const router = createMemoryRouter(
-      [
-        {
-          element: <Outlet />,
-          HydrateFallback: AppWideFallback,
-          children: [
-            {
-              element: <Outlet />,
-              HydrateFallback: DeskLoadingScreen,
-              loader: () => new Promise(() => undefined),
-              children: [{ path: "/desk", element: <p>The Desk</p> }],
-            },
-          ],
-        },
-      ],
-      { initialEntries: ["/desk"] },
-    );
-
-    render(<RouterProvider router={router} />);
+  it("shows the Desk's own frame rather than the app-wide card while its gates run", async () => {
+    deskStillOpening("/desk");
 
     const status = await screen.findByRole("status");
     expect(status).toHaveTextContent("Opening the desk");
@@ -63,18 +67,7 @@ describe("Desk first load", () => {
 });
 
 async function openAt(path: string) {
-  const router = createMemoryRouter(
-    [
-      {
-        element: <Outlet />,
-        HydrateFallback: DeskLoadingScreen,
-        loader: () => new Promise(() => undefined),
-        children: [{ path: "/desk/*", element: <p>The Desk</p> }],
-      },
-    ],
-    { initialEntries: [path] },
-  );
-  render(<RouterProvider router={router} />);
+  deskStillOpening(path);
   await screen.findByRole("status");
 
   return document.querySelector('[data-slot="desk-loading-screen"]') as HTMLElement;

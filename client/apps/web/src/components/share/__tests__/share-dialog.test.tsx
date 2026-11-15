@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation } from "@trenova/shared/types/permission";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ShareDialog } from "../share-dialog";
 import {
@@ -297,11 +297,11 @@ describe("the share dialog", () => {
   it("does not load anything until the dialog opens", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <MemoryRouter>
+      <TestRouter>
         <QueryClientProvider client={client}>
           <ShareDialog record={record} path={invoicePath()} />
         </QueryClientProvider>
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -353,7 +353,7 @@ describe("the share dialog", () => {
     const user = (await import("@testing-library/user-event")).default.setup();
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <MemoryRouter>
+      <TestRouter>
         <QueryClientProvider client={client}>
           <ShareDialog
             record={record}
@@ -361,7 +361,7 @@ describe("the share dialog", () => {
             description="A case someone else owns comes into their view."
           />
         </QueryClientProvider>
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     await user.click(screen.getByRole("button", { name: "Share" }));

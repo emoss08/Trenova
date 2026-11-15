@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { describeToolCall } from "@/components/assistant/tool-presentation";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -5,7 +6,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { Link } from "react-router";
 import type { OfferedMatch } from "../agent-recommendation-state";
 import { DeskAgentTile } from "../desk-agent-tile";
 import { deskLinkClass, deskSmallIconClass } from "../desk-button-styles";
@@ -134,7 +134,7 @@ export function DeskNoAgentFits({
             : t("None of your agents has the tools for this. An administrator can add them.")}
         </span>
         {canManage && (
-          <Link className={deskLinkClass} to="/admin/agent-control?tab=agents">
+          <Link className={deskLinkClass} to="/admin/agent-control" search={{ tab: "agents" }}>
             {t("Add tools")}
           </Link>
         )}

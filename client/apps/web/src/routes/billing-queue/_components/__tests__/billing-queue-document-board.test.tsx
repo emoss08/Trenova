@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BillingQueueDocumentsTab, type PacketControl } from "../billing-queue-documents-tab";
 
@@ -116,9 +116,9 @@ function packetControl(overrides: Partial<PacketControl> = {}): PacketControl {
 function renderTab(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>{ui}</QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

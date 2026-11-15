@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import {
@@ -5,7 +6,6 @@ import {
   formulaTemplateSchema,
   type FormulaTemplate,
 } from "@trenova/shared/types/formula-template";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskFormulaTemplate } from "../desk-formula-template";
 
@@ -110,7 +110,7 @@ function draw(props: Partial<Parameters<typeof DeskFormulaTemplate>[0]> = {}) {
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
   const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskFormulaTemplate
           recordId="ft_1"
           order={["ft_0", "ft_1", "ft_2"]}
@@ -118,7 +118,7 @@ function draw(props: Partial<Parameters<typeof DeskFormulaTemplate>[0]> = {}) {
           {...props}
           {...more}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
   const view = render(tree());

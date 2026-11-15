@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { DriverSettlementStatusBadge } from "@trenova/shared/components/status-badge";
@@ -13,7 +14,7 @@ import type { DriverSettlementStatus } from "@trenova/shared/types/driver-pay";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon, Flag01Icon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { DisputeDrawer } from "../_components/dispute-drawer";
 import { useDashFeatures } from "../_components/use-dash-features";
 import { DisputeStatusBadge } from "../_components/portal-badges";
@@ -28,7 +29,7 @@ import {
 export function DashSettlementPage() {
   const t = useT();
 
-  const { settlementId = "" } = useParams();
+  const { settlementId = "" } = useParams({ strict: false });
   const features = useDashFeatures();
   const [disputeOpen, setDisputeOpen] = useState(false);
   const [disputedLine, setDisputedLine] = useState<PortalSettlementLine | null>(null);

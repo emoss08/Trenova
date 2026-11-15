@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
@@ -10,7 +11,6 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { ArrowRightIcon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { ReconciliationSummaryEmpty } from "./_components/reconciliation-summary-empty";
 import { ReconciliationSummarySkeleton } from "./_components/reconciliation-summary-skeleton";
 

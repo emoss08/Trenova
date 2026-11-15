@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { ExternalLink } from "@/components/link";
 import { recordPath } from "@/config/record-links";
 import { usePermission } from "@/hooks/use-permission";
@@ -16,8 +17,6 @@ import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { BookCheckIcon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
-
 type AccountingSyncStateLineProps = {
   objectId: string | null | undefined;
   className?: string;

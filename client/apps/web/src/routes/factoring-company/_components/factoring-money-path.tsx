@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { HoverGlideGroup } from "@/components/hover-glide";
 import type { FactoringCompanyOverview } from "@/lib/graphql/factoring-company-page";
 import { factoringWorkspacePath, type FactoringTab } from "@/routes/factoring/use-factoring-state";
@@ -16,7 +17,6 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { formatMinor } from "@trenova/shared/lib/money";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 import type { FactoringCompanyTab } from "../use-factoring-company-state";
 
 type Stage = {

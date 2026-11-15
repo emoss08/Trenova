@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import type { DeskCase, DeskCaseExhibit } from "@/lib/graphql/desk-case";
@@ -5,7 +6,6 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { Link } from "react-router";
 import { formatFactTime } from "../watchtower/lanes";
 import { textTone } from "./case-tone";
 import { citedExhibits } from "./case-finding";

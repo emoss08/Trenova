@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { DeskDock } from "@/components/desk-chat/desk-thread";
 import type { AssistantThread, CaseChecklist, CaseRecord, StepAbility } from "@/types/assistant";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { CaseStepAction, onlyPeopleCanTake } from "../case-step-action";
 
@@ -22,7 +22,7 @@ const thread = { id: "athr_1", canContinue: true } as AssistantThread;
 function renderStep(ability: StepAbility | undefined, busy = false) {
   const dock: DeskDock = { ask: vi.fn(), busy };
   render(
-    <MemoryRouter>
+    <TestRouter>
       <CaseStepAction
         primary
         step="mark_ready"
@@ -32,7 +32,7 @@ function renderStep(ability: StepAbility | undefined, busy = false) {
         thread={thread}
         dock={dock}
       />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 
   return { dock };
@@ -51,7 +51,10 @@ describe("CaseStepAction", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Mark ready to invoice" }));
 
-    expect(dock.ask).toHaveBeenCalledWith("Mark shipment SEED-PAY-001 ready to invoice.", undefined);
+    expect(dock.ask).toHaveBeenCalledWith(
+      "Mark shipment SEED-PAY-001 ready to invoice.",
+      undefined,
+    );
   });
 
   it("asks the conversation's agent when nothing was worked out about the step", () => {
@@ -59,7 +62,10 @@ describe("CaseStepAction", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Mark ready to invoice" }));
 
-    expect(dock.ask).toHaveBeenCalledWith("Mark shipment SEED-PAY-001 ready to invoice.", undefined);
+    expect(dock.ask).toHaveBeenCalledWith(
+      "Mark shipment SEED-PAY-001 ready to invoice.",
+      undefined,
+    );
   });
 
   it("hands the step to the agent that can with the same button, in this conversation", () => {
@@ -84,7 +90,10 @@ describe("CaseStepAction", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Mark ready to invoice" }));
 
-    expect(dock.ask).toHaveBeenCalledWith("Mark shipment SEED-PAY-001 ready to invoice.", undefined);
+    expect(dock.ask).toHaveBeenCalledWith(
+      "Mark shipment SEED-PAY-001 ready to invoice.",
+      undefined,
+    );
   });
 
   it("waits for the reply under way before handing the step on", () => {

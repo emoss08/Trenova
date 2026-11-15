@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { ActivityEntry } from "@/lib/graphql/record-activity";
 import type { RecordFailure } from "@/lib/graphql/record-failures";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskServiceFailure, DeskServiceFailureArtifact } from "../desk-service-failure";
 import { NOW, serviceFailure } from "./fixtures";
@@ -92,7 +92,7 @@ function draw(props: Partial<Parameters<typeof DeskServiceFailure>[0]> = {}) {
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
   const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskServiceFailure
           recordId="sf_1"
           order={["sf_0", "sf_1"]}
@@ -100,7 +100,7 @@ function draw(props: Partial<Parameters<typeof DeskServiceFailure>[0]> = {}) {
           {...props}
           {...more}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
   const view = render(tree());
@@ -400,9 +400,9 @@ describe("DeskServiceFailure", () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskServiceFailureArtifact artifact={{} as never} recordId="sf_1" fallback={null} />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 

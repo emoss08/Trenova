@@ -15,7 +15,7 @@ import { formatRelativeTime } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { cn } from "@trenova/shared/lib/utils";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { intelligenceCsv } from "./intelligence-export";
 import {
   DETENTION_DESK_PATH,
@@ -249,10 +249,10 @@ export function NextSteps({
   const act = (step: DetentionNextStep) => {
     switch (step.kind) {
       case "FreeTime":
-        void navigate(DETENTION_POLICIES_PATH);
+        void navigate({ to: DETENTION_POLICIES_PATH });
         return;
       case "Notice":
-        void navigate(DETENTION_DESK_PATH);
+        void navigate({ to: DETENTION_DESK_PATH });
         return;
       case "CustomerTerms":
         targets.onSection("customers");

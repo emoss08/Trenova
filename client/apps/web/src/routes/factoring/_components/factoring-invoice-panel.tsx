@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FactoringVerdictBadge } from "@/components/factoring/factoring-badges";
 import { FactoringSubmissionLink } from "@/components/factoring/factoring-submission-link";
@@ -23,7 +24,6 @@ import { withheldAccessLabel } from "@trenova/shared/lib/reference-access";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useQueryStates } from "nuqs";
-import { Link } from "react-router";
 
 /**
  * One invoice's readiness: what it is worth, who it is assigned to, and each

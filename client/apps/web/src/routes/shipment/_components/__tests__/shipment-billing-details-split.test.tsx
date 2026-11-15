@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { MemoryRouter } from "react-router";
 import {
   FormProvider,
   useController,
@@ -143,11 +143,11 @@ function Harness({ values }: { values: Partial<Shipment> }) {
   );
   return (
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <FormProvider {...form}>
           <ShipmentBillingDetails />
         </FormProvider>
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
 }

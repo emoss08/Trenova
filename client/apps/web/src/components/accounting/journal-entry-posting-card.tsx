@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
@@ -8,7 +9,6 @@ import type { JournalEntryLine } from "@/types/journal-entry";
 import { AlertTriangleIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { recordPath } from "@/config/record-links";
-import { Link } from "react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 export type PostingEntry = {

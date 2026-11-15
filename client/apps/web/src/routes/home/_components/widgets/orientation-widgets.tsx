@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useRecentActivityInfinite } from "@/hooks/use-attention";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
@@ -8,7 +9,6 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQuery } from "@tanstack/react-query";
 import { Star01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { ActivityRow } from "@/components/navigation/activity-section";
 import { WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
 import type { WidgetProps } from "../widget-registry";

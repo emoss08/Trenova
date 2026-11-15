@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import type { DispatchBoardMove } from "@/lib/graphql/dispatch-console";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
@@ -6,8 +7,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
-import { Link } from "react-router";
-
 type FailedProposal = NonNullable<DispatchBoardMove["failedProposal"]>;
 
 /**

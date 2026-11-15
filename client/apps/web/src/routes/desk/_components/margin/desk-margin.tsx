@@ -16,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useDesk } from "../desk-layout";
 import { casePath } from "../attention/attention-record";
 import { viewPath } from "../view/view-path";
@@ -90,7 +90,7 @@ export function DeskMargin() {
               aria-label={t("Open full width")}
               onClick={() => {
                 closeMargin();
-                void navigate(conversationPath(thread.id));
+                void navigate({ to: conversationPath(thread.id) });
               }}
             >
               <DeskIcon name="ext" size={14} />
@@ -132,11 +132,11 @@ export function DeskMargin() {
               // What the agent made opens on the canvas, beside the
               // conversation that made it; the conversation alone opens full width.
               if (artifactId) {
-                void navigate(viewPath(thread.id, artifactId));
+                void navigate({ to: viewPath(thread.id, artifactId) });
                 return;
               }
               closeMargin();
-              void navigate(conversationPath(thread.id));
+              void navigate({ to: conversationPath(thread.id) });
             }}
           />
         </div>

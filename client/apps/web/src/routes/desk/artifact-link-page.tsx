@@ -1,9 +1,10 @@
+import { Link } from "@trenova/shared/components/link";
 import { assistant } from "@/lib/queries/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Link, Navigate, useParams } from "react-router";
+import { Navigate, useParams } from "@tanstack/react-router";
 
 /**
  * A link to one artifact, `desk/c/{conversation}/a/{slug}`: the slug is read
@@ -11,7 +12,7 @@ import { Link, Navigate, useParams } from "react-router";
  */
 export function DeskArtifactLinkPage() {
   const t = useT();
-  const { threadId = "", slug = "" } = useParams<{ threadId: string; slug: string }>();
+  const { threadId = "", slug = "" } = useParams({ strict: false });
   const lineageQuery = useQuery({
     ...assistant.artifacts(threadId)._ctx.slug(slug),
     enabled: threadId !== "" && slug !== "",

@@ -1,9 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import type { DeskActivityEntry } from "@/lib/graphql/desk-attention";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { useState } from "react";
-import { Link } from "react-router";
 import { LifeBadge, outcomeLife } from "../attention/life-badge";
 import { decidedLine, handledPath, recordLine } from "../handled/handled-lines";
 

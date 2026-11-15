@@ -13,7 +13,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryStates } from "nuqs";
 import { Activity, lazy, useState, type ReactNode } from "react";
-import { useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import {
   FactoringAgreementTabSkeleton,
   FactoringCompanyDetailsSkeleton,
@@ -46,7 +46,7 @@ export const prefetch: RoutePrefetch = ({ params }) =>
  */
 export function FactoringCompanyPage() {
   const t = useT();
-  const { id = "" } = useParams<{ id: string }>();
+  const { id = "" } = useParams({ strict: false });
   const company = useQuery({ ...factoringQueries.company(id), enabled: id !== "" });
   useBreadcrumbLabel(company.data?.name);
 

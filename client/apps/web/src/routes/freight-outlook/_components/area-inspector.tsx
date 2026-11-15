@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { FloatingPanelHeader } from "@/components/floating-panel";
 import { RECORD_LINKS } from "@/config/record-links";
 import { usePermission } from "@/hooks/use-permission";
@@ -25,7 +26,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatCentsWhole } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { lazy, type ReactNode } from "react";
-import { Link } from "react-router";
 import { AreaInspectorSkeleton } from "./area-inspector-skeleton";
 import { paceReadings, startsDay, windowOfSlot } from "./outlook-model";
 import { Strong, dayKey, dayLabel, hourLabel, slotLabel, slotRange } from "./outlook-parts";

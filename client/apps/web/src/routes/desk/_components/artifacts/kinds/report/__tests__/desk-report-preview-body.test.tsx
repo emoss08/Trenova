@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AssistantArtifact } from "@/types/assistant";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskReportPreviewBody } from "../desk-report-preview-body";
 
@@ -61,9 +61,9 @@ function draw(artifact: AssistantArtifact) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskReportPreviewBody artifact={artifact} versions={null} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

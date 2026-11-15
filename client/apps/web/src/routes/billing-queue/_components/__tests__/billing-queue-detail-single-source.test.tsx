@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { MemoryRouter } from "react-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -44,13 +44,13 @@ afterEach(() => {
 function renderPane() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <NuqsTestingAdapter>
           <BillingQueueDetailPane selectedItemId="bqi_peak" onDocumentSelect={vi.fn()} />
         </NuqsTestingAdapter>
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 
@@ -117,13 +117,13 @@ describe("billing queue review pane entrance", () => {
     );
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const view = (selectedItemId: string) => (
-      <MemoryRouter>
+      <TestRouter>
         <QueryClientProvider client={client}>
           <NuqsTestingAdapter>
             <BillingQueueDetailPane selectedItemId={selectedItemId} onDocumentSelect={vi.fn()} />
           </NuqsTestingAdapter>
         </QueryClientProvider>
-      </MemoryRouter>
+      </TestRouter>
     );
     const { rerender } = render(view("bqi_peak"));
 

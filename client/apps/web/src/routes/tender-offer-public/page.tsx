@@ -27,7 +27,7 @@ import {
   SlashCircle01Icon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { useLocation, useParams } from "react-router";
+import { useLocation, useParams } from "@tanstack/react-router";
 
 type OfferIntent = "accept" | "decline" | null;
 
@@ -263,7 +263,7 @@ function sendResponse(token: string, response: OfferResponse): Promise<void> {
 export function TenderOfferPublicPage() {
   const t = useT();
 
-  const { token = "" } = useParams();
+  const { token = "" } = useParams({ strict: false });
   const { pathname } = useLocation();
 
   const intent: OfferIntent = useMemo(() => {

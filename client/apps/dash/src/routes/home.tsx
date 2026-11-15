@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -12,7 +13,6 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRightIcon, ReceiptTextIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
-import { Link } from "react-router";
 import { LoadCard } from "../_components/load-card";
 import { useDashProfile } from "../_components/dash-layout";
 import { useMyLoads } from "../_components/use-loads";

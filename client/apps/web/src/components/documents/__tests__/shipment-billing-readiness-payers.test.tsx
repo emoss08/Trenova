@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { Shipment, ShipmentBillingReadiness } from "@trenova/shared/types/shipment";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ShipmentBillingReadinessPanel } from "../shipment-billing-readiness-panel";
 
@@ -74,7 +74,7 @@ function renderPanel(value: ShipmentBillingReadiness) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <ShipmentBillingReadinessPanel
           readiness={value}
           shipment={{ id: "shp_1", status: "ReadyToInvoice" } as Shipment}
@@ -82,7 +82,7 @@ function renderPanel(value: ShipmentBillingReadiness) {
           onMarkReadyToInvoice={vi.fn()}
           isMarkingReady={false}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

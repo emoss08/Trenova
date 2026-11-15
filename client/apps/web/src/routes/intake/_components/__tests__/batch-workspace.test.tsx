@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { CaptureBatchDetail, CaptureItem, CapturePage } from "@/lib/graphql/capture";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BatchWorkspace } from "../batch-workspace";
 
@@ -147,9 +147,9 @@ function renderWorkspace(onClose: () => void = () => {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <BatchWorkspace batchId="cpb_01stack" now={1_700_000_200} onClose={onClose} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

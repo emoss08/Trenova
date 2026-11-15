@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { recordPath } from "@/config/record-links";
 import { factoring as factoringQueries } from "@/lib/queries/factoring";
@@ -11,7 +12,6 @@ import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryStates } from "nuqs";
 import { lazy } from "react";
-import { Link } from "react-router";
 import { FactoringSummaryStrip } from "./_components/factoring-summary";
 import { factoringSearchParamsParser, type FactoringTab } from "./use-factoring-state";
 

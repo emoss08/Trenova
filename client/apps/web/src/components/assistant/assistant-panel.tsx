@@ -10,7 +10,7 @@ import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import {
   AssistantFullHeader,
   AssistantHeader,
@@ -100,7 +100,7 @@ export function AssistantPanel({
     (threadId: string, artifactId?: string | null) => {
       onClose();
       const path = conversationPath(threadId);
-      void navigate(artifactId ? `${path}?a=${encodeURIComponent(artifactId)}` : path);
+      void navigate({ to: artifactId ? `${path}?a=${encodeURIComponent(artifactId)}` : path });
     },
     [navigate, onClose],
   );

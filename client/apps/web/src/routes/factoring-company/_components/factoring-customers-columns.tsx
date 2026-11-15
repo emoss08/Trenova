@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { statusChoices } from "@/lib/choices";
 import { factoringNoaDisplayStatus } from "@/lib/factoring";
@@ -10,8 +11,6 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { formatMinor } from "@trenova/shared/lib/money";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { Link } from "react-router";
-
 type Step = "done" | "now" | "good" | "todo";
 
 const STEP_DOT: Record<Step, string> = {

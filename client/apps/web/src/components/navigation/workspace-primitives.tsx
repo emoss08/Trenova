@@ -1,7 +1,6 @@
+import { Link } from "@trenova/shared/components/link";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ComponentType, ReactNode } from "react";
-import { Link } from "react-router";
-
 export const WORKSPACE_SIDEBAR_WIDTH_CLASS = "w-56";
 
 /**

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import type { Tone } from "@/components/kpi/tone";
@@ -20,7 +21,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlugIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { useCallback, type ReactNode } from "react";
-import { Link } from "react-router";
 import { EventInbox } from "./inbox/event-inbox";
 import { monitoringHealth } from "./monitoring-health";
 import {

@@ -21,7 +21,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
   CORE_QUERY_KEYS,
@@ -219,7 +219,7 @@ export function useRealtimeConnection() {
               reply: replyReady,
               notificationId: notif.id ?? null,
               queryClient,
-              navigate: (to) => void navigateRef.current(to),
+              navigate: (to) => void navigateRef.current({ to }),
               t,
             });
           } else if (isForCurrentUser && notif.title) {
@@ -227,7 +227,7 @@ export function useRealtimeConnection() {
             deliverToDesktop(notif, () => {
               const link = notif.data?.link;
               if (typeof link === "string" && link.startsWith("/")) {
-                void navigateRef.current(link);
+                void navigateRef.current({ to: link });
               }
             });
 
@@ -256,9 +256,10 @@ export function useRealtimeConnection() {
                       ? {
                           label: t("View report"),
                           onClick: () =>
-                            navigateRef.current(
-                              `/billing-queue?transferRun=${encodeURIComponent(transferRunId)}`,
-                            ),
+                            navigateRef.current({
+                              to: "/billing-queue",
+                              search: { transferRun: transferRunId },
+                            }),
                         }
                       : auditExport?.kind === "download"
                         ? {
@@ -273,12 +274,12 @@ export function useRealtimeConnection() {
                         : auditExport
                           ? {
                               label: t("View exports"),
-                              onClick: () => navigateRef.current(auditExport.link),
+                              onClick: () => navigateRef.current({ to: auditExport.link }),
                             }
                           : noticeLink
                             ? {
                                 label: t("Open"),
-                                onClick: () => navigateRef.current(noticeLink),
+                                onClick: () => navigateRef.current({ to: noticeLink }),
                               }
                             : undefined,
                 });

@@ -1,7 +1,7 @@
 import { normalizePath } from "@/lib/navigation-paths";
 import { useBreadcrumbStore } from "@/stores/breadcrumb-store";
 import { useEffect } from "react";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 
 /**
  * Names the breadcrumb for the current page (or the crumb at `path`) with

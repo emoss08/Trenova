@@ -14,7 +14,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryStates } from "nuqs";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { LANES, laneLabel, laneOf, minutesLeft, type Lane } from "../watchtower/lanes";
 import { useWatchtowerActions } from "../watchtower/use-watchtower-actions";
 import { casePath, START_CASE } from "./attention-record";
@@ -191,7 +191,8 @@ export function NeedsAttention({
         currentGroup.record.label !== ""
       ) {
         event.preventDefault();
-        void navigate(casePath(currentGroup.record.kind, currentGroup.record.id), {
+        void navigate({
+          to: casePath(currentGroup.record.kind, currentGroup.record.id),
           state: START_CASE,
           viewTransition: true,
         });
@@ -199,7 +200,7 @@ export function NeedsAttention({
       }
       if (event.key === "Enter" && currentItem?.deskLens === "Triage" && currentItem.path !== "") {
         event.preventDefault();
-        void navigate(currentItem.path);
+        void navigate({ to: currentItem.path });
         return;
       }
       if (isDecision && canDecide && decision.phase === "idle" && key === "a") {

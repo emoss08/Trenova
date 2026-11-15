@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { BillReceipt } from "@/components/tariff-bill/bill-receipt";
 import { ChoicesView } from "@/components/tariff-bill/choices-view";
 import { usePermission } from "@/hooks/use-permission";
@@ -27,7 +28,6 @@ import type { Shipment } from "@trenova/shared/types/shipment";
 import { tariffInputValuesSchema, type TariffChoice } from "@trenova/shared/types/tariff";
 import type { StoredTariffBill } from "@trenova/shared/types/tariff-form";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 import { RatingContractReasoning } from "./rating-contract-reasoning";
 
 /**

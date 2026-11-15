@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { preview } from "@/components/assistant/__tests__/preview-fixtures";
 import type { ProposalPreview, ProposalPreviewRequest } from "@/lib/graphql/agent-preview";
@@ -61,9 +61,9 @@ function renderFlow() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <DecisionFlow onFilter={vi.fn()} since={0} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

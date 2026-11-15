@@ -1,9 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiGoalBar } from "@/components/kpi/kpi-goal-bar";
 import { KpiHero } from "@/components/kpi/kpi-hero";
 import { KpiRing } from "@/components/kpi/kpi-ring";
 import { KpiStat } from "@/components/kpi/kpi-stat";
-import { Link } from "react-router";
 import type { MetricValue } from "./metric-values";
 
 /**

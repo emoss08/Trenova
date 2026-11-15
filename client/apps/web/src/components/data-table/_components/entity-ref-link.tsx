@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { isRecordEntityType, recordPath } from "@/config/record-links";
 import { LockedReference } from "@trenova/shared/components/withheld-value";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
@@ -5,8 +6,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { ReferenceKind } from "@trenova/shared/types/generated/reference-views";
 import { cn } from "@trenova/shared/lib/utils";
 import { memo } from "react";
-import { Link } from "react-router";
-
 export type EntityRefConfig<TEntity, TParent> = {
   /**
    * The referenced record's kind. Given, the cell links to the record only for someone with

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import {
   AlertDialog,
@@ -11,9 +12,9 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import React, { useState } from "react";
-import { Link, type LinkProps } from "react-router";
+import { type LinkComponentProps } from "@tanstack/react-router";
 
-// Small Wrapper around react router <Link> to keep up with the design system
+// Small Wrapper around the router's <Link> to keep up with the design system
 const internalLinkStyle = {
   fontWeight: "normal",
   width: "fit-content",
@@ -89,7 +90,7 @@ export function ExternalLink({
   );
 }
 
-type EntityRedirectLinkProps = Omit<LinkProps, "to"> & {
+type EntityRedirectLinkProps = Omit<LinkComponentProps, "to"> & {
   entityId?: string;
   baseUrl: string;
   panelOpen?: boolean;

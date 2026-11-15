@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { StatusDot, riskTone } from "@/components/carrier-intelligence/status-dot";
 import { cityStateLabel } from "@/lib/place";
 import { carrierPanelPath } from "@/lib/carrier-links";
@@ -12,7 +13,6 @@ import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useRef, useState, type KeyboardEvent } from "react";
-import { Link } from "react-router";
 import { useSourcingLabels } from "./use-sourcing-labels";
 
 const ROW_GRID =

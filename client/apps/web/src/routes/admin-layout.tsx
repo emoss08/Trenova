@@ -1,5 +1,5 @@
 import { ErrorStateBoundary } from "@trenova/shared/components/error-boundary";
-import { Outlet } from "react-router";
+import { Outlet } from "@tanstack/react-router";
 
 /**
  * Nothing suspends at this outlet, so it catches failures only. Each admin page's code is read

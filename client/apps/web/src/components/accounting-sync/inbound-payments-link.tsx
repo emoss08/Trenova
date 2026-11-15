@@ -1,10 +1,10 @@
+import { Link } from "@trenova/shared/components/link";
 import { ACCOUNTING_INBOUND_PATH } from "@/lib/accounting-sync";
 import { accountingSync } from "@/lib/queries/accounting-sync";
 import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Link } from "react-router";
 
 export function InboundPaymentsLink({ system }: { system: AccountingSystem }) {
   const t = useT();

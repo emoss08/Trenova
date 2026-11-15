@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { ShipmentBillingQueueStatus } from "../shipment-billing-queue-status";
 
@@ -8,11 +8,11 @@ afterEach(cleanup);
 
 function renderStatus(shipment: Partial<Shipment>) {
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <ShipmentBillingQueueStatus
         shipment={{ id: "shp_1", proNumber: "PRO 1001/A", ...shipment } as Shipment}
       />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

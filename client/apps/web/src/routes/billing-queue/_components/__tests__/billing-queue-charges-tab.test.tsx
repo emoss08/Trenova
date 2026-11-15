@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type { BillingIssue, BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { MemoryRouter } from "react-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -81,13 +81,13 @@ function renderFromQuery(item: BillingQueueItem) {
     return data ? <BillingQueueChargesTab item={data} /> : null;
   }
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <NuqsTestingAdapter>
         <QueryClientProvider client={client}>
           <FromQuery />
         </QueryClientProvider>
       </NuqsTestingAdapter>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 
@@ -113,13 +113,13 @@ function profitability(revenue: string, profit: string, marginPercent: string) {
 function renderTab(item: BillingQueueItem) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <NuqsTestingAdapter>
         <QueryClientProvider client={client}>
           <BillingQueueChargesTab item={item} />
         </QueryClientProvider>
       </NuqsTestingAdapter>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

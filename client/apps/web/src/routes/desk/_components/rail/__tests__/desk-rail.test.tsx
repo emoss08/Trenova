@@ -1,9 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { stubLayout } from "@/test/layout";
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   DeskRailShelf,
@@ -97,6 +98,8 @@ function thread(overrides: Partial<AssistantThread> & { id: string }): Assistant
 type RailOptions = Partial<
   Omit<DeskRailProps, "shelves" | "today" | "noConversations" | "onLoadMore">
 > & {
+  /** The address the rail is drawn at; the Desk's own unless a place is open. */
+  at?: string;
   threads?: AssistantThread[];
   /** How each shelf is being read; every shelf read to its end by default. */
   paging?: Partial<Record<DeskShelfKey, Partial<DeskShelfPaging>>>;
@@ -134,10 +137,10 @@ function RailHarness({
     threads: grouped.get(key) ?? [],
     paging: { ...READ_TO_END, ...paging[key] },
   }));
-  const { handlers, ...rest } = props;
+  const { handlers, at = "/desk", ...rest } = props;
 
   return (
-    <MemoryRouter initialEntries={["/desk"]}>
+    <TestRouter initialEntries={[at]}>
       <DeskRail
         place="today"
         view="chats"
@@ -164,7 +167,7 @@ function RailHarness({
         {...rest}
       />
       <LocationProbe />
-    </MemoryRouter>
+    </TestRouter>
   );
 }
 
@@ -542,7 +545,7 @@ describe("DeskRail", () => {
   });
 
   it("lights Scheduled, not Today, on the scheduled requests", () => {
-    renderRail({ place: "scheduled" });
+    renderRail({ place: "scheduled", at: "/desk/scheduled" });
 
     expect(screen.getByRole("link", { name: "Scheduled" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Today" })).not.toHaveAttribute("aria-current");

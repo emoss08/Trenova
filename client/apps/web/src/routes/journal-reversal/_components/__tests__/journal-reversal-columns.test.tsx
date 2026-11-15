@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render, screen } from "@testing-library/react";
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import type { JournalReversalRow } from "@/lib/graphql/journal-reversal-table";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { getColumns } from "../journal-reversal-columns";
 
@@ -65,7 +65,7 @@ describe("journal reversal table original entry column", () => {
     const cell = originalEntryColumn().cell as (context: {
       row: { original: JournalReversalRow };
     }) => ReactNode;
-    render(<MemoryRouter>{cell({ row: { original: row } })}</MemoryRouter>);
+    render(<TestRouter>{cell({ row: { original: row } })}</TestRouter>);
 
     const link = screen.getByRole("link");
     expect(link.textContent).toBe("JE-2026-000418");

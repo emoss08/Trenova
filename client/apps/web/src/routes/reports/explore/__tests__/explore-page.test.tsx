@@ -1,6 +1,6 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { cleanup, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CannedReport } from "@/lib/graphql/reports";
 import { ReportExplorePage } from "../page";
@@ -32,17 +32,14 @@ function cannedReport(overrides: Partial<CannedReport> & { key: string; name: st
   } satisfies CannedReport;
 }
 
-function renderExplore(cannedKey: string) {
+async function renderExplore(cannedKey: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(
-    <MemoryRouter initialEntries={[`/reports/explore?canned=${cannedKey}`]}>
-      <QueryClientProvider client={client}>
-        <Routes>
-          <Route path="/reports/explore" element={<ReportExplorePage />} />
-        </Routes>
-      </QueryClientProvider>
-    </MemoryRouter>,
-  );
+  await renderAtRoutes([{ path: "/reports/explore", component: ReportExplorePage }], {
+    initialEntries: [`/reports/explore?canned=${cannedKey}`],
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    ),
+  });
 }
 
 beforeEach(() => {
@@ -77,8 +74,8 @@ afterEach(() => {
 });
 
 describe("ReportExplorePage", () => {
-  it("says a gallery report the plan leaves out is part of its add-on", () => {
-    renderExplore("factoring-schedules");
+  it("says a gallery report the plan leaves out is part of its add-on", async () => {
+    await renderExplore("factoring-schedules");
 
     expect(screen.getByText("Not on your plan")).toBeInTheDocument();
     expect(screen.getByText("Part of Accounting & Cash")).toBeInTheDocument();
@@ -91,7 +88,7 @@ describe("ReportExplorePage", () => {
     expect(document.body.textContent).not.toContain("tms.factoring");
   });
 
-  it("explains a preview the plan refuses instead of showing the error", () => {
+  it("explains a preview the plan refuses instead of showing the error", async () => {
     mocks.preview.mockReturnValue({
       data: undefined,
       isError: true,
@@ -110,7 +107,7 @@ describe("ReportExplorePage", () => {
       },
     });
 
-    renderExplore("open-invoice-aging");
+    await renderExplore("open-invoice-aging");
 
     expect(screen.getByText("Not on your plan")).toBeInTheDocument();
     expect(
@@ -121,8 +118,8 @@ describe("ReportExplorePage", () => {
     expect(screen.queryByText("Plan Restricted")).toBeNull();
   });
 
-  it("explores an available gallery report", () => {
-    renderExplore("open-invoice-aging");
+  it("explores an available gallery report", async () => {
+    await renderExplore("open-invoice-aging");
 
     expect(screen.getByText("Open Invoice Aging")).toBeInTheDocument();
     expect(screen.queryByText("Not on your plan")).toBeNull();

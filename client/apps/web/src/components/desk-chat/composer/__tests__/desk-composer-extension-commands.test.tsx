@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { ComposerPayload } from "@/components/assistant/composer-types";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
@@ -5,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useState } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DeskComposer } from "../desk-composer";
 
@@ -77,9 +77,9 @@ function renderComposer(props: Parameters<typeof Harness>[0]) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <Harness {...props} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 

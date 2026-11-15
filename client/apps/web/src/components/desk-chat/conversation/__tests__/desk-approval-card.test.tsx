@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { approvalQueue, type ApprovalEntry } from "@/components/assistant/approval-queue";
 import { planPreview, preview, record } from "@/components/assistant/__tests__/preview-fixtures";
 import type {
@@ -9,7 +10,6 @@ import type { AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import { Operation } from "@trenova/shared/types/permission";
 import { assistant } from "@/lib/queries/assistant";
@@ -178,7 +178,7 @@ function renderCard(proposals: AssistantProposal[] = [proposal()], plans: Assist
   const onDefer = vi.fn();
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskApprovalCard
           threadId="athr_1"
           entry={entryOf(proposals, plans)}
@@ -188,7 +188,7 @@ function renderCard(proposals: AssistantProposal[] = [proposal()], plans: Assist
           onDecided={onDecided}
           undo={undo}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 

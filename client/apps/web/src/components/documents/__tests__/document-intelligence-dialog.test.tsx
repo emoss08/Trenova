@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { documentSchema, type Document } from "@trenova/shared/types/document";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DocumentIntelligenceDialog } from "../document-intelligence-dialog";
 
@@ -95,7 +95,7 @@ function respond(content: () => unknown) {
 function renderDialog() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <DocumentIntelligenceDialog
           open
@@ -105,7 +105,7 @@ function renderDialog() {
           resourceId="athr_1"
         />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

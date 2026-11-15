@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AccountingConnection } from "@/lib/graphql/accounting-sync";
 import type {
   AccountingSyncRecord,
@@ -9,7 +10,6 @@ import userEvent from "@testing-library/user-event";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LedgerHeaderActions } from "../_components/ledger-header-actions";
 import { LedgerRecordPanel } from "../_components/ledger-record-panel";
@@ -173,7 +173,7 @@ function renderWith(node: ReactNode, searchParams = "") {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   const view = render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <NuqsTestingAdapter
           searchParams={searchParams}
@@ -183,7 +183,7 @@ function renderWith(node: ReactNode, searchParams = "") {
           {node}
         </NuqsTestingAdapter>
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
   return { ...view, urls };
 }

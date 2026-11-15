@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AgentMemoryRow } from "@/lib/graphql/agent-memories";
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryProvenance } from "../memory-provenance";
 
@@ -44,9 +44,9 @@ function memory(overrides: Partial<AgentMemoryRow>): AgentMemoryRow {
 
 function renderProvenance(row: AgentMemoryRow | null) {
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <MemoryProvenance memory={row} />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

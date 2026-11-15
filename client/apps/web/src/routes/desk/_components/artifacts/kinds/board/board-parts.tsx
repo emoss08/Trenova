@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { AnalysisTableView } from "@/components/assistant/analysis-result";
 import { AnalysisChartSkeleton } from "@/components/assistant/analysis-chart-skeleton";
 import { isRecordEntityType, recordPath } from "@/config/record-links";
@@ -24,7 +25,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { shipmentStatusSchema } from "@trenova/shared/types/shipment";
 import type { CSSProperties, ReactNode } from "react";
-import { Link } from "react-router";
 import { ArtIcon } from "../../desk-art-kinds";
 import { CardIcon } from "../../record-card/record-card";
 import { activityActor, activitySentence } from "../../record-card/record-activity";

@@ -35,7 +35,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { Document } from "@trenova/shared/types/document";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 
 const REMITTANCE_FILE_TYPES = ".csv,.txt,.xlsx,.pdf";
@@ -147,7 +147,7 @@ function ImportSession({
     (staged: FactoringRemittance) => {
       invalidateFactoringQueries(queryClient);
       onOpenChange(false);
-      void navigate(recordPath("factoring_remittance", staged.id));
+      void navigate({ to: recordPath("factoring_remittance", staged.id) });
     },
     [navigate, onOpenChange, queryClient],
   );

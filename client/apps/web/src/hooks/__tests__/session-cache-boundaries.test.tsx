@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useSwitchOrganization } from "../use-organization-switch";
 import { useSignOut } from "../use-sign-out";
@@ -20,8 +20,8 @@ const mocks = vi.hoisted(() => ({
   clearPermissions: vi.fn(),
 }));
 
-vi.mock("react-router", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("react-router")>()),
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-router")>()),
   useNavigate: () => mocks.navigate,
 }));
 
@@ -59,7 +59,7 @@ function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   return (
     <QueryClientProvider client={client}>
-      <MemoryRouter>{children}</MemoryRouter>
+      <TestRouter>{children}</TestRouter>
     </QueryClientProvider>
   );
 }
@@ -69,7 +69,9 @@ beforeEach(() => {
   for (const mock of Object.values(mocks)) mock.mockReset();
   mocks.logout.mockImplementation(async () => void calls.push("logout"));
   mocks.clearSessionCache.mockImplementation(async () => void calls.push("clear cache"));
-  mocks.navigate.mockImplementation((to: string) => void calls.push(`navigate ${to}`));
+  mocks.navigate.mockImplementation(
+    ({ to, href }: { to?: string; href?: string }) => void calls.push(`navigate ${href ?? to}`),
+  );
   mocks.fetchManifest.mockResolvedValue(undefined);
   mocks.switchOrganization.mockResolvedValue({ id: "usr_1", currentOrganizationId: "org_2" });
 });

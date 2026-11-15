@@ -10,8 +10,8 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { addReloadGuard, isLeavingRegardlessOfWork } from "@/lib/reload-guards";
-import { useCallback, useEffect } from "react";
-import { useBlocker, type BlockerFunction } from "react-router";
+import { useEffect } from "react";
+import { useBlocker } from "@tanstack/react-router";
 
 type UnsavedChangesGuardProps = {
   when: boolean;
@@ -24,12 +24,13 @@ type UnsavedChangesGuardProps = {
 export function UnsavedChangesGuard({ when }: UnsavedChangesGuardProps) {
   const t = useT();
 
-  const shouldBlock = useCallback<BlockerFunction>(
-    ({ currentLocation, nextLocation }) =>
-      when && currentLocation.pathname !== nextLocation.pathname,
-    [when],
-  );
-  const blocker = useBlocker(shouldBlock);
+  // Leaving the page is held; changing its query (a tab, a filter) is not. The browser's own
+  // prompt for a reload or a closed tab is the listener below, which a deliberate exit skips.
+  const blocker = useBlocker({
+    shouldBlockFn: ({ current, next }) => when && current.pathname !== next.pathname,
+    enableBeforeUnload: false,
+    withResolver: true,
+  });
 
   useEffect(() => {
     if (!when) return;
@@ -54,17 +55,17 @@ export function UnsavedChangesGuard({ when }: UnsavedChangesGuardProps) {
   // A save that lands while the dialog is open clears `when`; the block is
   // then stale and holding navigation hostage would be wrong.
   useEffect(() => {
-    if (blocker.state === "blocked" && !when) {
-      blocker.reset();
+    if (blocker.status === "blocked" && !when) {
+      blocker.reset?.();
     }
   }, [blocker, when]);
 
   return (
     <AlertDialog
-      open={blocker.state === "blocked"}
+      open={blocker.status === "blocked"}
       onOpenChange={(open) => {
-        if (!open && blocker.state === "blocked") {
-          blocker.reset();
+        if (!open && blocker.status === "blocked") {
+          blocker.reset?.();
         }
       }}
     >
@@ -82,7 +83,7 @@ export function UnsavedChangesGuard({ when }: UnsavedChangesGuardProps) {
             variant="outline"
             size="default"
             onClick={() => {
-              if (blocker.state === "blocked") blocker.reset();
+              if (blocker.status === "blocked") blocker.reset?.();
             }}
           >
             {t("Stay")}
@@ -91,7 +92,7 @@ export function UnsavedChangesGuard({ when }: UnsavedChangesGuardProps) {
             variant="destructive"
             size="default"
             onClick={() => {
-              if (blocker.state === "blocked") blocker.proceed();
+              if (blocker.status === "blocked") blocker.proceed?.();
             }}
           >
             {t("Discard changes")}

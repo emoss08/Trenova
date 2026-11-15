@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { ProposalPreview } from "@/lib/graphql/agent-preview";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CasePlan, CasePlanDrafting, CasePlanNone } from "../case-plan";
 import type { CaseDecision } from "../use-case-decision";
@@ -44,7 +44,7 @@ function renderPlan(
   canDecide = true,
 ) {
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <CasePlan
         data={deskCase({ decision })}
         decision={decision}
@@ -56,7 +56,7 @@ function renderPlan(
         onChange={handlers.onChange ?? vi.fn()}
         onAsk={handlers.onAsk ?? vi.fn()}
       />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

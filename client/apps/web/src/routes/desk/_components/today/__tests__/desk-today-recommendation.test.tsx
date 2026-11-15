@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { placeholderOf, writeInBox } from "@/components/desk-chat/composer/editor/editor-test-kit";
 import type { AgentChoice, AgentMatch } from "@/lib/graphql/agent-definition";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskToday, type DeskTodayProps } from "../desk-today";
 
@@ -161,7 +161,7 @@ function renderHome(onStart: DeskTodayProps["onStart"]) {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskToday
           agents={[dispatch, billing]}
           threads={[]}
@@ -169,7 +169,7 @@ function renderHome(onStart: DeskTodayProps["onStart"]) {
           isStarting={false}
           onStart={onStart}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

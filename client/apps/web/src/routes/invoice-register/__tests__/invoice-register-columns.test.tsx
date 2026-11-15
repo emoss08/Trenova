@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import type { InvoiceRegisterRow } from "@/lib/graphql/invoice-table";
 import { getColumns } from "../_components/invoice-register-columns";
@@ -58,7 +58,7 @@ function renderCell(
 ) {
   const cell = column?.cell;
   if (typeof cell !== "function") throw new Error("column has no cell renderer");
-  return render(<MemoryRouter>{cell({ row: { original } } as never)}</MemoryRouter>);
+  return render(<TestRouter>{cell({ row: { original } } as never)}</TestRouter>);
 }
 
 describe("invoice register columns", () => {

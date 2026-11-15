@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { PageInsightsCard } from "@/components/insights/page-insights";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
@@ -8,7 +9,6 @@ import { CoinsHandIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { Link } from "react-router";
 import { AccountingBriefing } from "./_components/accounting-briefing";
 import { AccountingDashboardEmpty } from "./_components/accounting-dashboard-empty";
 import { AccountingDashboardSkeleton } from "./_components/accounting-dashboard-skeleton";
@@ -34,7 +34,10 @@ export function AccountingDashboardPage() {
         title: t("Accounting"),
         description: t("Receivables health, collections, and cash-flow at a glance."),
         actions: canRecordPayment ? (
-          <Button size="sm" render={<Link to="/accounting/ar/payments?panelType=create" />}>
+          <Button
+            size="sm"
+            render={<Link to="/accounting/ar/payments" search={{ panelType: "create" }} />}
+          >
             <CoinsHandIcon className="size-4" />
             {t("Record payment")}
           </Button>

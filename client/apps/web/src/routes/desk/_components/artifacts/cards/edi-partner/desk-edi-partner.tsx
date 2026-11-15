@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -17,7 +18,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { EDIConnectionTestResult } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { CardActionButton } from "../../record-card/card-action";
 import { CardPagedList } from "../../record-card/card-paged-list";

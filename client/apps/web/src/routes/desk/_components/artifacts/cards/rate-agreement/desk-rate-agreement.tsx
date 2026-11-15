@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { useLaneScopeLabels } from "@/hooks/use-lane-scope-labels";
 import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
@@ -22,7 +23,6 @@ import type {
   RateAgreementVersion,
 } from "@trenova/shared/types/rate";
 import { useMemo, useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import { CardActivity } from "../../record-card/card-activity";
 import { useCardAccess } from "../../record-card/card-access";
 import {
@@ -273,18 +273,16 @@ function AgreementCard({
               <b className="dk-ra-wait">—</b>
               <span>{t("lanes priced")}</span>
             </>
+          ) : laneCountExact ? (
+            <>
+              <b key={laneCount}>{formatNumber(laneCount)}</b>
+              <span>{t("{0, plural, one {lane priced} other {lanes priced}}", laneCount)}</span>
+            </>
           ) : (
-            laneCountExact ? (
-              <>
-                <b key={laneCount}>{formatNumber(laneCount)}</b>
-                <span>{t("{0, plural, one {lane priced} other {lanes priced}}", laneCount)}</span>
-              </>
-            ) : (
-              <>
-                <b key={laneCount}>{t("about {0}", formatRowTotal(laneCount, false))}</b>
-                <span>{t("lanes priced")}</span>
-              </>
-            )
+            <>
+              <b key={laneCount}>{t("about {0}", formatRowTotal(laneCount, false))}</b>
+              <span>{t("lanes priced")}</span>
+            </>
           )
         }
         meta={

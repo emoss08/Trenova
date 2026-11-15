@@ -24,7 +24,7 @@ import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { EyeIcon, EyeOffIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { HomeCanvas } from "@/routes/home/_components/home-canvas";
 import { useHomeData } from "@/routes/home/_components/use-home-data";
@@ -138,7 +138,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
         await updatePreset.mutateAsync({ ...payload, id: preset.id, version: preset.version });
       } else {
         const created = await createPreset.mutateAsync(payload);
-        void navigate(`/admin/home-layouts/${created.id}`, { replace: true });
+        void navigate({ to: `/admin/home-layouts/${created.id}`, replace: true });
       }
     } catch (error) {
       toast.error(graphQLErrorMessage(error, "Could not save that home screen"));
@@ -151,7 +151,11 @@ export function PresetEditor({ preset }: PresetEditorProps) {
         title: preset ? draft.name || t("Home screen") : t("New home screen"),
         description: t("Arrange the widgets, then choose who lands on them."),
         actions: (
-          <Button variant="ghost" size="sm" onClick={() => void navigate("/admin/home-layouts")}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void navigate({ to: "/admin/home-layouts" })}
+          >
             {t("Back")}
           </Button>
         ),

@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { stubLayout } from "@/test/layout";
 import {
@@ -82,9 +82,9 @@ function renderFlow(
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <DecisionFlow filter={filter} onFilter={onFilter} since={0} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

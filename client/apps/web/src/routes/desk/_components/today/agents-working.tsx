@@ -1,9 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import type { WorkingRun } from "@/lib/graphql/ai-control";
 import type { DeskAttentionGroup, DeskAttentionItem } from "@/lib/graphql/desk-attention";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
-import { Link } from "react-router";
 import { agoOrIn } from "../attention/panels/panel-time";
 import { RunSteps, runDoing } from "../attention/run-steps";
 

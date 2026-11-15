@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigation } from "react-router";
+import { useRouterState } from "@tanstack/react-router";
 
 const INITIAL_PROGRESS = 0.15;
 const MAX_TRICKLE_PROGRESS = 0.94;
@@ -20,8 +20,7 @@ function trickleAmount(progress: number) {
 }
 
 export function NavigationProgress() {
-  const navigation = useNavigation();
-  const isNavigating = navigation.state !== "idle";
+  const isNavigating = useRouterState({ select: (state) => state.status === "pending" });
 
   const [phase, setPhase] = useState<LoaderPhase>("idle");
   const [progress, setProgress] = useState(0);

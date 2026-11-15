@@ -4,8 +4,9 @@ import { NavigationProgress } from "../navigation-progress";
 
 const navigationState = vi.hoisted(() => ({ state: "idle" as "idle" | "loading" }));
 
-vi.mock("react-router", () => ({
-  useNavigation: () => navigationState,
+vi.mock("@tanstack/react-router", () => ({
+  useRouterState: ({ select }: { select: (state: { status: "idle" | "pending" }) => unknown }) =>
+    select({ status: navigationState.state === "idle" ? "idle" : "pending" }),
 }));
 
 describe("NavigationProgress", () => {

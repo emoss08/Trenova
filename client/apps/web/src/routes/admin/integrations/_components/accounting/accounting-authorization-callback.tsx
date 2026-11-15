@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { describeApiError } from "@/lib/api-error-message";
 import { accountingSetupPath, readAccountingCallback } from "@/lib/accounting-sync";
 import { finishAccountingAuthorization } from "@/lib/graphql/accounting-sync";
@@ -9,7 +10,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { AccountingCompanyChoice } from "./accounting-company-choice";
 import type { AccountingVendor } from "./accounting-vendors";
 
@@ -17,7 +18,7 @@ export function AccountingAuthorizationCallback({ vendor }: { vendor: Accounting
   const t = useT();
   const navigate = useNavigate();
   const location = useLocation();
-  const [params] = useState(() => new URLSearchParams(location.search));
+  const [params] = useState(() => new URLSearchParams(location.searchStr));
   const started = useRef(false);
   const setupPath = accountingSetupPath(vendor.system);
 
@@ -32,7 +33,7 @@ export function AccountingAuthorizationCallback({ vendor }: { vendor: Accounting
     : returned;
 
   const connected = () => {
-    void navigate(`${setupPath}&setup=connected`, { replace: true });
+    void navigate({ to: `${setupPath}&setup=connected`, replace: true });
   };
 
   const finish = useMutation({
@@ -46,11 +47,15 @@ export function AccountingAuthorizationCallback({ vendor }: { vendor: Accounting
   });
   const { mutate } = finish;
 
+  // The provider's answer is read once, from the address the page opened at, and then taken
+  // out of it. The router reports where a navigation is going before this page leaves, so the
+  // address it strips is the one it captured, never the next page's.
+  const [returnedAt] = useState(() => location.pathname);
   useEffect(() => {
-    if (location.search !== "") {
-      void navigate(location.pathname, { replace: true });
+    if (params.size > 0) {
+      void navigate({ to: returnedAt, replace: true });
     }
-  }, [location.pathname, location.search, navigate]);
+  }, [navigate, params, returnedAt]);
 
   useEffect(() => {
     if (started.current || !profile || callback.kind !== "authorized") {

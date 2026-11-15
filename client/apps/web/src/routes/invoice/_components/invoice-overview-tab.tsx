@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -17,7 +18,6 @@ import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import type { InvoiceAdjustment, InvoiceAdjustmentLineage } from "@/types/invoice-adjustment";
 import { AlertTriangleIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { InvoiceAdjustmentRuntimeSection } from "./invoice-adjustment-runtime-section";
 import { InvoiceArContextSection } from "./invoice-ar-context-section";
 import { InvoiceFactoringSection } from "./invoice-factoring-section";

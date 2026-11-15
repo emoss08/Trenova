@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AttentionSummary } from "@/config/attention-rows";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { briefQueues, HomeBrief, type HomeBriefProps } from "../home-brief";
 
@@ -25,7 +25,7 @@ const same = (message: string) => message;
 
 function renderBrief(overrides: Partial<HomeBriefProps> = {}) {
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <HomeBrief
         attention={attention}
         analytics={analytics}
@@ -33,7 +33,7 @@ function renderBrief(overrides: Partial<HomeBriefProps> = {}) {
         loading={false}
         {...overrides}
       />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

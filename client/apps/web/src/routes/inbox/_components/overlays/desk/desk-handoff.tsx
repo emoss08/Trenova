@@ -22,7 +22,7 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { USER_FORMATTERS, actionCopy } from "../../action-copy";
 import { inlineErrorText } from "../../inline-error";
 import { useTriageActions } from "../../use-triage-actions";
@@ -222,7 +222,7 @@ function HandoffBody({ message, onClose }: { message: InboundMessageDetail; onCl
           onClick={() => {
             if (thread !== null) {
               onClose();
-              void navigate(conversationPath(thread.id));
+              void navigate({ to: conversationPath(thread.id) });
             }
           }}
         >
@@ -292,7 +292,9 @@ function HandoffBody({ message, onClose }: { message: InboundMessageDetail; onCl
             onOpenInDesk={(artifactId) => {
               onClose();
               const path = conversationPath(thread.id);
-              void navigate(artifactId ? `${path}?a=${encodeURIComponent(artifactId)}` : path);
+              void navigate({
+                to: artifactId ? `${path}?a=${encodeURIComponent(artifactId)}` : path,
+              });
             }}
             dockTop={dock}
             disclaimer={t(

@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { assistant } from "@/lib/queries/assistant";
 import { documentPageImageEndpoint } from "@/services/document";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantProposal } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskExtractBody } from "../desk-extract-body";
 import { DOCUMENT, THREAD, artifactOf, currentPayload, legacyPayload } from "./extraction-fixtures";
@@ -50,9 +50,9 @@ function renderBody({
   });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskExtractBody artifact={artifactOf(payload)} onOpenArtifact={onOpenArtifact} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

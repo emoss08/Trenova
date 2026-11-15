@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { CapabilityGate } from "@/components/capability-gate";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { VerifyEquipmentDialog } from "@/components/carrier-assignment/verify-equipment-dialog";
@@ -43,7 +44,6 @@ import {
 } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
 import { previousAssignmentOf } from "./assignment-input";
 import { CandidateList, isPickable, MAX_HOTKEY_RANK } from "./candidate-list";
 import { InspectorSkeleton } from "./console-skeletons";

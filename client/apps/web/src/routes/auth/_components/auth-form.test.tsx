@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { FakeBroadcastChannel } from "@trenova/shared/testing/fake-broadcast-channel";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthForm } from "./auth-form";
@@ -23,8 +23,8 @@ const mocks = vi.hoisted(() => ({
   clearPermissions: vi.fn(),
 }));
 
-vi.mock("react-router", async (importActual) => {
-  const actual = await importActual<typeof import("react-router")>();
+vi.mock("@tanstack/react-router", async (importActual) => {
+  const actual = await importActual<typeof import("@tanstack/react-router")>();
   return {
     ...actual,
     useNavigate: () => mocks.navigate,
@@ -119,9 +119,9 @@ function renderAuthForm() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <AuthForm />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }
@@ -187,7 +187,7 @@ describe("AuthForm", () => {
 
     new FakeBroadcastChannel("trenova-session-context").postMessage({ kind: "signed-in" });
 
-    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith("/", { replace: true }));
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ to: "/", replace: true }));
     expect(mocks.login).not.toHaveBeenCalled();
   });
 
@@ -239,7 +239,7 @@ describe("AuthForm", () => {
     await waitFor(() => expect(screen.getByText("Opening Alpha Logistics")).toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "Welcome back, Test." })).toBeInTheDocument();
     expect(screen.queryByText(/\brole|permission/i)).toBeNull();
-    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith("/", { replace: true }), {
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ to: "/", replace: true }), {
       timeout: 4000,
     });
   });

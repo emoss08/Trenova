@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
@@ -40,7 +41,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { nanoid } from "nanoid";
 import { useCallback, useMemo, useState } from "react";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { isBlockedByProvider, processingSummary } from "./rate-confirmation-import-status";

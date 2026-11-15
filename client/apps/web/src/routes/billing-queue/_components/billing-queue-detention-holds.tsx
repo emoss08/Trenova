@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
@@ -7,7 +8,6 @@ import type { BillingHoldReason } from "@trenova/shared/types/detention";
 import { ClockStopwatchIcon } from "@trenova/shared/components/icons";
 import { LockedReference } from "@trenova/shared/components/withheld-value";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
-import { Link } from "react-router";
 import { BillingQueueNotice } from "./billing-queue-notice";
 
 function holdReasonLabel(t: TranslateFn, reason: BillingHoldReason): string {

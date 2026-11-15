@@ -7,6 +7,7 @@ export type {
   EditionMessages,
   EditionNavItem,
   EditionPlan,
+  EditionRoute,
   EditionRouteMount,
   EditionRoutes,
   EditionSlots,

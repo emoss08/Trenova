@@ -5,10 +5,10 @@ import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { ConsolePageActions } from "./_components/console-page-actions";
 import { DispatchConsoleContent } from "./_components/page-content";
 import { useDispatchActions } from "./_components/use-dispatch-actions";
-import { dispatchBoardInputFromRequest, useDispatchWindow } from "./_components/url-state";
+import { dispatchBoardInputFromSearch, useDispatchWindow } from "./_components/url-state";
 
-export const prefetch: RoutePrefetch = ({ request }) => [
-  dispatchConsoleQueries.board(dispatchBoardInputFromRequest(request)),
+export const prefetch: RoutePrefetch = ({ searchParams }) => [
+  dispatchConsoleQueries.board(dispatchBoardInputFromSearch(searchParams)),
 ];
 
 export function DispatchConsolePage() {

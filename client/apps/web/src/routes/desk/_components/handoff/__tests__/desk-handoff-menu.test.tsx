@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { ThreadHistory } from "@/components/assistant/thread-history";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
@@ -7,7 +8,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Profiler } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { DeskHandoffMenu } from "../desk-handoff-menu";
 
@@ -76,7 +76,7 @@ function renderMenu(current: AgentChoice, agents: AgentChoice[], messages: Assis
 
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <Profiler
           id="handoff-menu"
           onRender={() => {
@@ -85,7 +85,7 @@ function renderMenu(current: AgentChoice, agents: AgentChoice[], messages: Assis
         >
           <DeskHandoffMenu threadId={THREAD_ID} agent={current} agents={agents} />
         </Profiler>
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 

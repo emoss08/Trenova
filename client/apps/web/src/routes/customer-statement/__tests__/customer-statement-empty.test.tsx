@@ -1,8 +1,7 @@
 import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PageLayoutStub, renderAccountingPage } from "@/test/accounting-page-mocks";
+import { PageLayoutStub, renderAccountingRoute } from "@/test/accounting-page-mocks";
 import { CustomerStatementPage } from "../page";
 
 const mocks = vi.hoisted(() => ({ fetchArCustomerStatement: vi.fn() }));
@@ -31,13 +30,8 @@ const STATEMENT = {
   transactions: [],
 };
 
-function renderStatement() {
-  return renderAccountingPage(
-    <Routes>
-      <Route path="/statement/:customerId" element={<CustomerStatementPage />} />
-    </Routes>,
-    ["/statement/cus_1"],
-  );
+async function renderStatement() {
+  return renderAccountingRoute("/statement/$customerId", CustomerStatementPage, "/statement/cus_1");
 }
 
 beforeEach(() => {
@@ -51,7 +45,7 @@ afterEach(() => {
 
 describe("customer statement empty states", () => {
   it("says nothing touched the account when the period has no transactions", async () => {
-    renderStatement();
+    await renderStatement();
 
     expect(await screen.findByText("Nothing in this period")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Clear filters" })).not.toBeInTheDocument();
@@ -61,7 +55,7 @@ describe("customer statement empty states", () => {
   // set, the empty statement offers to drop them rather than only widen.
   it("offers to clear the dates once one narrows the statement", async () => {
     const user = userEvent.setup();
-    renderStatement();
+    await renderStatement();
     await screen.findByText("Nothing in this period");
 
     const from = screen.getByLabelText("Start date");

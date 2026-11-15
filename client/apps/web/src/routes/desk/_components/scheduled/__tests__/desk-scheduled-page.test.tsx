@@ -1,10 +1,11 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import {
   FakeIntersectionObserver,
   installIntersectionObserver,
 } from "@/test/intersection-observer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskScheduledPage } from "../desk-scheduled-page";
 import { nextScheduleOffset, SCHEDULE_PAGE_SIZE } from "../schedules-query";
@@ -115,12 +116,10 @@ function renderPage() {
   });
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={["/desk/scheduled"]}>
-        <Routes>
-          <Route path="*" element={<DeskScheduledPage />} />
-        </Routes>
+      <TestRouter initialEntries={["/desk/scheduled"]}>
+        <DeskScheduledPage />
         <LocationProbe />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

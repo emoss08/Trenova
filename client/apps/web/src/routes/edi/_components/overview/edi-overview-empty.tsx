@@ -1,9 +1,8 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBar, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { cn } from "@trenova/shared/lib/utils";
-import { Link } from "react-router";
-
 const GHOST_TILES = 4;
 const GHOST_BARS = [30, 55, 45, 70, 60, 85, 65, 50, 75, 40] as const;
 const GHOST_PARTNERS: readonly { name: string; rate: number }[] = [

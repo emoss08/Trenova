@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { OshaLogCase } from "@/lib/graphql/worker-injury";
 import { caseLabel, illnessTypeNumber, logColumn } from "@/lib/osha-log";
@@ -27,7 +28,6 @@ import {
 import { initials } from "@trenova/shared/lib/utils";
 import { Edit02Icon, Lock01Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 import { FormMark } from "./osha-form-marks";
 
 type OshaCaseSheetProps = {

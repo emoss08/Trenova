@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   PlainInvoiceStatusBadge,
@@ -10,7 +11,6 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { useQuery } from "@tanstack/react-query";
 import { LinkExternal01Icon, SplitIcon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 
 /**
  * True when the invoice bills someone other than the customer whose freight it

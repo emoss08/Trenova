@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { act, cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PageAccessPanelSkeleton, PageAccessSheet } from "../page-access-sheet";
 
@@ -26,9 +26,9 @@ afterEach(() => {
 
 function renderAt(path: string) {
   render(
-    <MemoryRouter initialEntries={[path]}>
+    <TestRouter initialEntries={[path]}>
       <PageAccessSheet />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

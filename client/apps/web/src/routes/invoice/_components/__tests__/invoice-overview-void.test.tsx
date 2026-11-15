@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { InvoiceOverviewTab } from "../invoice-overview-tab";
 
@@ -56,7 +56,7 @@ function renderOverview(value: Invoice) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <InvoiceOverviewTab
           invoice={value}
           isCurrentVersion
@@ -64,7 +64,7 @@ function renderOverview(value: Invoice) {
           latestAdjustment={null}
           latestAdjustmentDetail={undefined}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

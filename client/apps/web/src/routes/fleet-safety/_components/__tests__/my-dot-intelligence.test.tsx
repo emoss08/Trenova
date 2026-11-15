@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MyDotIntelligence } from "../my-dot-intelligence";
 
@@ -51,9 +51,9 @@ function renderMyDot() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <MyDotIntelligence />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

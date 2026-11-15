@@ -1,3 +1,4 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import type {
   FactoringInvoiceStateRow,
   FactoringSubmission,
@@ -5,9 +6,8 @@ import type {
 } from "@/lib/graphql/factoring";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SubmitToFactorDialog } from "../submit-to-factor-dialog";
 
@@ -114,20 +114,22 @@ function plan(overrides: Partial<FactoringSubmissionPlan> = {}): FactoringSubmis
   };
 }
 
-function renderDialog(rows: FactoringInvoiceStateRow[], onOpenChange = vi.fn()) {
+async function renderDialog(rows: FactoringInvoiceStateRow[], onOpenChange = vi.fn()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={["/billing/factoring"]}>
-        <Routes>
-          <Route
-            path="/billing/factoring"
-            element={<SubmitToFactorDialog open rows={rows} onOpenChange={onOpenChange} />}
-          />
-          <Route path="/billing/factoring/submissions/:id" element={<p>schedule page</p>} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+  await renderAtRoutes(
+    [
+      {
+        path: "/billing/factoring",
+        component: () => <SubmitToFactorDialog open rows={rows} onOpenChange={onOpenChange} />,
+      },
+      { path: "/billing/factoring/submissions/$id", component: () => <p>schedule page</p> },
+    ],
+    {
+      initialEntries: ["/billing/factoring"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    },
   );
   return { onOpenChange };
 }
@@ -135,7 +137,7 @@ function renderDialog(rows: FactoringInvoiceStateRow[], onOpenChange = vi.fn()) 
 describe("submit to factor dialog", () => {
   it("plans the selected invoices with their factor and shows the funding expected", async () => {
     mocks.fetchFactoringSubmissionPlan.mockResolvedValue(plan());
-    renderDialog([row("inv_1", "fac_rts"), row("inv_2", "fac_rts")]);
+    await renderDialog([row("inv_1", "fac_rts"), row("inv_2", "fac_rts")]);
 
     expect(await screen.findByText("$2,375.00")).toBeInTheDocument();
     expect(mocks.fetchFactoringSubmissionPlan).toHaveBeenCalledWith(
@@ -156,7 +158,7 @@ describe("submit to factor dialog", () => {
     mocks.fetchFactoringSubmissionPlan.mockResolvedValue(
       plan({ invoiceCount: 1, items: plan().items.slice(0, 1) }),
     );
-    renderDialog([
+    await renderDialog([
       row("inv_1", "fac_apex", "Apex Capital"),
       row("inv_2", "fac_rts"),
       row("inv_3", "fac_rts"),
@@ -176,8 +178,8 @@ describe("submit to factor dialog", () => {
     );
   });
 
-  it("refuses a selection with no factor without asking the server", () => {
-    renderDialog([row("inv_1", null)]);
+  it("refuses a selection with no factor without asking the server", async () => {
+    await renderDialog([row("inv_1", null)]);
 
     expect(
       screen.getByText("None of the selected invoices is assigned to a factor."),
@@ -202,7 +204,7 @@ describe("submit to factor dialog", () => {
         ],
       }),
     );
-    renderDialog([row("inv_1", "fac_rts")]);
+    await renderDialog([row("inv_1", "fac_rts")]);
 
     expect(await screen.findByText(REFUSAL)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
@@ -216,7 +218,7 @@ describe("submit to factor dialog", () => {
       invoiceCount: 2,
       factoringCompany: { id: "fac_rts", code: "RTS", name: "RTS Financial" },
     } as FactoringSubmission);
-    const { onOpenChange } = renderDialog([row("inv_1", "fac_rts"), row("inv_2", "fac_rts")]);
+    const { onOpenChange } = await renderDialog([row("inv_1", "fac_rts"), row("inv_2", "fac_rts")]);
 
     await userEvent.click(await screen.findByRole("button", { name: "Send 2 invoices" }));
 

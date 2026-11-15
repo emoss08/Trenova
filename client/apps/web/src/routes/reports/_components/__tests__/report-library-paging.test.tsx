@@ -1,8 +1,8 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReportDefinitionGrid } from "../report-definition-grid";
 
@@ -74,7 +74,9 @@ function stubLibrary(
   });
 }
 
-function renderGrid(props: Partial<Parameters<typeof ReportDefinitionGrid>[0]> = {}): void {
+async function renderGrid(
+  props: Partial<Parameters<typeof ReportDefinitionGrid>[0]> = {},
+): Promise<void> {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const ui: ReactElement = (
     <ReportDefinitionGrid
@@ -87,15 +89,17 @@ function renderGrid(props: Partial<Parameters<typeof ReportDefinitionGrid>[0]> =
     />
   );
 
-  render(
-    <MemoryRouter initialEntries={["/reports"]}>
-      <QueryClientProvider client={client}>
-        <Routes>
-          <Route path="/reports" element={ui} />
-          <Route path="/reports/builder" element={<p>builder opened</p>} />
-        </Routes>
-      </QueryClientProvider>
-    </MemoryRouter>,
+  await renderAtRoutes(
+    [
+      { path: "/reports", component: () => ui },
+      { path: "/reports/builder", component: () => <p>builder opened</p> },
+    ],
+    {
+      initialEntries: ["/reports"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    },
   );
 }
 
@@ -111,8 +115,8 @@ beforeEach(() => {
 });
 
 describe("the report library grid", () => {
-  it("says nothing about more reports when the library is fully loaded", () => {
-    renderGrid();
+  it("says nothing about more reports when the library is fully loaded", async () => {
+    await renderGrid();
 
     expect(screen.getByText("Aging Detail")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: LOAD_MORE })).toBeNull();
@@ -121,16 +125,16 @@ describe("the report library grid", () => {
   it("offers the rest of the library when there is more of it", async () => {
     stubLibrary([definition("Aging Detail")], { hasNextPage: true });
     const user = userEvent.setup();
-    renderGrid();
+    await renderGrid();
 
     await user.click(screen.getByRole("button", { name: LOAD_MORE }));
 
     expect(mocks.fetchNextPage).toHaveBeenCalledTimes(1);
   });
 
-  it("will not ask for the same page twice while it is arriving", () => {
+  it("will not ask for the same page twice while it is arriving", async () => {
     stubLibrary([definition("Aging Detail")], { hasNextPage: true, isFetchingNextPage: true });
-    renderGrid();
+    await renderGrid();
 
     expect(screen.getByRole("button", { name: /Loading/ })).toBeDisabled();
   });
@@ -140,16 +144,16 @@ describe("the report library grid", () => {
   it("does not claim the library is empty when a filter hid an unloaded page", async () => {
     stubLibrary([definition("Aging Detail", { category: "Operations" })], { hasNextPage: true });
     const user = userEvent.setup();
-    renderGrid({ category: "Finance" });
+    await renderGrid({ category: "Finance" });
 
     expect(screen.getByText(/pages loaded so far/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: LOAD_MORE }));
     expect(mocks.fetchNextPage).toHaveBeenCalledTimes(1);
   });
 
-  it("still says the library is empty when there is genuinely nothing left to load", () => {
+  it("still says the library is empty when there is genuinely nothing left to load", async () => {
     stubLibrary([]);
-    renderGrid();
+    await renderGrid();
 
     expect(screen.getByRole("heading", { name: "No reports yet" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: LOAD_MORE })).toBeNull();

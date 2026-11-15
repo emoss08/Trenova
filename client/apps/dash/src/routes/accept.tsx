@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -14,7 +15,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQuery } from "@tanstack/react-query";
 import { m } from "motion/react";
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 
 type InvitationPreview = {
   organizationName: string;
@@ -29,7 +30,7 @@ type AcceptResult = {
 };
 
 export function DashAcceptPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams] = useQueryParams();
   const token = searchParams.get("token") ?? "";
 
   const preview = useQuery({
@@ -147,7 +148,8 @@ function AcceptForm({ token, preview }: { token: string; preview: InvitationPrev
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
       const outcome = await login({ emailAddress: result.emailAddress, password });
-      void navigate(outcome.status === "mfa_required" ? "/dash/login" : "/dash", {
+      void navigate({
+        to: outcome.status === "mfa_required" ? "/dash/login" : "/dash",
         replace: true,
       });
     } catch (err) {

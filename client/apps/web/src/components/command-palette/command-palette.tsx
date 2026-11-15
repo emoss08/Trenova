@@ -2,7 +2,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { PlanFeature } from "@/lib/plan-feature";
 import { assistant } from "@/lib/queries/assistant";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useMatch } from "react-router";
+import { useMatchRoute } from "@tanstack/react-router";
 import { conversationPage, type ConversationHits } from "./palette-conversations";
 import { turnFailureDetail } from "@/components/assistant/follow-turn";
 import { useAsk } from "@/components/assistant/use-ask";
@@ -202,7 +202,7 @@ export function CommandPalette() {
   // search, and nothing in it names or asks Nova. Conversations also need leave to converse.
   const asksNova = usePlanFeature(PlanFeature.AIDesk).available;
   const findsConversations = canConverse && asksNova;
-  const inDesk = useMatch("/desk/*") !== null;
+  const inDesk = useMatchRoute()({ to: "/desk", fuzzy: true }) !== false;
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
   const recordOpen = useRecentRecordsStore((state) => state.recordOpen);
 

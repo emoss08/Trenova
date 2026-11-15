@@ -1,8 +1,7 @@
+import { Link } from "@trenova/shared/components/link";
 import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
-
 export type ActionPillTone = "danger" | "warning" | "brand" | "neutral";
 
 const TONE_DOT: Record<ActionPillTone, string> = {

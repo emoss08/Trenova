@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { VehicleInspection } from "@/lib/graphql/telematics";
@@ -22,8 +23,6 @@ import {
   PlugIcon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { Link } from "react-router";
-
 const STALE_TIME_MS = 60_000;
 const INSPECTION_LIMIT = 50;
 
@@ -266,7 +265,7 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
             variant="outline"
             size="sm"
             className="mt-3"
-            render={<Link to="/admin/integrations?type=Samsara" />}
+            render={<Link to="/admin/integrations" search={{ type: "Samsara" }} />}
           >
             {t("Open integrations")}
           </Button>

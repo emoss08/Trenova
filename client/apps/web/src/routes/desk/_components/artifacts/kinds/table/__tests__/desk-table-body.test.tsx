@@ -1,7 +1,8 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import type { AssistantArtifact } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import { fireEvent, screen } from "@testing-library/react";
+import { useLocation } from "@tanstack/react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskTableBody } from "../desk-table-body";
 
@@ -125,20 +126,22 @@ function templates(): AssistantArtifact {
 
 function Where() {
   const location = useLocation();
-  return <div data-testid="where">{`${location.pathname}${location.search}`}</div>;
+  return <div data-testid="where">{`${location.pathname}${location.searchStr}`}</div>;
 }
 
-function renderTable(shown: AssistantArtifact) {
+async function renderTable(shown: AssistantArtifact) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/desk"]}>
-        <Routes>
-          <Route path="/desk" element={<DeskTableBody artifact={shown} previous={null} />} />
-          <Route path="*" element={<Where />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+  await renderAtRoutes(
+    [
+      { path: "/desk", component: () => <DeskTableBody artifact={shown} previous={null} /> },
+      { path: "$", component: () => <Where /> },
+    ],
+    {
+      initialEntries: ["/desk"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      ),
+    },
   );
 }
 
@@ -148,7 +151,7 @@ beforeEach(() => {
 
 describe("DeskTableBody with formula templates", () => {
   it("opens a row as the template itself, with the rows in the order shown", async () => {
-    renderTable(templates());
+    await renderTable(templates());
 
     fireEvent.click(screen.getByText("Detention"));
 
@@ -158,7 +161,7 @@ describe("DeskTableBody with formula templates", () => {
   });
 
   it("steps through only the rows the filter left", async () => {
-    renderTable(templates());
+    await renderTable(templates());
 
     fireEvent.change(screen.getByLabelText("Filter rows"), { target: { value: "per mile" } });
     fireEvent.click(screen.getByText("Dry van per mile"));
@@ -168,7 +171,7 @@ describe("DeskTableBody with formula templates", () => {
   });
 
   it("goes back to the table as it was left", async () => {
-    renderTable(templates());
+    await renderTable(templates());
 
     fireEvent.change(screen.getByLabelText("Filter rows"), { target: { value: "per mile" } });
     fireEvent.click(screen.getByText("Reefer per mile"));
@@ -181,7 +184,7 @@ describe("DeskTableBody with formula templates", () => {
   });
 
   it("shows another template when the card picks one", async () => {
-    renderTable(templates());
+    await renderTable(templates());
 
     fireEvent.click(screen.getByText("Reefer per mile"));
     fireEvent.click(await screen.findByRole("button", { name: "Next" }));
@@ -189,8 +192,8 @@ describe("DeskTableBody with formula templates", () => {
     expect(await screen.findByTestId("card-id")).toHaveTextContent("ft_2");
   });
 
-  it("opens the Formula Studio from a row's link without opening the card", () => {
-    renderTable(templates());
+  it("opens the Formula Studio from a row's link without opening the card", async () => {
+    await renderTable(templates());
 
     const [first] = screen.getAllByRole("link", { name: "Open this record" });
     expect(first).toHaveAttribute(
@@ -200,13 +203,13 @@ describe("DeskTableBody with formula templates", () => {
     fireEvent.click(first);
 
     expect(card.opened).toEqual([]);
-    expect(screen.getByTestId("where")).toHaveTextContent(
+    expect(await screen.findByTestId("where")).toHaveTextContent(
       "/billing/configuration-files/formula-templates/ft_1/edit",
     );
   });
 
-  it("still opens any other record on its page", () => {
-    renderTable(
+  it("still opens any other record on its page", async () => {
+    await renderTable(
       artifact({
         display: 1,
         tool: "masterdata_list_commodities",
@@ -221,7 +224,7 @@ describe("DeskTableBody with formula templates", () => {
     fireEvent.click(screen.getByText("Avery Lane"));
 
     expect(card.opened).toEqual([]);
-    expect(screen.getByTestId("where")).toHaveTextContent(
+    expect(await screen.findByTestId("where")).toHaveTextContent(
       "/shipment-management/configuration-files/commodities",
     );
   });
@@ -229,7 +232,7 @@ describe("DeskTableBody with formula templates", () => {
 
 describe("DeskTableBody with shipments", () => {
   it("opens a shipment row in place as the shipment, and goes back to the table", async () => {
-    renderTable(
+    await renderTable(
       artifact({
         display: 1,
         tool: "shipment_list",
@@ -257,7 +260,7 @@ describe("DeskTableBody with shipments", () => {
 
 describe("DeskTableBody with billing queue items", () => {
   it("opens a queue row in place as the billing item, and goes back to the queue", async () => {
-    renderTable(
+    await renderTable(
       artifact({
         display: 1,
         tool: "billing_list_queue_items",

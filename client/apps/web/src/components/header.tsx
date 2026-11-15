@@ -17,7 +17,7 @@ import {
   Star01Icon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 

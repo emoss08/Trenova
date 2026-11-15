@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { DeskManualJournalCard } from "@/lib/graphql/journal-cards";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskManualJournal } from "../desk-manual-journal";
@@ -67,9 +67,9 @@ function draw() {
   const onBack = vi.fn();
   const view = render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskManualJournal recordId="mjr_2610_0007" onBack={onBack} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
   return { ...view, onBack };

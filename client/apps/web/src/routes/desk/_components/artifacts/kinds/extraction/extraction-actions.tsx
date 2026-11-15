@@ -1,9 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { WorkingDot } from "@/components/assistant/voice/working-dot";
 import { recordPath } from "@/config/record-links";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { Link } from "react-router";
 import { CardBar, CardBarHint, CardIcon } from "../../record-card/record-card";
 import { canAsk, type ShipmentStage } from "./shipment-stage";
 

@@ -1,10 +1,10 @@
+import { Link } from "@trenova/shared/components/link";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { recordPath } from "@/config/record-links";
 import type { DeskFuelPurchaseCard } from "@/lib/graphql/fuel-desk-cards";
 import { fuelPurchase } from "@/lib/queries/fuel-purchase";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Link } from "react-router";
 import { CardDocuments } from "../../record-card/card-documents";
 import { FuelCardRow } from "../../record-card/card-fuel";
 import { CardPath, type PathStep } from "../../record-card/card-path";

@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { CaptureBatchRow } from "@/lib/graphql/capture";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CaptureStacksPanel } from "../capture-panel";
 
@@ -28,9 +28,9 @@ function renderPanel() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <CaptureStacksPanel kind="shipment" recordId="shp_1" />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

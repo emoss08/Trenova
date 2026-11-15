@@ -10,7 +10,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { Notification } from "@trenova/shared/types/notification";
 import { Bell01Icon, CheckDoubleIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { daysUntil, formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
 
 function notificationLink(notification: Notification): string {
@@ -44,7 +44,7 @@ export function DashNotificationsPage() {
     if (notification.readAt === null) {
       markRead.mutate([notification.id]);
     }
-    void navigate(notificationLink(notification));
+    void navigate({ to: notificationLink(notification) });
   };
 
   return (

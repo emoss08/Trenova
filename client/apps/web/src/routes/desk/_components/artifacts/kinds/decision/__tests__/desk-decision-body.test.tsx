@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { planPreview, preview } from "@/components/assistant/__tests__/preview-fixtures";
 import type {
   PlanPreview,
@@ -7,7 +8,6 @@ import type {
 import type { AssistantArtifact, AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { DeskDecisionBody } from "../desk-decision-body";
@@ -110,9 +110,9 @@ function renderBody(ids: string[], planId = "") {
   } as unknown as AssistantArtifact;
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskDecisionBody artifact={artifact} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

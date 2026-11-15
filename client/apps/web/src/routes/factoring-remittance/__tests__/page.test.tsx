@@ -1,3 +1,4 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import type {
   FactoringRemittance,
   FactoringRemittanceLine,
@@ -5,9 +6,8 @@ import type {
 } from "@/lib/graphql/factoring-remittance";
 import { factoring } from "@/lib/queries/factoring";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FactoringRemittancePage, prefetch } from "../page";
 
@@ -163,16 +163,16 @@ const suggested = line({
   ],
 });
 
-function renderPage() {
+async function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={["/billing/factoring/remittances/facrem_1"]}>
-        <Routes>
-          <Route path="/billing/factoring/remittances/:id" element={<FactoringRemittancePage />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+  return await renderAtRoutes(
+    [{ path: "/billing/factoring/remittances/$id", component: () => <FactoringRemittancePage /> }],
+    {
+      initialEntries: ["/billing/factoring/remittances/facrem_1"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    },
   );
 }
 
@@ -199,7 +199,7 @@ describe("FactoringRemittancePage", () => {
     mocks.listFactoringRemittanceLines.mockResolvedValue([line(), suggested]);
     mocks.updateFactoringRemittanceLine.mockResolvedValue(remittance({ version: 4 }));
 
-    renderPage();
+    await renderPage();
     expect(await screen.findByRole("heading", { name: "rts-2027-01-15.csv" })).toBeTruthy();
     expect(await screen.findByText("INV-200")).toBeTruthy();
     expect(screen.getByText("Invoice partly agrees, amount is close")).toBeTruthy();
@@ -221,7 +221,7 @@ describe("FactoringRemittancePage", () => {
   it("previews the journal and applies the remittance only with the apply permission", async () => {
     mocks.fetchFactoringRemittance.mockResolvedValue(remittance());
     mocks.listFactoringRemittanceLines.mockResolvedValue([line(), suggested]);
-    const { unmount } = renderPage();
+    const { unmount } = await renderPage();
     await screen.findByRole("heading", { name: "rts-2027-01-15.csv" });
     expect(screen.queryByRole("button", { name: "Apply" })).toBeNull();
     unmount();
@@ -256,7 +256,7 @@ describe("FactoringRemittancePage", () => {
       remittance({ status: "PartiallyApplied", appliedCount: 1, version: 4 }),
     );
 
-    renderPage();
+    await renderPage();
     await userEvent.click(await screen.findByRole("button", { name: "Apply" }));
     const dialog = await screen.findByRole("dialog");
     expect(await within(dialog).findByText("Row 2: Funding of invoice INV-100")).toBeTruthy();
@@ -282,7 +282,7 @@ describe("FactoringRemittancePage", () => {
     );
     mocks.stageFactoringRemittance.mockResolvedValue(remittance({ version: 4 }));
 
-    renderPage();
+    await renderPage();
     const read = await screen.findByRole("button", { name: "Read with this mapping" });
     expect(read).toHaveProperty("disabled", true);
     expect(
@@ -299,7 +299,7 @@ describe("FactoringRemittancePage", () => {
     mocks.listFactoringRemittanceLines.mockResolvedValue([line()]);
     mocks.discardFactoringRemittance.mockResolvedValue(remittance({ status: "Discarded" }));
 
-    renderPage();
+    await renderPage();
     await userEvent.click(await screen.findByRole("button", { name: "Discard" }));
     const dialog = await screen.findByRole("dialog");
     await userEvent.type(within(dialog).getByRole("textbox"), "Duplicate of yesterday's report");

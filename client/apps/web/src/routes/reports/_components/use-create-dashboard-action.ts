@@ -1,6 +1,6 @@
 import { useCreateReportDashboard } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 /**
@@ -17,7 +17,7 @@ export function useCreateDashboardAction() {
       { name: "Untitled dashboard", layout: { tiles: [] } },
       {
         onSuccess: (created) => {
-          void navigate(`/reports/dashboards/${created.id}`);
+          void navigate({ to: `/reports/dashboards/${created.id}` });
         },
         onError: (error) =>
           toast.error(graphQLErrorMessage(error, "Failed to create the dashboard")),

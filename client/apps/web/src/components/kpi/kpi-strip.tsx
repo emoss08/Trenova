@@ -1,8 +1,8 @@
+import { Link } from "@trenova/shared/components/link";
 import { usePageViewStore } from "@/stores/page-view-store";
 import { cn } from "@trenova/shared/lib/utils";
 import { ArrowDownIcon, ArrowUpIcon } from "@trenova/shared/components/icons";
 import { createContext, useContext, useEffect, useId } from "react";
-import { Link } from "react-router";
 import type React from "react";
 import type { Tone } from "./tone";
 

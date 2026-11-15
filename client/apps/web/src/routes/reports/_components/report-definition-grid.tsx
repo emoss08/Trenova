@@ -51,7 +51,7 @@ import {
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { irToInput } from "../builder/_components/builder-state";
 import {
@@ -114,7 +114,7 @@ function DefinitionCard({
   const { canCreate, canUpdate, canExport } = usePermissions(Resource.Report);
 
   return (
-    <ReportCard onClick={() => void navigate(`/reports/explore/${definition.id}`)}>
+    <ReportCard onClick={() => void navigate({ to: `/reports/explore/${definition.id}` })}>
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
@@ -143,12 +143,12 @@ function DefinitionCard({
               <DropdownMenuItem
                 title={t("Explore results")}
                 startContent={<TableIcon className="size-3.5" />}
-                onClick={() => void navigate(`/reports/explore/${definition.id}`)}
+                onClick={() => void navigate({ to: `/reports/explore/${definition.id}` })}
               />
               <DropdownMenuItem
                 title={t("Edit in builder")}
                 startContent={<Edit02Icon className="size-3.5" />}
-                onClick={() => void navigate(`/reports/builder/${definition.id}`)}
+                onClick={() => void navigate({ to: `/reports/builder/${definition.id}` })}
               />
               {canCreate && (
                 <DropdownMenuItem
@@ -285,7 +285,7 @@ export function ReportDefinitionGrid({
           toast.success(t('Duplicated as "{0}"', created.name), {
             action: {
               label: t("Open"),
-              onClick: () => void navigate(`/reports/builder/${created.id}`),
+              onClick: () => void navigate({ to: `/reports/builder/${created.id}` }),
             },
           });
         },
@@ -335,7 +335,7 @@ export function ReportDefinitionGrid({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => void navigate("/reports/builder")}
+                  onClick={() => void navigate({ to: "/reports/builder" })}
                 >
                   <PlusIcon className="size-3.5" />
                   {t("New report")}

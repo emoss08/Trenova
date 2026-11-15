@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-badges";
 import { SectionPanel } from "@/components/section-panel";
 import { recordPath } from "@/config/record-links";
@@ -13,8 +14,6 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
-import { Link } from "react-router";
-
 /** The most recent remittances the section lists; the factoring page holds the rest. */
 const RECENT_REMITTANCES = 5;
 

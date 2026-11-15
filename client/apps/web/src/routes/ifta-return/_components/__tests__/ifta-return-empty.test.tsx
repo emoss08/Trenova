@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { IftaReturnView } from "@/lib/ifta-return";
 import type {
   IftaPeriodFieldsFragment,
@@ -6,7 +7,6 @@ import type {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Operation } from "@trenova/shared/types/permission";
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IftaReturnWorkspace } from "../ifta-return-workspace";
 
@@ -148,11 +148,11 @@ function renderWorkspace() {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <IftaReturnWorkspace period={{ year: 2026, quarter: 2 }} onPeriodChange={vi.fn()} />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

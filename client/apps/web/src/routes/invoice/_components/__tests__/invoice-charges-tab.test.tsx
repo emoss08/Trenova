@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import type { Invoice, InvoiceLine } from "@trenova/shared/types/invoice";
 import { InvoiceChargesTab } from "../invoice-charges-tab";
@@ -56,9 +56,9 @@ function invoiceWith(lines: InvoiceLine[], overrides: Partial<Invoice> = {}): In
 
 function renderTab(invoice: Invoice) {
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <InvoiceChargesTab invoice={invoice} />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 
@@ -545,9 +545,9 @@ describe("InvoiceChargesTab", () => {
 
     // Same shipments on a different invoice, as a corrected artifact would carry.
     rerender(
-      <MemoryRouter>
+      <TestRouter>
         <InvoiceChargesTab invoice={invoiceWith(shipmentLines, { id: "inv_2" })} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     expect(screen.getAllByRole("button", { expanded: true })).toHaveLength(2);

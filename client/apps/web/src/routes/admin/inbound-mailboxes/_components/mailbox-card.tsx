@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { usePendingActions } from "@/hooks/use-pending-actions";
@@ -39,7 +40,6 @@ import {
   Shield01Icon,
   XCircleIcon,
 } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { reviewPolicyLabel } from "./mailbox-form-dialog";
 
 type Translate = ReturnType<typeof useT>;

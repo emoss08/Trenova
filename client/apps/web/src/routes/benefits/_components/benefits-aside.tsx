@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import type { BenefitEnrollmentListRow } from "@/lib/graphql/benefits";
@@ -10,7 +11,6 @@ import {
   SlashCircle01Icon,
 } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { enrollmentWorkerName } from "./plan-enrollments-sheet";
 import { workerRecordHref } from "@/lib/route-utils";
 

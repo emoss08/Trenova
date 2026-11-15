@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { staleTablePins, type FormulaTemplateTable } from "@/lib/graphql/formula-template-tables";
 import { formulaTemplateTables } from "@/lib/queries/formula-template-tables";
 import { recordPath } from "@/config/record-links";
@@ -6,7 +7,6 @@ import { TableIcon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { TariffCheckResult, TariffContext } from "@trenova/shared/types/tariff";
-import { Link } from "react-router";
 import { useStudio } from "../studio-context";
 import { SectionHead } from "./section-head";
 

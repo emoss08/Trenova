@@ -1,10 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useId } from "react";
-import { Link } from "react-router";
-
 const GHOST_LINE = "block h-1.5 rounded-full bg-dsk-sunken";
 
 /**

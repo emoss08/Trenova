@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { usePermission } from "@/hooks/use-permission";
@@ -15,7 +16,7 @@ import {
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { aiControlAgentPath } from "@/routes/agent-control/ai-control-tabs";
 import { casePath } from "../attention/attention-record";
 import { LifeBadge, outcomeLife } from "../attention/life-badge";
@@ -242,7 +243,7 @@ export function DeskHandled({ id }: { id: string }) {
               {t("Ask about this")}
             </Button>
           )}
-          <Button variant="ghost" onClick={() => void navigate("/desk")}>
+          <Button variant="ghost" onClick={() => void navigate({ to: "/desk" })}>
             {t("Back to Today")}
           </Button>
         </div>

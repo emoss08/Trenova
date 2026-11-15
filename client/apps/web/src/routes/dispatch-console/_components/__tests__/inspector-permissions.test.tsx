@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource, type PermissionManifest } from "@trenova/shared/types/permission";
@@ -82,7 +82,7 @@ function renderInspector() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <Inspector
           move={move}
           moveRead={null}
@@ -98,7 +98,7 @@ function renderInspector() {
           onJumpTo={vi.fn()}
           actions={actions}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

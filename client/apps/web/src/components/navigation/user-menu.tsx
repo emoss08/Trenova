@@ -18,7 +18,7 @@ import {
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useSignOut } from "@/hooks/use-sign-out";
 import { settingsPath } from "@/lib/settings-path";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import {
   ChevronSelectorVerticalIcon,
@@ -123,7 +123,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
                   {hotkeyLabel("general", "user-settings")}
                 </DropdownMenuShortcut>
               }
-              onClick={() => void navigate(settingsPath())}
+              onClick={() => void navigate({ to: settingsPath() })}
             />
             <ThemeSubmenu />
             <DropdownMenuItem

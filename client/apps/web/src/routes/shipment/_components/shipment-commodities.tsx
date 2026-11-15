@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { CommodityAutocompleteField } from "@/components/autocomplete-fields";
 import { EmptyState } from "@/components/empty-state";
 import { NumberField } from "@/components/fields/number-field";
@@ -61,8 +62,6 @@ import {
   type Path,
   type UseFieldArrayUpdate,
 } from "react-hook-form";
-import { Link } from "react-router";
-
 /** Which line the dialog edits, and whether it was just added (so cancelling removes it). */
 type DialogTarget = { index: number; mode: "add" | "edit" };
 

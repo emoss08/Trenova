@@ -1,10 +1,10 @@
+import { Link } from "@trenova/shared/components/link";
 import { AlertTriangleIcon, Link01Icon, Mail01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatDetentionMinutes } from "@trenova/shared/lib/detention";
 import { cn } from "@trenova/shared/lib/utils";
-import { Link } from "react-router";
 import { CardIcon } from "../../record-card/record-card";
 import { money } from "../../record-card/record-card-values";
 import type {

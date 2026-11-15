@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
 import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { usePermission } from "@/hooks/use-permission";
@@ -16,7 +17,6 @@ import {
   useDraftText,
 } from "@/stores/composer-draft-store";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import {
   agentToAsk,
   matchContextKinds,

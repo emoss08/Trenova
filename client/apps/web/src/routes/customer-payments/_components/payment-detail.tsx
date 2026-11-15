@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
@@ -62,7 +63,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
 import { ApplyUnappliedForm } from "./apply-unapplied-form";
 
 export function PaymentDetail({ paymentId, onClose }: { paymentId: string; onClose: () => void }) {

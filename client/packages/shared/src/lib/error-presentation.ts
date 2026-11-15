@@ -10,7 +10,7 @@ import { RequestTimeoutError, ResponseContractError } from "@trenova/shared/lib/
 import { isRecord } from "@trenova/shared/lib/utils";
 import type { NormalizedApiError, ProblemType } from "@trenova/shared/types/errors";
 import { RETRYABLE_PROBLEM_TYPES, apiProblem } from "@trenova/shared/types/errors";
-import { type ErrorResponse, isRouteErrorResponse } from "react-router";
+import { isRouteRefusal, type RouteRefusal } from "@trenova/shared/lib/router/refusal";
 
 // ErrorKind is what the person looking at the screen can do about a failure, not where it
 // came from. Two failures with different sources and the same remedy share a kind, so the
@@ -150,7 +150,7 @@ function exposesServerDetail(kind: ErrorKind): boolean {
   return kind === "request" || kind === "forbidden" || kind === "not-found";
 }
 
-function routeErrorDetail(error: ErrorResponse): string | undefined {
+function routeErrorDetail(error: RouteRefusal): string | undefined {
   if (typeof error.data === "string" && error.data.trim() !== "") {
     return error.data.trim();
   }
@@ -193,9 +193,9 @@ function describeApiError(
   });
 }
 
-// A route loader throws the API's own refusal body for a page the plan leaves out
-// (planRestrictedResponse), so a route error is read the way a refused read is.
-function routeErrorPlan(error: ErrorResponse): PlanRestriction | undefined {
+// A route gate throws the API's own refusal body for a page the plan leaves out
+// (planRestrictedRefusal), so a route refusal is read the way a refused read is.
+function routeErrorPlan(error: RouteRefusal): PlanRestriction | undefined {
   if (!isRecord(error.data)) return undefined;
   const notice = planLimitFromSource({
     code: error.data.code,
@@ -207,7 +207,7 @@ function routeErrorPlan(error: ErrorResponse): PlanRestriction | undefined {
 }
 
 // describeError turns anything thrown — a fetch TypeError, an API problem, a GraphQL
-// response, a route Response, a render crash, a non-Error value — into one description a
+// response, a route refusal, a render crash, a non-Error value — into one description a
 // screen can present. It never throws.
 export function describeError(error: unknown): ErrorDescription {
   if (isStaleBuildFailure(error)) {
@@ -236,7 +236,7 @@ export function describeError(error: unknown): ErrorDescription {
     return describeApiError(error, error.normalize());
   }
 
-  if (isRouteErrorResponse(error)) {
+  if (isRouteRefusal(error)) {
     const plan = routeErrorPlan(error);
     const kind = plan ? "plan-restricted" : kindFromStatus(error.status);
     const detail = routeErrorDetail(error);

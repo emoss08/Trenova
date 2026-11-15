@@ -1,3 +1,5 @@
+import { Link } from "@trenova/shared/components/link";
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import {
   holdActionText,
   holdReasonText,
@@ -30,7 +32,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { AlertCircleIcon, CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { askAgentMessage } from "@/components/assistant/proposal-preview/preview-warnings";
@@ -173,7 +174,7 @@ export function DecisionFlow({
 }) {
   const t = useT();
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useQueryParams();
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Update);
   const { allowed: canResume } = usePermission(Resource.AgentControl, Operation.Update);
   const { allowed: canEditAgent } = usePermission(Resource.AgentDefinition, Operation.Update);

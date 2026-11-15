@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { MappingEditor } from "@/components/accounting-mapping/mapping-editor";
 import { MappingRow } from "@/components/accounting-mapping/mapping-row";
 import { ReferenceRefreshStatus } from "@/components/accounting-mapping/reference-refresh-status";
@@ -43,8 +44,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
-
 const PAGE_SIZE = 50;
 const SEARCH_DELAY_MS = 250;
 const ALL = "all";

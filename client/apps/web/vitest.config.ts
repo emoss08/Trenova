@@ -15,7 +15,7 @@ const sharedAlias = path.resolve(dirname, "../../packages/shared/src");
 export default defineConfig({
   resolve: {
     alias: { "@": srcAlias, "@trenova/shared": sharedAlias, ...editionAlias() },
-    dedupe: ["react-router"],
+    dedupe: ["@tanstack/react-router", "@tanstack/router-core"],
   },
   test: {
     projects: [
@@ -25,7 +25,7 @@ export default defineConfig({
         assetsInclude: ["**/*.wasm"],
         resolve: {
           alias: { "@": srcAlias, "@trenova/shared": sharedAlias, ...editionAlias() },
-          dedupe: ["react-router"],
+          dedupe: ["@tanstack/react-router", "@tanstack/router-core"],
         },
         test: {
           name: "unit",
@@ -52,7 +52,7 @@ export default defineConfig({
         assetsInclude: ["**/*.wasm"],
         resolve: {
           alias: { "@": srcAlias, "@trenova/shared": sharedAlias, ...editionAlias() },
-          dedupe: ["react-router"],
+          dedupe: ["@tanstack/react-router", "@tanstack/router-core"],
         },
         test: {
           name: "compiled",
@@ -83,11 +83,11 @@ export default defineConfig({
             "@base-ui/react/collapsible",
             "@tanstack/react-hotkeys",
             "@vis.gl/react-google-maps",
-            "nuqs/adapters/react-router/v7",
+            "nuqs/adapters/tanstack-router",
             "react-error-boundary",
             "react-easy-crop",
             "react-lazy-load-image-component",
-            "react-router",
+            "@tanstack/react-router",
             "zustand",
             "zustand/middleware",
           ],

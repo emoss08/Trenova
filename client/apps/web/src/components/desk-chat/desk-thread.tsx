@@ -57,7 +57,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useDeskAttachments } from "./composer/desk-attachments";
 import { useDeskScans } from "./composer/desk-capture";
 import { approvesFromKey } from "./approve-shortcut";
@@ -711,7 +711,7 @@ export function DeskThread({
   const navigate = useNavigate();
   const requestMore = useRequestMore(thread.id);
   const checkProviders = useCallback(
-    () => void navigate("/admin/agent-control?tab=providers"),
+    () => void navigate({ to: "/admin/agent-control", search: { tab: "providers" } }),
     [navigate],
   );
   const vendorOf = useCallback(
@@ -896,8 +896,9 @@ export function DeskThread({
     timezone,
     t,
     requestMore: (kind) => void requestMore(kind),
-    startElsewhere: () => void navigate("/desk"),
-    openAgentControl: () => void navigate("/admin/agent-control?tab=providers"),
+    startElsewhere: () => void navigate({ to: "/desk" }),
+    openAgentControl: () =>
+      void navigate({ to: "/admin/agent-control", search: { tab: "providers" } }),
   });
   const fallbackLock =
     model.block === "read-only" ? (

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { CarrierIntelUsageSummaryView } from "@/components/carrier-intelligence/usage-summary";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { formatUsageMonth, recentUsageMonths, shiftUsageMonth } from "@/lib/carrier-intel-usage";
@@ -15,8 +16,6 @@ import {
   Settings01Icon,
 } from "@trenova/shared/components/icons";
 import { parseAsInteger, useQueryState } from "nuqs";
-import { Link } from "react-router";
-
 const USAGE_MONTHS_BACK = 24;
 
 export function UsagePanel() {

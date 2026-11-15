@@ -30,7 +30,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { newIdempotencyKey } from "@trenova/shared/lib/idempotency";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useQueueCursor, useQueueLeave } from "../queue/use-queue-cursor";
 import { watchtowerPageContext } from "./page-context";
 import { useMarkSeen } from "./use-mark-seen";
@@ -250,7 +250,7 @@ export function useWatchtowerActions({
           attachPage(thread.id, watchtowerPageContext(t, item, now, timezone));
           useAssistantStore.getState().setLastAgentId(askAgent.id);
           void queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
-          void navigate(conversationPath(thread.id));
+          void navigate({ to: conversationPath(thread.id) });
         },
         (error: unknown) => handleMutationError({ error, resourceName: "Conversation" }),
       )
@@ -325,7 +325,7 @@ export function useWatchtowerActions({
     reviewAndApprove: () => {
       const runId = current?.agentWork?.runId;
       if (runId) {
-        void navigate(deskDecisionPath({ run: runId }));
+        void navigate({ to: deskDecisionPath({ run: runId }) });
       }
     },
   };

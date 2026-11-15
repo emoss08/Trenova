@@ -6,7 +6,7 @@ import {
   planLimitFromError,
   planLimitFromGraphQLErrors,
   planLimitFromProblem,
-  planRestrictedResponse,
+  planRestrictedRefusal,
   planRestrictionOf,
   reportPlanLimit,
   setPlanLimitHandler,
@@ -338,15 +338,15 @@ describe("both transports tell the handler whether a read or a write was refused
   });
 });
 
-describe("planRestrictedResponse", () => {
-  it("is the body the API sends for the same refusal", async () => {
-    const response = planRestrictedResponse({
+describe("planRestrictedRefusal", () => {
+  it("carries the body the API sends for the same refusal", () => {
+    const refusal = planRestrictedRefusal({
       feature: "tms.factoring",
       addOn: "Accounting & Cash",
     });
 
-    expect(response.status).toBe(403);
-    const body = (await response.json()) as Record<string, unknown>;
+    expect(refusal.status).toBe(403);
+    const body = refusal.data as Record<string, unknown>;
     expect(planLimitFromProblem(403, body)).toMatchObject({
       kind: "restricted",
       feature: "tms.factoring",

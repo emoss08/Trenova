@@ -12,7 +12,7 @@ import type { TenantLoginMetadata, UserOrganization } from "@trenova/shared/type
 import type { LoginResponse } from "@trenova/shared/types/user";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { AuthHandoff } from "./auth-handoff";
 import { AuthShell, type AuthStep } from "./auth-shell";
 import { ForgotPasswordForm } from "./forgot-password-form";
@@ -155,7 +155,7 @@ export function AuthForm({
   const handleHandoff = useCallback(() => {
     // Drop anything cached by an earlier session in this tab, including one that
     // expired without signing out, before the app loads for the new one.
-    void clearSessionCache().then(() => navigate("/", { replace: true }));
+    void clearSessionCache().then(() => navigate({ to: "/", replace: true }));
   }, [navigate]);
 
   // Signing in in another tab finishes this tab's sign-in too.

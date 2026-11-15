@@ -5,37 +5,8 @@ import {
   recordPath,
   type RecordEntityType,
 } from "@/config/record-links";
-import { routes } from "@/router";
-import type { RouteObject } from "react-router";
+import { servesPage } from "@/test/route-tree";
 import { describe, expect, it } from "vitest";
-
-function joinPath(parent: string, child: string): string {
-  return child.startsWith("/") ? child : `${parent.replace(/\/$/, "")}/${child}`;
-}
-
-function registered(entries: RouteObject[], parent = "", found: string[] = []): string[] {
-  for (const entry of entries) {
-    const path = entry.path === undefined ? parent : joinPath(parent, entry.path);
-    if (entry.path !== undefined) found.push(path);
-    if (entry.children) registered(entry.children, path, found);
-  }
-  return found;
-}
-
-/** Whether a concrete pathname is served by a registered route, params included. */
-function servedBy(pathname: string, routePaths: string[]): boolean {
-  return routePaths.some((route) => {
-    const pattern = new RegExp(
-      `^${route
-        .split("/")
-        .map((segment) =>
-          segment.startsWith(":") ? "[^/]+" : segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-        )
-        .join("/")}/?$`,
-    );
-    return pattern.test(pathname);
-  });
-}
 
 const entities = Object.keys(RECORD_LINKS) as RecordEntityType[];
 
@@ -45,12 +16,10 @@ const entities = Object.keys(RECORD_LINKS) as RecordEntityType[];
  * the worker table never reads; both landed somewhere other than the record.
  */
 describe("record links", () => {
-  const routePaths = registered(routes);
-
   it.each(entities)("opens %s on a registered page", (entity) => {
     const url = new URL(recordPath(entity, "rec_1"), "http://localhost");
 
-    expect(servedBy(url.pathname, routePaths)).toBe(true);
+    expect(servesPage(url.pathname)).toBe(true);
   });
 
   it.each(entities)("finds the %s it opened again from the address", (entity) => {

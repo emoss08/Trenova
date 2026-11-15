@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AgentProposalRow } from "@/lib/graphql/agent-activity-tables";
 import { stubLayout } from "@/test/layout";
 import { translate } from "@trenova/shared/i18n/runtime";
@@ -5,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { decidable } from "../activity-model";
 import { PlanStatusBadge, ProposalStatusBadge } from "../agent-badges";
@@ -37,7 +37,7 @@ function wrap(children: ReactNode) {
   return (
     <QueryClientProvider client={client}>
       <NuqsTestingAdapter>
-        <MemoryRouter>{children}</MemoryRouter>
+        <TestRouter>{children}</TestRouter>
       </NuqsTestingAdapter>
     </QueryClientProvider>
   );

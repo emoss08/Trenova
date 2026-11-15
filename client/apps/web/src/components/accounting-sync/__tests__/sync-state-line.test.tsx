@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type {
   AccountingSyncObjectState,
   AccountingSyncRecord,
 } from "@/lib/graphql/accounting-sync-ledger";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountingSyncStateLine } from "../sync-state-line";
 
@@ -73,11 +73,11 @@ function state(overrides: Partial<AccountingSyncRecord> = {}): AccountingSyncObj
 function renderLine(objectId: string | null = INVOICE_ID) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const view = render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <AccountingSyncStateLine objectId={objectId} />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
   const settled = () =>
     waitFor(() => {

@@ -2,7 +2,7 @@ import { DeskConversationSkeleton } from "@/components/desk-chat/desk-skeletons"
 import { conversationAtPath } from "@/lib/conversation-path";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import "@/components/desk-chat/desk-frame.css";
 import {
   RAIL_BODY_CLASS,

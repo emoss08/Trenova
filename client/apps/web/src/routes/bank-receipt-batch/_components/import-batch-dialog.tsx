@@ -17,7 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Upload01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { EMPTY_LINE, ImportBatchForm, type ImportBatchFormValues } from "./import-batch-form";
 
 function toUnixTimestamp(dateStr: string): number {
@@ -70,7 +70,7 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
       onOpenChange(false);
       reset();
       if (result?.batch?.id) {
-        void navigate(`/accounting/reconciliation/import-batches/${result.batch.id}`);
+        void navigate({ to: `/accounting/reconciliation/import-batches/${result.batch.id}` });
       }
     },
   });

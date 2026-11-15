@@ -1,10 +1,10 @@
+import { Link } from "@trenova/shared/components/link";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { formulaLibrary } from "@/lib/queries/formula-library";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Link } from "react-router";
 import { useLibraryStudio } from "./library-studio-context";
 import { libraryPath } from "./starter";
 import { StatusLabel } from "./status-label";

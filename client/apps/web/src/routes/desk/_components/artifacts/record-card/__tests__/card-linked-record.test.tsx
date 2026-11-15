@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation } from "@trenova/shared/types/permission";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CardOpenLink, CardRecordRow } from "../record-card";
 
@@ -15,11 +15,11 @@ describe("a linked record on a card", () => {
     seedPermissions({ worker: Operation.Read });
     const onOpen = vi.fn();
     render(
-      <MemoryRouter>
+      <TestRouter>
         <CardRecordRow kind="worker" to="/hr/workers?panelEntityId=wrk_1" onOpen={onOpen}>
           <b>Rosa Diaz</b>
         </CardRecordRow>
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Rosa Diaz" }));
@@ -30,11 +30,11 @@ describe("a linked record on a card", () => {
     seedPermissions({ tractor: Operation.Read });
     const onOpen = vi.fn();
     const { container } = render(
-      <MemoryRouter>
+      <TestRouter>
         <CardRecordRow kind="worker" to="/hr/workers?panelEntityId=wrk_1" onOpen={onOpen}>
           <b>Rosa Diaz</b>
         </CardRecordRow>
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     expect(screen.queryByRole("button", { name: "Rosa Diaz" })).toBeNull();
@@ -47,11 +47,11 @@ describe("a linked record on a card", () => {
   it("leaves out the way to a linked carrier for someone who may not read carriers", () => {
     seedPermissions({ carrier_settlement: Operation.Read });
     const { container } = render(
-      <MemoryRouter>
+      <TestRouter>
         <CardOpenLink kind="carrier" to="/carriers?panelEntityId=car_1">
           Open carrier
         </CardOpenLink>
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     expect(container.textContent).toBe("");
@@ -60,11 +60,11 @@ describe("a linked record on a card", () => {
   it("keeps the way to a linked carrier for someone who may read carriers", () => {
     seedPermissions({ carrier: Operation.Read });
     render(
-      <MemoryRouter>
+      <TestRouter>
         <CardOpenLink kind="carrier" to="/carriers?panelEntityId=car_1">
           Open carrier
         </CardOpenLink>
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     expect(screen.getByRole("link", { name: /Open carrier/ })).toHaveAttribute(

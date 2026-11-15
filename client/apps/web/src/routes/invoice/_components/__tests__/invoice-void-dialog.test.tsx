@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InvoiceVoidDialog } from "../invoice-void-dialog";
 
@@ -27,11 +27,11 @@ const invoice = {
 function renderDialog(onOpenChange = vi.fn()) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <InvoiceVoidDialog invoice={invoice} open onOpenChange={onOpenChange} />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
   return onOpenChange;
 }

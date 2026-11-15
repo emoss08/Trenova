@@ -20,7 +20,7 @@ import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 import { useState, type ReactNode } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useTriageStore } from "@/stores/triage-store";
 import { USER_FORMATTERS } from "../action-copy";
 import { CLASSIFICATION_DOT, classificationLabel } from "../classification";
@@ -99,164 +99,164 @@ export function TriageFolders({ folder, onSelect }: TriageFoldersProps) {
   return (
     <HoverGlideGroup className="bg-transparent" glideClassName="rounded-[8px] bg-dsk-hover">
       <nav aria-label={t("Triage folders")} className="flex flex-col gap-1">
-      <RailHeading>{t("Triage")}</RailHeading>
-      <RailRow
-        active={folder.kind === "briefing"}
-        leading={<NovaBadge size="sm" spin="hover" />}
-        label={t("Briefing")}
-        onClick={() => onSelect(BRIEFING)}
-      />
-      {visibleLanes(counts).map((lane) => (
-        <LaneRow
-          key={lane}
-          lane={lane}
-          count={laneCount(counts, lane)}
-          active={isSameFolder(folder, { kind: "lane", lane })}
-          onSelect={onSelect}
+        <RailHeading>{t("Triage")}</RailHeading>
+        <RailRow
+          active={folder.kind === "briefing"}
+          leading={<NovaBadge size="sm" spin="hover" />}
+          label={t("Briefing")}
+          onClick={() => onSelect(BRIEFING)}
         />
-      ))}
-
-      {kinds.length > 0 && <RailHeading>{t("Waiting")}</RailHeading>}
-      {kinds.map((row) => {
-        const target: QueueFolder = {
-          kind: "classification",
-          classification: row.classification,
-        };
-        const title = classificationLabel(t, row.classification);
-        return (
-          <RailRow
-            key={row.classification}
-            active={isSameFolder(folder, target)}
-            leading={<KindDot classification={row.classification} />}
-            label={title}
-            count={row.waiting}
-            onClick={() => onSelect(target)}
-            menu={() =>
-              menuFor(target, title, row.waiting, [
-                {
-                  id: "rule",
-                  label: t("Make a rule for {0}", toSentenceFragment(title)),
-                  icon: ZapIcon,
-                  onSelect: () => {
-                    useTriageStore.getState().seedRule({ classification: row.classification });
-                    onSelect(RULES);
-                  },
-                },
-              ])
-            }
-          />
-        );
-      })}
-
-      {views.length > 0 && <RailHeading>{t("Views")}</RailHeading>}
-      {views.map((view) => {
-        const target: QueueFolder = { kind: "view", viewId: view.id };
-        return (
-          <ViewRow
-            key={view.id}
-            view={view}
-            active={isSameFolder(folder, target)}
-            renaming={renaming === view.id}
-            onRenamed={(name) => {
-              setRenaming(null);
-              actions.renameView(view, name);
-            }}
-            onCancelRename={() => setRenaming(null)}
-            onClick={() => onSelect(target)}
-            onDelete={() => {
-              if (isSameFolder(folder, target)) {
-                onSelect(BRIEFING);
-              }
-              actions.deleteView(view);
-            }}
-            menu={() =>
-              menuFor(target, view.name, view.waiting, [
-                {
-                  id: "rename",
-                  label: t("Rename"),
-                  icon: Edit05Icon,
-                  onSelect: () => setRenaming(view.id),
-                },
-                {
-                  id: "delete",
-                  label: t("Delete view"),
-                  icon: Trash01Icon,
-                  destructive: true,
-                  onSelect: () => {
-                    if (isSameFolder(folder, target)) {
-                      onSelect(BRIEFING);
-                    }
-                    actions.deleteView(view);
-                  },
-                },
-              ])
-            }
-          />
-        );
-      })}
-
-      <RailHeading
-        action={
-          mailboxes.length > 0 ? (
-            <button
-              type="button"
-              onClick={openConnect}
-              className="rounded-sm ui-focus-ring text-xs text-dsk-subtle hover:text-dsk-fg"
-            >
-              {t("Add")}
-            </button>
-          ) : undefined
-        }
-      >
-        {t("Sources")}
-      </RailHeading>
-      {mailboxes.length === 0 ? (
-        <button
-          type="button"
-          onClick={openConnect}
-          data-glide-target
-          className="flex h-7.5 items-center gap-2.5 rounded-[8px] border border-dashed ui-focus-ring border-dsk-b px-2.5 text-dsk-base text-dsk-fg2 hover:text-dsk-fg"
-        >
-          <PlusIcon aria-hidden className="size-3.5" />
-          <span>{t("Add a source")}</span>
-        </button>
-      ) : (
-        mailboxes.map((mailbox) => (
-          <SourceRow
-            key={mailbox.id}
-            mailbox={mailbox}
-            active={isSameFolder(folder, { kind: "mailbox", mailboxId: mailbox.id })}
+        {visibleLanes(counts).map((lane) => (
+          <LaneRow
+            key={lane}
+            lane={lane}
+            count={laneCount(counts, lane)}
+            active={isSameFolder(folder, { kind: "lane", lane })}
             onSelect={onSelect}
-            menu={(target) =>
-              menuFor(target, mailboxName(mailbox), waitingByMailbox.get(mailbox.id) ?? 0, [
-                {
-                  id: "test",
-                  label: t("Send a test email"),
-                  icon: Send01Icon,
-                  hint: mailbox.address,
-                  onSelect: () => actions.sendTestEmail(mailbox),
-                },
-                {
-                  id: "settings",
-                  label: t("Source settings"),
-                  icon: Settings01Icon,
-                  onSelect: () => navigate(SOURCES_PATH),
-                },
-              ])
-            }
           />
-        ))
-      )}
+        ))}
 
-      <RailHeading>{t("Automation")}</RailHeading>
-      <RailRow
-        active={folder.kind === "rules"}
-        icon={ZapIcon}
-        label={t("Rules")}
-        count={enabledRules}
-        onClick={() => onSelect(RULES)}
-      />
-    </nav>
+        {kinds.length > 0 && <RailHeading>{t("Waiting")}</RailHeading>}
+        {kinds.map((row) => {
+          const target: QueueFolder = {
+            kind: "classification",
+            classification: row.classification,
+          };
+          const title = classificationLabel(t, row.classification);
+          return (
+            <RailRow
+              key={row.classification}
+              active={isSameFolder(folder, target)}
+              leading={<KindDot classification={row.classification} />}
+              label={title}
+              count={row.waiting}
+              onClick={() => onSelect(target)}
+              menu={() =>
+                menuFor(target, title, row.waiting, [
+                  {
+                    id: "rule",
+                    label: t("Make a rule for {0}", toSentenceFragment(title)),
+                    icon: ZapIcon,
+                    onSelect: () => {
+                      useTriageStore.getState().seedRule({ classification: row.classification });
+                      onSelect(RULES);
+                    },
+                  },
+                ])
+              }
+            />
+          );
+        })}
+
+        {views.length > 0 && <RailHeading>{t("Views")}</RailHeading>}
+        {views.map((view) => {
+          const target: QueueFolder = { kind: "view", viewId: view.id };
+          return (
+            <ViewRow
+              key={view.id}
+              view={view}
+              active={isSameFolder(folder, target)}
+              renaming={renaming === view.id}
+              onRenamed={(name) => {
+                setRenaming(null);
+                actions.renameView(view, name);
+              }}
+              onCancelRename={() => setRenaming(null)}
+              onClick={() => onSelect(target)}
+              onDelete={() => {
+                if (isSameFolder(folder, target)) {
+                  onSelect(BRIEFING);
+                }
+                actions.deleteView(view);
+              }}
+              menu={() =>
+                menuFor(target, view.name, view.waiting, [
+                  {
+                    id: "rename",
+                    label: t("Rename"),
+                    icon: Edit05Icon,
+                    onSelect: () => setRenaming(view.id),
+                  },
+                  {
+                    id: "delete",
+                    label: t("Delete view"),
+                    icon: Trash01Icon,
+                    destructive: true,
+                    onSelect: () => {
+                      if (isSameFolder(folder, target)) {
+                        onSelect(BRIEFING);
+                      }
+                      actions.deleteView(view);
+                    },
+                  },
+                ])
+              }
+            />
+          );
+        })}
+
+        <RailHeading
+          action={
+            mailboxes.length > 0 ? (
+              <button
+                type="button"
+                onClick={openConnect}
+                className="rounded-sm ui-focus-ring text-xs text-dsk-subtle hover:text-dsk-fg"
+              >
+                {t("Add")}
+              </button>
+            ) : undefined
+          }
+        >
+          {t("Sources")}
+        </RailHeading>
+        {mailboxes.length === 0 ? (
+          <button
+            type="button"
+            onClick={openConnect}
+            data-glide-target
+            className="flex h-7.5 items-center gap-2.5 rounded-[8px] border border-dashed ui-focus-ring border-dsk-b px-2.5 text-dsk-base text-dsk-fg2 hover:text-dsk-fg"
+          >
+            <PlusIcon aria-hidden className="size-3.5" />
+            <span>{t("Add a source")}</span>
+          </button>
+        ) : (
+          mailboxes.map((mailbox) => (
+            <SourceRow
+              key={mailbox.id}
+              mailbox={mailbox}
+              active={isSameFolder(folder, { kind: "mailbox", mailboxId: mailbox.id })}
+              onSelect={onSelect}
+              menu={(target) =>
+                menuFor(target, mailboxName(mailbox), waitingByMailbox.get(mailbox.id) ?? 0, [
+                  {
+                    id: "test",
+                    label: t("Send a test email"),
+                    icon: Send01Icon,
+                    hint: mailbox.address,
+                    onSelect: () => actions.sendTestEmail(mailbox),
+                  },
+                  {
+                    id: "settings",
+                    label: t("Source settings"),
+                    icon: Settings01Icon,
+                    onSelect: () => navigate({ to: SOURCES_PATH }),
+                  },
+                ])
+              }
+            />
+          ))
+        )}
+
+        <RailHeading>{t("Automation")}</RailHeading>
+        <RailRow
+          active={folder.kind === "rules"}
+          icon={ZapIcon}
+          label={t("Rules")}
+          count={enabledRules}
+          onClick={() => onSelect(RULES)}
+        />
+      </nav>
     </HoverGlideGroup>
   );
 }

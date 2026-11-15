@@ -1,9 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { conversationPath } from "@/lib/conversation-path";
 import type { ConversationSchedule } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { Link } from "react-router";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { nextRunLabel, scheduleLine } from "@/lib/schedule-labels";
 import { ScheduleActionsMenu } from "../conversation/schedule-actions-menu";

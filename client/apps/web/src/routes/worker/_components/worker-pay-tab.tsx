@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { AssignPayProfileDialog } from "@/components/pay/assign-pay-profile-dialog";
@@ -24,7 +25,6 @@ import type { PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CurrencyDollarCircleIcon, Wallet02Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 function formatDate(unix?: number | null): string {

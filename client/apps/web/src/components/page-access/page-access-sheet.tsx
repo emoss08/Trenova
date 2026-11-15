@@ -6,7 +6,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Suspense, useEffect } from "react";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 
 // The panel, its queries and the role picker are a chunk of their own, so the
 // shell's import of this sheet names one file to preload, not the panel's.

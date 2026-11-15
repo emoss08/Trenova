@@ -1,9 +1,15 @@
 import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 import type React from "react";
 import type { ReactElement, ReactNode } from "react";
-import { Suspense, useCallback, useState } from "react";
+import { createContext, Suspense, useCallback, useContext, useState } from "react";
 import { ErrorBoundary as ReactErrorBoundary, type FallbackProps } from "react-error-boundary";
-import { isRouteErrorResponse, useLocation, useNavigate, useRouteError } from "react-router";
+import {
+  isNotFound,
+  useCanGoBack,
+  useLocation,
+  useRouter,
+  type ErrorComponentProps,
+} from "@tanstack/react-router";
 import { DataTableSkeleton } from "./data-table/data-table-skeleton";
 import { ErrorState, type ErrorStateLayout } from "./errors/error-state";
 import { NotFoundPage, NotFoundState } from "./errors/not-found";
@@ -12,6 +18,7 @@ import { Button } from "./ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Home02Icon } from "@trenova/shared/components/icons";
 import { describeError } from "@trenova/shared/lib/error-presentation";
+import { isRouteRefusal } from "@trenova/shared/lib/router/refusal";
 import { reportFailure } from "@trenova/shared/lib/failure-reporter";
 
 type ErrorStateBoundaryProps = {
@@ -113,42 +120,57 @@ export function RootErrorBoundary({ children }: ErrorBoundaryProps) {
   );
 }
 
-type RouteErrorBoundaryProps = {
+/**
+ * Whether a route error draws inside a frame that keeps the navigation on screen (the app
+ * shell, the Desk) or as the whole window. A layout that keeps its frame standing around a
+ * failed page provides true around its outlet.
+ */
+export const RouteErrorEmbedding = createContext(false);
+
+type RouteErrorBoundaryProps = Partial<ErrorComponentProps> & {
   // homePath is where "Go to dashboard" leads; each app has its own front door.
   homePath?: string;
   // embedded draws the state inside the app shell rather than as the whole window. A route
   // error below the shell leaves the navigation standing, so the person can go elsewhere.
+  // Read from RouteErrorEmbedding when not given.
   embedded?: boolean;
 };
 
 function useHomeNavigation(homePath: string) {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = useLocation({ select: (location) => location.pathname });
+  // Only the entry the app was opened at has nothing inside the app before it, and "Go back"
+  // there would leave Trenova.
+  const canGoBack = useCanGoBack();
 
   const goHome = useCallback(() => {
-    void navigate(homePath);
-  }, [navigate, homePath]);
+    void router.navigate({ href: homePath });
+  }, [router, homePath]);
 
-  // location.key is "default" only on the entry the app was opened at, so there is nothing
-  // inside the app to go back to and "Go back" would leave Trenova.
   const goBack = useCallback(() => {
-    void navigate(-1);
-  }, [navigate]);
+    router.history.back();
+  }, [router]);
 
   return {
     goHome,
-    goBack: location.key === "default" ? undefined : goBack,
-    path: location.pathname,
+    goBack: canGoBack ? goBack : undefined,
+    path: pathname,
   };
 }
 
-export function RouteErrorBoundary({ homePath = "/", embedded = false }: RouteErrorBoundaryProps) {
+/**
+ * A route's error component: what a gate refused or a page threw while it loaded or rendered.
+ * It is the router's default, so every route has one; inside a frame that provides
+ * RouteErrorEmbedding it draws in the page's place and the navigation stays.
+ */
+export function RouteErrorBoundary({ error, homePath = "/", embedded }: RouteErrorBoundaryProps) {
   const t = useT();
-  const error = useRouteError();
+  const inFrame = useContext(RouteErrorEmbedding);
+  const inPlace = embedded ?? inFrame;
   const { goHome, goBack, path } = useHomeNavigation(homePath);
 
-  if (isRouteErrorResponse(error) && error.status === 404) {
-    return embedded ? (
+  if (isNotFound(error) || (isRouteRefusal(error) && error.status === 404)) {
+    return inPlace ? (
       <NotFoundState path={path} onGoHome={goHome} onGoBack={goBack} className="min-h-full" />
     ) : (
       <NotFoundPage path={path} onGoHome={goHome} onGoBack={goBack} />
@@ -162,7 +184,7 @@ export function RouteErrorBoundary({ homePath = "/", embedded = false }: RouteEr
   const homeAction = (
     <Button
       variant={isPlanRestricted ? "default" : "outline"}
-      size={embedded ? "sm" : "default"}
+      size={inPlace ? "sm" : "default"}
       onClick={goHome}
     >
       <Home02Icon />
@@ -170,7 +192,7 @@ export function RouteErrorBoundary({ homePath = "/", embedded = false }: RouteEr
     </Button>
   );
 
-  if (embedded) {
+  if (inPlace) {
     return (
       <ErrorState error={error} layout="section" actions={homeAction} className="min-h-full" />
     );
@@ -178,7 +200,7 @@ export function RouteErrorBoundary({ homePath = "/", embedded = false }: RouteEr
 
   return (
     <StatusScreen
-      meta={isRouteErrorResponse(error) && !isPlanRestricted ? String(error.status) : undefined}
+      meta={isRouteRefusal(error) && !isPlanRestricted ? String(error.status) : undefined}
     >
       <ErrorState error={error} layout="screen" actions={homeAction} />
     </StatusScreen>

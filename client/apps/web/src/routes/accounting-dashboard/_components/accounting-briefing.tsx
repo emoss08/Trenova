@@ -5,7 +5,7 @@ import { ar } from "@/lib/queries/ar";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { AccountingBriefingSkeleton } from "./accounting-briefing-skeleton";
 import { BriefingActions } from "./briefing-actions";
 import { BRIEFING_LINK_LABELS, BRIEFING_LINK_TONES, briefingLinkPath } from "./briefing-links";
@@ -40,7 +40,7 @@ export function AccountingBriefing() {
       text: segment.text,
       label: BRIEFING_LINK_LABELS[segment.link],
       tone: BRIEFING_LINK_TONES[segment.link],
-      onActivate: () => void navigate(path),
+      onActivate: () => void navigate({ to: path }),
     };
   });
 

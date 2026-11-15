@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import type { CaseWriting as Writing } from "@/lib/desk-case-stream";
 import { CaseWritingCard } from "./case-writing";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
@@ -22,7 +23,6 @@ import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import { isBareId, readableField } from "./plan-values";
 import type { CaseDecision } from "./use-case-decision";
 

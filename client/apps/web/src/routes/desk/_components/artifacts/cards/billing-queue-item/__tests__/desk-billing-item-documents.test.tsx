@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { documentContentUrl } from "@/services/document";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -9,7 +10,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen } from "@testing-library/react";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import type { Document } from "@trenova/shared/types/document";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskBillingItem } from "../desk-billing-item";
 
@@ -72,9 +72,9 @@ function draw() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskBillingItem itemId="bqi_1" fallback={<p>Reading the item</p>} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

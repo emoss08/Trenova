@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { CONVERSATION_REJECT_REASON, decideBatch } from "@/components/assistant/approval-actions";
 import { useDecisionFollowUp } from "@/components/assistant/decision-follow-up";
 import {
@@ -48,7 +49,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useState, type MutableRefObject } from "react";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
   DropdownMenu,

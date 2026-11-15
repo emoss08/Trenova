@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { render, screen } from "@testing-library/react";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { SecurityBriefing } from "@trenova/shared/types/iam";
 import type { User } from "@trenova/shared/types/user";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { UnenrolledMembersPanel } from "../_components/security-access/briefing/briefing-aside";
 import { PostureRing } from "../_components/security-access/briefing/posture-ring";
@@ -50,20 +50,20 @@ const reachNothing: ReachableAction = () => null;
 
 function renderFindings(hrefFor: ReachableAction) {
   render(
-    <MemoryRouter>
+    <TestRouter>
       <BriefingFindings
         briefing={briefing}
         groups={groupFindings(briefing.findings)}
         hrefFor={hrefFor}
       />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 
 function renderBrief(hrefFor: ReachableAction) {
   useAuthStore.setState({ user: { name: "Dana Ruiz" } as unknown as User });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <BriefingBrief
         briefing={briefing}
         groups={groupFindings(briefing.findings)}
@@ -71,7 +71,7 @@ function renderBrief(hrefFor: ReachableAction) {
         refreshing={false}
         onRefresh={vi.fn()}
       />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 
@@ -92,10 +92,9 @@ describe("BriefingBrief", () => {
   it("links the phrase that names a finding to where it is settled", () => {
     renderBrief(reachEverything);
 
-    expect(screen.getByRole("link", { name: "3 members haven't turned on two-factor" })).toHaveAttribute(
-      "href",
-      "/admin/users",
-    );
+    expect(
+      screen.getByRole("link", { name: "3 members haven't turned on two-factor" }),
+    ).toHaveAttribute("href", "/admin/users");
     expect(screen.getByRole("link", { name: "requires two-factor" })).toHaveAttribute(
       "href",
       "/?tab=security&securityTab=policies",
@@ -142,7 +141,7 @@ describe("BriefingFindings", () => {
 describe("UnenrolledMembersPanel", () => {
   it("says how many more there are than the server listed", () => {
     render(
-      <MemoryRouter>
+      <TestRouter>
         <UnenrolledMembersPanel
           canOpenUsers
           mfa={{
@@ -158,7 +157,7 @@ describe("UnenrolledMembersPanel", () => {
             ],
           }}
         />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     expect(screen.getByText("Dana Ruiz")).toBeInTheDocument();
@@ -168,23 +167,25 @@ describe("UnenrolledMembersPanel", () => {
 
   it("keeps names back from a reader who cannot read users", () => {
     render(
-      <MemoryRouter>
+      <TestRouter>
         <UnenrolledMembersPanel
           canOpenUsers={false}
           mfa={{ enrolled: 37, total: 40, unenrolled: null }}
         />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
-    expect(screen.getByText("Their names are shown to people who can read users.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Their names are shown to people who can read users."),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Users" })).toBeNull();
   });
 
   it("draws nothing once every member has two-factor", () => {
     const { container } = render(
-      <MemoryRouter>
+      <TestRouter>
         <UnenrolledMembersPanel canOpenUsers mfa={{ enrolled: 40, total: 40, unenrolled: [] }} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     expect(container).toBeEmptyDOMElement();

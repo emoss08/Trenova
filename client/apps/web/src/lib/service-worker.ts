@@ -1,5 +1,5 @@
 import { reloadIsSafe } from "@/lib/reload-guards";
-import type { DataRouter, Location as RouterLocation } from "react-router";
+import type { AnyRouter } from "@tanstack/react-router";
 
 // How often an open tab asks whether a new release is out. The browser checks on its own only
 // when a page loads, which a single-page app rarely does, so a tab left open all day would
@@ -20,7 +20,7 @@ const ACTIVATION_WAIT_MS = 5000;
  * with VITE_SERVICE_WORKER=off registers nothing, and the sw.js it ships removes the worker
  * from browsers that installed one before.
  */
-export function registerServiceWorker(router: DataRouter): void {
+export function registerServiceWorker(router: AnyRouter): void {
   if (!serviceWorkerEnabled()) return;
 
   reloadIntoNewRelease({ router, container: navigator.serviceWorker, reloadIsSafe });
@@ -99,7 +99,17 @@ export async function settleOnNewestRelease(
   }
 }
 
-type ReleaseRouter = Pick<DataRouter, "state" | "subscribe" | "createHref">;
+/** The part of the router a release reload reads: the page changes it is about to make. */
+export interface ReleaseRouter {
+  subscribe(
+    eventType: "onBeforeNavigate",
+    listener: (event: {
+      fromLocation?: { pathname: string };
+      toLocation: { pathname: string; publicHref: string };
+    }) => void,
+  ): () => void;
+  history: { createHref(href: string): string };
+}
 type WorkerContainer = Pick<ServiceWorkerContainer, "controller" | "addEventListener">;
 type PageNavigator = { location: Pick<Location, "assign"> };
 
@@ -136,23 +146,15 @@ export function reloadIntoNewRelease({
     controlled = true;
   });
 
-  let committedPath = router.state.location.pathname;
   let leavingFor: string | null = null;
-  const leaveFor = (location: RouterLocation) => {
-    const href = router.createHref(location);
+
+  return router.subscribe("onBeforeNavigate", ({ fromLocation, toLocation }) => {
+    // The first page the app draws has nothing before it, and is no change of page.
+    const pageChanged = fromLocation !== undefined && fromLocation.pathname !== toLocation.pathname;
+    if (!releaseReady || !pageChanged || !safe()) return;
+    const href = router.history.createHref(toLocation.publicHref);
     if (href === leavingFor) return;
     leavingFor = href;
     target.location.assign(href);
-  };
-
-  return router.subscribe((state) => {
-    const next = state.navigation.location;
-    if (next) {
-      if (releaseReady && next.pathname !== committedPath && safe()) leaveFor(next);
-      return;
-    }
-    if (state.location.pathname === committedPath) return;
-    committedPath = state.location.pathname;
-    if (releaseReady && safe()) leaveFor(state.location);
   });
 }

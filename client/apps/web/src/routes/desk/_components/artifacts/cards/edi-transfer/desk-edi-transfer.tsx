@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { counterparty, type TransferDirection, transferDirection } from "@/lib/edi/transfer-sides";
 import { edi } from "@/lib/queries/edi";
@@ -7,7 +8,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { EDITransfer, EDITransferStatus } from "@trenova/shared/types/edi";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
 import {
   CardBar,

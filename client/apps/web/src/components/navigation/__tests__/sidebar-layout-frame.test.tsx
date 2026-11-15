@@ -1,6 +1,7 @@
 import { useNavigationStore } from "@/stores/navigation-store";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
+import { Outlet } from "@tanstack/react-router";
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { frameOfMatches, roomRailOfMatches } from "../shell-frame";
 import { PageLayout, SidebarLayout } from "../sidebar-layout";
@@ -69,37 +70,33 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderAt(path: string) {
+async function renderAt(path: string) {
   const page = (title: string) => (
     <PageLayout pageHeaderProps={{ title, description: `What ${title} is for` }}>
       <p>{title} body</p>
     </PageLayout>
   );
-  const router = createMemoryRouter(
+  return renderAtRoutes(
     [
+      { path: "/triage", staticData: { frame: "room" }, component: () => page("Triage") },
       {
-        element: (
-          <SidebarLayout>
-            <Outlet />
-          </SidebarLayout>
-        ),
-        children: [
-          { path: "/triage", handle: { frame: "room" }, element: page("Triage") },
-          {
-            path: "/studio",
-            handle: { frame: "room", roomRail: "stands" },
-            element: page("Studio"),
-          },
-          { path: "/shipments", element: page("Shipments") },
-          { path: "/dispatch/outlook", element: page("Freight outlook") },
-          { path: "/accounting/journal-entries/:id", element: page("Journal entry") },
-        ],
+        path: "/studio",
+        staticData: { frame: "room", roomRail: "stands" },
+        component: () => page("Studio"),
       },
+      { path: "/shipments", component: () => page("Shipments") },
+      { path: "/dispatch/outlook", component: () => page("Freight outlook") },
+      { path: "/accounting/journal-entries/$id", component: () => page("Journal entry") },
     ],
-    { initialEntries: [path] },
+    {
+      initialEntries: [path],
+      layout: () => (
+        <SidebarLayout>
+          <Outlet />
+        </SidebarLayout>
+      ),
+    },
   );
-
-  return render(<RouterProvider router={router} />);
 }
 
 /**
@@ -112,17 +109,19 @@ function renderAt(path: string) {
 describe("the shell's frame", () => {
   it("takes the frame the deepest route that names one asks for", () => {
     expect(frameOfMatches([])).toBe("page");
-    expect(frameOfMatches([{ handle: undefined }, { handle: { roomRail: "folds" } }])).toBe("page");
-    expect(frameOfMatches([{ handle: { frame: "page" } }, { handle: { frame: "room" } }])).toBe(
-      "room",
-    );
-    expect(frameOfMatches([{ handle: { frame: "room" } }, { handle: { frame: "page" } }])).toBe(
+    expect(frameOfMatches([{ staticData: undefined }, { staticData: { roomRail: "folds" } }])).toBe(
       "page",
     );
+    expect(
+      frameOfMatches([{ staticData: { frame: "page" } }, { staticData: { frame: "room" } }]),
+    ).toBe("room");
+    expect(
+      frameOfMatches([{ staticData: { frame: "room" } }, { staticData: { frame: "page" } }]),
+    ).toBe("page");
   });
 
   it("draws a page beside the rail and the panel, with one bar of its own", async () => {
-    renderAt("/shipments");
+    await renderAt("/shipments");
 
     expect(await screen.findByText("Shipments body")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Modules" })).not.toHaveAttribute("data-search");
@@ -138,7 +137,7 @@ describe("the shell's frame", () => {
   });
 
   it("leads the title with the trail above it, never with Home or the title itself", async () => {
-    renderAt("/dispatch/outlook");
+    await renderAt("/dispatch/outlook");
 
     await screen.findByText("Freight outlook body");
     const trail = screen.getByRole("navigation", { name: "Breadcrumb" });
@@ -152,7 +151,7 @@ describe("the shell's frame", () => {
   });
 
   it("leaves out a folder of the URL that no page or section fills", async () => {
-    renderAt("/accounting/journal-entries/je_01HZX2K3M4N5P6Q7R8S9T0V1");
+    await renderAt("/accounting/journal-entries/je_01HZX2K3M4N5P6Q7R8S9T0V1");
 
     await screen.findByText("Journal entry body");
     const trail = screen.getByRole("navigation", { name: "Breadcrumb" });
@@ -162,14 +161,14 @@ describe("the shell's frame", () => {
   });
 
   it("draws no trail on a module's own landing page", async () => {
-    renderAt("/shipments");
+    await renderAt("/shipments");
 
     await screen.findByText("Shipments body");
     expect(screen.queryByRole("navigation", { name: "Breadcrumb" })).not.toBeInTheDocument();
   });
 
   it("gives a room the window beside the rail, which carries the fold and search", async () => {
-    renderAt("/triage");
+    await renderAt("/triage");
 
     expect(await screen.findByText("Triage body")).toBeInTheDocument();
     const rail = screen.getByRole("navigation", { name: "Modules" });
@@ -180,7 +179,7 @@ describe("the shell's frame", () => {
   });
 
   it("keeps a room's title and description for assistive tech without drawing its title bar", async () => {
-    renderAt("/triage");
+    await renderAt("/triage");
 
     const heading = await screen.findByRole("heading", { name: "Triage", level: 1 });
     expect(heading.closest("[data-slot=page-header]")).toHaveClass("sr-only");
@@ -190,17 +189,23 @@ describe("the shell's frame", () => {
 
   it("takes the room rail the deepest route that names one asks for, folding by default", () => {
     expect(roomRailOfMatches([])).toBe("folds");
-    expect(roomRailOfMatches([{ handle: { frame: "room" } }])).toBe("folds");
+    expect(roomRailOfMatches([{ staticData: { frame: "room" } }])).toBe("folds");
     expect(
-      roomRailOfMatches([{ handle: { roomRail: "folds" } }, { handle: { roomRail: "stands" } }]),
+      roomRailOfMatches([
+        { staticData: { roomRail: "folds" } },
+        { staticData: { roomRail: "stands" } },
+      ]),
     ).toBe("stands");
     expect(
-      roomRailOfMatches([{ handle: { roomRail: "stands" } }, { handle: { roomRail: "folds" } }]),
+      roomRailOfMatches([
+        { staticData: { roomRail: "stands" } },
+        { staticData: { roomRail: "folds" } },
+      ]),
     ).toBe("folds");
   });
 
   it("folds a room's rail with ⌘B", async () => {
-    renderAt("/triage");
+    await renderAt("/triage");
 
     await screen.findByText("Triage body");
     expect(screen.getByRole("navigation", { name: "Modules" })).not.toHaveAttribute(
@@ -216,7 +221,7 @@ describe("the shell's frame", () => {
   });
 
   it("keeps a standing room's rail open, with the panel folded in its favour and no fold", async () => {
-    renderAt("/studio");
+    await renderAt("/studio");
 
     await screen.findByText("Studio body");
     const rail = screen.getByRole("navigation", { name: "Modules" });

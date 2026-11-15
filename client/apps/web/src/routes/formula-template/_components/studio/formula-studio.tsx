@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { ActiveEditorProvider } from "@/components/formula-editor/active-editor";
 import { isTestItem } from "@/lib/tariff-outline";
 import { DefinitionDialog } from "@/components/tariff-studio/definition-dialog";
@@ -30,7 +31,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import type { ApprovalAction } from "../approval-action-dialog";
 import "@/components/tariff-studio/tariff-studio.css";
@@ -279,7 +280,7 @@ function useSectionSpy() {
 function StudioLayout() {
   const t = useT();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useQueryParams();
   const studio = useStudio();
   const {
     mode,
@@ -504,7 +505,7 @@ function StudioLayout() {
               template={template}
               onForkSuccess={(forked) => {
                 setForkOpen(false);
-                if (forked.id) void navigate(formulaTemplateRoutes.edit(forked.id));
+                if (forked.id) void navigate({ to: formulaTemplateRoutes.edit(forked.id) });
               }}
             />
           )}
@@ -517,7 +518,7 @@ function StudioLayout() {
               currentTemplateId={template?.id}
               onNavigateToTemplate={(templateId) => {
                 setLineageOpen(false);
-                if (templateId) void navigate(formulaTemplateRoutes.edit(templateId));
+                if (templateId) void navigate({ to: formulaTemplateRoutes.edit(templateId) });
               }}
             />
           )}
@@ -526,7 +527,7 @@ function StudioLayout() {
             <ImportTemplateDialog
               open={importOpen}
               onOpenChange={setImportOpen}
-              onImported={(response) => void navigate(importLandingRoute(response))}
+              onImported={(response) => void navigate({ to: importLandingRoute(response) })}
             />
           )}
         </Suspense>

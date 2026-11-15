@@ -1,4 +1,6 @@
 "use no memo";
+import { Link } from "@trenova/shared/components/link";
+
 import { deskThreadState } from "@/components/desk-chat/rail/desk-thread-state";
 import { railTime, stateLabel } from "@/components/desk-chat/rail/rail-parts";
 import { conversationPath } from "@/lib/conversation-path";
@@ -11,7 +13,6 @@ import type { ContextMenuSpec } from "@trenova/shared/components/context-menu/me
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { memo, type ReactNode } from "react";
-import { Link } from "react-router";
 
 /**
  * One two-line row of the rail, as the design draws it: a dot, a title, and a

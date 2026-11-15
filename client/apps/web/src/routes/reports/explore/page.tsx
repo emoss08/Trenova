@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
@@ -5,7 +6,7 @@ import { useCannedReports, useReportDefinition } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { PlanLockedNotice } from "@trenova/shared/components/plan-locked";
-import { useSearchParams, useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { ExploreView } from "./_components/explore-view";
 
 function ExploreSkeleton() {
@@ -44,8 +45,8 @@ function NotFound({ what }: { what: string }) {
 export function ReportExplorePage() {
   const t = useT();
 
-  const { definitionId } = useParams<{ definitionId: string }>();
-  const [searchParams] = useSearchParams();
+  const { definitionId } = useParams({ strict: false });
+  const [searchParams] = useQueryParams();
   const cannedKey = searchParams.get("canned") ?? undefined;
 
   const definition = useReportDefinition(definitionId);

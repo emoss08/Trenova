@@ -1,3 +1,4 @@
+import { useQueryParams, type SetQueryParams } from "@trenova/shared/hooks/use-query-params";
 import type { VirtualRowsHandle } from "@/components/virtual-rows";
 import { Kept } from "@/components/kept";
 import { handleMutationError } from "@/hooks/use-api-mutation";
@@ -42,7 +43,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { USER_FORMATTERS } from "./_components/action-copy";
 import { folderTitle } from "./_components/folder-labels";
 import {
@@ -124,8 +125,8 @@ const AI_CONTROL_PATH = "/admin/agent-control";
  * and an open message. A view's folder needs the view to build its search,
  * so it is left to the page.
  */
-export const prefetch: RoutePrefetch = ({ request }) => {
-  const location = parseTriageLocation(new URL(request.url).searchParams);
+export const prefetch: RoutePrefetch = ({ searchParams }) => {
+  const location = parseTriageLocation(searchParams);
   const entries: RoutePrefetchEntry[] = [inbox.counts(), inbox.mailboxes(), inbox.views()];
   const folder = location.folder;
   if (folder.kind === "briefing") {
@@ -170,7 +171,7 @@ function Lazy({ children }: { children: ReactNode }) {
  * the folder's order) and the one set of actions.
  */
 export function TriageRoom() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useQueryParams();
   const location = useMemo(() => parseTriageLocation(searchParams), [searchParams]);
   const wide = useMediaQuery(WIDE_QUERY);
   const state = useRef({
@@ -242,7 +243,7 @@ function TriageWorkspace({
   wide: boolean;
   /** Hands the page what navigation reads: the open message, the order, the filter. */
   publish: (state: WorkspaceState) => void;
-  setSearchParams: ReturnType<typeof useSearchParams>[1];
+  setSearchParams: SetQueryParams;
 }) {
   const t = useT();
   const navigate = useNavigate();
@@ -603,7 +604,7 @@ function TriageWorkspace({
       {briefing !== undefined && !briefing.novaEnabled && (
         <NovaOffBanner
           onTurnOn={actions.readUnread}
-          onOpenControl={() => navigate(AI_CONTROL_PATH)}
+          onOpenControl={() => navigate({ to: AI_CONTROL_PATH })}
         />
       )}
     </>

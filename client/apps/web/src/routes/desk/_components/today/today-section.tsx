@@ -1,5 +1,5 @@
+import { Link } from "@trenova/shared/components/link";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 
 /** One block of Today, the prototype's `.sec`: a quiet head, how many, and where the rest are. */
 export function TodaySection({

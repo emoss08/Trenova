@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { writeInBox } from "@/components/desk-chat/composer/editor/editor-test-kit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskToday, type DeskTodayProps } from "../desk-today";
 
@@ -123,7 +123,7 @@ function renderHome(props: Partial<DeskTodayProps> = {}) {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskToday
           agents={[agent]}
           threads={[]}
@@ -132,7 +132,7 @@ function renderHome(props: Partial<DeskTodayProps> = {}) {
           onStart={() => undefined}
           {...props}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

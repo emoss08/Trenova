@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import { SectionPanel } from "@/components/section-panel";
@@ -20,7 +21,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryStates } from "nuqs";
-import { Link } from "react-router";
 import { activeBucket, bucketCount, bucketFilter, type LedgerBucket } from "./ledger-filters";
 
 export function LedgerSummary({ summary }: { summary: AccountingSyncSummary }) {

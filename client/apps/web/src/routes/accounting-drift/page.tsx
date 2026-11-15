@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { useAccountingDriftActions } from "@/hooks/use-accounting-drift-actions";
 import { usePermission } from "@/hooks/use-permission";
@@ -16,7 +17,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { lazy } from "react";
-import { Link } from "react-router";
 import { DriftNotices, DriftSummary, DriftSummarySkeleton } from "./_components/drift-summary";
 
 const Table = lazy(() => import("./_components/drift-table"));

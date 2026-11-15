@@ -1,5 +1,5 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { FailedApproval } from "../failed-approval";
 
@@ -17,9 +17,9 @@ const failed = {
 
 function renderApproval(overrides: Partial<typeof failed> = {}) {
   render(
-    <MemoryRouter>
+    <TestRouter>
       <FailedApproval move={{ shipmentId: "shp_1" }} failed={{ ...failed, ...overrides }} />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

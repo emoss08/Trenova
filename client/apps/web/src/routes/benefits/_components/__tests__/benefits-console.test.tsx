@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import BenefitsConsole from "../benefits-console";
 
@@ -136,11 +136,11 @@ function renderConsole(fixtures: Fixtures = {}) {
   );
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <BenefitsConsole />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 
@@ -164,11 +164,11 @@ describe("BenefitsConsole", () => {
     mocks.fetchBenefitEnrollments.mockReturnValue(new Promise(() => {}));
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <MemoryRouter>
+      <TestRouter>
         <QueryClientProvider client={client}>
           <BenefitsConsole />
         </QueryClientProvider>
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     const loading = screen.getByLabelText("Loading benefits");

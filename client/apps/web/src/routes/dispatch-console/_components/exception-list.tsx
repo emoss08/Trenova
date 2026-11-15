@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import type { WatchtowerItem } from "@/lib/graphql/watchtower";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
@@ -7,7 +8,6 @@ import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatMinutesSpan } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { Link } from "react-router";
 import { MoveQueueRowsSkeleton, QUEUE_GRID_CLASS } from "./console-skeletons";
 import { formatWhen } from "./format-when";
 import type { QueueRead } from "./move-queue";

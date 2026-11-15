@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BASE_ONLY_UNAVAILABLE, seedPlan } from "@/test/plan";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -85,7 +85,7 @@ const invoice = {
 function renderPane(searchParams: string, onUrlUpdate?: OnUrlUpdateFunction) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <NuqsTestingAdapter
           hasMemory
@@ -96,7 +96,7 @@ function renderPane(searchParams: string, onUrlUpdate?: OnUrlUpdateFunction) {
           <InvoiceDetailPane selectedInvoiceId="inv_1" onDocumentSelect={vi.fn()} />
         </NuqsTestingAdapter>
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

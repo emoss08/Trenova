@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import {
   CaptureDeviceAutocompleteField,
   CaptureProfileAutocompleteField,
@@ -34,7 +35,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 /** The scanner picker's value for "whichever scanner the computer defaults to". */

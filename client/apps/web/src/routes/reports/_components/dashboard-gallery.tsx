@@ -8,7 +8,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { parseDashboardLayout } from "@/types/report";
 import { AlertCircleIcon, LayoutAlt04Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import {
   CategoryTile,
   ReportCard,
@@ -101,7 +101,7 @@ export function DashboardGallery({ search, sortBy, onClearFilters }: DashboardGa
             return (
               <ReportCard
                 key={dashboard.id}
-                onClick={() => void navigate(`/reports/dashboards/${dashboard.id}`)}
+                onClick={() => void navigate({ to: `/reports/dashboards/${dashboard.id}` })}
               >
                 <div className="flex items-start gap-3">
                   <CategoryTile category={dashboard.category || "dashboard"} />

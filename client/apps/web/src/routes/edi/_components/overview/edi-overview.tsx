@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { KpiStrip } from "@/components/kpi/kpi-strip";
@@ -8,7 +9,6 @@ import type { EdiSummaryDocument } from "@trenova/graphql/generated/graphql";
 import type { ResultOf } from "@graphql-typed-document-node/core";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { Link } from "react-router";
 import { InfoTile } from "../panel/edi-panel-primitives";
 import { EDIOverviewEmpty } from "./edi-overview-empty";
 import { EDIOverviewSkeleton } from "./edi-overview-skeleton";

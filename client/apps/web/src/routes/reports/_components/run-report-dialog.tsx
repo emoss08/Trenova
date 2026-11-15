@@ -20,7 +20,7 @@ import { useRunReport } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { REPORT_FORMAT_CHOICES, type ReportParameterDef } from "@/types/report";
 import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
   ParameterField,
@@ -120,7 +120,7 @@ export function RunReportDialog({
           toast.success(t('"{0}" queued for generation', reportName), {
             action: {
               label: t("View runs"),
-              onClick: () => navigate("/reports/runs"),
+              onClick: () => navigate({ to: "/reports/runs" }),
             },
           });
         },

@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { CarrierIntelEvent } from "@/lib/graphql/carrier-intelligence";
 import type { FetchCarrierIntelEventInboxArgs } from "@/lib/graphql/carrier-monitoring-table";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -5,7 +6,6 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EventInbox } from "../event-inbox";
 
@@ -158,7 +158,7 @@ function renderInbox({
           resetUrlUpdateQueueOnMount={false}
           searchParams={searchParams}
         >
-          <MemoryRouter>{children}</MemoryRouter>
+          <TestRouter>{children}</TestRouter>
         </NuqsTestingAdapter>
       </QueryClientProvider>
     );

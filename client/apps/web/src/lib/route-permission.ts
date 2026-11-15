@@ -1,9 +1,10 @@
 import { planRestrictionOfResource } from "@/lib/resource-plan";
 import { translate } from "@trenova/shared/i18n/runtime";
-import { PLAN_RESTRICTED_CODE, planRestrictedResponse } from "@trenova/shared/lib/plan-limit";
+import { PLAN_RESTRICTED_CODE, planRestrictedRefusal } from "@trenova/shared/lib/plan-limit";
 import { getOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { isSessionExpiry } from "@trenova/shared/lib/error-presentation";
-import { isPathScopedLoader, pathScopedLoader } from "@trenova/shared/lib/session-loader";
+import type { RouteGate } from "@trenova/shared/lib/router/gates";
+import { RouteRefusal, isRouteRefusal } from "@trenova/shared/lib/router/refusal";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import {
   hasOrganizationCapability,
@@ -11,7 +12,7 @@ import {
   type OrganizationCapabilityType,
 } from "@trenova/shared/types/organization-capability";
 import { Operation } from "@trenova/shared/types/permission";
-import { redirect, type LoaderFunction } from "react-router";
+import { redirect } from "@tanstack/react-router";
 
 function getOperationLabel(operation: number): string {
   return (
@@ -42,17 +43,15 @@ export async function ensurePermissionManifest(): Promise<boolean> {
   }
 }
 
-export function createPermissionLoader(
-  resource: string,
-  operation: number = Operation.Read,
-): LoaderFunction {
-  return pathScopedLoader(async () => {
+/** Lets the person in when their roles grant `operation` on `resource`. */
+export function requirePermission(resource: string, operation: number = Operation.Read): RouteGate {
+  return async () => {
     if (!(await ensurePermissionManifest())) {
-      return redirect("/login");
+      throw redirect({ href: "/login" });
     }
 
     if (usePermissionStore.getState().hasPermission(resource, operation)) {
-      return null;
+      return;
     }
 
     try {
@@ -66,73 +65,47 @@ export function createPermissionLoader(
       // the page is part of instead of blaming the person's roles.
       const restriction = await planRestrictionOfResource(resource);
       if (restriction) {
-        throw planRestrictedResponse(restriction);
+        throw planRestrictedRefusal(restriction);
       }
 
       const operationLabel = getOperationLabel(operation);
-      throw new Response(`Missing permission: ${resource}:${operationLabel}`, {
+      throw new RouteRefusal({
         status: 403,
         statusText: `Missing ${resource}:${operationLabel}`,
+        data: `Missing permission: ${resource}:${operationLabel}`,
       });
     }
-
-    return null;
-  });
+  };
 }
 
 /**
  * Keeps a route out of reach when its half of the product is switched off for
  * the organization. This is the route-level twin of the navigation capability
  * filter — decluttering, not authorization: the API behind the route stays open
- * and `createPermissionLoader` remains the access check.
+ * and `requirePermission` remains the access check.
  */
-export function createCapabilityLoader(capability: OrganizationCapabilityType): LoaderFunction {
-  return async () => {
+export function requireCapability(capability: OrganizationCapabilityType): RouteGate {
+  return () => {
     if (hasOrganizationCapability(getOrgCapabilities(), capability)) {
-      return null;
+      return;
     }
 
     const label = organizationCapabilityLabel(capability);
-    throw new Response(translate("{0} is not enabled for this organization", label), {
+    throw new RouteRefusal({
       status: 403,
       statusText: translate("{0} not enabled", label),
+      data: translate("{0} is not enabled for this organization", label),
     });
   };
 }
 
-/**
- * Runs loaders in order and returns the first answer that is not null. The combination is
- * path-scoped when any part is: a route behind the session or permission gate revalidates
- * only when its path changes, and a prefetch beside the gate is only a cache warm-up the
- * mounted page's own queries already cover.
- */
-export function combineLoaders(...loaders: LoaderFunction[]): LoaderFunction {
-  const combined: LoaderFunction = async (args) => {
-    for (const loader of loaders) {
-      const result = await loader(args);
-      if (result !== null) {
-        return result;
-      }
-    }
-    return null;
-  };
-  return loaders.some(isPathScopedLoader) ? pathScopedLoader(combined) : combined;
-}
-
-async function isPlanRefusal(refusal: Response): Promise<boolean> {
-  if (!refusal.headers.get("Content-Type")?.includes("json")) {
-    return false;
-  }
-  try {
-    const body: unknown = await refusal.clone().json();
-    return (
-      typeof body === "object" &&
-      body !== null &&
-      (body as { code?: unknown }).code === PLAN_RESTRICTED_CODE
-    );
-  } catch {
-    return false;
-  }
+function isPlanRefusal(refusal: RouteRefusal): boolean {
+  const body = refusal.data;
+  return (
+    typeof body === "object" &&
+    body !== null &&
+    (body as { code?: unknown }).code === PLAN_RESTRICTED_CODE
+  );
 }
 
 /**
@@ -143,18 +116,19 @@ async function isPlanRefusal(refusal: Response): Promise<boolean> {
  * names the add-on); otherwise the last permission refusal is the answer, the rule the
  * server's RequireAnyPermission follows.
  */
-export function anyOfLoaders(...loaders: LoaderFunction[]): LoaderFunction {
-  const any: LoaderFunction = async (args) => {
-    let planRefusal: Response | null = null;
-    let permissionRefusal: Response | null = null;
-    for (const loader of loaders) {
+export function anyOfGates(...list: readonly RouteGate[]): RouteGate {
+  return async (context) => {
+    let planRefusal: RouteRefusal | null = null;
+    let permissionRefusal: RouteRefusal | null = null;
+    for (const gate of list) {
       try {
-        return await loader(args);
+        await gate(context);
+        return;
       } catch (error) {
-        if (!(error instanceof Response) || error.status !== 403) {
+        if (!isRouteRefusal(error) || error.status !== 403) {
           throw error;
         }
-        if (await isPlanRefusal(error)) {
+        if (isPlanRefusal(error)) {
           planRefusal ??= error;
         } else {
           permissionRefusal = error;
@@ -163,5 +137,4 @@ export function anyOfLoaders(...loaders: LoaderFunction[]): LoaderFunction {
     }
     throw permissionRefusal ?? planRefusal;
   };
-  return loaders.some(isPathScopedLoader) ? pathScopedLoader(any) : any;
 }

@@ -28,7 +28,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { FormulaLibraryFormValues } from "@trenova/shared/types/formula-library";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useFormContext, useWatch } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import type { LibraryDecision } from "./library-review-dialogs";
 import { useLibraryStudio } from "./library-studio-context";
 import { libraryPath } from "./starter";
@@ -99,7 +99,7 @@ export function LibraryTopBar({
         variant="ghost"
         size="icon-sm"
         aria-label={t("Back to formula libraries")}
-        onClick={() => void navigate(formulaLibraryRoutes.list)}
+        onClick={() => void navigate({ to: formulaLibraryRoutes.list })}
       >
         <ArrowLeftIcon className="size-4" />
       </Button>

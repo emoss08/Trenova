@@ -25,7 +25,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { Pin01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import type { ActionContext } from "./palette-actions";
 import {
   buildAppCommands,
@@ -140,7 +140,7 @@ export function useReadableRecordTypes(): readonly GlobalSearchEntityType[] | nu
  */
 export function usePaletteCatalog(unreadNotifications: number): PaletteCatalog {
   const t = useT();
-  const { pathname, search, hash } = useLocation();
+  const { pathname, searchStr: search, hash } = useLocation();
   const filteredModules = useFilteredNavigation();
   const adminLinks = useAccessibleAdminLinks();
   const hasPermission = usePermissionStore((state) => state.hasPermission);
@@ -152,7 +152,7 @@ export function usePaletteCatalog(unreadNotifications: number): PaletteCatalog {
   const canUseAssistant = hasPermission(Resource.Assistant, Operation.Read) && novaOnPlan;
   const assistantHidden = useAssistantHidden();
   const canCreateShipment = hasPermission(Resource.Shipment, Operation.Create);
-  const currentHref = `${pathname}${search}${hash}`;
+  const currentHref = `${pathname}${search}${hash ? `#${hash}` : ""}`;
 
   const pages = useMemo(
     () =>

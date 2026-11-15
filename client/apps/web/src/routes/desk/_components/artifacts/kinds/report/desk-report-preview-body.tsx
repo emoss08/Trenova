@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -11,7 +12,6 @@ import { downloadFromUrl } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { Suspense, useMemo, type ReactNode } from "react";
-import { Link } from "react-router";
 import { artifactReaderOf, reportPreviewFrom } from "../../artifact-payloads";
 import { ArtIcon } from "../../desk-art-kinds";
 import { cardMoment } from "../../record-card/record-card-values";

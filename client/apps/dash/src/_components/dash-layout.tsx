@@ -1,7 +1,7 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
 import { fetchMyPortalProfile } from "@trenova/shared/lib/graphql/driver-portal";
-import { cn } from "@trenova/shared/lib/utils";
 import { dropPushOfAnotherDriver } from "@/lib/push-owner";
 import { currentProfile, useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQuery } from "@tanstack/react-query";
@@ -15,7 +15,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
 import { useEffect } from "react";
-import { NavLink, Outlet, useLocation, Link } from "react-router";
+import { Outlet, useLocation } from "@tanstack/react-router";
 import { DashIdleTimeout } from "./dash-idle-timeout";
 import { useDashRealtime } from "./use-dash-realtime";
 
@@ -41,15 +41,11 @@ function NotificationBell() {
   const t = useT();
 
   return (
-    <NavLink
+    <Link
       to="/dash/notifications"
+      activeOptions={{ includeSearch: false }}
       aria-label={count > 0 ? t("Notifications ({0} unread)", count) : t("Notifications")}
-      className={({ isActive }) =>
-        cn(
-          "relative flex size-8 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground",
-          isActive && "border-primary text-foreground",
-        )
-      }
+      className="relative flex size-8 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground data-[status=active]:border-primary data-[status=active]:text-foreground"
     >
       <Bell01Icon className="size-4" />
       {count > 0 ? (
@@ -57,7 +53,7 @@ function NotificationBell() {
           {count > 99 ? "99+" : count}
         </span>
       ) : null}
-    </NavLink>
+    </Link>
   );
 }
 
@@ -72,7 +68,7 @@ export function DashLayout() {
 
   const t = useT();
 
-  const location = useLocation();
+  const pathname = useLocation({ select: (location) => location.pathname });
   const { data: profile } = useDashProfile();
   useDashRealtime();
 
@@ -96,25 +92,21 @@ export function DashLayout() {
           </div>
           <div className="flex items-center gap-2">
             <NotificationBell />
-            <NavLink
+            <Link
               to="/dash/profile"
+              activeOptions={{ includeSearch: false }}
               aria-label={t("Profile")}
-              className={({ isActive }) =>
-                cn(
-                  "flex size-8 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold text-muted-foreground",
-                  isActive && "border-primary text-foreground",
-                )
-              }
+              className="flex size-8 items-center justify-center rounded-full border border-border bg-muted text-xs font-semibold text-muted-foreground data-[status=active]:border-primary data-[status=active]:text-foreground"
             >
               {initials || "•"}
-            </NavLink>
+            </Link>
           </div>
         </div>
       </header>
 
       <main className="mx-auto w-full max-w-lg flex-1 px-4 pt-4 pb-24">
         <m.div
-          key={location.pathname}
+          key={pathname}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18, ease: "easeOut" }}
@@ -129,16 +121,11 @@ export function DashLayout() {
       >
         <div className="mx-auto grid w-full max-w-lg grid-cols-5">
           {tabs.map((tab) => (
-            <NavLink
+            <Link
               key={tab.to}
               to={tab.to}
-              end={tab.end}
-              className={({ isActive }) =>
-                cn(
-                  "relative flex flex-col items-center gap-1 py-2.5 text-xs font-medium text-muted-foreground",
-                  isActive && "text-foreground",
-                )
-              }
+              activeOptions={{ exact: tab.end, includeSearch: false }}
+              className="relative flex flex-col items-center gap-1 py-2.5 text-xs font-medium text-muted-foreground data-[status=active]:text-foreground"
             >
               {({ isActive }) => (
                 <>
@@ -152,7 +139,7 @@ export function DashLayout() {
                   {t(tab.label)}
                 </>
               )}
-            </NavLink>
+            </Link>
           ))}
         </div>
       </nav>

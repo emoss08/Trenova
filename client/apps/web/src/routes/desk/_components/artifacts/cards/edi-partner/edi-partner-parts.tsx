@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import {
   AlertCircleIcon,
   AlertTriangleIcon,
@@ -16,7 +17,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { cn, telHref } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 import { CardAvatar, CardIcon, type CardCheckState } from "../../record-card/record-card";
 import type {
   AckRuler,

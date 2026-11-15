@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AgingBadge } from "@/components/accounting/aging-buckets";
 import {
@@ -20,7 +21,6 @@ import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { Link } from "react-router";
 import { PlanFeature } from "@/lib/plan-feature";
 
 const settlementStatusChoices = [

@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { RecordShipment } from "@/lib/graphql/record-shipments";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskDetentionOccurrence } from "../desk-detention-occurrence";
 import { ACCRUING_NOW, accruingCharge, at, pendingCharge, waivedCharge } from "./fixtures";
@@ -63,9 +63,9 @@ function draw() {
   const onBack = vi.fn();
   const view = render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskDetentionOccurrence recordId="dto_kroger" onBack={onBack} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
   return { ...view, onBack };
@@ -203,13 +203,13 @@ describe("DeskDetentionOccurrence", () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const card = (recordId: string) => (
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskDetentionOccurrence
             recordId={recordId}
             order={["dto_kroger", "dto_lineage"]}
             onSelect={vi.fn()}
           />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>
     );
     const { container, rerender } = render(card("dto_kroger"));

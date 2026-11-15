@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { formatRelativeTime } from "@trenova/shared/i18n/format";
@@ -15,7 +16,6 @@ import {
   CalendarDateIcon,
   HandshakeIcon,
 } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { MemberAvatar, memberHref } from "./member-identity";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 

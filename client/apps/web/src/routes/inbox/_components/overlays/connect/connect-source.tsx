@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import type { InboundMailbox, InboundProvider } from "@/lib/graphql/inbox";
 import { inbox } from "@/lib/queries/inbox";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,7 +31,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useId, useReducer, useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import { mailboxName } from "../../folder-labels";
 import { inlineErrorText } from "../../inline-error";
 import { useTriageActions } from "../../use-triage-actions";

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
@@ -11,7 +12,6 @@ import { cn, formatPercent } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { Shipment, ShipmentStage } from "@trenova/shared/types/shipment";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 import { CardDocuments } from "../../record-card/card-documents";
 import {
   CardBar,

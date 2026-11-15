@@ -1,9 +1,8 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { m } from "motion/react";
 import { CheckIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
-
 type SuccessPhaseProps = {
   shipmentId: string;
   attachError: string | null;

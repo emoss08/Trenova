@@ -1,9 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { usePermission } from "@/hooks/use-permission";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { ReferenceKind } from "@trenova/shared/types/generated/reference-views";
 import { cn } from "@trenova/shared/lib/utils";
-import { Link } from "react-router";
 import { CardActionButton } from "./card-action";
 import { CardBar, CardBarHint, CardIcon } from "./record-card";
 import { Operation } from "@trenova/shared/types/permission";

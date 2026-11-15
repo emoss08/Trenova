@@ -1,92 +1,37 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useNavigationType } from "react-router";
+import { useRouter, useRouterState } from "@tanstack/react-router";
+import { useCallback, useEffect, useState } from "react";
 
-interface HistoryStackState {
-  entries: string[];
-  index: number;
-}
-
-function getLocationId(location: ReturnType<typeof useLocation>): string {
-  return `${location.key}:${location.pathname}${location.search}${location.hash}`;
-}
-
+/**
+ * Back and forward through the app's own history. The router numbers every entry it writes,
+ * so there is somewhere to go back to while the entry is not the first, and somewhere to go
+ * forward to while it sits below the furthest entry pushed since. A push drops the entries
+ * after it, as the browser does.
+ */
 export function useHistoryNavigation() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const navigationType = useNavigationType();
+  const router = useRouter();
+  const index = useRouterState({ select: (state) => state.location.state.__TSR_index ?? 0 });
+  const [pushedTo, setPushedTo] = useState(index);
 
-  const initialId = getLocationId(location);
-  const [historyState, setHistoryState] = useState<HistoryStackState>({
-    entries: [initialId],
-    index: 0,
-  });
-  const lastProcessedTokenRef = useRef<string | null>(null);
+  useEffect(
+    () =>
+      router.history.subscribe(({ location, action }) => {
+        if (action.type === "PUSH") {
+          setPushedTo(location.state.__TSR_index ?? 0);
+        }
+      }),
+    [router],
+  );
 
-  useEffect(() => {
-    const locationId = getLocationId(location);
-    const token = `${navigationType}:${locationId}`;
-
-    // Avoid duplicate transitions in StrictMode re-renders/effects.
-    if (lastProcessedTokenRef.current === token) {
-      return;
-    }
-    lastProcessedTokenRef.current = token;
-
-    setHistoryState((currentState) => {
-      if (currentState.entries.length === 0) {
-        return { entries: [locationId], index: 0 };
-      }
-
-      if (navigationType === "PUSH") {
-        const nextEntries = currentState.entries.slice(0, currentState.index + 1);
-        nextEntries.push(locationId);
-        return { entries: nextEntries, index: nextEntries.length - 1 };
-      }
-
-      if (navigationType === "REPLACE") {
-        const nextEntries = [...currentState.entries];
-        nextEntries[currentState.index] = locationId;
-        return { entries: nextEntries, index: currentState.index };
-      }
-
-      // POP: move within known entries when possible.
-      if (currentState.entries[currentState.index - 1] === locationId) {
-        return { entries: currentState.entries, index: currentState.index - 1 };
-      }
-
-      if (currentState.entries[currentState.index + 1] === locationId) {
-        return { entries: currentState.entries, index: currentState.index + 1 };
-      }
-
-      const existingIndex = currentState.entries.lastIndexOf(locationId);
-      if (existingIndex >= 0) {
-        return { entries: currentState.entries, index: existingIndex };
-      }
-
-      // If location is outside tracked stack, append so controls recover gracefully.
-      return {
-        entries: [...currentState.entries, locationId],
-        index: currentState.entries.length,
-      };
-    });
-  }, [location, navigationType]);
-
-  const canGoBack = historyState.index > 0;
-  const canGoForward = historyState.index < historyState.entries.length - 1;
+  const canGoBack = index > 0;
+  const canGoForward = index < Math.max(pushedTo, index);
 
   const goBack = useCallback(() => {
-    if (!canGoBack) {
-      return;
-    }
-    void navigate(-1);
-  }, [canGoBack, navigate]);
+    if (canGoBack) router.history.back();
+  }, [canGoBack, router]);
 
   const goForward = useCallback(() => {
-    if (!canGoForward) {
-      return;
-    }
-    void navigate(1);
-  }, [canGoForward, navigate]);
+    if (canGoForward) router.history.forward();
+  }, [canGoForward, router]);
 
   return {
     canGoBack,

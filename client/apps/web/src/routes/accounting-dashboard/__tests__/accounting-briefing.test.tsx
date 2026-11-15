@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
-import { Route, Routes, useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderAccountingPage } from "@/test/accounting-page-mocks";
 import { AccountingBriefing } from "../_components/accounting-briefing";
@@ -76,22 +76,15 @@ function briefing(over: { segments?: Segment[]; actions?: Action[]; narrated?: b
 
 function Location() {
   const location = useLocation();
-  return <output aria-label="location">{`${location.pathname}${location.search}`}</output>;
+  return <output aria-label="location">{`${location.pathname}${location.searchStr}`}</output>;
 }
 
 function renderBriefing() {
   return renderAccountingPage(
-    <Routes>
-      <Route
-        path="*"
-        element={
-          <>
-            <AccountingBriefing />
-            <Location />
-          </>
-        }
-      />
-    </Routes>,
+    <>
+      <AccountingBriefing />
+      <Location />
+    </>,
     ["/accounting"],
   );
 }
@@ -129,13 +122,14 @@ describe("AccountingBriefing", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Open the missed promise in collections" }),
     );
-    expect(location()).toBe("/accounting/ar/collections?customerId=cus_acme%2001");
+    // The address as the router writes it: a space in a value is a plus.
+    expect(location()).toBe("/accounting/ar/collections?customerId=cus_acme+01");
 
     fireEvent.click(screen.getByRole("button", { name: "Open the aging report" }));
     expect(location()).toBe("/accounting/ar/aging");
 
     fireEvent.click(screen.getByRole("button", { name: "Open this customer's ledger" }));
-    expect(location()).toBe("/accounting/ar/customer-ledger?customerId=cus_acme%2001");
+    expect(location()).toBe("/accounting/ar/customer-ledger?customerId=cus_acme+01");
   });
 
   it("lists the next steps, most pressing first, each opening where it gets done", async () => {

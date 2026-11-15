@@ -24,7 +24,7 @@ import { useUserTimezone } from "@/hooks/use-user-timezone";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { useBoardActions } from "../use-board-actions";
@@ -429,7 +429,7 @@ function CapacityDock({
         {provider.kind === "Driver" && !hos ? (
           <button
             type="button"
-            onClick={() => void navigate(INTEGRATIONS_PATH)}
+            onClick={() => void navigate({ to: INTEGRATIONS_PATH })}
             className="ui-focus-ring text-brand inline-flex shrink-0 items-center gap-1 rounded-sm hover:underline"
           >
             <PlugIcon className="size-3" />

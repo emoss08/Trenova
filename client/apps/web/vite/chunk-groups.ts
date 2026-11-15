@@ -70,7 +70,14 @@ export const chunkGroups: Group[] = [
   // The framework core is on every page, so it must own a chunk; left ungrouped it is
   // absorbed by whatever group claims it first, and the entry then pulls that library in.
   group("react-vendor", "react", "react-dom", "react-is", "scheduler", "use-sync-external-store"),
-  group("react-router", "react-router"),
+  group(
+    "tanstack-router",
+    "@tanstack/react-router",
+    "@tanstack/router-core",
+    "@tanstack/history",
+    "tiny-invariant",
+    "tiny-warning",
+  ),
   group("floating-ui", "@floating-ui/*"),
   group("store-utils", "zustand", "nuqs", "immer"),
   // TanStack Store is shared by Query's hotkeys and by Table. Claimed here first, it stays

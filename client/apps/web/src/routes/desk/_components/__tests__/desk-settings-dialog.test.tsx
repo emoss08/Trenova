@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { caseChecklistService } from "@/services/case-checklist";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource, type PermissionManifest } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DeskSettingsDialog } from "../desk-settings";
 
@@ -51,13 +51,13 @@ function renderDialog(initialSection?: "checklists", agents: { id: string; name:
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <MemoryRouter>
+      <TestRouter>
         <DeskSettingsDialog
           agents={agents as never}
           initialSection={initialSection}
           onClose={vi.fn()}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

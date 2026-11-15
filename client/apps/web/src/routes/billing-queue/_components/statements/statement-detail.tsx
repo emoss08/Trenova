@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   describeBillingSchedule,
@@ -25,7 +26,6 @@ import {
   InfoCircleIcon,
   RefreshCcw01Icon,
 } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { invalidateStatements, statementDetailQuery } from "../../statement-queries";

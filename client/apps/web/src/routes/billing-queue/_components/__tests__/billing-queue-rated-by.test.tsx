@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BillingQueueRatedBy } from "../billing-queue-rated-by";
 
@@ -115,13 +115,13 @@ const agreement = {
 
 function renderRatedBy(ratedBy = item.ratedBy!) {
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
         <BillingQueueRatedBy item={item} ratedBy={ratedBy} />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

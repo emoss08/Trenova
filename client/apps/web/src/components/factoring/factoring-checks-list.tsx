@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { usePermission } from "@/hooks/use-permission";
 import { factoringFixActionLabel } from "@/lib/factoring";
@@ -13,7 +14,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
-import { Link } from "react-router";
 import { RequestFactoringDocumentsDialog } from "./request-factoring-documents-dialog";
 
 type CheckLink = { label: string; to: string };

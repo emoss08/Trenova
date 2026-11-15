@@ -18,7 +18,7 @@
     "motion": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-router": "catalog:",
+    "@tanstack/react-router": "catalog:",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {

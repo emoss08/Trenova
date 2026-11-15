@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { groupCarrierEligibility, isOverridableIntelBlocker } from "@/lib/carrier-eligibility";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
@@ -8,7 +9,6 @@ import type {
 } from "@trenova/shared/types/shipment";
 import { emptyCarrierAssignmentPayload } from "@trenova/shared/types/shipment";
 import { useForm } from "react-hook-form";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CarrierEligibilityAlerts,
@@ -95,9 +95,9 @@ function renderAlerts(eligibility: CarrierEligibility) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <Harness eligibility={eligibility} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

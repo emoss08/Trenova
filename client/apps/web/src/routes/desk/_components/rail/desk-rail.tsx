@@ -1,4 +1,7 @@
 "use no memo";
+import { Link } from "@trenova/shared/components/link";
+
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import logo from "@/assets/logo.webp";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
@@ -33,7 +36,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { DeleteConversationCard } from "@/components/assistant/delete-conversation-card";
 import { useDeleteConversation } from "@/components/assistant/use-delete-conversation";
 import { isRecordEntityType, recordPath } from "@/config/record-links";
@@ -285,7 +288,7 @@ export function DeskRail({
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
   const liveThreadIds = useLiveThreadIds();
-  const [search] = useSearchParams();
+  const [search] = useQueryParams();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const lens = place === "needs" ? (search.get("lens") ?? "") : "";
@@ -334,7 +337,7 @@ export function DeskRail({
   const deletion = useDeleteConversation(onDelete);
   const [renaming, setRenaming] = useState<AssistantThread | null>(null);
   const forgetOpenWork = useDeskMarginStore((state) => state.forgetOpenWork);
-  const openPath = (path: string) => void navigate(path);
+  const openPath = (path: string) => void navigate({ to: path });
   const openInNewTab = (path: string) => window.open(path, "_blank", "noopener,noreferrer");
   const copyLink = (path: string) =>
     void copy(new URL(path, window.location.origin).toString(), { withToast: true });
@@ -485,7 +488,7 @@ export function DeskRail({
               // Beside a case sits the case's conversation, so a new one
               // starts on the Desk's own page.
               if (place === "case") {
-                void navigate("/desk");
+                void navigate({ to: "/desk" });
                 return;
               }
               useDeskMarginStore.getState().openMargin(null);

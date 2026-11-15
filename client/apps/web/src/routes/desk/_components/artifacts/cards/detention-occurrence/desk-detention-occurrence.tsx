@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
@@ -20,7 +21,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { DetentionOccurrence } from "@trenova/shared/types/detention";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 import { CardActionButton } from "../../record-card/card-action";
 import { useCardAccess } from "../../record-card/card-access";
 import { SettlementStub } from "../../record-card/card-settlement";

@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { lazyComponent } from "@/lib/lazy-component";
 import type { AssistantArtifact } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { BillingItemSkeleton } from "../billing-queue-item/billing-item-skeleton";
 import { DeskCustomerSkeleton } from "../customer/customer-skeleton";
@@ -102,7 +102,7 @@ function gatedEntry(Skeleton: RecordCardEntry["Skeleton"]) {
 function draw(node: ReactNode) {
   return render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter>{node}</MemoryRouter>
+      <TestRouter>{node}</TestRouter>
     </QueryClientProvider>,
   );
 }
@@ -240,7 +240,7 @@ describe("the Desk's resource cards", () => {
     if (!formula) throw new Error("No formula template card");
     const opened = (recordId: string) => (
       <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter>
+        <TestRouter>
           <InPlaceRecord
             entry={formula}
             recordId={recordId}
@@ -248,7 +248,7 @@ describe("the Desk's resource cards", () => {
             onSelect={vi.fn()}
             onBack={vi.fn()}
           />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>
     );
 

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { MappingEditor } from "@/components/accounting-mapping/mapping-editor";
 import { MappingRow } from "@/components/accounting-mapping/mapping-row";
 import { ReferenceRefreshStatus } from "@/components/accounting-mapping/reference-refresh-status";
@@ -15,7 +16,6 @@ import { Progress } from "@trenova/shared/components/ui/progress";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useId, useMemo, useState } from "react";
-import { Link } from "react-router";
 import type { AccountingVendor } from "./accounting-vendors";
 import { IntegrationSetupFooter } from "../shared/integration-setup-wizard";
 

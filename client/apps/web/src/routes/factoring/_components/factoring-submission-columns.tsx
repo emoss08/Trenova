@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { FactoringSubmissionStatusBadge } from "@/components/factoring/factoring-badges";
 import { recordPath } from "@/config/record-links";
 import type { FactoringSubmissionRow } from "@/lib/graphql/factoring";
@@ -6,7 +7,6 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { Link } from "react-router";
 
 export function getFactoringSubmissionColumns(t: TranslateFn): ColumnDef<FactoringSubmissionRow>[] {
   return [

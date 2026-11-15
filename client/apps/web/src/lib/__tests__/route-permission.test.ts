@@ -1,11 +1,9 @@
 import { queryClient } from "@/lib/query-client";
-import {
-  anyOfLoaders,
-  createPermissionLoader,
-  ensurePermissionManifest,
-} from "@/lib/route-permission";
+import { anyOfGates, ensurePermissionManifest, requirePermission } from "@/lib/route-permission";
 import { ApiRequestError } from "@trenova/shared/lib/api";
-import { planRestrictedResponse } from "@trenova/shared/lib/plan-limit";
+import { planRestrictedRefusal } from "@trenova/shared/lib/plan-limit";
+import { RouteRefusal } from "@trenova/shared/lib/router/refusal";
+import { enterContext } from "@trenova/shared/testing/gate-context";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import {
   Operation,
@@ -13,7 +11,7 @@ import {
   type PermissionManifest,
   type UnavailableFeature,
 } from "@trenova/shared/types/permission";
-import type { LoaderFunctionArgs } from "react-router";
+import { isRedirect, redirect } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The manifest is GET /me/permissions over REST. Every failure the server sends is an
@@ -59,17 +57,9 @@ async function settle(promise: Promise<unknown>): Promise<{ value: unknown; thro
   );
 }
 
-function runPermissionLoader() {
-  const loader = createPermissionLoader(Resource.Shipment, Operation.Read);
-  return settle(
-    Promise.resolve(
-      loader({
-        request: new Request("http://localhost/shipments/management"),
-        params: {},
-        context: undefined,
-      } as unknown as LoaderFunctionArgs),
-    ),
-  );
+function runPermissionGate() {
+  const gate = requirePermission(Resource.Shipment, Operation.Read);
+  return settle(Promise.resolve(gate(enterContext("/shipments/management"))));
 }
 
 describe("ensurePermissionManifest without a manifest loaded", () => {
@@ -112,7 +102,7 @@ describe("createPermissionLoader without a manifest loaded", () => {
   it("does not send a rate-limited manifest fetch to /login", async () => {
     answerManifestWith(problemResponse(429, "rate-limit-exceeded", "Rate Limit Exceeded"));
 
-    const { value, thrown } = await runPermissionLoader();
+    const { value, thrown } = await runPermissionGate();
 
     expect(value).toBeUndefined();
     expect(thrown).toBeInstanceOf(ApiRequestError);
@@ -123,7 +113,7 @@ describe("createPermissionLoader without a manifest loaded", () => {
   it("surfaces a server error as the route error", async () => {
     answerManifestWith(problemResponse(500, "internal-error", "Internal Error"));
 
-    const { value, thrown } = await runPermissionLoader();
+    const { value, thrown } = await runPermissionGate();
 
     expect(value).toBeUndefined();
     expect((thrown as ApiRequestError).status).toBe(500);
@@ -133,7 +123,7 @@ describe("createPermissionLoader without a manifest loaded", () => {
     const failure = new TypeError("Failed to fetch");
     answerManifestWith(failure);
 
-    const { value, thrown } = await runPermissionLoader();
+    const { value, thrown } = await runPermissionGate();
 
     expect(value).toBeUndefined();
     expect(thrown).toBe(failure);
@@ -142,93 +132,97 @@ describe("createPermissionLoader without a manifest loaded", () => {
   it("still sends an expired session to /login", async () => {
     answerManifestWith(problemResponse(401, "authentication-error", "Authentication Failed"));
 
-    const { value, thrown } = await runPermissionLoader();
+    const { thrown } = await runPermissionGate();
 
-    expect(thrown).toBeUndefined();
-    expect(value).toBeInstanceOf(Response);
-    expect((value as Response).headers.get("Location")).toBe("/login");
+    expect(isRedirect(thrown)).toBe(true);
+    expect((thrown as { options: { href?: string } }).options.href).toBe("/login");
   });
 });
 
-describe("anyOfLoaders, for a page whose parts answer to different permissions", () => {
-  const args = {
-    request: new Request("http://localhost/desk/needs"),
-    params: {},
-    context: undefined,
-  } as unknown as LoaderFunctionArgs;
+describe("anyOfGates, for a page whose parts answer to different permissions", () => {
+  const args = enterContext("/desk/needs");
   const refuse = (what: string) => () => {
-    throw new Response(`Missing permission: ${what}`, { status: 403 });
+    throw new RouteRefusal({
+      status: 403,
+      statusText: "Forbidden",
+      data: `Missing permission: ${what}`,
+    });
   };
 
   it("lets the person in when a later gate does, though an earlier one refused", async () => {
-    const loader = anyOfLoaders(refuse("watchtower:Read"), () => null);
+    const gate = anyOfGates(refuse("watchtower:Read"), () => undefined);
 
-    expect(await settle(Promise.resolve(loader(args)))).toEqual({ value: null, thrown: undefined });
+    expect(await settle(Promise.resolve(gate(args)))).toEqual({
+      value: undefined,
+      thrown: undefined,
+    });
   });
 
   it("refuses with the last gate's answer when every gate refuses", async () => {
-    const loader = anyOfLoaders(refuse("watchtower:Read"), refuse("agent_proposal:Read"));
+    const gate = anyOfGates(refuse("watchtower:Read"), refuse("agent_proposal:Read"));
 
-    const { thrown } = await settle(Promise.resolve(loader(args)));
+    const { thrown } = await settle(Promise.resolve(gate(args)));
 
-    expect(thrown).toBeInstanceOf(Response);
-    expect((thrown as Response).status).toBe(403);
-    expect(await (thrown as Response).text()).toBe("Missing permission: agent_proposal:Read");
+    expect(thrown).toBeInstanceOf(RouteRefusal);
+    expect((thrown as RouteRefusal).status).toBe(403);
+    expect((thrown as RouteRefusal).data).toBe("Missing permission: agent_proposal:Read");
   });
 
   const offPlan = (addOn: string) => () => {
-    throw planRestrictedResponse({ feature: "tms.factoring", addOn });
+    throw planRestrictedRefusal({ feature: "tms.factoring", addOn });
   };
 
   it("says the page is off the plan only when the plan refused every gate", async () => {
-    const loader = anyOfLoaders(offPlan("Accounting & Cash"), offPlan("Trenova AI"));
+    const gate = anyOfGates(offPlan("Accounting & Cash"), offPlan("Trenova AI"));
 
-    const { thrown } = await settle(Promise.resolve(loader(args)));
+    const { thrown } = await settle(Promise.resolve(gate(args)));
 
-    expect(thrown).toBeInstanceOf(Response);
-    expect((thrown as Response).status).toBe(403);
-    expect(await (thrown as Response).json()).toMatchObject({
+    expect(thrown).toBeInstanceOf(RouteRefusal);
+    expect((thrown as RouteRefusal).status).toBe(403);
+    expect((thrown as RouteRefusal).data).toMatchObject({
       code: "PLAN_RESTRICTED",
       params: { addOn: "Accounting & Cash" },
     });
   });
 
   it("reports the permission refusal when any gate was refused by the roles", async () => {
-    for (const loader of [
-      anyOfLoaders(refuse("watchtower:Read"), offPlan("Accounting & Cash")),
-      anyOfLoaders(offPlan("Accounting & Cash"), refuse("watchtower:Read")),
+    for (const gate of [
+      anyOfGates(refuse("watchtower:Read"), offPlan("Accounting & Cash")),
+      anyOfGates(offPlan("Accounting & Cash"), refuse("watchtower:Read")),
     ]) {
-      const { thrown } = await settle(Promise.resolve(loader(args)));
+      const { thrown } = await settle(Promise.resolve(gate(args)));
 
-      expect(thrown).toBeInstanceOf(Response);
-      expect((thrown as Response).status).toBe(403);
-      expect(await (thrown as Response).text()).toBe("Missing permission: watchtower:Read");
+      expect(thrown).toBeInstanceOf(RouteRefusal);
+      expect((thrown as RouteRefusal).status).toBe(403);
+      expect((thrown as RouteRefusal).data).toBe("Missing permission: watchtower:Read");
     }
   });
 
   it("obeys a gate that sends the person to sign in, without asking the next", async () => {
-    const next = vi.fn(() => null);
-    const toLogin = new Response(null, { status: 302, headers: { Location: "/login" } });
-    const loader = anyOfLoaders(() => toLogin, next);
+    const next = vi.fn(() => undefined);
+    const toLogin = redirect({ href: "/login" });
+    const gate = anyOfGates(() => {
+      throw toLogin;
+    }, next);
 
-    expect(await loader(args)).toBe(toLogin);
+    expect((await settle(Promise.resolve(gate(args)))).thrown).toBe(toLogin);
     expect(next).not.toHaveBeenCalled();
   });
 
   it("does not hide a failure that is not a refusal", async () => {
     const failure = new TypeError("Failed to fetch");
-    const loader = anyOfLoaders(
+    const gate = anyOfGates(
       () => {
         throw failure;
       },
-      () => null,
+      () => undefined,
     );
 
-    expect((await settle(Promise.resolve(loader(args)))).thrown).toBe(failure);
+    expect((await settle(Promise.resolve(gate(args)))).thrown).toBe(failure);
   });
 });
 
-describe("createPermissionLoader for a resource missing from the manifest", () => {
+describe("requirePermission for a resource missing from the manifest", () => {
   const factoring: UnavailableFeature = {
     feature: "tms.factoring",
     featureName: "Factoring",
@@ -313,16 +307,8 @@ describe("createPermissionLoader for a resource missing from the manifest", () =
   }
 
   function run(resource: string) {
-    const loader = createPermissionLoader(resource, Operation.Read);
-    return settle(
-      Promise.resolve(
-        loader({
-          request: new Request(`http://localhost/${resource}`),
-          params: {},
-          context: undefined,
-        } as unknown as LoaderFunctionArgs),
-      ),
-    );
+    const gate = requirePermission(resource, Operation.Read);
+    return settle(Promise.resolve(gate(enterContext(`/${resource}`))));
   }
 
   afterEach(() => {
@@ -336,10 +322,10 @@ describe("createPermissionLoader for a resource missing from the manifest", () =
 
     const { thrown } = await run(Resource.FactoringCompany);
 
-    expect(thrown).toBeInstanceOf(Response);
-    const refusal = thrown as Response;
+    expect(thrown).toBeInstanceOf(RouteRefusal);
+    const refusal = thrown as RouteRefusal;
     expect(refusal.status).toBe(403);
-    expect(await refusal.json()).toEqual({
+    expect(refusal.data).toEqual({
       type: "plan-restricted",
       title: "Plan Restricted",
       status: 403,
@@ -353,8 +339,8 @@ describe("createPermissionLoader for a resource missing from the manifest", () =
 
     const { thrown } = await run(Resource.Customer);
 
-    expect(thrown).toBeInstanceOf(Response);
-    expect(await (thrown as Response).text()).toBe("Missing permission: customer:Read");
+    expect(thrown).toBeInstanceOf(RouteRefusal);
+    expect((thrown as RouteRefusal).data).toBe("Missing permission: customer:Read");
   });
 
   it("does not read the catalogue when the plan leaves nothing out", async () => {
@@ -362,7 +348,7 @@ describe("createPermissionLoader for a resource missing from the manifest", () =
 
     const { thrown } = await run(Resource.FactoringCompany);
 
-    expect(await (thrown as Response).text()).toBe("Missing permission: factoring_company:Read");
+    expect((thrown as RouteRefusal).data).toBe("Missing permission: factoring_company:Read");
     expect(catalogueReads).toBe(0);
   });
 });

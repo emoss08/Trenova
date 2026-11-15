@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { PlanPreview } from "@/components/assistant/proposal-preview/plan-preview";
 import {
   canApprove,
@@ -20,7 +21,6 @@ import { agentRunPath } from "@/lib/record-paths";
 import { formatTimeAgo } from "@/lib/time-utils";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useEffect, useMemo } from "react";
-import { Link } from "react-router";
 import {
   approvalFacts,
   OUTCOME_FIELD,

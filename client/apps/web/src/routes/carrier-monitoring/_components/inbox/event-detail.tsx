@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { RelativeTime } from "@/components/carrier-intelligence/relative-time";
 import { RiskLabel, SeverityLabel } from "@/components/carrier-intelligence/status-dot";
 import type { CarrierIntelLabels } from "@/components/carrier-intelligence/use-carrier-intel-labels";
@@ -26,7 +27,6 @@ import {
   LinkExternal01Icon,
 } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 import type { EventPresentation } from "@/components/carrier-intelligence/use-event-presenter";
 
 export type EventDetailProps = {

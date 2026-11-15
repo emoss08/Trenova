@@ -2,11 +2,20 @@ import {
   DataTableLazyComponent,
   NotFoundRoute,
   RouteErrorBoundary,
+  RouteErrorEmbedding,
 } from "@trenova/shared/components/error-boundary";
+import { RouteRefusal } from "@trenova/shared/lib/router/refusal";
 import { QueryClient, QueryClientProvider, useSuspenseQuery } from "@tanstack/react-query";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  RouterProvider,
+} from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 function renderWithQueryClient(ui: React.ReactNode) {
@@ -92,39 +101,38 @@ function Shell() {
   return (
     <div>
       <nav>App navigation</nav>
-      <Outlet />
+      <RouteErrorEmbedding value>
+        <Outlet />
+      </RouteErrorEmbedding>
     </div>
   );
 }
 
-function renderRoutes(initialPath: string, loader?: () => never) {
-  const router = createMemoryRouter(
-    [
-      {
-        element: <Shell />,
-        errorElement: <RouteErrorBoundary />,
-        children: [
-          { path: "/", element: <p>Home page</p> },
-          {
-            element: <Outlet />,
-            errorElement: <RouteErrorBoundary embedded />,
-            children: [
-              { path: "/shipments", loader, element: <p>Shipments</p> },
-              { path: "*", element: <NotFoundRoute /> },
-            ],
-          },
-        ],
-      },
-    ],
-    { initialEntries: [initialPath] },
-  );
+async function renderRoutes(initialPath: string, gate?: () => never) {
+  const rootRoute = createRootRoute({ component: Shell });
+  const routeTree = rootRoute.addChildren([
+    createRoute({ getParentRoute: () => rootRoute, path: "/", component: () => <p>Home page</p> }),
+    createRoute({
+      getParentRoute: () => rootRoute,
+      path: "/shipments",
+      beforeLoad: gate,
+      component: () => <p>Shipments</p>,
+    }),
+    createRoute({ getParentRoute: () => rootRoute, path: "$", component: () => <NotFoundRoute /> }),
+  ]);
+  const router = createRouter({
+    routeTree,
+    history: createMemoryHistory({ initialEntries: [initialPath] }),
+    defaultErrorComponent: RouteErrorBoundary,
+  });
+  await router.load();
   render(<RouterProvider router={router} />);
   return router;
 }
 
 describe("route errors", () => {
   it("keeps the navigation on screen for an unknown address and shows the path", async () => {
-    renderRoutes("/admin/agent-control4");
+    await renderRoutes("/admin/agent-control4");
 
     expect(await screen.findByRole("heading", { name: "We can't find that page" })).toBeVisible();
     expect(screen.getByText("App navigation")).toBeVisible();
@@ -132,7 +140,7 @@ describe("route errors", () => {
   });
 
   it("goes to the dashboard from the not-found state", async () => {
-    const router = renderRoutes("/nowhere");
+    const router = await renderRoutes("/nowhere");
 
     await userEvent.click(await screen.findByRole("button", { name: "Go to dashboard" }));
 
@@ -141,21 +149,22 @@ describe("route errors", () => {
   });
 
   it("offers going back only when there is an in-app entry to go back to", async () => {
-    const router = renderRoutes("/nowhere");
+    const router = await renderRoutes("/nowhere");
 
     expect(await screen.findByRole("heading", { name: "We can't find that page" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Go back" })).not.toBeInTheDocument();
 
-    await act(() => router.navigate("/elsewhere"));
+    await act(() => router.navigate({ to: "/elsewhere" }));
 
     expect(await screen.findByRole("button", { name: "Go back" })).toBeVisible();
   });
 
   it("explains a refused permission without a reload that cannot help", async () => {
-    renderRoutes("/shipments", () => {
-      throw new Response("Missing permission: shipment:read", {
+    await renderRoutes("/shipments", () => {
+      throw new RouteRefusal({
         status: 403,
         statusText: "Missing shipment:read",
+        data: "Missing permission: shipment:read",
       });
     });
 

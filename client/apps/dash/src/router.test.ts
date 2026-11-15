@@ -1,10 +1,20 @@
-import { routes } from "@/router";
+import { routeTree } from "@/router";
+import type { RouteGateContext } from "@trenova/shared/lib/router/gates";
+import { enterContext } from "@trenova/shared/testing/gate-context";
+import { createTestRouter } from "@trenova/shared/testing/test-router";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { userSchema, type User } from "@trenova/shared/types/user";
-import { createMemoryRouter, type LoaderFunctionArgs, type RouteObject } from "react-router";
+import { isRedirect, type AnyRoute } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// The page modules are not under test, and loading them would pull every page's code into
+// this run; the gates and the router's rules for when they run are kept exactly as they are.
+vi.mock("@tanstack/react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@tanstack/react-router")>()),
+  lazyRouteComponent: () => () => null,
+}));
 
 // The session check is GET /users/me/. Every failure the server sends is an RFC 9457
 // problem document; the rate limiter's carries Retry-After.
@@ -42,37 +52,19 @@ function answerSessionCheckWith(outcome: Response | Error) {
   );
 }
 
-// The pathless layout every signed-in driver page sits under.
-function findSignedInLayout(entries: RouteObject[]): RouteObject | undefined {
-  for (const entry of entries) {
-    if (entry.children?.some((child) => child.path === "/dash")) {
-      return entry;
-    }
-    if (entry.children) {
-      const found = findSignedInLayout(entry.children);
-      if (found) {
-        return found;
-      }
-    }
+// The gate of the pathless layout every signed-in driver page sits under.
+async function runProtectedGate(): Promise<{ thrown: unknown }> {
+  const layout = (createTestRouter(routeTree).routesById as Record<string, AnyRoute>)["/signed-in"];
+  const gate = layout?.options.beforeLoad as ((context: RouteGateContext) => unknown) | undefined;
+  if (!gate) {
+    throw new Error("the signed-in layout has no gate");
   }
-  return undefined;
-}
-
-async function runProtectedLoader(): Promise<{ value: unknown; thrown: unknown }> {
-  const layout = findSignedInLayout(routes);
-  if (typeof layout?.loader !== "function") {
-    throw new Error("the signed-in layout has no loader");
+  try {
+    await gate(enterContext("/dash/loads"));
+    return { thrown: undefined };
+  } catch (thrown) {
+    return { thrown };
   }
-  return Promise.resolve(
-    layout.loader({
-      request: new Request("http://localhost/dash/loads"),
-      params: {},
-      context: undefined,
-    } as unknown as LoaderFunctionArgs),
-  ).then(
-    (value) => ({ value, thrown: undefined }),
-    (thrown: unknown) => ({ value: undefined, thrown }),
-  );
 }
 
 function signedInUser(isAuthenticated: boolean) {
@@ -82,7 +74,7 @@ function signedInUser(isAuthenticated: boolean) {
   });
 }
 
-describe("dashProtectedLoader", () => {
+describe("the dash session gate", () => {
   beforeEach(() => {
     vi.spyOn(usePermissionStore.getState(), "clearPermissions").mockImplementation(() => {});
   });
@@ -98,9 +90,8 @@ describe("dashProtectedLoader", () => {
     signedInUser(false);
     answerSessionCheckWith(problemResponse(429, "rate-limit-exceeded", "Rate Limit Exceeded"));
 
-    const { value, thrown } = await runProtectedLoader();
+    const { thrown } = await runProtectedGate();
 
-    expect(value).toBeUndefined();
     expect(thrown).toBeInstanceOf(ApiRequestError);
     expect((thrown as ApiRequestError).status).toBe(429);
   });
@@ -109,21 +100,19 @@ describe("dashProtectedLoader", () => {
     signedInUser(true);
     answerSessionCheckWith(new TypeError("Failed to fetch"));
 
-    const { value, thrown } = await runProtectedLoader();
+    const { thrown } = await runProtectedGate();
 
     expect(thrown).toBeUndefined();
-    expect(value).toBeNull();
   });
 
   it("still sends an expired session to /dash/login", async () => {
     signedInUser(true);
     answerSessionCheckWith(problemResponse(401, "authentication-error", "Authentication Failed"));
 
-    const { value, thrown } = await runProtectedLoader();
+    const { thrown } = await runProtectedGate();
 
-    expect(thrown).toBeUndefined();
-    expect(value).toBeInstanceOf(Response);
-    expect((value as Response).headers.get("Location")).toBe("/dash/login");
+    expect(isRedirect(thrown)).toBe(true);
+    expect((thrown as { options: { href?: string } }).options.href).toBe("/dash/login");
   });
 });
 
@@ -147,15 +136,6 @@ const currentUser = userSchema.parse({
   mustChangePassword: false,
   lastLoginAt: 1779811303,
 });
-
-// The page modules are not under test; the loaders and revalidation rules are kept exactly
-// as the app has them.
-function withoutPages(entries: RouteObject[]): RouteObject[] {
-  return entries.map((entry) => {
-    const { lazy: _lazy, children, ...rest } = entry;
-    return (children ? { ...rest, children: withoutPages(children) } : rest) as RouteObject;
-  });
-}
 
 describe("dash signed-in route revalidation", () => {
   let sessionChecks = 0;
@@ -190,8 +170,8 @@ describe("dash signed-in route revalidation", () => {
   });
 
   async function startAt(path: string) {
-    const router = createMemoryRouter(withoutPages(routes), { initialEntries: [path] });
-    await vi.waitFor(() => expect(router.state.initialized).toBe(true));
+    const router = createTestRouter(routeTree, [path]);
+    await router.load();
     return router;
   }
 
@@ -201,22 +181,20 @@ describe("dash signed-in route revalidation", () => {
     expect(afterLoad).toBeGreaterThan(0);
 
     for (const status of ["upcoming", "completed", "active"]) {
-      await router.navigate(`/dash/loads?status=${status}`);
+      await router.navigate({ href: `/dash/loads?status=${status}` });
     }
 
-    expect(router.state.location.search).toBe("?status=active");
+    expect(router.state.location.searchStr).toBe("?status=active");
     expect(sessionChecks).toBe(afterLoad);
-    router.dispose();
   });
 
   it("re-runs the session check when the path changes", async () => {
     const router = await startAt("/dash/loads?status=active");
     const afterLoad = sessionChecks;
 
-    await router.navigate("/dash/pay");
+    await router.navigate({ href: "/dash/pay" });
 
     expect(router.state.location.pathname).toBe("/dash/pay");
     expect(sessionChecks).toBeGreaterThan(afterLoad);
-    router.dispose();
   });
 });

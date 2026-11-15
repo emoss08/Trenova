@@ -3,7 +3,7 @@ import { factoring as factoringQueries } from "@/lib/queries/factoring";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Navigate, useParams } from "react-router";
+import { Navigate, useParams } from "@tanstack/react-router";
 import { FactoringCompanyPageSkeleton } from "./_components/factoring-company-skeleton";
 import { factoringCompanyPath, type FactoringCompanyTab } from "./use-factoring-company-state";
 
@@ -52,13 +52,13 @@ function OwnerRedirect({
 }
 
 export function FactoringAgreementRedirectPage() {
-  const { id = "" } = useParams<{ id: string }>();
+  const { id = "" } = useParams({ strict: false });
   const owner = useQuery({ ...factoringQueries.agreementOwner(id), enabled: id !== "" });
   return <OwnerRedirect owner={owner} tab="agreement" open={{ agreement: id }} />;
 }
 
 export function FactoringNoticeRedirectPage() {
-  const { id = "" } = useParams<{ id: string }>();
+  const { id = "" } = useParams({ strict: false });
   const owner = useQuery({ ...factoringQueries.noaOwner(id), enabled: id !== "" });
   return <OwnerRedirect owner={owner} tab="customers" open={{ noa: id }} />;
 }

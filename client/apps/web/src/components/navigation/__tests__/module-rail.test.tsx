@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { NavModule } from "@/config/navigation.types";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ModuleRail } from "../module-rail";
 import type { SidebarModuleView } from "../sidebar-model";
@@ -75,9 +75,9 @@ afterEach(() => {
 
 function renderRail(panelFolded: boolean) {
   return render(
-    <MemoryRouter initialEntries={["/shipments"]}>
+    <TestRouter initialEntries={["/shipments"]}>
       <ModuleRail panelFolded={panelFolded} search={panelFolded} />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

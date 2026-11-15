@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   fetchWorkerRosterAttention,
@@ -11,7 +12,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { rosterViews, type RosterViewId } from "@trenova/shared/lib/worker-roster-views";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import { formatPtoDayTotal } from "@trenova/shared/lib/pto";
-import { Link } from "react-router";
 import type { WidgetProps } from "../widget-registry";
 import { WidgetShell } from "../widget-shell";
 

@@ -24,7 +24,7 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { AddRecordAction, DockAction, RowAction } from "@trenova/shared/types/data-table";
 import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { archiveLibraries, type HeldArchive } from "./archive-libraries";
 import { getColumns } from "./formula-library-columns";
 
@@ -51,7 +51,8 @@ export default function FormulaLibrariesDataTable() {
           ),
         );
         const [only] = copies;
-        if (copies.length === 1 && only?.id) void navigate(formulaLibraryRoutes.edit(only.id));
+        if (copies.length === 1 && only?.id)
+          void navigate({ to: formulaLibraryRoutes.edit(only.id) });
       } catch {
         toast.error(t("The libraries could not be duplicated"));
       } finally {
@@ -146,7 +147,7 @@ export default function FormulaLibrariesDataTable() {
         label: t("New formula library"),
         description: t("Write functions and constants your formula templates import."),
         icon: FilePlus02Icon,
-        onClick: () => void navigate(formulaLibraryRoutes.new),
+        onClick: () => void navigate({ to: formulaLibraryRoutes.new }),
       },
     ],
     [navigate, t],
@@ -166,9 +167,9 @@ export default function FormulaLibrariesDataTable() {
         enableSelectionExport={false}
         dockActions={dockActions}
         contextMenuActions={contextMenuActions}
-        onAddRecord={() => void navigate(formulaLibraryRoutes.new)}
+        onAddRecord={() => void navigate({ to: formulaLibraryRoutes.new })}
         onRowClick={(row) => {
-          if (row.original.id) void navigate(formulaLibraryRoutes.edit(row.original.id));
+          if (row.original.id) void navigate({ to: formulaLibraryRoutes.edit(row.original.id) });
         }}
         addRecordActions={addRecordActions}
       />

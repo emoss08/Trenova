@@ -24,7 +24,7 @@ import {
   SlashCircle01Icon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 
 type SignerPayload = { signerName: string; signerTitle: string };
 
@@ -185,7 +185,7 @@ function ThrottledCard() {
 export function RateConfirmationPublicPage() {
   const t = useT();
 
-  const { token = "" } = useParams();
+  const { token = "" } = useParams({ strict: false });
 
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<PublicLinkErrorKind | null>(null);

@@ -134,8 +134,8 @@ export function toDispatchBoardInput(range: TimeRange, filters: BoardFilters): D
  * Resolves the board input from a request URL so a route loader can start the board
  * query before the console mounts. Reads the same parsers `useDispatchWindow` does.
  */
-export function dispatchBoardInputFromRequest(request: Request): DispatchBoardInput {
-  const { at, zoom, covered, search, fleets, customers } = loadDispatchWindow(request);
+export function dispatchBoardInputFromSearch(searchParams: URLSearchParams): DispatchBoardInput {
+  const { at, zoom, covered, search, fleets, customers } = loadDispatchWindow(searchParams);
   return toDispatchBoardInput(getRangeForDays(parseAnchorDate(at), zoom), {
     includeCovered: covered,
     search,

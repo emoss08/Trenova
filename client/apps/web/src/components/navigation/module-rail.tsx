@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { OrgSwitcher } from "@/components/navigation/org-switcher";
 import { HoverGlideGroup } from "@/components/hover-glide";
@@ -26,7 +27,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { useRef, useState, type ReactElement, type ReactNode } from "react";
-import { Link } from "react-router";
 import { GO_CHORD_KEY, MODULE_GO_KEYS } from "@/components/navigation/rail-shortcuts";
 
 export const RAIL_WIDTH_CLASS = "w-12";

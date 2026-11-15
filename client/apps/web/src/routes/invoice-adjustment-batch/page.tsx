@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
@@ -21,7 +22,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useMemo } from "react";
-import { Link } from "react-router";
 import { invoiceAdjustmentBatchSearchParamsParser } from "./use-invoice-adjustment-batch-state";
 
 const statusChoices = [

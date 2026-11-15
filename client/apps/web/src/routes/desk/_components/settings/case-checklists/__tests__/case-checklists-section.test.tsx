@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { caseChecklistService } from "@/services/case-checklist";
 import type { ChecklistTemplate, ChecklistTemplates, TemplateItem } from "@/types/case-checklist";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CaseChecklistsSection } from "../case-checklists-section";
 
@@ -64,9 +64,9 @@ function renderSection({ readOnly = false } = {}) {
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <MemoryRouter>
+      <TestRouter>
         <CaseChecklistsSection readOnly={readOnly} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 

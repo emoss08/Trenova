@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import type { DeskTrailer as DeskTrailerRecord } from "@/lib/graphql/trailer-card";
 import { trailer as trailerQueries } from "@/lib/queries/trailer";
@@ -5,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
 import { CardDocuments } from "../../record-card/card-documents";
 import { CardShipments } from "../../record-card/card-shipments";

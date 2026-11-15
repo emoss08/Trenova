@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { placeholderOf, writeInBox } from "../composer/editor/editor-test-kit";
 import type { ThreadAsks, ThreadAskRequest } from "@/components/assistant/ask-requests";
 import { approvalQueue } from "@/components/assistant/approval-queue";
 import type { AssistantMessage, AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { preview } from "@/components/assistant/__tests__/preview-fixtures";
 import { DESK_SETTINGS_DEFAULTS, useDeskSettingsStore } from "@/stores/desk-settings-store";
@@ -217,7 +217,7 @@ function renderThread(props: Partial<DeskThreadProps> = {}) {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/shipments"]}>
+      <TestRouter initialEntries={["/shipments"]}>
         <div className="dk-chat">
           <DeskThread
             thread={thread}
@@ -227,7 +227,7 @@ function renderThread(props: Partial<DeskThreadProps> = {}) {
             {...props}
           />
         </div>
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

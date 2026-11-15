@@ -1,8 +1,11 @@
 import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PageLayoutStub, renderAccountingPage } from "@/test/accounting-page-mocks";
+import {
+  PageLayoutStub,
+  renderAccountingPage,
+  renderAccountingRoute,
+} from "@/test/accounting-page-mocks";
 import { BankReceiptBatchDetailPage } from "../detail-page";
 import { BankReceiptBatchPage } from "../page";
 
@@ -53,12 +56,7 @@ describe("import batch empty states", () => {
   });
 
   it("says a batch carried nothing when it has no receipts", async () => {
-    renderAccountingPage(
-      <Routes>
-        <Route path="/batches/:batchId" element={<BankReceiptBatchDetailPage />} />
-      </Routes>,
-      ["/batches/brb_1"],
-    );
+    await renderAccountingRoute("/batches/$batchId", BankReceiptBatchDetailPage, "/batches/brb_1");
 
     expect(await screen.findByText("No receipts in this batch")).toBeInTheDocument();
   });

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { useConnectedAccountingSystem } from "@/hooks/use-connected-accounting-system";
 import {
@@ -12,7 +13,6 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { lazy } from "react";
-import { Link } from "react-router";
 import {
   InboundNotices,
   InboundSummary,

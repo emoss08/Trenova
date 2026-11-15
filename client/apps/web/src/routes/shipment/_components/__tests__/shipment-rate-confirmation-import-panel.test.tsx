@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Document } from "@trenova/shared/types/document";
 import type { DocumentExtractionStatus } from "@/types/document-control";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ShipmentRateConfirmationImportPanel } from "../shipment-rate-confirmation-import-panel";
 
@@ -86,9 +86,9 @@ async function renderBlockedImport() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <ShipmentRateConfirmationImportPanel open onOpenChange={() => undefined} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 

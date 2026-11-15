@@ -1,5 +1,6 @@
 import type {
   EditionDefinition,
+  EditionRoute,
   EditionPlan,
   EditionRouteMount,
   LoginPromptProps,
@@ -7,7 +8,6 @@ import type {
 } from "./types";
 import { EDITION_ROUTE_MOUNTS } from "./types";
 import type { ReactNode } from "react";
-import type { RouteObject } from "react-router";
 
 function EmptySlot(): ReactNode {
   return null;
@@ -29,7 +29,7 @@ export function defineEdition(definition: EditionDefinition): EditionDefinition 
  * slots and spreads routes without asking whether an edition is installed.
  */
 export function resolveEdition(definition: EditionDefinition | undefined): ResolvedEdition {
-  const routes = {} as Record<EditionRouteMount, readonly RouteObject[]>;
+  const routes = {} as Record<EditionRouteMount, readonly EditionRoute[]>;
   for (const mount of EDITION_ROUTE_MOUNTS) {
     routes[mount] = definition?.routes?.[mount] ?? [];
   }
@@ -45,7 +45,7 @@ export function resolveEdition(definition: EditionDefinition | undefined): Resol
       RootHost: definition?.slots?.RootHost ?? EmptySlot,
       LoginPrompt: definition?.slots?.LoginPrompt ?? FallbackLoginPrompt,
     },
-    protectedLoaders: definition?.protectedLoaders ?? [],
+    protectedGates: definition?.protectedGates ?? [],
     plan: definition?.plan ?? NO_PLAN,
     messages: definition?.messages ?? {},
   };

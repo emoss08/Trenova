@@ -1,11 +1,12 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import type { AccountingSyncStatus } from "@/lib/graphql/accounting-sync";
 import { netSuiteProfile, quickBooksProfile, xeroProfile } from "@/test/accounting-profiles";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountingAuthorizationCallback } from "../accounting-authorization-callback";
 import {
@@ -38,15 +39,15 @@ const NETSUITE_CALLBACK = "/admin/integrations/netsuite/callback";
 
 function Landing() {
   const location = useLocation();
-  return <p data-testid="landed">{`${location.pathname}${location.search}`}</p>;
+  return <p data-testid="landed">{`${location.pathname}${location.searchStr}`}</p>;
 }
 
 function AddressBar() {
   const location = useLocation();
-  return <p data-testid="address">{`${location.pathname}${location.search}`}</p>;
+  return <p data-testid="address">{`${location.pathname}${location.searchStr}`}</p>;
 }
 
-function renderCallback(
+async function renderCallback(
   search: string,
   vendor: AccountingVendor = quickBooksVendor,
   callbackPath = QUICKBOOKS_CALLBACK,
@@ -54,30 +55,32 @@ function renderCallback(
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return render(
-    <StrictMode>
-      <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={[`${callbackPath}${search}`]}>
-          <Routes>
-            <Route
-              path={callbackPath}
-              element={
-                <>
-                  <AccountingAuthorizationCallback vendor={vendor} />
-                  <AddressBar />
-                </>
-              }
-            />
-            <Route path="/admin/integrations" element={<Landing />} />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>
-    </StrictMode>,
+  return renderAtRoutes(
+    [
+      {
+        path: callbackPath,
+        component: () => (
+          <>
+            <AccountingAuthorizationCallback vendor={vendor} />
+            <AddressBar />
+          </>
+        ),
+      },
+      { path: "/admin/integrations", component: Landing },
+    ],
+    {
+      initialEntries: [`${callbackPath}${search}`],
+      wrapper: ({ children }) => (
+        <StrictMode>
+          <QueryClientProvider client={client}>{children}</QueryClientProvider>
+        </StrictMode>
+      ),
+    },
   );
 }
 
-function renderXero(search: string) {
-  return renderCallback(search, xeroVendor, XERO_CALLBACK);
+async function renderXero(search: string) {
+  return await renderCallback(search, xeroVendor, XERO_CALLBACK);
 }
 
 function statusFor(system: "QuickBooksOnline" | "Xero"): AccountingSyncStatus {
@@ -144,7 +147,7 @@ describe("AccountingAuthorizationCallback", () => {
   it("finishes the connection once, even under StrictMode's double effects, and opens the review step", async () => {
     mocks.finishAccountingAuthorization.mockResolvedValue(connected);
 
-    renderCallback("?code=c1&state=s1&realmId=9130348");
+    await renderCallback("?code=c1&state=s1&realmId=9130348");
 
     expect(await screen.findByTestId("landed")).toHaveTextContent(
       "/admin/integrations?type=QuickBooksOnline&setup=connected",
@@ -160,7 +163,7 @@ describe("AccountingAuthorizationCallback", () => {
   });
 
   it("says the person declined and sends nothing when the provider reports access_denied", async () => {
-    renderCallback("?error=access_denied&state=s1");
+    await renderCallback("?error=access_denied&state=s1");
 
     expect(
       await screen.findByText(
@@ -172,7 +175,7 @@ describe("AccountingAuthorizationCallback", () => {
   });
 
   it("names the provider's error code for any other refusal", async () => {
-    renderCallback("?error=invalid_scope&state=s1");
+    await renderCallback("?error=invalid_scope&state=s1");
 
     expect(
       await screen.findByText(
@@ -183,7 +186,7 @@ describe("AccountingAuthorizationCallback", () => {
   });
 
   it("refuses a QuickBooks return that is missing the realm, without finishing", async () => {
-    renderCallback("?code=c1&state=s1");
+    await renderCallback("?code=c1&state=s1");
 
     expect(
       await screen.findByText(
@@ -196,7 +199,7 @@ describe("AccountingAuthorizationCallback", () => {
   it("shows the server's reason when it refuses the connection and stays on the page", async () => {
     mocks.finishAccountingAuthorization.mockRejectedValue(businessError(REALM_TAKEN));
 
-    renderCallback("?code=c1&state=s1&realmId=9130348");
+    await renderCallback("?code=c1&state=s1&realmId=9130348");
 
     expect(await screen.findByText(REALM_TAKEN)).toBeInTheDocument();
     expect(screen.queryByTestId("landed")).not.toBeInTheDocument();
@@ -211,7 +214,7 @@ describe("AccountingAuthorizationCallback", () => {
       }),
     );
 
-    renderCallback("?code=c1&state=s1&realmId=9130348");
+    await renderCallback("?code=c1&state=s1&realmId=9130348");
 
     expect(
       await screen.findByText("Finishing the connection to QuickBooks Online..."),
@@ -230,7 +233,7 @@ describe("AccountingAuthorizationCallback", () => {
       businessError("The accounting integration is not available."),
     );
 
-    renderXero("?code=c1&state=s1");
+    await renderXero("?code=c1&state=s1");
 
     expect(
       await screen.findByText("The accounting integration is not available."),
@@ -242,7 +245,7 @@ describe("AccountingAuthorizationCallback", () => {
   it("finishes a Xero return that carries no company, sending no realm", async () => {
     mocks.finishAccountingAuthorization.mockResolvedValue(connected);
 
-    renderXero("?code=x1&state=s1&scope=openid");
+    await renderXero("?code=x1&state=s1&scope=openid");
 
     expect(await screen.findByTestId("landed")).toHaveTextContent(
       "/admin/integrations?type=Xero&setup=connected",
@@ -262,7 +265,7 @@ describe("AccountingAuthorizationCallback", () => {
     mocks.chooseAccountingCompany.mockResolvedValue(connection);
     const user = userEvent.setup();
 
-    renderXero("?code=x1&state=s1");
+    await renderXero("?code=x1&state=s1");
 
     expect(await screen.findByText("Choose the organisation")).toBeInTheDocument();
     const group = screen.getByRole("radiogroup", { name: "Organisations in Xero" });
@@ -299,7 +302,7 @@ describe("AccountingAuthorizationCallback", () => {
     mocks.chooseAccountingCompany.mockRejectedValue(businessError(taken));
     const user = userEvent.setup();
 
-    renderXero("?code=x1&state=s1");
+    await renderXero("?code=x1&state=s1");
 
     await user.click(await screen.findByRole("radio", { name: "Peak Freight Ltd" }));
     await user.click(screen.getByRole("button", { name: "Connect this organisation" }));
@@ -313,7 +316,7 @@ describe("AccountingAuthorizationCallback", () => {
     vi.useFakeTimers({ now: (NOW + 601) * 1000, toFake: ["Date"] });
     mocks.finishAccountingAuthorization.mockResolvedValue(choice);
 
-    renderXero("?code=x1&state=s1");
+    await renderXero("?code=x1&state=s1");
 
     expect(
       await screen.findByText(
@@ -327,7 +330,7 @@ describe("AccountingAuthorizationCallback", () => {
   it("says nothing was connected when the sign-in covered no organisation", async () => {
     mocks.finishAccountingAuthorization.mockResolvedValue({ kind: "none" });
 
-    renderXero("?code=x1&state=s1");
+    await renderXero("?code=x1&state=s1");
 
     expect(
       await screen.findByText(
@@ -346,7 +349,7 @@ describe("AccountingAuthorizationCallback", () => {
     });
     mocks.finishAccountingAuthorization.mockResolvedValue(connected);
 
-    renderCallback(
+    await renderCallback(
       "?code=n1&state=s1&role=1032&entity=-5&company=1234567_SB1",
       netSuiteVendor,
       NETSUITE_CALLBACK,
@@ -371,7 +374,7 @@ describe("AccountingAuthorizationCallback", () => {
       profile: netSuiteProfile,
     });
 
-    renderCallback("?code=n1&state=s1", netSuiteVendor, NETSUITE_CALLBACK);
+    await renderCallback("?code=n1&state=s1", netSuiteVendor, NETSUITE_CALLBACK);
 
     expect(
       await screen.findByText(/This page was opened without everything NetSuite sends back/),

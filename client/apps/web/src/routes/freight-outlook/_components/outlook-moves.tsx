@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { usePermission } from "@/hooks/use-permission";
 import type {
@@ -21,7 +22,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatCentsWhole } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 import { moveKey, windowOfSlot } from "./outlook-model";
 import { PanelSection, slotLabel, slotRange } from "./outlook-parts";
 import { useOutlookActions } from "./use-outlook-actions";

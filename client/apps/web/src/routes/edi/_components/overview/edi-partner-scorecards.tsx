@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   Table,
@@ -11,8 +12,6 @@ import type { EdiPartnerScorecardsDocument } from "@trenova/graphql/generated/gr
 import { formatDurationFromSeconds } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ResultOf } from "@graphql-typed-document-node/core";
-import { Link } from "react-router";
-
 type EDIPartnerScorecard = ResultOf<
   typeof EdiPartnerScorecardsDocument
 >["ediPartnerScorecards"][number];

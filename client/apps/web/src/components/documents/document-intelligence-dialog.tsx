@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
 import {
@@ -40,7 +41,6 @@ import {
   SpinnerIcon,
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";

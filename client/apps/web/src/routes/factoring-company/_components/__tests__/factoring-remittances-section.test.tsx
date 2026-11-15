@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { FactoringRemittance } from "@/lib/graphql/factoring-remittance";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FactoringRemittancesSection } from "../factoring-remittances-section";
 
@@ -51,9 +51,9 @@ function renderSection() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <FactoringRemittancesSection factoringCompanyId="fac_rts" />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

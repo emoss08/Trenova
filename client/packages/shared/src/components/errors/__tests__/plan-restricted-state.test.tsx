@@ -3,10 +3,11 @@ import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
-import { planRestrictedResponse } from "@trenova/shared/lib/plan-limit";
+import { planRestrictedRefusal } from "@trenova/shared/lib/plan-limit";
+import { createTestRouter } from "@trenova/shared/testing/test-router";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { PermissionManifest } from "@trenova/shared/types/permission";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { createRootRoute, createRoute, Outlet, RouterProvider } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 // The API's refusal of a read an add-on owns: PLAN_RESTRICTED with the feature and the
@@ -87,20 +88,23 @@ describe("ErrorState for a read the plan refuses", () => {
 });
 
 describe("RouteErrorBoundary for a page the plan leaves out", () => {
-  it("shows the plan page, not the permission message, for the loader's refusal", async () => {
-    const router = createMemoryRouter(
-      [
-        {
+  it("shows the plan page, not the permission message, for the route gate's refusal", async () => {
+    const rootRoute = createRootRoute({ component: Outlet });
+    const router = createTestRouter(
+      rootRoute.addChildren([
+        createRoute({
+          getParentRoute: () => rootRoute,
           path: "/factoring-companies",
-          loader: () => {
-            throw planRestrictedResponse(params);
+          beforeLoad: () => {
+            throw planRestrictedRefusal(params);
           },
-          element: <p>Factoring companies</p>,
-          errorElement: <RouteErrorBoundary />,
-        },
-      ],
-      { initialEntries: ["/factoring-companies"] },
+          component: () => <p>Factoring companies</p>,
+          errorComponent: RouteErrorBoundary,
+        }),
+      ]),
+      ["/factoring-companies"],
     );
+    await router.load();
     render(<RouterProvider router={router} />);
 
     expect(await screen.findByRole("heading", { name: "Not on your plan" })).toBeInTheDocument();

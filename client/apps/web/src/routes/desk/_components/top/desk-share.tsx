@@ -2,7 +2,7 @@ import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { ShareDialog, type SharedRecord } from "@/components/share/share-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 
 /**
  * Share what is in front on the Desk, with the dialog every share uses. A
@@ -19,7 +19,7 @@ export function DeskShare({ record }: { record: SharedRecord | null }) {
   return (
     <ShareDialog
       record={record}
-      path={`${location.pathname}${location.search}`}
+      path={`${location.pathname}${location.searchStr}`}
       description={
         record
           ? t(

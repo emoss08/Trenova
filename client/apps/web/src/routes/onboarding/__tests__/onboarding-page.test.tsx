@@ -1,11 +1,11 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import { onboardingStateQueryOptions } from "@/lib/queries/onboarding";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { ChangeEvent } from "react";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -107,19 +107,21 @@ const pendingState = {
 
 let queryClient: QueryClient;
 
-function renderOnboarding() {
+async function renderOnboarding() {
   queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/onboarding"]}>
-        <Routes>
-          <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/" element={<p>Home screen</p>} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+  return await renderAtRoutes(
+    [
+      { path: "/onboarding", component: () => <OnboardingPage /> },
+      { path: "/", component: () => <p>Home screen</p> },
+    ],
+    {
+      initialEntries: ["/onboarding"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      ),
+    },
   );
 }
 
@@ -213,7 +215,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
   });
 
   it("greets by first name and prefills the company name from signup", async () => {
-    renderOnboarding();
+    await renderOnboarding();
 
     expect(
       await screen.findByText(/Hi Marcus, I'm Nova\./, { selector: ".nv-prose" }),
@@ -228,7 +230,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
       organization: { ...pendingState.organization, timezone: "" },
     });
     const user = userEvent.setup();
-    renderOnboarding();
+    await renderOnboarding();
 
     await answerName(user);
     expect(
@@ -243,7 +245,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
 
   it("leaves number keys and Enter to the other-timezone list while it is open", async () => {
     const user = userEvent.setup();
-    renderOnboarding();
+    await renderOnboarding();
 
     await answerName(user);
     await user.click(await screen.findByRole("button", { name: "Other timezone\u2026" }));
@@ -267,7 +269,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
 
   it("holds the name turn until a name is given", async () => {
     const user = userEvent.setup();
-    renderOnboarding();
+    await renderOnboarding();
 
     const input = await screen.findByPlaceholderText("Company name");
     await user.clear(input);
@@ -279,7 +281,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
 
   it("refuses a short ZIP code and a malformed SCAC", async () => {
     const user = userEvent.setup();
-    renderOnboarding();
+    await renderOnboarding();
 
     await answerName(user);
     await answerTimezone(user);
@@ -300,7 +302,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
 
   it("skips both IDs at once", async () => {
     const user = userEvent.setup();
-    renderOnboarding();
+    await renderOnboarding();
 
     await answerName(user);
     await answerTimezone(user);
@@ -314,7 +316,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
 
   it("picks the operation type and sample data with number keys", async () => {
     const user = userEvent.setup();
-    renderOnboarding();
+    await renderOnboarding();
 
     await answerName(user);
     await answerTimezone(user);
@@ -331,7 +333,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
 
   it("returns to the review after editing a line from it", async () => {
     const user = userEvent.setup();
-    renderOnboarding();
+    await renderOnboarding();
 
     await walkToReview(user);
     await user.click(screen.getByRole("button", { name: /Company name/ }));
@@ -349,7 +351,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
 
   it("walks back one turn with Escape and keeps the answers", async () => {
     const user = userEvent.setup();
-    renderOnboarding();
+    await renderOnboarding();
 
     await answerName(user);
     await answerTimezone(user);
@@ -375,7 +377,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
       }),
     );
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    renderOnboarding();
+    await renderOnboarding();
 
     await walkToReview(user);
     expect(screen.getByRole("button", { name: /Address/ })).toHaveTextContent(
@@ -438,7 +440,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
       }),
     );
     const user = userEvent.setup();
-    renderOnboarding();
+    await renderOnboarding();
 
     const finish = await walkToReview(user);
     await user.click(finish);
@@ -458,7 +460,7 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
   it("offers to try again when the refusal names no field", async () => {
     mocks.complete.mockRejectedValueOnce(new Error("network down"));
     const user = userEvent.setup();
-    renderOnboarding();
+    await renderOnboarding();
 
     await user.click(await walkToReview(user));
     const retry = await screen.findByRole("button", { name: "Try again" });

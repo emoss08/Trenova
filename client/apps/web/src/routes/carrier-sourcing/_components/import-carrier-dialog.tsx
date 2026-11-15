@@ -26,7 +26,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useEffect } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
   CARRIER_CODE_MAX_LENGTH,
@@ -115,7 +115,7 @@ export function ImportCarrierDialog({
         description: t("It starts in Pending compliance until someone reviews it."),
         action: {
           label: t("Open carrier"),
-          onClick: () => void navigate(carrierPanelPath(carrier.id, "intelligence")),
+          onClick: () => void navigate({ to: carrierPanelPath(carrier.id, "intelligence") }),
         },
       });
       await queryClient.invalidateQueries({ queryKey: ["carrier-list"] });

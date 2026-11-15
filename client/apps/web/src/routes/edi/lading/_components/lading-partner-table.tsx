@@ -4,7 +4,7 @@ import { ediTableGraphQLConfigs } from "@/lib/graphql/edi-table";
 import type { EDIPartner } from "@trenova/shared/types/edi";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { getPartnerColumns } from "../../_components/edi-partner-columns";
 
 /** The partners, each row opening that partner's project in the Lading studio. */
@@ -22,7 +22,7 @@ export default function LadingPartnerTable() {
       columns={columns}
       graphql={ediTableGraphQLConfigs.partners}
       enableCreateAction={false}
-      onRowClick={(row) => navigate(`/edi/lading/${row.original.id}`)}
+      onRowClick={(row) => navigate({ to: `/edi/lading/${row.original.id}` })}
     />
   );
 }

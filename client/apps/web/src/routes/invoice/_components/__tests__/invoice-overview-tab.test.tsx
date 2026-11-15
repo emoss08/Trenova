@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { periodRange } from "@/lib/billing-schedule";
 import { InvoiceOverviewTab } from "../invoice-overview-tab";
@@ -62,7 +62,7 @@ function invoice(overrides: Partial<Invoice> = {}): Invoice {
 
 function renderOverview(value: Invoice) {
   render(
-    <MemoryRouter>
+    <TestRouter>
       <InvoiceOverviewTab
         invoice={value}
         isCurrentVersion
@@ -70,7 +70,7 @@ function renderOverview(value: Invoice) {
         latestAdjustment={null}
         latestAdjustmentDetail={undefined}
       />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   matchesTeamSearch,
@@ -25,7 +26,6 @@ import {
   SearchLgIcon,
 } from "@trenova/shared/components/icons";
 import { useId, useMemo, useState } from "react";
-import { Link } from "react-router";
 import { HealthTrio, MemberIdentity, memberHref } from "./member-identity";
 
 type RosterView = "all" | TeamPath;

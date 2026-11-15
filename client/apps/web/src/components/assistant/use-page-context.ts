@@ -1,7 +1,7 @@
 import { readPageView } from "@/stores/page-view-store";
 import type { AssistantPageContext } from "@/types/assistant";
 import { useCallback } from "react";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { derivePageContext } from "./page-context";
 
 /**
@@ -11,7 +11,7 @@ import { derivePageContext } from "./page-context";
  * are the ones on screen when the question leaves.
  */
 export function usePageContext(): () => AssistantPageContext | null {
-  const { pathname, search } = useLocation();
+  const { pathname, searchStr: search } = useLocation();
 
   return useCallback(() => {
     const context = derivePageContext({

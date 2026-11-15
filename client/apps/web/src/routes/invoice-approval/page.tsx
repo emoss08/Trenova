@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
@@ -37,7 +38,6 @@ import {
 import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
   invoiceAdjustmentOperationsSummaryQuery,

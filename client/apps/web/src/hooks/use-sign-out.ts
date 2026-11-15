@@ -3,7 +3,7 @@ import { clearSessionCache } from "@/lib/session-cache";
 import { signInPathAfter, type SignOutNotice } from "@trenova/shared/lib/sign-out-notice";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 
 /**
  * Ends the session the one way it may end. Any reply still being read is let
@@ -27,7 +27,7 @@ export function useSignOut(): (options?: { notice?: SignOutNotice }) => Promise<
         // Cached queries belong to the session that just ended, in memory and on disk; the
         // next sign-in must not see the last organization's plan, usage or records.
         await clearSessionCache();
-        void navigate(signInPathAfter("/login", notice));
+        void navigate({ to: signInPathAfter("/login", notice) });
       }
     },
     [logout, navigate],

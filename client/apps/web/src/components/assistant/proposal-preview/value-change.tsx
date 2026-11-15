@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import type {
   AgentPreviewOperation,
   PreviewFieldChange,
@@ -7,7 +8,6 @@ import { DescriptionEmpty } from "@trenova/shared/components/ui/description-list
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { ArrowRightIcon, Lock01Icon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { formatDisplayValue, isFigureType, type DisplayType } from "../readable-values";
 import { displayTypeOf, previewRecordPath } from "./preview-format";
 

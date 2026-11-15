@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { ActivityEntry } from "@/lib/graphql/record-activity";
 import type { RecordShipment } from "@/lib/graphql/record-shipments";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskDriverSettlement } from "../desk-driver-settlement";
 import {
@@ -81,9 +81,9 @@ function draw() {
   const onBack = vi.fn();
   const view = render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskDriverSettlement recordId="dstl_142" onBack={onBack} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
   return { ...view, onBack };
@@ -207,13 +207,13 @@ describe("DeskDriverSettlement", () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const card = (recordId: string) => (
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskDriverSettlement
             recordId={recordId}
             order={["dstl_142", "dstl_147"]}
             onSelect={vi.fn()}
           />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>
     );
     const { container, rerender } = render(card("dstl_142"));

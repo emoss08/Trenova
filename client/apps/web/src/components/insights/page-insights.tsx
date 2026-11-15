@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SectionPanel, SectionPanelLink } from "@/components/section-panel";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -10,7 +11,6 @@ import {
 } from "@/routes/home/_components/widgets/insight-presentation";
 import type { Insight, InsightSeverity, InsightSurface } from "@/types/insight";
 import { CheckCircleIcon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { PAGE_INSIGHTS_LIMIT, usePageInsights } from "./use-page-insights";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 

@@ -2,7 +2,7 @@ import { isAppPath } from "@/lib/app-path";
 import { createOnceClaimer } from "@/lib/claim-once";
 import type { AssistantArtifactEvent } from "@/types/assistant";
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 
 /*
  * "Take me there" moves the app once, when the assistant's navigation
@@ -60,6 +60,6 @@ export function useFollowNavigation(
       return;
     }
     onFollow?.();
-    void navigate(target);
+    void navigate({ to: target });
   }, [artifacts, navigate, onFollow]);
 }

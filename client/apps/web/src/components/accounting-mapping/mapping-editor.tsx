@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useAccountingMappingActions } from "@/hooks/use-accounting-mapping-actions";
 import { useAccountingMappingLabels } from "@/hooks/use-accounting-mapping-labels";
 import { accountingMappingCreatable, accountingMappingRecordPath } from "@/lib/accounting-sync";
@@ -15,7 +16,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { formatPercent } from "@trenova/shared/lib/utils";
 import { useState } from "react";
-import { Link } from "react-router";
 import { MappingRecordPicker } from "./mapping-record-picker";
 import { MappingStateBadge } from "./mapping-state-badge";
 

@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ProposalPreview, ProposalPreviewRequest } from "@/lib/graphql/agent-preview";
 import type { ProposalField } from "@/types/assistant";
@@ -73,9 +73,9 @@ function renderEditor(overrides: Partial<ProposalEditorRequest> = {}) {
 
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <ProposalEditor request={request} onClose={onClose} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 

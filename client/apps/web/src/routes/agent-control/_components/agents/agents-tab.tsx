@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
   AGENT_EDIT_PARAM,
@@ -263,10 +263,11 @@ export default function AgentsTab() {
     [save],
   );
   const ask = useCallback(
-    (agent: AgentDefinitionRow) => void navigate(`/desk/agents/${encodeURIComponent(agent.id)}`),
+    (agent: AgentDefinitionRow) =>
+      void navigate({ to: `/desk/agents/${encodeURIComponent(agent.id)}` }),
     [navigate],
   );
-  const reviewInDesk = useCallback(() => void navigate(DESK_DECISIONS_PATH), [navigate]);
+  const reviewInDesk = useCallback(() => void navigate({ to: DESK_DECISIONS_PATH }), [navigate]);
   const edit = useCallback(
     (agent: AgentDefinitionRow) => {
       void setOpenId(null);

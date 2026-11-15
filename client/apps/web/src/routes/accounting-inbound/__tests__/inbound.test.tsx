@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { InboundPaymentsLink } from "@/components/accounting-sync/inbound-payments-link";
 import type {
   AccountingInboundApplyPreview,
@@ -10,7 +11,6 @@ import userEvent from "@testing-library/user-event";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { activeInboundBucket, inboundBucketFilter } from "../_components/inbound-filters";
 import { InboundChangePanel } from "../_components/inbound-panel";
@@ -144,7 +144,7 @@ function renderWith(node: ReactNode, searchParams = "") {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   const view = render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <NuqsTestingAdapter
           searchParams={searchParams}
@@ -154,7 +154,7 @@ function renderWith(node: ReactNode, searchParams = "") {
           {node}
         </NuqsTestingAdapter>
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
   return { ...view, urls, client };
 }

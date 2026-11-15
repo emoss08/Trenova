@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { FACTORING_RESERVE_ENTRY_KIND_LABELS } from "@/lib/factoring";
 import type { FactoringReserveEntry } from "@/lib/graphql/factoring";
@@ -12,7 +13,6 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { Link } from "react-router";
 
 /**
  * Reserve movements as rows: when each happened, what it was, the invoice or

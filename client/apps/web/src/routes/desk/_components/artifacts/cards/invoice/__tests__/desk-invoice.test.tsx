@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AccountingSyncObjectState } from "@/lib/graphql/accounting-sync-ledger";
 import type { ActivityEntry } from "@/lib/graphql/record-activity";
 import type { RecordShipment } from "@/lib/graphql/record-shipments";
@@ -5,7 +6,6 @@ import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskInvoice, DeskInvoiceArtifact } from "../desk-invoice";
 import {
@@ -137,9 +137,9 @@ function draw(props: Partial<Parameters<typeof DeskInvoice>[0]> = {}) {
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
   const view = render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskInvoice recordId="inv_412" order={["inv_400", "inv_412"]} {...handlers} {...props} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
   return { ...view, ...handlers, queryClient };
@@ -442,13 +442,13 @@ describe("DeskInvoice", () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskInvoiceArtifact
             artifact={{} as Parameters<typeof DeskInvoiceArtifact>[0]["artifact"]}
             recordId="inv_412"
             fallback={null}
           />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 
@@ -480,9 +480,9 @@ describe("DeskInvoice actions", () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const card = (recordId: string) => (
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskInvoice recordId={recordId} order={["inv_457", "inv_412"]} onSelect={vi.fn()} />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>
     );
     const { container, rerender } = render(card("inv_457"));

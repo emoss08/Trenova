@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { checkTariffSource } from "@/components/formula-editor/tariff-service";
 import { BillView } from "@/components/tariff-bill/bill-view";
 import { refusalText, tariffMessageText } from "@/components/tariff-bill/refusal-text";
@@ -24,7 +25,6 @@ import type {
 } from "@trenova/shared/types/formula-template";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import {
   CardBar,
   CardBarHint,

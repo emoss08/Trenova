@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { EntraLogo } from "@/components/logos/entra";
 import { OktaLogo } from "@/components/logos/okta";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -21,7 +22,6 @@ import {
 } from "@trenova/shared/types/user";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useSearchParams } from "react-router";
 import { AuthErrorText, AuthPasswordField, AuthSubmit, AuthTextField } from "./auth-field";
 import { AuthHeading, AuthQuietButton } from "./auth-primitives";
 import { MFAChallengeForm } from "./mfa-challenge-form";
@@ -52,7 +52,7 @@ export function LoginForm({
   const t = useT();
   const stage = useAuthStage();
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useQueryParams();
   const ssoError = searchParams.get("sso_error");
   const signOutNotice = signOutNoticeFrom(searchParams);
   const setUser = useAuthStore((state) => state.setUser);

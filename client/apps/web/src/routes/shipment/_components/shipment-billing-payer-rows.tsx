@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   PlainBillingQueueStatusBadge,
@@ -11,7 +12,6 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ShipmentBillingPayerReadiness } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { LinkExternal01Icon, ShieldAlertIcon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 
 /**
  * One line per payer on a split shipment: their share, where their queue item

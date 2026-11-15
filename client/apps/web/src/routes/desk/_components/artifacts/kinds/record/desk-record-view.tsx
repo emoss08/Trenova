@@ -1,9 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { formatDisplayValue, statusPhase } from "@/components/assistant/readable-values";
 import { humanizeToolName } from "@/components/assistant/proposal-state";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 import type { RecordFact, RecordView, RouteEnd, RouteStop } from "../../artifact-payloads";
 import { ArtIcon } from "../../desk-art-kinds";
 

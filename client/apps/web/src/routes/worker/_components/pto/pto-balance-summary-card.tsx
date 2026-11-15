@@ -1,10 +1,10 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link } from "react-router";
 import { formatPtoDays, PTOLiabilityDialog } from "./pto-liability-dialog";
 import { ptoBalanceSummaryQuery, ptoLiabilityReportQuery } from "./pto-queries";
 

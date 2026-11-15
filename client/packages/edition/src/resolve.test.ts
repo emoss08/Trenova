@@ -10,7 +10,7 @@ describe("resolveEdition", () => {
     expect(edition.routes).toEqual({ public: [], guest: [], protected: [], admin: [] });
     expect(edition.adminLinks).toEqual([]);
     expect(edition.navItems).toEqual([]);
-    expect(edition.protectedLoaders).toEqual([]);
+    expect(edition.protectedGates).toEqual([]);
     expect(edition.messages).toEqual({});
     expect(edition.plan).toBe(NO_PLAN);
     expect(edition.plan).toEqual({});
@@ -27,17 +27,18 @@ describe("resolveEdition", () => {
 
   it("keeps what an edition declares and defaults the rest", () => {
     const banner = () => null;
+    const signup = { path: "/signup", page: async () => banner };
     const edition = resolveEdition(
       defineEdition({
         id: "cloud",
         name: "Cloud",
-        routes: { guest: [{ path: "/signup" }] },
+        routes: { guest: [signup] },
         adminLinks: [{ href: "/admin/plan", title: "Plan" }],
         slots: { AppBanner: banner },
       }),
     );
 
-    expect(edition.routes.guest).toEqual([{ path: "/signup" }]);
+    expect(edition.routes.guest).toEqual([signup]);
     expect(edition.routes.admin).toEqual([]);
     expect(edition.adminLinks).toHaveLength(1);
     expect(edition.slots.AppBanner).toBe(banner);

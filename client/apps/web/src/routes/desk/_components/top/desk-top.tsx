@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { CaseViewers } from "../record-case/case-viewers";
 import { DeleteConversationCard } from "@/components/assistant/delete-conversation-card";
 import { useDeleteConversation } from "@/components/assistant/use-delete-conversation";
@@ -21,7 +22,6 @@ import { isMacPlatform } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { ReactNode } from "react";
-import { useSearchParams } from "react-router";
 import { preloadDeskWorkspace } from "../artifacts/desk-workspace-lazy";
 import { lensFromParam, lensLabel } from "../attention/lens";
 import { DeskCaseMenu } from "../case/desk-case-menu";
@@ -141,7 +141,7 @@ export function DeskTop({
   needsYou,
 }: DeskTopProps) {
   const t = useT();
-  const [search] = useSearchParams();
+  const [search] = useQueryParams();
   const subject = useDeskMarginStore((state) => state.pageSubject);
   const pageTitle = useDeskMarginStore((state) => state.pageTitle);
   const marginOpen = useDeskMarginStore((state) => state.margin !== null);

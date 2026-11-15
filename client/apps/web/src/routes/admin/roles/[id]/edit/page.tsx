@@ -27,7 +27,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { usePermission } from "@/hooks/use-permission";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { RolePageLayout } from "../../_components/role-builder-layout";
 import { RoleAgentsSection } from "../../_components/role-agents-section";
 import { RolePermissionMatrix } from "../../_components/role-permission-matrix";
@@ -38,7 +38,7 @@ import { toRoleDraft } from "@/lib/role-draft";
 export function RoleEditPage() {
   const t = useT();
 
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isInitializedRef = useRef(false);
@@ -100,7 +100,7 @@ export function RoleEditPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["role-list"] });
       void queryClient.invalidateQueries({ queryKey: ["role", id] });
-      void navigate("/admin/roles");
+      void navigate({ to: "/admin/roles" });
     },
     form,
     resourceName: "Role",
@@ -111,13 +111,13 @@ export function RoleEditPage() {
   });
 
   const handleCancel = useCallback(() => {
-    void navigate("/admin/roles");
+    void navigate({ to: "/admin/roles" });
   }, [navigate]);
 
   const handleDeleted = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ["role-list"] });
     queryClient.removeQueries({ queryKey: ["role", id] });
-    void navigate("/admin/roles");
+    void navigate({ to: "/admin/roles" });
   }, [navigate, queryClient, id]);
 
   if (isLoading) {

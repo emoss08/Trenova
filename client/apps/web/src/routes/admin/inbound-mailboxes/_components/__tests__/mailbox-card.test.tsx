@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { InboundMailbox } from "@/lib/graphql/inbox";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { MailboxCard } from "../mailbox-card";
 
@@ -51,9 +51,9 @@ function renderCard(
     onSendTest,
   };
   render(
-    <MemoryRouter>
+    <TestRouter>
       <MailboxCard mailbox={value} canEdit={canEdit} now={NOW} {...handlers} />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 
   return handlers;

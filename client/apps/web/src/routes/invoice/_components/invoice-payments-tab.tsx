@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -32,7 +33,6 @@ import type { Invoice } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { CoinsHandIcon, InvoiceIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { Link } from "react-router";
 import { ApplyCreditMemoDialog } from "./apply-credit-memo-dialog";
 
 function formatDate(unix: number | null | undefined): string {

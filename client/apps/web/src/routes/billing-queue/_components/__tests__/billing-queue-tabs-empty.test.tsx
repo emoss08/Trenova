@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MessageScrollerProvider } from "@trenova/shared/components/ui/message-scroller";
 import { setLocale } from "@trenova/shared/i18n/runtime";
 import type { ReactElement } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AuditTab from "@/components/audit-tab";
 import { CommentStream } from "@/routes/shipment/_components/comments/comment-stream";
@@ -61,9 +61,9 @@ vi.mock("@/hooks/shipment-comments/use-new-comments-pill", () => ({
 function renderWithin(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>{ui}</QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

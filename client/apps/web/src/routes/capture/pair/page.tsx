@@ -1,3 +1,5 @@
+import { Link } from "@trenova/shared/components/link";
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import {
   CAPTURE_PAIRING_CODE_LENGTH,
@@ -19,7 +21,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CheckCircleIcon, XCircleIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router";
 import { PairingCodeForm } from "./_components/pairing-code-form";
 import { PairingReview, type PairingOutcome } from "./_components/pairing-review";
 
@@ -93,7 +94,7 @@ function LookupFailure({
  */
 export function CapturePairPage() {
   const t = useT();
-  const [searchParams] = useSearchParams();
+  const [searchParams] = useQueryParams();
   const linkedCode = searchParams.get("code") ?? "";
 
   const [submitted, setSubmitted] = useState(() => {

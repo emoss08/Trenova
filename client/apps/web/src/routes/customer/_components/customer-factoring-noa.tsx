@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { FactoringNoaStatusBadge } from "@/components/factoring/factoring-badges";
 import { SendFactoringNoaDialog } from "@/components/factoring/factoring-noa-dialogs";
 import { recordPath } from "@/config/record-links";
@@ -16,7 +17,6 @@ import type { Customer } from "@trenova/shared/types/customer";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { Link } from "react-router";
 
 /** The notice that governs a customer and factor now: the newest one not yet released. */
 export function currentFactoringNoa(notices: readonly FactoringNoa[]): FactoringNoa | null {

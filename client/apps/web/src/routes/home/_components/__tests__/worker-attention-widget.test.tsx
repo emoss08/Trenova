@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { HomeWidget } from "@/lib/graphql/home-layout";
 import { WorkerAttentionWidget } from "../widgets/worker-attention-widget";
@@ -68,9 +68,9 @@ async function renderWidget() {
   });
   function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <MemoryRouter>
+      <TestRouter>
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      </MemoryRouter>
+      </TestRouter>
     );
   }
   render(<WorkerAttentionWidget widget={widget()} data={{} as never} />, { wrapper: Wrapper });

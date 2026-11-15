@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { DocumentExtractionStatus } from "@/types/document-control";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ExtractionNeedsProviderAlert } from "../extraction-needs-provider-alert";
 
@@ -60,9 +60,9 @@ function renderAlert() {
 
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <ExtractionNeedsProviderAlert />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

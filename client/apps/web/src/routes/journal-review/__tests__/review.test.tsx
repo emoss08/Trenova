@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { recordPath } from "@/config/record-links";
 import type { JournalReviewLabels } from "@/hooks/use-journal-review-labels";
 import type { JournalReviewRow, JournalReviewSummary } from "@/lib/graphql/journal-review";
@@ -8,7 +9,6 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import type { ReactElement, ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getJournalReviewColumns } from "../_components/review-columns";
 import {
@@ -62,7 +62,7 @@ function renderWith(node: ReactNode, searchParams = "") {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   const view = render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <NuqsTestingAdapter
           searchParams={searchParams}
@@ -72,7 +72,7 @@ function renderWith(node: ReactNode, searchParams = "") {
           {node}
         </NuqsTestingAdapter>
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
   return { ...view, urls };
 }

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -8,7 +9,6 @@ import { counterparty, type TransferDirection } from "@/lib/edi/transfer-sides";
 import type { EDITransferRow } from "@/lib/graphql/edi-table";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Link01Icon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 
 export function getTransferColumns(
   direction: TransferDirection,

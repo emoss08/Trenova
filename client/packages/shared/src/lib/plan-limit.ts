@@ -1,5 +1,6 @@
 import { markExplained } from "@trenova/shared/lib/explained-errors";
 import { isRecord } from "@trenova/shared/lib/utils";
+import { RouteRefusal } from "@trenova/shared/lib/router/refusal";
 
 export const QUOTA_EXCEEDED_CODE = "QUOTA_EXCEEDED";
 export const PLAN_RESTRICTED_CODE = "PLAN_RESTRICTED";
@@ -201,27 +202,24 @@ export function planRestrictionOf(error: unknown): PlanRestriction | null {
 }
 
 /**
- * What a route loader throws for a page whose feature the organization's plan leaves out. It
- * is the body the API sends for the same refusal, so the route's error boundary explains it
- * exactly as it explains a refused read.
+ * What a route gate throws for a page whose feature the organization's plan leaves out. It
+ * carries the body the API sends for the same refusal, so the route's error component
+ * explains it exactly as it explains a refused read.
  */
-export function planRestrictedResponse(restriction: PlanRestriction): Response {
-  return new Response(
-    JSON.stringify({
+export function planRestrictedRefusal(restriction: PlanRestriction): RouteRefusal {
+  return new RouteRefusal({
+    status: 403,
+    // i18n-ignore: the HTTP status text, never shown
+    statusText: "Plan Restricted",
+    data: {
       type: PLAN_RESTRICTED_TYPE,
       // i18n-ignore: the problem title the API sends, never shown; the error states name the add-on
       title: "Plan Restricted",
       status: 403,
       code: PLAN_RESTRICTED_CODE,
       params: { feature: restriction.feature, addOn: restriction.addOn },
-    }),
-    {
-      status: 403,
-      // i18n-ignore: the HTTP status text, never shown
-      statusText: "Plan Restricted",
-      headers: { "Content-Type": "application/json" },
     },
-  );
+  });
 }
 
 /**

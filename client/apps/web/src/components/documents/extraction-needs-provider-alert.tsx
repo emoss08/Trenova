@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
@@ -8,7 +9,6 @@ import { documentControl } from "@/lib/queries/document-control";
 import { extractionModelReasonSchema } from "@/types/document-control";
 import { useQuery } from "@tanstack/react-query";
 import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
-import { Link } from "react-router";
 
 /**
  * Whether uploaded documents are read. Reading is Document Intelligence: on a plan without it

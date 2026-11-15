@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { DeskAttentionGroup, DeskAttentionItem } from "@/lib/graphql/desk-attention";
 import type { WatchtowerAgentWork } from "@/lib/graphql/watchtower";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it } from "vitest";
 import { watchtowerItem } from "../../watchtower/__tests__/item-fixture";
 import type { WorkingRun } from "@/lib/graphql/ai-control";
@@ -92,9 +92,9 @@ describe("what agents are working on", () => {
     };
 
     render(
-      <MemoryRouter>
+      <TestRouter>
         <AgentsWorking rows={workingRows(null, [row], () => "/desk/r/shipment/shp_1")} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     const link = screen.getByRole("link");
@@ -133,9 +133,9 @@ describe("what agents are working on", () => {
     );
 
     render(
-      <MemoryRouter>
+      <TestRouter>
         <AgentsWorking rows={rows} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     const link = screen.getByRole("link");

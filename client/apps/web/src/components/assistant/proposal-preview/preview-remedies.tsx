@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -12,8 +13,6 @@ import { inviteWorkerToPortal } from "@trenova/shared/lib/graphql/driver-portal"
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { Operation, Resource, type OperationType } from "@trenova/shared/types/permission";
 import { useRef, useState } from "react";
-import { Link } from "react-router";
-
 export type PreviewRemedy = PreviewWarning["remedies"][number];
 
 /**

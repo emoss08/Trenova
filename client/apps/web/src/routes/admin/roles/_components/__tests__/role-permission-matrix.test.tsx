@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { RoleResourceGuide } from "@/lib/graphql/page-access";
 import { stubLayout } from "@/test/layout";
 import type { BundleCatalog, ResourceCategory } from "@/lib/role-api";
@@ -5,7 +6,6 @@ import type { AddPermission } from "@trenova/shared/types/role";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RolePermissionMatrix } from "../role-permission-matrix";
 
@@ -115,13 +115,13 @@ async function renderAdvanced(permissions: AddPermission[]) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <RolePermissionMatrix
           permissions={permissions}
           onPermissionsChange={onPermissionsChange}
           maxSensitivity="restricted"
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
   await userEvent.click(await screen.findByRole("tab", { name: "Advanced" }));

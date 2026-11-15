@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { WatchtowerItem, WatchtowerPanel } from "@/lib/graphql/watchtower";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { watchtowerItem } from "../../../watchtower/__tests__/item-fixture";
 import { ItemPanel } from "../item-panel";
@@ -57,11 +57,11 @@ function show(overrides: Partial<WatchtowerItem>) {
   });
 
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <ItemPanel item={watchtowerItem(overrides)} now={NOW} timezone="UTC" />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

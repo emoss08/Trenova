@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { customerStatementPath } from "@/lib/ar-links";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
@@ -12,7 +13,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { CoinsHandIcon, Download01Icon, File06Icon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { MemoEntryButton } from "@/components/billing/memo-entry-button";
 import { CustomerSnapshotHeader } from "./_components/customer-snapshot-header";
 import { LedgerTable } from "./_components/ledger-table";
@@ -36,7 +37,7 @@ export function CustomerLedgerPage() {
 
   const navigate = useNavigate();
   const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useQueryParams();
   const initialCustomerId = searchParams.get("customerId") ?? "";
 
   const filterForm = useForm<FilterValues>({
@@ -113,7 +114,7 @@ export function CustomerLedgerPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void navigate(customerStatementPath(customerId))}
+              onClick={() => void navigate({ to: customerStatementPath(customerId) })}
             >
               <File06Icon className="size-4" />
               {t("Statement")}
@@ -124,7 +125,9 @@ export function CustomerLedgerPage() {
               <Button
                 size="sm"
                 onClick={() =>
-                  void navigate(`/accounting/ar/payments?panelType=create&customerId=${customerId}`)
+                  void navigate({
+                    to: `/accounting/ar/payments?panelType=create&customerId=${customerId}`,
+                  })
                 }
               >
                 <CoinsHandIcon className="size-4" />

@@ -29,7 +29,7 @@ import { formatUnixDateTimeShort, formatUnixTime } from "@trenova/shared/lib/dat
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useTriageActions } from "../use-triage-actions";
 
 const DAY = 86_400;
@@ -87,7 +87,7 @@ function ShipmentRow({
         id: "open",
         label: t("Open"),
         icon: LinkExternal01Icon,
-        onSelect: () => navigate(recordPath("shipment", shipment.id)),
+        onSelect: () => navigate({ to: recordPath("shipment", shipment.id) }),
       },
       { id: "peek", label: t("Peek"), icon: EyeIcon, onSelect: openPeek },
       { type: "separator" },
@@ -215,7 +215,7 @@ function CustomerRow({ message }: { message: InboundMessageDetail }) {
             id: "open",
             label: t("Open"),
             icon: LinkExternal01Icon,
-            onSelect: () => navigate(recordPath("customer", customer.id)),
+            onSelect: () => navigate({ to: recordPath("customer", customer.id) }),
           },
           { id: "peek", label: t("Peek"), icon: EyeIcon, onSelect: openPeek },
           {
@@ -279,7 +279,7 @@ function RemittanceRows({ messageId }: { messageId: string }) {
     <button
       key={remittance.id}
       type="button"
-      onClick={() => void navigate(recordPath("factoring_remittance", remittance.id))}
+      onClick={() => void navigate({ to: recordPath("factoring_remittance", remittance.id) })}
       className="flex w-full items-center gap-2.5 rounded-lg ui-focus-ring p-2 text-left hover:bg-surface-hover"
     >
       <RowIcon>

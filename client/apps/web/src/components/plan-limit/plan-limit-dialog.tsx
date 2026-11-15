@@ -16,7 +16,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { PlanLimitNotice } from "@trenova/shared/lib/plan-limit";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 
 /** The edition's words for a refusal when it has its own, the host's otherwise. */
 function dialogCopy(
@@ -81,7 +81,7 @@ export function PlanLimitDialog({
                 variant="outline"
                 onClick={() => {
                   onClose();
-                  void navigate(usagePath);
+                  void navigate({ to: usagePath });
                 }}
               >
                 {t("View plan & usage")}

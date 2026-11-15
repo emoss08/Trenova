@@ -1,6 +1,6 @@
 import type { HandleMatch, RoomRail, ShellFrame } from "@/types/router";
 import { createContext, useContext, type ReactNode } from "react";
-import { useMatches } from "react-router";
+import { useMatches } from "@tanstack/react-router";
 
 /**
  * The frame the shell drew around the current route, for the page inside it.
@@ -13,9 +13,9 @@ export function useShellFrame(): ShellFrame {
 }
 
 /** The frame the deepest route that names one asks for; a page when none does. */
-export function frameOfMatches(matches: readonly Pick<HandleMatch, "handle">[]): ShellFrame {
+export function frameOfMatches(matches: readonly HandleMatch[]): ShellFrame {
   for (let index = matches.length - 1; index >= 0; index -= 1) {
-    const frame = matches[index].handle?.frame;
+    const frame = matches[index].staticData?.frame;
     if (frame !== undefined) {
       return frame;
     }
@@ -26,15 +26,13 @@ export function frameOfMatches(matches: readonly Pick<HandleMatch, "handle">[]):
 
 /** The frame the matched routes ask the shell for. */
 export function useRouteFrame(): ShellFrame {
-  const matches = useMatches() as unknown as HandleMatch[];
-
-  return frameOfMatches(matches);
+  return useMatches({ select: frameOfMatches });
 }
 
 /** How the deepest route that names one asks its room's rail to sit; it folds when none does. */
-export function roomRailOfMatches(matches: readonly Pick<HandleMatch, "handle">[]): RoomRail {
+export function roomRailOfMatches(matches: readonly HandleMatch[]): RoomRail {
   for (let index = matches.length - 1; index >= 0; index -= 1) {
-    const roomRail = matches[index].handle?.roomRail;
+    const roomRail = matches[index].staticData?.roomRail;
     if (roomRail !== undefined) {
       return roomRail;
     }
@@ -45,9 +43,7 @@ export function roomRailOfMatches(matches: readonly Pick<HandleMatch, "handle">[
 
 /** How the matched routes ask the shell to sit a room's own rail. */
 export function useRouteRoomRail(): RoomRail {
-  const matches = useMatches() as unknown as HandleMatch[];
-
-  return roomRailOfMatches(matches);
+  return useMatches({ select: roomRailOfMatches });
 }
 
 /**

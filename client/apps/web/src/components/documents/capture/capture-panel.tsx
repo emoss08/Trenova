@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { SectionPanel } from "@/components/section-panel";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -39,7 +40,6 @@ import {
   ScanIcon,
 } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { CaptureRequestDialog } from "./capture-request-dialog";
 import { CoverSheetDialog } from "./cover-sheet-dialog";
 

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { describeApiError } from "@/lib/api-error-message";
 import { Button } from "@trenova/shared/components/ui/button";
 import { LockedReference } from "@trenova/shared/components/withheld-value";
@@ -6,7 +7,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import type { ReferenceKind } from "@trenova/shared/types/generated/reference-views";
 import { Fragment, type ReactNode } from "react";
-import { Link } from "react-router";
 import type { Neighbors } from "./record-card-values";
 
 /*

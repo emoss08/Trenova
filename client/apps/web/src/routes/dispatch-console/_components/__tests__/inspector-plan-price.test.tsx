@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type {
   DispatchBoardMove,
   DispatchCandidate,
@@ -9,7 +10,6 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource, type PermissionManifest } from "@trenova/shared/types/permission";
 import type { User } from "@trenova/shared/types/user";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useDispatchConsoleStore } from "@/stores/dispatch-console-store";
 import { Inspector } from "../inspector";
@@ -157,7 +157,7 @@ function renderInspector(move: DispatchBoardMove) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <Inspector
           move={move}
           moveRead={null}
@@ -173,7 +173,7 @@ function renderInspector(move: DispatchBoardMove) {
           onJumpTo={vi.fn()}
           actions={actions}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

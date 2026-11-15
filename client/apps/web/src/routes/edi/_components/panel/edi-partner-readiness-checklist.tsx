@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
@@ -7,7 +8,6 @@ import { ediService } from "@/services/edi";
 import type { EDIPartner } from "@trenova/shared/types/edi";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, CheckCircleIcon, CircleIcon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const READINESS_LINKS: Record<

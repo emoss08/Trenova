@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyState } from "@/components/empty-state";
 import { ShipmentStatusBadge } from "@trenova/shared/components/status-badge";
@@ -30,7 +31,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
   OffCycleInvoiceDialog,

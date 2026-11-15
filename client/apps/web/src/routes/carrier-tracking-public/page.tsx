@@ -35,7 +35,7 @@ import type {
 } from "@trenova/shared/types/carrier-tracking";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useRef, useState } from "react";
-import { useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 
 const LIMITS = { city: 100, stateCode: 10, delayReason: 255, note: 1000, contactName: 100 };
 
@@ -374,7 +374,7 @@ function ThrottledCard() {
  */
 export function CarrierTrackingPublicPage() {
   const t = useT();
-  const { token = "" } = useParams();
+  const { token = "" } = useParams({ strict: false });
   const [failure, setFailure] = useState<CheckCallPostFailure | null>(null);
   const [sent, setSent] = useState<string | null>(null);
   const pendingEventId = useRef<string | null>(null);

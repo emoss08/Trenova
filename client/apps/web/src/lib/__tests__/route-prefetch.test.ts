@@ -1,20 +1,26 @@
 import { queryClient } from "@/lib/query-client";
-import { combineLoaders } from "@/lib/route-permission";
 import {
   createPrefetchLoader,
   lazyPrefetch,
   PREFETCH_STALE_TIME_MS,
   type RoutePrefetch,
+  type RoutePrefetchArgs,
   type RoutePrefetchQuery,
 } from "@/lib/route-prefetch";
-import { redirect, type LoaderFunctionArgs } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+// The router's loader context for a first visit to the shipments page with a panel open.
 const args = {
-  request: new Request("http://localhost/shipment-management/shipments?panelType=edit"),
   params: {},
-  context: undefined,
-} as unknown as LoaderFunctionArgs;
+  location: { searchStr: "?panelType=edit" },
+  cause: "enter",
+} as const;
+
+// What a page's prefetch is handed for that visit.
+const prefetchArgs: RoutePrefetchArgs = {
+  params: {},
+  searchParams: new URLSearchParams("panelType=edit"),
+};
 
 // Lets the loader's fire-and-forget chain reach the query cache without awaiting it
 // from the test the way the loader must never do.
@@ -48,32 +54,34 @@ afterEach(() => {
 });
 
 describe("createPrefetchLoader", () => {
-  it("returns null before the queries it started have resolved", async () => {
+  it("returns before the queries it started have resolved", async () => {
     const queryKey = ["prefetch-test", "pending"] as const;
     const queryFn = vi.fn(() => new Promise<never>(() => undefined));
 
-    const result = await createPrefetchLoader(() => [{ queryKey, queryFn }])(args);
-    expect(result).toBeNull();
+    const result = createPrefetchLoader(() => [{ queryKey, queryFn }])(args);
+    expect(result).toBeUndefined();
 
     await flushMicrotasks();
     expect(queryFn).toHaveBeenCalledTimes(1);
     expect(queryClient.getQueryState(queryKey)?.fetchStatus).toBe("fetching");
   });
 
-  it("hands the loader arguments to the prefetch so it can read the request", async () => {
+  it("hands the prefetch the path's params and the query, so it can read the panel asked for", async () => {
     const prefetch = vi.fn<RoutePrefetch>(() => []);
 
-    await createPrefetchLoader(prefetch)(args);
+    createPrefetchLoader(prefetch)({ ...args, params: { id: "shp_1" } });
     await flushMicrotasks();
 
-    expect(prefetch).toHaveBeenCalledWith(args);
+    const [received] = prefetch.mock.calls[0] ?? [];
+    expect(received?.params).toEqual({ id: "shp_1" });
+    expect(received?.searchParams.get("panelType")).toBe("edit");
   });
 
   it("accepts a prefetch that resolves its list asynchronously", async () => {
     const queryKey = ["prefetch-test", "async-list"] as const;
     const queryFn = vi.fn(async () => "data");
 
-    await createPrefetchLoader(async () => [{ queryKey, queryFn }])(args);
+    createPrefetchLoader(async () => [{ queryKey, queryFn }])(args);
     await untilSettled(queryKey);
 
     expect(queryClient.getQueryData(queryKey)).toBe("data");
@@ -84,7 +92,7 @@ describe("createPrefetchLoader", () => {
       throw new Error("no list for you");
     });
 
-    expect(await loader(args)).toBeNull();
+    expect(loader(args)).toBeUndefined();
     await flushMicrotasks();
   });
 
@@ -93,7 +101,7 @@ describe("createPrefetchLoader", () => {
       throw new Error("no list for you");
     });
 
-    expect(await loader(args)).toBeNull();
+    expect(loader(args)).toBeUndefined();
     await flushMicrotasks();
   });
 
@@ -104,7 +112,7 @@ describe("createPrefetchLoader", () => {
       throw failure;
     });
 
-    expect(await createPrefetchLoader(() => [{ queryKey, queryFn }])(args)).toBeNull();
+    expect(createPrefetchLoader(() => [{ queryKey, queryFn }])(args)).toBeUndefined();
     await untilSettled(queryKey);
 
     expect(queryClient.getQueryState(queryKey)?.error).toBe(failure);
@@ -115,12 +123,12 @@ describe("createPrefetchLoader", () => {
     const queryFn = vi.fn(async () => "data");
     const loader = createPrefetchLoader(() => [{ queryKey, queryFn }]);
 
-    await loader(args);
+    loader(args);
     await untilSettled(queryKey);
 
     expect(storedStaleTime(queryKey)).toBe(PREFETCH_STALE_TIME_MS);
 
-    await loader(args);
+    loader(args);
     await flushMicrotasks();
     expect(queryFn).toHaveBeenCalledTimes(1);
   });
@@ -128,9 +136,9 @@ describe("createPrefetchLoader", () => {
   it("keeps a longer staleTime the page declared for the query", async () => {
     const queryKey = ["prefetch-test", "page-stale-time"] as const;
 
-    await createPrefetchLoader(() => [
-      { queryKey, queryFn: async () => "data", staleTime: Infinity },
-    ])(args);
+    createPrefetchLoader(() => [{ queryKey, queryFn: async () => "data", staleTime: Infinity }])(
+      args,
+    );
     await untilSettled(queryKey);
 
     expect(storedStaleTime(queryKey)).toBe(Infinity);
@@ -140,7 +148,7 @@ describe("createPrefetchLoader", () => {
     const first = ["prefetch-test", "first"] as const;
     const second = ["prefetch-test", "second"] as const;
 
-    await createPrefetchLoader(() => [
+    createPrefetchLoader(() => [
       { queryKey: first, queryFn: async () => 1 },
       { queryKey: second, queryFn: async () => 2 },
     ])(args);
@@ -151,14 +159,12 @@ describe("createPrefetchLoader", () => {
     expect(queryClient.getQueryData(second)).toBe(2);
   });
 
-  it("never runs when an earlier loader in the chain redirects", async () => {
+  it("warms nothing when the navigation only changes the page's query", async () => {
     const prefetch = vi.fn<RoutePrefetch>(() => []);
-    const loader = combineLoaders(async () => redirect("/login"), createPrefetchLoader(prefetch));
 
-    const result = await loader(args);
+    createPrefetchLoader(prefetch)({ ...args, cause: "stay" });
     await flushMicrotasks();
 
-    expect(result).toBeInstanceOf(Response);
     expect(prefetch).not.toHaveBeenCalled();
   });
 });
@@ -167,18 +173,18 @@ describe("lazyPrefetch", () => {
   it("returns an empty list for a page module without a prefetch export", async () => {
     const importer = vi.fn(async () => ({ Page: () => null }));
 
-    await expect(lazyPrefetch(importer)(args)).resolves.toEqual([]);
+    await expect(lazyPrefetch(importer)(prefetchArgs)).resolves.toEqual([]);
     expect(importer).toHaveBeenCalledTimes(1);
   });
 
-  it("runs the page module's prefetch with the loader arguments", async () => {
+  it("runs the page module's prefetch with the navigation's params and query", async () => {
     const list: RoutePrefetchQuery[] = [
       { queryKey: ["prefetch-test", "lazy"], queryFn: async () => "data" },
     ];
     const prefetch = vi.fn<RoutePrefetch>(() => list);
 
-    await expect(lazyPrefetch(async () => ({ prefetch }))(args)).resolves.toBe(list);
-    expect(prefetch).toHaveBeenCalledWith(args);
+    await expect(lazyPrefetch(async () => ({ prefetch }))(prefetchArgs)).resolves.toBe(list);
+    expect(prefetch).toHaveBeenCalledWith(prefetchArgs);
   });
 
   it("surfaces a failed module import to the loader, which swallows it", async () => {
@@ -188,7 +194,7 @@ describe("lazyPrefetch", () => {
       }),
     );
 
-    expect(await loader(args)).toBeNull();
+    expect(loader(args)).toBeUndefined();
     await flushMicrotasks();
   });
 });
@@ -215,7 +221,7 @@ describe("createPrefetchLoader with a paged query", () => {
     const queryKey = ["prefetch-test", "paged"] as const;
     const queryFn = vi.fn(() => Promise.resolve({ rows: ["a"] }));
 
-    await createPrefetchLoader(() => [infiniteEntry(queryKey, queryFn)])(args);
+    createPrefetchLoader(() => [infiniteEntry(queryKey, queryFn)])(args);
     await untilSettled(queryKey);
 
     expect(queryClient.getQueryData(queryKey)).toEqual({
@@ -231,7 +237,7 @@ describe("createPrefetchLoader with a paged query", () => {
       return Promise.resolve({ rows: [] });
     });
 
-    await createPrefetchLoader(() => [infiniteEntry(queryKey, queryFn)])(args);
+    createPrefetchLoader(() => [infiniteEntry(queryKey, queryFn)])(args);
     await untilSettled(queryKey);
 
     expect(queryFn.mock.calls[0]?.[0]).toMatchObject({ pageParam: null });
@@ -241,7 +247,7 @@ describe("createPrefetchLoader with a paged query", () => {
     const queryKey = ["prefetch-test", "plain"] as const;
     const queryFn = vi.fn(() => Promise.resolve({ rows: ["a"] }));
 
-    await createPrefetchLoader(() => [{ queryKey, queryFn }])(args);
+    createPrefetchLoader(() => [{ queryKey, queryFn }])(args);
     await untilSettled(queryKey);
 
     expect(queryClient.getQueryData(queryKey)).toEqual({ rows: ["a"] });
@@ -250,9 +256,9 @@ describe("createPrefetchLoader with a paged query", () => {
   it("gives a paged query the same default staleTime", async () => {
     const queryKey = ["prefetch-test", "paged-stale"] as const;
 
-    await createPrefetchLoader(() => [
-      infiniteEntry(queryKey, () => Promise.resolve({ rows: [] })),
-    ])(args);
+    createPrefetchLoader(() => [infiniteEntry(queryKey, () => Promise.resolve({ rows: [] }))])(
+      args,
+    );
     await untilSettled(queryKey);
 
     expect(storedStaleTime(queryKey)).toBe(PREFETCH_STALE_TIME_MS);

@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { ThreadListFilter } from "@/services/assistant";
 import { stubLayout } from "@/test/layout";
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskRailThreads, type DeskRailThreadsProps } from "../rail-threads";
 
@@ -104,7 +104,7 @@ function renderRail(props: Partial<DeskRailThreadsProps> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/desk"]}>
+      <TestRouter initialEntries={["/desk"]}>
         <DeskRailThreads
           place="today"
           onSetPinned={vi.fn()}
@@ -127,7 +127,7 @@ function renderRail(props: Partial<DeskRailThreadsProps> = {}) {
           onFold={vi.fn()}
           {...props}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

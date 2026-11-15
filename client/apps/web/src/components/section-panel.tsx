@@ -1,10 +1,9 @@
+import { Link } from "@trenova/shared/components/link";
 import { InfoPopover } from "@/components/info-popover";
 import { InfoTooltip } from "@/components/info-tooltip";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
-
 /**
  * Geist sets text high in its line box, so an icon centred on the title's line sits below the
  * letters; this lifts it onto their middle and draws it as close to the title as the panel's other

@@ -20,7 +20,7 @@ import type {
 import { Resource } from "@trenova/shared/types/permission";
 import { EyeIcon, EyeOffIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { getEnrollmentColumns } from "./enrollment-columns";
 import { monitorableCarrierIds } from "./enrollment-filter";
@@ -154,7 +154,7 @@ export function EnrollmentTable({ canUpdate }: EnrollmentTableProps) {
         hidden: (row) => !row.original.carrierId,
         onClick: (row) => {
           if (row.original.carrierId) {
-            void navigate(carrierPanelPath(row.original.carrierId, "intelligence"));
+            void navigate({ to: carrierPanelPath(row.original.carrierId, "intelligence") });
           }
         },
       },

@@ -14,7 +14,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { BookCheckIcon, CheckIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { getJournalReviewColumns } from "./review-columns";
 
 function idsWithStatus(rows: JournalReviewRow[], status: string): string[] {
@@ -78,7 +78,7 @@ export default function JournalReviewTable() {
       dockActions={dockActions}
       enableRowSelection={canApprove}
       enableCreateAction={false}
-      onRowClick={(row) => void navigate(recordPath("journal_entry", row.original.id))}
+      onRowClick={(row) => void navigate({ to: recordPath("journal_entry", row.original.id) })}
     />
   );
 }

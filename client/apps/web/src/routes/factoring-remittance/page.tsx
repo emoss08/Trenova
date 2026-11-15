@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-badges";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
@@ -29,7 +30,7 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { ApplyRemittanceDialog } from "./_components/apply-remittance-dialog";
 import { ReasonDialog } from "@/components/reason-dialog";
@@ -51,7 +52,7 @@ const READING_POLL_MS = 5000;
  */
 export function FactoringRemittancePage() {
   const t = useT();
-  const { id = "" } = useParams<{ id: string }>();
+  const { id = "" } = useParams({ strict: false });
   const { data, isLoading, error, refetch } = useQuery({
     ...factoringQueries.remittance(id),
     enabled: id !== "",

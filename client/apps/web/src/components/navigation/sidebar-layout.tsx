@@ -15,7 +15,7 @@ import { useUpdateStore } from "@/stores/update-store";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Suspense, useEffect } from "react";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { AssistantWidget, useAssistantSideInset } from "../assistant/assistant-widget";
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
@@ -68,7 +68,7 @@ function useRecordRecentPages() {
  * mention in a reply.
  */
 function useTouchRecentRecords() {
-  const { pathname, search } = useLocation();
+  const { pathname, searchStr: search } = useLocation();
   const touch = useRecentRecordsStore((state) => state.touch);
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
 

@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AssistantArtifact } from "@/types/assistant";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -19,7 +20,6 @@ import type {
   Stop,
 } from "@trenova/shared/types/shipment";
 import type { ReactElement } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskShipment, DeskShipmentArtifact } from "../desk-shipment";
 
@@ -396,7 +396,7 @@ function wrap(ui: ReactElement) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <TestRouter>{ui}</TestRouter>
     </QueryClientProvider>,
   );
 }
@@ -406,7 +406,7 @@ function draw(props: Partial<Parameters<typeof DeskShipment>[0]> = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskShipment
           recordId="shp_1"
           order={["shp_0", "shp_1", "shp_2"]}
@@ -414,7 +414,7 @@ function draw(props: Partial<Parameters<typeof DeskShipment>[0]> = {}) {
           {...props}
           {...more}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
   const view = render(tree());

@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { planPreview } from "@/components/assistant/__tests__/preview-fixtures";
 import type { PlanPreview } from "@/lib/graphql/agent-preview";
@@ -31,9 +31,9 @@ function renderCard(node: PendingPlanNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <PlanCard node={node} leaving={null} onGate={onGate} onDeclineWith={vi.fn()} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 

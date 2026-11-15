@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type {
   Notification,
   NotificationCounts,
@@ -6,7 +7,7 @@ import type {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRef, type ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { stubLayout } from "@/test/layout";
 import NotificationPanel, { type NotificationPanelKeyHandler } from "./notification-panel";
@@ -101,7 +102,7 @@ const COUNTS: NotificationCounts = {
 
 function Where() {
   const location = useLocation();
-  return <output data-testid="where">{location.pathname + location.search}</output>;
+  return <output data-testid="where">{location.pathname + location.searchStr}</output>;
 }
 
 function renderPanel() {
@@ -110,12 +111,12 @@ function renderPanel() {
   const keys = createRef<NotificationPanelKeyHandler>();
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter initialEntries={["/home"]}>
+      <TestRouter initialEntries={["/home"]}>
         <div onKeyDown={(event) => keys.current?.(event)}>
           <NotificationPanel open onClose={onClose} keys={keys} />
         </div>
         <Where />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 

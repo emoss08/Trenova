@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AssistantArtifact } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { deskArtKind, deskArtKindName } from "../../../desk-art-kinds";
 import { DeskRecordBody } from "../desk-record-body";
@@ -99,9 +99,9 @@ function card(entity: string, payload: Record<string, unknown> = {}): AssistantA
 function draw(artifact: AssistantArtifact) {
   return render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskRecordBody artifact={artifact} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

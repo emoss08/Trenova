@@ -20,7 +20,7 @@ import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatDetentionMinutes } from "@trenova/shared/lib/detention";
 import { cn } from "@trenova/shared/lib/utils";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import {
   ARRIVAL_BANDS,
   ARRIVAL_BAND_LABELS,
@@ -378,7 +378,7 @@ export function FacilityScorecardSheet({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => void navigate(DETENTION_POLICIES_PATH)}
+                onClick={() => void navigate({ to: DETENTION_POLICIES_PATH })}
               >
                 {t("Backtest a policy")}
               </Button>
@@ -386,7 +386,7 @@ export function FacilityScorecardSheet({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => void navigate(deskSearchPath(facility.locationName))}
+                onClick={() => void navigate({ to: deskSearchPath(facility.locationName) })}
               >
                 {t("See occurrences")}
               </Button>
@@ -394,7 +394,7 @@ export function FacilityScorecardSheet({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => void navigate(recordPath("location", facility.locationId))}
+                onClick={() => void navigate({ to: recordPath("location", facility.locationId) })}
               >
                 {t("Open location")}
               </Button>

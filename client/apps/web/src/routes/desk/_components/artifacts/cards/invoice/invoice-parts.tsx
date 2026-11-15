@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useClipped } from "@/hooks/use-clipped";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -15,7 +16,6 @@ import { formatList } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 import { CardActionButton } from "../../record-card/card-action";
 import { CardIcon } from "../../record-card/record-card";
 import type {

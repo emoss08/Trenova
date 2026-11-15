@@ -1,53 +1,6 @@
+import { createTestRouter } from "@trenova/shared/testing/test-router";
 import { describe, expect, it, vi } from "vitest";
-import type { Location, RouterState } from "react-router";
 import { releaseCheck, reloadIntoNewRelease, settleOnNewestRelease } from "../service-worker";
-
-type Listener = (state: RouterState) => void;
-
-function location(pathname: string, search = ""): Location {
-  return { pathname, search, hash: "", state: null, key: pathname + search };
-}
-
-/** A router whose navigations the test drives, the way React Router reports them. */
-function fakeRouter(start: string) {
-  const listeners: Listener[] = [];
-  let state = {
-    location: location(start),
-    navigation: { state: "idle", location: undefined },
-  } as unknown as RouterState;
-  const emit = (next: Partial<RouterState>) => {
-    state = { ...state, ...next } as RouterState;
-    for (const listener of listeners) listener(state);
-  };
-  return {
-    router: {
-      get state() {
-        return state;
-      },
-      subscribe: (listener: Listener) => {
-        listeners.push(listener);
-        return () => void listeners.splice(listeners.indexOf(listener), 1);
-      },
-      createHref: (to: Location | URL) =>
-        to instanceof URL ? to.href : `${to.pathname}${to.search}${to.hash}`,
-    },
-    /** A navigation with a loading phase (a route with a loader or lazy code). */
-    navigate: (pathname: string, search = "") => {
-      const to = location(pathname, search);
-      emit({ navigation: { state: "loading", location: to } as RouterState["navigation"] });
-      emit({
-        location: to,
-        navigation: { state: "idle", location: undefined } as RouterState["navigation"],
-      });
-    },
-    /** A navigation that commits at once, with no loading phase. */
-    navigateInstantly: (pathname: string, search = "") =>
-      emit({
-        location: location(pathname, search),
-        navigation: { state: "idle", location: undefined } as RouterState["navigation"],
-      }),
-  };
-}
 
 function fakeContainer(controlled: boolean) {
   const events = new EventTarget();
@@ -60,90 +13,84 @@ function fakeContainer(controlled: boolean) {
   };
 }
 
-function setup({
+async function setup({
   controlled = true,
   safe = () => true,
 }: { controlled?: boolean; safe?: () => boolean } = {}) {
-  const routing = fakeRouter("/shipments");
+  const router = createTestRouter(undefined, ["/shipments"]);
+  await router.load();
   const worker = fakeContainer(controlled);
   const assign = vi.fn();
   reloadIntoNewRelease({
-    router: routing.router as never,
+    router,
     container: worker.container as never,
     reloadIsSafe: safe,
     target: { location: { assign } },
   });
-  return { ...routing, ...worker, assign };
+  const navigate = (pathname: string, search = "") =>
+    router.navigate({ href: `${pathname}${search}` });
+  return { navigate, ...worker, assign };
 }
 
 describe("reloadIntoNewRelease", () => {
-  it("opens the next page by a full page load once a new release has taken over", () => {
-    const { navigate, newWorkerTakesOver, assign } = setup();
+  it("opens the next page by a full page load once a new release has taken over", async () => {
+    const { navigate, newWorkerTakesOver, assign } = await setup();
 
     newWorkerTakesOver();
-    navigate("/customers", "?status=active");
+    await navigate("/customers", "?status=active");
 
     expect(assign).toHaveBeenCalledTimes(1);
     expect(assign).toHaveBeenCalledWith("/customers?status=active");
   });
 
-  it("changes page in place while no new release has arrived", () => {
-    const { navigate, assign } = setup();
+  it("changes page in place while no new release has arrived", async () => {
+    const { navigate, assign } = await setup();
 
-    navigate("/customers");
-
-    expect(assign).not.toHaveBeenCalled();
-  });
-
-  it("does not count the worker's first install as a release", () => {
-    const { navigate, newWorkerTakesOver, assign } = setup({ controlled: false });
-
-    newWorkerTakesOver();
-    navigate("/customers");
+    await navigate("/customers");
 
     expect(assign).not.toHaveBeenCalled();
   });
 
-  it("never reloads for a filter, sort or table page, only for a change of page", () => {
-    const { navigateInstantly, navigate, newWorkerTakesOver, assign } = setup();
+  it("does not count the worker's first install as a release", async () => {
+    const { navigate, newWorkerTakesOver, assign } = await setup({ controlled: false });
 
     newWorkerTakesOver();
-    navigateInstantly("/shipments", "?status=in-transit");
-    navigateInstantly("/shipments", "?status=in-transit&page=2");
+    await navigate("/customers");
+
+    expect(assign).not.toHaveBeenCalled();
+  });
+
+  it("never reloads for a filter, sort or table page, only for a change of page", async () => {
+    const { navigate, newWorkerTakesOver, assign } = await setup();
+
+    newWorkerTakesOver();
+    await navigate("/shipments", "?status=in-transit");
+    await navigate("/shipments", "?status=in-transit&page=2");
     expect(assign).not.toHaveBeenCalled();
 
-    navigate("/customers");
+    await navigate("/customers");
     expect(assign).toHaveBeenCalledWith("/customers");
   });
 
-  it("reloads after a change of page that commits without a loading phase", () => {
-    const { navigateInstantly, newWorkerTakesOver, assign } = setup();
-
-    newWorkerTakesOver();
-    navigateInstantly("/customers");
-
-    expect(assign).toHaveBeenCalledWith("/customers");
-  });
-
-  it("waits while a guard holds the page (an unsaved form, a popout), then reloads at a later change of page", () => {
+  it("waits while a guard holds the page (an unsaved form, a popout), then reloads at a later change of page", async () => {
     let popoutOpen = true;
-    const { navigate, newWorkerTakesOver, assign } = setup({ safe: () => !popoutOpen });
+    const { navigate, newWorkerTakesOver, assign } = await setup({ safe: () => !popoutOpen });
 
     newWorkerTakesOver();
-    navigate("/customers");
+    await navigate("/customers");
     expect(assign).not.toHaveBeenCalled();
 
     popoutOpen = false;
-    navigate("/workers");
+    await navigate("/workers");
     expect(assign).toHaveBeenCalledWith("/workers");
   });
 
-  it("tries again at the next change of page when the browser stayed after all", () => {
-    const { navigate, newWorkerTakesOver, assign } = setup();
+  it("tries again at the next change of page when the browser stayed after all", async () => {
+    const { navigate, newWorkerTakesOver, assign } = await setup();
 
     newWorkerTakesOver();
-    navigate("/customers");
-    navigate("/workers");
+    await navigate("/customers");
+    await navigate("/workers");
 
     expect(assign.mock.calls).toEqual([["/customers"], ["/workers"]]);
   });

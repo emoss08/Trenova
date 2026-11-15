@@ -34,7 +34,7 @@ import {
 } from "@trenova/shared/types/formula-library";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { LibraryStudio } from "../_components/studio/library-studio";
 import {
   EMPTY_LIBRARY,
@@ -65,13 +65,13 @@ function seatedLibrary(
  * comparing its version with the last library's.
  */
 export function FormulaLibraryEditPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   return <FormulaLibraryEditor key={id} />;
 }
 
 function FormulaLibraryEditor() {
   const t = useT();
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [pendingSave, setPendingSave] = useState<FormulaLibraryFormValues | null>(null);
@@ -142,7 +142,7 @@ function FormulaLibraryEditor() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => void navigate(formulaLibraryRoutes.list)}
+          onClick={() => void navigate({ to: formulaLibraryRoutes.list })}
         >
           {t("Back to formula libraries")}
         </Button>

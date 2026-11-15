@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
+import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DeskConversationPage } from "../conversation-page";
 
@@ -10,13 +10,10 @@ vi.mock("../_components/desk-layout", () => ({
 vi.mock("../_components/desk-conversation", () => ({ DeskConversation: () => null }));
 
 describe("Desk conversation page while the Desk loads", () => {
-  it("holds its place with skeletons, not the desk visitor", () => {
-    const { container } = render(
-      <MemoryRouter initialEntries={["/desk/t/thread-1"]}>
-        <Routes>
-          <Route path="/desk/t/:threadId" element={<DeskConversationPage />} />
-        </Routes>
-      </MemoryRouter>,
+  it("holds its place with skeletons, not the desk visitor", async () => {
+    const { container } = await renderAtRoutes(
+      [{ path: "/desk/t/$threadId", component: () => <DeskConversationPage /> }],
+      { initialEntries: ["/desk/t/thread-1"] },
     );
 
     // The conversation's own room: two turns on the transcript's grid in its

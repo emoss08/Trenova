@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import type { NovaTarget } from "./use-nova-segments";
 
@@ -14,7 +14,7 @@ export function useNovaTargets(): (target: NovaTarget) => void {
     (target: NovaTarget) => {
       switch (target.kind) {
         case "watchtower":
-          void navigate(WATCHTOWER_PATH);
+          void navigate({ to: WATCHTOWER_PATH });
           return;
         case "providers":
         case "routing":

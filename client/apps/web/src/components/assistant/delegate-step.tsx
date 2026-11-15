@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useDelegateIdentity } from "@/components/agent-identity/agent-context";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { AiMarkdown } from "@/components/elements/ai-markdown";
@@ -20,7 +21,6 @@ import {
   Hourglass01Icon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState, type CSSProperties } from "react";
-import { Link } from "react-router";
 import { currentActivity, type ToolStep } from "./activity";
 import { useArtifactOpener } from "./artifact-opener";
 import { useWatchedChange } from "./decision-chrome";

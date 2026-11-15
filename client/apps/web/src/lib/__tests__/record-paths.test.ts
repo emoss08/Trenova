@@ -1,20 +1,6 @@
 import { agentRunPath, customerPath, shipmentPath } from "@/lib/record-paths";
-import { routes } from "@/router";
-import type { RouteObject } from "react-router";
+import { servesPage } from "@/test/route-tree";
 import { describe, expect, it } from "vitest";
-
-function joinPath(parent: string, child: string): string {
-  return child.startsWith("/") ? child : `${parent.replace(/\/$/, "")}/${child}`;
-}
-
-function registered(entries: RouteObject[], parent = "", found = new Set<string>()): Set<string> {
-  for (const entry of entries) {
-    const path = entry.path === undefined ? parent : joinPath(parent, entry.path);
-    if (entry.path !== undefined) found.add(path);
-    if (entry.children) registered(entry.children, path, found);
-  }
-  return found;
-}
 
 /**
  * A link to a record is only as good as the route it names. The inbox's first
@@ -23,12 +9,10 @@ function registered(entries: RouteObject[], parent = "", found = new Set<string>
  * something other than the record they promised.
  */
 describe("record paths", () => {
-  const paths = registered(routes);
-
   it("names a registered page and the panel parameters that page reads", () => {
     for (const build of [shipmentPath, customerPath]) {
       const url = new URL(build("rec_1"), "http://localhost");
-      expect(paths.has(url.pathname)).toBe(true);
+      expect(servesPage(url.pathname)).toBe(true);
       expect(url.searchParams.get("panelType")).toBe("edit");
       expect(url.searchParams.get("panelEntityId")).toBe("rec_1");
     }
@@ -36,7 +20,7 @@ describe("record paths", () => {
 
   it("opens a run in AI Control's activity list filtered to that run", () => {
     const url = new URL(agentRunPath("run_1"), "http://localhost");
-    expect(paths.has(url.pathname)).toBe(true);
+    expect(servesPage(url.pathname)).toBe(true);
     expect(url.searchParams.get("tab")).toBe("activity");
     expect(url.searchParams.get("activity")).toBe("runs");
     expect(JSON.parse(url.searchParams.get("fieldFilters") ?? "[]")).toEqual([

@@ -1,7 +1,7 @@
+import { Link } from "@trenova/shared/components/link";
 import type { DeskActivityEntry } from "@/lib/graphql/desk-attention";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 
 function Line({ k, children }: { k: string; children: ReactNode }) {
   return (

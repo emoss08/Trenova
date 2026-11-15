@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -9,7 +10,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { ReportChartSpec, ReportDashboardFilter, ReportDashboardTile } from "@/types/report";
 import { AlertCircleIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { irToInput } from "../../builder/_components/builder-state";
 import { ReportChart, type CategorySelect } from "../../_components/report-chart";
 import { ResultGrid } from "../../_components/result-grid";

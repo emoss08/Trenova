@@ -17,7 +17,7 @@ import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
 import { SIDEBAR_SECTION_KEYS, type SidebarSectionKey } from "@/lib/graphql/sidebar-preferences";
 import { findActiveNavPath } from "@/lib/route-utils";
 import { useMemo } from "react";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 
 export interface SidebarNavigation {
   /** The home module, when the person may see it. */

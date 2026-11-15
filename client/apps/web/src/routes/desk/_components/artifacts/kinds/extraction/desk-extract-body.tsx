@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { documentKindName } from "@/lib/document-kinds";
 import { assistant } from "@/lib/queries/assistant";
@@ -8,7 +9,6 @@ import { useReducedMotion } from "@trenova/shared/hooks/use-reduced-motion";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useRef, useState } from "react";
-import { Link } from "react-router";
 import { SettlementStub } from "../../record-card/card-settlement";
 import {
   CardFacts,

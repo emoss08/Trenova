@@ -1,5 +1,6 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
+import { act, cleanup, screen } from "@testing-library/react";
+import { useLocation } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SettingsSection } from "@/lib/settings-path";
 import { useRequestedSection } from "../_components/use-requested-section";
@@ -31,23 +32,19 @@ function flushFrames() {
 function Probe({ jump }: { jump: (section: SettingsSection) => void }) {
   useRequestedSection(jump);
   const location = useLocation();
-  return <p data-testid="where">{`${location.pathname}${location.search}`}</p>;
+  return <p data-testid="where">{`${location.pathname}${location.searchStr}`}</p>;
 }
 
-function renderAt(entry: string, jump: (section: SettingsSection) => void) {
-  return render(
-    <MemoryRouter initialEntries={[entry]}>
-      <Routes>
-        <Route path="/settings" element={<Probe jump={jump} />} />
-      </Routes>
-    </MemoryRouter>,
-  );
+async function renderAt(entry: string, jump: (section: SettingsSection) => void) {
+  return await renderAtRoutes([{ path: "/settings", component: () => <Probe jump={jump} /> }], {
+    initialEntries: [entry],
+  });
 }
 
 describe("useRequestedSection", () => {
-  it("lands on the section the address names once the page has laid out", () => {
+  it("lands on the section the address names once the page has laid out", async () => {
     const jump = vi.fn();
-    renderAt("/settings?section=notifications", jump);
+    await renderAt("/settings?section=notifications", jump);
 
     expect(jump).not.toHaveBeenCalled();
     flushFrames();
@@ -55,17 +52,17 @@ describe("useRequestedSection", () => {
     expect(jump).toHaveBeenCalledExactlyOnceWith("notifications");
   });
 
-  it("takes the section back out of the address and keeps every other parameter", () => {
-    renderAt("/settings?section=security&from=email", vi.fn());
+  it("takes the section back out of the address and keeps every other parameter", async () => {
+    await renderAt("/settings?section=security&from=email", vi.fn());
 
     flushFrames();
 
     expect(screen.getByTestId("where")).toHaveTextContent("/settings?from=email");
   });
 
-  it("drops a section it does not know without moving", () => {
+  it("drops a section it does not know without moving", async () => {
     const jump = vi.fn();
-    renderAt("/settings?section=billing", jump);
+    await renderAt("/settings?section=billing", jump);
 
     flushFrames();
 
@@ -73,9 +70,9 @@ describe("useRequestedSection", () => {
     expect(screen.getByTestId("where")).toHaveTextContent(/^\/settings$/);
   });
 
-  it("does nothing when the address names no section", () => {
+  it("does nothing when the address names no section", async () => {
     const jump = vi.fn();
-    renderAt("/settings", jump);
+    await renderAt("/settings", jump);
 
     flushFrames();
 

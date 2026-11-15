@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useController, type Control, type FieldValues, type Path } from "react-hook-form";
-import { MemoryRouter } from "react-router";
 import {
   Operation,
   Resource,
@@ -233,11 +233,11 @@ function renderConsole(
   });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <OrgStructureConsole />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 
@@ -269,11 +269,11 @@ describe("OrgStructureConsole", () => {
     mocks.fetchApprovalDelegations.mockReturnValue(new Promise(() => {}));
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
-      <MemoryRouter>
+      <TestRouter>
         <QueryClientProvider client={client}>
           <OrgStructureConsole />
         </QueryClientProvider>
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     const loading = screen.getByLabelText("Loading the organisation");

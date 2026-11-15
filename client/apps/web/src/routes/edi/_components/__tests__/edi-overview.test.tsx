@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EDIOverview } from "../overview/edi-overview";
 import * as summaryHook from "../overview/use-edi-summary";
@@ -9,9 +9,9 @@ function renderOverview() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <EDIOverview />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

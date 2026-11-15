@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
@@ -33,7 +34,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AlertTriangleIcon, PlayIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Link } from "react-router";
 import { LateChargePreviewTable } from "./_components/late-charge-preview-table";
 
 type FilterValues = {

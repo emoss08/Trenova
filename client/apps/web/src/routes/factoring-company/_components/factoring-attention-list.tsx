@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { HoverGlideGroup } from "@/components/hover-glide";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { recordPath } from "@/config/record-links";
@@ -22,7 +23,6 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { formatMinor } from "@trenova/shared/lib/money";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FactoringAttentionKind } from "@trenova/graphql/generated/graphql";
-import { Link } from "react-router";
 import type { FactoringCompanyTab } from "../use-factoring-company-state";
 
 const KIND_ICONS: Record<FactoringAttentionKind, IconComponent> = {

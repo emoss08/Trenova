@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { PendingProposalFieldsFragment } from "@trenova/graphql/generated/graphql";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProposalPreview, ProposalPreviewRequest } from "@/lib/graphql/agent-preview";
 import { asAssistantProposal } from "@/routes/desk/_components/decisions/decision-presenters";
@@ -153,7 +153,7 @@ function renderEditor(
 
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <ProposalEditor
           request={{
             summary: "Transfer 3 shipments to billing.",
@@ -164,7 +164,7 @@ function renderEditor(
           }}
           onClose={vi.fn()}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 

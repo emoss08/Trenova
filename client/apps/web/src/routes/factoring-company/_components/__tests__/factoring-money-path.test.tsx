@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { FactoringCompanyOverview } from "@/lib/graphql/factoring-company-page";
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FactoringMoneyPath } from "../factoring-money-path";
 
@@ -40,9 +40,9 @@ function overview(amountsIncluded: boolean): FactoringCompanyOverview {
 
 function renderPath(data: FactoringCompanyOverview, onTab = vi.fn()) {
   render(
-    <MemoryRouter>
+    <TestRouter>
       <FactoringMoneyPath overview={data} factoringCompanyId="fac_lonestar" onTab={onTab} />
-    </MemoryRouter>,
+    </TestRouter>,
   );
   return onTab;
 }
@@ -71,13 +71,13 @@ describe("FactoringMoneyPath", () => {
 
   it("leads with invoice counts and shows no amount without reserve access", () => {
     const { container } = render(
-      <MemoryRouter>
+      <TestRouter>
         <FactoringMoneyPath
           overview={overview(false)}
           factoringCompanyId="fac_lonestar"
           onTab={vi.fn()}
         />
-      </MemoryRouter>,
+      </TestRouter>,
     );
     expect(screen.getByText("9 invoices")).toBeTruthy();
     expect(screen.getByText("31 invoices")).toBeTruthy();

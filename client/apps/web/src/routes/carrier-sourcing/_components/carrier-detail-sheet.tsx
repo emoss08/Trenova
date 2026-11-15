@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import {
   CarrierIntelProfileView,
   type CarrierIntelProfileSectionId,
@@ -42,7 +43,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { ArrowUpRightIcon, LayersThree01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
-import { Link } from "react-router";
 import { candidateMetaLine } from "./sourcing-result-list";
 
 const SOURCING_PROFILE_SECTIONS = [

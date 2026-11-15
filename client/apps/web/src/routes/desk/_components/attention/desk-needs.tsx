@@ -9,8 +9,9 @@ import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { getStartOfDay, resolveUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import { useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { flushSync } from "react-dom";
 import { pendingFilter } from "../decisions/decision-filters";
 import { useDecisionsHead } from "../decisions/use-decisions-head";
 import { pendingDecisionsOptions, startOfToday } from "../decisions/use-pending-decisions";
@@ -56,12 +57,12 @@ export function DeskNeeds() {
   const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
+  // The lens is written beside the search and the filters, through nuqs, so one queue holds the
+  // whole address and a lens chosen while the search is still being written keeps it.
+  const [lensAddress, setLensAddress] = useQueryState("lens", { history: "replace" });
 
   const lenses = NEEDS_LENSES.filter((value) => (value === "Decisions" ? canDecide : canWatch));
-  const asked = lensFromParam(searchParams.get("lens"));
+  const asked = lensFromParam(lensAddress);
   const lens = lenses.includes(asked) ? asked : (lenses[0] ?? asked);
   const onDecisions = lens === "Decisions";
 
@@ -100,19 +101,17 @@ export function DeskNeeds() {
     if (next === lens) {
       return;
     }
-    // The address as it stands, not as the router last heard it: the search
-    // and the filters are written to it without a navigation.
-    const params = new URLSearchParams(window.location.search);
     const param = lensParam(next);
-    if (param === "") {
-      params.delete("lens");
+    const change = () =>
+      flushSync(() => {
+        void setLensAddress(param === "" ? null : param);
+      });
+    // The lenses cross-fade where the browser can draw it.
+    if (typeof document.startViewTransition === "function") {
+      document.startViewTransition(change);
     } else {
-      params.set("lens", param);
+      change();
     }
-    void navigate(
-      { search: params.toString() },
-      { replace: true, viewTransition: true, state: location.state },
-    );
   };
 
   const readAhead = (next: NeedsLens) => {

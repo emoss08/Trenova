@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { attentionReasons, isWatched, type ClassifiedMember } from "@/lib/my-team";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -7,7 +8,6 @@ import {
   ChevronRightIcon,
 } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { MemberIdentity, memberHref } from "./member-identity";
 
 type TeamAttentionProps = {

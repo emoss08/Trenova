@@ -4,7 +4,7 @@ import { roleTableGraphQLConfig, type RoleRow } from "@/lib/graphql/role-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { Row } from "@trenova/shared/types/data-table";
 import { useCallback, useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { getColumns } from "./role-columns";
 
 export default function RoleTable() {
@@ -14,11 +14,11 @@ export default function RoleTable() {
   const columns = useMemo(() => getColumns(t), [t]);
 
   const handleAddRecord = () => {
-    void navigate("/admin/roles/new");
+    void navigate({ to: "/admin/roles/new" });
   };
 
   const handleRowClick = useCallback(
-    (row: Row<RoleRow>) => void navigate(`/admin/roles/${row.original.id}/edit`),
+    (row: Row<RoleRow>) => void navigate({ to: `/admin/roles/${row.original.id}/edit` }),
     [navigate],
   );
 

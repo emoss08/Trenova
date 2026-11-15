@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import type { DeskOrder as DeskOrderRecord } from "@/lib/graphql/order-card";
 import { order } from "@/lib/queries/order";
@@ -5,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { CardActivity } from "../../record-card/card-activity";
 import { useCardAccess } from "../../record-card/card-access";
 import { CardShipments } from "../../record-card/card-shipments";

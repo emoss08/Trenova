@@ -1,25 +1,5 @@
-import { routes } from "@/router";
-import type { LoaderFunctionArgs, RouteObject } from "react-router";
+import { gateOutcome, hasRoute, redirectTarget } from "@/test/route-tree";
 import { describe, expect, it } from "vitest";
-
-function joinPath(parent: string, child: string): string {
-  return child.startsWith("/") ? child : `${parent.replace(/\/$/, "")}/${child}`;
-}
-
-function collect(
-  entries: RouteObject[],
-  parent = "",
-  found = new Map<string, RouteObject>(),
-): Map<string, RouteObject> {
-  for (const entry of entries) {
-    const path = entry.path === undefined ? parent : joinPath(parent, entry.path);
-    if (entry.path !== undefined) found.set(path, entry);
-    if (entry.children) collect(entry.children, path, found);
-  }
-  return found;
-}
-
-const routesByPath = collect(routes);
 
 /**
  * Links already sent to people — notification rows, bookmarks — still carry the
@@ -36,27 +16,13 @@ const MOVED = [
 ] as const;
 
 async function locationFor(path: string, search = ""): Promise<string | null> {
-  const route = routesByPath.get(path);
-  if (!route) throw new Error(`route ${path} is not registered`);
-  if (typeof route.loader !== "function") throw new Error(`route ${path} has no loader`);
-
-  // A redirect loader answers synchronously; anything else may throw its
-  // Response instead of returning it.
-  const result: unknown = await Promise.resolve(
-    route.loader({
-      request: new Request(`http://localhost${path}${search}`),
-      params: {},
-      context: undefined,
-    } as unknown as LoaderFunctionArgs),
-  ).catch((error: unknown) => error);
-
-  return result instanceof Response ? result.headers.get("Location") : null;
+  return redirectTarget(await gateOutcome(path, { search }));
 }
 
 describe("HR routes", () => {
   it("registers every page under /hr", () => {
     for (const [, next] of MOVED) {
-      expect(routesByPath.has(next)).toBe(true);
+      expect(hasRoute(next)).toBe(true);
     }
   });
 

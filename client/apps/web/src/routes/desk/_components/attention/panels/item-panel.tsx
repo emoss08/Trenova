@@ -1,8 +1,8 @@
+import { Link } from "@trenova/shared/components/link";
 import type { WatchtowerItem, WatchtowerPanel } from "@/lib/graphql/watchtower";
 import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 import { AskPanel } from "./ask-panel";
 import { BooksPanel } from "./books-panel";
 import { ChangePanel } from "./change-panel";

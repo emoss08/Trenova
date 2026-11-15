@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { assistant } from "@/lib/queries/assistant";
 import { QueryClient, QueryClientProvider, QueryObserver } from "@tanstack/react-query";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const handlers = vi.hoisted(() => new Map<string, (data: unknown) => void>());
@@ -103,9 +103,9 @@ describe("realtime invalidation of Desk conversations", () => {
 
   function mount() {
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <MemoryRouter>
+      <TestRouter>
         <QueryClientProvider client={client}>{children}</QueryClientProvider>
-      </MemoryRouter>
+      </TestRouter>
     );
     return renderHook(() => useRealtimeConnection(), { wrapper });
   }

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { isAppPath } from "@/lib/app-path";
 import { artifactRefId } from "@/lib/artifact-ref";
 import { splitMarkdownBlocks } from "@/lib/markdown-blocks";
@@ -19,7 +20,7 @@ import ReactMarkdown, {
   type Components,
   type Options as MarkdownOptions,
 } from "react-markdown";
-import { Link, useInRouterContext } from "react-router";
+import { useRouter } from "@tanstack/react-router";
 import { useKatexPlugin } from "@/lib/katex-plugin";
 import { markdownHasMath, prepareMarkdown } from "@/lib/markdown-prepare";
 import remarkBreaks from "remark-breaks";
@@ -133,7 +134,9 @@ export type ArtifactLinkRenderer = (id: string) => ReactNode | null;
 export const ArtifactLinkContext = createContext<ArtifactLinkRenderer | null>(null);
 
 export function MarkdownLink({ href, children }: ComponentProps<"a">) {
-  const inRouter = useInRouterContext();
+  // A reply is also drawn outside the app's router (a story, a printed export); a link there is
+  // a plain anchor.
+  const inRouter = (useRouter({ warn: false }) as ReturnType<typeof useRouter> | null) !== null;
   const renderLink = use(MarkdownLinkContext);
   const renderArtifact = use(ArtifactLinkContext);
   const artifactId = artifactRefId(href);

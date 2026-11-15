@@ -13,7 +13,7 @@ import { ArrowLeftIcon } from "@trenova/shared/components/icons";
 import { nanoid } from "nanoid";
 import { lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { importAssistantConversationKey } from "./import-draft";
 import { ProcessingPhase } from "./processing-phase";
@@ -234,7 +234,7 @@ export function ImportWorkspace() {
   }, [clearAll, requiredFieldsForm]);
 
   const handleBack = useCallback(() => {
-    void navigate("/shipment-management/shipments");
+    void navigate({ to: "/shipment-management/shipments" });
   }, [navigate]);
 
   const handleFilesSelected = useCallback(

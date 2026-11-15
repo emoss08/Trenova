@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
@@ -12,7 +13,6 @@ import {
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { RefreshCcw02Icon, ZapIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { SettlementDetail } from "@/routes/driver-settlement/_components/settlement-detail";
 import { DriverContextRail } from "./driver-context-rail";
@@ -46,7 +46,7 @@ export default function Workspace() {
   const t = useT();
 
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useQueryParams();
   const [filter, setFilter] = useState<QueueFilter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(
     () => searchParams.get("settlement") ?? null,

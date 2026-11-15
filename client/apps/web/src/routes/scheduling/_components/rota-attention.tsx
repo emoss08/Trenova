@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { RotaBoardRow } from "@/lib/graphql/scheduling";
 import {
@@ -17,7 +18,6 @@ import {
   Repeat01Icon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 import { workerRecordHref } from "@/lib/route-utils";
 
 const SHOWN_LIMIT = 6;

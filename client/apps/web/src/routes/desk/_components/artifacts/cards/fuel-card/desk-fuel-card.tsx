@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { usePermission } from "@/hooks/use-permission";
@@ -18,7 +19,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { FUEL_CARD_PROVIDER_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
-import { Link } from "react-router";
 import { CardActionButton } from "../../record-card/card-action";
 import { FuelCardLead, FuelCardRow } from "../../record-card/card-fuel";
 import {

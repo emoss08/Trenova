@@ -1,9 +1,8 @@
+import { Link } from "@trenova/shared/components/link";
 import type { BriefingSection } from "@/lib/graphql/briefing";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { CSSProperties } from "react";
-import { Link } from "react-router";
-
 /** How many of the morning's figures the strip shows, as the prototype draws it; the briefing holds up to eight. */
 const CELLS = 6;
 

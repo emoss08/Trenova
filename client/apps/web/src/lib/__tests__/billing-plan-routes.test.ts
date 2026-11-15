@@ -1,13 +1,13 @@
 import { appNavigationModules } from "@/config/app-navigation";
 import { isNavGroup, type NavGroup, type NavItem } from "@/config/navigation.types";
 import { filterNavModules } from "@/hooks/use-filtered-navigation";
-import { routes } from "@/router";
+import { gateOutcome, hasRoute } from "@/test/route-tree";
 import { BASE_ONLY_UNAVAILABLE, seedPlan, unavailableFeatures } from "@/test/plan";
+import { RouteRefusal } from "@trenova/shared/lib/router/refusal";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { User } from "@trenova/shared/types/user";
-import type { LoaderFunctionArgs, RouteObject } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
 const ALL_OPERATIONS = 0xffff;
@@ -36,41 +36,6 @@ function signIn() {
   } as unknown as Parameters<typeof useAuthStore.setState>[0]);
 }
 
-function joinPath(parent: string, child: string): string {
-  if (child.startsWith("/")) return child;
-  return `${parent.replace(/\/$/, "")}/${child}`;
-}
-
-function collectRoutes(
-  entries: RouteObject[],
-  parent = "",
-  found = new Map<string, RouteObject>(),
-): Map<string, RouteObject> {
-  for (const entry of entries) {
-    const path = entry.path === undefined ? parent : joinPath(parent, entry.path);
-    if (entry.path !== undefined) found.set(path, entry);
-    if (entry.children) collectRoutes(entry.children, path, found);
-  }
-  return found;
-}
-
-const routesByPath = collectRoutes(routes);
-
-async function runLoader(path: string): Promise<{ value: unknown; thrown: unknown }> {
-  const route = routesByPath.get(path);
-  if (typeof route?.loader !== "function") throw new Error(`route ${path} has no loader`);
-  try {
-    const value = await route.loader({
-      request: new Request(`http://localhost${path}`),
-      params: {},
-      context: undefined,
-    } as unknown as LoaderFunctionArgs);
-    return { value, thrown: undefined };
-  } catch (thrown) {
-    return { value: undefined, thrown };
-  }
-}
-
 function itemIds(entries: (NavItem | NavGroup)[]): string[] {
   return entries.flatMap((entry) => (isNavGroup(entry) ? entry.items : [entry])).map((e) => e.id);
 }
@@ -87,11 +52,11 @@ describe("the factoring workspace on a plan without Accounting & Cash", () => {
     signIn();
     seedPlan(invoiceReader, BASE_ONLY_UNAVAILABLE);
 
-    const { thrown } = await runLoader("/billing/factoring");
+    const thrown = await gateOutcome("/billing/factoring");
 
-    expect(thrown).toBeInstanceOf(Response);
-    expect((thrown as Response).status).toBe(403);
-    const body = (await (thrown as Response).json()) as Record<string, unknown>;
+    expect(thrown).toBeInstanceOf(RouteRefusal);
+    expect((thrown as RouteRefusal).status).toBe(403);
+    const body = (thrown as RouteRefusal).data as Record<string, unknown>;
     expect(body.code).toBe("PLAN_RESTRICTED");
     expect(body.params).toEqual({ feature: "tms.factoring", addOn: "Accounting & Cash" });
   });
@@ -100,7 +65,7 @@ describe("the factoring workspace on a plan without Accounting & Cash", () => {
     signIn();
     seedPlan(invoiceReader, unavailableFeatures("ai.desk"));
 
-    expect(await runLoader("/billing/factoring")).toEqual({ value: null, thrown: undefined });
+    expect(await gateOutcome("/billing/factoring")).toBeUndefined();
   });
 });
 
@@ -160,7 +125,7 @@ describe("billing and accounting navigation on a base-only plan", () => {
   });
 
   it("serves the invoice register at its billing address", () => {
-    expect(routesByPath.has("/billing/invoice-register")).toBe(true);
-    expect(routesByPath.has("/accounting/ar/invoices")).toBe(false);
+    expect(hasRoute("/billing/invoice-register")).toBe(true);
+    expect(hasRoute("/accounting/ar/invoices")).toBe(false);
   });
 });

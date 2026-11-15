@@ -6,7 +6,7 @@ import type { OrganizationCapabilityType } from "@trenova/shared/types/organizat
 import type { OperationType } from "@trenova/shared/types/permission";
 import type { PlatformMode } from "@trenova/shared/types/platform";
 import type { ComponentType, ReactNode } from "react";
-import type { LoaderFunction, RouteObject } from "react-router";
+import type { RouteGate } from "@trenova/shared/lib/router/gates";
 
 /**
  * Where an edition route is mounted in the web app's router.
@@ -25,7 +25,17 @@ export const EDITION_ROUTE_MOUNTS: readonly EditionRouteMount[] = [
   "admin",
 ];
 
-export type EditionRoutes = Partial<Record<EditionRouteMount, readonly RouteObject[]>>;
+/**
+ * A page an edition adds. The host mounts it as a route at `path` (relative to `/admin` for an
+ * admin route), runs its `gates` before it loads, and loads `page` the first time it opens.
+ */
+export type EditionRoute = {
+  path: string;
+  gates?: readonly RouteGate[];
+  page: () => Promise<ComponentType>;
+};
+
+export type EditionRoutes = Partial<Record<EditionRouteMount, readonly EditionRoute[]>>;
 
 /** Fields an edition entry and the host's own entries share for visibility. */
 type EditionVisibility = {
@@ -117,10 +127,10 @@ export type EditionDefinition = {
   navItems?: readonly EditionNavItem[];
   slots?: EditionSlots;
   /**
-   * Run after the session check on every protected page request, in order; the first
-   * one that returns a value (a redirect) wins. They must not throw for an outage.
+   * Run after the session check on every change of signed-in page, in order; the first one
+   * that throws (a redirect) wins. They must not throw for an outage.
    */
-  protectedLoaders?: readonly LoaderFunction[];
+  protectedGates?: readonly RouteGate[];
   plan?: EditionPlan;
   messages?: EditionMessages;
 };
@@ -128,11 +138,11 @@ export type EditionDefinition = {
 export type ResolvedEdition = {
   id: string;
   name: string;
-  routes: Readonly<Record<EditionRouteMount, readonly RouteObject[]>>;
+  routes: Readonly<Record<EditionRouteMount, readonly EditionRoute[]>>;
   adminLinks: readonly EditionAdminLink[];
   navItems: readonly EditionNavItem[];
   slots: Required<EditionSlots>;
-  protectedLoaders: readonly LoaderFunction[];
+  protectedGates: readonly RouteGate[];
   plan: EditionPlan;
   messages: EditionMessages;
 };

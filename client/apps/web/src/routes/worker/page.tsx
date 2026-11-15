@@ -38,8 +38,8 @@ const loadWorkersSearch = createLoader({
 // the roster's saved default view, or the PTO tab's balance summary and — for a manager
 // — its liability report. The rows of either table are paginated and left to the table.
 // Paid time off is the HR add-on's: without it none of that is drawn or read.
-export const prefetch: RoutePrefetch = ({ request }) => {
-  const { pageTab, ptoOverviewFilters, viewType } = loadWorkersSearch(request);
+export const prefetch: RoutePrefetch = ({ searchParams }) => {
+  const { pageTab, ptoOverviewFilters, viewType } = loadWorkersSearch(searchParams);
   const timezone = useAuthStore.getState().user?.timezone;
   const permissions = usePermissionStore.getState();
   const timeOffOnPlan = planFeatureOf(permissions.manifest, PlanFeature.WorkforceTimeOff).available;

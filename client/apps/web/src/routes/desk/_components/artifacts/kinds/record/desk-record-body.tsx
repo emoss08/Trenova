@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { DisplayValue } from "@/components/assistant/display-value";
 import {
   formatDisplayValue,
@@ -9,7 +10,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { humanizeToolName } from "@/components/assistant/proposal-state";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { entityCardFrom } from "../../artifact-payloads";
 import { ArtIcon } from "../../desk-art-kinds";
 import { recordCardFor, RecordArtifact } from "../../cards/registry";

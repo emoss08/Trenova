@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { MessagePreview } from "../proposal-preview/message-preview";
 import { MoneyPreview } from "../proposal-preview/money-preview";
@@ -20,7 +20,7 @@ import {
 } from "./preview-fixtures";
 
 function renderIn(ui: ReactElement) {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
+  return render(<TestRouter>{ui}</TestRouter>);
 }
 
 describe("ValueChange", () => {

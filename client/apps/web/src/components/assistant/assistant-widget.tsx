@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { usePermission } from "@/hooks/use-permission";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { lazyComponent } from "@/lib/lazy-component";
@@ -17,7 +18,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Fragment, Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
 import { AssistantEdgeTab } from "./assistant-edge-tab";
 import type { AssistantView } from "./assistant-header";
 import { AssistantLauncher } from "./assistant-launcher";
@@ -132,7 +132,7 @@ function MountedAssistantWidget() {
   const full = layout === "full";
   const tall = layout === "compact" && view !== "home";
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useQueryParams();
   const requestedOpen = searchParams.get(OPEN_PARAM) === "open";
 
   useEffect(() => {

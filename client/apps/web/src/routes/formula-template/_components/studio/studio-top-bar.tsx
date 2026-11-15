@@ -42,7 +42,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { Fragment } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import type { ApprovalAction } from "../approval-action-dialog";
 import { billingLabel } from "./model/billing";
 import { useStudio } from "./studio-context";
@@ -353,7 +353,7 @@ export function StudioTopBar({
         variant="ghost"
         size="icon-sm"
         aria-label={t("Back to formula templates")}
-        onClick={() => void navigate(formulaTemplateRoutes.list)}
+        onClick={() => void navigate({ to: formulaTemplateRoutes.list })}
       >
         <ArrowLeftIcon className="size-4" />
       </Button>

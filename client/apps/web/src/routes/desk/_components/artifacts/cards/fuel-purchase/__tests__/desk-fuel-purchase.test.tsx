@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { recordPath } from "@/config/record-links";
 import type { DeskFuelPurchaseCard } from "@/lib/graphql/fuel-desk-cards";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskFuelPurchase } from "../desk-fuel-purchase";
 import { importedPurchase, manualPurchase } from "./fixtures";
@@ -38,9 +38,9 @@ function draw(card: DeskFuelPurchaseCard | Error, recordId = "fpur_1019") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskFuelPurchase recordId={recordId} onBack={vi.fn()} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

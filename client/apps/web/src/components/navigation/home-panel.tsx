@@ -14,7 +14,7 @@ import { isRouteActive } from "@/lib/route-utils";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Star01Icon } from "@trenova/shared/components/icons";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 
 function AttentionRows() {
   const t = useT();

@@ -23,7 +23,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { CSSProperties } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { inlineErrorText } from "../../inline-error";
 import { useTriageActions } from "../../use-triage-actions";
 import { PhaseBadge, peekPhase } from "./peek-parts";
@@ -265,7 +265,7 @@ function ShipmentBody({
           size="sm"
           onClick={() => {
             onClose();
-            void navigate(path);
+            void navigate({ to: path });
           }}
         >
           {t("Open in Shipments")}

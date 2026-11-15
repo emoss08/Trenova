@@ -17,7 +17,7 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import type { PaletteCopyKind, PaletteIntent, PaletteTheme } from "./palette-model";
 
@@ -131,7 +131,7 @@ export function usePaletteIntentRunner({ close, askAbout, confirm }: IntentRunne
       switch (intent.type) {
         case "navigate":
           close();
-          void navigate(intent.href);
+          void navigate({ to: intent.href });
           return;
         case "new-tab":
           openInNewTab(absoluteUrl(intent.href));

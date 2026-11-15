@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { conversationPath } from "@/lib/conversation-path";
 import {
@@ -18,7 +19,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { defineLabels } from "@trenova/shared/i18n/labels";
@@ -67,7 +68,7 @@ function shortDate(at: number, timeZone: string): string {
 export function DeskAgentPage({ agentId }: { agentId: string }) {
   const t = useT();
   const navigate = useNavigate();
-  const [search] = useSearchParams();
+  const [search] = useQueryParams();
   const from = search.get("from");
   const queryClient = useQueryClient();
   const query = assistant.agentCapabilities(agentId);
@@ -86,7 +87,7 @@ export function DeskAgentPage({ agentId }: { agentId: string }) {
     resourceName: "Agent",
   });
 
-  const back = () => void navigate(from ? conversationPath(from) : "/desk");
+  const back = () => void navigate({ to: from ? conversationPath(from) : "/desk" });
 
   // One change at a time: each is saved against the version the page holds,
   // and the next waits for the one before it to come back.

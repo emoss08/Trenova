@@ -1,7 +1,7 @@
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SidebarLayout } from "../sidebar-layout";
 
@@ -87,11 +87,11 @@ afterEach(() => {
 });
 
 function renderShell() {
-  const router = createMemoryRouter(
-    [{ path: "*", element: <SidebarLayout>{null}</SidebarLayout> }],
-    { initialEntries: ["/shipments"] },
+  return render(
+    <TestRouter initialEntries={["/shipments"]}>
+      <SidebarLayout>{null}</SidebarLayout>
+    </TestRouter>,
   );
-  return render(<RouterProvider router={router} />);
 }
 
 // Happy DOM reports Ctrl+Alt as AltGr, which a browser on Linux or macOS does not.

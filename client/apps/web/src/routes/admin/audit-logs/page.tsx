@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useResetTableSearchParams } from "@/hooks/data-table/use-reset-table-search-params";
@@ -22,7 +23,7 @@ import type { FieldFilter } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryState, useQueryStates } from "nuqs";
 import { lazy, type ReactNode } from "react";
-import { Link, type LoaderFunctionArgs } from "react-router";
+import type { RoutePrefetchArgs } from "@/lib/route-prefetch";
 import { AuditAlertPoliciesSkeleton } from "./_components/audit-alert-policies-skeleton";
 import { AuditOverviewSkeleton } from "./_components/audit-overview-skeleton";
 import {
@@ -54,8 +55,8 @@ const ACTOR_FIELD = "principalId";
 const RECORD_FIELD = "resourceId";
 
 /** Warms the overview the page reads on mount, for the window in the address. */
-export function prefetch({ request }: LoaderFunctionArgs) {
-  const param = new URL(request.url).searchParams.get(AUDIT_PARAMS.window);
+export function prefetch({ searchParams }: RoutePrefetchArgs) {
+  const param = searchParams.get(AUDIT_PARAMS.window);
   const days = auditWindowOf(param === null ? Number.NaN : Number(param));
   return [{ ...audit.overview(days), staleTime: OVERVIEW_REFRESH_MS }];
 }

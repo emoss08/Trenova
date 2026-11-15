@@ -1,9 +1,8 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type { PublicTrackingView } from "@trenova/shared/types/carrier-tracking";
 import { CarrierTrackingPublicPage } from "./page";
@@ -71,22 +70,19 @@ function problem(
   });
 }
 
-function renderPage() {
+async function renderPage() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={["/carrier-tracking/tok_live"]}>
-          <Routes>
-            <Route path="/carrier-tracking/:token" element={children} />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>
-    );
-  }
-  return render(<CarrierTrackingPublicPage />, { wrapper: Wrapper });
+  return renderAtRoutes(
+    [{ path: "/carrier-tracking/$token", component: CarrierTrackingPublicPage }],
+    {
+      initialEntries: ["/carrier-tracking/tok_live"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      ),
+    },
+  );
 }
 
 describe("CarrierTrackingPublicPage", () => {
@@ -98,7 +94,7 @@ describe("CarrierTrackingPublicPage", () => {
   it("shows the load and offers the arrival at the next stop", async () => {
     mocks.getPublicTracking.mockResolvedValue(view());
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText("Load PRO-77 for Acme Brokerage")).toBeInTheDocument();
     expect(mocks.getPublicTracking).toHaveBeenCalledWith("tok_live");
@@ -111,7 +107,7 @@ describe("CarrierTrackingPublicPage", () => {
     mocks.postCheckCall.mockResolvedValue({ outcome: "Applied", replayed: false });
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.click(await screen.findByRole("button", { name: "I've arrived at stop 2" }));
 
@@ -131,7 +127,7 @@ describe("CarrierTrackingPublicPage", () => {
       .mockResolvedValueOnce({ outcome: "Applied", replayed: true });
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     const arrive = await screen.findByRole("button", { name: "I've arrived at stop 2" });
     await user.click(arrive);
@@ -157,7 +153,7 @@ describe("CarrierTrackingPublicPage", () => {
     );
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.click(await screen.findByRole("button", { name: "Send update" }));
 
@@ -171,7 +167,7 @@ describe("CarrierTrackingPublicPage", () => {
     mocks.getPublicTracking.mockResolvedValue(view());
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.click(await screen.findByRole("checkbox", { name: "Running late" }));
     await user.click(screen.getByRole("button", { name: "Send update" }));
@@ -187,7 +183,7 @@ describe("CarrierTrackingPublicPage", () => {
       ]),
     );
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText("This tracking link is no longer valid")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send update" })).not.toBeInTheDocument();
@@ -196,7 +192,7 @@ describe("CarrierTrackingPublicPage", () => {
   it("shows a finished load as read-only", async () => {
     mocks.getPublicTracking.mockResolvedValue(view({ closed: true }));
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText("This load is no longer being tracked")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send update" })).not.toBeInTheDocument();

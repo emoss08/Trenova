@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { GrantOverrideDialog } from "@/components/carrier-intelligence/grant-override-dialog";
 import { usePermission } from "@/hooks/use-permission";
@@ -21,7 +22,6 @@ import {
   XOctagonIcon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 export type EligibilityTone = "blocker" | "warning" | "advisory";

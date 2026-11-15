@@ -13,12 +13,22 @@ export type ShellFrame = "page" | "room";
  */
 export type RoomRail = "folds" | "stands";
 
+/** What a route tells the shell about itself, as its `staticData`. */
 export interface RouteHandle {
   frame?: ShellFrame;
   roomRail?: RoomRail;
 }
 
-/** A matched route as the shell reads it: only its handle. */
+declare module "@tanstack/react-router" {
+  interface StaticDataRouteOption extends RouteHandle {}
+
+  interface HistoryState {
+    /** The case was opened to be worked: an unowned case becomes the person's (START_CASE). */
+    startCase?: boolean;
+  }
+}
+
+/** A matched route as the shell reads it: only what it said about itself. */
 export interface HandleMatch {
-  handle?: RouteHandle;
+  staticData?: RouteHandle;
 }

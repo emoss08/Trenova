@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { InvoiceTableRowFieldsFragment } from "@trenova/graphql/generated/graphql";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { InvoiceItemCard } from "../invoice-item-card";
 
@@ -50,9 +50,9 @@ function row(
 
 function renderCard(invoice: InvoiceTableRowFieldsFragment, onPost = vi.fn()) {
   render(
-    <MemoryRouter>
+    <TestRouter>
       <InvoiceItemCard invoice={invoice} isSelected={false} onClick={vi.fn()} onPost={onPost} />
-    </MemoryRouter>,
+    </TestRouter>,
   );
   return onPost;
 }

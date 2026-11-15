@@ -20,7 +20,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { SaveDemoteDialog } from "../_components/studio/dialogs/save-demote-dialog";
 import { FormulaStudio } from "../_components/studio/formula-studio";
 import { StudioSkeleton } from "@/components/tariff-studio/studio-skeletons";
@@ -50,14 +50,14 @@ function seatedTemplate(template: FormulaTemplate): SeatedRecord<FormulaTemplate
  * nothing rather than comparing its version with the last template's.
  */
 export function FormulaStudioEditPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   return <FormulaTemplateEditor key={id} />;
 }
 
 function FormulaTemplateEditor() {
   const t = useT();
 
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [pendingDemotingSave, setPendingDemotingSave] = useState<FormulaTemplateFormValues | null>(
@@ -139,7 +139,7 @@ function FormulaTemplateEditor() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => void navigate(formulaTemplateRoutes.list)}
+          onClick={() => void navigate({ to: formulaTemplateRoutes.list })}
         >
           {t("Back to formula templates")}
         </Button>

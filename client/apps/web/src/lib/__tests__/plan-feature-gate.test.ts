@@ -1,9 +1,10 @@
 import { PlanFeature } from "@/lib/plan-feature";
-import { createPlanFeatureLoader } from "@/lib/plan-feature-loader";
+import { requirePlanFeature } from "@/lib/plan-feature-gate";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { PermissionManifest, UnavailableFeature } from "@trenova/shared/types/permission";
-import type { LoaderFunctionArgs } from "react-router";
+import { RouteRefusal } from "@trenova/shared/lib/router/refusal";
+import { enterContext } from "@trenova/shared/testing/gate-context";
 import { afterEach, describe, expect, it } from "vitest";
 
 const dispatchIntelligence: UnavailableFeature = {
@@ -25,28 +26,21 @@ function holdManifest(unavailableFeatures: UnavailableFeature[]) {
 }
 
 async function run() {
-  const loader = createPlanFeatureLoader(PlanFeature.DispatchIntelligence);
+  const gate = requirePlanFeature(PlanFeature.DispatchIntelligence);
   try {
-    return {
-      value: await loader({
-        request: new Request("http://localhost/dispatch/outlook"),
-        params: {},
-        context: undefined,
-      } as unknown as LoaderFunctionArgs),
-      thrown: undefined,
-    };
+    return { value: await gate(enterContext("/dispatch/outlook")), thrown: undefined };
   } catch (thrown) {
     return { value: undefined, thrown };
   }
 }
 
-describe("createPlanFeatureLoader", () => {
+describe("requirePlanFeature", () => {
   afterEach(() => usePermissionStore.getState().clearPermissions());
 
   it("lets the page open when the plan includes the feature", async () => {
     holdManifest([]);
 
-    expect(await run()).toEqual({ value: null, thrown: undefined });
+    expect(await run()).toEqual({ value: undefined, thrown: undefined });
   });
 
   it("throws the plan refusal naming the add-on when the plan leaves the feature out", async () => {
@@ -54,18 +48,17 @@ describe("createPlanFeatureLoader", () => {
 
     const { thrown } = await run();
 
-    expect(thrown).toBeInstanceOf(Response);
-    const body = (await (thrown as Response).json()) as Record<string, unknown>;
+    expect(thrown).toBeInstanceOf(RouteRefusal);
+    const body = (thrown as RouteRefusal).data as Record<string, unknown>;
     expect(body.code).toBe("PLAN_RESTRICTED");
     expect(body.params).toEqual({
       feature: "tms.dispatch_intelligence",
       addOn: "Dispatch Intelligence",
     });
 
-    // The router hands the error boundary the thrown response's status and parsed body; it
-    // reads that the way it reads a refused read.
-    const routeError = { status: 403, statusText: "Plan Restricted", internal: false, data: body };
-    expect(describeError(routeError)).toMatchObject({
+    // The route's error component is handed the refusal itself, and reads it the way it reads
+    // a refused read.
+    expect(describeError(thrown)).toMatchObject({
       kind: "plan-restricted",
       plan: { feature: "tms.dispatch_intelligence", addOn: "Dispatch Intelligence" },
     });

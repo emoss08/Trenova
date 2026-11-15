@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Controller, type Control } from "react-hook-form";
-import { MemoryRouter } from "react-router";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type { DispatchBoardMove } from "@/lib/graphql/dispatch-console";
 import { matchRoutingGuideGraphQL } from "@/lib/graphql/routing-guide-table";
@@ -83,11 +83,11 @@ async function submitSpotTender(actions: DispatchActions) {
   });
 
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={queryClient}>
         <TenderDialog move={move} actions={actions} onClose={vi.fn()} />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 
   await user.click(await screen.findByRole("tab", { name: "Spot" }));
@@ -183,11 +183,11 @@ async function submitWaterfall(actions: DispatchActions) {
   });
 
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={queryClient}>
         <TenderDialog move={move} actions={actions} onClose={vi.fn()} />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 
   await user.click(await screen.findByRole("button", { name: "Start waterfall" }));

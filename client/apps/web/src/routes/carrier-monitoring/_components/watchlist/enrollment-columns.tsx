@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { RelativeTime } from "@/components/carrier-intelligence/relative-time";
 import { StatusDot, type StatusTone } from "@/components/carrier-intelligence/status-dot";
 import type { CarrierIntelLabels } from "@/components/carrier-intelligence/use-carrier-intel-labels";
@@ -13,8 +14,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { Link } from "react-router";
-
 const VENDOR_STATE_TONES: Record<CarrierIntelVendorState, StatusTone> = {
   Active: "success",
   PendingAdd: "low",

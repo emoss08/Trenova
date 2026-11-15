@@ -4,7 +4,7 @@ import { SETTINGS_PATH } from "@/lib/settings-path";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { Suspense, useEffect, useState } from "react";
-import { useMatch } from "react-router";
+import { useMatchRoute } from "@tanstack/react-router";
 import { CommandPaletteSkeleton } from "./command-palette-skeleton";
 
 const Palette = lazyComponent(
@@ -31,7 +31,7 @@ export function CommandPaletteMount() {
   const open = useCommandPaletteStore((state) => state.open);
   const toggleOpen = useCommandPaletteStore((state) => state.toggleOpen);
   const [mounted, setMounted] = useState(false);
-  const onSettings = useMatch(SETTINGS_PATH) !== null;
+  const onSettings = useMatchRoute()({ to: SETTINGS_PATH }) !== false;
 
   useHotkey(
     "Mod+K",

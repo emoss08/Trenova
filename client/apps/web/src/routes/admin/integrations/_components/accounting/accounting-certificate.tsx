@@ -24,7 +24,7 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { downloadTextFile } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
   AccountingCompanyChoice,
@@ -196,7 +196,7 @@ export function AccountingCertificateConnect({
 
   const connected = async () => {
     await refresh();
-    void navigate(`${accountingSetupPath(vendor.system)}&setup=connected`, { replace: true });
+    void navigate({ to: `${accountingSetupPath(vendor.system)}&setup=connected`, replace: true });
   };
 
   const onResult = (result: AccountingAuthorizationResult) => {

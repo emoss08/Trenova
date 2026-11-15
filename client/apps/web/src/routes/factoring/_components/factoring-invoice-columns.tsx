@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import {
   FactoringSubmissionItemStatusBadge,
   FactoringSubmissionStatusBadge,
@@ -8,7 +9,6 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { Link } from "react-router";
 import type { FactoringQueueTab } from "../use-factoring-state";
 
 export function getFactoringInvoiceColumns(

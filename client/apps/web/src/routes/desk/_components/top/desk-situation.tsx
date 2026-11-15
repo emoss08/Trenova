@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 
 /** How many of the morning's figures the line carries before the live ones. */
 const BRIEFING_CELLS = 3;
@@ -57,7 +57,7 @@ export function DeskSituation({ canWatch, needsYou }: { canWatch: boolean; needs
           key={cell.key}
           type="button"
           className={cn("ui-focus-ring", cell.md && "dk-tb-md")}
-          onClick={() => void navigate(cell.to)}
+          onClick={() => void navigate({ to: cell.to })}
         >
           {cell.warn && <span className="dk-tb-dot dk-warn" />}
           <span className="dk-tb-sit-l">{cell.label}</span>
@@ -69,7 +69,7 @@ export function DeskSituation({ canWatch, needsYou }: { canWatch: boolean; needs
           <button
             type="button"
             className="ui-focus-ring"
-            onClick={() => void navigate("/desk/needs")}
+            onClick={() => void navigate({ to: "/desk/needs" })}
           >
             <span className="dk-tb-sit-l">{t("Needs you")}</span>
             <span className="dk-tb-sit-v">{needsYou}</span>
@@ -77,7 +77,7 @@ export function DeskSituation({ canWatch, needsYou }: { canWatch: boolean; needs
           <button
             type="button"
             className="dk-tb-md ui-focus-ring"
-            onClick={() => void navigate("/desk#dk-dy-working")}
+            onClick={() => void navigate({ to: "/desk", hash: "dk-dy-working" })}
           >
             {/* Agents are the organization's own; Nova's mark is kept for Nova. */}
             <span

@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { DeskOrder as DeskOrderRecord } from "@/lib/graphql/order-card";
 import type { ActivityEntry } from "@/lib/graphql/record-activity";
 import type { RecordShipment } from "@/lib/graphql/record-shipments";
@@ -5,7 +6,6 @@ import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskOrder, DeskOrderArtifact } from "../desk-order";
 
@@ -103,9 +103,9 @@ function draw(props: Partial<Parameters<typeof DeskOrder>[0]> = {}) {
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
   const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskOrder recordId="ord_1" order={["ord_0", "ord_1"]} {...handlers} {...props} {...more} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
   const view = render(tree());
@@ -342,9 +342,9 @@ describe("DeskOrder", () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskOrderArtifact artifact={{} as never} recordId="ord_1" fallback={null} />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 

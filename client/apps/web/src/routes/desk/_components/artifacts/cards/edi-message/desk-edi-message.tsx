@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { edi } from "@/lib/queries/edi";
@@ -8,7 +9,6 @@ import { describeApiError } from "@/lib/api-error-message";
 import { cn } from "@trenova/shared/lib/utils";
 import type { EDIMessage } from "@trenova/shared/types/edi";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
 import {
   CardBar,

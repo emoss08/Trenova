@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { RailItem, RailSection } from "@/components/navigation/queue-rail";
 import type { RowTotal } from "@trenova/shared/lib/row-total";
 import type { CaptureSource } from "@/lib/graphql/capture";
@@ -16,7 +17,6 @@ import {
   ScanIcon,
 } from "@trenova/shared/components/icons";
 import { useId } from "react";
-import { Link } from "react-router";
 import { INTAKE_VIEWS, viewLabel, type IntakeFilter, type IntakeView } from "./queue-filter";
 
 const VIEW_ICON: Record<IntakeView, IconComponent> = {

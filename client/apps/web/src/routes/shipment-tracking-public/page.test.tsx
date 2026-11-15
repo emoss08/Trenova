@@ -1,8 +1,7 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type { PublicShipmentView } from "@trenova/shared/types/shipment-tracking";
 import { TrackingView } from "./_components/tracking-view";
@@ -52,20 +51,17 @@ function view(overrides: Partial<PublicShipmentView> = {}): PublicShipmentView {
   };
 }
 
-function renderPage() {
+async function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={["/shipment-tracking/tok_live"]}>
-          <Routes>
-            <Route path="/shipment-tracking/:token" element={children} />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>
-    );
-  }
-  return render(<ShipmentTrackingPublicPage />, { wrapper: Wrapper });
+  return renderAtRoutes(
+    [{ path: "/shipment-tracking/$token", component: ShipmentTrackingPublicPage }],
+    {
+      initialEntries: ["/shipment-tracking/tok_live"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      ),
+    },
+  );
 }
 
 const NOW = 1_800_030_000;
@@ -83,7 +79,7 @@ describe("ShipmentTrackingPublicPage", () => {
 
   it("leads with where the load is going and when it is expected there", async () => {
     mocks.getPublicView.mockResolvedValue(view());
-    renderPage();
+    await renderPage();
 
     expect(
       await screen.findByRole("heading", { level: 1, name: "On its way to Tulsa." }),
@@ -115,14 +111,14 @@ describe("ShipmentTrackingPublicPage", () => {
         ],
       }),
     );
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText("About 30m after the appointment")).toBeDefined();
   });
 
   it("offers to put the arrival in a calendar and to copy the page's link", async () => {
     mocks.getPublicView.mockResolvedValue(view());
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByRole("button", { name: "Add to calendar" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Copy link" })).toBeDefined();
@@ -130,7 +126,7 @@ describe("ShipmentTrackingPublicPage", () => {
 
   it("draws nothing the view did not carry", async () => {
     mocks.getPublicView.mockResolvedValue(view({ fields: [], status: undefined, bol: undefined }));
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText("Load PRO-77")).toBeDefined();
     expect(screen.getByRole("heading", { level: 1, name: "On its way to Tulsa." })).toBeDefined();
@@ -146,7 +142,7 @@ describe("ShipmentTrackingPublicPage", () => {
         proofOfDelivery: { documentId: "doc_1", fileName: "pod.pdf", filedAt: 1_800_070_000 },
       }),
     );
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText("pod.pdf")).toBeDefined();
     const link = screen.getByRole("link", { name: "Download" });
@@ -166,7 +162,7 @@ describe("ShipmentTrackingPublicPage", () => {
         ],
       }),
     );
-    renderPage();
+    await renderPage();
     expect(await screen.findByText("This tracking link is no longer valid")).toBeDefined();
   });
 
@@ -178,7 +174,7 @@ describe("ShipmentTrackingPublicPage", () => {
         status: 503,
       }),
     );
-    renderPage();
+    await renderPage();
     expect(await screen.findByText("Temporarily unavailable")).toBeDefined();
     expect(screen.getByRole("button", { name: "Try again" })).toBeDefined();
   });

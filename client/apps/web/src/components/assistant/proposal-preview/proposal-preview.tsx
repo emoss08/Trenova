@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import type {
   AgentPreviewOperation,
   PreviewRecordChange,
@@ -20,7 +21,6 @@ import {
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import { humanizeToolName } from "../proposal-state";
 import { humanizeKey, isRecordId } from "../readable-values";
 import { MessagePreview } from "./message-preview";

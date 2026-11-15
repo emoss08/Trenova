@@ -15,7 +15,7 @@ import {
 } from "@trenova/shared/types/formula-library";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useFormState } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { EMPTY_LIBRARY, libraryFormValues } from "../_components/studio/library-form";
 import { LibraryStudio } from "../_components/studio/library-studio";
 
@@ -54,7 +54,8 @@ export function FormulaLibraryCreatePage() {
   const { isDirty } = useFormState({ control: form.control });
   useEffect(() => {
     if (createdId === null || isDirty) return;
-    void navigate(createdId ? formulaLibraryRoutes.edit(createdId) : formulaLibraryRoutes.list, {
+    void navigate({
+      to: createdId ? formulaLibraryRoutes.edit(createdId) : formulaLibraryRoutes.list,
       replace: true,
     });
   }, [createdId, isDirty, navigate]);

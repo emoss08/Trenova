@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { ComposerAttachment, ComposerPayload } from "@/components/assistant/composer-types";
 import type { AssistantEntityRef } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { MemoryRouter } from "react-router";
 import { registerCatalogSource, setLocale, translate } from "@trenova/shared/i18n/runtime";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { useDeskAttachments } from "../desk-attachments";
@@ -78,9 +78,9 @@ function renderComposer(props: Parameters<typeof Harness>[0]) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <Harness {...props} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 
@@ -447,7 +447,7 @@ describe("DeskComposer's box", () => {
     const onSend = vi.fn();
     const { unmount } = render(
       <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskComposer
             value=""
             onChange={onSend}
@@ -456,7 +456,7 @@ describe("DeskComposer's box", () => {
             busy={false}
             recall="Where is PRO-1001?"
           />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 
@@ -467,7 +467,7 @@ describe("DeskComposer's box", () => {
     const onChange = vi.fn();
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskComposer
             value="half a thought"
             onChange={onChange}
@@ -476,7 +476,7 @@ describe("DeskComposer's box", () => {
             busy={false}
             recall="Where is PRO-1001?"
           />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 
@@ -501,9 +501,9 @@ describe("DeskComposer's box", () => {
     }
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter>
+        <TestRouter>
           <Box />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>,
     );
     const box = screen.getByRole("textbox");

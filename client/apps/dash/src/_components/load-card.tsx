@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -12,7 +13,6 @@ import type { PortalStopAction } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRightIcon } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { stopTap, type StopTap } from "../lib/stop-tap";
 import { LoadStatusBadge } from "./portal-badges";

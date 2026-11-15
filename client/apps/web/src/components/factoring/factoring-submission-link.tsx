@@ -1,7 +1,7 @@
+import { Link } from "@trenova/shared/components/link";
 import { FactoringSubmissionStatusBadge } from "@/components/factoring/factoring-badges";
 import { recordPath } from "@/config/record-links";
 import type { FactoringSubmissionStatus } from "@trenova/graphql/generated/graphql";
-import { Link } from "react-router";
 
 /** The schedule an invoice is on while it is with the factor, and how its delivery stands. */
 export function FactoringSubmissionLink({

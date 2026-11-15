@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogTitle } from "@trenova/shared/components/u
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo, formatUnixInUserTimezone } from "@trenova/shared/lib/date";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { inlineErrorText } from "../../inline-error";
 import { peekPhase } from "./peek-parts";
 
@@ -197,7 +197,7 @@ function CustomerBody({
           size="sm"
           onClick={() => {
             onClose();
-            void navigate(recordPath("customer", customer.id));
+            void navigate({ to: recordPath("customer", customer.id) });
           }}
         >
           {t("Open customer")}

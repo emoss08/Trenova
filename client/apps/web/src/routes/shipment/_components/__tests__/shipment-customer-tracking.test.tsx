@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation } from "@trenova/shared/types/permission";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -77,7 +77,7 @@ function renderTab(subject: Shipment = shipment) {
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={client}>
-        <MemoryRouter>{children}</MemoryRouter>
+        <TestRouter>{children}</TestRouter>
       </QueryClientProvider>
     );
   }

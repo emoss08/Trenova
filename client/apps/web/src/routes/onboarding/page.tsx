@@ -46,7 +46,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { FormProvider, useForm, useWatch, type Control } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { AddressAsk } from "./_components/address-ask";
 import { BackButton } from "./_components/back-button";
 import { BuildNarration, type BuildOutcome } from "./_components/build-narration";
@@ -462,7 +462,7 @@ function Conversation({
     await queryClient.invalidateQueries({
       predicate: (query) => query.queryKey[0] !== "onboarding",
     });
-    void navigate("/", { replace: true });
+    void navigate({ to: "/", replace: true });
   };
 
   const company = answers.company || t("your company");

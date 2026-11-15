@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import {
@@ -21,8 +22,6 @@ import {
   ChevronSelectorVerticalIcon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
-
 const OVERDUE_CELL_CLASSES: Record<string, string> = {
   days1To30Minor: "text-warning-foreground",
   days31To60Minor: "text-warning-foreground",

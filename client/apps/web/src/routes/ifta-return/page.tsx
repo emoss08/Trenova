@@ -19,8 +19,8 @@ function nowUnix(): number {
 // The quarter is in the URL so a worksheet can be linked to, and an absent or
 // unusable pair falls back to the most recently completed quarter — the one a
 // preparer is working on.
-export const prefetch: RoutePrefetch = ({ request }) => {
-  const search = new URL(request.url).searchParams;
+export const prefetch: RoutePrefetch = ({ searchParams }) => {
+  const search = searchParams;
   const period = periodFromSearch(
     search.get("year"),
     search.get("quarter"),

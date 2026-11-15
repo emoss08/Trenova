@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import {
@@ -30,7 +31,6 @@ import type { BadgeVariant } from "@trenova/shared/types/badge";
 import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 import { CheckCircleIcon, RouteIcon, Settings01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { defineLabels } from "@trenova/shared/i18n/labels";

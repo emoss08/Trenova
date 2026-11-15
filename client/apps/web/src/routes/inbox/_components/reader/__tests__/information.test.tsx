@@ -1,9 +1,10 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import type { FactoringRemittance } from "@/lib/graphql/factoring-remittance";
 import type { InboundMessageDetail } from "@/lib/graphql/inbox";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Information } from "../information";
 
@@ -54,17 +55,19 @@ function Location() {
   return <p data-testid="location">{useLocation().pathname}</p>;
 }
 
-function renderInformation(detail: InboundMessageDetail) {
+async function renderInformation(detail: InboundMessageDetail) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={["/inbox"]}>
-        <Routes>
-          <Route path="/inbox" element={<Information message={detail} />} />
-          <Route path="*" element={<Location />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+  return await renderAtRoutes(
+    [
+      { path: "/inbox", component: () => <Information message={detail} /> },
+      { path: "$", component: () => <Location /> },
+    ],
+    {
+      initialEntries: ["/inbox"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    },
   );
 }
 
@@ -82,7 +85,7 @@ describe("Information remittance rows", () => {
       totalCount: 2,
     });
 
-    renderInformation(message());
+    await renderInformation(message());
 
     expect(await screen.findByText("rts-funding.csv")).toBeTruthy();
     expect(screen.getByText("rts-reserve.pdf")).toBeTruthy();
@@ -98,17 +101,17 @@ describe("Information remittance rows", () => {
     );
   });
 
-  it("reads no remittances for someone who cannot see them", () => {
+  it("reads no remittances for someone who cannot see them", async () => {
     mocks.canRead = false;
 
-    const { container } = renderInformation(message());
+    const { container } = await renderInformation(message());
 
     expect(container.textContent).toBe("");
     expect(mocks.listFactoringRemittances).not.toHaveBeenCalled();
   });
 
-  it("reads no remittances for a message of another kind", () => {
-    const { container } = renderInformation(message({ classification: "RateConfirmation" }));
+  it("reads no remittances for a message of another kind", async () => {
+    const { container } = await renderInformation(message({ classification: "RateConfirmation" }));
 
     expect(container.textContent).toBe("");
     expect(mocks.listFactoringRemittances).not.toHaveBeenCalled();

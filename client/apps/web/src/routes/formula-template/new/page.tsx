@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useFormState } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { FormulaStudio } from "../_components/studio/formula-studio";
 
@@ -54,7 +54,8 @@ export function FormulaStudioCreatePage() {
   const { isDirty } = useFormState({ control: form.control });
   useEffect(() => {
     if (createdId === null || isDirty) return;
-    void navigate(createdId ? formulaTemplateRoutes.edit(createdId) : formulaTemplateRoutes.list, {
+    void navigate({
+      to: createdId ? formulaTemplateRoutes.edit(createdId) : formulaTemplateRoutes.list,
       replace: true,
     });
   }, [createdId, isDirty, navigate]);

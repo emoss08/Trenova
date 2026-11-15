@@ -7,7 +7,7 @@ import type {
   SwitchOrganizationRequest,
   SwitchOrganizationResponse,
 } from "@trenova/shared/types/organization";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 
 export function useSwitchOrganization() {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ export function useSwitchOrganization() {
 
       await clearSessionCache();
 
-      void navigate("/");
+      void navigate({ to: "/" });
     },
   });
 }

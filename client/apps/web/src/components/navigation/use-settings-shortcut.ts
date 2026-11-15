@@ -1,7 +1,7 @@
 import { hotkeyOf } from "@/config/keybinds.config";
 import { SETTINGS_PATH } from "@/lib/settings-path";
 import { useHotkey } from "@tanstack/react-hotkeys";
-import { useMatch, useNavigate } from "react-router";
+import { useMatchRoute, useNavigate } from "@tanstack/react-router";
 
 /**
  * ⌘⇧S opens Settings from any page in the shell, even with focus in a field. On Settings
@@ -9,13 +9,13 @@ import { useMatch, useNavigate } from "react-router";
  */
 export function useSettingsShortcut() {
   const navigate = useNavigate();
-  const onSettings = useMatch(SETTINGS_PATH) !== null;
+  const onSettings = useMatchRoute()({ to: SETTINGS_PATH }) !== false;
 
   useHotkey(
     hotkeyOf("general", "user-settings"),
     () => {
       if (onSettings) return;
-      void navigate(SETTINGS_PATH);
+      void navigate({ to: SETTINGS_PATH });
     },
     { ignoreInputs: false, preventDefault: true },
   );

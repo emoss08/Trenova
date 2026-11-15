@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { customerStatementPath } from "@/lib/ar-links";
 import { AgingBadge } from "@/components/accounting/aging-buckets";
@@ -38,7 +39,6 @@ import {
   ChevronSelectorVerticalIcon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 type OpenItemsCoreTable = CoreTable<ClientSortedTableFeatures, AROpenItem>;

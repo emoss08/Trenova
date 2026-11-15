@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -47,8 +48,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useMemo, useRef, useState } from "react";
-import { Link } from "react-router";
-
 const HOUR_MS = 3_600_000;
 const REFETCH_INTERVAL_MS = 60_000;
 const STALE_TIME_MS = 60_000;
@@ -1076,7 +1075,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
             variant="outline"
             size="sm"
             className="mt-3"
-            render={<Link to="/admin/integrations?type=Samsara" />}
+            render={<Link to="/admin/integrations" search={{ type: "Samsara" }} />}
           >
             {t("Open integrations")}
           </Button>
@@ -1111,7 +1110,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
             variant="outline"
             size="sm"
             className="mt-3"
-            render={<Link to="/admin/integrations?type=Samsara" />}
+            render={<Link to="/admin/integrations" search={{ type: "Samsara" }} />}
           >
             {t("Open Samsara integration")}
           </Button>

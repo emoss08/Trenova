@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import {
   holdActionText,
   holdReasonText,
@@ -6,7 +7,6 @@ import {
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentProposalRow } from "@/lib/graphql/agent-activity-tables";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { Link } from "react-router";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -51,7 +51,9 @@ export function ProposalSheet({
     onClose();
   };
   const pending = proposal?.status === "Pending";
-  const held = pending ? holdSwitchOf(proposal?.hold, { agentId: proposal?.run?.agentDefinitionId }) : null;
+  const held = pending
+    ? holdSwitchOf(proposal?.hold, { agentId: proposal?.run?.agentDefinitionId })
+    : null;
   const { allowed: canResume } = usePermission(Resource.AgentControl, Operation.Update);
   const { allowed: canEditAgent } = usePermission(Resource.AgentDefinition, Operation.Update);
   const canTurnOff = held?.scope === "organization" ? canResume : canEditAgent;

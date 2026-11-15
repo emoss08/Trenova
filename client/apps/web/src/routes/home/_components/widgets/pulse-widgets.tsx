@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ChartContainer,
@@ -7,7 +8,6 @@ import {
 import { RingGauge } from "@trenova/shared/components/ui/ring-gauge";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import { Link } from "react-router";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { MetricTile } from "../metric-tile";
 import { resolveMetric } from "../metric-values";

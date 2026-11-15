@@ -51,7 +51,7 @@
     "react-hook-form": "catalog:",
     "react-phone-number-input": "^3.4.18",
     "react-resizable-panels": "^4.15.0",
-    "react-router": "catalog:",
+    "@tanstack/react-router": "catalog:",
     "react-textarea-autosize": "^8.5.9",
     "recharts": "3.10.1",
     "shadcn": "^4.22.1",

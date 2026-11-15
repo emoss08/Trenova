@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { DocumentControl, DocumentExtractionStatus } from "@/types/document-control";
-import { MemoryRouter } from "react-router";
 import { Suspense } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import DocumentIntelligenceForm from "../document-intelligence-form";
@@ -69,11 +69,11 @@ function renderForm() {
 
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <Suspense fallback={null}>
           <DocumentIntelligenceForm />
         </Suspense>
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

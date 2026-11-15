@@ -18,7 +18,7 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { BankReceipt } from "@/types/bank-receipt";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "@trenova/shared/components/icons";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { formatUnixDateMedium, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 
 const RECEIPT_COLUMNS = [
@@ -40,7 +40,7 @@ function formatDate(unix: number): string {
 export function BankReceiptBatchDetailPage() {
   const t = useT();
 
-  const { batchId } = useParams<{ batchId: string }>();
+  const { batchId } = useParams({ strict: false });
   const navigate = useNavigate();
 
   const { data, isLoading, isError } = useQuery({
@@ -55,7 +55,7 @@ export function BankReceiptBatchDetailPage() {
     <Button
       variant="outline"
       size="sm"
-      onClick={() => void navigate("/accounting/reconciliation/import-batches")}
+      onClick={() => void navigate({ to: "/accounting/reconciliation/import-batches" })}
     >
       <ArrowLeftIcon className="size-3.5" />
       {t("Back to batches")}

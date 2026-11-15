@@ -44,7 +44,7 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 /**
@@ -89,7 +89,7 @@ export function SubmitToFactorDialog({
     onSuccess: (submission) => {
       invalidateFactoringQueries(queryClient);
       onOpenChange(false);
-      void navigate(recordPath("factoring_submission", submission.id));
+      void navigate({ to: recordPath("factoring_submission", submission.id) });
     },
     onError: (error) => {
       void plan.refetch();

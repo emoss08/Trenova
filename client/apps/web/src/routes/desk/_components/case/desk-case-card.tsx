@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { caseStateOf } from "@/lib/case-state";
 import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
 import type { DeskDock } from "@/components/desk-chat/desk-thread";
@@ -6,7 +7,6 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
-import { Link } from "react-router";
 import {
   caseRecordPath,
   caseRecordTitle,
@@ -119,7 +119,10 @@ export function DeskCaseCard({
               {checklist.items.map((item) => {
                 const detail = checklistItemDetail(item, timezone, t);
                 return (
-                  <li key={item.key} className={cn("dk-cs-it", `dk-cs-${item.state.toLowerCase()}`)}>
+                  <li
+                    key={item.key}
+                    className={cn("dk-cs-it", `dk-cs-${item.state.toLowerCase()}`)}
+                  >
                     {item.manual ? (
                       <Button
                         variant="bare"

@@ -1,8 +1,8 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { inbox } from "@/lib/queries/inbox";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useCallback, type ReactNode } from "react";
-import { useSearchParams } from "react-router";
 import { WAITING, folderParams, searchParamsWith } from "../folders";
 import { useTriageNavigation } from "../triage-navigation";
 
@@ -43,7 +43,7 @@ export function TriageOverlayHost() {
   const overlay = useTriageStore((store) => store.overlay);
   const close = useTriageStore((store) => store.closeOverlay);
   const navigation = useTriageNavigation();
-  const [, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useQueryParams();
 
   const openMessage = useCallback(
     (id: string) =>

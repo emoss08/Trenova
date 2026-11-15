@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { CarrierIntelFinding, CarrierIntelProfile } from "@/lib/graphql/carrier-intelligence";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
-import { MemoryRouter } from "react-router";
 
 export function emptyProfile(overrides: Partial<CarrierIntelProfile> = {}): CarrierIntelProfile {
   return {
@@ -114,7 +114,7 @@ export function IntelTestProviders({ children }: { children: ReactNode }) {
   );
   return (
     <QueryClientProvider client={client}>
-      <MemoryRouter>{children}</MemoryRouter>
+      <TestRouter>{children}</TestRouter>
     </QueryClientProvider>
   );
 }

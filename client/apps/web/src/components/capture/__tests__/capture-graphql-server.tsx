@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import { clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
 import type { ReactElement } from "react";
-import { MemoryRouter } from "react-router";
 import { vi } from "vitest";
 
 // Fixtures follow the wire contract: the operations in
@@ -112,7 +112,7 @@ export function renderWithClient(ui: ReactElement, { route = "/" }: { route?: st
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+      <TestRouter initialEntries={[route]}>{ui}</TestRouter>
     </QueryClientProvider>,
   );
 }

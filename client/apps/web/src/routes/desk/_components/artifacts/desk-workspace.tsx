@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -51,7 +52,6 @@ import { DeskRecordBody } from "./kinds/record/desk-record-body";
 import { DeskReportRunBody } from "./kinds/report/desk-report-run-body";
 import { DeskViewBody } from "./kinds/view/desk-view-body";
 import { viewPath } from "../view/view-path";
-import { Link } from "react-router";
 import { DeskDocBody } from "./kinds/document/desk-doc-body";
 import { VERSION_OPTION_CLASS, versionTriggerClass } from "./desk-version-classes";
 import { ConnectionDraftSkeleton } from "./kinds/edi-connection-draft/connection-draft-skeleton";

@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { recordPath } from "@/config/record-links";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { DetentionHold } from "@trenova/shared/types/billing-queue";
-import { MemoryRouter } from "react-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -29,9 +29,9 @@ function hold(overrides: Partial<DetentionHold> = {}): DetentionHold {
 
 function renderHolds(holds: DetentionHold[]) {
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <BillingQueueDetentionHolds holds={holds} />
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

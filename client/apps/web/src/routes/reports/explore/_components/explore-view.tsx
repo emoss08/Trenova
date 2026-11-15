@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -23,7 +24,6 @@ import {
   SearchLgIcon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 import { DrillThroughSheet, type DrillTarget } from "../../_components/drill-through-sheet";
 import { buildDrillTarget } from "../../_components/drill-target";
 import { ReportChart } from "../../_components/report-chart";

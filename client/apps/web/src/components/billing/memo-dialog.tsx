@@ -37,7 +37,7 @@ import {
 } from "@trenova/shared/types/invoice";
 import { useEffect, useMemo } from "react";
 import { FormProvider, useFieldArray, useForm, useWatch, type Resolver } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 
 const MEMO_FORM_ID = "memo-form";
 
@@ -130,7 +130,7 @@ export function MemoDialog({
     onSuccess: (memo) => {
       invalidateInvoiceQueries(queryClient);
       onOpenChange(false);
-      void navigate(invoicePanelPath(memo.id));
+      void navigate({ to: invoicePanelPath(memo.id) });
     },
   });
 

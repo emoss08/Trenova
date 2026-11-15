@@ -1,6 +1,6 @@
+import { renderAtRoutes, TestRouter } from "@trenova/shared/testing/test-router";
 import { useBreadcrumbStore } from "@/stores/breadcrumb-store";
-import { act, render, renderHook, screen } from "@testing-library/react";
-import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
+import { act, renderHook, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { useBreadcrumbs } from "../use-breadcrumb";
 import { useBreadcrumbLabel } from "../use-breadcrumb-label";
@@ -31,15 +31,14 @@ function EditPage({ name }: { name: string | undefined }) {
   return <Trail />;
 }
 
-function renderRouter(initialPath: string, name: string | undefined) {
-  const router = createMemoryRouter(
+async function renderRouter(initialPath: string, name: string | undefined) {
+  return renderAtRoutes(
     [
-      { path: LIST_PATH, element: <Trail /> },
-      { path: `${LIST_PATH}/:id/edit`, element: <EditPage name={name} /> },
+      { path: LIST_PATH, component: Trail },
+      { path: `${LIST_PATH}/$id/edit`, component: () => <EditPage name={name} /> },
     ],
     { initialEntries: [initialPath] },
   );
-  return { router, ...render(<RouterProvider router={router} />) };
 }
 
 beforeEach(() => {
@@ -47,8 +46,8 @@ beforeEach(() => {
 });
 
 describe("useBreadcrumbs", () => {
-  it("shows the record name for an edit page instead of Details and a repeated list name", () => {
-    renderRouter(EDIT_PATH, "Base Linehaul");
+  it("shows the record name for an edit page instead of Details and a repeated list name", async () => {
+    await renderRouter(EDIT_PATH, "Base Linehaul");
 
     expect(trailText()).toEqual([
       "Billing management",
@@ -58,8 +57,8 @@ describe("useBreadcrumbs", () => {
     ]);
   });
 
-  it("falls back to Details while the record has not loaded", () => {
-    renderRouter(EDIT_PATH, undefined);
+  it("falls back to Details while the record has not loaded", async () => {
+    await renderRouter(EDIT_PATH, undefined);
 
     expect(trailText()).toEqual([
       "Billing management",
@@ -70,11 +69,11 @@ describe("useBreadcrumbs", () => {
   });
 
   it("withdraws the record name when the page unmounts", async () => {
-    const { router } = renderRouter(EDIT_PATH, "Base Linehaul");
+    const { router } = await renderRouter(EDIT_PATH, "Base Linehaul");
     expect(useBreadcrumbStore.getState().labels).toEqual({ [EDIT_PATH]: "Base Linehaul" });
 
     await act(async () => {
-      await router.navigate(LIST_PATH);
+      await router.navigate({ to: LIST_PATH });
     });
 
     expect(useBreadcrumbStore.getState().labels).toEqual({});
@@ -84,7 +83,7 @@ describe("useBreadcrumbs", () => {
 
 describe("useBreadcrumbLabel", () => {
   function wrapper({ children }: { children: React.ReactNode }) {
-    return <MemoryRouter initialEntries={[EDIT_PATH]}>{children}</MemoryRouter>;
+    return <TestRouter initialEntries={[EDIT_PATH]}>{children}</TestRouter>;
   }
 
   it("publishes the label for the current path and replaces it when it changes", () => {

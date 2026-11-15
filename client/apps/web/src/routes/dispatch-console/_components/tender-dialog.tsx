@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CarrierAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
@@ -55,7 +56,6 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
-import { Link } from "react-router";
 import { TenderLivePanel } from "./tender-live-panel";
 import { formatOfferRate } from "./tender-vocabulary";
 import type { DispatchActions } from "./use-dispatch-actions";

@@ -1,8 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { DetentionIntelligence as Intelligence } from "@/lib/graphql/detention-intelligence";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DetentionIntelligence } from "../detention-intelligence";
 
@@ -157,7 +158,7 @@ function intelligence(overrides: Partial<Intelligence> = {}): Intelligence {
 /** Where the page has navigated, so a test can assert the route an action opens. */
 function Location() {
   const location = useLocation();
-  return <output aria-label="Location">{`${location.pathname}${location.search}`}</output>;
+  return <output aria-label="Location">{`${location.pathname}${location.searchStr}`}</output>;
 }
 
 function renderPage() {
@@ -165,10 +166,10 @@ function renderPage() {
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <MemoryRouter>
+      <TestRouter>
         <DetentionIntelligence days={90} onWiden={() => {}} />
         <Location />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

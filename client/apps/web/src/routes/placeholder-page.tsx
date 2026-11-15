@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyState } from "@/components/empty-state";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { ConstructionIcon } from "@trenova/shared/components/icons";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 
 export function PlaceholderPage() {
   const t = useT();

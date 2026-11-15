@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { UserMenu } from "../user-menu";
 
@@ -43,9 +43,9 @@ afterEach(() => {
 
 async function openMenu() {
   render(
-    <MemoryRouter>
+    <TestRouter>
       <UserMenu />
-    </MemoryRouter>,
+    </TestRouter>,
   );
   await userEvent.click(screen.getByRole("button", { name: /Dana Reyes/ }));
 }

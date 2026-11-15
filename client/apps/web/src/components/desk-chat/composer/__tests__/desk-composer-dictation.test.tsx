@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { FakeRecognition } from "@/components/assistant/__tests__/dictation-fakes";
 import { clearSpeechServiceMissing, markSpeechServiceMissing } from "@/lib/speech-service";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DeskComposer } from "../desk-composer";
 
@@ -41,9 +41,9 @@ function renderComposer() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <Harness />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

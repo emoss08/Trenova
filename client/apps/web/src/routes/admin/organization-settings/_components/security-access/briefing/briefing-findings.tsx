@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import {
   AlertOctagonIcon,
   AlertTriangleIcon,
@@ -19,7 +20,6 @@ import type {
   SecurityFinding,
   SecurityFindingSeverity,
 } from "@trenova/shared/types/iam";
-import { Link } from "react-router";
 import { EmptyState, SecuritySection } from "../shared";
 import type { ReachableAction } from "./briefing-brief";
 import { describeFinding, type FindingGroups } from "./finding-copy";

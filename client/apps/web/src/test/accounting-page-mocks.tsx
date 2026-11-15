@@ -3,7 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
 import { useController, type Control, type FieldValues, type Path } from "react-hook-form";
-import { MemoryRouter } from "react-router";
+import { renderAtRoutes, TestRouter } from "@trenova/shared/testing/test-router";
+import type { RouteComponent } from "@tanstack/react-router";
 
 /**
  * A page layout that keeps only what an empty-state test looks for: the
@@ -52,11 +53,22 @@ export function FormFieldStub({
   );
 }
 
+/** Renders `Page` as the route at `path` (with its params), opened at `entry`. */
+export async function renderAccountingRoute(path: string, Page: RouteComponent, entry: string) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return renderAtRoutes([{ path, component: Page }], {
+    initialEntries: [entry],
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    ),
+  });
+}
+
 export function renderAccountingPage(ui: ReactElement, initialEntries: string[] = ["/"]) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter initialEntries={initialEntries}>
+    <TestRouter initialEntries={initialEntries}>
       <QueryClientProvider client={client}>{ui}</QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }

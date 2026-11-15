@@ -24,7 +24,7 @@ catalog:
   "@tanstack/react-query": ^5.105.3
   "@tanstack/react-table": ^9.3.1
   "@tanstack/table-core": "9.3.1"
-  react-router: ^8.5.1
+  "@tanstack/react-router": ^1.170.46
   react-hook-form: ^7.91.0
   react-error-boundary: ^6.1.6
   zustand: ^5.0.16

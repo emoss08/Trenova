@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { isRecordEntityType, recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import type { AuditEntryDetail } from "@/lib/graphql/audit-log-table";
@@ -22,7 +23,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import { ChangeRow, RequestEntries } from "./audit-entry-parts";
 import { actorKindOfPrincipal, entrySentence } from "./audit-entry-sentence";
 import { AuditJsonBlock } from "./audit-json-block";

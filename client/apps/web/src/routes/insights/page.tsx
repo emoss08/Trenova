@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -10,7 +11,6 @@ import {
   Lightbulb01Icon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { useSearchParams } from "react-router";
 import { InsightDetailCard } from "./_components/insight-detail-card";
 import { InsightDetailPanel } from "./_components/insight-detail-panel";
 import { InsightFilterBar } from "./_components/insight-filter-bar";
@@ -30,7 +30,7 @@ const PAGE_SIZE = 20;
 export function InsightsPage() {
   const t = useT();
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useQueryParams();
 
   // The URL is the filter state, not a copy of it. A filtered view can then be
   // linked, reloaded and reached with the back button, and there is no second

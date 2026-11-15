@@ -6,7 +6,7 @@ import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import type { WatchtowerResolutionCode } from "@trenova/graphql/generated/graphql";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { CaseFooter } from "./case-footer";
 
 /** How many of the things last closed about the record the page names. */
@@ -123,11 +123,11 @@ export function CaseClosed({
       )}
       <CaseFooter note={t("Something still look wrong? Ask about it below.")}>
         {recordPath && (
-          <Button variant="secondary" onClick={() => void navigate(recordPath)}>
+          <Button variant="secondary" onClick={() => void navigate({ to: recordPath })}>
             {t("Open the record")}
           </Button>
         )}
-        <Button onClick={() => void navigate("/desk/needs", { viewTransition: true })}>
+        <Button onClick={() => void navigate({ to: "/desk/needs", viewTransition: true })}>
           {t("Back to Needs you")}
         </Button>
       </CaseFooter>

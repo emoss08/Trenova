@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
 import { ShipmentTenderStatusBadge } from "@trenova/shared/components/status-badge";
@@ -11,7 +12,6 @@ import { getDestinationStop, getOrderedStops, getOriginStop } from "@/lib/shipme
 import { CountdownCell } from "@/components/data-table/cells/countdown-cell";
 import type { ColumnDef, DataTableFilterField } from "@trenova/shared/types/data-table";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
-import { Link } from "react-router";
 import { BOARD_CELL_SKELETONS } from "./board-cell-skeletons";
 import { ActionsCell } from "./cells/actions-cell";
 import { BillingCell } from "./cells/billing-cell";

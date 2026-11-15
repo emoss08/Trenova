@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { act, cleanup, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RailShell } from "../rail-shell";
 
@@ -50,11 +50,11 @@ afterEach(() => {
 
 function renderShell(room = false) {
   return render(
-    <MemoryRouter initialEntries={["/"]}>
+    <TestRouter initialEntries={["/"]}>
       <RailShell room={room}>
         <p>page body</p>
       </RailShell>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

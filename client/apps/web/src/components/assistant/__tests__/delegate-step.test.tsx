@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   assistantDelegateFinishedEventSchema,
@@ -79,11 +79,11 @@ function renderStep(running: boolean) {
 
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <ul>
           <DelegateStep step={handOff()} live={false} running={running} />
         </ul>
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

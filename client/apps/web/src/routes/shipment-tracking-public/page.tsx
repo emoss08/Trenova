@@ -6,7 +6,7 @@ import { AlertTriangleIcon, ClockIcon, SlashCircle01Icon } from "@trenova/shared
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { TrackingTopBar, TrackingView } from "./_components/tracking-view";
 import { TrackingViewSkeleton } from "./_components/tracking-view-skeleton";
 
@@ -45,7 +45,7 @@ function Message({
  */
 export function ShipmentTrackingPublicPage() {
   const t = useT();
-  const { token = "" } = useParams();
+  const { token = "" } = useParams({ strict: false });
   const now = useNowSeconds(30_000);
 
   const viewQuery = useQuery({

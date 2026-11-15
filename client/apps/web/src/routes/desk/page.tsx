@@ -1,7 +1,7 @@
 import { assistant } from "@/lib/queries/assistant";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { threadListQuery } from "@/lib/thread-list";
-import { useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { DeskLayout } from "./_components/desk-layout";
 import "@/components/desk-chat/desk-frame.css";
 import "@/components/desk-chat/desk-chat.css";
@@ -15,7 +15,7 @@ export const prefetch: RoutePrefetch = () => [threadListQuery(), assistant.myAge
 
 /** The Desk's frame; the page inside it is the route's outlet. */
 export function DeskPage() {
-  const { threadId } = useParams<{ threadId?: string }>();
+  const { threadId } = useParams({ strict: false });
 
   return <DeskLayout activeThreadId={threadId ?? null} />;
 }

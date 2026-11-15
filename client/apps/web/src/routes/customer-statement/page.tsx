@@ -15,7 +15,7 @@ import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { SentStatementsPanel } from "./_components/sent-statements-panel";
 import { StatementActions } from "./_components/statement-actions";
@@ -73,7 +73,7 @@ function AgingBar({
 export function CustomerStatementPage() {
   const t = useT();
 
-  const { customerId } = useParams<{ customerId: string }>();
+  const { customerId } = useParams({ strict: false });
   const navigate = useNavigate();
   const [statementDate, setStatementDate] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -106,7 +106,11 @@ export function CustomerStatementPage() {
   });
 
   const backButton = (
-    <Button variant="outline" size="sm" onClick={() => void navigate("/accounting/ar/open-items")}>
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => void navigate({ to: "/accounting/ar/open-items" })}
+    >
       <ArrowLeftIcon className="size-3.5" />
       {t("Back to open items")}
     </Button>

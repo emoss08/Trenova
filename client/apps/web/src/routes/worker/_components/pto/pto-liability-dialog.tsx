@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   fetchPtoLiabilityReport,
@@ -25,7 +26,6 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { PTO_TERMINATION_ACTION_LABELS } from "@trenova/shared/types/pto-policy";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router";
 import { recordPath } from "@/config/record-links";
 
 export function formatPtoDays(value: string): string {

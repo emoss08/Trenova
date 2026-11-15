@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import type {
   LateChargeAssessmentResult,
   LateChargeCustomerResult,
@@ -18,8 +19,6 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { Link } from "react-router";
-
 const COLUMNS = [
   { label: "Customer" },
   { label: "Invoice" },

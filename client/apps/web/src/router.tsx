@@ -1,2573 +1,2100 @@
-import { PlanFeature } from "@/lib/plan-feature";
-import { createPlanFeatureLoader } from "@/lib/plan-feature-loader";
-import {
-  anyOfLoaders,
-  combineLoaders,
-  createCapabilityLoader,
-  createPermissionLoader,
-} from "@/lib/route-permission";
-import { managedInstanceLoader } from "@/lib/managed-instance";
+import { AppErrorLayout, AppLayout, OnboardingLayout } from "@/routes/app-layout";
+import { AdminLayout } from "@/routes/admin-layout";
+import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
+import { DeskShellLayout } from "@/routes/desk/shell-layout";
+import { RootLayout } from "@/routes/root-layout";
+import { editionRoutes } from "@/lib/edition-routes";
+import { edition } from "@/lib/edition";
+import { requireManagedInstance } from "@/lib/managed-instance";
 import {
   onboardingExitRedirect,
   loadOnboardingSnapshot,
   resolveOnboardingRedirect,
 } from "@/lib/onboarding-gate";
-import { edition } from "@/lib/edition";
-import { withRouteCatalogs } from "@/lib/route-catalogs";
-import { createPrefetchLoader, lazyPrefetch } from "@/lib/route-prefetch";
-import { withSectionIndexes } from "@/lib/section-routes";
+import { PlanFeature } from "@/lib/plan-feature";
+import { requirePlanFeature } from "@/lib/plan-feature-gate";
+import { lazyPage } from "@/lib/route-catalogs";
+import { anyOfGates, requireCapability, requirePermission } from "@/lib/route-permission";
+import { prefetchPage } from "@/lib/route-prefetch";
 import { legacySettingsRedirect } from "@/lib/settings-path";
-import { AppErrorLayout, AppLayout, OnboardingLayout } from "@/routes/app-layout";
-import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
-import { DeskShellLayout } from "@/routes/desk/shell-layout";
-import { RootLayout } from "@/routes/root-layout";
-import type { RouteHandle } from "@/types/router";
-import { NotFoundRoute, RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
+import { UrlStateAdapter } from "@/lib/url-state-adapter";
+import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
 import {
-  pathScopedLoader,
+  gates,
+  redirectKeepingSearch,
+  redirectTo,
+  requireGuest,
   requireSession,
-  withPathScopedRevalidation,
-} from "@trenova/shared/lib/session-loader";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
+  type RouteGate,
+} from "@trenova/shared/lib/router/gates";
+import {
+  parseSearch,
+  stringifySearch,
+  validateSearchRecord,
+} from "@trenova/shared/lib/router/search";
 import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
-import { AdminLayout } from "./routes/admin-layout";
+import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/react-router";
 
-// An edition's own gates run after the session check and the onboarding redirect; the
-// first one that returns a redirect decides.
-const editionProtectedLoader = combineLoaders(...edition.protectedLoaders);
-
-const protectedLoader: LoaderFunction = pathScopedLoader(async (args) => {
-  const { request } = args;
-  const sessionRedirect = await requireSession("/login");
-  if (sessionRedirect) {
-    return sessionRedirect;
+// A cloud organization that has not finished the welcome wizard is sent to it from every
+// signed-in page; the wizard's own path is exempt, so this cannot loop.
+const onboardingRedirect: RouteGate = async ({ location }) => {
+  const target = await resolveOnboardingRedirect(location.pathname);
+  if (target) {
+    throw redirect({ href: target });
   }
+};
 
-  // A cloud organization that has not finished the welcome wizard is sent to it from
-  // every signed-in page; the wizard's own path is exempt, so this cannot loop.
-  const onboardingTarget = await resolveOnboardingRedirect(new URL(request.url).pathname);
-  if (onboardingTarget) {
-    return redirect(onboardingTarget);
-  }
-
-  return editionProtectedLoader(args);
-});
+/**
+ * The gate every signed-in layout runs: the session, the onboarding redirect, then the
+ * edition's own gates, the first to throw deciding. Each layout gets its own, because a gate
+ * remembers the path it last let through (see `gates`).
+ */
+function protectedGate(): RouteGate {
+  return gates(requireSession("/login"), onboardingRedirect, ...edition.protectedGates);
+}
 
 // The wizard is only for an organization that still owes it. Anybody else who opens
 // the address — a completed organization, a self-hosted install — goes home.
-const onboardingLoader: LoaderFunction = async () => {
+const onboardingGate: RouteGate = async () => {
   const target = onboardingExitRedirect(await loadOnboardingSnapshot());
-  return target ? redirect(target) : null;
+  if (target) {
+    throw redirect({ href: target });
+  }
 };
 
 // Settings used to open over the page from `/?settings=<section>`, and emails already sent
 // still link there.
-const legacySettingsLoader: LoaderFunction = ({ request }) => {
-  const target = legacySettingsRedirect(new URL(request.url).search);
-  return target ? redirect(target) : null;
-};
-
-const guestLoader: LoaderFunction = async () => {
-  const { checkAuth } = useAuthStore.getState();
-
-  const isAuthenticated = await checkAuth();
-  if (isAuthenticated) {
-    return redirect("/");
+const legacySettingsGate: RouteGate = ({ location }) => {
+  const target = legacySettingsRedirect(location.searchStr);
+  if (target) {
+    throw redirect({ href: target });
   }
-
-  return null;
 };
 
-// Every route behind the session or permission gate revalidates only when its path
-// changes; see revalidateOnPathChange.
-export const routes: RouteObject[] = withPathScopedRevalidation([
-  {
-    element: <RootLayout />,
-    errorElement: <RouteErrorBoundary />,
-    HydrateFallback: LoadingSkeleton,
-    children: [
-      {
-        element: <AppLayout />,
-        // A page that fails to load or render keeps the shell standing, so the way to
-        // anywhere else is still on screen.
-        errorElement: <AppErrorLayout />,
-        loader: protectedLoader,
-        children: [
-          {
-            path: "/",
-            loader: combineLoaders(
-              protectedLoader,
-              legacySettingsLoader,
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/home/page"))),
-            ),
-            async lazy() {
-              const { Home } = await import("@/routes/home/page");
-              return { Component: Home };
-            },
-          },
-          {
-            path: "/settings",
-            // Settings is a room: the module rail stays, and its sections take the panel's
-            // place and its fold.
-            handle: { frame: "room" } satisfies RouteHandle,
-            loader: combineLoaders(
-              protectedLoader,
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/settings/page"))),
-            ),
-            async lazy() {
-              const { SettingsPage } = await import("@/routes/settings/page");
-              return { Component: SettingsPage };
-            },
-          },
-          {
-            path: "/intake",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.CaptureBatch, Operation.Read),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/intake/page"))),
-            ),
-            async lazy() {
-              const { IntakePage } = await import("@/routes/intake/page");
-              return { Component: IntakePage };
-            },
-          },
-          {
-            path: "/capture/pair",
-            loader: protectedLoader,
-            async lazy() {
-              const { CapturePairPage } = await import("@/routes/capture/pair/page");
-              return { Component: CapturePairPage };
-            },
-          },
-          {
-            path: "/capture/devices",
-            loader: combineLoaders(
-              protectedLoader,
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/capture/devices/page"))),
-            ),
-            async lazy() {
-              const { CaptureDevicesPage } = await import("@/routes/capture/devices/page");
-              return { Component: CaptureDevicesPage };
-            },
-          },
-          {
-            path: "/organization/data-retention",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Organization),
-              createPrefetchLoader(
-                lazyPrefetch(() => import("@/routes/organization/data-retention/page")),
-              ),
-            ),
-            async lazy() {
-              const { DataRetentionPage } =
-                await import("@/routes/organization/data-retention/page");
-              return { Component: DataRetentionPage };
-            },
-          },
-          {
-            path: "/organization/email-profiles",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EmailProfile),
-            ),
-            async lazy() {
-              const { EmailProfilesPage } =
-                await import("@/routes/organization/email-profiles/page");
-              return { Component: EmailProfilesPage };
-            },
-          },
-          {
-            path: "/organization/email-logs",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EmailLog),
-            ),
-            async lazy() {
-              const { EmailLogsPage } = await import("@/routes/organization/email-logs/page");
-              return { Component: EmailLogsPage };
-            },
-          },
-          {
-            // The assistant is a floating panel on every page now; an old
-            // link opens it on the home screen.
-            path: "/assistant",
-            loader: () => redirect("/?assistant=open"),
-          },
-          {
-            path: "/insights",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Insight, Operation.Read),
-            ),
-            async lazy() {
-              const { InsightsPage } = await import("@/routes/insights/page");
-              return { Component: InsightsPage };
-            },
-          },
-          {
-            path: "/shipment-management/shipments",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Shipment),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/shipment/page"))),
-            ),
-            async lazy() {
-              const { ShipmentsPage } = await import("@/routes/shipment/page");
-              return { Component: ShipmentsPage };
-            },
-          },
-          {
-            path: "/shipment-management/recurring-shipments",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.RecurringShipment),
-            ),
-            async lazy() {
-              const { RecurringShipmentsPage } = await import("@/routes/recurring-shipment/page");
-              return { Component: RecurringShipmentsPage };
-            },
-          },
-          {
-            path: "/shipment-management/orders",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Order)),
-            async lazy() {
-              const { OrdersPage } = await import("@/routes/order/page");
-              return { Component: OrdersPage };
-            },
-          },
-          {
-            path: "/shipment-management/service-failures",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.ServiceFailure),
-            ),
-            async lazy() {
-              const { ServiceFailuresPage } = await import("@/routes/service-failure/page");
-              return { Component: ServiceFailuresPage };
-            },
-          },
-          {
-            path: "/shipment-management/shipments/import",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Shipment, Operation.Create),
-              createPlanFeatureLoader(PlanFeature.DocumentIntelligence),
-            ),
-            async lazy() {
-              const { ShipmentImportPage } = await import("@/routes/shipment/import-page");
-              return { Component: ShipmentImportPage };
-            },
-          },
-          {
-            path: "/shipment-management/configuration-files/shipment-types",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ShipmentType)),
-            async lazy() {
-              const { ShipmentTypesPage } = await import("@/routes/shipment-type/page");
-              return { Component: ShipmentTypesPage };
-            },
-          },
-          {
-            path: "/shipment-management/configuration-files/service-types",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ServiceType)),
-            async lazy() {
-              const { ServiceTypesPage } = await import("@/routes/service-type/page");
-              return { Component: ServiceTypesPage };
-            },
-          },
-          {
-            path: "/shipment-management/configuration-files/hazardous-materials",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.HazardousMaterial),
-            ),
-            async lazy() {
-              const { HazardousMaterialsPage } = await import("@/routes/hazardous-material/page");
-              return { Component: HazardousMaterialsPage };
-            },
-          },
-          {
-            path: "/shipment-management/configuration-files/commodities",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Commodity)),
-            async lazy() {
-              const { CommoditiesPage } = await import("@/routes/commodity/page");
-              return { Component: CommoditiesPage };
-            },
-          },
-          {
-            path: "/edi/overview",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EDI),
-            ),
-            async lazy() {
-              const { EDIOverviewPage } = await import("@/routes/edi/page");
-              return { Component: EDIOverviewPage };
-            },
-          },
-          {
-            path: "/edi/partners",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EDI),
-            ),
-            async lazy() {
-              const { EDIPartnersPage } = await import("@/routes/edi/page");
-              return { Component: EDIPartnersPage };
-            },
-          },
-          {
-            path: "/edi/communication-profiles",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EDI),
-            ),
-            async lazy() {
-              const { EDICommunicationProfilesPage } = await import("@/routes/edi/page");
-              return { Component: EDICommunicationProfilesPage };
-            },
-          },
-          {
-            path: "/edi/mapping-profiles",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EDI),
-            ),
-            async lazy() {
-              const { EDIMappingProfilesPage } = await import("@/routes/edi/page");
-              return { Component: EDIMappingProfilesPage };
-            },
-          },
-          {
-            path: "/edi/lading",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EDI),
-            ),
-            async lazy() {
-              const { LadingProjectsPage } = await import("@/routes/edi/lading/page");
-              return { Component: LadingProjectsPage };
-            },
-          },
-          {
-            path: "/edi/lading/:partnerId",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EDI),
-            ),
-            async lazy() {
-              const { LadingStudioPage } = await import("@/routes/edi/lading/[partnerId]/page");
-              return { Component: LadingStudioPage };
-            },
-          },
-          {
-            path: "/edi/transfers/inbound",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EDI),
-              // A tender's record link opens here; one we sent is carried to the outbound page.
-              async ({ request }) => {
-                const url = new URL(request.url);
-                if (!url.searchParams.has("panelEntityId")) return null;
-                const { sentTransferPath } = await import("@/lib/edi/transfer-page");
-                const sent = await sentTransferPath(url, request.signal);
-                return sent ? redirect(sent) : null;
-              },
-            ),
-            // Opening a row only changes the query; the page's guards ran when it was entered.
-            shouldRevalidate: ({ currentUrl, nextUrl, defaultShouldRevalidate }) =>
-              currentUrl.pathname === nextUrl.pathname ? false : defaultShouldRevalidate,
-            async lazy() {
-              const { EDIInboundTransfersPage } = await import("@/routes/edi/page");
-              return { Component: EDIInboundTransfersPage };
-            },
-          },
-          {
-            path: "/edi/transfers/outbound",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EDI),
-            ),
-            async lazy() {
-              const { EDIOutboundTransfersPage } = await import("@/routes/edi/page");
-              return { Component: EDIOutboundTransfersPage };
-            },
-          },
-          {
-            path: "/edi/messages",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EDI),
-            ),
-            async lazy() {
-              const { EDIMessagesPage } = await import("@/routes/edi/page");
-              return { Component: EDIMessagesPage };
-            },
-          },
-          {
-            path: "/edi/inbound-files",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EDI),
-            ),
-            async lazy() {
-              const { EDIInboundFilesPage } = await import("@/routes/edi/page");
-              return { Component: EDIInboundFilesPage };
-            },
-          },
-          {
-            path: "/edi/flows",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Administration),
-              createPermissionLoader(Resource.EDI),
-            ),
-            async lazy() {
-              const { EDIFlowInstancesPage } = await import("@/routes/edi/page");
-              return { Component: EDIFlowInstancesPage };
-            },
-          },
-          {
-            path: "/billing/queue",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.BillingQueue),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/billing-queue/page"))),
-            ),
-            async lazy() {
-              const { BillingQueuePage } = await import("@/routes/billing-queue/page");
-              return { Component: BillingQueuePage };
-            },
-          },
-          {
-            path: "/billing/factoring",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.Factoring),
-              createPermissionLoader(Resource.Invoice),
-            ),
-            async lazy() {
-              const { FactoringPage } = await import("@/routes/factoring/page");
-              return { Component: FactoringPage };
-            },
-          },
-          {
-            path: "/billing/factoring/submissions",
-            loader: () => redirect("/billing/factoring?view=schedules"),
-          },
-          {
-            path: "/billing/factoring/remittances",
-            loader: () => redirect("/billing/factoring?view=remittances"),
-          },
-          {
-            path: "/billing/factoring/remittances/:id",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FactoringRemittance),
-              createPrefetchLoader(
-                lazyPrefetch(() => import("@/routes/factoring-remittance/page")),
-              ),
-            ),
-            async lazy() {
-              const { FactoringRemittancePage } =
-                await import("@/routes/factoring-remittance/page");
-              return { Component: FactoringRemittancePage };
-            },
-          },
-          {
-            path: "/billing/factoring/submissions/:id",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FactoringSubmission),
-            ),
-            async lazy() {
-              const { FactoringSubmissionPage } =
-                await import("@/routes/factoring-submission/page");
-              return { Component: FactoringSubmissionPage };
-            },
-          },
-          {
-            path: "/payroll/workspace",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.DriverSettlement),
-            ),
-            async lazy() {
-              const { SettlementWorkspacePage } =
-                await import("@/routes/settlement-workspace/page");
-              return { Component: SettlementWorkspacePage };
-            },
-          },
-          {
-            path: "/payroll/settlements",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.DriverSettlement),
-            ),
-            async lazy() {
-              const { DriverSettlementsPage } = await import("@/routes/driver-settlement/page");
-              return { Component: DriverSettlementsPage };
-            },
-          },
-          {
-            path: "/payroll/disputes",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.SettlementDispute),
-            ),
-            async lazy() {
-              const { SettlementDisputesPage } = await import("@/routes/settlement-dispute/page");
-              return { Component: SettlementDisputesPage };
-            },
-          },
-          {
-            path: "/payroll/expenses",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.DriverExpense),
-            ),
-            async lazy() {
-              const { DriverExpensesPage } = await import("@/routes/driver-expense/page");
-              return { Component: DriverExpensesPage };
-            },
-          },
-          {
-            path: "/payroll/settlement-batches",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.DriverSettlement),
-            ),
-            async lazy() {
-              const { SettlementBatchesPage } = await import("@/routes/settlement-batch/page");
-              return { Component: SettlementBatchesPage };
-            },
-          },
-          {
-            path: "/payroll/pay-events",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.DriverSettlement),
-            ),
-            async lazy() {
-              const { DriverPayEventsPage } = await import("@/routes/driver-pay-event/page");
-              return { Component: DriverPayEventsPage };
-            },
-          },
-          {
-            path: "/payroll/pay-profiles",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.DriverPayProfile),
-            ),
-            async lazy() {
-              const { PayProfilesPage } = await import("@/routes/pay-profile/page");
-              return { Component: PayProfilesPage };
-            },
-          },
-          {
-            path: "/payroll/deductions",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.RecurringDeduction),
-            ),
-            async lazy() {
-              const { RecurringDeductionsPage } = await import("@/routes/recurring-deduction/page");
-              return { Component: RecurringDeductionsPage };
-            },
-          },
-          {
-            path: "/payroll/earnings",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.RecurringEarning),
-            ),
-            async lazy() {
-              const { RecurringEarningsPage } = await import("@/routes/recurring-earning/page");
-              return { Component: RecurringEarningsPage };
-            },
-          },
-          {
-            path: "/payroll/pay-codes",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.PayCode),
-            ),
-            async lazy() {
-              const { PayCodesPage } = await import("@/routes/pay-code/page");
-              return { Component: PayCodesPage };
-            },
-          },
-          {
-            path: "/payroll/advances",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.PayAdvance),
-            ),
-            async lazy() {
-              const { PayAdvancesPage } = await import("@/routes/pay-advance/page");
-              return { Component: PayAdvancesPage };
-            },
-          },
-          {
-            path: "/payroll/escrow-accounts",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.EscrowAccount),
-            ),
-            async lazy() {
-              const { EscrowAccountsPage } = await import("@/routes/escrow-account/page");
-              return { Component: EscrowAccountsPage };
-            },
-          },
-          {
-            path: "/carrier-settlements/workspace",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.Brokerage),
-              createPermissionLoader(Resource.CarrierSettlement),
-            ),
-            async lazy() {
-              const { CarrierSettlementWorkspacePage } =
-                await import("@/routes/carrier-settlement-workspace/page");
-              return { Component: CarrierSettlementWorkspacePage };
-            },
-          },
-          {
-            path: "/carrier-settlements/settlements",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.Brokerage),
-              createPermissionLoader(Resource.CarrierSettlement),
-            ),
-            async lazy() {
-              const { CarrierSettlementsPage } = await import("@/routes/carrier-settlement/page");
-              return { Component: CarrierSettlementsPage };
-            },
-          },
-          {
-            path: "/carrier-settlements/batches",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.Brokerage),
-              createPermissionLoader(Resource.CarrierSettlement),
-            ),
-            async lazy() {
-              const { CarrierSettlementBatchesPage } =
-                await import("@/routes/carrier-settlement-batch/page");
-              return { Component: CarrierSettlementBatchesPage };
-            },
-          },
-          {
-            path: "/carrier-settlements/cost-events",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.Brokerage),
-              createPermissionLoader(Resource.CarrierSettlement),
-            ),
-            async lazy() {
-              const { CarrierCostEventsPage } = await import("@/routes/carrier-cost-event/page");
-              return { Component: CarrierCostEventsPage };
-            },
-          },
-          {
-            path: "/carrier-settlements/invoice-matching",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.Brokerage),
-              createPermissionLoader(Resource.CarrierInvoiceMatch),
-            ),
-            async lazy() {
-              const { CarrierInvoiceMatchingPage } =
-                await import("@/routes/carrier-invoice-matching/page");
-              return { Component: CarrierInvoiceMatchingPage };
-            },
-          },
-          {
-            path: "/billing/invoices",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
-            async lazy() {
-              const { InvoicesPage } = await import("@/routes/invoice/page");
-              return { Component: InvoicesPage };
-            },
-          },
-          {
-            path: "/billing/invoice-register",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
-            async lazy() {
-              const { InvoiceRegisterPage } = await import("@/routes/invoice-register/page");
-              return { Component: InvoiceRegisterPage };
-            },
-          },
-          {
-            path: "/billing/pending-approvals",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
-            async lazy() {
-              const { InvoiceApprovalPage } = await import("@/routes/invoice-approval/page");
-              return { Component: InvoiceApprovalPage };
-            },
-          },
-          {
-            path: "/billing/reconciliation-exceptions",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
-            async lazy() {
-              const { InvoiceReconciliationPage } =
-                await import("@/routes/invoice-reconciliation/page");
-              return { Component: InvoiceReconciliationPage };
-            },
-          },
-          {
-            path: "/billing/adjustment-batches",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
-            async lazy() {
-              const { InvoiceAdjustmentBatchPage } =
-                await import("@/routes/invoice-adjustment-batch/page");
-              return { Component: InvoiceAdjustmentBatchPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/charge-types",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ChargeType)),
-            async lazy() {
-              const { PlaceholderPage } = await import("@/routes/placeholder-page");
-              return { Component: PlaceholderPage };
-            },
-          },
-          {
-            path: "/billing/rate-agreements",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RateAgreement)),
-            async lazy() {
-              const { RateAgreementPage } = await import("@/routes/rate-agreement/page");
-              return { Component: RateAgreementPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/rate-zones",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RateZone)),
-            async lazy() {
-              const { RateZonePage } = await import("@/routes/rate-zone/page");
-              return { Component: RateZonePage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/rate-matrices",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RateMatrix)),
-            async lazy() {
-              const { RateMatrixPage } = await import("@/routes/rate-matrix/page");
-              return { Component: RateMatrixPage };
-            },
-          },
-          {
-            path: "/detention/configuration-files/detention-policies",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.DetentionPolicy),
-            ),
-            async lazy() {
-              const { DetentionPolicyPage } = await import("@/routes/detention-policy/page");
-              return { Component: DetentionPolicyPage };
-            },
-          },
-          {
-            path: "/detention/intelligence",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Detention),
-              createPrefetchLoader(
-                lazyPrefetch(() => import("@/routes/detention-intelligence/page")),
-              ),
-            ),
-            async lazy() {
-              const { DetentionIntelligencePage } =
-                await import("@/routes/detention-intelligence/page");
-              return { Component: DetentionIntelligencePage };
-            },
-          },
-          {
-            path: "/detention/desk",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Detention)),
-            async lazy() {
-              const { DetentionDeskPage } = await import("@/routes/detention-desk/page");
-              return { Component: DetentionDeskPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/accessorial-charges",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccessorialCharge),
-            ),
-            async lazy() {
-              const { AccessorialChargesPage } = await import("@/routes/accessorial-charge/page");
-              return { Component: AccessorialChargesPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/customers",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Customer)),
-            async lazy() {
-              const { CustomersPage } = await import("@/routes/customer/page");
-              return { Component: CustomersPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/factoring-companies",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FactoringCompany),
-            ),
-            async lazy() {
-              const { FactoringCompaniesPage } = await import("@/routes/factoring-company/page");
-              return { Component: FactoringCompaniesPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/factoring-companies/new",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FactoringCompany, Operation.Create),
-            ),
-            async lazy() {
-              const { FactoringCompanyCreatePage } =
-                await import("@/routes/factoring-company/new/page");
-              return { Component: FactoringCompanyCreatePage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/factoring-companies/agreements/:id",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FactoringAgreement),
-            ),
-            async lazy() {
-              const { FactoringAgreementRedirectPage } =
-                await import("@/routes/factoring-company/record-redirect-page");
-              return { Component: FactoringAgreementRedirectPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/factoring-companies/notices/:id",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.FactoringNoa)),
-            async lazy() {
-              const { FactoringNoticeRedirectPage } =
-                await import("@/routes/factoring-company/record-redirect-page");
-              return { Component: FactoringNoticeRedirectPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/factoring-companies/:id",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FactoringCompany),
-              createPrefetchLoader(
-                lazyPrefetch(() => import("@/routes/factoring-company/[id]/page")),
-              ),
-            ),
-            async lazy() {
-              const { FactoringCompanyPage } = await import("@/routes/factoring-company/[id]/page");
-              return { Component: FactoringCompanyPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/document-types",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DocumentType)),
-            async lazy() {
-              const { DocumentTypesPage } = await import("@/routes/document-type/page");
-              return { Component: DocumentTypesPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/document-packet-rules",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DocumentType)),
-            async lazy() {
-              const { DocumentPacketRulesPage } =
-                await import("@/routes/document-packet-rule/page");
-              return { Component: DocumentPacketRulesPage };
-            },
-          },
-          {
-            // Case checklists moved into the Desk's settings; an old link
-            // opens them there.
-            path: "/billing/configuration-files/case-checklists",
-            loader: () => redirect("/desk?settings=checklists"),
-          },
+const guestGate = requireGuest("/");
 
-          {
-            path: "/accounting",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountsReceivable),
-            ),
-            async lazy() {
-              const { AccountingDashboardPage } =
-                await import("@/routes/accounting-dashboard/page");
-              return { Component: AccountingDashboardPage };
-            },
-          },
-          {
-            path: "/accounting/manual-journals",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ManualJournal)),
-            async lazy() {
-              const { ManualJournalsPage } = await import("@/routes/manual-journal/page");
-              return { Component: ManualJournalsPage };
-            },
-          },
-          {
-            path: "/accounting/journal-reversals",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.JournalReversal),
-            ),
-            async lazy() {
-              const { JournalReversalsPage } = await import("@/routes/journal-reversal/page");
-              return { Component: JournalReversalsPage };
-            },
-          },
-          {
-            path: "/accounting/journals-to-post",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.JournalEntry)),
-            async lazy() {
-              const { JournalReviewPage } = await import("@/routes/journal-review/page");
-              return { Component: JournalReviewPage };
-            },
-          },
-          {
-            path: "/accounting/journal-entries/:id",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.JournalEntry)),
-            async lazy() {
-              const { JournalEntryDetailPage } = await import("@/routes/journal-entry/page");
-              return { Component: JournalEntryDetailPage };
-            },
-          },
-          {
-            path: "/accounting/journal-entries/source/:type/:sourceId",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.JournalEntry)),
-            async lazy() {
-              const { SourceDrillDownPage } =
-                await import("@/routes/journal-entry/_components/source-drill-down-page");
-              return { Component: SourceDrillDownPage };
-            },
-          },
-          {
-            path: "/accounting/reports/trial-balance",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountingReport),
-            ),
-            async lazy() {
-              const { TrialBalancePage } = await import("@/routes/trial-balance/page");
-              return { Component: TrialBalancePage };
-            },
-          },
-          {
-            path: "/accounting/reports/income-statement",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountingReport),
-            ),
-            async lazy() {
-              const { IncomeStatementPage } = await import("@/routes/income-statement/page");
-              return { Component: IncomeStatementPage };
-            },
-          },
-          {
-            path: "/accounting/reports/balance-sheet",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountingReport),
-            ),
-            async lazy() {
-              const { BalanceSheetPage } = await import("@/routes/balance-sheet/page");
-              return { Component: BalanceSheetPage };
-            },
-          },
-          {
-            path: "/accounting/ar/aging",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountsReceivable),
-            ),
-            async lazy() {
-              const { ARAgingPage } = await import("@/routes/ar-aging/page");
-              return { Component: ARAgingPage };
-            },
-          },
-          {
-            path: "/accounting/ar/customer-ledger",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountsReceivable),
-            ),
-            async lazy() {
-              const { CustomerLedgerPage } = await import("@/routes/customer-ledger/page");
-              return { Component: CustomerLedgerPage };
-            },
-          },
-          {
-            path: "/accounting/ar/collections",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountsReceivable),
-            ),
-            async lazy() {
-              const { CollectionsPage } = await import("@/routes/collections/page");
-              return { Component: CollectionsPage };
-            },
-          },
-          {
-            path: "/accounting/ar/open-items",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountsReceivable),
-            ),
-            async lazy() {
-              const { AROpenItemsPage } = await import("@/routes/ar-open-items/page");
-              return { Component: AROpenItemsPage };
-            },
-          },
-          {
-            path: "/accounting/ar/late-charges",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountsReceivable),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/late-charges/page"))),
-            ),
-            async lazy() {
-              const { LateChargesPage } = await import("@/routes/late-charges/page");
-              return { Component: LateChargesPage };
-            },
-          },
-          {
-            path: "/accounting/ar/payments",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.CustomerPayment),
-            ),
-            async lazy() {
-              const { CustomerPaymentsPage } = await import("@/routes/customer-payments/page");
-              return { Component: CustomerPaymentsPage };
-            },
-          },
-          {
-            path: "/accounting/ar/customer-statement/:customerId",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountsReceivable),
-            ),
-            async lazy() {
-              const { CustomerStatementPage } = await import("@/routes/customer-statement/page");
-              return { Component: CustomerStatementPage };
-            },
-          },
-          {
-            path: "/accounting/reconciliation/bank-receipts",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
-            async lazy() {
-              const { BankReceiptPage } = await import("@/routes/bank-receipt/page");
-              return { Component: BankReceiptPage };
-            },
-          },
-          {
-            path: "/accounting/reconciliation/work-queue",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.BankReceiptWorkItem),
-            ),
-            async lazy() {
-              const { BankReceiptQueuePage: BankReceiptWorkQueuePage } =
-                await import("@/routes/bank-receipt-queue/page");
-              return { Component: BankReceiptWorkQueuePage };
-            },
-          },
-          {
-            path: "/accounting/reconciliation/summary",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
-            async lazy() {
-              const { ReconciliationSummaryPage } =
-                await import("@/routes/reconciliation-summary/page");
-              return { Component: ReconciliationSummaryPage };
-            },
-          },
-          {
-            path: "/accounting/reconciliation/import-batches",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
-            async lazy() {
-              const { BankReceiptBatchPage } = await import("@/routes/bank-receipt-batch/page");
-              return { Component: BankReceiptBatchPage };
-            },
-          },
-          {
-            path: "/accounting/reconciliation/import-batches/:batchId",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
-            async lazy() {
-              const { BankReceiptBatchDetailPage } =
-                await import("@/routes/bank-receipt-batch/detail-page");
-              return { Component: BankReceiptBatchDetailPage };
-            },
-          },
-          {
-            path: "/accounting/sync",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountingSync),
-            ),
-            async lazy() {
-              const { AccountingSyncLedgerPage } = await import("@/routes/accounting-sync/page");
-              return { Component: AccountingSyncLedgerPage };
-            },
-          },
-          {
-            path: "/accounting/sync/inbound",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountingSync),
-            ),
-            async lazy() {
-              const { AccountingInboundPage } = await import("@/routes/accounting-inbound/page");
-              return { Component: AccountingInboundPage };
-            },
-          },
-          {
-            path: "/accounting/sync/drift",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountingSync),
-            ),
-            async lazy() {
-              const { AccountingDriftPage } = await import("@/routes/accounting-drift/page");
-              return { Component: AccountingDriftPage };
-            },
-          },
-          {
-            path: "/accounting/sync/mappings",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountingIntegration),
-            ),
-            async lazy() {
-              const { AccountingMappingsPage } = await import("@/routes/accounting-mapping/page");
-              return { Component: AccountingMappingsPage };
-            },
-          },
-          {
-            path: "/accounting/configuration-files/account-types",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.AccountType)),
-            async lazy() {
-              const { AccountTypesPage } = await import("@/routes/account-type/page");
-              return { Component: AccountTypesPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/formula-templates",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FormulaTemplate),
-            ),
-            async lazy() {
-              const { FormulaTemplatesPage } = await import("@/routes/formula-template/page");
-              return { Component: FormulaTemplatesPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/formula-templates/new",
-            // The studio is a room: the module rail stays, and its rate trace takes
-            // the panel's place and always stands, the panel folded in its favour.
-            handle: { frame: "room", roomRail: "stands" } satisfies RouteHandle,
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FormulaTemplate, Operation.Create),
-              createPrefetchLoader(
-                lazyPrefetch(() => import("@/routes/formula-template/new/page")),
-              ),
-            ),
-            async lazy() {
-              const { FormulaStudioCreatePage } =
-                await import("@/routes/formula-template/new/page");
-              return { Component: FormulaStudioCreatePage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/formula-templates/:id/edit",
-            handle: { frame: "room", roomRail: "stands" } satisfies RouteHandle,
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FormulaTemplate),
-              createPrefetchLoader(
-                lazyPrefetch(() => import("@/routes/formula-template/[id]/page")),
-              ),
-            ),
-            async lazy() {
-              const { FormulaStudioEditPage } = await import("@/routes/formula-template/[id]/page");
-              return { Component: FormulaStudioEditPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/formula-libraries",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FormulaLibrary),
-            ),
-            async lazy() {
-              const { FormulaLibrariesPage } = await import("@/routes/formula-library/page");
-              return { Component: FormulaLibrariesPage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/formula-libraries/new",
-            handle: { frame: "room", roomRail: "stands" } satisfies RouteHandle,
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FormulaLibrary, Operation.Create),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/formula-library/new/page"))),
-            ),
-            async lazy() {
-              const { FormulaLibraryCreatePage } =
-                await import("@/routes/formula-library/new/page");
-              return { Component: FormulaLibraryCreatePage };
-            },
-          },
-          {
-            path: "/billing/configuration-files/formula-libraries/:id/edit",
-            handle: { frame: "room", roomRail: "stands" } satisfies RouteHandle,
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FormulaLibrary),
-              createPrefetchLoader(
-                lazyPrefetch(() => import("@/routes/formula-library/[id]/page")),
-              ),
-            ),
-            async lazy() {
-              const { FormulaLibraryEditPage } = await import("@/routes/formula-library/[id]/page");
-              return { Component: FormulaLibraryEditPage };
-            },
-          },
-          {
-            path: "/fuel/configuration-files/surcharge",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FuelSurchargeProgram),
-            ),
-            async lazy() {
-              const { FuelManagementPage } = await import("@/routes/fuel-management/page");
-              return { Component: FuelManagementPage };
-            },
-          },
-          {
-            path: "/equipment/tractors",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.Tractor),
-            ),
-            async lazy() {
-              const { TractorsPage } = await import("@/routes/tractor/page");
-              return { Component: TractorsPage };
-            },
-          },
-          {
-            path: "/equipment/trailers",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.Trailer),
-            ),
-            async lazy() {
-              const { TrailersPage } = await import("@/routes/trailer/page");
-              return { Component: TrailersPage };
-            },
-          },
-          {
-            path: "/fuel/purchases",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.FuelPurchase),
-            ),
-            async lazy() {
-              const { FuelPurchasesPage } = await import("@/routes/fuel-purchase/page");
-              return { Component: FuelPurchasesPage };
-            },
-          },
-          {
-            path: "/fuel/jurisdiction-mileage",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.IFTAJurisdictionMileage),
-            ),
-            async lazy() {
-              const { JurisdictionMileagePage } =
-                await import("@/routes/ifta-jurisdiction-mileage/page");
-              return { Component: JurisdictionMileagePage };
-            },
-          },
-          {
-            path: "/fuel/ifta-returns",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.IFTAReturn),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/ifta-return/page"))),
-            ),
-            async lazy() {
-              const { IftaReturnsPage } = await import("@/routes/ifta-return/page");
-              return { Component: IftaReturnsPage };
-            },
-          },
-          {
-            path: "/fuel/configuration-files/fuel-cards",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.FuelCard),
-            ),
-            async lazy() {
-              const { FuelCardsPage } = await import("@/routes/fuel-card/page");
-              return { Component: FuelCardsPage };
-            },
-          },
-          {
-            path: "/fuel/feed-runs",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.FuelPurchaseImport),
-            ),
-            async lazy() {
-              const { FuelFeedRunsPage } = await import("@/routes/fuel-feed-run/page");
-              return { Component: FuelFeedRunsPage };
-            },
-          },
-          {
-            path: "/fuel/unassigned-cards",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.FuelCard),
-            ),
-            async lazy() {
-              const { UnassignedFuelCardsPage } = await import("@/routes/fuel-card/page");
-              return { Component: UnassignedFuelCardsPage };
-            },
-          },
-          {
-            path: "/fuel/configuration-files/ifta-tax-rates",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.IFTATaxRate),
-            ),
-            async lazy() {
-              const { IftaTaxRatesPage } = await import("@/routes/ifta-tax-rate/page");
-              return { Component: IftaTaxRatesPage };
-            },
-          },
-          {
-            path: "/equipment/configuration-files/equipment-types",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EquipmentType)),
-            async lazy() {
-              const { EquipmentTypesPage } = await import("@/routes/equipment-type/page");
-              return { Component: EquipmentTypesPage };
-            },
-          },
+// A tender's record link opens the inbound page; one we sent is carried to the outbound page.
+const ediSentTransferGate: RouteGate = async ({ location, abortController }) => {
+  const url = new URL(`${location.pathname}${location.searchStr}`, window.location.origin);
+  if (!url.searchParams.has("panelEntityId")) {
+    return;
+  }
+  const { sentTransferPath } = await import("@/lib/edi/transfer-page");
+  const sent = await sentTransferPath(url, abortController.signal);
+  if (sent) {
+    throw redirect({ href: sent });
+  }
+};
 
-          {
-            path: "/equipment/configuration-files/equipment-manufacturers",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.EquipmentManufacturer),
-            ),
-            async lazy() {
-              const { EquipmentManufacturersPage } =
-                await import("@/routes/equipment-manufacturer/page");
-              return { Component: EquipmentManufacturersPage };
-            },
-          },
-          {
-            path: "/dispatch/configuration-files/location-categories",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.LocationCategory),
-            ),
-            async lazy() {
-              const { LocationCategoriesPage } = await import("@/routes/location-category/page");
-              return { Component: LocationCategoriesPage };
-            },
-          },
-          {
-            path: "/dispatch/configuration-files/fleet-codes",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.FleetCode, Operation.Read),
-            ),
-            async lazy() {
-              const { FleetCodesPage } = await import("@/routes/fleet-code/page");
-              return { Component: FleetCodesPage };
-            },
-          },
-          {
-            path: "/reports",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Report, Operation.Read),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/reports/page"))),
-            ),
-            async lazy() {
-              const { ReportsPage } = await import("@/routes/reports/page");
-              return { Component: ReportsPage };
-            },
-          },
-          {
-            path: "/reports/runs",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Report, Operation.Read),
-            ),
-            async lazy() {
-              const { ReportRunsPage } = await import("@/routes/reports/runs/page");
-              return { Component: ReportRunsPage };
-            },
-          },
-          {
-            path: "/reports/explore",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Report, Operation.Read),
-            ),
-            async lazy() {
-              const { ReportExplorePage } = await import("@/routes/reports/explore/page");
-              return { Component: ReportExplorePage };
-            },
-          },
-          {
-            path: "/reports/explore/:definitionId",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Report, Operation.Read),
-            ),
-            async lazy() {
-              const { ReportExplorePage } = await import("@/routes/reports/explore/page");
-              return { Component: ReportExplorePage };
-            },
-          },
-          {
-            path: "/reports/dashboards/:dashboardId",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Report, Operation.Read),
-            ),
-            async lazy() {
-              const { ReportDashboardPage } = await import("@/routes/reports/dashboards/page");
-              return { Component: ReportDashboardPage };
-            },
-          },
-          {
-            path: "/reports/builder",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Report, Operation.Create),
-            ),
-            async lazy() {
-              const { ReportBuilderPage } = await import("@/routes/reports/builder/page");
-              return { Component: ReportBuilderPage };
-            },
-          },
-          {
-            path: "/reports/builder/:definitionId",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Report, Operation.Read),
-            ),
-            async lazy() {
-              const { ReportBuilderPage } = await import("@/routes/reports/builder/page");
-              return { Component: ReportBuilderPage };
-            },
-          },
-          {
-            path: "/dispatch/locations",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Location)),
-            async lazy() {
-              const { LocationsPage } = await import("@/routes/location/page");
-              return { Component: LocationsPage };
-            },
-          },
-          {
-            path: "/dispatch/console",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.ShipmentMove),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/dispatch-console/page"))),
-            ),
-            async lazy() {
-              const { DispatchConsolePage } = await import("@/routes/dispatch-console/page");
-              return { Component: DispatchConsolePage };
-            },
-          },
-          {
-            path: "/dispatch/outlook",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPlanFeatureLoader(PlanFeature.DispatchIntelligence),
-              createPermissionLoader(Resource.ShipmentMove),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/freight-outlook/page"))),
-            ),
-            async lazy() {
-              const { FreightOutlookPage } = await import("@/routes/freight-outlook/page");
-              return { Component: FreightOutlookPage };
-            },
-          },
-          {
-            path: "/hr/workers",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.Worker),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/worker/page"))),
-            ),
-            async lazy() {
-              const { WorkersPage } = await import("@/routes/worker/page");
-              return { Component: WorkersPage };
-            },
-          },
-          {
-            path: "/hr/checklist-templates",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.WorkerChecklistTemplate),
-            ),
-            async lazy() {
-              const { WorkerChecklistTemplatesPage } =
-                await import("@/routes/worker-checklist-template/page");
-              return { Component: WorkerChecklistTemplatesPage };
-            },
-          },
-          {
-            path: "/hr/review-templates",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.PerformanceReviewTemplate),
-            ),
-            async lazy() {
-              const { ReviewTemplatesPage } = await import("@/routes/review-template/page");
-              return { Component: ReviewTemplatesPage };
-            },
-          },
-          {
-            path: "/hr/training-courses",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.TrainingCourse),
-            ),
-            async lazy() {
-              const { TrainingCoursesPage } = await import("@/routes/training-course/page");
-              return { Component: TrainingCoursesPage };
-            },
-          },
-          {
-            path: "/hr/credential-types",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.WorkerCredentialType),
-            ),
-            async lazy() {
-              const { WorkerCredentialTypesPage } =
-                await import("@/routes/worker-credential-type/page");
-              return { Component: WorkerCredentialTypesPage };
-            },
-          },
-          {
-            path: "/hr/holidays",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.OrgHoliday),
-            ),
-            async lazy() {
-              const { HolidayCalendarPage } = await import("@/routes/holiday/page");
-              return { Component: HolidayCalendarPage };
-            },
-          },
-          {
-            path: "/hr/leave-settings",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.WorkerLeave),
-            ),
-            async lazy() {
-              const { LeaveControlPage } = await import("@/routes/leave-control/page");
-              return { Component: LeaveControlPage };
-            },
-          },
-          {
-            path: "/hr/my-team",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.Worker),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/my-team/page"))),
-            ),
-            async lazy() {
-              const { MyTeamPage } = await import("@/routes/my-team/page");
-              return { Component: MyTeamPage };
-            },
-          },
-          {
-            path: "/hr/benefits",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.BenefitPlan),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/benefits/page"))),
-            ),
-            async lazy() {
-              const { BenefitsPage } = await import("@/routes/benefits/page");
-              return { Component: BenefitsPage };
-            },
-          },
-          {
-            path: "/hr/policies",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.WorkerPolicy),
-            ),
-            async lazy() {
-              const { PoliciesPage } = await import("@/routes/policies/page");
-              return { Component: PoliciesPage };
-            },
-          },
-          {
-            path: "/hr/time-attendance",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.Timesheet),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/time-attendance/page"))),
-            ),
-            async lazy() {
-              const { TimeAttendancePage } = await import("@/routes/time-attendance/page");
-              return { Component: TimeAttendancePage };
-            },
-          },
-          {
-            path: "/hr/scheduling",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.WorkerSchedule),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/scheduling/page"))),
-            ),
-            async lazy() {
-              const { SchedulingPage } = await import("@/routes/scheduling/page");
-              return { Component: SchedulingPage };
-            },
-          },
-          {
-            path: "/hr/org-structure",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.JobPosition),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/org-structure/page"))),
-            ),
-            async lazy() {
-              const { OrgStructurePage } = await import("@/routes/org-structure/page");
-              return { Component: OrgStructurePage };
-            },
-          },
-          {
-            path: "/hr/fleet-safety",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.WorkerSafetyEvent),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/fleet-safety/page"))),
-            ),
-            async lazy() {
-              const { FleetSafetyPage } = await import("@/routes/fleet-safety/page");
-              return { Component: FleetSafetyPage };
-            },
-          },
-          {
-            path: "/hr/osha-log",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.WorkerInjury),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/osha/page"))),
-            ),
-            async lazy() {
-              const { OshaLogPage } = await import("@/routes/osha/page");
-              return { Component: OshaLogPage };
-            },
-          },
-          {
-            path: "/hr/random-testing",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.DOTRandomPool),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/random-testing/page"))),
-            ),
-            async lazy() {
-              const { RandomTestingPage } = await import("@/routes/random-testing/page");
-              return { Component: RandomTestingPage };
-            },
-          },
-          {
-            path: "/hr/pto-policies",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.AssetOperations),
-              createPermissionLoader(Resource.PTOPolicy),
-            ),
-            async lazy() {
-              const { PTOPoliciesPage } = await import("@/routes/pto-policy/page");
-              return { Component: PTOPoliciesPage };
-            },
-          },
-          {
-            // Moved to Human Resource Management. Links already sent — stored
-            // notifications, bookmarks — keep working and carry their query on.
-            path: "/dispatch/workers",
-            loader: ({ request }) => redirect(`/hr/workers${new URL(request.url).search}`),
-          },
-          {
-            path: "/dispatch/configuration-files/checklist-templates",
-            loader: ({ request }) =>
-              redirect(`/hr/checklist-templates${new URL(request.url).search}`),
-          },
-          {
-            path: "/dispatch/configuration-files/review-templates",
-            loader: ({ request }) => redirect(`/hr/review-templates${new URL(request.url).search}`),
-          },
-          {
-            path: "/equipment/fuel-purchases",
-            loader: ({ request }) => redirect(`/fuel/purchases${new URL(request.url).search}`),
-          },
-          {
-            path: "/equipment/jurisdiction-mileage",
-            loader: ({ request }) =>
-              redirect(`/fuel/jurisdiction-mileage${new URL(request.url).search}`),
-          },
-          {
-            path: "/equipment/ifta/returns",
-            loader: ({ request }) => redirect(`/fuel/ifta-returns${new URL(request.url).search}`),
-          },
-          {
-            path: "/equipment/configuration-files/fuel-cards",
-            loader: ({ request }) =>
-              redirect(`/fuel/configuration-files/fuel-cards${new URL(request.url).search}`),
-          },
-          {
-            path: "/equipment/configuration-files/ifta-tax-rates",
-            loader: ({ request }) =>
-              redirect(`/fuel/configuration-files/ifta-tax-rates${new URL(request.url).search}`),
-          },
-          {
-            path: "/billing/fuel-management",
-            loader: ({ request }) =>
-              redirect(`/fuel/configuration-files/surcharge${new URL(request.url).search}`),
-          },
-          {
-            path: "/dispatch/configuration-files/training-courses",
-            loader: ({ request }) => redirect(`/hr/training-courses${new URL(request.url).search}`),
-          },
-          {
-            path: "/dispatch/configuration-files/credential-types",
-            loader: ({ request }) => redirect(`/hr/credential-types${new URL(request.url).search}`),
-          },
-          {
-            path: "/dispatch/configuration-files/holidays",
-            loader: ({ request }) => redirect(`/hr/holidays${new URL(request.url).search}`),
-          },
-          {
-            path: "/dispatch/configuration-files/pto-policies",
-            loader: ({ request }) => redirect(`/hr/pto-policies${new URL(request.url).search}`),
-          },
-          {
-            path: "/dispatch/carriers",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.Brokerage),
-              createPermissionLoader(Resource.Carrier),
-            ),
-            async lazy() {
-              const { CarriersPage } = await import("@/routes/carrier/page");
-              return { Component: CarriersPage };
-            },
-          },
-          {
-            path: "/dispatch/carrier-monitoring",
-            loader: combineLoaders(
-              protectedLoader,
-              createPlanFeatureLoader(PlanFeature.CarrierBrokerage),
-              createPermissionLoader(Resource.CarrierIntelligence),
-            ),
-            async lazy() {
-              const { CarrierMonitoringPage } = await import("@/routes/carrier-monitoring/page");
-              return { Component: CarrierMonitoringPage };
-            },
-          },
-          {
-            path: "/dispatch/carrier-sourcing",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.Brokerage),
-              createPlanFeatureLoader(PlanFeature.CarrierBrokerage),
-              createPermissionLoader(Resource.CarrierSourcing),
-            ),
-            async lazy() {
-              const { CarrierSourcingPage } = await import("@/routes/carrier-sourcing/page");
-              return { Component: CarrierSourcingPage };
-            },
-          },
-          {
-            path: "/dispatch/routing-guides",
-            loader: combineLoaders(
-              protectedLoader,
-              createCapabilityLoader(OrganizationCapability.Brokerage),
-              createPermissionLoader(Resource.RoutingGuide),
-            ),
-            async lazy() {
-              const { RoutingGuidesPage } = await import("@/routes/routing-guide/page");
-              return { Component: RoutingGuidesPage };
-            },
-          },
-          {
-            path: "/accounting/configuration-files/fiscal-years",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.FiscalYear)),
-            async lazy() {
-              const { FiscalYearsPage } = await import("@/routes/fiscal-year/page");
-              return { Component: FiscalYearsPage };
-            },
-          },
+// A layout entered for the first time (the app's first load, or arriving from sign-in) draws
+// its loading screen at once, as the page used to before the router had answered. A layout
+// that stays while its page changes is already loaded, so a change of page keeps the page
+// standing with the progress bar until the next one is ready.
+const SHOWN_AT_ONCE = { pendingMs: 0, pendingMinMs: 0 } as const;
 
-          {
-            path: "admin",
-            Component: AdminLayout,
-            HydrateFallback: LoadingSkeleton,
-            loader: protectedLoader,
-            children: [
-              {
-                path: "billing-controls",
-                loader: createPermissionLoader(Resource.BillingControl),
-                async lazy() {
-                  const { BillingControlPage } = await import("@/routes/billing-control/page");
-                  return { Component: BillingControlPage };
-                },
-              },
-              {
-                path: "organization-settings",
-                loader: combineLoaders(
-                  createPermissionLoader(Resource.Organization, Operation.Read),
-                  createPrefetchLoader(
-                    lazyPrefetch(() => import("@/routes/admin/organization-settings/page")),
-                  ),
-                ),
-                async lazy() {
-                  const { OrganizationSettingsPage } =
-                    await import("@/routes/admin/organization-settings/page");
-                  return { Component: OrganizationSettingsPage };
-                },
-              },
-              {
-                path: "accounting-control",
-                loader: createPermissionLoader(Resource.AccountingControl),
-                async lazy() {
-                  const { AccountingControlPage } =
-                    await import("@/routes/accounting-control/page");
-                  return { Component: AccountingControlPage };
-                },
-              },
-              {
-                path: "cost-control",
-                loader: createPermissionLoader(Resource.CostingControl),
-                async lazy() {
-                  const { CostControlPage } = await import("@/routes/cost-control/page");
-                  return { Component: CostControlPage };
-                },
-              },
-              {
-                path: "invoice-adjustment-controls",
-                loader: createPermissionLoader(Resource.InvoiceAdjustmentControl, Operation.Read),
-                async lazy() {
-                  const { InvoiceAdjustmentControlPage } =
-                    await import("@/routes/invoice-adjustment-control/page");
-                  return { Component: InvoiceAdjustmentControlPage };
-                },
-              },
-              {
-                path: "table-change-alerts",
-                loader: createPermissionLoader(Resource.TableChangeAlert, Operation.Read),
-                async lazy() {
-                  const { TableChangeAlertPage } = await import("@/routes/table-change-alert/page");
-                  return { Component: TableChangeAlertPage };
-                },
-              },
-              {
-                path: "data-entry-controls",
-                loader: createPermissionLoader(Resource.DataEntryControl, Operation.Read),
-                async lazy() {
-                  const { DataEntryControlPage } = await import("@/routes/data-entry-control/page");
-                  return { Component: DataEntryControlPage };
-                },
-              },
-              {
-                path: "dispatch-controls",
-                loader: createPermissionLoader(Resource.DispatchControl, Operation.Read),
-                async lazy() {
-                  const { DispatchControlPage } = await import("@/routes/dispatch-control/page");
-                  return { Component: DispatchControlPage };
-                },
-              },
-              {
-                path: "settlement-control",
-                loader: combineLoaders(
-                  createCapabilityLoader(OrganizationCapability.AssetOperations),
-                  createPermissionLoader(Resource.SettlementControl, Operation.Read),
-                ),
-                async lazy() {
-                  const { SettlementControlPage } =
-                    await import("@/routes/settlement-control/page");
-                  return { Component: SettlementControlPage };
-                },
-              },
-              {
-                path: "carrier-settlement-control",
-                loader: combineLoaders(
-                  createCapabilityLoader(OrganizationCapability.Brokerage),
-                  createPermissionLoader(Resource.CarrierSettlementControl, Operation.Read),
-                ),
-                async lazy() {
-                  const { CarrierSettlementControlPage } =
-                    await import("@/routes/carrier-settlement-control/page");
-                  return { Component: CarrierSettlementControlPage };
-                },
-              },
-              {
-                path: "dash-control",
-                loader: combineLoaders(
-                  createCapabilityLoader(OrganizationCapability.AssetOperations),
-                  createPermissionLoader(Resource.DashControl, Operation.Read),
-                ),
-                async lazy() {
-                  const { DashControlPage } = await import("@/routes/dash-control/page");
-                  return { Component: DashControlPage };
-                },
-              },
-              {
-                path: "agent-control",
-                loader: combineLoaders(
-                  createPlanFeatureLoader(PlanFeature.AgentAutomation),
-                  createPermissionLoader(Resource.AgentControl, Operation.Read),
-                ),
-                async lazy() {
-                  const { AgentControlPage } = await import("@/routes/agent-control/page");
-                  return { Component: AgentControlPage };
-                },
-              },
-              {
-                path: "distance-controls",
-                loader: createPermissionLoader(Resource.DistanceControl),
-                async lazy() {
-                  const { DistanceControlsPage } =
-                    await import("@/routes/admin/distance-controls/page");
-                  return { Component: DistanceControlsPage };
-                },
-              },
-              {
-                path: "distance-overrides",
-                loader: createPermissionLoader(Resource.DistanceOverride),
-                async lazy() {
-                  const { DistanceOverridesPage } = await import("@/routes/distance-override/page");
-                  return { Component: DistanceOverridesPage };
-                },
-              },
-              {
-                path: "distance-profiles",
-                loader: createPermissionLoader(Resource.DistanceProfile),
-                async lazy() {
-                  const { DistanceProfilesPage } =
-                    await import("@/routes/admin/distance-profiles/page");
-                  return { Component: DistanceProfilesPage };
-                },
-              },
-              {
-                path: "stored-mileages",
-                loader: createPermissionLoader(Resource.StoredMileage),
-                async lazy() {
-                  const { StoredMileagesPage } =
-                    await import("@/routes/admin/stored-mileages/page");
-                  return { Component: StoredMileagesPage };
-                },
-              },
-              {
-                path: "shipment-controls",
-                loader: createPermissionLoader(Resource.ShipmentControl, Operation.Read),
-                async lazy() {
-                  const { ShipmentControlPage } = await import("@/routes/shipment-control/page");
-                  return { Component: ShipmentControlPage };
-                },
-              },
-              {
-                path: "capture",
-                loader: combineLoaders(
-                  createPlanFeatureLoader(PlanFeature.DocumentIntelligence),
-                  createPermissionLoader(Resource.CaptureProfile, Operation.Read),
-                ),
-                async lazy() {
-                  const { CaptureAdminPage } = await import("@/routes/admin/capture/page");
-                  return { Component: CaptureAdminPage };
-                },
-              },
-              {
-                path: "document-intelligence",
-                loader: combineLoaders(
-                  createPlanFeatureLoader(PlanFeature.DocumentIntelligence),
-                  createPermissionLoader(Resource.DocumentControl, Operation.Read),
-                ),
-                async lazy() {
-                  const { DocumentIntelligencePage } =
-                    await import("@/routes/admin/document-intelligence/page");
-                  return { Component: DocumentIntelligencePage };
-                },
-              },
-              {
-                path: "sequence-configs",
-                loader: createPermissionLoader(Resource.SequenceConfig, Operation.Read),
-                async lazy() {
-                  const { SequenceConfigPage } =
-                    await import("@/routes/admin/sequence-config/page");
-                  return { Component: SequenceConfigPage };
-                },
-              },
-              {
-                path: "hold-reasons",
-                loader: combineLoaders(
-                  protectedLoader,
-                  createPermissionLoader(Resource.HoldReason),
-                ),
-                async lazy() {
-                  const { HoldReasonsPage } = await import("@/routes/hold-reason/page");
-                  return { Component: HoldReasonsPage };
-                },
-              },
-              {
-                path: "jurisdiction-rules",
-                loader: combineLoaders(
-                  protectedLoader,
-                  createPermissionLoader(Resource.JurisdictionRule),
-                ),
-                async lazy() {
-                  const { JurisdictionRulesPage } = await import("@/routes/jurisdiction-rule/page");
-                  return { Component: JurisdictionRulesPage };
-                },
-              },
-              {
-                path: "jurisdiction-rule-overrides",
-                loader: combineLoaders(
-                  protectedLoader,
-                  createPermissionLoader(Resource.JurisdictionRuleOverride),
-                ),
-                async lazy() {
-                  const { JurisdictionRuleOverridesPage } =
-                    await import("@/routes/jurisdiction-rule-override/page");
-                  return { Component: JurisdictionRuleOverridesPage };
-                },
-              },
-              {
-                path: "service-failure-reason-codes",
-                loader: combineLoaders(
-                  protectedLoader,
-                  createPermissionLoader(Resource.ServiceFailureReasonCode),
-                ),
-                async lazy() {
-                  const { ServiceFailureReasonCodesPage } =
-                    await import("@/routes/service-failure-reason-code/page");
-                  return { Component: ServiceFailureReasonCodesPage };
-                },
-              },
-              {
-                path: "hazmat-segregation-rules",
-                loader: createPermissionLoader(Resource.HazmatSegregationRule),
-                async lazy() {
-                  const { HazmatSegregationRulesPage } =
-                    await import("@/routes/hazmat-segregation-rule/page");
-                  return { Component: HazmatSegregationRulesPage };
-                },
-              },
-              {
-                path: "home-layouts",
-                loader: createPermissionLoader(Resource.HomeLayoutPreset, Operation.Read),
-                async lazy() {
-                  const { HomeLayoutsPage } = await import("@/routes/admin/home-layouts/page");
-                  return { Component: HomeLayoutsPage };
-                },
-              },
-              {
-                path: "home-layouts/new",
-                loader: createPermissionLoader(Resource.HomeLayoutPreset, Operation.Create),
-                async lazy() {
-                  const { NewHomeLayoutPage } =
-                    await import("@/routes/admin/home-layouts/new/page");
-                  return { Component: NewHomeLayoutPage };
-                },
-              },
-              {
-                path: "home-layouts/:id",
-                loader: createPermissionLoader(Resource.HomeLayoutPreset, Operation.Update),
-                async lazy() {
-                  const { EditHomeLayoutPage } =
-                    await import("@/routes/admin/home-layouts/[id]/page");
-                  return { Component: EditHomeLayoutPage };
-                },
-              },
-              {
-                path: "roles",
-                loader: createPermissionLoader(Resource.Role, Operation.Read),
-                async lazy() {
-                  const { RolesPage } = await import("@/routes/admin/roles/page");
-                  return { Component: RolesPage };
-                },
-              },
-              {
-                path: "roles/new",
-                loader: createPermissionLoader(Resource.Role, Operation.Create),
-                async lazy() {
-                  const { RoleCreatePage } = await import("@/routes/admin/roles/new/page");
-                  return { Component: RoleCreatePage };
-                },
-              },
-              {
-                path: "roles/:id/edit",
-                loader: createPermissionLoader(Resource.Role, Operation.Update),
-                async lazy() {
-                  const { RoleEditPage } = await import("@/routes/admin/roles/[id]/edit/page");
-                  return { Component: RoleEditPage };
-                },
-              },
-              {
-                path: "users",
-                loader: createPermissionLoader(Resource.User, Operation.Read),
-                async lazy() {
-                  const { UsersPage } = await import("@/routes/admin/users/page");
-                  return { Component: UsersPage };
-                },
-              },
-              {
-                path: "audit-logs",
-                loader: combineLoaders(
-                  createPermissionLoader(Resource.AuditLog, Operation.Read),
-                  createPrefetchLoader(
-                    lazyPrefetch(() => import("@/routes/admin/audit-logs/page")),
-                  ),
-                ),
-                async lazy() {
-                  const { AuditLogsPage } = await import("@/routes/admin/audit-logs/page");
-                  return { Component: AuditLogsPage };
-                },
-              },
-              {
-                path: "integrations",
-                loader: combineLoaders(
-                  createPlanFeatureLoader(PlanFeature.Administration),
-                  createPermissionLoader(Resource.Integration, Operation.Read),
-                ),
-                async lazy() {
-                  const { IntegrationsPage } = await import("@/routes/admin/integrations/page");
-                  return { Component: IntegrationsPage };
-                },
-              },
-              {
-                path: "integrations/quickbooks/callback",
-                loader: createPermissionLoader(Resource.AccountingIntegration, Operation.Manage),
-                async lazy() {
-                  const { QuickBooksCallbackPage } =
-                    await import("@/routes/admin/integrations/quickbooks-callback/page");
-                  return { Component: QuickBooksCallbackPage };
-                },
-              },
-              {
-                path: "integrations/xero/callback",
-                loader: createPermissionLoader(Resource.AccountingIntegration, Operation.Manage),
-                async lazy() {
-                  const { XeroCallbackPage } =
-                    await import("@/routes/admin/integrations/xero-callback/page");
-                  return { Component: XeroCallbackPage };
-                },
-              },
-              {
-                path: "integrations/business-central/callback",
-                loader: createPermissionLoader(Resource.AccountingIntegration, Operation.Manage),
-                async lazy() {
-                  const { BusinessCentralCallbackPage } =
-                    await import("@/routes/admin/integrations/business-central-callback/page");
-                  return { Component: BusinessCentralCallbackPage };
-                },
-              },
-              {
-                path: "integrations/netsuite/callback",
-                loader: createPermissionLoader(Resource.AccountingIntegration, Operation.Manage),
-                async lazy() {
-                  const { NetSuiteCallbackPage } =
-                    await import("@/routes/admin/integrations/netsuite-callback/page");
-                  return { Component: NetSuiteCallbackPage };
-                },
-              },
-              {
-                // Agents are configured from Agent Control; the old standalone
-                // page forwards so a saved link still lands somewhere useful.
-                path: "agents",
-                loader: () => redirect("/admin/agent-control"),
-              },
-              {
-                // Providers are a tab of AI Control now; saved links keep working.
-                path: "ai-providers",
-                loader: () => redirect("/admin/agent-control?tab=providers"),
-              },
-              {
-                path: "inbound-mailboxes",
-                loader: combineLoaders(
-                  createPermissionLoader(Resource.InboundMailbox, Operation.Read),
-                  createPrefetchLoader(
-                    lazyPrefetch(() => import("@/routes/admin/inbound-mailboxes/page")),
-                  ),
-                ),
-                async lazy() {
-                  const { InboundMailboxesPage } =
-                    await import("@/routes/admin/inbound-mailboxes/page");
-                  return { Component: InboundMailboxesPage };
-                },
-              },
-              {
-                path: "api-keys",
-                loader: combineLoaders(
-                  createPlanFeatureLoader(PlanFeature.APIKeys),
-                  createPermissionLoader(Resource.APIKey, Operation.Read),
-                ),
-                async lazy() {
-                  const { APIKeysPage } = await import("@/routes/admin/api-keys/page");
-                  return { Component: APIKeysPage };
-                },
-              },
-              {
-                path: "support-access",
-                loader: combineLoaders(
-                  createPermissionLoader(Resource.SupportAccess, Operation.Read),
-                  createPrefetchLoader(
-                    lazyPrefetch(() => import("@/routes/admin/support-access/page")),
-                  ),
-                ),
-                async lazy() {
-                  const { SupportAccessPage } = await import("@/routes/admin/support-access/page");
-                  return { Component: SupportAccessPage };
-                },
-              },
-              {
-                path: "plan",
-                loader: combineLoaders(
-                  managedInstanceLoader,
-                  createPermissionLoader(Resource.Organization, Operation.Update),
-                  createPrefetchLoader(lazyPrefetch(() => import("@/routes/admin/plan/page"))),
-                ),
-                async lazy() {
-                  const { PlanPage } = await import("@/routes/admin/plan/page");
-                  return { Component: PlanPage };
-                },
-              },
-              {
-                path: "custom-fields",
-                loader: createPermissionLoader(Resource.CustomFieldDefinition, Operation.Read),
-                async lazy() {
-                  const { CustomFieldDefinitionsPage } =
-                    await import("@/routes/admin/custom-fields/page");
-                  return { Component: CustomFieldDefinitionsPage };
-                },
-              },
-              ...edition.routes.admin,
-            ],
-          },
-          ...edition.routes.protected,
-          {
-            path: "*",
-            element: <NotFoundRoute />,
-          },
-        ],
-      },
-      {
-        // The welcome wizard a new cloud organization walks through once. It is a
-        // full-screen step of its own rather than a page in the app: nothing in the
-        // sidebar is useful until the organization has a profile. It still runs the
-        // session's gates, so a password change or role activation comes first.
-        element: <OnboardingLayout />,
-        loader: protectedLoader,
-        children: [
-          {
-            path: "/onboarding",
-            loader: combineLoaders(protectedLoader, onboardingLoader),
-            async lazy() {
-              const { OnboardingPage } = await import("@/routes/onboarding/page");
-              return { Component: OnboardingPage };
-            },
-          },
-        ],
-      },
-      {
-        // The Desk runs outside the app chrome.
-        //
-        // It is a room rather than a page: a conversation on one side and
-        // the work it produces on the other, both of which want the whole
-        // window. Mounted under AppLayout it paid for a sidebar, a
-        // breadcrumb and a page header before a word of conversation —
-        // roughly 190px of furniture on a surface whose entire job is to
-        // give the work room. It keeps the protected loader, so it is no
-        // less guarded than anything inside; it simply wears none of the
-        // frame. The way back is in its own chrome.
-        element: <DeskShellLayout />,
-        HydrateFallback: DeskLoadingScreen,
-        loader: protectedLoader,
-        children: [
-          {
-            path: "/desk",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Assistant, Operation.Read),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/desk/page"))),
-            ),
-            async lazy() {
-              const { DeskPage } = await import("@/routes/desk/page");
-              return { Component: DeskPage };
-            },
-            children: [
-              {
-                index: true,
-                async lazy() {
-                  const { DeskHomePage } = await import("@/routes/desk/home-page");
-                  return { Component: DeskHomePage };
-                },
-              },
-              {
-                path: "t/:threadId",
-                async lazy() {
-                  const { DeskConversationPage } = await import("@/routes/desk/conversation-page");
-                  return { Component: DeskConversationPage };
-                },
-              },
-              {
-                // A link to one artifact, named by its slug: the conversation
-                // opens with it beside it.
-                path: "c/:threadId/a/:slug",
-                async lazy() {
-                  const { DeskArtifactLinkPage } = await import("@/routes/desk/artifact-link-page");
-                  return { Component: DeskArtifactLinkPage };
-                },
-              },
-              {
-                // What an agent laid out, on the canvas, with the conversation
-                // that made it in the margin.
-                path: "v/:viewThreadId/:slug",
-                async lazy() {
-                  const { DeskViewPage } = await import("@/routes/desk/view-page");
-                  return { Component: DeskViewPage };
-                },
-              },
-              {
-                path: "agents/:agentId",
-                async lazy() {
-                  const { DeskAgentCapabilitiesPage } = await import("@/routes/desk/agent-page");
-                  return { Component: DeskAgentCapabilitiesPage };
-                },
-              },
-              {
-                path: "handled/:id",
-                loader: createPermissionLoader(Resource.AgentProposal, Operation.Read),
-                async lazy() {
-                  const { DeskHandledPage } = await import("@/routes/desk/handled-page");
-                  return { Component: DeskHandledPage };
-                },
-              },
-              {
-                path: "r/:kind/:id",
-                async lazy() {
-                  const { DeskCasePage } = await import("@/routes/desk/case-page");
-                  return { Component: DeskCasePage };
-                },
-              },
-              {
-                path: "triage",
-                loader: combineLoaders(
-                  createPermissionLoader(Resource.InboundMessage, Operation.Read),
-                  createPrefetchLoader(lazyPrefetch(() => import("@/routes/inbox/page"))),
-                ),
-                // Opening a message only changes the query; the guards ran when Triage opened.
-                shouldRevalidate: ({ currentUrl, nextUrl, defaultShouldRevalidate }) =>
-                  currentUrl.pathname === nextUrl.pathname ? false : defaultShouldRevalidate,
-                async lazy() {
-                  const { DeskTriagePage } = await import("@/routes/desk/triage-page");
-                  return { Component: DeskTriagePage };
-                },
-              },
-              {
-                path: "needs",
-                // Its Decisions lens is for whoever may read proposals; the
-                // rest of the page is the Watchtower's.
-                loader: anyOfLoaders(
-                  createPermissionLoader(Resource.Watchtower, Operation.Read),
-                  createPermissionLoader(Resource.AgentProposal, Operation.Read),
-                ),
-                // Picking a lens only changes the query; the guards ran when the page opened.
-                shouldRevalidate: ({ currentUrl, nextUrl, defaultShouldRevalidate }) =>
-                  currentUrl.pathname === nextUrl.pathname ? false : defaultShouldRevalidate,
-                async lazy() {
-                  const { DeskNeedsPage } = await import("@/routes/desk/needs-page");
-                  return { Component: DeskNeedsPage };
-                },
-              },
-              {
-                path: "watchtower",
-                loader: () => redirect("/desk/needs?lens=watchtower"),
-              },
-              {
-                path: "scheduled",
-                loader: createPrefetchLoader(
-                  lazyPrefetch(() => import("@/routes/desk/scheduled-page")),
-                ),
-                async lazy() {
-                  const { DeskScheduledRoutePage } = await import("@/routes/desk/scheduled-page");
-                  return { Component: DeskScheduledRoutePage };
-                },
-              },
-              {
-                path: "memory",
-                loader: createPrefetchLoader(
-                  lazyPrefetch(() => import("@/routes/desk/memory-page")),
-                ),
-                async lazy() {
-                  const { DeskMemoryRoutePage } = await import("@/routes/desk/memory-page");
-                  return { Component: DeskMemoryRoutePage };
-                },
-              },
-            ],
-          },
-        ],
-      },
-      {
-        // Public carrier-facing pages: no auth, no app chrome. An external
-        // carrier lands here from an emailed offer link, logged in or not.
-        children: [
-          {
-            path: "/tender-offer/:token",
-            async lazy() {
-              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
-              return { Component: TenderOfferPublicPage };
-            },
-          },
-          {
-            path: "/tender-offer/:token/accept",
-            async lazy() {
-              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
-              return { Component: TenderOfferPublicPage };
-            },
-          },
-          {
-            path: "/tender-offer/:token/decline",
-            async lazy() {
-              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
-              return { Component: TenderOfferPublicPage };
-            },
-          },
-          {
-            path: "/rate-confirmation/:token",
-            async lazy() {
-              const { RateConfirmationPublicPage } =
-                await import("@/routes/rate-confirmation-public/page");
-              return { Component: RateConfirmationPublicPage };
-            },
-          },
-          {
-            path: "/carrier-tracking/:token",
-            async lazy() {
-              const { CarrierTrackingPublicPage } =
-                await import("@/routes/carrier-tracking-public/page");
-              return { Component: CarrierTrackingPublicPage };
-            },
-          },
-          {
-            path: "/shipment-tracking/:token",
-            async lazy() {
-              const { ShipmentTrackingPublicPage } =
-                await import("@/routes/shipment-tracking-public/page");
-              return { Component: ShipmentTrackingPublicPage };
-            },
-          },
-          ...edition.routes.public,
-        ],
-      },
-      {
-        loader: guestLoader,
-        children: [
-          {
-            path: "/login",
-            async lazy() {
-              const { AuthPage } = await import("@/routes/auth/page");
-              return { Component: AuthPage };
-            },
-          },
-          {
-            path: "/login/:orgSlug",
-            async lazy() {
-              const { AuthPage } = await import("@/routes/auth/page");
-              return { Component: AuthPage };
-            },
-          },
-          {
-            // Opened from the emailed reset link. Guest-only, like the sign-in page:
-            // somebody already signed in has no use for it.
-            path: "/auth/reset",
-            async lazy() {
-              const { ResetPasswordPage } = await import("@/routes/auth/reset-page");
-              return { Component: ResetPasswordPage };
-            },
-          },
-          ...edition.routes.guest,
-        ],
-      },
-    ],
-  },
+const rootRoute = createRootRoute({
+  component: RootLayout,
+  validateSearch: validateSearchRecord,
+  pendingComponent: LoadingSkeleton,
+  pendingMs: 0,
+});
+
+// A page that fails to load or render keeps the shell standing, so the way to
+// anywhere else is still on screen.
+const appRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "app",
+  pendingComponent: LoadingSkeleton,
+  ...SHOWN_AT_ONCE,
+  beforeLoad: protectedGate(),
+  component: AppLayout,
+  errorComponent: AppErrorLayout,
+});
+
+const adminRoute = createRoute({
+  getParentRoute: () => appRoute,
+  path: "admin",
+  component: AdminLayout,
+});
+
+// The welcome wizard a new cloud organization walks through once. It is a
+// full-screen step of its own rather than a page in the app: nothing in the
+// sidebar is useful until the organization has a profile. It still runs the
+// session's gates, so a password change or role activation comes first.
+const onboardingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "onboarding",
+  pendingComponent: LoadingSkeleton,
+  ...SHOWN_AT_ONCE,
+  beforeLoad: protectedGate(),
+  component: OnboardingLayout,
+});
+
+// The Desk runs outside the app chrome.
+//
+// It is a room rather than a page: a conversation on one side and
+// the work it produces on the other, both of which want the whole
+// window. Mounted under AppLayout it paid for a sidebar, a
+// breadcrumb and a page header before a word of conversation —
+// roughly 190px of furniture on a surface whose entire job is to
+// give the work room. It keeps the protected loader, so it is no
+// less guarded than anything inside; it simply wears none of the
+// frame. The way back is in its own chrome.
+const deskShellRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "deskShell",
+  beforeLoad: protectedGate(),
+  component: DeskShellLayout,
+  pendingComponent: DeskLoadingScreen,
+  ...SHOWN_AT_ONCE,
+});
+
+const deskRoute = createRoute({
+  getParentRoute: () => deskShellRoute,
+  path: "/desk",
+  beforeLoad: gates(requirePermission(Resource.Assistant, Operation.Read)),
+  loader: prefetchPage(() => import("@/routes/desk/page")),
+  component: lazyPage(() => import("@/routes/desk/page"), "DeskPage"),
+});
+
+// Public carrier-facing pages: no auth, no app chrome. An external
+// carrier lands here from an emailed offer link, logged in or not.
+const publicRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "public",
+});
+
+const guestRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "guest",
+  pendingComponent: LoadingSkeleton,
+  ...SHOWN_AT_ONCE,
+  beforeLoad: gates(guestGate),
+});
+
+export const routeTree = rootRoute.addChildren([
+  appRoute.addChildren([
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/",
+      beforeLoad: gates(legacySettingsGate),
+      loader: prefetchPage(() => import("@/routes/home/page")),
+      component: lazyPage(() => import("@/routes/home/page"), "Home"),
+    }),
+    // Settings is a room: the module rail stays, and its sections take the panel's
+    // place and its fold.
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/settings",
+      loader: prefetchPage(() => import("@/routes/settings/page")),
+      staticData: { frame: "room" },
+      component: lazyPage(() => import("@/routes/settings/page"), "SettingsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/intake",
+      beforeLoad: gates(requirePermission(Resource.CaptureBatch, Operation.Read)),
+      loader: prefetchPage(() => import("@/routes/intake/page")),
+      component: lazyPage(() => import("@/routes/intake/page"), "IntakePage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/capture/pair",
+      component: lazyPage(() => import("@/routes/capture/pair/page"), "CapturePairPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/capture/devices",
+      loader: prefetchPage(() => import("@/routes/capture/devices/page")),
+      component: lazyPage(() => import("@/routes/capture/devices/page"), "CaptureDevicesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/organization/data-retention",
+      beforeLoad: gates(requirePermission(Resource.Organization)),
+      loader: prefetchPage(() => import("@/routes/organization/data-retention/page")),
+      component: lazyPage(
+        () => import("@/routes/organization/data-retention/page"),
+        "DataRetentionPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/organization/email-profiles",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EmailProfile),
+      ),
+      component: lazyPage(
+        () => import("@/routes/organization/email-profiles/page"),
+        "EmailProfilesPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/organization/email-logs",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EmailLog),
+      ),
+      component: lazyPage(() => import("@/routes/organization/email-logs/page"), "EmailLogsPage"),
+    }),
+    // The assistant is a floating panel on every page now; an old
+    // link opens it on the home screen.
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/assistant",
+      beforeLoad: gates(redirectTo("/?assistant=open")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/insights",
+      beforeLoad: gates(requirePermission(Resource.Insight, Operation.Read)),
+      component: lazyPage(() => import("@/routes/insights/page"), "InsightsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/shipment-management/shipments",
+      beforeLoad: gates(requirePermission(Resource.Shipment)),
+      loader: prefetchPage(() => import("@/routes/shipment/page")),
+      component: lazyPage(() => import("@/routes/shipment/page"), "ShipmentsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/shipment-management/recurring-shipments",
+      beforeLoad: gates(requirePermission(Resource.RecurringShipment)),
+      component: lazyPage(
+        () => import("@/routes/recurring-shipment/page"),
+        "RecurringShipmentsPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/shipment-management/orders",
+      beforeLoad: gates(requirePermission(Resource.Order)),
+      component: lazyPage(() => import("@/routes/order/page"), "OrdersPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/shipment-management/service-failures",
+      beforeLoad: gates(requirePermission(Resource.ServiceFailure)),
+      component: lazyPage(() => import("@/routes/service-failure/page"), "ServiceFailuresPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/shipment-management/shipments/import",
+      beforeLoad: gates(
+        requirePermission(Resource.Shipment, Operation.Create),
+        requirePlanFeature(PlanFeature.DocumentIntelligence),
+      ),
+      component: lazyPage(() => import("@/routes/shipment/import-page"), "ShipmentImportPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/shipment-management/configuration-files/shipment-types",
+      beforeLoad: gates(requirePermission(Resource.ShipmentType)),
+      component: lazyPage(() => import("@/routes/shipment-type/page"), "ShipmentTypesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/shipment-management/configuration-files/service-types",
+      beforeLoad: gates(requirePermission(Resource.ServiceType)),
+      component: lazyPage(() => import("@/routes/service-type/page"), "ServiceTypesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/shipment-management/configuration-files/hazardous-materials",
+      beforeLoad: gates(requirePermission(Resource.HazardousMaterial)),
+      component: lazyPage(
+        () => import("@/routes/hazardous-material/page"),
+        "HazardousMaterialsPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/shipment-management/configuration-files/commodities",
+      beforeLoad: gates(requirePermission(Resource.Commodity)),
+      component: lazyPage(() => import("@/routes/commodity/page"), "CommoditiesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/edi/overview",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EDI),
+      ),
+      component: lazyPage(() => import("@/routes/edi/page"), "EDIOverviewPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/edi/partners",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EDI),
+      ),
+      component: lazyPage(() => import("@/routes/edi/page"), "EDIPartnersPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/edi/communication-profiles",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EDI),
+      ),
+      component: lazyPage(() => import("@/routes/edi/page"), "EDICommunicationProfilesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/edi/mapping-profiles",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EDI),
+      ),
+      component: lazyPage(() => import("@/routes/edi/page"), "EDIMappingProfilesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/edi/lading",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EDI),
+      ),
+      component: lazyPage(() => import("@/routes/edi/lading/page"), "LadingProjectsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/edi/lading/$partnerId",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EDI),
+      ),
+      component: lazyPage(() => import("@/routes/edi/lading/[partnerId]/page"), "LadingStudioPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/edi/transfers/inbound",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EDI),
+        ediSentTransferGate,
+      ),
+      component: lazyPage(() => import("@/routes/edi/page"), "EDIInboundTransfersPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/edi/transfers/outbound",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EDI),
+      ),
+      component: lazyPage(() => import("@/routes/edi/page"), "EDIOutboundTransfersPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/edi/messages",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EDI),
+      ),
+      component: lazyPage(() => import("@/routes/edi/page"), "EDIMessagesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/edi/inbound-files",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EDI),
+      ),
+      component: lazyPage(() => import("@/routes/edi/page"), "EDIInboundFilesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/edi/flows",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Administration),
+        requirePermission(Resource.EDI),
+      ),
+      component: lazyPage(() => import("@/routes/edi/page"), "EDIFlowInstancesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/queue",
+      beforeLoad: gates(requirePermission(Resource.BillingQueue)),
+      loader: prefetchPage(() => import("@/routes/billing-queue/page")),
+      component: lazyPage(() => import("@/routes/billing-queue/page"), "BillingQueuePage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/factoring",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.Factoring),
+        requirePermission(Resource.Invoice),
+      ),
+      component: lazyPage(() => import("@/routes/factoring/page"), "FactoringPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/factoring/submissions",
+      beforeLoad: gates(redirectTo("/billing/factoring?view=schedules")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/factoring/remittances",
+      beforeLoad: gates(redirectTo("/billing/factoring?view=remittances")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/factoring/remittances/$id",
+      beforeLoad: gates(requirePermission(Resource.FactoringRemittance)),
+      loader: prefetchPage(() => import("@/routes/factoring-remittance/page")),
+      component: lazyPage(
+        () => import("@/routes/factoring-remittance/page"),
+        "FactoringRemittancePage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/factoring/submissions/$id",
+      beforeLoad: gates(requirePermission(Resource.FactoringSubmission)),
+      component: lazyPage(
+        () => import("@/routes/factoring-submission/page"),
+        "FactoringSubmissionPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/workspace",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.DriverSettlement),
+      ),
+      component: lazyPage(
+        () => import("@/routes/settlement-workspace/page"),
+        "SettlementWorkspacePage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/settlements",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.DriverSettlement),
+      ),
+      component: lazyPage(() => import("@/routes/driver-settlement/page"), "DriverSettlementsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/disputes",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.SettlementDispute),
+      ),
+      component: lazyPage(
+        () => import("@/routes/settlement-dispute/page"),
+        "SettlementDisputesPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/expenses",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.DriverExpense),
+      ),
+      component: lazyPage(() => import("@/routes/driver-expense/page"), "DriverExpensesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/settlement-batches",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.DriverSettlement),
+      ),
+      component: lazyPage(() => import("@/routes/settlement-batch/page"), "SettlementBatchesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/pay-events",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.DriverSettlement),
+      ),
+      component: lazyPage(() => import("@/routes/driver-pay-event/page"), "DriverPayEventsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/pay-profiles",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.DriverPayProfile),
+      ),
+      component: lazyPage(() => import("@/routes/pay-profile/page"), "PayProfilesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/deductions",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.RecurringDeduction),
+      ),
+      component: lazyPage(
+        () => import("@/routes/recurring-deduction/page"),
+        "RecurringDeductionsPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/earnings",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.RecurringEarning),
+      ),
+      component: lazyPage(() => import("@/routes/recurring-earning/page"), "RecurringEarningsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/pay-codes",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.PayCode),
+      ),
+      component: lazyPage(() => import("@/routes/pay-code/page"), "PayCodesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/advances",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.PayAdvance),
+      ),
+      component: lazyPage(() => import("@/routes/pay-advance/page"), "PayAdvancesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/payroll/escrow-accounts",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.EscrowAccount),
+      ),
+      component: lazyPage(() => import("@/routes/escrow-account/page"), "EscrowAccountsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/carrier-settlements/workspace",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.Brokerage),
+        requirePermission(Resource.CarrierSettlement),
+      ),
+      component: lazyPage(
+        () => import("@/routes/carrier-settlement-workspace/page"),
+        "CarrierSettlementWorkspacePage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/carrier-settlements/settlements",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.Brokerage),
+        requirePermission(Resource.CarrierSettlement),
+      ),
+      component: lazyPage(
+        () => import("@/routes/carrier-settlement/page"),
+        "CarrierSettlementsPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/carrier-settlements/batches",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.Brokerage),
+        requirePermission(Resource.CarrierSettlement),
+      ),
+      component: lazyPage(
+        () => import("@/routes/carrier-settlement-batch/page"),
+        "CarrierSettlementBatchesPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/carrier-settlements/cost-events",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.Brokerage),
+        requirePermission(Resource.CarrierSettlement),
+      ),
+      component: lazyPage(
+        () => import("@/routes/carrier-cost-event/page"),
+        "CarrierCostEventsPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/carrier-settlements/invoice-matching",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.Brokerage),
+        requirePermission(Resource.CarrierInvoiceMatch),
+      ),
+      component: lazyPage(
+        () => import("@/routes/carrier-invoice-matching/page"),
+        "CarrierInvoiceMatchingPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/invoices",
+      beforeLoad: gates(requirePermission(Resource.Invoice)),
+      component: lazyPage(() => import("@/routes/invoice/page"), "InvoicesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/invoice-register",
+      beforeLoad: gates(requirePermission(Resource.Invoice)),
+      component: lazyPage(() => import("@/routes/invoice-register/page"), "InvoiceRegisterPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/pending-approvals",
+      beforeLoad: gates(requirePermission(Resource.Invoice)),
+      component: lazyPage(() => import("@/routes/invoice-approval/page"), "InvoiceApprovalPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/reconciliation-exceptions",
+      beforeLoad: gates(requirePermission(Resource.Invoice)),
+      component: lazyPage(
+        () => import("@/routes/invoice-reconciliation/page"),
+        "InvoiceReconciliationPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/adjustment-batches",
+      beforeLoad: gates(requirePermission(Resource.Invoice)),
+      component: lazyPage(
+        () => import("@/routes/invoice-adjustment-batch/page"),
+        "InvoiceAdjustmentBatchPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/charge-types",
+      beforeLoad: gates(requirePermission(Resource.ChargeType)),
+      component: lazyPage(() => import("@/routes/placeholder-page"), "PlaceholderPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/rate-agreements",
+      beforeLoad: gates(requirePermission(Resource.RateAgreement)),
+      component: lazyPage(() => import("@/routes/rate-agreement/page"), "RateAgreementPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/rate-zones",
+      beforeLoad: gates(requirePermission(Resource.RateZone)),
+      component: lazyPage(() => import("@/routes/rate-zone/page"), "RateZonePage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/rate-matrices",
+      beforeLoad: gates(requirePermission(Resource.RateMatrix)),
+      component: lazyPage(() => import("@/routes/rate-matrix/page"), "RateMatrixPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/detention/configuration-files/detention-policies",
+      beforeLoad: gates(requirePermission(Resource.DetentionPolicy)),
+      component: lazyPage(() => import("@/routes/detention-policy/page"), "DetentionPolicyPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/detention/intelligence",
+      beforeLoad: gates(requirePermission(Resource.Detention)),
+      loader: prefetchPage(() => import("@/routes/detention-intelligence/page")),
+      component: lazyPage(
+        () => import("@/routes/detention-intelligence/page"),
+        "DetentionIntelligencePage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/detention/desk",
+      beforeLoad: gates(requirePermission(Resource.Detention)),
+      component: lazyPage(() => import("@/routes/detention-desk/page"), "DetentionDeskPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/accessorial-charges",
+      beforeLoad: gates(requirePermission(Resource.AccessorialCharge)),
+      component: lazyPage(
+        () => import("@/routes/accessorial-charge/page"),
+        "AccessorialChargesPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/customers",
+      beforeLoad: gates(requirePermission(Resource.Customer)),
+      component: lazyPage(() => import("@/routes/customer/page"), "CustomersPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/factoring-companies",
+      beforeLoad: gates(requirePermission(Resource.FactoringCompany)),
+      component: lazyPage(
+        () => import("@/routes/factoring-company/page"),
+        "FactoringCompaniesPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/factoring-companies/new",
+      beforeLoad: gates(requirePermission(Resource.FactoringCompany, Operation.Create)),
+      component: lazyPage(
+        () => import("@/routes/factoring-company/new/page"),
+        "FactoringCompanyCreatePage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/factoring-companies/agreements/$id",
+      beforeLoad: gates(requirePermission(Resource.FactoringAgreement)),
+      component: lazyPage(
+        () => import("@/routes/factoring-company/record-redirect-page"),
+        "FactoringAgreementRedirectPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/factoring-companies/notices/$id",
+      beforeLoad: gates(requirePermission(Resource.FactoringNoa)),
+      component: lazyPage(
+        () => import("@/routes/factoring-company/record-redirect-page"),
+        "FactoringNoticeRedirectPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/factoring-companies/$id",
+      beforeLoad: gates(requirePermission(Resource.FactoringCompany)),
+      loader: prefetchPage(() => import("@/routes/factoring-company/[id]/page")),
+      component: lazyPage(
+        () => import("@/routes/factoring-company/[id]/page"),
+        "FactoringCompanyPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/document-types",
+      beforeLoad: gates(requirePermission(Resource.DocumentType)),
+      component: lazyPage(() => import("@/routes/document-type/page"), "DocumentTypesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/document-packet-rules",
+      beforeLoad: gates(requirePermission(Resource.DocumentType)),
+      component: lazyPage(
+        () => import("@/routes/document-packet-rule/page"),
+        "DocumentPacketRulesPage",
+      ),
+    }),
+    // Case checklists moved into the Desk's settings; an old link
+    // opens them there.
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/case-checklists",
+      beforeLoad: gates(redirectTo("/desk?settings=checklists")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting",
+      beforeLoad: gates(requirePermission(Resource.AccountsReceivable)),
+      component: lazyPage(
+        () => import("@/routes/accounting-dashboard/page"),
+        "AccountingDashboardPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/manual-journals",
+      beforeLoad: gates(requirePermission(Resource.ManualJournal)),
+      component: lazyPage(() => import("@/routes/manual-journal/page"), "ManualJournalsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/journal-reversals",
+      beforeLoad: gates(requirePermission(Resource.JournalReversal)),
+      component: lazyPage(() => import("@/routes/journal-reversal/page"), "JournalReversalsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/journals-to-post",
+      beforeLoad: gates(requirePermission(Resource.JournalEntry)),
+      component: lazyPage(() => import("@/routes/journal-review/page"), "JournalReviewPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/journal-entries/$id",
+      beforeLoad: gates(requirePermission(Resource.JournalEntry)),
+      component: lazyPage(() => import("@/routes/journal-entry/page"), "JournalEntryDetailPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/journal-entries/source/$type/$sourceId",
+      beforeLoad: gates(requirePermission(Resource.JournalEntry)),
+      component: lazyPage(
+        () => import("@/routes/journal-entry/_components/source-drill-down-page"),
+        "SourceDrillDownPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/reports/trial-balance",
+      beforeLoad: gates(requirePermission(Resource.AccountingReport)),
+      component: lazyPage(() => import("@/routes/trial-balance/page"), "TrialBalancePage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/reports/income-statement",
+      beforeLoad: gates(requirePermission(Resource.AccountingReport)),
+      component: lazyPage(() => import("@/routes/income-statement/page"), "IncomeStatementPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/reports/balance-sheet",
+      beforeLoad: gates(requirePermission(Resource.AccountingReport)),
+      component: lazyPage(() => import("@/routes/balance-sheet/page"), "BalanceSheetPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/ar/aging",
+      beforeLoad: gates(requirePermission(Resource.AccountsReceivable)),
+      component: lazyPage(() => import("@/routes/ar-aging/page"), "ARAgingPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/ar/customer-ledger",
+      beforeLoad: gates(requirePermission(Resource.AccountsReceivable)),
+      component: lazyPage(() => import("@/routes/customer-ledger/page"), "CustomerLedgerPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/ar/collections",
+      beforeLoad: gates(requirePermission(Resource.AccountsReceivable)),
+      component: lazyPage(() => import("@/routes/collections/page"), "CollectionsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/ar/open-items",
+      beforeLoad: gates(requirePermission(Resource.AccountsReceivable)),
+      component: lazyPage(() => import("@/routes/ar-open-items/page"), "AROpenItemsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/ar/late-charges",
+      beforeLoad: gates(requirePermission(Resource.AccountsReceivable)),
+      loader: prefetchPage(() => import("@/routes/late-charges/page")),
+      component: lazyPage(() => import("@/routes/late-charges/page"), "LateChargesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/ar/payments",
+      beforeLoad: gates(requirePermission(Resource.CustomerPayment)),
+      component: lazyPage(() => import("@/routes/customer-payments/page"), "CustomerPaymentsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/ar/customer-statement/$customerId",
+      beforeLoad: gates(requirePermission(Resource.AccountsReceivable)),
+      component: lazyPage(
+        () => import("@/routes/customer-statement/page"),
+        "CustomerStatementPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/reconciliation/bank-receipts",
+      beforeLoad: gates(requirePermission(Resource.BankReceipt)),
+      component: lazyPage(() => import("@/routes/bank-receipt/page"), "BankReceiptPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/reconciliation/work-queue",
+      beforeLoad: gates(requirePermission(Resource.BankReceiptWorkItem)),
+      component: lazyPage(() => import("@/routes/bank-receipt-queue/page"), "BankReceiptQueuePage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/reconciliation/summary",
+      beforeLoad: gates(requirePermission(Resource.BankReceipt)),
+      component: lazyPage(
+        () => import("@/routes/reconciliation-summary/page"),
+        "ReconciliationSummaryPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/reconciliation/import-batches",
+      beforeLoad: gates(requirePermission(Resource.BankReceipt)),
+      component: lazyPage(() => import("@/routes/bank-receipt-batch/page"), "BankReceiptBatchPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/reconciliation/import-batches/$batchId",
+      beforeLoad: gates(requirePermission(Resource.BankReceipt)),
+      component: lazyPage(
+        () => import("@/routes/bank-receipt-batch/detail-page"),
+        "BankReceiptBatchDetailPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/sync",
+      beforeLoad: gates(requirePermission(Resource.AccountingSync)),
+      component: lazyPage(
+        () => import("@/routes/accounting-sync/page"),
+        "AccountingSyncLedgerPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/sync/inbound",
+      beforeLoad: gates(requirePermission(Resource.AccountingSync)),
+      component: lazyPage(
+        () => import("@/routes/accounting-inbound/page"),
+        "AccountingInboundPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/sync/drift",
+      beforeLoad: gates(requirePermission(Resource.AccountingSync)),
+      component: lazyPage(() => import("@/routes/accounting-drift/page"), "AccountingDriftPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/sync/mappings",
+      beforeLoad: gates(requirePermission(Resource.AccountingIntegration)),
+      component: lazyPage(
+        () => import("@/routes/accounting-mapping/page"),
+        "AccountingMappingsPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/configuration-files/account-types",
+      beforeLoad: gates(requirePermission(Resource.AccountType)),
+      component: lazyPage(() => import("@/routes/account-type/page"), "AccountTypesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/formula-templates",
+      beforeLoad: gates(requirePermission(Resource.FormulaTemplate)),
+      component: lazyPage(() => import("@/routes/formula-template/page"), "FormulaTemplatesPage"),
+    }),
+    // The studio is a room: the module rail stays, and its rate trace takes
+    // the panel's place and always stands, the panel folded in its favour.
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/formula-templates/new",
+      beforeLoad: gates(requirePermission(Resource.FormulaTemplate, Operation.Create)),
+      loader: prefetchPage(() => import("@/routes/formula-template/new/page")),
+      staticData: { frame: "room", roomRail: "stands" },
+      component: lazyPage(
+        () => import("@/routes/formula-template/new/page"),
+        "FormulaStudioCreatePage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/formula-templates/$id/edit",
+      beforeLoad: gates(requirePermission(Resource.FormulaTemplate)),
+      loader: prefetchPage(() => import("@/routes/formula-template/[id]/page")),
+      staticData: { frame: "room", roomRail: "stands" },
+      component: lazyPage(
+        () => import("@/routes/formula-template/[id]/page"),
+        "FormulaStudioEditPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/formula-libraries",
+      beforeLoad: gates(requirePermission(Resource.FormulaLibrary)),
+      component: lazyPage(() => import("@/routes/formula-library/page"), "FormulaLibrariesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/formula-libraries/new",
+      beforeLoad: gates(requirePermission(Resource.FormulaLibrary, Operation.Create)),
+      loader: prefetchPage(() => import("@/routes/formula-library/new/page")),
+      staticData: { frame: "room", roomRail: "stands" },
+      component: lazyPage(
+        () => import("@/routes/formula-library/new/page"),
+        "FormulaLibraryCreatePage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/configuration-files/formula-libraries/$id/edit",
+      beforeLoad: gates(requirePermission(Resource.FormulaLibrary)),
+      loader: prefetchPage(() => import("@/routes/formula-library/[id]/page")),
+      staticData: { frame: "room", roomRail: "stands" },
+      component: lazyPage(
+        () => import("@/routes/formula-library/[id]/page"),
+        "FormulaLibraryEditPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/fuel/configuration-files/surcharge",
+      beforeLoad: gates(requirePermission(Resource.FuelSurchargeProgram)),
+      component: lazyPage(() => import("@/routes/fuel-management/page"), "FuelManagementPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/equipment/tractors",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.Tractor),
+      ),
+      component: lazyPage(() => import("@/routes/tractor/page"), "TractorsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/equipment/trailers",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.Trailer),
+      ),
+      component: lazyPage(() => import("@/routes/trailer/page"), "TrailersPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/fuel/purchases",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.FuelPurchase),
+      ),
+      component: lazyPage(() => import("@/routes/fuel-purchase/page"), "FuelPurchasesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/fuel/jurisdiction-mileage",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.IFTAJurisdictionMileage),
+      ),
+      component: lazyPage(
+        () => import("@/routes/ifta-jurisdiction-mileage/page"),
+        "JurisdictionMileagePage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/fuel/ifta-returns",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.IFTAReturn),
+      ),
+      loader: prefetchPage(() => import("@/routes/ifta-return/page")),
+      component: lazyPage(() => import("@/routes/ifta-return/page"), "IftaReturnsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/fuel/configuration-files/fuel-cards",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.FuelCard),
+      ),
+      component: lazyPage(() => import("@/routes/fuel-card/page"), "FuelCardsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/fuel/feed-runs",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.FuelPurchaseImport),
+      ),
+      component: lazyPage(() => import("@/routes/fuel-feed-run/page"), "FuelFeedRunsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/fuel/unassigned-cards",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.FuelCard),
+      ),
+      component: lazyPage(() => import("@/routes/fuel-card/page"), "UnassignedFuelCardsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/fuel/configuration-files/ifta-tax-rates",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.IFTATaxRate),
+      ),
+      component: lazyPage(() => import("@/routes/ifta-tax-rate/page"), "IftaTaxRatesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/equipment/configuration-files/equipment-types",
+      beforeLoad: gates(requirePermission(Resource.EquipmentType)),
+      component: lazyPage(() => import("@/routes/equipment-type/page"), "EquipmentTypesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/equipment/configuration-files/equipment-manufacturers",
+      beforeLoad: gates(requirePermission(Resource.EquipmentManufacturer)),
+      component: lazyPage(
+        () => import("@/routes/equipment-manufacturer/page"),
+        "EquipmentManufacturersPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/configuration-files/location-categories",
+      beforeLoad: gates(requirePermission(Resource.LocationCategory)),
+      component: lazyPage(
+        () => import("@/routes/location-category/page"),
+        "LocationCategoriesPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/configuration-files/fleet-codes",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.FleetCode, Operation.Read),
+      ),
+      component: lazyPage(() => import("@/routes/fleet-code/page"), "FleetCodesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/reports",
+      beforeLoad: gates(requirePermission(Resource.Report, Operation.Read)),
+      loader: prefetchPage(() => import("@/routes/reports/page")),
+      component: lazyPage(() => import("@/routes/reports/page"), "ReportsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/reports/runs",
+      beforeLoad: gates(requirePermission(Resource.Report, Operation.Read)),
+      component: lazyPage(() => import("@/routes/reports/runs/page"), "ReportRunsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/reports/explore",
+      beforeLoad: gates(requirePermission(Resource.Report, Operation.Read)),
+      component: lazyPage(() => import("@/routes/reports/explore/page"), "ReportExplorePage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/reports/explore/$definitionId",
+      beforeLoad: gates(requirePermission(Resource.Report, Operation.Read)),
+      component: lazyPage(() => import("@/routes/reports/explore/page"), "ReportExplorePage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/reports/dashboards/$dashboardId",
+      beforeLoad: gates(requirePermission(Resource.Report, Operation.Read)),
+      component: lazyPage(() => import("@/routes/reports/dashboards/page"), "ReportDashboardPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/reports/builder",
+      beforeLoad: gates(requirePermission(Resource.Report, Operation.Create)),
+      component: lazyPage(() => import("@/routes/reports/builder/page"), "ReportBuilderPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/reports/builder/$definitionId",
+      beforeLoad: gates(requirePermission(Resource.Report, Operation.Read)),
+      component: lazyPage(() => import("@/routes/reports/builder/page"), "ReportBuilderPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/locations",
+      beforeLoad: gates(requirePermission(Resource.Location)),
+      component: lazyPage(() => import("@/routes/location/page"), "LocationsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/console",
+      beforeLoad: gates(requirePermission(Resource.ShipmentMove)),
+      loader: prefetchPage(() => import("@/routes/dispatch-console/page")),
+      component: lazyPage(() => import("@/routes/dispatch-console/page"), "DispatchConsolePage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/outlook",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePlanFeature(PlanFeature.DispatchIntelligence),
+        requirePermission(Resource.ShipmentMove),
+      ),
+      loader: prefetchPage(() => import("@/routes/freight-outlook/page")),
+      component: lazyPage(() => import("@/routes/freight-outlook/page"), "FreightOutlookPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/workers",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.Worker),
+      ),
+      loader: prefetchPage(() => import("@/routes/worker/page")),
+      component: lazyPage(() => import("@/routes/worker/page"), "WorkersPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/checklist-templates",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.WorkerChecklistTemplate),
+      ),
+      component: lazyPage(
+        () => import("@/routes/worker-checklist-template/page"),
+        "WorkerChecklistTemplatesPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/review-templates",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.PerformanceReviewTemplate),
+      ),
+      component: lazyPage(() => import("@/routes/review-template/page"), "ReviewTemplatesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/training-courses",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.TrainingCourse),
+      ),
+      component: lazyPage(() => import("@/routes/training-course/page"), "TrainingCoursesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/credential-types",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.WorkerCredentialType),
+      ),
+      component: lazyPage(
+        () => import("@/routes/worker-credential-type/page"),
+        "WorkerCredentialTypesPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/holidays",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.OrgHoliday),
+      ),
+      component: lazyPage(() => import("@/routes/holiday/page"), "HolidayCalendarPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/leave-settings",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.WorkerLeave),
+      ),
+      component: lazyPage(() => import("@/routes/leave-control/page"), "LeaveControlPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/my-team",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.Worker),
+      ),
+      loader: prefetchPage(() => import("@/routes/my-team/page")),
+      component: lazyPage(() => import("@/routes/my-team/page"), "MyTeamPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/benefits",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.BenefitPlan),
+      ),
+      loader: prefetchPage(() => import("@/routes/benefits/page")),
+      component: lazyPage(() => import("@/routes/benefits/page"), "BenefitsPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/policies",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.WorkerPolicy),
+      ),
+      component: lazyPage(() => import("@/routes/policies/page"), "PoliciesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/time-attendance",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.Timesheet),
+      ),
+      loader: prefetchPage(() => import("@/routes/time-attendance/page")),
+      component: lazyPage(() => import("@/routes/time-attendance/page"), "TimeAttendancePage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/scheduling",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.WorkerSchedule),
+      ),
+      loader: prefetchPage(() => import("@/routes/scheduling/page")),
+      component: lazyPage(() => import("@/routes/scheduling/page"), "SchedulingPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/org-structure",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.JobPosition),
+      ),
+      loader: prefetchPage(() => import("@/routes/org-structure/page")),
+      component: lazyPage(() => import("@/routes/org-structure/page"), "OrgStructurePage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/fleet-safety",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.WorkerSafetyEvent),
+      ),
+      loader: prefetchPage(() => import("@/routes/fleet-safety/page")),
+      component: lazyPage(() => import("@/routes/fleet-safety/page"), "FleetSafetyPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/osha-log",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.WorkerInjury),
+      ),
+      loader: prefetchPage(() => import("@/routes/osha/page")),
+      component: lazyPage(() => import("@/routes/osha/page"), "OshaLogPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/random-testing",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.DOTRandomPool),
+      ),
+      loader: prefetchPage(() => import("@/routes/random-testing/page")),
+      component: lazyPage(() => import("@/routes/random-testing/page"), "RandomTestingPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/hr/pto-policies",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.AssetOperations),
+        requirePermission(Resource.PTOPolicy),
+      ),
+      component: lazyPage(() => import("@/routes/pto-policy/page"), "PTOPoliciesPage"),
+    }),
+    // Moved to Human Resource Management. Links already sent — stored
+    // notifications, bookmarks — keep working and carry their query on.
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/workers",
+      beforeLoad: gates(redirectKeepingSearch("/hr/workers")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/configuration-files/checklist-templates",
+      beforeLoad: gates(redirectKeepingSearch("/hr/checklist-templates")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/configuration-files/review-templates",
+      beforeLoad: gates(redirectKeepingSearch("/hr/review-templates")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/equipment/fuel-purchases",
+      beforeLoad: gates(redirectKeepingSearch("/fuel/purchases")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/equipment/jurisdiction-mileage",
+      beforeLoad: gates(redirectKeepingSearch("/fuel/jurisdiction-mileage")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/equipment/ifta/returns",
+      beforeLoad: gates(redirectKeepingSearch("/fuel/ifta-returns")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/equipment/configuration-files/fuel-cards",
+      beforeLoad: gates(redirectKeepingSearch("/fuel/configuration-files/fuel-cards")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/equipment/configuration-files/ifta-tax-rates",
+      beforeLoad: gates(redirectKeepingSearch("/fuel/configuration-files/ifta-tax-rates")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/billing/fuel-management",
+      beforeLoad: gates(redirectKeepingSearch("/fuel/configuration-files/surcharge")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/configuration-files/training-courses",
+      beforeLoad: gates(redirectKeepingSearch("/hr/training-courses")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/configuration-files/credential-types",
+      beforeLoad: gates(redirectKeepingSearch("/hr/credential-types")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/configuration-files/holidays",
+      beforeLoad: gates(redirectKeepingSearch("/hr/holidays")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/configuration-files/pto-policies",
+      beforeLoad: gates(redirectKeepingSearch("/hr/pto-policies")),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/carriers",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.Brokerage),
+        requirePermission(Resource.Carrier),
+      ),
+      component: lazyPage(() => import("@/routes/carrier/page"), "CarriersPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/carrier-monitoring",
+      beforeLoad: gates(
+        requirePlanFeature(PlanFeature.CarrierBrokerage),
+        requirePermission(Resource.CarrierIntelligence),
+      ),
+      component: lazyPage(
+        () => import("@/routes/carrier-monitoring/page"),
+        "CarrierMonitoringPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/carrier-sourcing",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.Brokerage),
+        requirePlanFeature(PlanFeature.CarrierBrokerage),
+        requirePermission(Resource.CarrierSourcing),
+      ),
+      component: lazyPage(() => import("@/routes/carrier-sourcing/page"), "CarrierSourcingPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/dispatch/routing-guides",
+      beforeLoad: gates(
+        requireCapability(OrganizationCapability.Brokerage),
+        requirePermission(Resource.RoutingGuide),
+      ),
+      component: lazyPage(() => import("@/routes/routing-guide/page"), "RoutingGuidesPage"),
+    }),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "/accounting/configuration-files/fiscal-years",
+      beforeLoad: gates(requirePermission(Resource.FiscalYear)),
+      component: lazyPage(() => import("@/routes/fiscal-year/page"), "FiscalYearsPage"),
+    }),
+    adminRoute.addChildren([
+      // Settings at /admin draws only its frame; the section index fills it.
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "/",
+        component: lazyPage(() => import("@/routes/section-index/page"), "SectionIndexPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "billing-controls",
+        beforeLoad: gates(requirePermission(Resource.BillingControl)),
+        component: lazyPage(() => import("@/routes/billing-control/page"), "BillingControlPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "organization-settings",
+        beforeLoad: gates(requirePermission(Resource.Organization, Operation.Read)),
+        loader: prefetchPage(() => import("@/routes/admin/organization-settings/page")),
+        component: lazyPage(
+          () => import("@/routes/admin/organization-settings/page"),
+          "OrganizationSettingsPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "accounting-control",
+        beforeLoad: gates(requirePermission(Resource.AccountingControl)),
+        component: lazyPage(
+          () => import("@/routes/accounting-control/page"),
+          "AccountingControlPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "cost-control",
+        beforeLoad: gates(requirePermission(Resource.CostingControl)),
+        component: lazyPage(() => import("@/routes/cost-control/page"), "CostControlPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "invoice-adjustment-controls",
+        beforeLoad: gates(requirePermission(Resource.InvoiceAdjustmentControl, Operation.Read)),
+        component: lazyPage(
+          () => import("@/routes/invoice-adjustment-control/page"),
+          "InvoiceAdjustmentControlPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "table-change-alerts",
+        beforeLoad: gates(requirePermission(Resource.TableChangeAlert, Operation.Read)),
+        component: lazyPage(
+          () => import("@/routes/table-change-alert/page"),
+          "TableChangeAlertPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "data-entry-controls",
+        beforeLoad: gates(requirePermission(Resource.DataEntryControl, Operation.Read)),
+        component: lazyPage(
+          () => import("@/routes/data-entry-control/page"),
+          "DataEntryControlPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "dispatch-controls",
+        beforeLoad: gates(requirePermission(Resource.DispatchControl, Operation.Read)),
+        component: lazyPage(() => import("@/routes/dispatch-control/page"), "DispatchControlPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "settlement-control",
+        beforeLoad: gates(
+          requireCapability(OrganizationCapability.AssetOperations),
+          requirePermission(Resource.SettlementControl, Operation.Read),
+        ),
+        component: lazyPage(
+          () => import("@/routes/settlement-control/page"),
+          "SettlementControlPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "carrier-settlement-control",
+        beforeLoad: gates(
+          requireCapability(OrganizationCapability.Brokerage),
+          requirePermission(Resource.CarrierSettlementControl, Operation.Read),
+        ),
+        component: lazyPage(
+          () => import("@/routes/carrier-settlement-control/page"),
+          "CarrierSettlementControlPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "dash-control",
+        beforeLoad: gates(
+          requireCapability(OrganizationCapability.AssetOperations),
+          requirePermission(Resource.DashControl, Operation.Read),
+        ),
+        component: lazyPage(() => import("@/routes/dash-control/page"), "DashControlPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "agent-control",
+        beforeLoad: gates(
+          requirePlanFeature(PlanFeature.AgentAutomation),
+          requirePermission(Resource.AgentControl, Operation.Read),
+        ),
+        component: lazyPage(() => import("@/routes/agent-control/page"), "AgentControlPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "distance-controls",
+        beforeLoad: gates(requirePermission(Resource.DistanceControl)),
+        component: lazyPage(
+          () => import("@/routes/admin/distance-controls/page"),
+          "DistanceControlsPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "distance-overrides",
+        beforeLoad: gates(requirePermission(Resource.DistanceOverride)),
+        component: lazyPage(
+          () => import("@/routes/distance-override/page"),
+          "DistanceOverridesPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "distance-profiles",
+        beforeLoad: gates(requirePermission(Resource.DistanceProfile)),
+        component: lazyPage(
+          () => import("@/routes/admin/distance-profiles/page"),
+          "DistanceProfilesPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "stored-mileages",
+        beforeLoad: gates(requirePermission(Resource.StoredMileage)),
+        component: lazyPage(
+          () => import("@/routes/admin/stored-mileages/page"),
+          "StoredMileagesPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "shipment-controls",
+        beforeLoad: gates(requirePermission(Resource.ShipmentControl, Operation.Read)),
+        component: lazyPage(() => import("@/routes/shipment-control/page"), "ShipmentControlPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "capture",
+        beforeLoad: gates(
+          requirePlanFeature(PlanFeature.DocumentIntelligence),
+          requirePermission(Resource.CaptureProfile, Operation.Read),
+        ),
+        component: lazyPage(() => import("@/routes/admin/capture/page"), "CaptureAdminPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "document-intelligence",
+        beforeLoad: gates(
+          requirePlanFeature(PlanFeature.DocumentIntelligence),
+          requirePermission(Resource.DocumentControl, Operation.Read),
+        ),
+        component: lazyPage(
+          () => import("@/routes/admin/document-intelligence/page"),
+          "DocumentIntelligencePage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "sequence-configs",
+        beforeLoad: gates(requirePermission(Resource.SequenceConfig, Operation.Read)),
+        component: lazyPage(
+          () => import("@/routes/admin/sequence-config/page"),
+          "SequenceConfigPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "hold-reasons",
+        beforeLoad: gates(requirePermission(Resource.HoldReason)),
+        component: lazyPage(() => import("@/routes/hold-reason/page"), "HoldReasonsPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "jurisdiction-rules",
+        beforeLoad: gates(requirePermission(Resource.JurisdictionRule)),
+        component: lazyPage(
+          () => import("@/routes/jurisdiction-rule/page"),
+          "JurisdictionRulesPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "jurisdiction-rule-overrides",
+        beforeLoad: gates(requirePermission(Resource.JurisdictionRuleOverride)),
+        component: lazyPage(
+          () => import("@/routes/jurisdiction-rule-override/page"),
+          "JurisdictionRuleOverridesPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "service-failure-reason-codes",
+        beforeLoad: gates(requirePermission(Resource.ServiceFailureReasonCode)),
+        component: lazyPage(
+          () => import("@/routes/service-failure-reason-code/page"),
+          "ServiceFailureReasonCodesPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "hazmat-segregation-rules",
+        beforeLoad: gates(requirePermission(Resource.HazmatSegregationRule)),
+        component: lazyPage(
+          () => import("@/routes/hazmat-segregation-rule/page"),
+          "HazmatSegregationRulesPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "home-layouts",
+        beforeLoad: gates(requirePermission(Resource.HomeLayoutPreset, Operation.Read)),
+        component: lazyPage(() => import("@/routes/admin/home-layouts/page"), "HomeLayoutsPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "home-layouts/new",
+        beforeLoad: gates(requirePermission(Resource.HomeLayoutPreset, Operation.Create)),
+        component: lazyPage(
+          () => import("@/routes/admin/home-layouts/new/page"),
+          "NewHomeLayoutPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "home-layouts/$id",
+        beforeLoad: gates(requirePermission(Resource.HomeLayoutPreset, Operation.Update)),
+        component: lazyPage(
+          () => import("@/routes/admin/home-layouts/[id]/page"),
+          "EditHomeLayoutPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "roles",
+        beforeLoad: gates(requirePermission(Resource.Role, Operation.Read)),
+        component: lazyPage(() => import("@/routes/admin/roles/page"), "RolesPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "roles/new",
+        beforeLoad: gates(requirePermission(Resource.Role, Operation.Create)),
+        component: lazyPage(() => import("@/routes/admin/roles/new/page"), "RoleCreatePage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "roles/$id/edit",
+        beforeLoad: gates(requirePermission(Resource.Role, Operation.Update)),
+        component: lazyPage(() => import("@/routes/admin/roles/[id]/edit/page"), "RoleEditPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "users",
+        beforeLoad: gates(requirePermission(Resource.User, Operation.Read)),
+        component: lazyPage(() => import("@/routes/admin/users/page"), "UsersPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "audit-logs",
+        beforeLoad: gates(requirePermission(Resource.AuditLog, Operation.Read)),
+        loader: prefetchPage(() => import("@/routes/admin/audit-logs/page")),
+        component: lazyPage(() => import("@/routes/admin/audit-logs/page"), "AuditLogsPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "integrations",
+        beforeLoad: gates(
+          requirePlanFeature(PlanFeature.Administration),
+          requirePermission(Resource.Integration, Operation.Read),
+        ),
+        component: lazyPage(() => import("@/routes/admin/integrations/page"), "IntegrationsPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "integrations/quickbooks/callback",
+        beforeLoad: gates(requirePermission(Resource.AccountingIntegration, Operation.Manage)),
+        component: lazyPage(
+          () => import("@/routes/admin/integrations/quickbooks-callback/page"),
+          "QuickBooksCallbackPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "integrations/xero/callback",
+        beforeLoad: gates(requirePermission(Resource.AccountingIntegration, Operation.Manage)),
+        component: lazyPage(
+          () => import("@/routes/admin/integrations/xero-callback/page"),
+          "XeroCallbackPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "integrations/business-central/callback",
+        beforeLoad: gates(requirePermission(Resource.AccountingIntegration, Operation.Manage)),
+        component: lazyPage(
+          () => import("@/routes/admin/integrations/business-central-callback/page"),
+          "BusinessCentralCallbackPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "integrations/netsuite/callback",
+        beforeLoad: gates(requirePermission(Resource.AccountingIntegration, Operation.Manage)),
+        component: lazyPage(
+          () => import("@/routes/admin/integrations/netsuite-callback/page"),
+          "NetSuiteCallbackPage",
+        ),
+      }),
+      // Agents are configured from Agent Control; the old standalone
+      // page forwards so a saved link still lands somewhere useful.
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "agents",
+        beforeLoad: gates(redirectTo("/admin/agent-control")),
+      }),
+      // Providers are a tab of AI Control now; saved links keep working.
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "ai-providers",
+        beforeLoad: gates(redirectTo("/admin/agent-control?tab=providers")),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "inbound-mailboxes",
+        beforeLoad: gates(requirePermission(Resource.InboundMailbox, Operation.Read)),
+        loader: prefetchPage(() => import("@/routes/admin/inbound-mailboxes/page")),
+        component: lazyPage(
+          () => import("@/routes/admin/inbound-mailboxes/page"),
+          "InboundMailboxesPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "api-keys",
+        beforeLoad: gates(
+          requirePlanFeature(PlanFeature.APIKeys),
+          requirePermission(Resource.APIKey, Operation.Read),
+        ),
+        component: lazyPage(() => import("@/routes/admin/api-keys/page"), "APIKeysPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "support-access",
+        beforeLoad: gates(requirePermission(Resource.SupportAccess, Operation.Read)),
+        loader: prefetchPage(() => import("@/routes/admin/support-access/page")),
+        component: lazyPage(
+          () => import("@/routes/admin/support-access/page"),
+          "SupportAccessPage",
+        ),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "plan",
+        beforeLoad: gates(
+          requireManagedInstance,
+          requirePermission(Resource.Organization, Operation.Update),
+        ),
+        loader: prefetchPage(() => import("@/routes/admin/plan/page")),
+        component: lazyPage(() => import("@/routes/admin/plan/page"), "PlanPage"),
+      }),
+      createRoute({
+        getParentRoute: () => adminRoute,
+        path: "custom-fields",
+        beforeLoad: gates(requirePermission(Resource.CustomFieldDefinition, Operation.Read)),
+        component: lazyPage(
+          () => import("@/routes/admin/custom-fields/page"),
+          "CustomFieldDefinitionsPage",
+        ),
+      }),
+      ...editionRoutes(adminRoute, "admin"),
+    ]),
+    ...editionRoutes(appRoute, "protected"),
+    createRoute({
+      getParentRoute: () => appRoute,
+      path: "$",
+      component: lazyPage(() => import("@/routes/section-index/page"), "SectionIndexPage"),
+    }),
+  ]),
+  onboardingRoute.addChildren([
+    createRoute({
+      getParentRoute: () => onboardingRoute,
+      path: "/onboarding",
+      beforeLoad: gates(onboardingGate),
+      component: lazyPage(() => import("@/routes/onboarding/page"), "OnboardingPage"),
+    }),
+  ]),
+  deskShellRoute.addChildren([
+    deskRoute.addChildren([
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "/",
+        component: lazyPage(() => import("@/routes/desk/home-page"), "DeskHomePage"),
+      }),
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "t/$threadId",
+        component: lazyPage(
+          () => import("@/routes/desk/conversation-page"),
+          "DeskConversationPage",
+        ),
+      }),
+      // A link to one artifact, named by its slug: the conversation
+      // opens with it beside it.
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "c/$threadId/a/$slug",
+        component: lazyPage(
+          () => import("@/routes/desk/artifact-link-page"),
+          "DeskArtifactLinkPage",
+        ),
+      }),
+      // What an agent laid out, on the canvas, with the conversation
+      // that made it in the margin.
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "v/$viewThreadId/$slug",
+        component: lazyPage(() => import("@/routes/desk/view-page"), "DeskViewPage"),
+      }),
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "agents/$agentId",
+        component: lazyPage(() => import("@/routes/desk/agent-page"), "DeskAgentCapabilitiesPage"),
+      }),
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "handled/$id",
+        beforeLoad: gates(requirePermission(Resource.AgentProposal, Operation.Read)),
+        component: lazyPage(() => import("@/routes/desk/handled-page"), "DeskHandledPage"),
+      }),
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "r/$kind/$id",
+        component: lazyPage(() => import("@/routes/desk/case-page"), "DeskCasePage"),
+      }),
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "triage",
+        beforeLoad: gates(requirePermission(Resource.InboundMessage, Operation.Read)),
+        loader: prefetchPage(() => import("@/routes/inbox/page")),
+        component: lazyPage(() => import("@/routes/desk/triage-page"), "DeskTriagePage"),
+      }),
+      // Its Decisions lens is for whoever may read proposals; the
+      // rest of the page is the Watchtower's.
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "needs",
+        beforeLoad: gates(
+          anyOfGates(
+            requirePermission(Resource.Watchtower, Operation.Read),
+            requirePermission(Resource.AgentProposal, Operation.Read),
+          ),
+        ),
+        component: lazyPage(() => import("@/routes/desk/needs-page"), "DeskNeedsPage"),
+      }),
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "watchtower",
+        beforeLoad: gates(redirectTo("/desk/needs?lens=watchtower")),
+      }),
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "scheduled",
+        loader: prefetchPage(() => import("@/routes/desk/scheduled-page")),
+        component: lazyPage(() => import("@/routes/desk/scheduled-page"), "DeskScheduledRoutePage"),
+      }),
+      createRoute({
+        getParentRoute: () => deskRoute,
+        path: "memory",
+        loader: prefetchPage(() => import("@/routes/desk/memory-page")),
+        component: lazyPage(() => import("@/routes/desk/memory-page"), "DeskMemoryRoutePage"),
+      }),
+    ]),
+  ]),
+  publicRoute.addChildren([
+    createRoute({
+      getParentRoute: () => publicRoute,
+      path: "/tender-offer/$token",
+      component: lazyPage(
+        () => import("@/routes/tender-offer-public/page"),
+        "TenderOfferPublicPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => publicRoute,
+      path: "/tender-offer/$token/accept",
+      component: lazyPage(
+        () => import("@/routes/tender-offer-public/page"),
+        "TenderOfferPublicPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => publicRoute,
+      path: "/tender-offer/$token/decline",
+      component: lazyPage(
+        () => import("@/routes/tender-offer-public/page"),
+        "TenderOfferPublicPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => publicRoute,
+      path: "/rate-confirmation/$token",
+      component: lazyPage(
+        () => import("@/routes/rate-confirmation-public/page"),
+        "RateConfirmationPublicPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => publicRoute,
+      path: "/carrier-tracking/$token",
+      component: lazyPage(
+        () => import("@/routes/carrier-tracking-public/page"),
+        "CarrierTrackingPublicPage",
+      ),
+    }),
+    createRoute({
+      getParentRoute: () => publicRoute,
+      path: "/shipment-tracking/$token",
+      component: lazyPage(
+        () => import("@/routes/shipment-tracking-public/page"),
+        "ShipmentTrackingPublicPage",
+      ),
+    }),
+    ...editionRoutes(publicRoute, "public"),
+  ]),
+  guestRoute.addChildren([
+    createRoute({
+      getParentRoute: () => guestRoute,
+      path: "/login",
+      component: lazyPage(() => import("@/routes/auth/page"), "AuthPage"),
+    }),
+    createRoute({
+      getParentRoute: () => guestRoute,
+      path: "/login/$orgSlug",
+      component: lazyPage(() => import("@/routes/auth/page"), "AuthPage"),
+    }),
+    // Opened from the emailed reset link. Guest-only, like the sign-in page:
+    // somebody already signed in has no use for it.
+    createRoute({
+      getParentRoute: () => guestRoute,
+      path: "/auth/reset",
+      component: lazyPage(() => import("@/routes/auth/reset-page"), "ResetPasswordPage"),
+    }),
+    ...editionRoutes(guestRoute, "guest"),
+  ]),
 ]);
 
-export const router = createBrowserRouter(withRouteCatalogs(withSectionIndexes(routes)));
+export const router = createRouter({
+  routeTree,
+  parseSearch,
+  stringifySearch,
+  // A route without an error component of its own draws the failure where its page would
+  // have been; inside the shell or the Desk the frame stays standing around it.
+  defaultErrorComponent: RouteErrorBoundary,
+  // Route loaders only warm TanStack Query, which decides freshness itself.
+  defaultPreloadStaleTime: 0,
+  InnerWrap: UrlStateAdapter,
+});
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}

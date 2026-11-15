@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import {
   JOURNAL_REVIEW_STATUSES,
@@ -11,7 +12,6 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { Link } from "react-router";
 import { journalReviewPhase } from "./review-filters";
 
 export function getJournalReviewColumns(

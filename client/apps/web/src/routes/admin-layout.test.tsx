@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider, useSuspenseQuery } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { Suspense, type ReactNode } from "react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminLayout } from "./admin-layout";
 
@@ -10,19 +10,17 @@ function Settings({ load }: { load: () => Promise<string> }) {
   return <p>{data}</p>;
 }
 
-function renderAdminPage(page: ReactNode) {
+async function renderAdminPage(page: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const router = createMemoryRouter(
-    [{ path: "/admin", Component: AdminLayout, children: [{ path: "settings", element: page }] }],
-    { initialEntries: ["/admin/settings"] },
-  );
-  return render(
-    <QueryClientProvider client={client}>
-      <Suspense fallback={<p>Shell is holding the screen</p>}>
-        <RouterProvider router={router} />
-      </Suspense>
-    </QueryClientProvider>,
-  );
+  return renderAtRoutes([{ path: "/admin/settings", component: () => page }], {
+    initialEntries: ["/admin/settings"],
+    layout: AdminLayout,
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={client}>
+        <Suspense fallback={null}>{children}</Suspense>
+      </QueryClientProvider>
+    ),
+  });
 }
 
 let consoleError: ReturnType<typeof vi.spyOn>;
@@ -46,9 +44,11 @@ describe("AdminLayout", () => {
           answer = resolve;
         }),
     );
-    const { container } = renderAdminPage(<Settings load={load} />);
+    const { container } = await renderAdminPage(<Settings load={load} />);
 
-    expect(await screen.findByText("Shell is holding the screen")).toBeVisible();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(load).toHaveBeenCalled();
+    expect(screen.queryByText("Billing controls")).not.toBeInTheDocument();
     expect(container.querySelector("[data-slot=skeleton]")).toBeNull();
 
     answer("Billing controls");
@@ -57,7 +57,7 @@ describe("AdminLayout", () => {
 
   it("draws the failure in place of the page that failed", async () => {
     const load = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
-    renderAdminPage(<Settings load={load} />);
+    await renderAdminPage(<Settings load={load} />);
 
     expect(await screen.findByRole("heading", { name: "Can't reach Trenova" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();

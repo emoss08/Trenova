@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -6,7 +7,6 @@ import { journalReversalStatusChoices } from "@/lib/choices";
 import type { JournalReversalRow } from "@/lib/graphql/journal-reversal-table";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { Link } from "react-router";
 
 export function getColumns(t: TranslateFn): ColumnDef<JournalReversalRow>[] {
   return [

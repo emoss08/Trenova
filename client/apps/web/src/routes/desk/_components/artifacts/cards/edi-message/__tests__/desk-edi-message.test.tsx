@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskEdiMessage, DeskEdiMessageArtifact } from "../desk-edi-message";
 import { HOUR, NOW, RAW_214, wireInspection, wireMessage } from "./fixtures";
@@ -86,7 +86,7 @@ function draw(props: Partial<Parameters<typeof DeskEdiMessage>[0]> = {}) {
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
   const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskEdiMessage
           recordId="edimsg_1"
           order={["edimsg_0", "edimsg_1"]}
@@ -94,7 +94,7 @@ function draw(props: Partial<Parameters<typeof DeskEdiMessage>[0]> = {}) {
           {...props}
           {...more}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
   const view = render(tree());
@@ -470,9 +470,9 @@ describe("DeskEdiMessage", () => {
   it("draws the message as an artifact of its own, with nothing to step through", async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter>
+        <TestRouter>
           <DeskEdiMessageArtifact recordId="edimsg_1" artifact={{} as never} fallback={null} />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 

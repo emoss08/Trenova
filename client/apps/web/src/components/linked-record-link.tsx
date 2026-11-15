@@ -1,14 +1,15 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath, type RecordEntityType } from "@/config/record-links";
 import { LockedReference } from "@trenova/shared/components/withheld-value";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import type { ReferenceKind } from "@trenova/shared/types/generated/reference-views";
 import type { ReactNode } from "react";
-import { Link, type LinkProps } from "react-router";
+import { type LinkComponentProps } from "@tanstack/react-router";
 
 /** A kind of record that has its own page and a reference view. */
 export type LinkedRecordKind = RecordEntityType & ReferenceKind;
 
-type LinkedRecordLinkProps = Omit<LinkProps, "to" | "children"> & {
+type LinkedRecordLinkProps = Omit<LinkComponentProps, "to" | "children"> & {
   /** The linked record's kind; its read decides whether the link is drawn. */
   kind: LinkedRecordKind;
   id: string;

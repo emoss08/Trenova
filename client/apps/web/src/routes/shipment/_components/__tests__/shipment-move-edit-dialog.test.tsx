@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect, useState } from "react";
 import { FormProvider, type FieldErrors, type Resolver, useForm } from "react-hook-form";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MoveEditDialog, type MoveDialogState } from "../shipment-move-edit-dialog";
 
@@ -81,11 +81,11 @@ function Harness({
 
   return (
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <FormProvider {...form}>
           {ready && <MoveEditDialog state={state} onClose={onClose} onCancel={vi.fn()} />}
         </FormProvider>
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
 }

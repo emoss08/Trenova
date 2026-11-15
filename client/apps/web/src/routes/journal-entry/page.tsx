@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
@@ -20,14 +21,14 @@ import { journalEntry } from "@/lib/queries/journal-entry";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "@trenova/shared/components/icons";
-import { Link, useNavigate, useParams } from "react-router";
+import { useRouter, useParams } from "@tanstack/react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 export function JournalEntryDetailPage() {
   const t = useT();
 
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { id } = useParams({ strict: false });
+  const router = useRouter();
 
   const { data: entry, isLoading } = useQuery({
     ...journalEntry.get(id!),
@@ -36,7 +37,7 @@ export function JournalEntryDetailPage() {
   useBreadcrumbLabel(entry?.entryNumber);
 
   const backButton = (
-    <Button variant="outline" size="sm" onClick={() => void navigate(-1)}>
+    <Button variant="outline" size="sm" onClick={() => router.history.back()}>
       <ArrowLeftIcon className="size-3.5" />
       {t("Back")}
     </Button>

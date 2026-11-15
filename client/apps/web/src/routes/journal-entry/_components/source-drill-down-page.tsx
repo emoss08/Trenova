@@ -16,7 +16,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useRouter, useParams } from "@tanstack/react-router";
 import { defineLabels, translateLabel } from "@trenova/shared/i18n/labels";
 
 const SOURCE_TYPE_LABELS: Record<string, string> = defineLabels({
@@ -159,8 +159,8 @@ function computeAccountNets(entries: PostingEntry[]): AccountNet[] {
 export function SourceDrillDownPage() {
   const t = useT();
 
-  const { type, sourceId } = useParams<{ type: string; sourceId: string }>();
-  const navigate = useNavigate();
+  const { type, sourceId } = useParams({ strict: false });
+  const router = useRouter();
   const sourceLabel = humanizeSourceType(type ?? "");
   const copy = sourceCopy(t, type ?? "", sourceLabel);
 
@@ -203,7 +203,7 @@ export function SourceDrillDownPage() {
               sourceId={sourceId!}
               label={t("Open {0}", sourceLabel)}
             />
-            <Button variant="outline" size="sm" onClick={() => void navigate(-1)}>
+            <Button variant="outline" size="sm" onClick={() => router.history.back()}>
               <ArrowLeftIcon className="size-3.5" />
               {t("Back")}
             </Button>

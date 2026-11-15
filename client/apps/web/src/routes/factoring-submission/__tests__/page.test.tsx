@@ -1,3 +1,4 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import type {
   FactoringFundingPlan,
   FactoringPlannedMovement,
@@ -5,9 +6,8 @@ import type {
   FactoringSubmissionDetail,
 } from "@/lib/graphql/factoring";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FactoringSubmissionPage } from "../page";
 
@@ -143,23 +143,23 @@ function submission(overrides: Partial<FactoringSubmissionDetail> = {}): Factori
   } as FactoringSubmissionDetail;
 }
 
-function renderPage() {
+async function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={["/billing/factoring/submissions/facsub_1"]}>
-        <Routes>
-          <Route path="/billing/factoring/submissions/:id" element={<FactoringSubmissionPage />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+  await renderAtRoutes(
+    [{ path: "/billing/factoring/submissions/$id", component: () => <FactoringSubmissionPage /> }],
+    {
+      initialEntries: ["/billing/factoring/submissions/facsub_1"],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    },
   );
 }
 
 describe("factoring schedule page", () => {
   it("shows why a failed schedule did not go out, with its invoices and what each is worth", async () => {
     mocks.fetchFactoringSubmission.mockResolvedValue(submission());
-    renderPage();
+    await renderPage();
 
     expect(
       await screen.findByRole("heading", { name: "Schedule FS2610-00007" }),
@@ -190,7 +190,7 @@ describe("factoring schedule page", () => {
 
   it("offers no retry or cancel to someone who may not change schedules", async () => {
     mocks.fetchFactoringSubmission.mockResolvedValue(submission());
-    renderPage();
+    await renderPage();
 
     await screen.findByRole("heading", { name: "Schedule FS2610-00007" });
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
@@ -202,7 +202,7 @@ describe("factoring schedule page", () => {
     mocks.fetchFactoringSubmission.mockResolvedValue(
       submission({ status: "Sent", sentAt: 1_789_000_100, failedAt: null, lastError: null }),
     );
-    renderPage();
+    await renderPage();
 
     await screen.findByRole("heading", { name: "Schedule FS2610-00007" });
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
@@ -215,7 +215,7 @@ describe("factoring schedule page", () => {
     mocks.retryFactoringSubmission.mockResolvedValue(
       submission({ status: "Sending", sendAttemptGroup: 2, version: 5 }),
     );
-    renderPage();
+    await renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: "Retry" }));
 
@@ -231,7 +231,7 @@ describe("factoring schedule page", () => {
     mocks.cancelFactoringSubmission.mockResolvedValue(
       submission({ status: "Cancelled", cancelReason: "Factor closed the account", version: 5 }),
     );
-    renderPage();
+    await renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: "Cancel schedule" }));
     const dialog = await screen.findByRole("dialog");
@@ -348,7 +348,7 @@ describe("factoring schedule funding", () => {
     mocks.recordFactoringFunding.mockResolvedValue(
       submission({ status: "Funded", version: 5, items: fundedItems() }),
     );
-    renderPage();
+    await renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: "Record funding" }));
     const dialog = await screen.findByRole("dialog");
@@ -397,7 +397,7 @@ describe("factoring schedule funding", () => {
     mocks.fetchFactoringSubmission.mockResolvedValue(
       submission({ status: "Sent", sentAt: 1_789_000_100, failedAt: null, lastError: null }),
     );
-    renderPage();
+    await renderPage();
     await screen.findByRole("heading", { name: "Schedule FS2610-00007" });
     expect(screen.queryByRole("button", { name: "Record funding" })).toBeNull();
     cleanup();
@@ -405,7 +405,7 @@ describe("factoring schedule funding", () => {
     mocks.granted.add(CREATE);
     mocks.listFactoringAgreements.mockResolvedValue([]);
     mocks.fetchFactoringSubmission.mockResolvedValue(submission());
-    renderPage();
+    await renderPage();
     await screen.findByRole("heading", { name: "Schedule FS2610-00007" });
     expect(screen.queryByRole("button", { name: "Record funding" })).toBeNull();
   });
@@ -414,7 +414,7 @@ describe("factoring schedule funding", () => {
     mocks.fetchFactoringSubmission.mockResolvedValue(
       submission({ status: "Funded", items: fundedItems() }),
     );
-    renderPage();
+    await renderPage();
 
     const invoices = await screen.findByRole("region", { name: "Invoices" });
     const funded = within(invoices).getByRole("row", { name: /INV-1/ });
@@ -469,7 +469,7 @@ describe("factoring schedule funding", () => {
       reverses: null,
     } satisfies FactoringReserveMovementPlan);
     mocks.bookFactoringReserveMovement.mockResolvedValue(submission({ status: "Funded" }));
-    renderPage();
+    await renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: "Actions for invoice INV-1" }));
     expect(await screen.findByRole("menuitem", { name: "Charge back" })).toBeInTheDocument();
@@ -512,7 +512,7 @@ describe("factoring schedule funding", () => {
       submission({ status: "Funded", items: fundedItems() }),
     );
     mocks.listFactoringAgreements.mockResolvedValue([{ id: "facagr_1", recourse: "NonRecourse" }]);
-    renderPage();
+    await renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: "Actions for invoice INV-1" }));
     expect(await screen.findByRole("menuitem", { name: "Release reserve" })).toBeInTheDocument();

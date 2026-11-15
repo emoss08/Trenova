@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { useAccountingInboundLabels } from "@/hooks/use-accounting-inbound-labels";
@@ -20,7 +21,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { Sliders01Icon } from "@trenova/shared/components/icons";
 import { useForm, useWatch } from "react-hook-form";
-import { Link } from "react-router";
 import {
   accountingSyncSettingsSchema,
   type AccountingSyncSettingsValues,

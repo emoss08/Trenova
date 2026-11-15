@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import { ExchangeRateLine } from "@/components/accounting/exchange-rate-line";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -53,7 +54,6 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { defineLabels } from "@trenova/shared/i18n/labels";

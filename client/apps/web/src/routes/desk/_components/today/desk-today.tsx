@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import {
   DeskHomeComposer,
   useDeskHomeAsk,
@@ -29,7 +30,7 @@ import {
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { attentionPath } from "../attention/attention-record";
 import { AttentionRow } from "../attention/attention-row";
 import { usePendingDecisionSummary } from "../decisions/use-pending-decisions";
@@ -231,7 +232,7 @@ export function DeskToday({ agents, threads, isLoading, isStarting, onStart }: D
                       key={group.key}
                       group={group}
                       now={now}
-                      onOpen={() => void navigate(attentionPath(group))}
+                      onOpen={() => void navigate({ to: attentionPath(group) })}
                     />
                   ))}
                 </div>

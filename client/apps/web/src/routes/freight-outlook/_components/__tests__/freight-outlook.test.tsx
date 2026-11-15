@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import {
   cleveland,
   kansasCity,
@@ -14,7 +15,6 @@ import { act, cleanup, render, screen, waitFor, within } from "@testing-library/
 import userEvent from "@testing-library/user-event";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { useState } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FreightOutlook as FreightOutlookView } from "../freight-outlook";
 import { slotRange } from "../outlook-parts";
@@ -101,9 +101,9 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <Page />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

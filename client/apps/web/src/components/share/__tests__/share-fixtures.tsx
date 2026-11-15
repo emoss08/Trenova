@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { RecordShare, RecordShareUser, ShareRecordResult } from "@/lib/graphql/record-share";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { ShareDialog, type SharedRecord } from "../share-dialog";
 
 // Shared by the share dialog's suites. Each suite mocks the share requests, the toast module and the
@@ -72,11 +72,11 @@ export async function openDialog(path = invoicePath(), shared: SharedRecord | nu
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <ShareDialog record={shared} path={path} />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 
   await user.click(screen.getByRole("button", { name: "Share" }));

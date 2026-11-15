@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AssistantArtifact } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { useDeskStore } from "@/stores/desk-store";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { groupLineages, lineageContaining } from "../desk-lineage";
@@ -181,14 +181,14 @@ function renderWorkspace(onClose = vi.fn(), pendingLookups?: ReadonlySet<string>
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskWorkspace
           threadId="athr_1"
           liveArtifacts={{ ids: [], revision: 0 }}
           pendingLookups={pendingLookups}
           onClose={onClose}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
   return { onClose };

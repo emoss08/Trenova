@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { InvoiceArContext } from "@/lib/graphql/invoice";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InvoicePaymentsTab } from "../invoice-payments-tab";
 
@@ -107,11 +107,11 @@ function arContext(overrides: Partial<InvoiceArContext> = {}): InvoiceArContext 
 function renderTab(context: InvoiceArContext | null, value: Invoice = invoice) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <InvoicePaymentsTab invoice={value} arContext={context} isLoading={false} />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

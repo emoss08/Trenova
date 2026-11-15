@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CarrierIntelProfileView } from "@/components/carrier-intelligence/carrier-intel-profile-view";
 import { CarrierKeyFacts } from "@/components/carrier-intelligence/carrier-key-facts";
@@ -25,7 +26,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlugIcon, ScanSearchIcon } from "@trenova/shared/components/icons";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import { IntelligenceEvents } from "./intelligence-events";
 import { IntelligenceFindings } from "./intelligence-findings";
 import { IntelligenceHeader } from "./intelligence-header";
@@ -161,7 +161,7 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
             size="sm"
             variant="outline"
             nativeButton={false}
-            render={<Link to="/admin/integrations?category=CarrierCompliance" />}
+            render={<Link to="/admin/integrations" search={{ category: "CarrierCompliance" }} />}
           >
             <PlugIcon className="size-3.5" />
             {t("Open integrations")}
@@ -229,7 +229,8 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
             "No provider is connected, so this is the last snapshot on file and cannot be refreshed.",
           )}
           <Link
-            to="/admin/integrations?category=CarrierCompliance"
+            to="/admin/integrations"
+            search={{ category: "CarrierCompliance" }}
             className="text-foreground underline-offset-2 hover:underline"
           >
             {t("Open integrations")}

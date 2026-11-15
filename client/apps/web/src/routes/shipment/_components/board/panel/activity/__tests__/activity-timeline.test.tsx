@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { ShipmentLifecycleEvent } from "@/types/shipment-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ActivityTimeline } from "../activity-timeline";
 
@@ -45,9 +45,9 @@ function renderTimeline() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <MemoryRouter>
+      <TestRouter>
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      </MemoryRouter>
+      </TestRouter>
     );
   }
   return render(<ActivityTimeline scrollElement={null} />, { wrapper: Wrapper });

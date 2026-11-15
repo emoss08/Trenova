@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo, useState } from "react";
-import { useLocation } from "react-router";
+import { useLocation } from "@tanstack/react-router";
 import { DeskIcon, type DeskIconName } from "../desk-icons";
 import { deskPopoverClass, useComposerPopover } from "../desk-popover";
 

@@ -1,6 +1,6 @@
 import { agentProfileQueryKey } from "@/lib/graphql/agent-profile";
 import { DESK_MEMORIES_KEY } from "@/lib/graphql/desk-memories";
-import type { LoaderFunctionArgs } from "react-router";
+import type { RoutePrefetchArgs } from "@/lib/route-prefetch";
 import { describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
@@ -22,11 +22,7 @@ vi.mock("../_components/memory/desk-memory-page", () => ({
   DeskMemoryPage: () => null,
 }));
 
-const loaderArgs = {
-  request: new Request("http://localhost/desk/memory"),
-  params: {},
-  context: undefined,
-} as unknown as LoaderFunctionArgs;
+const loaderArgs: RoutePrefetchArgs = { params: {}, searchParams: new URLSearchParams() };
 
 // The route warms exactly what the page reads on mount, under the keys the page's own
 // queries use, so the card and the settings paint with the page instead of after it.

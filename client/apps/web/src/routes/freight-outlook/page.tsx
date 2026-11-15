@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { freightOutlook } from "@/lib/queries/freight-outlook";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -5,7 +6,6 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useState } from "react";
-import { Link } from "react-router";
 import { tourTarget } from "@/components/tour/tour-model";
 import { FreightOutlook } from "./_components/freight-outlook";
 import { OUTLOOK_TOUR, OUTLOOK_TOUR_TARGET } from "./_components/outlook-tour";

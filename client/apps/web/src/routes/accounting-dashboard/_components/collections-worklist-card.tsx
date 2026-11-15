@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { SectionPanel, SectionPanelLink } from "@/components/section-panel";
 import type { ARWorklistItem } from "@/lib/graphql/accounts-receivable";
 import { ar } from "@/lib/queries/ar";
@@ -9,7 +10,6 @@ import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
-import { Link } from "react-router";
 import { PANEL_LIST_HEIGHT, PanelQuiet, RowsBodySkeleton } from "./dashboard-panel";
 
 const WORKLIST_LIMIT = 25;

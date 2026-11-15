@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { ReviewHistoryView } from "@/components/tariff-studio/review-history-view";
 import type { ReviewEntryData } from "@/components/tariff-studio/review-rounds";
@@ -32,7 +33,6 @@ import {
 } from "@trenova/shared/types/rate";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
-import { Link } from "react-router";
 import { MatrixGridEditor } from "./matrix-grid-editor";
 import { MatrixGridEditorSkeleton } from "./matrix-grid-editor-skeleton";
 import {

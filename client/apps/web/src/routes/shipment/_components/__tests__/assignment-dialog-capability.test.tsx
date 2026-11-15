@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { OrganizationCapabilities } from "@trenova/shared/types/organization-capability";
 import type { Assignment, CarrierAssignment } from "@trenova/shared/types/shipment";
 import type { User } from "@trenova/shared/types/user";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AssignmentDialog } from "../assignment-dialog";
 
@@ -53,7 +53,7 @@ function renderDialog(options: { existingAssignment?: Assignment | null } = {}) 
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <AssignmentDialog
           open
           onOpenChange={vi.fn()}
@@ -61,7 +61,7 @@ function renderDialog(options: { existingAssignment?: Assignment | null } = {}) 
           existingAssignment={options.existingAssignment ?? null}
           existingCarrierAssignment={null as CarrierAssignment | null}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

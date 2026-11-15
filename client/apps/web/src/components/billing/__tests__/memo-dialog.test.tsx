@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoDialog } from "../memo-dialog";
 
@@ -16,8 +16,8 @@ vi.mock("@/lib/graphql/invoice", () => ({ createMemo: mocks.createMemo }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError },
 }));
-vi.mock("react-router", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react-router")>();
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
   return { ...actual, useNavigate: () => mocks.navigate };
 });
 vi.mock("@/components/autocomplete-fields", () => ({
@@ -35,11 +35,11 @@ function renderDialog(props: Partial<React.ComponentProps<typeof MemoDialog>> = 
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const onOpenChange = vi.fn();
   render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <MemoDialog open onOpenChange={onOpenChange} billType="CreditMemo" {...props} />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
   return onOpenChange;
 }
@@ -103,7 +103,7 @@ describe("MemoDialog", () => {
         ],
       }),
     );
-    expect(mocks.navigate).toHaveBeenCalledWith("/billing/invoices?item=inv_cm");
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/billing/invoices?item=inv_cm" });
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

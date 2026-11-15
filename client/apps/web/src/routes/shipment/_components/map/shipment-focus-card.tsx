@@ -11,7 +11,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatMinutesSpan } from "@trenova/shared/lib/date";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { AlertSwatch, formatMapTime, MapCardHeader, MapCardSection } from "./map-card-parts";
 import { useMapFocusStore } from "./map-focus-store";
 import { placeLabel, type MapShipment } from "./map-shipment-model";
@@ -127,7 +127,7 @@ export function ShipmentFocusCard({
         </MapCardSection>
       ) : null}
       <footer className="border-subtle flex items-center gap-2 border-t px-3 py-2.5">
-        <Button size="sm" onClick={() => void navigate(shipmentPanelPath(model.id))}>
+        <Button size="sm" onClick={() => void navigate({ to: shipmentPanelPath(model.id) })}>
           {t("Open shipment")}
         </Button>
       </footer>

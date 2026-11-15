@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { ArtifactRows, AssistantArtifact } from "@/types/assistant";
 import type { ArtifactRowsRequest } from "@/services/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskTableBody } from "../desk-table-body";
 
@@ -122,9 +122,9 @@ function renderTable(shown: AssistantArtifact) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskTableBody artifact={shown} previous={null} />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -31,7 +32,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon, CheckCircleIcon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";

@@ -1,10 +1,10 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useCanManagePlan } from "@trenova/shared/components/plan-locked";
 import { planLockedGuidance } from "@trenova/shared/lib/plan-copy";
-import { Link } from "react-router";
 import type { ReportIR } from "@/types/report";
 import {
   isRemovable,

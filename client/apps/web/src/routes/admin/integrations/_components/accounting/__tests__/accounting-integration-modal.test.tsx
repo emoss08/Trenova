@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type {
   AccountingAppSettings,
   AccountingConnection,
@@ -10,7 +11,6 @@ import { ApiRequestError } from "@trenova/shared/lib/api";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { quickBooksProfile, XERO_LEDGER_REASON, xeroProfile } from "@/test/accounting-profiles";
 import { AccountingIntegrationModal } from "../accounting-integration-modal";
@@ -260,7 +260,7 @@ function renderWithRouter(props: { justConnected?: boolean; vendor?: AccountingV
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
-    <MemoryRouter>
+    <TestRouter>
       <QueryClientProvider client={client}>
         <AccountingIntegrationModal
           vendor={props.vendor ?? quickBooksVendor}
@@ -270,7 +270,7 @@ function renderWithRouter(props: { justConnected?: boolean; vendor?: AccountingV
           onReviewed={() => undefined}
         />
       </QueryClientProvider>
-    </MemoryRouter>,
+    </TestRouter>,
   );
 }
 

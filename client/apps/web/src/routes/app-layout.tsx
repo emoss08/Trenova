@@ -1,4 +1,4 @@
-import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
+import { RouteErrorBoundary, RouteErrorEmbedding } from "@trenova/shared/components/error-boundary";
 import { SidebarLayout } from "@/components/navigation";
 import { SessionIdleTimeout } from "@/components/session-idle-timeout";
 import { SupportSessionBanner } from "@/components/session-context/support-session-banner";
@@ -10,7 +10,7 @@ import { useUserDatePreferenceKey } from "@trenova/shared/hooks/use-user-date-pr
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Suspense, type ReactNode } from "react";
-import { Outlet } from "react-router";
+import { Outlet, type ErrorComponentProps } from "@tanstack/react-router";
 
 // Only a session that owes a password change, a role choice or its organization's details
 // meets a gate, so the sign-in frame and forms they draw are read when one is shown, not by
@@ -102,16 +102,25 @@ export function OnboardingLayout() {
 }
 
 export function AppLayout() {
-  return <AppSession>{(outlet) => <SidebarLayout>{outlet}</SidebarLayout>}</AppSession>;
+  return (
+    <AppSession>
+      {(outlet) => (
+        <SidebarLayout>
+          <RouteErrorEmbedding value>{outlet}</RouteErrorEmbedding>
+        </SidebarLayout>
+      )}
+    </AppSession>
+  );
 }
 
-// AppErrorLayout is AppLayout's error element. It draws the same frame around the failure
-// rather than replacing the whole window. It skips the session's polling and gates: the
-// failure may be in them, and if the frame itself throws the root boundary takes over.
-export function AppErrorLayout() {
+// AppErrorLayout is AppLayout's error component: what the session gate threw, or the layout
+// itself. It draws the same frame around the failure rather than replacing the whole window.
+// It skips the session's polling and gates: the failure may be in them, and if the frame
+// itself throws the root's error component takes over.
+export function AppErrorLayout(props: ErrorComponentProps) {
   return (
     <SidebarLayout>
-      <RouteErrorBoundary embedded />
+      <RouteErrorBoundary {...props} embedded />
     </SidebarLayout>
   );
 }

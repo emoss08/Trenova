@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { FactoringSubmissionStatusBadge } from "@/components/factoring/factoring-badges";
 import { HoverGlideGroup } from "@/components/hover-glide";
 import { SectionPanel, SectionPanelLink, SectionPanelQuiet } from "@/components/section-panel";
@@ -14,7 +15,6 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDate, formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { formatMinor } from "@trenova/shared/lib/money";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { Link } from "react-router";
 import { FactoringDeliverySection } from "./factoring-delivery-section";
 
 function outcome(t: TranslateFn, schedule: FactoringCompanySchedule): string {

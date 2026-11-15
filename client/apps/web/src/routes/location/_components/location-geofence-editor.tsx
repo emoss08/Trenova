@@ -19,7 +19,7 @@ import { APIProvider, Circle, Map, Polygon, Rectangle, useMap } from "@vis.gl/re
 import { CircleIcon, PenTool01Icon, PlusIcon, SquareIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext, useFormState, useWatch, type Path, type PathValue } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
 const DEFAULT_GEOFENCE_RADIUS_METERS = 50;
@@ -262,7 +262,11 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
               )}
             </span>
             {canCreateIntegrations ? (
-              <Button onClick={() => navigate("/admin/integrations?type=GoogleMaps")}>
+              <Button
+                onClick={() =>
+                  navigate({ to: "/admin/integrations", search: { type: "GoogleMaps" } })
+                }
+              >
                 <PlusIcon className="size-4 shrink-0" aria-hidden />
                 {t("Configure Google maps")}
               </Button>

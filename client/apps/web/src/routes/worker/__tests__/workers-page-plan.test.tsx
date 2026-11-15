@@ -5,7 +5,6 @@ import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
-import type { LoaderFunctionArgs } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { prefetch, WorkersPage } from "../page";
 
@@ -39,11 +38,7 @@ function renderPage(searchParams = "") {
 }
 
 async function prefetched(search: string) {
-  return await prefetch({
-    request: new Request(`http://localhost/hr/workers${search}`),
-    params: {},
-    context: undefined,
-  } as unknown as LoaderFunctionArgs);
+  return await prefetch({ params: {}, searchParams: new URLSearchParams(search) });
 }
 
 afterEach(() => {

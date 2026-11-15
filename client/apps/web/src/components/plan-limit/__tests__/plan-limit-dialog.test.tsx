@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { handlePlanLimit } from "@/lib/plan-limit-handler";
 import { PLAN_LIMIT_QUIET_MS, decidePlanLimit, usePlanLimitStore } from "@/stores/plan-limit-store";
 import { act, render, screen } from "@testing-library/react";
@@ -13,7 +14,6 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, type PermissionManifest } from "@trenova/shared/types/permission";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GENERIC_PLAN_LIMIT_WORDING, planLimitCopy } from "@/lib/plan-limit-copy";
 import { PlanLimitDialogHost } from "../plan-limit-dialog";
@@ -278,9 +278,9 @@ describe("PlanLimitDialogHost", () => {
       ),
     );
     render(
-      <MemoryRouter>
+      <TestRouter>
         <PlanLimitDialogHost plan={{ usagePath: "/admin/plan" }} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     let error: unknown;
@@ -303,7 +303,7 @@ describe("PlanLimitDialogHost", () => {
   it("offers no plan page without an edition that has one, and uses the edition's words", async () => {
     usePlanLimitStore.getState().show(shipmentsQuota);
     render(
-      <MemoryRouter>
+      <TestRouter>
         <PlanLimitDialogHost
           plan={{
             limitCopy: (notice) =>
@@ -317,7 +317,7 @@ describe("PlanLimitDialogHost", () => {
                 : null,
           }}
         />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     expect(await screen.findByText("Edition title")).toBeInTheDocument();
@@ -355,9 +355,9 @@ describe("PlanLimitDialogHost", () => {
   it("opens with the add-on's name for a GraphQL mutation an add-on refuses", async () => {
     answerGraphQLWithAddOnRefusal();
     render(
-      <MemoryRouter>
+      <TestRouter>
         <PlanLimitDialogHost plan={{}} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     let error: unknown;
@@ -378,9 +378,9 @@ describe("PlanLimitDialogHost", () => {
   it("leaves a GraphQL query an add-on refuses to the page, without the dialog", async () => {
     answerGraphQLWithAddOnRefusal();
     render(
-      <MemoryRouter>
+      <TestRouter>
         <PlanLimitDialogHost plan={{}} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     let error: unknown;
@@ -413,9 +413,9 @@ describe("PlanLimitDialogHost", () => {
       ),
     );
     render(
-      <MemoryRouter>
+      <TestRouter>
         <PlanLimitDialogHost plan={{}} />
-      </MemoryRouter>,
+      </TestRouter>,
     );
 
     let read: unknown;

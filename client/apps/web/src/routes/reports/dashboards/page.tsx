@@ -5,11 +5,11 @@ import { usePermission } from "@/hooks/use-permission";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
-import { useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { DashboardView } from "./_components/dashboard-view";
 
 export function ReportDashboardPage() {
-  const { dashboardId } = useParams<{ dashboardId: string }>();
+  const { dashboardId } = useParams({ strict: false });
   const dashboard = useReportDashboard(dashboardId);
   useBreadcrumbLabel(dashboard.data?.name);
   const { allowed: canEdit } = usePermission(Resource.Report, Operation.Update);

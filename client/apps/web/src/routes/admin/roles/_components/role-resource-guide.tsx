@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { PAGE_ACCESS_USE_LABELS } from "@/components/page-access/page-access-labels";
 import { MAX_GUIDE_RESOURCES, type RoleResourceGuide } from "@/lib/graphql/page-access";
 import { pageAccess } from "@/lib/queries/page-access";
@@ -8,7 +9,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { translateLabel } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueries } from "@tanstack/react-query";
-import { Link } from "react-router";
 
 /**
  * The role editor's sentences for the resources of each open category, asked

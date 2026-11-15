@@ -1,10 +1,12 @@
-import { routes } from "@/router";
+import { routeAt } from "@/test/route-tree";
+import type { RouteGateContext } from "@trenova/shared/lib/router/gates";
+import { enterContext } from "@trenova/shared/testing/gate-context";
+import { RouteRefusal } from "@trenova/shared/lib/router/refusal";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { OrganizationCapabilities } from "@trenova/shared/types/organization-capability";
 import { Resource, type PermissionManifest } from "@trenova/shared/types/permission";
 import type { User } from "@trenova/shared/types/user";
-import type { LoaderFunctionArgs, RouteObject } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const ALL_OPERATIONS = 0xffff;
@@ -55,7 +57,6 @@ function signIn(capabilities: OrganizationCapabilities) {
       ],
     } as unknown as User,
     isAuthenticated: true,
-    // protectedLoader asks the store, not the network.
     checkAuth: async () => true,
     checkSession: async () => ({ status: "signed_in" }),
   } as unknown as Parameters<typeof useAuthStore.setState>[0]);
@@ -63,54 +64,19 @@ function signIn(capabilities: OrganizationCapabilities) {
   usePermissionStore.setState({ manifest: manifest(), lastFetched: Date.now(), isLoading: false });
 }
 
-function joinPath(parent: string, child: string): string {
-  if (child.startsWith("/")) {
-    return child;
-  }
-  return `${parent.replace(/\/$/, "")}/${child}`;
+// Runs the route's gates; resolves when they let the person in and rejects with what they threw.
+async function runGates(path: string): Promise<void> {
+  const beforeLoad = routeAt(path).options.beforeLoad as
+    | ((context: RouteGateContext) => unknown)
+    | undefined;
+  await beforeLoad?.(enterContext(path));
 }
 
-function collectLoaders(
-  entries: RouteObject[],
-  parent = "",
-  found = new Map<string, RouteObject>(),
-): Map<string, RouteObject> {
-  for (const entry of entries) {
-    const path = entry.path === undefined ? parent : joinPath(parent, entry.path);
-    if (entry.path !== undefined) {
-      found.set(path, entry);
-    }
-    if (entry.children) {
-      collectLoaders(entry.children, path, found);
-    }
-  }
-  return found;
-}
-
-const routesByPath = collectLoaders(routes);
-
-async function runLoader(path: string): Promise<unknown> {
-  const route = routesByPath.get(path);
-  if (!route) {
-    throw new Error(`route ${path} is not registered`);
-  }
-  if (typeof route.loader !== "function") {
-    throw new Error(`route ${path} has no loader`);
-  }
-
-  return await route.loader({
-    request: new Request(`http://localhost${path}`),
-    params: {},
-    context: undefined,
-  } as unknown as LoaderFunctionArgs);
-}
-
-async function capabilityRefusal(path: string): Promise<Response | null> {
-  const thrown: unknown = await runLoader(path)
+async function capabilityRefusal(path: string): Promise<RouteRefusal | null> {
+  const thrown: unknown = await runGates(path)
     .then(() => null)
     .catch((error: unknown) => error);
-
-  if (thrown instanceof Response && thrown.statusText === CAPABILITY_STATUS_TEXT) {
+  if (thrown instanceof RouteRefusal && thrown.statusText === CAPABILITY_STATUS_TEXT) {
     return thrown;
   }
   return null;
@@ -175,9 +141,7 @@ describe("asset-only routes", () => {
       const refusal = await capabilityRefusal(path);
       expect(refusal, `${path} should be refused`).not.toBeNull();
       expect(refusal?.status).toBe(403);
-      await expect(refusal?.text()).resolves.toBe(
-        "Asset Operations is not enabled for this organization",
-      );
+      expect(refusal?.data).toBe("Asset Operations is not enabled for this organization");
     }
   });
 
@@ -185,7 +149,7 @@ describe("asset-only routes", () => {
     signIn(hybrid);
 
     for (const path of ASSET_ONLY_ROUTES) {
-      await expect(runLoader(path), `${path} should load`).resolves.toBeNull();
+      await expect(runGates(path), `${path} should load`).resolves.toBeUndefined();
     }
   });
 
@@ -193,7 +157,7 @@ describe("asset-only routes", () => {
     signIn(brokerageOnly);
 
     for (const path of NEVER_GATED_ROUTES) {
-      await expect(runLoader(path), `${path} should stay open`).resolves.toBeNull();
+      await expect(runGates(path), `${path} should stay open`).resolves.toBeUndefined();
     }
   });
 
@@ -201,11 +165,11 @@ describe("asset-only routes", () => {
     signIn(brokerageOnly);
     usePermissionStore.setState({ manifest: null, lastFetched: null, isLoading: false });
 
-    const thrown: unknown = await runLoader("/payroll/workspace")
+    const thrown: unknown = await runGates("/payroll/workspace")
       .then(() => null)
       .catch((error: unknown) => error);
 
-    expect(thrown).toBeInstanceOf(Response);
-    expect((thrown as Response).statusText).toBe(CAPABILITY_STATUS_TEXT);
+    expect(thrown).toBeInstanceOf(RouteRefusal);
+    expect((thrown as RouteRefusal).statusText).toBe(CAPABILITY_STATUS_TEXT);
   });
 });

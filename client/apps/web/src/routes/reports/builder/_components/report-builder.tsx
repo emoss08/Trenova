@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -24,7 +25,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { RunReportDialog } from "../../_components/run-report-dialog";
 import {
@@ -187,7 +188,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
       createDefinition.mutate(input, {
         onSuccess: (created) => {
           setSaveOpen(false);
-          void navigate(`/reports/builder/${created.id}`, { replace: true });
+          void navigate({ to: `/reports/builder/${created.id}`, replace: true });
         },
         onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to create the report")),
       });

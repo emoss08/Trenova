@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   BillingQueueStatusBadge,
@@ -6,7 +7,6 @@ import {
 import type { BillingQueueStatus } from "@trenova/shared/types/billing-queue";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { LinkExternal01Icon } from "@trenova/shared/components/icons";
-import { Link } from "react-router";
 
 export function ShipmentBillingQueueBadge({ status }: { status?: BillingQueueStatus | null }) {
   const t = useT();

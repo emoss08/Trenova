@@ -1,8 +1,8 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
+import { cleanup, screen } from "@testing-library/react";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { OrganizationSetup, User } from "@trenova/shared/types/user";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppSession } from "../app-layout";
 
@@ -38,16 +38,11 @@ function signIn(overrides: Partial<User>) {
   });
 }
 
-function renderAt(path: string) {
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route element={<AppSession>{(outlet) => outlet}</AppSession>}>
-          <Route path="*" element={<p>the page</p>} />
-        </Route>
-      </Routes>
-    </MemoryRouter>,
-  );
+async function renderAt(path: string) {
+  return renderAtRoutes([{ path: "$", component: () => <p>the page</p> }], {
+    initialEntries: [path],
+    layout: () => <AppSession>{(outlet) => outlet}</AppSession>,
+  });
 }
 
 const incomplete: OrganizationSetup = {
@@ -65,7 +60,7 @@ describe("the organization setup gate", () => {
 
   it("stands in front of any page while the organization is incomplete", async () => {
     signIn({ organizationSetup: incomplete });
-    renderAt("/billing/invoices?tab=open");
+    await renderAt("/billing/invoices?tab=open");
 
     expect(
       await screen.findByText("organization setup gate: addressLine1, scacCode"),
@@ -73,16 +68,16 @@ describe("the organization setup gate", () => {
     expect(screen.queryByText("the page")).not.toBeInTheDocument();
   });
 
-  it("lets the page through once the organization is complete", () => {
+  it("lets the page through once the organization is complete", async () => {
     signIn({ organizationSetup: { complete: true, missing: [], canComplete: false } });
-    renderAt("/billing/invoices");
+    await renderAt("/billing/invoices");
 
     expect(screen.getByText("the page")).toBeInTheDocument();
   });
 
   it("asks for a password change first", async () => {
     signIn({ organizationSetup: incomplete, mustChangePassword: true });
-    renderAt("/");
+    await renderAt("/");
 
     expect(await screen.findByText("password gate")).toBeInTheDocument();
     expect(screen.queryByText(/organization setup gate/)).not.toBeInTheDocument();

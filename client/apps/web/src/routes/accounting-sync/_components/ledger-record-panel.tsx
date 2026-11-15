@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { ExternalLink } from "@/components/link";
@@ -35,7 +36,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryStates } from "nuqs";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
 import { skipSchema, type SkipValues } from "./ledger-schemas";
 
 const RETRYABLE = new Set(["Blocked", "DeadLettered", "Retrying"]);

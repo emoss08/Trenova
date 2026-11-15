@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import {
   FactoringSubmissionItemStatusBadge,
   FactoringVerdictBadge,
@@ -43,7 +44,6 @@ import type { Invoice } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
-import { Link } from "react-router";
 import { z } from "zod";
 
 const OVERRIDE_FORM_ID = "invoice-factoring-override-form";

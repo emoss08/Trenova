@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { DeskEdiPartnerCard, EdiPartnerMessagesPage } from "@/lib/graphql/edi-partner-card";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskEdiPartner, DeskEdiPartnerArtifact } from "../desk-edi-partner";
 import acmeFixture from "./acme-trouble.json";
@@ -65,7 +65,7 @@ function draw(props: Partial<Parameters<typeof DeskEdiPartner>[0]> = {}) {
   const handlers = { onSelect: vi.fn(), onBack: vi.fn() };
   const tree = (more: Partial<typeof props> = {}) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <DeskEdiPartner
           recordId="edip_tyson"
           order={["edip_acme", "edip_tyson"]}
@@ -73,7 +73,7 @@ function draw(props: Partial<Parameters<typeof DeskEdiPartner>[0]> = {}) {
           {...props}
           {...more}
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>
   );
   const view = render(tree());
@@ -297,9 +297,9 @@ describe("DeskEdiPartner", () => {
       <QueryClientProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
-        <MemoryRouter>
+        <TestRouter>
           <DeskEdiPartnerArtifact recordId="edip_globex" artifact={{} as never} fallback={null} />
-        </MemoryRouter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 

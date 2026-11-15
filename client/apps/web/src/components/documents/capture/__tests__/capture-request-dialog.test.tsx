@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
-import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CaptureRequestDialog } from "../capture-request-dialog";
 
@@ -77,7 +77,7 @@ function renderDialog() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
+      <TestRouter>
         <CaptureRequestDialog
           open
           onOpenChange={() => {}}
@@ -85,7 +85,7 @@ function renderDialog() {
           kind="shipment"
           recordId="shp_1"
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

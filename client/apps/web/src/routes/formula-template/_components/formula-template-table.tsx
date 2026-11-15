@@ -37,7 +37,7 @@ import {
   GitBranch02Icon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { archiveRefusal } from "@/lib/archive-refusal";
 import { ExportTemplateDialog } from "./export-template-dialog";
@@ -267,7 +267,7 @@ export default function FormulaTemplatesDataTable() {
         label: t("New formula template"),
         description: t("Write a rating formula from a blank template in the studio."),
         icon: FilePlus02Icon,
-        onClick: () => void navigate(formulaTemplateRoutes.new),
+        onClick: () => void navigate({ to: formulaTemplateRoutes.new }),
       },
       {
         id: "import-templates",
@@ -294,16 +294,16 @@ export default function FormulaTemplatesDataTable() {
         enableSelectionExport={false}
         dockActions={dockActions}
         contextMenuActions={contextMenuActions}
-        onAddRecord={() => void navigate(formulaTemplateRoutes.new)}
+        onAddRecord={() => void navigate({ to: formulaTemplateRoutes.new })}
         onRowClick={(row) => {
-          if (row.original.id) void navigate(formulaTemplateRoutes.edit(row.original.id));
+          if (row.original.id) void navigate({ to: formulaTemplateRoutes.edit(row.original.id) });
         }}
         addRecordActions={addRecordActions}
       />
       <ImportTemplateDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
-        onImported={(response) => void navigate(importLandingRoute(response))}
+        onImported={(response) => void navigate({ to: importLandingRoute(response) })}
       />
       <DuplicateAlertDialog
         open={isDuplicateDialogOpen}
@@ -364,7 +364,7 @@ export default function FormulaTemplatesDataTable() {
         template={forkDialogTemplate}
         onForkSuccess={(forked) => {
           setForkDialogTemplate(null);
-          if (forked.id) void navigate(formulaTemplateRoutes.edit(forked.id));
+          if (forked.id) void navigate({ to: formulaTemplateRoutes.edit(forked.id) });
         }}
       />
       <ForkLineageDialog
@@ -376,7 +376,7 @@ export default function FormulaTemplatesDataTable() {
         currentTemplateId={lineageDialogTemplate?.id}
         onNavigateToTemplate={(templateId) => {
           setLineageDialogTemplate(null);
-          if (templateId) void navigate(formulaTemplateRoutes.edit(templateId));
+          if (templateId) void navigate({ to: formulaTemplateRoutes.edit(templateId) });
         }}
       />
     </>

@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { PendingProposalFieldsFragment } from "@trenova/graphql/generated/graphql";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import {
   field,
@@ -55,7 +55,7 @@ function renderChange(proposal: PendingProposalNode, data: ProposalPreview | nul
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <TestRouter>
         <DecisionChange
           node={proposal}
           entry={
@@ -68,7 +68,7 @@ function renderChange(proposal: PendingProposalNode, data: ProposalPreview | nul
           onModify={onModify}
           canChange
         />
-      </MemoryRouter>
+      </TestRouter>
     </QueryClientProvider>,
   );
   return { onModify, onRetry };

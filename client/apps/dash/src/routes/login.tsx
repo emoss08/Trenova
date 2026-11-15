@@ -1,3 +1,4 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { useFollowSignInElsewhere } from "@trenova/shared/hooks/use-follow-sign-in-elsewhere";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SignOutNoticeAlert } from "@trenova/shared/components/session/sign-out-notice-alert";
@@ -9,19 +10,19 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { MFAChallenge } from "@trenova/shared/types/mfa";
 import { m } from "motion/react";
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 
 export function DashLoginPage() {
   const t = useT();
 
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams] = useQueryParams();
   const signOutNotice = signOutNoticeFrom(searchParams);
   const login = useAuthStore((state) => state.login);
   const verifyMFA = useAuthStore((state) => state.verifyMFA);
 
   // Signing in in another tab finishes this tab's sign-in too.
-  useFollowSignInElsewhere(() => void navigate("/dash", { replace: true }));
+  useFollowSignInElsewhere(() => void navigate({ to: "/dash", replace: true }));
 
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
@@ -45,7 +46,7 @@ export function DashLoginPage() {
         setChallenge(outcome.challenge);
         return;
       }
-      void navigate("/dash", { replace: true });
+      void navigate({ to: "/dash", replace: true });
     } catch {
       setError(t("We couldn't sign you in. Check your email and password and try again."));
     } finally {
@@ -67,7 +68,7 @@ export function DashLoginPage() {
         code: useRecovery ? "" : code,
         recoveryCode: useRecovery ? code : "",
       });
-      void navigate("/dash", { replace: true });
+      void navigate({ to: "/dash", replace: true });
     } catch {
       setError(t("That code didn't work. Check it and try again, or sign in again."));
     } finally {

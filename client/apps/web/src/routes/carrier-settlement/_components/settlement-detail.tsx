@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import { ExchangeRateLine } from "@/components/accounting/exchange-rate-line";
@@ -61,7 +62,6 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
 

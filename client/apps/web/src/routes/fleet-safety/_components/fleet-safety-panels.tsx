@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { terminalStandings } from "@/lib/fleet-safety-console";
@@ -9,7 +10,6 @@ import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { Award01Icon, Building07Icon, ShieldAlertIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { workerRecordHref } from "@/lib/route-utils";
 
 type TerminalsPanelProps = {

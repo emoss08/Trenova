@@ -1,16 +1,17 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useHomeLayoutPreset } from "@/hooks/use-home-layout";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { Link, useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { PresetEditor } from "../_components/preset-editor";
 
 export function EditHomeLayoutPage() {
   const t = useT();
 
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams({ strict: false });
   const { data: preset, isLoading, isError } = useHomeLayoutPreset(id);
   useBreadcrumbLabel(preset?.name);
 

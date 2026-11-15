@@ -1,10 +1,9 @@
+import { renderAtRoutes } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type { PublicTenderOffer } from "@trenova/shared/types/tender";
-import type { ReactNode } from "react";
-import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TenderOfferPublicPage } from "./page";
 
@@ -50,24 +49,23 @@ function apiError(status: number): ApiRequestError {
   return new ApiRequestError(status, { type: "about:blank", title: "Error", status });
 }
 
-function renderPage(path = "/tender-offer/tok_123") {
+async function renderPage(path = "/tender-offer/tok_123") {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route path="/tender-offer/:token" element={children} />
-            <Route path="/tender-offer/:token/accept" element={children} />
-            <Route path="/tender-offer/:token/decline" element={children} />
-          </Routes>
-        </MemoryRouter>
-      </QueryClientProvider>
-    );
-  }
-  return render(<TenderOfferPublicPage />, { wrapper: Wrapper });
+  return renderAtRoutes(
+    [
+      { path: "/tender-offer/$token", component: TenderOfferPublicPage },
+      { path: "/tender-offer/$token/accept", component: TenderOfferPublicPage },
+      { path: "/tender-offer/$token/decline", component: TenderOfferPublicPage },
+    ],
+    {
+      initialEntries: [path],
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      ),
+    },
+  );
 }
 
 describe("TenderOfferPublicPage", () => {
@@ -81,7 +79,7 @@ describe("TenderOfferPublicPage", () => {
   it("renders the lane, rate and expiry preview with both response buttons", async () => {
     mocks.getPublicOffer.mockResolvedValue(publicOffer());
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText("Load offer for Blue Ridge Freight")).toBeInTheDocument();
     expect(mocks.getPublicOffer).toHaveBeenCalledWith("tok_123");
@@ -100,7 +98,7 @@ describe("TenderOfferPublicPage", () => {
   it("hides the expiry line when the offer carries no expiry", async () => {
     mocks.getPublicOffer.mockResolvedValue(publicOffer({ expiresAt: 0 }));
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText("Load offer for Blue Ridge Freight")).toBeInTheDocument();
     expect(screen.queryByText(/Offer expires/)).not.toBeInTheDocument();
@@ -109,7 +107,7 @@ describe("TenderOfferPublicPage", () => {
   it("never auto-submits on the /accept intent URL — it only pre-highlights", async () => {
     mocks.getPublicOffer.mockResolvedValue(publicOffer());
 
-    renderPage("/tender-offer/tok_123/accept");
+    await renderPage("/tender-offer/tok_123/accept");
 
     expect(await screen.findByText("Load offer for Blue Ridge Freight")).toBeInTheDocument();
     expect(mocks.acceptPublicOffer).not.toHaveBeenCalled();
@@ -121,7 +119,7 @@ describe("TenderOfferPublicPage", () => {
   it("never auto-submits on the /decline intent URL", async () => {
     mocks.getPublicOffer.mockResolvedValue(publicOffer());
 
-    renderPage("/tender-offer/tok_123/decline");
+    await renderPage("/tender-offer/tok_123/decline");
 
     expect(await screen.findByText("Load offer for Blue Ridge Freight")).toBeInTheDocument();
     expect(mocks.declinePublicOffer).not.toHaveBeenCalled();
@@ -131,7 +129,7 @@ describe("TenderOfferPublicPage", () => {
   it("pre-expands the reason textarea on the /decline intent URL", async () => {
     mocks.getPublicOffer.mockResolvedValue(publicOffer());
 
-    renderPage("/tender-offer/tok_123/decline");
+    await renderPage("/tender-offer/tok_123/decline");
 
     expect(await screen.findByLabelText(/Reason/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Confirm decline" })).toBeInTheDocument();
@@ -140,7 +138,7 @@ describe("TenderOfferPublicPage", () => {
   it("shows the vague invalid-link state for a definitive 4xx preview rejection", async () => {
     mocks.getPublicOffer.mockRejectedValue(apiError(422));
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText(NO_LONGER_VALID)).toBeInTheDocument();
     expect(screen.queryByText(/Blue Ridge Freight/)).not.toBeInTheDocument();
@@ -152,7 +150,7 @@ describe("TenderOfferPublicPage", () => {
   it("shows the already-answered state when the preview reports a recorded response", async () => {
     mocks.getPublicOffer.mockResolvedValue(publicOffer({ responded: true }));
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByText("Already answered")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Accept load" })).not.toBeInTheDocument();
@@ -163,7 +161,7 @@ describe("TenderOfferPublicPage", () => {
     mocks.acceptPublicOffer.mockRejectedValue(apiError(422));
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.click(await screen.findByRole("button", { name: "Accept load" }));
 
@@ -176,7 +174,7 @@ describe("TenderOfferPublicPage", () => {
     mocks.acceptPublicOffer.mockResolvedValue(undefined);
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.click(await screen.findByRole("button", { name: "Accept load" }));
 
@@ -192,7 +190,7 @@ describe("TenderOfferPublicPage", () => {
     mocks.declinePublicOffer.mockResolvedValue(undefined);
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.click(await screen.findByRole("button", { name: "Decline" }));
 
@@ -214,7 +212,7 @@ describe("TenderOfferPublicPage", () => {
     mocks.declinePublicOffer.mockResolvedValue(undefined);
     const user = userEvent.setup();
 
-    renderPage("/tender-offer/tok_123/decline");
+    await renderPage("/tender-offer/tok_123/decline");
 
     await user.click(await screen.findByRole("button", { name: "Confirm decline" }));
 
@@ -228,7 +226,7 @@ describe("TenderOfferPublicPage", () => {
     mocks.acceptPublicOffer.mockRejectedValue(apiError(429));
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.click(await screen.findByRole("button", { name: "Accept load" }));
 
@@ -241,7 +239,7 @@ describe("TenderOfferPublicPage", () => {
     mocks.declinePublicOffer.mockRejectedValueOnce(apiError(503)).mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
 
-    renderPage("/tender-offer/tok_123/decline");
+    await renderPage("/tender-offer/tok_123/decline");
 
     await user.type(await screen.findByLabelText(/Reason/), "Rate too low");
     await user.click(screen.getByRole("button", { name: "Confirm decline" }));
@@ -258,7 +256,7 @@ describe("TenderOfferPublicPage", () => {
   it("does not offer a counter when the broker takes none", async () => {
     mocks.getPublicOffer.mockResolvedValue(publicOffer({ counterAllowed: false }));
 
-    renderPage();
+    await renderPage();
 
     expect(await screen.findByRole("button", { name: "Accept load" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Propose a different rate" })).toBeNull();
@@ -269,7 +267,7 @@ describe("TenderOfferPublicPage", () => {
     mocks.counterPublicOffer.mockResolvedValue(undefined);
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.click(await screen.findByRole("button", { name: "Propose a different rate" }));
     expect(screen.getByLabelText("Your rate (Flat Rate)")).toHaveAttribute(
@@ -295,7 +293,7 @@ describe("TenderOfferPublicPage", () => {
     mocks.getPublicOffer.mockResolvedValue(publicOffer({ counterAllowed: true }));
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.click(await screen.findByRole("button", { name: "Propose a different rate" }));
     await user.click(screen.getByRole("button", { name: "Send counter-offer" }));
@@ -312,7 +310,7 @@ describe("TenderOfferPublicPage", () => {
     mocks.counterPublicOffer.mockRejectedValue(apiError(409));
     const user = userEvent.setup();
 
-    renderPage();
+    await renderPage();
 
     await user.click(await screen.findByRole("button", { name: "Propose a different rate" }));
     await user.type(screen.getByLabelText("Your rate (Flat Rate)"), "2100");

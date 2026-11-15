@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -19,7 +20,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ClockRewindIcon, PlusIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { createLoader, useQueryStates } from "nuqs";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { CannedGallery } from "./_components/canned-gallery";
 import { DashboardGallery } from "./_components/dashboard-gallery";
 import { ReportDefinitionGrid } from "./_components/report-definition-grid";
@@ -41,8 +42,8 @@ const loadReportsSearch = createLoader(reportsPageSearchParamsParser);
 
 // Only the active tab's grid mounts, so only its list is worth starting. The library's
 // search box is debounced, which on first render is simply the URL value.
-export const prefetch: RoutePrefetch = ({ request }) => {
-  const { tab, query } = loadReportsSearch(request);
+export const prefetch: RoutePrefetch = ({ searchParams }) => {
+  const { tab, query } = loadReportsSearch(searchParams);
   switch (tab) {
     case "gallery":
       return [reports.canned()];
@@ -165,7 +166,7 @@ export function ReportsPage() {
               {t("Run history")}
             </Button>
             {canCreate && (
-              <Button size="sm" onClick={() => void navigate("/reports/builder")}>
+              <Button size="sm" onClick={() => void navigate({ to: "/reports/builder" })}>
                 <PlusIcon className="size-3.5" />
                 {t("New report")}
               </Button>

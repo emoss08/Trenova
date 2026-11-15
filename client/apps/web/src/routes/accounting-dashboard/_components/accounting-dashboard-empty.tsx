@@ -1,8 +1,7 @@
+import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBar, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { Link } from "react-router";
-
 const GHOST_KPIS = 5;
 const TREND_POINTS = "0,30 20,26 40,28 60,20 80,22 100,15 120,17 140,11 160,13 180,8";
 const GHOST_BARS = [40, 65, 50, 80, 60, 90, 70, 55] as const;

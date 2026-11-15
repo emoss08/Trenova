@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { briefPhraseClass, type BriefPhraseTone } from "@/components/brief-phrase";
 import { firstNameOf } from "@/lib/onboarding-copy";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -11,7 +12,6 @@ import type {
   SecurityFindingSeverity,
 } from "@trenova/shared/types/iam";
 import { Fragment, type ReactNode } from "react";
-import { Link } from "react-router";
 import {
   BRIEF_SENTENCE_LIMIT,
   briefClosing,
@@ -79,9 +79,7 @@ export function BriefingBrief({
       <p className="text-foreground text-lg leading-relaxed text-pretty">
         {firstName ? t("Hello {0}.", firstName) : t("Hello.")}{" "}
         {sentences.map((sentence, index) => (
-          <Fragment key={said[index]?.code ?? index}>
-            {sentence}{" "}
-          </Fragment>
+          <Fragment key={said[index]?.code ?? index}>{sentence} </Fragment>
         ))}
         {closing}
       </p>

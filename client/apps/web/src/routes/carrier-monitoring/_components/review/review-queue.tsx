@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { FindingList, type FindingKind } from "@/components/carrier-intelligence/finding-list";
 import { MarkReviewedDialog } from "@/components/carrier-intelligence/mark-reviewed-dialog";
 import { RelativeTime } from "@/components/carrier-intelligence/relative-time";
@@ -34,8 +35,6 @@ import {
   SearchLgIcon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
-import { Link } from "react-router";
-
 export const REVIEW_QUEUE_LIMIT = 100;
 const COMPACT_FINDING_LIMIT = 3;
 const COMPACT_FINDING_KINDS: readonly FindingKind[] = ["blocker", "advisory"];

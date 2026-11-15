@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { DataTable } from "@/components/data-table/data-table";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -16,7 +17,6 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryState } from "nuqs";
 import { useMemo } from "react";
-import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { QUALITY_AGENT_PARAM, qualityAgentParser } from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
@@ -140,7 +140,8 @@ export function WorstRatedSheet({
             {canCapture && answer.sample && (
               <Button
                 type="button"
-                variant="default" size="sm"
+                variant="default"
+                size="sm"
                 disabled={capture.isPending}
                 onClick={() => answer.sample && capture.mutate(answer.sample.id)}
               >

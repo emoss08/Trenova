@@ -3,7 +3,7 @@ import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useReportCatalog, useReportDefinition } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
-import { useParams } from "react-router";
+import { useParams } from "@tanstack/react-router";
 import { ReportBuilder } from "./_components/report-builder";
 
 function BuilderSkeleton() {
@@ -31,7 +31,7 @@ function BuilderError({ error }: { error: unknown }) {
 }
 
 export function ReportBuilderPage() {
-  const { definitionId } = useParams<{ definitionId: string }>();
+  const { definitionId } = useParams({ strict: false });
   const catalog = useReportCatalog();
   const definition = useReportDefinition(definitionId);
   useBreadcrumbLabel(definition.data?.name);

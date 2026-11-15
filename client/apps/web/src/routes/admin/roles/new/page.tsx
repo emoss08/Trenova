@@ -17,7 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { RolePageLayout } from "../_components/role-builder-layout";
 import { RoleForm } from "../_components/role-form";
 import { RolePermissionMatrix } from "../_components/role-permission-matrix";
@@ -62,7 +62,7 @@ export function RoleCreatePage() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["role-list"] });
-      void navigate("/admin/roles");
+      void navigate({ to: "/admin/roles" });
     },
     form,
     resourceName: "Role",
@@ -85,7 +85,7 @@ export function RoleCreatePage() {
   );
 
   const handleCancel = useCallback(() => {
-    void navigate("/admin/roles");
+    void navigate({ to: "/admin/roles" });
   }, [navigate]);
 
   return (

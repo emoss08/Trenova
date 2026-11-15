@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -10,7 +11,7 @@ import { Form } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { FactoringCompanyEditor } from "../_components/factoring-company-editor";
 import type { FactorState } from "../_components/factoring-invoice-preview";
 import { FACTORING_COMPANIES_PATH, factoringCompanyPath } from "../use-factoring-company-state";
@@ -67,7 +68,7 @@ export function FactoringCompanyCreatePage() {
     onSuccess: (created, values) => {
       void queryClient.invalidateQueries({ queryKey: ["factoring-company-list"] });
       reset(values);
-      void navigate(factoringCompanyPath(created.id), { replace: true });
+      void navigate({ to: factoringCompanyPath(created.id), replace: true });
     },
   });
 

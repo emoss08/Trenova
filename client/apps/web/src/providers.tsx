@@ -16,7 +16,6 @@ import { I18nProvider } from "@trenova/shared/i18n/provider";
 import { registerCatalogSource } from "@trenova/shared/i18n/runtime";
 import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
 import { currentProfile, useAuthStore } from "@trenova/shared/stores/auth-store";
-import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import type { ReactNode } from "react";
 import { installFailureListeners } from "@trenova/shared/lib/failure-reporter";
 
@@ -50,68 +49,6 @@ setPartialErrorReporter((errors, { operationName }) => {
   }
 });
 
-export function normalizeSearchParams(search: URLSearchParams) {
-  const nextSearch = new URLSearchParams(search);
-
-  removeEmptyDataTableParams(nextSearch);
-  normalizeOrganizationSettingsSearchParams(nextSearch);
-
-  return nextSearch;
-}
-
-function removeEmptyDataTableParams(search: URLSearchParams) {
-  for (const key of ["fieldFilters", "filterGroups", "sort"]) {
-    const value = search.get(key);
-    if (value === "" || value === "[]") {
-      search.delete(key);
-    }
-  }
-
-  if (search.get("pageIndex") === "1") {
-    search.delete("pageIndex");
-  }
-}
-
-function normalizeOrganizationSettingsSearchParams(search: URLSearchParams) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const pathname = window.location.pathname.replace(/\/+$/, "");
-  if (pathname !== "/admin/organization-settings") {
-    return;
-  }
-
-  const tab = search.get("tab") || "general";
-  if (tab !== "security") {
-    for (const key of [
-      "securityTab",
-      "activityView",
-      "directoryId",
-      "search",
-      "editingProvider",
-      "panelMode",
-      "panelOpen",
-    ]) {
-      search.delete(key);
-    }
-    return;
-  }
-
-  const securityTab = search.get("securityTab") || "sign-in";
-  if (securityTab !== "provisioning") {
-    search.delete("directoryId");
-  }
-  if (securityTab !== "activity") {
-    search.delete("activityView");
-  }
-  if (securityTab !== "sign-in") {
-    for (const key of ["search", "editingProvider", "panelMode", "panelOpen"]) {
-      search.delete(key);
-    }
-  }
-}
-
 // The signed-in user's language is the one their emails and documents already use, so it
 // outranks anything the browser reports. Reading it here rather than inside I18nProvider
 // keeps the provider free of any dependency on how this app stores its session.
@@ -142,19 +79,17 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <RootErrorBoundary>
       <AppQueryProvider>
-        <NuqsAdapter processUrlSearchParams={normalizeSearchParams}>
-          <ThemeProvider defaultTheme="system" storageKey="trenova-ui-theme">
-            <MotionPreferenceProvider>
-              <LocalizedApp>{children}</LocalizedApp>
-              <Toaster position="top-right" />
-              <CodeLigaturesPreference />
-            </MotionPreferenceProvider>
-            {/*<ReactQueryDevtools
+        <ThemeProvider defaultTheme="system" storageKey="trenova-ui-theme">
+          <MotionPreferenceProvider>
+            <LocalizedApp>{children}</LocalizedApp>
+            <Toaster position="top-right" />
+            <CodeLigaturesPreference />
+          </MotionPreferenceProvider>
+          {/*<ReactQueryDevtools
               buttonPosition="bottom-left"
               initialIsOpen={false}
             />*/}
-          </ThemeProvider>
-        </NuqsAdapter>
+        </ThemeProvider>
       </AppQueryProvider>
     </RootErrorBoundary>
   );

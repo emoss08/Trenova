@@ -5,7 +5,7 @@ import "@trenova/shared/styles/app.css";
 import { LazyMotion, domMax } from "motion/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { RouterProvider } from "react-router";
+import { RouterProvider } from "@tanstack/react-router";
 import { installChunkRecovery } from "@/lib/chunk-recovery";
 import { registerServiceWorker } from "@/lib/service-worker";
 import { preloadRulesWhenIdle } from "@trenova/shared/rules/preload";

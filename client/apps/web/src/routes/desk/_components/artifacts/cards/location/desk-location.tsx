@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { describeApiError } from "@/lib/api-error-message";
 import {
@@ -17,7 +18,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 import { useCardAccess } from "../../record-card/card-access";
 import { CardFailures } from "../../record-card/card-failures";
 import { CardShipments } from "../../record-card/card-shipments";

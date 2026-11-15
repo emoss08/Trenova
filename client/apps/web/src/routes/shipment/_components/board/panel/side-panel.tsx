@@ -11,7 +11,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { type PanelTab, useShipmentBoardUrl } from "../url-state";
 import { ActionQueue } from "./action-queue";
 import { ActivityTimeline } from "./activity/activity-timeline";
@@ -59,7 +59,7 @@ export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
               {aiOnPlan && !ai ? (
                 <button
                   type="button"
-                  onClick={() => void navigate(AI_SETUP_PATH)}
+                  onClick={() => void navigate({ to: AI_SETUP_PATH })}
                   className="flex items-center gap-2 rounded-md border border-dashed ui-focus-ring border-border p-2.5 text-left text-xs text-muted-foreground hover:text-foreground"
                 >
                   <PlugIcon className="size-3.5 shrink-0" />

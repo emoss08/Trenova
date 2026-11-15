@@ -1,3 +1,4 @@
+import { Link } from "@trenova/shared/components/link";
 import { dashboardFilterToKeel, parameterToKeel } from "@/lib/report-definition";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -38,7 +39,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { downloadBlob } from "@trenova/shared/lib/utils";
 import { exportDashboard } from "@/lib/graphql/reports";
@@ -422,7 +423,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
   const handleDelete = () => {
     deleteDashboard.mutate(dashboard.id, {
       onSuccess: () => {
-        void navigate("/reports?tab=dashboards");
+        void navigate({ to: "/reports", search: { tab: "dashboards" } });
       },
       onError: (error) => toast.error(graphQLErrorMessage(error, "Failed to delete the dashboard")),
     });
@@ -435,7 +436,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
           variant="ghost"
           size="icon"
           className="size-7"
-          render={<Link to="/reports?tab=dashboards" />}
+          render={<Link to="/reports" search={{ tab: "dashboards" }} />}
           aria-label={t("Back to dashboards")}
         >
           <ArrowLeftIcon className="size-4" />

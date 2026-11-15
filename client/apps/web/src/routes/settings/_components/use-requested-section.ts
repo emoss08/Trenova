@@ -1,10 +1,10 @@
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import {
   isSettingsSection,
   SETTINGS_SECTION_PARAM,
   type SettingsSection,
 } from "@/lib/settings-path";
 import { useEffect } from "react";
-import { useSearchParams } from "react-router";
 
 /**
  * Lands on the section the address names (`/settings?section=notifications`), which is how
@@ -12,7 +12,7 @@ import { useSearchParams } from "react-router";
  * parameter back out so a reload or a later visit starts at the top.
  */
 export function useRequestedSection(jump: (section: SettingsSection) => void) {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useQueryParams();
   const requested = searchParams.get(SETTINGS_SECTION_PARAM);
 
   useEffect(() => {
