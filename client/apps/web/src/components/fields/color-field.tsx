@@ -14,6 +14,7 @@ import {
   type Path,
 } from "react-hook-form";
 import { Input } from "@trenova/shared/components/ui/input";
+import { ColorSwatchGrid } from "@/components/color-swatches";
 import { FieldWrapper } from "./field-components";
 import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/variants/field";
 
@@ -25,64 +26,6 @@ export type ColorFieldProps<TFieldValues extends FieldValues> = {
   disabled?: boolean;
   autoWidth?: boolean;
 } & FormControlProps<TFieldValues>;
-
-const solids = [
-  { color: "#E2E2E2", name: "Light gray" },
-  { color: "#ff75c3", name: "Bright pink" },
-  { color: "#ffa647", name: "Vibrant orange" },
-  { color: "#ffe83f", name: "Bright yellow" },
-  { color: "#9fff5b", name: "Vibrant green" },
-  { color: "#70e2ff", name: "Light blue" },
-  { color: "#cd93ff", name: "Soft purple" },
-  { color: "#09203f", name: "Dark blue-grey" },
-  { color: "#ff7575", name: "Soft red" },
-  { color: "#b284be", name: "Periwinkle" },
-  { color: "#ff7f50", name: "Coral" },
-  { color: "#deb887", name: "Burlywood" },
-  { color: "#5f9ea0", name: "Cadet blue" },
-  { color: "#ffd700", name: "Gold" },
-  { color: "#6a5acd", name: "Slate blue" },
-  { color: "#ff4500", name: "Orange red" },
-  { color: "#2e8b57", name: "Sea green" },
-  { color: "#4682b4", name: "Steel blue" },
-  { color: "#d2691e", name: "Chocolate" },
-  { color: "#6495ed", name: "Cornflower blue" },
-  { color: "#dc143c", name: "Crimson" },
-  { color: "#008b8b", name: "Dark cyan" },
-  { color: "#b8860b", name: "Dark goldenrod" },
-  { color: "#006400", name: "Dark green" },
-  { color: "#8b008b", name: "Dark magenta" },
-  { color: "#556b2f", name: "Dark olive green" },
-  { color: "#ff8c00", name: "Dark orange" },
-  { color: "#9932cc", name: "Dark orchid" },
-  { color: "#8b0000", name: "Dark red" },
-  { color: "#e9967a", name: "Dark salmon" },
-  { color: "#20b2aa", name: "Light sea green" },
-  { color: "#ff6347", name: "Tomato" },
-  { color: "#ffa07a", name: "Light salmon" },
-  { color: "#da70d6", name: "Orchid" },
-  { color: "#f0e68c", name: "Khaki" },
-  { color: "#40e0d0", name: "Turquoise" },
-  { color: "#ee82ee", name: "Violet" },
-  { color: "#696969", name: "Dim gray" },
-  { color: "#ffdab9", name: "Peach puff" },
-  { color: "#87cefa", name: "Light sky blue" },
-];
-
-function ColorGrid({ handleChange }: { handleChange: (color: string) => void }) {
-  return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(20px,1fr))] gap-1.5">
-      {solids.map(({ color }) => (
-        <div
-          key={color}
-          style={{ background: color }}
-          className="size-6 cursor-pointer rounded-md active:scale-105"
-          onClick={() => handleChange(color)}
-        />
-      ))}
-    </div>
-  );
-}
 
 function ColorFieldInput<T extends FieldValues>({
   field,
@@ -163,7 +106,7 @@ function ColorFieldInput<T extends FieldValues>({
               <p className="text-2xs text-muted-foreground">{t("Click to select a color")}</p>
             </div>
           )}
-          <ColorGrid handleChange={handleChange} />
+          <ColorSwatchGrid value={value} onPick={handleChange} />
         </div>
         <Input
           id="custom"

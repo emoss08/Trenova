@@ -3,7 +3,9 @@ import {
   DataTableColorColumn,
   DataTableDescription,
 } from "@/components/data-table/_components/data-table-components";
+import { ColorDot } from "@/components/data-table/_components/data-table-color-picker";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
+import { commitRowField } from "@/lib/data-table-commit";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
 import { shipmentTypeService } from "@/services/shipment-type";
@@ -61,12 +63,28 @@ export function getColumns(t: TranslateFn): ColumnDef<ShipmentTypeRow>[] {
     {
       accessorKey: "code",
       header: t("Code"),
-      cell: ({ row }) => {
+      // The code and its colour are both changed in place: the dot opens the swatches, the
+      // text is edited like any other cell, with the dot kept beside it.
+      cell: ({ row, cell, table }) => {
         const { code, color } = row.original;
-        return <DataTableColorColumn text={code} color={color ?? undefined} />;
+        return (
+          <DataTableColorColumn
+            text={code}
+            color={color ?? undefined}
+            editColor={
+              cell.getCanEdit()
+                ? {
+                    label: t("Code"),
+                    onChange: (next) => commitRowField(table, row, "color", next),
+                  }
+                : undefined
+            }
+          />
+        );
       },
       enableCellEditing: true,
       meta: {
+        editLeading: (row) => (row.color ? <ColorDot color={row.color} /> : null),
         apiField: "code",
         filterable: true,
         sortable: true,

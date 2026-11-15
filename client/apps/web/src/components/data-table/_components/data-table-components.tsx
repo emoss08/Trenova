@@ -1,18 +1,28 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
+import { ColorDot, DataTableColorPicker } from "./data-table-color-picker";
 
 type DataTableColorColumnProps = {
   text: string;
   color?: string;
   className?: string;
+  /** Lets the person change the colour from the dot; the label names what it belongs to. */
+  editColor?: { label: string; onChange: (color: string | null) => Promise<void> };
 };
 
-export function DataTableColorColumn({ text, color, className }: DataTableColorColumnProps) {
+export function DataTableColorColumn({
+  text,
+  color,
+  className,
+  editColor,
+}: DataTableColorColumnProps) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      {color && (
-        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-      )}
+      {editColor ? (
+        <DataTableColorPicker color={color} label={editColor.label} onChange={editColor.onChange} />
+      ) : color ? (
+        <ColorDot color={color} />
+      ) : null}
       <span className="truncate">{text}</span>
     </div>
   );

@@ -29,7 +29,7 @@ import { gridCellMove } from "@/lib/data-table-grid";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useTableAtom } from "@trenova/shared/hooks/use-table-atom";
 import type { DataTableRowChanges } from "@/hooks/data-table/use-data-table-live-refresh";
-import { DataTableCellEditor } from "./data-table-cell-editor";
+import { DataTableCellEditor, editsInline } from "./data-table-cell-editor";
 import { DataTableContextMenu } from "./_components/data-table-context-menu";
 import { DataTableExpandedRow } from "./data-table-expanded-row";
 import { DataTableVirtualRows, type VirtualRowSlot } from "./data-table-virtual-rows";
@@ -263,7 +263,12 @@ function DataTableRowInner<TData extends RowData>({
                   "group-hover/row:bg-inherit group-data-cursor/row:bg-inherit group-data-expanded/row:bg-inherit group-data-formatted/row:bg-inherit group-data-[state=selected]/row:bg-inherit",
                 canEdit && "group/cell relative",
                 "data-cell-selected:bg-brand-subtle data-cell-focused:shadow-[inset_0_0_0_1px_var(--brand)]",
-                isEditing && "overflow-visible py-1",
+                // A line of text is edited in the cell itself, which only takes a faint fill; a
+                // list or a switch is a control of its own, which may reach past the cell.
+                isEditing &&
+                  (editsInline(cell.column.columnDef.meta?.filterType)
+                    ? "bg-muted/50 data-cell-focused:shadow-none"
+                    : "overflow-visible py-1"),
               )}
               key={cell.id}
               role="gridcell"

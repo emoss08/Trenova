@@ -47,6 +47,11 @@ declare module "@tanstack/react-table" {
      * The table leaves the column out when the organization's plan does not include it.
      */
     planFeature?: string;
+    /**
+     * Drawn before the text while the cell is edited in place, so what sits beside the value
+     * (a colour dot) stays where it was and the text does not move.
+     */
+    editLeading?: (row: TData) => React.ReactNode;
     [key: string]: any;
   }
 }

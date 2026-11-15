@@ -1,5 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Input } from "@trenova/shared/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -69,6 +68,14 @@ function draftToValue(variant: FilterVariant, draft: string): unknown {
       return trimmed === "" ? null : trimmed;
     }
   }
+}
+
+/**
+ * Whether a column is edited in the cell itself, as a line of text (text, numbers, dates),
+ * rather than through a control of its own (a list to choose from, a switch).
+ */
+export function editsInline(variant: FilterVariant | undefined): boolean {
+  return variant !== "select" && variant !== "boolean";
 }
 
 type DataTableCellEditorProps<TData extends Record<string, any>> = {
@@ -192,20 +199,38 @@ export function DataTableCellEditor<TData extends Record<string, any>>({
     );
   }
 
+  // The cell is the field: the text is edited where it is drawn, in the cell's own padding and
+  // type, with no box around it, after whatever the column draws before it (a colour dot). The
+  // hidden copy keeps the row the height it was.
+  const leading = cell.column.columnDef.meta?.editLeading?.(cell.row.original);
   return (
-    <span className="flex w-full items-center gap-2" onClick={stopClickThrough}>
-      <Input
-        autoFocus
-        disabled={isPending}
-        type={variant === "number" ? "number" : variant === "date" ? "datetime-local" : "text"}
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-        onKeyDown={handleInputKeyDown}
-        onBlur={handleInputBlur}
-        className={cn("h-7 w-full min-w-0 px-2 text-xs")}
-        aria-label={t("Edit {0}", columnHeaderLabel(cell.column))}
-      />
-      {isPending && <Spinner className="size-3.5 shrink-0" />}
-    </span>
+    <>
+      <span aria-hidden className="invisible">
+        {draft || "\u00a0"}
+      </span>
+      <span
+        data-slot="cell-inline-editor"
+        className="absolute inset-0 flex items-center gap-2 px-(--cell-px)"
+        onClick={stopClickThrough}
+      >
+        {leading}
+        <input
+          autoFocus
+          disabled={isPending}
+          type={variant === "number" ? "number" : variant === "date" ? "datetime-local" : "text"}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={handleInputKeyDown}
+          onBlur={handleInputBlur}
+          className={cn(
+            "h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none",
+            "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+            isPending && "text-muted-foreground",
+          )}
+          aria-label={t("Edit {0}", columnHeaderLabel(cell.column))}
+        />
+        {isPending && <Spinner className="size-3.5 shrink-0" />}
+      </span>
+    </>
   );
 }

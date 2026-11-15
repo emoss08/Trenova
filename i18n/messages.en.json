@@ -54215,6 +54215,15 @@
       "go/other"
     ]
   },
+  "Change the {0} color": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Change this report's settings.": {
     "sites": 1,
     "scope": [
@@ -61778,7 +61787,7 @@
     ]
   },
   "Code": {
-    "sites": 108,
+    "sites": 109,
     "scope": [
       "go",
       "ts"
@@ -61937,7 +61946,7 @@
     ]
   },
   "Code is required": {
-    "sites": 65,
+    "sites": 66,
     "scope": [
       "go",
       "ts"
@@ -61945,7 +61954,8 @@
     "areas": [
       "apps/web/types",
       "go/other",
-      "packages/shared/types"
+      "packages/shared/types",
+      "routes/shipment-type"
     ]
   },
   "Code mappings": {
@@ -62540,6 +62550,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Color {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Colorado (CO)": {
@@ -170301,6 +170320,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No color": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "No column matches.": {
@@ -278816,7 +278844,7 @@
     ]
   },
   "The change could not be saved.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -318730,7 +318758,7 @@
     ]
   },
   "Update failed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],

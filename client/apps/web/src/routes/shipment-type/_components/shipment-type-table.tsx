@@ -15,10 +15,9 @@ import { CheckCircleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./shipment-type-columns";
+import { shipmentTypeInlinePatch } from "./shipment-type-inline-edit";
 import { ShipmentTypePanel } from "./shipment-type-panel";
 import { translate } from "@trenova/shared/i18n/runtime";
-
-const INLINE_EDITABLE_FIELDS = new Set<keyof ShipmentTypeRow>(["code", "description"]);
 
 export default function ShipmentTypeTable() {
   const t = useT();
@@ -52,13 +51,9 @@ export default function ShipmentTypeTable() {
 
   const handleCellEditCommit = useCallback<CellEditCommitFn<ShipmentTypeRow>>(
     async ({ rowId, columnId, value, batch }) => {
-      const field = columnId as keyof ShipmentTypeRow;
-      if (!INLINE_EDITABLE_FIELDS.has(field)) return;
-      if (field === "code" && (value === null || value === "")) {
-        throw new Error("Code is required.");
-      }
-
-      await shipmentTypeService.patch(rowId, { [field]: value });
+      const patch = shipmentTypeInlinePatch(columnId, value);
+      if (!patch) return;
+      await shipmentTypeService.patch(rowId, patch);
       if (batch) return;
       await queryClient.invalidateQueries({
         queryKey: ["shipment-type-list"],

@@ -14,7 +14,12 @@ const testColumns: ColumnDef<TestRow>[] = [
     accessorKey: "name",
     header: "Name",
     enableCellEditing: true,
-    meta: { label: "Name", apiField: "name", filterType: "text" },
+    meta: {
+      label: "Name",
+      apiField: "name",
+      filterType: "text",
+      editLeading: (row: TestRow) => <span data-testid="name-mark">{row.name.charAt(0)}</span>,
+    },
   },
   {
     accessorKey: "status",
@@ -146,6 +151,35 @@ describe("DataTable cell editing", () => {
     await waitFor(() => {
       expect(screen.queryByRole("textbox", { name: "Edit Name" })).not.toBeInTheDocument();
     });
+  });
+
+  it("edits a line of text in the cell itself, filling it, with no field box around it", async () => {
+    renderTable(vi.fn());
+
+    fireEvent.click(screen.getAllByLabelText("Edit Name")[0]);
+    const input = await screen.findByRole("textbox", { name: "Edit Name" });
+    const cell = input.closest('[role="gridcell"]');
+
+    const field = input.closest('[data-slot="cell-inline-editor"]');
+    expect(input).not.toHaveAttribute("data-slot", "input");
+    expect(input).toHaveClass("border-0", "bg-transparent", "outline-none", "text-sm");
+    expect(field).toHaveClass("absolute", "inset-0", "px-(--cell-px)");
+    expect(cell).toHaveClass("bg-muted/50");
+    expect(cell).not.toHaveClass("overflow-visible");
+    // The hidden copy of the text holds the row at its height while the field floats over it.
+    expect(cell?.querySelector('[aria-hidden="true"]')?.textContent).toBe("Alice");
+  });
+
+  it("keeps what the column draws before the text beside it while the text is edited", async () => {
+    renderTable(vi.fn());
+
+    fireEvent.click(screen.getAllByLabelText("Edit Name")[0]);
+    const input = await screen.findByRole("textbox", { name: "Edit Name" });
+    const field = input.closest('[data-slot="cell-inline-editor"]');
+    const mark = screen.getByTestId("name-mark");
+
+    expect(mark.textContent).toBe("A");
+    expect(field?.firstElementChild).toBe(mark);
   });
 
   it("cancels the edit on Escape without committing", async () => {
