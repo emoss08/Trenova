@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/demandforecastjobs/demandforecastcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -65,6 +67,7 @@ func newActivities(forecasts *fakeForecasts, tenants *fakeTenants) *Activities {
 	return NewActivities(ActivitiesParams{
 		Forecasts: forecasts,
 		Tenants:   tenants,
+		Features:  plantest.AllFeatures(),
 		Logger:    zap.NewNop(),
 	})
 }
@@ -87,6 +90,27 @@ func TestFitDemandForecastActivity_FitsThePayloadsTenantAndReportsTheGrade(t *te
 
 	assert.Equal(t, []pagination.TenantInfo{tenantA}, forecasts.fitted)
 	assert.Equal(t, &FitResult{Status: "ready", LoadsTested: 640, Skill: 0.31}, result)
+}
+
+func TestFitDemandForecastActivity_ComputesNothingWithoutDispatchIntelligence(t *testing.T) {
+	t.Parallel()
+
+	forecasts := &fakeForecasts{quality: &demandforecast.Quality{Status: demandforecast.StatusReady}}
+	activities := NewActivities(ActivitiesParams{
+		Forecasts: forecasts,
+		Tenants:   &fakeTenants{},
+		Features:  plantest.Without(platformcatalog.FeatureDispatchIntelligence),
+		Logger:    zap.NewNop(),
+	})
+
+	result, err := activities.FitDemandForecastActivity(
+		t.Context(),
+		&TenantPayload{TenantWorkItem: temporaljobs.NewTenantWorkItem(tenantA, 1)},
+	)
+	require.NoError(t, err)
+
+	assert.Empty(t, forecasts.fitted, "no forecast is fitted or stored")
+	assert.Equal(t, &FitResult{Status: FitStatusNotOnPlan}, result)
 }
 
 func TestFitDemandForecastActivity_ReturnsTheFitError(t *testing.T) {

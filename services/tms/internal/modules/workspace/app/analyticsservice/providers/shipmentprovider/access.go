@@ -2,6 +2,7 @@ package shipmentprovider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
@@ -93,6 +94,20 @@ func (a *cardAccess) shows(ctx context.Context, value linkedValue) bool {
 	}
 
 	return true
+}
+
+func (a *cardAccess) readsDetention(ctx context.Context) (bool, error) {
+	if a.linked == nil {
+		return false, nil
+	}
+	_, off, err := a.linked.PlanDenial(ctx, permission.ResourceDetention, "")
+	if err != nil {
+		return false, fmt.Errorf("read whether the plan includes detention: %w", err)
+	}
+	if off {
+		return false, nil
+	}
+	return a.linked.Reads(ctx, permission.ResourceDetention), nil
 }
 
 func (a *cardAccess) showsMargins() bool {

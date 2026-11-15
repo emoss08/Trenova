@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -114,4 +115,8 @@ func (o *ShipmentObserver) OnShipmentEvent(ctx context.Context, event *shipmente
 	}
 
 	return nil
+}
+
+func (o *ShipmentObserver) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureBilling
 }

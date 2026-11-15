@@ -17,6 +17,8 @@ import { ReconciliationHeader } from "./reconciliation-header";
 import { RequiredFieldsSection } from "./required-fields-section";
 import { StopReconciliationCard } from "./stop-reconciliation-card";
 import type { ReconciliationCounts, ReconciliationState, RequiredFieldsForm } from "./types";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 
 const DocumentPreviewPanel = lazy(() => import("./document-preview-panel"));
 const AIActivityPanel = lazy(() => import("./ai-activity-panel"));
@@ -73,6 +75,8 @@ export default function ReconciliationWorkspace({
   onClearCreateError,
 }: ReconciliationWorkspaceProps) {
   const t = useT();
+  // The assistant beside the review is Nova, which only a plan with Trenova AI has.
+  const assistantShown = usePlanFeature(PlanFeature.AIDesk).available;
 
   const [showIssuesOnly, setShowIssuesOnly] = useState(false);
 
@@ -85,7 +89,7 @@ export default function ReconciliationWorkspace({
           </LazyComponent>
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={40} minSize={30}>
+        <ResizablePanel defaultSize={assistantShown ? 40 : 65} minSize={30}>
           <div className="flex h-full flex-col">
             <ReconciliationHeader
               overallConfidence={state.overallConfidence}
@@ -166,24 +170,26 @@ export default function ReconciliationWorkspace({
             </div>
           </div>
         </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={25} minSize={18} collapsible collapsedSize={0}>
-          <LazyComponent fallback={<AIActivityPanelSkeleton />}>
-            <AIActivityPanel
-              documentId={documentId}
-              state={state}
-              onAcceptField={onAcceptField}
-              onAcceptAllConfident={onAcceptAllConfident}
-              onEditField={onEditField}
-              onSetRequiredField={onSetRequiredField}
-              onSetStopLocation={onSetStopLocation}
-              onSetStopSchedule={onSetStopSchedule}
-              requiredFieldValues={requiredFieldValues}
-              lastCreateError={lastCreateError}
-              onClearCreateError={onClearCreateError}
-            />
-          </LazyComponent>
-        </ResizablePanel>
+        {assistantShown ? <ResizableHandle withHandle /> : null}
+        {assistantShown ? (
+          <ResizablePanel defaultSize={25} minSize={18} collapsible collapsedSize={0}>
+            <LazyComponent fallback={<AIActivityPanelSkeleton />}>
+              <AIActivityPanel
+                documentId={documentId}
+                state={state}
+                onAcceptField={onAcceptField}
+                onAcceptAllConfident={onAcceptAllConfident}
+                onEditField={onEditField}
+                onSetRequiredField={onSetRequiredField}
+                onSetStopLocation={onSetStopLocation}
+                onSetStopSchedule={onSetStopSchedule}
+                requiredFieldValues={requiredFieldValues}
+                lastCreateError={lastCreateError}
+                onClearCreateError={onClearCreateError}
+              />
+            </LazyComponent>
+          </ResizablePanel>
+        ) : null}
       </ResizablePanelGroup>
     </div>
   );

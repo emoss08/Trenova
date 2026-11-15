@@ -18,12 +18,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -51,9 +50,9 @@ type Params struct {
 	Permissions  permissionports.PermissionEngine
 	Realtime     realtimeports.RealtimeService
 	// Days writes a page a person asked for again, on a worker.
-	Days    briefingports.BriefingDayWriter
-	Sources briefingfacts.Sources
-	Plans   platformplanports.PlanService
+	Days     briefingports.BriefingDayWriter
+	Sources  briefingfacts.Sources
+	Features platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -65,7 +64,7 @@ type Service struct {
 	permissions  permissionports.PermissionEngine
 	realtime     realtimeports.RealtimeService
 	days         briefingports.BriefingDayWriter
-	plans        platformplanports.PlanService
+	features     platformcatalogports.FeatureGate
 	now          func() int64
 }
 
@@ -81,7 +80,7 @@ func New(p Params) *Service {
 		permissions:  p.Permissions,
 		realtime:     p.Realtime,
 		days:         p.Days,
-		plans:        p.Plans,
+		features:     p.Features,
 		now:          timeutils.NowUnix,
 	}
 }
@@ -339,12 +338,7 @@ func (s *Service) Regenerate(
 	if err := s.assertMay(ctx, actor, permission.OpCreate); err != nil {
 		return nil, err
 	}
-	if err := planservice.RequireCapability(
-		ctx,
-		s.plans,
-		req.TenantInfo,
-		platformplan.CapabilityAgentAutomation,
-	); err != nil {
+	if err := platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureAIDesk); err != nil {
 		return nil, err
 	}
 
@@ -409,10 +403,10 @@ func (s *Service) assertMay(
 		return err
 	}
 	if result == nil || !result.Allowed {
-		return errortypes.NewAuthorizationError(
+		return permissionports.DeniedError(result, errortypes.NewAuthorizationError(
 			"You do not have permission to {0} briefings",
 			operation,
-		)
+		))
 	}
 
 	return nil

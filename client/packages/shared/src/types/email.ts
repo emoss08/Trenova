@@ -24,6 +24,8 @@ export const emailMessageStatusSchema = z.enum([
   "Clicked",
   "Suppressed",
 ]);
+export const emailKindSchema = z.enum(["System", "CustomerFacing"]);
+export const emailSenderSchema = z.enum(["Organization", "Trenova"]);
 export const emailSuppressionReasonSchema = z.enum([
   "HardBounce",
   "Complaint",
@@ -54,10 +56,18 @@ export const emailProfileAssignmentSchema = z.object({
   profile: linkedRecordSchema("email_profile", emailProfileSchema).optional(),
 });
 
+export const emailRoutingSchema = z.object({
+  assignments: z.array(emailProfileAssignmentSchema),
+  systemEmailInUse: z.boolean(),
+  systemEmailFromAddress: z.string(),
+});
+
 export const emailMessageSchema = z.object({
   id: z.string(),
   profileId: z.string(),
   purpose: emailPurposeSchema,
+  kind: emailKindSchema.optional(),
+  sender: emailSenderSchema,
   provider: emailProviderSchema,
   idempotencyKey: z.string(),
   providerMessageId: z.string().optional(),
@@ -101,6 +111,7 @@ export const emailSuppressionListSchema = createLimitOffsetResponse(emailSuppres
 
 export type EmailProfile = z.infer<typeof emailProfileSchema>;
 export type EmailProfileAssignment = z.infer<typeof emailProfileAssignmentSchema>;
+export type EmailRouting = z.infer<typeof emailRoutingSchema>;
 export type EmailMessage = z.infer<typeof emailMessageSchema>;
 export type EmailSuppression = z.infer<typeof emailSuppressionSchema>;
 export type TestEmailProfileRequest = z.infer<typeof testEmailProfileRequestSchema>;

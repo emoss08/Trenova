@@ -2,7 +2,9 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import type { DispatchBoardSummary } from "@/lib/graphql/dispatch-console";
+import { PlanFeature } from "@/lib/plan-feature";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import type { ReactNode } from "react";
 import type { UrgencyBucket } from "./dispatch-vocabulary";
 
@@ -17,7 +19,9 @@ function Label({ children }: { children: ReactNode }) {
 
 /**
  * The figures a dispatcher is measured on, each one a way into the queue: the groups it
- * counts, Nova's waiting proposals, the exceptions tab and the open drivers.
+ * counts, Nova's waiting proposals, the exceptions tab and the open drivers. Nova's
+ * proposals are Trenova AI's and the exceptions are the Watchtower's, so each figure is
+ * drawn only on a plan that includes it, and the strip reflows without it.
  */
 export function SummaryStrip({
   summary,
@@ -46,6 +50,8 @@ export function SummaryStrip({
   showsDrivers: boolean;
 }) {
   const t = useT();
+  const showsProposals = usePlanFeature(PlanFeature.AIDesk).available;
+  const showsExceptions = usePlanFeature(PlanFeature.AIWatchtower).available;
 
   if (isError && !summary) {
     // A failed read is never drawn as figures still loading: each one says it is unknown.
@@ -53,10 +59,10 @@ export function SummaryStrip({
       t("Needs a driver"),
       t("Late"),
       t("Due now"),
-      t("Proposals waiting"),
-      t("Exceptions"),
+      showsProposals ? t("Proposals waiting") : null,
+      showsExceptions ? t("Exceptions") : null,
       t("Open drivers"),
-    ];
+    ].filter((label): label is string => label !== null);
     return (
       <KpiStrip aria-label={t("Dispatch figures")} className={STRIP_CLASS}>
         {unknown.map((label) => (
@@ -72,7 +78,12 @@ export function SummaryStrip({
   }
 
   if (isPending || !summary) {
-    return <KpiStripSkeleton count={6} className={STRIP_CLASS} />;
+    return (
+      <KpiStripSkeleton
+        count={4 + Number(showsProposals) + Number(showsExceptions)}
+        className={STRIP_CLASS}
+      />
+    );
   }
 
   const toggleFocus = (bucket: UrgencyBucket) =>
@@ -112,35 +123,39 @@ export function SummaryStrip({
         value={<span className="tabular-nums">{summary.atRiskMoves.toLocaleString()}</span>}
         sub={t("open or opens within 4 hours")}
       />
-      <KpiStripItem
-        label={
-          <Label>
-            <NovaBadge size="xs" />
-            {t("Proposals waiting")}
-          </Label>
-        }
-        hint={t("Moves where Nova picked a driver and is waiting on a decision.")}
-        value={<span className="tabular-nums">{proposalsWaiting.toLocaleString()}</span>}
-        sub={t("Nova picked a driver")}
-      />
-      <KpiStripItem
-        label={<Label>{t("Exceptions")}</Label>}
-        hint={t(
-          "Covered moves that slipped: late, a missed stop, no check call, or out of carriers.",
-        )}
-        tone={exceptions && exceptions.count > 0 ? "danger" : undefined}
-        onClick={onShowExceptions}
-        value={
-          <span className="tabular-nums">
-            {exceptions === null
-              ? "—"
-              : exceptions.more
-                ? t("{0}+", exceptions.count)
-                : exceptions.count.toLocaleString()}
-          </span>
-        }
-        sub={t("covered, off plan")}
-      />
+      {showsProposals ? (
+        <KpiStripItem
+          label={
+            <Label>
+              <NovaBadge size="xs" />
+              {t("Proposals waiting")}
+            </Label>
+          }
+          hint={t("Moves where Nova picked a driver and is waiting on a decision.")}
+          value={<span className="tabular-nums">{proposalsWaiting.toLocaleString()}</span>}
+          sub={t("Nova picked a driver")}
+        />
+      ) : null}
+      {showsExceptions ? (
+        <KpiStripItem
+          label={<Label>{t("Exceptions")}</Label>}
+          hint={t(
+            "Covered moves that slipped: late, a missed stop, no check call, or out of carriers.",
+          )}
+          tone={exceptions && exceptions.count > 0 ? "danger" : undefined}
+          onClick={onShowExceptions}
+          value={
+            <span className="tabular-nums">
+              {exceptions === null
+                ? "—"
+                : exceptions.more
+                  ? t("{0}+", exceptions.count)
+                  : exceptions.count.toLocaleString()}
+            </span>
+          }
+          sub={t("covered, off plan")}
+        />
+      ) : null}
       <KpiStripItem
         label={<Label>{t("Open drivers")}</Label>}
         hint={t("Available drivers holding no work.")}

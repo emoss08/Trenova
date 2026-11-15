@@ -570,7 +570,6 @@ function ShipmentRatingReview({
 
 export default function ShipmentBillingDetails() {
   const t = useT();
-
   const { control, setValue } = useFormContext<Shipment>();
   const customerId = useWatch({ control, name: "customerId" });
   const customer = useWatch({ control, name: "customer" });
@@ -687,7 +686,6 @@ export default function ShipmentBillingDetails() {
       render: () => <ShipmentTariffInputs />,
     },
   ];
-
   return (
     <Inner>
       <FuelSurchargeChangeDialog

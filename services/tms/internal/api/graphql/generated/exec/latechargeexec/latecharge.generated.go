@@ -29,7 +29,6 @@ var Shard = &gqlexec.Shard{
 		{Object: "Invoice", Fields: []*gqlexec.Field{
 			{
 				Name:       "lateChargeAssessments",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
@@ -38,7 +37,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@latecharge").LateChargeAssessments(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNLateChargeAssessment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessmentᚄ),
+				Marshal: gqlexec.Marshal(marshalOLateChargeAssessment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessmentᚄ),
 			},
 		}},
 		{Object: "LateChargeAssessment", Fields: []*gqlexec.Field{
@@ -84,67 +83,60 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sourceInvoiceId",
-				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*latecharge.LateChargeAssessment)
 					return obj.SourceInvoiceID, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
 				Name:     "periodIndex",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*latecharge.LateChargeAssessment)
 					return obj.PeriodIndex, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2int),
 			},
 			{
 				Name:     "periodStart",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*latecharge.LateChargeAssessment)
 					return obj.PeriodStart, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
 			},
 			{
 				Name:     "periodEnd",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*latecharge.LateChargeAssessment)
 					return obj.PeriodEnd, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
 			},
 			{
 				Name:     "asOfDate",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*latecharge.LateChargeAssessment)
 					return obj.AsOfDate, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
 			},
 			{
 				Name:     "basisOpenBalanceMinor",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*latecharge.LateChargeAssessment)
 					return obj.BasisOpenBalanceMinor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int64),
+				Marshal: gqlexec.Marshal(marshalOInt2int64),
 			},
 			{
 				Name:       "ratePercent",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				ChildErr:   errNoChild3,
@@ -152,17 +144,16 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*latecharge.LateChargeAssessment)
 					return gqlexec.Resolver[LateChargeAssessmentResolver](ec, "LateChargeAssessment@latecharge").RatePercent(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
 				Name:     "chargeMinor",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*latecharge.LateChargeAssessment)
 					return obj.ChargeMinor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int64),
+				Marshal: gqlexec.Marshal(marshalOInt2int64),
 			},
 			{
 				Name:     "debitMemoInvoiceId",
@@ -551,7 +542,7 @@ type InvoiceResolver interface {
 }
 
 type LateChargeAssessmentResolver interface {
-	RatePercent(ctx context.Context, obj *latecharge.LateChargeAssessment) (string, error)
+	RatePercent(ctx context.Context, obj *latecharge.LateChargeAssessment) (*string, error)
 }
 
 type LateChargeLineResolver interface {
@@ -707,14 +698,6 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNLateChargeAssessment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*latecharge.LateChargeAssessment) graphql.Marshaler {
-	return gqlexec.List[*latecharge.LateChargeAssessment]{
-		Elem:        marshalNLateChargeAssessment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessment,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
 func marshalNLateChargeAssessment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *latecharge.LateChargeAssessment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -787,8 +770,26 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
+func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
+	return res
+}
+
 func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	return res
+}
+
+func marshalOInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	return res
+}
+
+func marshalOInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
 	return res
 }
 
@@ -797,4 +798,16 @@ func marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Invoice", v)
+}
+
+func marshalOLateChargeAssessment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*latecharge.LateChargeAssessment) graphql.Marshaler {
+	return gqlexec.List[*latecharge.LateChargeAssessment]{
+		Elem:        marshalNLateChargeAssessment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessment,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalOTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	return res
 }

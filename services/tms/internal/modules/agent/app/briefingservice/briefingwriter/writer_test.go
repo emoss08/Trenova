@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,7 +19,7 @@ type cannedNova struct {
 	err  error
 }
 
-func (c *cannedNova) Available(context.Context, pagination.TenantInfo) (bool, error) {
+func (c *cannedNova) Available(context.Context, pagination.TenantInfo, aitask.Task) (bool, error) {
 	return true, nil
 }
 

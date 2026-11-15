@@ -17,6 +17,8 @@ export type TileReport = {
   ir: ReportIR | null;
   name: string;
   loading: boolean;
+  /** The add-on a gallery report needs when the organization's plan does not include it. */
+  planDenial?: { featureName: string; addOnName: string } | null;
 };
 
 /** A field a dashboard filter could sensibly target, and why it was offered. */
@@ -133,6 +135,7 @@ export function useTileReport(tile: ReportDashboardTile | null): TileReport {
         ir: entry ? parseReportIR(entry.definition) : null,
         name: entry?.name ?? cannedKey,
         loading: canned.isLoading,
+        planDenial: entry && !entry.available ? (entry.planDenial ?? null) : null,
       };
     }
     if (definitionId) {

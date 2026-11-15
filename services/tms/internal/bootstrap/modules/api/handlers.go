@@ -99,6 +99,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttrackingpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/supportentryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablequeryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/telematicshandler"
@@ -189,6 +190,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	rateconfirmationpublichandler.New,
 	carriertrackingpublichandler.New,
 	shipmenttrackingpublichandler.New,
+	supportentryhandler.New,
 	googlemapshandler.New,
 	weatheralerthandler.New,
 	accountingcontrolhandler.New,

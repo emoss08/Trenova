@@ -1,9 +1,8 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
 import { appAdminLinks } from "@/config/app-navigation";
-import { usePlanRestrictions } from "@/hooks/use-plan-restrictions";
-import { isPlanRestricted } from "@/lib/plan-capability";
 import { normalizePath } from "@/lib/navigation-paths";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import { isFeatureOnPlan, useUnavailableFeatures } from "@trenova/shared/hooks/use-plan-feature";
 import { usePublicConfig } from "@trenova/shared/hooks/use-public-config";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { hasOrganizationCapability } from "@trenova/shared/types/organization-capability";
@@ -15,9 +14,10 @@ export function useAccessibleAdminLinks(): SidebarLink[] {
   const hasPermission = usePermissionStore((state) => state.hasPermission);
   const canAccessRoute = usePermissionStore((state) => state.canAccessRoute);
   const capabilities = useOrgCapabilities();
-  const planRestrictions = usePlanRestrictions();
+  const unavailableFeatures = useUnavailableFeatures();
   const { config } = usePublicConfig();
   const platformMode = config.platformMode;
+  const managed = config.managed;
 
   return useMemo(
     () =>
@@ -30,11 +30,15 @@ export function useAccessibleAdminLinks(): SidebarLink[] {
           return false;
         }
 
-        if (isPlanRestricted(planRestrictions, link.planCapability)) {
+        if (!isFeatureOnPlan(unavailableFeatures, link.planFeature)) {
           return false;
         }
 
         if (link.platformMode && link.platformMode !== platformMode) {
+          return false;
+        }
+
+        if (link.managedOnly && !managed) {
           return false;
         }
 
@@ -53,6 +57,14 @@ export function useAccessibleAdminLinks(): SidebarLink[] {
 
         return canAccessRoute(normalizedPath) || canAccessRoute(link.href);
       }),
-    [canAccessRoute, capabilities, hasPermission, manifest, planRestrictions, platformMode],
+    [
+      canAccessRoute,
+      capabilities,
+      hasPermission,
+      manifest,
+      unavailableFeatures,
+      platformMode,
+      managed,
+    ],
   );
 }

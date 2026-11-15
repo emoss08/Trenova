@@ -88,8 +88,9 @@ func (p *planner) plan(t reflect.Type) *typePlan {
 }
 
 // mayGuard reports whether a value of a type can hold anything the guard acts
-// on: a record of a kind, an entity that withholds protected fields, or an
-// interface whose dynamic value could be either.
+// on: a record of a kind, an entity that withholds protected fields, a field
+// some kind declares in its FieldFeatures, or an interface whose dynamic value
+// could be any of them.
 func (p *planner) mayGuard(t reflect.Type) bool {
 	p.mu.RLock()
 	known, ok := p.reaches[t]
@@ -159,6 +160,9 @@ func (p *planner) structReaches(
 		return false
 	}
 	for _, f := range jsonFields(t) {
+		if p.kinds.registry.DeclaresFieldFeature(f.name) {
+			return true
+		}
 		if p.search(t.FieldByIndex(f.index).Type, seen, positive) {
 			return true
 		}

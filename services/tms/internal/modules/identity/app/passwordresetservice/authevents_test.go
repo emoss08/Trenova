@@ -115,7 +115,7 @@ func TestResetPasswordRecordsARefusedToken(t *testing.T) {
 	svc := newService(
 		t,
 		&stubUserRepo{user: activeUser()},
-		&stubTokenRepo{findErr: errors.New("not found")},
+		&stubTokenRepo{findErr: errortypes.NewNotFoundError("Password reset token not found")},
 		&stubSessionRepo{},
 	)
 	svc.authEvents = events
@@ -161,7 +161,7 @@ func TestResetPasswordRefusesAPasswordThePolicyRejectsWithoutSpendingTheLink(t *
 			var multiErr *errortypes.MultiError
 			require.ErrorAs(t, err, &multiErr)
 			require.Len(t, multiErr.Errors, 1)
-			assert.Equal(t, "newPassword", multiErr.Errors[0].Field)
+			assert.Equal(t, "newPassword", multiErr.Errors[0].Field())
 			assert.Zero(t, tokens.markUsedCall)
 		})
 	}

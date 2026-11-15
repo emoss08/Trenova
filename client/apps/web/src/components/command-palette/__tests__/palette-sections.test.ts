@@ -51,6 +51,7 @@ function search(
     remote: IDLE_REMOTE,
     recentRecords: [],
     ranking: rankLocal(query, pages, commands, t),
+    asksNova: true,
     ...rest,
   };
 }

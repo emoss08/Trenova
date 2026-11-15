@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { billingQueue } from "@/lib/queries/billing-queue";
 import { billingQueueService } from "@/services/billing-queue";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -16,12 +15,12 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import type { BillingQueueSearchIntent } from "@trenova/shared/types/billing-queue";
 import { BILLING_QUEUE_OPEN_LANES } from "@trenova/shared/types/billing-queue";
-import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import { useState } from "react";
 import { queueSidebarSearchParamsParser } from "../use-billing-queue-state";
 import { CLEARED_QUEUE_FILTERS } from "./billing-queue-filters";
 import { laneLabel } from "./billing-queue-lanes";
+import { useBillingQueueAssist } from "./use-billing-queue-assist";
 
 /** Three words or more reads as a question for Nova rather than a number to look up. */
 export function isSentence(text: string): boolean {
@@ -43,7 +42,7 @@ export function BillingQueueSearch() {
   const [payerName, setPayerName] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState<string | null>(null);
   const [unresolved, setUnresolved] = useState<string | null>(null);
-  const { data: assist } = useQuery(billingQueue.assist());
+  const assist = useBillingQueueAssist();
   const canAsk = assist?.search === true;
   const asking = canAsk && isSentence(params.query);
 

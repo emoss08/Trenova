@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/novaharness"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -21,14 +22,14 @@ func NovaRunner(completion llmports.StructuredCompleter) llmports.TaskRunner {
 
 type novaChosen struct{}
 
-func (novaChosen) NovaReady(context.Context, pagination.TenantInfo) (bool, error) {
-	return true, nil
+func (novaChosen) NovaReady(context.Context, pagination.TenantInfo, aitask.Task) error {
+	return nil
 }
 
 type novaUnchosen struct{}
 
-func (novaUnchosen) NovaReady(context.Context, pagination.TenantInfo) (bool, error) {
-	return false, nil
+func (novaUnchosen) NovaReady(context.Context, pagination.TenantInfo, aitask.Task) error {
+	return llmports.ErrNoProviderConfigured
 }
 
 // NovaOnRouter is the harness calling a scripted router itself, as it does on a

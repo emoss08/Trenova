@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -157,6 +158,7 @@ func TestStartForDefinitionRejectsDisabledDefinition(t *testing.T) {
 	startCalled := false
 	def := definitionFixture(false)
 	svc := &Service{
+		features: plantest.AllFeatures(),
 		l:        zap.NewNop(),
 		budgets:  &agenttest.StubMoneyBudgets{},
 		activity: agenttest.QuietActivity{},
@@ -212,6 +214,7 @@ func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 	var createdAfterStart bool
 	audit := &fakeAuditService{}
 	svc := &Service{
+		features:    plantest.AllFeatures(),
 		l:           zap.NewNop(),
 		budgets:     &agenttest.StubMoneyBudgets{},
 		activity:    agenttest.QuietActivity{},
@@ -319,6 +322,7 @@ func TestStartForDefinitionUsesSlotWorkflowID(t *testing.T) {
 	def.SystemKey = ""
 	var started client.StartWorkflowOptions
 	svc := &Service{
+		features:    plantest.AllFeatures(),
 		l:           zap.NewNop(),
 		budgets:     &agenttest.StubMoneyBudgets{},
 		activity:    agenttest.QuietActivity{},
@@ -383,6 +387,7 @@ func TestStartForDefinitionRecordsNothingWhenWorkflowStartFails(t *testing.T) {
 	def := definitionFixture(true)
 	created := false
 	svc := &Service{
+		features:    plantest.AllFeatures(),
 		l:           zap.NewNop(),
 		budgets:     &agenttest.StubMoneyBudgets{},
 		activity:    agenttest.QuietActivity{},
@@ -425,6 +430,7 @@ func TestStartForDefinitionRefusesASecondRunForAnOpenSubject(t *testing.T) {
 	def := definitionFixture(true)
 	created := false
 	svc := &Service{
+		features:    plantest.AllFeatures(),
 		l:           zap.NewNop(),
 		budgets:     &agenttest.StubMoneyBudgets{},
 		activity:    agenttest.QuietActivity{},
@@ -465,6 +471,7 @@ func TestStartForDefinitionRequiresIDOrSystemKey(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{
+		features:    plantest.AllFeatures(),
 		l:           zap.NewNop(),
 		budgets:     &agenttest.StubMoneyBudgets{},
 		activity:    agenttest.QuietActivity{},

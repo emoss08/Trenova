@@ -491,6 +491,7 @@ func (s *Service) mail(
 
 	if _, err = s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     group.tenant,
+		Type:           email.TypeProposalReminder,
 		Purpose:        email.PurposeNotifications,
 		To:             []string{address},
 		Subject:        rendered.Subject,

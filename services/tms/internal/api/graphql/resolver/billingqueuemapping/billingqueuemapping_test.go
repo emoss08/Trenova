@@ -1,12 +1,22 @@
 package billingqueuemapping
 
 import (
+	"context"
+	"errors"
+	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +33,7 @@ func TestBillingQueueItemToModel_MapsTypedBillingQueueItem(t *testing.T) {
 	reviewStartedAt := int64(1780415883)
 	canceledAt := int64(1780415999)
 
-	model, err := BillingQueueItemToModel(t.Context(), &billingqueue.BillingQueueItem{
+	model, err := BillingQueueItemToModel(allOn(t), &billingqueue.BillingQueueItem{
 		ID:                        pulid.MustNew("bqi_"),
 		OrganizationID:            pulid.MustNew("org_"),
 		BusinessUnitID:            pulid.MustNew("bu_"),
@@ -85,7 +95,7 @@ func TestBillingQueueItemToModel_MapsAMemoAndWhoRaisedIt(t *testing.T) {
 	t.Parallel()
 
 	raisedBy := pulid.MustNew("usr_")
-	model, err := BillingQueueItemToModel(t.Context(), &billingqueue.BillingQueueItem{
+	model, err := BillingQueueItemToModel(allOn(t), &billingqueue.BillingQueueItem{
 		ID:                    pulid.MustNew("bqi_"),
 		OrganizationID:        pulid.MustNew("org_"),
 		BusinessUnitID:        pulid.MustNew("bu_"),
@@ -107,7 +117,7 @@ func TestBillingQueueItemToModel_MapsAMemoAndWhoRaisedIt(t *testing.T) {
 func TestBillingQueueItemToModel_DefaultsNilAdjustmentContext(t *testing.T) {
 	t.Parallel()
 
-	model, err := BillingQueueItemToModel(t.Context(), &billingqueue.BillingQueueItem{
+	model, err := BillingQueueItemToModel(allOn(t), &billingqueue.BillingQueueItem{
 		ID:                    pulid.MustNew("bqi_"),
 		OrganizationID:        pulid.MustNew("org_"),
 		BusinessUnitID:        pulid.MustNew("bu_"),
@@ -130,4 +140,109 @@ func TestRequiredBillingQueueItemToModel_RejectsNilItem(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, model)
 	assert.Contains(t, err.Error(), "Billing queue transfer did not return an item")
+}
+
+func allOn(t *testing.T) context.Context {
+	t.Helper()
+
+	return gqlctx.WithPlanMemo(t.Context(), plantest.AllOn().Memo())
+}
+
+func reviewedItem() *billingqueue.BillingQueueItem {
+	verdict := billingqueue.AgentVerdictConcern
+	reviewedAt := int64(1_790_000_000)
+	return &billingqueue.BillingQueueItem{
+		ID:              pulid.MustNew("bqi_"),
+		Lane:            billingqueue.LaneNeedsYou,
+		AgentVerdict:    &verdict,
+		AgentSummary:    "Fuel is 18% above this lane's usual",
+		AgentReviewedAt: &reviewedAt,
+	}
+}
+
+func TestBillingQueueItemConnectionToModel_WithholdsTheAgentReviewWithoutAgentAutomation(t *testing.T) {
+	t.Parallel()
+
+	gate := &countingGate{FeatureGate: plantest.BaseOnly()}
+	ctx := gqlctx.WithPlanMemo(t.Context(), onplanMemo(gate))
+	conn, err := BillingQueueItemConnectionToModel(
+		ctx,
+		&pagination.CursorListResult[*billingqueue.BillingQueueItem]{
+			Items:       []*billingqueue.BillingQueueItem{reviewedItem(), reviewedItem()},
+			EdgeCursors: []string{"cursor-1", "cursor-2"},
+		},
+	)
+
+	require.NoError(t, err)
+	require.Len(t, conn.Edges, 2)
+	for _, edge := range conn.Edges {
+		assert.Nil(t, edge.Node.AgentVerdict)
+		assert.Nil(t, edge.Node.AgentSummary)
+		assert.Nil(t, edge.Node.AgentReviewedAt)
+		assert.Equal(t, billingqueue.LaneNeedsYou, edge.Node.Lane)
+	}
+	assert.Equal(t, 1, gate.asked(platformcatalog.FeatureAgentAutomation),
+		"the plan is asked once per request, not once per row")
+}
+
+func TestBillingQueueItemToModel_ShowsTheAgentReviewWithAgentAutomation(t *testing.T) {
+	t.Parallel()
+
+	model, err := BillingQueueItemToModel(allOn(t), reviewedItem())
+
+	require.NoError(t, err)
+	require.NotNil(t, model.AgentVerdict)
+	assert.Equal(t, billingqueue.AgentVerdictConcern, *model.AgentVerdict)
+	require.NotNil(t, model.AgentSummary)
+	assert.Equal(t, "Fuel is 18% above this lane's usual", *model.AgentSummary)
+	require.NotNil(t, model.AgentReviewedAt)
+	assert.Equal(t, 1_790_000_000, *model.AgentReviewedAt)
+}
+
+func TestBillingQueueItemToModel_AGateErrorIsAnError(t *testing.T) {
+	t.Parallel()
+
+	ctx := gqlctx.WithPlanMemo(t.Context(), onplanMemo(failingGate{}))
+	model, err := BillingQueueItemToModel(ctx, reviewedItem())
+
+	require.Error(t, err)
+	assert.Nil(t, model)
+}
+
+type countingGate struct {
+	platformcatalogports.FeatureGate
+
+	mu   sync.Mutex
+	asks map[platformcatalog.FeatureKey]int
+}
+
+func (g *countingGate) Enabled(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	g.mu.Lock()
+	if g.asks == nil {
+		g.asks = make(map[platformcatalog.FeatureKey]int, 1)
+	}
+	g.asks[feature]++
+	g.mu.Unlock()
+
+	return g.FeatureGate.Enabled(ctx, feature)
+}
+
+func (g *countingGate) asked(feature platformcatalog.FeatureKey) int {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	return g.asks[feature]
+}
+
+type failingGate struct{}
+
+func (failingGate) Enabled(context.Context, platformcatalog.FeatureKey) (bool, error) {
+	return false, errors.New("the plan could not be read")
+}
+
+func onplanMemo(gate platformcatalogports.FeatureGate) *onplan.Memo {
+	return onplan.New(permissioncatalog.Default(), gate).Memo()
 }

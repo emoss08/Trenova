@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +26,7 @@ type novaRunner struct {
 	asked    int
 }
 
-func (n *novaRunner) Available(_ context.Context, _ pagination.TenantInfo) (bool, error) {
+func (n *novaRunner) Available(_ context.Context, _ pagination.TenantInfo, _ aitask.Task) (bool, error) {
 	n.asked++
 	return n.servable, n.err
 }
@@ -38,46 +39,42 @@ func TestExtractionAvailabilityNamesWhatStandsInTheWay(t *testing.T) {
 	tests := []struct {
 		name         string
 		cfg          aiconfig.Config
-		plans        func(t *testing.T) platformplanports.PlanService
+		features     platformcatalogports.FeatureGate
 		availability *novaRunner
 		want         documentaiextractionports.ExtractionAvailability
 	}{
 		{
 			name:         "document extraction switched off on the server",
 			cfg:          aiconfig.Config{DocumentExtraction: false},
-			plans:        func(*testing.T) platformplanports.PlanService { return nil },
+			features:     plantest.AllFeatures(),
 			availability: &novaRunner{servable: true},
 			want:         documentaiextractionports.ExtractionOffOnServer,
 		},
 		{
 			name:         "all AI switched off on the server",
 			cfg:          aiconfig.Config{Enabled: &off, DocumentExtraction: true},
-			plans:        func(*testing.T) platformplanports.PlanService { return nil },
+			features:     plantest.AllFeatures(),
 			availability: &novaRunner{servable: true},
 			want:         documentaiextractionports.ExtractionOffOnServer,
 		},
 		{
-			name: "plan without document intelligence",
-			cfg:  aiconfig.Config{DocumentExtraction: true},
-			plans: func(t *testing.T) platformplanports.PlanService {
-				return plantest.Restricting(t, platformplan.CapabilityDocumentIntelligence)
-			},
+			name:         "plan without document intelligence",
+			cfg:          aiconfig.Config{DocumentExtraction: true},
+			features:     plantest.Without(platformcatalog.FeatureDocumentIntelligence),
 			availability: &novaRunner{servable: true},
 			want:         documentaiextractionports.ExtractionNotInPlan,
 		},
 		{
 			name:         "no provider chosen for Nova",
 			cfg:          aiconfig.Config{DocumentExtraction: true},
-			plans:        func(*testing.T) platformplanports.PlanService { return nil },
+			features:     plantest.AllFeatures(),
 			availability: &novaRunner{servable: false},
 			want:         documentaiextractionports.ExtractionNoProviderAssigned,
 		},
 		{
-			name: "Nova runs",
-			cfg:  aiconfig.Config{DocumentExtraction: true},
-			plans: func(t *testing.T) platformplanports.PlanService {
-				return plantest.Allowing(t, platformplan.CapabilityDocumentIntelligence)
-			},
+			name:         "Nova runs",
+			cfg:          aiconfig.Config{DocumentExtraction: true},
+			features:     plantest.AllFeatures(),
 			availability: &novaRunner{servable: true},
 			want:         documentaiextractionports.ExtractionAvailable,
 		},
@@ -88,7 +85,7 @@ func TestExtractionAvailabilityNamesWhatStandsInTheWay(t *testing.T) {
 			t.Parallel()
 
 			cfg := tt.cfg
-			svc := &Service{cfg: &cfg, plans: tt.plans(t), nova: tt.availability}
+			svc := &Service{cfg: &cfg, features: tt.features, nova: tt.availability}
 
 			got, err := svc.ExtractionAvailability(t.Context(), plantest.Tenant())
 
@@ -108,8 +105,9 @@ func TestExtractionAvailabilityAsksWhetherNovaRuns(t *testing.T) {
 
 	nova := &novaRunner{servable: true}
 	svc := &Service{
-		cfg:  &aiconfig.Config{DocumentExtraction: true},
-		nova: nova,
+		cfg:      &aiconfig.Config{DocumentExtraction: true},
+		features: plantest.AllFeatures(),
+		nova:     nova,
 	}
 
 	got, err := svc.ExtractionAvailability(t.Context(), plantest.Tenant())
@@ -124,8 +122,9 @@ func TestExtractionAvailabilityReturnsTheRouterError(t *testing.T) {
 
 	failure := errors.New("provider lookup failed")
 	svc := &Service{
-		cfg:  &aiconfig.Config{DocumentExtraction: true},
-		nova: &novaRunner{err: failure},
+		cfg:      &aiconfig.Config{DocumentExtraction: true},
+		features: plantest.AllFeatures(),
+		nova:     &novaRunner{err: failure},
 	}
 
 	_, err := svc.ExtractionAvailability(t.Context(), plantest.Tenant())

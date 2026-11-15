@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -63,6 +64,7 @@ func testRegistry(t *testing.T) *permissioncatalog.Registry {
 	registry := permissioncatalog.NewEmptyRegistry()
 	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    resourceCustomer.String(),
+		Feature:     platformcatalog.FeatureCoreTMS,
 		DisplayName: "Customer",
 		Category:    "Test",
 		Operations:  []permissionspec.OperationDefinition{{Operation: permission.OpRead}},
@@ -79,6 +81,7 @@ func testRegistry(t *testing.T) *permissioncatalog.Registry {
 	}))
 	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    resourceLedger.String(),
+		Feature:     platformcatalog.FeatureCoreTMS,
 		DisplayName: "Ledger",
 		Category:    "Test",
 		Operations:  []permissionspec.OperationDefinition{{Operation: permission.OpRead}},

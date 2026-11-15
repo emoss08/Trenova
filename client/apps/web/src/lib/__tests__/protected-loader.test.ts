@@ -209,6 +209,7 @@ function manifestReadingEverything(): PermissionManifest {
     permissions: Object.fromEntries(Object.values(Resource).map((resource) => [resource, 0xffff])),
     routeAccess: {},
     availableOrgs: [],
+    unavailableFeatures: [],
     checksum: "abc123",
     expiresAt: 1_782_403_304,
   } as unknown as PermissionManifest;

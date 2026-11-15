@@ -587,6 +587,24 @@ the page, or it would be read for a tile nobody scrolled to; the two reads the b
 with the canvas (`use-home-data.ts`) are the exception. A list a widget caps asks the server
 for the rows it shows, not a page it then slices.
 
+**A widget names what it needs, and the plan can lock it.** Each `WidgetDefinition`
+(`workspace/domain/homelayout/catalog.go`) declares its permission `Resource`, any further
+resources its data reads (`AlsoReads`: the detention watch reads detention), and, when it has
+no resource or belongs to another feature, its `Feature` (the fleet map needs Google Maps);
+every `MetricDefinition` does the same, and a test fails for a widget or a metric that names
+neither a resource nor a feature. A reader without one of those reads has the widget dropped.
+When the plan leaves out the feature of any of them, the layout returns the widget in its slot
+with `planLock` (feature, add-on name), decided from the one batched check before any data is
+read. Home leaves such a widget out entirely; only the layout editor draws
+`PlanLocked variant="card"` in its slot, so saving never drops it. Its component is never
+loaded and `use-home-data.ts` asks for none of its data. A single metric tile whose figure the
+plan leaves out is locked as a whole; a metric strip keeps its figures and lists the ones the
+plan leaves out in `lockedMetrics`, and a strip whose every figure is off the plan is locked as
+a whole. A measure carries its own `Feature` when it is computed from another add-on's setup
+(margin and cost per mile need Accounting & Cash, the costing setup's feature). The widget picker lists a widget the plan leaves out with a
+"Part of <add-on>" badge and cannot add it; a metric the same way. The roster tile's PTO
+liability and overdue training are null without their reads or their HR Suite feature.
+
 **Every crumb in the trail opens something.** The trail takes its names from the
 navigation config (`generateBreadcrumbSegments` in `lib/route-utils.ts`) and shows a
 parent only when it is a page, a section, or a record a page named with

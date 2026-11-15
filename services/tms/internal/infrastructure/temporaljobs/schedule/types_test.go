@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/api/enums/v1"
@@ -88,6 +89,7 @@ func TestSchedule_Validate_Valid(t *testing.T) {
 				Spec:      Cron("0 9 * * *"),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 		{
@@ -97,6 +99,7 @@ func TestSchedule_Validate_Valid(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -121,6 +124,7 @@ func TestSchedule_Validate_Invalid(t *testing.T) {
 				Spec:      Cron("0 9 * * *"),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 			expectedErr: ErrScheduleIDRequired,
 		},
@@ -130,6 +134,7 @@ func TestSchedule_Validate_Invalid(t *testing.T) {
 				ID:        "test-schedule",
 				Spec:      Cron("0 9 * * *"),
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 			expectedErr: ErrWorkflowRequired,
 		},
@@ -148,8 +153,30 @@ func TestSchedule_Validate_Invalid(t *testing.T) {
 				ID:        "test-schedule",
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 			expectedErr: ErrInvalidScheduleSpec,
+		},
+		{
+			name: "missing feature",
+			schedule: &Schedule{
+				ID:        "test-schedule",
+				Spec:      Cron("0 9 * * *"),
+				Workflow:  dummyWorkflow,
+				TaskQueue: "test-queue",
+			},
+			expectedErr: ErrFeatureRequired,
+		},
+		{
+			name: "feature the catalog does not know",
+			schedule: &Schedule{
+				ID:        "test-schedule",
+				Feature:   platformcatalog.FeatureKey("tms.no_such_feature"),
+				Spec:      Cron("0 9 * * *"),
+				Workflow:  dummyWorkflow,
+				TaskQueue: "test-queue",
+			},
+			expectedErr: ErrUnknownFeature,
 		},
 	}
 
@@ -170,6 +197,7 @@ func TestSchedule_Validate_Args(t *testing.T) {
 			Spec:      Every(time.Minute),
 			Workflow:  wf,
 			TaskQueue: "test-queue",
+			Feature:   testFeature,
 			Args:      args,
 		}
 	}
@@ -229,6 +257,7 @@ func TestSchedule_Hash(t *testing.T) {
 		Spec:      Cron("0 9 * * *"),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
 	schedule2 := &Schedule{
@@ -236,6 +265,7 @@ func TestSchedule_Hash(t *testing.T) {
 		Spec:      Cron("0 9 * * *"),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
 	schedule3 := &Schedule{
@@ -243,6 +273,7 @@ func TestSchedule_Hash(t *testing.T) {
 		Spec:      Cron("0 10 * * *"),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
 	assert.Equal(t, schedule1.Hash(), schedule2.Hash())
@@ -258,6 +289,7 @@ func TestSchedule_HashChangesWithJitter(t *testing.T) {
 		Spec:      Cron("15 * * * *"),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 	jittered := *bare
 	jittered.Spec = bare.Spec.WithJitter(5 * time.Minute)
@@ -277,6 +309,7 @@ func TestSchedule_HashChangesWithArgs(t *testing.T) {
 		Spec:      Cron("0 9 * * *"),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 	withArgs := *bare
 	withArgs.Args = []any{&input{}}
@@ -287,20 +320,21 @@ func TestSchedule_HashChangesWithArgs(t *testing.T) {
 	assert.Equal(t, withArgs.Hash(), again.Hash(), "the hash does not depend on where the args live")
 }
 
-func TestSchedule_ToScheduleOptions(t *testing.T) {
+func TestSchedule_Options(t *testing.T) {
 	schedule := &Schedule{
 		ID:            "test-schedule",
 		Description:   "Test schedule",
 		Spec:          Every(30 * time.Minute).WithTimezone("America/Chicago"),
 		Workflow:      dummyWorkflow,
 		TaskQueue:     "test-queue",
+		Feature:       testFeature,
 		OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_BUFFER_ONE,
 		Memo: map[string]any{
 			"custom": "value",
 		},
 	}
 
-	opts := schedule.ToScheduleOptions()
+	opts := enabled(schedule).options()
 
 	assert.Equal(t, "test-schedule", opts.ID)
 	assert.Equal(t, "America/Chicago", opts.Spec.TimeZoneName)
@@ -309,15 +343,16 @@ func TestSchedule_ToScheduleOptions(t *testing.T) {
 	assert.Equal(t, enums.SCHEDULE_OVERLAP_POLICY_BUFFER_ONE, opts.Overlap)
 }
 
-func TestSchedule_ToScheduleOptions_DefaultOverlapPolicy(t *testing.T) {
+func TestSchedule_Options_DefaultOverlapPolicy(t *testing.T) {
 	schedule := &Schedule{
 		ID:        "test-schedule",
 		Spec:      Every(30 * time.Minute),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
-	opts := schedule.ToScheduleOptions()
+	opts := enabled(schedule).options()
 
 	assert.Equal(t, enums.SCHEDULE_OVERLAP_POLICY_SKIP, opts.Overlap)
 }

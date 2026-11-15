@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,6 +60,7 @@ func newFixture(t *testing.T) *fixture {
 		Usage:        f.usage,
 		Encryption:   agentextensiontest.EncryptionService(),
 		AuditService: f.audit,
+		Features:     plantest.AllFeatures(),
 		Connectors: []agentextensionports.ExtensionConnector{
 			f.web,
 			f.parallel,

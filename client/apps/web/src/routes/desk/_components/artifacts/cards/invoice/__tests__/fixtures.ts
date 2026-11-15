@@ -86,6 +86,7 @@ export function credit(overrides: Partial<DeskInvoiceCredit> = {}): DeskInvoiceC
     appliedAmountMinor: 22_500,
     accountingDate: DAY.oct9,
     status: "Applied",
+    createdAt: DAY.oct9,
     unappliedAt: null,
     unappliedReason: "",
     creditMemo: { id: "inv_cm31", number: "CM-2610-0031" },

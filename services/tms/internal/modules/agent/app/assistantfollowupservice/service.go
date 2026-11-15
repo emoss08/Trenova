@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -220,6 +221,12 @@ func (s *Service) ownerMayUseAgent(
 	}
 
 	allowed, err := s.permissions.MayUseAgent(ctx, owner, definition)
+	if errortypes.IsPlanRestrictionError(err) {
+		s.l.Info("decision follow-up skipped: the plan leaves out the assistant",
+			zap.String("thread", thread.ID.String()),
+		)
+		return false
+	}
 	if err != nil {
 		s.l.Warn("decision follow-up skipped: agent access could not be checked",
 			zap.String("thread", thread.ID.String()),

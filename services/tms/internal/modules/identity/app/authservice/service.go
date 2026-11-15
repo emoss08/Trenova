@@ -22,14 +22,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -59,9 +63,11 @@ type Params struct {
 	AuthEvents        iamports.AuthEventRecorder
 	LoginThrottle     sessionports.LoginThrottleStore
 	Plans             platformplanports.PlanService
+	Features          platformcatalogports.FeatureGate
 	MFA               sessionports.MFAService
 	MFAChallenges     iamports.MFAChallengeRepository
 	RoleActivation    iamports.RoleActivationPolicy
+	SupportPrincipals supportaccessports.Principals
 	Encryption        *encryptionservice.Service
 	Tokens            *sessiontoken.Issuer
 	Rotator           *sessionrotation.Rotator
@@ -85,9 +91,11 @@ type Service struct {
 	authEvents     iamports.AuthEventRecorder
 	throttle       sessionports.LoginThrottleStore
 	plans          platformplanports.PlanService
+	features       platformcatalogports.FeatureGate
 	mfa            sessionports.MFAService
 	challenges     iamports.MFAChallengeRepository
 	activation     iamports.RoleActivationPolicy
+	support        supportaccessports.Principals
 	enc            *encryptionservice.Service
 	tokens         *sessiontoken.Issuer
 	rotator        *sessionrotation.Rotator
@@ -114,9 +122,11 @@ func New(p Params) tenantports.AuthService {
 		authEvents:     p.AuthEvents,
 		throttle:       p.LoginThrottle,
 		plans:          p.Plans,
+		features:       p.Features,
 		mfa:            p.MFA,
 		challenges:     p.MFAChallenges,
 		activation:     p.RoleActivation,
+		support:        p.SupportPrincipals,
 		enc:            p.Encryption,
 		tokens:         p.Tokens,
 		rotator:        p.Rotator,
@@ -289,7 +299,11 @@ func (s *Service) GetTenantLoginMetadata(
 		OrganizationID:   org.ID.String(),
 		OrganizationName: org.Name,
 		OrganizationSlug: org.LoginSlug,
+		EnabledProviders: []string{},
 		PasswordEnabled:  true,
+	}
+	if !s.singleSignOnListed(ctx) {
+		return resp, nil
 	}
 
 	var anyEnforced bool
@@ -317,6 +331,9 @@ func (s *Service) ListAuthProviders(
 	}
 
 	providers := make([]tenantports.AuthProviderSummary, 0, len(loginConfig.configs))
+	if !s.singleSignOnListed(ctx) {
+		return providers, nil
+	}
 	for _, cfg := range loginConfig.configs {
 		providers = append(providers, tenantports.AuthProviderSummary{
 			ID:       cfg.ID,
@@ -328,6 +345,19 @@ func (s *Service) ListAuthProviders(
 	}
 
 	return providers, nil
+}
+
+func (s *Service) singleSignOnListed(ctx context.Context) bool {
+	enabled, err := s.features.Enabled(ctx, platformcatalog.FeatureIdentity)
+	if err != nil {
+		s.l.Warn(
+			"could not ask whether single sign-on is on the plan; listing password sign-in only",
+			zap.Error(err),
+		)
+		return false
+	}
+
+	return enabled
 }
 
 func (s *Service) StartSSOLogin(
@@ -712,6 +742,16 @@ func (s *Service) AuthenticateSession(
 
 	sess.AuthenticatedSecretHash = secretHash
 
+	if sess.Support != nil {
+		if err = s.requireLiveSupport(ctx, sess); err != nil {
+			return nil, err
+		}
+		if err = s.refreshSession(ctx, sess, timeutils.NowUnix()); err != nil {
+			return nil, err
+		}
+		return sess, nil
+	}
+
 	if err = s.refreshSession(ctx, sess, timeutils.NowUnix()); err != nil {
 		return nil, err
 	}
@@ -1019,6 +1059,11 @@ func (s *Service) createSession(
 	user *tenant.User,
 	authn loginSessionContext,
 ) (*session.Session, string, error) {
+	if supportaccess.IsPrincipalID(user.ID) {
+		s.l.Error("refused to sign in a Trenova support principal", zap.String("userID", user.ID.String()))
+		return nil, "", errInvalidCredentials
+	}
+
 	expiresAt := s.policy.ExpiresAt(timeutils.NowUnix())
 
 	tenantInfo := pagination.TenantInfo{
@@ -1252,10 +1297,23 @@ func (s *Service) enforcePasswordLoginPolicy(
 	if err != nil {
 		return err
 	}
-	for _, cfg := range configs {
-		if cfg.EnforceSSO {
-			return errSSORequired
-		}
+	enforced := slices.ContainsFunc(configs, func(cfg *sso.SSOConfig) bool {
+		return cfg.EnforceSSO
+	})
+	if !enforced {
+		return nil
+	}
+
+	singleSignOn, err := s.features.Enabled(ctx, platformcatalog.FeatureIdentity)
+	if err != nil {
+		s.l.Warn(
+			"could not ask whether single sign-on is on the plan; enforcing it",
+			zap.Error(err),
+		)
+		return errSSORequired
+	}
+	if singleSignOn {
+		return errSSORequired
 	}
 
 	return nil

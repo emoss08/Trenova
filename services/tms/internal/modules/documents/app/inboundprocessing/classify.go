@@ -157,6 +157,11 @@ func (s *Service) classify(
 		MaxTokens:    classifyMaxTokens,
 		TenantInfo:   tenantInfo,
 	}, &answer)
+	if errors.Is(err, llmports.ErrNoProviderConfigured) {
+		// Nobody reads mail here (no provider, or a plan without Inbound
+		// triage); the message goes to a person, as it would on a failure.
+		return fallback, nil
+	}
 	if err != nil && !errors.Is(err, llmports.ErrOutsideSchema) {
 		s.l.Warn("inbound classification did not run",
 			zap.String("messageId", message.ID.String()), zap.Error(err))

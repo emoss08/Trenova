@@ -3,7 +3,7 @@ import defaultEdition from "./default-entry";
 import { NO_PLAN, defineEdition, resolveEdition } from "./resolve";
 
 describe("resolveEdition", () => {
-  it("adds nothing for the default edition", async () => {
+  it("adds nothing for the default edition", () => {
     const edition = resolveEdition(defaultEdition);
 
     expect(edition.id).toBe("self-hosted");
@@ -13,7 +13,7 @@ describe("resolveEdition", () => {
     expect(edition.protectedLoaders).toEqual([]);
     expect(edition.messages).toEqual({});
     expect(edition.plan).toBe(NO_PLAN);
-    await expect(edition.plan.loadRestrictions()).resolves.toEqual([]);
+    expect(edition.plan).toEqual({});
   });
 
   it("renders nothing in an empty slot and the host's fallback in the login prompt", () => {

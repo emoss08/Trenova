@@ -101,33 +101,33 @@ type CustomerBillingProfile {
   hasBillingControlOverrides: Boolean!
   creditLimit: Decimal
   """Open receivables, net of unapplied cash and credits, as of creditReviewedAt. Kept by the credit review, not entered."""
-  creditBalance: Decimal!
-  creditStatus: CustomerCreditStatus!
-  enforceCreditLimit: Boolean!
-  autoCreditHold: Boolean!
-  creditHoldReason: String!
+  creditBalance: Decimal
+  creditStatus: CustomerCreditStatus
+  enforceCreditLimit: Boolean
+  autoCreditHold: Boolean
+  creditHoldReason: String
   """True when the credit review placed the current Hold or Warning; only the review lifts it."""
-  creditHoldAutomatic: Boolean!
+  creditHoldAutomatic: Boolean
   """When creditBalance was last recomputed from the receivables ledger."""
   creditReviewedAt: Timestamp
   "Whether a posted invoice is emailed to the customer as soon as its PDF is made, without anyone sending it. Email must also be allowed by emailInvoiceEnabled."
   autoSendInvoiceOnGeneration: Boolean!
   "Whether the organization's payment reminders may email this customer about overdue invoices."
-  sendPaymentReminders: Boolean!
+  sendPaymentReminders: Boolean
   "Whether the organization's monthly statements may be emailed to this customer."
-  sendStatements: Boolean!
+  sendStatements: Boolean
   "Whether invoices may be emailed to this customer."
   emailInvoiceEnabled: Boolean!
   "Whether invoices are sent to this customer's EDI partner as an 210."
-  ediInvoiceEnabled: Boolean!
+  ediInvoiceEnabled: Boolean
   invoiceNumberFormat: CustomerInvoiceNumberFormat!
   customerInvoicePrefix: String!
   invoiceCopies: Int!
   revenueAccountId: ID
   arAccountId: ID
-  applyLateCharges: Boolean!
+  applyLateCharges: Boolean
   lateChargeRate: Decimal
-  gracePeriodDays: Int!
+  gracePeriodDays: Int
   taxExempt: Boolean!
   taxExemptNumber: String!
   enforceCustomerBillingReq: Boolean!
@@ -216,7 +216,7 @@ type Customer {
   What this customer asked to be told as their freight moves. None is the
   default: a customer who never opted in is not emailed about a stop.
   """
-  statusUpdatePreference: CustomerStatusUpdatePreference!
+  statusUpdatePreference: CustomerStatusUpdatePreference
   """
   Who receives those updates, comma separated. Empty falls back to the
   notice profile's own recipients.

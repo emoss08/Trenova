@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -193,7 +194,10 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 		accountingRepo:   accountingRepo,
 		journalRepo:      journalRepo,
 		fiscalPeriodRepo: fiscalPeriodRepo,
-		edi:              invoiceediservice.New(invoiceediservice.Params{Logger: zap.NewNop()}),
+		edi: invoiceediservice.New(invoiceediservice.Params{
+			Logger:   zap.NewNop(),
+			Features: plantest.AllFeatures(),
+		}),
 		validator: invoicevalidation.NewValidator(
 			invoicevalidation.ValidatorParams{
 				DB:               conn,
@@ -414,7 +418,10 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 		accountingRepo:   accountingRepo,
 		journalRepo:      journalRepo,
 		fiscalPeriodRepo: fiscalPeriodRepo,
-		edi:              invoiceediservice.New(invoiceediservice.Params{Logger: zap.NewNop()}),
+		edi: invoiceediservice.New(invoiceediservice.Params{
+			Logger:   zap.NewNop(),
+			Features: plantest.AllFeatures(),
+		}),
 		validator: invoicevalidation.NewValidator(
 			invoicevalidation.ValidatorParams{
 				DB:               conn,

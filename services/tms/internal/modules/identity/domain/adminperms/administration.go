@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func administrationResources() []*permissionspec.ResourceDefinition {
@@ -35,6 +36,7 @@ func administrationResources() []*permissionspec.ResourceDefinition {
 		riskDecisionResource(),
 		externalIdentityResource(),
 		mfaAuthenticatorResource(),
+		supportAccessResource(),
 		tableChangeAlertResource(),
 		homeLayoutPresetResource(),
 		documentTemplateResource(),
@@ -44,18 +46,23 @@ func administrationResources() []*permissionspec.ResourceDefinition {
 func organizationResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceOrganization.String(),
+		Feature:            platformcatalog.FeatureCoreTMS,
 		DisplayName:        "Organization",
 		Description:        "Organization settings and configuration",
 		Category:           "Organization settings",
 		ReferenceView:      []string{"name", "logoUrl", "iconUrl"},
 		Operations:         permissionspec.StandardOps,
 		DefaultSensitivity: permission.SensitivityRestricted,
+		FieldFeatures: map[string]platformcatalog.FeatureKey{
+			"brokerageEnabled": platformcatalog.FeatureCarrierBrokerage,
+		},
 	}
 }
 
 func businessUnitResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceBusinessUnit.String(),
+		Feature:            platformcatalog.FeatureCoreTMS,
 		DisplayName:        "Business Unit",
 		Description:        "Business unit management",
 		Category:           "Organization settings",
@@ -68,6 +75,7 @@ func businessUnitResource() *permissionspec.ResourceDefinition {
 func userResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceUser.String(),
+		Feature:       platformcatalog.FeatureAdministration,
 		DisplayName:   "User",
 		Description:   "User account management",
 		Category:      "Users & security",
@@ -106,6 +114,7 @@ func userResource() *permissionspec.ResourceDefinition {
 func roleResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceRole.String(),
+		Feature:       platformcatalog.FeatureAdministration,
 		DisplayName:   "Role",
 		Description:   "Role and permission management",
 		Category:      "Users & security",
@@ -135,6 +144,7 @@ func roleResource() *permissionspec.ResourceDefinition {
 func auditLogResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAuditLog.String(),
+		Feature:     platformcatalog.FeatureAdministration,
 		DisplayName: "Audit Log",
 		Description: "The organization's audit log, narrowed to the kinds of record the person can read",
 		Category:    "Users & security",
@@ -157,6 +167,7 @@ func auditLogResource() *permissionspec.ResourceDefinition {
 func securityAuditLogResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceSecurityAuditLog.String(),
+		Feature:     platformcatalog.FeatureAdministration,
 		DisplayName: "Security Audit Log",
 		Description: "Security entries in the audit log (access and administrative changes, refused requests) and the alerts raised from them",
 		Category:    "Users & security",
@@ -179,6 +190,7 @@ func securityAuditLogResource() *permissionspec.ResourceDefinition {
 func auditLegalHoldResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAuditLegalHold.String(),
+		Feature:     platformcatalog.FeatureIdentity,
 		DisplayName: "Audit Legal Hold",
 		Description: "Holds that keep audit entries past their retention for litigation or an investigation",
 		Category:    "Users & security",
@@ -206,6 +218,7 @@ func auditLegalHoldResource() *permissionspec.ResourceDefinition {
 func tableConfigurationResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceTableConfiguration.String(),
+		Feature:     platformcatalog.FeatureAdministration,
 		DisplayName: "Table Configuration",
 		Description: "Saved table views. Anyone may keep private views; sharing one with the organization needs these",
 		Category:    "Organization settings",
@@ -233,6 +246,7 @@ func tableConfigurationResource() *permissionspec.ResourceDefinition {
 func customFieldDefinitionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceCustomFieldDefinition.String(),
+		Feature:     platformcatalog.FeatureAdministration,
 		DisplayName: "Custom Field Definition",
 		Description: "Custom field definitions and resource assignments",
 		Category:    "Organization settings",
@@ -265,6 +279,7 @@ func customFieldDefinitionResource() *permissionspec.ResourceDefinition {
 func sequenceConfigResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceSequenceConfig.String(),
+		Feature:            platformcatalog.FeatureAdministration,
 		DisplayName:        "Sequence Configuration",
 		Description:        "Sequence generator configuration",
 		Category:           "Organization settings",
@@ -276,6 +291,7 @@ func sequenceConfigResource() *permissionspec.ResourceDefinition {
 func integrationResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceIntegration.String(),
+		Feature:            platformcatalog.FeatureAdministration,
 		DisplayName:        "Integration",
 		Description:        "External integration configuration and synchronization",
 		Category:           "Organization settings",
@@ -287,6 +303,7 @@ func integrationResource() *permissionspec.ResourceDefinition {
 func emailProfileResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceEmailProfile.String(),
+		Feature:            platformcatalog.FeatureAdministration,
 		DisplayName:        "Email Profile",
 		Description:        "Transactional email sender profiles and assignments",
 		Category:           "Organization settings",
@@ -316,6 +333,7 @@ func emailProfileResource() *permissionspec.ResourceDefinition {
 func emailLogResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceEmailLog.String(),
+		Feature:            platformcatalog.FeatureAdministration,
 		DisplayName:        "Email Log",
 		Description:        "Transactional email send and delivery logs",
 		Category:           "Organization settings",
@@ -328,6 +346,7 @@ func emailLogResource() *permissionspec.ResourceDefinition {
 func emailSuppressionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceEmailSuppression.String(),
+		Feature:            platformcatalog.FeatureAdministration,
 		DisplayName:        "Email Suppression",
 		Description:        "Email bounce, complaint, and manual suppression records",
 		Category:           "Organization settings",
@@ -339,6 +358,7 @@ func emailSuppressionResource() *permissionspec.ResourceDefinition {
 func ediResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceEDI.String(),
+		Feature:     platformcatalog.FeatureEDIIntegration,
 		DisplayName: "EDI",
 		Description: "EDI partner setup, mapping profiles, and load tender transfers",
 		Category:    "EDI",
@@ -526,6 +546,7 @@ func ediFieldSensitivities() map[string]permission.FieldSensitivity {
 func apiKeyResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceAPIKey.String(),
+		Feature:            platformcatalog.FeatureAPIKeys,
 		DisplayName:        "API Key",
 		Description:        "API key creation, rotation, revocation, and permission management",
 		Category:           "Users & security",
@@ -537,6 +558,7 @@ func apiKeyResource() *permissionspec.ResourceDefinition {
 func platformCatalogResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourcePlatformCatalog.String(),
+		Feature:            platformcatalog.FeatureAdministration,
 		DisplayName:        "Platform Catalog",
 		Description:        "Platform catalog and entitlement metadata administration",
 		Category:           "Organization settings",
@@ -548,6 +570,7 @@ func platformCatalogResource() *permissionspec.ResourceDefinition {
 func identityProviderResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceIdentityProvider.String(),
+		Feature:            platformcatalog.FeatureIdentity,
 		DisplayName:        "Identity Provider",
 		Description:        "OIDC identity provider configuration",
 		Category:           "Users & security",
@@ -559,6 +582,7 @@ func identityProviderResource() *permissionspec.ResourceDefinition {
 func scimDirectoryResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceSCIMDirectory.String(),
+		Feature:            platformcatalog.FeatureIdentity,
 		DisplayName:        "SCIM Directory",
 		Description:        "SCIM directory, token, and group mapping administration",
 		Category:           "Users & security",
@@ -570,6 +594,7 @@ func scimDirectoryResource() *permissionspec.ResourceDefinition {
 func provisioningAuditResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceProvisioningAudit.String(),
+		Feature:            platformcatalog.FeatureIdentity,
 		DisplayName:        "Provisioning Audit",
 		Description:        "SCIM provisioning activity",
 		Category:           "Users & security",
@@ -581,6 +606,7 @@ func provisioningAuditResource() *permissionspec.ResourceDefinition {
 func accessPolicyResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceAccessPolicy.String(),
+		Feature:            platformcatalog.FeatureIdentity,
 		DisplayName:        "Access Policy",
 		Description:        "Organization access policy decisions",
 		Category:           "Users & security",
@@ -592,6 +618,7 @@ func accessPolicyResource() *permissionspec.ResourceDefinition {
 func authEventResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceAuthEvent.String(),
+		Feature:            platformcatalog.FeatureAdministration,
 		DisplayName:        "Authentication Event",
 		Description:        "Authentication and sign-in activity",
 		Category:           "Users & security",
@@ -603,6 +630,7 @@ func authEventResource() *permissionspec.ResourceDefinition {
 func riskDecisionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceRiskDecision.String(),
+		Feature:            platformcatalog.FeatureIdentity,
 		DisplayName:        "Risk Decision",
 		Description:        "Authentication risk decisions",
 		Category:           "Users & security",
@@ -614,6 +642,7 @@ func riskDecisionResource() *permissionspec.ResourceDefinition {
 func externalIdentityResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceExternalIdentity.String(),
+		Feature:            platformcatalog.FeatureIdentity,
 		DisplayName:        "External Identity",
 		Description:        "Federated identity links",
 		Category:           "Users & security",
@@ -625,6 +654,7 @@ func externalIdentityResource() *permissionspec.ResourceDefinition {
 func mfaAuthenticatorResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceMFAAuthenticator.String(),
+		Feature:            platformcatalog.FeatureAdministration,
 		DisplayName:        "MFA Authenticator",
 		Description:        "MFA authenticator inventory",
 		Category:           "Users & security",
@@ -633,9 +663,41 @@ func mfaAuthenticatorResource() *permissionspec.ResourceDefinition {
 	}
 }
 
+// Support access lets a named Trenova staff member into a managed instance for a set time. It
+// is a person's decision: no API key or agent may hold it (neither runtimePolicy nor the agent
+// ceiling lists it), and a support session may not use it (supportaccess.denied).
+func supportAccessResource() *permissionspec.ResourceDefinition {
+	return &permissionspec.ResourceDefinition{
+		Resource:    permission.ResourceSupportAccess.String(),
+		Feature:     platformcatalog.FeatureAdministration,
+		DisplayName: "Trenova Support Access",
+		Description: "Let a named Trenova staff member into this organization for a set time",
+		Category:    "Users & security",
+		Operations: []permissionspec.OperationDefinition{
+			{
+				Operation:   permission.OpRead,
+				DisplayName: "View",
+				Description: "View support access grants and what was done under each",
+			},
+			{
+				Operation:   permission.OpCreate,
+				DisplayName: "Grant",
+				Description: "Give a Trenova staff member access for a set time",
+			},
+			{
+				Operation:   permission.OpDelete,
+				DisplayName: "Revoke",
+				Description: "End a support access grant and its sessions at once",
+			},
+		},
+		DefaultSensitivity: permission.SensitivityConfidential,
+	}
+}
+
 func tableChangeAlertResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceTableChangeAlert.String(),
+		Feature:     platformcatalog.FeatureTableChangeAlerts,
 		DisplayName: "Table Change Alert",
 		Description: "Table change alert subscriptions and notifications",
 		Category:    "Organization settings",
@@ -673,6 +735,7 @@ func tableChangeAlertResource() *permissionspec.ResourceDefinition {
 func homeLayoutPresetResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceHomeLayoutPreset.String(),
+		Feature:     platformcatalog.FeatureAdministration,
 		DisplayName: "Home Screen Preset",
 		Description: "Home screens administrators author and assign to roles",
 		Category:    "Organization settings",
@@ -708,6 +771,7 @@ func homeLayoutPresetResource() *permissionspec.ResourceDefinition {
 func documentTemplateResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceDocumentTemplate.String(),
+		Feature:     platformcatalog.FeatureDocumentManagement,
 		DisplayName: "Document & Message Template",
 		Description: "Templates for customer documents, emails, and notifications",
 		Category:    "Documents",

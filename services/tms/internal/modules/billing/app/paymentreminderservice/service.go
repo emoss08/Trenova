@@ -244,6 +244,7 @@ func (s *Service) PreviewSendNow(
 	if s.senders != nil {
 		if _, err = s.senders.ResolveSender(ctx, &emailports.SendEmailRequest{
 			TenantInfo: batch.from.tenant,
+			Type:       email.TypePaymentReminder,
 			Purpose:    email.PurposeBilling,
 			To:         recipients.To,
 			CC:         recipients.CC,
@@ -402,6 +403,7 @@ func (s *Service) send(ctx context.Context, from *sender, rem *reminder) ([]stri
 
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     from.tenant,
+		Type:           email.TypePaymentReminder,
 		Purpose:        email.PurposeBilling,
 		To:             recipients.To,
 		CC:             recipients.CC,

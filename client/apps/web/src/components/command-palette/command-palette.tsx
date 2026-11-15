@@ -1,4 +1,5 @@
 import { usePermission } from "@/hooks/use-permission";
+import { PlanFeature } from "@/lib/plan-feature";
 import { assistant } from "@/lib/queries/assistant";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useMatch } from "react-router";
@@ -17,6 +18,7 @@ import { CommandDialog } from "@trenova/shared/components/ui/command";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -196,6 +198,10 @@ export function CommandPalette() {
   const setOpen = useCommandPaletteStore((state) => state.setOpen);
   const takeRequestedScope = useCommandPaletteStore((state) => state.takeRequestedScope);
   const { allowed: canConverse } = usePermission(Resource.Assistant, Operation.Read);
+  // Nova is Trenova AI's assistant: without it on the plan the palette is navigation and
+  // search, and nothing in it names or asks Nova. Conversations also need leave to converse.
+  const asksNova = usePlanFeature(PlanFeature.AIDesk).available;
+  const findsConversations = canConverse && asksNova;
   const inDesk = useMatch("/desk/*") !== null;
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
   const recordOpen = useRecentRecordsStore((state) => state.recordOpen);
@@ -216,8 +222,8 @@ export function CommandPalette() {
   const catalog = usePaletteCatalog(unread);
   const readableTypes = useReadableRecordTypes();
   const scopes = useMemo(
-    () => paletteScopes(readableTypes, canConverse),
-    [canConverse, readableTypes],
+    () => paletteScopes(readableTypes, findsConversations),
+    [findsConversations, readableTypes],
   );
   const available = useMemo<AvailableScopes>(
     () => new Set(scopes.filter((option): option is SearchableEntityType => option !== "all")),
@@ -240,7 +246,7 @@ export function CommandPalette() {
     commandText ?? (view.mentionOpen ? stripMentionToken(view.query) : view.query);
   const trimmedQuery = searchQuery.trim();
   const question =
-    view.askSubject !== null
+    !asksNova || view.askSubject !== null
       ? null
       : effectiveScope === "commands" || effectiveScope === "pages"
         ? null
@@ -255,7 +261,7 @@ export function CommandPalette() {
   });
   const searchesConversations =
     open &&
-    canConverse &&
+    findsConversations &&
     view.askSubject === null &&
     (effectiveScope === "conversations" ||
       (inDesk && effectiveScope === "all" && debouncedRecordQuery.trim().length >= 2));
@@ -405,6 +411,7 @@ export function CommandPalette() {
         ranking,
         recentRecords: home.recentRecords,
         conversations,
+        asksNova,
       },
       t,
     );
@@ -414,6 +421,7 @@ export function CommandPalette() {
   }, [
     answerVisible,
     asked,
+    asksNova,
     effectiveScope,
     home,
     conversations,
@@ -874,7 +882,7 @@ export function CommandPalette() {
       ? { kind: "subject", title: askSubject.label }
       : question !== null
         ? { kind: "question" }
-        : effectiveScope === "commands" || effectiveScope === "pages"
+        : !asksNova || effectiveScope === "commands" || effectiveScope === "pages"
           ? null
           : { kind: "ask" };
 
@@ -910,11 +918,15 @@ export function CommandPalette() {
               : t("Nothing called “{0}”", trimmedQuery)}
           </p>
           <p className="text-foreground-subtle mt-1 max-w-md text-sm">
-            {view.scope !== "all"
-              ? t(
-                  "Try everything instead, or ask Nova — it reads records the search index doesn't, like stop notes and email.",
-                )
-              : t("Check the spelling, try a PRO or BOL number, or ask Nova.")}
+            {!asksNova
+              ? view.scope !== "all"
+                ? t("Try everything instead, or check the spelling.")
+                : t("Check the spelling, or try a PRO or BOL number.")
+              : view.scope !== "all"
+                ? t(
+                    "Try everything instead, or ask Nova — it reads records the search index doesn't, like stop notes and email.",
+                  )
+                : t("Check the spelling, try a PRO or BOL number, or ask Nova.")}
           </p>
         </div>
       )}
@@ -936,7 +948,11 @@ export function CommandPalette() {
         }
       }}
       title={t("Command palette")}
-      description={t("Search records, jump to pages, run commands and ask Nova")}
+      description={
+        asksNova
+          ? t("Search records, jump to pages, run commands and ask Nova")
+          : t("Search records, jump to pages and run commands")
+      }
       showCloseButton={false}
       className="cp-dialog bg-card rounded-surface ui-lift-float top-[8vh] flex h-[min(680px,calc(100dvh-12vh))] w-full max-w-[min(1080px,calc(100%-2rem))] translate-y-0 flex-col gap-0 overflow-hidden p-0 sm:max-w-[min(1080px,calc(100%-2rem))]"
       commandProps={{
@@ -968,6 +984,7 @@ export function CommandPalette() {
         onClearScope={() => changeScope("all")}
         commandMode={commandTextOf(query, scope, askSubject) !== null}
         askSubject={askSubject?.label ?? null}
+        asksNova={asksNova}
         onClearAskSubject={() => {
           setAskSubject(null);
           clearAnswer();

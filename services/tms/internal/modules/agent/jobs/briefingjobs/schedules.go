@@ -2,6 +2,7 @@ package briefingjobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:          "daily-briefing",
+			Feature:     platformcatalog.FeatureAIDesk,
 			Description: "Write the morning briefing for every organization whose hour has come",
 			// Every hour on the hour, because the hour that matters is the
 			// organization's own and a half-hour offset timezone still
@@ -33,6 +35,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "briefing-retention",
+			Feature:       platformcatalog.FeatureAIDesk,
 			Description:   "Remove briefings older than the window a reader can page back through",
 			Spec:          schedule.Cron("30 4 * * 0"),
 			Workflow:      BriefingRetentionWorkflow,

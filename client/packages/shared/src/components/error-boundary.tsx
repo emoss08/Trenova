@@ -11,6 +11,7 @@ import { StatusScreen } from "./errors/status-screen";
 import { Button } from "./ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Home02Icon } from "@trenova/shared/components/icons";
+import { describeError } from "@trenova/shared/lib/error-presentation";
 import { reportFailure } from "@trenova/shared/lib/failure-reporter";
 
 type ErrorStateBoundaryProps = {
@@ -154,8 +155,16 @@ export function RouteErrorBoundary({ homePath = "/", embedded = false }: RouteEr
     );
   }
 
+  // A page the organization's plan leaves out is not a failure: going home is the way on, so
+  // it is the primary action, and no status code sits at the foot.
+  const isPlanRestricted = describeError(error).kind === "plan-restricted";
+
   const homeAction = (
-    <Button variant="outline" size={embedded ? "sm" : "default"} onClick={goHome}>
+    <Button
+      variant={isPlanRestricted ? "default" : "outline"}
+      size={embedded ? "sm" : "default"}
+      onClick={goHome}
+    >
       <Home02Icon />
       {t("Go to dashboard")}
     </Button>
@@ -168,7 +177,9 @@ export function RouteErrorBoundary({ homePath = "/", embedded = false }: RouteEr
   }
 
   return (
-    <StatusScreen meta={isRouteErrorResponse(error) ? String(error.status) : undefined}>
+    <StatusScreen
+      meta={isRouteErrorResponse(error) && !isPlanRestricted ? String(error.status) : undefined}
+    >
       <ErrorState error={error} layout="screen" actions={homeAction} />
     </StatusScreen>
   );

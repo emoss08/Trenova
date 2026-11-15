@@ -61,6 +61,7 @@ func (s *ReadinessService) RequestMissingDocuments(
 	}
 	if _, err = s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     req.TenantInfo,
+		Type:           email.TypeFactoringDocumentRequest,
 		Purpose:        email.PurposeBilling,
 		To:             plan.Message.To,
 		Subject:        plan.Message.Subject,

@@ -47,11 +47,25 @@ export function KPIRowWidget({ widget, data }: WidgetProps) {
   const t = useT();
 
   const configured = widget.config.metrics ?? [];
-  const metrics = configured
-    .map((key) => resolveMetric(key, data))
-    .filter((metric): metric is NonNullable<typeof metric> => metric != null);
+  const lockedByPlan = new Map(widget.lockedMetrics.map((entry) => [entry.metric, entry]));
 
-  if (metrics.length === 0) {
+  // A figure the plan leaves out is not drawn and never resolved: nothing about it was read.
+  // The rest of the strip closes up around it.
+  const resolved = configured.map((key) =>
+    lockedByPlan.has(key) ? ("off-plan" as const) : resolveMetric(key, data),
+  );
+  const offPlan = resolved.filter(
+    (metric) => metric === "off-plan" || Boolean(metric?.lockedFeature),
+  ).length;
+  const figures = resolved.flatMap((metric) =>
+    metric === "off-plan" || !metric || metric.lockedFeature ? [] : [metric],
+  );
+
+  // Every figure is off the plan: the canvas leaves out a strip it knows that of up front, and
+  // one that learns it from the figures themselves draws nothing rather than asking for setup.
+  if (configured.length > 0 && offPlan === configured.length) return null;
+
+  if (figures.length === 0) {
     const loading =
       configured.length > 0 && (data.shipmentAnalyticsLoading || data.receivablesLoading);
 
@@ -74,7 +88,7 @@ export function KPIRowWidget({ widget, data }: WidgetProps) {
       aria-label={widget.title || t("Key figures")}
       className="h-full rounded-none border-0 bg-transparent [&>div]:h-full"
     >
-      {metrics.map((metric) => (
+      {figures.map((metric) => (
         <KpiStripItem
           key={metric.key}
           size="lg"

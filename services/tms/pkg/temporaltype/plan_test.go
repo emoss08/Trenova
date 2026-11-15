@@ -18,7 +18,7 @@ func TestToPlanRefusalMakesQuotaAndPlanErrorsNonRetryable(t *testing.T) {
 		expected ErrorType
 	}{
 		{errortypes.NewQuotaExceededError("shipments.total", 12, 12, "free_demo"), ErrorTypeQuotaExceeded},
-		{errortypes.NewPlanRestrictionError("sms", "", "free_demo"), ErrorTypePlanRestricted},
+		{errortypes.NewFeatureRestrictionError("platform.administration", ""), ErrorTypePlanRestricted},
 	} {
 		converted := ToPlanRefusal(tc.err)
 

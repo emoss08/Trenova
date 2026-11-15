@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/allocationcheck"
 	"github.com/emoss08/trenova/internal/modules/operations/app/equipmentavailabilityhelper"
 	"github.com/emoss08/trenova/internal/modules/operations/app/equipmentcontinuityhelper"
@@ -76,6 +77,7 @@ type Service struct {
 	effects              *shipmenteffects.Effects
 	readiness            *shipmentbillingreadiness.Service
 	transfer             *shipmentbillingtransfer.Service
+	features             platformcatalogports.FeatureGate
 }
 
 func (s *Service) recordCapabilityDeviations(
@@ -191,6 +193,9 @@ func (s *Service) prepareCreate(
 	}
 
 	s.dropSystemGeneratedAdditionalChargesForCreate(entity)
+	if err = s.effects.KeepPlanFields(ctx, entity, nil); err != nil {
+		return nil, err
+	}
 
 	if err = s.effects.HydrateShipmentCommodityDetails(ctx, entity); err != nil {
 		return nil, err
@@ -260,6 +265,7 @@ type Params struct {
 	Effects              *shipmenteffects.Effects
 	Readiness            *shipmentbillingreadiness.Service
 	Transfer             *shipmentbillingtransfer.Service
+	Features             platformcatalogports.FeatureGate
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -288,6 +294,7 @@ func New(p Params) *Service {
 		effects:              p.Effects,
 		readiness:            p.Readiness,
 		transfer:             p.Transfer,
+		features:             p.Features,
 	}
 }
 
@@ -464,6 +471,9 @@ func (s *Service) Update(
 	shipmentnormalize.BillTo(entity)
 	entity.PreviousCustomerID = original.CustomerID
 	if err = s.effects.RefuseCreditHold(ctx, entity, original); err != nil {
+		return nil, err
+	}
+	if err = s.effects.KeepPlanFields(ctx, entity, original); err != nil {
 		return nil, err
 	}
 	s.restoreAssignmentsForExistingMoves(original, entity)
@@ -706,13 +716,15 @@ func (s *Service) notifyShipmentMutationObservers(
 	updated *shipment.Shipment,
 	actor *permissionports.RequestActor,
 ) {
-	if len(s.mutationObservers) == 0 {
-		return
+	observers, gateErr := platformcatalogports.Observing(ctx, s.features, s.mutationObservers)
+	if gateErr != nil {
+		s.l.Warn(
+			"shipment mutation observer failed",
+			zap.String("shipmentID", updated.ID.String()),
+			zap.Error(gateErr),
+		)
 	}
-	for _, observer := range s.mutationObservers {
-		if observer == nil {
-			continue
-		}
+	for _, observer := range observers {
 		if err := observer.AfterShipmentUpdate(ctx, original, updated, actor); err != nil {
 			s.l.Warn(
 				"shipment mutation observer failed",

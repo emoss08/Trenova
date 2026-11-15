@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -182,6 +183,9 @@ func (a *Activities) RefreshCoverageActivity(
 		Apply:      true,
 		Trigger:    agent.RunTriggerEvent,
 	})
+	if errortypes.IsPlanRestrictionError(err) {
+		return &CoverageRefreshResult{Skipped: true}, nil
+	}
 	if err != nil {
 		return nil, err
 	}

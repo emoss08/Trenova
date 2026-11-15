@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -129,6 +130,7 @@ func TestCreateRejectsInvalidPTO(t *testing.T) {
 
 	repoCalled := false
 	svc := &Service{
+		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
 		userRepo:     unknownUsers(t),
@@ -166,6 +168,7 @@ func TestCreatePersistsValidPTO(t *testing.T) {
 
 	audit := &fakeAuditService{}
 	svc := &Service{
+		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
 		userRepo:     unknownUsers(t),
@@ -284,6 +287,7 @@ func TestCreateRejectsOverlappingPTO(t *testing.T) {
 
 	repoCalled := false
 	svc := &Service{
+		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
 		userRepo:     unknownUsers(t),
@@ -323,6 +327,7 @@ func TestRejectRequiresReason(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{
+		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
 		userRepo:     unknownUsers(t),
@@ -377,6 +382,7 @@ func TestTransitionRefusesInvalidSourceStatus(t *testing.T) {
 			current := storedPTO(tc.from)
 			updateCalled := false
 			svc := &Service{
+				features:     plantest.AllFeatures(),
 				db:           dbtest.NopConnection{},
 				driverNotify: quietDriverNotify(t, unknownWorkers(t)),
 				userRepo:     unknownUsers(t),
@@ -424,6 +430,7 @@ func TestTransitionCarriesReasonVersionAndAudit(t *testing.T) {
 	audit := &fakeAuditService{}
 	var captured *workerptoports.UpdatePTOStatusRequest
 	svc := &Service{
+		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
 		userRepo:     unknownUsers(t),
@@ -476,6 +483,7 @@ func TestCancelApprovedPTO(t *testing.T) {
 	current := storedPTO(worker.PTOStatusApproved)
 	audit := &fakeAuditService{}
 	svc := &Service{
+		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
 		userRepo:     unknownUsers(t),
@@ -555,6 +563,7 @@ func TestBulkActionReportsPerItemOutcomes(t *testing.T) {
 	audit := &fakeAuditService{}
 	var updates []*workerptoports.UpdatePTOStatusRequest
 	svc := &Service{
+		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
 		userRepo:     unknownUsers(t),
@@ -641,6 +650,7 @@ func TestUpdateRefusesNonRequestedPTO(t *testing.T) {
 	current := storedPTO(worker.PTOStatusApproved)
 	updateCalled := false
 	svc := &Service{
+		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
 		userRepo:     unknownUsers(t),
@@ -683,6 +693,7 @@ func TestUpdateExcludesItselfFromOverlapAndAudits(t *testing.T) {
 	var overlapReq *workerptoports.PTOOverlapRequest
 	var persisted *worker.WorkerPTO
 	svc := &Service{
+		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
 		userRepo:     unknownUsers(t),
@@ -747,6 +758,7 @@ func TestUpdateRejectsOverlap(t *testing.T) {
 
 	current := storedPTO(worker.PTOStatusRequested)
 	svc := &Service{
+		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
 		userRepo:     unknownUsers(t),

@@ -97,7 +97,7 @@ function PaymentDetailView({
   const isPosted = payment.status === "Posted";
   const isReversed = payment.status === "Reversed";
   const shortPayMinor = (payment.applications ?? []).reduce(
-    (sum, application) => sum + application.shortPayAmountMinor,
+    (sum, application) => sum + (application.shortPayAmountMinor ?? 0),
     0,
   );
 
@@ -316,14 +316,14 @@ function ApplicationsSection({
                   </TableCell>
                   <TableCell className="py-2 text-right">
                     <AmountDisplay
-                      value={application.appliedAmountMinor}
+                      value={application.appliedAmountMinor ?? 0}
                       className="text-xs font-medium"
                     />
                   </TableCell>
                   <TableCell className="py-2 text-right">
-                    {application.shortPayAmountMinor > 0 ? (
+                    {(application.shortPayAmountMinor ?? 0) > 0 ? (
                       <AmountDisplay
-                        value={application.shortPayAmountMinor}
+                        value={application.shortPayAmountMinor ?? 0}
                         className="text-xs text-warning-foreground"
                       />
                     ) : (

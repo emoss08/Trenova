@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -17,7 +18,8 @@ func NewScheduleProvider() *ScheduleProvider {
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
-			ID: "consolidated-invoice-run",
+			ID:      "consolidated-invoice-run",
+			Feature: platformcatalog.FeatureBilling,
 			Description: "Bill every statement period that has closed and not yet " +
 				"been invoiced",
 			// Hourly rather than daily because the cadence lives on each customer,
@@ -39,7 +41,8 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
-			ID: "late-charge-assessment",
+			ID:      "late-charge-assessment",
+			Feature: platformcatalog.FeatureAccounting,
 			Description: "Assess late charges on overdue invoices for tenants " +
 				"with assessment enabled",
 			// Once a night, after the day's cash has been applied, so an invoice

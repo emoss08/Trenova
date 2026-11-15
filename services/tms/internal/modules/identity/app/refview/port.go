@@ -17,9 +17,6 @@ type Port struct {
 }
 
 func NewPort(views *Views, engine permissionports.PermissionEngine) *Port {
-	if views == nil {
-		views = Default()
-	}
 	return &Port{views: views, engine: engine}
 }
 
@@ -28,7 +25,7 @@ func (p *Port) Person(
 	grants permissionports.PersonGrants,
 ) permissionports.LinkedFields {
 	access := NewPersonAccess(p.engine, actor, grants.Reads).WithDetail(grants.Detail)
-	return linkedFields{views: p.views, access: access}
+	return linkedFields{views: p.views.Request(), access: access}
 }
 
 type linkedFields struct {
@@ -52,7 +49,17 @@ func (l linkedFields) Decide(
 		return permissionports.LinkedFieldWithheldKind
 	case WithheldSensitivity:
 		return permissionports.LinkedFieldWithheldSensitivity
+	case WithheldPlan:
+		return permissionports.LinkedFieldWithheldPlan
 	default:
 		return permissionports.LinkedFieldWithheldKind
 	}
+}
+
+func (l linkedFields) PlanDenial(
+	ctx context.Context,
+	kind permission.Resource,
+	field string,
+) (permissionports.PlanDenial, bool, error) {
+	return l.views.PlanDenial(ctx, kind, field)
 }

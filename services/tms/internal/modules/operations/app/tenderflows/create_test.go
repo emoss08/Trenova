@@ -279,7 +279,7 @@ func guideEntry(carrierID pulid.ID, rank int16) *tender.RoutingGuideEntry {
 
 func fieldError(multiErr *errortypes.MultiError, field string) *errortypes.Error {
 	for _, err := range multiErr.Errors {
-		if err.Field == field {
+		if err.Field() == field {
 			return err
 		}
 	}

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/record"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -56,6 +58,14 @@ func resolvedInputs(
 	return out
 }
 
+func (s *Service) requireOnPlan(ctx context.Context, template *tariffports.Template) error {
+	if template.Standard {
+		return nil
+	}
+
+	return platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureRating)
+}
+
 func (s *Service) price(
 	ctx context.Context,
 	rateCtx *RateContext,
@@ -71,6 +81,9 @@ func (s *Service) price(
 		AsOf:       rateCtx.AsOf,
 	})
 	if err != nil {
+		return nil, err
+	}
+	if err = s.requireOnPlan(ctx, template); err != nil {
 		return nil, err
 	}
 	inputs := declared(template, p.inputs)

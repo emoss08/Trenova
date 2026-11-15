@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
@@ -485,4 +486,8 @@ func (s *Service) voidPendingEvents(
 		s.publisher.PublishCostEvent(ctx, event, permission.OpCancel, pulid.Nil)
 	}
 	return nil
+}
+
+func (s *Service) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureCarrierBrokerage
 }

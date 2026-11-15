@@ -59,7 +59,7 @@ type Tractor {
   """
   Whether the tractor's miles and fuel enter the IFTA return.
   """
-  iftaQualified: Boolean!
+  iftaQualified: Boolean
   "Who owns the tractor: the company, a lessor, or the owner-operator who drives it."
   ownershipType: EquipmentOwnershipType!
   "The owner-operator who owns the tractor, when it is theirs."

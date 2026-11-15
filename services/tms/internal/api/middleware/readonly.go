@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -50,20 +51,20 @@ var expiredAllowedPaths = map[string]struct{}{
 	"/api/v1/users/me/organizations":       {},
 	"/api/v1/users/me/switch-organization": {},
 	"/api/v1/me/billing":                   {},
-	"/api/v1/me/entitlements":              {},
-	"/api/v1/me/platform-catalog":          {},
 }
 
 type ReadOnlyGuardParams struct {
 	fx.In
 
 	Plans        platformplanports.PlanService
+	Features     platformcatalogports.FeatureGate
 	ErrorHandler *helpers.ErrorHandler
 	Logger       *zap.Logger
 }
 
 type ReadOnlyGuard struct {
 	plans        platformplanports.PlanService
+	features     platformcatalogports.FeatureGate
 	errorHandler *helpers.ErrorHandler
 	l            *zap.Logger
 }
@@ -71,6 +72,7 @@ type ReadOnlyGuard struct {
 func NewReadOnlyGuard(p ReadOnlyGuardParams) *ReadOnlyGuard {
 	return &ReadOnlyGuard{
 		plans:        p.Plans,
+		features:     p.Features,
 		errorHandler: p.ErrorHandler,
 		l:            p.Logger.Named("read-only-guard"),
 	}
@@ -78,11 +80,6 @@ func NewReadOnlyGuard(p ReadOnlyGuardParams) *ReadOnlyGuard {
 
 func (g *ReadOnlyGuard) Guard() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !g.plans.EnforcesPlans() {
-			c.Next()
-			return
-		}
-
 		authCtx := authctx.GetAuthContext(c)
 		if authCtx == nil || authCtx.OrganizationID.IsNil() || authCtx.BusinessUnitID.IsNil() {
 			c.Next()
@@ -90,18 +87,23 @@ func (g *ReadOnlyGuard) Guard() gin.HandlerFunc {
 		}
 
 		route := routeOf(c)
-		err := planservice.Admit(c.Request.Context(), g.plans, &planservice.AdmissionRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  authCtx.OrganizationID,
-				BuID:   authCtx.BusinessUnitID,
-				UserID: authCtx.UserID,
+		err := planservice.Admit(
+			c.Request.Context(),
+			g.plans,
+			g.features,
+			&planservice.AdmissionRequest{
+				TenantInfo: pagination.TenantInfo{
+					OrgID:  authCtx.OrganizationID,
+					BuID:   authCtx.BusinessUnitID,
+					UserID: authCtx.UserID,
+				},
+				Write:     IsUnsafeMethod(c.Request.Method) && !ReadOnlyWriteAllowed(route),
+				APIKey:    authCtx.IsAPIKey(),
+				ExpiredOK: ExpiredAllowed(route),
 			},
-			Write:     IsUnsafeMethod(c.Request.Method) && !ReadOnlyWriteAllowed(route),
-			APIKey:    authCtx.IsAPIKey(),
-			ExpiredOK: ExpiredAllowed(route),
-		})
+		)
 		if err != nil {
-			g.l.Debug("request refused by the organization's plan",
+			g.l.Debug("request refused by the plan",
 				zap.String("route", route),
 				zap.String("method", c.Request.Method),
 				zap.String("organizationId", authCtx.OrganizationID.String()),

@@ -23,7 +23,7 @@ import {
   microsoftSSOConfigSchema,
   oktaSSOConfigSchema,
   organizationBrandingSchema,
-  organizationSettingsSchema,
+  storedOrganizationSettingsSchema,
   tenantLoginMetadataSchema,
   type MicrosoftSSOConfig,
   type OktaSSOConfig,
@@ -42,7 +42,7 @@ export class OrganizationService {
       data,
     );
 
-    return safeParse(organizationSettingsSchema, response, "OrganizationSettings");
+    return safeParse(storedOrganizationSettingsSchema, response, "OrganizationSettings");
   }
 
   public async getBranding(organizationId: string, options?: { signal?: AbortSignal }) {
@@ -63,7 +63,7 @@ export class OrganizationService {
       formData,
     );
 
-    return safeParse(organizationSettingsSchema, response, "OrganizationSettings");
+    return safeParse(storedOrganizationSettingsSchema, response, "OrganizationSettings");
   }
 
   public async deleteBrandImage(organizationId: string, image: OrganizationBrandImage) {
@@ -71,7 +71,7 @@ export class OrganizationService {
       `${this.base_url}/${organizationId}/branding/${image}`,
     );
 
-    return safeParse(organizationSettingsSchema, response, "OrganizationSettings");
+    return safeParse(storedOrganizationSettingsSchema, response, "OrganizationSettings");
   }
 
   public async getMicrosoftSSOConfig(organizationId: string) {

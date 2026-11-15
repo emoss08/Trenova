@@ -40,7 +40,7 @@ function Chip({
   );
 }
 
-export function scopePlaceholder(scope: PaletteScope, t: TranslateFn): string {
+export function scopePlaceholder(scope: PaletteScope, t: TranslateFn, asksNova: boolean): string {
   if (isRecordScope(scope)) {
     return paletteEntityText(scope, t).placeholder;
   }
@@ -52,7 +52,9 @@ export function scopePlaceholder(scope: PaletteScope, t: TranslateFn): string {
     case "commands":
       return t("Run a command…");
     default:
-      return t("Search records and pages, run a command, or ask Nova…");
+      return asksNova
+        ? t("Search records and pages, run a command, or ask Nova…")
+        : t("Search records and pages, or run a command…");
   }
 }
 
@@ -68,6 +70,8 @@ export interface PaletteInputProps {
   commandMode: boolean;
   askSubject: string | null;
   onClearAskSubject: () => void;
+  /** Whether Nova can be asked here; without it the box never offers to. */
+  asksNova: boolean;
   mention: {
     open: boolean;
     options: readonly SearchEntityOption[];
@@ -92,6 +96,7 @@ export function PaletteInput({
   commandMode,
   askSubject,
   onClearAskSubject,
+  asksNova,
   mention,
 }: PaletteInputProps) {
   const t = useT();
@@ -99,7 +104,7 @@ export function PaletteInput({
 
   const placeholder = askSubject
     ? t("Ask Nova about {0}…", askSubject)
-    : scopePlaceholder(commandMode ? "commands" : scope, t);
+    : scopePlaceholder(commandMode ? "commands" : scope, t, asksNova);
 
   return (
     <div className="relative">

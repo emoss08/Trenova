@@ -2,7 +2,7 @@
 path: /accounting/ar/late-charges
 aliases: [late fees, finance charges, overdue charges, interest on overdue invoices, late payment fees]
 related:
-  - /accounting/ar/invoices
+  - /billing/invoice-register
   - /accounting/ar/aging
   - /billing/configuration-files/customers
 ---

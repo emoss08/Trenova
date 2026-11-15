@@ -15,7 +15,7 @@ func TestAPlanRefusalTurnsAQuestionAwayAsAUsageLimit(t *testing.T) {
 
 	quota := errortypes.NewQuotaExceededError("ai.assistant_messages", 25, 25, "free_demo")
 	require.True(t, rejected(quota))
-	require.True(t, rejected(errortypes.NewPlanRestrictionError("", "subscription_read_only", "free_demo")))
+	require.True(t, rejected(errortypes.NewPlanRestrictionError("subscription_read_only", "free_demo")))
 
 	params := rejectionParams(quota)
 	assert.Equal(t, planLimitCode, params["code"])
@@ -27,7 +27,7 @@ func TestAPlanRefusalTurnsAQuestionAwayAsAUsageLimit(t *testing.T) {
 	assert.Equal(t, "25", limit["limit"])
 	assert.Equal(t, "free_demo", limit["plan"])
 
-	restricted := rejectionParams(errortypes.NewPlanRestrictionError("", "subscription_read_only", "free_demo"))
+	restricted := rejectionParams(errortypes.NewPlanRestrictionError("subscription_read_only", "free_demo"))
 	assert.Equal(t, planRestrictedCode, restricted["code"])
 	assert.Nil(t, usageLimit(restricted))
 }
@@ -40,7 +40,7 @@ func TestAFailedTurnSaysWhichPlanLimitStoppedIt(t *testing.T) {
 		Plan: &modelcallcontract.PlanRefusal{
 			Code:    string(errortypes.ErrQuotaExceeded),
 			Message: "This organization has reached the limit of its plan",
-			Meter:   "ai.spend_cents",
+			Meter:   "ai.assistant_messages",
 			Limit:   150,
 			Used:    151,
 			Plan:    "free_demo",
@@ -56,5 +56,5 @@ func TestAFailedTurnSaysWhichPlanLimitStoppedIt(t *testing.T) {
 	limit, ok := data["limit"].(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, "151", limit["used"])
-	assert.Equal(t, "ai.spend_cents", limit["meter"])
+	assert.Equal(t, "ai.assistant_messages", limit["meter"])
 }

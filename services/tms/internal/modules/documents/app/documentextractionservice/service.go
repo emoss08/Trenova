@@ -17,11 +17,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -50,7 +49,7 @@ type Params struct {
 	SearchRepo               customerports.SearchRepository
 	SearchProjection         documentsearchprojectionports.DocumentSearchProjectionService
 	WorkflowStarter          kernelports.WorkflowStarter
-	Plans                    platformplanports.PlanService
+	Features                 platformcatalogports.FeatureGate
 	AIDocuments              documentaiextractionports.AIDocumentService
 }
 
@@ -67,7 +66,7 @@ type Service struct {
 	searchRepo          customerports.SearchRepository
 	searchProjection    documentsearchprojectionports.DocumentSearchProjectionService
 	workflowStarter     kernelports.WorkflowStarter
-	plans               platformplanports.PlanService
+	features            platformcatalogports.FeatureGate
 	aiDocuments         documentaiextractionports.AIDocumentService
 }
 
@@ -94,7 +93,7 @@ func New(p Params) *Service {
 		searchRepo:          p.SearchRepo,
 		searchProjection:    searchProjection,
 		workflowStarter:     workflowStarter,
-		plans:               p.Plans,
+		features:            p.Features,
 		aiDocuments:         p.AIDocuments,
 	}
 }
@@ -204,11 +203,10 @@ func (s *Service) Reextract(
 			"This document isn't one Nova reads",
 		)
 	}
-	if err = planservice.RequireCapability(
+	if err = platformcatalogports.RequireFeature(
 		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityDocumentIntelligence,
+		s.features,
+		platformcatalog.FeatureDocumentIntelligence,
 	); err != nil {
 		return err
 	}
@@ -265,6 +263,15 @@ func (s *Service) EnqueueExtraction(
 ) error {
 	if !doc.ProcessingProfile.SupportsIntelligence() {
 		s.metrics.Document.RecordExtraction("skipped", "", "processing_profile_disabled")
+		return nil
+	}
+
+	onPlan, err := s.features.Enabled(ctx, platformcatalog.FeatureDocumentIntelligence)
+	if err != nil {
+		return fmt.Errorf("ask whether document intelligence is on the plan: %w", err)
+	}
+	if !onPlan {
+		s.metrics.Document.RecordExtraction("skipped", "", "not_on_plan")
 		return nil
 	}
 

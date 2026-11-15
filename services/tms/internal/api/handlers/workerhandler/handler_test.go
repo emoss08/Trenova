@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -125,6 +126,7 @@ func setupWorkerHandlerWithEngines(
 		AuditService:              auditSvc,
 		Realtime:                  &mocks.NoopRealtimeService{},
 		CustomFieldsValuesService: cfService,
+		PlanFields:                plantest.Keeper(nil),
 	})
 
 	cfg := &config.Config{

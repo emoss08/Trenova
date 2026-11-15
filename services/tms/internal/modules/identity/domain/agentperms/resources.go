@@ -3,6 +3,7 @@ package agentperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func Resources() []*permissionspec.ResourceDefinition {
@@ -32,6 +33,7 @@ func Resources() []*permissionspec.ResourceDefinition {
 func agentRunResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAgentRun.String(),
+		Feature:     platformcatalog.FeatureAgentAutomation,
 		DisplayName: "Agent Run",
 		Description: "Billing exception agent runs",
 		Category:    "AI & agents",
@@ -57,6 +59,7 @@ func agentRunResource() *permissionspec.ResourceDefinition {
 func agentProposalResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceAgentProposal.String(),
+		Feature:       platformcatalog.FeatureAIDesk,
 		DisplayName:   "Decisions",
 		Description:   "What the agents propose and ask a person to approve or decline",
 		Category:      "Desk",
@@ -80,6 +83,7 @@ func agentProposalResource() *permissionspec.ResourceDefinition {
 func agentExceptionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAgentException.String(),
+		Feature:     platformcatalog.FeatureAgentAutomation,
 		DisplayName: "Agent Exception",
 		Description: "Agent exceptions raised for human review",
 		Category:    "AI & agents",
@@ -107,6 +111,7 @@ func agentExceptionResource() *permissionspec.ResourceDefinition {
 func agentControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAgentControl.String(),
+		Feature:     platformcatalog.FeatureAgentAutomation,
 		DisplayName: "Agent Control",
 		Description: "Per-organization agent autonomy configuration",
 		Category:    "AI & agents",
@@ -135,6 +140,7 @@ func agentControlResource() *permissionspec.ResourceDefinition {
 func agentMemoryResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAgentMemory.String(),
+		Feature:     platformcatalog.FeatureAIDesk,
 		DisplayName: "Agent Memory",
 		Description: "Standing instructions, facts, corrections and profile guidance kept for agents between runs",
 		Category:    "Desk",
@@ -157,6 +163,7 @@ func agentMemoryResource() *permissionspec.ResourceDefinition {
 func agentEvalSuiteResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAgentEvalSuite.String(),
+		Feature:     platformcatalog.FeatureAgentAutomation,
 		DisplayName: "Agent Evaluation Suite",
 		Description: "Evaluation cases agents are replayed against and scored on",
 		Category:    "AI & agents",
@@ -184,6 +191,7 @@ func agentEvalSuiteResource() *permissionspec.ResourceDefinition {
 func agentFeedbackResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAgentFeedback.String(),
+		Feature:     platformcatalog.FeatureAgentAutomation,
 		DisplayName: "Agent Feedback",
 		Description: "Everyone's ratings of AI output, with what they saw and why they rated it",
 		Category:    "AI & agents",
@@ -206,6 +214,7 @@ func agentFeedbackResource() *permissionspec.ResourceDefinition {
 func aiAuditTrailResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAIAuditTrail.String(),
+		Feature:     platformcatalog.FeatureAIAuditTrail,
 		DisplayName: "AI Audit Trail",
 		Description: "The tamper-evident record of what agents did, for whom, and who decided",
 		Category:    "Users & security",
@@ -228,6 +237,7 @@ func aiAuditTrailResource() *permissionspec.ResourceDefinition {
 func agentDefinitionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceAgentDefinition.String(),
+		Feature:       platformcatalog.FeatureAgentAutomation,
 		DisplayName:   "Agent Definition",
 		Description:   "Per-organization agent configurations and their tool access",
 		Category:      "AI & agents",
@@ -265,6 +275,7 @@ func agentDefinitionResource() *permissionspec.ResourceDefinition {
 func assistantResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAssistant.String(),
+		Feature:     platformcatalog.FeatureAIDesk,
 		DisplayName: "Desk",
 		Description: "Conversations with the agents and what they produce",
 		Category:    "Desk",
@@ -297,6 +308,7 @@ func assistantResource() *permissionspec.ResourceDefinition {
 func insightResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceInsight.String(),
+		Feature:     platformcatalog.FeatureAIDesk,
 		DisplayName: "Insight",
 		Description: "Operational findings surfaced on the home screen",
 		Category:    "Reports",
@@ -323,6 +335,7 @@ func insightResource() *permissionspec.ResourceDefinition {
 func recordShareResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceRecordShare.String(),
+		Feature:     platformcatalog.FeatureAIDesk,
 		DisplayName: "Sharing",
 		Description: "Sharing a record with teammates from the Share button",
 		Category:    "Desk",
@@ -348,6 +361,7 @@ func recordShareResource() *permissionspec.ResourceDefinition {
 func watchtowerResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceWatchtower.String(),
+		Feature:     platformcatalog.FeatureAIWatchtower,
 		DisplayName: "Watchtower",
 		Description: "The live feed of what needs attention across the operation",
 		Category:    "Desk",
@@ -383,6 +397,7 @@ func watchtowerResource() *permissionspec.ResourceDefinition {
 func briefingResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceBriefing.String(),
+		Feature:     platformcatalog.FeatureAIDesk,
 		DisplayName: "Briefing",
 		Description: "The daily briefing written for a role from the day's figures",
 		Category:    "Desk",
@@ -408,6 +423,7 @@ func briefingResource() *permissionspec.ResourceDefinition {
 func agentExtensionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAgentExtension.String(),
+		Feature:     platformcatalog.FeatureAgentAutomation,
 		DisplayName: "Agent Extension",
 		Description: "Capabilities turned on for agents only, such as web research, and their credentials",
 		Category:    "AI & agents",
@@ -430,6 +446,7 @@ func agentExtensionResource() *permissionspec.ResourceDefinition {
 func webResearchResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceWebResearch.String(),
+		Feature:     platformcatalog.FeatureAIDesk,
 		DisplayName: "Web Research",
 		Description: "Agents searching and reading public web pages on a person's behalf, through an enabled extension",
 		Category:    "Desk",
@@ -447,6 +464,7 @@ func webResearchResource() *permissionspec.ResourceDefinition {
 func portalAutomationResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourcePortalAutomation.String(),
+		Feature:     platformcatalog.FeatureAIDesk,
 		DisplayName: "Portal Automation",
 		Description: "Agents reading and acting on the third-party web portals the organization set up, through an enabled extension",
 		Category:    "Desk",
@@ -469,6 +487,7 @@ func portalAutomationResource() *permissionspec.ResourceDefinition {
 func codeModeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceCodeMode.String(),
+		Feature:     platformcatalog.FeatureAIDesk,
 		DisplayName: "Scripts and analysis",
 		Description: "Agents answering questions across many records, and analyzing report results and attached files, with short read-only scripts",
 		Category:    "Desk",
@@ -486,6 +505,7 @@ func codeModeResource() *permissionspec.ResourceDefinition {
 func aiProviderResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAIProvider.String(),
+		Feature:     platformcatalog.FeatureAdministration,
 		DisplayName: "AI Provider",
 		Description: "Model endpoints, including self-hosted servers, and their task routing",
 		Category:    "AI & agents",

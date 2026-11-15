@@ -105,4 +105,53 @@ export const customer = entity({
   ],
 });
 
-export const catalog: ReportCatalog = { version: "1", rules: {}, entities: [shipment, customer] };
+const detention = {
+  feature: "tms.detention",
+  featureName: "Detention",
+  addOnName: "Rating & Revenue Recovery",
+};
+
+const factoring = {
+  feature: "tms.factoring",
+  featureName: "Factoring",
+  addOnName: "Accounting & Cash",
+};
+
+/**
+ * On a plan without Rating & Revenue Recovery or Accounting & Cash: the
+ * shipment's detention field, its edge to factoring submissions and the
+ * factoring submission table itself are left out of the catalog.
+ */
+export const withheldByPlan: ReportCatalog["withheldByPlan"] = [
+  {
+    entity: "submission",
+    entityLabel: "Factoring Submissions",
+    name: null,
+    label: "Factoring Submissions",
+    edge: false,
+    denial: factoring,
+  },
+  {
+    entity: "shipment",
+    entityLabel: "Shipment",
+    name: "detentionMinutes",
+    label: "Detention Minutes",
+    edge: false,
+    denial: detention,
+  },
+  {
+    entity: "shipment",
+    entityLabel: "Shipment",
+    name: "factoringSubmission",
+    label: "Factoring Submission",
+    edge: true,
+    denial: factoring,
+  },
+];
+
+export const catalog: ReportCatalog = {
+  version: "1",
+  rules: {},
+  entities: [shipment, customer],
+  withheldByPlan,
+};

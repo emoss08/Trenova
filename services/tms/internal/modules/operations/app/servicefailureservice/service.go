@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
@@ -35,6 +37,8 @@ type Params struct {
 	Publisher       agenteventports.AgentEventPublisher
 	// Watchtower puts an open failure on the feed a person reads.
 	Watchtower watchtowerports.WatchtowerProjector
+	Features   platformcatalogports.FeatureGate
+	PlanFields permissionports.PlanFieldKeeper
 }
 
 type EDIServiceSetter interface {
@@ -54,6 +58,8 @@ type service struct {
 	delayedMarker  delayedShipmentMarker
 	publisher      agenteventports.AgentEventPublisher
 	watchtower     watchtowerports.WatchtowerProjector
+	features       platformcatalogports.FeatureGate
+	planFields     permissionports.PlanFieldKeeper
 }
 
 func New(p Params) *service {
@@ -68,6 +74,8 @@ func New(p Params) *service {
 		realtime:       p.Realtime,
 		publisher:      p.Publisher,
 		watchtower:     p.Watchtower,
+		features:       p.Features,
+		planFields:     p.PlanFields,
 	}
 	s.delayedMarker = newDelayedShipmentMarker(delayedShipmentMarkerParams{
 		logger:          s.l,

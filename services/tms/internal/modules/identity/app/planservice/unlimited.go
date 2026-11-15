@@ -37,14 +37,6 @@ func (s *UnlimitedPlanService) Resolve(
 	), nil
 }
 
-func (s *UnlimitedPlanService) RequireCapability(
-	context.Context,
-	pagination.TenantInfo,
-	platformplan.Capability,
-) error {
-	return nil
-}
-
 func (s *UnlimitedPlanService) RequireWritable(context.Context, pagination.TenantInfo) error {
 	return nil
 }

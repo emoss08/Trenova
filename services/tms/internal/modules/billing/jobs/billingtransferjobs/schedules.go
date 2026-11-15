@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -18,6 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:          "billing-transfer-automatic",
+			Feature:     platformcatalog.FeatureBilling,
 			Description: "Move ready freight into billing for organizations that transfer automatically",
 			// Continuous is the tightest cadence billing control offers, so the
 			// sweep runs that often; hourly, daily and weekly organizations are
@@ -33,7 +35,8 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
-			ID: "billing-transfer-zombie-reconcile",
+			ID:      "billing-transfer-zombie-reconcile",
+			Feature: platformcatalog.FeatureBilling,
 			Description: "Close out billing transfer runs whose workflow is no " +
 				"longer running",
 			// The workflow finalizes itself on every path it can reach, so this

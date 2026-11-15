@@ -18,6 +18,10 @@ const EMPTY_MILE_SCALE_MAX = 20;
 export function MetricTile({ metric }: { metric: MetricValue }) {
   const t = useT();
 
+  // The server locks a tile whose figure the plan leaves out before anything is read, and Home
+  // leaves such a tile out; a figure that still arrives locked draws nothing.
+  if (metric.lockedFeature) return null;
+
   const shared = {
     label: metric.label,
     value: metric.display,

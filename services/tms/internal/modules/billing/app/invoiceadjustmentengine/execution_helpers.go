@@ -187,6 +187,7 @@ func (s *Engine) creditMemoLedger() *invoiceledger.Poster {
 		},
 	}
 	poster.Ledger = s.customerLedgerRepo
+	poster.Features = s.features
 	return poster
 }
 

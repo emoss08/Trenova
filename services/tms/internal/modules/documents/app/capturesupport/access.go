@@ -106,9 +106,9 @@ func (s *Service) Require(
 		return nil, err
 	}
 	if !result.Allowed {
-		return nil, errortypes.NewAuthorizationError(
-			"You do not have permission to " + string(op) + " " + resource.String(),
-		)
+		return nil, permissionports.DeniedError(result, errortypes.NewAuthorizationError(
+			"You do not have permission to "+string(op)+" "+resource.String(),
+		))
 	}
 
 	return result, nil

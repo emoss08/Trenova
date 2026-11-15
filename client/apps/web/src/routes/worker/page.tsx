@@ -1,7 +1,9 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
+import { PlanFeature } from "@/lib/plan-feature";
 import { tableConfiguration } from "@/lib/queries/table-configuration";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
+import { planFeatureOf, usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -35,10 +37,17 @@ const loadWorkersSearch = createLoader({
 // a different component with its own queries. Below it, only the active tab mounts:
 // the roster's saved default view, or the PTO tab's balance summary and — for a manager
 // — its liability report. The rows of either table are paginated and left to the table.
+// Paid time off is the HR add-on's: without it none of that is drawn or read.
 export const prefetch: RoutePrefetch = ({ request }) => {
   const { pageTab, ptoOverviewFilters, viewType } = loadWorkersSearch(request);
   const timezone = useAuthStore.getState().user?.timezone;
+  const permissions = usePermissionStore.getState();
+  const timeOffOnPlan = planFeatureOf(permissions.manifest, PlanFeature.WorkforceTimeOff).available;
   const list: RoutePrefetchQuery[] = [];
+
+  if (!timeOffOnPlan) {
+    return [{ ...tableConfiguration.default(WORKER_TABLE_NAME), staleTime: Infinity }];
+  }
 
   if (viewType === "chart") {
     const params: ApprovedPTOAnalyticsParams = {
@@ -53,7 +62,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
 
   if (pageTab === "pto") {
     list.push(ptoBalanceSummaryQuery());
-    if (usePermissionStore.getState().hasPermission(Resource.WorkerPTO, Operation.Manage)) {
+    if (permissions.hasPermission(Resource.WorkerPTO, Operation.Manage)) {
       list.push(ptoLiabilityReportQuery());
     }
   } else {
@@ -65,6 +74,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
 
 export function WorkersPage() {
   const t = useT();
+  const timeOffOnPlan = usePlanFeature(PlanFeature.WorkforceTimeOff).available;
 
   return (
     <PageLayout
@@ -73,8 +83,8 @@ export function WorkersPage() {
         description: t("Manage and track workers along with their compliance and paid time off"),
       }}
     >
-      <PTOContent />
-      <WorkersContent />
+      {timeOffOnPlan ? <PTOContent /> : null}
+      <WorkersContent timeOffOnPlan={timeOffOnPlan} />
     </PageLayout>
   );
 }

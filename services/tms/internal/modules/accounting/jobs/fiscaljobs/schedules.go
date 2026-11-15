@@ -2,6 +2,7 @@ package fiscaljobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "fiscal-auto-close-periods",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Automatically close fiscal periods whose end date has passed",
 			Spec:          schedule.Cron("0 1 * * *"), // runs at 1:00 AM UTC
 			Workflow:      AutoCloseFiscalPeriodsWorkflow,
@@ -27,6 +29,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "fiscal-auto-create-next-year",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Automatically create next fiscal year when current one is within 60 days of ending",
 			Spec:          schedule.Cron("0 2 * * *"), // runs at 2:00 AM UTC
 			Workflow:      AutoCreateNextFiscalYearWorkflow,
@@ -38,6 +41,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "fiscal-year-close-readiness",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Notify controllers about fiscal years past their end date that are still open",
 			Spec:          schedule.Cron("0 3 * * *"), // runs at 3:00 AM UTC
 			Workflow:      FiscalYearCloseReadinessWorkflow,

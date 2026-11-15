@@ -4,6 +4,8 @@ import { billingQueueItemLabel } from "@/lib/billing-queue-label";
 import { documentNeedsSignature } from "@/lib/document-signature";
 import { storedDocumentPages } from "@/lib/queries/document-page";
 import { documentReading } from "@/lib/queries/document-reading";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import type { Extraction } from "@/lib/document-reading/extraction-payload";
 import { ArrowLeftIcon } from "@trenova/shared/components/icons";
@@ -81,6 +83,9 @@ export function BillingQueueDocumentReview({
   const shipmentId = item?.shipmentId ?? "";
   const [requested, setRequested] = useState<ReadonlyMap<string, number>>(() => new Map());
   const nowSeconds = useNow("second");
+  // What was read off each page is Document Intelligence's, and Nova's only with Trenova AI.
+  const readsDocuments = usePlanFeature(PlanFeature.DocumentIntelligence).available;
+  const novaOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
   const { data: documents = [] } = useQuery({
     ...shipmentDocumentsQuery(shipmentId),
     enabled: Boolean(shipmentId) && open,
@@ -96,7 +101,7 @@ export function BillingQueueDocumentReview({
   const reading = stillReading(document, requested, nowSeconds * 1000);
   const readingQuery = useQuery({
     ...documentReading.get(documentId ?? ""),
-    enabled: open,
+    enabled: open && readsDocuments,
     refetchInterval: reading ? READING_POLL_MS : false,
   });
   const { data: readiness } = useQuery({
@@ -167,7 +172,9 @@ export function BillingQueueDocumentReview({
             {t("Documents")}
           </DialogTitle>
           <DialogDescription className="sr-only">
-            {t("Each document's page beside what Nova read from it.")}
+            {novaOnPlan
+              ? t("Each document's page beside what Nova read from it.")
+              : t("Each document's page beside its details.")}
           </DialogDescription>
           <span className="flex-1" />
           <div

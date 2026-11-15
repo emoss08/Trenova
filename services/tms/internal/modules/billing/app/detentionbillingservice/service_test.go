@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -129,6 +130,7 @@ func newFixture(t *testing.T) *fixture {
 		invoiceRepo:    f.invoices,
 		auditService:   f.audit,
 		watchtower:     &mocks.NoopWatchtowerProjector{},
+		features:       plantest.AllFeatures(),
 		now:            func() int64 { return 1_700_000_000 },
 	}
 

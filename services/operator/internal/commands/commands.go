@@ -268,7 +268,7 @@ func (r *Runner) logs(ctx context.Context, component string, lines *int) (string
 }
 
 func succeeded(message string, output *string) instanceapi.CommandResult {
-	res := instanceapi.CommandResult{Status: instanceapi.Succeeded, Output: output}
+	res := instanceapi.CommandResult{Status: instanceapi.CommandResultStatusSucceeded, Output: output}
 	if message != "" {
 		res.Message = &message
 	}
@@ -280,7 +280,7 @@ func failed(err error) instanceapi.CommandResult {
 	if len(msg) > maxMessage {
 		msg = msg[:maxMessage]
 	}
-	return instanceapi.CommandResult{Status: instanceapi.Failed, Message: &msg}
+	return instanceapi.CommandResult{Status: instanceapi.CommandResultStatusFailed, Message: &msg}
 }
 
 func oneLine(s string) string {

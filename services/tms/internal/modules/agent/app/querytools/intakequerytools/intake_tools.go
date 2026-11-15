@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -106,6 +107,7 @@ func (t *getShipmentDraftTool) ParamSchema() map[string]any {
 func (t *getShipmentDraftTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceDocument,
+		Feature:  platformcatalog.FeatureDocumentIntelligence,
 		Reads:    agenttooltrust.ExternalReadAlways,
 		Source:   agent.TaintSourceDocument,
 		Rationale: "Reads a shipment drafted from a document someone outside sent; nothing " +

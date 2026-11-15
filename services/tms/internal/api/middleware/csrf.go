@@ -90,7 +90,7 @@ func (m *CSRFBrowserGuard) Guard() gin.HandlerFunc {
 		if mode == "" {
 			mode = "report"
 		}
-		if mode == "off" || isSafeMethod(c.Request.Method) {
+		if mode == "off" || isSafeMethod(c.Request.Method) || isSupportEntry(c.Request.URL.Path) {
 			c.Next()
 			return
 		}

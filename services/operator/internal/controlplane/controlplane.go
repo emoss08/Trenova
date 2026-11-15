@@ -148,6 +148,26 @@ func (c *Client) Secrets(ctx context.Context) (instanceapi.InstanceSecrets, erro
 	)
 }
 
+var ErrNoStorage = errors.New("the instance has no object storage of its own")
+
+func (c *Client) Storage(ctx context.Context) (instanceapi.InstanceStorage, error) {
+	res, err := c.api.GetStorageWithResponse(ctx)
+	if err != nil {
+		return instanceapi.InstanceStorage{}, fmt.Errorf("get the instance's storage: %w", err)
+	}
+	switch {
+	case res.StatusCode() == http.StatusOK && res.JSON200 != nil:
+		return *res.JSON200, nil
+	case res.StatusCode() == http.StatusNotFound:
+		return instanceapi.InstanceStorage{}, ErrNoStorage
+	}
+	return instanceapi.InstanceStorage{}, failure(
+		res.HTTPResponse,
+		res.ApplicationproblemJSON401,
+		res.ApplicationproblemJSON429,
+	)
+}
+
 // Commands lists what the control plane asks the instance to do.
 func (c *Client) Commands(ctx context.Context) ([]instanceapi.Command, error) {
 	res, err := c.api.ListCommandsWithResponse(ctx)

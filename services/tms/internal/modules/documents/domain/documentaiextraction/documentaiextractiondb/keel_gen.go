@@ -31,6 +31,7 @@ var extractionsTable = schema.Table{
 		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: 0, Label: `User ID`, JSON: `userId`},
 		{Name: "extracted_at", Quoted: `"extracted_at"`, Field: "ExtractedAt", Kind: schema.KindInt64, Flags: 0, Label: `Extracted At`, JSON: `extractedAt`},
 		{Name: "request_hash", Quoted: `"request_hash"`, Field: "RequestHash", Kind: schema.KindString, Flags: 0, Label: `Request Hash`, JSON: `requestHash`},
+		{Name: "page_count", Quoted: `"page_count"`, Field: "PageCount", Kind: schema.KindInt64, Flags: 0, Label: `Page Count`, JSON: `pageCount`},
 		{Name: "workflow_id", Quoted: `"workflow_id"`, Field: "WorkflowID", Kind: schema.KindString, Flags: 0, Label: `Workflow ID`, JSON: `workflowId`},
 		{Name: "workflow_run_id", Quoted: `"workflow_run_id"`, Field: "WorkflowRunID", Kind: schema.KindString, Flags: 0, Label: `Workflow Run ID`, JSON: `workflowRunId`},
 		{Name: "activity_id", Quoted: `"activity_id"`, Field: "ActivityID", Kind: schema.KindString, Flags: 0, Label: `Activity ID`, JSON: `activityId`},
@@ -49,14 +50,14 @@ var extractionsTable = schema.Table{
 	},
 	PK:           []int32{0, 2, 3},
 	Tenant:       []int32{2, 3},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:       []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:       []int32{1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
 	Returning:    nil,
-	Version:      19,
+	Version:      20,
 	AutoID:       0,
-	AutoCreate:   20,
-	AutoUpdate:   21,
+	AutoCreate:   21,
+	AutoUpdate:   22,
 	IDPrefix:     "dax_",
 	New:          newExtraction,
 	NewN:         newNExtraction,
@@ -78,6 +79,7 @@ type ExtractionsTable struct {
 	UserID         keelkinds.PulidIDCol
 	ExtractedAt    keel.Int64Col
 	RequestHash    keel.StringCol
+	PageCount      keel.Int64Col
 	WorkflowID     keel.StringCol
 	WorkflowRunID  keel.StringCol
 	ActivityID     keel.StringCol
@@ -105,21 +107,22 @@ var Extractions = &ExtractionsTable{
 	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extractionsRef, Index: 4}}},
 	ExtractedAt:    keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 5}},
 	RequestHash:    keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 6}},
-	WorkflowID:     keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 7}},
-	WorkflowRunID:  keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 8}},
-	ActivityID:     keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 9}},
-	ResponseID:     keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 10}},
-	ProviderID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extractionsRef, Index: 11}}},
-	Model:          keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 12}},
-	Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extractionsRef, Index: 13}}},
-	FailureCode:    keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 14}},
-	FailureMessage: keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 15}},
-	SubmittedAt:    keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 16}},
-	LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 17}},
-	CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 18}},
-	Version:        keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 19}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 20}},
-	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 21}},
+	PageCount:      keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 7}},
+	WorkflowID:     keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 8}},
+	WorkflowRunID:  keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 9}},
+	ActivityID:     keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 10}},
+	ResponseID:     keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 11}},
+	ProviderID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extractionsRef, Index: 12}}},
+	Model:          keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 13}},
+	Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extractionsRef, Index: 14}}},
+	FailureCode:    keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 15}},
+	FailureMessage: keel.StringCol{Col: keel.Col{Ref: &extractionsRef, Index: 16}},
+	SubmittedAt:    keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 17}},
+	LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 18}},
+	CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 19}},
+	Version:        keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 20}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 21}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &extractionsRef, Index: 22}},
 }
 
 // BuildExtractions builds the table of document_ai_extractions for ref. Generated relation and alias methods call it.
@@ -133,21 +136,22 @@ func BuildExtractions(r *keel.Ref) *ExtractionsTable {
 		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ExtractedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		RequestHash:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		WorkflowID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		WorkflowRunID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		ActivityID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		ResponseID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		ProviderID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		Model:          keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		FailureCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		FailureMessage: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		SubmittedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		PageCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		WorkflowID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
+		WorkflowRunID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
+		ActivityID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
+		ResponseID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
+		ProviderID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Model:          keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		FailureCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		FailureMessage: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
+		SubmittedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 	}
 }
 
@@ -553,34 +557,36 @@ func ptrExtraction(p unsafe.Pointer, c int32) any {
 	case 6:
 		return &r.RequestHash
 	case 7:
-		return &r.WorkflowID
+		return (*int64)(unsafe.Pointer(&r.PageCount))
 	case 8:
-		return &r.WorkflowRunID
+		return &r.WorkflowID
 	case 9:
-		return &r.ActivityID
+		return &r.WorkflowRunID
 	case 10:
-		return &r.ResponseID
+		return &r.ActivityID
 	case 11:
-		return (*string)(unsafe.Pointer(&r.ProviderID))
+		return &r.ResponseID
 	case 12:
-		return &r.Model
+		return (*string)(unsafe.Pointer(&r.ProviderID))
 	case 13:
-		return (*string)(unsafe.Pointer(&r.Status))
+		return &r.Model
 	case 14:
-		return &r.FailureCode
+		return (*string)(unsafe.Pointer(&r.Status))
 	case 15:
-		return &r.FailureMessage
+		return &r.FailureCode
 	case 16:
-		return &r.SubmittedAt
+		return &r.FailureMessage
 	case 17:
-		return &r.LastPolledAt
+		return &r.SubmittedAt
 	case 18:
-		return &r.CompletedAt
+		return &r.LastPolledAt
 	case 19:
-		return &r.Version
+		return &r.CompletedAt
 	case 20:
-		return &r.CreatedAt
+		return &r.Version
 	case 21:
+		return &r.CreatedAt
+	case 22:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -604,58 +610,60 @@ func valueExtraction(p unsafe.Pointer, c int32) any {
 	case 6:
 		return r.RequestHash
 	case 7:
-		return r.WorkflowID
+		return int64(r.PageCount)
 	case 8:
-		return r.WorkflowRunID
+		return r.WorkflowID
 	case 9:
-		return r.ActivityID
+		return r.WorkflowRunID
 	case 10:
+		return r.ActivityID
+	case 11:
 		if r.ResponseID == "" {
 			return nil
 		}
 		return r.ResponseID
-	case 11:
+	case 12:
 		if r.ProviderID == "" {
 			return nil
 		}
 		return string(r.ProviderID)
-	case 12:
+	case 13:
 		if r.Model == "" {
 			return nil
 		}
 		return r.Model
-	case 13:
-		return string(r.Status)
 	case 14:
+		return string(r.Status)
+	case 15:
 		if r.FailureCode == "" {
 			return nil
 		}
 		return r.FailureCode
-	case 15:
+	case 16:
 		if r.FailureMessage == "" {
 			return nil
 		}
 		return r.FailureMessage
-	case 16:
+	case 17:
 		if r.SubmittedAt == nil {
 			return nil
 		}
 		return *r.SubmittedAt
-	case 17:
+	case 18:
 		if r.LastPolledAt == nil {
 			return nil
 		}
 		return *r.LastPolledAt
-	case 18:
+	case 19:
 		if r.CompletedAt == nil {
 			return nil
 		}
 		return *r.CompletedAt
-	case 19:
-		return r.Version
 	case 20:
-		return r.CreatedAt
+		return r.Version
 	case 21:
+		return r.CreatedAt
+	case 22:
 		return r.UpdatedAt
 	}
 	return nil
@@ -664,6 +672,9 @@ func valueExtraction(p unsafe.Pointer, c int32) any {
 func beforeCreateExtraction(ctx context.Context, p unsafe.Pointer) error {
 	return (*documentaiextraction.Extraction)(p).BeforeCreate(ctx)
 }
+
+// intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
+const intIs64 = unsafe.Sizeof(int(0)) - 8
 
 var enumStatus = [...]schema.EnumValue{
 	{Value: `Pending`, Label: `Pending`},

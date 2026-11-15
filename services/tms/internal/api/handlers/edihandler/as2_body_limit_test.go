@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -17,10 +19,18 @@ import (
 func as2Router() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	handler := &Handler{eh: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
+	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 		Logger:    zap.NewNop(),
 		AppConfig: &appconfig.Config{},
-	})}
+	})
+	handler := &Handler{
+		eh: errorHandler,
+		features: middleware.NewFeatureGuard(middleware.FeatureGuardParams{
+			Features:     plantest.AllFeatures(),
+			ErrorHandler: errorHandler,
+			Logger:       zap.NewNop(),
+		}),
+	}
 	handler.RegisterPublicRoutes(router.Group("/"))
 
 	return router

@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const selfHostedBody = `{"platformMode":"self_hosted",` +
+const selfHostedBody = `{"platformMode":"self_hosted","managed":false,` +
 	`"session":{"idleTimeoutSeconds":0,"idleWarningSeconds":0,"keepAliveSeconds":0}}`
 
 func serve(t *testing.T, cfg *config.Config) *httptest.ResponseRecorder {
@@ -27,6 +27,7 @@ func serve(t *testing.T, cfg *config.Config) *httptest.ResponseRecorder {
 	handler := publicconfighandler.New(publicconfighandler.Params{
 		PlatformConfig: &cfg.Platform,
 		SecurityConfig: &cfg.Security,
+		ManagedConfig:  &cfg.Managed,
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,
@@ -90,4 +91,15 @@ func TestSessionIdlePolicyIsPublished(t *testing.T) {
 		w.Body.String(),
 		`"session":{"idleTimeoutSeconds":1800,"idleWarningSeconds":120,"keepAliveSeconds":60}`,
 	)
+}
+
+func TestAManagedInstanceSaysSo(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{}
+	cfg.Managed.Enabled = true
+	w := serve(t, cfg)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `"managed":true`)
 }

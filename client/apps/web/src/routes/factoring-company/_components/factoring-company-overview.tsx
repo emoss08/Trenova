@@ -4,6 +4,8 @@ import { factoring as factoringQueries } from "@/lib/queries/factoring";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { FactoringOverviewTarget } from "@trenova/graphql/generated/graphql";
 import type { FactoringCompanyTab } from "../use-factoring-company-state";
@@ -34,6 +36,8 @@ export default function FactoringCompanyOverview({
   onTab: (tab: FactoringCompanyTab) => void;
 }) {
   const t = useT();
+  // The summary is the records' own; it is signed as Nova's only on a plan with Trenova AI.
+  const novaOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
   const { data, error, isLoading, refetch } = useQuery(
     factoringQueries.overview(factoringCompanyId),
   );
@@ -64,8 +68,12 @@ export default function FactoringCompanyOverview({
     <div className="flex flex-col gap-5">
       <section aria-label={t("Summary")} className="flex flex-col gap-2">
         <span className="flex items-center gap-2 text-xs text-muted-foreground">
-          <NovaBadge size="sm" />
-          <span className="font-medium text-foreground">{t("Nova")}</span>
+          {novaOnPlan ? (
+            <>
+              <NovaBadge size="sm" />
+              <span className="font-medium text-foreground">{t("Nova")}</span>
+            </>
+          ) : null}
           {t("Factor summary")}
         </span>
         <p className="max-w-5xl text-lg leading-relaxed text-pretty text-muted-foreground">

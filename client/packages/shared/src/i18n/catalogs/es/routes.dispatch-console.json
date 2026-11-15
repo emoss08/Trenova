@@ -165,6 +165,7 @@
   "No driver location known": "No se conoce la ubicación de ningún conductor",
   "No driver near the pickup has a known location.": "Ningún conductor cerca de la recolección tiene una ubicación conocida.",
   "No driver on duty can take this move on the clocks and equipment they have now.": "Ningún conductor en servicio puede tomar este tramo con los relojes y el equipo que tiene ahora.",
+  "No driver yet": "Aún sin conductor",
   "No drivers match": "Ningún conductor coincide",
   "No drivers on the board": "No hay conductores en el tablero",
   "No drivers to plan": "No hay conductores que planificar",

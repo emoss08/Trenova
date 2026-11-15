@@ -7,9 +7,12 @@ import {
   aiAuditExportNotice,
 } from "@/lib/ai-audit-exports";
 import { invoicePanelPath } from "@/lib/invoice-links";
+import { PlanFeature } from "@/lib/plan-feature";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { isFeatureOnPlan } from "@trenova/shared/hooks/use-plan-feature";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import type { Notification } from "@trenova/shared/types/notification";
+import type { UnavailableFeature } from "@trenova/shared/types/permission";
 import {
   AlertOctagonIcon,
   AlertTriangleIcon,
@@ -905,16 +908,62 @@ function catalogType(key: string, descriptor: NotificationDescriptor): Notificat
 }
 
 /**
- * Every kind of notification Trenova sends, grouped by the registry's category in the
- * order a person reads them: what needs them first, news last. A category the looks
- * above do not name yet takes the look of its first kind and sorts last.
+ * The add-on feature each kind of notification belongs to, where it is not the base plan's.
+ * A category is listed when every kind in it shares one feature; a kind is listed when its
+ * category mixes features. The server's catalogue keys, never shown.
  */
-export function buildNotificationCatalog(): NotificationCatalogCategory[] {
-  const entries: Array<[string, NotificationDescriptor]> = [
+const CATEGORY_FEATURES: Readonly<Record<string, string>> = {
+  Assistant: PlanFeature.AIDesk,
+  Exceptions: PlanFeature.AIWatchtower,
+  EDI: PlanFeature.EDI,
+  "Carrier Intelligence": PlanFeature.CarrierBrokerage,
+  Dispatch: PlanFeature.CarrierBrokerage,
+  Accounting: PlanFeature.Accounting,
+  "Data alert": PlanFeature.TableChangeAlerts,
+};
+
+const KIND_FEATURES: Readonly<Record<string, string>> = {
+  "agent.proposals_pending": PlanFeature.AIDesk,
+  "agent.proposals_reminder": PlanFeature.AIDesk,
+  "agent.tool_promoted": PlanFeature.AgentAutomation,
+  "agent.tool_demoted": PlanFeature.AgentAutomation,
+  "agent.quality_regression": PlanFeature.AgentAutomation,
+  [AI_AUDIT_EXPORT_READY_EVENT]: PlanFeature.AIAuditTrail,
+  [AI_AUDIT_EXPORT_FAILED_EVENT]: PlanFeature.AIAuditTrail,
+  [AI_AUDIT_CHAIN_MISMATCH_EVENT]: PlanFeature.AIAuditTrail,
+  "dash.pto_requested": PlanFeature.WorkforceTimeOff,
+  "dash.credential_expiring": PlanFeature.WorkforceCompliance,
+  credential_expiring: PlanFeature.WorkforceCompliance,
+  credential_expired: PlanFeature.WorkforceCompliance,
+  credential_document_uploaded: PlanFeature.WorkforceCompliance,
+};
+
+/** The add-on feature a kind of notification belongs to, or undefined for the base plan. */
+export function notificationFeature(
+  key: string,
+  descriptor: Pick<NotificationDescriptor, "category">,
+): string | undefined {
+  return KIND_FEATURES[key] ?? CATEGORY_FEATURES[descriptor.category];
+}
+
+/**
+ * Every kind of notification Trenova sends on the organization's plan, grouped by the
+ * registry's category in the order a person reads them: what needs them first, news last. A
+ * kind whose feature the plan leaves out is not offered, and a category left with none is
+ * not drawn. A category the looks above do not name yet takes the look of its first kind and
+ * sorts last.
+ */
+export function buildNotificationCatalog(
+  unavailable: readonly UnavailableFeature[],
+): NotificationCatalogCategory[] {
+  const every: Array<[string, NotificationDescriptor]> = [
     ...Object.entries(EXACT_REGISTRY),
     [TCA_PREFERENCE_KEY, TCA_DESCRIPTOR],
     [SYSTEM_PREFERENCE_KEY, FALLBACK_DESCRIPTOR],
   ];
+  const entries = every.filter(([key, descriptor]) =>
+    isFeatureOnPlan(unavailable, notificationFeature(key, descriptor)),
+  );
   const looks = new Map(CATEGORY_LOOKS.map((look, index) => [look.name, { look, index }]));
   const byCategory = new Map<string, NotificationCatalogCategory & { order: number }>();
   for (const [key, descriptor] of entries) {

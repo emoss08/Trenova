@@ -2056,13 +2056,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "tariffInputs",
-				NonNull:  true,
 				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.TariffInputs, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNJSON2map),
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
 			{
 				Name:      "freightLines",
@@ -2732,13 +2731,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "isDetention",
-				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
 					return obj.IsDetention, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2ᚖbool),
 			},
 			{
 				Name:     "isTariff",
@@ -6208,14 +6206,13 @@ var Shard = &gqlexec.Shard{
 		{Object: "ShipmentDetentionWatchlist", Fields: []*gqlexec.Field{
 			{
 				Name:      "items",
-				NonNull:   true,
 				HasChild:  true,
 				ChildType: "ShipmentDetentionWatchlistItem",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentDetentionWatchlist)
 					return obj.Items, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentDetentionWatchlistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDetentionWatchlistItemᚄ),
+				Marshal: gqlexec.Marshal(marshalOShipmentDetentionWatchlistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDetentionWatchlistItemᚄ),
 			},
 		}},
 		{Object: "ShipmentDetentionWatchlistItem", Fields: []*gqlexec.Field{
@@ -8763,23 +8760,21 @@ var Shard = &gqlexec.Shard{
 		{Object: "ShipmentRatingDetail", Fields: []*gqlexec.Field{
 			{
 				Name:     "formulaTemplateId",
-				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.FormulaTemplateID, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "formulaTemplateName",
-				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.FormulaTemplateName, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "ratedAt",
@@ -8793,13 +8788,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "versionNumber",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.VersionNumber, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
 				Name:      "bill",
@@ -8813,45 +8807,41 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "refusal",
-				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.Refusal, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:      "choices",
-				NonNull:   true,
 				HasChild:  true,
 				ChildType: "TariffChoice",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.Choices, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTariffChoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceᚄ),
+				Marshal: gqlexec.Marshal(marshalOTariffChoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceᚄ),
 			},
 			{
 				Name:     "inputs",
-				NonNull:  true,
 				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.Inputs, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNJSON2map),
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
 			{
 				Name:      "skipped",
-				NonNull:   true,
 				HasChild:  true,
 				ChildType: "ShipmentRatingSkip",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.Skipped, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentRatingSkip2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingSkipᚄ),
+				Marshal: gqlexec.Marshal(marshalOShipmentRatingSkip2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingSkipᚄ),
 			},
 			{
 				Name:       "trace",
@@ -8936,13 +8926,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "awaitingReview",
-				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
 					return obj.AwaitingReview, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2ᚖbool),
 			},
 			{
 				Name:      "reviewApproval",
@@ -14473,14 +14462,6 @@ func marshalNShipmentCustomerMixEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "ShipmentCustomerMixEntry", v)
 }
 
-func marshalNShipmentDetentionWatchlistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDetentionWatchlistItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentDetentionWatchlistItem) graphql.Marshaler {
-	return gqlexec.List[*gqlmodel.ShipmentDetentionWatchlistItem]{
-		Elem:        marshalNShipmentDetentionWatchlistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDetentionWatchlistItem,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
 func marshalNShipmentDetentionWatchlistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDetentionWatchlistItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentDetentionWatchlistItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -14725,14 +14706,6 @@ func marshalNShipmentPreviousRatesResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return ec.MarshalType(ctx, sel, "ShipmentPreviousRatesResponse", v)
 }
 
-func marshalNShipmentRatingSkip2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingSkipᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentRatingSkip) graphql.Marshaler {
-	return gqlexec.List[*gqlmodel.ShipmentRatingSkip]{
-		Elem:        marshalNShipmentRatingSkip2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingSkip,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
 func marshalNShipmentRatingSkip2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingSkip(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentRatingSkip) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -14904,14 +14877,6 @@ func marshalNTariffBillLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "TariffBillLine", v)
-}
-
-func marshalNTariffChoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.TariffChoice) graphql.Marshaler {
-	return gqlexec.List[*gqlmodel.TariffChoice]{
-		Elem:        marshalNTariffChoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoice,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNTariffChoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TariffChoice) graphql.Marshaler {
@@ -15300,6 +15265,13 @@ func marshalOShipmentDetentionWatchlist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "ShipmentDetentionWatchlist", v)
 }
 
+func marshalOShipmentDetentionWatchlistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDetentionWatchlistItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentDetentionWatchlistItem) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ShipmentDetentionWatchlistItem]{
+		Elem:        marshalNShipmentDetentionWatchlistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDetentionWatchlistItem,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalOShipmentDispatchCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDispatchCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentDispatchCounts) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -15384,6 +15356,13 @@ func marshalOShipmentRatingReviewApproval2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return ec.MarshalType(ctx, sel, "ShipmentRatingReviewApproval", v)
 }
 
+func marshalOShipmentRatingSkip2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingSkipᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentRatingSkip) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ShipmentRatingSkip]{
+		Elem:        marshalNShipmentRatingSkip2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingSkip,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalOShipmentReadyToDispatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentReadyToDispatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentReadyToDispatch) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -15459,6 +15438,13 @@ func marshalOTariffBillExchange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "TariffBillExchange", v)
+}
+
+func marshalOTariffChoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.TariffChoice) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.TariffChoice]{
+		Elem:        marshalNTariffChoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoice,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalOTariffLineLimit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffLineLimit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TariffLineLimit) graphql.Marshaler {

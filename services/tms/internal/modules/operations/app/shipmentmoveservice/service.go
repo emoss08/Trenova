@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/equipmentavailabilityhelper"
 	"github.com/emoss08/trenova/internal/modules/operations/app/equipmentcontinuityhelper"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailuretrigger"
@@ -54,6 +55,7 @@ type Params struct {
 	DashControlRepo tenantports.DashControlRepository
 	MoveObservers   []shipmentserviceports.MoveStatusObserver `group:"move_status_observers"`
 	Publisher       agenteventports.AgentEventPublisher
+	Features        platformcatalogports.FeatureGate
 }
 
 type service struct {
@@ -74,6 +76,7 @@ type service struct {
 	dashControlRepo tenantports.DashControlRepository
 	moveObservers   []shipmentserviceports.MoveStatusObserver
 	publisher       agenteventports.AgentEventPublisher
+	features        platformcatalogports.FeatureGate
 }
 
 //nolint:gocritic // service constructor
@@ -96,6 +99,7 @@ func New(p Params) shipmentmoveports.ShipmentMoveService {
 		dashControlRepo: p.DashControlRepo,
 		moveObservers:   p.MoveObservers,
 		publisher:       p.Publisher,
+		features:        p.Features,
 	}
 }
 
@@ -108,10 +112,13 @@ func (s *service) notifyMoveObservers(
 	if move == nil || previous == move.Status {
 		return
 	}
-	for _, observer := range s.moveObservers {
-		if observer == nil {
-			continue
-		}
+	observers, gateErr := platformcatalogports.Observing(ctx, s.features, s.moveObservers)
+	if gateErr != nil {
+		s.l.Error("move status observer failed",
+			zap.String("moveId", move.ID.String()),
+			zap.Error(gateErr))
+	}
+	for _, observer := range observers {
 		if err := observer.AfterMoveStatusChange(ctx, tenantInfo, move, previous); err != nil {
 			s.l.Error("move status observer failed",
 				zap.String("moveId", move.ID.String()),

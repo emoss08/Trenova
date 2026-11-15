@@ -62,7 +62,7 @@ func New(p Params) *Service {
 
 // Available reports whether Nova answers palette questions for the tenant.
 func (s *Service) Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
-	return s.nova.Available(ctx, tenantInfo)
+	return s.nova.Available(ctx, tenantInfo, aitask.TaskPaletteAnswer)
 }
 
 // Answer reads what the question needs as the person asking and streams the

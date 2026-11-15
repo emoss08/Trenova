@@ -1,7 +1,6 @@
 package reportaccess
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"context"
 	"errors"
 	"fmt"
@@ -16,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -33,6 +33,7 @@ const (
 	NeedsFieldGroup
 	NeedsExport
 	OwnScopeUnsupported
+	NotOnPlan
 )
 
 func (d Decision) String() string {
@@ -49,13 +50,15 @@ func (d Decision) String() string {
 		return "needs_export"
 	case OwnScopeUnsupported:
 		return "own_scope_unsupported"
+	case NotOnPlan:
+		return permissionports.ReasonNotOnPlan
 	default:
 		return "unknown"
 	}
 }
 
 func DecisionOf(reason string) Decision {
-	for d := Available; d <= OwnScopeUnsupported; d++ {
+	for d := Available; d <= NotOnPlan; d++ {
 		if d.String() == reason {
 			return d
 		}
@@ -70,6 +73,7 @@ type Use struct {
 	Reference   bool
 	Group       protectedfield.Group
 	HoldsGroup  bool
+	Plan        *permissionports.PlanDenial
 }
 
 func (u Use) Available() bool { return u.Decision == Available }
@@ -367,6 +371,9 @@ func (a *Access) Denials() []Denial {
 
 func (a *Access) EntityUse(e *analytics.Entity) Use {
 	k := a.resolver.kinds[e]
+	if denial := a.kindPlan(k.resource); denial != nil {
+		return Use{Decision: NotOnPlan, Kind: k.resource, Plan: denial}
+	}
 	kind := a.Kind(k.resource)
 	switch {
 	case !kind.Reads:
@@ -401,13 +408,22 @@ func (a *Access) FieldUse(ctx context.Context, f *analytics.Field) Use {
 		Sensitivity: r.registry.GetFieldSensitivity(k.resource.String(), key),
 		Reference:   !k.withinRecord && r.registry.InReferenceView(k.resource.String(), key),
 	}
+	if decision, denial, withheld := a.fieldPlan(ctx, k.resource, key); withheld {
+		use.Decision, use.Kind, use.Plan = decision, k.resource, denial
+		return use
+	}
 	if group, ok := r.Protection(f); ok {
 		use.Group = group
 		use.HoldsGroup = a.holdsGroup(group)
 	}
 
 	use.Decision = a.decide(ctx, k, key, use.Reference, &use.Sensitivity)
+	if use.Decision == NotOnPlan {
+		use.Decision, use.Plan = a.linkedPlan(ctx, k.resource, key)
+	}
 	switch {
+	case use.Decision == NotOnPlan:
+		use.Kind = k.resource
 	case use.Decision == NeedsKindRead:
 		use.Kind = k.resource
 	case use.Decision == Available && use.Group != "" && !use.HoldsGroup:
@@ -432,9 +448,16 @@ func (a *Access) EdgeUse(ctx context.Context, g *analytics.Edge) Use {
 		Sensitivity: r.registry.GetFieldSensitivity(k.resource.String(), g.Name),
 		Reference:   !k.withinRecord && r.registry.InReferenceView(k.resource.String(), g.Name),
 	}
+	if planned, withheld := a.edgePlan(ctx, g); withheld {
+		planned.Sensitivity, planned.Reference = use.Sensitivity, use.Reference
+		return planned
+	}
 
 	use.Decision = a.decide(ctx, k, g.Name, use.Reference, nil)
-	if use.Decision == NeedsKindRead {
+	if use.Decision == NotOnPlan {
+		use.Decision, use.Plan = a.linkedPlan(ctx, k.resource, g.Name)
+	}
+	if use.Decision == NotOnPlan || use.Decision == NeedsKindRead {
 		use.Kind = k.resource
 		return use
 	}
@@ -528,6 +551,8 @@ func (a *Access) decideGrant(
 		return Available
 	case permissionports.LinkedFieldWithheldSensitivity:
 		return WithheldByCeiling
+	case permissionports.LinkedFieldWithheldPlan:
+		return NotOnPlan
 	case permissionports.LinkedFieldWithheldKind:
 		return NeedsKindRead
 	default:

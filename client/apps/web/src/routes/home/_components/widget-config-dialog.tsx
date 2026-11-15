@@ -8,6 +8,7 @@ import {
 } from "@/routes/reports/builder/_components/builder-state";
 import { useTileReport } from "@/routes/reports/dashboards/_components/use-tile-report";
 import type { ReportDashboardTile } from "@/types/report";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
@@ -343,7 +344,10 @@ function MetricPicker({
         <div className="grid max-h-52 gap-1 overflow-y-auto p-1.5 sm:grid-cols-2">
           {visible.map((metric) => {
             const checked = selected.includes(metric.key);
-            const disabled = !checked && max > 1 && selected.length >= max;
+            // A measure the plan leaves out is listed with the add-on that carries it and
+            // cannot be chosen; one already chosen can still be cleared.
+            const lock = metric.planLock;
+            const disabled = !checked && ((max > 1 && selected.length >= max) || lock != null);
 
             return (
               <label
@@ -359,7 +363,12 @@ function MetricPicker({
                   disabled={disabled}
                   onCheckedChange={() => toggle(metric.key)}
                 />
-                <span className="truncate">{t(metric.label)}</span>
+                <span className="min-w-0 flex-1 truncate">{t(metric.label)}</span>
+                {lock != null && (
+                  <Badge variant="neutral" className="shrink-0">
+                    {t("Part of {0}", lock.addOnName)}
+                  </Badge>
+                )}
               </label>
             );
           })}

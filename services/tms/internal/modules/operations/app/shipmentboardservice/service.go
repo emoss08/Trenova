@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
@@ -33,6 +34,7 @@ type Params struct {
 	Integrations    integrationports.IntegrationRepository
 	IntegrationsSvc *integrationservice.Service
 	Cache           shipmentboardports.ShipmentBoardCache
+	Features        platformcatalogports.FeatureGate
 	Logger          *zap.Logger
 }
 
@@ -44,6 +46,7 @@ type Service struct {
 	integrations  integrationports.IntegrationRepository
 	maps          MapsReadiness
 	cache         shipmentboardports.ShipmentBoardCache
+	features      platformcatalogports.FeatureGate
 	l             *zap.Logger
 }
 
@@ -63,6 +66,7 @@ func New(p Params) *Service {
 		integrations:  p.Integrations,
 		maps:          p.IntegrationsSvc,
 		cache:         p.Cache,
+		features:      p.Features,
 		l:             p.Logger.Named("service.shipment-board"),
 	}
 }

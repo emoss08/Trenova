@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -18,12 +19,14 @@ type ObservedParams struct {
 
 	Repo      documentports.DocumentRepository
 	Observers []documentports.DocumentChangeObserver `group:"document_change_observers"`
+	Features  platformcatalogports.FeatureGate
 	Logger    *zap.Logger
 }
 
 type observed struct {
 	documentports.DocumentRepository
 	observers []documentports.DocumentChangeObserver
+	features  platformcatalogports.FeatureGate
 	l         *zap.Logger
 }
 
@@ -40,6 +43,7 @@ func Observe(p ObservedParams) documentports.DocumentRepository {
 	return &observed{
 		DocumentRepository: p.Repo,
 		observers:          observers,
+		features:           p.Features,
 		l:                  p.Logger.Named("repository.document-observed"),
 	}
 }
@@ -296,8 +300,12 @@ func (o *observed) publish(
 		return
 	}
 	kernelports.AfterCommit(ctx, func(committed context.Context) {
+		observers, gateErr := platformcatalogports.Observing(committed, o.features, o.observers)
+		if gateErr != nil {
+			o.l.Warn("document change observers skipped", zap.Error(gateErr))
+		}
 		for _, change := range changes {
-			for _, observer := range o.observers {
+			for _, observer := range observers {
 				observer.DocumentsChanged(committed, change)
 			}
 		}

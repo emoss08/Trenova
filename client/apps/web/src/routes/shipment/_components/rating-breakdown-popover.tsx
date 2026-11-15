@@ -1,5 +1,6 @@
 import { BillReceipt } from "@/components/tariff-bill/bill-receipt";
 import { ChoicesView } from "@/components/tariff-bill/choices-view";
+import { usePermission } from "@/hooks/use-permission";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { ArrowUpRightIcon, ChevronRightIcon, ReceiptIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -21,6 +22,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { humanizeTariffName } from "@trenova/shared/lib/tariff-inputs";
 import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { tariffInputValuesSchema, type TariffChoice } from "@trenova/shared/types/tariff";
 import type { StoredTariffBill } from "@trenova/shared/types/tariff-form";
@@ -73,6 +75,7 @@ export function RatingBreakdownPopover({
   choices: TariffChoice[];
 }) {
   const t = useT();
+  const { allowed: mayOpenTariff } = usePermission(Resource.FormulaTemplate, Operation.Read);
   const currency = bill.currency || undefined;
   const skipped = ratingDetail.skipped ?? [];
   // A shipment read over GraphQL reaches the form unparsed, so the stored inputs are read here.
@@ -109,7 +112,7 @@ export function RatingBreakdownPopover({
         <PopoverHeader className="gap-1 border-b px-3 py-2.5">
           <div className="flex items-center justify-between gap-3">
             <PopoverTitle className="text-sm">{t("Last rating")}</PopoverTitle>
-            {ratingDetail.formulaTemplateId ? (
+            {ratingDetail.formulaTemplateId && mayOpenTariff ? (
               <Link
                 to={formulaTemplateRoutes.edit(ratingDetail.formulaTemplateId)}
                 className="text-foreground-muted hover:text-foreground ui-focus-ring flex items-center gap-0.5 rounded-sm text-xs"

@@ -18,10 +18,19 @@ func NewMockQuotaGuard(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockQuotaGuard {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockQuotaGuard{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -74,8 +83,8 @@ type MockQuotaGuard_Check_Call struct {
 
 // Check is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.QuotaRequest
-func (_e *MockQuotaGuard_Expecter) Check(ctx interface{}, req interface{}) *MockQuotaGuard_Check_Call {
+//   - req *platformplanports.QuotaRequest
+func (_e *MockQuotaGuard_Expecter) Check(ctx any, req any) *MockQuotaGuard_Check_Call {
 	return &MockQuotaGuard_Check_Call{Call: _e.mock.On("Check", ctx, req)}
 }
 
@@ -131,8 +140,8 @@ type MockQuotaGuard_Enforce_Call struct {
 
 // Enforce is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.QuotaRequest
-func (_e *MockQuotaGuard_Expecter) Enforce(ctx interface{}, req interface{}) *MockQuotaGuard_Enforce_Call {
+//   - req *platformplanports.QuotaRequest
+func (_e *MockQuotaGuard_Expecter) Enforce(ctx any, req any) *MockQuotaGuard_Enforce_Call {
 	return &MockQuotaGuard_Enforce_Call{Call: _e.mock.On("Enforce", ctx, req)}
 }
 
@@ -200,7 +209,7 @@ type MockQuotaGuard_Usage_Call struct {
 // Usage is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockQuotaGuard_Expecter) Usage(ctx interface{}, tenantInfo interface{}) *MockQuotaGuard_Usage_Call {
+func (_e *MockQuotaGuard_Expecter) Usage(ctx any, tenantInfo any) *MockQuotaGuard_Usage_Call {
 	return &MockQuotaGuard_Usage_Call{Call: _e.mock.On("Usage", ctx, tenantInfo)}
 }
 

@@ -1371,43 +1371,39 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "complianceStatus",
-				NonNull:  true,
 				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.ComplianceStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐComplianceStatus),
+				Marshal: gqlexec.Marshal(marshalOComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐComplianceStatus),
 			},
 			{
 				Name:     "trainingHealth",
-				NonNull:  true,
 				ChildErr: errNoChild18,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.TrainingHealth, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerTrainingHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingHealth),
+				Marshal: gqlexec.Marshal(marshalOWorkerTrainingHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingHealth),
 			},
 			{
 				Name:     "safetyRating",
-				NonNull:  true,
 				ChildErr: errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.SafetyRating, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyRating),
+				Marshal: gqlexec.Marshal(marshalOSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyRating),
 			},
 			{
 				Name:     "safetyScore",
-				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.SafetyScore, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int16),
+				Marshal: gqlexec.Marshal(marshalOInt2int16),
 			},
 			{
 				Name:     "nextCredentialExpiry",
@@ -1429,13 +1425,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "drugAlcoholStatus",
-				NonNull:  true,
 				ChildErr: errNoChild20,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.DrugAlcoholStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDrugAlcoholStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDrugAlcoholStatus),
+				Marshal: gqlexec.Marshal(marshalODrugAlcoholStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDrugAlcoholStatus),
 			},
 			{
 				Name:     "isQualified",
@@ -1459,23 +1454,21 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastComplianceCheck",
-				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.LastComplianceCheck, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
 			},
 			{
 				Name:     "lastMvrCheck",
-				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.LastMVRCheck, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
 			},
 			{
 				Name:     "lastDrugTest",
@@ -2554,14 +2547,6 @@ func marshalNCDLClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋwo
 	return res
 }
 
-func marshalNComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐComplianceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ComplianceStatus) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
 func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
@@ -2571,14 +2556,6 @@ func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Selec
 }
 
 func marshalNDriverType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.DriverType) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
-func marshalNDrugAlcoholStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDrugAlcoholStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.DrugAlcoholStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2612,14 +2589,6 @@ func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 
 func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
-func marshalNInt2int16(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int16) graphql.Marshaler {
-	res := graphql.MarshalInt16(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -2684,14 +2653,6 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
-}
-
-func marshalNSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyRating(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.SafetyRating) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
 }
 
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
@@ -2782,14 +2743,6 @@ func marshalNWorkerPTOEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return ec.MarshalType(ctx, sel, "WorkerPTOEdge", v)
 }
 
-func marshalNWorkerTrainingHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingHealth(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.TrainingHealth) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
 func marshalNWorkerType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.WorkerType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -2805,11 +2758,21 @@ func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "BusinessUnit", v)
 }
 
+func marshalOComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐComplianceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ComplianceStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
 func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func marshalODrugAlcoholStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDrugAlcoholStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.DrugAlcoholStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
 	return res
 }
 
@@ -2841,6 +2804,11 @@ func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
+func marshalOInt2int16(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int16) graphql.Marshaler {
+	res := graphql.MarshalInt16(v)
+	return res
+}
+
 func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -2862,6 +2830,11 @@ func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Organization", v)
+}
+
+func marshalOSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyRating(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.SafetyRating) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
 }
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
@@ -2928,4 +2901,9 @@ func marshalOWorkerProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerProfile", v)
+}
+
+func marshalOWorkerTrainingHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTrainingHealth(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.TrainingHealth) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -112,6 +113,7 @@ func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
 		workflowStarter: starter,
 		auditService:    &fakeAuditService{},
 		driverNotify:    quietDriverNotify(t, workers),
+		features:        plantest.AllFeatures(),
 	}
 	request := func() *workerptoports.UpdatePTOStatusRequest {
 		return &workerptoports.UpdatePTOStatusRequest{
@@ -158,6 +160,7 @@ func TestPreviewCancel_SaysApprovedDaysGoBack(t *testing.T) {
 	workers.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&worker.Worker{ID: current.WorkerID}, nil)
 	svc := &Service{
+		features: plantest.AllFeatures(),
 		db:       dbtest.NopConnection{},
 		realtime: &mocks.NoopRealtimeService{},
 		ledger:   untrackedLedger(),

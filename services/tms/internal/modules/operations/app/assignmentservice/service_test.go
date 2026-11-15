@@ -42,6 +42,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -173,6 +174,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -226,6 +228,7 @@ func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -292,6 +295,7 @@ func TestAssignToMove_RejectsDispatchBlockingHold(t *testing.T) {
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		holdRepo:     holdRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -422,6 +426,7 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 		trailerRepo:         trailerRepo,
 		locationRepo:        locationRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -673,6 +678,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 		dispatchControlRepo: dispatchControlRepo,
 		continuityRepo:      continuityRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -796,6 +802,7 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -876,6 +883,7 @@ func TestUnassign_RejectsMissingAssignment(t *testing.T) {
 		shipmentRepo: shipmentRepo,
 		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -928,6 +936,7 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -1167,6 +1176,7 @@ func newAssignToMoveService(
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},

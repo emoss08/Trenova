@@ -2,12 +2,14 @@ package servicefailureservice
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -32,6 +34,13 @@ func (s *service) preflightServiceFailure214(
 	req := serviceFailure214Request(params)
 	if req == nil || s.ediService == nil {
 		return nil, nil //nolint:nilnil // a nil result means the change generates no 214
+	}
+	ediOn, err := s.features.Enabled(ctx, platformcatalog.FeatureEDIIntegration)
+	if err != nil {
+		return nil, fmt.Errorf("ask whether EDI is on the plan: %w", err)
+	}
+	if !ediOn {
+		return nil, nil //nolint:nilnil // without EDI on the plan the change generates no 214
 	}
 	result, err := s.ediService.PreviewServiceFailure214ForLifecycle(ctx, req)
 	if err != nil {
@@ -60,6 +69,18 @@ func (s *service) generateServiceFailure214(
 ) {
 	req := serviceFailure214Request(params)
 	if req == nil || s.ediService == nil {
+		return
+	}
+	ediOn, gateErr := s.features.Enabled(ctx, platformcatalog.FeatureEDIIntegration)
+	if gateErr != nil {
+		s.l.Warn(
+			"failed to generate service failure EDI 214",
+			zap.Error(gateErr),
+			zap.String("serviceFailureId", params.current.ID.String()),
+		)
+		return
+	}
+	if !ediOn {
 		return
 	}
 	req.ServiceFailure = nil

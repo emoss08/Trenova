@@ -44,6 +44,15 @@ export const orgSummarySchema = z.object({
 
 export type OrgSummary = z.infer<typeof orgSummarySchema>;
 
+export const unavailableFeatureSchema = z.object({
+  feature: z.string(),
+  featureName: z.string(),
+  addOn: z.string(),
+  addOnName: z.string(),
+});
+
+export type UnavailableFeature = z.infer<typeof unavailableFeatureSchema>;
+
 export const permissionManifestSchema = z.object({
   version: z.string(),
   userId: z.string(),
@@ -57,6 +66,7 @@ export const permissionManifestSchema = z.object({
   permissions: z.record(z.string(), z.number()),
   routeAccess: z.record(z.string(), z.boolean()),
   availableOrgs: z.array(orgSummarySchema),
+  unavailableFeatures: z.array(unavailableFeatureSchema),
   checksum: z.string(),
   expiresAt: z.number(),
 });

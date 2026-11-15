@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,16 +19,49 @@ const (
 )
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
-	rg.POST(as2InboundRoute, h.receiveAS2Message)
+	rg.POST(
+		as2InboundRoute,
+		h.features.RequireFeature(
+			platformcatalog.FeatureEDIIntegration,
+			middleware.AnswerWith(h.refuseAS2Message),
+		),
+		h.receiveAS2Message,
+	)
 }
 
 func (h *Handler) receiveAS2Message(c *gin.Context) {
-	body, err := helpers.ReadBoundedRequestBody(c, as2MaxRequestBody)
+	request, ok := h.as2Request(c)
+	if !ok {
+		return
+	}
+	result, err := h.as2Service.ReceiveAS2Message(c.Request.Context(), request)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	request := &ediinboundas2.ReceiveAS2MessageRequest{
+	h.writeAS2Result(c, result)
+}
+
+func (h *Handler) refuseAS2Message(c *gin.Context) {
+	request, ok := h.as2Request(c)
+	if !ok {
+		return
+	}
+	result, err := h.as2Service.RefuseAS2Message(request)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	h.writeAS2Result(c, result)
+}
+
+func (h *Handler) as2Request(c *gin.Context) (*ediinboundas2.ReceiveAS2MessageRequest, bool) {
+	body, err := helpers.ReadBoundedRequestBody(c, as2MaxRequestBody)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return nil, false
+	}
+	return &ediinboundas2.ReceiveAS2MessageRequest{
 		InboundToken:                   c.Param("as2InboundToken"),
 		From:                           c.GetHeader("AS2-From"),
 		To:                             c.GetHeader("AS2-To"),
@@ -37,12 +72,10 @@ func (h *Handler) receiveAS2Message(c *gin.Context) {
 		DispositionNotificationOptions: c.GetHeader("Disposition-Notification-Options"),
 		ReceiptDeliveryOption:          c.GetHeader("Receipt-Delivery-Option"),
 		Body:                           body,
-	}
-	result, err := h.as2Service.ReceiveAS2Message(c.Request.Context(), request)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
+	}, true
+}
+
+func (h *Handler) writeAS2Result(c *gin.Context, result *ediinboundas2.ReceiveAS2MessageResult) {
 	if result.IsMDN {
 		c.Status(http.StatusNoContent)
 		return

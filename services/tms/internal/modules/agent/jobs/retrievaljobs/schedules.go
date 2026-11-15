@@ -2,6 +2,7 @@ package retrievaljobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "retrieval-index-sweep",
+			Feature:       platformcatalog.FeatureAIDesk,
 			Description:   "Mark retrieval sources changed since they were indexed, per organization",
 			Spec:          schedule.Cron("17 * * * *"),
 			Workflow:      RetrievalIndexSweepWorkflow,

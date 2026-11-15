@@ -59,7 +59,17 @@ class FakeIntersectionObserver {
 }
 
 function widget(id: string, key: string): HomeWidget {
-  return { id, key, title: null, w: 6, h: 5, config: {} } as unknown as HomeWidget;
+  return {
+    id,
+    key,
+    label: key,
+    title: null,
+    w: 6,
+    h: 5,
+    planLock: null,
+    lockedMetrics: [],
+    config: {},
+  } as unknown as HomeWidget;
 }
 
 const widgets = [widget("widget_1", "unassigned"), widget("widget_2", "map")];

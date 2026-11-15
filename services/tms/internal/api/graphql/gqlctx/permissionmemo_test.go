@@ -5,6 +5,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,16 +18,16 @@ func TestPermissionMemo_RoundTrip(t *testing.T) {
 	_, found := memo.Lookup("shipment|read")
 	assert.False(t, found)
 
-	memo.Store("shipment|read", true)
-	memo.Store("shipment|delete", false)
+	memo.Store("shipment|read", permissionports.PermissionCheckResult{Allowed: true})
+	memo.Store("shipment|delete", permissionports.PermissionCheckResult{Allowed: false})
 
-	allowed, found := memo.Lookup("shipment|read")
+	result, found := memo.Lookup("shipment|read")
 	assert.True(t, found)
-	assert.True(t, allowed)
+	assert.True(t, result.Allowed)
 
-	allowed, found = memo.Lookup("shipment|delete")
+	result, found = memo.Lookup("shipment|delete")
 	assert.True(t, found, "denials are memoised too; permissions do not change mid-request")
-	assert.False(t, allowed)
+	assert.False(t, result.Allowed)
 
 	assert.Equal(t, 2, memo.Len())
 }
@@ -60,7 +61,7 @@ func TestPermissionMemo_ConcurrentAccess(t *testing.T) {
 		key := "resource|" + strconv.Itoa(i%10)
 		go func() {
 			defer wg.Done()
-			memo.Store(key, i%2 == 0)
+			memo.Store(key, permissionports.PermissionCheckResult{Allowed: i%2 == 0})
 		}()
 		go func() {
 			defer wg.Done()

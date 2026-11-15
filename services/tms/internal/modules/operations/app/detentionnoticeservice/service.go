@@ -467,6 +467,7 @@ func (s *Service) SendNotice(
 
 	_, err := s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
+		Type:           email.TypeDetentionNotice,
 		Purpose:        email.PurposeNotifications,
 		To:             notice.Recipients,
 		Subject:        notice.Subject,
@@ -1062,6 +1063,7 @@ func (s *Service) PreviewOccurrenceNotice(
 
 	sender, sErr := s.senders.ResolveSender(ctx, &emailports.SendEmailRequest{
 		TenantInfo: p.TenantInfo,
+		Type:       email.TypeDetentionNotice,
 		Purpose:    email.PurposeNotifications,
 		To:         schedule.Recipients,
 	})

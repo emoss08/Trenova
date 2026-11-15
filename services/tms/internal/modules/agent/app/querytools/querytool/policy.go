@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 const readRationale = "Reads records the caller may already open; it changes nothing and " +
@@ -18,6 +19,9 @@ type ReadSpec struct {
 	Source          agent.TaintSource
 	CapsLaterWrites bool
 	Rationale       string
+	// Feature is the plan feature the read needs beyond its resource's own
+	// (ToolPolicy.Feature).
+	Feature platformcatalog.FeatureKey
 }
 
 func ReadPolicy(name string, spec *ReadSpec) agenttoolports.ToolPolicy {
@@ -37,6 +41,7 @@ func ReadPolicy(name string, spec *ReadSpec) agenttoolports.ToolPolicy {
 		Source:          spec.Source,
 		CapsLaterWrites: spec.CapsLaterWrites,
 		Rationale:       spec.Rationale,
+		Feature:         spec.Feature,
 	}
 	if policy.Scope == "" {
 		policy.Scope = agenttooltrust.ToolScopeTenant

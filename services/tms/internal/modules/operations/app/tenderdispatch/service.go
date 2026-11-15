@@ -236,6 +236,7 @@ func (s *Service) deliverByEmail(
 
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
+		Type:           email.TypeTenderOffer,
 		Purpose:        email.PurposeGeneral,
 		To:             []string{offer.RecipientEmail},
 		Subject:        rendered.Subject,

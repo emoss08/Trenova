@@ -84,7 +84,7 @@ type WorkerProfile {
   terminationDate: Timestamp
   physicalDueDate: Timestamp
   mvrDueDate: Timestamp
-  complianceStatus: ComplianceStatus!
+  complianceStatus: ComplianceStatus
   """
   Roster roll-ups: the worker's training and safety standing denormalised onto
   the profile so the workers list can filter and sort on them. They are a cache
@@ -92,9 +92,9 @@ type WorkerProfile {
   re-checked by the nightly compliance sweep. Read the worker overview or the
   per-area summaries for the live answer.
   """
-  trainingHealth: WorkerTrainingHealth!
-  safetyRating: SafetyRating!
-  safetyScore: Int!
+  trainingHealth: WorkerTrainingHealth
+  safetyRating: SafetyRating
+  safetyScore: Int
   """
   When the worker's soonest required credential expires, and when their soonest
   required course falls due. Null when nothing does.
@@ -106,11 +106,11 @@ type WorkerProfile {
   ledgers so the roster can filter and sort on it. Only Prohibited blocks
   dispatch; Unknown and Pending warn.
   """
-  drugAlcoholStatus: DrugAlcoholStatus!
+  drugAlcoholStatus: DrugAlcoholStatus
   isQualified: Boolean!
   disqualificationReason: String!
-  lastComplianceCheck: Timestamp!
-  lastMvrCheck: Timestamp!
+  lastComplianceCheck: Timestamp
+  lastMvrCheck: Timestamp
   lastDrugTest: Timestamp @protected(group: Personal)
   eldExempt: Boolean!
   shortHaulExempt: Boolean!

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -290,7 +291,8 @@ func newTestService(
 	require.NoError(t, err)
 
 	integrationSvc := integrationservice.New(integrationservice.Params{
-		Logger: zap.NewNop(),
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
 		Repo: &stubIntegrationRepo{
 			record: &integration.Integration{
 				Type:    integration.TypeOANDAExchangeRates,

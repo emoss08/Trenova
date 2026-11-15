@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
+import { WithheldPanel } from "@trenova/shared/components/withheld-value";
 import {
   DescriptionEmpty,
   DescriptionItem,
@@ -18,6 +19,7 @@ import {
 } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
+import { withheldAccessLabel } from "@trenova/shared/lib/reference-access";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useQueryStates } from "nuqs";
@@ -50,7 +52,14 @@ export function FactoringInvoicePanel({
         title={t("Factoring readiness")}
         size="lg"
       >
-        {fetched.isError || (fetched.isSuccess && !fetched.data?.factoringState) ? (
+        {fetched.data?.factoringStateWithheld ? (
+          <WithheldPanel>
+            {t(
+              "You don't have access to {0}",
+              withheldAccessLabel({ kind: "factoring_submission" }),
+            )}
+          </WithheldPanel>
+        ) : fetched.isError || (fetched.isSuccess && !fetched.data?.factoringState) ? (
           <Alert size="sm" variant="destructive">
             <AlertDescription>
               {t("This invoice's factoring readiness could not be loaded.")}

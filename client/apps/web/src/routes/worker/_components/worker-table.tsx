@@ -4,6 +4,8 @@ import { driverTypeChoices, statusChoices, workerTypeChoices } from "@/lib/choic
 import { patchWorker } from "@/lib/graphql/worker-mutations";
 import { workerTableGraphQLConfig, type WorkerRow } from "@/lib/graphql/worker-table";
 import { usePermission } from "@/hooks/use-permission";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { worker } from "@/lib/queries/worker";
 import type { DataTableToolbarSlots, DockAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -31,6 +33,7 @@ export default function WorkerTable() {
   // after the dock closes it.
   const [trainingTargets, setTrainingTargets] = useState<WorkerRow[] | null>(null);
   const { allowed: readsCredentials } = usePermission(Resource.WorkerCredential, Operation.Read);
+  const trainingOnPlan = usePlanFeature(PlanFeature.WorkforceTalent).available;
   const [withoutCredential, setWithoutCredential] = useState<string | null>(null);
   const graphql = useMemo(() => workerTableGraphQLConfig(withoutCredential), [withoutCredential]);
   const choices = useQuery({
@@ -169,14 +172,18 @@ export default function WorkerTable() {
         onSelect: handleBulkDriverTypeUpdate,
         clearSelectionOnSuccess: true,
       },
-      {
-        id: "assign-training",
-        label: t("Assign training"),
-        icon: GraduationHat01Icon,
-        onClick: (rows) => setTrainingTargets(rows),
-      },
+      ...(trainingOnPlan
+        ? [
+            {
+              id: "assign-training",
+              label: t("Assign training"),
+              icon: GraduationHat01Icon,
+              onClick: (rows: WorkerRow[]) => setTrainingTargets(rows),
+            },
+          ]
+        : []),
     ],
-    [handleBulkStatusUpdate, handleBulkTypeUpdate, handleBulkDriverTypeUpdate, t],
+    [handleBulkStatusUpdate, handleBulkTypeUpdate, handleBulkDriverTypeUpdate, trainingOnPlan, t],
   );
 
   return (
@@ -193,13 +200,15 @@ export default function WorkerTable() {
         enableRowSelection
         TablePanel={WorkerPanel}
       />
-      <BulkAssignTrainingDialog
-        open={trainingTargets !== null}
-        onOpenChange={(open) => {
-          if (!open) setTrainingTargets(null);
-        }}
-        workers={trainingTargets ?? []}
-      />
+      {trainingOnPlan ? (
+        <BulkAssignTrainingDialog
+          open={trainingTargets !== null}
+          onOpenChange={(open) => {
+            if (!open) setTrainingTargets(null);
+          }}
+          workers={trainingTargets ?? []}
+        />
+      ) : null}
     </>
   );
 }

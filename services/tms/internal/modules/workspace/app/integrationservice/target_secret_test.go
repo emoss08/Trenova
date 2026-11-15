@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -52,6 +53,7 @@ func saveFuelFeed(
 	t.Helper()
 
 	svc := New(Params{
+		Features:     plantest.AllFeatures(),
 		Logger:       zap.NewNop(),
 		Repo:         &stubIntegrationRepo{getByTypeResult: saved},
 		Encryption:   testEncryptionService(),
@@ -97,7 +99,7 @@ func TestFuelFeedRequiresThePasswordAgainWhenTheSFTPTargetChanges(t *testing.T) 
 			assert.Equal(
 				t,
 				"configuration."+integration.ConfigKeyFuelPassword,
-				multiErr.Errors[0].Field,
+				multiErr.Errors[0].Field(),
 			)
 		})
 	}
@@ -157,6 +159,7 @@ func updateWebhookConfig(
 	t.Helper()
 
 	svc := New(Params{
+		Features:     plantest.AllFeatures(),
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		Encryption:   testEncryptionService(),

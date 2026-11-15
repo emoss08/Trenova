@@ -12,15 +12,15 @@ enum CustomerPaymentMethod {
   Other
 }
 
-type CustomerPaymentApplication {
+type CustomerPaymentApplication @kind(resource: "customer_payment") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
-  customerPaymentId: ID!
-  invoiceId: ID!
-  appliedAmountMinor: Int!
-  shortPayAmountMinor: Int!
-  lineNumber: Int!
+  customerPaymentId: ID
+  invoiceId: ID
+  appliedAmountMinor: Int
+  shortPayAmountMinor: Int
+  lineNumber: Int
   createdAt: Timestamp!
   updatedAt: Timestamp!
   invoice: Invoice
@@ -33,20 +33,20 @@ enum CreditMemoApplicationStatus {
 }
 
 "Part of a posted credit memo used to settle an invoice."
-type CreditMemoApplication {
+type CreditMemoApplication @kind(resource: "customer_payment") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
-  creditMemoInvoiceId: ID!
-  invoiceId: ID!
-  appliedAmountMinor: Int!
-  accountingDate: Timestamp!
-  lineNumber: Int!
+  creditMemoInvoiceId: ID
+  invoiceId: ID
+  appliedAmountMinor: Int
+  accountingDate: Timestamp
+  lineNumber: Int
   status: CreditMemoApplicationStatus!
   unappliedAt: Timestamp
   unappliedById: ID
-  unappliedReason: String!
-  createdById: ID!
+  unappliedReason: String
+  createdById: ID
   createdAt: Timestamp!
   updatedAt: Timestamp!
   creditMemo: Invoice
@@ -158,7 +158,7 @@ extend type Mutation {
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
   "Settles open invoices of the same customer with a posted credit memo."
-  applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
+  applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]! @authorizes(resource: "invoice")
   "Takes one credit memo application back."
-  unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
+  unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication! @authorizes(resource: "invoice")
 }

@@ -3,6 +3,7 @@ package accessjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -26,6 +27,11 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 		TaskQueue: temporaltype.TaskQueueSystem.String(),
 		Description: "Revoke the roles and sessions people still hold in organizations " +
 			"they no longer belong to",
+	}, {
+		Name:        SupportExpiryWorkflowName,
+		Fn:          RecordSupportAccessExpiriesWorkflow,
+		TaskQueue:   temporaltype.TaskQueueSystem.String(),
+		Description: "Record the Trenova support access grants that ended on their own",
 	}}
 }
 
@@ -38,6 +44,18 @@ func SweepOrphanedOrganizationAccessWorkflow(
 	result := new(userservice.OrganizationAccessSweepResult)
 	err := workflow.ExecuteActivity(ctx, a.SweepOrphanedOrganizationAccessActivity).
 		Get(ctx, result)
+
+	return result, err
+}
+
+func RecordSupportAccessExpiriesWorkflow(
+	ctx workflow.Context,
+) (*supportaccessservice.ExpirySweepResult, error) {
+	var a *Activities
+	ctx = workflow.WithActivityOptions(ctx, sweepOptions)
+
+	result := new(supportaccessservice.ExpirySweepResult)
+	err := workflow.ExecuteActivity(ctx, a.RecordSupportAccessExpiriesActivity).Get(ctx, result)
 
 	return result, err
 }

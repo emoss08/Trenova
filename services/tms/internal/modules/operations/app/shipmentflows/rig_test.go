@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -309,6 +310,8 @@ func (s *rig) assemble() {
 		AuditService:        s.auditService,
 		EventService:        s.eventService,
 		OrderDerivation:     s.orderDerivation,
+		PlanFields:          plantest.Keeper(nil),
+		PricingTemplates:    plantest.AllPricingTemplates(),
 	})
 	s.readiness = shipmentbillingreadiness.New(shipmentbillingreadiness.Params{
 		Logger:             s.l,
@@ -317,6 +320,7 @@ func (s *rig) assemble() {
 		DocumentRepo:       s.documentRepo,
 		BillingRepo:        s.billingRepo,
 		ServiceFailureRepo: s.serviceFailureRepo,
+		Features:           plantest.AllFeatures(),
 	})
 	s.transfer = shipmentbillingtransfer.New(shipmentbillingtransfer.Params{
 		Logger:              s.l,

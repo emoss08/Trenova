@@ -5,7 +5,9 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -79,19 +81,25 @@ func EvaluateWorkflowID(tenantInfo pagination.TenantInfo) string {
 type RequesterParams struct {
 	fx.In
 
-	Signals kernelports.WorkflowSignalStarter
-	Logger  *zap.Logger
+	Signals  kernelports.WorkflowSignalStarter
+	Features platformcatalogports.FeatureGate
+	Logger   *zap.Logger
 }
 
 type Requester struct {
-	signals kernelports.WorkflowSignalStarter
-	l       *zap.Logger
+	signals  kernelports.WorkflowSignalStarter
+	features platformcatalogports.FeatureGate
+	l        *zap.Logger
 }
 
 var _ factoringports.EvaluationRequester = (*Requester)(nil)
 
 func NewRequester(p RequesterParams) factoringports.EvaluationRequester {
-	return &Requester{signals: p.Signals, l: p.Logger.Named("factoring-readiness-requester")}
+	return &Requester{
+		signals:  p.Signals,
+		features: p.Features,
+		l:        p.Logger.Named("factoring-readiness-requester"),
+	}
 }
 
 func (r *Requester) RequestEvaluation(
@@ -100,6 +108,16 @@ func (r *Requester) RequestEvaluation(
 	targets *factoringports.EvaluationTargets,
 ) {
 	if targets.Empty() || tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
+		return
+	}
+	factoring, err := r.features.Enabled(ctx, platformcatalog.FeatureFactoring)
+	if err != nil {
+		r.l.Warn("could not request a factoring readiness evaluation",
+			zap.String("organizationId", tenantInfo.OrgID.String()),
+			zap.Error(err))
+		return
+	}
+	if !factoring {
 		return
 	}
 	id := EvaluateWorkflowID(tenantInfo)

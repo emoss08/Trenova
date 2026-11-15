@@ -3,6 +3,7 @@ package kernel
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/importsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/managedfeaturesrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/managedusagerepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/recordvisibilityrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/settingversionrepository"
@@ -11,8 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/editioninfo"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/entitlementservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/managedfeaturesservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/managedplanservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/platformbillingservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/realtimeservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
@@ -36,16 +38,14 @@ func SharedOptions() fx.Option {
 			settingversionrepository.New,
 			recordvisibilityrepository.New,
 			workqueuerepository.New,
-			fx.Annotate(
-				entitlementservice.NewLocalEntitlementProvider,
-				fx.As(new(platformcatalogports.EntitlementProvider)),
-			),
-			fx.Annotate(
-				platformbillingservice.NewLocalBillingProvider,
-				fx.As(new(platformcatalogports.BillingProvider)),
-			),
+			managedfeaturesrepository.New,
+			managedfeaturesservice.New,
+			managedfeaturesservice.NewReceiver,
+			managedplanservice.New,
+			featureGate,
 			managedusagerepository.New,
 			managedusageservice.New,
+			managedusageservice.NewReceiver,
 			func(s *managedusageservice.Service) managedusageports.Gate { return s },
 			usageProvider,
 			usstateservice.New,
@@ -67,6 +67,16 @@ func usageProvider(
 		return usageservice.NewManagedUsageProvider(gate)
 	}
 	return usageservice.NewNoopUsageProvider()
+}
+
+func featureGate(
+	cfg *managedconfig.Config,
+	managed *managedfeaturesservice.Service,
+) platformcatalogports.FeatureGate {
+	if cfg.Enabled {
+		return managed
+	}
+	return entitlementservice.NewAllowAll()
 }
 
 func spreadsheetLimits(cfg *importsconfig.Config) rateimport.Limits {

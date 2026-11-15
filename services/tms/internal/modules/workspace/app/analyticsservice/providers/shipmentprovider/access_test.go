@@ -8,13 +8,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -82,7 +82,7 @@ func (r reader) provider() *Provider {
 		groups = groups.With(protectedfield.Margins)
 	}
 	return &Provider{
-		views:       refview.NewPort(refview.New(permissioncatalog.NewRegistry()), engine),
+		views:       refview.NewPort(plantest.Views(nil), engine),
 		fieldAccess: groupAccess{visible: groups},
 	}
 }

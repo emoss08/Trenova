@@ -132,6 +132,7 @@ function card(overrides: Partial<ReportRunDeskCard> = {}): ReportRunDeskCard {
       truncated: false,
     },
     withheld: null,
+    withheldByPlan: null,
     previous: null,
     schedule: null,
     chart: null,

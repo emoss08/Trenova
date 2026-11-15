@@ -328,14 +328,19 @@ const attentionHorizonDays = 30
 // liability come from their own areas, because neither is a property of a
 // worker's profile.
 type RosterAttention struct {
-	ActiveWorkers   int
-	NonCompliant    int
-	TrainingOverdue int
+	ActiveWorkers int
+	NonCompliant  int
+	// TrainingOverdue is nil for a reader without worker_training read, and
+	// when the plan leaves out the HR Suite talent feature.
+	TrainingOverdue *int
 	AtRisk          int
 	ExpiringSoon    int
 	// ReviewsAwaitingSignOff is nil for a reader who may not read reviews.
 	ReviewsAwaitingSignOff *int
-	PTOLiabilityDays       decimal.Decimal
+	// PTOLiabilityDays is nil for a reader without worker_pto read, and when
+	// the plan leaves out the HR Suite time off feature. The PTO ledger is not
+	// read for such a reader.
+	PTOLiabilityDays *decimal.Decimal
 	// LeaveCertificationsOutstanding is how many leave cases are waiting on a
 	// medical certification the employee owes. Past the deadline the employer
 	// may deny the leave (29 CFR 825.313), so it is a queue, not a statistic.
@@ -350,6 +355,8 @@ type RosterAttention struct {
 type AttentionAccess struct {
 	Reviews         bool
 	Leave           bool
+	PTO             bool
+	Training        bool
 	LeaveManagerIDs []pulid.ID
 }
 
@@ -398,6 +405,9 @@ func (s *Service) RosterAttention(
 		return err
 	})
 	group.Go(func() error {
+		if !access.PTO {
+			return nil
+		}
 		var err error
 		ptoTotals, err = s.pto.Summary(groupCtx, tenantInfo)
 		return err
@@ -429,12 +439,22 @@ func (s *Service) RosterAttention(
 	if counts != nil {
 		attention.ActiveWorkers = counts.ActiveWorkers
 		attention.NonCompliant = counts.NonCompliant
-		attention.TrainingOverdue = counts.TrainingOverdue
 		attention.AtRisk = counts.AtRisk
 		attention.ExpiringSoon = counts.ExpiringSoon
 	}
-	if ptoTotals != nil {
-		attention.PTOLiabilityDays = ptoTotals.TotalBalanceDays
+	if access.Training {
+		overdue := 0
+		if counts != nil {
+			overdue = counts.TrainingOverdue
+		}
+		attention.TrainingOverdue = &overdue
+	}
+	if access.PTO {
+		liability := decimal.Zero
+		if ptoTotals != nil {
+			liability = ptoTotals.TotalBalanceDays
+		}
+		attention.PTOLiabilityDays = &liability
 	}
 	return attention, nil
 }

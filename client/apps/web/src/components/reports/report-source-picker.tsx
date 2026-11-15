@@ -115,10 +115,11 @@ export function ReportSourcePicker({
       (canned.data ?? [])
         .filter(
           (entry) =>
-            term === "" ||
-            entry.name.toLowerCase().includes(term) ||
-            (entry.description ?? "").toLowerCase().includes(term) ||
-            (entry.category ?? "").toLowerCase().includes(term),
+            entry.available &&
+            (term === "" ||
+              entry.name.toLowerCase().includes(term) ||
+              (entry.description ?? "").toLowerCase().includes(term) ||
+              (entry.category ?? "").toLowerCase().includes(term)),
         )
         .map((entry) => ({
           id: entry.key,

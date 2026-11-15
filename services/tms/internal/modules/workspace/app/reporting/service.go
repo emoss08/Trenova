@@ -60,6 +60,7 @@ type Service struct {
 	metrics      *documentmetrics.Report
 	cfg          *reportingconfig.Config
 	canned       *canned.Registry
+	reaches      cannedReaches
 }
 
 //nolint:gocritic // fx.In parameter structs must be passed by value

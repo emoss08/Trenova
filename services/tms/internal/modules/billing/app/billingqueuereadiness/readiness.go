@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -42,6 +44,7 @@ type Params struct {
 	OccurrenceRepo detentionports.DetentionOccurrenceRepository
 	AgreementRepo  rateagreementports.RateAgreementRepository
 	InvoiceRepo    invoiceports.InvoiceRepository
+	Features       platformcatalogports.FeatureGate
 }
 
 // Reviewer reads what a biller checks before an item is invoiced: the
@@ -55,6 +58,7 @@ type Reviewer struct {
 	occurrenceRepo detentionports.DetentionOccurrenceRepository
 	agreementRepo  rateagreementports.RateAgreementRepository
 	invoiceRepo    invoiceports.InvoiceRepository
+	features       platformcatalogports.FeatureGate
 }
 
 func New(p *Params) *Reviewer {
@@ -66,6 +70,7 @@ func New(p *Params) *Reviewer {
 		occurrenceRepo: p.OccurrenceRepo,
 		agreementRepo:  p.AgreementRepo,
 		invoiceRepo:    p.InvoiceRepo,
+		features:       p.Features,
 	}
 }
 
@@ -144,7 +149,11 @@ func (s *Reviewer) reviewFacts(
 	facts.charges = s.chargeReview(ctx, item, tenantInfo, occurrences)
 	facts.dwells = detentionDwells(item, occurrences)
 	facts.invoice = s.invoiceRef(ctx, item, tenantInfo)
+	accounting := s.creditHoldsApply(ctx, item)
 	facts.terms = TermsFor(item.BillToCustomer, facts.invoice)
+	if !accounting {
+		facts.terms.CreditHold = nil
+	}
 
 	docs := s.shipmentDocuments(ctx, item, tenantInfo)
 	required := requiredDocumentTypes(item.BillToCustomer)
@@ -178,6 +187,9 @@ func (s *Reviewer) reviewFacts(
 	}
 
 	creditHold, holdReason := creditHoldOf(item.BillToCustomer)
+	if creditHold && !accounting {
+		creditHold, holdReason = false, ""
+	}
 	shareError := ""
 	if item.PayerShare != nil {
 		shareError = item.PayerShare.ResolutionError
@@ -784,7 +796,8 @@ func TermsFor(cus *customer.Customer, inv *billingqueue.InvoiceRef) *billingqueu
 	}
 	terms.PaymentTerm = string(cus.BillingProfile.PaymentTerm)
 	terms.NetDays = billingqueuereview.NetDaysFor(terms.PaymentTerm)
-	terms.CreditHold, _ = creditHoldOf(cus)
+	held, _ := creditHoldOf(cus)
+	terms.CreditHold = &held
 	switch {
 	case inv != nil && inv.DueDate != nil:
 		terms.DueDate = inv.DueDate
@@ -1137,4 +1150,17 @@ func missingPONumber(item *billingqueue.BillingQueueItem) bool {
 	}
 
 	return cus.BillingProfile.RequirePONumber
+}
+
+func (s *Reviewer) creditHoldsApply(ctx context.Context, item *billingqueue.BillingQueueItem) bool {
+	accounting, err := s.features.Enabled(ctx, platformcatalog.FeatureAccounting)
+	if err != nil {
+		s.l.Warn(
+			"could not ask whether accounting is on the plan; the credit hold stands",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.Error(err),
+		)
+		return true
+	}
+	return accounting
 }

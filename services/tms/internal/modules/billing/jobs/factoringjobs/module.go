@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.uber.org/fx"
@@ -70,6 +71,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            SweepScheduleID,
+			Feature:       platformcatalog.FeatureFactoring,
 			Description:   sweepDescription,
 			Spec:          schedule.Cron(sweepCron).WithJitter(sweepJitter),
 			Workflow:      FactoringReadinessSweepWorkflow,

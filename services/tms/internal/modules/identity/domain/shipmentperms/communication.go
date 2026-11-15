@@ -3,12 +3,14 @@ package shipmentperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func communicationResources() []*permissionspec.ResourceDefinition {
 	return []*permissionspec.ResourceDefinition{
 		{
 			Resource:    permission.ResourceDriverMessage.String(),
+			Feature:     platformcatalog.FeatureDispatch,
 			DisplayName: "Driver Message",
 			Description: "Messages sent to drivers on their phone through the Dash app",
 			Category:    "Dispatch",
@@ -29,6 +31,7 @@ func communicationResources() []*permissionspec.ResourceDefinition {
 
 		{
 			Resource:    permission.ResourceCustomerCommunication.String(),
+			Feature:     platformcatalog.FeatureAITriage,
 			DisplayName: "Customer Communication",
 			Description: "Emails and notices sent to customers and other outside parties",
 			Category:    "Triage",
@@ -49,6 +52,7 @@ func communicationResources() []*permissionspec.ResourceDefinition {
 
 		{
 			Resource:    permission.ResourceInboundMessage.String(),
+			Feature:     platformcatalog.FeatureAITriage,
 			DisplayName: "Triage",
 			Description: "Email that arrived on a monitored address, and what was made of it",
 			Category:    "Triage",
@@ -83,6 +87,7 @@ func communicationResources() []*permissionspec.ResourceDefinition {
 		// is not.
 		{
 			Resource:      permission.ResourceInboundMailbox.String(),
+			Feature:       platformcatalog.FeatureAITriage,
 			DisplayName:   "Inbound Mailbox",
 			Description:   "Addresses the system listens on, and how much they are trusted to act alone",
 			Category:      "Triage",

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -123,6 +124,8 @@ type StubQueryTool struct {
 	LastParams agenttoolports.QueryToolParams
 	LastTenant dbscope.Tenant
 	Resource   permission.Resource
+	// Feature is the plan feature the tool needs beyond its resource's.
+	Feature platformcatalog.FeatureKey
 	// Reads and Source declare the tool as one that reads outside content.
 	Reads   agenttooltrust.ExternalRead
 	Source  agent.TaintSource
@@ -174,6 +177,7 @@ func (t *StubQueryTool) Policy() agenttoolports.ToolPolicy {
 		Source:        t.Source,
 		Sources:       t.Sources,
 		Rationale:     "A stub read.",
+		Feature:       t.Feature,
 	}
 }
 
@@ -346,6 +350,7 @@ type StubPermissions struct {
 	mu sync.Mutex
 
 	Denied   map[string]bool
+	OffPlan  map[string]permissionports.PlanDenial
 	Requests []*permissionports.PermissionCheckRequest
 	// GrantedAgents are the agents restricted to roles that the person's
 	// roles grant.
@@ -357,6 +362,10 @@ func (p *StubPermissions) AgentsUsable(
 	_ *permissionports.RequestActor,
 	operation permission.Operation,
 ) (*permissionports.UsableAgents, error) {
+	if denial, offPlan := p.OffPlan[permission.ResourceAssistant.String()]; offPlan {
+		return &permissionports.UsableAgents{PlanDenial: &denial}, nil
+	}
+
 	return &permissionports.UsableAgents{
 		Assistant:  !p.Denied[permission.ResourceAssistant.String()+":"+string(operation)],
 		GrantedIDs: p.GrantedAgents,
@@ -372,6 +381,9 @@ func (p *StubPermissions) MayUseAgent(
 	if err != nil {
 		return false, err
 	}
+	if usable.PlanDenial != nil {
+		return false, usable.PlanDenial.Restriction()
+	}
 
 	return usable.Allows(definition), nil
 }
@@ -383,6 +395,12 @@ func (p *StubPermissions) Check(
 	p.mu.Lock()
 	p.Requests = append(p.Requests, req)
 	p.mu.Unlock()
+	if denial, offPlan := p.OffPlan[req.Resource]; offPlan {
+		return &permissionports.PermissionCheckResult{
+			Reason:     permissionports.ReasonNotOnPlan,
+			PlanDenial: &denial,
+		}, nil
+	}
 	if p.Denied[req.Resource+":"+string(req.Operation)] {
 		return &permissionports.PermissionCheckResult{Allowed: false, Reason: "denied"}, nil
 	}

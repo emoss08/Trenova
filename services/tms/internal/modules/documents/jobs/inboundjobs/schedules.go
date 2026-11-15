@@ -2,6 +2,7 @@ package inboundjobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:          "inbound-message-retention",
+			Feature:     platformcatalog.FeatureAITriage,
 			Description: "Remove inbound messages settled more than six months ago",
 			// Weekly is plenty for a six-month window, and Sunday morning keeps
 			// the deletes off the hours the watchtower sweeps already use.

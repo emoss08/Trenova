@@ -9,6 +9,8 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useReportPreview } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
+import { planRestrictionOf } from "@trenova/shared/lib/plan-limit";
+import { PlanLockedNotice } from "@trenova/shared/components/plan-locked";
 import { cn } from "@trenova/shared/lib/utils";
 import { irToInput } from "../../builder/_components/builder-state";
 import { parseReportIR, type ReportIR, type ReportParameterDef } from "@/types/report";
@@ -83,6 +85,7 @@ export function ExploreView({
     [ir, missing.length],
   );
   const preview = useReportPreview(previewInput, debouncedParams);
+  const restriction = preview.isError ? planRestrictionOf(preview.error) : null;
 
   const rows = Array.isArray(preview.data?.rows) ? (preview.data.rows as unknown[][]) : [];
   const totals = Array.isArray(preview.data?.totals) ? (preview.data.totals as unknown[]) : null;
@@ -238,6 +241,13 @@ export function ExploreView({
               )}
             </p>
           </ExploreEmpty>
+        ) : restriction ? (
+          <PlanLockedNotice
+            variant="page"
+            title={name}
+            featureName=""
+            addOnName={restriction.addOn}
+          />
         ) : preview.isError ? (
           <ExploreEmpty>
             <AlertCircleIcon className="text-destructive size-5" />

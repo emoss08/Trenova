@@ -4,7 +4,7 @@ aliases: [cash receipts, receive payment, customer remittance, cash application,
 related:
   - /accounting/ar/open-items
   - /accounting/ar/customer-ledger
-  - /accounting/ar/invoices
+  - /billing/invoice-register
   - /accounting/reconciliation/bank-receipts
 ---
 

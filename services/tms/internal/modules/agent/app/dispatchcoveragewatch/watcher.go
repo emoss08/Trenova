@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -16,6 +18,7 @@ type Params struct {
 
 	Controls  dispatchcontrolports.DispatchControlRepository
 	Requester dispatchconsoleports.CoverageRefreshRequester
+	Features  platformcatalogports.FeatureGate
 	Logger    *zap.Logger
 }
 
@@ -25,6 +28,7 @@ type Params struct {
 type Watcher struct {
 	controls  dispatchcontrolports.DispatchControlRepository
 	requester dispatchconsoleports.CoverageRefreshRequester
+	features  platformcatalogports.FeatureGate
 	l         *zap.Logger
 }
 
@@ -34,12 +38,13 @@ func New(p Params) *Watcher {
 	return &Watcher{
 		controls:  p.Controls,
 		requester: p.Requester,
+		features:  p.Features,
 		l:         p.Logger.Named("service.dispatch-coverage-watch"),
 	}
 }
 
 func (w *Watcher) ObserveAgentEvent(ctx context.Context, event *agenteventports.AgentEvent) {
-	if !uncoversWork(event.Kind) {
+	if !uncoversWork(event.Kind) || !w.plannerOnPlan(ctx) {
 		return
 	}
 
@@ -59,6 +64,26 @@ func (w *Watcher) ObserveAgentEvent(ctx context.Context, event *agenteventports.
 	}
 
 	w.requester.RequestRefresh(ctx, event.TenantInfo)
+}
+
+func (w *Watcher) plannerOnPlan(ctx context.Context) bool {
+	for _, feature := range []platformcatalog.FeatureKey{
+		platformcatalog.FeatureDispatchIntelligence,
+		platformcatalog.FeatureAIDesk,
+	} {
+		on, err := w.features.Enabled(ctx, feature)
+		if err != nil {
+			w.l.Warn("could not ask whether the planner is on the plan; coverage not re-planned",
+				zap.String("feature", string(feature)),
+				zap.Error(err),
+			)
+			return false
+		}
+		if !on {
+			return false
+		}
+	}
+	return true
 }
 
 func uncoversWork(kind agenttrigger.EventKind) bool {

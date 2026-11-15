@@ -122,6 +122,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	rg.POST("/webhooks/email/resend/:webhookToken/", h.handleResendWebhook)
 	rg.POST("/webhooks/email/postmark/:webhookToken/", h.handlePostmarkWebhook)
+	rg.POST(systemWebhookPath+"resend/", h.handleSystemResendWebhook)
+	rg.POST(systemWebhookPath+"postmark/", h.handleSystemPostmarkWebhook)
 }
 
 func (h *Handler) listProfiles(c *gin.Context) {
@@ -232,12 +234,18 @@ func (h *Handler) testSend(c *gin.Context) {
 
 func (h *Handler) listAssignments(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	assignments, err := h.service.ListAssignments(c.Request.Context(), tenantInfo(authCtx))
+	tenant := tenantInfo(authCtx)
+	assignments, err := h.service.ListAssignments(c.Request.Context(), tenant)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	helpers.JSON(c, http.StatusOK, assignments)
+	routing, err := h.service.Routing(c.Request.Context(), tenant, assignments)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	helpers.JSON(c, http.StatusOK, routing)
 }
 
 func (h *Handler) updateAssignments(c *gin.Context) {
@@ -247,9 +255,10 @@ func (h *Handler) updateAssignments(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
+	tenant := tenantInfo(authCtx)
 	updated, err := h.service.UpsertAssignments(
 		c.Request.Context(),
-		tenantInfo(authCtx),
+		tenant,
 		assignments,
 		authCtx.UserID,
 	)
@@ -257,7 +266,12 @@ func (h *Handler) updateAssignments(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	helpers.JSON(c, http.StatusOK, updated)
+	routing, err := h.service.Routing(c.Request.Context(), tenant, updated)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	helpers.JSON(c, http.StatusOK, routing)
 }
 
 func (h *Handler) listLogs(c *gin.Context) {
@@ -394,7 +408,16 @@ func (h *Handler) handleResendWebhook(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	eventType, known := resendEventType(&payload)
+	h.recordResendEvent(c, tenantInfo, body, &payload)
+}
+
+func (h *Handler) recordResendEvent(
+	c *gin.Context,
+	tenantInfo pagination.TenantInfo,
+	body []byte,
+	payload *resendWebhookPayload,
+) {
+	eventType, known := resendEventType(payload)
 	if !known {
 		c.Status(http.StatusNoContent)
 		return
@@ -409,15 +432,15 @@ func (h *Handler) handleResendWebhook(c *gin.Context) {
 		Provider:        email.ProviderResend,
 		ProviderEventID: providerEventID,
 		Type:            eventType,
-		Recipient:       resendRecipient(&payload),
+		Recipient:       resendRecipient(payload),
 		OccurredAt:      timeutils.NowUnix(),
 		Raw:             map[string]any{},
 	}
-	if err = sonic.Unmarshal(body, &event.Raw); err != nil {
+	if err := sonic.Unmarshal(body, &event.Raw); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	err = h.service.HandleProviderEvent(c.Request.Context(), emailservice.HandleProviderEventParams{
+	err := h.service.HandleProviderEvent(c.Request.Context(), emailservice.HandleProviderEventParams{
 		TenantInfo:        tenantInfo,
 		Event:             event,
 		ProviderMessageID: payload.Data.EmailID,
@@ -487,7 +510,16 @@ func (h *Handler) handlePostmarkWebhook(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	eventType, known := postmarkEventType(&payload)
+	h.recordPostmarkEvent(c, tenantInfo, body, &payload)
+}
+
+func (h *Handler) recordPostmarkEvent(
+	c *gin.Context,
+	tenantInfo pagination.TenantInfo,
+	body []byte,
+	payload *postmarkWebhookPayload,
+) {
+	eventType, known := postmarkEventType(payload)
 	if !known {
 		c.Status(http.StatusNoContent)
 		return
@@ -496,21 +528,21 @@ func (h *Handler) handlePostmarkWebhook(c *gin.Context) {
 		BusinessUnitID:  tenantInfo.BuID,
 		OrganizationID:  tenantInfo.OrgID,
 		Provider:        email.ProviderPostmark,
-		ProviderEventID: postmarkProviderEventID(&payload),
+		ProviderEventID: postmarkProviderEventID(payload),
 		Type:            eventType,
-		Recipient:       postmarkRecipient(&payload),
+		Recipient:       postmarkRecipient(payload),
 		OccurredAt:      timeutils.NowUnix(),
 		Raw:             map[string]any{},
 	}
-	if err = sonic.Unmarshal(body, &event.Raw); err != nil {
+	if err := sonic.Unmarshal(body, &event.Raw); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	err = h.service.HandleProviderEvent(c.Request.Context(), emailservice.HandleProviderEventParams{
+	err := h.service.HandleProviderEvent(c.Request.Context(), emailservice.HandleProviderEventParams{
 		TenantInfo:        tenantInfo,
 		Event:             event,
 		ProviderMessageID: payload.MessageID,
-		SuppressionReason: postmarkSuppressionReason(&payload),
+		SuppressionReason: postmarkSuppressionReason(payload),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)

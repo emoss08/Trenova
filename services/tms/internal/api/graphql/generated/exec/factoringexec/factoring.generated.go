@@ -1541,13 +1541,12 @@ var Shard = &gqlexec.Shard{
 		{Object: "FactoringInvoiceState", Fields: []*gqlexec.Field{
 			{
 				Name:     "invoiceId",
-				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringreadiness.InvoiceState)
 					return obj.InvoiceID, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
 				Name:     "factoringCompanyId",
@@ -1560,54 +1559,49 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "customerId",
-				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringreadiness.InvoiceState)
 					return obj.CustomerID, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
 				Name:     "verdict",
-				NonNull:  true,
 				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringreadiness.InvoiceState)
 					return obj.Verdict, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐVerdict),
+				Marshal: gqlexec.Marshal(marshalOFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐVerdict),
 			},
 			{
 				Name:      "checks",
-				NonNull:   true,
 				HasChild:  true,
 				ChildType: "FactoringCheck",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringreadiness.InvoiceState)
 					return obj.Checks, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFactoringCheck2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheckᚄ),
+				Marshal: gqlexec.Marshal(marshalOFactoringCheck2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheckᚄ),
 			},
 			{
 				Name:     "failedChecks",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringreadiness.InvoiceState)
 					return obj.FailedChecks, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2int),
 			},
 			{
 				Name:     "openBalanceMinor",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringreadiness.InvoiceState)
 					return obj.OpenBalanceMinor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int64),
+				Marshal: gqlexec.Marshal(marshalOInt2int64),
 			},
 			{
 				Name:     "readySince",
@@ -1620,13 +1614,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "evaluatedAt",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*factoringreadiness.InvoiceState)
 					return obj.EvaluatedAt, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
 			},
 			{
 				Name:       "invoice",
@@ -5185,13 +5178,12 @@ var Shard = &gqlexec.Shard{
 		{Object: "Invoice", Fields: []*gqlexec.Field{
 			{
 				Name:     "factoringOverride",
-				NonNull:  true,
 				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
 					return obj.FactoringOverride, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceFactoringOverride2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐFactoringOverride),
+				Marshal: gqlexec.Marshal(marshalOInvoiceFactoringOverride2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐFactoringOverride),
 			},
 			{
 				Name:     "factoringOverrideReason",
@@ -9053,14 +9045,6 @@ func marshalNFactoringCheck2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 	return ec.MarshalType(ctx, sel, "FactoringCheck", &v)
 }
 
-func marshalNFactoringCheck2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheckᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []factoringreadiness.Check) graphql.Marshaler {
-	return gqlexec.List[factoringreadiness.Check]{
-		Elem:        marshalNFactoringCheck2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheck,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
 func marshalNFactoringCheckCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheckCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringreadiness.CheckCode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -9689,14 +9673,6 @@ func marshalNFactoringTransportTestResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return ec.MarshalType(ctx, sel, "FactoringTransportTestResult", v)
 }
 
-func marshalNFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringreadiness.Verdict) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
 func marshalNFactoringVerdictTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋfactoringportsᚐVerdictTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringports.VerdictTotals) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "FactoringVerdictTotals", &v)
 }
@@ -9744,14 +9720,6 @@ func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet
 
 func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
-func marshalNInvoiceFactoringOverride2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐFactoringOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoice.FactoringOverride) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -9810,6 +9778,13 @@ func marshalOFactoringAwaitingSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FactoringAwaitingSchedule", v)
+}
+
+func marshalOFactoringCheck2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheckᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []factoringreadiness.Check) graphql.Marshaler {
+	return gqlexec.List[factoringreadiness.Check]{
+		Elem:        marshalNFactoringCheck2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐCheck,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalOFactoringCompany2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋfactoringcompanyᚐFactoringCompany(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoringcompany.FactoringCompany) graphql.Marshaler {
@@ -9921,6 +9896,16 @@ func marshalOFactoringTransportMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
+func marshalOFactoringVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringreadinessᚐVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v factoringreadiness.Verdict) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
+func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
 func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -9939,6 +9924,11 @@ func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 
 func marshalOInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
+	return res
+}
+
+func marshalOInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
 	return res
 }
 
@@ -9965,6 +9955,11 @@ func marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 	return ec.MarshalType(ctx, sel, "Invoice", v)
 }
 
+func marshalOInvoiceFactoringOverride2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐFactoringOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoice.FactoringOverride) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
 func marshalOJournalEntryLineAccount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJournalEntryLineAccount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.JournalEntryLineAccount) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -9982,6 +9977,11 @@ func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func marshalOTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
 	return res
 }
 

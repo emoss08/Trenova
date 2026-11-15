@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -21,17 +23,20 @@ type Params struct {
 
 	Service      *telematicsservice.Service
 	ErrorHandler *helpers.ErrorHandler
+	Features     *middleware.FeatureGuard
 }
 
 type Handler struct {
-	service *telematicsservice.Service
-	eh      *helpers.ErrorHandler
+	service  *telematicsservice.Service
+	eh       *helpers.ErrorHandler
+	features *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
+		service:  p.Service,
+		eh:       p.ErrorHandler,
+		features: p.Features,
 	}
 }
 
@@ -40,8 +45,13 @@ var webhookProviders = map[string]integration.Type{
 }
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
-	rg.POST("/webhooks/samsara/:webhookToken/", h.handleProviderWebhook(integration.TypeSamsara))
-	rg.POST("/webhooks/telematics/:provider/:webhookToken/", h.handleTelematicsWebhook)
+	api := rg.Group("/webhooks")
+	api.Use(h.features.RequireFeature(
+		platformcatalog.FeatureSamsaraIntegration,
+		middleware.AnswerStatus(http.StatusUnauthorized),
+	))
+	api.POST("/samsara/:webhookToken/", h.handleProviderWebhook(integration.TypeSamsara))
+	api.POST("/telematics/:provider/:webhookToken/", h.handleTelematicsWebhook)
 }
 
 func (h *Handler) handleTelematicsWebhook(c *gin.Context) {

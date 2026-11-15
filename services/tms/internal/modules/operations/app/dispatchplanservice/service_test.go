@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchplanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/integrationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -73,6 +74,7 @@ func newPlanRig(t *testing.T) *planRig {
 		consoleRepo: rig.console,
 		controls:    rig.controls,
 		candidates: dispatchcandidateservice.New(dispatchcandidateservice.Params{
+			Features:        plantest.AllFeatures(),
 			Positionings:    positioningtest.None{},
 			ConsoleRepo:     rig.console,
 			IntegrationRepo: rig.integrations,

@@ -3,12 +3,14 @@ package billingperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func customerResources() []*permissionspec.ResourceDefinition {
 	return []*permissionspec.ResourceDefinition{
 		{
 			Resource:    permission.ResourceCustomer.String(),
+			Feature:     platformcatalog.FeatureCoreTMS,
 			DisplayName: "Customer",
 			Description: "Customer management",
 			Category:    "Billing",
@@ -66,10 +68,12 @@ func customerResources() []*permissionspec.ResourceDefinition {
 				},
 			},
 			DefaultSensitivity: permission.SensitivityInternal,
+			FieldFeatures:      customerFieldFeatures(),
 		},
 
 		{
 			Resource:      permission.ResourceFactoringCompany.String(),
+			Feature:       platformcatalog.FeatureFactoring,
 			DisplayName:   "Factoring Company",
 			Description:   "Factors that customers' invoices are assigned to",
 			Category:      "Billing",

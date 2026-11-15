@@ -362,6 +362,8 @@ func (r *repository) UpdateMessage(
 			ctx,
 			r.db.Keel(ctx),
 			entity,
+			m.Provider,
+			m.FromEmail,
 			m.ProviderMessageID,
 			m.Status,
 			m.Attempts,

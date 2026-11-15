@@ -1,5 +1,11 @@
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
+import {
+  type PlanRestriction,
+  planLimitFromSource,
+  planRestrictionOf,
+  planRestrictionOfNotice,
+} from "@trenova/shared/lib/plan-limit";
 import { RequestTimeoutError, ResponseContractError } from "@trenova/shared/lib/request-errors";
 import { isRecord } from "@trenova/shared/lib/utils";
 import type { NormalizedApiError, ProblemType } from "@trenova/shared/types/errors";
@@ -15,6 +21,7 @@ export type ErrorKind =
   | "stale-build"
   | "session-expired"
   | "forbidden"
+  | "plan-restricted"
   | "not-found"
   | "rate-limited"
   | "timeout"
@@ -36,6 +43,9 @@ export type ErrorDescription = {
   // detail is the server's own explanation when it wrote one for people (a validation or
   // business-rule message, a missing permission). Transport and crash text never lands here.
   detail?: string;
+  // plan is the add-on refusal of a "plan-restricted" failure: the feature the organization's
+  // plan leaves out and its add-on's name. The screens name the add-on from it.
+  plan?: PlanRestriction;
   status?: number;
   problemType?: ProblemType;
   code?: string;
@@ -62,6 +72,7 @@ const KIND_TONE: Record<ErrorKind, ErrorTone> = {
   "stale-build": "info",
   "session-expired": "info",
   forbidden: "neutral",
+  "plan-restricted": "neutral",
   "not-found": "neutral",
   "rate-limited": "warning",
   timeout: "warning",
@@ -165,7 +176,8 @@ function describeApiError(
   error: ApiRequestError | GraphQLRequestError,
   problem: NormalizedApiError,
 ): ErrorDescription {
-  const kind = kindFromProblem(problem);
+  const plan = planRestrictionOf(error) ?? undefined;
+  const kind = plan ? "plan-restricted" : kindFromProblem(problem);
   const code = error instanceof GraphQLRequestError ? error.getCodes()[0] : undefined;
 
   return describe(kind, {
@@ -177,7 +189,21 @@ function describeApiError(
     code,
     traceId: problem.traceId,
     stack: error.stack,
+    plan,
   });
+}
+
+// A route loader throws the API's own refusal body for a page the plan leaves out
+// (planRestrictedResponse), so a route error is read the way a refused read is.
+function routeErrorPlan(error: ErrorResponse): PlanRestriction | undefined {
+  if (!isRecord(error.data)) return undefined;
+  const notice = planLimitFromSource({
+    code: error.data.code,
+    type: error.data.type,
+    status: error.status,
+    params: error.data.params,
+  });
+  return planRestrictionOfNotice(notice) ?? undefined;
 }
 
 // describeError turns anything thrown — a fetch TypeError, an API problem, a GraphQL
@@ -211,13 +237,15 @@ export function describeError(error: unknown): ErrorDescription {
   }
 
   if (isRouteErrorResponse(error)) {
-    const kind = kindFromStatus(error.status);
+    const plan = routeErrorPlan(error);
+    const kind = plan ? "plan-restricted" : kindFromStatus(error.status);
     const detail = routeErrorDetail(error);
     return describe(kind, {
       name: "RouteError",
       message: detail ?? `${error.status}`,
       detail: exposesServerDetail(kind) ? detail : undefined,
       status: error.status,
+      plan,
     });
   }
 

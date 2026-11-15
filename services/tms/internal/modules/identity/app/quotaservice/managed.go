@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -72,30 +71,35 @@ func (g *ManagedQuotaGuard) Usage(
 		return nil, err
 	}
 	summary := &platformplanports.QuotaUsageSummary{
-		OrganizationID:         tenantInfo.OrgID,
-		BusinessUnitID:         tenantInfo.BuID,
-		Plan:                   platformplan.PlanKeyManaged,
-		PlanName:               managedPlanName,
-		Origin:                 platformplan.OriginManaged,
-		RestrictedCapabilities: []platformplan.Capability{},
-		Meters:                 []platformplanports.QuotaMeterUsage{},
-		CheckedAt:              g.clock(),
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Plan:           platformplan.PlanKeyManaged,
+		PlanName:       managedPlanName,
+		Origin:         platformplan.OriginManaged,
+		Meters:         []platformplanports.QuotaMeterUsage{},
+		CheckedAt:      g.clock(),
 	}
 	if state == nil {
 		summary.Unlimited = true
 		return summary, nil
 	}
+	summary.Overage = state.Overage
 	for i := range state.Meters {
 		m := &state.Meters[i]
-		d := managedusage.Decide(state, m.Meter, 0)
+		d, err := g.gate.Decide(ctx, m.Meter, 0)
+		if err != nil {
+			return nil, err
+		}
 		summary.Meters = append(summary.Meters, platformplanports.QuotaMeterUsage{
 			Meter:       m.Meter,
 			Window:      platformplan.WindowMonthly,
 			Limit:       m.Allowance,
-			Used:        m.Quantity,
+			Used:        d.Used,
 			Remaining:   d.Remaining(),
 			WindowStart: state.WindowStart,
 			WindowEnd:   state.WindowEnd,
+			HardCap:     m.HardCap,
+			Stopped:     !d.Allowed,
 		})
 	}
 	return summary, nil

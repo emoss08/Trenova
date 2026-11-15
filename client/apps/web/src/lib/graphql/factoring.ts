@@ -82,6 +82,7 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { rootFields, type RootFields } from "@trenova/shared/lib/reference-access";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
@@ -90,7 +91,25 @@ type RequestOptions = { signal?: AbortSignal };
 export type FactoringAgreement = FactoringAgreementFieldsFragment;
 export type FactoringNoa = FactoringNoaFieldsFragment;
 export type FactoringCompanyRecord = NonNullable<FactoringCompanyRecordQuery["factoringCompany"]>;
-export type FactoringInvoiceState = FactoringInvoiceStateFieldsFragment;
+/**
+ * The fields of an invoice's factoring readiness that a reader without factoring schedule read
+ * is answered null on an invoice it links from. Read from the readiness queue or the override,
+ * the state is the root of the read and each is present (see `rootFields`).
+ */
+const FACTORING_STATE_FIELDS = [
+  "invoiceId",
+  "customerId",
+  "verdict",
+  "checks",
+  "failedChecks",
+  "openBalanceMinor",
+  "evaluatedAt",
+] as const;
+
+export type FactoringInvoiceState = RootFields<
+  FactoringInvoiceStateFieldsFragment,
+  (typeof FACTORING_STATE_FIELDS)[number]
+>;
 export type FactoringCheck = FactoringInvoiceState["checks"][number];
 export type FactoringSummary = FactoringSummaryQuery["factoringSummary"];
 export type FactoringDocumentRequestResult =
@@ -100,6 +119,11 @@ export type InvoiceFactoring = Omit<
   "factoringState"
 > & {
   factoringState: FactoringInvoiceState | null;
+  /**
+   * The invoice has a readiness its reader may not see: they cannot read factoring schedules,
+   * so the state's figures came back withheld and `factoringState` is null.
+   */
+  factoringStateWithheld: boolean;
 };
 
 export type FactoringSubmission = FactoringSubmissionFieldsFragment;
@@ -163,7 +187,10 @@ export function createFactoringInvoiceStateTableConfig(
     operationName: "FactoringInvoiceStateTable",
     connectionKey: "factoringInvoiceStates",
     extraVariables: { verdicts, factoringCompanyId },
-    mapNode: (node) => ({ ...node, id: node.invoiceId }),
+    mapNode: (node) => {
+      const state = rootFields(node, "FactoringInvoiceState", FACTORING_STATE_FIELDS);
+      return { ...state, id: state.invoiceId };
+    },
   });
 }
 
@@ -302,6 +329,10 @@ export async function fetchFactoringSummary(options?: RequestOptions): Promise<F
   return data.factoringSummary;
 }
 
+function rootFactoringState(state: FactoringInvoiceStateFieldsFragment): FactoringInvoiceState {
+  return rootFields(state, "FactoringInvoiceState", FACTORING_STATE_FIELDS);
+}
+
 export async function fetchInvoiceFactoring(
   invoiceId: string,
   options?: RequestOptions,
@@ -316,11 +347,14 @@ export async function fetchInvoiceFactoring(
     return null;
   }
   const { factoringState, ...invoice } = data.invoice;
+  const state = factoringState
+    ? getFragmentData(FactoringInvoiceStateFieldsFragmentDoc, factoringState)
+    : null;
+  const withheld = state !== null && state.verdict === null;
   return {
     ...invoice,
-    factoringState: factoringState
-      ? getFragmentData(FactoringInvoiceStateFieldsFragmentDoc, factoringState)
-      : null,
+    factoringState: state && !withheld ? rootFactoringState(state) : null,
+    factoringStateWithheld: withheld,
   };
 }
 
@@ -332,7 +366,9 @@ export async function setInvoiceFactoringOverride(
     operationName: "SetInvoiceFactoringOverride",
     variables: { input },
   });
-  return getFragmentData(FactoringInvoiceStateFieldsFragmentDoc, data.setInvoiceFactoringOverride);
+  return rootFactoringState(
+    getFragmentData(FactoringInvoiceStateFieldsFragmentDoc, data.setInvoiceFactoringOverride),
+  );
 }
 
 export async function requestMissingFactoringDocuments(

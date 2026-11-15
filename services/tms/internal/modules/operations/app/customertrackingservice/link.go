@@ -81,6 +81,9 @@ func (s *Service) shareable(
 	ctx context.Context,
 	req *customertrackingports.IssueLinkRequest,
 ) (*shipment.Shipment, *trackingprofile.Profile, error) {
+	if err := s.requireTracking(ctx); err != nil {
+		return nil, nil, err
+	}
 	if multiErr := validateIssueRequest(req); multiErr != nil {
 		return nil, nil, multiErr
 	}
@@ -181,6 +184,9 @@ func (s *Service) RevokeLink(
 	ctx context.Context,
 	req *customertrackingports.RevokeLinkRequest,
 ) (int, error) {
+	if err := s.requireTracking(ctx); err != nil {
+		return 0, err
+	}
 	if req == nil || req.ShipmentID.IsNil() {
 		return 0, errortypes.NewValidationError(
 			"shipmentId",
@@ -221,6 +227,9 @@ func (s *Service) PreviewRevokeLink(
 	ctx context.Context,
 	req *customertrackingports.RevokeLinkRequest,
 ) ([]*customertracking.Link, error) {
+	if err := s.requireTracking(ctx); err != nil {
+		return nil, err
+	}
 	if req == nil || req.ShipmentID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"shipmentId",
@@ -254,6 +263,9 @@ func (s *Service) ListLinks(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*customertracking.Link, error) {
+	if err := s.requireTracking(ctx); err != nil {
+		return nil, err
+	}
 	if shipmentID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"shipmentId",
@@ -269,6 +281,9 @@ func (s *Service) ListNotifications(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*customertracking.Notification, error) {
+	if err := s.requireTracking(ctx); err != nil {
+		return nil, err
+	}
 	if shipmentID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"shipmentId",
@@ -321,6 +336,7 @@ func (s *Service) sendLinkEmail(
 	}
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
+		Type:           email.TypeCustomerTrackingLink,
 		Purpose:        email.PurposeOperations,
 		To:             []string{minted.link.RecipientEmail},
 		Subject:        rendered.Subject,

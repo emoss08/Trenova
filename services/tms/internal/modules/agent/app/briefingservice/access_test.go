@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -116,6 +117,7 @@ func gatedService(page *briefing.Briefing, denied ...permission.Resource) *Servi
 
 	return &Service{
 		l:           zap.NewNop(),
+		features:    plantest.AllFeatures(),
 		repo:        &fakePages{page: page, pages: []*briefing.Briefing{page}},
 		permissions: &mocks.DenyResourcesPermissionEngine{Denied: names},
 		now:         func() int64 { return 1_761_200_000 },

@@ -248,18 +248,19 @@ type FactoringCheck {
 }
 
 "Whether an invoice is ready to factor, and why not."
-type FactoringInvoiceState @kind(resource: "invoice") {
-  invoiceId: ID!
+type FactoringInvoiceState @kind(resource: "factoring_submission") {
+  invoiceId: ID
   factoringCompanyId: ID
-  customerId: ID!
-  verdict: FactoringVerdict!
-  checks: [FactoringCheck!]!
-  failedChecks: Int!
-  openBalanceMinor: Int!
+  customerId: ID
+  verdict: FactoringVerdict
+  checks: [FactoringCheck!]
+  failedChecks: Int
+  openBalanceMinor: Int
   "When the invoice became ready; null while it is not."
   readySince: Timestamp
-  evaluatedAt: Timestamp!
-  invoice: Invoice
+  evaluatedAt: Timestamp
+  "The invoice, for a caller who may read invoices; null for anyone else."
+  invoice: Invoice @authorizes(resource: "invoice")
   customer: Customer
   factoringCompany: FactoringCompany
 }
@@ -282,7 +283,7 @@ type FactoringVerdictTotals {
   amountMinor: Int!
 }
 
-type FactoringSummary @kind(resource: "invoice") {
+type FactoringSummary @kind(resource: "factoring_submission") {
   ready: FactoringVerdictTotals!
   notReady: FactoringVerdictTotals!
   "On a schedule with the factor or being sent to it."
@@ -1078,7 +1079,7 @@ input DiscardFactoringRemittanceInput {
 }
 
 extend type Invoice {
-  factoringOverride: InvoiceFactoringOverride!
+  factoringOverride: InvoiceFactoringOverride
   "Why the invoice stays out of factoring; null unless it is excluded."
   factoringOverrideReason: String
   "The agreement in force when the invoice posted."

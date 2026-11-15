@@ -10,6 +10,7 @@ const (
 	ResourceRole                  Resource = "role"
 	ResourceAuditLog              Resource = "audit_log"
 	ResourceSecurityAuditLog      Resource = "security_audit_log"
+	ResourceSupportAccess         Resource = "support_access"
 	ResourceAuditLegalHold        Resource = "audit_legal_hold"
 	ResourceTableConfiguration    Resource = "table_configuration"
 	ResourceCustomFieldDefinition Resource = "custom_field_definition"

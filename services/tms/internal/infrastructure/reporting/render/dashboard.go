@@ -37,6 +37,7 @@ type DashboardRenderRequest struct {
 	Filters     []DashboardValue
 	Params      []DashboardValue
 	Sheets      []DashboardSheet
+	Omitted     []DashboardValue
 	Sink        io.Writer
 }
 
@@ -108,6 +109,9 @@ func writeDashboardInfo(
 	}
 	for _, p := range req.Params {
 		rows = append(rows, []any{p.Name, fmt.Sprint(p.Value)})
+	}
+	for _, o := range req.Omitted {
+		rows = append(rows, []any{o.Name, fmt.Sprint(o.Value)})
 	}
 
 	for i, row := range rows {

@@ -1,3 +1,4 @@
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
@@ -29,6 +30,8 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
 
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("general"));
   const remembers = useRecordMemoriesAvailable() && Boolean(customerId);
+  const tracking = usePlanFeature("tms.customer_tracking").available;
+  const vetting = usePlanFeature("tms.carrier_brokerage").available && Boolean(customerId);
 
   return (
     <Tabs
@@ -50,11 +53,13 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
             <Mail01Icon className="size-4" />
             {t("Email profile")}
           </TabsTab>
-          <TabsTab value="tracking">
-            <Share07Icon className="size-4" />
-            {t("Tracking")}
-          </TabsTab>
-          {customerId ? (
+          {tracking ? (
+            <TabsTab value="tracking">
+              <Share07Icon className="size-4" />
+              {t("Tracking")}
+            </TabsTab>
+          ) : null}
+          {vetting ? (
             <TabsTab value="broker-vetting">
               <RadarIcon className="size-4" />
               {t("Broker vetting")}
@@ -80,10 +85,12 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
         <TabsContent value="email" className="p-4">
           <CustomerEmailProfileForm />
         </TabsContent>
-        <TabsContent value="tracking" className="p-4">
-          <CustomerTrackingSettingsForm />
-        </TabsContent>
-        {customerId ? (
+        {tracking ? (
+          <TabsContent value="tracking" className="p-4">
+            <CustomerTrackingSettingsForm />
+          </TabsContent>
+        ) : null}
+        {vetting && customerId ? (
           <TabsContent value="broker-vetting" className="p-4">
             <CustomerBrokerIntelligence customerId={customerId} />
           </TabsContent>

@@ -337,6 +337,7 @@ func (b *BesideReads) Read(
 		for _, path := range RelativePaths(result.Withheld, prefix) {
 			withheld = append(withheld, spec.Key+"."+path)
 		}
+		notes = append(notes, PrefixedPlanWithheld(result.WithheldByPlan, prefix, spec.Key)...)
 		if note != "" {
 			notes = append(notes, note)
 		}

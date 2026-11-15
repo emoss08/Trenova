@@ -2,9 +2,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
+import { useCanManagePlan } from "@trenova/shared/components/plan-locked";
+import { planLockedGuidance } from "@trenova/shared/lib/plan-copy";
 import { Link } from "react-router";
 import type { ReportIR } from "@/types/report";
 import {
+  isRemovable,
+  planWithheld,
   unavailableRefs,
   withoutRefs,
   type UnavailableRef,
@@ -28,6 +32,10 @@ function useProblemText() {
         );
       case "WithheldByCeiling":
         return t("{0} is above your role's sensitivity level", field);
+      case "NotOnPlan":
+        return problem.addOnName
+          ? t("{0} is part of the {1} add-on, which is not on your plan", field, problem.addOnName)
+          : t("{0} is not on your plan", field);
       default:
         return t("{0} is no longer in the catalog", field);
     }
@@ -36,9 +44,11 @@ function useProblemText() {
 
 /**
  * A saved report that names data the reader may not use: a field their role
- * no longer reaches, or one someone with a wider role added. The server
- * refuses to preview or run it, so the builder says what is out of reach and
- * offers to take it out.
+ * no longer reaches, one someone with a wider role added, or one from an
+ * add-on the organization's plan does not include. The server refuses to
+ * preview or run it, so the builder says what is out of reach and offers to
+ * take out what access withholds. What the plan withholds is listed with its
+ * add-on and kept: adding the add-on is the fix.
  */
 export function UnavailableFieldsAlert({
   index,
@@ -51,10 +61,32 @@ export function UnavailableFieldsAlert({
 }) {
   const t = useT();
   const problemText = useProblemText();
+  const canManagePlan = useCanManagePlan();
 
   if (!ir.entity) return null;
 
   const root = index.entities.get(ir.entity);
+  const rootPlan = root ? undefined : planWithheld(index, ir.entity);
+  if (rootPlan) {
+    return (
+      <Alert size="sm" variant="warning" className="rounded-none border-x-0 border-t-0">
+        <AlertTriangleIcon />
+        <AlertTitle>{t("This report's data is not on your plan")}</AlertTitle>
+        <AlertDescription className="flex flex-col items-start gap-1.5">
+          <span>
+            {rootPlan.denial.addOnName
+              ? t(
+                  "It is built on {0}, from the {1} add-on, which is not on your plan.",
+                  t(rootPlan.label),
+                  rootPlan.denial.addOnName,
+                )
+              : t("It is built on {0}, which your plan does not include.", t(rootPlan.label))}
+          </span>
+          <span>{planLockedGuidance(t, canManagePlan)}</span>
+        </AlertDescription>
+      </Alert>
+    );
+  }
   if (!root?.readable) {
     return (
       <Alert size="sm" variant="destructive" className="rounded-none border-x-0 border-t-0">
@@ -77,6 +109,8 @@ export function UnavailableFieldsAlert({
 
   const problems = unavailableRefs(index, ir);
   if (problems.length === 0) return null;
+  const removable = problems.filter(isRemovable);
+  const planned = removable.length < problems.length;
 
   return (
     <Alert size="sm" variant="warning" className="rounded-none border-x-0 border-t-0">
@@ -95,16 +129,21 @@ export function UnavailableFieldsAlert({
             </li>
           ))}
         </ul>
+        {planned && <span>{planLockedGuidance(t, canManagePlan)}</span>}
         <span>
-          {t("The preview and runs are refused until they are removed or your access changes.")}
+          {removable.length > 0
+            ? t("The preview and runs are refused until they are removed or your access changes.")
+            : t("The preview and runs are refused until your plan includes them.")}
         </span>
-        <Button
-          size="xs"
-          variant="outline"
-          onClick={() => onChange(pruneOutputReferences(withoutRefs(ir, problems)))}
-        >
-          {t("Remove unavailable fields")}
-        </Button>
+        {removable.length > 0 && (
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={() => onChange(pruneOutputReferences(withoutRefs(ir, removable)))}
+          >
+            {t("Remove unavailable fields")}
+          </Button>
+        )}
       </AlertDescription>
     </Alert>
   );

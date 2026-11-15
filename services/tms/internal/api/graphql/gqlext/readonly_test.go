@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"slices"
 	"testing"
 
 	gqlgen "github.com/99designs/gqlgen/graphql"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,6 +22,14 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 	"go.uber.org/zap"
 )
+
+type featureGate struct {
+	disabled []platformcatalog.FeatureKey
+}
+
+func (g featureGate) Enabled(_ context.Context, feature platformcatalog.FeatureKey) (bool, error) {
+	return !slices.Contains(g.disabled, feature), nil
+}
 
 func readOnlyOperation(operation ast.Operation) *gqlgen.OperationContext {
 	return &gqlgen.OperationContext{
@@ -44,8 +54,13 @@ func TestReadOnlyExtensionRefusesMutationsFromAReadOnlyOrganization(t *testing.T
 
 	tenant := plantest.Tenant()
 	ext := NewReadOnlyExtension(ReadOnlyParams{
-		Plans:  plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusReadOnly)),
-		Logger: zap.NewNop(),
+		Plans: plantest.Cloud(
+			t,
+			tenant,
+			plantest.FreeDemo(t, tenant, subscription.StatusReadOnly),
+		),
+		Features: featureGate{},
+		Logger:   zap.NewNop(),
 	})
 	status := gqlctx.NewResponseStatus()
 
@@ -65,8 +80,13 @@ func TestReadOnlyExtensionLetsQueriesAndWritableOrganizationsThrough(t *testing.
 
 	tenant := plantest.Tenant()
 	readOnly := NewReadOnlyExtension(ReadOnlyParams{
-		Plans:  plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusReadOnly)),
-		Logger: zap.NewNop(),
+		Plans: plantest.Cloud(
+			t,
+			tenant,
+			plantest.FreeDemo(t, tenant, subscription.StatusReadOnly),
+		),
+		Features: featureGate{},
+		Logger:   zap.NewNop(),
 	})
 	assert.Nil(t, readOnly.MutateOperationContext(
 		readOnlyContext(tenant, gqlctx.NewResponseStatus()),
@@ -74,8 +94,13 @@ func TestReadOnlyExtensionLetsQueriesAndWritableOrganizationsThrough(t *testing.
 	))
 
 	trialing := NewReadOnlyExtension(ReadOnlyParams{
-		Plans:  plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusTrialing)),
-		Logger: zap.NewNop(),
+		Plans: plantest.Cloud(
+			t,
+			tenant,
+			plantest.FreeDemo(t, tenant, subscription.StatusTrialing),
+		),
+		Features: featureGate{},
+		Logger:   zap.NewNop(),
 	})
 	assert.Nil(t, trialing.MutateOperationContext(
 		readOnlyContext(tenant, gqlctx.NewResponseStatus()),
@@ -87,8 +112,9 @@ func TestReadOnlyExtensionIsInertOutsideCloudMode(t *testing.T) {
 	t.Parallel()
 
 	ext := NewReadOnlyExtension(ReadOnlyParams{
-		Plans:  planservice.NewUnlimited(),
-		Logger: zap.NewNop(),
+		Plans:    planservice.NewUnlimited(),
+		Features: featureGate{},
+		Logger:   zap.NewNop(),
 	})
 
 	assert.Nil(t, ext.MutateOperationContext(
@@ -103,7 +129,7 @@ func TestReadOnlyExtensionRefusesMutationsFromASupersededSecret(t *testing.T) {
 	t.Parallel()
 
 	tenant := plantest.Tenant()
-	ext := NewReadOnlyExtension(ReadOnlyParams{Logger: zap.NewNop()})
+	ext := NewReadOnlyExtension(ReadOnlyParams{Features: featureGate{}, Logger: zap.NewNop()})
 	status := gqlctx.NewResponseStatus()
 	ctx := authctx.WithSupersededSessionSecret(readOnlyContext(tenant, status))
 
@@ -117,4 +143,47 @@ func TestReadOnlyExtensionRefusesMutationsFromASupersededSecret(t *testing.T) {
 	assert.True(t, overridden)
 	assert.Equal(t, http.StatusConflict, code)
 	assert.Nil(t, ext.MutateOperationContext(ctx, readOnlyOperation(ast.Query)))
+}
+
+func apiKeyContext(tenant pagination.TenantInfo, status *gqlctx.ResponseStatus) context.Context {
+	ctx := gqlctx.WithAuthContext(context.Background(), &authctx.AuthContext{
+		PrincipalType:  authctx.PrincipalTypeAPIKey,
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+	})
+
+	return gqlctx.WithResponseStatus(ctx, status)
+}
+
+func TestReadOnlyExtensionRefusesAPIKeyMutationsWhenTheInstanceLacksTheFeature(t *testing.T) {
+	t.Parallel()
+
+	tenant := plantest.Tenant()
+	ext := NewReadOnlyExtension(ReadOnlyParams{
+		Plans: planservice.NewUnlimited(),
+		Features: featureGate{
+			disabled: []platformcatalog.FeatureKey{platformcatalog.FeatureAPIKeys},
+		},
+		Logger: zap.NewNop(),
+	})
+	status := gqlctx.NewResponseStatus()
+
+	gqlErr := ext.MutateOperationContext(
+		apiKeyContext(tenant, status),
+		readOnlyOperation(ast.Mutation),
+	)
+
+	require.NotNil(t, gqlErr)
+	restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](gqlErr)
+	require.True(t, ok)
+	assert.Equal(t, errortypes.PlanRestrictionReasonPlan, restriction.Reason)
+	assert.Equal(t, string(platformcatalog.FeatureAPIKeys), restriction.Feature)
+	code, overridden := status.Code()
+	assert.True(t, overridden)
+	assert.Equal(t, http.StatusForbidden, code)
+
+	assert.Nil(t, ext.MutateOperationContext(
+		readOnlyContext(tenant, gqlctx.NewResponseStatus()),
+		readOnlyOperation(ast.Mutation),
+	))
 }

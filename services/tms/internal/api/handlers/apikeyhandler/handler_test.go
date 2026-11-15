@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,6 +64,7 @@ func setupAPIKeyHandler(
 		Engine:         &mocks.AllowAllPermissionEngine{},
 		Auditor:        &securityaudittest.Recorder{},
 		SecurityConfig: &cfg.Security,
+		Features:       plantest.AllFeatures(),
 	})
 
 	return apikeyhandler.New(apikeyhandler.Params{

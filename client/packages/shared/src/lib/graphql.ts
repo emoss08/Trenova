@@ -4,6 +4,11 @@ import { ResponseContractError, withRequestDeadline } from "@trenova/shared/lib/
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { withIdempotencyKeyHeader } from "@trenova/shared/lib/idempotency";
 import { reportPlanLimit } from "@trenova/shared/lib/plan-limit";
+import {
+  recordWithholdings,
+  type Withholdings,
+  withholdingsOfExtensions,
+} from "@trenova/shared/lib/withheld";
 import { reportSessionContextStale } from "@trenova/shared/lib/session-context";
 import { isRecord } from "@trenova/shared/lib/utils";
 import type {
@@ -34,6 +39,7 @@ type GraphQLErrorResponse = {
 type GraphQLResponse<TData> = {
   data?: TData;
   errors?: GraphQLErrorResponse[];
+  extensions?: unknown;
   type?: unknown;
   title?: unknown;
   detail?: unknown;
@@ -143,6 +149,12 @@ export type GraphQLRequestErrorKind = "graphql" | "transport";
 export type GraphQLResult<TData> = {
   data: TData;
   errors: NormalizedGraphQLError[];
+  /**
+   * What the response left out: fields withheld because the reader may not read their kind
+   * (`extensions.withheldByAccess`) and because the plan does not include their feature
+   * (`extensions.withheldByPlan`). `withholdingsOf(data)` answers the same for `requestGraphQL`.
+   */
+  withheld: Withholdings;
 };
 
 type GraphQLRequestErrorOptions = {
@@ -508,9 +520,13 @@ function isAuthenticationExpiry(graphQLErrors: NormalizedGraphQLError[], status:
 // failedGraphQLRequest hands a plan-limit refusal (QUOTA_EXCEEDED, PLAN_RESTRICTED in the
 // error extensions), or the refusal of a tab another tab's sign-in or organization switch
 // left behind, to the app before the error reaches its caller, so every operation gets the
-// same explanation without each call site recognising the code.
-function failedGraphQLRequest(error: GraphQLRequestError): GraphQLRequestError {
-  reportPlanLimit(error);
+// same explanation without each call site recognising the code. A query an add-on refuses is
+// left to the page that asked, which names the add-on in its error state.
+function failedGraphQLRequest(
+  error: GraphQLRequestError,
+  isMutation: boolean,
+): GraphQLRequestError {
+  reportPlanLimit(error, isMutation ? "write" : "read");
   reportSessionContextStale(error);
   return error;
 }
@@ -625,6 +641,7 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
         retryAfter: retryAfterOf(response),
         status: response.status,
       }),
+      isMutation,
     );
   }
 
@@ -637,13 +654,16 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
   // read off the document rather than passed in, so the safe path cannot be forgotten at a
   // call site.
   if (payload.data != null) {
+    const withheld = withholdingsOfExtensions(payload.extensions);
+    recordWithholdings(payload.data, withheld);
+
     if (graphQLErrors.length === 0) {
-      return { data: payload.data, errors: graphQLErrors };
+      return { data: payload.data, errors: graphQLErrors, withheld };
     }
 
     if (!isMutation) {
       partialErrorReporter?.(graphQLErrors, { operationName: operationLabel });
-      return { data: payload.data, errors: graphQLErrors };
+      return { data: payload.data, errors: graphQLErrors, withheld };
     }
 
     throw failedGraphQLRequest(
@@ -653,6 +673,7 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
         message: graphQLErrors[0].message,
         status: response.status,
       }),
+      isMutation,
     );
   }
 
@@ -665,6 +686,7 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
         message: firstError.message,
         status: response.status,
       }),
+      isMutation,
     );
   }
 

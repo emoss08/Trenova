@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentuploadservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/storagequotaservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -40,6 +41,7 @@ type Params struct {
 	UploadService          *documentuploadservice.Service
 	DocumentContentService documentports.DocumentContentService
 	ExtractionStatus       documentports.ExtractionStatusReader
+	Storage                *storagequotaservice.Service
 	Reader                 documentports.DocumentReader
 	ImportAssistant        shipmentimportassistantports.ShipmentImportAssistantService
 	PageAssistant          assistantports.PageAssistant
@@ -54,6 +56,7 @@ type Handler struct {
 	uploadService   *documentuploadservice.Service
 	contentService  documentports.DocumentContentService
 	extraction      documentports.ExtractionStatusReader
+	storage         *storagequotaservice.Service
 	reader          documentports.DocumentReader
 	importAssistant shipmentimportassistantports.ShipmentImportAssistantService
 	pageAssistant   assistantports.PageAssistant
@@ -126,6 +129,7 @@ func New(p Params) *Handler {
 		uploadService:   p.UploadService,
 		contentService:  p.DocumentContentService,
 		extraction:      p.ExtractionStatus,
+		storage:         p.Storage,
 		reader:          p.Reader,
 		importAssistant: p.ImportAssistant,
 		pageAssistant:   p.PageAssistant,
@@ -172,6 +176,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/extraction-status/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.extractionStatus,
+	)
+	api.GET(
+		"/storage/",
+		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
+		h.storageStatus,
 	)
 	api.GET(
 		"/uploads/active/",
@@ -1498,6 +1507,19 @@ func (h *Handler) getImportAssistantHistory(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, resp)
+}
+
+func (h *Handler) storageStatus(c *gin.Context) {
+	status, err := h.storage.Status(
+		c.Request.Context(),
+		pagination.FromAuth(authctx.GetAuthContext(c)),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	helpers.JSON(c, http.StatusOK, status)
 }
 
 func (h *Handler) extractionStatus(c *gin.Context) {

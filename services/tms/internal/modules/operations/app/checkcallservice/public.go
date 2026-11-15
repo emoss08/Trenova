@@ -24,7 +24,7 @@ type resolvedLink struct {
 	move   *shipment.ShipmentMove
 }
 
-func invalidLinkError() error {
+func InvalidLinkError() error {
 	return errortypes.NewValidationError(
 		"token",
 		errortypes.ErrInvalid,
@@ -35,14 +35,14 @@ func invalidLinkError() error {
 func (s *Service) resolveToken(ctx context.Context, token string) (*resolvedLink, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
-		return nil, invalidLinkError()
+		return nil, InvalidLinkError()
 	}
 	link, err := s.links.GetByHash(ctx, tokenutils.Hash(token))
 	if err != nil {
 		return nil, err
 	}
 	if !link.IsUsable(s.now()) {
-		return nil, invalidLinkError()
+		return nil, InvalidLinkError()
 	}
 
 	tenant := pagination.TenantInfo{OrgID: link.OrganizationID, BuID: link.BusinessUnitID}
@@ -50,7 +50,7 @@ func (s *Service) resolveToken(ctx context.Context, token string) (*resolvedLink
 	move, err := s.loadMove(ctx, tenant, link.ShipmentMoveID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, invalidLinkError()
+			return nil, InvalidLinkError()
 		}
 		return nil, err
 	}
@@ -59,10 +59,10 @@ func (s *Service) resolveToken(ctx context.Context, token string) (*resolvedLink
 		return nil, err
 	}
 	if assignment == nil && !moveIsClosed(move) {
-		return nil, invalidLinkError()
+		return nil, InvalidLinkError()
 	}
 	if assignment != nil && assignment.CarrierID != link.CarrierID {
-		return nil, invalidLinkError()
+		return nil, InvalidLinkError()
 	}
 	return &resolvedLink{ctx: ctx, link: link, tenant: tenant, move: move}, nil
 }

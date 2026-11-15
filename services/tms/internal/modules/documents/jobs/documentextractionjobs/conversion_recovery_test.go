@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -186,6 +187,7 @@ func (h *doclingHarness) contentService(
 		DraftRepo:           h.drafts,
 		SearchProjection:    noopDocumentSearchProjectionService{},
 		WorkflowStarter:     starter,
+		Features:            plantest.AllFeatures(),
 	})
 }
 

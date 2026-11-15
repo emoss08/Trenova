@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -103,6 +105,13 @@ func (s *Service) ResolveWorker(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*worker.Worker, error) {
+	if err := platformcatalogports.RequireFeature(
+		ctx,
+		s.features,
+		platformcatalog.FeatureDriverPortal,
+	); err != nil {
+		return nil, err
+	}
 	wrk, err := s.portalRepo.GetWorkerByUserID(ctx, tenantInfo)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {

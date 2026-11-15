@@ -251,7 +251,7 @@ function InvoiceCard({
   });
   const sendEdi = useApiMutation({
     resourceName: "invoice EDI",
-    mutationFn: () => sendInvoiceEdi(id, record.ediSendPlan.status === "Sent"),
+    mutationFn: () => sendInvoiceEdi(id, record.ediSendPlan?.status === "Sent"),
     onSuccess: () => settle(),
   });
   const busy = sendEmail.isPending || makePdf.isPending || sendEdi.isPending;
@@ -275,7 +275,7 @@ function InvoiceCard({
       group.formulaTemplateId ? [group.formulaTemplateId] : [],
     ),
   );
-  const messageIds = useStableIds(edi.messageId ? [edi.messageId] : []);
+  const messageIds = useStableIds(edi?.messageId ? [edi.messageId] : []);
   const invoiceIds = useStableIds([
     ...(record.referenceInvoice ? [record.referenceInvoice.id] : []),
     ...record.relatedInvoices.map((related) => related.id),
@@ -357,7 +357,7 @@ function InvoiceCard({
     });
   }
   const ediActs: ChannelAct[] = [];
-  if (live && canEdit && record.ediSendPlan.enabled) {
+  if (live && canEdit && record.ediSendPlan?.enabled) {
     ediActs.push({
       kind: "do",
       label: record.ediSendPlan.status === "Sent" ? t("Resend 210") : t("Send 210"),
@@ -366,17 +366,17 @@ function InvoiceCard({
       busy,
     });
   }
-  if (edi.messageId && listedMessages.open) {
+  if (edi?.messageId && listedMessages.open) {
     ediActs.push({
       kind: "open",
       label: t("Open message"),
       onClick: () => listedMessages.open?.(edi.messageId ?? ""),
     });
   }
-  const slips: ChannelSlip[] = [
-    { key: "email", label: t("Email"), ...email, actions: emailActs },
-    { key: "edi", label: t("EDI 210"), ...edi, actions: ediActs },
-  ];
+  const slips: ChannelSlip[] = [{ key: "email", label: t("Email"), ...email, actions: emailActs }];
+  if (edi) {
+    slips.push({ key: "edi", label: t("EDI 210"), ...edi, actions: ediActs });
+  }
   if (books) {
     slips.push({
       key: "books",
@@ -508,7 +508,7 @@ function InvoiceCard({
           <ChargeBill
             rows={rows}
             foot={foot}
-            tariffNotes={record.ratingNotes}
+            tariffNotes={record.ratingNotes ?? undefined}
             note={
               record.shipmentCount > 1
                 ? t(

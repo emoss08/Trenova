@@ -49,6 +49,47 @@ artifact from each tool's result), `extractionartifact`, `recordviews` and
 small component it needs from them per call, so a test sets the fields it uses.
 Test fixtures shared by these packages are in `assistanttest`.
 
+## What the plan includes
+
+Every AI path runs only when the organization's plan includes it (see "What the plan
+includes" in [permissions.md](permissions.md)). Self-hosted every feature is on and
+nothing below changes anything.
+
+- **No model call off the plan.** Every model call and embedding reaches a provider through
+  the completion router's `UsableFor` or `NovaProvider`, and both ask `Engine.OnPlan` first:
+  a task runs only when one of `aitask.Task.Features()` is on (`llmports.RequireTask`).
+  Reading a document into fields (classification, extraction, remittances, paperwork) is
+  Document Intelligence and runs without Trenova AI; everything else is Trenova AI. The
+  refusal is `PLAN_RESTRICTED` naming the add-on and also `llmports.ErrNoProviderConfigured`,
+  so work that is skipped when no provider serves it is skipped the same way. A new task
+  declares its features or `aitask` fails its test. The Nova harness asks
+  `ProviderAvailability.NovaReady(ctx, tenant, task)` before anything is dispatched, and
+  `TaskRunner.Available` takes the task, so a feature that asks whether Nova can do its work
+  is told no off the plan.
+- **Entries.** Each piece of work also checks its own feature where it starts: every Desk
+  turn needs `ai.desk` (`assistantturnservice.Start`; a scheduled one also
+  `platform.agent_automation`), agent runs `platform.agent_automation`
+  (`agentrunservice`, `agentjobs`), briefings and insights `ai.desk`, the watchtower
+  projector `ai.watchtower` (nothing is stored, routed or announced without it), indexing
+  and search by meaning `ai.desk` (`retrievalservice.Plan`/`IndexBatch`,
+  `retrievalquery`; keyword search is unaffected), the billing queue's review
+  `platform.agent_automation` (its availability asks Nova for `BillingDiagnosis`).
+- **The tool set.** `toolaccess` offers a tool only when its resource's feature (the
+  permission engine refuses an off-plan resource) and the feature its policy names
+  (`ToolPolicy.Feature`) are on; dispatch refuses either the same way. The turn reads what
+  the plan leaves out once (`permissionports.PlanFeatures.Unavailable`), and
+  `ToolSet.NotOnPlan` groups it by add-on, at most `toolaccess.MaxPlanFeatureNames` feature
+  names a line, one line per add-on in catalog order. The system prompt's stable part names
+  them under "The organization's plan" (`agentprompt.buildPlanSection`), so the model says a
+  request is part of an add-on the plan does not include instead of guessing; with every
+  add-on on it adds nothing. A call to a tool withheld for the plan, held or not, is refused
+  naming the add-on, never as a tool an administrator could add to the agent.
+- **One wording.** `planwording` builds every refusal whose cause is the plan (the reason a
+  trace records, the plan's sentence, the advice for a person or an unattended run). Helpers
+  that answer yes or no carry the plan through: `MayUseAgent` returns the plan's refusal as
+  its error (`UsableAgents.PlanDenial`), and `subjectaccess.Refusal` turns a subject the plan
+  leaves out into `PLAN_RESTRICTED` with `permissionports.DeniedError`.
+
 ## Everything is a workflow
 
 Every AI feature runs on Temporal. The API authenticates the request, records

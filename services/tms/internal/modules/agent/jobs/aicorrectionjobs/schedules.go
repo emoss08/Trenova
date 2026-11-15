@@ -3,6 +3,7 @@ package aicorrectionjobs
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -21,6 +22,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	schedules := []*schedule.Schedule{
 		{
 			ID:            "ai-correction-retention",
+			Feature:       platformcatalog.FeatureAIDesk,
 			Description:   "Purge AI corrections older than each organization's retention period",
 			Spec:          schedule.Cron("40 2 * * *"),
 			Workflow:      AICorrectionRetentionWorkflow,
@@ -39,6 +41,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return append(schedules,
 		&schedule.Schedule{
 			ID:            "extraction-accuracy-drift",
+			Feature:       platformcatalog.FeatureDocumentIntelligence,
 			Description:   "Tell each organization when an extraction provider read last week's documents worse than its own recent weeks",
 			Spec:          schedule.Cron("20 6 * * 1"),
 			Workflow:      ExtractionAccuracyDriftWorkflow,

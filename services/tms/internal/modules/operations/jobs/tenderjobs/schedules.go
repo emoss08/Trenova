@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -18,6 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "tender-stalled-sweep",
+			Feature:       platformcatalog.FeatureCarrierBrokerage,
 			Description:   "Nudge or recover live tenders whose offers are overdue",
 			Spec:          schedule.Every(15 * time.Minute),
 			Workflow:      TenderSweepWorkflow,
@@ -29,6 +31,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "rate-confirmation-issue-sweep",
+			Feature:       platformcatalog.FeatureCarrierBrokerage,
 			Description:   "Issue rate confirmations for accepted tenders whose paperwork never landed",
 			Spec:          schedule.Every(time.Hour),
 			Workflow:      RateConfirmationIssueSweepWorkflow,
@@ -40,6 +43,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "tender-token-retention",
+			Feature:       platformcatalog.FeatureCarrierBrokerage,
 			Description:   "Purge tender offer and rate confirmation tokens that are no longer usable",
 			Spec:          schedule.Every(24 * time.Hour),
 			Workflow:      PurgeTenderTokensWorkflow,

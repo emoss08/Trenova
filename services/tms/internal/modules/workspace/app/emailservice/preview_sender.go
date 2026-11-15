@@ -17,7 +17,7 @@ func (s *Service) ResolveSender(
 	ctx context.Context,
 	req *emailports.SendEmailRequest,
 ) (*emailports.EmailSender, error) {
-	profile, err := s.resolveProfile(ctx, req)
+	route, err := s.route(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -27,14 +27,21 @@ func (s *Service) ResolveSender(
 		return nil, err
 	}
 
-	return &emailports.EmailSender{
-		ProfileID:  profile.ID,
-		Email:      senderEmail(req, profile),
-		Name:       profile.SenderName,
-		ReplyTo:    profile.ReplyToEmail,
+	sender := &emailports.EmailSender{
 		Suppressed: split.Suppressed,
 		Refused:    len(split.To) == 0 && len(req.To) > 0,
-	}, nil
+	}
+	if route.trenova != nil {
+		sender.Email = route.trenova.FromAddress
+		sender.Name = route.fromName
+		sender.ViaTrenova = true
+		return sender, nil
+	}
+	sender.ProfileID = route.profile.ID
+	sender.Email = senderEmail(req, route.profile)
+	sender.Name = route.profile.SenderName
+	sender.ReplyTo = route.profile.ReplyToEmail
+	return sender, nil
 }
 
 func senderEmail(req *emailports.SendEmailRequest, profile *email.Profile) string {

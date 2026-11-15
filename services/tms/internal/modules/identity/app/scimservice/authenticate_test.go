@@ -5,10 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/scim"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
-	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/scimproto"
@@ -41,7 +40,7 @@ func TestAuthenticate_BindsTheTokenToItsDirectoryAndTenant(t *testing.T) {
 
 	h := newHarness(t)
 	issuedCredential(h)
-	h.svc.plans = plantest.Allowing(t, platformplan.CapabilitySSO)
+	h.svc.features = plantest.AllFeatures()
 
 	dir, err := h.svc.Authenticate(t.Context(), scimports.AuthenticateRequest{
 		Token:      testToken,
@@ -88,7 +87,7 @@ func TestAuthenticate_RefusesTokensThatDoNotAdmitTheRequest(t *testing.T) {
 			if tc.change != nil {
 				tc.change(h.repo.credential)
 			}
-			h.svc.plans = platformplanportsmock.NewMockPlanService(t)
+			h.svc.features = plantest.Without(platformcatalog.FeatureIdentity)
 
 			dir, err := h.svc.Authenticate(t.Context(), scimports.AuthenticateRequest{
 				Token:      tc.token,
@@ -117,12 +116,12 @@ func disable(credential *scimports.Credential) {
 	credential.DirectoryEnabled = false
 }
 
-func TestAuthenticate_RefusesWhenThePlanDoesNotIncludeSSO(t *testing.T) {
+func TestAuthenticate_RefusesWhenSecurityAndIdentityIsOff(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
 	issuedCredential(h)
-	h.svc.plans = plantest.Restricting(t, platformplan.CapabilitySSO)
+	h.svc.features = plantest.Without(platformcatalog.FeatureIdentity)
 
 	_, err := h.svc.Authenticate(t.Context(), scimports.AuthenticateRequest{
 		Token:      testToken,

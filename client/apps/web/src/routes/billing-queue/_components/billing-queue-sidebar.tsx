@@ -27,7 +27,6 @@ import {
   UserPlus01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { billingQueue } from "@/lib/queries/billing-queue";
 import { useQueryStates } from "nuqs";
 import { useDeferredValue, useEffect, useRef, useState } from "react";
 import {
@@ -54,6 +53,7 @@ import { BillingQueueLaneSkeleton, BillingQueueListSkeleton } from "./billing-qu
 import { BillingQueueSearch, isSentence } from "./billing-queue-search";
 import { BillingQueueSuggestions } from "./billing-queue-suggestions";
 import { useBulkRun } from "./use-bulk-run";
+import { useBillingQueueAssist } from "./use-billing-queue-assist";
 
 const itemId = (item: BillingQueueRow) => item.id;
 
@@ -98,7 +98,7 @@ export function BillingQueueSidebar({
   const { allowed: canPost } = usePermission(Resource.Invoice, Operation.Post);
   const [params, setParams] = useQueryStates(queueSidebarSearchParamsParser);
   const deferredSearch = useDeferredValue(params.query);
-  const { data: assist } = useQuery(billingQueue.assist());
+  const assist = useBillingQueueAssist();
   const { data: stats } = useQuery(billingQueueStatsQuery());
 
   // A sentence waits for Enter, when Nova turns it into filters; searching the

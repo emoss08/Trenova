@@ -19,28 +19,31 @@ import (
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	Repo         rateagreementports.RateAgreementRepository
-	Validator    *Validator
-	AuditService auditports.AuditService
-	Fields       permissionports.FieldAccess
+	Logger           *zap.Logger
+	Repo             rateagreementports.RateAgreementRepository
+	Validator        *Validator
+	AuditService     auditports.AuditService
+	Fields           permissionports.FieldAccess
+	PricingTemplates permissionports.PricingTemplatePlan
 }
 
 type Service struct {
-	l            *zap.Logger
-	repo         rateagreementports.RateAgreementRepository
-	validator    *Validator
-	auditService auditports.AuditService
-	fields       permissionports.FieldAccess
+	l                *zap.Logger
+	repo             rateagreementports.RateAgreementRepository
+	validator        *Validator
+	auditService     auditports.AuditService
+	fields           permissionports.FieldAccess
+	pricingTemplates permissionports.PricingTemplatePlan
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:            p.Logger.Named("service.rate-agreement"),
-		repo:         p.Repo,
-		validator:    p.Validator,
-		auditService: p.AuditService,
-		fields:       p.Fields,
+		l:                p.Logger.Named("service.rate-agreement"),
+		repo:             p.Repo,
+		validator:        p.Validator,
+		auditService:     p.AuditService,
+		fields:           p.Fields,
+		pricingTemplates: p.PricingTemplates,
 	}
 }
 

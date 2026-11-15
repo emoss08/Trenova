@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -18,6 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:          "watchtower-reconcile",
+			Feature:     platformcatalog.FeatureAIWatchtower,
 			Description: "Correct every organization's watchtower against its sources",
 			// Nightly, before the briefing is written, so the morning's feed
 			// is the corrected one. A live projection lost to a failed write
@@ -35,6 +37,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "no-check-call-sweep",
+			Feature:       platformcatalog.FeatureAIWatchtower,
 			Description:   "Raise and clear watchtower items for brokered loads overdue a check call",
 			Spec:          schedule.Every(15 * time.Minute),
 			Workflow:      NoCheckCallSweepWorkflow,
@@ -46,6 +49,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "exception-attention",
+			Feature:       platformcatalog.FeatureAIWatchtower,
 			Description:   "Wake snoozed exceptions and escalate overdue ones",
 			Spec:          schedule.Every(5 * time.Minute),
 			Workflow:      ExceptionAttentionWorkflow,
@@ -57,6 +61,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "shipment-exception-sweep",
+			Feature:       platformcatalog.FeatureAIWatchtower,
 			Description:   "Raise and clear missed stops, missing PODs and exhausted tenders",
 			Spec:          schedule.Every(10 * time.Minute),
 			Workflow:      ShipmentExceptionSweepWorkflow,
@@ -68,6 +73,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "factoring-watchtower-sweep",
+			Feature:       platformcatalog.FeatureAIWatchtower,
 			Description:   "Raise and clear factoring items: late ready invoices and notices of assignment",
 			Spec:          schedule.Every(15 * time.Minute),
 			Workflow:      FactoringSweepWorkflow,
@@ -79,6 +85,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "decision-sweep",
+			Feature:       platformcatalog.FeatureAIWatchtower,
 			Description:   "Clear proposals and plans that expired without a decision",
 			Spec:          schedule.Every(10 * time.Minute),
 			Workflow:      DecisionSweepWorkflow,
@@ -90,6 +97,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:          "watchtower-retention",
+			Feature:     platformcatalog.FeatureAIWatchtower,
 			Description: "Remove watchtower items resolved more than a month ago",
 			// Weekly is often enough for a month-long window, and it keeps
 			// the delete off the nightly hour the reconcile already uses.

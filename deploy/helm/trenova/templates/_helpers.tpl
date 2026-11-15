@@ -13,7 +13,23 @@
 {{- end -}}
 
 {{- define "trenova.postgresCluster" -}}
-{{- printf "%s-postgres" (include "trenova.fullname" .) -}}
+{{- include "trenova.postgresClusterOf" (dict "root" . "generation" .Values.postgres.generation) -}}
+{{- end -}}
+
+{{/* A PostgreSQL cluster by its generation: the first is <fullname>-postgres,
+one a restore made <fullname>-postgres-<generation>. */}}
+{{- define "trenova.postgresClusterOf" -}}
+{{- $base := printf "%s-postgres" (include "trenova.fullname" .root) -}}
+{{- if .generation -}}
+{{- printf "%s-%s" $base .generation -}}
+{{- else -}}
+{{- $base -}}
+{{- end -}}
+{{- end -}}
+
+{{/* The Barman Cloud object store every generation backs up to. */}}
+{{- define "trenova.backupStore" -}}
+{{- printf "%s-backups" (include "trenova.fullname" .) -}}
 {{- end -}}
 
 {{- define "trenova.postgresHost" -}}

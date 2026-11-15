@@ -162,6 +162,7 @@ func (s *Service) sendDigest(
 	day := now.In(location).Format(time.DateOnly)
 	if _, err = s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
+		Type:           email.TypeNotificationDigest,
 		Purpose:        email.PurposeNotifications,
 		To:             []string{address},
 		Subject:        rendered.Subject,

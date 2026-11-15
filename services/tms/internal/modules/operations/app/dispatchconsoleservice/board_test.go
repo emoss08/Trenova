@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/integrationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -57,6 +58,7 @@ func TestGetBoard_SaysWhenTheDriverListWasCut(t *testing.T) {
 				dispatchControlRepo: controls,
 				organizations:       organizations,
 				candidates: dispatchcandidateservice.New(dispatchcandidateservice.Params{
+					Features:        plantest.AllFeatures(),
 					Positionings:    positioningtest.None{},
 					ConsoleRepo:     console,
 					IntegrationRepo: integrations,

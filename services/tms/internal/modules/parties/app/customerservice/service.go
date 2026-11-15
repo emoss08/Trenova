@@ -38,6 +38,7 @@ type Params struct {
 	DB           kernelports.Transactor
 	Sync         accountingsyncports.AccountingSyncEnqueuer
 	Credit       customerports.CreditReviewer
+	PlanFields   permissionports.PlanFieldKeeper
 }
 
 type Service struct {
@@ -51,6 +52,7 @@ type Service struct {
 	db           kernelports.Transactor
 	sync         accountingsyncports.AccountingSyncEnqueuer
 	credit       customerports.CreditReviewer
+	planFields   permissionports.PlanFieldKeeper
 }
 
 func New(p Params) *Service {
@@ -65,6 +67,7 @@ func New(p Params) *Service {
 		db:           p.DB,
 		sync:         p.Sync,
 		credit:       p.Credit,
+		planFields:   p.PlanFields,
 	}
 }
 

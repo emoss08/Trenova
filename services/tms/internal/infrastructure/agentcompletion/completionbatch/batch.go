@@ -50,9 +50,6 @@ func (s *Batch) SubmitBatch(
 	if err != nil {
 		return nil, err
 	}
-	if err = s.AssertWithinSpend(ctx, req.TenantInfo); err != nil {
-		return nil, err
-	}
 
 	usable, err := s.CandidatesFor(ctx, runs[0])
 	if err != nil {

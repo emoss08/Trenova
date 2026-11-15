@@ -129,6 +129,55 @@ func TestOrganization_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "missing address line 1 fails",
+			modify: func(o *Organization) {
+				o.AddressLine1 = ""
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing state fails",
+			modify: func(o *Organization) {
+				o.StateID = ""
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing postal code fails",
+			modify: func(o *Organization) {
+				o.PostalCode = ""
+			},
+			wantErr: true,
+		},
+		{
+			name: "the bootstrap's placeholder SCAC code fails",
+			modify: func(o *Organization) {
+				o.ScacCode = PlaceholderSCAC
+			},
+			wantErr: true,
+		},
+		{
+			name: "the bootstrap's placeholder DOT number fails",
+			modify: func(o *Organization) {
+				o.DOTNumber = PlaceholderDOTNumber
+			},
+			wantErr: true,
+		},
+		{
+			name: "the bootstrap's placeholder city fails",
+			modify: func(o *Organization) {
+				o.City = PlaceholderCity
+			},
+			wantErr: true,
+		},
+		{
+			name: "the bootstrap's placeholder postal code fails",
+			modify: func(o *Organization) {
+				o.PostalCode = PlaceholderPostalCode
+			},
+			wantErr: true,
+		},
+		{
 			name: "address line 1 too long fails",
 			modify: func(o *Organization) {
 				o.AddressLine1 = string(make([]byte, 151))

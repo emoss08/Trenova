@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -711,4 +712,8 @@ func actorUserID(actor *permissionports.RequestActor) pulid.ID {
 		return pulid.Nil
 	}
 	return actor.UserID
+}
+
+func (s *Service) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureEDIIntegration
 }

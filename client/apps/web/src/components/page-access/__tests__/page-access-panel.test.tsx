@@ -42,6 +42,7 @@ const access: PageAccess = {
       canRead: false,
       withheld: 1,
       fields: [{ name: "creditLimit", inView: false, decision: "WITHHELD_KIND" }],
+      planDenial: null,
     },
   ],
   withheld: 1,

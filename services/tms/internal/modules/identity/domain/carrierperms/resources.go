@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func Resources() []*permissionspec.ResourceDefinition {
@@ -26,6 +27,7 @@ func Resources() []*permissionspec.ResourceDefinition {
 func carrierResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceCarrier.String(),
+		Feature:       platformcatalog.FeatureCoreTMS,
 		DisplayName:   "Carrier",
 		Description:   "External carrier management for brokered freight",
 		Category:      "Carriers",
@@ -54,12 +56,19 @@ func carrierResource() *permissionspec.ResourceDefinition {
 			},
 		},
 		DefaultSensitivity: permission.SensitivityInternal,
+		FieldFeatures: map[string]platformcatalog.FeatureKey{
+			"intelRiskLevel":      platformcatalog.FeatureCarrierBrokerage,
+			"intelReviewRequired": platformcatalog.FeatureCarrierBrokerage,
+			"intelBlockingCount":  platformcatalog.FeatureCarrierBrokerage,
+			"openIntelEventCount": platformcatalog.FeatureCarrierBrokerage,
+		},
 	}
 }
 
 func carrierCapacityPostingResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceCarrierCapacityPosting.String(),
+		Feature:            platformcatalog.FeatureCarrierBrokerage,
 		DisplayName:        "Carrier Capacity Posting",
 		Description:        "Trucks carriers say they have available, with lane, window and rate",
 		Category:           "Carriers",
@@ -72,6 +81,7 @@ func carrierCapacityPostingResource() *permissionspec.ResourceDefinition {
 func rateConfirmationResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceRateConfirmation.String(),
+		Feature:        platformcatalog.FeatureCarrierBrokerage,
 		DisplayName:    "Rate Confirmation",
 		Description:    "Outbound carrier rate confirmations",
 		Category:       "Carriers",
@@ -100,6 +110,7 @@ func rateConfirmationResource() *permissionspec.ResourceDefinition {
 func carrierSettlementResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceCarrierSettlement.String(),
+		Feature:       platformcatalog.FeatureCarrierBrokerage,
 		DisplayName:   "Carrier Settlement",
 		Description:   "Carrier settlement statements, batches, and cost events",
 		Category:      "Carrier settlements",
@@ -186,6 +197,7 @@ func carrierSettlementResource() *permissionspec.ResourceDefinition {
 func carrierSettlementControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceCarrierSettlementControl.String(),
+		Feature:            platformcatalog.FeatureCarrierBrokerage,
 		DisplayName:        "Carrier Settlement Control",
 		Description:        "Carrier settlement pay period, trigger, and GL default configuration",
 		Category:           "Carrier settlements",
@@ -198,6 +210,7 @@ func carrierSettlementControlResource() *permissionspec.ResourceDefinition {
 func carrierInvoiceMatchResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceCarrierInvoiceMatch.String(),
+		Feature:       platformcatalog.FeatureCarrierBrokerage,
 		DisplayName:   "Carrier Invoice Match",
 		Description:   "Carrier invoice matching against negotiated buy rates",
 		Category:      "Carrier settlements",
@@ -263,6 +276,7 @@ func carrierInvoiceMatchResource() *permissionspec.ResourceDefinition {
 func routingGuideResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceRoutingGuide.String(),
+		Feature:       platformcatalog.FeatureCarrierBrokerage,
 		DisplayName:   "Routing Guide",
 		Description:   "Ranked carrier lists per freight lane that drive waterfall tenders",
 		Category:      "Carriers",
@@ -297,6 +311,7 @@ func routingGuideResource() *permissionspec.ResourceDefinition {
 func tenderResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceTender.String(),
+		Feature:     platformcatalog.FeatureCarrierBrokerage,
 		DisplayName: "Carrier Tender",
 		Description: "Waterfall and spot tender offers made to carriers for brokered moves",
 		Category:    "Carriers",
@@ -339,6 +354,7 @@ func tenderResource() *permissionspec.ResourceDefinition {
 func carrierIntelligenceResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceCarrierIntelligence.String(),
+		Feature:     platformcatalog.FeatureCarrierBrokerage,
 		DisplayName: "Carrier Intelligence",
 		Description: "Vetting, monitoring and compliance findings from carrier intelligence providers",
 		Category:    "Carriers",
@@ -383,6 +399,7 @@ func carrierIntelligenceResource() *permissionspec.ResourceDefinition {
 func carrierSourcingResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceCarrierSourcing.String(),
+		Feature:     platformcatalog.FeatureCarrierBrokerage,
 		DisplayName: "Carrier Sourcing",
 		Description: "Search carrier intelligence providers for new capacity and import prospects",
 		Category:    "Carriers",
@@ -406,6 +423,7 @@ func carrierSourcingResource() *permissionspec.ResourceDefinition {
 func equipmentVerificationResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceEquipmentVerification.String(),
+		Feature:     platformcatalog.FeatureCarrierBrokerage,
 		DisplayName: "Equipment Verification",
 		Description: "Driver-at-dock checks that arriving equipment belongs to the assigned carrier",
 		Category:    "Carriers",

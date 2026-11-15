@@ -240,7 +240,7 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
         carrierId={carrierId}
         snapshot={snapshot}
         enrollment={carrier.monitoringEnrollment}
-        openEventCount={carrier.openIntelEventCount}
+        openEventCount={carrier.openIntelEventCount ?? 0}
         provider={provider.provider}
         control={settingsQuery.data?.carrierIntelControl ?? null}
         canUpdate={canUpdate && provider.configured}
@@ -262,7 +262,7 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
           </TabsTab>
           <TabsTab value="timeline" className="grow-0 px-2 text-sm">
             {t("Timeline")}
-            {quietCount(carrier.openIntelEventCount)}
+            {quietCount(carrier.openIntelEventCount ?? 0)}
           </TabsTab>
           <TabsTab value="history" className="grow-0 px-2 text-sm">
             {t("History")}

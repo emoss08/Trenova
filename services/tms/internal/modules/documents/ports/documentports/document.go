@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -218,5 +219,6 @@ type RetiredDocument struct {
 }
 
 type DocumentChangeObserver interface {
+	platformcatalogports.FeatureObserver
 	DocumentsChanged(ctx context.Context, change *DocumentChange)
 }

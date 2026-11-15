@@ -2,13 +2,17 @@ package shipmenteffects
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -41,6 +45,9 @@ type Effects struct {
 	auditService        auditports.AuditService
 	eventService        shipmenteventports.ShipmentEventService
 	orderDerivation     orderports.OrderDerivationService
+	features            platformcatalogports.FeatureGate
+	planFields          permissionports.PlanFieldKeeper
+	pricingTemplates    permissionports.PricingTemplatePlan
 }
 
 // RefuseCreditHold stops new business for a customer whose credit is held:
@@ -57,6 +64,13 @@ func (s *Effects) RefuseCreditHold(
 	}
 	payerID := entity.PayerID()
 	if payerID.IsNil() || (original != nil && original.PayerID() == payerID) {
+		return nil
+	}
+	accounting, err := s.features.Enabled(ctx, platformcatalog.FeatureAccounting)
+	if err != nil {
+		return fmt.Errorf("ask whether accounting is on the plan: %w", err)
+	}
+	if !accounting {
 		return nil
 	}
 
@@ -143,6 +157,9 @@ type Params struct {
 	AuditService        auditports.AuditService
 	EventService        shipmenteventports.ShipmentEventService
 	OrderDerivation     orderports.OrderDerivationService
+	Features            platformcatalogports.FeatureGate
+	PlanFields          permissionports.PlanFieldKeeper
+	PricingTemplates    permissionports.PricingTemplatePlan
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -158,6 +175,9 @@ func New(p Params) *Effects {
 		auditService:        p.AuditService,
 		eventService:        p.EventService,
 		orderDerivation:     p.OrderDerivation,
+		features:            p.Features,
+		planFields:          p.PlanFields,
+		pricingTemplates:    p.PricingTemplates,
 	}
 }
 

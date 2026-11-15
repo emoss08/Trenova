@@ -32,12 +32,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -122,7 +121,7 @@ type Params struct {
 	Workflows     kernelports.WorkflowStarter
 	Syncer        conversationscheduleports.ConversationScheduleSyncer
 	Realtime      realtimeports.RealtimeService
-	Plans         platformplanports.PlanService
+	Features      platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -136,7 +135,7 @@ type Service struct {
 	syncer      conversationscheduleports.ConversationScheduleSyncer
 	realtime    realtimeports.RealtimeService
 	clocks      clocks
-	plans       platformplanports.PlanService
+	features    platformcatalogports.FeatureGate
 	now         func() int64
 }
 
@@ -158,18 +157,13 @@ func New(p Params) *Service {
 		syncer:      p.Syncer,
 		realtime:    p.Realtime,
 		clocks:      repositoryClocks{users: p.Users, organizations: p.Organizations},
-		plans:       p.Plans,
+		features:    p.Features,
 		now:         timeutils.NowUnix,
 	}
 }
 
-func (s *Service) requireAutomation(ctx context.Context, tenant pagination.TenantInfo) error {
-	return planservice.RequireCapability(
-		ctx,
-		s.plans,
-		tenant,
-		platformplan.CapabilityAgentAutomation,
-	)
+func (s *Service) requireAutomation(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureAgentAutomation)
 }
 
 // NewRunner is the same service, as what a firing schedule asks to run.
@@ -207,7 +201,7 @@ type CreateResult struct {
 // its card in the conversation, and the Temporal schedule that fires it.
 func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult, error) {
 	tenant := tenantOf(req.Actor)
-	if err := s.requireAutomation(ctx, tenant); err != nil {
+	if err := s.requireAutomation(ctx); err != nil {
 		return nil, err
 	}
 
@@ -302,7 +296,7 @@ func (s *Service) Plan(
 	req conversationscheduleports.PlanConversationScheduleRequest,
 ) (*conversationscheduleports.PlannedConversationSchedule, error) {
 	tenant := tenantOf(req.Actor)
-	if err := s.requireAutomation(ctx, tenant); err != nil {
+	if err := s.requireAutomation(ctx); err != nil {
 		return nil, err
 	}
 
@@ -556,7 +550,7 @@ func (s *Service) SetEnabled(
 		return schedule, nil
 	}
 	if enabled {
-		if err = s.requireAutomation(ctx, tenantOf(req.Actor)); err != nil {
+		if err = s.requireAutomation(ctx); err != nil {
 			return nil, err
 		}
 	}
@@ -591,7 +585,7 @@ func (s *Service) Edit(
 		return nil, err
 	}
 	if schedule.Enabled {
-		if err = s.requireAutomation(ctx, tenantOf(req.Actor)); err != nil {
+		if err = s.requireAutomation(ctx); err != nil {
 			return nil, err
 		}
 	}

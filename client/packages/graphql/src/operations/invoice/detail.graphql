@@ -12,7 +12,7 @@ fragment InvoiceRelatedFields on Invoice {
   isSplitBill
 }
 
-query InvoiceArContext($id: ID!) @requiresRead(kind: "invoice_dispute") {
+query InvoiceArContext($id: ID!) @requiresRead(kind: "invoice_dispute") @requiresRead(kind: "customer_payment") @requiresRead(kind: "accounts_receivable") @requiresRead(kind: "edi") {
   invoice(id: $id) {
     id
     customerId
@@ -70,13 +70,11 @@ fragment CreditMemoApplicationFields on CreditMemoApplication {
   creditMemo {
     id
     number
-    billType
     status
   }
   invoice {
     id
     number
-    billType
     status
   }
 }

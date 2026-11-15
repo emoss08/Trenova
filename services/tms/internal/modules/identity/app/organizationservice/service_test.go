@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -249,6 +250,7 @@ func setupTest(t *testing.T) *testDeps {
 		storageCfg:   &storageconfig.Config{PresignedURLExpiry: 15 * time.Minute},
 		v:            NewValidator(ValidatorParams{DB: pgstubtest.NewConnection(t)}),
 		auditService: &mocks.NoopAuditService{},
+		planFields:   plantest.Keeper(nil),
 	}
 	return &testDeps{repo: repo, svc: svc}
 }
@@ -670,6 +672,7 @@ func TestNew(t *testing.T) {
 		SecurityConfig: &securityconfig.Config{},
 		StorageConfig:  &storageconfig.Config{},
 		Validator:      NewValidator(ValidatorParams{DB: pgstubtest.NewConnection(t)}),
+		PlanFields:     plantest.Keeper(nil),
 	})
 
 	require.NotNil(t, svc)

@@ -19,6 +19,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,7 +57,7 @@ type rig struct {
 	tenant   pagination.TenantInfo
 }
 
-func newRig(fact *podchaseports.Facts, plan *playsendtest.Plans) *rig {
+func newRig(fact *podchaseports.Facts, features platformcatalogports.FeatureGate) *rig {
 	r := &rig{
 		drivers: &playsendtest.Drivers{Known: map[pulid.ID]playsendtest.Driver{}},
 		texts:   &playsendtest.Texts{},
@@ -67,7 +70,7 @@ func newRig(fact *podchaseports.Facts, plan *playsendtest.Plans) *rig {
 	}
 	r.playbook = NewPlaybook(PlaybookParams{
 		Facts:         &facts{rows: rows},
-		Messages:      playsendtest.Messages(r.drivers, plan, r.texts),
+		Messages:      playsendtest.Messages(r.drivers, features, r.texts),
 		Requests:      r.mail.Requests(),
 		Organizations: organizations{},
 	})
@@ -106,7 +109,7 @@ func TestPlaybookSendsADashMessageWithThePersonsWords(t *testing.T) {
 	fact := deliveredFact()
 	workerID := pulid.MustNew("wrk_")
 	fact.Driver = &podchaseports.Driver{WorkerID: workerID, Name: "Laura Wright", OnDash: true}
-	r := newRig(fact, &playsendtest.Plans{Texts: true})
+	r := newRig(fact, plantest.AllFeatures())
 	r.drivers.Known[workerID] = playsendtest.Driver{Name: "Laura Wright", OnDash: true}
 
 	planned, err := r.plan(t, fact.ShipmentID)
@@ -139,7 +142,7 @@ func TestPlaybookTextsADriverWithOnlyANumber(t *testing.T) {
 	fact := deliveredFact()
 	workerID := pulid.MustNew("wrk_")
 	fact.Driver = &podchaseports.Driver{WorkerID: workerID, Name: "Theresa Aguilar", HasPhone: true}
-	r := newRig(fact, &playsendtest.Plans{Texts: true})
+	r := newRig(fact, plantest.AllFeatures())
 	r.mail.NoProfile = true
 	r.playbook.requests = r.mail.Requests()
 	r.drivers.Known[workerID] = playsendtest.Driver{Name: "Theresa Aguilar", Phone: "+15555550123"}
@@ -164,7 +167,7 @@ func TestPlaybookEmailsTheCarrierInTheOrganizationsTemplate(t *testing.T) {
 
 	fact := deliveredFact()
 	fact.Carrier = &podchaseports.Carrier{Name: "Acme Freight", Email: "ops@acme.test"}
-	r := newRig(fact, &playsendtest.Plans{})
+	r := newRig(fact, plantest.Without(platformcatalog.FeatureAdministration))
 
 	planned, err := r.plan(t, fact.ShipmentID)
 	require.NoError(t, err)
@@ -195,7 +198,7 @@ func TestPlaybookEmailsTheCarrierInTheOrganizationsTemplate(t *testing.T) {
 func TestPlaybookSaysWhyItCannotBeSent(t *testing.T) {
 	t.Parallel()
 
-	onFile := newRig(nil, &playsendtest.Plans{})
+	onFile := newRig(nil, plantest.Without(platformcatalog.FeatureAdministration))
 	_, err := onFile.plan(t, pulid.MustNew("shp_"))
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
@@ -203,14 +206,14 @@ func TestPlaybookSaysWhyItCannotBeSent(t *testing.T) {
 
 	fact := deliveredFact()
 	fact.Driver = &podchaseports.Driver{WorkerID: pulid.MustNew("wrk_"), Name: "A Driver"}
-	unreachable := newRig(fact, &playsendtest.Plans{Texts: true})
+	unreachable := newRig(fact, plantest.AllFeatures())
 	_, err = unreachable.plan(t, fact.ShipmentID)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 
 	suppressed := deliveredFact()
 	suppressed.Carrier = &podchaseports.Carrier{Name: "Acme Freight", Email: "ops@acme.test"}
-	refused := newRig(suppressed, &playsendtest.Plans{})
+	refused := newRig(suppressed, plantest.Without(platformcatalog.FeatureAdministration))
 	refused.mail.Refused = true
 	refused.playbook.requests = refused.mail.Requests()
 	_, err = refused.plan(t, suppressed.ShipmentID)

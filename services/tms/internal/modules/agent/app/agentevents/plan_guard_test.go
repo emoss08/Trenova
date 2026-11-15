@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +26,7 @@ func TestPublishSkipsOrganizationsWithoutAutomatedAgents(t *testing.T) {
 		Waits:       quietWaits{},
 		Definitions: definitions,
 		EventRuns:   runs,
-		Plans:       plantest.Restricting(t, platformplan.CapabilityAgentAutomation),
+		Features:    plantest.Without(platformcatalog.FeatureAgentAutomation),
 	})
 
 	publisher.Publish(t.Context(), &agenteventports.AgentEvent{

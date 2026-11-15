@@ -32,6 +32,7 @@ func TestRegistry_RegisterProvider(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -52,6 +53,7 @@ func TestRegistry_CollectSchedules(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -63,6 +65,7 @@ func TestRegistry_CollectSchedules(t *testing.T) {
 				Spec:      Cron("0 9 * * *"),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -92,6 +95,7 @@ func TestRegistry_CollectSchedules_DuplicateID(t *testing.T) {
 				Spec:        Every(30 * time.Minute),
 				Workflow:    dummyWorkflow,
 				TaskQueue:   "test-queue",
+				Feature:     testFeature,
 			},
 		},
 	}
@@ -104,6 +108,7 @@ func TestRegistry_CollectSchedules_DuplicateID(t *testing.T) {
 				Spec:        Cron("0 9 * * *"),
 				Workflow:    dummyWorkflow,
 				TaskQueue:   "test-queue",
+				Feature:     testFeature,
 			},
 		},
 	}
@@ -126,6 +131,7 @@ func TestRegistry_CollectSchedules_InvalidSchedule(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -148,6 +154,7 @@ func TestRegistry_GetSchedule(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -175,12 +182,14 @@ func TestRegistry_GetScheduleIDs(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 			{
 				ID:        "schedule-b",
 				Spec:      Every(1 * time.Hour),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -202,6 +211,7 @@ func TestProviderFunc(t *testing.T) {
 			Spec:      Every(1 * time.Hour),
 			Workflow:  dummyWorkflow,
 			TaskQueue: "test-queue",
+			Feature:   testFeature,
 		},
 	}
 

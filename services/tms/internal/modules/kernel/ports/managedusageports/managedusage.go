@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	CounterGroup = `group:"managed_hourly_counters"`
-	LevelGroup   = `group:"managed_level_readers"`
+	CounterGroup  = `group:"managed_hourly_counters"`
+	LevelGroup    = `group:"managed_level_readers"`
+	ObserverGroup = `group:"managed_state_observers"`
 )
 
 type StateRepository interface {
@@ -44,4 +45,13 @@ type Gate interface {
 		requested int64,
 	) (managedusage.Decision, error)
 	State(ctx context.Context) (*managedusage.State, error)
+}
+
+type StateChange struct {
+	Previous *managedusage.State
+	Current  *managedusage.State
+}
+
+type StateObserver interface {
+	StateChanged(ctx context.Context, change *StateChange) error
 }

@@ -28,7 +28,6 @@ const (
 	FreeDemoDocumentStorage   int64 = 100 * 1024 * 1024
 	FreeDemoDocumentFileBytes int64 = 10 * 1024 * 1024
 	FreeDemoAssistantMessages int64 = 25
-	FreeDemoAISpendCents      int64 = 150
 	freeDemoName                    = "Free demo"
 	unlimitedName                   = "Unlimited"
 )
@@ -39,11 +38,10 @@ type Limit struct {
 }
 
 type Plan struct {
-	Key                    PlanKey                            `json:"key"`
-	Name                   string                             `json:"name"`
-	Limits                 map[platformcatalog.MeterKey]Limit `json:"limits"`
-	RestrictedCapabilities []Capability                       `json:"restrictedCapabilities"`
-	TrialEndingMeters      []platformcatalog.MeterKey         `json:"trialEndingMeters"`
+	Key               PlanKey                            `json:"key"`
+	Name              string                             `json:"name"`
+	Limits            map[platformcatalog.MeterKey]Limit `json:"limits"`
+	TrialEndingMeters []platformcatalog.MeterKey         `json:"trialEndingMeters"`
 }
 
 func DefaultFreeDemoLimits() map[platformcatalog.MeterKey]Limit {
@@ -96,15 +94,7 @@ func DefaultFreeDemoLimits() map[platformcatalog.MeterKey]Limit {
 			Max:    FreeDemoAssistantMessages,
 			Window: WindowMonthly,
 		},
-		platformcatalog.MeterAISpendCents: {
-			Max:    FreeDemoAISpendCents,
-			Window: WindowMonthly,
-		},
 	}
-}
-
-func FreeDemoRestrictedCapabilities() []Capability {
-	return AllCapabilities()
 }
 
 func FreeDemoTrialEndingMeters() []platformcatalog.MeterKey {
@@ -128,11 +118,10 @@ func FreeDemo(overrides map[platformcatalog.MeterKey]int64) (*Plan, error) {
 	}
 
 	return &Plan{
-		Key:                    PlanKeyFreeDemo,
-		Name:                   freeDemoName,
-		Limits:                 limits,
-		RestrictedCapabilities: FreeDemoRestrictedCapabilities(),
-		TrialEndingMeters:      FreeDemoTrialEndingMeters(),
+		Key:               PlanKeyFreeDemo,
+		Name:              freeDemoName,
+		Limits:            limits,
+		TrialEndingMeters: FreeDemoTrialEndingMeters(),
 	}, nil
 }
 
@@ -147,11 +136,10 @@ func ParseLimitOverrides(raw map[string]int64) map[platformcatalog.MeterKey]int6
 
 func Unlimited() *Plan {
 	return &Plan{
-		Key:                    PlanKeyUnlimited,
-		Name:                   unlimitedName,
-		Limits:                 map[platformcatalog.MeterKey]Limit{},
-		RestrictedCapabilities: []Capability{},
-		TrialEndingMeters:      []platformcatalog.MeterKey{},
+		Key:               PlanKeyUnlimited,
+		Name:              unlimitedName,
+		Limits:            map[platformcatalog.MeterKey]Limit{},
+		TrialEndingMeters: []platformcatalog.MeterKey{},
 	}
 }
 
@@ -164,14 +152,6 @@ func (p *Plan) Limit(meter platformcatalog.MeterKey) (Limit, bool) {
 	return limit, ok
 }
 
-func (p *Plan) Restricts(capability Capability) bool {
-	if p == nil {
-		return false
-	}
-
-	return slices.Contains(p.RestrictedCapabilities, capability)
-}
-
 func (p *Plan) EndsTrial(meter platformcatalog.MeterKey) bool {
 	if p == nil {
 		return false
@@ -180,12 +160,8 @@ func (p *Plan) EndsTrial(meter platformcatalog.MeterKey) bool {
 	return slices.Contains(p.TrialEndingMeters, meter)
 }
 
-func (p *Plan) Allows(capability Capability) bool {
-	return !p.Restricts(capability)
-}
-
 func (p *Plan) IsUnlimited() bool {
-	return p == nil || (len(p.Limits) == 0 && len(p.RestrictedCapabilities) == 0)
+	return p == nil || len(p.Limits) == 0
 }
 
 func (p *Plan) MeterKeys() []platformcatalog.MeterKey {

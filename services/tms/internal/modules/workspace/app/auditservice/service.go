@@ -199,6 +199,14 @@ func enrichFromContext(ctx context.Context, entry *audit.Entry) {
 			entry.Metadata[audit.MetadataAgentID] = source.AgentID
 		}
 	}
+	if support := source.Support; support != nil {
+		entry.CreditSupport(
+			pulid.ID(support.GrantID),
+			pulid.ID(support.PrincipalUserID),
+			support.StaffEmail,
+			support.StaffName,
+		)
+	}
 	if entry.Channel == "" {
 		entry.Channel = channelOf(ctx, entry, source)
 	}

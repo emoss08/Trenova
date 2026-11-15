@@ -266,6 +266,9 @@ func (t *UnpagedTool) Query(
 		outcome[key] = rows
 	}
 	annotateOutcome(outcome, append(notes, besideNotes...), append(withheld, besideWithheld...))
+	if byPlan := graphqlread.PlanWithheld(result.WithheldByPlan, prefix); len(byPlan) > 0 {
+		outcome[graphqlread.OutcomeWithheldByPlan] = byPlan
+	}
 
 	return t.packaged(outcome, items, positions, window), nil
 }

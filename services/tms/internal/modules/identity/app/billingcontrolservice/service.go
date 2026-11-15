@@ -5,9 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -17,25 +19,28 @@ import (
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	Repo         tenantports.BillingControlRepository
-	Validator    *Validator
-	AuditService auditports.AuditService
+	Logger           *zap.Logger
+	Repo             tenantports.BillingControlRepository
+	Validator        *Validator
+	AuditService     auditports.AuditService
+	PricingTemplates permissionports.PricingTemplatePlan
 }
 
 type Service struct {
-	l            *zap.Logger
-	repo         tenantports.BillingControlRepository
-	validator    *Validator
-	auditService auditports.AuditService
+	l                *zap.Logger
+	repo             tenantports.BillingControlRepository
+	validator        *Validator
+	auditService     auditports.AuditService
+	pricingTemplates permissionports.PricingTemplatePlan
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:            p.Logger.Named("service.billingcontrol"),
-		repo:         p.Repo,
-		validator:    p.Validator,
-		auditService: p.AuditService,
+		l:                p.Logger.Named("service.billingcontrol"),
+		repo:             p.Repo,
+		validator:        p.Validator,
+		auditService:     p.AuditService,
+		pricingTemplates: p.PricingTemplates,
 	}
 }
 
@@ -65,6 +70,9 @@ func (s *Service) Update(
 		log.Error("failed to get original billing control", zap.Error(err))
 		return nil, err
 	}
+	if err = s.refuseOffPlanFallback(ctx, entity, original); err != nil {
+		return nil, err
+	}
 
 	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
@@ -91,4 +99,23 @@ func (s *Service) Update(
 	}
 
 	return updatedEntity, nil
+}
+
+func (s *Service) refuseOffPlanFallback(
+	ctx context.Context,
+	entity, original *billingcontrol.BillingControl,
+) error {
+	if entity.FallbackFormulaTemplateID == nil {
+		return nil
+	}
+	if original != nil && original.FallbackFormulaTemplateID != nil &&
+		*original.FallbackFormulaTemplateID == *entity.FallbackFormulaTemplateID {
+		return nil
+	}
+
+	return s.pricingTemplates.RefuseOffPlan(
+		ctx,
+		pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		*entity.FallbackFormulaTemplateID,
+	)
 }

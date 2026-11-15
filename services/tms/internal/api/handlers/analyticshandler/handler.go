@@ -159,9 +159,9 @@ func (h *Handler) authorizePage(c *gin.Context, page kernelports.AnalyticsPage) 
 	}
 
 	if !result.Allowed {
-		return errortypes.NewAuthorizationError(
+		return permissionports.DeniedError(result, errortypes.NewAuthorizationError(
 			"You don't have permission to view this analytics page",
-		)
+		))
 	}
 
 	return nil

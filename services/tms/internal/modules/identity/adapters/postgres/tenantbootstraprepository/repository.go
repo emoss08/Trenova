@@ -10,8 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
+	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -36,17 +39,20 @@ type Params struct {
 
 	DB     *postgres.Connection
 	Logger *zap.Logger
+	Quota  platformplanports.QuotaGuard
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db    *postgres.Connection
+	l     *zap.Logger
+	quota platformplanports.QuotaGuard
 }
 
 func New(p Params) tenantports.TenantBootstrapRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.tenant-bootstrap-repository"),
+		db:    p.DB,
+		l:     p.Logger.Named("postgres.tenant-bootstrap-repository"),
+		quota: quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -80,6 +86,10 @@ func (r *repository) Bootstrap(
 		r.db,
 		func(ctx context.Context) (*tenantports.BootstrapTenantResult, error) {
 			db := r.db.Keel(ctx)
+
+			if err := r.admitOrganization(ctx, db); err != nil {
+				return nil, err
+			}
 
 			if req.Organization.StateID.IsNil() {
 				stateID, err := r.resolveState(ctx, req.StateAbbreviation)
@@ -126,6 +136,20 @@ func (r *repository) Bootstrap(
 			}, nil
 		},
 	)
+}
+
+func (r *repository) admitOrganization(ctx context.Context, db *keel.DB) error {
+	if !quotaservice.Enforcing(r.quota) {
+		return nil
+	}
+	if err := keel.LockKey(ctx, db, provisioningLockKey); err != nil {
+		return fmt.Errorf("lock tenant provisioning: %w", err)
+	}
+
+	return quotaservice.EnforceAll(ctx, r.quota, platformplanports.QuotaRequest{
+		Meter:    platformcatalog.MeterOrganizationsTotal,
+		Quantity: 1,
+	})
 }
 
 func (r *repository) resolveState(ctx context.Context, abbreviation string) (pulid.ID, error) {

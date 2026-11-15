@@ -15,6 +15,7 @@ func (s *Service) invoiceLedger() *invoiceledger.Poster {
 		Controls: s.accountingRepo,
 		Policy:   s.accountingPolicy,
 		Ledger:   s.customerLedgerRepo,
+		Features: s.features,
 		Writer: journalposting.Writer{
 			Periods:  s.fiscalPeriodRepo,
 			Numbers:  s.sequenceGenerator,

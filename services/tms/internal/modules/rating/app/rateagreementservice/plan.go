@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -119,6 +120,9 @@ func (s *Service) PlanCreate(
 	if err := rateagreement.ApplyLanes(ctx, planned.Rules); err != nil {
 		return nil, err
 	}
+	if err := s.refuseOffPlanLanes(ctx, tenantOf(&planned), planned.Rules); err != nil {
+		return nil, err
+	}
 
 	if multiErr := s.validator.ValidateCreate(ctx, &planned); multiErr != nil {
 		return nil, multiErr
@@ -176,6 +180,9 @@ func (s *Service) PlanUpdate(
 		plan.SupersededIDs = amendment.SupersededIDs
 		plan.Inserts = amendment.Inserts
 	}
+	if err = s.refuseOffPlanLanes(ctx, tenantOf(&planned), plan.Inserts); err != nil {
+		return nil, err
+	}
 
 	return plan, nil
 }
@@ -215,6 +222,9 @@ func (s *Service) PlanAmendRules(
 	}
 
 	if err = rateagreement.ApplyLanes(ctx, req.Rules); err != nil {
+		return nil, err
+	}
+	if err = s.refuseOffPlanLanes(ctx, req.TenantInfo, req.Rules); err != nil {
 		return nil, err
 	}
 	if multiErr := s.validator.ValidateAmendment(ctx, agreement, req); multiErr != nil {
@@ -266,4 +276,19 @@ func rateIncreaseApplicable(plan *RateIncreasePlan) error {
 	}
 
 	return nil
+}
+
+func (s *Service) refuseOffPlanLanes(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	lanes []*rateagreement.RateAgreementRule,
+) error {
+	templateIDs := make([]pulid.ID, 0, len(lanes))
+	for _, lane := range lanes {
+		if lane != nil {
+			templateIDs = append(templateIDs, lane.FormulaTemplateID)
+		}
+	}
+
+	return s.pricingTemplates.RefuseOffPlan(ctx, tenant, templateIDs...)
 }

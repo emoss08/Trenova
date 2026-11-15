@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -258,7 +259,10 @@ func (e *countingEngine) Check(
 func newFieldGuard(t *testing.T, engine permissionports.PermissionEngine) *FieldGuardExtension {
 	t.Helper()
 
-	guard := NewFieldGuardExtension(FieldGuardParams{PermissionEngine: engine})
+	guard := NewFieldGuardExtension(FieldGuardParams{
+		PermissionEngine: engine,
+		Plan:             plantest.AllOn(),
+	})
 	guard.fields = loadProtectedFields(t)
 	return guard
 }
@@ -460,11 +464,17 @@ type fieldStep struct {
 	object, field string
 	nonNull       bool
 	authorizes    string
+	// returns is the type the field returns; a scalar when empty.
+	returns string
 }
 
 func nestedFieldContext(ctx context.Context, steps ...fieldStep) context.Context {
 	for _, step := range steps {
-		def := &ast.FieldDefinition{Type: &ast.Type{NamedType: "String", NonNull: step.nonNull}}
+		returns := step.returns
+		if returns == "" {
+			returns = "String"
+		}
+		def := &ast.FieldDefinition{Type: &ast.Type{NamedType: returns, NonNull: step.nonNull}}
 		if step.authorizes != "" {
 			def.Directives = ast.DirectiveList{{
 				Name: authorizesDirective,

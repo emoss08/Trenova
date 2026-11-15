@@ -18,6 +18,7 @@ func (t *ToolSet) State() ToolSetState {
 		FindCalls:  t.FindCalls,
 		Beyond:     slices.Clone(t.Beyond),
 		Query:      packQueryVector(t.Query),
+		OffPlan:    t.offPlanDenials(),
 	}
 }
 

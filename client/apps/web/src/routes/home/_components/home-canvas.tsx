@@ -17,12 +17,13 @@ import {
 import { useInView } from "@/hooks/use-in-view";
 import { scrollParent } from "@/lib/dom";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { PlanLocked } from "@trenova/shared/components/plan-locked";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { AnimatePresence } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import { AddWidgetDialog } from "./add-widget-dialog";
 import { HomeEditDock } from "./edit-dock";
-import type { HomeData } from "./use-home-data";
+import { isWidgetOffPlan, type HomeData } from "./use-home-data";
 import { WIDGET_COMPONENTS, type WidgetProps } from "./widget-registry";
 import { WidgetConfigDialog } from "./widget-config-dialog";
 import { WidgetEditingProvider, WidgetTileSkeleton } from "./widget-shell";
@@ -98,9 +99,12 @@ export function HomeCanvas({
     const widget: HomeWidget = {
       id: nextItemId(widgets, "widget_"),
       key: option.key,
+      label: option.label,
       title: null,
       w: option.defaultW,
       h: option.defaultH,
+      planLock: null,
+      lockedMetrics: [],
       config: emptyConfig(),
     };
 
@@ -129,7 +133,11 @@ export function HomeCanvas({
     setConfiguring(null);
   };
 
-  if (widgets.length === 0 && !editing) {
+  // Home shows only what the plan includes. The editor keeps every widget, a locked one as the
+  // card that names its add-on, so arranging the layout never drops one the person placed.
+  const shown = editing ? widgets : widgets.filter((widget) => !isWidgetOffPlan(widget));
+
+  if (shown.length === 0 && !editing) {
     return (
       <EmptySheet
         title={t("Your home screen is empty")}
@@ -165,7 +173,7 @@ export function HomeCanvas({
       )}
 
       <TileGrid
-        items={widgets}
+        items={shown}
         columns={columns}
         onReorder={onChange}
         className={editing ? "bg-muted/20 rounded-lg p-2" : undefined}
@@ -274,9 +282,13 @@ const TILE_LOAD_MARGIN = "240px 0px";
  * brings its own code and its own reads. Until a tile comes into view it draws its
  * skeleton and asks for nothing, so opening Home costs what the first screenful
  * costs. Once seen a widget stays mounted, so scrolling back does not reload it.
+ *
+ * A widget the plan leaves out reaches here only in the editor: it draws the locked card
+ * that names its add-on instead, loads none of its code and asks for none of its data.
  */
 function WidgetBody({ widget, data }: WidgetProps) {
-  const Component = WIDGET_COMPONENTS[widget.key];
+  const t = useT();
+  const Component = widget.planLock ? undefined : WIDGET_COMPONENTS[widget.key];
   // The page scrolls inside the shell, and a watcher rooted at the window ignores its
   // margin for anything an inner scroller clips, so the tile is watched against the
   // element that actually scrolls it.
@@ -294,6 +306,16 @@ function WidgetBody({ widget, data }: WidgetProps) {
     },
     [watch],
   );
+
+  if (widget.planLock) {
+    return (
+      <PlanLocked
+        feature={widget.planLock.feature}
+        variant="card"
+        title={widget.title || t(widget.label)}
+      />
+    );
+  }
 
   if (!Component) return null;
 
@@ -327,7 +349,7 @@ function WidgetControls({
 }) {
   const t = useT();
 
-  const configurable = option != null && option.configKind !== "none";
+  const configurable = option != null && option.configKind !== "none" && widget.planLock == null;
 
   return (
     <Popover>

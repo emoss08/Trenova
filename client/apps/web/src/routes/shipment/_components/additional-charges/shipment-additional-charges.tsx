@@ -2,6 +2,8 @@
 import { ChargePayerControl } from "@/components/billing/charge-payer-control";
 import { EmptyState } from "@/components/empty-state";
 import { detention } from "@/lib/queries/detention";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { OccurrenceDetailSheet } from "@/routes/detention-desk/_components/occurrence-detail-sheet";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -128,7 +130,10 @@ export default function AdditionalChargesSection() {
     charges: charges.map((charge) => additionalChargeForAllocation(charge ?? {})),
   });
 
-  const hasDetentionCharges = charges.some(isDetentionCharge);
+  // The occurrences behind a detention charge are the Rating add-on's detention; without it the
+  // charge is an ordinary line and nothing about detention is read.
+  const detentionOnPlan = usePlanFeature(PlanFeature.Detention).available;
+  const hasDetentionCharges = detentionOnPlan && charges.some(isDetentionCharge);
   const defaultPayer = useShipmentDefaultPayer();
 
   const { data: occurrences, refetch: refetchOccurrences } = useQuery({

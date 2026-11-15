@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -75,7 +76,7 @@ func newFixture(t *testing.T, groups protectedfield.GroupSet) *fixture {
 		Catalog:  catalog,
 		Engine:   engine,
 		Registry: registry,
-		Views:    refview.NewPort(refview.New(registry), engine),
+		Views:    refview.NewPort(plantest.Views(registry), engine),
 		Fields:   groupAccess{visible: groups},
 	})
 	require.NoError(t, err)
@@ -371,6 +372,7 @@ func TestDecisionsRoundTripThroughTheirReasonCodes(t *testing.T) {
 		reportaccess.NeedsFieldGroup,
 		reportaccess.NeedsExport,
 		reportaccess.OwnScopeUnsupported,
+		reportaccess.NotOnPlan,
 	} {
 		assert.Equal(t, decision, reportaccess.DecisionOf(decision.String()))
 	}

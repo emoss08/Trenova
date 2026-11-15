@@ -139,14 +139,26 @@ err := errortypes.NewRateLimitError("api", "Too many requests. Please try again 
 
 ### Plan Errors
 
-Trenova Cloud plan limits. A quota error carries the meter, the plan's limit and the usage at
-the time of the refusal; a plan restriction carries the capability (empty when the whole
-organization is read-only or expired), a reason (`plan_restricted`,
-`subscription_read_only`, `subscription_expired`, `signups_paused`) and the plan key:
+Plan limits and the features an instance may use. A quota error carries the meter, the plan's
+limit and the usage at the time of the refusal.
+
+A plan restriction (403, `PLAN_RESTRICTED`) carries `feature`, `addOn`, `reason` and `plan`, and
+has two constructors:
+
+- `NewFeatureRestrictionError(feature, addOn)` refuses a feature this instance has not bought.
+  `feature` is the `platformcatalog.FeatureKey`, `addOn` the name of the add-on that sells it
+  (empty for a base feature) and the reason is `plan_restricted`. With an add-on the message is
+  "This feature is part of the {0} add-on, which is not on your plan", translated whole with the
+  add-on's name as its argument. Code does not call it directly: it calls
+  `platformcatalogports.RequireFeature`, which asks the `FeatureGate` and builds this error.
+- `NewPlanRestrictionError(reason, plan)` refuses because of the organization's subscription:
+  `subscription_read_only`, `subscription_expired` or `signups_paused`, with the plan key.
+  `feature` and `addOn` are empty.
 
 ```go
 err := errortypes.NewQuotaExceededError("shipments.total", 12, 12, "free_demo") // 402, QUOTA_EXCEEDED
-err := errortypes.NewPlanRestrictionError("api_keys", errortypes.PlanRestrictionReasonPlan, "free_demo") // 403, PLAN_RESTRICTED
+err := errortypes.NewFeatureRestrictionError("ai.desk", "Trenova AI")             // 403, PLAN_RESTRICTED
+err := errortypes.NewPlanRestrictionError(errortypes.PlanRestrictionReasonReadOnly, "free_demo") // 403, PLAN_RESTRICTED
 ```
 
 Both expose `Params()`, which the REST problem document and the GraphQL error
@@ -503,7 +515,7 @@ localizes and logs it; resolvers return it to gqlgen, whose presenter does the s
 | `ErrForbidden` | Not authorized | Insufficient permissions |
 | `ErrTooManyRequests` | Rate limited | API throttling |
 | `ErrQuotaExceeded` | Plan limit reached | Cloud free tier meter at its limit |
-| `ErrPlanRestricted` | Not on this plan | Cloud capability restriction, read-only or expired trial |
+| `ErrPlanRestricted` | Not on this plan | Feature not bought, read-only or expired trial, sign-ups paused |
 | `ErrSessionContextStale` | Session no longer the tab's | A tab another tab's sign-in or organization switch left behind |
 | `ErrBusinessLogic` | Business rule violation | Domain-specific rules |
 | `ErrComplianceViolation` | Compliance rule broken | Regulatory requirements |

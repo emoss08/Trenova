@@ -13,10 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -189,7 +191,8 @@ func (stubReasons) LeadingLateReason(
 
 type stubOrgs struct {
 	tenantports.OrganizationRepository
-	timezone string
+	timezone  string
+	brokerage bool
 }
 
 func (o stubOrgs) GetByID(
@@ -199,11 +202,14 @@ func (o stubOrgs) GetByID(
 	return &tenant.Organization{Timezone: o.timezone}, nil
 }
 
-func (stubOrgs) GetCapabilities(
+func (o stubOrgs) GetCapabilities(
 	context.Context,
 	tenantports.GetOrganizationCapabilitiesRequest,
 ) (*tenantports.OrganizationCapabilities, error) {
-	return &tenantports.OrganizationCapabilities{AssetOperationsEnabled: true}, nil
+	return &tenantports.OrganizationCapabilities{
+		AssetOperationsEnabled: true,
+		BrokerageEnabled:       o.brokerage,
+	}, nil
 }
 
 type stubCandidates struct {
@@ -320,6 +326,7 @@ func newFixture(completion llmports.CompletionService) *fixture {
 		Briefs:        f.briefs,
 		QuickFilters:  f.basis,
 		Organizations: stubOrgs{timezone: "America/Chicago"},
+		Features:      plantest.AllFeatures(),
 		Suggestions:   f.candidates,
 		Nova:          agenttest.NovaRunner(completion),
 		Logger:        zap.NewNop(),
@@ -349,6 +356,23 @@ func TestFactsResolveTheBasisEveryFactFilterNeeds(t *testing.T) {
 	assert.False(t, req.Margin,
 		"the brief is shared by every board reader, so it counts no margin-derived set")
 	assert.True(t, req.Detention)
+}
+
+func TestFactsReadBrokerageOnlyWhenItIsOnThePlan(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
+	f.service.organizations = stubOrgs{timezone: "America/Chicago", brokerage: true}
+
+	facts, err := f.service.Facts(t.Context(), testTenant(), "America/Chicago")
+	require.NoError(t, err)
+	assert.Equal(t, tenant.OperationTypeBoth, facts.OperationType)
+
+	f.service.features = plantest.Without(platformcatalog.FeatureCarrierBrokerage)
+	facts, err = f.service.Facts(t.Context(), testTenant(), "America/Chicago")
+	require.NoError(t, err)
+	assert.Equal(t, tenant.OperationTypeAsset, facts.OperationType,
+		"a stored brokerage switch off the plan reads as off")
 }
 
 func TestBriefingFallsBackWithoutAModel(t *testing.T) {

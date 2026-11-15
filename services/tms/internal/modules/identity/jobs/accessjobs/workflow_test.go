@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -43,9 +45,59 @@ func runSweep(t *testing.T, sweeper *scriptedSweeper) *testsuite.TestWorkflowEnv
 func TestSchedules_MatchTheirWorkflowSignatures(t *testing.T) {
 	t.Parallel()
 
-	for _, s := range NewScheduleProvider().GetSchedules() {
-		require.NoError(t, s.Validate(), s.ID)
+	for _, managed := range []bool{false, true} {
+		for _, s := range NewScheduleProvider(&managedconfig.Config{Enabled: managed}).GetSchedules() {
+			require.NoError(t, s.Validate(), s.ID)
+		}
 	}
+}
+
+func TestSchedules_RecordSupportAccessExpiriesOnlyOnAManagedInstance(t *testing.T) {
+	t.Parallel()
+
+	ids := func(managed bool) []string {
+		var out []string
+		for _, s := range NewScheduleProvider(&managedconfig.Config{Enabled: managed}).GetSchedules() {
+			out = append(out, s.ID)
+		}
+		return out
+	}
+
+	assert.NotContains(t, ids(false), SupportExpiryScheduleID)
+	assert.Contains(t, ids(true), SupportExpiryScheduleID)
+}
+
+type scriptedExpiries struct {
+	calls int
+}
+
+func (s *scriptedExpiries) RecordExpiries(
+	_ context.Context,
+	now int64,
+) (*supportaccessservice.ExpirySweepResult, error) {
+	s.calls++
+	if now <= 0 {
+		return nil, errors.New("the record needs the current time")
+	}
+	return &supportaccessservice.ExpirySweepResult{Recorded: 2}, nil
+}
+
+func TestSupportExpiryWorkflow_ReportsWhatItRecorded(t *testing.T) {
+	t.Parallel()
+
+	expiries := &scriptedExpiries{}
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(NewActivities(ActivitiesParams{SupportExpiries: expiries}))
+	env.RegisterWorkflow(RecordSupportAccessExpiriesWorkflow)
+	env.ExecuteWorkflow(RecordSupportAccessExpiriesWorkflow)
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+	var result supportaccessservice.ExpirySweepResult
+	require.NoError(t, env.GetWorkflowResult(&result))
+	assert.Equal(t, 2, result.Recorded)
+	assert.Equal(t, 1, expiries.calls)
 }
 
 func TestSweepWorkflow_ReportsWhatItRevoked(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,6 +35,7 @@ func TestRegistry_Register(t *testing.T) {
 
 	def := &permissionspec.ResourceDefinition{
 		Resource:    "test_resource",
+		Feature:     platformcatalog.FeatureCoreTMS,
 		DisplayName: "Test Resource",
 		Description: "A test resource",
 		Category:    "Testing",
@@ -55,6 +57,7 @@ func TestRegistry_Register_DuplicateFails(t *testing.T) {
 
 	def := &permissionspec.ResourceDefinition{
 		Resource:    "test_resource",
+		Feature:     platformcatalog.FeatureCoreTMS,
 		DisplayName: "Test Resource",
 	}
 
@@ -72,6 +75,7 @@ func TestRegistry_Get(t *testing.T) {
 
 	def := &permissionspec.ResourceDefinition{
 		Resource:    "test_resource",
+		Feature:     platformcatalog.FeatureCoreTMS,
 		DisplayName: "Test Resource",
 	}
 	err := reg.Register(def)
@@ -92,13 +96,16 @@ func TestRegistry_GetChildren(t *testing.T) {
 
 	parent := &permissionspec.ResourceDefinition{
 		Resource: "shipment",
+		Feature:  platformcatalog.FeatureCoreTMS,
 	}
 	child1 := &permissionspec.ResourceDefinition{
 		Resource:       "shipment_move",
+		Feature:        platformcatalog.FeatureCoreTMS,
 		ParentResource: "shipment",
 	}
 	child2 := &permissionspec.ResourceDefinition{
 		Resource:       "shipment_stop",
+		Feature:        platformcatalog.FeatureCoreTMS,
 		ParentResource: "shipment",
 	}
 
@@ -122,9 +129,11 @@ func TestRegistry_GetEffectiveResource(t *testing.T) {
 
 	parent := &permissionspec.ResourceDefinition{
 		Resource: "shipment",
+		Feature:  platformcatalog.FeatureCoreTMS,
 	}
 	child := &permissionspec.ResourceDefinition{
 		Resource:       "shipment_move",
+		Feature:        platformcatalog.FeatureCoreTMS,
 		ParentResource: "shipment",
 	}
 
@@ -141,8 +150,8 @@ func TestRegistry_All(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def1 := &permissionspec.ResourceDefinition{Resource: "resource1"}
-	def2 := &permissionspec.ResourceDefinition{Resource: "resource2"}
+	def1 := &permissionspec.ResourceDefinition{Resource: "resource1", Feature: platformcatalog.FeatureCoreTMS}
+	def2 := &permissionspec.ResourceDefinition{Resource: "resource2", Feature: platformcatalog.FeatureCoreTMS}
 
 	require.NoError(t, reg.Register(def1))
 	require.NoError(t, reg.Register(def2))
@@ -158,6 +167,7 @@ func TestRegistry_GetFieldSensitivity(t *testing.T) {
 
 	def := &permissionspec.ResourceDefinition{
 		Resource:           "worker",
+		Feature:            platformcatalog.FeatureCoreTMS,
 		DefaultSensitivity: permission.SensitivityInternal,
 		FieldSensitivities: map[string]permission.FieldSensitivity{
 			"ssn":      permission.SensitivityConfidential,
@@ -179,6 +189,7 @@ func TestRegistry_GetOperationsForResource(t *testing.T) {
 
 	def := &permissionspec.ResourceDefinition{
 		Resource: "shipment",
+		Feature:  platformcatalog.FeatureCoreTMS,
 		Operations: []permissionspec.OperationDefinition{
 			{Operation: permission.OpRead},
 			{Operation: permission.OpCreate},
@@ -204,6 +215,7 @@ func TestRegistry_ExpandCompositeOperation(t *testing.T) {
 
 	def := &permissionspec.ResourceDefinition{
 		Resource: "shipment",
+		Feature:  platformcatalog.FeatureCoreTMS,
 		CompositeOps: map[string][]permission.Operation{
 			"manage": {
 				permission.OpRead,
@@ -243,7 +255,7 @@ func TestRegistry_HasResource(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def := &permissionspec.ResourceDefinition{Resource: "shipment"}
+	def := &permissionspec.ResourceDefinition{Resource: "shipment", Feature: platformcatalog.FeatureCoreTMS}
 	require.NoError(t, reg.Register(def))
 
 	assert.True(t, reg.HasResource("shipment"))
@@ -255,9 +267,9 @@ func TestRegistry_GetByCategory(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def1 := &permissionspec.ResourceDefinition{Resource: "shipment", Category: "Operations"}
-	def2 := &permissionspec.ResourceDefinition{Resource: "invoice", Category: "Billing"}
-	def3 := &permissionspec.ResourceDefinition{Resource: "customer", Category: "Operations"}
+	def1 := &permissionspec.ResourceDefinition{Resource: "shipment", Feature: platformcatalog.FeatureCoreTMS, Category: "Operations"}
+	def2 := &permissionspec.ResourceDefinition{Resource: "invoice", Feature: platformcatalog.FeatureCoreTMS, Category: "Billing"}
+	def3 := &permissionspec.ResourceDefinition{Resource: "customer", Feature: platformcatalog.FeatureCoreTMS, Category: "Operations"}
 
 	require.NoError(t, reg.Register(def1))
 	require.NoError(t, reg.Register(def2))
@@ -278,9 +290,9 @@ func TestRegistry_GetCategories(t *testing.T) {
 
 	reg := NewEmptyRegistry()
 
-	def1 := &permissionspec.ResourceDefinition{Resource: "shipment", Category: "Operations"}
-	def2 := &permissionspec.ResourceDefinition{Resource: "invoice", Category: "Billing"}
-	def3 := &permissionspec.ResourceDefinition{Resource: "customer", Category: "Operations"}
+	def1 := &permissionspec.ResourceDefinition{Resource: "shipment", Feature: platformcatalog.FeatureCoreTMS, Category: "Operations"}
+	def2 := &permissionspec.ResourceDefinition{Resource: "invoice", Feature: platformcatalog.FeatureCoreTMS, Category: "Billing"}
+	def3 := &permissionspec.ResourceDefinition{Resource: "customer", Feature: platformcatalog.FeatureCoreTMS, Category: "Operations"}
 
 	require.NoError(t, reg.Register(def1))
 	require.NoError(t, reg.Register(def2))
@@ -317,6 +329,7 @@ func TestRegistry_Register_DefaultSensitivity(t *testing.T) {
 	reg := NewEmptyRegistry()
 	def := &permissionspec.ResourceDefinition{
 		Resource: "test_resource",
+		Feature:  platformcatalog.FeatureCoreTMS,
 	}
 	err := reg.Register(def)
 	require.NoError(t, err)
@@ -332,10 +345,10 @@ func TestRegistry_Count(t *testing.T) {
 	reg := NewEmptyRegistry()
 	assert.Equal(t, 0, reg.Count())
 
-	_ = reg.Register(&permissionspec.ResourceDefinition{Resource: "r1"})
+	_ = reg.Register(&permissionspec.ResourceDefinition{Resource: "r1", Feature: platformcatalog.FeatureCoreTMS})
 	assert.Equal(t, 1, reg.Count())
 
-	_ = reg.Register(&permissionspec.ResourceDefinition{Resource: "r2"})
+	_ = reg.Register(&permissionspec.ResourceDefinition{Resource: "r2", Feature: platformcatalog.FeatureCoreTMS})
 	assert.Equal(t, 2, reg.Count())
 }
 
@@ -637,6 +650,7 @@ func TestRegistry_GetFieldSensitivity_EmptyField(t *testing.T) {
 
 	def := &permissionspec.ResourceDefinition{
 		Resource:           "test",
+		Feature:            platformcatalog.FeatureCoreTMS,
 		DefaultSensitivity: permission.SensitivityRestricted,
 		FieldSensitivities: map[string]permission.FieldSensitivity{
 			"secret": permission.SensitivityConfidential,
@@ -766,19 +780,19 @@ func TestRegistry_GetCategoriesFollowsTheModuleRail(t *testing.T) {
 	reg := NewEmptyRegistry()
 	require.NoError(
 		t,
-		reg.Register(&permissionspec.ResourceDefinition{Resource: "b", Category: "Zeta"}),
+		reg.Register(&permissionspec.ResourceDefinition{Resource: "b", Feature: platformcatalog.FeatureCoreTMS, Category: "Zeta"}),
 	)
 	require.NoError(
 		t,
-		reg.Register(&permissionspec.ResourceDefinition{Resource: "a", Category: "Billing"}),
+		reg.Register(&permissionspec.ResourceDefinition{Resource: "a", Feature: platformcatalog.FeatureCoreTMS, Category: "Billing"}),
 	)
 	require.NoError(
 		t,
-		reg.Register(&permissionspec.ResourceDefinition{Resource: "c", Category: "Alpha"}),
+		reg.Register(&permissionspec.ResourceDefinition{Resource: "c", Feature: platformcatalog.FeatureCoreTMS, Category: "Alpha"}),
 	)
 	require.NoError(
 		t,
-		reg.Register(&permissionspec.ResourceDefinition{Resource: "d", Category: "Desk"}),
+		reg.Register(&permissionspec.ResourceDefinition{Resource: "d", Feature: platformcatalog.FeatureCoreTMS, Category: "Desk"}),
 	)
 	assert.Equal(t, []string{"Desk", "Billing", "Alpha", "Zeta"}, reg.GetCategories())
 }

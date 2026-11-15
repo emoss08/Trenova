@@ -26,10 +26,10 @@ const signTokenTTLSeconds = int64(14 * 24 * 3600)
 
 const maxSignerFieldLength = 255
 
-// invalidTokenError uses one piece of copy for every failure mode — missing,
+// InvalidTokenError uses one piece of copy for every failure mode — missing,
 // expired, used, revoked, voided — so the public endpoint leaks nothing about
 // which one applied.
-func invalidTokenError() error {
+func InvalidTokenError() error {
 	return errortypes.NewValidationError(
 		"token",
 		errortypes.ErrInvalid,
@@ -73,7 +73,7 @@ func (s *Service) resolveToken(
 	rawToken string,
 ) (context.Context, *rateconfirmation.RateConfirmationToken, *rateconfirmation.RateConfirmation, error) {
 	if rawToken == "" {
-		return ctx, nil, nil, invalidTokenError()
+		return ctx, nil, nil, InvalidTokenError()
 	}
 
 	token, err := s.repo.GetTokenByHash(ctx, tokenutils.Hash(rawToken))
@@ -81,7 +81,7 @@ func (s *Service) resolveToken(
 		return ctx, nil, nil, err
 	}
 	if token == nil || !token.IsUsable(timeutils.NowUnix()) {
-		return ctx, nil, nil, invalidTokenError()
+		return ctx, nil, nil, InvalidTokenError()
 	}
 
 	tenantInfo := pagination.TenantInfo{
@@ -98,12 +98,12 @@ func (s *Service) resolveToken(
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return ctx, nil, nil, invalidTokenError()
+			return ctx, nil, nil, InvalidTokenError()
 		}
 		return ctx, nil, nil, err
 	}
 	if entity.Status == rateconfirmation.StatusVoided {
-		return ctx, nil, nil, invalidTokenError()
+		return ctx, nil, nil, InvalidTokenError()
 	}
 
 	return ctx, token, entity, nil
@@ -124,7 +124,7 @@ func (s *Service) PreviewByToken(
 	templateContext, err := contextFromSnapshot(entity.PayloadSnapshot)
 	if err != nil {
 		s.l.Warn("failed to build public rate confirmation view", zap.Error(err))
-		return nil, invalidTokenError()
+		return nil, InvalidTokenError()
 	}
 
 	view := &PublicRateConfirmationView{
@@ -204,7 +204,7 @@ func (s *Service) ConfirmByToken(
 
 	if entity.Status != rateconfirmation.StatusConfirmed {
 		if !entity.CanConfirm() {
-			return invalidTokenError()
+			return InvalidTokenError()
 		}
 		previous := *entity
 		confirmed, confirmErr := s.markConfirmed(

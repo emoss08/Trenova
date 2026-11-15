@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/sessioncookie"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,6 +36,7 @@ type Params struct {
 	SecurityConfig *securityconfig.Config
 	ServerConfig   *serverconfig.Config
 	ErrorHandler   *helpers.ErrorHandler
+	Features       *middleware.FeatureGuard
 }
 
 type Handler struct {
@@ -43,6 +46,7 @@ type Handler struct {
 	securityConfig *securityconfig.Config
 	serverConfig   *serverconfig.Config
 	eh             *helpers.ErrorHandler
+	features       *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
@@ -53,6 +57,7 @@ func New(p Params) *Handler {
 		securityConfig: p.SecurityConfig,
 		serverConfig:   p.ServerConfig,
 		eh:             p.ErrorHandler,
+		features:       p.Features,
 	}
 }
 
@@ -69,10 +74,19 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("csrf", h.csrfToken)
 	api.GET("tenant/:slug", h.getTenantLoginMetadata)
 	api.GET("providers/:orgSlug", h.listAuthProviders)
-	api.GET("microsoft/start/:slug", h.startSSOLogin(sso.SSOProviderAzureAD))
-	api.GET("microsoft/callback", h.ssoCallback(sso.SSOProviderAzureAD))
-	api.GET("sso/start/:providerId/:orgSlug", h.startSSOLoginGeneric)
-	api.GET("sso/callback/:provider", h.ssoCallbackGeneric)
+
+	single := api.Group("", h.features.RequireFeature(
+		platformcatalog.FeatureIdentity,
+		middleware.AnswerError(singleSignOnNotSetUp),
+	))
+	single.GET("microsoft/start/:slug", h.startSSOLogin(sso.SSOProviderAzureAD))
+	single.GET("microsoft/callback", h.ssoCallback(sso.SSOProviderAzureAD))
+	single.GET("sso/start/:providerId/:orgSlug", h.startSSOLoginGeneric)
+	single.GET("sso/callback/:provider", h.ssoCallbackGeneric)
+}
+
+func singleSignOnNotSetUp() error {
+	return errortypes.NewNotFoundError("{0} not found within your organization", "SSOConfig")
 }
 
 func (h *Handler) listAuthorizedSessionRoles(c *gin.Context) {

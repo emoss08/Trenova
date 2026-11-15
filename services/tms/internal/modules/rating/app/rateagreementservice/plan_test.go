@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
@@ -106,7 +108,12 @@ func TestPlanCreate_StartsEveryAgreementAsADraftAndSavesNothing(t *testing.T) {
 	t.Parallel()
 
 	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
-	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: testValidator()})
+	svc := New(Params{
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+	})
 
 	entity := draftAgreement(rateagreement.StatusActive)
 	entity.ID = pulid.Nil
@@ -167,7 +174,12 @@ func TestPlanUpdate_ShowsTheAmendmentAndSavesNothing(t *testing.T) {
 	stored := draftAgreement(rateagreement.StatusDraft)
 	stored.Rules = []*rateagreement.RateAgreementRule{laneRule("2.00")}
 	repo := agreementRepoReturning(t, stored)
-	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: testValidator()})
+	svc := New(Params{
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+	})
 
 	edited := *stored
 	edited.Name = "Acme Freight Agreement 2026"
@@ -196,7 +208,12 @@ func TestPlanDuplicate_CopiesAsADraftAndSavesNothing(t *testing.T) {
 	stored := draftAgreement(rateagreement.StatusActive)
 	stored.Rules = []*rateagreement.RateAgreementRule{laneRule("2.00")}
 	repo := agreementRepoReturning(t, stored)
-	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: testValidator()})
+	svc := New(Params{
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+	})
 
 	plan, err := svc.PlanDuplicate(t.Context(), &DuplicateRateAgreementRequest{
 		TenantInfo: pagination.TenantInfo{
@@ -222,7 +239,12 @@ func TestPlanAmendRules_ChecksTheAmendmentAndWritesNothing(t *testing.T) {
 	current := laneRule("2.00")
 	stored.Rules = []*rateagreement.RateAgreementRule{current}
 	repo := agreementRepoReturning(t, stored)
-	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: testValidator()})
+	svc := New(Params{
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+	})
 
 	successor := laneRule("2.40")
 	successor.ID = pulid.Nil
@@ -297,10 +319,11 @@ func TestPlanUpdate_KeepsStoredMarginsForAnEditorWithoutTheGroup(t *testing.T) {
 	stored.MaxPayPercentOfSell = decimal.NewNullDecimal(decimal.RequireFromString("85"))
 	repo := agreementRepoReturning(t, stored)
 	svc := New(Params{
-		Logger:    zap.NewNop(),
-		Repo:      repo,
-		Validator: testValidator(),
-		Fields:    fixedFieldAccess(0),
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+		Fields:           fixedFieldAccess(0),
 	})
 
 	edited := *stored
@@ -323,10 +346,11 @@ func TestPlanUpdate_TakesMarginsFromAnEditorWithTheGroup(t *testing.T) {
 	stored.MarginFloorPercent = decimal.NewNullDecimal(decimal.RequireFromString("12.5"))
 	repo := agreementRepoReturning(t, stored)
 	svc := New(Params{
-		Logger:    zap.NewNop(),
-		Repo:      repo,
-		Validator: testValidator(),
-		Fields:    fixedFieldAccess(protectedfield.AllGroups()),
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+		Fields:           fixedFieldAccess(protectedfield.AllGroups()),
 	})
 
 	edited := *stored
@@ -335,4 +359,45 @@ func TestPlanUpdate_TakesMarginsFromAnEditorWithTheGroup(t *testing.T) {
 	plan, err := svc.PlanUpdate(t.Context(), &edited, testActor())
 	require.NoError(t, err)
 	assert.Equal(t, "15", plan.After.MarginFloorPercent.Decimal.String())
+}
+
+func TestPlanCreate_RefusesALaneOnTheOrganizationsOwnTemplateWithoutRating(t *testing.T) {
+	t.Parallel()
+
+	svc := New(Params{
+		Logger:           zap.NewNop(),
+		Repo:             rateagreementportsmock.NewMockRateAgreementRepository(t),
+		Validator:        testValidator(),
+		PricingTemplates: plantest.OwnTemplatesOffPlan(tarifftest.PerMile().TemplateID),
+	})
+
+	entity := draftAgreement(rateagreement.StatusDraft)
+	entity.ID = pulid.Nil
+	entity.Rules = []*rateagreement.RateAgreementRule{laneRule("2.00")}
+
+	_, err := svc.PlanCreate(t.Context(), entity)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsPlanRestrictionError(err), "a plan restriction, got %v", err)
+}
+
+func TestPlanUpdate_KeepsAnUnchangedLaneOnTheOrganizationsOwnTemplateWithoutRating(t *testing.T) {
+	t.Parallel()
+
+	stored := draftAgreement(rateagreement.StatusDraft)
+	stored.Rules = []*rateagreement.RateAgreementRule{laneRule("2.00")}
+	svc := New(Params{
+		Logger:           zap.NewNop(),
+		Repo:             agreementRepoReturning(t, stored),
+		Validator:        testValidator(),
+		PricingTemplates: plantest.OwnTemplatesOffPlan(tarifftest.PerMile().TemplateID),
+	})
+
+	edited := *stored
+	edited.Name = "Acme Freight Agreement 2026"
+
+	plan, err := svc.PlanUpdate(t.Context(), &edited, testActor())
+
+	require.NoError(t, err, "only a lane the edit adds or changes is checked against the plan")
+	assert.Empty(t, plan.Inserts)
 }

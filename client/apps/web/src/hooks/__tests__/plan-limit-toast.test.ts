@@ -14,7 +14,7 @@ function readOnlyError() {
     title: "Plan Restricted",
     status: 403,
     code: "PLAN_RESTRICTED",
-    params: { capability: "", reason: "subscription_read_only", plan: "free_demo" },
+    params: { feature: "", addOn: "", reason: "subscription_read_only", plan: "free_demo" },
   });
 }
 
@@ -25,7 +25,7 @@ describe("handleMutationError and the plan-limit dialog", () => {
   it("stays quiet for a refusal the dialog has already explained", () => {
     setPlanLimitHandler(() => true);
     const error = readOnlyError();
-    reportPlanLimit(error);
+    reportPlanLimit(error, "write");
 
     handleMutationError({ error, resourceName: "Customer" });
 
@@ -35,7 +35,7 @@ describe("handleMutationError and the plan-limit dialog", () => {
   it("still reports a plan refusal the dialog declined, so the person is told something", () => {
     setPlanLimitHandler(() => false);
     const error = readOnlyError();
-    reportPlanLimit(error);
+    reportPlanLimit(error, "write");
 
     handleMutationError({ error, resourceName: "Customer" });
 

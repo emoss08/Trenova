@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -186,7 +188,7 @@ func newFixture(t *testing.T, opts fixtureOptions) *fixture {
 		VersionRepo:  f.versions,
 		Checker:      checker,
 		Resolver:     resolver,
-		AuditService: &mocks.NoopAuditService{},
+		AuditService: &mocks.NoopAuditService{}, Features: plantest.AllFeatures(),
 	})
 	reviews := formulatemplatereviewservice.New(formulatemplatereviewservice.Params{
 		Logger:      logger,

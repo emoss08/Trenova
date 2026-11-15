@@ -162,7 +162,9 @@ paths:
         code pepper. The answer is the same every time, so an instance that is reinstalled, or
         restored from a backup onto new infrastructure, still reads its data. Fetch them when the
         cluster holds no copy, keep them only in a Secret, and never log them. The first fetch makes
-        them.
+        them. While the spec names a system email sender (`systemEmail`), the answer also carries
+        its credential, which the operator fetches when the instance does not hold that
+        fingerprint and keeps only in memory.
       responses:
         "200":
           description: The secrets.
@@ -177,6 +179,38 @@ paths:
                 $ref: "#/components/schemas/InstanceSecrets"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/storage:
+    get:
+      operationId: getStorage
+      summary: The instance's object storage
+      description: |
+        The instance's two buckets and a credential for each, scoped to that bucket alone: the
+        documents bucket, which the TMS reads and writes, and the backups bucket, which only
+        PostgreSQL's backup tool may write. Keep the backups credential where the application's
+        pods cannot read it, so a compromised application cannot delete its backups. The answer is
+        the same until the provider makes new credentials. Fetch it when the cluster holds no copy,
+        keep the credentials only in Secrets, and never log them. `404 not_found` means the instance
+        has no object storage of its own (its infrastructure was made by hand): keep documents in
+        the chart's own store and take no backups.
+      responses:
+        "200":
+          description: The storage.
+          headers:
+            Cache-Control:
+              description: Always `no-store`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstanceStorage"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "429":
           $ref: "#/components/responses/RateLimited"
 
@@ -429,6 +463,91 @@ components:
             $ref: "#/components/schemas/SpecAllowance"
         firstAdministrator:
           $ref: "#/components/schemas/SpecFirstAdministrator"
+        systemEmail:
+          $ref: "#/components/schemas/SpecSystemEmail"
+        backup:
+          $ref: "#/components/schemas/SpecBackupRequest"
+        database:
+          $ref: "#/components/schemas/SpecDatabase"
+        restore:
+          $ref: "#/components/schemas/SpecRestore"
+
+    SpecSystemEmail:
+      type: object
+      description: |
+        The sender Trenova supplies for the instance's system email (invitations, password resets,
+        notifications). Absent when Trenova supplies none: the operator then removes any the
+        instance holds. The credential itself is never in the spec; the operator fetches it from
+        `getSecrets` when the instance does not already hold one with this fingerprint.
+      required: [fingerprint]
+      properties:
+        fingerprint:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: |
+            The lowercase hex SHA-256 of the credential, the same value the instance reports:
+            SHA-256 over `trenova.system-email.v1`, `provider`, `fromAddress`, `fromName`,
+            `apiKey` and `webhookSecret` (empty when absent), joined by a line feed (`\n`), in
+            that order. A new credential has a new fingerprint, which is how a rotation reaches
+            the instance.
+
+    SpecBackupRequest:
+      type: object
+      description: |
+        Take one base backup now, before a version update, unless one has completed for this `id`.
+        Report how it goes as `backup.request` on the status report. A later revision carries the
+        same request until another replaces it.
+      required: [id, requestedAt]
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: '^[0-9a-f-]{1,64}$'
+        requestedAt:
+          type: string
+          format: date-time
+
+    SpecDatabase:
+      type: object
+      description: |
+        The database the instance runs on, once a restore has replaced its first one: `generation`
+        names it, and it was restored from `sourceGeneration`'s backups (empty for the first
+        database) to `targetTime`. Absent while the instance runs on its first database.
+      required: [generation, sourceGeneration, targetTime]
+      properties:
+        generation:
+          type: string
+          pattern: '^r[0-9a-f]{8}$'
+        sourceGeneration:
+          type: string
+          pattern: '^(r[0-9a-f]{8})?$'
+        targetTime:
+          type: string
+          format: date-time
+
+    SpecRestore:
+      type: object
+      description: |
+        Restore the database to `targetTime` from the backups of the database the instance runs on
+        (`sourceGeneration`), into a new database named by `generation`, beside the live one. The
+        live database keeps serving and is never touched. Report how it goes as `restore` on the
+        status report. A later revision switches to it by naming it as `database`; one without
+        `restore` or a matching `database` means remove the new database.
+      required: [id, generation, sourceGeneration, targetTime]
+      properties:
+        id:
+          type: string
+          format: uuid
+        generation:
+          type: string
+          pattern: '^r[0-9a-f]{8}$'
+        sourceGeneration:
+          type: string
+          pattern: '^(r[0-9a-f]{8})?$'
+        targetTime:
+          type: string
+          format: date-time
 
     SpecFirstAdministrator:
       type: object
@@ -590,6 +709,22 @@ components:
           $ref: "#/components/schemas/FinalBackup"
         administrator:
           $ref: "#/components/schemas/AdministratorStatus"
+        features:
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 80
+            pattern: '^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$'
+          description: |
+            The TMS catalog features the instance holds now, as it reads them, so staff can see
+            whether it has taken up its spec's `features`. Report the whole list each time; left
+            out, the last list reported stands. Only staff see it, and it entitles and bills
+            nothing: the spec says what the instance should hold.
+        backup:
+          $ref: "#/components/schemas/BackupHealth"
+        restore:
+          $ref: "#/components/schemas/RestoreProgress"
 
     UsageReport:
       type: object
@@ -703,6 +838,112 @@ components:
           format: int64
           minimum: 0
 
+    BackupHealth:
+      type: object
+      description: |
+        The instance's backups as the operator reads them from the cluster: the last base backup,
+        how far back the backups reach, and whether WAL archiving works. Report it with every status
+        report once the instance has backup storage; left out, staff see the last one reported.
+      required: [walArchiving]
+      properties:
+        lastBaseBackupAt:
+          type: string
+          format: date-time
+          description: When the newest completed base backup finished.
+        lastBaseBackupId:
+          type: string
+          maxLength: 200
+        firstRecoverabilityPoint:
+          type: string
+          format: date-time
+          description: The earliest time the database can be restored to.
+        walArchiving:
+          type: string
+          enum: [healthy, failing, unknown]
+          description: Whether WAL segments reach the backups bucket.
+        lastArchivedWalAt:
+          type: string
+          format: date-time
+          description: When the newest WAL segment was archived; the archiving lag is now minus this.
+        message:
+          type: string
+          maxLength: 500
+          description: Why archiving or the last backup failed, in one line.
+        request:
+          $ref: "#/components/schemas/BackupRequestStatus"
+
+    BackupRequestStatus:
+      type: object
+      description: How the base backup the spec's `backup` asks for goes, by its `id`.
+      required: [id, phase]
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        phase:
+          type: string
+          enum: [running, completed, failed]
+        backupId:
+          type: string
+          maxLength: 200
+        completedAt:
+          type: string
+          format: date-time
+        message:
+          type: string
+          maxLength: 500
+
+    RestoreProgress:
+      type: object
+      description: |
+        How the restore the spec's `restore` asks for goes: `preparing` while the new database is
+        restored, `ready` once it accepts connections at `recoveredTo`, `failed` if it cannot be, and
+        `switched` once the instance runs on it after a revision names it as `database`.
+      required: [id, phase]
+      properties:
+        id:
+          type: string
+          format: uuid
+        phase:
+          type: string
+          enum: [preparing, ready, failed, switched]
+        recoveredTo:
+          type: string
+          format: date-time
+        message:
+          type: string
+          maxLength: 500
+
+    InstanceStorage:
+      type: object
+      required: [endpoint, region, backupsPrefix, documents, backups]
+      properties:
+        endpoint:
+          type: string
+          description: The S3 API's URL, such as `https://s3.bhs.io.cloud.ovh.net`.
+        region:
+          type: string
+          description: The region requests are signed for, such as `bhs`.
+        backupsPrefix:
+          type: string
+          description: Where in the backups bucket the backup tool keeps base backups and WAL.
+        documents:
+          $ref: "#/components/schemas/StorageBucket"
+        backups:
+          $ref: "#/components/schemas/StorageBucket"
+
+    StorageBucket:
+      type: object
+      required: [bucket, accessKeyId, secretAccessKey]
+      properties:
+        bucket:
+          type: string
+        accessKeyId:
+          type: string
+        secretAccessKey:
+          type: string
+
     ComponentStatus:
       type: object
       required: [name, ready]
@@ -750,6 +991,48 @@ components:
           minLength: 32
           maxLength: 128
           description: The TMS's `security.mfa.recoveryCodePepper`.
+        systemEmail:
+          $ref: "#/components/schemas/SystemEmailCredential"
+
+    SystemEmailCredential:
+      type: object
+      description: |
+        The credential of the sender Trenova supplies for the instance's system email, present
+        while the spec names one (`systemEmail`). Unlike the keys above it may change: a rotation
+        is a new credential and a new fingerprint in the spec. Keep it only in memory and never
+        log it; the instance stores it encrypted and never returns it.
+      required: [provider, apiKey, fromAddress, fromName]
+      properties:
+        provider:
+          type: string
+          enum: [Resend, Postmark]
+          description: The email provider the credential is for.
+        apiKey:
+          type: string
+          minLength: 20
+          maxLength: 512
+          pattern: "^[\\x21-\\x7E]+$"
+          description: The provider API key (a Postmark server token or a Resend API key).
+        fromAddress:
+          type: string
+          format: email
+          maxLength: 254
+          description: The address system email is sent from, on a domain Trenova verified with the provider.
+        fromName:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: |
+            The brand in the display name. The instance sends as `<organization name> via <fromName>`.
+        webhookSecret:
+          type: string
+          minLength: 1
+          maxLength: 512
+          pattern: "^[\\x21-\\x7E]+$"
+          description: |
+            What the provider's delivery webhooks prove themselves with: the Svix signing secret
+            (`whsec_…`) for Resend, `user:password` of the webhook's basic authentication for
+            Postmark. Absent when bounces are not reported to the instance.
 
     IssuedCertificate:
       type: object

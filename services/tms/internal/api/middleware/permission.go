@@ -47,9 +47,7 @@ func (m *PermissionMiddleware) RequirePermission(
 		}
 
 		if !result.Allowed {
-			m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(
-				"You don't have permission to perform this action",
-			))
+			m.errorHandler.HandleError(c, deniedError(result))
 			return
 		}
 
@@ -102,6 +100,8 @@ func (m *PermissionMiddleware) RequireAnyPermission(checks ...PermissionCheck) g
 		authCtx := authctx.GetAuthContext(c)
 
 		var checkErr error
+		var planDenied *permissionports.PermissionCheckResult
+		onlyPlanDenials := true
 		for _, check := range checks {
 			result, err := m.permEngine.Check(
 				c.Request.Context(),
@@ -119,6 +119,11 @@ func (m *PermissionMiddleware) RequireAnyPermission(checks ...PermissionCheck) g
 				c.Next()
 				return
 			}
+			if result.PlanDenial == nil {
+				onlyPlanDenials = false
+			} else if planDenied == nil {
+				planDenied = result
+			}
 		}
 
 		if checkErr != nil {
@@ -126,9 +131,12 @@ func (m *PermissionMiddleware) RequireAnyPermission(checks ...PermissionCheck) g
 			return
 		}
 
-		m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(
-			"You don't have permission to perform this action",
-		))
+		if onlyPlanDenials && planDenied != nil {
+			m.errorHandler.HandleError(c, deniedError(planDenied))
+			return
+		}
+
+		m.errorHandler.HandleError(c, deniedError(nil))
 	}
 }
 
@@ -147,15 +155,19 @@ func (m *PermissionMiddleware) RequireAllPermissions(checks ...PermissionCheck) 
 			}
 
 			if !result.Allowed {
-				m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(
-					"You don't have permission to perform this action",
-				))
+				m.errorHandler.HandleError(c, deniedError(result))
 				return
 			}
 		}
 
 		c.Next()
 	}
+}
+
+func deniedError(result *permissionports.PermissionCheckResult) error {
+	return permissionports.DeniedError(result, errortypes.NewAuthorizationError(
+		"You don't have permission to perform this action",
+	))
 }
 
 func GetPermissionResult(c *gin.Context) *permissionports.PermissionCheckResult {

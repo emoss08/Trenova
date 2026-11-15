@@ -163,8 +163,15 @@ export function ediCodes(
   >,
   t: TranslateFn,
 ): EdiCode[] {
-  const override = (key: "status" | "reason", label: string, value: string): EdiCode => {
-    const code = value.trim();
+  if (
+    failure.x12StatusCodeOverride === null &&
+    failure.x12ReasonCodeOverride === null &&
+    failure.x12ExceptionCode === null
+  ) {
+    return [];
+  }
+  const override = (key: "status" | "reason", label: string, value: string | null): EdiCode => {
+    const code = (value ?? "").trim();
     return {
       key,
       label,
@@ -172,7 +179,7 @@ export function ediCodes(
       note: code ? t("Set on this failure") : t("From the failure type"),
     };
   };
-  const exception = failure.x12ExceptionCode.trim();
+  const exception = (failure.x12ExceptionCode ?? "").trim();
   return [
     override("status", t("Status code"), failure.x12StatusCodeOverride),
     override("reason", t("Reason code"), failure.x12ReasonCodeOverride),

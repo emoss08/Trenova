@@ -66,7 +66,7 @@ type wordedMessage struct {
 // Available reports whether Nova can write for the organization, so the
 // page offers rewording only where it will work.
 func (s *Service) Available(ctx context.Context, tenantInfo pagination.TenantInfo) bool {
-	available, err := s.nova.Available(ctx, tenantInfo)
+	available, err := s.nova.Available(ctx, tenantInfo, aitask.TaskRequestWording)
 
 	return err == nil && available
 }
@@ -87,7 +87,7 @@ func (s *Service) Word(ctx context.Context, req *Request) (string, error) {
 		return "", errortypes.NewBusinessError("There is no message to reword")
 	}
 
-	available, err := s.nova.Available(ctx, req.TenantInfo)
+	available, err := s.nova.Available(ctx, req.TenantInfo, aitask.TaskRequestWording)
 	if err != nil {
 		return "", err
 	}

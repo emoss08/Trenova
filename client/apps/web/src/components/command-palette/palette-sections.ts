@@ -68,6 +68,11 @@ export interface SearchInput {
   recentRecords: readonly RecentPaletteRecord[];
   /** The person's conversations for the query, when the palette searches them. */
   conversations?: ConversationHits | null;
+  /**
+   * Whether Nova can be asked: the plan includes Trenova AI. Without it the palette offers
+   * no question, no "ask instead" and nothing named Nova.
+   */
+  asksNova: boolean;
 }
 
 /** How many conversations "All" shows before its scope holds the rest. */
@@ -445,7 +450,7 @@ export function buildSearchSections(input: SearchInput, t: TranslateFn): SearchR
         { count: found?.total },
       ),
     );
-    if (input.question === null) {
+    if (input.asksNova && input.question === null) {
       sections.push(fallbackAsk(query, empty, t));
     }
     if (empty) {
@@ -569,7 +574,7 @@ export function buildSearchSections(input: SearchInput, t: TranslateFn): SearchR
   const settled = !input.remote.loading && !input.remote.error;
   const empty = settled && !matchedSomething && input.question === null;
 
-  if (input.question === null && query !== "") {
+  if (input.asksNova && input.question === null && query !== "") {
     sections.push(fallbackAsk(query, empty, t));
   }
 

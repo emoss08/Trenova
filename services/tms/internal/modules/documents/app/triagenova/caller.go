@@ -35,7 +35,7 @@ func New(p Params) *Caller {
 }
 
 func (c *Caller) Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
-	return c.nova.Available(ctx, tenantInfo)
+	return c.nova.Available(ctx, tenantInfo, aitask.TaskInboundClassification)
 }
 
 func (c *Caller) Run(
@@ -53,6 +53,8 @@ func (c *Caller) Run(
 	result, err := c.nova.Run(ctx, task, out)
 	var failed *llmports.ChatProvidersFailedError
 	switch {
+	case errortypes.IsPlanRestrictionError(err):
+		return nil, err
 	case errors.Is(err, llmports.ErrNoProviderConfigured):
 		return nil, ErrUnavailable
 	case errors.As(err, &failed):

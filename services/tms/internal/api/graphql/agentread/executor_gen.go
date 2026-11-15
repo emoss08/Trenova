@@ -903,8 +903,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "HomeLayout",
-		Hash:     "sha256:54555d91b387c7e74269ce62063e35106cd2b8291936c35a3d0642268410856f",
-		Document: "fragment HomeLayoutFields on HomeLayout { canCustomize density locked presetId presetName schemaVersion source version widgets { ...HomeWidgetFields } } fragment HomeWidgetFields on HomeWidget { config { cannedKey chartId columnId dashboardId definitionId limit metric metrics text windowDays } h id key title w } query HomeLayout { homeLayout { ...HomeLayoutFields } }",
+		Hash:     "sha256:d5081f0aa5bf4234d962ed591ce1f9db4829d8177a183ce67bc9f6245ad12920",
+		Document: "fragment HomeLayoutFields on HomeLayout { canCustomize density locked presetId presetName schemaVersion source version widgets { ...HomeWidgetFields } } fragment HomeWidgetFields on HomeWidget { config { cannedKey chartId columnId dashboardId definitionId limit metric metrics text windowDays } h id key label lockedMetrics { label lock { addOn addOnName feature featureName } metric } planLock { addOn addOnName feature featureName } title w } query HomeLayout { homeLayout { ...HomeLayoutFields } }",
 	},
 	{
 		Name:     "DeskInboundMessage",

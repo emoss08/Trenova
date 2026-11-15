@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -37,6 +38,7 @@ type Effects struct {
 	dispatchControls dispatchcontrolports.DispatchControlRepository
 	intelGate        carrierintelports.CarrierIntelGate
 	lifecycle        carrierintelports.CarrierLifecycleObserver
+	features         platformcatalogports.FeatureGate
 }
 
 func (s *Effects) LogAudit(ctx context.Context, p *AuditParams) {
@@ -99,6 +101,7 @@ type Params struct {
 	Invalidator      shipmentinvalidationports.ShipmentInvalidator
 	Notifications    *notificationservice.Service
 	DispatchControls dispatchcontrolports.DispatchControlRepository
+	Features         platformcatalogports.FeatureGate
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -111,6 +114,7 @@ func New(p Params) *Effects {
 		invalidator:      p.Invalidator,
 		notifications:    p.Notifications,
 		dispatchControls: p.DispatchControls,
+		features:         p.Features,
 	}
 }
 
@@ -130,11 +134,24 @@ func (s *Effects) MarkCarriersUsed(
 	if s.lifecycle == nil || len(offers) == 0 {
 		return
 	}
+	observers, err := platformcatalogports.Observing(
+		ctx,
+		s.features,
+		[]carrierintelports.CarrierLifecycleObserver{s.lifecycle},
+	)
+	if err != nil {
+		s.l.Warn("carrier lifecycle observer skipped", zap.Error(err))
+	}
+	if len(observers) == 0 {
+		return
+	}
 	ids := make([]pulid.ID, 0, len(offers))
 	for _, offer := range offers {
 		ids = append(ids, offer.CarrierID)
 	}
-	s.lifecycle.CarriersUsed(ctx, tenantInfo, ids)
+	for _, observer := range observers {
+		observer.CarriersUsed(ctx, tenantInfo, ids)
+	}
 }
 
 // NotifyDispatch raises a global in-app notification for dispatchers. Failures

@@ -734,14 +734,13 @@ var Shard = &gqlexec.Shard{
 		{Object: "WorkerCredentialSummaryItem", Fields: []*gqlexec.Field{
 			{
 				Name:      "credentialType",
-				NonNull:   true,
 				HasChild:  true,
 				ChildType: "WorkerCredentialType",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workercredential.CredentialSummaryItem)
 					return obj.CredentialType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType),
+				Marshal: gqlexec.Marshal(marshalOWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType),
 			},
 			{
 				Name:      "credential",

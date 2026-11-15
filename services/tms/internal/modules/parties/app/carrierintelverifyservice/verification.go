@@ -40,7 +40,7 @@ func (s *Service) VerifyEquipment(
 	req *VerifyEquipmentRequest,
 ) (*carrierintelverification.CarrierEquipmentVerification, error) {
 	ctx = carrierintel.WithPurpose(ctx, carrierintel.PurposeVerify)
-	if err := s.requirePaidLookups(ctx, req.TenantInfo); err != nil {
+	if err := s.requirePaidLookups(ctx); err != nil {
 		return nil, err
 	}
 

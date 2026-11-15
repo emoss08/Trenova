@@ -228,7 +228,7 @@ describe("owedSegments", () => {
       postedInvoice({
         creditApplications: [
           {
-            ...postedInvoice().creditApplications[0]!,
+            ...postedInvoice().creditApplications![0]!,
             status: "Unapplied",
             unappliedAt: DAY.oct10,
           },
@@ -649,7 +649,7 @@ describe("ediChannel", () => {
   });
 
   it("reads a customer who does not take invoices by EDI as not set up", () => {
-    const plan = { ...postedInvoice().ediSendPlan, enabled: false, status: "NotSent" as const };
+    const plan = { ...postedInvoice().ediSendPlan!, enabled: false, status: "NotSent" as const };
     expect(ediChannel(postedInvoice({ ediSendPlan: plan }), t)).toEqual({
       state: "Not set up",
       tone: "idle",
@@ -659,9 +659,31 @@ describe("ediChannel", () => {
     });
   });
 
+  it("shows no EDI channel when the organization's plan leaves EDI out", () => {
+    expect(ediChannel(postedInvoice({ ediSendPlan: null }), t)).toBeNull();
+  });
+
+  it("says the plan is hidden from a reader who cannot read EDI", () => {
+    const plan = {
+      ...postedInvoice().ediSendPlan!,
+      enabled: null,
+      partnerName: null,
+      communicationMethod: null,
+      lastError: null,
+      blockers: null,
+    };
+    expect(ediChannel(postedInvoice({ ediSendPlan: plan }), t)).toEqual({
+      state: "Hidden",
+      tone: "idle",
+      detail: "You don't have access to EDI",
+      why: false,
+      messageId: null,
+    });
+  });
+
   it("keeps the error of a 210 that failed or was set aside", () => {
     const plan = {
-      ...postedInvoice().ediSendPlan,
+      ...postedInvoice().ediSendPlan!,
       status: "DeadLettered" as const,
       lastError: "AS2 endpoint refused the connection",
     };

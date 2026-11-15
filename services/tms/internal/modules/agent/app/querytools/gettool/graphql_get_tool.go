@@ -245,6 +245,12 @@ func (t *GraphQLTool) one(
 		record[graphqlread.OutcomeWithheld] = withheld
 		record[graphqlread.OutcomeWithheldNote] = fieldgate.WithheldNote
 	}
+	if byPlan := graphqlread.PlanWithheld(
+		result.WithheldByPlan,
+		t.read.RootField+".",
+	); len(byPlan) > 0 {
+		record[graphqlread.OutcomeWithheldByPlan] = byPlan
+	}
 	if len(notes) > 0 {
 		record[graphqlread.ParamNote] = strings.Join(notes, " ")
 	}
@@ -320,7 +326,7 @@ func (t *GraphQLTool) several(
 // text was written outside the organization marked.
 func (t *GraphQLTool) gathered(ids []pulid.ID, records []any) any {
 	items := make([]map[string]any, 0, len(ids))
-	var missing, withheld []string
+	var missing, withheld, byPlan []string
 	var outside []agentrecord.RecordRef
 	for idx, read := range records {
 		record, found := read.(map[string]any)
@@ -335,8 +341,12 @@ func (t *GraphQLTool) gathered(ids []pulid.ID, records []any) any {
 		if paths, ok := record[graphqlread.OutcomeWithheld].([]string); ok {
 			withheld = append(withheld, paths...)
 		}
+		if sentences, ok := record[graphqlread.OutcomeWithheldByPlan].([]string); ok {
+			byPlan = append(byPlan, sentences...)
+		}
 		delete(record, graphqlread.OutcomeWithheld)
 		delete(record, graphqlread.OutcomeWithheldNote)
+		delete(record, graphqlread.OutcomeWithheldByPlan)
 		items = append(items, record)
 	}
 
@@ -359,6 +369,10 @@ func (t *GraphQLTool) gathered(ids []pulid.ID, records []any) any {
 		slices.Sort(withheld)
 		outcome[graphqlread.OutcomeWithheld] = slices.Compact(withheld)
 		outcome[graphqlread.OutcomeWithheldNote] = fieldgate.WithheldNote
+	}
+	if len(byPlan) > 0 {
+		slices.Sort(byPlan)
+		outcome[graphqlread.OutcomeWithheldByPlan] = slices.Compact(byPlan)
 	}
 	if len(outside) > 0 {
 		return &graphqlread.MarkedRecord{Record: outcome, Outside: outside}

@@ -6,7 +6,9 @@ import {
   SettingsSection,
   SettingsSections,
 } from "@/components/settings/settings-section";
+import { PlanFeature } from "@/lib/plan-feature";
 import type { DispatchControl } from "@/types/dispatch-control";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useFormContext, useWatch } from "react-hook-form";
 
@@ -18,6 +20,8 @@ export function AssignmentTab() {
   const t = useT();
   const { control } = useFormContext<DispatchControl>();
   const enableAutoAssignment = useWatch({ control, name: "enableAutoAssignment" });
+  // Proposed coverage waits as Nova's proposals for a person to decide, which is Trenova AI.
+  const proposalsOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
 
   return (
     <SettingsSections>
@@ -36,14 +40,16 @@ export function AssignmentTab() {
           )}
         />
         <SettingsNested show={enableAutoAssignment}>
-          <SwitchField
-            control={control}
-            name="autoProposeCoverage"
-            label={t("Keep coverage proposed")}
-            description={t(
-              "Plans again when loads are created or left without a driver, and every hour, so each uncovered move has a proposed driver waiting in the dispatch console and in Decisions. Nothing is assigned until someone approves it, unless the dispatch agent is trusted to act on its own.",
-            )}
-          />
+          {proposalsOnPlan ? (
+            <SwitchField
+              control={control}
+              name="autoProposeCoverage"
+              label={t("Keep coverage proposed")}
+              description={t(
+                "Plans again when loads are created or left without a driver, and every hour, so each uncovered move has a proposed driver waiting in the dispatch console and in Decisions. Nothing is assigned until someone approves it, unless the dispatch agent is trusted to act on its own.",
+              )}
+            />
+          ) : null}
           <NumberField
             control={control}
             name="autoAssignConfidenceThreshold"

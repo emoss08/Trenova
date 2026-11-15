@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"go.uber.org/zap"
 )
 
@@ -101,6 +102,7 @@ func (p *runtimeParts) access() toolaccess.AccessParams {
 		Disclosures:    p.Disclosures,
 		Scripts:        p.Scripts,
 		Registry:       p.Registry,
+		Plan:           plantest.AllOn(),
 	}
 }
 

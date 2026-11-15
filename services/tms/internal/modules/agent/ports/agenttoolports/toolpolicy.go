@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/shared/money"
 )
 
@@ -17,6 +18,13 @@ type ToolPolicy struct {
 	Kind      agenttooltrust.ToolKind
 	Resource  permission.Resource
 	Operation permission.Operation
+	// Feature is the plan feature the tool's work belongs to when its
+	// resource does not say so: a read of a base record that shows what an
+	// add-on computed (the demand forecast is Dispatch Intelligence, read
+	// under shipment-move access). The tool is offered and run only when its
+	// resource's feature and this one are both on the plan. Empty means the
+	// resource's feature alone.
+	Feature platformcatalog.FeatureKey
 	// PersonAlsoNeeds is what the page this tool mirrors asks of a person beyond
 	// the tool's own permission. An agent acting alone is held to its ceiling
 	// instead, so these are checked only for a person.

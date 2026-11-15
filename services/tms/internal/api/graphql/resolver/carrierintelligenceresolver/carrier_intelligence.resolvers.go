@@ -59,21 +59,29 @@ func (r *CarrierResolver) Intelligence(ctx context.Context, obj *carrier.Carrier
 	)
 }
 
-func (r *CarrierResolver) OpenIntelEventCount(ctx context.Context, obj *carrier.Carrier) (int, error) {
+func (r *CarrierResolver) OpenIntelEventCount(ctx context.Context, obj *carrier.Carrier) (*int, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead)
 	if err != nil {
-		return 0, nil
+		if errortypes.IsPlanRestrictionError(err) {
+			return nil, err
+		}
+		return nil, nil //nolint:nilnil // a reader without carrier intelligence sees no count
 	}
 	if loadercore.Available(ctx) {
-		return partiesloaders.CarrierIntelOpenEventCount(ctx, obj.ID.String())
+		count, loadErr := partiesloaders.CarrierIntelOpenEventCount(ctx, obj.ID.String())
+		if loadErr != nil {
+			return nil, loadErr
+		}
+		return &count, nil
 	}
 	counts, err := r.CarrierIntelReviewService.OpenEventCountsByCarrierIDs(
 		ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{obj.ID},
 	)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return counts[obj.ID], nil
+	count := counts[obj.ID]
+	return &count, nil
 }
 
 func (r *CarrierResolver) MonitoringEnrollment(ctx context.Context, obj *carrier.Carrier) (*carrierintelenrollment.CarrierMonitoringEnrollment, error) {

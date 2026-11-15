@@ -3,6 +3,7 @@ package workerperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 const (
@@ -49,6 +50,7 @@ func Resources() []*permissionspec.ResourceDefinition {
 func workerResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceWorker.String(),
+		Feature:     platformcatalog.FeatureWorkforceCore,
 		DisplayName: "Worker",
 		Description: "Driver and worker management",
 		Category:    "Human resources",
@@ -99,6 +101,7 @@ func workerResource() *permissionspec.ResourceDefinition {
 		},
 		DefaultSensitivity: permission.SensitivityRestricted,
 		FieldSensitivities: workerFieldSensitivities(),
+		FieldFeatures:      workerFieldFeatures(),
 		Scopes: []permissionspec.ScopeSupport{
 			{
 				Scope:      permission.DataScopeTeam,
@@ -179,6 +182,7 @@ func workerFieldSensitivities() map[string]permission.FieldSensitivity {
 func workerPTOResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceWorkerPTO.String(),
+		Feature:     platformcatalog.FeatureWorkforceTimeOff,
 		DisplayName: "Worker PTO",
 		Description: "Worker paid time off requests and approvals",
 		Category:    "Human resources",
@@ -253,6 +257,7 @@ func workerPTOResource() *permissionspec.ResourceDefinition {
 func workerCredentialResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceWorkerCredential.String(),
+		Feature:        platformcatalog.FeatureWorkforceCompliance,
 		DisplayName:    "Worker Credential",
 		Description:    "Licences, medical cards, endorsements and certificates held by workers",
 		Category:       "Human resources",
@@ -325,6 +330,7 @@ func workerCredentialResource() *permissionspec.ResourceDefinition {
 func workerEmploymentEventResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceWorkerEmploymentEvent.String(),
+		Feature:     platformcatalog.FeatureWorkforceCore,
 		DisplayName: "Employment Event",
 		Description: "Hires, terminations, leave, suspensions, transfers and other employment history",
 		Category:    "Human resources",
@@ -357,6 +363,7 @@ func workerEmploymentEventResource() *permissionspec.ResourceDefinition {
 func workerChecklistResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceWorkerChecklist.String(),
+		Feature:        platformcatalog.FeatureWorkforceCore,
 		DisplayName:    "Worker Checklist",
 		Description:    "Onboarding and offboarding checklists run for a worker",
 		Category:       "Human resources",
@@ -390,6 +397,7 @@ func workerChecklistResource() *permissionspec.ResourceDefinition {
 func workerChecklistTemplateResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceWorkerChecklistTemplate.String(),
+		Feature:     platformcatalog.FeatureWorkforceCore,
 		DisplayName: "Checklist Template",
 		Description: "Reusable onboarding and offboarding checklists",
 		Category:    "Human resources",
@@ -431,6 +439,7 @@ func workerChecklistTemplateResource() *permissionspec.ResourceDefinition {
 func orgHolidayResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceOrgHoliday.String(),
+		Feature:     platformcatalog.FeatureWorkforceCore,
 		DisplayName: "Holiday Calendar",
 		Description: "Organisation holidays and PTO blackout dates",
 		Category:    "Human resources",
@@ -462,6 +471,7 @@ func orgHolidayResource() *permissionspec.ResourceDefinition {
 func trainingCourseResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceTrainingCourse.String(),
+		Feature:     platformcatalog.FeatureWorkforceTalent,
 		DisplayName: "Training Course",
 		Description: "Catalog of training courses and which are required per driver type",
 		Category:    "Human resources",
@@ -521,6 +531,7 @@ func trainingCourseResource() *permissionspec.ResourceDefinition {
 func workerTrainingResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceWorkerTraining.String(),
+		Feature:        platformcatalog.FeatureWorkforceTalent,
 		DisplayName:    "Worker Training",
 		Description:    "Courses assigned to workers, their results and certifications",
 		Category:       "Human resources",
@@ -558,6 +569,7 @@ func workerTrainingResource() *permissionspec.ResourceDefinition {
 func workerDOTTestResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceWorkerDOTTest.String(),
+		Feature:     platformcatalog.FeatureWorkforceCompliance,
 		DisplayName: "Drug & Alcohol Testing",
 		Description: "Controlled-substances and alcohol tests, violations and Clearinghouse queries on a worker's record",
 		Category:    "Human resources",
@@ -627,6 +639,7 @@ func workerDOTTestResource() *permissionspec.ResourceDefinition {
 func workerLeaveResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceWorkerLeave.String(),
+		Feature:     platformcatalog.FeatureWorkforceTimeOff,
 		DisplayName: "Leave & FMLA",
 		Description: "Leave cases, the FMLA entitlement drawn against them, and medical certification",
 		Category:    "Human resources",
@@ -712,6 +725,7 @@ func workerLeaveResource() *permissionspec.ResourceDefinition {
 func benefitPlanResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceBenefitPlan.String(),
+		Feature:       platformcatalog.FeatureWorkforceBenefits,
 		DisplayName:   "Benefits",
 		Description:   "Benefit plans and who is enrolled on them",
 		Category:      "Human resources",
@@ -748,6 +762,7 @@ func benefitPlanResource() *permissionspec.ResourceDefinition {
 func shiftTemplateResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceShiftTemplate.String(),
+		Feature:        platformcatalog.FeatureWorkforceTimeTracking,
 		DisplayName:    "Shift",
 		Description:    "The repeating working patterns a roster is built from",
 		Category:       "Human resources",
@@ -768,6 +783,7 @@ func shiftTemplateResource() *permissionspec.ResourceDefinition {
 func workerScheduleResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceWorkerSchedule.String(),
+		Feature:        platformcatalog.FeatureWorkforceTimeTracking,
 		DisplayName:    "Schedule",
 		Description:    "The rota, who is on which shift, and what they would rather work",
 		Category:       "Human resources",
@@ -802,6 +818,7 @@ func workerScheduleResource() *permissionspec.ResourceDefinition {
 func shiftSwapResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceShiftSwap.String(),
+		Feature:        platformcatalog.FeatureWorkforceTimeTracking,
 		DisplayName:    "Shift Swap",
 		Description:    "Days drivers arrange to trade between themselves",
 		Category:       "Human resources",
@@ -839,6 +856,7 @@ func shiftSwapResource() *permissionspec.ResourceDefinition {
 func timesheetResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceTimesheet.String(),
+		Feature:     platformcatalog.FeatureWorkforceTimeTracking,
 		DisplayName: "Timesheet",
 		Description: "Hours worked by staff paid by the clock, and the sign-off on them",
 		Category:    "Human resources",
@@ -899,6 +917,7 @@ func timesheetResource() *permissionspec.ResourceDefinition {
 func workerPolicyResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceWorkerPolicy.String(),
+		Feature:        platformcatalog.FeatureWorkforceSelfService,
 		DisplayName:    "Policy",
 		Description:    "Handbooks and policies people sign from the portal, and who has signed them",
 		Category:       "Human resources",
@@ -927,6 +946,7 @@ func workerPolicyResource() *permissionspec.ResourceDefinition {
 func profileChangeRequestResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceProfileChangeRequest.String(),
+		Feature:     platformcatalog.FeatureWorkforceSelfService,
 		DisplayName: "Profile Change",
 		Description: "Changes drivers ask to make to their own record from the portal",
 		Category:    "Human resources",
@@ -955,6 +975,7 @@ func profileChangeRequestResource() *permissionspec.ResourceDefinition {
 func jobPositionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceJobPosition.String(),
+		Feature:        platformcatalog.FeatureWorkforceCore,
 		DisplayName:    "Job Position",
 		Description:    "Job titles the roster is counted by, and the reporting lines between them",
 		Category:       "Human resources",
@@ -992,6 +1013,7 @@ func jobPositionResource() *permissionspec.ResourceDefinition {
 func approvalDelegationResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceApprovalDelegation.String(),
+		Feature:        platformcatalog.FeatureWorkforceCore,
 		DisplayName:    "Approval Delegation",
 		Description:    "Handing approval to somebody else while a manager is away",
 		Category:       "Human resources",
@@ -1019,6 +1041,7 @@ func approvalDelegationResource() *permissionspec.ResourceDefinition {
 func workerInjuryResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceWorkerInjury.String(),
+		Feature:       platformcatalog.FeatureWorkforceSafety,
 		DisplayName:   "Injury & Illness",
 		Description:   "Injury and illness cases, the OSHA 300 log and the 300A annual summary",
 		Category:      "Human resources",
@@ -1092,6 +1115,7 @@ func workerInjuryResource() *permissionspec.ResourceDefinition {
 func dotRandomPoolResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceDOTRandomPool.String(),
+		Feature:       platformcatalog.FeatureWorkforceCompliance,
 		DisplayName:   "Random Testing Pool",
 		Description:   "Random selection pools and the rounds drawn from them",
 		Category:      "Human resources",
@@ -1125,6 +1149,7 @@ func dotRandomPoolResource() *permissionspec.ResourceDefinition {
 func workerSafetyEventResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceWorkerSafetyEvent.String(),
+		Feature:        platformcatalog.FeatureWorkforceSafety,
 		DisplayName:    "Worker Safety Event",
 		Description:    "Accidents, incidents, near misses, citations and inspections on a worker's record",
 		Category:       "Human resources",
@@ -1168,6 +1193,7 @@ func workerSafetyEventResource() *permissionspec.ResourceDefinition {
 func workerDisciplinaryActionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceWorkerDisciplinaryAction.String(),
+		Feature:       platformcatalog.FeatureWorkforceTalent,
 		DisplayName:   "Disciplinary Action",
 		Description:   "Progressive-discipline actions issued to workers",
 		Category:      "Human resources",
@@ -1200,6 +1226,7 @@ func workerDisciplinaryActionResource() *permissionspec.ResourceDefinition {
 func workerRecognitionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceWorkerRecognition.String(),
+		Feature:        platformcatalog.FeatureWorkforceTalent,
 		DisplayName:    "Worker Recognition",
 		Description:    "Praise and milestones recorded for workers",
 		Category:       "Human resources",
@@ -1227,6 +1254,7 @@ func workerRecognitionResource() *permissionspec.ResourceDefinition {
 func performanceReviewTemplateResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourcePerformanceReviewTemplate.String(),
+		Feature:       platformcatalog.FeatureWorkforceTalent,
 		DisplayName:   "Review Template",
 		Description:   "Rating items performance reviews are scored against",
 		Category:      "Human resources",
@@ -1264,6 +1292,7 @@ func performanceReviewTemplateResource() *permissionspec.ResourceDefinition {
 func performanceReviewResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourcePerformanceReview.String(),
+		Feature:       platformcatalog.FeatureWorkforceTalent,
 		DisplayName:   "Performance Review",
 		Description:   "Reviews drafted for workers, their ratings, goals and sign-off",
 		Category:      "Human resources",
@@ -1311,6 +1340,7 @@ func performanceReviewResource() *permissionspec.ResourceDefinition {
 func workerCredentialTypeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceWorkerCredentialType.String(),
+		Feature:     platformcatalog.FeatureWorkforceCompliance,
 		DisplayName: "Credential Type",
 		Description: "Catalog of credential types workers can hold and which are required",
 		Category:    "Human resources",
@@ -1365,6 +1395,7 @@ func workerCredentialTypeResource() *permissionspec.ResourceDefinition {
 func ptoPolicyResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourcePTOPolicy.String(),
+		Feature:       platformcatalog.FeatureWorkforceTimeOff,
 		DisplayName:   "PTO Policy",
 		Description:   "Paid time off accrual policies and the workers assigned to them",
 		Category:      "Human resources",

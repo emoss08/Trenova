@@ -29,7 +29,7 @@ spec:
             - { name: STUB_HOSTNAME, value: "trenova.ci.test" }
             - { name: STUB_VERSION, value: "0.11.0-ci" }
             - { name: STUB_VCPU, value: "2" }
-            - { name: STUB_MEMORY_GIB, value: "8" }
+            - { name: STUB_MEMORY_GIB, value: "10" }
             - { name: STUB_DISK_GIB, value: "40" }
           ports:
             - { name: api, containerPort: 8443 }

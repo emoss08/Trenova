@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 
@@ -59,10 +61,11 @@ func TestApprove_RefusesFromTheWrongStatus(t *testing.T) {
 		Once()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		Validator:    testValidator(),
-		AuditService: auditportsmock.NewMockAuditService(t),
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+		AuditService:     auditportsmock.NewMockAuditService(t),
 	})
 
 	_, err := svc.Approve(t.Context(), &ApprovalActionRequest{
@@ -84,10 +87,11 @@ func TestReject_RequiresAReason(t *testing.T) {
 	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		Validator:    testValidator(),
-		AuditService: auditportsmock.NewMockAuditService(t),
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+		AuditService:     auditportsmock.NewMockAuditService(t),
 	})
 
 	_, err := svc.Reject(t.Context(), &ApprovalActionRequest{
@@ -180,10 +184,11 @@ func TestCreate_AlwaysStartsInDraft(t *testing.T) {
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		Validator:    testValidator(),
-		AuditService: audit,
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+		AuditService:     audit,
 	})
 
 	created, err := svc.Create(t.Context(), agreement, pulid.MustNew("usr_"))
@@ -243,9 +248,10 @@ func serviceFor(
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	return New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		Validator:    testValidator(),
-		AuditService: audit,
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+		AuditService:     audit,
 	}), repo
 }

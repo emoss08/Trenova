@@ -311,6 +311,21 @@ postgres:
   uid: 70
   gid: 70
   instances: 1
+  # How PostgreSQL stops when CloudNativePG restarts it (a changed setting or
+  # size, an image update, hibernation), in seconds. It first waits up to
+  # smartShutdownTimeout for clients to disconnect, then asks for a fast
+  # shutdown: open sessions are ended, every committed transaction is already
+  # in the WAL and a shutdown checkpoint is written, so nothing is lost. The
+  # API, the worker, Temporal and gtc hold pooled connections that never leave
+  # on their own and reconnect when the database is back, so waiting for them
+  # only keeps the instance down: CloudNativePG's default of 180 held a restart
+  # for three minutes. stopDelay is the pod's termination grace period and so
+  # bounds the fast shutdown (the checkpoint included); it must exceed
+  # smartShutdownTimeout, or CloudNativePG skips the smart wait. switchoverDelay
+  # keeps CloudNativePG's default: it only applies with replicas, and cutting it
+  # short could demote a primary before its replicas have every WAL record.
+  smartShutdownTimeout: 15
+  stopDelay: 300
   # Stops PostgreSQL too (CloudNativePG's declarative hibernation), keeping
   # its volumes. Use it with stopped: true.
   hibernate: false
@@ -387,6 +402,48 @@ postgres:
     log_checkpoints: "on"
     log_autovacuum_min_duration: 1s
     track_io_timing: "on"
+  # The database a restore made, which Trenova runs on: its name suffix
+  # (r and eight hex digits), with what it was restored from. Empty for the
+  # first database. Trenova Cloud's operator sets these after a restore is
+  # switched to; the database before it is kept, and the chart no longer
+  # renders it.
+  generation: ""
+  # restoredFrom:
+  #   sourceGeneration: ""             # the generation it was restored from
+  #   targetTime: "2026-11-14T09:30:00Z"
+  # A database restored beside the live one, from backup's object store, to a
+  # point in time. The live database is not touched; switch to the new one by
+  # setting generation (and restoredFrom) to it. Needs backup.enabled.
+  # restore:
+  #   generation: r1a2b3c4d
+  #   sourceGeneration: ""
+  #   targetTime: "2026-11-14T09:30:00Z"
+
+# Point-in-time backups of PostgreSQL to S3-compatible object storage, with
+# CloudNativePG's Barman Cloud plugin: WAL archived continuously and a base
+# backup every day, kept for retentionPolicy. Install the plugin, and the
+# cert-manager it needs, once per cluster (docs/self-hosting/kubernetes.md).
+# Trenova Cloud's operator turns this on with the instance's backups bucket.
+backup:
+  enabled: false
+  # Where backups go: s3://<bucket>/<prefix>/. Each database writes under its
+  # own name inside it.
+  destinationPath: ""
+  # The S3 API, e.g. https://s3.bhs.io.cloud.ovh.net. Empty for AWS. Plain http
+  # only for a store on the cluster's own private network, never across the internet.
+  endpointURL: ""
+  # A Secret with ACCESS_KEY_ID, ACCESS_SECRET_KEY and ACCESS_REGION for the
+  # bucket. Only PostgreSQL's backup tool reads it: keep it a credential no
+  # application holds, so a compromised application cannot delete backups.
+  existingSecret: ""
+  # How far back a restore can reach.
+  retentionPolicy: 30d
+  # A base backup every day at 03:00 UTC (CloudNativePG's six-field cron,
+  # seconds first).
+  schedule: "0 0 3 * * *"
+  compression: gzip
+  # Server-side encryption of every object.
+  encryption: AES256
 
 redis:
   image:

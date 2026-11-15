@@ -44,9 +44,17 @@ function stubDefinitions(
   }));
 }
 
-function stubCanned(rows: { key: string; name: string; description: string; category: string }[]) {
+function stubCanned(
+  rows: {
+    key: string;
+    name: string;
+    description: string;
+    category: string;
+    available?: boolean;
+  }[],
+) {
   mocks.useCannedReports.mockImplementation((enabled = true) => ({
-    data: enabled ? rows : undefined,
+    data: enabled ? rows.map((row) => ({ available: true, planDenial: null, ...row })) : undefined,
     isLoading: false,
     error: null,
     refetch: vi.fn(),
@@ -214,6 +222,31 @@ describe("ReportSourcePicker", () => {
 
     await waitFor(() => expect(screen.queryByRole("option", { name: /On-Time/ })).toBeNull());
     expect(screen.getByRole("option", { name: /AR aging/ })).toBeInTheDocument();
+  });
+
+  it("does not offer a gallery report the organization's plan does not include", async () => {
+    stubCanned([
+      {
+        key: "on_time",
+        name: "On-Time Service",
+        description: "Service against target",
+        category: "Operations",
+      },
+      {
+        key: "factoring_schedules",
+        name: "Factoring Schedules",
+        description: "Schedules sent to the factor",
+        category: "Finance",
+        available: false,
+      },
+    ]);
+    const user = userEvent.setup();
+    renderPicker();
+
+    await user.click(screen.getByRole("radio", { name: "Report gallery" }));
+
+    expect(await screen.findByRole("option", { name: /On-Time Service/ })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /Factoring Schedules/ })).toBeNull();
   });
 
   it("says nothing matches rather than showing an empty box", async () => {

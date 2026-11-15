@@ -174,6 +174,7 @@ func (r *TemplateResolver) ResolveBilling(
 		Imports:       content.Imports,
 		Tables:        content.Tables,
 		Libraries:     libraries,
+		Standard:      template.IsStandard(),
 	}, nil
 }
 

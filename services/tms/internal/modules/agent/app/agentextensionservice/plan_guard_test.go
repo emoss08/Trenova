@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensiontest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,7 @@ func TestActiveCapabilitiesOfferNothingThePlanRestricts(t *testing.T) {
 
 	f := newFixture(t)
 	f.enable(t, map[string]string{"apiKey": agentextensiontest.APIKey})
-	f.svc.plans = plantest.Restricting(t, platformplan.CapabilityAgentWebSearch)
+	f.svc.features = plantest.Without(platformcatalog.FeatureAIDesk)
 
 	active, err := f.svc.ActiveCapabilities(t.Context(), f.tenant)
 
@@ -29,7 +29,7 @@ func TestActiveCapabilitiesOfferNothingThePlanRestricts(t *testing.T) {
 func TestUpdateConfigRefusesEnablingWebSearchThePlanRestricts(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{plans: plantest.Restricting(t, platformplan.CapabilityAgentWebSearch)}
+	svc := &Service{features: plantest.Without(platformcatalog.FeatureAIDesk)}
 
 	resp, err := svc.UpdateConfig(
 		t.Context(),
@@ -47,7 +47,7 @@ func TestUpdateConfigRefusesEnablingWebSearchThePlanRestricts(t *testing.T) {
 func TestServingTellsTheAgentWebResearchIsNotOnThePlan(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{plans: plantest.Restricting(t, platformplan.CapabilityAgentWebSearch)}
+	svc := &Service{features: plantest.Without(platformcatalog.FeatureAIDesk)}
 
 	settings, err := svc.Serving(
 		t.Context(),

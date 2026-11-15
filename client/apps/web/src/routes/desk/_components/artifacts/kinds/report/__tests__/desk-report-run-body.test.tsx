@@ -177,6 +177,28 @@ describe("DeskReportRunBody", () => {
     expect(screen.queryByRole("button", { name: /Download/u })).not.toBeInTheDocument();
   });
 
+  it("names the add-on when the plan no longer includes what the report reads", async () => {
+    draw({
+      ...finishedCard(),
+      sample: null,
+      previous: null,
+      withheld: "plan",
+      withheldByPlan: {
+        feature: "tms.factoring",
+        featureName: "Factoring",
+        addOnName: "Accounting & Cash",
+      },
+    });
+
+    expect(
+      await screen.findByText(
+        "This report reads data from the Accounting & Cash add-on, which is not on your plan.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Download/u })).not.toBeInTheDocument();
+  });
+
   it("warns that a capped run's figures are of the kept rows", async () => {
     draw(withRun({ truncated: true, rowCount: 50000 }));
 

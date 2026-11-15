@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -117,6 +118,7 @@ func setupTest(t *testing.T) *testDeps {
 			Logger: logger,
 			Repo:   noCredentialTypes{},
 		}),
+		planFields: plantest.Keeper(nil),
 	}
 	return &testDeps{
 		repo:      repo,
@@ -998,11 +1000,12 @@ func TestNew(t *testing.T) {
 	validator := newTestValidator()
 
 	svc := New(Params{
-		Logger:    zap.NewNop(),
-		Repo:      repo,
-		CacheRepo: customerportsmock.NewMockWorkerCacheRepository(t),
-		Validator: validator,
-		Realtime:  &mocks.NoopRealtimeService{},
+		Logger:     zap.NewNop(),
+		Repo:       repo,
+		CacheRepo:  customerportsmock.NewMockWorkerCacheRepository(t),
+		Validator:  validator,
+		Realtime:   &mocks.NoopRealtimeService{},
+		PlanFields: plantest.Keeper(nil),
 	})
 
 	require.NotNil(t, svc)

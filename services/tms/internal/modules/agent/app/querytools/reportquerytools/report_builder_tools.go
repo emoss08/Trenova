@@ -488,6 +488,10 @@ func (t *describeReportDatasetTool) Query(
 	}
 	decided, ok := catalog.entity(key)
 	if !ok {
+		if withheld, offPlan := catalog.WithheldEntity(key); offPlan {
+			return nil, fmt.Errorf("%s are %s; do not look for them another way, say so",
+				withheld.EntityLabel, planPart(&withheld.Denial))
+		}
 		return nil, fmt.Errorf(
 			"there is no dataset with the key %q; call report_list_datasets for the ones that exist",
 			key,

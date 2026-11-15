@@ -3,6 +3,7 @@ package aiproviderservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,5 +30,5 @@ func (r *InboundReadiness) ReadsInboundMail(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (bool, error) {
-	return r.nova.Available(ctx, tenantInfo)
+	return r.nova.Available(ctx, tenantInfo, aitask.TaskInboundClassification)
 }

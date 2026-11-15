@@ -11,6 +11,7 @@ import type {
 } from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useBillingQueueReviewOnPlan } from "@/lib/billing-queue-nova-plan";
 import type { StartBulkRun } from "./use-bulk-run";
 
 type Suggestion = {
@@ -53,7 +54,12 @@ export function BillingQueueSuggestions({
 }) {
   const t = useT();
   const userId = useAuthStore((state) => state.user?.id ?? null);
-  const { data: recommendations = [] } = useQuery(billingQueue.recommendations());
+  const { data: allRecommendations = [] } = useQuery(billingQueue.recommendations());
+  // What Nova's review recommends is offered only on a plan that includes the review.
+  const novaReviews = useBillingQueueReviewOnPlan();
+  const recommendations = novaReviews
+    ? allRecommendations
+    : allRecommendations.filter((r) => r.source !== "Agent");
   const [hidden, setHidden] = useState<ReadonlySet<string>>(() => new Set());
   const [taken, setTaken] = useState<ReadonlyMap<string, string>>(() => new Map());
   const [startingKey, setStartingKey] = useState<string | null>(null);

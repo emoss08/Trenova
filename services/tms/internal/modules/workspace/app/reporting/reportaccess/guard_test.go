@@ -20,6 +20,9 @@ var accessPrimitives = map[string]bool{
 	"InReferenceView": true,
 	"GroupAt":         true,
 	"Visible":         true,
+	"PlanDenial":      true,
+	"FeatureOff":      true,
+	"RequireFeature":  true,
 }
 
 type reportSurface struct {
@@ -92,6 +95,7 @@ func TestTheEngineAndTheCatalogShareTheDecision(t *testing.T) {
 		"../engine.go":  {"For"},
 		"../catalog.go": {"For", "FieldUse", "EdgeUse"},
 		"access.go":     {"FieldUse", "EdgeUse", "EntityUse"},
+		"../canned.go":  {"For", "OffPlan", "ReachOf"},
 	} {
 		called := selectorCalls(t, path)
 		for _, name := range want {

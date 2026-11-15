@@ -1234,9 +1234,12 @@ func (r *ShipmentResolver) FormulaTemplate(ctx context.Context, obj *gqlmodel.Sh
 		return nil, nil
 	}
 
-	allowed, err := mayReadFormulas(ctx, r.Core)
-	if err != nil || !allowed {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
 		return nil, err
+	}
+	if !r.HasPermission(ctx, authCtx, permission.ResourceFormulaTemplate, permission.OpRead) {
+		return nil, nil
 	}
 
 	return obj.FormulaTemplate, nil

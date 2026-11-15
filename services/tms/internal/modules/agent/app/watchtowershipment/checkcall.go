@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -72,4 +73,8 @@ func (o *NoCheckCallObserver) CheckCallRecorded(
 		return
 	}
 	o.projector.Resolve(ctx, tenant, watchtower.SourceNoCheckCall, moveID.String())
+}
+
+func (o *NoCheckCallObserver) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureAIWatchtower
 }

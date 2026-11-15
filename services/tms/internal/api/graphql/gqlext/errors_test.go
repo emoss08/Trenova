@@ -180,7 +180,7 @@ func TestErrorPresenter_PlanRestrictionCarriesItsParams(t *testing.T) {
 	present := newErrorPresenter(&presenterTestConfig().App)
 
 	presented := present(context.Background(),
-		errortypes.NewPlanRestrictionError("api_keys", "", "free_demo"))
+		errortypes.NewFeatureRestrictionError("ai.desk", "Trenova AI"))
 	require.NotNil(t, presented)
 	assert.Equal(t, string(errortypes.ErrPlanRestricted), presented.Extensions["code"])
 	assert.Equal(t,
@@ -188,8 +188,14 @@ func TestErrorPresenter_PlanRestrictionCarriesItsParams(t *testing.T) {
 		presented.Extensions["type"],
 	)
 	assert.Equal(t, map[string]string{
-		"capability": "api_keys",
-		"reason":     errortypes.PlanRestrictionReasonPlan,
-		"plan":       "free_demo",
+		"feature": "ai.desk",
+		"addOn":   "Trenova AI",
+		"reason":  errortypes.PlanRestrictionReasonPlan,
+		"plan":    "",
 	}, presented.Extensions["params"])
+	assert.Equal(
+		t,
+		"This feature is part of the Trenova AI add-on, which is not on your plan",
+		presented.Message,
+	)
 }

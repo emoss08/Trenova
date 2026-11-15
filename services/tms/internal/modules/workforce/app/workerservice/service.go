@@ -48,6 +48,7 @@ type Params struct {
 	DB                        kernelports.Transactor
 	Sync                      accountingsyncports.AccountingSyncEnqueuer
 	Fields                    permissionports.FieldAccess
+	PlanFields                permissionports.PlanFieldKeeper
 }
 
 type Service struct {
@@ -66,6 +67,7 @@ type Service struct {
 	db                        kernelports.Transactor
 	sync                      accountingsyncports.AccountingSyncEnqueuer
 	fields                    permissionports.FieldAccess
+	planFields                permissionports.PlanFieldKeeper
 }
 
 //nolint:gocritic // dependency injection
@@ -85,6 +87,7 @@ func New(p Params) *Service {
 		db:                        p.DB,
 		sync:                      p.Sync,
 		fields:                    p.Fields,
+		planFields:                p.PlanFields,
 	}
 }
 
@@ -257,6 +260,15 @@ func (s *Service) Create(
 
 	entity.UserID = pulid.Nil
 
+	if err := s.planFields.Keep(
+		ctx,
+		permission.ResourceWorker,
+		entity,
+		workerDefaults(entity),
+	); err != nil {
+		return nil, err
+	}
+
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -371,6 +383,11 @@ func (s *Service) update(
 
 	entity.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
 	entity.KeepHomeWithAddress(original)
+	if guardEmployment {
+		if err = s.planFields.Keep(ctx, permission.ResourceWorker, entity, original); err != nil {
+			return nil, err
+		}
+	}
 
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr

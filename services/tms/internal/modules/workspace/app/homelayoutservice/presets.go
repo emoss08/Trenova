@@ -279,7 +279,8 @@ func (s *Service) PreviewPreset(
 	}
 
 	return &EffectiveLayout{
-		Layout:       narrowed,
+		Layout:       narrowed.Layout,
+		Locks:        narrowed.Locks,
 		Density:      homelayout.DensityComfortable,
 		Source:       source,
 		PresetID:     req.PresetID,

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -759,4 +760,8 @@ func severityForStatus(status shipmentvocab.Status) shipmentevent.Severity {
 	default:
 		return shipmentevent.SeverityMuted
 	}
+}
+
+func (o *Observer) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureEDIIntegration
 }

@@ -46,22 +46,25 @@ func (s *Service) mayPublish(
 	if entity.Visibility == tableconfiguration.VisibilityPrivate {
 		return nil
 	}
-	if actor != nil {
-		result, err := s.permissions.Check(
-			ctx,
-			actor.PermissionCheck(permission.ResourceTableConfiguration, operation),
-		)
-		if err != nil {
-			return err
-		}
-		if result != nil && result.Allowed {
-			return nil
-		}
-	}
-
-	return errortypes.NewAuthorizationError(
+	denied := errortypes.NewAuthorizationError(
 		"Your role cannot share views with your organization. Keep the view private or ask an administrator to share it.",
 	)
+	if actor == nil {
+		return denied
+	}
+
+	result, err := s.permissions.Check(
+		ctx,
+		actor.PermissionCheck(permission.ResourceTableConfiguration, operation),
+	)
+	if err != nil {
+		return err
+	}
+	if result != nil && result.Allowed {
+		return nil
+	}
+
+	return permissionports.DeniedError(result, denied)
 }
 
 func (s *Service) Create(

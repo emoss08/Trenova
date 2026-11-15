@@ -147,7 +147,7 @@ query FactoringSummary {
   }
 }
 
-query InvoiceFactoring($id: ID!) {
+query InvoiceFactoring($id: ID!) @requiresRead(kind: "factoring_submission") {
   invoice(id: $id) {
     id
     number

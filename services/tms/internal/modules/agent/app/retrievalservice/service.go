@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -41,6 +42,9 @@ type Params struct {
 	Embeddings aiusageports.EmbeddingService
 	Signals    kernelports.WorkflowSignalStarter
 	Workflows  kernelports.WorkflowStarter
+	// Features is the plan: search by meaning is Trenova AI, so nothing is
+	// indexed without the Desk.
+	Features platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -52,6 +56,7 @@ type Service struct {
 	embeddings aiusageports.EmbeddingService
 	signals    kernelports.WorkflowSignalStarter
 	workflows  kernelports.WorkflowStarter
+	features   platformcatalogports.FeatureGate
 	now        func() int64
 }
 
@@ -67,6 +72,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		embeddings: p.Embeddings,
 		signals:    p.Signals,
 		workflows:  p.Workflows,
+		features:   p.Features,
 		now:        timeutils.NowUnix,
 	}
 }

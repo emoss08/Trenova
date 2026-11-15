@@ -2,6 +2,7 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Popover, PopoverContent } from "@trenova/shared/components/ui/popover";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
+import { useUnavailableFeatures } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useHotkey } from "@tanstack/react-hotkeys";
@@ -25,7 +26,8 @@ export function SettingsSearch({
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const [dismissed, setDismissed] = useState(false);
-  const entries = useMemo(() => buildSettingsIndex(), []);
+  const unavailable = useUnavailableFeatures();
+  const entries = useMemo(() => buildSettingsIndex(unavailable), [unavailable]);
   const results = useMemo(() => searchSettings(entries, query, t), [entries, query, t]);
   const open = query.trim() !== "" && !dismissed;
 

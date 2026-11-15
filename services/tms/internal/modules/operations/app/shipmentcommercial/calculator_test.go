@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 )
 
 func newCalculator(t *testing.T, p Params) *Calculator {
@@ -18,6 +19,9 @@ func newCalculator(t *testing.T, p Params) *Calculator {
 
 	if p.FuelSurcharge == nil {
 		p.FuelSurcharge = ratingtest.NoFuelSurcharge{}
+	}
+	if p.Features == nil {
+		p.Features = plantest.AllFeatures()
 	}
 
 	return New(p)

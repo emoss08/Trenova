@@ -349,10 +349,10 @@ func (s *Service) authorizeApply(
 			return err
 		}
 		if result == nil || !result.Allowed {
-			return errortypes.NewAuthorizationError(
+			return permissionports.DeniedError(result, errortypes.NewAuthorizationError(
 				"Applying this payment posts to {0}, which you do not have permission to change",
 				needed.resource.String(),
-			)
+			))
 		}
 	}
 	return nil

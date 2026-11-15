@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.uber.org/fx"
@@ -62,7 +63,8 @@ func NewScheduleProvider() *ScheduleProvider { return &ScheduleProvider{} }
 
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{{
-		ID: SweepScheduleID,
+		ID:      SweepScheduleID,
+		Feature: platformcatalog.FeatureIdentity,
 		Description: "Start a reconcile for every SCIM directory whose group roles still wait " +
 			"to be brought up to date",
 		Spec:          schedule.Every(sweepEvery),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
@@ -1070,4 +1071,8 @@ func removeForeignRefs(
 		result.DriftRemove += len(removed.Succeeded)
 	}
 	return nil
+}
+
+func (s *Service) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureCarrierBrokerage
 }

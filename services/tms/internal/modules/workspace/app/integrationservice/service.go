@@ -10,14 +10,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -47,7 +45,7 @@ type Params struct {
 	FuelCardConnectors     []fuelpurchaseports.FuelCardProvider      `group:"fuelCardConnectors"`
 	CarrierIntelConnectors []carrierintelports.CarrierIntelConnector `group:"carrierIntelConnectors"`
 	CarrierIntelControls   carrierintelports.CarrierIntelControlRepository
-	Plans                  platformplanports.PlanService
+	Features               platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -60,7 +58,7 @@ type Service struct {
 	fuelCardConnectors     map[integration.Type]fuelpurchaseports.FuelCardProvider
 	carrierIntelConnectors map[integration.Type]carrierintelports.CarrierIntelConnector
 	carrierIntelControls   carrierintelports.CarrierIntelControlRepository
-	plans                  platformplanports.PlanService
+	features               platformcatalogports.FeatureGate
 	egress                 httpsafe.Policy
 	httpClient             *http.Client
 	connectionTesters      map[integration.Type]connectionTester
@@ -101,7 +99,7 @@ func New(p Params) *Service {
 		fuelCardConnectors:     connectors,
 		carrierIntelConnectors: intelConnectors,
 		carrierIntelControls:   p.CarrierIntelControls,
-		plans:                  p.Plans,
+		features:               p.Features,
 		egress:                 egress,
 		httpClient:             httpsafe.NewClientWithPolicy(runtimeRequestTimeout, egress),
 		connectionTesters: newConnectionTesters(
@@ -270,7 +268,7 @@ func (s *Service) UpdateConfig(
 	}
 
 	if req.Enabled {
-		if err := s.requireIntegrations(ctx, tenantInfo); err != nil {
+		if err := s.requireIntegration(ctx, typ); err != nil {
 			return nil, err
 		}
 	}
@@ -392,7 +390,7 @@ func (s *Service) TestConnection(
 		)
 	}
 
-	if err := s.requireIntegrations(ctx, tenantInfo); err != nil {
+	if err := s.requireIntegration(ctx, typ); err != nil {
 		return nil, err
 	}
 
@@ -517,12 +515,7 @@ func (s *Service) GetClientRuntimeConfig(
 	configured := len(missingRequiredFields) == 0
 	ready := record.Enabled && configured
 	if ready {
-		allowed, planErr := planservice.Allows(
-			ctx,
-			s.plans,
-			tenantInfo,
-			platformplan.CapabilityIntegrations,
-		)
+		allowed, planErr := s.integrationOnPlan(ctx, typ)
 		if planErr != nil {
 			return nil, planErr
 		}
@@ -587,7 +580,7 @@ func (s *Service) getRuntimeConfig(
 	}
 
 	if record.Enabled {
-		if err = s.requireIntegrations(ctx, tenantInfo); err != nil {
+		if err = s.requireIntegration(ctx, typ); err != nil {
 			return nil, err
 		}
 	}
@@ -621,18 +614,6 @@ func (s *Service) getRuntimeConfig(
 		Config:                cfg,
 		HTTPClient:            s.httpClient,
 	}, nil
-}
-
-func (s *Service) requireIntegrations(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) error {
-	return planservice.RequireCapability(
-		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityIntegrations,
-	)
 }
 
 func validateRequiredFields(

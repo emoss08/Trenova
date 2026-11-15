@@ -10,7 +10,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
@@ -225,7 +224,7 @@ func TestSCIMMappingRefusedForAnotherOrganizationsDirectory(t *testing.T) {
 	t.Parallel()
 
 	svc, repo, recorder := auditedService(t)
-	svc.plans = plantest.Allowing(t, platformplan.CapabilitySSO)
+	svc.features = plantest.AllFeatures()
 	grants := &fixedRoleGrants{}
 	svc.grants = grants
 	tenant := auditTenant()
@@ -248,7 +247,7 @@ func TestSCIMMappingRefusedForARoleTheActorCannotGrant(t *testing.T) {
 	t.Parallel()
 
 	svc, repo, recorder := auditedService(t)
-	svc.plans = plantest.Allowing(t, platformplan.CapabilitySSO)
+	svc.features = plantest.AllFeatures()
 	svc.grants = &fixedRoleGrants{err: errortypes.NewAuthorizationError("beyond your access")}
 	tenant := auditTenant()
 	directoryID := pulid.MustNew("scd_")
@@ -278,7 +277,7 @@ func TestSCIMMappingSavedForARoleTheActorCanGrant(t *testing.T) {
 	t.Parallel()
 
 	svc, repo, recorder := auditedService(t)
-	svc.plans = plantest.Allowing(t, platformplan.CapabilitySSO)
+	svc.features = plantest.AllFeatures()
 	grants := &fixedRoleGrants{}
 	svc.grants = grants
 	tenant := auditTenant()
@@ -327,7 +326,7 @@ func TestSCIMMappingRecordsWhoSavedItAndReconcilesTheDirectory(t *testing.T) {
 	t.Parallel()
 
 	svc, repo, _ := auditedService(t)
-	svc.plans = plantest.Allowing(t, platformplan.CapabilitySSO)
+	svc.features = plantest.AllFeatures()
 	svc.grants = &fixedRoleGrants{}
 	directory := &recordingDirectoryGrants{}
 	svc.directory = directory
@@ -367,7 +366,7 @@ func TestSCIMMappingIsNotSavedWhenItsGrantsCannotBeReconciled(t *testing.T) {
 	t.Parallel()
 
 	svc, repo, recorder := auditedService(t)
-	svc.plans = plantest.Allowing(t, platformplan.CapabilitySSO)
+	svc.features = plantest.AllFeatures()
 	svc.grants = &fixedRoleGrants{}
 	svc.directory = &recordingDirectoryGrants{err: errors.New("database unavailable")}
 	tenant := auditTenant()

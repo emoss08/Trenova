@@ -46,6 +46,10 @@ func (r *QueryResolver) WorkerRosterAttention(ctx context.Context) (*workeroverv
 	return r.WorkerOverviewService.RosterAttention(ctx, resolvercore.TenantInfo(authCtx), access)
 }
 
-func (r *WorkerRosterAttentionResolver) PTOLiabilityDays(ctx context.Context, obj *workeroverviewservice.RosterAttention) (string, error) {
-	return gqldecimal.DecimalString(obj.PTOLiabilityDays), nil
+func (r *WorkerRosterAttentionResolver) PTOLiabilityDays(ctx context.Context, obj *workeroverviewservice.RosterAttention) (*string, error) {
+	if obj.PTOLiabilityDays == nil {
+		return nil, nil //nolint:nilnil // a withheld figure is null
+	}
+	liability := gqldecimal.DecimalString(*obj.PTOLiabilityDays)
+	return &liability, nil
 }

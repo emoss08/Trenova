@@ -74,6 +74,7 @@ func (t *ReplyToInboundMessageTool) compose(
 		send: &emailports.SendEmailRequest{
 			TenantInfo:     tenant,
 			ProfileID:      reply.profileID,
+			Type:           email.TypeInboundReply,
 			Purpose:        email.PurposeOperations,
 			To:             []string{reply.message.FromAddress},
 			Subject:        rendered.Subject,

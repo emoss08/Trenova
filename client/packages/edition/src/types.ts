@@ -90,18 +90,12 @@ export type PlanLimitCopy = {
 };
 
 /**
- * Where the organization's plan comes from. The host owns the capability names
- * (`PlanCapability`), the nav and route plumbing that hides what a plan withholds, and
- * the dialog that explains a QUOTA_EXCEEDED / PLAN_RESTRICTED refusal; the edition
- * supplies the plan itself.
+ * What an edition adds to the host's plan handling. Which features the plan leaves out, and
+ * what they and their add-ons are called, come from the server in the permission manifest
+ * (`unavailableFeatures`), so the host hides and explains them on every install; an edition
+ * only links its plan page and words its own refusals.
  */
 export type EditionPlan = {
-  /** The capabilities the plan withholds, for rendering. Must be a stable React hook. */
-  useRestrictions: () => readonly string[];
-  /** The same list for a route loader. Rejecting keeps the route reachable. */
-  loadRestrictions: () => Promise<readonly string[]>;
-  /** Where a route the plan withholds sends the visitor instead. */
-  restrictedRedirect: string;
   /** The page that shows the plan and its usage, linked from the plan-limit dialog. */
   usagePath?: string;
   /** Edition copy for a refusal; null falls back to the host's generic copy. */

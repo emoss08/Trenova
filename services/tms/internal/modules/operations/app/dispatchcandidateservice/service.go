@@ -2,7 +2,10 @@ package dispatchcandidateservice
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/driverpositioning"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
@@ -60,6 +63,7 @@ type Params struct {
 	Market          dispatchmarketports.ValuerSource
 	Forecasts       demandforecastports.Service
 	Positionings    driverpositioningports.LiveReader
+	Features        platformcatalogports.FeatureGate
 	Logger          *zap.Logger
 }
 
@@ -74,6 +78,7 @@ type Service struct {
 	market          dispatchmarketports.ValuerSource
 	forecasts       demandforecastports.Service
 	positionings    driverpositioningports.LiveReader
+	features        platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In parameter struct by value
@@ -88,6 +93,7 @@ func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In paramete
 		market:          p.Market,
 		forecasts:       p.Forecasts,
 		positionings:    p.Positionings,
+		features:        p.Features,
 	}
 }
 
@@ -195,16 +201,14 @@ func (s *Service) BuildSnapshot(
 	if err = s.loadSchedules(ctx, req, snapshot, workerIDs); err != nil {
 		return nil, err
 	}
-	positioned, err := s.positionings.ListLive(ctx, &driverpositioningports.LiveRequest{
-		TenantInfo: req.TenantInfo,
-		WorkerIDs:  workerIDs,
-		Now:        now,
-	})
+	intelligence, err := s.features.Enabled(ctx, platformcatalog.FeatureDispatchIntelligence)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ask whether dispatch intelligence is on the plan: %w", err)
 	}
-	for _, positioning := range positioned {
-		snapshot.PositionedByWorker[positioning.WorkerID] = positioning
+	if intelligence {
+		if err = s.loadPositionings(ctx, req.TenantInfo, snapshot, workerIDs); err != nil {
+			return nil, err
+		}
 	}
 	if err = s.loadWorkersAndEquipment(ctx, req, snapshot, workerIDs, tractorIDs); err != nil {
 		return nil, err
@@ -217,11 +221,34 @@ func (s *Service) BuildSnapshot(
 	}
 
 	snapshot.Prepare()
+	if !intelligence {
+		return snapshot, nil
+	}
 	if err = s.anticipate(ctx, req, snapshot); err != nil {
 		return nil, err
 	}
 
 	return snapshot, nil
+}
+
+func (s *Service) loadPositionings(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	snapshot *FleetSnapshot,
+	workerIDs []pulid.ID,
+) error {
+	positioned, err := s.positionings.ListLive(ctx, &driverpositioningports.LiveRequest{
+		TenantInfo: tenantInfo,
+		WorkerIDs:  workerIDs,
+		Now:        snapshot.Now,
+	})
+	if err != nil {
+		return err
+	}
+	for _, positioning := range positioned {
+		snapshot.PositionedByWorker[positioning.WorkerID] = positioning
+	}
+	return nil
 }
 
 func (s *Service) anticipate(

@@ -26,6 +26,11 @@ export type ResourceDefinition = {
   displayName: string;
   description: string;
   category: string;
+  /**
+   * The feature catalog key of the feature the resource belongs to; never shown. Whether the
+   * organization's plan includes it is the permission manifest's `unavailableFeatures`.
+   */
+  feature: string;
   operations: OperationDefinition[];
   parentResource?: string;
   defaultSensitivity: string;

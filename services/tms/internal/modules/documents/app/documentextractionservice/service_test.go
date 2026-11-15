@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -141,6 +142,7 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		SearchProjection: searchProjection,
 		WorkflowStarter:  workflowStarter,
 		Paperwork:        paperwork,
+		Features:         plantest.AllFeatures(),
 	})
 
 	err = service.Reextract(t.Context(), documentID, tenantInfo)
@@ -183,6 +185,7 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 			t,
 		),
 		WorkflowStarter: workflowStarter,
+		Features:        plantest.AllFeatures(),
 	})
 
 	err = service.EnqueueExtraction(t.Context(), &document.Document{

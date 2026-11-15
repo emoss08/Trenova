@@ -17,10 +17,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -36,7 +36,7 @@ type Params struct {
 	Metrics  *metrics.Registry
 	Nova     llmports.TaskRunner
 	Deferrer llmports.TaskDeferrer
-	Plans    platformplanports.PlanService
+	Features platformcatalogports.FeatureGate
 	Quota    platformplanports.QuotaGuard
 }
 
@@ -46,7 +46,7 @@ type Service struct {
 	metrics  *metrics.Registry
 	nova     llmports.TaskRunner
 	deferrer llmports.TaskDeferrer
-	plans    platformplanports.PlanService
+	features platformcatalogports.FeatureGate
 	quota    platformplanports.QuotaGuard
 }
 
@@ -57,7 +57,7 @@ func New(p Params) documentaiextractionports.AIDocumentService {
 		metrics:  p.Metrics,
 		nova:     p.Nova,
 		deferrer: p.Deferrer,
-		plans:    p.Plans,
+		features: p.Features,
 		quota:    quotaservice.OrUnlimited(p.Quota),
 	}
 }
@@ -70,12 +70,7 @@ func (s *Service) ExtractionAvailability(
 		return documentaiextractionports.ExtractionOffOnServer, nil
 	}
 
-	allowed, err := planservice.Allows(
-		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityDocumentIntelligence,
-	)
+	allowed, err := s.features.Enabled(ctx, platformcatalog.FeatureDocumentIntelligence)
 	if err != nil {
 		return "", err
 	}
@@ -83,7 +78,7 @@ func (s *Service) ExtractionAvailability(
 		return documentaiextractionports.ExtractionNotInPlan, nil
 	}
 
-	ready, err := s.nova.Available(ctx, tenantInfo)
+	ready, err := s.nova.Available(ctx, tenantInfo, aitask.TaskDocumentExtraction)
 	if err != nil {
 		return "", err
 	}
@@ -160,6 +155,7 @@ func newExtractCall(req *documentaiextractionports.AIExtractRequest) *structured
 	return &structuredCall{
 		tenant:     req.TenantInfo,
 		documentID: req.DocumentID,
+		pages:      req.PageCount,
 		feature:    aiusage.FeatureDocumentIntelligenceExtract,
 		task:       aitask.TaskDocumentExtraction,
 		metric:     "extract",
@@ -264,6 +260,7 @@ func (s *Service) PollRateConfirmationBackgroundExtraction(
 			req.TenantInfo,
 			req.DocumentID,
 			aiusage.FeatureDocumentIntelligenceExtract,
+			req.PageCount,
 		),
 	})
 	if err != nil {

@@ -2,6 +2,7 @@ package capturejobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:          "capture-maintenance",
+			Feature:     platformcatalog.FeatureDocumentManagement,
 			Description: "Expire stale capture requests, restart lost batch runs and enforce intake retention",
 			// Every five minutes keeps an unanswered scan request from sitting
 			// in the web app long after its two minutes ran out, and restarts

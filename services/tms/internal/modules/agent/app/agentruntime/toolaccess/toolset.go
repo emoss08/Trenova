@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnhistory"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/modules/agent/app/planwording"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
@@ -25,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -140,6 +142,10 @@ type ToolSet struct {
 	// opened, by name and sorted, which the person's message carries to the
 	// model.
 	Opened []string
+	// NotOnPlan are the add-ons the organization's plan leaves out, for the
+	// prompt to name; empty when everything is on.
+	NotOnPlan []agentturn.PlanAddOn
+	offPlan   map[platformcatalog.FeatureKey]permissionports.PlanDenial
 }
 
 func (s *Access) NewToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet {
@@ -179,6 +185,7 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 		},
 		Self: req.Definition.ID,
 	}
+	s.readPlan(ctx, set)
 
 	disclosed := len(selected) > s.toolThreshold()
 	searchable := disclosed || len(set.Beyond) > 0
@@ -795,7 +802,18 @@ func (s *Access) unheldRefusal(set *ToolSet, name string, exists bool) string {
 	return b.String()
 }
 
+// UnheldOutcome answers a call to a tool the turn was not offered. A tool the
+// plan leaves out is refused naming its add-on, never as a tool an
+// administrator could add to the agent.
 func (s *Access) UnheldOutcome(set *ToolSet, name string) toolcall.Result {
+	if denial, off := s.planDenial(set, name); off {
+		return toolcall.Refused(
+			aitrace.OutcomeDenied,
+			planwording.Reason(denial),
+			"%s",
+			planwording.Refusal(fmt.Sprintf("Tool %q", name), denial, set.unattended),
+		)
+	}
 	if _, _, exists := s.ToolGate(name); exists {
 		return toolcall.Refused(aitrace.OutcomeDenied, aianalytics.ReasonNotHeld,
 			"%s", s.unheldRefusal(set, name, true))
@@ -965,6 +983,10 @@ func (s *Access) PermittedWith(
 		}
 		names = onlyOffered(names, *extensions)
 	}
+	// A tool whose work is an add-on's beyond its resource is withheld when
+	// the plan leaves that add-on out; the permission engine withholds one
+	// whose resource is off the plan.
+	names = s.onPlanOnly(ctx, names)
 
 	verdicts := s.toolVerdicts(ctx, actor, names)
 	for _, name := range names {

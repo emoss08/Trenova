@@ -62,6 +62,7 @@ func (s *Service) SendMailboxTest(
 
 	if _, err = s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
+		Type:           email.TypeMailboxTest,
 		Purpose:        email.PurposeOperations,
 		To:             []string{mailbox.Address},
 		Subject:        testSubject + token,

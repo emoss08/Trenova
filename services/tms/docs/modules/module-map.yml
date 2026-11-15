@@ -7,6 +7,7 @@ modules:
     domain:
       - configspec
       - editchange
+      - managedfeatures
       - managedusage
       - platformcatalog
       - settingversion
@@ -16,8 +17,8 @@ modules:
       - editioninfo
       - encryptionservice
       - entitlementservice
+      - managedfeaturesservice
       - managedusageservice
-      - platformbillingservice
       - realtimeservice
       - secretconfig
       - statuschange
@@ -25,6 +26,7 @@ modules:
       - usstateservice
       - versionservice
     repository:
+      - managedfeaturesrepository
       - managedusagerepository
       - settingversionrepository
       - usstaterepository
@@ -61,7 +63,6 @@ modules:
       - platformbundles
       - platformplan
       - protectedfield
-      - provisioning
       - rbac
       - recordkind
       - reportperms
@@ -73,6 +74,7 @@ modules:
       - shipmentperms
       - sso
       - subscription
+      - supportaccess
       - tenant
       - workerperms
       - workforcebundles
@@ -95,6 +97,7 @@ modules:
       - journalreviewservice
       - locationcodegenerator
       - mfaservice
+      - onplan
       - organizationservice
       - orgstructureservice
       - orgzone
@@ -110,6 +113,7 @@ modules:
       - sequenceconfigservice
       - settlementcontrolservice
       - shipmentcontrolservice
+      - supportaccessservice
       - tableinsightservice
       - tenanttimezone
       - userservice
@@ -141,6 +145,7 @@ modules:
       - shipmentcontrolrepository
       - ssoconfigrepository
       - ssoidentitylinkrepository
+      - supportaccessrepository
       - tenantbootstraprepository
       - tenantsyncrepository
       - userrepository
@@ -159,6 +164,7 @@ modules:
       - pagefavorite
       - report
       - sidebarpreference
+      - systememail
       - tablechangealert
       - tableconfiguration
       - tablelayout
@@ -181,6 +187,8 @@ modules:
       - reportscheduleservice
       - reportviewservice
       - sidebarpreferenceservice
+      - supportaccessnotice
+      - systememailservice
       - tablechangealertservice
       - tableconfigurationservice
       - tableexportservice
@@ -209,6 +217,7 @@ modules:
       - pushsubscriptionrepository
       - reportrepository
       - sidebarpreferencerepository
+      - systememailrepository
       - tableconfigurationrepository
       - tablelayoutrepository
       - tcaallowlistrepository

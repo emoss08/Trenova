@@ -6,7 +6,6 @@ import {
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
-  organizationSettingsSchema,
   storedOrganizationSettingsSchema,
   type OrganizationSettings,
 } from "@trenova/shared/types/organization";
@@ -50,7 +49,11 @@ export async function updateOrganizationSettingsGraphQL(
     },
   });
 
-  return safeParse(organizationSettingsSchema, data.updateOrganization, "OrganizationSettings");
+  return safeParse(
+    storedOrganizationSettingsSchema,
+    data.updateOrganization,
+    "OrganizationSettings",
+  );
 }
 
 function toOrganizationInput(values: OrganizationSettings): OrganizationInput {

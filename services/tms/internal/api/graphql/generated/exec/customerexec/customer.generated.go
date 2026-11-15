@@ -235,13 +235,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "statusUpdatePreference",
-				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.Customer)
 					return obj.StatusUpdatePreference, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomerStatusUpdatePreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐStatusUpdatePreference),
+				Marshal: gqlexec.Marshal(marshalOCustomerStatusUpdatePreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐStatusUpdatePreference),
 			},
 			{
 				Name:     "statusUpdateRecipients",
@@ -517,7 +516,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "creditBalance",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				ChildErr:   errNoChild13,
@@ -525,57 +523,52 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customer.CustomerBillingProfile)
 					return gqlexec.Resolver[CustomerBillingProfileResolver](ec, "CustomerBillingProfile@customer").CreditBalance(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
 				Name:     "creditStatus",
-				NonNull:  true,
 				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.CreditStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomerCreditStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCreditStatus),
+				Marshal: gqlexec.Marshal(marshalOCustomerCreditStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCreditStatus),
 			},
 			{
 				Name:     "enforceCreditLimit",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.EnforceCreditLimit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:     "autoCreditHold",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.AutoCreditHold, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:     "creditHoldReason",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.CreditHoldReason, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "creditHoldAutomatic",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.CreditHoldAutomatic, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:     "creditReviewedAt",
@@ -598,23 +591,21 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sendPaymentReminders",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.SendPaymentReminders, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:     "sendStatements",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.SendStatements, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:     "emailInvoiceEnabled",
@@ -628,13 +619,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "ediInvoiceEnabled",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.EDIInvoiceEnabled, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:     "invoiceNumberFormat",
@@ -686,13 +676,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "applyLateCharges",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.ApplyLateCharges, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:       "lateChargeRate",
@@ -707,13 +696,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "gracePeriodDays",
-				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.CustomerBillingProfile)
 					return obj.GracePeriodDays, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int16),
+				Marshal: gqlexec.Marshal(marshalOInt2int16),
 			},
 			{
 				Name:     "taxExempt",
@@ -1339,7 +1327,7 @@ var Shard = &gqlexec.Shard{
 type CustomerBillingProfileResolver interface {
 	MinConsolidatedAmount(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	CreditLimit(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
-	CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (string, error)
+	CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 	LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error)
 }
 
@@ -2751,22 +2739,6 @@ func marshalNCustomerPaymentTerm2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNCustomerStatusUpdatePreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐStatusUpdatePreference(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customer.StatusUpdatePreference) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
-func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
 func marshalNDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttype.DocumentType) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -2879,6 +2851,11 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
+func marshalOBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	return res
+}
+
 func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -2900,11 +2877,21 @@ func marshalOCustomerBillingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "CustomerBillingProfile", v)
 }
 
+func marshalOCustomerCreditStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCreditStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customer.CreditStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
 func marshalOCustomerEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomerEmailProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.CustomerEmailProfile) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CustomerEmailProfile", v)
+}
+
+func marshalOCustomerStatusUpdatePreference2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐStatusUpdatePreference(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customer.StatusUpdatePreference) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
 }
 
 func marshalOCustomerTrackingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋtrackingprofileᚐProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *trackingprofile.Profile) graphql.Marshaler {
@@ -2942,6 +2929,11 @@ func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx co
 		return graphql.Null
 	}
 	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOInt2int16(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int16) graphql.Marshaler {
+	res := graphql.MarshalInt16(v)
 	return res
 }
 

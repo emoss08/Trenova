@@ -32,9 +32,15 @@ providers and models it picks.
 - **Which providers.** An Anthropic Messages provider reaching Claude through a platform that
   names models by their Claude API id (`aiprovider.NovaPlatforms`: the Claude API, Claude
   Platform on AWS or Google Cloud, Vertex AI). Bedrock and Foundry name models their own way.
-- **Readiness.** `TaskRunner.Available(ctx, tenant)` (the router's `NovaReady`) is true when AI is
-  on and the Nova provider exists and is enabled. A feature asks it, never the provider list;
-  without it the error tells the organization to choose an Anthropic provider for Nova.
+- **Readiness.** `TaskRunner.Available(ctx, tenant, task)` (the router's `NovaReady`) is true
+  when AI is on, the organization's plan pays for the task (`aitask.Task.Features`: Document
+  Intelligence for reading documents into fields, Trenova AI for everything else) and the
+  Nova provider exists and is enabled. A feature asks it with the task it will run, never the
+  provider list. `Run` and `Converse` refuse before anything is dispatched with why: off the
+  plan `PLAN_RESTRICTED` naming the add-on, without a provider the error telling the
+  organization to choose an Anthropic provider for Nova; both are
+  `llmports.ErrNoProviderConfigured`, so a job that skips without a provider skips off the
+  plan.
 
 ## The ports
 

@@ -28,10 +28,8 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | Password changed, reset link or account invitation sent by an administrator | `audit_entries` | `userservice`, `passwordresetservice` | yes |
 | Two-factor code at sign-in, success or failure | `auth_events` | `authservice.VerifyMFAChallenge` | — |
 | Authenticator app enrolled, confirmed or turned off; recovery codes regenerated; two-factor reset by an administrator | `audit_entries` | `mfaservice` | yes |
-| Trenova support access allowed, changed or revoked (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
-| Trenova support session started, elevated to write, returned to read-only, ended (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
-| Request refused inside a Trenova support session (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
-| Platform staff member added or removed (`trenova cloud staff`, Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice.StaffManager` | yes |
+| Trenova support access granted, revoked, or ended on its own (managed instances) | `audit_entries` | `identity/app/supportaccessservice` | yes |
+| Trenova support session started, or an entry refused for an assertion that verified (managed instances) | `audit_entries`, `auth_events` | `identity/app/supportaccessservice.Enter` | yes |
 | Agent tool rule held lower or returned to its declared rule, with the reason and the agents whose answer moved | `audit_entries` | `agenttoolruleservice` | yes |
 | Money limits for agents changed in AI Control (one change's ceiling, a run's and a day's count and total) | `audit_entries` | `agentcontrolservice` | yes |
 | Agent memory written after outside content reviewed (directly, or by approving it as a suggestion), so it no longer holds the writes of the turns that read it | `audit_entries` | `agentmemoryservice` | yes |
@@ -223,31 +221,33 @@ Losing access ends it everywhere it is held, and each step is recorded:
   request is refused. This catches whatever a failed revocation above left open. A
   database error leaves the session alone and checks again on its next request.
 
-Support sessions draw their permissions from the support access grant, not from role
-assignments, and are not issued by sign-in, so none of this touches them; their own
-lifecycle (grant revoked or expired, staff removed) ends them.
+Support sessions draw their permissions from their grant, not from role assignments, and are not
+issued by sign-in, so none of this touches them; their grant ending (revoked or expired) ends them,
+read on every request.
 
 ## Trenova support sessions
 
-Trenova Cloud staff enter a customer organization only through a grant its own
-administrators made (Admin > Support access). Everything about that access is written
-to the customer's own `audit_entries`, under the organization resource, with
-`metadata.supportAccess` naming the event, so the organization's administrators read it
-in their audit log:
+On a managed instance Trenova staff enter an organization only under a grant its own
+administrators made (Admin > Trenova support access), with a single-use assertion the control
+plane signs ([managed-mode.md](managed-mode.md#support-access)). The grant's lifecycle is written
+through the `SecurityAuditor` against resource `support_access`, with `metadata.supportAccess`
+naming the event: `support_access.granted` and `support_access.revoked` by the administrator, with
+the reason; `support_access.expired` by the system when the expiry sweep
+(`support-access-expiry-sweep`, every five minutes) finds a grant that ended on its own;
+`support_access.session_started` with the staff member's address and name and the assertion id;
+and `support_access.entry_refused` for an assertion that verified but was replayed or named no
+live grant. An assertion that did not verify is logged by the instance and reaches no customer's
+log. A session start and a refused entry are also sign-in activity, provider `trenova_support`.
 
-- grant created, changed or revoked, by the administrator who did it;
-- session started (staff member, reason, ticket), elevated to write (reason, ticket),
-  returned to read-only and ended (with the reason it ended: staff exit, expiry, grant
-  revoked or expired, staff removed, replaced by a newer session, sign-out, two-factor
-  sign-in lapsed);
-- every request the session was refused (read-only or deny list), with the method and
-  path or GraphQL field.
-
-Writes made in a write-elevated session are ordinary writes by the session's
-principal, a synthetic, inactive user named "Trenova Support (staff name)", so each
-domain audit entry names support as the actor. Admins who can update the organization
-are notified when a session starts. Platform staff membership changes are recorded by
-`trenova cloud staff add|remove` against the staff member's own organization.
+Everything a support session does is an ordinary audit entry credited to the support principal:
+principal type `support`, principal id the grant, user id the grant's system-owned support user
+(never one of the organization's people), channel `support`, `actor_name`
+"Trenova support: <name> (<address>)", and `supportGrantId` and `supportStaffEmail` in its
+metadata (`audit.Entry.CreditSupport`, applied from the request context in `auditservice`). An
+entry about another actor written in the same request keeps its actor and still carries the grant
+in its metadata. The grants page lists one grant's actions by filtering the audit log by its
+principal id, so a reader sees only the kinds of record they could read on the audit log itself.
+The organization's administrators holding `support_access` read are notified when a session starts.
 
 ## Document access
 

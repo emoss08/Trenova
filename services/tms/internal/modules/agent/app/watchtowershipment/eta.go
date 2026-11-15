@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
@@ -211,4 +212,8 @@ func (o *EtaAtRiskObserver) StopEtasRefreshed(
 			o.projector.Resolve(ctx, tenant, watchtower.SourceEtaAtRisk, id.String())
 		}
 	}
+}
+
+func (o *EtaAtRiskObserver) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureAIWatchtower
 }

@@ -3,6 +3,7 @@ package stopetaports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -76,6 +77,7 @@ type RefreshRequester interface {
 }
 
 type Observer interface {
+	platformcatalogports.FeatureObserver
 	StopEtasRefreshed(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

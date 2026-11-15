@@ -2,7 +2,7 @@
 # each was billed, what settled it, its disputes, and where it went. The
 # shipments it bills are read a page at a time through shipments, and the
 # lines themselves stay on the invoice's page.
-query DeskInvoiceCard($id: ID!) @requiresRead(kind: "invoice_dispute") {
+query DeskInvoiceCard($id: ID!) @requiresRead(kind: "invoice_dispute") @requiresRead(kind: "customer_payment") @requiresRead(kind: "edi") {
   invoice(id: $id) {
     id
     number
@@ -96,6 +96,7 @@ query DeskInvoiceCard($id: ID!) @requiresRead(kind: "invoice_dispute") {
       appliedAmountMinor
       accountingDate
       status
+      createdAt
       unappliedAt
       unappliedReason
       creditMemo {

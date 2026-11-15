@@ -2,6 +2,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import type { TractorRow } from "@/lib/graphql/equipment-table";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { tractorSchema } from "@/types/tractor";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,6 +56,9 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
     defaultValues: buildTractorDefaults(),
   });
 
+  // Inspections stream from Samsara, which is Visibility's; without it the tractor has no such tab.
+  const samsaraOnPlan = usePlanFeature(PlanFeature.Samsara).available;
+
   const documentsTabs = useMemo(
     () => [
       {
@@ -66,17 +71,21 @@ export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
           resourceId: row?.id,
         },
       },
-      {
-        value: "inspections",
-        label: t("Inspections"),
-        icon: ClipboardCheckIcon,
-        content: InspectionsTab,
-        contentProps: {
-          tractorId: row?.id,
-        },
-      },
+      ...(samsaraOnPlan
+        ? [
+            {
+              value: "inspections",
+              label: t("Inspections"),
+              icon: ClipboardCheckIcon,
+              content: InspectionsTab,
+              contentProps: {
+                tractorId: row?.id,
+              },
+            },
+          ]
+        : []),
     ],
-    [row?.id, t],
+    [row?.id, samsaraOnPlan, t],
   );
 
   if (mode === "edit") {

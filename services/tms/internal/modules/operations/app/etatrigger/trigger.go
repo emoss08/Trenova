@@ -3,6 +3,7 @@ package etatrigger
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -91,4 +92,8 @@ func (t *Trigger) CheckCallRecorded(
 	shipmentID, _ pulid.ID,
 ) {
 	t.requester.RequestRefresh(ctx, tenantInfo, shipmentID)
+}
+
+func (t *Trigger) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureCustomerTracking
 }

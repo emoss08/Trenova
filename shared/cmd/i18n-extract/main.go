@@ -108,6 +108,7 @@ var noMessage = map[string]struct{}{
 	"NewCanceledError":                  {},
 	"NewQuotaExceededError":             {},
 	"NewPlanRestrictionError":           {},
+	"NewFeatureRestrictionError":        {},
 	"NewPlanRefusalError":               {},
 }
 

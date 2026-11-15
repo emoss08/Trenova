@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchplanprice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -126,6 +127,7 @@ func newPlanningRig(t *testing.T, p planningRigParams) *planningRig {
 			ProposalRepo: proposals,
 		}),
 		WorkerRepo: &namedWorkers{},
+		Features:   plantest.AllFeatures(),
 	})
 
 	return &planningRig{

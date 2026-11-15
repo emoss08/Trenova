@@ -1,5 +1,6 @@
 import { CarrierTrackingLink } from "@/components/carrier-assignment/carrier-tracking-link";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
+import { PlanFeature } from "@/lib/plan-feature";
 import { assignmentService } from "@/services/assignment";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRightIcon, User01Icon, UserPlus01Icon } from "@trenova/shared/components/icons";
@@ -17,6 +18,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatCurrency, getNameInitials } from "@trenova/shared/lib/utils";
 import type { Assignment, CarrierAssignment } from "@trenova/shared/types/shipment";
@@ -126,6 +128,9 @@ function CarrierCoverage({
   canTrack: boolean;
 }) {
   const t = useT();
+  // Rate confirmations are Carrier & Brokerage's.
+  const brokerageOnPlan = usePlanFeature(PlanFeature.CarrierBrokerage).available;
+  const showsRateConfirmation = Boolean(carrierAssignment.id) && brokerageOnPlan;
   const currency = carrierAssignment.currencyCode;
   const name = carrierAssignment.carrier?.name || t("External carrier");
   const equipment = [
@@ -199,9 +204,9 @@ function CarrierCoverage({
               {money(carrierAssignment.accessorialTotal, currency)}
             </Fact>
           </dl>
-          {moveId && (carrierAssignment.id || canTrack) && (
+          {moveId && (showsRateConfirmation || canTrack) && (
             <div className="flex flex-col divide-y rounded-md border">
-              {carrierAssignment.id && (
+              {showsRateConfirmation && carrierAssignment.id && (
                 <div className="px-2.5 py-2">
                   <RateConfirmationActions
                     moveId={moveId}

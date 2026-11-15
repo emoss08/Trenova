@@ -30,8 +30,8 @@ func (r *CustomerBillingProfileResolver) CreditLimit(ctx context.Context, obj *c
 	return gqldecimal.NullDecimalToStringPtr(obj.CreditLimit), nil
 }
 
-func (r *CustomerBillingProfileResolver) CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (string, error) {
-	return obj.CreditBalance.String(), nil
+func (r *CustomerBillingProfileResolver) CreditBalance(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {
+	return new(obj.CreditBalance.String()), nil
 }
 
 func (r *CustomerBillingProfileResolver) LateChargeRate(ctx context.Context, obj *customer.CustomerBillingProfile) (*string, error) {

@@ -23,7 +23,10 @@ func (r *refusingRepo) Generate(
 	context.Context,
 	*recurringshipmentports.GenerateRecurringShipmentRequest,
 ) (*recurringshipmentports.GenerateRecurringShipmentResult, error) {
-	return nil, errortypes.NewPlanRestrictionError("", platformplan.ReasonSubscriptionReadOnly, "free_demo")
+	return nil, errortypes.NewPlanRestrictionError(
+		platformplan.ReasonSubscriptionReadOnly,
+		"free_demo",
+	)
 }
 
 func (r *refusingRepo) RecordGenerationFailure(

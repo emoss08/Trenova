@@ -1,5 +1,5 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
-import { PlanCapability } from "@/lib/plan-capability";
+import { PlanFeature } from "@/lib/plan-feature";
 import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
@@ -183,6 +183,7 @@ const dispatchModule: NavModule = {
       path: "/dispatch/outlook",
       resource: Resource.ShipmentMove,
       capability: OrganizationCapability.AssetOperations,
+      planFeature: PlanFeature.DispatchIntelligence,
     },
     {
       id: "locations",
@@ -202,14 +203,14 @@ const dispatchModule: NavModule = {
       label: "Carrier monitoring",
       path: "/dispatch/carrier-monitoring",
       resource: Resource.CarrierIntelligence,
-      planCapability: PlanCapability.CarrierIntelligencePaid,
+      planFeature: PlanFeature.CarrierBrokerage,
     },
     {
       id: "carrier-sourcing",
       label: "Carrier sourcing",
       path: "/dispatch/carrier-sourcing",
       resource: Resource.CarrierSourcing,
-      planCapability: PlanCapability.CarrierIntelligencePaid,
+      planFeature: PlanFeature.CarrierBrokerage,
       capability: OrganizationCapability.Brokerage,
     },
     {
@@ -532,11 +533,19 @@ const billingModule: NavModule = {
       resource: Resource.Invoice,
     },
     {
+      id: "invoice-register",
+      label: "Invoice register",
+      path: "/billing/invoice-register",
+      keywords: ["invoice list", "invoice ledger", "all invoices", "invoice history"],
+      resource: Resource.Invoice,
+    },
+    {
       id: "factoring",
       label: "Factoring",
       path: "/billing/factoring",
       keywords: ["factor", "factoring", "ready to factor", "notice of assignment", "noa"],
       resource: Resource.Invoice,
+      planFeature: PlanFeature.Factoring,
     },
     {
       id: "pending-approvals",
@@ -808,7 +817,7 @@ const ediModule: NavModule = {
   description: "Internal partner exchange and load tender workflow",
   basePath: "/edi/overview",
   routePrefixes: ["/edi"],
-  planCapability: PlanCapability.Integrations,
+  planFeature: PlanFeature.Administration,
   navigation: [
     {
       id: "edi-overview",
@@ -894,6 +903,7 @@ const accountingModule: NavModule = {
       id: "accounting-dashboard",
       label: "Accounting dashboard",
       path: "/accounting",
+      resource: Resource.AccountsReceivable,
     },
     {
       id: "manual-journals",
@@ -947,28 +957,25 @@ const accountingModule: NavModule = {
           id: "ar-aging",
           label: "AR aging",
           path: "/accounting/ar/aging",
+          resource: Resource.AccountsReceivable,
         },
         {
           id: "customer-ledger",
           label: "Customer ledger",
           path: "/accounting/ar/customer-ledger",
+          resource: Resource.AccountsReceivable,
         },
         {
           id: "ar-open-items",
           label: "Open items",
           path: "/accounting/ar/open-items",
+          resource: Resource.AccountsReceivable,
         },
         {
           id: "collections",
           label: "Collections",
           path: "/accounting/ar/collections",
           resource: Resource.AccountsReceivable,
-        },
-        {
-          id: "invoice-register",
-          label: "Invoice register",
-          path: "/accounting/ar/invoices",
-          resource: Resource.Invoice,
         },
         {
           id: "late-charges",
@@ -980,6 +987,7 @@ const accountingModule: NavModule = {
           id: "customer-payments",
           label: "Customer payments",
           path: "/accounting/ar/payments",
+          resource: Resource.CustomerPayment,
         },
       ],
     },
@@ -1657,7 +1665,7 @@ export const adminLinks: SidebarLink[] = [
     group: "AI & Automation",
     resource: Resource.AgentControl,
     requiredOperation: Operation.Read,
-    planCapability: PlanCapability.AgentAutomation,
+    planFeature: PlanFeature.AgentAutomation,
   },
   {
     href: "/admin/document-intelligence",
@@ -1666,7 +1674,7 @@ export const adminLinks: SidebarLink[] = [
     group: "AI & Automation",
     resource: Resource.DocumentControl,
     requiredOperation: Operation.Read,
-    planCapability: PlanCapability.DocumentIntelligence,
+    planFeature: PlanFeature.DocumentIntelligence,
   },
   {
     href: "/admin/capture",
@@ -1674,7 +1682,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Document Management",
     resource: Resource.CaptureProfile,
     requiredOperation: Operation.Read,
-    planCapability: PlanCapability.DocumentIntelligence,
+    planFeature: PlanFeature.DocumentIntelligence,
   },
   {
     href: "/admin/sequence-configs",
@@ -1772,6 +1780,22 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/support-access",
+    title: "Trenova support access",
+    group: "Organization",
+    resource: Resource.SupportAccess,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/plan",
+    title: "Your plan",
+    keywords: ["subscription", "add-ons", "what we pay for", "features"],
+    group: "Organization",
+    resource: Resource.Organization,
+    requiredOperation: Operation.Update,
+    managedOnly: true,
+  },
+  {
     href: "#",
     title: "Custom reports",
     group: "Reporting & Analytics",
@@ -1795,7 +1819,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Email & SMS",
     resource: Resource.EmailLog,
     requiredOperation: Operation.Read,
-    planCapability: PlanCapability.EmailOutbound,
+    planFeature: PlanFeature.Administration,
   },
   {
     href: "/organization/email-profiles/",
@@ -1803,7 +1827,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Email & SMS",
     resource: Resource.EmailProfile,
     requiredOperation: Operation.Read,
-    planCapability: PlanCapability.EmailOutbound,
+    planFeature: PlanFeature.Administration,
   },
   {
     href: "#",
@@ -1831,7 +1855,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
     resource: Resource.Integration,
     requiredOperation: Operation.Read,
-    planCapability: PlanCapability.Integrations,
+    planFeature: PlanFeature.Administration,
   },
   {
     href: "/admin/inbound-mailboxes",
@@ -1846,7 +1870,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
     resource: Resource.APIKey,
     requiredOperation: Operation.Read,
-    planCapability: PlanCapability.APIKeys,
+    planFeature: PlanFeature.APIKeys,
   },
   {
     href: "/organization/pattern-config/",

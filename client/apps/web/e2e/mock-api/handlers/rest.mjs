@@ -66,11 +66,7 @@ const ROUTES = [
     /^\/api\/v1\/auth\/csrf\/?$/,
     () => ({ csrfToken: "mock-csrf", headerName: "X-CSRF-Token" }),
   ],
-  [
-    "GET",
-    /^\/api\/v1\/users\/me\/organizations\/?$/,
-    (state) => [currentOrganization(state)],
-  ],
+  ["GET", /^\/api\/v1\/users\/me\/organizations\/?$/, (state) => [currentOrganization(state)]],
   [
     "GET",
     /^\/api\/v1\/integrations\/GoogleMaps\/runtime-config\/?$/,
@@ -101,6 +97,20 @@ const ROUTES = [
   ["GET", /^\/api\/v1\/page-favorites\/check\/?$/, () => ({ favorited: false })],
   ["GET", /^\/api\/v1\/page-favorites\/?$/, () => []],
   ["GET", /^\/api\/v1\/documents\/uploads\/active\/?$/, () => []],
+  [
+    "GET",
+    /^\/api\/v1\/documents\/storage\/?$/,
+    // storagequotaservice.Status: bytes stored against the plan's included storage, on a
+    // managed instance whose plan bills overage, below the warning line.
+    () => ({
+      managed: true,
+      used: 41_234_567_890,
+      included: 53_687_091_200,
+      overage: true,
+      warning: false,
+      stopped: false,
+    }),
+  ],
   ["GET", /^\/api\/v1\/realtime\/stream\/?$/, () => ({ __stream: true })],
   ["GET", /^\/api\/v1\/insights\/?$/, () => ({ items: [], total: 0 })],
   ["GET", /^\/api\/v1\/tables\/?$/, () => ({ results: [], count: 0 })],

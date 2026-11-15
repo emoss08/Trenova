@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -188,6 +189,7 @@ func (s *Service) dispatch(
 ) (*triage.Reply, error) {
 	sent, err := s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantOf(message),
+		Type:           email.TypeInboundReply,
 		Purpose:        email.PurposeOperations,
 		FromEmail:      reply.FromAddress,
 		To:             []string{reply.ToAddress},
@@ -491,4 +493,8 @@ func replySubject(subject string) string {
 	}
 
 	return stringutils.TruncateRunes(replySubjectPrefix+trimmed, triage.MaxReplySubjectLength)
+}
+
+func (s *tracker) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureAITriage
 }

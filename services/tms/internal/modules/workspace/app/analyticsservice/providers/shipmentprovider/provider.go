@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -130,11 +131,12 @@ func (p *Provider) GetAnalyticsData(
 	ctx context.Context,
 	opts *kernelports.AnalyticsRequestOptions,
 ) (kernelports.AnalyticsData, error) {
-	data, err := p.analyticsData(ctx, opts)
+	access := p.accessFor(ctx, opts)
+	data, err := p.analyticsData(ctx, opts, access)
 	if err != nil {
 		return nil, err
 	}
-	p.accessFor(ctx, opts).gate(ctx, data)
+	access.gate(ctx, data)
 
 	return data, nil
 }
@@ -142,6 +144,7 @@ func (p *Provider) GetAnalyticsData(
 func (p *Provider) analyticsData(
 	ctx context.Context,
 	opts *kernelports.AnalyticsRequestOptions,
+	access *cardAccess,
 ) (kernelports.AnalyticsData, error) {
 	tz := timeutils.NormalizeTimezone(opts.Timezone)
 
@@ -155,9 +158,13 @@ func (p *Provider) analyticsData(
 	case laneHeatmapInclude:
 		return p.readLaneHeatmap(ctx, opts.WindowDays)
 	case kernelports.AnalyticsIncludeMetrics:
-		return p.readCards(ctx, opts, tz, false)
+		return p.readCards(ctx, opts, tz, cardSet{})
 	default:
-		return p.readCards(ctx, opts, tz, true)
+		readsDetention, err := access.readsDetention(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return p.readCards(ctx, opts, tz, cardSet{full: true, detention: readsDetention})
 	}
 }
 
@@ -225,11 +232,16 @@ type cardRows struct {
 // profitability summary and the dispatch counts are read by their owners in
 // their own transactions: reading the costing control creates its defaults the
 // first time, which a read-only transaction would refuse.
+type cardSet struct {
+	full      bool
+	detention bool
+}
+
 func (p *Provider) readCards(
 	ctx context.Context,
 	opts *kernelports.AnalyticsRequestOptions,
 	tz string,
-	full bool,
+	set cardSet,
 ) (kernelports.AnalyticsData, error) {
 	window, err := shipmentAnalyticsWindow(tz)
 	if err != nil {
@@ -251,7 +263,7 @@ func (p *Provider) readCards(
 
 	var pickupsStart time.Time
 	var laneDays int
-	if full {
+	if set.full {
 		var pickups keel.Query[*shipment.Stop]
 		pickupsStart, pickups, err = tomorrowsPickups(tomorrowsPickupsRequest{tz: tz})
 		if err != nil {
@@ -262,8 +274,12 @@ func (p *Provider) readCards(
 		laneDays, lanes = laneHeatmapRead(window.Now, opts.WindowDays)
 		currentStart, previousStart := customerMixWindow(window.Now)
 
+		if set.detention {
+			items = append(items,
+				keel.IntoSlice(detentionWatchlistQuery(window.Now), &rows.detention),
+			)
+		}
 		items = append(items,
-			keel.IntoSlice(detentionWatchlistQuery(window.Now), &rows.detention),
 			keel.IntoSlice(
 				customerMixQuery(window.Now, currentStart, previousStart),
 				&rows.customerMix,
@@ -286,7 +302,7 @@ func (p *Provider) readCards(
 		return nil, err
 	}
 
-	profitability, err := p.getProfitability(ctx, opts.OrgID, opts.BuID)
+	profitability, err := p.readProfitability(ctx, opts)
 	if err != nil {
 		return nil, fmt.Errorf("read profitability summary: %w", err)
 	}
@@ -307,8 +323,11 @@ func (p *Provider) readCards(
 		"profitability":    profitability,
 		"dispatch":         dispatch,
 	}
-	if full {
-		data["detentionWatchlist"] = detentionWatchlistCard(rows.detention)
+	if set.full {
+		data["detentionWatchlist"] = (*DetentionWatchlistCard)(nil)
+		if set.detention {
+			data["detentionWatchlist"] = detentionWatchlistCard(rows.detention)
+		}
 		data["customerMix"] = buildCustomerMixCard(rows.customerMix)
 		data["tomorrowsPickups"] = buildTomorrowsPickupsCard(pickupsStart, rows.pickups)
 		data["laneHeatmap"] = buildLaneHeatmapCard(laneDays, rows.lanes)
@@ -353,6 +372,26 @@ func (p *Provider) getDispatch(
 		DueToday:  summary.DueTodayMoves,
 		Uncovered: summary.UncoveredMoves,
 	}, nil
+}
+
+// readProfitability reads the fleet profitability summary unless the plan
+// leaves out the costing setup it is computed from, which belongs to Accounting
+// & Cash. A plan without it answers a locked card and the costing figures are
+// not computed.
+func (p *Provider) readProfitability(
+	ctx context.Context,
+	opts *kernelports.AnalyticsRequestOptions,
+) (*ProfitabilityCard, error) {
+	plan := p.views.Person(analyticsActor(opts), permissionports.PersonGrants{})
+	denial, off, err := plan.PlanDenial(ctx, permission.ResourceCostingControl, "")
+	if err != nil {
+		return nil, fmt.Errorf("read whether the plan includes costing: %w", err)
+	}
+	if off {
+		return &ProfitabilityCard{PlanDenial: &denial}, nil
+	}
+
+	return p.getProfitability(ctx, opts.OrgID, opts.BuID)
 }
 
 func (p *Provider) getProfitability(

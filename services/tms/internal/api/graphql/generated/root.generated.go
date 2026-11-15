@@ -94,6 +94,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/latechargeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationcategoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/managedplanexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/manualjournalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/notificationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orderexec"
@@ -125,6 +126,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sidebarpreferenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/storedmileageexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/supportaccessexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablechangealertexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tableconfigurationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablelayoutexec"
@@ -252,6 +254,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		latechargeexec.Shard,
 		locationexec.Shard,
 		locationcategoryexec.Shard,
+		managedplanexec.Shard,
 		manualjournalexec.Shard,
 		notificationexec.Shard,
 		orderexec.Shard,
@@ -282,6 +285,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		shipmenttypeexec.Shard,
 		sidebarpreferenceexec.Shard,
 		storedmileageexec.Shard,
+		supportaccessexec.Shard,
 		tablechangealertexec.Shard,
 		tableconfigurationexec.Shard,
 		tablelayoutexec.Shard,

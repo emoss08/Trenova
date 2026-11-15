@@ -6,15 +6,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -35,7 +34,7 @@ type Params struct {
 	Scopes   permissionports.ScopePolicy
 
 	SecurityConfig *securityconfig.Config
-	Plans          platformplanports.PlanService
+	Features       platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -46,7 +45,7 @@ type Service struct {
 	engine   permissionports.PermissionEngine
 	scopes   permissionports.ScopePolicy
 	cfg      *securityconfig.Config
-	plans    platformplanports.PlanService
+	features platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service {
@@ -58,7 +57,7 @@ func New(p Params) *Service {
 		engine:   p.Engine,
 		scopes:   p.Scopes,
 		cfg:      p.SecurityConfig,
-		plans:    p.Plans,
+		features: p.Features,
 	}
 }
 
@@ -111,11 +110,10 @@ func (s *Service) CreateAPIKey(
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	if err := planservice.RequireCapability(
+	if err := platformcatalogports.RequireFeature(
 		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityAPIKeys,
+		s.features,
+		platformcatalog.FeatureAPIKeys,
 	); err != nil {
 		return nil, err
 	}
@@ -254,11 +252,10 @@ func (s *Service) RotateAPIKey(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*apikeyports.APIKeySecretResponse, error) {
-	if err := planservice.RequireCapability(
+	if err := platformcatalogports.RequireFeature(
 		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityAPIKeys,
+		s.features,
+		platformcatalog.FeatureAPIKeys,
 	); err != nil {
 		return nil, err
 	}
@@ -365,6 +362,7 @@ func (s *Service) GetAllowedResources(ctx context.Context) []AllowedResourceCate
 			DisplayName:        i18n.T(ctx, def.DisplayName),
 			Description:        i18n.T(ctx, def.Description),
 			Category:           def.Category,
+			Feature:            def.Feature,
 			ParentResource:     def.ParentResource,
 			DefaultSensitivity: def.DefaultSensitivity,
 		}

@@ -143,6 +143,8 @@ import { createSelectionColumn } from "./data-table-selection-column";
 import { DataTableToolbar } from "./data-table-toolbar";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { nullWhenAbsent } from "@trenova/shared/lib/error-presentation";
+import { useUnavailableFeatures } from "@trenova/shared/hooks/use-plan-feature";
+import { columnsOnPlan } from "./plan-columns";
 
 const BULK_SELECT_MAX = 1000;
 const COLUMN_DRAG_MODIFIERS = [restrictToHorizontalAxis];
@@ -172,7 +174,7 @@ const NO_SCOPE_FILTERS: FieldFilter[] = [];
 const noop = () => {};
 
 export function DataTable<TData extends Record<string, any>>({
-  columns,
+  columns: allColumns,
   filterFields: tableFilterFields = NO_FILTER_FIELDS,
   name,
   queryKey,
@@ -207,6 +209,12 @@ export function DataTable<TData extends Record<string, any>>({
   footerLeading,
 }: DataTableProps<TData>) {
   const t = useT();
+  // A column that belongs to an add-on the plan leaves out is not part of the table.
+  const unavailableFeatures = useUnavailableFeatures();
+  const columns = useMemo(
+    () => columnsOnPlan(allColumns, unavailableFeatures),
+    [allColumns, unavailableFeatures],
+  );
 
   const contextMenuActions = useGuardedRowActions<TData>(
     unguardedContextMenuActions ?? NO_ROW_ACTIONS,

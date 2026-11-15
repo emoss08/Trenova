@@ -1,6 +1,4 @@
 import { appNavigationModules } from "@/config/app-navigation";
-import { usePlanRestrictions } from "@/hooks/use-plan-restrictions";
-import { isPlanRestricted } from "@/lib/plan-capability";
 import {
   isNavGroup,
   type NavGroup,
@@ -9,6 +7,7 @@ import {
   type QuickActionCommand,
 } from "@/config/navigation.types";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import { isFeatureOnPlan, useUnavailableFeatures } from "@trenova/shared/hooks/use-plan-feature";
 import { usePublicConfig } from "@trenova/shared/hooks/use-public-config";
 import type { PlatformMode } from "@trenova/shared/types/platform";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -16,14 +15,21 @@ import {
   hasOrganizationCapability,
   type OrganizationCapabilities,
 } from "@trenova/shared/types/organization-capability";
-import { Operation, type OperationType } from "@trenova/shared/types/permission";
+import {
+  Operation,
+  type OperationType,
+  type UnavailableFeature,
+} from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 
 export interface NavAccessContext {
   hasPermission: (resource: string, operation: OperationType) => boolean;
   capabilities: OrganizationCapabilities;
-  /** What the organization's plan withholds; absent means nothing. */
-  planRestrictions?: readonly string[];
+  /**
+   * The features the organization's plan leaves out (the manifest's `unavailableFeatures`);
+   * absent means none. An entry for one of them is not shown at all.
+   */
+  unavailableFeatures?: readonly UnavailableFeature[];
   /** The install's platform mode, for entries that exist only in one. */
   platformMode?: PlatformMode;
 }
@@ -41,7 +47,7 @@ export function canAccessNavEntry(
     return false;
   }
 
-  if (isPlanRestricted(context.planRestrictions, entry.planCapability)) {
+  if (!isFeatureOnPlan(context.unavailableFeatures ?? [], entry.planFeature)) {
     return false;
   }
 
@@ -68,7 +74,7 @@ export function canAccessQuickAction(
     return false;
   }
 
-  if (isPlanRestricted(context.planRestrictions, action.planCapability)) {
+  if (!isFeatureOnPlan(context.unavailableFeatures ?? [], action.planFeature)) {
     return false;
   }
 
@@ -122,7 +128,7 @@ function useNavAccessContext(): NavAccessContext {
   const manifest = usePermissionStore((state) => state.manifest);
   const hasPermission = usePermissionStore((state) => state.hasPermission);
   const capabilities = useOrgCapabilities();
-  const planRestrictions = usePlanRestrictions();
+  const unavailableFeatures = useUnavailableFeatures();
   const { config } = usePublicConfig();
   const platformMode = config.platformMode;
 
@@ -133,10 +139,10 @@ function useNavAccessContext(): NavAccessContext {
     () => ({
       hasPermission: manifest ? hasPermission : PERMIT_ALL,
       capabilities,
-      planRestrictions,
+      unavailableFeatures,
       platformMode,
     }),
-    [manifest, hasPermission, capabilities, planRestrictions, platformMode],
+    [manifest, hasPermission, capabilities, unavailableFeatures, platformMode],
   );
 }
 

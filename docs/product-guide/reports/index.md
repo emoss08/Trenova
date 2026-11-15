@@ -54,4 +54,8 @@ Keywords: new dashboard, report tiles, KPI board
 ## Notes
 Needs read access to reports. **New report**, **New dashboard**, **Duplicate** and customizing a gallery report need create permission; **Schedules** needs export permission on reports. Each card shows whether the report is **Shared** or **Private**, set by its **Visibility** when saved.
 
+A gallery report that reads data from an add-on your organization's plan does not include is shown as a locked card with **Not on your plan** and the add-on it is part of. It cannot be explored, run or customized, and the dashboard tile picker does not offer it, until the add-on is added.
+
+A dashboard tile whose report reads an add-on the plan does not include shows a locked card naming the add-on, and a dashboard export leaves that tile out and names it on the first sheet. A scheduled run of such a report fails, and its owner is told which add-on it needs.
+
 **Schedules** lists the schedules you set up, and on a report you own every schedule on it, because deleting the report deletes them too. A schedule runs with the permissions of the person who set it up, and only they can change, turn off or delete it; a teammate's schedule shows **Set up by a teammate**.

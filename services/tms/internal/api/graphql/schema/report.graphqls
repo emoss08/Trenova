@@ -109,9 +109,44 @@ type ReportCatalogEntity {
 }
 
 """
+The add-on a part of the product belongs to, named because the
+organization's plan does not include it.
+"""
+type ReportPlanDenial {
+  "The feature's key."
+  feature: String!
+  "The feature's name, such as Factoring."
+  featureName: String!
+  "The add-on's key."
+  addOn: String!
+  "The add-on's name, such as Accounting & Cash."
+  addOnName: String!
+}
+
+"""
+A table, or a field or edge of a table on the plan, that the organization's
+plan leaves out of the catalog. It is never offered to build with; it names
+what a saved report reads that its plan does not include.
+"""
+type ReportPlanWithheld {
+  "The key of the table."
+  entity: String!
+  "The table's label: its plural for a whole table, its singular for a field or edge."
+  entityLabel: String!
+  "The field's key or the edge's name; absent for a whole table."
+  name: String
+  label: String!
+  "Whether name is an edge."
+  edge: Boolean!
+  denial: ReportPlanDenial!
+}
+
+"""
 The report catalog as the caller may use it: every kind they can read, and
 every kind they cannot read that they can still reach through a join, with
-only its reference-view fields available.
+only its reference-view fields available. Tables, fields and edges the
+organization's plan leaves out are not in entities; they are listed in
+withheldByPlan.
 """
 type ReportCatalog {
   version: String!
@@ -123,6 +158,8 @@ type ReportCatalog {
   """
   rules: JSON!
   entities: [ReportCatalogEntity!]!
+  "What the organization's plan leaves out of the catalog, with the add-on each needs."
+  withheldByPlan: [ReportPlanWithheld!]!
 }
 
 # --- Canned reports ----------------------------------------------------------
@@ -136,6 +173,13 @@ type CannedReport {
   tags: [String!]!
   defaultFormat: String!
   definition: JSON!
+  """
+  Whether the organization's plan includes everything the report reads. An
+  unavailable report cannot be run, customized or explored.
+  """
+  available: Boolean!
+  "The add-on the report needs, when it is not available."
+  planDenial: ReportPlanDenial
 }
 
 # --- Report definitions ------------------------------------------------------
@@ -584,9 +628,12 @@ type ReportRunDeskCard {
   sample: ReportPreview
   """
   Why a finished run's result is not shown: access (the person can no longer
-  read everything it shows) or changed (the report no longer runs as it did).
+  read everything it shows), plan (it reads data the organization's plan no
+  longer includes) or changed (the report no longer runs as it did).
   """
   withheld: String
+  "The add-on the run's report needs, when withheld is plan."
+  withheldByPlan: ReportPlanDenial
   "The person's previous finished run of the same report with the same parameters."
   previous: ReportRunDeskPrevious
   "The schedule the run came from."

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/integrationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/geoutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,6 +55,7 @@ func TestGetMoveCandidates_ReadsTheDriversNearestThePickup(t *testing.T) {
 				consoleRepo:         console,
 				dispatchControlRepo: controls,
 				candidates: dispatchcandidateservice.New(dispatchcandidateservice.Params{
+					Features:        plantest.AllFeatures(),
 					Positionings:    positioningtest.None{},
 					ConsoleRepo:     console,
 					IntegrationRepo: integrations,

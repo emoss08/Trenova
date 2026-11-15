@@ -50,10 +50,6 @@ func (s *Service) CompleteStructured(
 		return nil, errortypes.NewBusinessError(completionengine.AIDisabledMessage)
 	}
 
-	if err := s.AssertWithinSpend(ctx, req.TenantInfo); err != nil {
-		return nil, err
-	}
-
 	outcome, err := s.Run(ctx, completionengine.StructuredRun(req))
 	if err != nil {
 		return nil, err

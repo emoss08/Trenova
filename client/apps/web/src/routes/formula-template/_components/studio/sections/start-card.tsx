@@ -16,6 +16,7 @@ import { useFormContext } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { tariffSetName } from "@trenova/shared/rules/tariff";
 import { useStudio } from "../studio-context";
+import { useStudioNova } from "@/components/tariff-studio/use-studio-nova";
 
 const SKELETON_KEYS = ["a", "b", "c", "d"] as const;
 const RECENT_TEMPLATES = 6;
@@ -36,6 +37,8 @@ type Starter = {
 export function StartCard() {
   const t = useT();
   const { askNova, novaBusy, rules } = useStudio();
+  // Drafting from a description is Nova's: without Trenova AI the card starts from a template.
+  const nova = useStudioNova();
   const form = useFormContext<FormulaTemplateFormValues>();
   const [question, setQuestion] = useState("");
   const [library, setLibrary] = useState<"standard" | "org">("standard");
@@ -130,31 +133,35 @@ export function StartCard() {
 
   return (
     <div className="bg-card flex flex-col gap-3 rounded-lg border p-3">
-      <Input
-        value={question}
-        onChange={(event) => setQuestion(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            draft();
+      {nova ? (
+        <Input
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              draft();
+            }
+          }}
+          aria-label={t("Describe the method for Nova to draft")}
+          placeholder={t(
+            "Describe the method: “per mile, 18% fuel, $250 minimum, $50 a stop after two”",
+          )}
+          disabled={novaBusy}
+          className="h-9 pr-22 pl-8"
+          leftElement={<NovaBadge size="md" spin={novaBusy ? "always" : "none"} />}
+          rightElement={
+            <Button type="button" size="sm" disabled={!question.trim() || novaBusy} onClick={draft}>
+              {t("Draft it")}
+            </Button>
           }
-        }}
-        aria-label={t("Describe the method for Nova to draft")}
-        placeholder={t(
-          "Describe the method: “per mile, 18% fuel, $250 minimum, $50 a stop after two”",
-        )}
-        disabled={novaBusy}
-        className="h-9 pr-22 pl-8"
-        leftElement={<NovaBadge size="md" spin={novaBusy ? "always" : "none"} />}
-        rightElement={
-          <Button type="button" size="sm" disabled={!question.trim() || novaBusy} onClick={draft}>
-            {t("Draft it")}
-          </Button>
-        }
-      />
+        />
+      ) : null}
 
       <div className="flex items-center gap-2">
-        <span className="text-foreground-subtle text-xs">{t("or start from")}</span>
+        <span className="text-foreground-subtle text-xs">
+          {nova ? t("or start from") : t("Start from")}
+        </span>
         <span className="bg-border h-px flex-1" aria-hidden />
         <SegmentedControl<"standard" | "org">
           aria-label={t("Start from")}

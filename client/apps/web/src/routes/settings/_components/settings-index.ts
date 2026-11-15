@@ -1,5 +1,8 @@
 import { buildNotificationCatalog } from "@/components/notification-center/notification-registry";
 import type { SettingsSection } from "@/lib/settings-path";
+import type { UnavailableFeature } from "@trenova/shared/types/permission";
+import { isFeatureOnPlan } from "@trenova/shared/hooks/use-plan-feature";
+import { PlanFeature } from "@/lib/plan-feature";
 import {
   Bell01Icon,
   type IconComponent,
@@ -53,6 +56,8 @@ export type SettingsIndexEntry = {
   row: string;
   /** The notification category a type belongs to, English source. */
   detail?: string;
+  /** The add-on feature the row belongs to; the search does not find it on a plan without it. */
+  planFeature?: string;
 };
 
 const FIXED_ENTRIES: readonly SettingsIndexEntry[] = [
@@ -73,7 +78,12 @@ const FIXED_ENTRIES: readonly SettingsIndexEntry[] = [
   { label: "Vim keys · code editor", section: "preferences", row: "vim-keys" },
   { label: "Format on save · code editor", section: "preferences", row: "format-on-save" },
   { label: "Ligatures · code editor", section: "preferences", row: "code-ligatures" },
-  { label: "Assistant · Nova · AI", section: "preferences", row: "assistant" },
+  {
+    label: "Assistant · Nova · AI",
+    section: "preferences",
+    row: "assistant",
+    planFeature: PlanFeature.AIDesk,
+  },
   { label: "Desktop notifications", section: "notifications", row: "desktop" },
   { label: "Email notifications · digest", section: "notifications", row: "email" },
   { label: "Sound", section: "notifications", row: "sound" },
@@ -87,9 +97,14 @@ const FIXED_ENTRIES: readonly SettingsIndexEntry[] = [
   { label: "Sign-in activity", section: "security", row: "sign-ins" },
 ];
 
-/** Every setting the search finds: the fixed rows and every kind of notification. */
-export function buildSettingsIndex(): SettingsIndexEntry[] {
-  const notificationTypes = buildNotificationCatalog().flatMap((category) =>
+/**
+ * Every setting the search finds: the fixed rows and every kind of notification the
+ * organization's plan sends.
+ */
+export function buildSettingsIndex(
+  unavailable: readonly UnavailableFeature[],
+): SettingsIndexEntry[] {
+  const notificationTypes = buildNotificationCatalog(unavailable).flatMap((category) =>
     category.types.map((type) => ({
       label: type.label,
       section: "notifications" as const,
@@ -97,7 +112,8 @@ export function buildSettingsIndex(): SettingsIndexEntry[] {
       detail: category.label,
     })),
   );
-  return [...FIXED_ENTRIES, ...notificationTypes];
+  const fixed = FIXED_ENTRIES.filter((entry) => isFeatureOnPlan(unavailable, entry.planFeature));
+  return [...fixed, ...notificationTypes];
 }
 
 export type SettingsSearchResult = SettingsIndexEntry & { text: string; detailText?: string };

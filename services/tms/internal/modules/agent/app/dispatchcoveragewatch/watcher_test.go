@@ -7,8 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +44,12 @@ func (r *requests) RequestRefresh(_ context.Context, tenant pagination.TenantInf
 func watcher(control *dispatchcontrol.DispatchControl, err error) (*Watcher, *controls, *requests) {
 	c := &controls{control: control, err: err}
 	r := &requests{}
-	return New(Params{Controls: c, Requester: r, Logger: zap.NewNop()}), c, r
+	return New(Params{
+		Controls:  c,
+		Requester: r,
+		Features:  plantest.AllFeatures(),
+		Logger:    zap.NewNop(),
+	}), c, r
 }
 
 func event(kind agenttrigger.EventKind) *agenteventports.AgentEvent {
@@ -108,4 +115,27 @@ func TestObserveAgentEvent_DoesNotAskWhenTheSettingsCannotBeRead(t *testing.T) {
 	w.ObserveAgentEvent(t.Context(), event(agenttrigger.EventShipmentMoveUnassigned))
 
 	assert.Empty(t, r.tenants)
+}
+
+func TestObserveAgentEvent_DoesNotReplanWhenThePlannerIsNotOnThePlan(t *testing.T) {
+	t.Parallel()
+
+	for _, off := range []platformcatalog.FeatureKey{
+		platformcatalog.FeatureDispatchIntelligence,
+		platformcatalog.FeatureAIDesk,
+	} {
+		c := &controls{control: keepsCoverageProposed}
+		r := &requests{}
+		w := New(Params{
+			Controls:  c,
+			Requester: r,
+			Features:  plantest.Without(off),
+			Logger:    zap.NewNop(),
+		})
+
+		w.ObserveAgentEvent(t.Context(), event(agenttrigger.EventShipmentCreated))
+
+		assert.Empty(t, r.tenants, string(off))
+		assert.Zero(t, c.reads, "nothing is read for a planner the plan leaves out")
+	}
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -49,6 +50,7 @@ func newRoutingProjector(
 		Permissions:   perms,
 		Realtime:      &recordingRealtime{},
 		Notifications: notificationtest.Discarding(),
+		Features:      plantest.AllFeatures(),
 	})
 	projector.now = func() int64 { return 1_700_000_000 }
 
@@ -167,4 +169,30 @@ func TestReconcileSubject_RaisesWhatIsOpenAndResolvesTheRest(t *testing.T) {
 	assert.NotNil(t, repo.items["MissedPickup:stp_old"].ResolvedAt)
 	assert.Nil(t, repo.items["MissedPickup:stp_new"].ResolvedAt)
 	assert.Nil(t, repo.items["MissedPickup:stp_other"].ResolvedAt)
+}
+
+// The watchtower is Trenova AI: without it a source's item is not stored,
+// routed or announced, so no critical notification reaches anyone.
+func TestUpsert_ProjectsNothingWithoutTheWatchtower(t *testing.T) {
+	t.Parallel()
+
+	repo := newStubRepo()
+	projector, controls := newRoutingProjector(
+		repo,
+		&agenttest.StubPermissions{},
+		&dispatchcontrol.DispatchControl{},
+	)
+	projector.features = plantest.BaseOnly()
+
+	in := input(
+		testActor().TenantInfo(),
+		watchtower.SourceServiceFailure,
+		"sf_1",
+		watchtower.SeverityCritical,
+		100,
+	)
+	require.NoError(t, projector.upsert(t.Context(), in))
+
+	assert.Empty(t, repo.items)
+	assert.Zero(t, controls.reads)
 }

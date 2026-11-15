@@ -8,8 +8,11 @@
 // company. The record the route authorized is the caller's to see. A record of
 // another kind reached through it shows its kind's reference view, and any
 // other field of it only to a caller who reads that kind, as the GraphQL field
-// guard decides it for the screens. Protected field groups are withheld from
-// every record, wherever it sits. Both decisions are refview's and
+// guard decides it for the screens. A record carried by another whose kind the
+// organization's plan leaves out shows only its id, and a field of a feature
+// the plan leaves out is withheld on any record, the root included; both are
+// named in WithheldByPlanHeader. Protected field groups are withheld from
+// every record, wherever it sits. The decisions are refview's and
 // fieldguard's; this package only finds the records.
 package responseguard
 
@@ -37,6 +40,12 @@ import (
 // that was answered with only part of its fields: each field of it that is
 // null there and outside its kind's reference view was withheld, not empty.
 const WithheldHeader = "Withheld-By-Access"
+
+// WithheldByPlanHeader names, without list indices, every record or field the
+// organization's plan withheld, each as path=feature, comma separated and
+// sorted: a record names every field of it but its id, a field names itself.
+// A path never holds "=" or ",", and a feature key never holds either.
+const WithheldByPlanHeader = "Withheld-By-Plan"
 
 const selfScopedKey = "responseguard.self_scoped"
 
@@ -108,6 +117,13 @@ type requestGuard struct {
 
 	mu        sync.Mutex
 	decisions map[fieldKey]bool
+	plans     map[fieldKey]planAnswer
+}
+
+type planAnswer struct {
+	denial permissionports.PlanDenial
+	off    bool
+	err    error
 }
 
 type fieldKey struct {
@@ -138,6 +154,9 @@ func (r *requestGuard) Guarded(c *gin.Context, value any) any {
 	guarded, changed := w.guard(root, nil, 0)
 	if withheld := w.withheldRecords(); len(withheld) > 0 {
 		c.Header(WithheldHeader, strings.Join(withheld, ", "))
+	}
+	if byPlan := w.withheldByPlan(); len(byPlan) > 0 {
+		c.Header(WithheldByPlanHeader, strings.Join(byPlan, ", "))
 	}
 	if !changed {
 		return value
@@ -202,6 +221,33 @@ func (r *requestGuard) visible(ctx context.Context, kind permission.Resource, na
 	r.mu.Unlock()
 
 	return decided
+}
+
+// planDenial is whether the organization's plan withholds a field of a kind,
+// or with no field the kind itself, asked once per request.
+func (r *requestGuard) planDenial(
+	ctx context.Context,
+	kind permission.Resource,
+	field string,
+) (permissionports.PlanDenial, bool, error) {
+	key := fieldKey{kind: kind, field: field}
+	r.mu.Lock()
+	answer, ok := r.plans[key]
+	r.mu.Unlock()
+	if ok {
+		return answer.denial, answer.off, answer.err
+	}
+
+	answer.denial, answer.off, answer.err = r.fields().PlanDenial(ctx, kind, field)
+
+	r.mu.Lock()
+	if r.plans == nil {
+		r.plans = make(map[fieldKey]planAnswer, 32)
+	}
+	r.plans[key] = answer
+	r.mu.Unlock()
+
+	return answer.denial, answer.off, answer.err
 }
 
 func (r *requestGuard) groups() protectedfield.GroupSet {

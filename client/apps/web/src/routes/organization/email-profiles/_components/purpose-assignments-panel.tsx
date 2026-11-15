@@ -12,6 +12,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { z } from "zod";
 import { emailPurposes } from "./email-profile-constants";
+import { SystemEmailNotice } from "./system-email-notice";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 // A cleared purpose holds null, which is how the autocomplete clears; it saves as no
@@ -65,7 +66,7 @@ export function PurposeAssignmentsPanel() {
   });
 
   useEffect(() => {
-    form.reset(toFormValues(assignmentsQuery.data ?? []));
+    form.reset(toFormValues(assignmentsQuery.data?.assignments ?? []));
   }, [assignmentsQuery.data, form]);
 
   const saveAssignments = useMutation({
@@ -94,7 +95,10 @@ export function PurposeAssignmentsPanel() {
           )}
         </p>
       </div>
-      <div className="p-4">
+      <div className="flex flex-col gap-4 p-4">
+        {assignmentsQuery.data?.systemEmailInUse ? (
+          <SystemEmailNotice fromAddress={assignmentsQuery.data.systemEmailFromAddress} />
+        ) : null}
         <FormProvider {...form}>
           <Form onSubmit={form.handleSubmit((values) => saveAssignments.mutate(values))}>
             <FormGroup cols={3}>

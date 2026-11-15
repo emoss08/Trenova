@@ -108,6 +108,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -314,6 +315,7 @@ func convertedListCases(
 		}),
 		CustomerService: customerservice.New(customerservice.Params{
 			Logger: logger, Repo: customers, CacheRepo: customerCacheMiss{},
+			PlanFields: plantest.Keeper(nil),
 		}),
 		LocationService: locationservice.New(locationservice.Params{
 			Logger: logger,
@@ -322,6 +324,7 @@ func convertedListCases(
 		CarrierService: carrierservice.New(carrierservice.Params{Logger: logger, Repo: carriers}),
 		TractorService: tractorservice.New(tractorservice.Params{
 			Logger: logger, Repo: tractors, CustomFieldsValuesService: customFields,
+			PlanFields: plantest.Keeper(nil),
 		}),
 		WorkerTrainingService: workertrainingservice.New(workertrainingservice.Params{
 			Logger: logger, Repo: training, WorkerRepo: workers,
@@ -329,6 +332,7 @@ func convertedListCases(
 		WorkerService: workerservice.New(workerservice.Params{
 			Logger: logger, Repo: workers, CacheRepo: workerCacheMiss{},
 			CustomFieldsValuesService: customFields,
+			PlanFields:                plantest.Keeper(nil),
 		}),
 		WorkerPTOService: workerptoservice.New(workerptoservice.Params{
 			Logger: logger, Repo: timeOff, WorkerRepo: workers,
@@ -342,6 +346,7 @@ func convertedListCases(
 				Templates: formulaTemplates, Versions: formulaVersions,
 				LibraryVersions: libraryVersions,
 			}),
+			Features: plantest.AllFeatures(),
 		}),
 		FormulaLibraryService: formulalibraryservice.New(formulalibraryservice.Params{
 			Logger: logger, Repo: libraries, VersionRepo: libraryVersions,

@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -144,6 +146,7 @@ func newHarness(t *testing.T, allowed ...string) *harness {
 			Logger:         zap.NewNop(),
 			Permissions:    permissions,
 			Organizations:  organizations,
+			Features:       plantest.AllFeatures(),
 			Registry:       permissioncatalog.NewRegistry(),
 			Vectorizer:     &stubVectorizer{},
 			CatalogVectors: &stubVectors{},
@@ -244,6 +247,21 @@ func TestSearch_AnOrganizationWithoutBrokerageCannotOpenBrokeragePages(t *testin
 	matches = h.search(t, "carrier sourcing")
 	require.NotEmpty(t, matches)
 	assert.True(t, matches[0].CanOpen)
+}
+
+func TestSearch_BrokerageOffThePlanReadsAsNotTurnedOn(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.organizations.capabilities.BrokerageEnabled = true
+	h.service.features = plantest.Without(platformcatalog.FeatureCarrierBrokerage)
+
+	matches := h.search(t, "carrier sourcing")
+
+	require.NotEmpty(t, matches)
+	assert.Equal(t, "/dispatch/carrier-sourcing", matches[0].Page.Path)
+	assert.False(t, matches[0].CanOpen)
+	assert.Equal(t, []string{"brokerage to be turned on for the organization"}, matches[0].Missing)
 }
 
 func TestSearch_AnswersNothingForAQuestionTheGuideDoesNotCover(t *testing.T) {
@@ -411,6 +429,7 @@ func TestSearch_DoesNotMatchAPageOnTheProductsOwnName(t *testing.T) {
 		Logger:        zap.NewNop(),
 		Permissions:   &stubPermissions{allowed: map[string]bool{}},
 		Organizations: &stubOrganizations{},
+		Features:      plantest.AllFeatures(),
 	}, catalog)
 
 	search := func(query string) []productguideports.ProductGuideMatch {

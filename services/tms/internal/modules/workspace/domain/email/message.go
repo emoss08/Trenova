@@ -21,8 +21,11 @@ type Message struct {
 	ID                pulid.ID      `json:"id"                keel:"id,pk,autoid:emlmsg_"`
 	BusinessUnitID    pulid.ID      `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
 	OrganizationID    pulid.ID      `json:"organizationId"    keel:"organization_id,pk,tenant"`
-	ProfileID         pulid.ID      `json:"profileId"         keel:"profile_id"`
+	ProfileID         pulid.ID      `json:"profileId"         keel:"profile_id,nullzero"`
 	Purpose           Purpose       `json:"purpose"           keel:"purpose"`
+	Type              Type          `json:"type"              keel:"type,nullzero"`
+	Kind              Kind          `json:"kind"              keel:"kind,nullzero"`
+	Sender            Sender        `json:"sender"            keel:"sender"`
 	Provider          Provider      `json:"provider"          keel:"provider"`
 	IdempotencyKey    string        `json:"idempotencyKey"    keel:"idempotency_key"`
 	ProviderMessageID string        `json:"providerMessageId" keel:"provider_message_id,nullzero"`
@@ -144,7 +147,51 @@ func (m *Message) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&m.BusinessUnitID,
 			validation.Required.Error("Business unit is required"),
 		),
-		validation.Field(&m.ProfileID, validation.Required.Error("Email profile is required")),
+		validation.Field(&m.Sender,
+			validation.Required.Error("Sender is required"),
+			validation.By(func(any) error {
+				if !m.Sender.IsValid() {
+					return validation.NewError("validation_invalid", "Sender is invalid")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&m.ProfileID,
+			validation.When(
+				m.Sender == SenderOrganization,
+				validation.Required.Error("Email profile is required"),
+			),
+			validation.When(
+				m.Sender == SenderTrenova,
+				validation.Empty.Error("A message sent by Trenova has no email profile"),
+			),
+		),
+		validation.Field(&m.Type,
+			validation.Required.Error("Email type is required"),
+			validation.By(func(any) error {
+				if !m.Type.IsValid() {
+					return validation.NewError("validation_invalid", "Email type is invalid")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&m.Kind,
+			validation.By(func(any) error {
+				if m.Kind != m.Type.Kind() {
+					return validation.NewError(
+						"validation_invalid",
+						"Kind must be the kind the email type declares",
+					)
+				}
+				if m.Sender == SenderTrenova && m.Kind != KindSystem {
+					return validation.NewError(
+						"validation_invalid",
+						"Only system email may be sent by Trenova",
+					)
+				}
+				return nil
+			}),
+		),
 		validation.Field(&m.Purpose,
 			validation.Required.Error("Purpose is required"),
 			domainvalidation.ValidEnum[Purpose]("Purpose is invalid"),

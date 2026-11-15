@@ -126,7 +126,7 @@ export async function fetchAgentAccessPreview(
   };
 }
 
-export type RoleAgent = RoleAgentAccessFieldsFragment["agents"][number];
+export type RoleAgent = NonNullable<RoleAgentAccessFieldsFragment["agents"]>[number];
 
 export type RoleAgents = {
   roleId: string;
@@ -193,8 +193,9 @@ export async function setAgentUnattendedRole(
   return data.setAgentUnattendedRole.unattendedRoleId || null;
 }
 
+/** A role's agents; none when the organization's plan leaves agents out. */
 function toRoleAgents(fields: RoleAgentAccessFieldsFragment): RoleAgents {
-  return { roleId: fields.id, roleName: fields.name, agents: [...fields.agents] };
+  return { roleId: fields.id, roleName: fields.name, agents: [...(fields.agents ?? [])] };
 }
 
 /** The agents a role is granted. Null when the role is not found. */

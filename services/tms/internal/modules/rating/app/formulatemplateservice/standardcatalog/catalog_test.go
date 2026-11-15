@@ -44,6 +44,23 @@ func TestLoadParsesEveryTemplate(t *testing.T) {
 	}
 }
 
+func TestEveryTemplateHasAKeyOfItsOwn(t *testing.T) {
+	t.Parallel()
+
+	catalog, err := standardcatalog.Load()
+	require.NoError(t, err)
+
+	keys := make(map[string]struct{}, len(catalog))
+	for _, entry := range catalog {
+		require.NotEmpty(t, entry.Key, "%s has a key", entry.Name)
+		assert.LessOrEqual(t, len(entry.Key), 64, "%s's key fits the column", entry.Name)
+		assert.Equal(t, strings.ToLower(entry.Key), entry.Key, "%s's key is lower case", entry.Name)
+		_, duplicate := keys[entry.Key]
+		assert.False(t, duplicate, "duplicate key %s", entry.Key)
+		keys[entry.Key] = struct{}{}
+	}
+}
+
 func TestEveryRatingMethodTakesARateAndAMinimum(t *testing.T) {
 	t.Parallel()
 

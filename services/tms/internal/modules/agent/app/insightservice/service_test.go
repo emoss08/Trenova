@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -210,7 +211,7 @@ func silentNarrator() *narrator.Service {
 
 type failingNova struct{}
 
-func (failingNova) Available(context.Context, pagination.TenantInfo) (bool, error) {
+func (failingNova) Available(context.Context, pagination.TenantInfo, aitask.Task) (bool, error) {
 	return false, nil
 }
 

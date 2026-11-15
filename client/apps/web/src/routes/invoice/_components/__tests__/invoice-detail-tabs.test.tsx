@@ -5,6 +5,9 @@ import userEvent from "@testing-library/user-event";
 import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { BASE_ONLY_UNAVAILABLE, seedPlan } from "@/test/plan";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import InvoiceDetailPane from "../invoice-detail-pane";
 
 const mocks = vi.hoisted(() => ({ getById: vi.fn(), fetchInvoiceArContext: vi.fn() }));
@@ -243,5 +246,30 @@ describe("invoice detail tabs in the URL", () => {
     const params = lastSearchParams(onUrlUpdate);
     expect(params.get("tab")).toBeNull();
     expect(params.get("item")).toBe("inv_1");
+  });
+});
+
+describe("invoice detail tabs on a plan without Accounting & Cash", () => {
+  afterEach(() => usePermissionStore.getState().clearPermissions());
+
+  it("offers no Payments tab", async () => {
+    seedPlan({ [Resource.Invoice]: Operation.Read }, BASE_ONLY_UNAVAILABLE);
+    renderPane("?item=inv_1");
+
+    expect(await screen.findByRole("tab", { name: "Overview" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Payments" })).toBeNull();
+    expect(screen.getByRole("tab", { name: "Disputes" })).toBeInTheDocument();
+  });
+
+  it("opens a link to the Payments tab on the overview", async () => {
+    seedPlan({ [Resource.Invoice]: Operation.Read }, BASE_ONLY_UNAVAILABLE);
+    renderPane("?item=inv_1&tab=payments");
+
+    expect(await screen.findByRole("tab", { name: "Overview" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByText("Overview content")).toBeInTheDocument();
+    expect(screen.queryByText("Payments content")).toBeNull();
   });
 });

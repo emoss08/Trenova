@@ -3,6 +3,7 @@ package schedule
 import (
 	"context"
 	"errors"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 
 type mockScheduleHandle struct {
 	id           string
+	current      client.ScheduleState
 	updateErr    error
 	deleteErr    error
 	invokeUpdate bool
@@ -37,9 +39,10 @@ func (m *mockScheduleHandle) Backfill(_ context.Context, _ client.ScheduleBackfi
 func (m *mockScheduleHandle) Update(_ context.Context, opts client.ScheduleUpdateOptions) error {
 	m.updateCalled = true
 	if m.invokeUpdate && opts.DoUpdate != nil {
+		current := m.current
 		input := client.ScheduleUpdateInput{
 			Description: client.ScheduleDescription{
-				Schedule: client.Schedule{},
+				Schedule: client.Schedule{State: &current},
 			},
 		}
 		m.lastUpdate, _ = opts.DoUpdate(input)
@@ -81,15 +84,18 @@ func (m *mockScheduleListIterator) Next() (*client.ScheduleListEntry, error) {
 type mockScheduleClient struct {
 	createHandle client.ScheduleHandle
 	createErr    error
+	created      []client.ScheduleOptions
 	listIter     client.ScheduleListIterator
 	listErr      error
+	listCalls    atomic.Int32
 	handles      map[string]*mockScheduleHandle
 }
 
 func (m *mockScheduleClient) Create(
 	_ context.Context,
-	_ client.ScheduleOptions,
+	opts client.ScheduleOptions,
 ) (client.ScheduleHandle, error) {
+	m.created = append(m.created, opts)
 	if m.createErr != nil {
 		return nil, m.createErr
 	}
@@ -100,6 +106,7 @@ func (m *mockScheduleClient) List(
 	_ context.Context,
 	_ client.ScheduleListOptions,
 ) (client.ScheduleListIterator, error) {
+	m.listCalls.Add(1)
 	if m.listErr != nil {
 		return nil, m.listErr
 	}
@@ -220,7 +227,7 @@ func TestNewReconciler(t *testing.T) {
 	logger := newTestLogger()
 	registry := NewRegistry(logger)
 
-	reconciler := NewReconciler(nil, registry, logger)
+	reconciler := NewReconciler(nil, registry, allOn(), logger)
 
 	require.NotNil(t, reconciler)
 	assert.Equal(t, registry, reconciler.registry)
@@ -239,12 +246,14 @@ func TestReconcile_CreatesNewSchedules(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 			{
 				ID:        "new-schedule-2",
 				Spec:      Cron("0 9 * * *"),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -259,7 +268,7 @@ func TestReconcile_CreatesNewSchedules(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.NoError(t, err)
@@ -283,6 +292,7 @@ func TestReconcile_UpdatesExistingSchedules(t *testing.T) {
 		Spec:      Every(30 * time.Minute),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
 	provider := &testProvider{
@@ -312,7 +322,7 @@ func TestReconcile_UpdatesExistingSchedules(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.NoError(t, err)
@@ -336,6 +346,7 @@ func TestReconcile_SkipsUnchangedSchedules(t *testing.T) {
 		Spec:      Every(30 * time.Minute),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
 	provider := &testProvider{
@@ -360,7 +371,7 @@ func TestReconcile_SkipsUnchangedSchedules(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.NoError(t, err)
@@ -385,6 +396,7 @@ func TestReconcile_DeletesOrphanSchedules(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -404,7 +416,7 @@ func TestReconcile_DeletesOrphanSchedules(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.NoError(t, err)
@@ -435,7 +447,7 @@ func TestReconcile_ErrorInCollectSchedules(t *testing.T) {
 		scheduleClient: &mockScheduleClient{},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.Error(t, err)
@@ -456,6 +468,7 @@ func TestReconcile_ErrorInListExistingSchedules(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -467,7 +480,7 @@ func TestReconcile_ErrorInListExistingSchedules(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.Error(t, err)
@@ -488,6 +501,7 @@ func TestReconcile_ErrorInCreateSchedule(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -502,7 +516,7 @@ func TestReconcile_ErrorInCreateSchedule(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.NoError(t, err)
@@ -525,6 +539,7 @@ func TestReconcile_AlreadyExistsErrorInCreate_FallsBackToUpdate(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -544,7 +559,7 @@ func TestReconcile_AlreadyExistsErrorInCreate_FallsBackToUpdate(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.NoError(t, err)
@@ -567,6 +582,7 @@ func TestReconcile_ScheduleAlreadyRunningInCreate_FallsBackToUpdate(t *testing.T
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -586,7 +602,7 @@ func TestReconcile_ScheduleAlreadyRunningInCreate_FallsBackToUpdate(t *testing.T
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.NoError(t, err)
@@ -622,7 +638,7 @@ func TestReconcile_DeleteSchedule_NotFoundError_Succeeds(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.NoError(t, err)
@@ -658,7 +674,7 @@ func TestReconcile_DeleteSchedule_OtherError(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.NoError(t, err)
@@ -680,6 +696,7 @@ func TestReconcile_ListIteratorError(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -696,7 +713,7 @@ func TestReconcile_ListIteratorError(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.Error(t, err)
@@ -715,6 +732,7 @@ func TestReconcile_UpdateScheduleError(t *testing.T) {
 		Spec:      Every(30 * time.Minute),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
 	provider := &testProvider{
@@ -745,7 +763,7 @@ func TestReconcile_UpdateScheduleError(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.Reconcile(t.Context())
 
 	require.NoError(t, err)
@@ -759,20 +777,21 @@ func TestNeedsUpdate_NoMemo(t *testing.T) {
 
 	logger := newTestLogger()
 	registry := NewRegistry(logger)
-	reconciler := NewReconciler(nil, registry, logger)
+	reconciler := NewReconciler(nil, registry, allOn(), logger)
 
 	existing := &client.ScheduleListEntry{
 		ID:   "test",
 		Memo: nil,
 	}
-	desired := &Schedule{
+	sched := &Schedule{
 		ID:        "test",
 		Spec:      Every(30 * time.Minute),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
-	assert.True(t, reconciler.needsUpdate(existing, desired))
+	assert.True(t, reconciler.needsUpdate(existing, enabled(sched)))
 }
 
 func TestNeedsUpdate_NoFields(t *testing.T) {
@@ -780,7 +799,7 @@ func TestNeedsUpdate_NoFields(t *testing.T) {
 
 	logger := newTestLogger()
 	registry := NewRegistry(logger)
-	reconciler := NewReconciler(nil, registry, logger)
+	reconciler := NewReconciler(nil, registry, allOn(), logger)
 
 	existing := &client.ScheduleListEntry{
 		ID: "test",
@@ -788,14 +807,15 @@ func TestNeedsUpdate_NoFields(t *testing.T) {
 			Fields: nil,
 		},
 	}
-	desired := &Schedule{
+	sched := &Schedule{
 		ID:        "test",
 		Spec:      Every(30 * time.Minute),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
-	assert.True(t, reconciler.needsUpdate(existing, desired))
+	assert.True(t, reconciler.needsUpdate(existing, enabled(sched)))
 }
 
 func TestNeedsUpdate_NoHashField(t *testing.T) {
@@ -803,7 +823,7 @@ func TestNeedsUpdate_NoHashField(t *testing.T) {
 
 	logger := newTestLogger()
 	registry := NewRegistry(logger)
-	reconciler := NewReconciler(nil, registry, logger)
+	reconciler := NewReconciler(nil, registry, allOn(), logger)
 
 	existing := &client.ScheduleListEntry{
 		ID: "test",
@@ -813,14 +833,15 @@ func TestNeedsUpdate_NoHashField(t *testing.T) {
 			},
 		},
 	}
-	desired := &Schedule{
+	sched := &Schedule{
 		ID:        "test",
 		Spec:      Every(30 * time.Minute),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
-	assert.True(t, reconciler.needsUpdate(existing, desired))
+	assert.True(t, reconciler.needsUpdate(existing, enabled(sched)))
 }
 
 func TestNeedsUpdate_HashDiffers(t *testing.T) {
@@ -828,7 +849,7 @@ func TestNeedsUpdate_HashDiffers(t *testing.T) {
 
 	logger := newTestLogger()
 	registry := NewRegistry(logger)
-	reconciler := NewReconciler(nil, registry, logger)
+	reconciler := NewReconciler(nil, registry, allOn(), logger)
 
 	existing := &client.ScheduleListEntry{
 		ID: "test",
@@ -838,14 +859,15 @@ func TestNeedsUpdate_HashDiffers(t *testing.T) {
 			},
 		},
 	}
-	desired := &Schedule{
+	sched := &Schedule{
 		ID:        "test",
 		Spec:      Every(30 * time.Minute),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
-	assert.True(t, reconciler.needsUpdate(existing, desired))
+	assert.True(t, reconciler.needsUpdate(existing, enabled(sched)))
 }
 
 func TestNeedsUpdate_HashMatches(t *testing.T) {
@@ -853,25 +875,26 @@ func TestNeedsUpdate_HashMatches(t *testing.T) {
 
 	logger := newTestLogger()
 	registry := NewRegistry(logger)
-	reconciler := NewReconciler(nil, registry, logger)
+	reconciler := NewReconciler(nil, registry, allOn(), logger)
 
-	desired := &Schedule{
+	sched := &Schedule{
 		ID:        "test",
 		Spec:      Every(30 * time.Minute),
 		Workflow:  dummyWorkflow,
 		TaskQueue: "test-queue",
+		Feature:   testFeature,
 	}
 
 	existing := &client.ScheduleListEntry{
 		ID: "test",
 		Memo: &commonpb.Memo{
 			Fields: map[string]*commonpb.Payload{
-				"scheduleHash": {Data: []byte(desired.Hash())},
+				"scheduleHash": {Data: []byte(sched.Hash())},
 			},
 		},
 	}
 
-	assert.False(t, reconciler.needsUpdate(existing, desired))
+	assert.False(t, reconciler.needsUpdate(existing, enabled(sched)))
 }
 
 func TestReconcileWithRetry_SuccessOnFirstTry(t *testing.T) {
@@ -887,6 +910,7 @@ func TestReconcileWithRetry_SuccessOnFirstTry(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -901,7 +925,7 @@ func TestReconcileWithRetry_SuccessOnFirstTry(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 	result, err := reconciler.ReconcileWithRetry(t.Context(), 3)
 
 	require.NoError(t, err)
@@ -922,6 +946,7 @@ func TestReconcileWithRetry_SuccessOnRetry(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -940,7 +965,7 @@ func TestReconcileWithRetry_SuccessOnRetry(t *testing.T) {
 		scheduleClient: sc,
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	defer cancel()
@@ -965,6 +990,7 @@ func TestReconcileWithRetry_ContextCancelled(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -979,7 +1005,7 @@ func TestReconcileWithRetry_ContextCancelled(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
@@ -1004,6 +1030,7 @@ func TestReconcileWithRetry_MaxRetriesExhausted(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -1015,7 +1042,7 @@ func TestReconcileWithRetry_MaxRetriesExhausted(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	defer cancel()
@@ -1040,6 +1067,7 @@ func TestReconcileWithRetry_MaxRetriesExhausted_WithResultErrors(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -1054,7 +1082,7 @@ func TestReconcileWithRetry_MaxRetriesExhausted_WithResultErrors(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	defer cancel()
@@ -1104,7 +1132,7 @@ func TestReconcile_LeavesSchedulesItDidNotCreate(t *testing.T) {
 		},
 	}
 
-	result, err := NewReconciler(mc, registry, logger).Reconcile(t.Context())
+	result, err := NewReconciler(mc, registry, allOn(), logger).Reconcile(t.Context())
 	require.NoError(t, err)
 
 	assert.False(t, desk.deleteCalled, "a schedule marked as another owner's must survive")
@@ -1123,14 +1151,20 @@ func TestReconcile_LeavesSchedulesItDidNotCreate(t *testing.T) {
 func TestNeedsUpdate_ReadsTheHashFromTheNote(t *testing.T) {
 	t.Parallel()
 
-	desired := &Schedule{ID: "s", Spec: Every(time.Minute), Workflow: dummyWorkflow, TaskQueue: "q"}
+	sched := enabled(&Schedule{
+		ID:        "s",
+		Feature:   testFeature,
+		Spec:      Every(time.Minute),
+		Workflow:  dummyWorkflow,
+		TaskQueue: "q",
+	})
 	r := &Reconciler{}
 
 	assert.False(
 		t,
-		r.needsUpdate(&client.ScheduleListEntry{Note: registryNote(desired.Hash())}, desired),
+		r.needsUpdate(&client.ScheduleListEntry{Note: registryNote(sched.Hash())}, sched),
 	)
-	assert.True(t, r.needsUpdate(&client.ScheduleListEntry{Note: registryNote("stale")}, desired))
+	assert.True(t, r.needsUpdate(&client.ScheduleListEntry{Note: registryNote("stale")}, sched))
 }
 
 // Overlap and paused are hashed, so a change to either is detected. It has to
@@ -1140,41 +1174,48 @@ func TestReconcile_UpdateAppliesOverlapPausedAndTheNewHash(t *testing.T) {
 
 	logger := newTestLogger()
 	registry := NewRegistry(logger)
-	desired := &Schedule{
+	sched := &Schedule{
 		ID:            "paused-one",
 		Spec:          Every(time.Hour),
 		Workflow:      dummyWorkflow,
 		TaskQueue:     "test-queue",
+		Feature:       testFeature,
 		OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_BUFFER_ONE,
 		Paused:        true,
 	}
-	registry.RegisterProvider(&testProvider{schedules: []*Schedule{desired}})
+	registry.RegisterProvider(&testProvider{schedules: []*Schedule{sched}})
 
-	handle := &mockScheduleHandle{id: desired.ID, invokeUpdate: true}
+	handle := &mockScheduleHandle{id: sched.ID, invokeUpdate: true}
 	mc := &mockTemporalClient{
 		scheduleClient: &mockScheduleClient{
 			listIter: &mockScheduleListIterator{
-				entries: []*client.ScheduleListEntry{{ID: desired.ID, Note: registryNote("stale")}},
+				entries: []*client.ScheduleListEntry{{ID: sched.ID, Note: registryNote("stale")}},
 			},
-			handles: map[string]*mockScheduleHandle{desired.ID: handle},
+			handles: map[string]*mockScheduleHandle{sched.ID: handle},
 		},
 	}
 
-	_, err := NewReconciler(mc, registry, logger).Reconcile(t.Context())
+	_, err := NewReconciler(mc, registry, allOn(), logger).Reconcile(t.Context())
 	require.NoError(t, err)
 	require.NotNil(t, handle.lastUpdate)
 
 	got := handle.lastUpdate.Schedule
 	assert.Equal(t, enums.SCHEDULE_OVERLAP_POLICY_BUFFER_ONE, got.Policy.Overlap)
 	assert.True(t, got.State.Paused)
-	assert.Equal(t, registryNote(desired.Hash()), got.State.Note)
+	assert.Equal(t, registryNote(sched.Hash()), got.State.Note)
 }
 
-func TestToScheduleOptions_MarksTheScheduleAsTheRegistrys(t *testing.T) {
+func TestScheduleOptions_MarksTheScheduleAsTheRegistrys(t *testing.T) {
 	t.Parallel()
 
-	sched := &Schedule{ID: "s", Spec: Every(time.Minute), Workflow: dummyWorkflow, TaskQueue: "q"}
-	opts := sched.ToScheduleOptions()
+	sched := &Schedule{
+		ID:        "s",
+		Feature:   testFeature,
+		Spec:      Every(time.Minute),
+		Workflow:  dummyWorkflow,
+		TaskQueue: "q",
+	}
+	opts := enabled(sched).options()
 
 	assert.Equal(t, ManagedByRegistry, opts.Memo[ManagedByMemoKey])
 	hash, ok := hashFromNote(opts.Note)

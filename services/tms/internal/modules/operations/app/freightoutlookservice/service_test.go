@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/positioningtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -146,6 +148,7 @@ func newTestService(
 		controls:     controls,
 		positionings: live,
 		clock:        func() int64 { return testNow },
+		features:     plantest.AllFeatures(),
 	}
 }
 
@@ -317,6 +320,32 @@ func TestArea_RefusesAnAreaTheForecastDoesNotHave(t *testing.T) {
 
 	var notFound *errortypes.NotFoundError
 	require.ErrorAs(t, err, &notFound)
+}
+
+func TestOutlook_IsRefusedWithoutDispatchIntelligence(t *testing.T) {
+	t.Parallel()
+
+	forecasts, repo := readyWorld(t)
+	svc := newTestService(t, forecasts, repo, positioningtest.Fixed{})
+	svc.features = plantest.Without(platformcatalog.FeatureDispatchIntelligence)
+
+	_, err := svc.Outlook(t.Context(), &freightoutlookports.Request{TenantInfo: tenant})
+
+	require.True(t, errortypes.IsPlanRestrictionError(err), "got %v", err)
+	assert.Nil(t, forecasts.request, "no forecast is read")
+}
+
+func TestArea_IsRefusedWithoutDispatchIntelligence(t *testing.T) {
+	t.Parallel()
+
+	forecasts, repo := readyWorld(t)
+	svc := newTestService(t, forecasts, repo, positioningtest.Fixed{})
+	svc.features = plantest.Without(platformcatalog.FeatureDispatchIntelligence)
+
+	_, err := svc.Area(t.Context(), &freightoutlookports.AreaRequest{TenantInfo: tenant, Cell: 1})
+
+	require.True(t, errortypes.IsPlanRestrictionError(err), "got %v", err)
+	assert.Nil(t, forecasts.request, "no forecast is read")
 }
 
 func TestRelevant_PutsAreasAMoveNamesFirstThenTheBiggestGapAndStopsAtForty(t *testing.T) {

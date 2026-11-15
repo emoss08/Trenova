@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -27,6 +28,7 @@ func newVectorizer(
 		Repository: repo,
 		Embeddings: embeddings,
 		Shared:     newMemorySharedVectors(),
+		Features:   plantest.AllFeatures(),
 	})
 }
 
@@ -327,4 +329,26 @@ func TestAvailability(t *testing.T) {
 
 	_, err = ready.Availability(t.Context(), pagination.TenantInfo{})
 	require.ErrorIs(t, err, retrievalports.ErrQueryTenantRequired)
+}
+
+// Search by meaning is Trenova AI: without it no query is embedded and the
+// search is by keyword, as it is when retrieval is turned off.
+func TestVectorize_OnABaseOnlyPlanEmbedsNothing(t *testing.T) {
+	t.Parallel()
+
+	tenant := testTenant()
+	embeddings := &fakeEmbeddings{vectorFor: func(string) []float32 { return axis(3) }}
+	service := newVectorizer(newFakeRepository(activeSettings(tenant)), embeddings)
+	service.features = plantest.BaseOnly()
+
+	vector, err := service.Vectorize(t.Context(), queryRequest(tenant, "who is off this week"))
+	require.NoError(t, err)
+	assert.False(t, vector.Usable())
+	assert.Equal(t, airetrieval.UnavailableReasonDisabled, vector.Reason)
+
+	availability, err := service.Availability(t.Context(), tenant)
+	require.NoError(t, err)
+	assert.Equal(t, airetrieval.UnavailableReasonDisabled, availability.Reason)
+
+	assert.Empty(t, embeddings.calls())
 }

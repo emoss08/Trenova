@@ -1,3 +1,4 @@
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -23,6 +24,7 @@ import type { Carrier } from "@trenova/shared/types/carrier";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
+import { PlanFeature } from "@/lib/plan-feature";
 
 function CarrierStatusCell({ row }: { row: CarrierRow }) {
   const queryClient = useQueryClient();
@@ -212,6 +214,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
       minSize: 110,
       maxSize: 160,
       meta: {
+        planFeature: PlanFeature.CarrierBrokerage,
         apiField: "intelRiskLevel",
         filterable: true,
         sortable: true,
@@ -223,11 +226,17 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
     {
       accessorKey: "intelReviewRequired",
       header: t("Intel review"),
-      cell: ({ row }) => <ReviewRequiredLabel required={row.original.intelReviewRequired} />,
+      cell: ({ row }) =>
+        row.original.intelReviewRequired == null ? (
+          <WithheldValue plan="tms.carrier_brokerage" />
+        ) : (
+          <ReviewRequiredLabel required={row.original.intelReviewRequired} />
+        ),
       size: 140,
       minSize: 110,
       maxSize: 170,
       meta: {
+        planFeature: PlanFeature.CarrierBrokerage,
         apiField: "intelReviewRequired",
         filterable: true,
         sortable: true,
@@ -241,7 +250,9 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
       accessorKey: "intelBlockingCount",
       header: t("Blockers"),
       cell: ({ row }) =>
-        row.original.intelBlockingCount > 0 ? (
+        row.original.intelBlockingCount == null ? (
+          <WithheldValue plan="tms.carrier_brokerage" />
+        ) : row.original.intelBlockingCount > 0 ? (
           <Badge variant="danger" className="max-h-5 tabular-nums">
             {row.original.intelBlockingCount}
           </Badge>
@@ -252,6 +263,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CarrierRow>[] {
       minSize: 80,
       maxSize: 130,
       meta: {
+        planFeature: PlanFeature.CarrierBrokerage,
         apiField: "intelBlockingCount",
         filterable: true,
         sortable: true,

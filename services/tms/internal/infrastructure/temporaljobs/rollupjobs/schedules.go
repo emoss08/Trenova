@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -18,6 +19,7 @@ func NewScheduleProvider() *ScheduleProvider { return &ScheduleProvider{} }
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{{
 		ID:            RefreshScheduleID,
+		Feature:       platformcatalog.FeatureAdministration,
 		Description:   "Recompute the rollup days writes marked dirty",
 		Spec:          schedule.Every(refreshEvery),
 		Workflow:      RefreshRollupsWorkflow,

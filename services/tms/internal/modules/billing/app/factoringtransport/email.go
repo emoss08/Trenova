@@ -67,6 +67,7 @@ func (t *Email) Send(
 		}
 		sent, sendErr := t.email.Send(ctx, &emailports.SendEmailRequest{
 			TenantInfo:     req.TenantInfo,
+			Type:           email.TypeFactoringSubmission,
 			Purpose:        email.PurposeBilling,
 			To:             req.Transport.EmailRecipients,
 			Subject:        message.Subject,

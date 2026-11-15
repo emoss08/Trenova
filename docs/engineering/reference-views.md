@@ -12,11 +12,16 @@ credit limit and the driver's phone number need customer read and worker read.
 
 ## The rule
 
-A record is reached in one of four ways, and the way decides what is checked:
+The organization's plan comes first. A record of a kind whose feature the plan leaves out shows
+nothing, however it was reached and whoever reads it, an administrator included; a field that
+belongs to a feature of its own (below) is withheld the same way on any record of a readable
+kind. Self-hosted, every feature is on and nothing is withheld for the plan.
+
+Then a record is reached in one of four ways, and the way decides what is checked:
 
 | Reached as | Example | Checked |
 |---|---|---|
-| Root | what `shipment(id:)` returns, through a connection's edges or a mutation's payload | the root resolver's own permission check; the fields are the record's own. A shipment, order, invoice or worker a payload carries is linked for a caller who cannot read its kind, unless the mutation declares `@authorizes` |
+| Root | what `shipment(id:)` returns, through a connection's edges or a mutation's payload, or what a field declaring `@authorizes` for its kind returns | the root resolver's own permission check, or that field's resolver's; the fields are the record's own. A shipment, order, invoice or worker a payload carries is linked for a caller who cannot read its kind, unless the mutation declares `@authorizes` |
 | Self-scoped | anything under `mySettlements` | nothing more: every record there is the caller's own (`selfscoped.Resolvers`) |
 | Part of another | a shipment's moves and stops | the record it is part of: a kind whose `ParentResource` family is the carrier's |
 | Linked | a shipment's customer, a tractor's driver | the reference view always; every other field needs the kind's read |
@@ -43,6 +48,58 @@ view if it ranks above that ceiling; an agent's data access ceiling applies to e
 not. Every view field ranks Internal unless its resource ranks it otherwise, and none may rank above
 Internal.
 
+### What the plan withholds
+
+A kind belongs to one feature (`ResourceDefinition.Feature`). A field of its records can belong to
+another: an invoice's factoring company is Factoring's, a shipment's detention flag Detention's. The
+kind's definition says so in `FieldFeatures`, keyed by the API field name as `FieldSensitivities`
+is; the registry refuses a feature the catalog does not know or the kind's own, and
+`Registry.FieldFeatureOf` answers it. Dropping an add-on deletes nothing; its data is not shown.
+A field of a plain struct the record carries (a worker's `profile.complianceStatus`, a customer's
+`billingProfile.creditLimit`) is keyed by its own name on the record's kind. A field in the kind's
+`ReferenceView` stays base (an invoice's `settlementStatus`).
+
+**A gated field is nullable everywhere, and the service keeps its stored value on save.** Its
+GraphQL field is nullable (`TestEveryFieldCarryingAnotherFeatureIsNullable`), its REST schema on
+the client is nullable, and a screen draws `WithheldValue` where it shows one and hides the control
+that would edit it. A base record's form then sends the record back with the field null, so every
+service that writes a base record a person or an agent sent calls
+`permissionports.PlanFieldKeeper.Keep(ctx, kind, incoming, stored)` before it validates: the stored
+value of every field whose feature is off is put back, and on a create the record's defaults (nil
+for zero values). It walks plain nested structs by JSON name, not lists: a caller keeps each part
+against its stored match by id. The canonical caller is
+`operations/app/shipmenteffects/planfields.go` (a shipment, its moves, stops and charges). A write
+whose only purpose is an add-on's value (an invoice's factoring override) is refused at its service
+entry with `platformcatalogports.RequireFeature`. `TestEveryFieldFeatureNamesAFieldOfItsKind`
+(gqlext) fails for a field feature no GraphQL or REST type of its kind has.
+
+- **GraphQL.** A field that returns records of a kind the plan leaves out (a connection or an edge
+  of them included) is never resolved: on `Query`, `Mutation` or `Subscription`, or when it is
+  non-null, it is refused with `PLAN_RESTRICTED` naming the feature and its add-on; otherwise it
+  is answered `null`. A record reached through an interface or a union, a part of an add-on kind
+  and a field in `FieldFeatures` are withheld field by field: `null` when nullable, and for a
+  non-null one `PLAN_RESTRICTED` for a person (an agent read strips it). Each is named in
+  `extensions.withheldByPlan`, a list of `{ "path", "feature" }` sorted by path then feature,
+  in the same path form as `withheldByAccess` and never in it. An agent read records it on its
+  `FieldCeiling` (`WithheldByPlan`), and the tools tell the model that the field is part of the
+  named add-on, which the organization's plan does not include (`graphqlread.PlanWithheld`).
+- **REST.** A record carried by another whose kind, or whose carrier's kind for a part, the plan
+  leaves out is written with its id alone, as a linked record nothing of which may show; a field
+  in `FieldFeatures` is withheld on any record, the root included. Each is named in the
+  `Withheld-By-Plan` header as `path=feature`, comma separated and sorted
+  (`factoringCompany=tms.factoring, shipment.moves=tms.detention`), never in
+  `Withheld-By-Access`. A plan that cannot be read withholds the same fields and names them in
+  `Withheld-By-Access`, never as the plan's.
+- **The client** reads both in the transports (`@trenova/shared/lib/withheld`): a
+  `requestGraphQLResult` carries them as `withheld`, and `withholdingsOf(data)` answers for the
+  object `requestGraphQL` or a REST call resolved to (not for a copy: a `select` or a spread
+  loses it, so read it in the `queryFn` and return it with the data).
+  `planWithholdingAt(withholdings, path)` finds a path's feature, and
+  `<WithheldValue plan={feature or withholding} />` draws it as "Part of <add-on>", named from
+  the permission manifest's `unavailableFeatures`. A field whose feature the screen knows
+  statically passes the key (`plan="tms.factoring"`). Operations never select an add-on's root
+  field beside another plan's unconditionally (`packages/graphql/scripts/plan-mixed-operations.test.mjs`).
+
 ## Where it is decided
 
 - **Declaration.** Each kind's `ReferenceView` sits on its definition in
@@ -58,9 +115,17 @@ Internal.
   records through bundles and job templates, and how sensitive a field may be through the role's
   ceiling.
 - **Enforcement.** One package, `internal/modules/identity/app/refview`, answers
-  `Decide(ctx, access, kind, field, reach)`, and `Filter` for a list of fields. `PersonAccess` is a
-  person's grants for one request, `AgentAccess` an agent read's. Every surface asks it; none
-  reimplements the rule.
+  `Decide(ctx, access, kind, field, reach)`, `DecidePart(ctx, access, own, carrier, field, reach)`
+  for a part (it asks the plan about the part's own kind and its carrier's), and `Filter` for a
+  list of fields, which returns the plan's withholdings apart from the rest. The plan is asked
+  first, through `internal/modules/identity/app/onplan`, the lookup the permission engine refuses
+  through as well; a decision is `WithheldPlan` and `PlanDenial` names the feature. A plan that
+  cannot be read withholds the field as `WithheldKind`, never shows it. `Views.Request()` asks each
+  feature once for a request. The static facts (`InView`, `PartOf`) are `refview.Catalog`, which
+  the schema tooling uses without a plan. `PersonAccess` is a person's grants for one request,
+  `AgentAccess` an agent read's, and `RoleAccess` a role's, which reads nothing the plan leaves
+  out. Every surface asks it; none reimplements the rule. Surfaces in other modules ask through
+  `permissionports.ReferenceViews`, whose `LinkedFieldWithheldPlan` each treats as withheld.
 - **GraphQL.** `FieldGuardExtension` (`internal/api/graphql/gqlext/fieldguard.go`) maps every
   object type to its kind (a type named for a resource, or one that declares
   `@kind(resource:)`), works out how the record holding each field was reached, and asks
@@ -182,6 +247,19 @@ asks the same port, `permissionports.ReferenceViews`, which refview implements:
    (`ShipmentCustomer`, `InboundShipmentRef`) declares `@kind(resource: "customer")`, so the guard
    gates it as that kind. A field named for a kind that returns some other type fails CI until the
    type declares its kind or the field is listed, with its reason, in `notAKind`.
+5. **An add-on's data on another feature's record.** A type that shows a record of an add-on's
+   kind under a record of another feature (an invoice's payment applications, a dispatch board
+   move's live tender, a customer's broker vetting) declares that kind with `@kind`, the kind the
+   add-on's own root resolvers check for that data. A type with no kind is gated as its carrier,
+   so it would show on a plan without the add-on. The field that carries it is nullable: on a
+   plan without the add-on it is answered `null` without its resolver running and named in
+   `extensions.withheldByPlan`, while a non-null one would refuse the whole operation. For a
+   reader who cannot read the kind it is a linked record (step 2): the screen declares
+   `@requiresRead`, the fields it selects are nullable, and it draws them withheld. A field whose
+   resolver already returns the record only to a caller who reads its kind
+   (`Customer.brokerIntelligence`) declares `@authorizes(resource:)` instead, so the record is the
+   caller's own; a test holds the declaration to the resolver's check. A type that is genuinely
+   part of every record carrying it goes in `partOfCarrier` (`planfeature_test.go`) with why.
 
 ## The page access manifest
 
@@ -292,9 +370,11 @@ Each failure says what to add.
 | `TestEveryReferenceFieldExistsOnItsKind` (gqlext) | a view names a field no GraphQL type of its kind has |
 | `TestEveryReferenceFieldExistsOnItsRESTKind` (responseguard) | a kind no GraphQL type shows declares a view field that no REST type carrying it has, or no response carries it at all |
 | `TestEveryKindToKindFieldIsCovered` (gqlext) | a field named for a kind returns a type that declares no kind |
+| `TestEveryFieldCarryingAnotherFeatureIsNullable` (gqlext) | a non-null field outside the root types and connection wrappers returns records of another add-on's kind, or a `FieldFeatures` field is non-null. A type with no kind is exempt only when every record that carries it is of that add-on and every root field (a mutation's for a payload) that returns it has a resolver checking a resource of that add-on |
+| `TestEveryTypeARecordCarriesIsAccountedFor` (gqlext) | an object type with no kind, carried by a record of a kind, shares no leading word with its carrier's type or resource and is not listed in `partOfCarrier` |
 | `TestEveryLinkedFieldIsDeclared` (gqlext) | a client operation selects a field outside a linked record's view without `@requiresRead` for its kind |
 | `TestEveryDeclaredLinkedFieldIsNullable` (gqlext) | a field selected under `@requiresRead` is non-null |
-| `TestEveryAuthorizesDeclarationIsCheckedByItsResolver` (gqlext) | a root field declares `@authorizes` for a kind its resolver does not check |
+| `TestEveryAuthorizesDeclarationIsCheckedByItsResolver` (gqlext) | a field, root or not, declares `@authorizes` for a kind its resolver does not check |
 | `TestEveryRootOfADatabaseScopedKindChecksItsRead` (gqlext) | a root field returns shipments, orders, invoices or workers, directly or through a connection, without its resolver checking the kind's read |
 | `TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler` (responseguard) | a REST response returns a shipment, order, invoice or worker as its own record outside that kind's handler |
 | `TestReferenceFragmentsAreGenerated` (gqlext) | the generated fragments or views are out of date |

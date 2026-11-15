@@ -105,7 +105,11 @@ function buildComparison(selected: Document, current: Document): CompareField[] 
       current: current.previewStatus,
     });
   }
-  if (selected.contentStatus !== current.contentStatus) {
+  if (
+    selected.contentStatus != null &&
+    current.contentStatus != null &&
+    selected.contentStatus !== current.contentStatus
+  ) {
     fields.push({
       label: translate("Text extraction"),
       selected: selected.contentStatus,
@@ -160,7 +164,7 @@ function VersionStatusBadges({ version }: { version: Document }) {
         </Badge>
       )}
       <PreviewBadge status={version.previewStatus} />
-      <ContentBadge status={version.contentStatus} />
+      {version.contentStatus ? <ContentBadge status={version.contentStatus} /> : null}
     </div>
   );
 }

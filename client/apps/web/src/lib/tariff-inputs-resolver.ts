@@ -19,7 +19,7 @@ export async function loadTemplateInputs(
   const entries = await Promise.all(
     distinct.map(async (templateId) => {
       try {
-        const inputs = await queryClient.ensureQueryData(formulaTemplate.inputs(templateId, null));
+        const inputs = await queryClient.ensureQueryData(formulaTemplate.inputs(templateId));
         return [templateId, inputs] as const;
       } catch {
         return null;

@@ -144,13 +144,13 @@ type Invoice {
   "Whether this invoice bills only part of what its shipments charged."
   isSplitBill: Boolean!
   "Notes the tariffs that rated the invoice's shipments put on their bills."
-  ratingNotes: [String!]!
+  ratingNotes: [String!]
   "Other invoices that bill any shipment on this one, split-bill siblings first."
   relatedInvoices: [Invoice!]!
   subtotalAmount: Decimal!
   otherAmount: Decimal!
   totalAmount: Decimal
-  appliedAmount: Decimal!
+  appliedAmount: Decimal
   settlementStatus: InvoiceSettlementStatus!
   disputeStatus: InvoiceDisputeStatus!
   sendStatus: InvoiceSendStatus!
@@ -180,26 +180,33 @@ type Invoice {
   memoReason: String!
   memoKind: InvoiceMemoKind
   "What is still owed on an open invoice or debit memo; zero on anything else."
-  openBalance: Decimal!
+  openBalance: Decimal
   "Open balance in minor units, kept by the database for filtering and sorting."
-  balanceDueMinor: Int!
+  balanceDueMinor: Int
   "How much of a posted credit memo has not yet been applied to an invoice."
-  creditRemaining: Decimal!
+  creditRemaining: Decimal
   "Days past the due date for an open invoice; null when nothing is owed or overdue."
   daysPastDue: Int
-  "Cash applied against this invoice, newest first, reversed payments included."
-  paymentApplications: [CustomerPaymentApplication!]!
+  """
+  Cash applied against this invoice, newest first, reversed payments included.
+  Null when the organization's plan leaves out Accounting & Cash.
+  """
+  paymentApplications: [CustomerPaymentApplication!]
   """
   Credit memo applications touching this invoice: the credits that settled it,
-  or, on a credit memo, the invoices it settled.
+  or, on a credit memo, the invoices it settled. Null when the organization's
+  plan leaves out Accounting & Cash.
   """
-  creditApplications: [CreditMemoApplication!]!
-  ediSendStatus: InvoiceEDISendStatus!
+  creditApplications: [CreditMemoApplication!]
+  ediSendStatus: InvoiceEDISendStatus
   lastEdiMessageId: ID
   ediSentAt: Timestamp
-  lastEdiError: String!
-  "Whether and where this invoice's outbound EDI 210 can go."
-  ediSendPlan: InvoiceEDISendPlan!
+  lastEdiError: String
+  """
+  Whether and where this invoice's outbound EDI 210 can go. Null when the
+  organization's plan leaves out EDI & Integrations.
+  """
+  ediSendPlan: InvoiceEDISendPlan
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -291,23 +298,23 @@ type CreateInvoicesResult {
 }
 
 "Whether an invoice's outbound 210 can go, where it would go, and where the last attempt stands."
-type InvoiceEDISendPlan {
-  invoiceId: ID!
+type InvoiceEDISendPlan @kind(resource: "edi") {
+  invoiceId: ID
   "The customer's EDI invoicing switch."
-  enabled: Boolean!
+  enabled: Boolean
   "Whether posting queues the 210 without a hand on it."
-  autoSend: Boolean!
+  autoSend: Boolean
   partnerId: ID
-  partnerName: String!
+  partnerName: String
   "The version of the partner's Lading project that would write the 210."
   ladingVersionId: ID
-  communicationMethod: String!
+  communicationMethod: String
   status: InvoiceEDISendStatus!
   lastMessageId: ID
-  lastError: String!
+  lastError: String
   sentAt: Timestamp
   "Why a send cannot happen right now; empty when it can."
-  blockers: [String!]!
+  blockers: [String!]
 }
 
 type InvoiceEDISendResult {

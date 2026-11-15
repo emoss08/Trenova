@@ -11,6 +11,7 @@ import (
 var catalogYAML []byte
 
 type Template struct {
+	Key         string `yaml:"key"`
 	Name        string `yaml:"name"`
 	Description string `yaml:"description"`
 	Source      string `yaml:"source"`

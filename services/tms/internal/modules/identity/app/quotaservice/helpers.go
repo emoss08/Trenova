@@ -3,7 +3,9 @@ package quotaservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -28,6 +30,15 @@ func Enforcing(guard platformplanports.QuotaGuard) bool {
 func DecisionError(decision *platformplanports.QuotaDecision) error {
 	if decision == nil || decision.Allowed {
 		return nil
+	}
+	if decision.Plan == platformplan.PlanKeyManaged {
+		return managedusage.Refusal(
+			decision.Meter,
+			decision.Limit,
+			decision.Used,
+			decision.Requested,
+			decision.Plan.String(),
+		)
 	}
 
 	return errortypes.NewQuotaExceededError(

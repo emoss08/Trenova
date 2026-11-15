@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/ports/routeestimateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/dispatchplanner"
@@ -222,6 +223,7 @@ func TestPlanHorizon_ChainsAFollowOnMoveOntoOneDriver(t *testing.T) {
 		due: horizonTestNow + 44*hour,
 	})
 	candidates := dispatchcandidateservice.New(dispatchcandidateservice.Params{
+		Features:       plantest.AllFeatures(),
 		Positionings:   positioningtest.None{},
 		Logger:         zap.NewNop(),
 		RouteEstimator: straightLineRoutes{},

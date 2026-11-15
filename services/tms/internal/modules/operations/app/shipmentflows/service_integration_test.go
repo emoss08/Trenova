@@ -39,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -1103,7 +1104,8 @@ func newIntegrationShipmentServiceWith(
 
 	audit := &mocks.NoopAuditService{}
 	commercial := shipmentcommercial.New(shipmentcommercial.Params{
-		Logger: zap.NewNop(),
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
 		RateEngine: ratingtest.NewStack(t, ratingtest.StackOptions{
 			Any: &tariffports.Template{
 				TemplateID:    pulid.MustNew("ft_"),

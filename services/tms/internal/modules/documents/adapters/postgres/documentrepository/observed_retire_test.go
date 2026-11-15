@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -73,6 +75,10 @@ type heard struct {
 	changes []*documentports.DocumentChange
 }
 
+func (h *heard) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureDocumentManagement
+}
+
 func (h *heard) DocumentsChanged(_ context.Context, change *documentports.DocumentChange) {
 	h.changes = append(h.changes, change)
 }
@@ -104,6 +110,7 @@ func observedOver(
 	repo := Observe(ObservedParams{
 		Repo:      stored,
 		Observers: []documentports.DocumentChangeObserver{listener},
+		Features:  plantest.AllFeatures(),
 		Logger:    zap.NewNop(),
 	})
 	return repo, listener

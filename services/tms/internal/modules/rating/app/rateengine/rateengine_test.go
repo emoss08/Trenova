@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -166,6 +167,7 @@ func setup(t *testing.T) *deps {
 		exchange:      d.exchange,
 		routingGuides: d.guides,
 		hydrator:      noHydration{},
+		features:      plantest.AllFeatures(),
 		modeProfile:   &stubModeProfiles{err: modeprofileports.ErrNoModeProfileConfigured},
 		now:           func() int64 { return testNow },
 	}

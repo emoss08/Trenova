@@ -866,7 +866,7 @@ func (s *Service) assertActorHolds(
 	}
 
 	if !result.Allowed {
-		return errortypes.NewValidationError(
+		return permissionports.DeniedError(result, errortypes.NewValidationError(
 			"actor",
 			errortypes.ErrForbidden,
 			fmt.Sprintf(
@@ -874,7 +874,7 @@ func (s *Service) assertActorHolds(
 				operation,
 				resource,
 			),
-		)
+		))
 	}
 
 	return nil

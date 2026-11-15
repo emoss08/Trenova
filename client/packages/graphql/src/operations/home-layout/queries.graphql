@@ -17,6 +17,12 @@ query HomeWidgetCatalog {
     metrics {
       key
       label
+      planLock {
+        feature
+        featureName
+        addOn
+        addOnName
+      }
     }
     widgets {
       key
@@ -31,6 +37,12 @@ query HomeWidgetCatalog {
       minH
       maxW
       maxH
+      planLock {
+        feature
+        featureName
+        addOn
+        addOnName
+      }
     }
   }
 }

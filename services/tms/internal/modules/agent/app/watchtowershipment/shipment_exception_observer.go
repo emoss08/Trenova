@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -125,4 +126,8 @@ func (o *ShipmentExceptionObserver) OnShipmentEvent(
 		})
 	}
 	return nil
+}
+
+func (o *ShipmentExceptionObserver) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureAIWatchtower
 }

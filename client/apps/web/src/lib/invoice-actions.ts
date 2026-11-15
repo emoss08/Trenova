@@ -1,9 +1,10 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { withheldAccessLabel } from "@trenova/shared/lib/reference-access";
 
 /** The parts of an invoice's EDI send plan that decide whether a 210 can go now. */
 export type InvoiceEdiPlanGate = {
-  enabled: boolean;
-  blockers: readonly string[];
+  enabled: boolean | null;
+  blockers: readonly string[] | null;
   status: string;
 };
 
@@ -17,7 +18,8 @@ export type InvoiceEmailGate = {
 /**
  * Why an EDI 210 cannot go for the invoice right now, in the customer's terms,
  * or null when it can. The plan's own blockers come first; a missing plan
- * means it has not loaded yet.
+ * means it has not loaded yet, and a plan whose switch is withheld means the
+ * reader cannot read EDI.
  */
 export function invoiceEdiSendBlocker(
   invoiceStatus: string,
@@ -25,10 +27,14 @@ export function invoiceEdiSendBlocker(
   t: TranslateFn,
 ): string | null {
   if (!plan) return t("Checking the customer's EDI configuration.");
-  if (!plan.enabled) {
-    return plan.blockers[0] ?? t("EDI invoicing is not enabled for this customer.");
+  if (plan.enabled === null) {
+    return t("You don't have access to {0}", withheldAccessLabel({ kind: "edi" }));
   }
-  if (plan.blockers.length > 0) return plan.blockers[0];
+  const blockers = plan.blockers ?? [];
+  if (!plan.enabled) {
+    return blockers[0] ?? t("EDI invoicing is not enabled for this customer.");
+  }
+  if (blockers.length > 0) return blockers[0];
   if (invoiceStatus !== "Posted") return t("Only a posted invoice can be sent by EDI.");
   if (plan.status === "Queued" || plan.status === "Sending") {
     return t("An EDI send for this invoice is already in progress.");

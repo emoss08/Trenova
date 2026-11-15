@@ -87,9 +87,10 @@ func (f *fakeChecklists) ListForWorker(
 }
 
 type fakeBalances struct {
-	calls    int
-	balances []*ptoledgerservice.BalanceView
-	summary  *ptoledgerports.PTOBalanceSummary
+	calls        int
+	summaryCalls int
+	balances     []*ptoledgerservice.BalanceView
+	summary      *ptoledgerports.PTOBalanceSummary
 }
 
 func (f *fakeBalances) GetBalances(
@@ -102,6 +103,7 @@ func (f *fakeBalances) GetBalances(
 func (f *fakeBalances) Summary(
 	_ context.Context, _ pagination.TenantInfo,
 ) (*ptoledgerports.PTOBalanceSummary, error) {
+	f.summaryCalls++
 	if f.summary == nil {
 		return &ptoledgerports.PTOBalanceSummary{}, nil
 	}
@@ -341,17 +343,39 @@ func TestRosterAttention_GathersEveryArea(t *testing.T) {
 	}
 
 	attention, err := h.svc.RosterAttention(t.Context(), h.tenant,
-		workeroverviewservice.AttentionAccess{Reviews: true})
+		workeroverviewservice.AttentionAccess{Reviews: true, PTO: true, Training: true})
 	require.NoError(t, err)
 
 	assert.Equal(t, 40, attention.ActiveWorkers)
 	assert.Equal(t, 3, attention.NonCompliant)
-	assert.Equal(t, 7, attention.TrainingOverdue)
+	require.NotNil(t, attention.TrainingOverdue)
+	assert.Equal(t, 7, *attention.TrainingOverdue)
 	assert.Equal(t, 1, attention.AtRisk)
 	assert.Equal(t, 5, attention.ExpiringSoon)
 	require.NotNil(t, attention.ReviewsAwaitingSignOff)
 	assert.Equal(t, 4, *attention.ReviewsAwaitingSignOff)
-	assert.True(t, decimal.NewFromInt(312).Equal(attention.PTOLiabilityDays))
+	require.NotNil(t, attention.PTOLiabilityDays)
+	assert.True(t, decimal.NewFromInt(312).Equal(*attention.PTOLiabilityDays))
+}
+
+func TestRosterAttention_TheTwoWorkerFiguresAreNullWithoutTheirReadOrTheirFeature(t *testing.T) {
+	h := newOverviewHarness(t)
+	h.workerRepo.EXPECT().
+		CountRosterAttention(mock.Anything, mock.Anything).
+		Return(&workerports.RosterAttention{ActiveWorkers: 40, TrainingOverdue: 7}, nil).
+		Once()
+	h.pto.summary = &ptoledgerports.PTOBalanceSummary{
+		TotalBalanceDays: decimal.NewFromInt(312),
+	}
+
+	attention, err := h.svc.RosterAttention(t.Context(), h.tenant,
+		workeroverviewservice.AttentionAccess{Reviews: true})
+	require.NoError(t, err)
+
+	assert.Equal(t, 40, attention.ActiveWorkers)
+	assert.Nil(t, attention.TrainingOverdue)
+	assert.Nil(t, attention.PTOLiabilityDays)
+	assert.Zero(t, h.pto.summaryCalls, "the PTO ledger is not read for a reader without worker_pto")
 }
 
 // A draft review is still being written; it is its author's work in progress,
@@ -458,4 +482,3 @@ func TestGet_ReadsDisciplineForAReaderWhoMaySeeIt(t *testing.T) {
 	assert.Equal(t, 1, h.safety.calls)
 	assert.Zero(t, h.safety.withoutDiscipline)
 }
-

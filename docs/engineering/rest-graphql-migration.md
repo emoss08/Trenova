@@ -565,7 +565,6 @@ before converting: other work may have changed them.
   POST /formula-templates/context/cells
   POST /formula-templates/duplicate
   POST /formula-templates/import
-  POST /formula-templates/install-standards
   POST /formula-templates/scaffold-test
   GET /formula-templates/standards
   POST /formula-templates/test

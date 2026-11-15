@@ -23,6 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -64,6 +66,7 @@ type ReadinessParams struct {
 	Events        agenteventports.AgentEventPublisher
 	Audit         auditports.AuditService
 	Realtime      realtimeports.RealtimeService
+	Features      platformcatalogports.FeatureGate
 	Logger        *zap.Logger
 }
 
@@ -83,6 +86,7 @@ type ReadinessService struct {
 	email         emailports.EmailService
 	events        agenteventports.AgentEventPublisher
 	rec           factoringaction.Recorder
+	features      platformcatalogports.FeatureGate
 	l             *zap.Logger
 	now           func() int64
 }
@@ -108,6 +112,7 @@ func NewReadinessService(p ReadinessParams) factoringports.ReadinessService {
 		email:         p.Email,
 		events:        p.Events,
 		rec:           factoringaction.Recorder{Audit: p.Audit, Realtime: p.Realtime, Logger: l},
+		features:      p.Features,
 		l:             l,
 		now:           timeutils.NowUnix,
 	}
@@ -549,6 +554,13 @@ func (s *ReadinessService) PlanOverride(
 	req *factoringports.SetOverrideRequest,
 ) (*factoringports.OverridePlan, error) {
 	if err := factoringaction.RequireRequest(req != nil); err != nil {
+		return nil, err
+	}
+	if err := platformcatalogports.RequireFeature(
+		ctx,
+		s.features,
+		platformcatalog.FeatureFactoring,
+	); err != nil {
 		return nil, err
 	}
 	if !req.Override.IsValid() {

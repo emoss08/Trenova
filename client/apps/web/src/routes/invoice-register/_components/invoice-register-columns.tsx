@@ -16,10 +16,12 @@ import {
 } from "@/lib/choices";
 import type { InvoiceRegisterRow } from "@/lib/graphql/invoice-table";
 import { invoicePanelPath } from "@/lib/invoice-links";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Link } from "react-router";
+import { PlanFeature } from "@/lib/plan-feature";
 
 const settlementStatusChoices = [
   { value: "Unpaid", label: "Unpaid" },
@@ -182,7 +184,10 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
       accessorKey: "openBalance",
       header: t("Open"),
       cell: ({ row }) => {
-        const open = Number(row.original.openBalance ?? 0);
+        if (row.original.openBalance == null) {
+          return <WithheldValue plan="tms.accounting" className="justify-end" />;
+        }
+        const open = Number(row.original.openBalance);
         return (
           <span
             className={
@@ -196,6 +201,7 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
         );
       },
       meta: {
+        planFeature: PlanFeature.Accounting,
         apiField: "balanceDueMinor",
         filterable: true,
         sortable: true,
@@ -260,12 +266,15 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
       accessorKey: "ediSendStatus",
       header: t("EDI"),
       cell: ({ row }) =>
-        row.original.ediSendStatus === "NotSent" ? (
+        row.original.ediSendStatus == null ? (
+          <WithheldValue plan="integrations.edi" />
+        ) : row.original.ediSendStatus === "NotSent" ? (
           <span className="text-muted-foreground text-xs">—</span>
         ) : (
           <InvoiceEdiSendStatusBadge status={row.original.ediSendStatus} />
         ),
       meta: {
+        planFeature: PlanFeature.EDI,
         apiField: "ediSendStatus",
         filterable: true,
         sortable: true,

@@ -38,10 +38,11 @@ type BillingReadinessCache struct {
 // itself. One shipment reads them for itself; a plan over many reads each
 // once for all of them, and both decide from the same function.
 type Sources struct {
-	control   *billingcontrol.BillingControl
-	Payers    map[pulid.ID]*customer.Customer
-	documents map[string][]*document.Document
-	failures  map[pulid.ID][]*servicefailure.ServiceFailure
+	control     *billingcontrol.BillingControl
+	Payers      map[pulid.ID]*customer.Customer
+	documents   map[string][]*document.Document
+	failures    map[pulid.ID][]*servicefailure.ServiceFailure
+	creditHolds bool
 }
 
 func payersByID(payers []*customer.Customer) map[pulid.ID]*customer.Customer {
@@ -94,12 +95,13 @@ func applyPayerReadiness(
 	readiness *shipmentbillingports.ShipmentBillingReadiness,
 	entity *shipment.Shipment,
 	resolution *chargeallocation.ShareResolution,
-	payersByID map[pulid.ID]*customer.Customer,
+	sources *Sources,
 	docs []*document.Document,
 ) {
 	if readiness == nil || resolution == nil {
 		return
 	}
+	payersByID := sources.Payers
 	readiness.Payers = make(
 		[]shipmentbillingports.ShipmentBillingPayerReadiness,
 		0,
@@ -113,6 +115,7 @@ func applyPayerReadiness(
 
 	for _, share := range resolution.Shares {
 		entry, profile := payerReadinessEntry(share, resolution, payersByID)
+		entry.CreditHold = entry.CreditHold && sources.creditHolds
 
 		if !entry.IsPrimary && profile != nil {
 			mergePayerRequirements(readiness, entity, profile, docs, known)

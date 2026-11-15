@@ -8,8 +8,27 @@ import type { ReportFieldRef, ReportFilterGroup, ReportIR } from "@/types/report
 
 export type ReportFieldAccess = ReportCatalogField["access"];
 
+export type ReportPlanWithheld = ReportCatalog["withheldByPlan"][number];
+
 /** The catalog's entities by key, as the builder indexes them. */
-type CatalogIndex = { entities: ReadonlyMap<string, ReportCatalogEntity> };
+type CatalogIndex = {
+  entities: ReadonlyMap<string, ReportCatalogEntity>;
+  catalog?: Pick<ReportCatalog, "withheldByPlan">;
+};
+
+/**
+ * What the organization's plan leaves out of the catalog under an entity: the
+ * entity itself when name is omitted, else one of its fields or edges.
+ */
+export function planWithheld(
+  index: CatalogIndex,
+  entity: string,
+  name?: string,
+): ReportPlanWithheld | undefined {
+  return index.catalog?.withheldByPlan.find(
+    (item) => item.entity === entity && (item.name ?? undefined) === name,
+  );
+}
 
 /**
  * Whether a report may use a field. The server decides it by the rule its
@@ -45,7 +64,11 @@ export type UnavailableRef = {
   label: string;
   /** The entity the field is on, or the root when the path is broken. */
   entityLabel: string;
-  access: ReportFieldAccess | "Missing";
+  access: ReportFieldAccess | "Missing" | "NotOnPlan";
+  /** The add-on that holds it and the feature it belongs to, for NotOnPlan. */
+  addOnName?: string;
+  feature?: string;
+  featureName?: string;
   /** The kind whose read is missing, for NeedsKindRead. */
   kindLabel?: string;
   /** The protected group, for NeedsFieldGroup. */
@@ -55,13 +78,26 @@ export type UnavailableRef = {
 type Resolved = {
   entity?: ReportCatalogEntity;
   field?: ReportCatalogField;
-  blocked?: { access: ReportFieldAccess | "Missing"; kindLabel?: string; entity?: ReportCatalogEntity };
+  blocked?: {
+    access: ReportFieldAccess | "Missing";
+    kindLabel?: string;
+    entity?: ReportCatalogEntity;
+  };
+  plan?: ReportPlanWithheld;
 };
 
 function resolve(index: CatalogIndex, root: string, ref: ReportFieldRef): Resolved {
   let current = index.entities.get(root);
+  if (!current) {
+    const plan = planWithheld(index, root);
+    if (plan) return { plan };
+  }
   for (const name of ref.path ?? []) {
     const edge = current?.edges.find((candidate) => candidate.name === name);
+    if (current && !edge) {
+      const plan = planWithheld(index, current.key, name);
+      if (plan) return { entity: current, plan };
+    }
     if (!current || !edge) return { entity: current, blocked: { access: "Missing" } };
     if (!isEdgeAvailable(edge)) {
       return {
@@ -83,7 +119,12 @@ function resolve(index: CatalogIndex, root: string, ref: ReportFieldRef): Resolv
     current = next;
   }
   if (!current) return { blocked: { access: "Missing" } };
-  return { entity: current, field: current.fields.find((field) => field.key === ref.field) };
+  const field = current.fields.find((candidate) => candidate.key === ref.field);
+  if (!field) {
+    const plan = planWithheld(index, current.key, ref.field);
+    if (plan) return { entity: current, plan };
+  }
+  return { entity: current, field };
 }
 
 /** Why one ref of a report cannot be used, or undefined when it can. */
@@ -93,9 +134,20 @@ export function unavailableRef(
   ref: ReportFieldRef,
 ): UnavailableRef | undefined {
   const resolved = resolve(index, root, ref);
-  const entityLabel =
-    resolved.entity?.label ?? index.entities.get(root)?.label ?? root;
+  const entityLabel = resolved.entity?.label ?? index.entities.get(root)?.label ?? root;
 
+  if (resolved.plan) {
+    const { plan } = resolved;
+    return {
+      ref,
+      label: plan.name ? plan.label : ref.field,
+      entityLabel: plan.entityLabel,
+      access: "NotOnPlan",
+      addOnName: plan.denial.addOnName,
+      feature: plan.denial.feature,
+      featureName: plan.denial.featureName,
+    };
+  }
   if (resolved.blocked) {
     return {
       ref,
@@ -172,6 +224,30 @@ function pruneFilters(
     .filter((nested): nested is ReportFilterGroup => nested !== undefined);
   if (filters.length === 0 && groups.length === 0) return undefined;
   return { ...group, filters, groups };
+}
+
+/**
+ * Whether the fix for a ref is to take it out of the report. A ref the plan
+ * leaves out is not: it comes back when the add-on is added.
+ */
+export function isRemovable(problem: UnavailableRef): boolean {
+  return problem.access !== "NotOnPlan";
+}
+
+export type PlanAddOn = { feature: string; featureName: string; addOnName: string };
+
+/** The add-ons a report's plan-withheld refs need, each once. */
+export function planAddOns(problems: UnavailableRef[]): PlanAddOn[] {
+  const out: PlanAddOn[] = [];
+  for (const problem of problems) {
+    if (problem.access !== "NotOnPlan" || !problem.feature) continue;
+    const addOnName = problem.addOnName ?? "";
+    const featureName = problem.featureName ?? "";
+    const key = addOnName || featureName;
+    if (out.some((addOn) => (addOn.addOnName || addOn.featureName) === key)) continue;
+    out.push({ feature: problem.feature, featureName, addOnName });
+  }
+  return out;
 }
 
 /**

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
@@ -26,6 +27,7 @@ func TestStartForDefinition_StartsTheWorkflowUnderTheRunsAnchor(t *testing.T) {
 	var startedUnder trace.SpanContext
 	var payload *agentcontract.AgentRunPayload
 	svc := &Service{
+		features:    plantest.AllFeatures(),
 		budgets:     &agenttest.StubMoneyBudgets{},
 		activity:    agenttest.QuietActivity{},
 		l:           zap.NewNop(),
@@ -74,6 +76,7 @@ func TestStartInline_RecordsTheTraceItRanIn(t *testing.T) {
 
 	var created *agent.AgentRun
 	svc := &Service{
+		features:  plantest.AllFeatures(),
 		budgets:   &agenttest.StubMoneyBudgets{},
 		activity:  agenttest.QuietActivity{},
 		l:         zap.NewNop(),

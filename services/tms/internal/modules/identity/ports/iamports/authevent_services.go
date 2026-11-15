@@ -42,6 +42,10 @@ const AuthEventProviderSignupProvisioned = "signup_provisioned"
 
 const AuthEventProviderLoginThrottled = "login_throttled"
 
+// AuthEventProviderSupport is a Trenova staff member entering a managed instance under a support
+// access grant.
+const AuthEventProviderSupport = "trenova_support"
+
 func NonSignInAuthEventProviders() []string {
 	return []string{
 		AuthEventProviderLogout,

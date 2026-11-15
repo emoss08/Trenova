@@ -2,6 +2,7 @@ package webwatchjobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -13,6 +14,7 @@ func NewScheduleProvider() *ScheduleProvider { return &ScheduleProvider{} }
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{{
 		ID:            SweepScheduleID,
+		Feature:       platformcatalog.FeatureAIDesk,
 		Description:   "Check the web watches whose check is due and hand on what they found",
 		Spec:          schedule.Every(sweepEvery),
 		Workflow:      CheckDueWebWatchesWorkflow,

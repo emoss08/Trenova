@@ -1,5 +1,6 @@
 import { formatForDisplay, type Hotkey } from "@tanstack/react-hotkeys";
 import { isMacPlatform } from "@trenova/shared/lib/shortcuts";
+import { PlanFeature } from "@/lib/plan-feature";
 
 export interface Keybind {
   id: string;
@@ -12,12 +13,16 @@ export interface Keybind {
   description: string;
   /** The binding as `useHotkey` takes it, for a keybind bound from this config. */
   hotkey?: Hotkey;
+  /** The add-on feature the shortcut belongs to; it is not listed on a plan without it. */
+  planFeature?: string;
 }
 
 export interface KeybindGroup {
   id: string;
   label: string;
   keybinds: Keybind[];
+  /** The add-on feature every shortcut in the group belongs to. */
+  planFeature?: string;
 }
 
 export const keybindGroups: KeybindGroup[] = [
@@ -71,8 +76,20 @@ export const keybindGroups: KeybindGroup[] = [
     label: "Go to",
     keybinds: [
       { id: "go-home", label: "Home", keys: ["G", "H"], description: "Open Home from anywhere" },
-      { id: "go-desk", label: "Desk", keys: ["G", "D"], description: "Open the Desk" },
-      { id: "go-triage", label: "Triage", keys: ["G", "T"], description: "Open Triage" },
+      {
+        id: "go-desk",
+        label: "Desk",
+        keys: ["G", "D"],
+        description: "Open the Desk",
+        planFeature: PlanFeature.AIDesk,
+      },
+      {
+        id: "go-triage",
+        label: "Triage",
+        keys: ["G", "T"],
+        description: "Open Triage",
+        planFeature: PlanFeature.AITriage,
+      },
       { id: "go-intake", label: "Intake", keys: ["G", "I"], description: "Open Intake" },
       { id: "go-shipments", label: "Shipments", keys: ["G", "S"], description: "Open Shipments" },
       { id: "go-dispatch", label: "Dispatch", keys: ["G", "P"], description: "Open Dispatch" },
@@ -84,12 +101,14 @@ export const keybindGroups: KeybindGroup[] = [
         label: "Carrier settlements",
         keys: ["G", "C"],
         description: "Open Carrier settlements",
+        planFeature: PlanFeature.CarrierBrokerage,
       },
       {
         id: "go-accounting",
         label: "Accounting",
         keys: ["G", "A"],
         description: "Open Accounting",
+        planFeature: PlanFeature.Accounting,
       },
       { id: "go-reports", label: "Reports", keys: ["G", "R"], description: "Open Reports" },
       {
@@ -102,6 +121,7 @@ export const keybindGroups: KeybindGroup[] = [
   },
   {
     id: "desk",
+    planFeature: PlanFeature.AIDesk,
     label: "Desk",
     keybinds: [
       {
@@ -209,6 +229,7 @@ export const keybindGroups: KeybindGroup[] = [
       },
       {
         id: "dispatch-approve",
+        planFeature: PlanFeature.AIDesk,
         label: "Approve Nova's proposal",
         keys: ["A"],
         description:
@@ -216,6 +237,7 @@ export const keybindGroups: KeybindGroup[] = [
       },
       {
         id: "dispatch-decline",
+        planFeature: PlanFeature.AIDesk,
         label: "Decline Nova's proposal",
         keys: ["D"],
         description: "Open the reason box to decline the proposal for the open move",
@@ -366,6 +388,7 @@ export const keybindGroups: KeybindGroup[] = [
   },
   {
     id: "ai-control",
+    planFeature: PlanFeature.AgentAutomation,
     label: "AI control",
     keybinds: [
       {
@@ -465,6 +488,7 @@ export const keybindGroups: KeybindGroup[] = [
   },
   {
     id: "triage",
+    planFeature: PlanFeature.AITriage,
     label: "Triage",
     keybinds: [
       {
@@ -567,6 +591,7 @@ export const keybindGroups: KeybindGroup[] = [
   },
   {
     id: "watchtower",
+    planFeature: PlanFeature.AIWatchtower,
     label: "Watchtower",
     keybinds: [
       {

@@ -154,7 +154,7 @@ type BillingTerms struct {
 	DueDate     *int64 `json:"dueDate"`
 	// Recipients are the bill-to's invoice addresses, first one first.
 	Recipients []string `json:"recipients"`
-	CreditHold bool     `json:"creditHold"`
+	CreditHold *bool    `json:"creditHold,omitempty"`
 }
 
 // DocumentState is how a document the item needs stands.

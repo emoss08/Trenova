@@ -2,9 +2,12 @@ package tendercancel
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
@@ -25,6 +28,7 @@ type Service struct {
 	workflows   kernelports.WorkflowStarter
 	invalidator shipmentinvalidationports.ShipmentInvalidator
 	effects     *tendereffects.Effects
+	features    platformcatalogports.FeatureGate
 }
 
 // Cancel withdraws a live tender. An Active tender is canceled through its
@@ -80,6 +84,9 @@ func (s *Service) CancelLiveTenderForMove(
 	moveID pulid.ID,
 	reason string,
 ) error {
+	if on, err := s.tenderingOn(ctx); err != nil || !on {
+		return err
+	}
 	live, err := s.repo.GetLiveByMoveID(ctx, tenderports.GetLiveTenderByMoveRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
@@ -106,6 +113,9 @@ func (s *Service) CancelLiveTendersForShipment(
 	shipmentID pulid.ID,
 	reason string,
 ) error {
+	if on, err := s.tenderingOn(ctx); err != nil || !on {
+		return err
+	}
 	live, err := s.liveTendersForShipment(ctx, tenantInfo, shipmentID)
 	if err != nil {
 		return err
@@ -219,6 +229,7 @@ type Params struct {
 	Workflows   kernelports.WorkflowStarter
 	Invalidator shipmentinvalidationports.ShipmentInvalidator
 	Effects     *tendereffects.Effects
+	Features    platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service {
@@ -228,6 +239,7 @@ func New(p Params) *Service {
 		workflows:   p.Workflows,
 		invalidator: p.Invalidator,
 		effects:     p.Effects,
+		features:    p.Features,
 	}
 }
 
@@ -327,3 +339,11 @@ func (s *Service) liveTendersForShipment(
 }
 
 var _ tenderports.TenderGuard = (*Service)(nil)
+
+func (s *Service) tenderingOn(ctx context.Context) (bool, error) {
+	on, err := s.features.Enabled(ctx, platformcatalog.FeatureCarrierBrokerage)
+	if err != nil {
+		return false, fmt.Errorf("ask whether carrier brokerage is on the plan: %w", err)
+	}
+	return on, nil
+}

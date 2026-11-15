@@ -31,6 +31,7 @@ type PermissionCheckResult struct {
 	DataScope     permission.DataScope
 	CacheHit      bool
 	CheckDuration int64
+	PlanDenial    *PlanDenial
 }
 
 type BatchPermissionCheckRequest struct {
@@ -87,6 +88,7 @@ type LightPermissionManifest struct {
 	Permissions            map[string]uint32           `json:"permissions"`
 	RouteAccess            map[string]bool             `json:"routeAccess"`
 	AvailableOrgs          []OrgSummary                `json:"availableOrgs"`
+	UnavailableFeatures    []PlanDenial                `json:"unavailableFeatures"`
 	Checksum               string                      `json:"checksum"`
 	ExpiresAt              int64                       `json:"expiresAt"`
 }
@@ -101,6 +103,7 @@ type ResourcePermissionDetail struct {
 	Operations     []permission.Operation      `json:"operations"`
 	DataScope      permission.DataScope        `json:"dataScope"`
 	MaxSensitivity permission.FieldSensitivity `json:"maxSensitivity"`
+	PlanDenial     *PlanDenial                 `json:"planDenial,omitempty"`
 }
 
 type EffectivePermissions struct {
@@ -138,6 +141,7 @@ type EffectiveResourcePermission struct {
 	Operations []permission.Operation `json:"operations"`
 	DataScope  permission.DataScope   `json:"dataScope"`
 	GrantedBy  []string               `json:"grantedBy"`
+	PlanDenial *PlanDenial            `json:"planDenial,omitempty"`
 }
 
 type PermissionEngine interface {
@@ -174,7 +178,10 @@ type PermissionEngine interface {
 		operation permission.Operation,
 	) (*UsableAgents, error)
 	// MayUseAgent reports whether the actor may start or continue a
-	// conversation with the agent.
+	// conversation with the agent. When the plan leaves the assistant out
+	// the answer is the plan's refusal (PLAN_RESTRICTED, naming the add-on)
+	// as the error, so a caller refusing with it words the refusal as the
+	// plan rather than as a missing grant.
 	MayUseAgent(
 		ctx context.Context,
 		actor *RequestActor,
@@ -189,6 +196,9 @@ type PermissionEngine interface {
 type UsableAgents struct {
 	Assistant  bool
 	GrantedIDs []pulid.ID
+	// PlanDenial names the add-on when the plan leaves the assistant out,
+	// which is why no agent is usable.
+	PlanDenial *PlanDenial
 }
 
 // Allows reports whether the person may use the agent.

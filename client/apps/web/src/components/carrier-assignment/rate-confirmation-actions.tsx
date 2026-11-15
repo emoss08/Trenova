@@ -1,9 +1,11 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useSingleFlight } from "@/hooks/use-single-flight";
+import { PlanFeature } from "@/lib/plan-feature";
 import { documentContentUrl } from "@/services/document";
 import { rateConfirmationService } from "@/services/rate-confirmation";
 import { RateConfirmationStatusBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -56,10 +58,13 @@ export function RateConfirmationActions({
   const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
+  // Rate confirmations are Carrier & Brokerage's: without it there is no row and no read.
+  const onPlan = usePlanFeature(PlanFeature.CarrierBrokerage).available;
 
   const { data: rateConfirmations, isLoading } = useQuery({
     queryKey: rateConfirmationQueryKey(moveId),
     queryFn: () => rateConfirmationService.listByMove(moveId),
+    enabled: onPlan,
   });
 
   // A move can accumulate rate confirmations from replaced assignments; only the
@@ -98,6 +103,8 @@ export function RateConfirmationActions({
   // One request at a time: a second send or generate while the first is out is ignored.
   const generate = useSingleFlight(() => generateMutation.mutateAsync());
   const send = useSingleFlight((rateConId: string) => sendMutation.mutateAsync(rateConId));
+
+  if (!onPlan) return null;
 
   if (isLoading) {
     return <CarrierDocumentRowSkeleton label={t("Loading rate confirmations…")} />;

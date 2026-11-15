@@ -22,7 +22,8 @@ export type QuotaExceededNotice = {
 
 export type PlanRestrictedNotice = {
   kind: "restricted";
-  capability: string;
+  feature: string;
+  addOn: string;
   reason: string;
   plan: string;
   message: string;
@@ -97,7 +98,8 @@ export function planLimitFromSource(source: PlanLimitSource): PlanLimitNotice | 
   if (code === PLAN_RESTRICTED_CODE || type === PLAN_RESTRICTED_TYPE) {
     return {
       kind: "restricted",
-      capability: stringOf(params.capability),
+      feature: stringOf(params.feature),
+      addOn: stringOf(params.addOn),
       reason: stringOf(params.reason),
       plan: stringOf(params.plan),
       message,
@@ -176,8 +178,64 @@ export function planLimitFromError(error: unknown): PlanLimitNotice | null {
   return null;
 }
 
-/** Returns whether the notice was shown; a handler may decline one it has no use for. */
-export type PlanLimitHandler = (notice: PlanLimitNotice) => boolean;
+/**
+ * The add-on refusal an error carries: a `PLAN_RESTRICTED` that names the feature the plan
+ * leaves out. A read-only workspace, an expired trial or the signup wait list names none and
+ * is not one.
+ */
+export type PlanRestriction = {
+  /** The feature key; never shown. */
+  feature: string;
+  /** The add-on's name as the server gave it; empty for a feature of the base plan. */
+  addOn: string;
+};
+
+export function planRestrictionOfNotice(notice: PlanLimitNotice | null): PlanRestriction | null {
+  if (!notice || notice.kind !== "restricted" || notice.feature === "") return null;
+  return { feature: notice.feature, addOn: notice.addOn };
+}
+
+/** The add-on refusal a thrown request error (either transport) carries, or null. */
+export function planRestrictionOf(error: unknown): PlanRestriction | null {
+  return planRestrictionOfNotice(planLimitFromError(error));
+}
+
+/**
+ * What a route loader throws for a page whose feature the organization's plan leaves out. It
+ * is the body the API sends for the same refusal, so the route's error boundary explains it
+ * exactly as it explains a refused read.
+ */
+export function planRestrictedResponse(restriction: PlanRestriction): Response {
+  return new Response(
+    JSON.stringify({
+      type: PLAN_RESTRICTED_TYPE,
+      // i18n-ignore: the problem title the API sends, never shown; the error states name the add-on
+      title: "Plan Restricted",
+      status: 403,
+      code: PLAN_RESTRICTED_CODE,
+      params: { feature: restriction.feature, addOn: restriction.addOn },
+    }),
+    {
+      status: 403,
+      // i18n-ignore: the HTTP status text, never shown
+      statusText: "Plan Restricted",
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+}
+
+/**
+ * What the request that was refused did: a read (a GET, a GraphQL query, an event stream) or
+ * a write. The handler decides from it: the web app leaves an add-on refusal of a read to the
+ * page that asked, whose error state names the add-on, and explains a write in the dialog.
+ */
+export type PlanLimitRequest = "read" | "write";
+
+/**
+ * Returns whether the notice was shown, which marks the error explained so the caller does not
+ * repeat it; a handler declines what it leaves to the caller.
+ */
+export type PlanLimitHandler = (notice: PlanLimitNotice, request: PlanLimitRequest) => boolean;
 
 let planLimitHandler: PlanLimitHandler | null = null;
 
@@ -191,11 +249,12 @@ export function setPlanLimitHandler(handler: PlanLimitHandler | null): void {
 }
 
 /**
- * Called by a transport with the error it is about to throw. When the handler shows
- * the refusal, the error is remembered so the caller's own error reporting can stay
- * quiet instead of repeating it as a generic toast.
+ * Called by both transports with every error they are about to throw: the one place a
+ * plan-limit refusal is handed to the app. When the handler shows the refusal, the error is
+ * remembered so the caller's own error reporting can stay quiet instead of repeating it as a
+ * generic toast.
  */
-export function reportPlanLimit(error: object): boolean {
+export function reportPlanLimit(error: object, request: PlanLimitRequest): boolean {
   const notice = planLimitFromError(error);
   if (!notice || !planLimitHandler) {
     return false;
@@ -203,7 +262,7 @@ export function reportPlanLimit(error: object): boolean {
 
   let shown = false;
   try {
-    shown = planLimitHandler(notice);
+    shown = planLimitHandler(notice, request);
   } catch (handlerError) {
     console.error("[plan-limit] handler failed", handlerError);
   }

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/temporal"
@@ -55,6 +56,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "edi-inbound-poll",
+			Feature:       platformcatalog.FeatureEDIIntegration,
 			Description:   "Poll partner SFTP and VAN mailboxes for inbound EDI files",
 			Spec:          schedule.Every(10 * time.Minute),
 			Workflow:      PollInboundMailboxesWorkflow,
@@ -66,6 +68,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "edi-flow-timers",
+			Feature:       platformcatalog.FeatureEDIIntegration,
 			Description:   "Wake every open EDI flow instance whose timer is due",
 			Spec:          schedule.Every(time.Minute),
 			Workflow:      DispatchDueFlowTimersWorkflow,
@@ -77,6 +80,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "edi-raw-retention-purge",
+			Feature:       platformcatalog.FeatureEDIIntegration,
 			Description:   "Purge raw EDI payloads past each organization's retention window",
 			Spec:          schedule.Cron("0 3 * * *"),
 			Workflow:      PurgeEDIRawPayloadsWorkflow,

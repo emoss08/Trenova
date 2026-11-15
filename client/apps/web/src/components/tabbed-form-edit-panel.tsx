@@ -153,7 +153,13 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   const pendingActionRef = useRef<EditPanelSaveAction>(defaultAction);
   const hasFormTabs = formTabs.length > 0;
   const defaultTab = hasFormTabs ? formTabs[0].value : "details";
-  const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault(defaultTab));
+  const [requestedTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault(defaultTab));
+  // A link to a tab this panel does not offer (one the plan leaves out, or one that was
+  // renamed) opens on the first tab rather than on an empty panel.
+  const offeredTabs = hasFormTabs
+    ? formTabs.map((tab) => tab.value)
+    : ["details", ...tabs.map((tab) => tab.value)];
+  const activeTab = offeredTabs.includes(requestedTab) ? requestedTab : defaultTab;
   const {
     formState: { isSubmitting },
     handleSubmit,

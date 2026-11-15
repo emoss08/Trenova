@@ -54,7 +54,8 @@ import {
   useRecordMemoriesAvailable,
 } from "@/components/record-memories/record-memories";
 import { ComplianceTab, EmploymentTab, GeneralTab } from "./worker-form-tabs";
-import { resolveWorkerPanelTab, type EmploymentView } from "./worker-panel-tabs";
+import { useUnavailableFeatures } from "@trenova/shared/hooks/use-plan-feature";
+import { isWorkerTabOnPlan, resolveWorkerPanelTab, type EmploymentView } from "./worker-panel-tabs";
 
 const GENERAL_FIELDS = [
   "status",
@@ -144,6 +145,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
   const t = useT();
   const remembers = useRecordMemoriesAvailable();
   const personalDetailsVisible = useProtectedFieldAccess("Personal");
+  const unavailableFeatures = useUnavailableFeatures();
 
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
@@ -160,6 +162,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
   const { tab: resolvedTab, employmentView } = resolveWorkerPanelTab(
     activeTab,
     employmentViewChoice,
+    unavailableFeatures,
   );
   const showEmploymentView = (view: EmploymentView) => {
     setEmploymentViewChoice(view);
@@ -355,7 +358,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                         ...(remembers
                           ? [{ value: "memory", label: t("Agent memory"), icon: BrainIcon }]
                           : []),
-                      ]}
+                      ].filter((item) => isWorkerTabOnPlan(item.value, unavailableFeatures))}
                       activeValue={resolvedTab}
                       onSelect={(value) => void setActiveTab(value)}
                     />

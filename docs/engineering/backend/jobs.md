@@ -96,6 +96,8 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
 
 - Schedules come from a `ScheduleProvider.GetSchedules()` with `schedule.Every` and
   `SCHEDULE_OVERLAP_POLICY_SKIP`, registered with `schedule.AsProvider`.
+- Every schedule names its `Feature` (see below); `Validate` refuses one without a feature the
+  catalogue knows.
 - A sweep across tenants lists candidates under `dbscope.WithSystem(ctx, "<reason>")` in the
   repository (reviewed by `rlslint`), then does each tenant's work under `dbscope.WithTenant`.
   `temporaljobs.RunTenantFanOut` is the helper.
@@ -106,3 +108,27 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   index on the column, empty once the sweep has caught up. Its write is conditional on the
   row's `version` and on the stamp still being stale, so a person's save that lands meanwhile
   wins (`reportcatalogjobs/catalogcheck.go`).
+
+## A schedule names its feature
+
+- `schedule.Schedule.Feature` is the `platformcatalog` feature the schedule's work belongs to,
+  written as the catalogue constant. Where the work is on records of a permission resource, it is
+  that resource's feature in the permission registry; base work names its base feature
+  (`FeatureCoreTMS`, `FeatureBilling`, `FeatureAdministration`, …), never nothing. Work that
+  serves base and add-on features alike (the rollup refresh) is base.
+  `TestEveryDeclaredScheduleNamesAKnownFeature` reads every declaration in the tree.
+- The reconciler asks the instance-wide `FeatureGate` once per feature. A schedule whose feature
+  is off is still created, but paused, with a note saying the plan does not include the feature;
+  when the feature is on it runs unless its declaration says `Paused: true`. The paused state and
+  its reason are part of the hash in the note, so a plan change is an update and an unchanged plan
+  is not. With every feature on (self-hosted) the hash is the declaration's own.
+- A pause or unpause made by hand in Temporal replaces the note; from then on the paused state is
+  the person's and the reconciler keeps it, until the plan turns the feature off, which always
+  pauses. A gate error fails the reconcile pass before Temporal is touched.
+- The scheduler checks the gate every minute after the start-up reconcile and re-reconciles only
+  when the set of off features among those its schedules name changes, so buying or dropping an
+  add-on takes effect within about a minute and a half with no restart. A failed pass is retried
+  on the next check. Every worker replica runs the check; the reconcile writes the same desired
+  state from the same inputs, so replicas racing converge.
+- Schedules a service creates at run time (an agent definition's, a conversation's) do not go
+  through the registry; the service gates them with `RequireFeature` itself.

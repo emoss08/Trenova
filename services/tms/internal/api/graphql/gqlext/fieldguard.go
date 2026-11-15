@@ -12,11 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -34,6 +36,7 @@ const (
 	rootMutation            = "Mutation"
 	rootSubscription        = "Subscription"
 	withheldExtension       = "withheldByAccess"
+	withheldByPlanExtension = "withheldByPlan"
 )
 
 type ProtectedFieldMap map[string]map[string]protectedfield.Group
@@ -99,6 +102,7 @@ type FieldGuardParams struct {
 	fx.In
 
 	PermissionEngine permissionports.PermissionEngine
+	Plan             *onplan.Lookup
 }
 
 type FieldGuardExtension struct {
@@ -108,6 +112,9 @@ type FieldGuardExtension struct {
 	views     *refview.Views
 	resources map[string]permission.Resource
 	wrappers  map[string]struct{}
+	// returns maps every type that holds records of a kind, a connection or
+	// an edge of them included, to that kind.
+	returns map[string]permission.Resource
 }
 
 // recordIDField is how a read names its rows. It is never withheld: the
@@ -127,7 +134,7 @@ func NewFieldGuardExtension(p FieldGuardParams) *FieldGuardExtension {
 	return &FieldGuardExtension{
 		engine:   p.PermissionEngine,
 		registry: registry,
-		views:    refview.New(registry),
+		views:    refview.New(registry, p.Plan),
 	}
 }
 
@@ -147,7 +154,54 @@ func (e *FieldGuardExtension) Validate(schema graphql.ExecutableSchema) error {
 	e.fields = fields
 	e.resources = resources
 	e.wrappers = WrapperTypes(schema.Schema())
+	e.returns = RecordTypes(schema.Schema(), resources)
 	return nil
+}
+
+// RecordTypes maps every type that holds records of a kind to the kind: a
+// type of a kind, and a connection or an edge whose nodes are of one.
+func RecordTypes(
+	schema *ast.Schema,
+	kinds map[string]permission.Resource,
+) map[string]permission.Resource {
+	out := make(map[string]permission.Resource, len(kinds))
+	for name, kind := range kinds {
+		out[name] = kind
+	}
+	if schema == nil {
+		return out
+	}
+	for name, def := range schema.Types {
+		if kind, ok := wrappedKind(schema, kinds, def, 0); ok {
+			out[name] = kind
+		}
+	}
+
+	return out
+}
+
+func wrappedKind(
+	schema *ast.Schema,
+	kinds map[string]permission.Resource,
+	def *ast.Definition,
+	depth int,
+) (permission.Resource, bool) {
+	if def == nil || depth > 2 || !wrapperType(def) {
+		return "", false
+	}
+	field := def.Fields.ForName("node")
+	if field == nil {
+		field = def.Fields.ForName("edges")
+	}
+	if field == nil {
+		return "", false
+	}
+	inner := field.Type.Name()
+	if kind, ok := kinds[inner]; ok {
+		return kind, true
+	}
+
+	return wrappedKind(schema, kinds, schema.Types[inner], depth+1)
 }
 
 func WrapperTypes(schema *ast.Schema) map[string]struct{} {
@@ -223,9 +277,11 @@ func KindTypes(
 	return out, nil
 }
 
-// Authorizes reports whether a root field declares, with
-// @authorizes(resource:), that its resolver checks read on a kind, so the
-// records of that kind it returns inside a card or overview are its own.
+// Authorizes reports whether a field declares, with @authorizes(resource:),
+// that its resolver checks read on a kind: on a root field, the records of
+// that kind it returns inside a card or overview are its own; on a field of a
+// record, the resolver returns a record of that kind only to a caller who
+// reads it, so the record is shown whole.
 func Authorizes(def *ast.FieldDefinition, kind permission.Resource) bool {
 	if def == nil {
 		return false
@@ -254,8 +310,12 @@ type fieldVisibility struct {
 	accessOnce sync.Once
 	access     *refview.PersonAccess
 
+	viewsOnce sync.Once
+	views     *refview.Views
+
 	mu       sync.Mutex
 	withheld map[string]struct{}
+	byPlan   map[gqlctx.WithheldByPlan]struct{}
 }
 
 func (e *FieldGuardExtension) InterceptOperation(
@@ -264,12 +324,14 @@ func (e *FieldGuardExtension) InterceptOperation(
 ) graphql.ResponseHandler {
 	return next(context.WithValue(ctx, fieldVisibilityKey{}, &fieldVisibility{
 		withheld: make(map[string]struct{}, 4),
+		byPlan:   make(map[gqlctx.WithheldByPlan]struct{}),
 	}))
 }
 
 // InterceptResponse names every path a person's read withheld, without list
 // indices, so a client can tell a field it may not see from one that is
-// empty.
+// empty: what their access withheld in withheldByAccess, and what the
+// organization's plan does not include in withheldByPlan, with its feature.
 func (e *FieldGuardExtension) InterceptResponse(
 	ctx context.Context,
 	next graphql.ResponseHandler,
@@ -280,13 +342,19 @@ func (e *FieldGuardExtension) InterceptResponse(
 		return resp
 	}
 	withheld := holder.withheldPaths()
-	if len(withheld) == 0 {
+	byPlan := holder.withheldByPlan()
+	if len(withheld) == 0 && len(byPlan) == 0 {
 		return resp
 	}
 	if resp.Extensions == nil {
-		resp.Extensions = make(map[string]any, 1)
+		resp.Extensions = make(map[string]any, 2)
 	}
-	resp.Extensions[withheldExtension] = withheld
+	if len(withheld) > 0 {
+		resp.Extensions[withheldExtension] = withheld
+	}
+	if len(byPlan) > 0 {
+		resp.Extensions[withheldByPlanExtension] = byPlan
+	}
 
 	return resp
 }
@@ -296,6 +364,20 @@ func (v *fieldVisibility) withhold(path ast.Path) {
 	v.mu.Lock()
 	v.withheld[name] = struct{}{}
 	v.mu.Unlock()
+}
+
+func (v *fieldVisibility) withholdByPlan(path ast.Path, feature platformcatalog.FeatureKey) {
+	entry := gqlctx.WithheldByPlan{Path: gqlctx.WithheldName(path), Feature: feature}
+	v.mu.Lock()
+	v.byPlan[entry] = struct{}{}
+	v.mu.Unlock()
+}
+
+func (v *fieldVisibility) withheldByPlan() []gqlctx.WithheldByPlan {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+
+	return gqlctx.SortedByPlan(v.byPlan)
 }
 
 func (v *fieldVisibility) withheldPaths() []string {
@@ -320,27 +402,36 @@ func (e *FieldGuardExtension) InterceptField(
 		return next(ctx)
 	}
 	ceiling, agentRead := gqlctx.FieldCeilingFrom(ctx)
+	views := e.requestViews(ctx)
+	nonNull := fc.Field.Definition != nil && fc.Field.Definition.Type.NonNull
+	if withheld, err := e.returnsOffPlan(ctx, views, fc, ceiling, agentRead, nonNull); withheld {
+		return nil, err
+	}
+	record, isRecord := e.record(fc)
+	decided := isRecord && fc.Field.Name != recordIDField
+	var decision refview.Decision
+	if decided {
+		var access refview.Access
+		if agentRead {
+			access = refview.AgentAccess{Ceilings: ceiling}
+		} else {
+			access = e.personAccess(ctx)
+		}
+		var denial permissionports.PlanDenial
+		decision, denial = e.decide(ctx, views, access, record, fc.Field.Name)
+		if decision == refview.WithheldPlan {
+			return e.withholdByPlan(ctx, next, ceiling, agentRead, nonNull, denial)
+		}
+	}
 	if group, protected := e.fields.Group(fc.Object, fc.Field.Name); protected &&
 		!e.visible(ctx).Has(group) {
 		e.recordWithheld(ctx, ceiling, agentRead, fc.Path(), false)
 		return nil, nil //nolint:nilnil // a withheld field is answered null
 	}
-	record, ok := e.record(fc)
-	if !ok || fc.Field.Name == recordIDField {
-		return next(ctx)
-	}
-	var access refview.Access
-	if agentRead {
-		access = refview.AgentAccess{Ceilings: ceiling}
-	} else {
-		access = e.personAccess(ctx)
-	}
-	decision := e.decide(ctx, access, record, fc.Field.Name)
-	if decision.Visible() {
+	if !decided || decision.Visible() {
 		return next(ctx)
 	}
 
-	nonNull := fc.Field.Definition != nil && fc.Field.Definition.Type.NonNull
 	if agentRead {
 		ceiling.Withhold(fc.Path(), nonNull)
 		if nonNull {
@@ -376,11 +467,88 @@ func (e *FieldGuardExtension) recordWithheld(
 	}
 }
 
+// returnsOffPlan withholds a field that returns records of a kind the
+// organization's plan does not include, before its resolver runs: a root
+// field is refused, as is a non-null one, and any other is answered null.
+// The kind is the returned type's own, even where it is part of its
+// carrier.
+func (e *FieldGuardExtension) returnsOffPlan(
+	ctx context.Context,
+	views *refview.Views,
+	fc *graphql.FieldContext,
+	ceiling *gqlctx.FieldCeiling,
+	agentRead bool,
+	nonNull bool,
+) (bool, error) {
+	if fc.Field.Definition == nil {
+		return false, nil
+	}
+	kind, ok := e.returns[fc.Field.Definition.Type.Name()]
+	if !ok {
+		return false, nil
+	}
+	denial, off, err := views.Plan().Resource(ctx, kind.String())
+	if err != nil {
+		return true, err
+	}
+	if !off {
+		return false, nil
+	}
+	if isRoot(fc.Object) || nonNull {
+		return true, denial.Restriction()
+	}
+	e.recordWithheldByPlan(ctx, ceiling, agentRead, fc.Path(), denial.Feature, false)
+
+	return true, nil
+}
+
+// withholdByPlan answers a field the plan does not include: null when it
+// may be, and otherwise refused for a person, or resolved and marked for the
+// agent read to strip.
+func (e *FieldGuardExtension) withholdByPlan(
+	ctx context.Context,
+	next graphql.Resolver,
+	ceiling *gqlctx.FieldCeiling,
+	agentRead bool,
+	nonNull bool,
+	denial permissionports.PlanDenial,
+) (any, error) {
+	fc := graphql.GetFieldContext(ctx)
+	if nonNull && !agentRead {
+		return nil, denial.Restriction()
+	}
+	e.recordWithheldByPlan(ctx, ceiling, agentRead, fc.Path(), denial.Feature, nonNull)
+	if nonNull {
+		return next(ctx)
+	}
+
+	return nil, nil //nolint:nilnil // a withheld field is answered null
+}
+
+func (e *FieldGuardExtension) recordWithheldByPlan(
+	ctx context.Context,
+	ceiling *gqlctx.FieldCeiling,
+	agentRead bool,
+	path ast.Path,
+	feature platformcatalog.FeatureKey,
+	strip bool,
+) {
+	if agentRead {
+		ceiling.WithholdByPlan(path, feature, strip)
+		return
+	}
+	if holder, ok := ctx.Value(fieldVisibilityKey{}).(*fieldVisibility); ok {
+		holder.withholdByPlan(path, feature)
+	}
+}
+
 // recordContext is the record a field belongs to: its kind, and how it was
 // reached. A part of another record (a shipment's stop) follows the record
-// it is part of, all of it, with no reference view of its own.
+// it is part of, all of it, with no reference view of its own; own is the
+// part's own kind, which the plan is asked about as well.
 type recordContext struct {
 	kind  permission.Resource
+	own   permission.Resource
 	reach refview.Reach
 	part  bool
 	// carried is a root record that a mutation's payload carries rather than
@@ -391,23 +559,51 @@ type recordContext struct {
 	through string
 }
 
+// decide is refview's decision on a field of a record, and the feature the
+// plan withholds it for. A field reached through one of the record's own
+// fields (a state under a location's address) is withheld by the plan when
+// either field belongs to a feature it leaves out.
 func (e *FieldGuardExtension) decide(
 	ctx context.Context,
+	views *refview.Views,
 	access refview.Access,
 	record recordContext,
 	field string,
-) refview.Decision {
+) (refview.Decision, permissionports.PlanDenial) {
 	if record.carried && record.reach == refview.Root && !access.Reads(ctx, record.kind) {
 		record.reach = refview.Nested
 	}
+	own := record.kind
 	if record.part {
-		return e.views.DecidePart(ctx, access, record.kind, field, record.reach)
+		own = record.own
 	}
-	if record.through != "" && !record.part && e.views.InView(record.kind, record.through) {
+	if record.through != "" {
+		denial, off, err := views.PlanDenial(ctx, own, record.through)
+		switch {
+		case err != nil:
+			return refview.WithheldKind, permissionports.PlanDenial{}
+		case off:
+			return refview.WithheldPlan, denial
+		}
+	}
+	if record.part {
+		decision := views.DecidePart(ctx, access, record.own, record.kind, field, record.reach)
+		if decision != refview.WithheldPlan {
+			return decision, permissionports.PlanDenial{}
+		}
+		denial, _, _ := views.PartDenial(ctx, record.own, record.kind, field)
+		return decision, denial
+	}
+	if record.through != "" && views.InView(record.kind, record.through) {
 		field = record.through
 	}
+	decision := views.Decide(ctx, access, record.kind, field, record.reach)
+	if decision != refview.WithheldPlan {
+		return decision, permissionports.PlanDenial{}
+	}
+	denial, _, _ := views.PlanDenial(ctx, record.kind, field)
 
-	return e.views.Decide(ctx, access, record.kind, field, record.reach)
+	return decision, denial
 }
 
 // record finds the record a field belongs to: the nearest enclosing type
@@ -431,15 +627,21 @@ func (e *FieldGuardExtension) record(fc *graphql.FieldContext) (recordContext, b
 
 // reachOf is how the record a field returned was reached: from its root
 // resolver, through a connection, its edges or a mutation's payload; under
-// a self-scoped root; or carried by another record. A record a mutation's
-// payload carries is marked carried: the mutation authorized what it wrote,
-// which need not be that kind (a training record carries its worker, an
-// assignment its customer), so it is the root record only for a caller who
-// reads its kind or when the mutation declares @authorizes for it.
+// a self-scoped root; through a field whose resolver checks read on its kind
+// (@authorizes on a field of a record); or carried by another record. A
+// record a mutation's payload carries is marked carried: the mutation
+// authorized what it wrote, which need not be that kind (a training record
+// carries its worker, an assignment its customer), so it is the root record
+// only for a caller who reads its kind or when the mutation declares
+// @authorizes for it.
 func (e *FieldGuardExtension) reachOf(
 	returned *graphql.FieldContext,
 	kind permission.Resource,
 ) recordContext {
+	if via := returningField(returned); via != nil && !isRoot(via.Object) &&
+		Authorizes(via.Field.Definition, kind) {
+		return recordContext{kind: kind, reach: refview.Root}
+	}
 	nested, throughRecord, carried := false, false, false
 	for f := returned; f != nil; f = f.Parent {
 		if isRoot(f.Object) {
@@ -473,11 +675,24 @@ func (e *FieldGuardExtension) reachOf(
 	}
 	if carrier, ok := e.record(returned); ok && e.views.PartOf(kind, carrier.kind) {
 		carrier.part = carrier.part || carrier.kind != kind
+		carrier.own = kind
 		carrier.through = ""
 		return carrier
 	}
 
 	return recordContext{kind: kind, reach: refview.Nested}
+}
+
+// returningField is the field that returned a record: the field itself, or
+// for an element of a list, the list's field above the element's index.
+func returningField(fc *graphql.FieldContext) *graphql.FieldContext {
+	for f := fc; f != nil; f = f.Parent {
+		if f.Field.Field != nil {
+			return f
+		}
+	}
+
+	return nil
 }
 
 // returnedByRoot reports whether a field belongs to the type its root field
@@ -507,6 +722,19 @@ func (e *FieldGuardExtension) payload(fc *graphql.FieldContext) bool {
 
 func isRoot(object string) bool {
 	return object == rootQuery || object == rootMutation || object == rootSubscription
+}
+
+// requestViews is the operation's views, which ask the plan once per
+// feature for the whole operation.
+func (e *FieldGuardExtension) requestViews(ctx context.Context) *refview.Views {
+	holder, ok := ctx.Value(fieldVisibilityKey{}).(*fieldVisibility)
+	if !ok {
+		return e.views.Request()
+	}
+	holder.viewsOnce.Do(func() {
+		holder.views = e.views.Request()
+	})
+	return holder.views
 }
 
 func (e *FieldGuardExtension) personAccess(ctx context.Context) refview.Access {

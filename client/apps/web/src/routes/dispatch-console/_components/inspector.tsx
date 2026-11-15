@@ -10,6 +10,7 @@ import type {
   DispatchBoardMove,
   DispatchCandidate,
 } from "@/lib/graphql/dispatch-console";
+import { PlanFeature } from "@/lib/plan-feature";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import type { TimeRange } from "@/lib/timeline/time-scale";
 import { useDispatchConsoleStore } from "@/stores/dispatch-console-store";
@@ -32,6 +33,7 @@ import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn, formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
@@ -364,6 +366,11 @@ function MoveInspector({
   const { allowed: mayAssign } = usePermission(Resource.ShipmentMove, Operation.Assign);
   const { allowed: canTender } = usePermission(Resource.Tender, Operation.Create);
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Update);
+  // Nova's proposals (and approvals of them that failed) are Trenova AI's, and the plan
+  // price is the planner's, which is Dispatch Intelligence: each is read only on a plan
+  // that includes it, so a proposal left from an earlier plan is neither shown nor decided.
+  const proposalsOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
+  const plannerOnPlan = usePlanFeature(PlanFeature.DispatchIntelligence).available;
   const isCarrierCovered = move.coverageType === "carrier";
   // A carrier-covered move cannot take a driver on top; the carrier assignment is
   // canceled first, so driver assignment is held off rather than allowed to fail.
@@ -380,7 +387,10 @@ function MoveInspector({
   });
   const candidates = candidatesQuery.data ?? [];
 
-  const proposal = move.isCovered ? null : (move.pendingProposal ?? null);
+  const proposal = move.isCovered || !proposalsOnPlan ? null : (move.pendingProposal ?? null);
+  const failedProposal =
+    move.isCovered || !proposalsOnPlan || proposal ? null : (move.failedProposal ?? null);
+  const planPrice = move.isCovered || !plannerOnPlan ? null : (move.planPrice ?? null);
   const proposedCandidate = proposal
     ? (candidates.find((candidate) => candidate.workerId === proposal.workerId) ?? null)
     : null;
@@ -551,9 +561,7 @@ function MoveInspector({
           </CapabilityGate>
         )}
 
-        {!proposal && !move.isCovered && move.failedProposal ? (
-          <FailedApproval move={move} failed={move.failedProposal} />
-        ) : null}
+        {failedProposal ? <FailedApproval move={move} failed={failedProposal} /> : null}
 
         {proposal ? (
           <NovaProposalPanel
@@ -570,9 +578,7 @@ function MoveInspector({
           />
         ) : null}
 
-        {!move.isCovered && move.planPrice ? (
-          <PlanPricePanel price={move.planPrice} nowSeconds={nowSeconds} />
-        ) : null}
+        {planPrice ? <PlanPricePanel price={planPrice} nowSeconds={nowSeconds} /> : null}
 
         {showsCarrierPaths && (
           <div className="flex items-center gap-1.5">

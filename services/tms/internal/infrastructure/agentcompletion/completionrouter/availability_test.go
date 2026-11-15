@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -19,6 +21,7 @@ func TestNovaReady_ReportsARepositoryFailure(t *testing.T) {
 	svc := newTestService(t)
 	svc.Repo = &fakeRepo{Err: errors.New("database unavailable")}
 
-	_, err := svc.NovaReady(t.Context(), availabilityTenant())
+	err := svc.NovaReady(t.Context(), availabilityTenant(), aitask.TaskPaperworkReading)
 	require.Error(t, err, "a failure to look is not the same as nothing found")
+	require.NotErrorIs(t, err, llmports.ErrNoProviderConfigured)
 }

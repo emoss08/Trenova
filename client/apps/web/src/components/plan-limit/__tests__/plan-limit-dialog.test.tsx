@@ -11,6 +11,8 @@ import {
 } from "@trenova/shared/lib/plan-limit";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation, type PermissionManifest } from "@trenova/shared/types/permission";
+import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GENERIC_PLAN_LIMIT_WORDING, planLimitCopy } from "@/lib/plan-limit-copy";
@@ -33,7 +35,8 @@ const shipmentsQuota: PlanLimitNotice = {
 
 const readOnly: PlanLimitNotice = {
   kind: "restricted",
-  capability: "",
+  feature: "",
+  addOn: "",
   reason: "subscription_read_only",
   plan: "free_demo",
   message: "",
@@ -57,19 +60,19 @@ describe("planLimitCopy", () => {
     }
   });
 
-  it("formats storage in bytes and spend in dollars", () => {
+  it("formats storage in bytes and Document Intelligence pages as a monthly count", () => {
     expect(
       planLimitCopy(
         { ...shipmentsQuota, meter: "documents.storage_bytes", limit: 104857600, used: 104857600 },
         t,
       ).usage?.limitLabel,
     ).toBe("100 MB");
-    const spend = planLimitCopy(
-      { ...shipmentsQuota, meter: "ai.spend_cents", limit: 150, used: 150 },
+    const pages = planLimitCopy(
+      { ...shipmentsQuota, meter: "document_intelligence.pages", limit: 500, used: 500 },
       t,
     );
-    expect(spend.usage?.limitLabel).toBe("$1.50");
-    expect(spend.guidance).toBe("This limit resets at the start of next month.");
+    expect(pages.usage?.limitLabel).toBe("500");
+    expect(pages.guidance).toBe("This limit resets at the start of next month.");
   });
 
   it("explains a per-file limit without a usage bar", () => {
@@ -100,23 +103,72 @@ describe("planLimitCopy", () => {
     expect(copy.description).toContain("nothing can be created or changed");
   });
 
-  it("names a restricted capability", () => {
-    const copy = planLimitCopy(
-      { ...readOnly, capability: "integrations", reason: "capability_restricted" },
-      t,
-    );
-    expect(copy.title).toBe("Integrations not available");
-    expect(copy.description).toBe("This part of Trenova is not included in your current plan.");
+  describe("for an add-on the plan leaves out", () => {
+    afterEach(() => usePermissionStore.getState().clearPermissions());
+
+    function holdManifest(canManage: boolean) {
+      usePermissionStore.setState({
+        manifest: {
+          permissions: canManage ? { organization: Operation.Read | Operation.Update } : {},
+          routeAccess: {},
+          unavailableFeatures: [
+            {
+              feature: "tms.factoring",
+              featureName: "Factoring",
+              addOn: "ACC",
+              addOnName: "Accounting & Cash",
+            },
+          ],
+        } as unknown as PermissionManifest,
+      });
+    }
+
+    const factoring: PlanLimitNotice = {
+      kind: "restricted",
+      feature: "tms.factoring",
+      addOn: "Accounting & Cash",
+      reason: "plan",
+      plan: "",
+      message: "",
+    };
+
+    it("names the feature and its add-on, and sends the person to an administrator", () => {
+      holdManifest(false);
+      const copy = planLimitCopy(factoring, t);
+      expect(copy.title).toBe("Factoring is not on your plan");
+      expect(copy.description).toBe(
+        "Factoring is part of the Accounting & Cash add-on, which is not on your plan.",
+      );
+      expect(copy.guidance).toBe("Ask your organization's administrator about adding it.");
+      expect(copy.usage).toBeNull();
+    });
+
+    it("tells someone who manages the organization to add it themselves", () => {
+      holdManifest(true);
+      expect(planLimitCopy(factoring, t).guidance).toBe("Add it from your Trenova account.");
+    });
+
+    it("never shows the feature key or the add-on code", () => {
+      holdManifest(false);
+      const copy = planLimitCopy(factoring, t);
+      const text = `${copy.title} ${copy.description} ${copy.guidance}`;
+      expect(text).not.toContain("tms.factoring");
+      expect(text).not.toContain("ACC");
+    });
+
+    it("still names the add-on when the manifest does not list the feature yet", () => {
+      const copy = planLimitCopy(factoring, t);
+      expect(copy.title).toBe("Not on your plan");
+      expect(copy.description).toBe(
+        "This is part of the Accounting & Cash add-on, which is not on your plan.",
+      );
+    });
   });
 
-  it("falls back to a readable label for a meter or capability the client does not know", () => {
+  it("falls back to a readable label for a meter the client does not know", () => {
     expect(planLimitCopy({ ...shipmentsQuota, meter: "edi.partners" }, t).title).toBe(
       "Edi partners limit reached",
     );
-    expect(
-      planLimitCopy({ ...readOnly, capability: "edi.partners", reason: "capability_restricted" }, t)
-        .title,
-    ).toBe("Edi partners not available");
   });
 
   it("takes an edition's wording in place of the host's", () => {
@@ -133,6 +185,7 @@ describe("planLimitCopy", () => {
 describe("decidePlanLimit", () => {
   const base = {
     notice: shipmentsQuota,
+    request: "write" as const,
     isAuthenticated: true,
     openNotice: null,
     lastDismissed: null,
@@ -154,6 +207,21 @@ describe("decidePlanLimit", () => {
         notice: { ...readOnly, reason: "signups_paused" },
       }),
     ).toBe("ignore");
+  });
+
+  it("leaves an add-on's refusal of a read to the page that asked, and explains a write", () => {
+    const addOn: PlanLimitNotice = {
+      kind: "restricted",
+      feature: "tms.factoring",
+      addOn: "Accounting & Cash",
+      reason: "plan",
+      plan: "",
+      message: "",
+    };
+    expect(decidePlanLimit({ ...base, notice: addOn, request: "read" })).toBe("ignore");
+    expect(decidePlanLimit({ ...base, notice: addOn, request: "write" })).toBe("open");
+    // A quota or a read-only workspace is the dialog's either way.
+    expect(decidePlanLimit({ ...base, request: "read" })).toBe("open");
   });
 
   it("absorbs a second refusal while the dialog is open", () => {
@@ -257,6 +325,118 @@ describe("PlanLimitDialogHost", () => {
     expect(screen.queryByRole("button", { name: "View plan & usage" })).not.toBeInTheDocument();
   });
 
+  function answerGraphQLWithAddOnRefusal() {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              data: null,
+              errors: [
+                {
+                  message:
+                    "This feature is part of the Accounting & Cash add-on, which is not on your plan",
+                  path: ["factoringCompanies"],
+                  extensions: {
+                    code: "PLAN_RESTRICTED",
+                    type: "plan-restricted",
+                    params: { feature: "tms.factoring", addOn: "Accounting & Cash" },
+                  },
+                },
+              ],
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          ),
+      ),
+    );
+  }
+
+  it("opens with the add-on's name for a GraphQL mutation an add-on refuses", async () => {
+    answerGraphQLWithAddOnRefusal();
+    render(
+      <MemoryRouter>
+        <PlanLimitDialogHost plan={{}} />
+      </MemoryRouter>,
+    );
+
+    let error: unknown;
+    await act(async () => {
+      error = await requestGraphQL({
+        document: "mutation AssignFactoring { assignFactoring { id } }",
+      }).catch((caught) => caught);
+    });
+
+    expect(isExplainedError(error)).toBe(true);
+    expect(
+      await screen.findByText(
+        "This is part of the Accounting & Cash add-on, which is not on your plan.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves a GraphQL query an add-on refuses to the page, without the dialog", async () => {
+    answerGraphQLWithAddOnRefusal();
+    render(
+      <MemoryRouter>
+        <PlanLimitDialogHost plan={{}} />
+      </MemoryRouter>,
+    );
+
+    let error: unknown;
+    await act(async () => {
+      error = await requestGraphQL({
+        document: "query FactoringCompanies { factoringCompanies { id } }",
+      }).catch((caught) => caught);
+    });
+
+    expect(isExplainedError(error)).toBe(false);
+    expect(usePlanLimitStore.getState().notice).toBeNull();
+    expect(screen.queryByTestId("plan-limit-dialog")).toBeNull();
+  });
+
+  it("leaves a REST read an add-on refuses to the page, and explains a REST write", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              type: "https://trenova.app/problems/plan-restricted",
+              title: "Plan Restricted",
+              status: 403,
+              code: "PLAN_RESTRICTED",
+              params: { feature: "tms.factoring", addOn: "Accounting & Cash" },
+            }),
+            { status: 403, headers: { "Content-Type": "application/json" } },
+          ),
+      ),
+    );
+    render(
+      <MemoryRouter>
+        <PlanLimitDialogHost plan={{}} />
+      </MemoryRouter>,
+    );
+
+    let read: unknown;
+    await act(async () => {
+      read = await api.get("/factoring-companies/").catch((caught) => caught);
+    });
+    expect(isExplainedError(read)).toBe(false);
+    expect(usePlanLimitStore.getState().notice).toBeNull();
+
+    let write: unknown;
+    await act(async () => {
+      write = await api.post("/factoring-companies/", { name: "Acme" }).catch((caught) => caught);
+    });
+    expect(isExplainedError(write)).toBe(true);
+    expect(
+      await screen.findByText(
+        "This is part of the Accounting & Cash add-on, which is not on your plan.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("does not open for a signed-out visitor, and leaves the error to its caller", async () => {
     useAuthStore.setState({ isAuthenticated: false });
     const error = new ApiRequestError(403, {
@@ -269,7 +449,7 @@ describe("PlanLimitDialogHost", () => {
 
     const notice = planLimitFromError(error);
     expect(notice).toMatchObject({ kind: "restricted", reason: "signups_paused" });
-    expect(handlePlanLimit(notice as PlanLimitNotice)).toBe(false);
+    expect(handlePlanLimit(notice as PlanLimitNotice, "write")).toBe(false);
     expect(usePlanLimitStore.getState().notice).toBeNull();
   });
 });

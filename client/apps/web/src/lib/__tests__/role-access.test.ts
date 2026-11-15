@@ -17,6 +17,7 @@ const invoiceDispute: ResourceDefinition = {
   description: "Dispute cases raised against posted invoices",
   category: "Billing",
   defaultSensitivity: "restricted",
+  feature: "tms.core",
   operations: [
     { operation: "read", displayName: "View", description: "View invoice disputes", implies: [] },
     { operation: "create", displayName: "Open", description: "Open a dispute", implies: ["read"] },
@@ -31,6 +32,7 @@ const locationCategory: ResourceDefinition = {
   description: "Location categories",
   category: "Dispatch",
   defaultSensitivity: "internal",
+  feature: "tms.core",
   operations: [{ operation: "read", displayName: "View", description: "View", implies: [] }],
 };
 
@@ -40,6 +42,7 @@ const signal: ResourceDefinition = {
   description: "A resource with no read",
   category: "Operations",
   defaultSensitivity: "internal",
+  feature: "tms.core",
   operations: [{ operation: "resolve", displayName: "Resolve", description: "Resolve" }],
 };
 

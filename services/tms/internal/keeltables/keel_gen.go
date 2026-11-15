@@ -105,6 +105,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent/documentcontentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule/documentpacketruledb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentsearchprojection/documentsearchprojectiondb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentstorage/documentstoragedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload/documentuploaddb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument/generateddocumentdb"
@@ -144,7 +145,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso/ssodb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription/subscriptiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess/supportaccessdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures/managedfeaturesdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage/managedusagedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
@@ -265,6 +268,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagetour/pagetourdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/sidebarpreference/sidebarpreferencedb"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/systememail/systememaildb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert/tablechangealertdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration/tableconfigurationdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablelayout/tablelayoutdb"
@@ -467,6 +471,7 @@ func All() []*schema.Table {
 		documentpacketruledb.DocumentPacketRulesSchema(),
 		documentsearchprojectiondb.ProjectionsSchema(),
 		documentshipmentdraftdb.DocumentShipmentDraftsSchema(),
+		documentstoragedb.TotalsSchema(),
 		documenttemplatedb.DocumentTemplateAssignmentsSchema(),
 		documenttemplatedb.DocumentTemplateVersionsSchema(),
 		documenttemplatedb.DocumentTemplatesSchema(),
@@ -612,6 +617,9 @@ func All() []*schema.Table {
 		workerleavedb.LeaveControlsSchema(),
 		locationcategorydb.LocationCategoriesSchema(),
 		locationdb.LocationsSchema(),
+		managedfeaturesdb.ChangesSchema(),
+		managedfeaturesdb.StatesSchema(),
+		supportaccessdb.KeySetsSchema(),
 		managedusagedb.StatesSchema(),
 		manualjournaldb.LinesSchema(),
 		manualjournaldb.RequestsSchema(),
@@ -723,6 +731,9 @@ func All() []*schema.Table {
 		stopetadb.StopETAsSchema(),
 		shipmentdb.StopsSchema(),
 		storedmileagedb.StoredMileagesSchema(),
+		supportaccessdb.GrantsSchema(),
+		supportaccessdb.AssertionUsesSchema(),
+		systememaildb.SendersSchema(),
 		tableconfigurationdb.TableConfigurationsSchema(),
 		tablelayoutdb.TableLayoutsSchema(),
 		tablechangealertdb.TCAAllowlistedTablesSchema(),

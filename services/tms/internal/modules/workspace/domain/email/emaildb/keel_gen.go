@@ -1092,8 +1092,11 @@ var messagesTable = schema.Table{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "profile_id", Quoted: `"profile_id"`, Field: "ProfileID", Kind: schema.KindString, Flags: 0, Label: `Profile ID`, JSON: `profileId`},
+		{Name: "profile_id", Quoted: `"profile_id"`, Field: "ProfileID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Profile ID`, JSON: `profileId`},
 		{Name: "purpose", Quoted: `"purpose"`, Field: "Purpose", Kind: schema.KindString, Flags: 0, Label: `Purpose`, JSON: `purpose`, Enum: enumPurpose[:]},
+		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Type`, JSON: `type`},
+		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Kind`, JSON: `kind`, Enum: enumKind[:]},
+		{Name: "sender", Quoted: `"sender"`, Field: "Sender", Kind: schema.KindString, Flags: 0, Label: `Sender`, JSON: `sender`, Enum: enumSender[:]},
 		{Name: "provider", Quoted: `"provider"`, Field: "Provider", Kind: schema.KindString, Flags: 0, Label: `Provider`, JSON: `provider`, Enum: enumProvider[:]},
 		{Name: "idempotency_key", Quoted: `"idempotency_key"`, Field: "IdempotencyKey", Kind: schema.KindString, Flags: 0, Label: `Idempotency Key`, JSON: `idempotencyKey`},
 		{Name: "provider_message_id", Quoted: `"provider_message_id"`, Field: "ProviderMessageID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Provider Message ID`, JSON: `providerMessageId`},
@@ -1122,14 +1125,14 @@ var messagesTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 24},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27},
 	Returning:  nil,
 	Version:    -1,
 	AutoID:     0,
-	AutoCreate: 23,
-	AutoUpdate: 24,
+	AutoCreate: 26,
+	AutoUpdate: 27,
 	IDPrefix:   "emlmsg_",
 	New:        newMessage,
 	NewN:       newNMessage,
@@ -1149,6 +1152,9 @@ type MessagesTable struct {
 	OrganizationID    keelkinds.PulidIDCol
 	ProfileID         keelkinds.PulidIDCol
 	Purpose           PurposeCol
+	Type              TypeCol
+	Kind              KindCol
+	Sender            SenderCol
 	Provider          ProviderCol
 	IdempotencyKey    keel.StringCol
 	ProviderMessageID keel.StringCol
@@ -1180,27 +1186,30 @@ var Messages = &MessagesTable{
 	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 2}}},
 	ProfileID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 3}}},
 	Purpose:           PurposeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 4}}},
-	Provider:          ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 5}}},
-	IdempotencyKey:    keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 6}},
-	ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 7}},
-	Status:            MessageStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 8}}},
-	Attempts:          keel.Int32Col{Col: keel.Col{Ref: &messagesRef, Index: 9}},
-	FromEmail:         keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 10}},
-	FromName:          keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 11}},
-	ReplyToEmail:      keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 12}},
-	ToRecipients:      keel.StringArrayCol{Col: keel.Col{Ref: &messagesRef, Index: 13}},
-	CCRecipients:      keel.StringArrayCol{Col: keel.Col{Ref: &messagesRef, Index: 14}},
-	BCCRecipients:     keel.StringArrayCol{Col: keel.Col{Ref: &messagesRef, Index: 15}},
-	Subject:           keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 16}},
-	BodyTextSize:      keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 17}},
-	BodyHTMLSize:      keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 18}},
-	LastError:         keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 19}},
-	SentAt:            keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 20}},
-	DeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 21}},
-	FailedAt:          keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 22}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 23}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 24}},
-	SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: &messagesRef, Index: 25}},
+	Type:              TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 5}}},
+	Kind:              KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 6}}},
+	Sender:            SenderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 7}}},
+	Provider:          ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 8}}},
+	IdempotencyKey:    keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 9}},
+	ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 10}},
+	Status:            MessageStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 11}}},
+	Attempts:          keel.Int32Col{Col: keel.Col{Ref: &messagesRef, Index: 12}},
+	FromEmail:         keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 13}},
+	FromName:          keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 14}},
+	ReplyToEmail:      keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 15}},
+	ToRecipients:      keel.StringArrayCol{Col: keel.Col{Ref: &messagesRef, Index: 16}},
+	CCRecipients:      keel.StringArrayCol{Col: keel.Col{Ref: &messagesRef, Index: 17}},
+	BCCRecipients:     keel.StringArrayCol{Col: keel.Col{Ref: &messagesRef, Index: 18}},
+	Subject:           keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 19}},
+	BodyTextSize:      keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 20}},
+	BodyHTMLSize:      keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 21}},
+	LastError:         keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 22}},
+	SentAt:            keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 23}},
+	DeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 24}},
+	FailedAt:          keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 25}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 26}},
+	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 27}},
+	SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: &messagesRef, Index: 28}},
 }
 
 // BuildMessages builds the table of email_messages for ref. Generated relation and alias methods call it.
@@ -1212,27 +1221,30 @@ func BuildMessages(r *keel.Ref) *MessagesTable {
 		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		ProfileID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Purpose:           PurposeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Provider:          ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		IdempotencyKey:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Status:            MessageStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Attempts:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 9}},
-		FromEmail:         keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		FromName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		ReplyToEmail:      keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		ToRecipients:      keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 13}},
-		CCRecipients:      keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 14}},
-		BCCRecipients:     keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 15}},
-		Subject:           keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
-		BodyTextSize:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		BodyHTMLSize:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		LastError:         keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		SentAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		DeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		FailedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 25}},
+		Type:              TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Kind:              KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Sender:            SenderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Provider:          ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		IdempotencyKey:    keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
+		ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
+		Status:            MessageStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Attempts:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 12}},
+		FromEmail:         keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		FromName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
+		ReplyToEmail:      keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		ToRecipients:      keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 16}},
+		CCRecipients:      keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 17}},
+		BCCRecipients:     keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 18}},
+		Subject:           keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
+		BodyTextSize:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		BodyHTMLSize:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		LastError:         keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
+		SentAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
+		DeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+		FailedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
+		SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 28}},
 	}
 }
 
@@ -1640,46 +1652,52 @@ func ptrMessage(p unsafe.Pointer, c int32) any {
 	case 4:
 		return (*string)(unsafe.Pointer(&r.Purpose))
 	case 5:
-		return (*string)(unsafe.Pointer(&r.Provider))
+		return (*string)(unsafe.Pointer(&r.Type))
 	case 6:
-		return &r.IdempotencyKey
+		return (*string)(unsafe.Pointer(&r.Kind))
 	case 7:
-		return &r.ProviderMessageID
+		return (*string)(unsafe.Pointer(&r.Sender))
 	case 8:
-		return (*string)(unsafe.Pointer(&r.Status))
+		return (*string)(unsafe.Pointer(&r.Provider))
 	case 9:
-		return &r.Attempts
+		return &r.IdempotencyKey
 	case 10:
-		return &r.FromEmail
+		return &r.ProviderMessageID
 	case 11:
-		return &r.FromName
+		return (*string)(unsafe.Pointer(&r.Status))
 	case 12:
-		return &r.ReplyToEmail
+		return &r.Attempts
 	case 13:
-		return &r.ToRecipients
+		return &r.FromEmail
 	case 14:
-		return &r.CCRecipients
+		return &r.FromName
 	case 15:
-		return &r.BCCRecipients
+		return &r.ReplyToEmail
 	case 16:
-		return &r.Subject
+		return &r.ToRecipients
 	case 17:
-		return &r.BodyTextSize
+		return &r.CCRecipients
 	case 18:
-		return &r.BodyHTMLSize
+		return &r.BCCRecipients
 	case 19:
-		return &r.LastError
+		return &r.Subject
 	case 20:
-		return &r.SentAt
+		return &r.BodyTextSize
 	case 21:
-		return &r.DeliveredAt
+		return &r.BodyHTMLSize
 	case 22:
-		return &r.FailedAt
+		return &r.LastError
 	case 23:
-		return &r.CreatedAt
+		return &r.SentAt
 	case 24:
-		return &r.UpdatedAt
+		return &r.DeliveredAt
 	case 25:
+		return &r.FailedAt
+	case 26:
+		return &r.CreatedAt
+	case 27:
+		return &r.UpdatedAt
+	case 28:
 		return &r.SearchVector
 	}
 	return nil
@@ -1695,77 +1713,92 @@ func valueMessage(p unsafe.Pointer, c int32) any {
 	case 2:
 		return string(r.OrganizationID)
 	case 3:
+		if r.ProfileID == "" {
+			return nil
+		}
 		return string(r.ProfileID)
 	case 4:
 		return string(r.Purpose)
 	case 5:
-		return string(r.Provider)
+		if r.Type == "" {
+			return nil
+		}
+		return string(r.Type)
 	case 6:
-		return r.IdempotencyKey
+		if r.Kind == "" {
+			return nil
+		}
+		return string(r.Kind)
 	case 7:
+		return string(r.Sender)
+	case 8:
+		return string(r.Provider)
+	case 9:
+		return r.IdempotencyKey
+	case 10:
 		if r.ProviderMessageID == "" {
 			return nil
 		}
 		return r.ProviderMessageID
-	case 8:
-		return string(r.Status)
-	case 9:
-		return r.Attempts
-	case 10:
-		return r.FromEmail
 	case 11:
-		return r.FromName
+		return string(r.Status)
 	case 12:
+		return r.Attempts
+	case 13:
+		return r.FromEmail
+	case 14:
+		return r.FromName
+	case 15:
 		if r.ReplyToEmail == "" {
 			return nil
 		}
 		return r.ReplyToEmail
-	case 13:
+	case 16:
 		if r.ToRecipients == nil {
 			return []string{}
 		}
 		return r.ToRecipients
-	case 14:
+	case 17:
 		if r.CCRecipients == nil {
 			return nil
 		}
 		return r.CCRecipients
-	case 15:
+	case 18:
 		if r.BCCRecipients == nil {
 			return nil
 		}
 		return r.BCCRecipients
-	case 16:
-		return r.Subject
-	case 17:
-		return r.BodyTextSize
-	case 18:
-		return r.BodyHTMLSize
 	case 19:
+		return r.Subject
+	case 20:
+		return r.BodyTextSize
+	case 21:
+		return r.BodyHTMLSize
+	case 22:
 		if r.LastError == "" {
 			return nil
 		}
 		return r.LastError
-	case 20:
+	case 23:
 		if r.SentAt == 0 {
 			return nil
 		}
 		return r.SentAt
-	case 21:
+	case 24:
 		if r.DeliveredAt == 0 {
 			return nil
 		}
 		return r.DeliveredAt
-	case 22:
+	case 25:
 		if r.FailedAt == 0 {
 			return nil
 		}
 		return r.FailedAt
-	case 23:
+	case 26:
 		return r.CreatedAt
-	case 24:
+	case 27:
 		return r.UpdatedAt
-	case 25:
+	case 28:
 		return r.SearchVector
 	}
 	return nil
@@ -3453,6 +3486,11 @@ var enumEventType = [...]schema.EnumValue{
 	{Value: `Failed`, Label: `Failed`},
 }
 
+var enumKind = [...]schema.EnumValue{
+	{Value: `System`, Label: `System`},
+	{Value: `CustomerFacing`, Label: `Customer Facing`},
+}
+
 var enumMessageStatus = [...]schema.EnumValue{
 	{Value: `Queued`, Label: `Queued`},
 	{Value: `Sending`, Label: `Sending`},
@@ -3483,6 +3521,11 @@ var enumPurpose = [...]schema.EnumValue{
 	{Value: `Operations`, Label: `Operations`},
 	{Value: `Authentication`, Label: `Authentication`},
 	{Value: `Notifications`, Label: `Notifications`},
+}
+
+var enumSender = [...]schema.EnumValue{
+	{Value: `Organization`, Label: `Organization`},
+	{Value: `Trenova`, Label: `Trenova`},
 }
 
 var enumSuppressionReason = [...]schema.EnumValue{
@@ -3584,6 +3627,27 @@ func (c EventTypeCol) NotIn(vs ...email.EventType) keel.Pred {
 	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
+// KindCol is a column of email.Kind values.
+type KindCol struct{ keel.TypedStringCol }
+
+func (c KindCol) Eq(v email.Kind) keel.Pred             { return c.Text().Eq(string(v)) }
+func (c KindCol) Ne(v email.Kind) keel.Pred             { return c.Text().Ne(string(v)) }
+func (c KindCol) Gt(v email.Kind) keel.Pred             { return c.Text().Gt(string(v)) }
+func (c KindCol) Gte(v email.Kind) keel.Pred            { return c.Text().Gte(string(v)) }
+func (c KindCol) Lt(v email.Kind) keel.Pred             { return c.Text().Lt(string(v)) }
+func (c KindCol) Lte(v email.Kind) keel.Pred            { return c.Text().Lte(string(v)) }
+func (c KindCol) IsDistinctFrom(v email.Kind) keel.Pred { return c.Text().IsDistinctFrom(string(v)) }
+func (c KindCol) Between(lo, hi email.Kind) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c KindCol) To(v email.Kind) keel.Assignment { return c.Text().To(string(v)) }
+func (c KindCol) In(vs ...email.Kind) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c KindCol) NotIn(vs ...email.Kind) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
 // MessageStatusCol is a column of email.MessageStatus values.
 type MessageStatusCol struct{ keel.TypedStringCol }
 
@@ -3676,6 +3740,29 @@ func (c PurposeCol) NotIn(vs ...email.Purpose) keel.Pred {
 	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
+// SenderCol is a column of email.Sender values.
+type SenderCol struct{ keel.TypedStringCol }
+
+func (c SenderCol) Eq(v email.Sender) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SenderCol) Ne(v email.Sender) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SenderCol) Gt(v email.Sender) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SenderCol) Gte(v email.Sender) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SenderCol) Lt(v email.Sender) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SenderCol) Lte(v email.Sender) keel.Pred { return c.Text().Lte(string(v)) }
+func (c SenderCol) IsDistinctFrom(v email.Sender) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c SenderCol) Between(lo, hi email.Sender) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c SenderCol) To(v email.Sender) keel.Assignment { return c.Text().To(string(v)) }
+func (c SenderCol) In(vs ...email.Sender) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c SenderCol) NotIn(vs ...email.Sender) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
 // SuppressionReasonCol is a column of email.SuppressionReason values.
 type SuppressionReasonCol struct{ keel.TypedStringCol }
 
@@ -3702,5 +3789,26 @@ func (c SuppressionReasonCol) In(vs ...email.SuppressionReason) keel.Pred {
 	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SuppressionReasonCol) NotIn(vs ...email.SuppressionReason) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
+// TypeCol is a column of email.Type values.
+type TypeCol struct{ keel.TypedStringCol }
+
+func (c TypeCol) Eq(v email.Type) keel.Pred             { return c.Text().Eq(string(v)) }
+func (c TypeCol) Ne(v email.Type) keel.Pred             { return c.Text().Ne(string(v)) }
+func (c TypeCol) Gt(v email.Type) keel.Pred             { return c.Text().Gt(string(v)) }
+func (c TypeCol) Gte(v email.Type) keel.Pred            { return c.Text().Gte(string(v)) }
+func (c TypeCol) Lt(v email.Type) keel.Pred             { return c.Text().Lt(string(v)) }
+func (c TypeCol) Lte(v email.Type) keel.Pred            { return c.Text().Lte(string(v)) }
+func (c TypeCol) IsDistinctFrom(v email.Type) keel.Pred { return c.Text().IsDistinctFrom(string(v)) }
+func (c TypeCol) Between(lo, hi email.Type) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c TypeCol) To(v email.Type) keel.Assignment { return c.Text().To(string(v)) }
+func (c TypeCol) In(vs ...email.Type) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c TypeCol) NotIn(vs ...email.Type) keel.Pred {
 	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

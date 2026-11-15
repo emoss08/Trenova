@@ -141,6 +141,9 @@ type tableViewResult struct {
 	// WithheldByAccess names the fields the reader's access hides, which the
 	// preview leaves out as the table does.
 	WithheldByAccess []string `json:"withheldByAccess,omitempty"`
+	// WithheldByPlan says which fields belong to an add-on the organization's
+	// plan does not include.
+	WithheldByPlan []string `json:"withheldByPlan,omitempty"`
 }
 
 // previewItems is the first n rows of a list's items, whatever slice type
@@ -211,6 +214,7 @@ func (t *ComposeTableViewTool) Query(
 		result.Columns = run.Outcome.Columns
 		result.Items = previewItems(run.Outcome.Items, viewPreviewRows)
 		result.WithheldByAccess = run.Withheld
+		result.WithheldByPlan = run.WithheldByPlan
 	}
 	for _, unresolved := range composed.Unresolved {
 		result.Unresolved = append(result.Unresolved, unresolvedTermRow{

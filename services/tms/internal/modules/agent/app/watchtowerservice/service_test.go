@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -369,6 +370,7 @@ func newService(
 		Repo:          repo,
 		Realtime:      &recordingRealtime{},
 		Notifications: notificationtest.Discarding(),
+		Features:      plantest.AllFeatures(),
 	})
 	projector.now = func() int64 { return 1_700_000_000 }
 

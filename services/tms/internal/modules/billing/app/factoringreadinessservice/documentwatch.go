@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -94,4 +95,8 @@ func parseIDs(raw []string) []pulid.ID {
 		ids = append(ids, id)
 	}
 	return ids
+}
+
+func (o *DocumentObserver) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureFactoring
 }

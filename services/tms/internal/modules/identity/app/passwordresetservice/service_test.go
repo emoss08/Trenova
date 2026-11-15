@@ -12,11 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -37,6 +40,7 @@ type stubTokenRepo struct {
 	countSince   int
 	countErr     error
 	markUsedCall int
+	markUsedInTx bool
 }
 
 func (r *stubTokenRepo) Create(_ context.Context, token *passwordreset.PasswordResetToken) error {
@@ -55,8 +59,9 @@ func (r *stubTokenRepo) FindRedeemableByHash(
 	return r.redeemable, nil
 }
 
-func (r *stubTokenRepo) MarkUsed(_ context.Context, _ pulid.ID, _ int64) (bool, error) {
+func (r *stubTokenRepo) MarkUsed(ctx context.Context, _ pulid.ID, _ int64) (bool, error) {
 	r.markUsedCall++
+	r.markUsedInTx = inTransaction(ctx)
 	return r.markUsedOK, r.markUsedErr
 }
 
@@ -92,6 +97,7 @@ type stubUserRepo struct {
 	updated    *tenantports.UpdateUserPasswordRequest
 	updateErr  error
 	findCalled int
+	updateInTx bool
 }
 
 func (r *stubUserRepo) GetByID(
@@ -119,10 +125,11 @@ func (r *stubUserRepo) FindByEmail(_ context.Context, _ string) (*tenant.User, e
 }
 
 func (r *stubUserRepo) UpdatePassword(
-	_ context.Context,
+	ctx context.Context,
 	req tenantports.UpdateUserPasswordRequest,
 ) (int64, error) {
 	r.updated = &req
+	r.updateInTx = inTransaction(ctx)
 	return 1, r.updateErr
 }
 
@@ -160,6 +167,32 @@ func invitedUser() *tenant.User {
 	return user
 }
 
+type txKey struct{}
+
+func inTransaction(ctx context.Context) bool {
+	return ctx.Value(txKey{}) != nil
+}
+
+type recordingTransactor struct {
+	dbtest.NopConnection
+
+	transactions int
+	failed       int
+}
+
+func (r *recordingTransactor) Transact(
+	ctx context.Context,
+	_ kernelports.TxOptions,
+	fn func(context.Context) error,
+) error {
+	r.transactions++
+	err := fn(context.WithValue(ctx, txKey{}, true))
+	if err != nil {
+		r.failed++
+	}
+	return err
+}
+
 type discardedAuthEvents struct{}
 
 func (discardedAuthEvents) Record(context.Context, *iamports.AuthEventRecord) {}
@@ -189,6 +222,7 @@ func newService(
 	mail.EXPECT().Send(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 
 	return &Service{
+		db:           &recordingTransactor{},
 		ur:           users,
 		tokens:       tokens,
 		sessions:     sessions,
@@ -368,13 +402,54 @@ func TestResetPassword_RejectsAnUnknownOrExpiredToken(t *testing.T) {
 	t.Parallel()
 
 	users := &stubUserRepo{user: activeUser()}
-	tokens := &stubTokenRepo{findErr: errors.New("not found")}
+	tokens := &stubTokenRepo{findErr: errortypes.NewNotFoundError("Password reset token not found")}
 	svc := newService(t, users, tokens, &stubSessionRepo{})
 
 	err := svc.ResetPassword(t.Context(), "raw-token", "a-good-password")
 
-	require.Error(t, err)
+	require.ErrorIs(t, err, errInvalidToken)
 	assert.Nil(t, users.updated)
+}
+
+// A database that cannot answer says nothing about the link. Calling the link dead
+// would send the person to ask for a new one, which retires the one that still works.
+func TestResetPassword_ALookupFailureIsNotADeadLink(t *testing.T) {
+	t.Parallel()
+
+	users := &stubUserRepo{user: activeUser()}
+	lookupErr := errors.New("conn closed")
+	tokens := &stubTokenRepo{findErr: lookupErr}
+	svc := newService(t, users, tokens, &stubSessionRepo{})
+
+	err := svc.ResetPassword(t.Context(), "raw-token", "a-good-password")
+
+	require.ErrorIs(t, err, lookupErr)
+	assert.NotErrorIs(t, err, errInvalidToken)
+	assert.Nil(t, users.updated)
+	assert.Zero(t, tokens.markUsedCall, "nothing may be redeemed after a failed lookup")
+}
+
+// Redeeming the link and writing the password are one write: a password that fails to
+// save rolls the redemption back, so the same link still works on the next try.
+func TestResetPassword_RedeemsAndWritesThePasswordInOneTransaction(t *testing.T) {
+	t.Parallel()
+
+	user := invitedUser()
+	writeErr := errors.New("conn closed")
+	users := &stubUserRepo{user: user, updateErr: writeErr}
+	tokens := &stubTokenRepo{redeemable: redeemableToken(user), markUsedOK: true}
+	svc := newService(t, users, tokens, &stubSessionRepo{})
+	tx := svc.db.(*recordingTransactor)
+
+	err := svc.ResetPassword(t.Context(), "raw-token", "a-good-password")
+
+	require.ErrorIs(t, err, writeErr)
+	assert.NotErrorIs(t, err, errInvalidToken)
+	assert.Equal(t, 1, tx.transactions)
+	assert.Equal(t, 1, tx.failed, "the redemption is rolled back with the failed write")
+	assert.True(t, tokens.markUsedInTx)
+	assert.True(t, users.updateInTx)
+	assert.Empty(t, tokens.invalidated, "no sibling is retired when nothing was saved")
 }
 
 func TestResetPassword_RejectsABlankToken(t *testing.T) {

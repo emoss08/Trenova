@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/keel/analytics"
 	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/keel/analytics/ir"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -17,16 +19,17 @@ import (
 )
 
 type RunCard struct {
-	Run        *report.ReportRun
-	Report     RunCardReport
-	Parameters []RunCardParameter
-	Timezone   string
-	Sample     *PreviewResult
-	Withheld   RunCardWithheld
-	Previous   *RunCardPrevious
-	Schedule   *report.ReportSchedule
-	Chart      *ir.Chart
-	Sort       []ir.Sort
+	Run          *report.ReportRun
+	Report       RunCardReport
+	Parameters   []RunCardParameter
+	Timezone     string
+	Sample       *PreviewResult
+	Withheld     RunCardWithheld
+	WithheldPlan *permissionports.PlanDenial
+	Previous     *RunCardPrevious
+	Schedule     *report.ReportSchedule
+	Chart        *ir.Chart
+	Sort         []ir.Sort
 }
 
 type RunCardWithheld string
@@ -34,6 +37,7 @@ type RunCardWithheld string
 const (
 	RunCardWithheldAccess  = RunCardWithheld("access")
 	RunCardWithheldChanged = RunCardWithheld("changed")
+	RunCardWithheldPlan    = RunCardWithheld("plan")
 )
 
 type RunCardReport struct {
@@ -103,6 +107,7 @@ func (s *Service) GetRunCard(ctx context.Context, req *GetRunRequest) (*RunCard,
 			return nil, err
 		}
 		card.Withheld = withheld
+		card.WithheldPlan = planDenialOf(err)
 		return card, nil
 	}
 	if card.Sample, err = sampleResult(ctx, run.Sample); err != nil {
@@ -252,7 +257,19 @@ func (s *Service) runCardPrevious(
 	}
 }
 
+func planDenialOf(err error) *permissionports.PlanDenial {
+	restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err)
+	if !ok || restriction.Feature == "" {
+		return nil
+	}
+	denial := permissionports.NewPlanDenial(platformcatalog.FeatureKey(restriction.Feature))
+	return &denial
+}
+
 func withheldReason(err error) (RunCardWithheld, bool) {
+	if _, ok := errors.AsType[*errortypes.PlanRestrictionError](err); ok {
+		return RunCardWithheldPlan, true
+	}
 	if _, ok := errors.AsType[*errortypes.AuthorizationError](err); ok {
 		return RunCardWithheldAccess, true
 	}

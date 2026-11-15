@@ -2,6 +2,7 @@ package dispatchjobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "horizon-plan-sweep",
+			Feature:       platformcatalog.FeatureDispatchIntelligence,
 			Description:   "Re-plan coverage for organizations that plan on a schedule",
 			Spec:          schedule.Cron("50 * * * *"),
 			Workflow:      HorizonPlanSweepWorkflow,

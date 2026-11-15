@@ -149,7 +149,10 @@ func Readable(
 }
 
 type FakeReporting struct {
-	Entries     []*canned.Entry
+	Entries []*canned.Entry
+	// OffPlan are the built-in reports, by key, whose tables the plan leaves
+	// out.
+	OffPlan     map[string]permissionports.PlanDenial
 	Definitions []*report.ReportDefinition
 	Run         *report.ReportRun
 	runErr      error
@@ -183,7 +186,23 @@ func (f *FakeReporting) Catalog(
 	return reporting.CatalogFor(ctx, f.Kinds, req)
 }
 
-func (f *FakeReporting) ListCanned() []*canned.Entry { return f.Entries }
+// CannedLibrary is every entry, available unless OffPlan names it.
+func (f *FakeReporting) CannedLibrary(
+	context.Context,
+	*reporting.Request,
+) ([]reporting.CannedReport, error) {
+	library := make([]reporting.CannedReport, 0, len(f.Entries))
+	for _, entry := range f.Entries {
+		denial, off := f.OffPlan[entry.Key]
+		report := reporting.CannedReport{Entry: entry, Available: !off}
+		if off {
+			report.Plan = &denial
+		}
+		library = append(library, report)
+	}
+
+	return library, nil
+}
 
 func (f *FakeReporting) GetCanned(key string) (*canned.Entry, error) {
 	for _, entry := range f.Entries {

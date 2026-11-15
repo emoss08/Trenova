@@ -3,12 +3,14 @@ package shipmentperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func locationResources() []*permissionspec.ResourceDefinition {
 	return []*permissionspec.ResourceDefinition{
 		{
 			Resource:    permission.ResourceLocation.String(),
+			Feature:     platformcatalog.FeatureDispatch,
 			DisplayName: "Location",
 			Description: "Location management",
 			Category:    "Dispatch",
@@ -65,6 +67,7 @@ func locationResources() []*permissionspec.ResourceDefinition {
 
 		{
 			Resource:    permission.ResourceLocationCategory.String(),
+			Feature:     platformcatalog.FeatureDispatch,
 			DisplayName: "Location Category",
 			Description: "Location category definitions",
 			Category:    "Dispatch",

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -85,6 +86,7 @@ type Params struct {
 	Checker      *tariff.Checker
 	Resolver     *tariff.TemplateResolver
 	AuditService auditports.AuditService
+	Features     platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -95,6 +97,8 @@ type Service struct {
 	checker      SourceChecker
 	resolver     BillingResolver
 	auditService auditports.AuditService
+	features     platformcatalogports.FeatureGate
+	standards    *standardsLedger
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
@@ -106,6 +110,8 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		checker:      p.Checker,
 		resolver:     p.Resolver,
 		auditService: p.AuditService,
+		features:     p.Features,
+		standards:    newStandardsLedger(),
 	}
 }
 
@@ -181,6 +187,9 @@ func (s *Service) Update(
 	)
 	if err != nil {
 		log.Error("failed to get original formula template", zap.Error(err))
+		return nil, err
+	}
+	if err = original.RefuseStandardChange(); err != nil {
 		return nil, err
 	}
 
@@ -444,6 +453,10 @@ func (s *Service) BulkUpdateStatus(
 		return nil, err
 	}
 
+	if err = refuseStandardChanges(templates...); err != nil {
+		return nil, err
+	}
+
 	for _, template := range templates {
 		if template.Status == formulatemplate.StatusActive ||
 			template.Status == formulatemplate.StatusInactive {
@@ -625,6 +638,11 @@ func (s *Service) List(
 	ctx context.Context,
 	req *formulatemplateports.ListFormulaTemplatesRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
+	if req.Filter != nil {
+		if err := s.EnsureStandards(ctx, req.Filter.TenantInfo); err != nil {
+			return nil, err
+		}
+	}
 	return s.repo.List(ctx, req)
 }
 
@@ -632,6 +650,11 @@ func (s *Service) ListConnection(
 	ctx context.Context,
 	req *formulatemplateports.ListFormulaTemplateConnectionRequest,
 ) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
+	if req.Filter != nil {
+		if err := s.EnsureStandards(ctx, req.Filter.TenantInfo); err != nil {
+			return nil, err
+		}
+	}
 	return s.repo.ListConnection(ctx, req)
 }
 
@@ -646,6 +669,18 @@ func (s *Service) SelectOptions(
 	ctx context.Context,
 	req *formulatemplateports.FormulaTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
+	if req.SelectQueryRequest != nil {
+		if err := s.EnsureStandards(ctx, req.SelectQueryRequest.TenantInfo); err != nil {
+			return nil, err
+		}
+	}
+
+	on, err := s.ratingOnPlan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	req.StandardOnly = !on
+
 	return s.repo.SelectOptions(ctx, req)
 }
 

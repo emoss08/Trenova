@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -63,6 +64,7 @@ type Params struct {
 	Stamper             *exchangeratestamp.Stamper
 	Validator           *invoicevalidation.Validator
 	WorkflowStarter     kernelports.WorkflowStarter
+	Features            platformcatalogports.FeatureGate
 }
 
 // Service posts invoices: the ledger entry, the records posting moves, its preview and the
@@ -98,6 +100,7 @@ type Service struct {
 	stamper             *exchangeratestamp.Stamper
 	validator           *invoicevalidation.Validator
 	workflowStarter     kernelports.WorkflowStarter
+	features            platformcatalogports.FeatureGate
 }
 
 var _ invoiceports.InvoicePostingService = (*Service)(nil)
@@ -142,5 +145,6 @@ func New(p Params) *Service {
 		stamper:           p.Stamper,
 		validator:         p.Validator,
 		workflowStarter:   p.WorkflowStarter,
+		features:          p.Features,
 	}
 }

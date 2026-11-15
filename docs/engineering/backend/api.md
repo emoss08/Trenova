@@ -124,6 +124,16 @@ rather than raising the ceiling.
   rate limit (`ByAPIKey`), CSRF, the read-only guard and idempotency; a public route (token links,
   webhooks) applies its own rate limit (`ByPublicToken`, `ByClientIP`) and verifies its token or
   signature (`shared/webhooksig`) before reading anything.
+- A route with no signed-in caller never reaches the permission engine, so its group declares
+  its feature where it is registered: `h.features.RequireFeature(feature, answer)` from
+  `middleware.FeatureGuard` (`shipmenttrackingpublichandler.RegisterPublicRoutes`). The answer
+  when the feature is off is what the route already gives for "not available", so it reveals
+  nothing an unknown token would not: the service's own invalid-link error for a token page
+  (`middleware.AnswerError`), the unknown-tenant status for a webhook (`AnswerStatus`), a
+  protocol reply built by the handler (`AnswerWith`, the AS2 negative MDN), or `PLAN_RESTRICTED`
+  for a signed-in surface such as the driver app (`AnswerPlanRestricted`). A gate error answers
+  503 and never passes. `TestEveryRouteWithoutASessionDeclaresItsFeature` fails a public
+  registration that names no feature and is not listed as base with a reason.
 - Request-rate limits are for external callers only: API keys (per key and per organization)
   and anonymous or token-addressed public routes. Signed-in sessions and Capture devices are
   first-party and never request-rate limited, on GraphQL or REST, because one bulk upload or

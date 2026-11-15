@@ -28,8 +28,6 @@ var notAKind = map[string]string{
 	"AIProvider.apiKey": "the provider's own key status, not an API key record",
 	"Customer.emailProfile": "the customer's own delivery settings, part of the customer, " +
 		"not an email profile record",
-	"Shipment.formulaTemplate": "its resolver shows the template only with formula_template " +
-		"read (formulavisibility), so the screen never sees it otherwise",
 	"AgentAccessPreview.roles": "a row about the agent's audience; its role field is a Role, " +
 		"gated as one",
 	"AgentAudienceSuggestion.roles": "a row about the agent's audience; its role field is a Role, " +
@@ -236,14 +234,16 @@ func TestReferenceFragmentsLeaveOutASummaryWithNothingToShow(t *testing.T) {
 }
 
 var (
-	resolverFunc   = regexp.MustCompile(`func \(r \*(Query|Mutation)Resolver\) (\w+)\(`)
+	resolverFunc   = regexp.MustCompile(`func \(r \*(\w+)Resolver\) (\w+)\(`)
 	resolverCheck  = regexp.MustCompile(`permission\.(Resource\w+),\s*permission\.(Op\w+)`)
 	resourceConst  = regexp.MustCompile(`(Resource\w+)\s+Resource\s*=\s*"([a-z_0-9]+)"`)
 	operationConst = regexp.MustCompile(`(Op\w+)\s+Operation\s*=\s*"([a-z_0-9]+)"`)
 )
 
-// A root field's @authorizes declaration is held to its resolver: the
-// resolver checks the kind with read or an operation that implies it.
+// A field's @authorizes declaration is held to its resolver: the resolver
+// checks the kind with read or an operation that implies it, a root field's
+// before it answers and a record's field before it returns a record of the
+// kind.
 func TestEveryAuthorizesDeclarationIsCheckedByItsResolver(t *testing.T) {
 	t.Parallel()
 
@@ -251,26 +251,30 @@ func TestEveryAuthorizesDeclarationIsCheckedByItsResolver(t *testing.T) {
 	checks := resolverReadChecks(t)
 
 	var unchecked []string
-	for _, root := range []*ast.Definition{schema.Query, schema.Mutation} {
-		for _, field := range root.Fields {
+	for name, def := range schema.Types {
+		if def.Kind != ast.Object || def.BuiltIn {
+			continue
+		}
+		for _, field := range def.Fields {
 			for _, directive := range field.Directives.ForNames(authorizesDirective) {
 				resource := directive.Arguments.ForName(kindResourceArgument).Value.Raw
-				if !slices.Contains(checks[strings.ToLower(root.Name+"."+field.Name)], resource) {
+				if !slices.Contains(checks[strings.ToLower(name+"."+field.Name)], resource) {
 					unchecked = append(unchecked, fmt.Sprintf("%s.%s @authorizes(resource: %q)",
-						root.Name, field.Name, resource))
+						name, field.Name, resource))
 				}
 			}
 		}
 	}
 	slices.Sort(unchecked)
 	assert.Empty(t, unchecked,
-		"root fields that declare @authorizes for a kind their resolver does not check with read "+
+		"fields that declare @authorizes for a kind their resolver does not check with read "+
 			"(or an operation implying it). Check it in the resolver, or remove the declaration so "+
 			"the records are gated as linked ones:\n  %s", strings.Join(unchecked, "\n  "))
 }
 
-// resolverReadChecks is, for each root resolver ("query.shipments"), the
-// kinds its body checks with read or an operation implying it.
+// resolverReadChecks is, for each resolver ("query.shipments",
+// "customer.brokerintelligence"), the kinds its body checks with read or an
+// operation implying it.
 func resolverReadChecks(t *testing.T) map[string][]string {
 	t.Helper()
 

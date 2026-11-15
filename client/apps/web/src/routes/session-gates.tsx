@@ -1,8 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Metadata } from "@/components/metadata";
 import type { PermissionManifest } from "@trenova/shared/types/permission";
+import type { OrganizationSetup } from "@trenova/shared/types/user";
 import { AuthShell } from "./auth/_components/auth-shell";
 import { ChangePasswordForm } from "./auth/_components/change-password-form";
+import { OrganizationSetupStep } from "./auth/_components/organization-setup-form";
 import { RoleSelection, resolveAuthorizedRoles } from "./auth/_components/role-selection";
 
 /**
@@ -52,6 +54,30 @@ export function PasswordChangeGate() {
       <Metadata title={t("Change password")} description={t("Choose a new password to continue")} />
       <AuthShell screenKey="change-password">
         <ChangePasswordForm />
+      </AuthShell>
+    </>
+  );
+}
+
+/**
+ * Stands in front of the app while the session's organization lacks the details the
+ * product needs: an organization a new instance's bootstrap made has only its name.
+ *
+ * The server says whether it is complete on every session check and refuses to save an
+ * organization without them, so a page reached around this gate still cannot store one.
+ * The gate exists so the first administrator fills them in before anything else asks.
+ */
+export function OrganizationSetupGate({ setup }: { setup: OrganizationSetup }) {
+  const t = useT();
+
+  return (
+    <>
+      <Metadata
+        title={t("Set up your organization")}
+        description={t("Add your company's address and identifiers to continue")}
+      />
+      <AuthShell screenKey="organization-setup">
+        <OrganizationSetupStep setup={setup} />
       </AuthShell>
     </>
   );

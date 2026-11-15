@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -62,7 +63,13 @@ func sharedVectorizer(
 	shared retrievalports.QueryVectorCache,
 ) *Service {
 	return New(
-		Params{Logger: zap.NewNop(), Repository: repo, Embeddings: embeddings, Shared: shared},
+		Params{
+			Logger:     zap.NewNop(),
+			Repository: repo,
+			Embeddings: embeddings,
+			Shared:     shared,
+			Features:   plantest.AllFeatures(),
+		},
 	)
 }
 

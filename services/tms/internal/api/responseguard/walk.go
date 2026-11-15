@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 // maxDepth bounds the walk. Nothing a handler returns nests this deep; a value
@@ -25,6 +27,11 @@ var anyType = reflect.TypeFor[any]()
 type decider interface {
 	reads(ctx context.Context, kind permission.Resource) bool
 	visible(ctx context.Context, kind permission.Resource, field string) bool
+	planDenial(
+		ctx context.Context,
+		kind permission.Resource,
+		field string,
+	) (permissionports.PlanDenial, bool, error)
 	groups() protectedfield.GroupSet
 }
 
@@ -50,6 +57,11 @@ type walker struct {
 
 	path     []string
 	withheld map[string]struct{}
+	byPlan   map[string]platformcatalog.FeatureKey
+	// owners is the kind of each struct of a kind the walk is inside, the
+	// nearest last: a plain struct's fields (a worker's profile) are the
+	// nearest one's, for the plan as for field sensitivities.
+	owners []permission.Resource
 }
 
 // guard returns the value to encode in place of v, and whether it differs.
@@ -161,8 +173,6 @@ func (w *walker) guardStruct(v reflect.Value, carrier *record, depth int) (refle
 	}
 
 	rec := w.recordOf(plan.kind, carrier, isEnvelope(t))
-	gate := w.gate(plan.kind, rec)
-
 	var overrides map[string]any
 	set := func(name string, value any) {
 		if overrides == nil {
@@ -170,11 +180,35 @@ func (w *walker) guardStruct(v reflect.Value, carrier *record, depth int) (refle
 		}
 		overrides[name] = value
 	}
+	if plan.kind != "" && carrier != nil {
+		if withheld := w.recordOffPlan(plan.kind, rec); withheld.withheld() {
+			w.withholdWhole(v, plan, withheld, set)
+			return reflect.ValueOf(encodeStruct(v, plan, overrides)), true
+		}
+	}
+	gate := w.gate(plan.kind, rec)
+	owner := w.owner(plan.kind)
+	if plan.kind != "" {
+		w.owners = append(w.owners, plan.kind)
+		defer func() { w.owners = w.owners[:len(w.owners)-1] }()
+	}
+
 	for i := range plan.fields {
 		f := &plan.fields[i]
 		fv, ok := fieldByIndex(v, f.index)
 		if !ok {
 			continue
+		}
+		if w.ownFeature(owner, f.name) {
+			if withheld := w.fieldOffPlan(owner, f.name); withheld.withheld() {
+				if !f.omitted(fv) && !isNull(fv) {
+					w.push(f.name)
+					w.markPlanWithheld(withheld)
+					w.pop()
+					set(f.name, nil)
+				}
+				continue
+			}
 		}
 		if gate != gateNone && !w.fieldVisible(gate, rec.kind, f.name) {
 			if !f.omitted(fv) && !isNull(fv) {
@@ -295,6 +329,112 @@ func (w *walker) withhold(v reflect.Value) (reflect.Value, bool) {
 	}
 
 	return cp.Elem(), true
+}
+
+// planWithholding is what the plan answered for a record or a field: shown,
+// withheld for a feature it leaves out, or withheld because the plan could not
+// be read, which is named as an access withholding.
+type planWithholding struct {
+	feature platformcatalog.FeatureKey
+	unread  bool
+}
+
+var planShown = planWithholding{}
+
+func (p planWithholding) withheld() bool { return p != planShown }
+
+// recordOffPlan is whether the plan leaves out a record carried by another:
+// its own kind, or for a part the kind of the record it is part of.
+func (w *walker) recordOffPlan(kind permission.Resource, rec *record) planWithholding {
+	if withheld := w.fieldOffPlan(kind, ""); withheld.withheld() {
+		return withheld
+	}
+	if rec != nil && rec.kind != "" && rec.kind != kind {
+		return w.fieldOffPlan(rec.kind, "")
+	}
+
+	return planShown
+}
+
+// owner is the kind whose fields a struct's fields are: its own, or for a
+// plain struct the nearest struct of a kind it is inside.
+func (w *walker) owner(kind permission.Resource) permission.Resource {
+	if kind != "" || len(w.owners) == 0 {
+		return kind
+	}
+
+	return w.owners[len(w.owners)-1]
+}
+
+// ownFeature reports whether a field of a kind belongs to a feature of its
+// own, which the plan may leave out while it includes the kind.
+func (w *walker) ownFeature(kind permission.Resource, name string) bool {
+	if kind == "" || name == recordIDField {
+		return false
+	}
+	_, declared := w.registry.FieldFeatureOf(kind.String(), name)
+	return declared
+}
+
+func (w *walker) fieldOffPlan(kind permission.Resource, name string) planWithholding {
+	denial, off, err := w.decider.planDenial(w.ctx, kind, name)
+	switch {
+	case err != nil:
+		return planWithholding{unread: true}
+	case off:
+		return planWithholding{feature: denial.Feature}
+	default:
+		return planShown
+	}
+}
+
+// withholdWhole writes a record the plan leaves out the way a linked record
+// the caller cannot read is written when nothing of it may show: every key,
+// and null for each but its id.
+func (w *walker) withholdWhole(
+	v reflect.Value,
+	plan *typePlan,
+	withheld planWithholding,
+	set func(name string, value any),
+) {
+	for i := range plan.fields {
+		f := &plan.fields[i]
+		if f.name == recordIDField {
+			continue
+		}
+		fv, ok := fieldByIndex(v, f.index)
+		if !ok || f.omitted(fv) || isNull(fv) {
+			continue
+		}
+		set(f.name, nil)
+	}
+	w.markPlanWithheld(withheld)
+}
+
+func (w *walker) markPlanWithheld(withheld planWithholding) {
+	if withheld.unread {
+		w.markWithheld()
+		return
+	}
+	if w.byPlan == nil {
+		w.byPlan = make(map[string]platformcatalog.FeatureKey, 4)
+	}
+	w.byPlan[strings.Join(w.path, ".")] = withheld.feature
+}
+
+// withheldByPlan is every path the plan withheld with its feature, as
+// path=feature, sorted.
+func (w *walker) withheldByPlan() []string {
+	if len(w.byPlan) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(w.byPlan))
+	for path, feature := range w.byPlan {
+		out = append(out, path+"="+string(feature))
+	}
+	slices.Sort(out)
+
+	return out
 }
 
 func (w *walker) push(name string) { w.path = append(w.path, name) }

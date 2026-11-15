@@ -19,11 +19,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -48,6 +50,7 @@ var errInvalidToken = errortypes.NewValidationError(
 type Params struct {
 	fx.In
 
+	DB               kernelports.Transactor
 	UserRepository   tenantports.UserRepository
 	TokenRepository  tenantports.PasswordResetTokenRepository
 	SessionRepo      sessionports.SessionRepository
@@ -61,6 +64,7 @@ type Params struct {
 }
 
 type Service struct {
+	db           kernelports.Transactor
 	ur           tenantports.UserRepository
 	tokens       tenantports.PasswordResetTokenRepository
 	sessions     sessionports.SessionRepository
@@ -75,6 +79,7 @@ type Service struct {
 
 func New(p Params) *Service {
 	return &Service{
+		db:           p.DB,
 		ur:           p.UserRepository,
 		tokens:       p.TokenRepository,
 		sessions:     p.SessionRepo,
@@ -389,6 +394,10 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 	now := timeutils.NowUnix()
 	token, err := s.tokens.FindRedeemableByHash(ctx, tokenutils.Hash(rawToken), now)
 	if err != nil {
+		if !isNotFound(err) {
+			s.l.Error("failed to look up a reset token", zap.Error(err))
+			return err
+		}
 		event.deny(iam.AuthEventOutcomeFailed, resetErrorInvalidToken)
 		return errInvalidToken
 	}
@@ -428,40 +437,40 @@ func (s *Service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 		UserID:         user.ID,
 	})
 
-	// Redeem before writing the password. Two tabs opened from the same email both
-	// reach here; the guard lives in the UPDATE, so exactly one of them proceeds.
-	redeemed, err := s.tokens.MarkUsed(scoped, token.ID, now)
-	if err != nil {
-		return err
-	}
-	if !redeemed {
-		event.deny(iam.AuthEventOutcomeFailed, resetErrorInvalidToken)
-		return errInvalidToken
-	}
-
 	hashed, err := user.GeneratePassword(newPassword)
 	if err != nil {
 		s.l.Error("failed to hash the new password", zap.Error(err))
 		return err
 	}
 
-	if _, err = s.ur.UpdatePassword(scoped, tenantports.UpdateUserPasswordRequest{
-		UserID:         user.ID,
-		OrganizationID: token.OrganizationID,
-		BusinessUnitID: token.BusinessUnitID,
-		Password:       hashed,
-		// The user just chose this password, so any standing demand that they change
-		// one is satisfied.
-		MustChangePassword: false,
-	}); err != nil {
-		s.l.Error("failed to write the new password", zap.Error(err))
-		return err
-	}
+	err = s.db.Transact(scoped, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		redeemed, markErr := s.tokens.MarkUsed(txCtx, token.ID, now)
+		if markErr != nil {
+			return markErr
+		}
+		if !redeemed {
+			return errInvalidToken
+		}
 
-	if err = s.tokens.InvalidateOutstanding(scoped, user.ID, now); err != nil {
-		// The redeemed token is already spent; a stale sibling left live is worth
-		// logging but not worth failing a completed reset over.
-		s.l.Error("failed to retire sibling reset tokens", zap.Error(err))
+		if _, updateErr := s.ur.UpdatePassword(txCtx, tenantports.UpdateUserPasswordRequest{
+			UserID:             user.ID,
+			OrganizationID:     token.OrganizationID,
+			BusinessUnitID:     token.BusinessUnitID,
+			Password:           hashed,
+			MustChangePassword: false,
+		}); updateErr != nil {
+			s.l.Error("failed to write the new password", zap.Error(updateErr))
+			return updateErr
+		}
+
+		return s.tokens.InvalidateOutstanding(txCtx, user.ID, now)
+	})
+	if errors.Is(err, errInvalidToken) {
+		event.deny(iam.AuthEventOutcomeFailed, resetErrorInvalidToken)
+		return errInvalidToken
+	}
+	if err != nil {
+		return err
 	}
 
 	// Whoever was holding a session on this account is not necessarily the person who
@@ -532,6 +541,7 @@ func (s *Service) sendResetEmail(
 
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo: tenantInfo,
+		Type:       email.TypePasswordReset,
 		Purpose:    email.PurposeGeneral,
 		To:         []string{user.EmailAddress},
 		Subject:    rendered.Subject,
@@ -624,6 +634,7 @@ func (s *Service) sendInviteEmail(
 
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
+		Type:           email.TypeAccountInvitation,
 		Purpose:        email.PurposeGeneral,
 		To:             []string{user.EmailAddress},
 		Subject:        rendered.Subject,
@@ -654,4 +665,8 @@ func (s *Service) companyName(ctx context.Context, user *tenant.User) string {
 		return "Trenova"
 	}
 	return org.Name
+}
+
+func isNotFound(err error) bool {
+	return dberror.IsNotFoundError(err) || errortypes.IsNotFoundError(err)
 }

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -27,6 +28,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "carrier-intelligence-sweep",
+			Feature:       platformcatalog.FeatureCarrierBrokerage,
 			Description:   "Recompute carrier findings, sync monitoring watchlists, poll change feeds and refresh due snapshots",
 			Spec:          schedule.Every(2 * time.Hour),
 			Workflow:      CarrierIntelSweepWorkflow,
@@ -37,6 +39,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "carrier-intelligence-reconcile",
+			Feature:       platformcatalog.FeatureCarrierBrokerage,
 			Description:   "Reconcile carrier monitoring enrollment with each organization's policy",
 			Spec:          schedule.Cron("0 6 * * *"),
 			Workflow:      CarrierIntelReconcileWorkflow,
@@ -47,6 +50,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "carrier-intelligence-digest",
+			Feature:       platformcatalog.FeatureCarrierBrokerage,
 			Description:   "Daily digest of carrier intelligence changes awaiting review",
 			Spec:          schedule.Cron("0 12 * * *"),
 			Workflow:      CarrierIntelDigestWorkflow,
@@ -57,6 +61,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "carrier-intelligence-maintenance",
+			Feature:       platformcatalog.FeatureCarrierBrokerage,
 			Description:   "Roll up provider usage, purge expired payloads and prune snapshot history",
 			Spec:          schedule.Cron("30 3 * * *"),
 			Workflow:      CarrierIntelMaintenanceWorkflow,

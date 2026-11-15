@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"go.temporal.io/api/enums/v1"
-	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -20,6 +18,7 @@ var workflowContextType = reflect.TypeFor[workflow.Context]()
 
 type Schedule struct {
 	ID            string
+	Feature       platformcatalog.FeatureKey
 	Description   string
 	Spec          Spec
 	Workflow      any
@@ -122,6 +121,12 @@ func (s *Schedule) Validate() error {
 	if !s.Spec.IsInterval() && !s.Spec.IsCron() {
 		return ErrInvalidScheduleSpec
 	}
+	if s.Feature == "" {
+		return ErrFeatureRequired
+	}
+	if _, known := platformcatalog.Lookup(s.Feature); !known {
+		return fmt.Errorf("%w: %q", ErrUnknownFeature, s.Feature)
+	}
 	return s.validateArgs()
 }
 
@@ -162,60 +167,6 @@ func (s *Schedule) validateArgs() error {
 	return nil
 }
 
-func (s *Schedule) ToScheduleOptions() client.ScheduleOptions {
-	timezone := s.Spec.Timezone
-	if timezone == "" {
-		timezone = "UTC"
-	}
-
-	spec := client.ScheduleSpec{
-		TimeZoneName: timezone,
-		Jitter:       s.Spec.Jitter,
-	}
-
-	if s.Spec.StartAt != nil {
-		spec.StartAt = *s.Spec.StartAt
-	}
-	if s.Spec.EndAt != nil {
-		spec.EndAt = *s.Spec.EndAt
-	}
-
-	if s.Spec.IsInterval() {
-		spec.Intervals = []client.ScheduleIntervalSpec{{Every: s.Spec.Interval}}
-	} else if s.Spec.IsCron() {
-		spec.CronExpressions = []string{s.Spec.Cron}
-	}
-
-	workflowIDPrefix := fmt.Sprintf("%s-run", s.ID)
-	memo := s.Memo
-	if memo == nil {
-		memo = make(map[string]any)
-	}
-	memo["scheduleHash"] = s.Hash()
-	memo["description"] = s.Description
-
-	overlapPolicy := s.OverlapPolicy
-	if overlapPolicy == enums.SCHEDULE_OVERLAP_POLICY_UNSPECIFIED {
-		overlapPolicy = enums.SCHEDULE_OVERLAP_POLICY_SKIP
-	}
-
-	return client.ScheduleOptions{
-		ID:     s.ID,
-		Spec:   spec,
-		Paused: s.Paused,
-		Note:   registryNote(s.Hash()),
-		Memo:   map[string]any{ManagedByMemoKey: ManagedByRegistry},
-		Action: &client.ScheduleWorkflowAction{
-			ID:        fmt.Sprintf("%s-%d", workflowIDPrefix, timeutils.NowUnix()),
-			Workflow:  s.Workflow,
-			TaskQueue: s.TaskQueue,
-			Args:      s.Args,
-			Memo:      memo,
-		},
-		Overlap: overlapPolicy,
-	}
-}
-
 // ManagedByMemoKey marks, on the schedule itself, what created it. The memo is
 // written once at creation and returned by List, so ownership is known without
 // describing every schedule. The reconciler only ever deletes schedules marked
@@ -225,19 +176,3 @@ const (
 	ManagedByMemoKey  = "managedBy"
 	ManagedByRegistry = "schedule-registry"
 )
-
-// registryNotePrefix carries the registry's change hash in the schedule's note.
-// The note, unlike the schedule memo, can be changed by an update and is
-// returned by List, so a schedule's current definition can be compared with the
-// desired one without a describe call per schedule, and the comparison stays
-// right after the schedule has been updated.
-const registryNotePrefix = "Managed by the schedule registry. hash="
-
-func registryNote(hash string) string {
-	return registryNotePrefix + hash
-}
-
-func hashFromNote(note string) (string, bool) {
-	hash, ok := strings.CutPrefix(note, registryNotePrefix)
-	return hash, ok && hash != ""
-}

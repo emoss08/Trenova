@@ -122,8 +122,8 @@ func (r *InvoiceResolver) TotalAmount(ctx context.Context, obj *invoice.Invoice)
 	return stringutils.Ptr(obj.TotalAmount.String()), nil
 }
 
-func (r *InvoiceResolver) AppliedAmount(ctx context.Context, obj *invoice.Invoice) (string, error) {
-	return obj.AppliedAmount.String(), nil
+func (r *InvoiceResolver) AppliedAmount(ctx context.Context, obj *invoice.Invoice) (*string, error) {
+	return new(obj.AppliedAmount.String()), nil
 }
 
 func (r *InvoiceResolver) VoidDisposition(ctx context.Context, obj *invoice.Invoice) (*invoice.VoidDisposition, error) {
@@ -165,20 +165,20 @@ func (r *InvoiceResolver) MemoKind(ctx context.Context, obj *invoice.Invoice) (*
 	return &obj.MemoKind, nil
 }
 
-func (r *InvoiceResolver) OpenBalance(ctx context.Context, obj *invoice.Invoice) (string, error) {
+func (r *InvoiceResolver) OpenBalance(ctx context.Context, obj *invoice.Invoice) (*string, error) {
 	if obj == nil {
-		return decimal.Zero.String(), nil
+		return new(decimal.Zero.String()), nil
 	}
 
-	return obj.OpenBalanceAmount().String(), nil
+	return new(obj.OpenBalanceAmount().String()), nil
 }
 
-func (r *InvoiceResolver) CreditRemaining(ctx context.Context, obj *invoice.Invoice) (string, error) {
+func (r *InvoiceResolver) CreditRemaining(ctx context.Context, obj *invoice.Invoice) (*string, error) {
 	if obj == nil {
-		return decimal.Zero.String(), nil
+		return new(decimal.Zero.String()), nil
 	}
 
-	return money.DecimalFromMinor(obj.CreditRemainingMinor()).String(), nil
+	return new(money.DecimalFromMinor(obj.CreditRemainingMinor()).String()), nil
 }
 
 func (r *InvoiceResolver) DaysPastDue(ctx context.Context, obj *invoice.Invoice) (*int, error) {

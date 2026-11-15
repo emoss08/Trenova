@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/etaprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -239,10 +240,12 @@ func (r *Refresher) announce(
 		return
 	}
 
-	for _, observer := range r.observers {
-		if observer != nil {
-			observer.StopEtasRefreshed(ctx, tenantInfo, changed)
-		}
+	observers, gateErr := platformcatalogports.Observing(ctx, r.features, r.observers)
+	if gateErr != nil {
+		r.l.Warn("stop ETA observers skipped", zap.Error(gateErr))
+	}
+	for _, observer := range observers {
+		observer.StopEtasRefreshed(ctx, tenantInfo, changed)
 	}
 
 	for _, id := range changed {

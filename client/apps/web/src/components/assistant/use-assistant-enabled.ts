@@ -1,4 +1,6 @@
 import { usePermission } from "@/hooks/use-permission";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 
@@ -8,12 +10,13 @@ export function useAssistantHidden(): boolean {
 }
 
 /**
- * Whether the assistant that lives on every page is there at all: the person
- * may use it and has not turned it off. When this is false nothing of it is
- * mounted, and nothing else offers to open it.
+ * Whether the assistant that lives on every page is there at all: the plan includes
+ * Trenova AI, the person may use it and has not turned it off. When this is false
+ * nothing of it is mounted, and nothing else offers to open it.
  */
 export function useAssistantEnabled(): boolean {
   const { allowed } = usePermission(Resource.Assistant, Operation.Read);
+  const onPlan = usePlanFeature(PlanFeature.AIDesk).available;
   const hidden = useAssistantHidden();
-  return allowed && !hidden;
+  return allowed && onPlan && !hidden;
 }

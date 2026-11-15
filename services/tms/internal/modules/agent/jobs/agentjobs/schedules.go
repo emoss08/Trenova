@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/evalcasejobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -30,6 +31,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return append([]*schedule.Schedule{
 		{
 			ID:            ReconcileSchedulesScheduleID,
+			Feature:       platformcatalog.FeatureAgentAutomation,
 			Description:   "Keep one schedule behind every scheduled or continuous agent",
 			Spec:          schedule.Every(reconcileEvery),
 			Workflow:      ReconcileDefinitionSchedulesWorkflow,
@@ -41,6 +43,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            ExpireStaleProposalsScheduleID,
+			Feature:       platformcatalog.FeatureAIDesk,
 			Description:   "Expire pending agent proposals past their decision window and close the runs they leave settled",
 			Spec:          schedule.Every(proposalExpiryEvery),
 			Workflow:      ExpireStaleProposalsWorkflow,
@@ -52,6 +55,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            AssistantRetentionScheduleID,
+			Feature:       platformcatalog.FeatureAIDesk,
 			Description:   "Remove unsaved formula conversations and old palette question records",
 			Spec:          schedule.Cron("30 4 * * *"),
 			Workflow:      AssistantRetentionWorkflow,

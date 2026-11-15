@@ -144,6 +144,7 @@ func (s *Service) NotifyDelay(
 
 	if _, err = s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     req.TenantInfo,
+		Type:           email.TypeCustomerUpdate,
 		Purpose:        email.PurposeOperations,
 		To:             recipients,
 		Subject:        rendered.Subject,

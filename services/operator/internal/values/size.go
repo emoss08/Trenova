@@ -24,8 +24,8 @@ const (
 	// room for a future companion.
 	headroomMillicore = 240
 	reservedMillicore = systemMillicore + companionMillicore + releaseMillicore + headroomMillicore
-	minMemoryGiB      = 8
-	minMemoryGiBScan  = 10
+	minMemoryGiB      = 9
+	minMemoryGiBScan  = 12
 	clamavRequestMiB  = 3072
 	clamavLimitMiB    = 4096
 	releaseMiB        = 256
@@ -39,9 +39,7 @@ type sizeInput struct {
 	vcpu      int64
 	memoryGiB int64
 	diskGiB   int64
-	docling   bool
 	clamav    bool
-	minio     bool
 }
 
 type share struct {
@@ -51,7 +49,33 @@ type share struct {
 	floorMiB float64
 	fixedMiB float64
 	limitMiB float64
-	on       bool
+	surge    bool
+}
+
+func shares(clamav bool) []share {
+	out := []share{
+		{path: []string{keyPostgres}, memory: 28, cpu: 20, floorMiB: 1024},
+		{path: []string{keyTMS, "api"}, memory: 12, cpu: 15, floorMiB: 512, surge: true},
+		{path: []string{keyTMS, "worker"}, memory: 12, cpu: 15, floorMiB: 512, surge: true},
+		{path: []string{"imaging"}, memory: 10, cpu: 15, floorMiB: 512, surge: true},
+		{path: []string{keyRedis}, memory: 5, cpu: 3, floorMiB: 256},
+		{path: []string{"meilisearch"}, memory: 5, cpu: 5, floorMiB: 256},
+		{path: []string{"temporal"}, memory: 5, cpu: 5, floorMiB: 384},
+		{path: []string{"gotenberg"}, memory: 4, cpu: 4, floorMiB: 256, surge: true},
+		{path: []string{keyMinio}, memory: 3, cpu: 3, floorMiB: 256},
+		{path: []string{"gtc"}, memory: 2, cpu: 2, floorMiB: 128},
+		{path: []string{"client"}, memory: 1, cpu: 1, floorMiB: 64, surge: true},
+		{path: []string{keyDocling}, memory: 15, cpu: 8, floorMiB: 2048},
+	}
+	if clamav {
+		out = append(out, share{
+			path:     []string{keyClamAV},
+			cpu:      4,
+			fixedMiB: clamavRequestMiB,
+			limitMiB: clamavLimitMiB,
+		})
+	}
+	return out
 }
 
 func size(in sizeInput) (map[string]any, error) {
@@ -65,44 +89,29 @@ func size(in sizeInput) (map[string]any, error) {
 			ErrInvalidSpec, minVCPU, minMemory, minDiskGiB,
 		)
 	}
-	shares := []share{
-		{path: []string{keyPostgres}, memory: 28, cpu: 20, floorMiB: 1024, on: true},
-		{path: []string{keyTMS, "api"}, memory: 12, cpu: 15, floorMiB: 512, on: true},
-		{path: []string{keyTMS, "worker"}, memory: 12, cpu: 15, floorMiB: 512, on: true},
-		{path: []string{"imaging"}, memory: 10, cpu: 15, floorMiB: 512, on: true},
-		{path: []string{keyRedis}, memory: 5, cpu: 3, floorMiB: 256, on: true},
-		{path: []string{"meilisearch"}, memory: 5, cpu: 5, floorMiB: 256, on: true},
-		{path: []string{"temporal"}, memory: 5, cpu: 5, floorMiB: 384, on: true},
-		{path: []string{"gotenberg"}, memory: 4, cpu: 4, floorMiB: 256, on: true},
-		{path: []string{keyMinio}, memory: 3, cpu: 3, floorMiB: 256, on: in.minio},
-		{path: []string{"gtc"}, memory: 2, cpu: 2, floorMiB: 128, on: true},
-		{path: []string{"client"}, memory: 1, cpu: 1, floorMiB: 64, on: true},
-		{
-			path:     []string{"clamav"},
-			cpu:      4,
-			fixedMiB: clamavRequestMiB,
-			limitMiB: clamavLimitMiB,
-			on:       in.clamav,
-		},
-		{path: []string{"docling"}, memory: 15, cpu: 8, floorMiB: 2048, on: in.docling},
-	}
-	var memTotal, cpuTotal, memFixed float64
-	for _, s := range shares {
-		if s.on {
-			memTotal += s.memory
-			cpuTotal += s.cpu
-			memFixed += s.fixedMiB
+	return divide(in), nil
+}
+
+func divide(in sizeInput) map[string]any {
+	all := shares(in.clamav)
+	var memTotal, cpuTotal, memFixed, memSurge, cpuSurge float64
+	for _, s := range all {
+		memTotal += s.memory
+		cpuTotal += s.cpu
+		memFixed += s.fixedMiB
+		if s.surge {
+			memSurge = math.Max(memSurge, s.memory)
+			cpuSurge = math.Max(cpuSurge, s.cpu)
 		}
 	}
+	memTotal += memSurge
+	cpuTotal += cpuSurge
 	memAlloc := float64(in.memoryGiB*1024-reservedMiB) - memFixed
 	cpuAlloc := float64(in.vcpu*1000 - reservedMillicore)
 
 	out := map[string]any{}
 	var pgLimit float64
-	for _, s := range shares {
-		if !s.on {
-			continue
-		}
+	for _, s := range all {
 		request := math.Max(memAlloc*s.memory/memTotal, s.floorMiB)
 		if s.fixedMiB > 0 {
 			request = s.fixedMiB
@@ -150,7 +159,7 @@ func size(in sizeInput) (map[string]any, error) {
 		"max_wal_size":           mibBytes(clamp(pgDiskGiB*1024/20, 1024, 8192)),
 		"max_slot_wal_keep_size": mibBytes(clamp(pgDiskGiB*1024/8, 2048, 16384)),
 	})
-	return out, nil
+	return out
 }
 
 func set(dst map[string]any, path []string, v any) {

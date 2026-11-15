@@ -88,7 +88,7 @@ func (p *Playbook) Plan(
 	}
 	can := reach{
 		email: p.requests.CanSend(ctx, req.TenantInfo),
-		texts: p.messages.Texts(ctx, req.TenantInfo),
+		texts: p.messages.Texts(ctx),
 	}
 	planned := planAsk(fact, can, org.Timezone)
 	if planned == nil {

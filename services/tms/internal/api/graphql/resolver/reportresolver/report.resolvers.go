@@ -421,14 +421,19 @@ func (r *QueryResolver) ReportCatalog(ctx context.Context) (*gqlmodel.ReportCata
 }
 
 func (r *QueryResolver) CannedReports(ctx context.Context) ([]*gqlmodel.CannedReport, error) {
-	if _, err := r.RequirePermission(ctx, permission.ResourceReport, permission.OpRead); err != nil {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceReport, permission.OpRead)
+	if err != nil {
 		return nil, err
 	}
 
-	entries := r.ReportingService.ListCanned()
-	models := make([]*gqlmodel.CannedReport, 0, len(entries))
-	for _, entry := range entries {
-		model, mapErr := cannedReportToModel(entry)
+	req := reportingRequest(authCtx)
+	library, err := r.ReportingService.CannedLibrary(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+	models := make([]*gqlmodel.CannedReport, 0, len(library))
+	for i := range library {
+		model, mapErr := cannedReportToModel(&library[i])
 		if mapErr != nil {
 			return nil, mapErr
 		}

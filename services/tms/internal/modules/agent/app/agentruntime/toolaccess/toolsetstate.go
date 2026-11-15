@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
@@ -23,6 +24,9 @@ type ToolSetState struct {
 	FindCalls  int                    `json:"findCalls"`
 	Beyond     []string               `json:"beyond,omitempty"`
 	Query      *QueryVectorState      `json:"query,omitempty"`
+	// OffPlan is what the plan left out when the turn opened, in catalog
+	// order, so a restored turn refuses those tools naming the add-on too.
+	OffPlan []permissionports.PlanDenial `json:"offPlan,omitempty"`
 }
 
 func RestoreToolSet(state *ToolSetState) *ToolSet {
@@ -44,6 +48,7 @@ func RestoreToolSet(state *ToolSetState) *ToolSet {
 	}
 	set.Pending = slices.Clone(state.Pending)
 	set.frozen = true
+	set.planOff(state.OffPlan)
 
 	return set
 }

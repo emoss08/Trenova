@@ -207,6 +207,7 @@ func (a *Activities) deliverRunEmail(
 
 	req := &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
+		Type:           email.TypeReportDelivery,
 		Purpose:        email.PurposeReporting,
 		To:             schedule.Delivery.EmailRecipients,
 		Subject:        rendered.Subject,

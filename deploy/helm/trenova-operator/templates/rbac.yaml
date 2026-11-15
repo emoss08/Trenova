@@ -77,6 +77,15 @@ rules:
   - apiGroups: [postgresql.cnpg.io]
     resources: [clusters, imagecatalogs]
     verbs: [get, list, watch, create, update, patch, delete]
+  # Backups: the chart's daily schedule, and the base backups the operator
+  # takes itself (before an update, and the final one); the Barman Cloud
+  # object store they go to, whose status says how far back they reach.
+  - apiGroups: [postgresql.cnpg.io]
+    resources: [scheduledbackups, backups]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [barmancloud.cnpg.io]
+    resources: [objectstores]
+    verbs: [get, list, watch, create, update, patch, delete]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

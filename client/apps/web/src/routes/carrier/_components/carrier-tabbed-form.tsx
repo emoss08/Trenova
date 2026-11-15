@@ -14,6 +14,8 @@ import {
   RecordMemories,
   useRecordMemoriesAvailable,
 } from "@/components/record-memories/record-memories";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { parseAsString, useQueryState } from "nuqs";
 import { CarrierComplianceForm } from "./carrier-compliance-form";
 import { CarrierContactsForm } from "./carrier-contacts-form";
@@ -29,8 +31,14 @@ export type CarrierTabbedFormProps = {
 export function CarrierTabbedForm({ carrierId }: CarrierTabbedFormProps) {
   const t = useT();
 
-  const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("identity"));
+  const [requestedTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("identity"));
   const remembers = useRecordMemoriesAvailable() && Boolean(carrierId);
+  // Carrier intelligence is Carrier & Brokerage's; without it the carrier has no such tab, and
+  // a saved link to it opens on the identity.
+  const brokerageOnPlan = usePlanFeature(PlanFeature.CarrierBrokerage).available;
+  const showsIntelligence = Boolean(carrierId) && brokerageOnPlan;
+  const activeTab =
+    requestedTab === "intelligence" && !showsIntelligence ? "identity" : requestedTab;
 
   return (
     <Tabs
@@ -60,7 +68,7 @@ export function CarrierTabbedForm({ carrierId }: CarrierTabbedFormProps) {
             <Users01Icon className="size-4" />
             {t("Contacts")}
           </TabsTab>
-          {carrierId ? (
+          {showsIntelligence ? (
             <TabsTab value="intelligence">
               <RadarIcon className="size-4" />
               {t("Intelligence")}
@@ -90,7 +98,7 @@ export function CarrierTabbedForm({ carrierId }: CarrierTabbedFormProps) {
         <TabsContent value="contacts" className="p-4">
           <CarrierContactsForm />
         </TabsContent>
-        {carrierId ? (
+        {showsIntelligence && carrierId ? (
           <TabsContent value="intelligence" className="p-4">
             <CarrierIntelligenceTab carrierId={carrierId} />
           </TabsContent>

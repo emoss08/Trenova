@@ -1860,14 +1860,13 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:      "detention",
-				NonNull:   true,
 				HasChild:  true,
 				ChildType: "ShipmentDetentionWatch",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentWatchlist)
 					return obj.Detention, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentDetentionWatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDetentionWatch),
+				Marshal: gqlexec.Marshal(marshalOShipmentDetentionWatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDetentionWatch),
 			},
 			{
 				Name:      "billing",
@@ -3153,14 +3152,6 @@ func marshalNShipmentDeliveryWatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "ShipmentDeliveryWatch", v)
 }
 
-func marshalNShipmentDetentionWatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDetentionWatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentDetentionWatch) graphql.Marshaler {
-	if v == nil {
-		gqlexec.NullViolation(ctx)
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "ShipmentDetentionWatch", v)
-}
-
 func marshalNShipmentQuickFilter2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋquickfilterᚐQuickFilter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v quickfilter.QuickFilter) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -3464,6 +3455,13 @@ func marshalONextUncoveredPickup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "NextUncoveredPickup", v)
+}
+
+func marshalOShipmentDetentionWatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentDetentionWatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentDetentionWatch) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ShipmentDetentionWatch", v)
 }
 
 func marshalOShipmentQuickFilter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋquickfilterᚐQuickFilter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *quickfilter.QuickFilter) graphql.Marshaler {

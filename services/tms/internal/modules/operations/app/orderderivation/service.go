@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -192,4 +193,8 @@ func derivationRelevant(t shipmentevent.Type) bool {
 	default:
 		return false
 	}
+}
+
+func (o *Observer) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureCoreTMS
 }

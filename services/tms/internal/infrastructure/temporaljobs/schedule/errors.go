@@ -10,6 +10,8 @@ var (
 	ErrWorkflowRequired    = errors.New("workflow is required")
 	ErrTaskQueueRequired   = errors.New("task queue is required")
 	ErrWorkflowArgsInvalid = errors.New("schedule args do not match the workflow signature")
+	ErrFeatureRequired     = errors.New("schedule feature is required")
+	ErrUnknownFeature      = errors.New("schedule feature is not in the platform catalog")
 	ErrTemporalUnavailable = errors.New("temporal server unavailable")
 	ErrNoProviders         = errors.New("no schedule providers registered")
 )

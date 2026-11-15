@@ -8,7 +8,6 @@ import {
   formulaTemplateSchema,
   formulaTemplateVersionSchema,
   importTemplatesResponseSchema,
-  installStandardsResponseSchema,
   listFormulaReviewersResponseSchema,
   listFormulaTemplateResponseSchema,
   listFormulaTemplateReviewsResponseSchema,
@@ -38,7 +37,6 @@ import {
   type FormulaTemplateVersion,
   type FormulaTemplateWrite,
   type ImportTemplatesResponse,
-  type InstallStandardsResponse,
   type ListFormulaTemplateResponse,
   type ReadinessResponse,
   type ReviewDiffResponse,
@@ -67,10 +65,7 @@ import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { pageThreadSchema, type PageThread } from "@/types/assistant";
 import { z } from "zod";
 
-const declaredInputsSchema = z.object({
-  inputs: tariffInputDeclarationsSchema,
-  billing: z.object({ versionNumber: z.number().int() }).nullish(),
-});
+const declaredInputsSchema = z.object({ inputs: tariffInputDeclarationsSchema });
 
 /** A template as an export file carries it: its content and where it was forked from. */
 export type ImportTemplatePayload = {
@@ -188,11 +183,6 @@ export class FormulaTemplateService {
     return safeParse(importTemplatesResponseSchema, response, "Formula Template Import");
   }
 
-  public async installStandards(): Promise<InstallStandardsResponse> {
-    const response = await api.post<unknown>(`${BASE}/install-standards`, {});
-    return safeParse(installStandardsResponseSchema, response, "Standard Templates");
-  }
-
   /**
    * Opens the person's conversation with the formula assistant about a saved
    * template, or a fresh one while the template is unsaved.
@@ -243,28 +233,19 @@ export class FormulaTemplateService {
   }
 
   /**
-   * The inputs a template's version declares, for a contract form. With no version it is the
-   * version that bills today (the template's billing version), or the template's own content
-   * while nothing has been approved.
+   * The inputs a rating method prices with today (its billing version), for a shipment, lane or
+   * re-rate form. Every plan reads a standard template's; the organization's own needs Rating and
+   * permission to read templates, and the server refuses it otherwise.
    */
   public async getDeclaredInputs(
     templateId: string,
-    versionNumber: number | null,
     options?: RequestOptions,
   ): Promise<TariffInputDeclaration[]> {
-    if (versionNumber !== null) {
-      const version = await api.get<unknown>(`${BASE}/${templateId}/versions/${versionNumber}`, {
-        signal: options?.signal,
-      });
-      const parsed = await safeParse(declaredInputsSchema, version, "Formula Template Inputs");
-      return parsed.inputs;
-    }
-    const template = await api.get<unknown>(`${BASE}/${templateId}/`, {
+    const response = await api.get<unknown>(`/pricing-templates/${templateId}/inputs`, {
       signal: options?.signal,
     });
-    const parsed = await safeParse(declaredInputsSchema, template, "Formula Template Inputs");
-    const billing = parsed.billing?.versionNumber;
-    return billing ? this.getDeclaredInputs(templateId, billing, options) : parsed.inputs;
+    const parsed = await safeParse(declaredInputsSchema, response, "Formula Template Inputs");
+    return parsed.inputs;
   }
 
   public async getVersion(

@@ -4,6 +4,8 @@ import { ColorOptionValue } from "@/components/fields/select-components";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { usePermission } from "@/hooks/use-permission";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { usePendingActions } from "@/hooks/use-pending-actions";
 import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
@@ -41,6 +43,7 @@ import { DocumentBulkActionDock } from "./document-bulk-action-dock";
 import { DocumentIntelligenceDialog } from "./document-intelligence-dialog";
 import { DocumentList } from "./document-list";
 import { DocumentVersionDialog } from "./document-version-dialog";
+import { DocumentStorageAlert } from "./document-storage-alert";
 import { ExtractionNeedsProviderAlert } from "./extraction-needs-provider-alert";
 import {
   DocumentToolbar,
@@ -125,6 +128,9 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   const { allowed: canRejectDocuments } = usePermission(Resource.Document, Operation.Reject);
   const [signatureDocument, setSignatureDocument] = useState<Document | null>(null);
   const { allowed: canRecordSignatures } = usePermission(Resource.Document, Operation.Update);
+  // What was read off a document is Document Intelligence's: without it there is nothing to
+  // inspect.
+  const readsDocuments = usePlanFeature(PlanFeature.DocumentIntelligence).available;
   const [replacementLineageId, setReplacementLineageId] = useState<string | undefined>(undefined);
 
   const [isUploadOpen, setIsUploadOpen] = useQueryState(
@@ -511,6 +517,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
 
   return (
     <div className="space-y-4" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
+      <DocumentStorageAlert />
       <ExtractionNeedsProviderAlert />
       {packetSummary && packetSummary.totalRules > 0 && (
         <PacketCompletenessPanel summary={packetSummary} />
@@ -595,7 +602,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         onPreview={handlePreview}
         onDownload={handleDownload}
         onDelete={handleDelete}
-        onInspect={handleInspect}
+        onInspect={readsDocuments ? handleInspect : undefined}
         onVersions={handleOpenVersions}
         onApprove={canApproveDocuments ? handleApproveDocument : undefined}
         onReject={canRejectDocuments ? setRejectingDocument : undefined}
@@ -649,7 +656,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
       />
 
       <DocumentIntelligenceDialog
-        open={!!inspectedDocument}
+        open={readsDocuments && !!inspectedDocument}
         onOpenChange={(nextOpen) => {
           if (!nextOpen) {
             setInspectedDocument(null);

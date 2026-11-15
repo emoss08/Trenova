@@ -742,6 +742,9 @@ func (t *Tool) readInstead(
 		outcome[graphqlread.OutcomeWithheld] = withheld
 		outcome[graphqlread.OutcomeWithheldNote] = fieldgate.WithheldNote
 	}
+	if byPlan := graphqlread.PlanWithheld(result.WithheldByPlan, prefix); len(byPlan) > 0 {
+		outcome[graphqlread.OutcomeWithheldByPlan] = byPlan
+	}
 
 	return outcome, nil
 }
@@ -760,6 +763,7 @@ type Outcome struct {
 	TotalEstimated   bool             `json:"totalEstimated,omitempty"`
 	WithheldByAccess []string         `json:"withheldByAccess,omitempty"`
 	WithheldNote     string           `json:"withheldNote,omitempty"`
+	WithheldByPlan   []string         `json:"withheldByPlan,omitempty"`
 
 	Outside []agentrecord.RecordRef `json:"-"`
 	// cursors are the edge cursors of items, in order, and window the call's
@@ -951,6 +955,7 @@ func (t *Tool) outcome(
 		Total:            page.total,
 		TotalEstimated:   page.total != nil && !page.totalExact,
 		WithheldByAccess: page.withheld,
+		WithheldByPlan:   page.byPlan,
 		Outside:          markedRows(&t.Spec, page.Items),
 		cursors:          cursors,
 		window:           *window,
@@ -1037,6 +1042,7 @@ type Page struct {
 	HasMore    bool
 	endCursor  string
 	withheld   []string
+	byPlan     []string
 	first      bool
 	total      *int
 	totalExact bool
@@ -1062,7 +1068,12 @@ func (t *Tool) page(
 	}
 
 	connection, _ := result.Data[t.Read.RootField].(map[string]any)
-	page := &Page{first: req.after == "", withheld: t.relativeWithheld(result.Withheld)}
+	page := &Page{
+		first:    req.after == "",
+		withheld: t.relativeWithheld(result.Withheld),
+		byPlan: graphqlread.PlanWithheld(result.WithheldByPlan,
+			t.Read.RootField+"."+graphqlread.ConnectionEdges+"."+graphqlread.ConnectionNode+"."),
+	}
 	edges, _ := connection[graphqlread.ConnectionEdges].([]any)
 	page.Items = make([]map[string]any, 0, len(edges))
 	page.cursors = make([]string, 0, len(edges))
@@ -1616,7 +1627,8 @@ func (t *Tool) RunView(
 			Items:       items,
 			Columns:     graphqlread.SelectedColumns(t.rowFields, page.Items),
 		},
-		Withheld: page.withheld,
-		More:     page.HasMore,
+		Withheld:       page.withheld,
+		WithheldByPlan: page.byPlan,
+		More:           page.HasMore,
 	}, nil
 }

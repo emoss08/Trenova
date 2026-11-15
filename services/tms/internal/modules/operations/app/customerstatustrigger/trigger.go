@@ -3,6 +3,7 @@ package customerstatustrigger
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -121,4 +122,8 @@ func (t *Trigger) notifies(ctx context.Context, tenant pagination.TenantInfo) bo
 		return true
 	}
 	return notifying
+}
+
+func (t *Trigger) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureCustomerTracking
 }

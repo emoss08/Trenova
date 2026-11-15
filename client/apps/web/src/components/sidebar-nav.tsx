@@ -1,4 +1,4 @@
-import type { PlanCapabilityType } from "@/lib/plan-capability";
+import type { PlanFeatureKey } from "@/lib/plan-feature";
 import type { OrganizationCapabilityType } from "@trenova/shared/types/organization-capability";
 import type { PlatformMode } from "@trenova/shared/types/platform";
 import type { OperationType } from "@trenova/shared/types/permission";
@@ -15,10 +15,12 @@ export type SidebarLink = {
   requiredOperation?: OperationType;
   capability?: OrganizationCapabilityType;
   /** Hides the entry when the organization's plan withholds it. */
-  planCapability?: PlanCapabilityType;
+  planFeature?: PlanFeatureKey;
   /**
    * Shows the entry only on an install running in this platform mode, for an edition
    * page that means nothing elsewhere.
    */
   platformMode?: PlatformMode;
+  /** Shows the entry only on a Managed Trenova instance (the public config's `managed`). */
+  managedOnly?: boolean;
 };

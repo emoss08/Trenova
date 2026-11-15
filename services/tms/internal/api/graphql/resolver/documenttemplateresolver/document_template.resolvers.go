@@ -360,6 +360,7 @@ func (r *MutationResolver) SendTestMessageTemplate(ctx context.Context, input gq
 
 	if _, err = r.EmailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Type:       email.TypeTemplateTest,
 		Purpose:    email.PurposeGeneral,
 		To:         []string{input.ToEmail},
 		// The subject is marked so a test can never be mistaken for the real

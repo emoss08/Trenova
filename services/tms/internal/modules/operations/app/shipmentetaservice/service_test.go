@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -24,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -224,6 +226,10 @@ func (m *memoryEtas) ListActiveTenants(
 
 type recordingObserver struct{ calls [][]pulid.ID }
 
+func (r *recordingObserver) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureCustomerTracking
+}
+
 func (r *recordingObserver) StopEtasRefreshed(
 	_ context.Context,
 	_ pagination.TenantInfo,
@@ -339,6 +345,7 @@ func newFixture(windowEndFromNow time.Duration) *fixture {
 		Routes:           f.routes,
 		Realtime:         &mocks.NoopRealtimeService{},
 		Observers:        []stopetaports.Observer{f.observer},
+		Features:         plantest.AllFeatures(),
 		Logger:           zap.NewNop(),
 	})
 	f.refresher.now = clock

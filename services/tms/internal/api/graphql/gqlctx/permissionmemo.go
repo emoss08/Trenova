@@ -3,17 +3,19 @@ package gqlctx
 import (
 	"context"
 	"sync"
+
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
 type permissionMemoKey struct{}
 
 type PermissionMemo struct {
 	mu      sync.RWMutex
-	results map[string]bool
+	results map[string]permissionports.PermissionCheckResult
 }
 
 func NewPermissionMemo() *PermissionMemo {
-	return &PermissionMemo{results: make(map[string]bool)}
+	return &PermissionMemo{results: make(map[string]permissionports.PermissionCheckResult)}
 }
 
 func WithPermissionMemo(ctx context.Context, memo *PermissionMemo) context.Context {
@@ -25,19 +27,21 @@ func PermissionMemoFrom(ctx context.Context) (*PermissionMemo, bool) {
 	return memo, ok && memo != nil
 }
 
-func (m *PermissionMemo) Lookup(key string) (allowed, found bool) {
+func (m *PermissionMemo) Lookup(
+	key string,
+) (result permissionports.PermissionCheckResult, found bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	allowed, found = m.results[key]
-	return allowed, found
+	result, found = m.results[key]
+	return result, found
 }
 
-func (m *PermissionMemo) Store(key string, allowed bool) {
+func (m *PermissionMemo) Store(key string, result permissionports.PermissionCheckResult) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.results[key] = allowed
+	m.results[key] = result
 }
 
 func (m *PermissionMemo) Len() int {

@@ -32,6 +32,14 @@ func (d *Decision) Remaining() int64 {
 }
 
 func Decide(s *State, meter platformcatalog.MeterKey, requested int64) Decision {
+	return decide(s, meter, nil, requested)
+}
+
+func DecideAt(s *State, meter platformcatalog.MeterKey, level, requested int64) Decision {
+	return decide(s, meter, &level, requested)
+}
+
+func decide(s *State, meter platformcatalog.MeterKey, level *int64, requested int64) Decision {
 	d := Decision{Meter: meter, Requested: requested, Allowed: true, Reason: ReasonNotManaged}
 	if s == nil {
 		return d
@@ -39,6 +47,9 @@ func Decide(s *State, meter platformcatalog.MeterKey, requested int64) Decision 
 	m, ok := s.Meter(meter)
 	if !ok {
 		return d
+	}
+	if level != nil {
+		m.Quantity = *level
 	}
 	d.Managed = true
 	d.Limit = m.Allowance

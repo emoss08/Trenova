@@ -29,7 +29,6 @@ import type { AddRecordAction, DockAction, RowAction, Row } from "@trenova/share
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArchiveIcon,
-  BookOpen01Icon,
   Copy01Icon,
   Dataflow04Icon,
   Download01Icon,
@@ -54,8 +53,6 @@ export default function FormulaTemplatesDataTable() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [installDialogOpen, setInstallDialogOpen] = useState(false);
-  const [isInstalling, setIsInstalling] = useState(false);
 
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
   const [pendingDuplicateRows, setPendingDuplicateRows] = useState<FormulaTemplateRow[]>([]);
@@ -75,48 +72,6 @@ export default function FormulaTemplatesDataTable() {
   const handleExportClick = useCallback((template: FormulaTemplateRow) => {
     setExportDialogTemplate(template);
   }, []);
-
-  const handleInstallStandards = useCallback(async () => {
-    setIsInstalling(true);
-    await formulaTemplateService
-      .installStandards()
-      .then((result) => {
-        if (result.installed.length === 0) {
-          toast.info(t("Standard templates already installed"), {
-            description: t(
-              "All {0} standard templates exist in your organization.",
-              result.skipped.length,
-            ),
-          });
-        } else {
-          toast.success(
-            t(
-              "{0, plural, one {Installed # standard template} other {Installed # standard templates}}",
-              result.installed.length,
-            ),
-            {
-              description:
-                result.skipped.length > 0
-                  ? t(
-                      "{0, plural, one {# already existed and was skipped.} other {# already existed and were skipped.}}",
-                      result.skipped.length,
-                    )
-                  : t(
-                      "They are drafts: check their tests and send each for review before it rates.",
-                    ),
-            },
-          );
-        }
-        setInstallDialogOpen(false);
-      })
-      .catch(() => {
-        toast.error(t("Failed to install standard templates"));
-      })
-      .finally(async () => {
-        setIsInstalling(false);
-        await invalidateFormulaTemplate(queryClient);
-      });
-  }, [queryClient, t]);
 
   const handleDuplicate = useCallback(
     (row: Row<FormulaTemplateRow>) => {
@@ -315,13 +270,6 @@ export default function FormulaTemplatesDataTable() {
         onClick: () => void navigate(formulaTemplateRoutes.new),
       },
       {
-        id: "install-standards",
-        label: t("Install standard templates"),
-        description: t("Add Trenova's vetted rating library, from per mile to per CWT, as drafts."),
-        icon: BookOpen01Icon,
-        onClick: () => setInstallDialogOpen(true),
-      },
-      {
         id: "import-templates",
         label: t("Import templates"),
         description: t("Bring in templates from a JSON file exported from Trenova."),
@@ -352,33 +300,6 @@ export default function FormulaTemplatesDataTable() {
         }}
         addRecordActions={addRecordActions}
       />
-      <AlertDialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg font-semibold">
-              {t("Install standard templates?")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(
-                "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as drafts. Each one carries its own tests and rates shipments once someone else approves it. Templates you already have are left untouched.",
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel variant="outline" size="default">
-              {t("Cancel")}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              size="default"
-              onClick={() => void handleInstallStandards()}
-              disabled={isInstalling}
-              isLoading={isInstalling}
-            >
-              {t("Install")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       <ImportTemplateDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmapping"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -38,8 +40,12 @@ func BillingQueueItemToModel(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	withheld, err := agentReviewWithheld(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	return &gqlmodel.BillingQueueItem{
+	model := &gqlmodel.BillingQueueItem{
 		ID:                        item.ID.String(),
 		OrganizationID:            item.OrganizationID.String(),
 		BusinessUnitID:            item.BusinessUnitID.String(),
@@ -82,7 +88,23 @@ func BillingQueueItemToModel(ctx context.Context,
 		AgentSummary:              gqlscalar.StringPtrFromValue(item.AgentSummary),
 		AgentReviewedAt:           gqlscalar.IntPtr(item.AgentReviewedAt),
 		Headline:                  headlineToModel(item.Headline),
-	}, nil
+	}
+	if withheld {
+		model.AgentVerdict, model.AgentSummary, model.AgentReviewedAt = nil, nil, nil
+	}
+
+	return model, nil
+}
+
+var errNoPlanMemo = errors.New("the request carries no plan memo to read the agent review through")
+
+func agentReviewWithheld(ctx context.Context) (bool, error) {
+	memo, ok := gqlctx.PlanMemoFrom(ctx)
+	if !ok {
+		return false, errNoPlanMemo
+	}
+
+	return memo.FeatureOff(ctx, platformcatalog.FeatureAgentAutomation)
 }
 
 func headlineToModel(headline *billingqueue.Headline) *gqlmodel.BillingQueueHeadline {

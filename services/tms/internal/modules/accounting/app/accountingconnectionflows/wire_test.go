@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"go.uber.org/zap"
 )
 
@@ -65,6 +66,7 @@ func wire(w *wiring) services {
 		Refresher:    w.Refresher,
 		Certificates: w.Certificates,
 		Realtime:     &mocks.NoopRealtimeService{},
+		Features:     plantest.AllFeatures(),
 	})
 	health := accountingconnectionhealth.New(accountingconnectionhealth.Params{
 		Logger:      l,

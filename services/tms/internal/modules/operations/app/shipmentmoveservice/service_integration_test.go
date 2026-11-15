@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -358,6 +359,7 @@ func newIntegrationService(
 		Maybe()
 
 	commercial := shipmentcommercial.New(shipmentcommercial.Params{
+		Features:        plantest.AllFeatures(),
 		Logger:          zap.NewNop(),
 		RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
 		AccessorialRepo: accessorialRepo,

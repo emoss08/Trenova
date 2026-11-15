@@ -73,6 +73,7 @@ func (r *repository) SavePending(
 					Update(
 						ex.UserID,
 						ex.RequestHash,
+						ex.PageCount,
 						ex.WorkflowID,
 						ex.WorkflowRunID,
 						ex.ActivityID,

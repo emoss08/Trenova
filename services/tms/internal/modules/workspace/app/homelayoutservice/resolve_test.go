@@ -8,10 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/homelayoutportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -33,6 +35,12 @@ type harness struct {
 func newHarness(t *testing.T) *harness {
 	t.Helper()
 
+	return newHarnessOn(t, plantest.AllFeatures())
+}
+
+func newHarnessOn(t *testing.T, features platformcatalogports.FeatureGate) *harness {
+	t.Helper()
+
 	repo := homelayoutportsmock.NewMockHomeLayoutRepository(t)
 	rbacRepo := permissionportsmock.NewMockRBACRepository(t)
 	roles := permissionportsmock.NewMockRoleRepository(t)
@@ -45,6 +53,7 @@ func newHarness(t *testing.T) *harness {
 			RBACRepo:         rbacRepo,
 			RoleRepo:         roles,
 			PermissionEngine: engine,
+			Features:         features,
 		}),
 		repo:   repo,
 		rbac:   rbacRepo,

@@ -38,6 +38,8 @@ import { DataTableSaveConfigDialog } from "./data-table-save-config-dialog";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 import { DEFAULT_CREATE_ACTION_ID, type FilterableField } from "@/lib/data-table";
 import { TABLE_TOOLBAR_CLASS } from "./data-table-chrome";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 
 const DataTableSearch = lazy(() => import("@/components/data-table/data-table-search"));
 
@@ -166,6 +168,9 @@ export function DataTableToolbar<TData extends Record<string, any>>({
   slots,
 }: DataTableToolbarProps<TData>) {
   const t = useT();
+  // Narrowing a table by description is Nova's, which only a plan with Trenova AI has: without
+  // it the input is never mounted, its code never loaded and its catalogue never read.
+  const asksNova = usePlanFeature(PlanFeature.AIDesk).available;
 
   const { canExport } = useDataTable<TData, unknown>();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -207,7 +212,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
               fact, so the input asks the server itself and renders nothing
               until it knows — a skeleton here would promise a control that
               most tables never get. */}
-          {resource && onAskApplied && (
+          {asksNova && resource && onAskApplied && (
             <Suspense fallback={null}>
               <DataTableAsk
                 resource={resource}

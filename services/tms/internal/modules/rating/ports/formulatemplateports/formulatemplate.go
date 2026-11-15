@@ -78,6 +78,11 @@ type GetFormulaTemplateStatsRequest struct {
 
 type FormulaTemplateSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest
+	StandardOnly       bool
+}
+
+type ListStandardKeysRequest struct {
+	TenantInfo pagination.TenantInfo
 }
 
 type FormulaTemplateRepository interface {
@@ -101,6 +106,8 @@ type FormulaTemplateRepository interface {
 		ctx context.Context,
 		req GetFormulaTemplatesByNamesRequest,
 	) ([]*formulatemplate.FormulaTemplate, error)
+	ListStandardKeys(ctx context.Context, req ListStandardKeysRequest) ([]string, error)
+	NonStandardIDs(ctx context.Context, req GetFormulaTemplatesByIDsRequest) ([]pulid.ID, error)
 	List(
 		ctx context.Context,
 		req *ListFormulaTemplatesRequest,

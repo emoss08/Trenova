@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -20,6 +21,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:          "fuel-card-feed-sync",
+			Feature:     platformcatalog.FeatureFuelTax,
 			Description: "Read fuel card transactions for all connected tenants and post the ones that resolve",
 			// Hourly matches how the networks publish: a fleet card export lands
 			// on a billing cycle, not in real time, so polling harder would only

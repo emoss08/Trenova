@@ -6,6 +6,7 @@ import { EditableDriverTypeBadge } from "@/components/editable-driver-type-badge
 import { EditableWorkerTypeBadge } from "@/components/editable-worker-type-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { StatusBadge } from "@trenova/shared/components/status-badge";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { TrainingHealthBadge } from "@trenova/shared/components/training-health-badge";
 import { drugAlcoholStatusMeta } from "@trenova/shared/lib/drug-alcohol";
 import { safetyRatingMeta } from "@trenova/shared/lib/safety";
@@ -29,6 +30,7 @@ import type { DriverType, WorkerType } from "@trenova/shared/types/worker";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
+import { PlanFeature } from "@/lib/plan-feature";
 
 function WorkerTypeCell({ row }: { row: WorkerRow }) {
   const queryClient = useQueryClient();
@@ -280,7 +282,11 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       accessorKey: "profile.complianceStatus",
       header: t("Compliance"),
       cell: ({ row }) => {
-        const complianceStatus = row.original.profile?.complianceStatus;
+        const profile = row.original.profile;
+        if (profile && profile.complianceStatus == null) {
+          return <WithheldValue plan="workforce.compliance" />;
+        }
+        const complianceStatus = profile?.complianceStatus;
         if (!complianceStatus) {
           return <p className="text-muted-foreground">—</p>;
         }
@@ -291,6 +297,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       minSize: 110,
       maxSize: 150,
       meta: {
+        planFeature: PlanFeature.WorkforceCompliance,
         label: t("Compliance"),
         apiField: "profile.complianceStatus",
         filterable: true,
@@ -304,7 +311,11 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       accessorKey: "profile.trainingHealth",
       header: t("Training"),
       cell: ({ row }) => {
-        const health = row.original.profile?.trainingHealth;
+        const profile = row.original.profile;
+        if (profile && profile.trainingHealth == null) {
+          return <WithheldValue plan="workforce.talent" />;
+        }
+        const health = profile?.trainingHealth;
         if (!health) {
           return <p className="text-muted-foreground">—</p>;
         }
@@ -314,6 +325,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       minSize: 110,
       maxSize: 160,
       meta: {
+        planFeature: PlanFeature.WorkforceTalent,
         label: t("Training"),
         apiField: "profile.trainingHealth",
         filterable: true,
@@ -331,6 +343,9 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
         if (!profile) {
           return <p className="text-muted-foreground">—</p>;
         }
+        if (profile.safetyRating == null) {
+          return <WithheldValue plan="workforce.safety" />;
+        }
         const meta = safetyRatingMeta(profile.safetyRating);
         return (
           <div className="flex items-center gap-2">
@@ -345,6 +360,7 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
       minSize: 120,
       maxSize: 170,
       meta: {
+        planFeature: PlanFeature.WorkforceSafety,
         label: t("Safety"),
         apiField: "profile.safetyRating",
         filterable: true,

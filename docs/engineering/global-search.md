@@ -60,6 +60,16 @@ Postgres table  ──(GTC, change data capture)──►  Meilisearch index  �
    so `own()` needs no field check; a field in a protected group (`protectedfield`, such as a
    worker's licence number) must never be an `own()` value.
 
+**The plan.** A kind's resource belongs to a feature, and the permission engine refuses an
+off-plan resource in the same `CheckBatch`, so a kind whose add-on the organization does not have
+is never searched, its index is never asked, and no group comes back; `TestEveryKindNamesAResourceThePermissionRegistryKnows`
+fails for a definition with no resource. Every kind today is base. A metadata value is withheld
+the same way a missing read withholds it: a figure about another kind (`openBalance`) needs that
+kind's read, which an off-plan kind never has, and the receivables are not read at all; a linked
+record's field goes through its reference view, which asks the plan; and a value of the hit's own
+record is dropped when the registry declares a `FieldFeatures` entry for the field named by its
+metadata key and the plan leaves that feature out.
+
 The client never decides access, but it never offers what the server will not return either:
 the palette's tabs and `@` filters show only the kinds the person may read
 (`useReadableRecordTypes`, from `PALETTE_SEARCH_RESOURCES`), and while the permissions load

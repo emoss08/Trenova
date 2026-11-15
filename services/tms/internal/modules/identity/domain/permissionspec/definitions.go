@@ -2,6 +2,7 @@ package permissionspec
 
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 type BundleGrant struct {
@@ -50,10 +51,12 @@ type ResourceDefinition struct {
 	DisplayName        string                                 `json:"displayName"`
 	Description        string                                 `json:"description"`
 	Category           string                                 `json:"category"`
+	Feature            platformcatalog.FeatureKey             `json:"feature"`
 	Operations         []OperationDefinition                  `json:"operations"`
 	CompositeOps       map[string][]permission.Operation      `json:"compositeOps,omitempty"`
 	ParentResource     string                                 `json:"parentResource,omitempty"`
 	FieldSensitivities map[string]permission.FieldSensitivity `json:"fieldSensitivities,omitempty"`
+	FieldFeatures      map[string]platformcatalog.FeatureKey  `json:"fieldFeatures,omitempty"`
 	DefaultSensitivity permission.FieldSensitivity            `json:"defaultSensitivity"`
 	Scopes             []ScopeSupport                         `json:"scopes,omitempty"`
 	ReferenceView      []string                               `json:"referenceView,omitempty"`

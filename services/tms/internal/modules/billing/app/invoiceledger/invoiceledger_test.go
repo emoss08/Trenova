@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -102,7 +103,8 @@ func poster(
 			Numbers:  fixedNumbers{},
 			Journals: journals,
 		},
-		Ledger: ledger,
+		Ledger:   ledger,
+		Features: plantest.AllFeatures(),
 	}
 }
 

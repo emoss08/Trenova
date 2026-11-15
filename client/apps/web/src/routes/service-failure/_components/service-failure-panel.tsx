@@ -53,9 +53,9 @@ function toUpdate(row: ServiceFailureRow): ServiceFailureUpdate {
     clearReasonCode: false,
     notes: row.notes,
     internalNotes: row.internalNotes,
-    x12StatusCodeOverride: row.x12StatusCodeOverride,
-    x12ReasonCodeOverride: row.x12ReasonCodeOverride,
-    x12ExceptionCode: row.x12ExceptionCode,
+    x12StatusCodeOverride: row.x12StatusCodeOverride ?? "",
+    x12ReasonCodeOverride: row.x12ReasonCodeOverride ?? "",
+    x12ExceptionCode: row.x12ExceptionCode ?? "",
     version: row.version,
   };
 }

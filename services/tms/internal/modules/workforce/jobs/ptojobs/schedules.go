@@ -2,6 +2,7 @@ package ptojobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/workforce/jobs/ptojobs/ptocontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
@@ -17,6 +18,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            ScheduleID,
+			Feature:       platformcatalog.FeatureWorkforceTimeOff,
 			Description:   "Nightly PTO accrual, carryover cap, and expiry posting",
 			Spec:          schedule.Cron("15 2 * * *"),
 			Workflow:      PTOAccrualWorkflow,

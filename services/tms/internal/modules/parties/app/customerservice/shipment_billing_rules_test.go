@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,7 +47,11 @@ func TestGetShipmentBillingRules_ReadsEveryPayerOnceAndCarriesOnlyTheFormRules(t
 		}, nil).
 		Once()
 
-	svc := customerservice.New(customerservice.Params{Logger: zap.NewNop(), Repo: repo})
+	svc := customerservice.New(customerservice.Params{
+		Logger:     zap.NewNop(),
+		Repo:       repo,
+		PlanFields: plantest.Keeper(nil),
+	})
 	rules, err := svc.GetShipmentBillingRules(t.Context(), customerports.GetShipmentBillingRulesRequest{
 		TenantInfo:  tenant,
 		CustomerIDs: []pulid.ID{strict, lenient, strict},
@@ -79,7 +84,11 @@ func TestGetShipmentBillingRules_RefusesMoreCustomersThanAShipmentBills(t *testi
 	}
 	repo := customerportsmock.NewMockCustomerRepository(t)
 
-	svc := customerservice.New(customerservice.Params{Logger: zap.NewNop(), Repo: repo})
+	svc := customerservice.New(customerservice.Params{
+		Logger:     zap.NewNop(),
+		Repo:       repo,
+		PlanFields: plantest.Keeper(nil),
+	})
 	_, err := svc.GetShipmentBillingRules(t.Context(), customerports.GetShipmentBillingRulesRequest{
 		CustomerIDs: ids,
 	})

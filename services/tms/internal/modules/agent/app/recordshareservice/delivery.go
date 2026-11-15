@@ -167,6 +167,7 @@ func (s *Service) sendEmail(ctx context.Context, p *emailParams) bool {
 
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo: p.tenantInfo,
+		Type:       email.TypeRecordShare,
 		Purpose:    email.PurposeNotifications,
 		To:         []string{address},
 		Subject:    rendered.Subject,

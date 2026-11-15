@@ -2,6 +2,7 @@ package compliancejobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "credential-expiry-sweep",
+			Feature:       platformcatalog.FeatureWorkforceCompliance,
 			Description:   "Daily sweep for expiring driver credentials (CDL, medical, MVR, ...)",
 			Spec:          schedule.Cron("0 11 * * *"),
 			Workflow:      CredentialExpirySweepWorkflow,

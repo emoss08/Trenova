@@ -16,6 +16,7 @@ function manifest(permissions: Record<string, number>): PermissionManifest {
     permissions,
     routeAccess: { "/shipments": true },
     availableOrgs: [],
+    unavailableFeatures: [],
     checksum: "abc123",
     expiresAt: 1782403304,
   } as PermissionManifest;

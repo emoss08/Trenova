@@ -30,6 +30,7 @@ export const ERROR_ICONS: Record<ErrorKind, IconComponent> = {
   "stale-build": RefreshCw02Icon,
   "session-expired": Key01Icon,
   forbidden: Lock01Icon,
+  "plan-restricted": Lock01Icon,
   "not-found": FileQuestion02Icon,
   "rate-limited": ClockStopwatchIcon,
   timeout: Hourglass01Icon,
@@ -83,6 +84,11 @@ export function errorCopy(t: TranslateFn, description: ErrorDescription): ErrorC
         description: t(
           "Your roles don't include permission to view this. Ask an administrator if you need it.",
         ),
+      };
+    case "plan-restricted":
+      return {
+        title: t("Not on your plan"),
+        description: t("This is not on your plan."),
       };
     case "not-found":
       return {

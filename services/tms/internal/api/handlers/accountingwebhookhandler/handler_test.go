@@ -7,13 +7,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type recordingService struct {
@@ -75,7 +78,8 @@ func serveMethod(
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
-	New(Params{Webhooks: svc, Connectors: registry{}}).RegisterPublicRoutes(engine.Group(""))
+	New(Params{Webhooks: svc, Connectors: registry{}, Features: everyFeature()}).
+		RegisterPublicRoutes(engine.Group(""))
 
 	req := httptest.NewRequestWithContext(
 		t.Context(),
@@ -161,7 +165,8 @@ func serve(
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
-	New(Params{Webhooks: svc, Connectors: registry{}}).RegisterPublicRoutes(engine.Group(""))
+	New(Params{Webhooks: svc, Connectors: registry{}, Features: everyFeature()}).
+		RegisterPublicRoutes(engine.Group(""))
 
 	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, path, bytes.NewReader(body))
 	req.Header.Set("intuit-signature", "c2lnbmF0dXJl")
@@ -214,4 +219,11 @@ func TestWebhookRejectsUnknownProvidersAndOversizedBodies(t *testing.T) {
 		serve(t, svc, WebhookPath("quickbooks"), big).Code,
 	)
 	assert.Nil(t, svc.received)
+}
+
+func everyFeature() *middleware.FeatureGuard {
+	return middleware.NewFeatureGuard(middleware.FeatureGuardParams{
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
+	})
 }

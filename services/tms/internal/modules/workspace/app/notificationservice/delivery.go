@@ -159,6 +159,7 @@ func (s *Service) sendEmail(
 	go func() {
 		if _, sendErr := s.email.Send(background, &emailports.SendEmailRequest{
 			TenantInfo:     tenantInfo,
+			Type:           email.TypeNotification,
 			Purpose:        email.PurposeNotifications,
 			To:             []string{address},
 			Subject:        rendered.Subject,

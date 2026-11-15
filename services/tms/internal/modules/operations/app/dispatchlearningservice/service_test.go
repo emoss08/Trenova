@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchlearningservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
@@ -14,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -128,6 +131,7 @@ func newService(
 		Controls:     controls,
 		AuditService: audit,
 		Clock:        func() int64 { return 50_000 },
+		Features:     plantest.AllFeatures(),
 	}), audit
 }
 
@@ -325,4 +329,24 @@ func TestStartLearning_ANewStyleStartsAtNow(t *testing.T) {
 	assert.Equal(t, int64(50_000), repo.style.ObservedThroughAt,
 		"history from before learning was turned on is never swept")
 	assert.Zero(t, repo.saves, "a style created at now needs no second write")
+}
+
+func TestTheLearnedStyleIsRefusedWithoutDispatchIntelligence(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	svc := dispatchlearningservice.New(dispatchlearningservice.Params{
+		Logger:       zap.NewNop(),
+		Repo:         repo,
+		Controls:     dispatchcontrolportsmock.NewMockDispatchControlRepository(t),
+		AuditService: auditportsmock.NewMockAuditService(t),
+		Clock:        func() int64 { return 50_000 },
+		Features:     plantest.Without(platformcatalog.FeatureDispatchIntelligence),
+	})
+
+	_, err := svc.Get(t.Context(), &dispatchlearningports.GetStyleRequest{TenantInfo: tenant})
+	assert.True(t, errortypes.IsPlanRestrictionError(err))
+
+	_, err = svc.Reset(t.Context(), &dispatchlearningports.ResetStyleRequest{TenantInfo: tenant})
+	assert.True(t, errortypes.IsPlanRestrictionError(err))
 }

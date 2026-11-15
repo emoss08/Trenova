@@ -2,11 +2,14 @@ package shipmentbillingreadiness
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -32,6 +35,7 @@ type Service struct {
 	documentRepo       documentports.DocumentRepository
 	billingRepo        tenantports.BillingControlRepository
 	serviceFailureRepo servicefailureports.ServiceFailureRepository
+	features           platformcatalogports.FeatureGate
 }
 
 func (s *Service) GetBillingReadiness(
@@ -176,6 +180,9 @@ func (s *Service) EvaluateBillingReadinessCached(
 		documents: make(map[string][]*document.Document, 1),
 		failures:  make(map[pulid.ID][]*servicefailure.ServiceFailure, 1),
 	}
+	if sources.creditHolds, err = s.creditHoldsApply(ctx); err != nil {
+		return nil, err
+	}
 	err = s.completePayers(ctx, tenantInfo, sources.Payers, resolution.DefaultPayerID)
 	if err != nil {
 		return nil, err
@@ -253,7 +260,7 @@ func (s *Service) ReadinessFrom(
 	docs := sources.documents[entity.ID.String()]
 
 	readiness := buildShipmentBillingReadiness(entity, profile, sources.control, docs)
-	applyPayerReadiness(readiness, entity, resolution, sources.Payers, docs)
+	applyPayerReadiness(readiness, entity, resolution, sources, docs)
 	applyUnresolvedServiceFailures(readiness, sources.failures[entity.ID])
 	s.l.Debug(
 		"evaluated shipment billing readiness",
@@ -342,6 +349,11 @@ func (s *Service) ReadinessSourcesFor(
 	if len(pending) == 0 {
 		return sources, nil
 	}
+	creditHolds, err := s.creditHoldsApply(ctx)
+	if err != nil {
+		return nil, err
+	}
+	sources.creditHolds = creditHolds
 
 	payerIDs := make([]pulid.ID, 0, len(pending))
 	defaultPayers := make([]pulid.ID, 0, len(pending))
@@ -443,6 +455,7 @@ type Params struct {
 	DocumentRepo       documentports.DocumentRepository
 	BillingRepo        tenantports.BillingControlRepository
 	ServiceFailureRepo servicefailureports.ServiceFailureRepository
+	Features           platformcatalogports.FeatureGate
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -454,7 +467,16 @@ func New(p Params) *Service {
 		documentRepo:       p.DocumentRepo,
 		billingRepo:        p.BillingRepo,
 		serviceFailureRepo: p.ServiceFailureRepo,
+		features:           p.Features,
 	}
 }
 
 var _ shipmentserviceports.ShipmentBillingReadinessReader = (*Service)(nil)
+
+func (s *Service) creditHoldsApply(ctx context.Context) (bool, error) {
+	on, err := s.features.Enabled(ctx, platformcatalog.FeatureAccounting)
+	if err != nil {
+		return false, fmt.Errorf("ask whether accounting is on the plan: %w", err)
+	}
+	return on, nil
+}

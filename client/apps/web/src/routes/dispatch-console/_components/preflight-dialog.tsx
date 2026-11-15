@@ -34,6 +34,8 @@ import { formatMiles, hosStrategyMeta, pickupState, verdictMeta } from "./dispat
 import { FindingList } from "./finding-list";
 import { CostBreakdown } from "./cost-breakdown";
 import { preferenceFloorOf } from "./cost-vocabulary";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 
 const VERDICT_BANNER: Record<
   string,
@@ -144,6 +146,8 @@ export function PreflightDialog({
 }) {
   const t = useT();
   const nowSeconds = useNow("minute");
+  // What the best driver pays in preferences comes from the planner's last plan.
+  const plannerOnPlan = usePlanFeature(PlanFeature.DispatchIntelligence).available;
 
   const { move, driver } = target;
   const { data, isLoading, isError, error, refetch } = useQuery(
@@ -311,7 +315,7 @@ export function PreflightDialog({
               <div className="border-border border-t pt-3.5">
                 <CostBreakdown
                   candidate={data.candidate}
-                  preferenceFloorCents={preferenceFloorOf(move)}
+                  preferenceFloorCents={plannerOnPlan ? preferenceFloorOf(move) : 0}
                 />
               </div>
             </div>

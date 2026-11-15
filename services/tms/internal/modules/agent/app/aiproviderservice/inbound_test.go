@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +20,7 @@ type novaFor struct {
 	tenant pagination.TenantInfo
 }
 
-func (n *novaFor) Available(_ context.Context, tenant pagination.TenantInfo) (bool, error) {
+func (n *novaFor) Available(_ context.Context, tenant pagination.TenantInfo, _ aitask.Task) (bool, error) {
 	n.tenant = tenant
 	return n.ready, nil
 }

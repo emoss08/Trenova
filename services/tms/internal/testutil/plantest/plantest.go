@@ -1,14 +1,20 @@
 package plantest
 
 import (
+	"context"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
-
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planfields"
+	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -58,34 +64,69 @@ func Unmanaged(tenantInfo pagination.TenantInfo) *platformplan.ResolvedPlan {
 	)
 }
 
-func Restriction(capability platformplan.Capability) error {
-	return errortypes.NewPlanRestrictionError(
-		capability.String(),
-		platformplan.ReasonPlanRestricted,
-		platformplan.PlanKeyFreeDemo.String(),
-	)
+type Gate struct {
+	off map[platformcatalog.FeatureKey]struct{}
 }
 
-func Restricting(t *testing.T, capability platformplan.Capability) *platformplanportsmock.MockPlanService {
-	t.Helper()
+var _ platformcatalogports.FeatureGate = (*Gate)(nil)
 
-	plans := platformplanportsmock.NewMockPlanService(t)
-	plans.EXPECT().
-		RequireCapability(mock.Anything, mock.Anything, capability).
-		Return(Restriction(capability))
-
-	return plans
+func AllFeatures() *Gate {
+	return &Gate{off: map[platformcatalog.FeatureKey]struct{}{}}
 }
 
-func Allowing(t *testing.T, capability platformplan.Capability) *platformplanportsmock.MockPlanService {
-	t.Helper()
+func Without(features ...platformcatalog.FeatureKey) *Gate {
+	off := make(map[platformcatalog.FeatureKey]struct{}, len(features))
+	for _, feature := range features {
+		off[feature] = struct{}{}
+	}
 
-	plans := platformplanportsmock.NewMockPlanService(t)
-	plans.EXPECT().
-		RequireCapability(mock.Anything, mock.Anything, capability).
-		Return(nil)
+	return &Gate{off: off}
+}
 
-	return plans
+// BaseOnly is a plan of the base features alone: every add-on's feature is
+// off.
+func BaseOnly() *Gate {
+	var addOns []platformcatalog.FeatureKey
+	for _, feature := range platformcatalog.Features() {
+		if !feature.IsBase() {
+			addOns = append(addOns, feature.Key)
+		}
+	}
+
+	return Without(addOns...)
+}
+
+func (g *Gate) Enabled(_ context.Context, feature platformcatalog.FeatureKey) (bool, error) {
+	_, off := g.off[feature]
+
+	return !off, nil
+}
+
+// AllOn is the plan lookup over the process's registry with every feature on.
+func AllOn() *onplan.Lookup {
+	return onplan.New(permissioncatalog.Default(), AllFeatures())
+}
+
+// Views is the reference views over a registry, or the process's when nil,
+// with every feature on.
+func Views(registry *permissioncatalog.Registry) *refview.Views {
+	if registry == nil {
+		registry = permissioncatalog.NewRegistry()
+	}
+	return refview.New(registry, onplan.New(registry, AllFeatures()))
+}
+
+// Keeper is the plan field keeper over a registry, or the process's when nil,
+// with every feature on: it keeps nothing back.
+func Keeper(registry *permissioncatalog.Registry) *planfields.Keeper {
+	if registry == nil {
+		registry = permissioncatalog.Default()
+	}
+	return planfields.New(registry, onplan.New(registry, AllFeatures()))
+}
+
+func Restriction(feature platformcatalog.FeatureKey) error {
+	return platformcatalogports.RequireFeature(context.Background(), Without(feature), feature)
 }
 
 func Cloud(
@@ -103,4 +144,51 @@ func Cloud(
 		Maybe()
 
 	return plans
+}
+
+type PricingTemplates struct {
+	Off map[pulid.ID]struct{}
+}
+
+var _ permissionports.PricingTemplatePlan = (*PricingTemplates)(nil)
+
+func AllPricingTemplates() *PricingTemplates {
+	return &PricingTemplates{Off: map[pulid.ID]struct{}{}}
+}
+
+func OwnTemplatesOffPlan(ids ...pulid.ID) *PricingTemplates {
+	off := make(map[pulid.ID]struct{}, len(ids))
+	for _, id := range ids {
+		off[id] = struct{}{}
+	}
+
+	return &PricingTemplates{Off: off}
+}
+
+func (p *PricingTemplates) OffPlan(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	templateIDs ...pulid.ID,
+) (map[pulid.ID]struct{}, error) {
+	off := make(map[pulid.ID]struct{}, len(templateIDs))
+	for _, id := range templateIDs {
+		if _, withheld := p.Off[id]; withheld {
+			off[id] = struct{}{}
+		}
+	}
+
+	return off, nil
+}
+
+func (p *PricingTemplates) RefuseOffPlan(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	templateIDs ...pulid.ID,
+) error {
+	off, _ := p.OffPlan(ctx, tenantInfo, templateIDs...)
+	if len(off) == 0 {
+		return nil
+	}
+
+	return Restriction(platformcatalog.FeatureRating)
 }

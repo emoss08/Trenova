@@ -1,6 +1,8 @@
 import { isOffered, scopeLabel, usageLine } from "@/components/desk-chat/memory/memory-format";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import {
   DESK_MEMORIES_KEY,
   createDeskMemory,
@@ -33,12 +35,14 @@ export function recordMemoriesQueryKey(subject: DeskMemorySubject) {
 }
 
 /**
- * Whether the person may read what agents remember. Hiding the assistant that
- * floats on every page is a preference about that assistant; it does not hide
- * what agents were told about a record.
+ * Whether the person may read what agents remember: the plan includes Trenova AI and the
+ * person may use the assistant. Hiding the assistant that floats on every page is a
+ * preference about that assistant; it does not hide what agents were told about a record.
  */
 export function useRecordMemoriesAvailable(): boolean {
-  return usePermission(Resource.Assistant, Operation.Read).allowed;
+  const { allowed } = usePermission(Resource.Assistant, Operation.Read);
+  const onPlan = usePlanFeature(PlanFeature.AIDesk).available;
+  return allowed && onPlan;
 }
 
 /** What a memory is, in the words the panel uses for the two kinds a person writes. */

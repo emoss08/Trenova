@@ -1,9 +1,26 @@
 fragment HomeWidgetFields on HomeWidget {
   id
   key
+  label
   title
   w
   h
+  planLock {
+    feature
+    featureName
+    addOn
+    addOnName
+  }
+  lockedMetrics {
+    metric
+    label
+    lock {
+      feature
+      featureName
+      addOn
+      addOnName
+    }
+  }
   config {
     metric
     metrics

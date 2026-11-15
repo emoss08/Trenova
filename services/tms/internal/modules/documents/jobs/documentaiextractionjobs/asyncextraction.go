@@ -94,6 +94,7 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 		UserID:         payload.UserID,
 		ExtractedAt:    payload.ExtractedAt,
 		RequestHash:    requestHash,
+		PageCount:      len(pages),
 		WorkflowID:     info.WorkflowExecution.ID,
 		WorkflowRunID:  info.WorkflowExecution.RunID,
 		ActivityID:     info.ActivityID,
@@ -146,7 +147,8 @@ func (a *Activities) submitAIExtraction( //nolint:funlen // async submission wit
 					content.ContentText,
 					a.cfg.GetMaxInputChars(),
 				),
-				Pages: toAIDocumentPages(pages, a.cfg.GetMaxInputChars()),
+				Pages:     toAIDocumentPages(pages, a.cfg.GetMaxInputChars()),
+				PageCount: len(pages),
 			},
 		)
 		if submitErr != nil {
@@ -287,6 +289,7 @@ func (a *Activities) pollExtraction(
 			ResponseID:  row.ResponseID,
 			ProviderID:  row.ProviderID,
 			SubmittedAt: typeutils.ValueOrZero(row.SubmittedAt),
+			PageCount:   row.PageCount,
 		},
 	)
 	if err != nil {

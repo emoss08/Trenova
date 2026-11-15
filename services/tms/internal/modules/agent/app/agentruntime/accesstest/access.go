@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"go.uber.org/zap"
 )
 
@@ -48,6 +49,9 @@ func New(p *toolaccess.AccessParams) *toolaccess.Access {
 	}
 	if filled.Registry == nil {
 		filled.Registry = permissioncatalog.NewRegistry()
+	}
+	if filled.Plan == nil {
+		filled.Plan = plantest.AllOn()
 	}
 
 	return toolaccess.NewAccess(&filled)

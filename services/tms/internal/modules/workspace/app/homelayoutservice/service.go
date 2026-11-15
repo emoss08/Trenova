@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -35,6 +36,7 @@ type Params struct {
 	RBACRepo         permissionports.RBACRepository
 	RoleRepo         permissionports.RoleRepository
 	PermissionEngine permissionports.PermissionEngine
+	Features         platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -43,6 +45,7 @@ type Service struct {
 	rbac        permissionports.RBACRepository
 	roles       permissionports.RoleRepository
 	permissions permissionports.PermissionEngine
+	features    platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service {
@@ -52,6 +55,7 @@ func New(p Params) *Service {
 		rbac:        p.RBACRepo,
 		roles:       p.RoleRepo,
 		permissions: p.PermissionEngine,
+		features:    p.Features,
 	}
 }
 
@@ -70,7 +74,11 @@ type UpdateRequest struct {
 // EffectiveLayout is what the home screen renders: a layout already narrowed to
 // what this viewer may see, plus the provenance the UI needs to explain it.
 type EffectiveLayout struct {
-	Layout       *homelayout.Layout
+	Layout *homelayout.Layout
+	// Locks holds, by widget id, the widgets and the measures the plan leaves
+	// out. Such a widget stays in Layout, in its slot, and nothing about it is
+	// read; a widget the viewer may not read is not in Layout at all.
+	Locks        map[string]WidgetLock
 	Density      string
 	Source       Source
 	PresetID     pulid.ID
@@ -80,13 +88,48 @@ type EffectiveLayout struct {
 	Version      int64
 }
 
+// WidgetLock is what the plan leaves out of one widget on a home screen.
+// Widget is set when the whole widget is locked; Metrics names the measures of
+// a metric strip that are locked while the rest of the strip is not.
+type WidgetLock struct {
+	Widget  *permissionports.PlanDenial
+	Metrics []MetricLock
+}
+
+func (l WidgetLock) locked() bool {
+	return l.Widget != nil || len(l.Metrics) > 0
+}
+
+type MetricLock struct {
+	Metric string
+	Denial permissionports.PlanDenial
+}
+
+// LockedWidget is a widget the viewer could add if the plan included it, and
+// the add-on that carries it.
+type LockedWidget struct {
+	Definition homelayout.WidgetDefinition
+	Denial     permissionports.PlanDenial
+}
+
+type LockedMetric struct {
+	Definition homelayout.MetricDefinition
+	Denial     permissionports.PlanDenial
+}
+
+// WidgetCatalog is what one viewer may choose from. Widgets and Metrics are
+// the ones they can add now; LockedWidgets and LockedMetrics are the ones the
+// plan leaves out, which a picker names with their add-on and offers no way
+// to add.
 type WidgetCatalog struct {
-	Widgets     []homelayout.WidgetDefinition
-	Metrics     []homelayout.MetricDefinition
-	Categories  []homelayout.CategoryDefinition
-	Densities   []string
-	GridColumns int
-	MaxWidgets  int
+	Widgets       []homelayout.WidgetDefinition
+	Metrics       []homelayout.MetricDefinition
+	LockedWidgets []LockedWidget
+	LockedMetrics []LockedMetric
+	Categories    []homelayout.CategoryDefinition
+	Densities     []string
+	GridColumns   int
+	MaxWidgets    int
 }
 
 func (s *Service) GetEffective(ctx context.Context, req *Request) (*EffectiveLayout, error) {
@@ -121,34 +164,46 @@ func (s *Service) GetEffective(ctx context.Context, req *Request) (*EffectiveLay
 }
 
 func (s *Service) GetCatalog(ctx context.Context, req *Request) (*WidgetCatalog, error) {
-	allowed, err := s.checkCatalogPermissions(ctx, req)
+	access, err := s.checkCatalogAccess(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
 	widgetCatalog := homelayout.WidgetCatalog()
 	widgets := make([]homelayout.WidgetDefinition, 0, len(widgetCatalog))
+	var lockedWidgets []LockedWidget
 	for _, widget := range widgetCatalog {
-		if !widget.RequiresPermission() || allowed(widget.Resource, widget.Operation) {
+		if denial := access.widgetDenial(widget); denial != nil {
+			lockedWidgets = append(lockedWidgets, LockedWidget{Definition: widget, Denial: *denial})
+			continue
+		}
+		if access.widgetAllowed(widget) {
 			widgets = append(widgets, widget)
 		}
 	}
 
 	metricCatalog := homelayout.MetricCatalog()
 	metrics := make([]homelayout.MetricDefinition, 0, len(metricCatalog))
+	var lockedMetrics []LockedMetric
 	for _, metric := range metricCatalog {
-		if allowed(metric.Resource, metric.Operation) {
+		denial, allowed := access.metric(metric.Key)
+		switch {
+		case denial != nil:
+			lockedMetrics = append(lockedMetrics, LockedMetric{Definition: metric, Denial: *denial})
+		case allowed:
 			metrics = append(metrics, metric)
 		}
 	}
 
 	return &WidgetCatalog{
-		Widgets:     widgets,
-		Metrics:     metrics,
-		Categories:  homelayout.CategoryCatalog(),
-		Densities:   homelayout.Densities(),
-		GridColumns: homelayout.GridColumns,
-		MaxWidgets:  homelayout.MaxWidgets,
+		Widgets:       widgets,
+		Metrics:       metrics,
+		LockedWidgets: lockedWidgets,
+		LockedMetrics: lockedMetrics,
+		Categories:    homelayout.CategoryCatalog(),
+		Densities:     homelayout.Densities(),
+		GridColumns:   homelayout.GridColumns,
+		MaxWidgets:    homelayout.MaxWidgets,
 	}, nil
 }
 

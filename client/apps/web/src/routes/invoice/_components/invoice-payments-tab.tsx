@@ -16,6 +16,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import {
   Table,
   TableBody,
@@ -41,7 +42,10 @@ function formatDate(unix: number | null | undefined): string {
 /**
  * The cash side of an invoice: what is owed, every payment and credit that
  * settled part of it, and the way to record the next one. A credit memo reads
- * the other way round, listing the invoices its credit was applied to.
+ * the other way round, listing the invoices its credit was applied to. The
+ * applications are absent when the organization's plan leaves out Accounting &
+ * Cash, and their figures are drawn withheld for a reader who cannot read
+ * customer payments.
  */
 export function InvoicePaymentsTab({
   invoice,
@@ -84,6 +88,10 @@ export function InvoicePaymentsTab({
   const isOpen = invoice.status === "Posted" && !isCreditMemo && openBalance > 0;
   const payments = arContext?.paymentApplications ?? [];
   const credits = arContext?.creditApplications ?? [];
+  const applicationsWithheld =
+    arContext != null &&
+    arContext.paymentApplications == null &&
+    arContext.creditApplications == null;
   const canApplyCredit =
     isCreditMemo && invoice.status === "Posted" && creditRemaining > 0 && canUnapply;
 
@@ -145,7 +153,7 @@ export function InvoicePaymentsTab({
           </div>
         </div>
 
-        {payments.length === 0 && credits.length === 0 ? (
+        {!applicationsWithheld && payments.length === 0 && credits.length === 0 ? (
           <p className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
             {isCreditMemo ? t("Not applied to any invoice yet") : t("No payments applied yet")}
           </p>
@@ -226,41 +234,54 @@ function PaymentApplicationsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell>
-                <Link
-                  to={`/accounting/ar/payments?panelType=edit&panelEntityId=${row.customerPaymentId}`}
-                  className="font-mono text-xs font-medium hover:underline"
-                >
-                  {row.payment?.referenceNumber || row.customerPaymentId}
-                </Link>
-              </TableCell>
-              <TableCell className="text-xs">{formatDate(row.payment?.paymentDate)}</TableCell>
-              <TableCell className="text-xs">{row.payment?.paymentMethod ?? "—"}</TableCell>
-              <TableCell className="text-right text-xs">
-                <AmountDisplay value={row.appliedAmountMinor} currency={currencyCode} />
-              </TableCell>
-              <TableCell className="text-right text-xs">
-                {row.shortPayAmountMinor > 0 ? (
-                  <AmountDisplay
-                    value={row.shortPayAmountMinor}
-                    currency={currencyCode}
-                    variant="negative"
-                  />
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {row.payment ? (
-                  <PlainCustomerPaymentStatusBadge status={row.payment.status} />
-                ) : (
-                  <span className="text-muted-foreground text-xs">—</span>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
+          {rows.map((row) => {
+            const paymentId = row.payment?.id ?? row.customerPaymentId;
+            return (
+              <TableRow key={row.id}>
+                <TableCell>
+                  {paymentId ? (
+                    <Link
+                      to={`/accounting/ar/payments?panelType=edit&panelEntityId=${paymentId}`}
+                      className="font-mono text-xs font-medium hover:underline"
+                    >
+                      {row.payment?.referenceNumber || paymentId}
+                    </Link>
+                  ) : (
+                    <WithheldValue kind="customer_payment" />
+                  )}
+                </TableCell>
+                <TableCell className="text-xs">{formatDate(row.payment?.paymentDate)}</TableCell>
+                <TableCell className="text-xs">{row.payment?.paymentMethod ?? "—"}</TableCell>
+                <TableCell className="text-right text-xs">
+                  {row.appliedAmountMinor === null ? (
+                    <WithheldValue kind="customer_payment" />
+                  ) : (
+                    <AmountDisplay value={row.appliedAmountMinor} currency={currencyCode} />
+                  )}
+                </TableCell>
+                <TableCell className="text-right text-xs">
+                  {row.shortPayAmountMinor === null ? (
+                    <WithheldValue kind="customer_payment" />
+                  ) : row.shortPayAmountMinor > 0 ? (
+                    <AmountDisplay
+                      value={row.shortPayAmountMinor}
+                      currency={currencyCode}
+                      variant="negative"
+                    />
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {row.payment ? (
+                    <PlainCustomerPaymentStatusBadge status={row.payment.status} />
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
@@ -299,20 +320,35 @@ function CreditApplicationsTable({
         <TableBody>
           {rows.map((row) => {
             const counterpart = perspective === "memo" ? row.invoice : row.creditMemo;
-            const counterpartId = perspective === "memo" ? row.invoiceId : row.creditMemoInvoiceId;
+            const counterpartId =
+              counterpart?.id ?? (perspective === "memo" ? row.invoiceId : row.creditMemoInvoiceId);
             return (
               <TableRow key={row.id} className={cn(row.status === "Unapplied" && "opacity-60")}>
                 <TableCell>
-                  <Link
-                    to={invoicePanelPath(counterpartId)}
-                    className="font-mono text-xs font-medium hover:underline"
-                  >
-                    {counterpart?.number ?? counterpartId}
-                  </Link>
+                  {counterpartId ? (
+                    <Link
+                      to={invoicePanelPath(counterpartId)}
+                      className="font-mono text-xs font-medium hover:underline"
+                    >
+                      {counterpart?.number ?? counterpartId}
+                    </Link>
+                  ) : (
+                    <WithheldValue kind="customer_payment" />
+                  )}
                 </TableCell>
-                <TableCell className="text-xs">{formatDate(row.accountingDate)}</TableCell>
+                <TableCell className="text-xs">
+                  {row.accountingDate === null ? (
+                    <WithheldValue kind="customer_payment" />
+                  ) : (
+                    formatDate(row.accountingDate)
+                  )}
+                </TableCell>
                 <TableCell className="text-right text-xs">
-                  <AmountDisplay value={row.appliedAmountMinor} currency={currencyCode} />
+                  {row.appliedAmountMinor === null ? (
+                    <WithheldValue kind="customer_payment" />
+                  ) : (
+                    <AmountDisplay value={row.appliedAmountMinor} currency={currencyCode} />
+                  )}
                 </TableCell>
                 <TableCell>
                   <Badge variant={row.status === "Applied" ? "success" : "neutral"}>

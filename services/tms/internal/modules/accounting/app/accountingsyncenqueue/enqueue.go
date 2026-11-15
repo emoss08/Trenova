@@ -14,7 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,6 +35,7 @@ type Params struct {
 	Orgs        tenantports.OrganizationRepository
 	Ledger      journalentryports.AccountingLedgerSource
 	Dispatcher  accountingsyncports.AccountingSyncDispatcher
+	Features    platformcatalogports.FeatureGate
 }
 
 type Enqueuer struct {
@@ -43,6 +46,7 @@ type Enqueuer struct {
 	orgs        tenantports.OrganizationRepository
 	ledger      journalentryports.AccountingLedgerSource
 	dispatcher  accountingsyncports.AccountingSyncDispatcher
+	features    platformcatalogports.FeatureGate
 }
 
 var (
@@ -61,6 +65,7 @@ func New(p Params) *Enqueuer {
 		orgs:        p.Orgs,
 		ledger:      p.Ledger,
 		dispatcher:  p.Dispatcher,
+		features:    p.Features,
 	}
 }
 
@@ -193,6 +198,10 @@ func (e *Enqueuer) EnqueueJournal(
 		!accountingsync.JournalSendable(posted.EntryType, "") {
 		return nil
 	}
+	on, err := e.accountingOn(ctx)
+	if err != nil || !on {
+		return err
+	}
 	conns, err := e.connections.ListByTenant(ctx, posted.TenantInfo)
 	if err != nil {
 		return fmt.Errorf("accounting sync: list connections: %w", err)
@@ -320,6 +329,10 @@ func (e *Enqueuer) coveringConnections(
 	ctx context.Context,
 	req *accountingsyncports.AccountingSyncEnqueueRequest,
 ) ([]*accountingconnection.AccountingConnection, error) {
+	on, err := e.accountingOn(ctx)
+	if err != nil || !on {
+		return nil, err
+	}
 	conns, err := e.connections.ListByTenant(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, fmt.Errorf("accounting sync: list connections: %w", err)
@@ -471,4 +484,12 @@ func (e *Enqueuer) QueueCandidates(
 		records = append(records, NewRecordFor(conn, req, now))
 	}
 	return e.QueueRecords(ctx, accountingsynceffects.TenantOf(conn), records)
+}
+
+func (e *Enqueuer) accountingOn(ctx context.Context) (bool, error) {
+	on, err := e.features.Enabled(ctx, platformcatalog.FeatureAccounting)
+	if err != nil {
+		return false, fmt.Errorf("accounting sync: ask whether accounting is on the plan: %w", err)
+	}
+	return on, nil
 }

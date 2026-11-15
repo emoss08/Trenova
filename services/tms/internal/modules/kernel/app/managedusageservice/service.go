@@ -111,17 +111,51 @@ func (s *Service) Decide(
 	if err != nil {
 		return managedusage.Decision{}, err
 	}
-	return managedusage.Decide(state, meter, requested), nil
+	reader, isLevel := s.levelReader(meter)
+	if _, named := stateMeter(state, meter); !isLevel || !named {
+		return managedusage.Decide(state, meter, requested), nil
+	}
+	level, err := reader.Level(ctx)
+	if err != nil {
+		return managedusage.Decision{}, fmt.Errorf("read the level of %s: %w", meter, err)
+	}
+	return managedusage.DecideAt(state, meter, level, requested), nil
 }
 
-func (s *Service) SetState(ctx context.Context, state *managedusage.State) error {
+func (s *Service) levelReader(meter platformcatalog.MeterKey) (managedusageports.LevelReader, bool) {
+	for _, lr := range s.levels {
+		if lr.Meter() == meter {
+			return lr, true
+		}
+	}
+	return nil, false
+}
+
+func stateMeter(
+	state *managedusage.State,
+	meter platformcatalog.MeterKey,
+) (managedusage.Meter, bool) {
+	if state == nil {
+		return managedusage.Meter{}, false
+	}
+	return state.Meter(meter)
+}
+
+func (s *Service) SetState(
+	ctx context.Context,
+	state *managedusage.State,
+) (*managedusageports.StateChange, error) {
 	if err := state.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 	state.ID = managedusage.CurrentStateID
 	state.ReceivedAt = s.clock()
-	if err := s.repo.Save(ctx, state); err != nil {
-		return err
+	previous, err := s.repo.Get(ctx)
+	if err != nil && !errors.Is(err, managedusage.ErrNoState) {
+		return nil, err
+	}
+	if err = s.repo.Save(ctx, state); err != nil {
+		return nil, err
 	}
 	s.cache.Invalidate(stateKey)
 	s.l.Info("the control plane set the usage state",
@@ -130,7 +164,7 @@ func (s *Service) SetState(ctx context.Context, state *managedusage.State) error
 		zap.Int("meters", len(state.Meters)),
 		zap.Int("stopped", stoppedCount(state)),
 	)
-	return nil
+	return &managedusageports.StateChange{Previous: previous, Current: state}, nil
 }
 
 func stoppedCount(state *managedusage.State) int {

@@ -3,12 +3,14 @@ package reportperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func Resources() []*permissionspec.ResourceDefinition {
 	return []*permissionspec.ResourceDefinition{
 		{
 			Resource:    permission.ResourceReport.String(),
+			Feature:     platformcatalog.FeatureAnalytics,
 			DisplayName: "Report",
 			Description: "Report generation and management",
 			Category:    "Reports",
@@ -50,6 +52,7 @@ func Resources() []*permissionspec.ResourceDefinition {
 
 		{
 			Resource:    permission.ResourceDashboard.String(),
+			Feature:     platformcatalog.FeatureAnalytics,
 			DisplayName: "Dashboard",
 			Description: "Dashboard configuration",
 			Category:    "Reports",

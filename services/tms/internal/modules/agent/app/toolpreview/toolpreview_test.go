@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -48,6 +49,7 @@ func testRegistry(t *testing.T) *permissioncatalog.Registry {
 	registry := permissioncatalog.NewEmptyRegistry()
 	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:           testResource.String(),
+		Feature:            platformcatalog.FeatureCoreTMS,
 		DefaultSensitivity: permission.SensitivityInternal,
 		FieldSensitivities: map[string]permission.FieldSensitivity{
 			"bankAccount":  permission.SensitivityConfidential,

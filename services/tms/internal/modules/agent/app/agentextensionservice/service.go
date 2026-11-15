@@ -10,12 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -44,7 +43,7 @@ type Params struct {
 	Encryption   *encryptionservice.Service
 	AuditService auditports.AuditService
 	Connectors   []agentextensionports.ExtensionConnector `group:"agent_extension_connectors"`
-	Plans        platformplanports.PlanService
+	Features     platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -55,7 +54,7 @@ type Service struct {
 	audit      auditports.AuditService
 	connectors map[agentextension.Type]agentextensionports.ExtensionConnector
 	webSearch  map[agentextension.Type]agentextensionports.WebSearchProvider
-	plans      platformplanports.PlanService
+	features   platformcatalogports.FeatureGate
 	now        func() int64
 }
 
@@ -87,7 +86,7 @@ func New(p Params) *Service {
 		audit:      p.AuditService,
 		connectors: connectors,
 		webSearch:  webSearch,
-		plans:      p.Plans,
+		features:   p.Features,
 		now:        timeutils.NowUnix,
 	}
 }
@@ -307,7 +306,7 @@ func (s *Service) UpdateConfig(
 
 	tenantInfo := req.TenantInfo
 	if req.Enabled {
-		if err = s.requirePlan(ctx, tenantInfo, spec.Capability); err != nil {
+		if err = s.requirePlan(ctx, spec.Capability); err != nil {
 			return nil, err
 		}
 	}
@@ -580,7 +579,7 @@ func (s *Service) ActiveCapabilities(
 
 	active := agentextension.ActiveFrom(records)
 	for capability := range active {
-		allowed, planErr := s.allows(ctx, tenantInfo, capability)
+		allowed, planErr := s.allows(ctx, capability)
 		if planErr != nil {
 			return nil, planErr
 		}
@@ -605,7 +604,7 @@ func (s *Service) Serving(
 	capability agentextension.Capability,
 ) (*ExtensionSettings, error) {
 	label := capabilityDefinitions[capability].Label
-	allowed, err := s.allows(ctx, tenantInfo, capability)
+	allowed, err := s.allows(ctx, capability)
 	if err != nil {
 		return nil, err
 	}
@@ -708,21 +707,18 @@ func (s *Service) settingsOf(
 
 func (s *Service) allows(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
 	capability agentextension.Capability,
 ) (bool, error) {
-	return planservice.Allows(ctx, s.plans, tenantInfo, capabilityDefinitions[capability].Plan)
+	return s.features.Enabled(ctx, capabilityDefinitions[capability].Plan)
 }
 
 func (s *Service) requirePlan(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
 	capability agentextension.Capability,
 ) error {
-	return planservice.RequireCapability(
+	return platformcatalogports.RequireFeature(
 		ctx,
-		s.plans,
-		tenantInfo,
+		s.features,
 		capabilityDefinitions[capability].Plan,
 	)
 }

@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -158,32 +159,39 @@ func (a AgentAccess) Ceiling(
 	return a.Ceilings.For(ctx, kind), true
 }
 
-// RoleAccess is what a role would be shown, from its grants alone: what a
-// person holding only that role (and the roles it inherits) reads, with the
-// same ceiling on what they see of a linked record through its view. It is
-// how an administrator previews a screen as a role, and it never reads a
-// record.
+// RoleAccess is what a role would be shown, from its grants and the
+// organization's plan: what a person holding only that role (and the roles
+// it inherits) reads, with the same ceiling on what they see of a linked
+// record through its view. A resource the plan leaves out is granted to
+// nobody, as the engine refuses it. It is how an administrator previews a
+// screen as a role, and it never reads a record.
 type RoleAccess struct {
 	registry *permissioncatalog.Registry
+	plan     onplan.Plan
 	grants   permissioncatalog.RoleGrants
 }
 
 func NewRoleAccess(
 	registry *permissioncatalog.Registry,
+	plan onplan.Plan,
 	grants permissioncatalog.RoleGrants,
 ) RoleAccess {
 	if registry == nil {
 		registry = fieldsensitivity.DefaultRegistry()
 	}
-	return RoleAccess{registry: registry, grants: grants}
+	return RoleAccess{registry: registry, plan: plan, grants: grants}
 }
 
-func (a RoleAccess) Reads(_ context.Context, kind permission.Resource) bool {
-	return a.grants.Allows(a.registry, kind.String(), permission.OpRead)
+func (a RoleAccess) Reads(ctx context.Context, kind permission.Resource) bool {
+	return a.Allows(ctx, kind.String(), permission.OpRead)
 }
 
 // Allows reports whether the role may perform an operation on a resource.
-func (a RoleAccess) Allows(resource string, op permission.Operation) bool {
+// A plan that cannot be read allows nothing.
+func (a RoleAccess) Allows(ctx context.Context, resource string, op permission.Operation) bool {
+	if _, off, err := a.plan.Resource(ctx, resource); err != nil || off {
+		return false
+	}
 	return a.grants.Allows(a.registry, resource, op)
 }
 

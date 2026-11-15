@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentstorage/documentstoragedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -44,11 +44,11 @@ func (s *storage) Level(ctx context.Context) (int64, error) {
 		"add up the bytes of every stored document on this managed instance",
 	)
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) (int64, error) {
-		d := documentdb.Documents
+		t := documentstoragedb.Totals
 		bytes, err := keel.Into[int64](
 			ctx,
 			s.db.Keel(ctx),
-			d.AllTenants().Pick(keel.CastInt64(keel.Int64Of(d.FileSize.Sum()).Coalesce(0))),
+			t.AllTenants().Pick(keel.CastInt64(keel.NumericOf(t.Bytes.Sum()).Coalesce(0))),
 		)
 		if err != nil {
 			return 0, fmt.Errorf("add up stored document bytes: %w", err)

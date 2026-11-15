@@ -9,6 +9,7 @@ import {
   type DeskWorkerStandingQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { typedCredentialSlots } from "./worker-credential";
 
 export type DeskWorker = NonNullable<DeskWorkerCardQuery["worker"]>;
 export type DeskWorkerHos = {
@@ -16,8 +17,12 @@ export type DeskWorkerHos = {
   violations: DeskWorkerHosQuery["workerHosViolations"];
 };
 export type DeskWorkerStanding = NonNullable<DeskWorkerStandingQuery["workerOverview"]>;
-export type DeskWorkerCredential =
+type RawDeskWorkerCredential =
   DeskWorkerCredentialsQuery["workerCredentialSummary"]["items"][number];
+/** A credential slot with its type; see `WorkerCredentialSummaryItem`. */
+export type DeskWorkerCredential = RawDeskWorkerCredential & {
+  credentialType: NonNullable<RawDeskWorkerCredential["credentialType"]>;
+};
 
 /**
  * One worker as the Desk's card reads it. A worker the server does not return
@@ -79,5 +84,5 @@ export async function fetchWorkerCredentials(
     variables: { workerId },
     signal: options?.signal,
   });
-  return data.workerCredentialSummary.items;
+  return typedCredentialSlots(data.workerCredentialSummary.items);
 }

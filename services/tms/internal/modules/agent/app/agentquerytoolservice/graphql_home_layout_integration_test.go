@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,6 +43,7 @@ func TestConvertedGets_HomeLayoutReadsThePersonsOwnPage(t *testing.T) {
 		RBACRepo:         rbacrepository.New(rbacrepository.Params{DB: conn, Logger: logger}),
 		RoleRepo:         rolerepository.New(rolerepository.Params{DB: conn, Logger: logger}),
 		PermissionEngine: engine,
+		Features:         plantest.AllFeatures(),
 	})
 	resolvers.HomeLayoutService = layouts
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})

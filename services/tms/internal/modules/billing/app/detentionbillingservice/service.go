@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -35,6 +37,7 @@ type Params struct {
 	InvoiceRepo    invoiceports.InvoiceRepository
 	AuditService   auditports.AuditService
 	Watchtower     watchtowerports.WatchtowerProjector
+	Features       platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -44,6 +47,7 @@ type Service struct {
 	invoiceRepo    invoiceports.InvoiceRepository
 	auditService   auditports.AuditService
 	watchtower     watchtowerports.WatchtowerProjector
+	features       platformcatalogports.FeatureGate
 	now            func() int64
 }
 
@@ -58,6 +62,7 @@ func New(p Params) detentionports.DetentionBillingService {
 		invoiceRepo:    p.InvoiceRepo,
 		auditService:   p.AuditService,
 		watchtower:     p.Watchtower,
+		features:       p.Features,
 		now:            timeutils.NowUnix,
 	}
 }
@@ -73,6 +78,9 @@ func (s *Service) HoldsForShipments(
 	shipmentIDs := distinctIDs(req.ShipmentIDs)
 	if len(shipmentIDs) == 0 {
 		return []*detention.DetentionOccurrence{}, nil
+	}
+	if on, err := s.detentionOn(ctx); err != nil || !on {
+		return []*detention.DetentionOccurrence{}, err
 	}
 
 	return s.occurrenceRepo.ListBillingHoldsByShipments(
@@ -107,6 +115,9 @@ func (s *Service) SyncInvoiceBilling(
 	invoiceIDs := distinctIDs(req.InvoiceIDs)
 	if len(invoiceIDs) == 0 {
 		return nil
+	}
+	if on, err := s.detentionOn(ctx); err != nil || !on {
+		return err
 	}
 
 	charges, err := s.invoiceRepo.ListLineCharges(ctx, &invoiceports.ListInvoiceLineChargesRequest{
@@ -344,4 +355,12 @@ func (s *Service) audit(
 
 func distinctIDs(ids []pulid.ID) []pulid.ID {
 	return slices.DeleteFunc(sliceutils.Dedupe(ids), pulid.ID.IsNil)
+}
+
+func (s *Service) detentionOn(ctx context.Context) (bool, error) {
+	on, err := s.features.Enabled(ctx, platformcatalog.FeatureDetention)
+	if err != nil {
+		return false, fmt.Errorf("ask whether detention is on the plan: %w", err)
+	}
+	return on, nil
 }

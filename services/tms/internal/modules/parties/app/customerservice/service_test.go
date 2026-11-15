@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
@@ -61,6 +62,7 @@ func setupTest(t *testing.T) *testDeps {
 		transformer:  transformer,
 		db:           dbtest.NopConnection{},
 		credit:       noCreditReview{},
+		planFields:   plantest.Keeper(nil),
 	}
 	return &testDeps{
 		repo:        repo,
@@ -117,6 +119,7 @@ func TestNew(t *testing.T) {
 		AuditService: auditSvc,
 		Realtime:     &mocks.NoopRealtimeService{},
 		Transformer:  transformer,
+		PlanFields:   plantest.Keeper(nil),
 	})
 
 	require.NotNil(t, svc)
@@ -343,6 +346,8 @@ func TestUpdate_TransformError(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	transformErr := errors.New("transform failed")
 
+	stored := *entity
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(&stored, nil)
 	deps.transformer.On("TransformCustomer", mock.Anything, mock.Anything).
 		Return(transformErr)
 
@@ -355,7 +360,7 @@ func TestUpdate_TransformError(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.Equal(t, transformErr, err)
-	deps.repo.AssertNotCalled(t, "GetByID")
+	deps.repo.AssertNotCalled(t, "Update")
 }
 
 func TestUpdate_ValidationError(t *testing.T) {
@@ -378,6 +383,8 @@ func TestUpdate_ValidationError(t *testing.T) {
 		Version:        1,
 	}
 
+	stored := *entity
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(&stored, nil)
 	deps.transformer.On("TransformCustomer", mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Update(
@@ -388,7 +395,6 @@ func TestUpdate_ValidationError(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Nil(t, result)
-	deps.repo.AssertNotCalled(t, "GetByID")
 	deps.repo.AssertNotCalled(t, "Update")
 }
 
@@ -400,7 +406,6 @@ func TestUpdate_RepoGetError(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	getErr := errors.New("not found")
 
-	deps.transformer.On("TransformCustomer", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, getErr)
 
 	result, err := deps.svc.Update(

@@ -3,6 +3,7 @@ package emailports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 )
 
@@ -14,5 +15,6 @@ type EmailMessageChange struct {
 }
 
 type EmailMessageObserver interface {
+	platformcatalogports.FeatureObserver
 	EmailMessageChanged(ctx context.Context, change EmailMessageChange)
 }

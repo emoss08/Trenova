@@ -1,4 +1,5 @@
 import type { DispatchBoardMove } from "@/lib/graphql/dispatch-console";
+import { PlanFeature } from "@/lib/plan-feature";
 import { VirtualRows, type VirtualRow, type VirtualRowsHandle } from "@/components/virtual-rows";
 import {
   AlertTriangleIcon,
@@ -13,7 +14,9 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptyTable, type EmptyTableColumn } from "@trenova/shared/components/ui/empty-table";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useNow } from "@trenova/shared/hooks/use-now";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { cn, formatCompactCurrency } from "@trenova/shared/lib/utils";
@@ -70,10 +73,12 @@ function moveFacts(move: DispatchBoardMove): string {
  * The one thing that happens next for a move, in the order a dispatcher would act on it:
  * a hold stops everything, a tender in flight is someone else's answer to wait on, a
  * covered move names who holds it, Nova's proposal waits on a decision, an approval that
- * could not be carried out says why, and anything else waits on a ranking.
+ * could not be carried out says why, and anything else waits on a ranking. Proposals are
+ * Trenova AI's, so a plan without it reads a move with no driver as just that.
  */
 function NextStep({ move }: { move: DispatchBoardMove }) {
   const t = useT();
+  const proposalsOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
 
   if (move.hasActiveHold) {
     return (
@@ -89,7 +94,28 @@ function NextStep({ move }: { move: DispatchBoardMove }) {
   }
 
   if (move.liveTender) {
-    const meta = tenderChipMeta(move.liveTender);
+    const tender = move.liveTender;
+    // A reader who cannot read tenders is answered the tender's id alone.
+    if (tender.status === null || tender.mode === null) {
+      return (
+        <div className="flex min-w-0 items-center gap-1.5">
+          <Badge variant="info" className="h-4 shrink-0 rounded-md px-1 text-3xs">
+            <Send01Icon className="mr-0.5 size-2.5" aria-hidden />
+            {t("Tender")}
+          </Badge>
+          <WithheldValue kind="tender" />
+        </div>
+      );
+    }
+    const offerCount = tender.offerCount ?? 0;
+    const meta = tenderChipMeta({
+      status: tender.status,
+      mode: tender.mode,
+      currentRank: tender.currentRank ?? 0,
+      offerCount,
+      currentCarrierName: tender.currentCarrierName ?? "",
+      currentOfferExpiresAt: tender.currentOfferExpiresAt,
+    });
     return (
       <>
         <div className="flex min-w-0 items-center gap-1.5">
@@ -105,10 +131,7 @@ function NextStep({ move }: { move: DispatchBoardMove }) {
           <span className="truncate">{meta.label}</span>
         </div>
         <div className="truncate text-2xs text-muted-foreground">
-          {t(
-            "{0, plural, one {# carrier offered} other {# carriers offered}}",
-            move.liveTender.offerCount,
-          )}
+          {t("{0, plural, one {# carrier offered} other {# carriers offered}}", offerCount)}
         </div>
       </>
     );
@@ -138,6 +161,19 @@ function NextStep({ move }: { move: DispatchBoardMove }) {
           </span>
         </div>
         <div className="truncate text-2xs text-muted-foreground">{t("Covered")}</div>
+      </>
+    );
+  }
+
+  if (!proposalsOnPlan) {
+    return (
+      <>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-muted-foreground">{t("No driver yet")}</span>
+        </div>
+        <div className="truncate text-2xs text-muted-foreground">
+          {t("Open it to rank drivers")}
+        </div>
       </>
     );
   }

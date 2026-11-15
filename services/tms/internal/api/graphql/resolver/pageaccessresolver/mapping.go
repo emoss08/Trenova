@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pageaccess"
 )
 
@@ -69,6 +70,7 @@ func pageAccessToModel(access *pageaccessservice.Access) *gqlmodel.PageAccess {
 			CanRead:      kind.CanRead,
 			Fields:       make([]*gqlmodel.PageAccessField, 0, len(kind.Fields)),
 			Withheld:     kind.Withheld,
+			PlanDenial:   planDenialToModel(kind.PlanDenial),
 		}
 		for _, field := range kind.Fields {
 			model.Fields = append(model.Fields, &gqlmodel.PageAccessField{
@@ -122,8 +124,22 @@ func decisionToModel(decision pageaccessservice.Decision) gqlmodel.PageAccessDec
 		return gqlmodel.PageAccessDecisionWithheldSensitivity
 	case pageaccessservice.DecisionWithheldKind:
 		return gqlmodel.PageAccessDecisionWithheldKind
+	case pageaccessservice.DecisionWithheldPlan:
+		return gqlmodel.PageAccessDecisionWithheldPlan
 	default:
 		return gqlmodel.PageAccessDecisionWithheldKind
+	}
+}
+
+func planDenialToModel(denial *permissionports.PlanDenial) *gqlmodel.PageAccessPlanDenial {
+	if denial == nil {
+		return nil
+	}
+	return &gqlmodel.PageAccessPlanDenial{
+		Feature:     string(denial.Feature),
+		FeatureName: denial.FeatureName,
+		AddOn:       string(denial.AddOn),
+		AddOnName:   denial.AddOnName,
 	}
 }
 

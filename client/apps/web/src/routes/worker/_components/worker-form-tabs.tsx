@@ -19,6 +19,7 @@ import {
   workerTypeChoices,
 } from "@/lib/choices";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Worker } from "@trenova/shared/types/worker";
@@ -438,6 +439,7 @@ export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps
 
 export function ComplianceTab({ personalWithheld = false }: PersonalDetailsProps) {
   const t = useT();
+  const compliance = usePlanFeature("workforce.compliance").available;
 
   const { control } = useFormContext<Worker>();
 
@@ -448,17 +450,19 @@ export function ComplianceTab({ personalWithheld = false }: PersonalDetailsProps
         description={t("Compliance status information for the worker.")}
       >
         <FormGroup cols={2}>
-          <FormControl>
-            <SelectField
-              control={control}
-              options={complianceStatusChoices}
-              required
-              name="profile.complianceStatus"
-              label={t("Compliance status")}
-              placeholder={t("Pick a status")}
-              description={t("Current compliance status of the worker.")}
-            />
-          </FormControl>
+          {compliance ? (
+            <FormControl>
+              <SelectField
+                control={control}
+                options={complianceStatusChoices}
+                required
+                name="profile.complianceStatus"
+                label={t("Compliance status")}
+                placeholder={t("Pick a status")}
+                description={t("Current compliance status of the worker.")}
+              />
+            </FormControl>
+          ) : null}
           <FormControl>
             <AutoCompleteDateField
               control={control}

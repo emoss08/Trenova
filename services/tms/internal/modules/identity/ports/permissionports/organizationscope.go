@@ -16,11 +16,11 @@ func RequireOrganizationScope(
 		return err
 	}
 	if result == nil || !result.Allowed {
-		return errortypes.NewAuthorizationError(
+		return DeniedError(result, errortypes.NewAuthorizationError(
 			"You don't have permission to perform this action: {0} {1}",
 			check.Resource,
 			check.Operation,
-		)
+		))
 	}
 	if result.DataScope.IsNarrow() {
 		return errortypes.NewAuthorizationError(

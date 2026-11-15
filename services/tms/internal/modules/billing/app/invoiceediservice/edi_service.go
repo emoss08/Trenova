@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -20,6 +21,7 @@ type Params struct {
 	EDIPartnerRepo              edipartnerports.EDIPartnerRepository
 	Repo                        invoiceports.InvoiceRepository
 	WorkflowStarter             kernelports.WorkflowStarter
+	Features                    platformcatalogports.FeatureGate
 }
 
 // Service resolves and sends an invoice's outbound 210s.
@@ -31,6 +33,7 @@ type Service struct {
 	l                           *zap.Logger
 	repo                        invoiceports.InvoiceRepository
 	workflowStarter             kernelports.WorkflowStarter
+	features                    platformcatalogports.FeatureGate
 }
 
 var _ invoiceports.InvoiceEDIService = (*Service)(nil)
@@ -46,5 +49,6 @@ func New(p Params) *Service {
 		l:                           l,
 		repo:                        p.Repo,
 		workflowStarter:             p.WorkflowStarter,
+		features:                    p.Features,
 	}
 }

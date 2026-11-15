@@ -1,6 +1,8 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
@@ -104,8 +106,12 @@ export default function InvoiceDetailPane({
 }) {
   const t = useT();
   const { allowed: canPost } = usePermission(Resource.Invoice, Operation.Post);
+  // Payments, credits and the open balance are Accounting & Cash's. Without it the invoice has
+  // no Payments tab, and a link to that tab opens on the overview.
+  const accountingOnPlan = usePlanFeature(PlanFeature.Accounting).available;
 
-  const [{ tab }, setTabState] = useQueryStates(invoiceDetailTabSearchParamsParser);
+  const [{ tab: requestedTab }, setTabState] = useQueryStates(invoiceDetailTabSearchParamsParser);
+  const tab = requestedTab === "payments" && !accountingOnPlan ? "overview" : requestedTab;
   const { data: invoice, isLoading } = useQuery({
     ...invoiceQueries.get(selectedInvoiceId ?? ""),
     enabled: !!selectedInvoiceId,
@@ -253,7 +259,7 @@ export default function InvoiceDetailPane({
           <TabsTrigger value="overview">{t("Overview")}</TabsTrigger>
           <TabsTrigger value="delivery">{t("Delivery")}</TabsTrigger>
           <TabsTrigger value="charges">{t("Charges")}</TabsTrigger>
-          <TabsTrigger value="payments">{t("Payments")}</TabsTrigger>
+          {accountingOnPlan ? <TabsTrigger value="payments">{t("Payments")}</TabsTrigger> : null}
           <TabsTrigger value="disputes">{t("Disputes")}</TabsTrigger>
           <TabsTrigger value="documents">{t("Documents")}</TabsTrigger>
           <TabsTrigger value="activity">{t("Activity")}</TabsTrigger>
@@ -280,13 +286,15 @@ export default function InvoiceDetailPane({
         <TabsContent value="charges" className="mt-0 min-h-0 flex-1">
           <InvoiceChargesTab invoice={invoice} />
         </TabsContent>
-        <TabsContent value="payments" className="mt-0 min-h-0 flex-1">
-          <InvoicePaymentsTab
-            invoice={invoice}
-            arContext={arContext}
-            isLoading={arContextQuery.isLoading}
-          />
-        </TabsContent>
+        {accountingOnPlan ? (
+          <TabsContent value="payments" className="mt-0 min-h-0 flex-1">
+            <InvoicePaymentsTab
+              invoice={invoice}
+              arContext={arContext}
+              isLoading={arContextQuery.isLoading}
+            />
+          </TabsContent>
+        ) : null}
         <TabsContent value="disputes" className="mt-0 min-h-0 flex-1">
           <InvoiceDisputesTab
             invoice={invoice}

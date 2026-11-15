@@ -237,7 +237,7 @@ func ShipmentAdditionalChargeToModel(
 		Unit:                   int(entity.Unit),
 		FuelSurchargeProgramID: gqlid.IDPtrFromPulidPtr(entity.FuelSurchargeProgramID),
 		FuelSurchargeDetail:    fuelSurchargeDetailToMap(entity.FuelSurchargeDetail),
-		IsDetention:            entity.IsDetention,
+		IsDetention:            new(entity.IsDetention),
 		IsTariff:               entity.IsTariff,
 		Label:                  entity.Label,
 		Quantity:               gqldecimal.NullDecimalStringPtr(entity.Quantity),
@@ -320,12 +320,12 @@ func ratingDetailToModel(
 		)
 	}
 	return &gqlmodel.ShipmentRatingDetail{
-		FormulaTemplateID:   detail.FormulaTemplateID,
-		FormulaTemplateName: detail.FormulaTemplateName,
+		FormulaTemplateID:   new(detail.FormulaTemplateID),
+		FormulaTemplateName: new(detail.FormulaTemplateName),
 		RatedAt:             int(detail.RatedAt),
-		VersionNumber:       int(detail.VersionNumber),
+		VersionNumber:       new(int(detail.VersionNumber)),
 		Bill:                tariffmapping.TariffBillToModel(detail.Bill),
-		Refusal:             detail.Refusal,
+		Refusal:             new(detail.Refusal),
 		Choices:             tariffmapping.TariffChoicesToModel(detail.Choices),
 		Inputs:              inputs,
 		Skipped:             skipped,
@@ -337,7 +337,7 @@ func ratingDetailToModel(
 		RuleLabel:           detail.RuleLabel,
 		Source:              detail.Source,
 		Explanation:         detail.Explanation,
-		AwaitingReview:      shipmentrating.DetailAwaitsReview(detail),
+		AwaitingReview:      new(shipmentrating.DetailAwaitsReview(detail)),
 		ReviewApproval:      ratingReviewApprovalToModel(detail.ReviewApproval),
 	}, nil
 }

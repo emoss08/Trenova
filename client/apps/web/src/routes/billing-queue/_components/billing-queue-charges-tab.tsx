@@ -77,6 +77,7 @@ import { BillingQueueReassignChargeDialog } from "./billing-queue-reassign-charg
 import { BillingQueueRerateDialog } from "./billing-queue-rerate-dialog";
 import { useAfterReassignment } from "./use-after-reassignment";
 import { BillingQueueRatedBy, ratedByName } from "./billing-queue-rated-by";
+import { useBillingQueueReviewOnPlan } from "@/lib/billing-queue-nova-plan";
 import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
 
 const GRID = "grid grid-cols-[minmax(0,1fr)_4.5rem_7rem_11rem_8rem_1.875rem] items-center gap-2";
@@ -157,6 +158,8 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
   const invalidate = useInvalidateBillingQueue();
   const queryClient = useQueryClient();
   const { allowed: canUpdate } = usePermission(Resource.BillingQueue, Operation.Update);
+  // A charge Nova found is offered only on a plan that includes its review.
+  const novaReviews = useBillingQueueReviewOnPlan();
   const canReassign = canUpdate && isChargeReassignable(item.status);
 
   const [adding, setAdding] = useState(false);
@@ -438,7 +441,8 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
     addBaseline !== null && row.chargeId != null && !addBaseline.includes(row.chargeId);
   const showAddEditor = adding && !rows.some(isArriving);
   const unbilled = (item.review?.issues ?? []).filter(
-    (issue) => isSuggestion(issue) && !issue.resolvedAt,
+    (issue) =>
+      isSuggestion(issue) && !issue.resolvedAt && (novaReviews || issue.source !== "Agent"),
   );
   const accessorialTotal = share
     ? Number(share.accessorialAmount ?? 0)

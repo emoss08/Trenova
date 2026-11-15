@@ -37,7 +37,7 @@ func TestCheckNewPasswordAppliesThePasswordPolicy(t *testing.T) {
 			var multiErr *errortypes.MultiError
 			require.ErrorAs(t, err, &multiErr)
 			require.Len(t, multiErr.Errors, 1)
-			assert.Equal(t, "newPassword", multiErr.Errors[0].Field)
+			assert.Equal(t, "newPassword", multiErr.Errors[0].Field())
 			assert.Equal(t, tc.message, multiErr.Errors[0].Message)
 		})
 	}
@@ -52,7 +52,7 @@ func TestGeneratePasswordRefusesMoreThanBcryptReads(t *testing.T) {
 	_, err := user.GeneratePassword(strings.Repeat("ab1-", 19))
 	var validationErr *errortypes.Error
 	require.ErrorAs(t, err, &validationErr)
-	assert.Equal(t, "password", validationErr.Field)
+	assert.Equal(t, "password", validationErr.Field())
 
 	hashed, err := user.GeneratePassword(strings.Repeat("ab1-", 18))
 	require.NoError(t, err)

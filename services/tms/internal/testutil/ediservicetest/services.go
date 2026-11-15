@@ -29,10 +29,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -50,6 +50,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"go.uber.org/zap"
 )
 
@@ -100,7 +101,7 @@ type Deps struct {
 	Transport           editransportports.EDITransportDispatcher
 	OrderDerivation     orderports.OrderDerivationService
 	Metrics             *metrics.Registry
-	Plans               platformplanports.PlanService
+	Features            platformcatalogports.FeatureGate
 	Realtime            realtimeports.RealtimeService
 	CustomFields        customfieldports.NamedValues
 }
@@ -131,6 +132,9 @@ func New(d Deps) *Services {
 	}
 	if d.Metrics == nil {
 		d.Metrics = metricstest.Disabled()
+	}
+	if d.Features == nil {
+		d.Features = plantest.AllFeatures()
 	}
 	if d.Notifications == nil {
 		d.Notifications = notificationtest.Discarding()
@@ -186,7 +190,7 @@ func New(d Deps) *Services {
 		Logger:             d.Logger,
 		MappingProfileRepo: d.MappingProfileRepo,
 		PartnerRepo:        d.PartnerRepo,
-		Plans:              d.Plans,
+		Features:           d.Features,
 		ProfileRepo:        d.ProfileRepo,
 		Secret:             s.Secrets,
 		TransactionSetRepo: d.TransactionSetRepo,

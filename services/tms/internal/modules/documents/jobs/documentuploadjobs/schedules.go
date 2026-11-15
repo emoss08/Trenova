@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -18,6 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "document-upload-reconciliation",
+			Feature:       platformcatalog.FeatureDocumentManagement,
 			Description:   "Reconcile stale document uploads and pending previews",
 			Spec:          schedule.Every(time.Hour),
 			Workflow:      ReconcileDocumentUploadsWorkflow,

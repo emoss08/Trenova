@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -16,36 +18,35 @@ type AdmissionRequest struct {
 	ExpiredOK  bool
 }
 
-func Admit(ctx context.Context, plans platformplanports.PlanService, req *AdmissionRequest) error {
-	if plans == nil || !plans.EnforcesPlans() {
-		return nil
-	}
-	if req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
-		return nil
+func Admit(
+	ctx context.Context,
+	plans platformplanports.PlanService,
+	gate platformcatalogports.FeatureGate,
+	req *AdmissionRequest,
+) error {
+	var resolved *platformplan.ResolvedPlan
+	if plans.EnforcesPlans() && !req.TenantInfo.OrgID.IsNil() && !req.TenantInfo.BuID.IsNil() {
+		var err error
+		resolved, err = plans.Resolve(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
+		if err != nil {
+			return err
+		}
 	}
 
-	resolved, err := plans.Resolve(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
-	if err != nil {
-		return err
-	}
-	if !resolved.IsManaged() {
-		return nil
-	}
-
-	planKey := resolved.Key().String()
 	if !resolved.AllowsLogin() && !req.ExpiredOK {
 		return errortypes.NewPlanRestrictionError(
-			"",
 			platformplan.ReasonSubscriptionExpired,
-			planKey,
+			resolved.Key().String(),
 		)
 	}
-	if req.APIKey && !resolved.Allows(platformplan.CapabilityAPIKeys) {
-		return errortypes.NewPlanRestrictionError(
-			platformplan.CapabilityAPIKeys.String(),
-			platformplan.ReasonPlanRestricted,
-			planKey,
-		)
+	if req.APIKey {
+		if err := platformcatalogports.RequireFeature(
+			ctx,
+			gate,
+			platformcatalog.FeatureAPIKeys,
+		); err != nil {
+			return err
+		}
 	}
 	if req.Write && !resolved.AllowsWrites() {
 		reason := platformplan.ReasonSubscriptionReadOnly
@@ -53,7 +54,7 @@ func Admit(ctx context.Context, plans platformplanports.PlanService, req *Admiss
 			reason = platformplan.ReasonSubscriptionExpired
 		}
 
-		return errortypes.NewPlanRestrictionError("", reason, planKey)
+		return errortypes.NewPlanRestrictionError(reason, resolved.Key().String())
 	}
 
 	return nil

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -56,6 +57,7 @@ func newSendHarness(t *testing.T) *sendHarness {
 			repo:            repo,
 			validator:       NewValidator(),
 			workflowStarter: workflows,
+			features:        plantest.AllFeatures(),
 		},
 		repo:      repo,
 		workflows: workflows,
@@ -67,6 +69,7 @@ func newSendHarness(t *testing.T) *sendHarness {
 func (h *sendHarness) request(to ...string) *emailports.SendEmailRequest {
 	return &emailports.SendEmailRequest{
 		TenantInfo:     h.tenant,
+		Type:           email.TypeTenderOffer,
 		Purpose:        email.PurposeGeneral,
 		To:             to,
 		Subject:        "Load offer",
@@ -83,6 +86,9 @@ func (h *sendHarness) stored(status email.MessageStatus, to ...string) *email.Me
 		OrganizationID: h.tenant.OrgID,
 		ProfileID:      h.profile.ID,
 		Purpose:        email.PurposeGeneral,
+		Type:           email.TypeTenderOffer,
+		Kind:           email.KindCustomerFacing,
+		Sender:         email.SenderOrganization,
 		Provider:       h.profile.Provider,
 		IdempotencyKey: "tender-offer-tof_1",
 		Status:         status,

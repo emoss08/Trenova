@@ -26,6 +26,7 @@ type Params struct {
 	Waits                agentextensionports.WebWatchWaits
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	Features             *middleware.FeatureGuard
 }
 
 type Handler struct {
@@ -35,6 +36,7 @@ type Handler struct {
 	waits      agentextensionports.WebWatchWaits
 	eh         *helpers.ErrorHandler
 	pm         *middleware.PermissionMiddleware
+	features   *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
@@ -45,6 +47,7 @@ func New(p Params) *Handler {
 		waits:      p.Waits,
 		eh:         p.ErrorHandler,
 		pm:         p.PermissionMiddleware,
+		features:   p.Features,
 	}
 }
 

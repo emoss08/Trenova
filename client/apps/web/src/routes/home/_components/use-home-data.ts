@@ -56,10 +56,31 @@ export type UseHomeDataOptions = {
   brief?: boolean;
 };
 
+/**
+ * The measures of a widget the plan does not leave out. A locked widget, and a locked
+ * measure of a strip, are drawn as the add-on that carries them and read nothing.
+ */
+export function liveMetricsOf(widget: HomeWidget): string[] {
+  if (widget.planLock) return [];
+  const locked = new Set(widget.lockedMetrics.map((entry) => entry.metric));
+  const configured = [widget.config.metric, ...(widget.config.metrics ?? [])];
+  return configured.filter((metric): metric is string => !!metric && !locked.has(metric));
+}
+
+/**
+ * Whether the plan leaves out everything a widget would show: the widget itself, or every
+ * measure it is set to show. Such a widget is not drawn on Home, only in the editor, where the
+ * person can see what it was and remove it.
+ */
+export function isWidgetOffPlan(widget: HomeWidget): boolean {
+  if (widget.planLock) return true;
+  return widget.lockedMetrics.length > 0 && liveMetricsOf(widget).length === 0;
+}
+
 function widgetReadsReceivables(widget: HomeWidget): boolean {
+  if (widget.planLock) return false;
   if (RECEIVABLES_WIDGETS.has(widget.key)) return true;
-  if (widget.config.metric && RECEIVABLES_METRICS.has(widget.config.metric)) return true;
-  return (widget.config.metrics ?? []).some((metric) => RECEIVABLES_METRICS.has(metric));
+  return liveMetricsOf(widget).some((metric) => RECEIVABLES_METRICS.has(metric));
 }
 
 /**
@@ -91,7 +112,7 @@ export function useHomeData(widgets: HomeWidget[], options: UseHomeDataOptions =
   const needsShipmentAnalytics =
     canReadShipments &&
     (options.brief === true ||
-      widgets.some((widget) => SHIPMENT_ANALYTICS_WIDGETS.has(widget.key)));
+      widgets.some((widget) => !widget.planLock && SHIPMENT_ANALYTICS_WIDGETS.has(widget.key)));
   const needsReceivables = widgets.some(widgetReadsReceivables);
 
   const shipmentQuery = useQuery({

@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -357,6 +358,7 @@ func newFixture() *fixture {
 	}
 	f.service = &Service{
 		l:           zap.NewNop(),
+		features:    plantest.AllFeatures(),
 		schedules:   f.schedules,
 		threads:     &fakeThreads{thread: thread},
 		definitions: &fakeDefinitions{definition: definition},

@@ -56,6 +56,7 @@ import {
 import { previewInputsResolution, type PreviewInputsForm } from "./preview-inputs";
 import { useLivePreview, type LivePreviewState } from "./use-live-preview";
 import { useStudioRail } from "@/components/tariff-studio/use-studio-rail";
+import { useStudioNova } from "@/components/tariff-studio/use-studio-nova";
 
 export type StudioMode = "create" | "edit";
 export type StudioTab = "preview" | "tests" | "reference" | "nova";
@@ -273,21 +274,25 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   const stacked = useMediaQuery("(max-width: 899px)");
   const [railOpen, setRailOpen] = useStudioRail(stacked);
   const [tab, setTabState] = useState<StudioTab>("preview");
+  // Nova is Trenova AI's: without it on the plan its tab never opens and nothing asks it.
+  const nova = useStudioNova();
   const setTab = useCallback(
     (next: StudioTab) => {
+      if (next === "nova" && !nova) return;
       setTabState(next);
       setRailOpen(true);
     },
-    [setRailOpen],
+    [nova, setRailOpen],
   );
   const [novaRequest, setNovaRequest] = useState<PageRequest | null>(null);
   const askNova = useCallback(
     (question?: string) => {
+      if (!nova) return;
       setTab("nova");
       const trimmed = question?.trim();
       if (trimmed) setNovaRequest({ key: nanoid(), text: trimmed });
     },
-    [setTab],
+    [nova, setTab],
   );
   const clearNovaRequest = useCallback((key: string) => {
     setNovaRequest((current) => (current?.key === key ? null : current));

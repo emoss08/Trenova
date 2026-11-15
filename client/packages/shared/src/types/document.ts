@@ -1,6 +1,7 @@
 import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { documentTypeSchema } from "./document-type";
+import { planWithheldSchema } from "./helpers";
 
 export const documentStatusSchema = z.enum([
   "Draft",
@@ -120,11 +121,11 @@ export const documentSchema = z.object({
   rejectionReason: z.string().nullable().optional(),
   previewStoragePath: z.string().nullable().optional(),
   previewStatus: documentPreviewStatusSchema,
-  contentStatus: documentContentStatusSchema,
+  contentStatus: documentContentStatusSchema.nullish(),
   contentError: z.string().nullable().optional(),
   detectedKind: z.string().nullable().optional(),
-  hasExtractedText: z.boolean(),
-  shipmentDraftStatus: documentShipmentDraftStatusSchema,
+  hasExtractedText: planWithheldSchema(z.boolean(), false),
+  shipmentDraftStatus: planWithheldSchema(documentShipmentDraftStatusSchema, "Unavailable"),
   documentTypeId: z.string().nullable().optional(),
   documentType: linkedRecordSchema("document_type", documentTypeSchema).nullable().optional(),
   signatureStatus: documentSignatureStatusSchema.nullish().transform((value) => value ?? "Unknown"),

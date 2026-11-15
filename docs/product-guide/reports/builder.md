@@ -76,3 +76,7 @@ Needs create permission for reports. **Save** stays disabled until the report ha
 The entity picker lists only the kinds of record your role can read. The field catalog decides
 each field by the same rule as the preview and runs, so a field you can add always compiles, and a
 saved report someone with a wider role built may name fields that are locked for you.
+
+Kinds of record and fields that belong to an add-on your organization's plan does not include
+are not offered at all. A saved report that uses them lists each one with the add-on it is part
+of; they stay in the report, and the preview and runs are refused until the plan includes them.

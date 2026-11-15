@@ -1,6 +1,6 @@
 import { usePermission } from "@/hooks/use-permission";
-import { usePlanRestrictions } from "@/hooks/use-plan-restrictions";
-import { isPlanRestricted, PlanCapability } from "@/lib/plan-capability";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 
 /**
@@ -11,11 +11,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 export function useCanAddAIProvider(): boolean {
   const { allowed: canCreateProvider } = usePermission(Resource.AIProvider, Operation.Create);
   const { allowed: canOpenAgentControl } = usePermission(Resource.AgentControl, Operation.Read);
-  const restrictions = usePlanRestrictions();
+  const agents = usePlanFeature(PlanFeature.AgentAutomation);
 
-  return (
-    canCreateProvider &&
-    canOpenAgentControl &&
-    !isPlanRestricted(restrictions, PlanCapability.AgentAutomation)
-  );
+  return canCreateProvider && canOpenAgentControl && agents.available;
 }

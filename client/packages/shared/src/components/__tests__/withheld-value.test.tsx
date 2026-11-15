@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { LockedReference, WithheldValue } from "@trenova/shared/components/withheld-value";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import type { PermissionManifest } from "@trenova/shared/types/permission";
 
 afterEach(cleanup);
 
@@ -65,5 +67,53 @@ describe("LockedReference", () => {
     expect(row?.className).toContain("dk-rec-row");
     expect(row?.firstElementChild?.tagName).toBe("B");
     expect(row?.lastElementChild?.getAttribute("data-slot")).toBe("locked-reference-icon");
+  });
+});
+
+describe("WithheldValue for a value the plan withheld", () => {
+  afterEach(() => usePermissionStore.getState().clearPermissions());
+
+  function holdManifest() {
+    usePermissionStore.setState({
+      manifest: {
+        permissions: {},
+        routeAccess: {},
+        unavailableFeatures: [
+          {
+            feature: "tms.factoring",
+            featureName: "Factoring",
+            addOn: "ACC",
+            addOnName: "Accounting & Cash",
+          },
+        ],
+      } as unknown as PermissionManifest,
+    });
+  }
+
+  it("names the add-on in the same compact form as Hidden, from a feature key", () => {
+    holdManifest();
+    const { container } = render(<WithheldValue plan="tms.factoring" />);
+
+    const value = container.querySelector('[data-slot="locked-reference"]');
+    expect(value?.getAttribute("data-withheld")).toBe("plan");
+    expect(container.textContent).toBe("Part of Accounting & Cash");
+    expect(value?.getAttribute("aria-description")).toBe(
+      "Factoring is part of the Accounting & Cash add-on, which is not on your plan.",
+    );
+    expect(container.querySelector('[data-slot="locked-reference-icon"]')).not.toBeNull();
+  });
+
+  it("takes a response's withholding for its path", () => {
+    holdManifest();
+    render(<WithheldValue plan={{ path: "invoice.factoringCompany", feature: "tms.factoring" }} />);
+
+    expect(screen.getByText("Part of Accounting & Cash")).toBeInTheDocument();
+  });
+
+  it("says only that it is not on the plan when the manifest does not list the feature", () => {
+    const { container } = render(<WithheldValue plan="tms.factoring" />);
+
+    expect(container.textContent).toBe("Not on your plan");
+    expect(container.textContent).not.toContain("tms.factoring");
   });
 });

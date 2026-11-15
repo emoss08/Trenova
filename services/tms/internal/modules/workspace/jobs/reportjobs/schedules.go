@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -20,6 +21,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "report-schedule-dispatch",
+			Feature:       platformcatalog.FeatureAnalytics,
 			Description:   "Dispatch report runs for due user schedules",
 			Spec:          schedule.Every(5 * time.Minute),
 			Workflow:      DispatchDueReportSchedulesWorkflow,
@@ -31,6 +33,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "report-artifact-cleanup",
+			Feature:       platformcatalog.FeatureAnalytics,
 			Description:   "Delete expired report artifacts and mark runs expired",
 			Spec:          schedule.Every(time.Hour),
 			Workflow:      CleanupExpiredReportRunsWorkflow,
@@ -42,6 +45,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "report-zombie-reconciliation",
+			Feature:       platformcatalog.FeatureAnalytics,
 			Description:   "Fail report runs whose workflows are no longer running",
 			Spec:          schedule.Every(time.Hour),
 			Workflow:      ReconcileZombieReportRunsWorkflow,
@@ -53,6 +57,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "report-catalog-check",
+			Feature:       platformcatalog.FeatureAnalytics,
 			Description:   "Mark saved reports that no longer validate against the report catalog",
 			Spec:          schedule.Every(15 * time.Minute),
 			Workflow:      CheckReportDefinitionsAgainstCatalogWorkflow,

@@ -154,12 +154,18 @@ A row says three things:
 - `ownership`: the column an `own` data scope narrows by (`shipment`, `order` and
   `report_definition` name `owner_id`).
 
+The resource also decides the plan: a table belongs to the add-on of its resource's feature,
+so a table of an add-on must map to a resource of that add-on (`invoice_state`, factoring
+readiness, is `factoring_submission`, not `invoice`). The rollup and forecast tables
+(`demand_forecast_*`, `driver_positionings`, the detention rollups) are not reportable.
+
 `Resolver.For(ctx, tenant, mode)` loads the caller's grants on every report kind in one
 `GetResourcePermissionsBatch` call and returns the `*Access` for one request. keel asks it once
 per entity, field and edge the request touches.
 
 | Decision | When |
 |---|---|
+| `not_on_plan` | the organization's plan leaves it out (below); decided before any grant |
 | `available` | allowed; the field carries its registry sensitivity, which every output column reading it inherits |
 | `needs_kind_read` | the caller cannot read the kind and the field or edge is not in its [reference view](reference-views.md), or the report's root kind is unreadable |
 | `withheld_by_ceiling` | the field's sensitivity is above the caller's ceiling for the kind |
@@ -167,6 +173,14 @@ per entity, field and edge the request touches.
 | `needs_export` | export mode, and the caller reads the kind without its `export` |
 | `own_scope_unsupported` | the caller's scope on the kind is `own` and the kind has no ownership column |
 
+- **What the plan includes** ([permissions.md](permissions.md#what-the-plan-includes)) is
+  decided first, from the same batch read. An entity is `not_on_plan` when its kind's
+  `ResourcePermissionDetail` carries a `PlanDenial`; a field when its kind is off or the
+  field's `FieldFeatures` entry names an off feature (asked through
+  `permissionports.LinkedFields.PlanDenial`); an edge when its source kind, its own field
+  feature, its target's kind or a kind it picks through is off. The `Use` carries the
+  `PlanDenial` (feature, its name, the add-on's key and name). A plan that cannot be read
+  withholds the field as `needs_kind_read`, never allows it.
 - **Read and export modes.** Previews, drill-through and saving a definition compile in
   `ModeRead`. Runs, the CSV stream, dashboard exports and serving a stored run compile in
   `ModeExport`, which also needs each kind's `export` (reference-view fields excepted).
@@ -179,12 +193,51 @@ per entity, field and edge the request touches.
   context, and keel applies the tenant columns to every table reference by construction.
 - **Refusals.** keel returns `denied` with the decision as its reason; `Access.Refusal` turns
   the request's denials into one translated authorization error ("you do not have read access
-  to Customers, which "Credit Limit" on Invoices needs; …").
+  to Customers, which "Credit Limit" on Invoices needs; …"). When any denial is `not_on_plan`
+  the refusal is `PLAN_RESTRICTED` instead (`errortypes.PlanRestrictionError`, naming the first
+  add-on), worded only from the plan denials: "This report reads data your plan does not
+  include: Factoring Schedules are part of the Accounting & Cash add-on, which is not on your
+  plan" (a field: ""Compliance Status" on Worker Profile is part of the Safety & Compliance
+  add-on, …"). Previews, drill-through, CSV streams, runs, stored-run reads and dashboard
+  tiles all return it; `Resolver.Need` says "the <Add-on> add-on".
+- **The catalog leaves the plan's exclusions out.** `CatalogFor` drops a table whose kind is
+  off the plan, and a field or edge that is off from a table that is on, so nothing of an
+  unpaid add-on is offered to build with (the builder, the dashboard filter editor, the
+  agent's dataset tools). Each one is listed instead in `Catalog.WithheldByPlan`
+  (`reportCatalog.withheldByPlan`: entity, field or edge name, labels, the add-on), which
+  only explains a saved report: `lib/report-catalog-access.ts` resolves a ref the catalog no
+  longer has against it and `unavailable-fields-alert.tsx` lists it as "… is part of the
+  <Add-on> add-on, which is not on your plan". Plan-withheld refs are never offered for
+  removal: adding the add-on is the fix, and the report keeps them.
+- **Canned reports carry their availability.** `Service.CannedLibrary` returns every canned
+  report with `available` and, when not, the `PlanDenial` of the first thing it reads that is
+  off. What a definition reads (`reportaccess.Reach`: the root entity and every edge and field
+  on its field paths, exactly what keel's compiler asks the policy about) is worked out once
+  per process with `ir.Resolve`, without compiling or running anything, because it depends
+  only on the embedded definitions and the catalog. The plan is decided per request by
+  `Access.OffPlan` over that reach, from the request's own permission read and plan memo, so a
+  plan change is seen on the next request (within the plan gate's own cache) and nothing
+  about the plan is cached by reporting. The library draws an unavailable report as a locked
+  card by name (`PlanLockedNotice`), the dashboard picker does not offer it, a tile pointing at
+  it draws a locked card, and running, customizing (`RequireCannedOnPlan`) or exploring it is
+  refused with `PLAN_RESTRICTED`. On a base-only plan the reports built on add-on tables are
+  locked (13 of 43 by their tables alone; more as field features are declared on base tables,
+  `TestCannedLibrary_ABaseOnlyPlanLocksEveryReportThatReadsAnAddOn` derives the count from the
+  definitions).
+- **Scheduled and queued runs** run as their owner, so `PrepareRunActivity` refuses one that
+  now reads an add-on. `classifyCompileError` makes the refusal the non-retryable
+  `PLAN_RESTRICTED` application error, so it is not retried as transient; the run fails with
+  that code and the plan wording, which is the reason the owner's run notification and the
+  schedule's failure streak carry. A dashboard export leaves an off-plan tile out and names it,
+  with the wording, on the workbook's first sheet; with every tile off it is the refusal. A
+  Desk run card whose stored run is refused by the plan is `withheld: plan` with
+  `withheldByPlan`.
 - **One decision everywhere.** The engine, the `reportCatalog` query (`CatalogFor`, which
-  returns `FieldUse` and `EdgeUse` for every field and edge) and the agent's dataset tools all
-  ask `reportaccess`, so the builder offers exactly what the compiler accepts.
-  `TestReportSurfacesDecideAccessOnlyThroughReportaccess` fails if a report surface calls a
-  permission primitive (`CanAccess`, `Decide`, `InReferenceView`, `ProtectedGroupAt`, …) itself.
+  returns `FieldUse` and `EdgeUse` for every field and edge), canned availability and the
+  agent's dataset tools all ask `reportaccess`, so the builder offers exactly what the
+  compiler accepts. `TestReportSurfacesDecideAccessOnlyThroughReportaccess` fails if a report
+  surface calls a permission or plan primitive (`CanAccess`, `Decide`, `InReferenceView`,
+  `ProtectedGroupAt`, `PlanDenial`, `FeatureOff`, `RequireFeature`, …) itself.
 - **A model reads below the person.** A read whose rows reach a model sets
   `Request.FieldCeiling` (`reportquerytools.RequestFor`, from `fieldsensitivity.AgentReadLimit`).
   `Access.LimitFields` then withholds anything above the agent's data access, and Confidential

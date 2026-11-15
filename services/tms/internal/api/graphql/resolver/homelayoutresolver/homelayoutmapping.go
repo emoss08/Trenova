@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
@@ -46,11 +47,44 @@ func homeLayoutToModel(effective *homelayoutservice.EffectiveLayout) *gqlmodel.H
 		Locked:        effective.Locked,
 		CanCustomize:  effective.CanCustomize,
 		Density:       effective.Density,
-		Widgets:       homeWidgetsToModel(effective.Layout),
+		Widgets:       homeWidgetsToModel(effective.Layout, effective.Locks),
 	}
 }
 
-func homeWidgetsToModel(layout *homelayout.Layout) []*gqlmodel.HomeWidget {
+func homePlanLockToModel(denial *permissionports.PlanDenial) *gqlmodel.HomePlanLock {
+	if denial == nil {
+		return nil
+	}
+
+	return &gqlmodel.HomePlanLock{
+		Feature:     string(denial.Feature),
+		FeatureName: denial.FeatureName,
+		AddOn:       string(denial.AddOn),
+		AddOnName:   denial.AddOnName,
+	}
+}
+
+func homeLockedMetricsToModel(locks []homelayoutservice.MetricLock) []*gqlmodel.HomeLockedMetric {
+	metrics := make([]*gqlmodel.HomeLockedMetric, 0, len(locks))
+	for i := range locks {
+		label := locks[i].Metric
+		if definition, ok := homelayout.MetricDefinitionFor(label); ok {
+			label = definition.Label
+		}
+		metrics = append(metrics, &gqlmodel.HomeLockedMetric{
+			Metric: locks[i].Metric,
+			Label:  label,
+			Lock:   homePlanLockToModel(&locks[i].Denial),
+		})
+	}
+
+	return metrics
+}
+
+func homeWidgetsToModel(
+	layout *homelayout.Layout,
+	locks map[string]homelayoutservice.WidgetLock,
+) []*gqlmodel.HomeWidget {
 	if layout == nil {
 		return []*gqlmodel.HomeWidget{}
 	}
@@ -58,13 +92,21 @@ func homeWidgetsToModel(layout *homelayout.Layout) []*gqlmodel.HomeWidget {
 	widgets := make([]*gqlmodel.HomeWidget, 0, len(layout.Widgets))
 	for i := range layout.Widgets {
 		widget := &layout.Widgets[i]
+		lock := locks[widget.ID]
+		label := ""
+		if definition, ok := homelayout.WidgetDefinitionFor(widget.Key); ok {
+			label = definition.Label
+		}
 		widgets = append(widgets, &gqlmodel.HomeWidget{
-			ID:     widget.ID,
-			Key:    widget.Key,
-			Title:  homeOptionalString(widget.Title),
-			W:      widget.W,
-			H:      widget.H,
-			Config: homeWidgetConfigToModel(widget.Config),
+			ID:            widget.ID,
+			Key:           widget.Key,
+			Label:         label,
+			Title:         homeOptionalString(widget.Title),
+			W:             widget.W,
+			H:             widget.H,
+			Config:        homeWidgetConfigToModel(widget.Config),
+			PlanLock:      homePlanLockToModel(lock.Widget),
+			LockedMetrics: homeLockedMetricsToModel(lock.Metrics),
 		})
 	}
 
@@ -89,29 +131,28 @@ func homeWidgetConfigToModel(config homelayout.WidgetConfig) *gqlmodel.HomeWidge
 func homeWidgetCatalogToModel(
 	catalog *homelayoutservice.WidgetCatalog,
 ) *gqlmodel.HomeWidgetCatalog {
-	widgets := make([]*gqlmodel.HomeWidgetOption, 0, len(catalog.Widgets))
+	widgets := make([]*gqlmodel.HomeWidgetOption, 0, len(catalog.Widgets)+len(catalog.LockedWidgets))
 	for _, widget := range catalog.Widgets {
-		widgets = append(widgets, &gqlmodel.HomeWidgetOption{
-			Key:              widget.Key,
-			Label:            widget.Label,
-			Description:      widget.Description,
-			Category:         widget.Category,
-			ConfigKind:       string(widget.ConfigKind),
-			AnalyticsInclude: homeOptionalString(widget.AnalyticsInclude),
-			DefaultW:         widget.DefaultW,
-			DefaultH:         widget.DefaultH,
-			MinW:             widget.MinW,
-			MinH:             widget.MinH,
-			MaxW:             widget.MaxW,
-			MaxH:             widget.MaxH,
-		})
+		widgets = append(widgets, homeWidgetOptionToModel(widget, nil))
+	}
+	for i := range catalog.LockedWidgets {
+		locked := &catalog.LockedWidgets[i]
+		widgets = append(widgets, homeWidgetOptionToModel(locked.Definition, &locked.Denial))
 	}
 
-	metrics := make([]*gqlmodel.HomeMetricOption, 0, len(catalog.Metrics))
+	metrics := make([]*gqlmodel.HomeMetricOption, 0, len(catalog.Metrics)+len(catalog.LockedMetrics))
 	for _, metric := range catalog.Metrics {
 		metrics = append(metrics, &gqlmodel.HomeMetricOption{
 			Key:   metric.Key,
 			Label: metric.Label,
+		})
+	}
+	for i := range catalog.LockedMetrics {
+		locked := &catalog.LockedMetrics[i]
+		metrics = append(metrics, &gqlmodel.HomeMetricOption{
+			Key:      locked.Definition.Key,
+			Label:    locked.Definition.Label,
+			PlanLock: homePlanLockToModel(&locked.Denial),
 		})
 	}
 
@@ -134,6 +175,27 @@ func homeWidgetCatalogToModel(
 	}
 }
 
+func homeWidgetOptionToModel(
+	widget homelayout.WidgetDefinition,
+	denial *permissionports.PlanDenial,
+) *gqlmodel.HomeWidgetOption {
+	return &gqlmodel.HomeWidgetOption{
+		Key:              widget.Key,
+		Label:            widget.Label,
+		Description:      widget.Description,
+		Category:         widget.Category,
+		ConfigKind:       string(widget.ConfigKind),
+		AnalyticsInclude: homeOptionalString(widget.AnalyticsInclude),
+		DefaultW:         widget.DefaultW,
+		DefaultH:         widget.DefaultH,
+		MinW:             widget.MinW,
+		MinH:             widget.MinH,
+		MaxW:             widget.MaxW,
+		MaxH:             widget.MaxH,
+		PlanLock:         homePlanLockToModel(denial),
+	}
+}
+
 func homePresetToModel(view *homelayoutservice.PresetView) *gqlmodel.HomeLayoutPreset {
 	preset := view.Preset
 
@@ -146,7 +208,7 @@ func homePresetToModel(view *homelayoutservice.PresetView) *gqlmodel.HomeLayoutP
 		ID:                 preset.ID.String(),
 		Name:               preset.Name,
 		Description:        homeOptionalString(preset.Description),
-		Widgets:            homeWidgetsToModel(preset.Layout),
+		Widgets:            homeWidgetsToModel(preset.Layout, nil),
 		RoleIds:            roleIDs,
 		CoreResponsibility: homeOptionalString(string(preset.CoreResponsibility)),
 		IsOrgDefault:       preset.IsOrgDefault,

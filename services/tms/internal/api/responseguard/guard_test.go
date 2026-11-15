@@ -12,10 +12,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
@@ -27,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -64,6 +70,23 @@ func serveRaw(
 	opts routeOptions,
 ) ([]byte, string) {
 	t.Helper()
+
+	rec := serveWith(t, fieldsensitivity.DefaultRegistry(), plantest.AllFeatures(), denied, value,
+		opts)
+
+	return rec.Body.Bytes(), rec.Header().Get(WithheldHeader)
+}
+
+// serveWith writes value as serveRaw does, over a registry and a plan.
+func serveWith(
+	t *testing.T,
+	registry *permissioncatalog.Registry,
+	gate platformcatalogports.FeatureGate,
+	denied []permission.Resource,
+	value any,
+	opts routeOptions,
+) *httptest.ResponseRecorder {
+	t.Helper()
 	gin.SetMode(gin.TestMode)
 
 	names := make([]string, 0, len(denied))
@@ -73,8 +96,13 @@ func serveRaw(
 	engine := &mocks.DenyResourcesPermissionEngine{Denied: names}
 	guard := NewGuard(GuardParams{
 		PermissionEngine: engine,
-		ReferenceViews:   refview.NewPort(refview.Default(), engine),
+		ReferenceViews: refview.NewPort(
+			refview.New(registry, onplan.New(registry, gate)),
+			engine,
+		),
 	})
+	guard.registry = registry
+	guard.planner = newPlanner(newKindTable(registry))
 
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
@@ -100,7 +128,7 @@ func serveRaw(
 	router.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil))
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 
-	return rec.Body.Bytes(), rec.Header().Get(WithheldHeader)
+	return rec
 }
 
 var guarded = routeOptions{install: true}
@@ -488,8 +516,8 @@ func TestAPartOfALinkedRecordShowsOnlyItsIDWithoutTheLinkedKindsRead(t *testing.
 	walker := &walker{
 		ctx:      t.Context(),
 		decider:  denyAll{},
-		planner:  newPlanner(newKindTable(refview.Default().Registry())),
-		registry: refview.Default().Registry(),
+		planner:  newPlanner(newKindTable(fieldsensitivity.DefaultRegistry())),
+		registry: fieldsensitivity.DefaultRegistry(),
 	}
 	linked := walker.recordOf(permission.ResourceShipment, rootRecord, false)
 	require.True(t, linked.linked)
@@ -509,7 +537,7 @@ func TestAPartOfALinkedRecordShowsOnlyItsIDWithoutTheLinkedKindsRead(t *testing.
 func TestALeaveCaseAWorkerCarriesNeedsLeaveRead(t *testing.T) {
 	t.Parallel()
 
-	registry := refview.Default().Registry()
+	registry := fieldsensitivity.DefaultRegistry()
 	walker := &walker{
 		ctx:      t.Context(),
 		decider:  denyAll{},
@@ -565,12 +593,20 @@ func (denyAll) reads(context.Context, permission.Resource) bool { return false }
 
 func (denyAll) visible(context.Context, permission.Resource, string) bool { return false }
 
+func (denyAll) planDenial(
+	context.Context,
+	permission.Resource,
+	string,
+) (permissionports.PlanDenial, bool, error) {
+	return permissionports.PlanDenial{}, false, nil
+}
+
 func (denyAll) groups() protectedfield.GroupSet { return 0 }
 
 func TestADrugTestAWorkerCarriesNeedsDOTTestRead(t *testing.T) {
 	t.Parallel()
 
-	registry := refview.Default().Registry()
+	registry := fieldsensitivity.DefaultRegistry()
 	kinds := newKindTable(registry)
 	for typ, want := range map[reflect.Type]permission.Resource{
 		reflect.TypeFor[workerdot.WorkerDOTTest]():                  permission.ResourceWorkerDOTTest,

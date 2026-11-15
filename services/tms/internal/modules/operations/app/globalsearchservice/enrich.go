@@ -34,6 +34,15 @@ type hitEnricher struct {
 	access  *searchAccess
 	limit   int
 	results []*indexResult
+
+	ownOnPlan map[ownedField]bool
+}
+
+// ownedField is one field of a hit's own record, as the permission registry
+// names it.
+type ownedField struct {
+	kind  permission.Resource
+	field string
 }
 
 type enrichment struct {
@@ -356,7 +365,10 @@ func (e *hitEnricher) applyShipments(
 }
 
 // hitSource is where one metadata value on a hit comes from. A value of the
-// hit's own record follows the index's read; a value about a record the hit
+// hit's own record follows the index's read, and is dropped when the plan
+// leaves out a feature the registry declares for the field of that name (the
+// key is read as the record's field name; a key the registry does not name is
+// on the plan with its record); a value about a record the hit
 // links to (a shipment's customer, a worker's current load) is decided field
 // by field through the reference view rule; a figure about a linked record
 // that no view carries needs that kind's read.
@@ -462,7 +474,10 @@ func (e *hitEnricher) withholdUnshown(ctx context.Context) {
 		for _, hit := range result.hits {
 			for key := range hit.Metadata {
 				source, ok := sources[key]
-				if !ok || !e.mayShow(ctx, hit, source) {
+				if !ok || !e.mayShow(ctx, hit, source, ownedField{
+					kind:  result.definition.resource,
+					field: key,
+				}) {
 					delete(hit.Metadata, key)
 				}
 			}
@@ -474,12 +489,13 @@ func (e *hitEnricher) mayShow(
 	ctx context.Context,
 	hit *kernelports.GlobalSearchHit,
 	source hitSource,
+	owned ownedField,
 ) bool {
 	switch {
 	case source.attached:
 		return e.canLabel(hit.Metadata["resourceType"])
 	case source.kind == "":
-		return true
+		return e.onPlan(ctx, owned)
 	case source.figure:
 		return e.access.linked.Reads(ctx, source.kind)
 	}
@@ -489,6 +505,25 @@ func (e *hitEnricher) mayShow(
 		}
 	}
 	return true
+}
+
+// onPlan reports whether the plan includes a field of the hit's own record. A
+// plan that cannot be read withholds it.
+func (e *hitEnricher) onPlan(ctx context.Context, owned ownedField) bool {
+	if owned.kind == "" {
+		return true
+	}
+	if shown, asked := e.ownOnPlan[owned]; asked {
+		return shown
+	}
+	_, off, err := e.access.linked.PlanDenial(ctx, owned.kind, owned.field)
+	shown := err == nil && !off
+	if e.ownOnPlan == nil {
+		e.ownOnPlan = make(map[ownedField]bool, 16)
+	}
+	e.ownOnPlan[owned] = shown
+
+	return shown
 }
 
 func applyShipmentCard(hit *kernelports.GlobalSearchHit, card *shipmentports.ShipmentSearchCard) {

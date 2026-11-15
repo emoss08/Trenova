@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -33,6 +34,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            ProjectorScheduleID,
+			Feature:       platformcatalog.FeatureAIAuditTrail,
 			Description:   "Write new agent activity to the AI audit trail",
 			Spec:          schedule.Every(p.projectorInterval),
 			Workflow:      ProjectAIAuditWorkflow,
@@ -45,6 +47,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            VerifyScheduleID,
+			Feature:       platformcatalog.FeatureAIAuditTrail,
 			Description:   "Verify every tenant's AI audit trail hash chain",
 			Spec:          schedule.Cron("37 3 * * *"),
 			Workflow:      VerifyAIAuditChainWorkflow,
@@ -58,6 +61,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            PruneScheduleID,
+			Feature:       platformcatalog.FeatureAIAuditTrail,
 			Description:   "Remove AI audit trail rows past each organization's retention period",
 			Spec:          schedule.Cron("13 4 * * *"),
 			Workflow:      PruneAIAuditWorkflow,
@@ -70,6 +74,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            CleanupScheduleID,
+			Feature:       platformcatalog.FeatureAIAuditTrail,
 			Description:   "Delete AI audit export files past their download window",
 			Spec:          schedule.Every(exportCleanupEvery),
 			Workflow:      CleanupAIAuditExportsWorkflow,

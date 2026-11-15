@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func rateResources() []*permissionspec.ResourceDefinition {
@@ -20,6 +21,7 @@ func rateResources() []*permissionspec.ResourceDefinition {
 func rateAgreementResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceRateAgreement.String(),
+		Feature:     platformcatalog.FeatureBilling,
 		DisplayName: "Rate Agreement",
 		Description: "Customer and carrier rate agreements, their lane rules, accessorial schedules, and versions",
 		Category:    "Billing",
@@ -167,6 +169,7 @@ func rateAgreementFieldSensitivities() map[string]permission.FieldSensitivity {
 func rateZoneResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceRateZone.String(),
+		Feature:            platformcatalog.FeatureRating,
 		DisplayName:        "Rate Zone",
 		Description:        "Named groupings of geography that lane rules and rate matrices are written against",
 		Category:           "Billing",
@@ -178,6 +181,7 @@ func rateZoneResource() *permissionspec.ResourceDefinition {
 func rateMatrixResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceRateMatrix.String(),
+		Feature:     platformcatalog.FeatureRating,
 		DisplayName: "Rate Matrix",
 		Description: "Rate tables that tariffs look values up in: their axes, cells and published versions",
 		Category:    "Billing",
@@ -269,6 +273,7 @@ func rateMatrixResource() *permissionspec.ResourceDefinition {
 func rateSimulationResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceRateSimulation.String(),
+		Feature:     platformcatalog.FeatureRating,
 		DisplayName: "Rate Simulation",
 		Description: "Replays of a proposed contract against freight that already moved, and what it would have charged",
 		Category:    "Billing",
@@ -298,6 +303,7 @@ func rateSimulationResource() *permissionspec.ResourceDefinition {
 func rateQuoteResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceRateQuote.String(),
+		Feature:     platformcatalog.FeatureBilling,
 		DisplayName: "Rate Quote",
 		Description: "The record of how each shipment was priced, including every rate considered and why it lost",
 		Category:    "Billing",

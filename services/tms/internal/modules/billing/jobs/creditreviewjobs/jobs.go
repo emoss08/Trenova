@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/billing/app/creditreviewservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/activity"
@@ -141,6 +142,7 @@ func NewScheduleProvider() *ScheduleProvider {
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{{
 		ID:          "customer-credit-sweep",
+		Feature:     platformcatalog.FeatureAccounting,
 		Description: "Review every customer's open receivables against its credit limit",
 		// After the 02:30 late-charge assessment, so charges it raised count
 		// toward the balance the sweep reviews.

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
@@ -56,6 +57,7 @@ type Params struct {
 	ModeProfile   modeprofileports.ModeProfileService
 	RoutingGuides tenderports.RoutingGuideRepository
 	Hydrator      ratequoteports.ShipmentRatingHydrator
+	Features      platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -71,6 +73,7 @@ type Service struct {
 	modeProfile   modeprofileports.ModeProfileService
 	routingGuides tenderports.RoutingGuideRepository
 	hydrator      ratequoteports.ShipmentRatingHydrator
+	features      platformcatalogports.FeatureGate
 	now           func() int64
 }
 
@@ -89,6 +92,7 @@ func New(p Params) *Service {
 		modeProfile:   p.ModeProfile,
 		routingGuides: p.RoutingGuides,
 		hydrator:      p.Hydrator,
+		features:      p.Features,
 		now:           timeutils.NowUnix,
 	}
 }

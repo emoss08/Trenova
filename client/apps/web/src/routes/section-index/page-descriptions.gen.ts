@@ -8,8 +8,6 @@ export const PAGE_DESCRIPTIONS = defineLabels({
     "Customers with overdue receivables, ranked by who to call first. Open one to log a call, record a promise to pay, or schedule the next follow-up.",
   "/accounting/ar/customer-ledger":
     "Statement-style transaction history with the customer's AR profile.",
-  "/accounting/ar/invoices":
-    "Every invoice issued, with its bill-to, shipper, dates and settlement status.",
   "/accounting/ar/late-charges":
     "Overdue invoices charged once per thirty-day period at each customer's rate, raised as one debit memo per customer.",
   "/accounting/ar/open-items":
@@ -72,6 +70,7 @@ export const PAGE_DESCRIPTIONS = defineLabels({
     "Oversize and overweight limits per state. These limits are shared across every organization; record a carrier override to hold your own fleet to something stricter.",
   "/admin/organization-settings":
     "Manage your organization profile, compliance, and security settings",
+  "/admin/plan": "What your plan includes, the add-ons it does not, and recent changes",
   "/admin/sequence-configs":
     "Configure sequence generation formats for shipments and billing workflows",
   "/admin/service-failure-reason-codes":
@@ -80,6 +79,8 @@ export const PAGE_DESCRIPTIONS = defineLabels({
     "Configure pay periods, accrual triggers, exception policies, and escrow interest",
   "/admin/shipment-controls": "Configure and manage your shipment control settings",
   "/admin/stored-mileages": "Review reusable mileage records captured from PC*Miler calculations",
+  "/admin/support-access":
+    "Let a named Trenova staff member into this organization for a set time, and see everything they did",
   "/admin/table-change-alerts":
     "Get told when the records you watch are created, changed or deleted",
   "/admin/users": "Manage users and their role assignments",
@@ -104,6 +105,8 @@ export const PAGE_DESCRIPTIONS = defineLabels({
     "Name a market area once and price against it, instead of listing every postal prefix it covers",
   "/billing/factoring":
     "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, open one to see the checks it failed, or follow funded invoices until the factor releases their reserve.",
+  "/billing/invoice-register":
+    "Every invoice issued, with its bill-to, shipper, dates and settlement status.",
   "/billing/invoices": "Review draft invoices, confirm billing details, and post completed charges",
   "/billing/pending-approvals":
     "Review policy-controlled invoice adjustments awaiting finance approval.",

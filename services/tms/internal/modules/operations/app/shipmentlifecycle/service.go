@@ -809,11 +809,11 @@ func (s *Service) validateTransferActor(
 		return nil
 	}
 
-	return errortypes.NewValidationError(
+	return permissionports.DeniedError(result, errortypes.NewValidationError(
 		"ownerId",
 		errortypes.ErrInvalidOperation,
 		"You do not have permission to transfer ownership of this shipment",
-	)
+	))
 }
 
 func (s *Service) validateTransferTarget(

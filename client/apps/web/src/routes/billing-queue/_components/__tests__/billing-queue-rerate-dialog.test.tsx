@@ -66,6 +66,7 @@ describe("BillingQueueRerateDialog", () => {
 
     await waitFor(() =>
       expect(updateCharges).toHaveBeenCalledWith("bqi_1", {
+        expandShipmentDetails: true,
         formulaTemplateId: "ft_ltl",
         tariffInputs: { minimumCharge: { $q: "120", u: "$" } },
       }),
@@ -80,6 +81,7 @@ describe("BillingQueueRerateDialog", () => {
     await user.click(screen.getByRole("button", { name: "Re-rate" }));
     await waitFor(() =>
       expect(updateCharges).toHaveBeenCalledWith("bqi_1", {
+        expandShipmentDetails: true,
         formulaTemplateId: "ft_ltl",
         tariffInputs: {},
       }),

@@ -15,10 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportviewservice"
@@ -409,7 +409,10 @@ func saveReportDashboardRequest(
 	return req, nil
 }
 
-func cannedReportToModel(entry *canned.Entry) (*gqlmodel.CannedReport, error) {
+func cannedReportToModel(
+	library *reportingservice.CannedReport,
+) (*gqlmodel.CannedReport, error) {
+	entry := library.Entry
 	definitionJSON, err := reportDefinitionAsJSON(entry.Definition)
 	if err != nil {
 		return nil, err
@@ -424,7 +427,39 @@ func cannedReportToModel(entry *canned.Entry) (*gqlmodel.CannedReport, error) {
 		Tags:          emptyIfNil(entry.Tags),
 		DefaultFormat: string(entry.DefaultFormat),
 		Definition:    definitionJSON,
+		Available:     library.Available,
+		PlanDenial:    reportPlanDenialToModel(library.Plan),
 	}, nil
+}
+
+func reportPlanDenialToModel(denial *permissionports.PlanDenial) *gqlmodel.ReportPlanDenial {
+	if denial == nil {
+		return nil
+	}
+	return &gqlmodel.ReportPlanDenial{
+		Feature:     string(denial.Feature),
+		FeatureName: denial.FeatureName,
+		AddOn:       string(denial.AddOn),
+		AddOnName:   denial.AddOnName,
+	}
+}
+
+func reportPlanWithheldToModel(
+	withheld []reportingservice.PlanWithheld,
+) []*gqlmodel.ReportPlanWithheld {
+	out := make([]*gqlmodel.ReportPlanWithheld, 0, len(withheld))
+	for i := range withheld {
+		item := &withheld[i]
+		out = append(out, &gqlmodel.ReportPlanWithheld{
+			Entity:      item.Entity,
+			EntityLabel: item.EntityLabel,
+			Name:        nilIfEmpty(item.Name),
+			Label:       item.Label,
+			Edge:        item.Edge,
+			Denial:      reportPlanDenialToModel(&item.Denial),
+		})
+	}
+	return out
 }
 
 func reportDefinitionConnectionToModel(
@@ -493,9 +528,10 @@ func reportCatalogToModel(
 	}
 
 	return &gqlmodel.ReportCatalog{
-		Version:  catalog.Version,
-		Rules:    rules,
-		Entities: entities,
+		Version:        catalog.Version,
+		Rules:          rules,
+		Entities:       entities,
+		WithheldByPlan: reportPlanWithheldToModel(catalog.WithheldByPlan),
 	}, nil
 }
 
@@ -521,7 +557,8 @@ func reportFieldAccessToModel(decision reportaccess.Decision) gqlmodel.ReportFie
 		return gqlmodel.ReportFieldAccessNeedsFieldGroup
 	case reportaccess.NeedsKindRead,
 		reportaccess.NeedsExport,
-		reportaccess.OwnScopeUnsupported:
+		reportaccess.OwnScopeUnsupported,
+		reportaccess.NotOnPlan:
 		return gqlmodel.ReportFieldAccessNeedsKindRead
 	default:
 		return gqlmodel.ReportFieldAccessNeedsKindRead

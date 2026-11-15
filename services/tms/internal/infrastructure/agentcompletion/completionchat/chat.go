@@ -143,9 +143,6 @@ func (s *Chat) chatProviders(
 	if !s.AI.AIEnabled() {
 		return nil, errortypes.NewBusinessError(completionengine.AIDisabledMessage)
 	}
-	if err := s.AssertWithinSpend(ctx, req.TenantInfo); err != nil {
-		return nil, err
-	}
 
 	usable, err := s.chatRouted(ctx, req)
 	if err != nil {
@@ -170,7 +167,7 @@ func (s *Chat) chatRouted(
 	req *llmports.ChatCompletionRequest,
 ) ([]*aiprovider.Provider, error) {
 	if req.Nova {
-		nova, err := s.NovaProvider(ctx, req.TenantInfo)
+		nova, err := s.NovaProvider(ctx, req.TenantInfo, req.ChatTask())
 		if err != nil {
 			return nil, err
 		}

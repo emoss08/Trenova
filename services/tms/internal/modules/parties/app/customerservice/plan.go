@@ -3,6 +3,7 @@ package customerservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/statuschange"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -17,6 +18,15 @@ func (s *Service) PlanCreate(
 	ctx context.Context,
 	entity *customer.Customer,
 ) (*customer.Customer, error) {
+	if err := s.planFields.Keep(
+		ctx,
+		permission.ResourceCustomer,
+		entity,
+		customerDefaults(entity),
+	); err != nil {
+		return nil, err
+	}
+
 	if err := s.transformer.TransformCustomer(ctx, entity); err != nil {
 		return nil, err
 	}
@@ -36,14 +46,6 @@ func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *customer.Customer,
 ) (*kernelports.RecordChange[customer.Customer], error) {
-	if err := s.transformer.TransformCustomer(ctx, entity); err != nil {
-		return nil, err
-	}
-
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
 	original, err := s.repo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
@@ -51,11 +53,24 @@ func (s *Service) PlanUpdate(
 			BuID:  entity.GetBusinessUnitID(),
 		},
 		CustomerFilterOptions: customerports.CustomerFilterOptions{
+			IncludeBillingProfile:  entity.BillingProfile != nil,
 			IncludeTrackingProfile: entity.TrackingProfile != nil,
 		},
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if err = s.planFields.Keep(ctx, permission.ResourceCustomer, entity, original); err != nil {
+		return nil, err
+	}
+
+	if err = s.transformer.TransformCustomer(ctx, entity); err != nil {
+		return nil, err
+	}
+
+	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+		return nil, multiErr
 	}
 
 	if entity.TrackingProfile != nil {
@@ -87,4 +102,21 @@ func (s *Service) PlanBulkUpdateStatus(
 		IDOf:   func(entity *customer.Customer) pulid.ID { return entity.ID },
 		Set:    func(entity *customer.Customer, status domaintypes.Status) { entity.Status = status },
 	})
+}
+
+// customerDefaults is what a new customer holds where the plan withholds a
+// field: a new customer's billing profile defaults, and zero values
+// elsewhere.
+func customerDefaults(entity *customer.Customer) *customer.Customer {
+	if entity == nil || entity.BillingProfile == nil {
+		return nil
+	}
+
+	return &customer.Customer{
+		BillingProfile: customer.NewDefaultBillingProfile(
+			entity.OrganizationID,
+			entity.BusinessUnitID,
+			entity.ID,
+		),
+	}
 }

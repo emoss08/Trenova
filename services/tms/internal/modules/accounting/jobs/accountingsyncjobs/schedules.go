@@ -2,6 +2,7 @@ package accountingsyncjobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "accounting-connection-check",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Refresh expiring accounting authorizations and check every connection answers",
 			Spec:          schedule.Cron("7 * * * *"),
 			Workflow:      CheckAccountingConnectionsWorkflow,
@@ -27,6 +29,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-webhook-subscriptions",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Create, renew and remove the webhook subscriptions accounting systems require",
 			Spec:          schedule.Cron("15 */6 * * *"),
 			Workflow:      KeepAccountingWebhookSubscriptionsWorkflow,
@@ -38,6 +41,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-reference-refresh",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Pull every active accounting connection's reference data and re-score open mappings",
 			Spec:          schedule.Cron("17 7 * * *"),
 			Workflow:      RefreshAllAccountingReferenceWorkflow,
@@ -50,6 +54,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-changes-read",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Read what changed in every syncing accounting system and bring payments in",
 			Spec:          schedule.Cron("*/30 * * * *"),
 			Workflow:      KickAccountingChangesWorkflow,
@@ -61,6 +66,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-drift-reconcile",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Compare what every syncing accounting system holds with what Trenova sent it",
 			Spec:          schedule.Cron("13 6 * * *"),
 			Workflow:      KickAccountingDriftWorkflow,
@@ -72,6 +78,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-drift-weekly",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Raise the weekly books reconciliation for every syncing accounting connection",
 			Spec:          schedule.Cron("37 7 * * 1"),
 			Workflow:      AnnounceAccountingReconciliationDueWorkflow,
@@ -83,6 +90,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-sync-dispatch",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Wake the sender for every accounting connection with documents due",
 			Spec:          schedule.Cron("*/5 * * * *"),
 			Workflow:      KickDueAccountingSyncWorkflow,
@@ -94,6 +102,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-sync-safety-net",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Queue posted documents that never reached the accounting outbox",
 			Spec:          schedule.Cron("23 * * * *"),
 			Workflow:      AccountingSafetyNetWorkflow,
@@ -105,6 +114,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-sync-retention",
+			Feature:       platformcatalog.FeatureAccounting,
 			Description:   "Clear accounting sync payloads and attempts older than 90 days",
 			Spec:          schedule.Cron("41 4 * * *"),
 			Workflow:      PurgeAccountingSyncWorkflow,

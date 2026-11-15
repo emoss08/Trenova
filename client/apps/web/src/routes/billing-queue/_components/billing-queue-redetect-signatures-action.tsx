@@ -1,5 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
+import { PlanFeature } from "@/lib/plan-feature";
 import { billingQueueService } from "@/services/billing-queue";
 import { ScanSearchIcon } from "@trenova/shared/components/icons";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
 import { toast } from "@trenova/shared/components/ui/toast";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { PODSignatureRedetectResult } from "@trenova/shared/types/billing-queue";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -38,6 +40,8 @@ export function BillingQueueRedetectSignaturesAction() {
   const [open, setOpen] = useState(false);
   const { allowed: canUpdateQueue } = usePermission(Resource.BillingQueue, Operation.Update);
   const { allowed: canUpdateDocuments } = usePermission(Resource.Document, Operation.Update);
+  // Reading a signature off a page is Document Intelligence.
+  const readsDocuments = usePlanFeature(PlanFeature.DocumentIntelligence).available;
 
   const { mutate, isPending } = useApiMutation<PODSignatureRedetectResult, undefined>({
     resourceName: "Billing queue",
@@ -48,7 +52,7 @@ export function BillingQueueRedetectSignaturesAction() {
     },
   });
 
-  if (!canUpdateQueue || !canUpdateDocuments) return null;
+  if (!canUpdateQueue || !canUpdateDocuments || !readsDocuments) return null;
 
   return (
     <>

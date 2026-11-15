@@ -15,10 +15,11 @@ func reportRunDeskCardToModel(card *reportingservice.RunCard) *gqlmodel.ReportRu
 			Category:    card.Report.Category,
 			CannedKey:   nilIfEmpty(card.Report.CannedKey),
 		},
-		Parameters: make([]*gqlmodel.ReportRunDeskParameter, 0, len(card.Parameters)),
-		Timezone:   card.Timezone,
-		Withheld:   nilIfEmpty(string(card.Withheld)),
-		Sort:       make([]*gqlmodel.ReportRunDeskSort, 0, len(card.Sort)),
+		Parameters:     make([]*gqlmodel.ReportRunDeskParameter, 0, len(card.Parameters)),
+		Timezone:       card.Timezone,
+		Withheld:       nilIfEmpty(string(card.Withheld)),
+		WithheldByPlan: reportPlanDenialToModel(card.WithheldPlan),
+		Sort:           make([]*gqlmodel.ReportRunDeskSort, 0, len(card.Sort)),
 	}
 	if !card.Report.DefinitionID.IsNil() {
 		definitionID := card.Report.DefinitionID.String()

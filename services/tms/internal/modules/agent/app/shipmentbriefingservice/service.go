@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardcache"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -51,6 +52,7 @@ type Params struct {
 	Briefs        shipmentbriefports.ShipmentBriefRepository
 	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
 	Organizations tenantports.OrganizationRepository
+	Features      platformcatalogports.FeatureGate
 	Suggestions   shipmentbriefports.ShipmentSuggestionCandidates
 	Nova          llmports.TaskRunner
 	Cache         shipmentboardports.ShipmentBoardCache
@@ -63,6 +65,7 @@ type Service struct {
 	briefs        shipmentbriefports.ShipmentBriefRepository
 	quickFilters  shipmentports.ShipmentQuickFilterBasisResolver
 	organizations tenantports.OrganizationRepository
+	features      platformcatalogports.FeatureGate
 	suggestions   shipmentbriefports.ShipmentSuggestionCandidates
 	nova          llmports.TaskRunner
 	cache         shipmentboardports.ShipmentBoardCache
@@ -83,6 +86,7 @@ func New(p Params) *Service {
 		briefs:        p.Briefs,
 		quickFilters:  p.QuickFilters,
 		organizations: p.Organizations,
+		features:      p.Features,
 		suggestions:   p.Suggestions,
 		nova:          p.Nova,
 		cache:         p.Cache,
@@ -349,6 +353,9 @@ func (s *Service) Facts(
 			tenantports.GetOrganizationCapabilitiesRequest{TenantInfo: tenantInfo},
 		)
 		if cErr != nil {
+			return cErr
+		}
+		if caps, cErr = tenantports.CapabilitiesOnPlan(gctx, s.features, caps); cErr != nil {
 			return cErr
 		}
 		facts.OperationType = tenant.OperationTypeOf(

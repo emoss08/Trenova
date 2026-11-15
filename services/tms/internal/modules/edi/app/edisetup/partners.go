@@ -46,10 +46,7 @@ func (s *Service) CreatePartner(
 	entity *edi.EDIPartner,
 	actor *permissionports.RequestActor,
 ) (*edi.EDIPartner, error) {
-	if err := s.requireIntegrations(ctx, pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	}); err != nil {
+	if err := s.requireEDIIntegration(ctx); err != nil {
 		return nil, err
 	}
 	normalizePartnerForCreate(entity)

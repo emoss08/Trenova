@@ -1,7 +1,7 @@
 import type { OrganizationCapabilityType } from "@trenova/shared/types/organization-capability";
 import type { OperationType } from "@trenova/shared/types/permission";
 import type { IconComponent } from "@trenova/shared/components/icons";
-import type { PlanCapabilityType } from "@/lib/plan-capability";
+import type { PlanFeatureKey } from "@/lib/plan-feature";
 import type { PlatformMode } from "@trenova/shared/types/platform";
 
 export type ModuleId =
@@ -48,9 +48,9 @@ export interface NavItem {
   capability?: OrganizationCapabilityType;
   /**
    * Hides the entry when the organization's Trenova Cloud plan withholds the
-   * capability, as the free demo does for integrations, API keys and the like.
+   * feature, as the free demo does for integrations, API keys and the like.
    */
-  planCapability?: PlanCapabilityType;
+  planFeature?: PlanFeatureKey;
   /** Shows the entry only on an install running in this platform mode. */
   platformMode?: PlatformMode;
   badge?: NavItemBadgeKind;
@@ -75,7 +75,7 @@ export interface NavGroup {
   kind?: NavGroupKind;
   resource?: string;
   capability?: OrganizationCapabilityType;
-  planCapability?: PlanCapabilityType;
+  planFeature?: PlanFeatureKey;
   platformMode?: PlatformMode;
 }
 
@@ -104,7 +104,7 @@ export interface NavModule {
   hideSecondarySidebar?: boolean;
   resource?: string;
   capability?: OrganizationCapabilityType;
-  planCapability?: PlanCapabilityType;
+  planFeature?: PlanFeatureKey;
   platformMode?: PlatformMode;
   /** Other words people use for the module, which the command palette also matches. */
   keywords?: readonly string[];
@@ -134,7 +134,7 @@ export interface QuickActionCommand {
    * the organization does not run would only lead to a route that refuses it.
    */
   capability?: OrganizationCapabilityType;
-  planCapability?: PlanCapabilityType;
+  planFeature?: PlanFeatureKey;
   query?: Record<string, string>;
   keywords?: string[];
 }

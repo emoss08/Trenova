@@ -8,7 +8,11 @@ import {
   hasOrganizationCapability,
   OrganizationCapability,
 } from "@trenova/shared/types/organization-capability";
-import { dispatchControlTabs, type DispatchControlTab } from "./dispatch-control-tabs";
+import {
+  dispatchControlTabs,
+  useDispatchControlPlan,
+  type DispatchControlTab,
+} from "./dispatch-control-tabs";
 
 const figures = (count: number) => ({ kind: "input", count, narrow: true }) as const;
 const choice = { kind: "input", narrow: false } as const;
@@ -58,9 +62,11 @@ const TAB_SECTIONS: Record<DispatchControlTab, readonly SettingsSectionSpec[]> =
  */
 export function DispatchControlSkeleton() {
   const capabilities = useOrgCapabilities();
+  const plan = useDispatchControlPlan();
   const tabs = dispatchControlTabs({
     runsAssets: hasOrganizationCapability(capabilities, OrganizationCapability.AssetOperations),
     brokers: hasOrganizationCapability(capabilities, OrganizationCapability.Brokerage),
+    plan,
   });
   const [openTab] = useSettingsTab(tabs);
 

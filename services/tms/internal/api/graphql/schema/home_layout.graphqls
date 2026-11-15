@@ -26,16 +26,53 @@ type HomeWidgetConfig {
 }
 
 """
+The add-on a widget or a measure needs that the organization's plan does not
+include. A locked widget keeps its place on the home screen and the server reads
+nothing for it; the client draws the add-on's name in its slot.
+"""
+type HomePlanLock {
+  feature: String!
+  featureName: String!
+  addOn: String!
+  addOnName: String!
+}
+
+"""
+One measure of a metric strip that the plan leaves out, while the rest of the
+strip is on the plan.
+"""
+type HomeLockedMetric {
+  metric: String!
+  label: String!
+  lock: HomePlanLock!
+}
+
+"""
 One card on the home canvas. Position is not stored: widgets are an ordered
 list that the client packs into the grid, so order alone defines the layout.
 """
 type HomeWidget {
   id: String!
   key: String!
+  """
+  The widget's name in the catalog, so a locked widget can be named without
+  loading the catalog.
+  """
+  label: String!
   title: String
   w: Int!
   h: Int!
   config: HomeWidgetConfig!
+  """
+  Set when the plan leaves the whole widget out. A widget the reader has no
+  permission for is not returned at all; this is only ever the plan.
+  """
+  planLock: HomePlanLock
+  """
+  The measures of a metric strip the plan leaves out. Empty for every other
+  widget, and for a strip whose measures are all on the plan.
+  """
+  lockedMetrics: [HomeLockedMetric!]!
 }
 
 type HomeLayout {
@@ -63,6 +100,11 @@ type HomeWidgetOption {
   minH: Int!
   maxW: Int!
   maxH: Int!
+  """
+  Set when the plan leaves the widget out: it is listed so an administrator can
+  see it exists and which add-on carries it, and it cannot be added.
+  """
+  planLock: HomePlanLock
 }
 
 type HomeWidgetCategory {
@@ -74,6 +116,10 @@ type HomeWidgetCategory {
 type HomeMetricOption {
   key: String!
   label: String!
+  """
+  Set when the plan leaves the measure out; it cannot be chosen.
+  """
+  planLock: HomePlanLock
 }
 
 type HomeWidgetCatalog {

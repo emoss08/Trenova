@@ -4349,6 +4349,7 @@ var enumPermissionResource = [...]schema.EnumValue{
 	{Value: `role`, Label: `Role`},
 	{Value: `audit_log`, Label: `Audit Log`},
 	{Value: `security_audit_log`, Label: `Security Audit Log`},
+	{Value: `support_access`, Label: `Support Access`},
 	{Value: `audit_legal_hold`, Label: `Audit Legal Hold`},
 	{Value: `table_configuration`, Label: `Table Configuration`},
 	{Value: `custom_field_definition`, Label: `Custom Field Definition`},

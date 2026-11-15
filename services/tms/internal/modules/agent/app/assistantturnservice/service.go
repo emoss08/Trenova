@@ -14,11 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,7 +36,7 @@ type Params struct {
 	Realtime  realtimeports.RealtimeService
 	Metrics   *metrics.Registry
 	Quota     platformplanports.QuotaGuard
-	Plans     platformplanports.PlanService
+	Features  platformcatalogports.FeatureGate
 	Chapters  assistantchapterports.ChapterScheduler
 }
 
@@ -49,7 +48,7 @@ type Service struct {
 	realtime  realtimeports.RealtimeService
 	metrics   *aimetrics.Assistant
 	quota     platformplanports.QuotaGuard
-	plans     platformplanports.PlanService
+	features  platformcatalogports.FeatureGate
 	chapters  assistantchapterports.ChapterScheduler
 }
 
@@ -64,7 +63,7 @@ func New(p Params) *Service {
 		realtime:  p.Realtime,
 		metrics:   metrics.AssistantFrom(p.Metrics),
 		quota:     p.Quota,
-		plans:     p.Plans,
+		features:  p.Features,
 		chapters:  p.Chapters,
 	}
 }
@@ -119,7 +118,19 @@ func (s *Service) Start(
 	return turn, nil
 }
 
+// assertPlanAllows refuses a turn the plan does not pay for. Every Desk turn,
+// whoever or whatever starts it, is a Desk conversation (ai.desk); a
+// scheduled one is also automation, and a person's counts against the
+// plan's assistant messages.
 func (s *Service) assertPlanAllows(ctx context.Context, req StartRequest) error {
+	if err := platformcatalogports.RequireFeature(
+		ctx,
+		s.features,
+		platformcatalog.FeatureAIDesk,
+	); err != nil {
+		return err
+	}
+
 	switch req.Origin {
 	case "", conversationturn.AssistantTurnOriginPerson:
 		return quotaservice.Preflight(ctx, s.quota, &platformplanports.QuotaRequest{
@@ -128,11 +139,10 @@ func (s *Service) assertPlanAllows(ctx context.Context, req StartRequest) error 
 			Quantity:   1,
 		})
 	case conversationturn.AssistantTurnOriginScheduled:
-		return planservice.RequireCapability(
+		return platformcatalogports.RequireFeature(
 			ctx,
-			s.plans,
-			req.TenantInfo,
-			platformplan.CapabilityAgentAutomation,
+			s.features,
+			platformcatalog.FeatureAgentAutomation,
 		)
 	default:
 		return nil

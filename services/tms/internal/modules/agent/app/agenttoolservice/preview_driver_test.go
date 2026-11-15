@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -117,7 +118,7 @@ func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 	t.Parallel()
 
 	drivers := &fakeDriverNotifier{}
-	tool := operationstools.NewNotifyDriverTool(drivermessage.New(drivers, nil, nil))
+	tool := operationstools.NewNotifyDriverTool(drivermessage.New(drivers, plantest.AllFeatures(), nil))
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"workerId": pulid.MustNew("wrk_").String(),
 		"title":    "Delivery moved to 3 PM",
@@ -145,7 +146,7 @@ func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 func TestNotifyDriverPreview_WarnsADriverWithoutDash(t *testing.T) {
 	t.Parallel()
 
-	tool := operationstools.NewNotifyDriverTool(drivermessage.New(&unreachableDriverNotifier{}, nil, nil))
+	tool := operationstools.NewNotifyDriverTool(drivermessage.New(&unreachableDriverNotifier{}, plantest.AllFeatures(), nil))
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{

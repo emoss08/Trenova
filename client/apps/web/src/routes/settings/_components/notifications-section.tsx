@@ -22,6 +22,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { ChevronDownIcon, Lock01Icon } from "@trenova/shared/components/icons";
+import { useUnavailableFeatures } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixInUserTimezone, resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
@@ -497,7 +498,9 @@ function TypesCard({
 function NotificationsForm({ preferences }: { preferences: NotificationPreferences }) {
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
-  const catalog = useMemo(() => buildNotificationCatalog(), []);
+  // A kind of notification the plan never sends is not offered.
+  const unavailable = useUnavailableFeatures();
+  const catalog = useMemo(() => buildNotificationCatalog(unavailable), [unavailable]);
   const entries = useMemo(() => flatCatalog(catalog), [catalog]);
   const [pausedUntil, setPausedUntil] = useState<number | null>(preferences.pausedUntil);
   const pausedUntilRef = useRef<number | null>(preferences.pausedUntil);

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -86,6 +87,7 @@ func newHarness(t *testing.T) *harness {
 		Connections: h.connections,
 		Apps:        h.apps,
 		Encryption:  h.encryption,
+		Features:    plantest.AllFeatures(),
 	})
 	return h
 }

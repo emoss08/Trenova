@@ -321,7 +321,7 @@ describe("ShipmentBillingDetails on a tariff", () => {
     expect(screen.getByDisplayValue("2.35")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Default: $75.00")).toBeInTheDocument();
     expect(screen.queryByText("Base rate")).not.toBeInTheDocument();
-    expect(getDeclaredInputs).toHaveBeenCalledWith("ft_dry_van", null, expect.anything());
+    expect(getDeclaredInputs).toHaveBeenCalledWith("ft_dry_van", expect.anything());
   });
 
   it("says on the card why the tariff refused to rate, with no bill to open", async () => {

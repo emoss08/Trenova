@@ -233,8 +233,11 @@ func (s *Service) authorize(
 		return filtercatalog.Resource{}, err
 	}
 	if !result.Allowed {
-		return filtercatalog.Resource{}, errortypes.NewAuthorizationError(
-			fmt.Sprintf("You do not have permission to read %s.", resource.Entity),
+		return filtercatalog.Resource{}, permissionports.DeniedError(
+			result,
+			errortypes.NewAuthorizationError(
+				fmt.Sprintf("You do not have permission to read %s.", resource.Entity),
+			),
 		)
 	}
 

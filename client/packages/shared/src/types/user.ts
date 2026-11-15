@@ -70,6 +70,20 @@ export type ReplaceOrganizationMembershipsRequest = z.infer<
   typeof replaceOrganizationMembershipsRequestSchema
 >;
 
+// Whether the session's organization has the details the product needs (its address,
+// identifiers and time zone), the fields still missing by name, and whether this person
+// may fill them in. Only GET /users/me carries it.
+export const organizationSetupSchema = z.object({
+  complete: z.boolean(),
+  missing: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  canComplete: z.boolean().catch(false).default(false),
+});
+
+export type OrganizationSetup = z.infer<typeof organizationSetupSchema>;
+
 export const userSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,
@@ -100,6 +114,7 @@ export const userSchema = z.object({
   awayNote: z.string().catch("").default(""),
   passwordChangedAt: nullableTimestampSchema,
   assistantHidden: z.boolean().catch(false).default(false),
+  organizationSetup: organizationSetupSchema.nullish().catch(null),
 
   assignments: z.array(userRoleAssignmentSchema).nullish(),
   memberships: z.array(userOrganizationMembershipSchema).nullish(),

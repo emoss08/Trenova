@@ -1059,14 +1059,13 @@ var Shard = &gqlexec.Shard{
 		{Object: "MySettlementList", Fields: []*gqlexec.Field{
 			{
 				Name:      "items",
-				NonNull:   true,
 				HasChild:  true,
 				ChildType: "DriverSettlement",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.MySettlementList)
 					return obj.Items, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDriverSettlement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlementᚄ),
+				Marshal: gqlexec.Marshal(marshalODriverSettlement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlementᚄ),
 			},
 			{
 				Name:     "total",
@@ -5610,14 +5609,6 @@ func marshalNDriverPayEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return ec.MarshalType(ctx, sel, "DriverPayEvent", v)
 }
 
-func marshalNDriverSettlement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driversettlement.Settlement) graphql.Marshaler {
-	return gqlexec.List[*driversettlement.Settlement]{
-		Elem:        marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
 func marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driversettlement.Settlement) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -6244,6 +6235,13 @@ func marshalOAvailabilityPreference2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	}
 	res := graphql.MarshalString(string(*v))
 	return res
+}
+
+func marshalODriverSettlement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*driversettlement.Settlement) graphql.Marshaler {
+	return gqlexec.List[*driversettlement.Settlement]{
+		Elem:        marshalNDriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalODriverSettlement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋdriversettlementᚐSettlement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *driversettlement.Settlement) graphql.Marshaler {

@@ -1,7 +1,7 @@
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import type { Tone } from "@/components/kpi/tone";
-import { usePlanRestrictions } from "@/hooks/use-plan-restrictions";
-import { isPlanRestricted, PlanCapability } from "@/lib/plan-capability";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { organization } from "@/lib/queries/organization";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -30,10 +30,7 @@ const SEVERITY_TONE: Record<SecurityFindingSeverity, Tone> = {
   pass: "success",
 };
 
-function findingTone(
-  briefing: SecurityBriefingData,
-  code: SecurityFindingCode,
-): Tone | undefined {
+function findingTone(briefing: SecurityBriefingData, code: SecurityFindingCode): Tone | undefined {
   const finding = briefing.findings.find((item) => item.code === code);
   return finding ? SEVERITY_TONE[finding.severity] : undefined;
 }
@@ -47,7 +44,7 @@ function findingTone(
 export function SecurityBriefing({ organizationId }: { organizationId: string }) {
   const t = useT();
   const access = useSecurityAccess();
-  const planRestrictions = usePlanRestrictions();
+  const apiKeysOnPlan = usePlanFeature(PlanFeature.APIKeys).available;
   const briefingQuery = useQuery(organization.securityBriefing(organizationId));
 
   if (briefingQuery.isPending) {
@@ -70,8 +67,7 @@ export function SecurityBriefing({ organizationId }: { organizationId: string })
   const briefing = briefingQuery.data;
   const groups = groupFindings(briefing.findings);
   const canOpenUsers = access.pages.users;
-  const canOpenAPIKeys =
-    access.pages.apiKeys && !isPlanRestricted(planRestrictions, PlanCapability.APIKeys);
+  const canOpenAPIKeys = access.pages.apiKeys && apiKeysOnPlan;
 
   const hrefFor: ReachableAction = (finding: SecurityFinding) => {
     const action = describeFinding(t, finding, briefing).action;

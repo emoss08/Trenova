@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -174,6 +175,13 @@ func (s *Engine) issueReplacement(ctx context.Context, run *adjustmentRun) error
 func (s *Engine) recordWriteOff(ctx context.Context, run *adjustmentRun) error {
 	adjustment := run.adjustment
 	if adjustment.Kind != invoiceadjustment.KindWriteOff {
+		return nil
+	}
+	accounting, err := s.features.Enabled(ctx, platformcatalog.FeatureAccounting)
+	if err != nil {
+		return fmt.Errorf("ask whether accounting is on the plan: %w", err)
+	}
+	if !accounting {
 		return nil
 	}
 	journalID, err := s.createWriteOffJournalEntry(

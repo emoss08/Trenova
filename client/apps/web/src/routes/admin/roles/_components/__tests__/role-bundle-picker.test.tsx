@@ -86,6 +86,7 @@ const resources: ResourceCategory[] = [
         description: "The billing queue",
         category: "Billing",
         defaultSensitivity: "internal",
+        feature: "tms.core",
         operations: [
           { operation: "read", displayName: "View", description: "View", implies: [] },
           { operation: "update", displayName: "Work", description: "Work", implies: ["read"] },
@@ -97,6 +98,7 @@ const resources: ResourceCategory[] = [
         description: "Invoices",
         category: "Billing",
         defaultSensitivity: "restricted",
+        feature: "tms.core",
         operations: [
           { operation: "read", displayName: "View", description: "View", implies: [] },
           { operation: "create", displayName: "Draft", description: "Draft", implies: ["read"] },

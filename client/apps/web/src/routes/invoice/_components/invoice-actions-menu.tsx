@@ -1,5 +1,7 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { sendInvoiceEdi, type InvoiceArContext } from "@/lib/graphql/invoice";
 import { invoiceEdiSendBlocker } from "@/lib/invoice-actions";
 import { invalidateInvoiceQueries } from "@/lib/queries/invoice";
@@ -46,11 +48,16 @@ export function InvoiceActionsMenu({
   const { allowed: canSend } = usePermission(Resource.Invoice, Operation.Update);
 
   const voidBlocker = invoiceVoidBlocker(invoice, {
-    paymentApplications: arContext?.paymentApplications.length ?? 0,
-    creditApplications: arContext?.creditApplications.length ?? 0,
+    paymentApplications: arContext?.paymentApplications?.length ?? 0,
+    creditApplications: arContext?.creditApplications?.length ?? 0,
   });
   const ediBlocker = invoiceEdiSendBlocker(invoice.status, arContext?.ediSendPlan, t);
-  const ediSent = arContext?.ediSendPlan.status === "Sent";
+  const ediSent = arContext?.ediSendPlan?.status === "Sent";
+  // A loaded invoice with no EDI plan is one whose organization's plan leaves EDI
+  // out: there is nothing to send it through.
+  const ediOnPlan = usePlanFeature(PlanFeature.EDI).available;
+  const ediWithheld = !ediOnPlan || (arContext != null && arContext.ediSendPlan === null);
+  const offerSend = canSend && !ediWithheld;
 
   const sendEdi = useApiMutation({
     resourceName: "invoice EDI",
@@ -61,7 +68,7 @@ export function InvoiceActionsMenu({
     },
   });
 
-  if (!canVoid && !canSend) {
+  if (!canVoid && !offerSend) {
     return null;
   }
 
@@ -81,7 +88,7 @@ export function InvoiceActionsMenu({
           }
         />
         <DropdownMenuContent align="end" className="w-72">
-          {canSend ? (
+          {offerSend ? (
             <>
               <DropdownMenuItem
                 title={ediSent ? t("Resend EDI") : t("Send EDI")}
@@ -95,7 +102,7 @@ export function InvoiceActionsMenu({
           ) : null}
           {canVoid ? (
             <>
-              {canSend ? <DropdownMenuSeparator /> : null}
+              {offerSend ? <DropdownMenuSeparator /> : null}
               <DropdownMenuItem
                 title={t("Void invoice")}
                 description={voidBlocker ? t(voidBlocker) : undefined}

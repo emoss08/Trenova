@@ -33,14 +33,14 @@ func (r *Core) RequirePermission(
 		return nil, errortypes.NewAuthenticationError("Authentication required")
 	}
 
-	allowed, err := r.checkPermission(ctx, authCtx, resource, operation)
+	result, err := checkResult(ctx, r.PermissionEngine, authCtx, resource, operation)
 	if err != nil {
 		return nil, err
 	}
-	if !allowed {
-		return nil, errortypes.NewAuthorizationError(
+	if !result.Allowed {
+		return nil, permissionports.DeniedError(&result, errortypes.NewAuthorizationError(
 			"You don't have permission to perform this action: {0} {1}", resource, operation,
-		)
+		))
 	}
 
 	return authCtx, nil
@@ -79,11 +79,26 @@ func CheckPermission(
 	resource permission.Resource,
 	operation permission.Operation,
 ) (bool, error) {
+	result, err := checkResult(ctx, engine, authCtx, resource, operation)
+	if err != nil {
+		return false, err
+	}
+
+	return result.Allowed, nil
+}
+
+func checkResult(
+	ctx context.Context,
+	engine permissionports.PermissionEngine,
+	authCtx *authctx.AuthContext,
+	resource permission.Resource,
+	operation permission.Operation,
+) (permissionports.PermissionCheckResult, error) {
 	memo, memoised := gqlctx.PermissionMemoFrom(ctx)
 	key := resource.String() + "|" + string(operation)
 	if memoised {
-		if allowed, found := memo.Lookup(key); found {
-			return allowed, nil
+		if result, found := memo.Lookup(key); found {
+			return result, nil
 		}
 	}
 
@@ -92,13 +107,13 @@ func CheckPermission(
 		middleware.BuildPermissionCheckRequest(authCtx, resource.String(), operation),
 	)
 	if err != nil {
-		return false, err
+		return permissionports.PermissionCheckResult{}, err
 	}
 	if memoised {
-		memo.Store(key, result.Allowed)
+		memo.Store(key, *result)
 	}
 
-	return result.Allowed, nil
+	return *result, nil
 }
 
 func (r *Core) RequireAuth(ctx context.Context) (*authctx.AuthContext, error) {

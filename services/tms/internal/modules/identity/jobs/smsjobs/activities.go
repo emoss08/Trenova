@@ -5,11 +5,9 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/infrastructure/sms"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
@@ -21,20 +19,20 @@ type ActivitiesParams struct {
 
 	SMSClient *sms.Client
 	Logger    *zap.Logger
-	Plans     platformplanports.PlanService
+	Features  platformcatalogports.FeatureGate
 }
 
 type Activities struct {
 	smsClient *sms.Client
 	logger    *zap.Logger
-	plans     platformplanports.PlanService
+	features  platformcatalogports.FeatureGate
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		smsClient: p.SMSClient,
 		logger:    p.Logger.Named("sms-activities"),
-		plans:     p.Plans,
+		features:  p.Features,
 	}
 }
 
@@ -48,10 +46,11 @@ func (a *Activities) SendSMSActivity(
 		"businessUnitId", payload.BusinessUnitID.String(),
 	)
 
-	if err := planservice.RequireCapability(ctx, a.plans, pagination.TenantInfo{
-		OrgID: payload.OrganizationID,
-		BuID:  payload.BusinessUnitID,
-	}, platformplan.CapabilitySMS); err != nil {
+	if err := platformcatalogports.RequireFeature(
+		ctx,
+		a.features,
+		platformcatalog.FeatureAdministration,
+	); err != nil {
 		logger.Info("SMS not sent: the organization's plan does not include SMS", "error", err)
 		return &SendSMSResult{
 			Success: false,

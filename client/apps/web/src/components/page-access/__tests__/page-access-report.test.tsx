@@ -3,7 +3,9 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { PageAccessReport, screenNeeds } from "../page-access-report";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+});
 
 // Written from schema/page_access.graphqls: a screen whose route needs
 // shipment read, that calls one endpoint needing shipment create and another
@@ -57,6 +59,7 @@ const access: PageAccess = {
       canRead: true,
       withheld: 0,
       fields: [],
+      planDenial: null,
     },
     {
       resource: "customer",
@@ -69,6 +72,7 @@ const access: PageAccess = {
         { name: "creditLimit", inView: false, decision: "WITHHELD_KIND" },
         { name: "ShipmentMove.status", inView: false, decision: "WITHHELD_SENSITIVITY" },
       ],
+      planDenial: null,
     },
     {
       resource: "worker",
@@ -77,6 +81,7 @@ const access: PageAccess = {
       canRead: false,
       withheld: 0,
       fields: [{ name: "wholeName", inView: true, decision: "VISIBLE" }],
+      planDenial: null,
     },
   ],
   withheld: 2,
@@ -152,5 +157,76 @@ describe("PageAccessReport", () => {
       screen.getByText("The screen shows no kind of record the permission registry knows."),
     ).toBeInTheDocument();
     expect(screen.queryByText(/GraphQL operation/)).toBeNull();
+  });
+
+  it("names the add-on of a kind the plan leaves out, from the server's answer", () => {
+    render(
+      <PageAccessReport
+        access={{
+          ...access,
+          kinds: [
+            {
+              resource: "factoring_company",
+              resourceName: "Factoring company",
+              use: "REFERENCE",
+              canRead: false,
+              withheld: 1,
+              fields: [{ name: "remitTo", inView: false, decision: "WITHHELD_PLAN" }],
+              planDenial: {
+                feature: "tms.factoring",
+                featureName: "Factoring",
+                addOn: "ACC",
+                addOnName: "Accounting & Cash",
+              },
+            },
+            ...access.kinds,
+          ],
+        }}
+      />,
+    );
+
+    const records = within(screen.getByRole("region", { name: "Records on this screen" }));
+    const factoring = records.getByText("Factoring company").closest("li")!;
+    expect(within(factoring).getAllByText("Part of Accounting & Cash")).toHaveLength(2);
+    expect(within(factoring).queryByText("No read")).toBeNull();
+    expect(
+      within(within(factoring).getByRole("list", { name: "Withheld fields" }))
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["remitTo Part of Accounting & Cash"]);
+    expect(factoring.textContent).not.toContain("ACC");
+    expect(factoring.textContent).not.toContain("tms.factoring");
+
+    const customer = records.getByText("Customer").closest("li")!;
+    expect(within(customer).getByText("No read")).toBeInTheDocument();
+    expect(customer.textContent).not.toContain("Part of");
+  });
+
+  it("says a field is off the plan when its kind is on it", () => {
+    render(
+      <PageAccessReport
+        access={{
+          ...access,
+          kinds: [
+            {
+              resource: "customer",
+              resourceName: "Customer",
+              use: "REFERENCE",
+              canRead: true,
+              withheld: 1,
+              fields: [{ name: "creditLimit", inView: true, decision: "WITHHELD_PLAN" }],
+              planDenial: null,
+            },
+          ],
+        }}
+      />,
+    );
+
+    const withheld = screen.getByRole("list", { name: "Withheld fields" });
+    expect(
+      within(withheld)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["creditLimit Not on your plan"]);
   });
 });

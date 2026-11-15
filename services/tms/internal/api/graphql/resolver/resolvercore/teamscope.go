@@ -48,8 +48,13 @@ func (r *Core) RequireTeamScope(
 		return nil, pulid.Nil, err
 	}
 	if !result.Allowed {
-		return nil, pulid.Nil, errortypes.NewAuthorizationError(
-			"You don't have permission to perform this action: {0} {1}", resource, operation,
+		return nil, pulid.Nil, permissionports.DeniedError(
+			result,
+			errortypes.NewAuthorizationError(
+				"You don't have permission to perform this action: {0} {1}",
+				resource,
+				operation,
+			),
 		)
 	}
 
@@ -140,8 +145,13 @@ func (r *Core) RequireListTeamScope(
 		return nil, nil, err
 	}
 	if !result.Allowed {
-		return nil, nil, errortypes.NewAuthorizationError(
-			"You don't have permission to perform this action: {0} {1}", resource, operation,
+		return nil, nil, permissionports.DeniedError(
+			result,
+			errortypes.NewAuthorizationError(
+				"You don't have permission to perform this action: {0} {1}",
+				resource,
+				operation,
+			),
 		)
 	}
 	if !result.DataScope.IsNarrow() {

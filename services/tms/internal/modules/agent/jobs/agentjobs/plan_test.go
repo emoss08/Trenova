@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ func TestStartScheduledRunSkipsOrganizationsWithoutAutomation(t *testing.T) {
 	t.Parallel()
 
 	tenant := plantest.Tenant()
-	a := &Activities{platformPlans: plantest.Restricting(t, platformplan.CapabilityAgentAutomation)}
+	a := &Activities{features: plantest.Without(platformcatalog.FeatureAgentAutomation)}
 
 	result, err := a.StartScheduledRunActivity(t.Context(), &agentcontract.ScheduledRunPayload{
 		DefinitionID:   pulid.MustNew("agd_"),

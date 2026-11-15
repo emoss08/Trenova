@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/iamrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/instancebootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/invoiceadjustmentcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationmeter"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/orgstructurerepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/passwordresetrepository"
@@ -27,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/ssoconfigrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/ssoidentitylinkrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/supportaccessrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
@@ -50,12 +52,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/journalreviewservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/locationcodegenerator"
 	"github.com/emoss08/trenova/internal/modules/identity/app/mfaservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/app/organizationservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/app/permissionchange"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planfields"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
@@ -69,6 +73,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/shipmentcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/tenanttimezone"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
@@ -82,6 +87,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
@@ -93,6 +99,7 @@ func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			organizationrepository.New,
+			organizationmeter.New,
 			tenantbootstraprepository.New,
 			userrepository.New,
 			orgstructurerepository.New,
@@ -125,6 +132,12 @@ func SharedOptions() fx.Option {
 			apikeyrepository.New,
 			invoiceadjustmentcontrolrepository.New,
 			billingcontrolrepository.New,
+			supportaccessrepository.NewGrantRepository,
+			supportaccessrepository.NewKeySetRepository,
+			supportaccessrepository.NewAssertionLedger,
+			supportaccessservice.NewPrincipals,
+			func(p *supportaccessservice.Principals) supportaccessports.Principals { return p },
+			supportaccessservice.New,
 			organizationservice.NewValidator,
 			iamservice.NewValidator,
 			userservice.NewValidator,
@@ -150,10 +163,19 @@ func SharedOptions() fx.Option {
 			permission.NewEngine,
 			fieldsensitivity.NewFieldAccess,
 			func(a *fieldsensitivity.FieldAccess) permissionports.FieldAccess { return a },
-			func(engine permissionports.PermissionEngine) permissionports.ReferenceViews {
-				return refview.NewPort(refview.Default(), engine)
+			onplan.New,
+			func(lookup *onplan.Lookup) permissionports.PlanFeatures { return lookup },
+			planfields.New,
+			func(k *planfields.Keeper) permissionports.PlanFieldKeeper { return k },
+			func(
+				registry *permissioncatalog.Registry,
+				plan *onplan.Lookup,
+				engine permissionports.PermissionEngine,
+			) permissionports.ReferenceViews {
+				return refview.NewPort(refview.New(registry, plan), engine)
 			},
 			permissionchange.New,
+			permissionchange.NewPlanObserver,
 			readscopeservice.New,
 			accesssettingsservice.New,
 			func(s *accesssettingsservice.Service) iamports.RoleActivationPolicy { return s },

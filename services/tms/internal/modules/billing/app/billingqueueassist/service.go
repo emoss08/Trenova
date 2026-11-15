@@ -3,6 +3,7 @@ package billingqueueassist
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
@@ -103,7 +104,7 @@ func (s *Service) Availability(
 // novaReady reports whether Nova runs for the tenant, which the review, the
 // brief and the search all need.
 func (s *Service) novaReady(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
-	return s.nova.Available(ctx, tenantInfo)
+	return s.nova.Available(ctx, tenantInfo, aitask.TaskBillingDiagnosis)
 }
 
 func (s *Service) AutoApprove(

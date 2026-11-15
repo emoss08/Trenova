@@ -64,9 +64,14 @@ func DecodeAnswer(task aitask.Task, text string, out any) error {
 // each task's instructions, on the provider the organization chose for Nova
 // and with Nova's own model. The agent module's harness implements it.
 type TaskRunner interface {
-	// Available reports whether Nova can run for the tenant: AI is on and the
-	// organization has chosen an enabled provider for Nova.
-	Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error)
+	// Available reports whether Nova can run the task for the tenant: AI is
+	// on, the organization's plan pays for the task and the organization has
+	// chosen an enabled provider for Nova.
+	Available(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		task aitask.Task,
+	) (bool, error)
 	// Run does the task and decodes its answer into out, returning what the
 	// call cost and which model answered.
 	Run(ctx context.Context, task *NovaTask, out any) (*StructuredCompletionResult, error)

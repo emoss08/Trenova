@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/orderportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -57,11 +58,13 @@ func newMarkReadyFixture(t *testing.T) *markReadyFixture {
 			Logger:   zap.NewNop(),
 		}),
 		effects: shipmenteffects.New(shipmenteffects.Params{
-			Logger:          zap.NewNop(),
-			Repo:            f.repo,
-			OrderDerivation: f.derivation,
-			EventService:    f.events,
-			AuditService:    &mocks.NoopAuditService{},
+			Logger:           zap.NewNop(),
+			Repo:             f.repo,
+			OrderDerivation:  f.derivation,
+			EventService:     f.events,
+			AuditService:     &mocks.NoopAuditService{},
+			PlanFields:       plantest.Keeper(nil),
+			PricingTemplates: plantest.AllPricingTemplates(),
 		}),
 	}
 

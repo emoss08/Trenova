@@ -65,8 +65,28 @@ export type WorkerCredentialTypeRow = RootFields<
   (typeof CREDENTIAL_TYPE_ROOT_FIELDS)[number]
 >;
 export type WorkerCredentialRow = WorkerCredentialFieldsFragment;
-export type WorkerCredentialSummary = WorkerCredentialSummaryQuery["workerCredentialSummary"];
-export type WorkerCredentialSummaryItem = WorkerCredentialSummary["items"][number];
+type RawCredentialSummary = WorkerCredentialSummaryQuery["workerCredentialSummary"];
+type RawCredentialSummaryItem = RawCredentialSummary["items"][number];
+/**
+ * A credential slot. The server answers its type null only when the organization's plan leaves
+ * out Safety & Compliance, and a slot with no type is no slot, so it is left out.
+ */
+export type WorkerCredentialSummaryItem = Omit<RawCredentialSummaryItem, "credentialType"> & {
+  credentialType: NonNullable<RawCredentialSummaryItem["credentialType"]>;
+};
+export type WorkerCredentialSummary = Omit<RawCredentialSummary, "items"> & {
+  items: WorkerCredentialSummaryItem[];
+};
+
+/** The credential slots whose type the server answered (see `WorkerCredentialSummaryItem`). */
+export function typedCredentialSlots<T extends { credentialType: unknown }>(
+  items: readonly T[],
+): (T & { credentialType: NonNullable<T["credentialType"]> })[] {
+  return items.filter(
+    (item): item is T & { credentialType: NonNullable<T["credentialType"]> } =>
+      item.credentialType != null,
+  );
+}
 export type CredentialExpiryForecast = CredentialExpiryForecastQuery["credentialExpiryForecast"];
 export type CredentialExpiryForecastItem = CredentialExpiryForecast["items"][number];
 
@@ -129,7 +149,10 @@ export async function fetchWorkerCredentialSummary(
     variables: { workerId },
     signal: options?.signal,
   });
-  return data.workerCredentialSummary;
+  return {
+    ...data.workerCredentialSummary,
+    items: typedCredentialSlots(data.workerCredentialSummary.items),
+  };
 }
 
 export async function fetchCredentialExpiryForecast(

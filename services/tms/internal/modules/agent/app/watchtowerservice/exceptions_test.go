@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -52,6 +53,7 @@ func newExceptionFixture(t *testing.T, perms permissionports.PermissionEngine) *
 		Repo:          repo,
 		Realtime:      &recordingRealtime{},
 		Notifications: notificationtest.Discarding(),
+		Features:      plantest.AllFeatures(),
 	})
 	exceptions := NewExceptions(ExceptionsParams{
 		Owners:        &agenttest.OpenCases{},

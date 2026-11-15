@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
@@ -45,6 +46,7 @@ type Params struct {
 	PayEstimator        *driversettlementaccrualservice.Service
 	PayHistory          *driversettlementworkspaceservice.Service
 	NotificationService *notificationservice.Service
+	Features            platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -69,6 +71,7 @@ type Service struct {
 	payEstimator        *driversettlementaccrualservice.Service
 	payHistory          *driversettlementworkspaceservice.Service
 	notificationService *notificationservice.Service
+	features            platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -94,5 +97,6 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		payEstimator:        p.PayEstimator,
 		payHistory:          p.PayHistory,
 		notificationService: p.NotificationService,
+		features:            p.Features,
 	}
 }

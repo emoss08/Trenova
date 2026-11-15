@@ -1,12 +1,17 @@
 import { decidePlanLimit, usePlanLimitStore } from "@/stores/plan-limit-store";
-import { setPlanLimitHandler, type PlanLimitNotice } from "@trenova/shared/lib/plan-limit";
+import {
+  setPlanLimitHandler,
+  type PlanLimitNotice,
+  type PlanLimitRequest,
+} from "@trenova/shared/lib/plan-limit";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 
 /** The handler the REST and GraphQL transports call with every plan-limit refusal. */
-export function handlePlanLimit(notice: PlanLimitNotice): boolean {
+export function handlePlanLimit(notice: PlanLimitNotice, request: PlanLimitRequest): boolean {
   const store = usePlanLimitStore.getState();
   const decision = decidePlanLimit({
     notice,
+    request,
     isAuthenticated: useAuthStore.getState().isAuthenticated,
     openNotice: store.notice,
     lastDismissed: store.lastDismissed,

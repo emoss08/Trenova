@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
@@ -20,7 +21,11 @@ func TestConsumerResumesReadingAfterStreamKeyIsDropped(t *testing.T) {
 	ctx := context.Background()
 	client := testutil.SetupTestRedis(t)
 
-	consumer := NewConsumer(ConsumerParams{Logger: zap.NewNop(), Redis: client})
+	consumer := NewConsumer(ConsumerParams{
+		Logger:   zap.NewNop(),
+		Redis:    client,
+		Features: plantest.AllFeatures(),
+	})
 	consumer.Start(ctx)
 	t.Cleanup(consumer.Stop)
 

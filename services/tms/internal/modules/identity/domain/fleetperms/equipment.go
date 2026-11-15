@@ -3,6 +3,7 @@ package fleetperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func equipmentResources() []*permissionspec.ResourceDefinition {
@@ -18,6 +19,7 @@ func equipmentResources() []*permissionspec.ResourceDefinition {
 func equipmentTypeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceEquipmentType.String(),
+		Feature:            platformcatalog.FeatureFleetMaintenance,
 		DisplayName:        "Equipment Type",
 		Description:        "Equipment type definitions",
 		Category:           "Equipment",
@@ -30,6 +32,7 @@ func equipmentTypeResource() *permissionspec.ResourceDefinition {
 func equipmentManufacturerResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceEquipmentManufacturer.String(),
+		Feature:            platformcatalog.FeatureFleetMaintenance,
 		DisplayName:        "Equipment Manufacturer",
 		Description:        "Equipment manufacturer records",
 		Category:           "Equipment",
@@ -42,6 +45,7 @@ func equipmentManufacturerResource() *permissionspec.ResourceDefinition {
 func trailerResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceTrailer.String(),
+		Feature:       platformcatalog.FeatureFleetMaintenance,
 		DisplayName:   "Trailer",
 		Description:   "Trailer fleet management",
 		Category:      "Equipment",
@@ -86,6 +90,7 @@ func trailerResource() *permissionspec.ResourceDefinition {
 func tractorResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceTractor.String(),
+		Feature:       platformcatalog.FeatureFleetMaintenance,
 		DisplayName:   "Tractor",
 		Description:   "Tractor fleet management",
 		Category:      "Equipment",
@@ -124,12 +129,16 @@ func tractorResource() *permissionspec.ResourceDefinition {
 			},
 		},
 		DefaultSensitivity: permission.SensitivityInternal,
+		FieldFeatures: map[string]platformcatalog.FeatureKey{
+			"iftaQualified": platformcatalog.FeatureFuelTax,
+		},
 	}
 }
 
 func fleetCodeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceFleetCode.String(),
+		Feature:            platformcatalog.FeatureDispatch,
 		DisplayName:        "Fleet Code",
 		Description:        "Fleet code definitions",
 		Category:           "Dispatch",

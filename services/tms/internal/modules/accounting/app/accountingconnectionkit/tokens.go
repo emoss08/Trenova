@@ -11,10 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,16 +30,8 @@ const (
 
 var RealmIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,100}$`)
 
-func (k *Kit) RequireIntegrations(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) error {
-	return planservice.RequireCapability(
-		ctx,
-		k.plans,
-		tenantInfo,
-		platformplan.CapabilityIntegrations,
-	)
+func (k *Kit) RequireAccounting(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(ctx, k.features, platformcatalog.FeatureAccounting)
 }
 
 func (k *Kit) RequestReferenceRefresh(

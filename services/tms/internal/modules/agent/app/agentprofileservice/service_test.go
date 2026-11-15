@@ -14,10 +14,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -324,7 +325,6 @@ type harness struct {
 	controls  *fakeControls
 	scheduler *fakeScheduler
 	memories  *fakeMemories
-	plans     *platformplanportsmock.MockPlanService
 	tenant    pagination.TenantInfo
 	userID    pulid.ID
 }
@@ -341,7 +341,6 @@ func newHarness(t *testing.T) *harness {
 		controls:  &fakeControls{},
 		scheduler: &fakeScheduler{},
 		memories:  &fakeMemories{manages: true},
-		plans:     platformplanportsmock.NewMockPlanService(t),
 		tenant:    pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		userID:    pulid.MustNew("usr_"),
 	}
@@ -351,8 +350,6 @@ func newHarness(t *testing.T) *harness {
 		Name:                   "Acme Freight",
 		AssetOperationsEnabled: true,
 	}, nil).Maybe()
-	h.plans.EXPECT().RequireCapability(mock.Anything, mock.Anything, mock.Anything).
-		Return(nil).Maybe()
 
 	dispatchControls := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	dispatchControls.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
@@ -371,7 +368,7 @@ func newHarness(t *testing.T) *harness {
 		DispatchControls: dispatchControls,
 		BillingControls:  billingControls,
 		ShipmentControls: shipmentControls,
-		Plans:            h.plans,
+		Features:         plantest.AllFeatures(),
 		Scheduler:        h.scheduler,
 		Audit:            &mocks.NoopAuditService{},
 		Realtime:         &mocks.NoopRealtimeService{},
@@ -839,6 +836,38 @@ func TestFinish_TheOrganizationsOwnNameIsNotAFigure(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, agentprofile.StatusCurrent, outcome.Status)
+}
+
+func TestPrepare_BrokerageOffThePlanIsNotSaidToRun(t *testing.T) {
+	t.Parallel()
+
+	operations := func(t *testing.T, plan *agentprofileports.GenerationPlan) string {
+		t.Helper()
+
+		for _, fact := range plan.Facts {
+			if fact.Key == "organization.operations" {
+				return fact.Text
+			}
+		}
+		t.Fatal("no operations fact")
+
+		return ""
+	}
+
+	h := newHarness(t)
+	h.svc.organizations = tenantportsmock.NewMockOrganizationRepository(t)
+	h.svc.organizations.(*tenantportsmock.MockOrganizationRepository).EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.Organization{
+			Name:                   "Acme Freight",
+			AssetOperationsEnabled: true,
+			BrokerageEnabled:       true,
+		}, nil)
+	h.svc.features = plantest.Without(platformcatalog.FeatureCarrierBrokerage)
+
+	plan, err := h.svc.Prepare(t.Context(), &agentprofileports.GenerateRequest{Ref: h.org()})
+	require.NoError(t, err)
+	assert.Equal(t, "Runs its own fleet; brokerage is not turned on.", operations(t, plan))
 }
 
 func TestRegenerate_SaysWhenAPersonHasNoWorkToWriteAbout(t *testing.T) {

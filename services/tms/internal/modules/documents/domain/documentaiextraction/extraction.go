@@ -29,6 +29,7 @@ type Extraction struct {
 	UserID         pulid.ID `json:"userId"         keel:"user_id"`
 	ExtractedAt    int64    `json:"extractedAt"    keel:"extracted_at"`
 	RequestHash    string   `json:"requestHash"    keel:"request_hash"`
+	PageCount      int      `json:"pageCount"      keel:"page_count"`
 	WorkflowID     string   `json:"workflowId"     keel:"workflow_id"`
 	WorkflowRunID  string   `json:"workflowRunId"  keel:"workflow_run_id"`
 	ActivityID     string   `json:"activityId"     keel:"activity_id"`

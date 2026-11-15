@@ -264,7 +264,7 @@ function AccruingAmount({
   return <>{formatCurrency(amount)}</>;
 }
 
-function Detention({ data }: { data: ShipmentWatchlist["detention"] }) {
+function Detention({ data }: { data: NonNullable<ShipmentWatchlist["detention"]> }) {
   const t = useT();
   const filter = useBoardFilter();
   const actions = useBoardActions();
@@ -441,7 +441,7 @@ export function Watchlist() {
     <div className="flex flex-col gap-3">
       <Deliveries data={data.deliveries} />
       <Uncovered data={data.uncovered} />
-      <Detention data={data.detention} />
+      {data.detention ? <Detention data={data.detention} /> : null}
       <Billing data={data.billing} />
     </div>
   );

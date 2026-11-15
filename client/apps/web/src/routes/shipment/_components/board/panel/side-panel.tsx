@@ -1,5 +1,7 @@
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { AI_SETUP_PATH } from "@/lib/ai-setup";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +21,9 @@ export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
   const t = useT();
   const navigate = useNavigate();
   const { ai } = useShipmentCapabilities();
+  // Connecting a provider is offered only on a plan with Trenova AI; without it the panel is
+  // the overview and never mentions AI.
+  const aiOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
   const timezone = useUserTimezone();
   const [{ tab }, setUrl] = useShipmentBoardUrl();
   const { data: suggestions } = useQuery({
@@ -51,7 +56,7 @@ export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
         <TabsPanel value="brief" className="flex min-h-0 flex-1 flex-col">
           <ScrollArea className="min-h-0 flex-1" maskVariant="raised">
             <div className="flex flex-col gap-5 p-4">
-              {!ai ? (
+              {aiOnPlan && !ai ? (
                 <button
                   type="button"
                   onClick={() => void navigate(AI_SETUP_PATH)}

@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -23,6 +25,7 @@ func TestServiceRecordNotifiesObserversAfterInsert(t *testing.T) {
 		l:         testLogger(),
 		repo:      repo,
 		realtime:  noopRealtimeService{},
+		features:  plantest.AllFeatures(),
 		observers: []shipmenteventports.ShipmentEventObserver{observer},
 	}
 
@@ -44,6 +47,7 @@ func TestServiceRecordSkipsObserversWhenInsertFails(t *testing.T) {
 		l:         testLogger(),
 		repo:      &fakeShipmentEventRepository{insertErr: insertErr},
 		realtime:  noopRealtimeService{},
+		features:  plantest.AllFeatures(),
 		observers: []shipmenteventports.ShipmentEventObserver{observer},
 	}
 
@@ -60,6 +64,7 @@ func TestServiceRecordObserverErrorDoesNotFailRecord(t *testing.T) {
 		l:        testLogger(),
 		repo:     &fakeShipmentEventRepository{},
 		realtime: noopRealtimeService{},
+		features: plantest.AllFeatures(),
 		observers: []shipmenteventports.ShipmentEventObserver{
 			nil,
 			failingShipmentEventObserver{},
@@ -126,7 +131,15 @@ func (r *fakeShipmentEventRepository) List(
 }
 
 type recordingShipmentEventObserver struct {
-	events []*shipmentevent.Event
+	feature platformcatalog.FeatureKey
+	events  []*shipmentevent.Event
+}
+
+func (o *recordingShipmentEventObserver) ObserverFeature() platformcatalog.FeatureKey {
+	if o.feature == "" {
+		return platformcatalog.FeatureCoreTMS
+	}
+	return o.feature
 }
 
 func (o *recordingShipmentEventObserver) OnShipmentEvent(
@@ -138,6 +151,10 @@ func (o *recordingShipmentEventObserver) OnShipmentEvent(
 }
 
 type failingShipmentEventObserver struct{}
+
+func (failingShipmentEventObserver) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureCoreTMS
+}
 
 func (failingShipmentEventObserver) OnShipmentEvent(
 	context.Context,
@@ -164,6 +181,7 @@ func TestServiceRecordDefersObserversUntilTheTransactionCommits(t *testing.T) {
 		l:         testLogger(),
 		repo:      repo,
 		realtime:  noopRealtimeService{},
+		features:  plantest.AllFeatures(),
 		observers: []shipmenteventports.ShipmentEventObserver{observer},
 	}
 	txCtx, hooks := kernelports.WithAfterCommitHooks(t.Context())
@@ -176,4 +194,80 @@ func TestServiceRecordDefersObserversUntilTheTransactionCommits(t *testing.T) {
 
 	hooks.Run(t.Context())
 	require.Len(t, observer.events, 1)
+}
+
+func TestServiceRecordTellsOnlyTheObserversThePlanIncludes(t *testing.T) {
+	t.Parallel()
+
+	base := &recordingShipmentEventObserver{}
+	tracking := &recordingShipmentEventObserver{feature: platformcatalog.FeatureCustomerTracking}
+	edi := &recordingShipmentEventObserver{feature: platformcatalog.FeatureEDIIntegration}
+	svc := &service{
+		l:         testLogger(),
+		repo:      &fakeShipmentEventRepository{},
+		realtime:  noopRealtimeService{},
+		features:  plantest.BaseOnly(),
+		observers: []shipmenteventports.ShipmentEventObserver{tracking, base, edi},
+	}
+
+	err := svc.Record(t.Context(), validRecordShipmentEventParams(t))
+
+	require.NoError(t, err)
+	require.Len(t, base.events, 1, "a base observer is told")
+	require.Empty(t, tracking.events, "an observer of an add-on that is off is not told")
+	require.Empty(t, edi.events, "an observer of an add-on that is off is not told")
+}
+
+func TestServiceRecordTellsEveryObserverWithEveryFeatureOn(t *testing.T) {
+	t.Parallel()
+
+	base := &recordingShipmentEventObserver{}
+	tracking := &recordingShipmentEventObserver{feature: platformcatalog.FeatureCustomerTracking}
+	svc := &service{
+		l:         testLogger(),
+		repo:      &fakeShipmentEventRepository{},
+		realtime:  noopRealtimeService{},
+		features:  plantest.AllFeatures(),
+		observers: []shipmenteventports.ShipmentEventObserver{tracking, base},
+	}
+
+	err := svc.Record(t.Context(), validRecordShipmentEventParams(t))
+
+	require.NoError(t, err)
+	require.Len(t, base.events, 1)
+	require.Len(t, tracking.events, 1)
+}
+
+type unreachableTrackingGate struct{}
+
+func (unreachableTrackingGate) Enabled(
+	_ context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	if feature == platformcatalog.FeatureCustomerTracking {
+		return false, errors.New("plan store unreachable")
+	}
+	return true, nil
+}
+
+func TestServiceRecordTreatsAPlanQuestionThatFailsLikeAFailingObserver(t *testing.T) {
+	t.Parallel()
+
+	base := &recordingShipmentEventObserver{}
+	tracking := &recordingShipmentEventObserver{feature: platformcatalog.FeatureCustomerTracking}
+	repo := &fakeShipmentEventRepository{}
+	svc := &service{
+		l:         testLogger(),
+		repo:      repo,
+		realtime:  noopRealtimeService{},
+		features:  unreachableTrackingGate{},
+		observers: []shipmenteventports.ShipmentEventObserver{tracking, base},
+	}
+
+	err := svc.Record(t.Context(), validRecordShipmentEventParams(t))
+
+	require.NoError(t, err, "a notification stays best-effort")
+	require.Len(t, repo.inserted, 1)
+	require.Empty(t, tracking.events, "the observer whose feature could not be asked about is skipped")
+	require.Len(t, base.events, 1)
 }

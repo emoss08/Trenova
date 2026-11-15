@@ -493,6 +493,7 @@ func (s *NoaService) send(
 ) error {
 	_, err := s.email.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo: tenantInfo,
+		Type:       email.TypeFactoringNoticeOfAssignment,
 		Purpose:    email.PurposeBilling,
 		To:         message.To,
 		CC:         message.CC,

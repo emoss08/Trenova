@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -126,6 +127,7 @@ func previewAssignmentServiceWith(
 		Once()
 	svc.controlRepo = controlRepo
 	svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
+		Features:           plantest.AllFeatures(),
 		FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 		Hydrator:           ratingtest.NoHydration{},
 		BillingControlRepo: ratingtest.NoBillingControl{},

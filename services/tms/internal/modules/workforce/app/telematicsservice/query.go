@@ -30,6 +30,9 @@ func (s *Service) ListVehiclePositions(
 	ctx context.Context,
 	req *telematicsports.ListVehiclePositionsRequest,
 ) ([]*telematics.VehiclePosition, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	maxAge := req.MaxAgeSeconds
 	if maxAge <= 0 {
 		maxAge = defaultPositionMaxAgeSeconds
@@ -48,6 +51,9 @@ func (s *Service) GetVehiclePosition(
 	tenantInfo pagination.TenantInfo,
 	tractorID pulid.ID,
 ) (*telematics.VehiclePosition, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	positions, err := s.repo.ListVehiclePositions(ctx, &telematicsports.ListVehiclePositionsRequest{
 		TenantInfo:    tenantInfo,
 		TractorIDs:    []pulid.ID{tractorID},
@@ -68,6 +74,9 @@ func (s *Service) ListWorkerHOSStates(
 	workerIDs []pulid.ID,
 	limit int,
 ) ([]*telematics.WorkerHOSState, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	return s.repo.ListWorkerHOSStates(ctx, &telematicsports.ListWorkerHOSStatesRequest{
 		TenantInfo:    tenantInfo,
 		WorkerIDs:     workerIDs,
@@ -81,6 +90,9 @@ func (s *Service) GetWorkerHOSState(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*telematics.WorkerHOSState, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	state, err := s.repo.GetWorkerHOSState(ctx, telematicsports.GetWorkerHOSStateRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
@@ -98,6 +110,9 @@ func (s *Service) ListWorkerHOSViolations(
 	since int64,
 	limit int,
 ) ([]*telematics.WorkerHOSViolation, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	return s.repo.ListWorkerHOSViolations(ctx, &telematicsports.ListWorkerHOSViolationsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
@@ -115,6 +130,9 @@ func (s *Service) ListVehicleInspections(
 	ctx context.Context,
 	req *telematicsports.ListVehicleInspectionsRequest,
 ) ([]*VehicleInspectionRecord, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	inspections, err := s.repo.ListVehicleInspections(ctx, req)
 	if err != nil {
 		return nil, err
@@ -164,6 +182,14 @@ func (s *Service) GetStatus(
 	tenantInfo pagination.TenantInfo,
 ) (*Status, error) {
 	status := new(Status)
+	onPlan, err := s.samsaraOnPlan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !onPlan {
+		status.Provider = string(integration.TypeSamsara)
+		return status, nil
+	}
 
 	providerType := integration.TypeSamsara
 	if provider, providerErr := s.resolveProvider(ctx, tenantInfo); providerErr == nil {
@@ -229,6 +255,9 @@ func (s *Service) ListShipmentFormSubmissions(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*FormSubmissionRecord, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	submissions, err := s.repo.ListFormSubmissions(ctx, &telematicsports.ListFormSubmissionsRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: shipmentID,

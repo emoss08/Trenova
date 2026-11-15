@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevents"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,6 +35,7 @@ func TestPublish_TellsAttachmentObserversOfEachExtraction(t *testing.T) {
 
 	publisher := agentevents.New(agentevents.Params{
 		Logger:      zap.NewNop(),
+		Features:    plantest.AllFeatures(),
 		Waits:       quietWaits{},
 		Definitions: &fakeDefinitions{},
 		EventRuns:   &fakeEventRuns{},
@@ -65,6 +67,7 @@ func TestPublish_WithNoAttachmentObserversStillPublishes(t *testing.T) {
 
 	publisher := agentevents.New(agentevents.Params{
 		Logger:      zap.NewNop(),
+		Features:    plantest.AllFeatures(),
 		Waits:       quietWaits{},
 		Definitions: &fakeDefinitions{},
 		EventRuns:   &fakeEventRuns{},

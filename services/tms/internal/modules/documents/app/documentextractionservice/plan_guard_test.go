@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +21,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestReextractRefusesWhenThePlanRestrictsDocumentIntelligence(t *testing.T) {
+func TestReextractRefusesWhenDocumentIntelligenceIsOff(t *testing.T) {
 	t.Parallel()
 
 	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
@@ -41,12 +43,39 @@ func TestReextractRefusesWhenThePlanRestrictsDocumentIntelligence(t *testing.T) 
 		SearchConfig:             &searchconfig.Config{},
 		Metrics:                  metricRegistry,
 		DocumentRepo:             documentRepo,
-		Plans: plantest.Restricting(
-			t,
-			platformplan.CapabilityDocumentIntelligence,
-		),
+		Features:                 plantest.Without(platformcatalog.FeatureDocumentIntelligence),
 	})
 
 	err = service.Reextract(t.Context(), documentID, tenant)
 	require.True(t, errortypes.IsPlanRestrictionError(err))
+}
+
+func TestUploadingADocumentMakesNoExtractionCallWithoutDocumentIntelligence(t *testing.T) {
+	t.Parallel()
+
+	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
+	require.NoError(t, err)
+	tenant := plantest.Tenant()
+
+	controls := tenantportsmock.NewMockDocumentControlRepository(t)
+	workflows := kernelportsmock.NewMockWorkflowStarter(t)
+
+	service := documentextractionservice.New(documentextractionservice.Params{
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &documentconversionconfig.Config{},
+		SearchConfig:             &searchconfig.Config{},
+		Metrics:                  metricRegistry,
+		DocumentControlRepo:      controls,
+		WorkflowStarter:          workflows,
+		Features:                 plantest.BaseOnly(),
+	})
+
+	err = service.EnqueueExtraction(t.Context(), &document.Document{
+		ID:                pulid.MustNew("doc_"),
+		OrganizationID:    tenant.OrgID,
+		BusinessUnitID:    tenant.BuID,
+		ProcessingProfile: document.IntelligenceProcessingProfiles()[0],
+	}, tenant.UserID)
+
+	require.NoError(t, err, "the control is not read and no workflow starts: either call fails the mock")
 }

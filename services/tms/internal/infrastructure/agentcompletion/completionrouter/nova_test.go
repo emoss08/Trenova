@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -31,6 +32,7 @@ func novaService(t *testing.T, repo *fakeRepo) *Service {
 		Encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("k")),
 		Adapters:   adapterregistry.NewRegistry(),
 		Clients:    make(map[bool]*http.Client, 2),
+		Features:   plantest.AllFeatures(),
 	})
 }
 
@@ -173,9 +175,12 @@ func TestNovaReady(t *testing.T) {
 				svc.AI = tt.ai
 			}
 
-			ready, err := svc.NovaReady(t.Context(), pagination.TenantInfo{})
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, ready)
+			err := svc.NovaReady(t.Context(), pagination.TenantInfo{}, aitask.TaskPaperworkReading)
+			if tt.want {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 		})
 	}
 }

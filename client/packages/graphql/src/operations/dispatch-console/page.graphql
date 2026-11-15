@@ -101,13 +101,13 @@ fragment DispatchBoardMoveFields on DispatchBoardMove {
   }
 }
 
-query DispatchMove($moveId: ID!) {
+query DispatchMove($moveId: ID!) @requiresRead(kind: "tender") {
   dispatchMove(moveId: $moveId) {
     ...DispatchBoardMoveFields
   }
 }
 
-query DispatchBoard($input: DispatchBoardInput!) {
+query DispatchBoard($input: DispatchBoardInput!) @requiresRead(kind: "tender") {
   dispatchBoard(input: $input) {
     driversTruncated
     windowStart
@@ -204,7 +204,7 @@ query DispatchMoveCandidates($input: DispatchMoveCandidatesInput!) {
   }
 }
 
-query DispatchDriverMoves($input: DispatchDriverMovesInput!) {
+query DispatchDriverMoves($input: DispatchDriverMovesInput!) @requiresRead(kind: "tender") {
   dispatchDriverMoves(input: $input) {
     move {
       ...DispatchBoardMoveFields

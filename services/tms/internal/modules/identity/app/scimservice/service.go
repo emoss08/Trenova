@@ -6,17 +6,16 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/directoryaccounts"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/scim"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -60,7 +59,7 @@ type Params struct {
 	Organizations tenantports.OrganizationRepository
 	Accounts      Accounts
 	Roles         RoleAssigner
-	Plans         platformplanports.PlanService
+	Features      platformcatalogports.FeatureGate
 	Requester     scimports.ReconcileRequester
 	Notifier      permissionports.PermissionChangeNotifier
 	Auditor       permissionports.SecurityAuditor
@@ -74,7 +73,7 @@ type Service struct {
 	organizations tenantports.OrganizationRepository
 	accounts      Accounts
 	roles         RoleAssigner
-	plans         platformplanports.PlanService
+	features      platformcatalogports.FeatureGate
 	requester     scimports.ReconcileRequester
 	notifier      permissionports.PermissionChangeNotifier
 	auditor       permissionports.SecurityAuditor
@@ -95,7 +94,7 @@ func New(p Params) *Service {
 		organizations: p.Organizations,
 		accounts:      p.Accounts,
 		roles:         p.Roles,
-		plans:         p.Plans,
+		features:      p.Features,
 		requester:     p.Requester,
 		notifier:      p.Notifier,
 		auditor:       p.Auditor,
@@ -142,11 +141,10 @@ func (s *Service) Authenticate(
 	}
 	scoped := scopedTo(ctx, dir)
 
-	if err = planservice.RequireCapability(
+	if err = platformcatalogports.RequireFeature(
 		scoped,
-		s.plans,
-		dir.TenantInfo(),
-		platformplan.CapabilitySSO,
+		s.features,
+		platformcatalog.FeatureIdentity,
 	); err != nil {
 		if errortypes.IsPlanRestrictionError(err) {
 			return nil, scimproto.Forbidden("The organization's plan does not include provisioning")

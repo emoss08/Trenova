@@ -22,6 +22,7 @@ const (
 	principalAPIKey      = "api_key"
 	principalAgent       = "agent"
 	principalSystem      = "system"
+	principalSupport     = "support"
 	maxEntityRefLength   = 255
 	maxActorNameLength   = 255
 	maxUserAgentLength   = 255
@@ -35,6 +36,13 @@ var (
 // MetadataAgentID is the metadata key naming the agent whose tool call made
 // a change.
 const MetadataAgentID = "agentDefinitionId"
+
+// MetadataSupportGrantID and MetadataSupportStaffEmail name the Trenova support grant and staff
+// member on every entry a support session wrote.
+const (
+	MetadataSupportGrantID    = "supportGrantId"
+	MetadataSupportStaffEmail = "supportStaffEmail"
+)
 
 type Entry struct {
 	keel.Table `keel:"audit_entries"`
@@ -112,6 +120,8 @@ func defaultChannel(principalType string) Channel {
 		return ChannelAPI
 	case principalAgent:
 		return ChannelAgentRun
+	case principalSupport:
+		return ChannelSupport
 	case principalSystem:
 		return ChannelSystem
 	default:
@@ -224,6 +234,16 @@ func (e *Entry) Validate() error {
 		if e.UserID.IsNotNil() && e.UserID == e.PrincipalID {
 			return errors.New("agent audit entries cannot use the user ID as principal ID")
 		}
+	case principalSupport:
+		if e.UserID.IsNil() {
+			return errors.New("support audit entries require the support principal's user ID")
+		}
+		if e.APIKeyID.IsNotNil() {
+			return errors.New("support audit entries cannot include an api key ID")
+		}
+		if e.UserID == e.PrincipalID {
+			return errors.New("support audit entries must use the grant as principal ID")
+		}
 	default:
 		return fmt.Errorf("unsupported principal type %q", e.PrincipalType)
 	}
@@ -239,6 +259,38 @@ func (e *Entry) CreditAgent(agentName string) {
 	}
 
 	e.Comment = e.Comment + " (" + credit + ")"
+}
+
+// CreditSupport credits the entry to Trenova support under a grant. When the entry's user is
+// the grant's support principal, the grant becomes the entry's principal, so the customer can
+// list everything done under one grant; either way the entry names the grant and the staff
+// member, and comes through the support channel.
+func (e *Entry) CreditSupport(grantID, principalUserID pulid.ID, staffEmail, staffName string) {
+	if grantID.IsNil() {
+		return
+	}
+	if e.Metadata == nil {
+		e.Metadata = make(map[string]any, 2)
+	}
+	e.Metadata[MetadataSupportGrantID] = grantID.String()
+	e.Metadata[MetadataSupportStaffEmail] = staffEmail
+	e.Channel = ChannelSupport
+	if (e.PrincipalType != principalSessionUser && e.PrincipalType != "") ||
+		principalUserID.IsNil() || e.UserID != principalUserID {
+		return
+	}
+	e.PrincipalType = principalSupport
+	e.PrincipalID = grantID
+	e.APIKeyID = pulid.Nil
+	e.ActorName = SupportActorName(staffName, staffEmail)
+}
+
+// SupportActorName is how an entry a support session wrote names who acted.
+func SupportActorName(staffName, staffEmail string) string {
+	if name := strings.TrimSpace(staffName); name != "" {
+		return "Trenova support: " + name + " (" + staffEmail + ")"
+	}
+	return "Trenova support: " + staffEmail
 }
 
 func AgentCredit(agentName string) string {

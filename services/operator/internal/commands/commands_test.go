@@ -111,7 +111,7 @@ func TestRestartsOneComponentAndLeavesTheRest(t *testing.T) {
 	assert.Equal(t, "2026-11-12T09:00:00Z", restartedAtOf(t, kube, "trenova-api"))
 	assert.Empty(t, restartedAtOf(t, kube, "trenova-worker"))
 	require.Len(t, cp.answers[cmd.Id], 1)
-	assert.Equal(t, instanceapi.Succeeded, cp.answers[cmd.Id][0].Status)
+	assert.Equal(t, instanceapi.CommandResultStatusSucceeded, cp.answers[cmd.Id][0].Status)
 }
 
 func TestRestartsEveryWorkloadWhenNoComponentIsNamed(t *testing.T) {
@@ -138,9 +138,9 @@ func TestRefusesToRestartTheDatabaseOrAnUnknownComponent(t *testing.T) {
 
 	require.NoError(t, r.Run(t.Context(), cp))
 
-	assert.Equal(t, instanceapi.Failed, cp.answers[database.Id][0].Status)
+	assert.Equal(t, instanceapi.CommandResultStatusFailed, cp.answers[database.Id][0].Status)
 	assert.Contains(t, *cp.answers[database.Id][0].Message, "database")
-	assert.Equal(t, instanceapi.Failed, cp.answers[unknown.Id][0].Status)
+	assert.Equal(t, instanceapi.CommandResultStatusFailed, cp.answers[unknown.Id][0].Status)
 }
 
 // A command listed again was not answered yet, not issued again: it is
@@ -162,7 +162,7 @@ func TestCarriesACommandOutOnceEvenWhenItsAnswerIsLost(t *testing.T) {
 
 	assert.Equal(t, first, restartedAtOf(t, kube, "trenova-api"))
 	require.Len(t, cp.answers[cmd.Id], 1)
-	assert.Equal(t, instanceapi.Succeeded, cp.answers[cmd.Id][0].Status)
+	assert.Equal(t, instanceapi.CommandResultStatusSucceeded, cp.answers[cmd.Id][0].Status)
 }
 
 func TestCollectedLogsNameTheirPodAndNeedAComponent(t *testing.T) {
@@ -180,11 +180,11 @@ func TestCollectedLogsNameTheirPodAndNeedAComponent(t *testing.T) {
 	require.NoError(t, r.Run(t.Context(), cp))
 
 	got := cp.answers[withComponent.Id][0]
-	require.Equal(t, instanceapi.Succeeded, got.Status)
+	require.Equal(t, instanceapi.CommandResultStatusSucceeded, got.Status)
 	require.NotNil(t, got.Output)
 	// The fake clientset's log is one line, "fake logs".
 	assert.Equal(t, "trenova-api-1/api: fake logs\n", *got.Output)
-	assert.Equal(t, instanceapi.Failed, cp.answers[without.Id][0].Status)
+	assert.Equal(t, instanceapi.CommandResultStatusFailed, cp.answers[without.Id][0].Status)
 }
 
 func TestNoLineLeavesWithASecretInIt(t *testing.T) {

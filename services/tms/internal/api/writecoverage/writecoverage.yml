@@ -1466,6 +1466,12 @@ writes:
   "POST /api/v1/webhooks/email/resend/:webhookToken/":
     exempt: infrastructure
     reason: "An inbound webhook a provider calls with a signed token, not a person."
+  "POST /api/v1/webhooks/email/system/postmark/":
+    exempt: infrastructure
+    reason: "An inbound webhook Trenova's email provider calls with the system sender's webhook credential, not a person."
+  "POST /api/v1/webhooks/email/system/resend/":
+    exempt: infrastructure
+    reason: "An inbound webhook Trenova's email provider calls, signed with the system sender's webhook secret, not a person."
   "PUT /api/v1/email-profiles/:profileID/":
     exempt: configuration
     reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."
@@ -1657,9 +1663,6 @@ writes:
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
   "POST /api/v1/formula-templates/import":
-    exempt: configuration
-    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
-  "POST /api/v1/formula-templates/install-standards":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
   "POST /api/v1/formula-templates/scaffold-test":
@@ -2822,6 +2825,17 @@ writes:
   "DELETE /api/v1/stored-mileages/:storedMileageID/":
     exempt: infrastructure
     reason: "A stored mileage is a cached routing answer; clearing one only makes the next rating ask the routing provider again."
+
+  # supportaccess
+  "mutation grantSupportAccess":
+    exempt: security
+    reason: "Letting Trenova staff into the organization is a person's decision; no agent, API key or support session may grant it."
+  "mutation revokeSupportAccess":
+    exempt: security
+    reason: "Ending Trenova support access is a person's decision about who may enter the organization."
+  "POST /api/v1/support/enter":
+    exempt: security
+    reason: "A Trenova staff member entering with a signed, single-use assertion; an agent holds no such credential."
 
   # tablechangealert
   "DELETE /api/v1/tca/subscriptions/:id":

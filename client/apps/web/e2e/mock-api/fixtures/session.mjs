@@ -2,7 +2,10 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const RESOURCES_FILE = fileURLToPath(
-  new URL("../../../../../packages/shared/src/types/generated/permission-resources.ts", import.meta.url),
+  new URL(
+    "../../../../../packages/shared/src/types/generated/permission-resources.ts",
+    import.meta.url,
+  ),
 );
 
 const ALL_OPERATIONS = 0x3ffffff;
@@ -52,6 +55,7 @@ export function permissionManifest() {
     permissions,
     routeAccess: {},
     availableOrgs: [ORG],
+    unavailableFeatures: [],
     checksum: "mock",
     expiresAt: Math.floor(Date.now() / 1000) + 86400,
   };

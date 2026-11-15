@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/entitlementservice"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -124,7 +125,8 @@ func repairJournals(
 		Policy: accountingcontrolpolicyservice.New(
 			accountingcontrolpolicyservice.Params{Logger: logger},
 		),
-		Now: timeutils.NowUnix,
+		Features: entitlementservice.NewAllowAll(),
+		Now:      timeutils.NowUnix,
 	})
 
 	report, err := service.Repair(ctx, &journalrepairservice.Request{

@@ -173,7 +173,7 @@ const ADVANCE_OWN_FIELDS = ["amountMinor", "outstandingMinor"] as const;
 
 type MySettlements = MySettlementsQuery["mySettlements"];
 export type PortalSettlementSummary = RootFields<
-  MySettlements["items"][number],
+  NonNullable<MySettlements["items"]>[number],
   (typeof SETTLEMENT_OWN_FIELDS)[number]
 >;
 export type PortalSettlementDetail = RootFields<
@@ -371,7 +371,8 @@ export async function fetchMySettlements(
   });
   return {
     ...data.mySettlements,
-    items: data.mySettlements.items.map((item): PortalSettlementSummary =>
+    // Null when the organization's plan leaves out Driver Pay: there are no settlements to list.
+    items: (data.mySettlements.items ?? []).map((item): PortalSettlementSummary =>
       rootFields(item, "DriverSettlement", SETTLEMENT_OWN_FIELDS),
     ),
   };

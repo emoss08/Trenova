@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,6 +25,7 @@ func TestGrantFingerprintChangesWithAnOperation(t *testing.T) {
 
 	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:   "fingerprint_probe",
+		Feature:    platformcatalog.FeatureCoreTMS,
 		Operations: []permissionspec.OperationDefinition{{Operation: permission.OpRead}},
 	}))
 	added := registry.GrantFingerprint()

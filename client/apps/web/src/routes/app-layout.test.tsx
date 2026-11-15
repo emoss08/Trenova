@@ -34,6 +34,7 @@ const mocks = vi.hoisted(() => ({
     permissions: {},
     routeAccess: {},
     availableOrgs: [{ id: "org_1", name: "Alpha Logistics" }],
+    unavailableFeatures: [],
     checksum: "abc123",
     expiresAt: 1782403304,
   },

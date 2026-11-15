@@ -651,6 +651,41 @@ and the five-minute client poll are only safety nets. Never delete permission ke
 pattern or by holder: holders through inheritance are invisible to such a delete, which is
 the bug the epoch replaced.
 
+## What the plan includes
+
+Every registered resource belongs to one feature (`ResourceDefinition.Feature`,
+`Registry.FeatureOf`), and a feature belongs to the base plan or to one paid add-on
+(`platformcatalog`). The engine refuses a resource whose feature the instance's
+`platformcatalogports.FeatureGate` reports off, for every principal (a person, an
+administrator who holds everything, an API key, an agent) and for reads as well as writes;
+dropping an add-on deletes nothing. A resource the registry does not know is left to the
+role logic. Self-hosted, the gate enables every feature, so nothing changes there.
+
+- The plan is applied at decision time, on top of the cached permissions, through one
+  lookup (`app/onplan`), which the engine asks once per feature per call (`Lookup.Memo`). It
+  is never baked into the permission cache: a plan change takes effect within the gate's own
+  30-second cache, with no epoch bump. A gate error is an error, never an allow.
+  A GraphQL request (HTTP or an agent read) carries one `Memo` in its context
+  (`gqlctx.PlanMemoFrom`): a mapping that withholds a field of a type with no `@kind`, such as
+  the billing queue item's agent review, asks it, so a list of rows asks the gate once.
+- The same lookup decides the records and fields one kind carries of another feature's, on
+  every surface that shows them (`refview`; see "What the plan withholds" in
+  [reference-views.md](reference-views.md#what-the-plan-withholds)). A field of a kind that
+  belongs to another feature is declared in its definition's `FieldFeatures`.
+- `Check` and `CheckBatch` refuse an off-plan resource before any role, scope, policy or
+  attribute evaluation, with `Reason` `not_on_plan` and a `PlanDenial` (feature, its name,
+  the add-on's key and name). `GetResourcePermissions` returns no operations with the same
+  `PlanDenial`; `GetEffectivePermissions` keeps what roles grant (delegation still compares
+  holdings) and marks the off-plan resources with it. The light manifest leaves them out of
+  `permissions` (and so `routeAccess`) and lists every feature that is off in
+  `unavailableFeatures`, in catalog order; its checksum covers that list. The agent paths
+  (`AgentsUsable`, `RoleCoverage`) count an off-plan resource as not granted.
+- A plan denial is not a permission denial. Turn a denied result into an error with
+  `permissionports.DeniedError(result, <the permission error>)`: a plan denial becomes
+  `PLAN_RESTRICTED` naming the add-on (`errortypes.NewFeatureRestrictionError`), anything
+  else stays the permission error you passed. Agent tool dispatch names the add-on in the
+  refusal the model reads.
+
 ## Reading a document
 
 A document needs `document` access and read on the record it hangs off, and one rule on the
@@ -698,3 +733,28 @@ where records are shared from: every Desk bundle (`platformbundles`), and `billi
 `billing.receivables` (`financebundles`), whose invoices and disputes are sent to someone else
 to look at. A new bundle whose people need to pass records on adds the same grant.
 
+
+## Trenova support
+
+On a managed instance a Trenova staff member enters under a grant an administrator made
+([managed-mode.md](managed-mode.md#support-access)). The session's user is the grant's support
+principal, a system-owned users row whose id starts `sup_`; it holds no role and no membership.
+The engine sends every check for such a user to the grant (`getOrComputePermissions` →
+`supportaccessports.Principals`) and never reads role assignments for it: no live grant for that
+organization, or managed mode off, means no permissions at all. A grant's permissions come from
+one rule on the principal type, `supportaccess.Effective` over the registry
+(`identity/domain/supportaccess/policy.go`):
+
+- read-only allows `read` and nothing else;
+- full allows every declared operation except the deny list (users, roles and sign-in settings,
+  API keys, support access itself, stored credentials, bank and factoring remittance details,
+  and `export` on every resource);
+- an operation refused on a child resource is taken off its parent too, since a parent's grant
+  satisfies a check on its child.
+
+Organization scope applies to every kind; access policies still narrow a support session as they
+do anyone. A new resource in Users & security, Organization settings or AI & agents, or one whose
+name says it holds a credential or a way in, must be named denied or reviewed in the policy:
+`TestEverySensitiveResourceIsClassifiedForSupport` fails until it is. `support_access` itself is
+granted by no bundle, never to an API key (`runtimePolicy`) or an agent (`agentceiling`), and its
+resolvers refuse anything but a person of the organization.

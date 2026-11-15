@@ -110,18 +110,10 @@ func (s *Limits) AssertWithinAllowance(
 }
 
 func (s *Limits) AssertWithinPlan(ctx context.Context, tenantInfo pagination.TenantInfo) error {
-	if err := quotaservice.Preflight(ctx, s.Quota, &platformplanports.QuotaRequest{
+	return quotaservice.Preflight(ctx, s.Quota, &platformplanports.QuotaRequest{
 		TenantInfo: tenantInfo,
 		Meter:      platformcatalog.MeterAIAssistantMessages,
 		Quantity:   0,
-	}); err != nil {
-		return err
-	}
-
-	return quotaservice.Preflight(ctx, s.Quota, &platformplanports.QuotaRequest{
-		TenantInfo: tenantInfo,
-		Meter:      platformcatalog.MeterAISpendCents,
-		Quantity:   1,
 	})
 }
 
@@ -135,17 +127,10 @@ func (s *Limits) AssertMayAsk(
 	if err := s.AssertWithinAllowance(ctx, userID, tenant); err != nil {
 		return err
 	}
-	if err := quotaservice.Preflight(ctx, s.Quota, &platformplanports.QuotaRequest{
-		TenantInfo: tenant,
-		Meter:      platformcatalog.MeterAIAssistantMessages,
-		Quantity:   1,
-	}); err != nil {
-		return err
-	}
 
 	return quotaservice.Preflight(ctx, s.Quota, &platformplanports.QuotaRequest{
 		TenantInfo: tenant,
-		Meter:      platformcatalog.MeterAISpendCents,
+		Meter:      platformcatalog.MeterAIAssistantMessages,
 		Quantity:   1,
 	})
 }

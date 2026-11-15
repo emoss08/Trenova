@@ -39,7 +39,7 @@ import (
 // delivery path. None of it is reimplemented here; these tools are a schema over
 // it, which is also why the interface is this narrow.
 type Runner interface {
-	ListCanned() []*canned.Entry
+	CannedLibrary(ctx context.Context, req *reporting.Request) ([]reporting.CannedReport, error)
 	GetCanned(key string) (*canned.Entry, error)
 	RunReport(ctx context.Context, req *reporting.RunReportRequest) (*report.ReportRun, error)
 	GetRun(ctx context.Context, req *reporting.GetRunRequest) (*report.ReportRun, error)
@@ -97,6 +97,12 @@ type reportCatalogRow struct {
 	// which left the model choosing from a list it had been told not to
 	// trust.
 	Takes []string `json:"takes,omitempty"`
+	// Available is false for a built-in report that reads a table of an
+	// add-on the plan leaves out; Requires names the add-on and Note says it
+	// in the plan's words, so the model answers that rather than running it.
+	Available bool   `json:"available"`
+	Requires  string `json:"requires,omitempty"`
+	Note      string `json:"note,omitempty"`
 }
 
 type listReportsTool struct {
@@ -160,9 +166,17 @@ func (t *listReportsTool) Query(
 	criteria.Text(query)
 	criteria.Field("category", category)
 
-	entries := t.reports.ListCanned()
+	request := RequestFor(params)
+	library, err := t.reports.CannedLibrary(ctx, &request)
+	if err != nil {
+		return nil, err
+	}
+	entries := make([]*canned.Entry, 0, len(library))
+	for _, report := range library {
+		entries = append(entries, report.Entry)
+	}
 	saved, err := t.reports.ListDefinitions(ctx, &reporting.ListDefinitionsRequest{
-		Request:  RequestFor(params),
+		Request:  request,
 		Statuses: listableDefinitionStatuses,
 		Limit:    maxSavedReportsListed,
 	})
@@ -171,15 +185,16 @@ func (t *listReportsTool) Query(
 	}
 
 	words := stringutils.SearchWords(query)
-	rows := make([]reportCatalogRow, 0, len(entries)+len(saved))
-	for _, entry := range entries {
+	rows := make([]reportCatalogRow, 0, len(library)+len(saved))
+	for _, report := range library {
+		entry := report.Entry
 		if category != "" && !strings.EqualFold(entry.Category, category) {
 			continue
 		}
 		if !stringutils.MatchesWordPrefixes(words, entry.Name, entry.Description, entry.Key) {
 			continue
 		}
-		rows = append(rows, toCatalogRow(entry))
+		rows = append(rows, toCannedRow(report))
 	}
 	for _, definition := range saved {
 		if category != "" && !strings.EqualFold(definition.Category, category) {
@@ -288,7 +303,31 @@ func toCatalogRow(entry *canned.Entry) reportCatalogRow {
 		Kind:        "canned",
 		Format:      string(entry.DefaultFormat),
 		Takes:       parameterNames(entry.Definition),
+		Available:   true,
 	}
+}
+
+// toCannedRow is a built-in report as the library offers it on this plan.
+func toCannedRow(report reporting.CannedReport) reportCatalogRow {
+	row := toCatalogRow(report.Entry)
+	if report.Available || report.Plan == nil {
+		return row
+	}
+	row.Available = false
+	row.Requires = report.Plan.AddOnName
+	row.Note = fmt.Sprintf("%s is %s", report.Entry.Name, planPart(report.Plan))
+
+	return row
+}
+
+// planPart words what the plan leaves out: "part of the Accounting & Cash
+// add-on, which is not on your plan".
+func planPart(denial *permissionports.PlanDenial) string {
+	if denial.AddOnName == "" {
+		return "not available on your organization's plan"
+	}
+
+	return fmt.Sprintf("part of the %s add-on, which is not on your plan", denial.AddOnName)
 }
 
 // parameterNames is what a listing says about parameters: that they exist
@@ -315,6 +354,7 @@ func toSavedRow(definition *report.ReportDefinition, actor pulid.ID) reportCatal
 		Editable:     definition.OwnerID == actor,
 		Format:       string(definition.DefaultFormat),
 		Takes:        parameterNames(definition.Definition),
+		Available:    true,
 	}
 }
 

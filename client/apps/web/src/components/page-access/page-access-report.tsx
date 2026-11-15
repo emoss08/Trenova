@@ -143,9 +143,16 @@ export function PageAccessReport({ access }: { access: PageAccess }) {
   );
 }
 
+// A kind the organization's plan leaves out carries the server's plan denial: the row names its
+// add-on rather than asking for a read no role can grant.
 function PageAccessKindRow({ kind }: { kind: PageAccessKind }) {
   const t = useT();
+  const offPlan = kind.planDenial;
   const withheld = kind.fields.filter((field) => field.decision !== "VISIBLE");
+  const decisionLabel = (decision: PageAccessKind["fields"][number]["decision"]) =>
+    offPlan && decision === "WITHHELD_PLAN"
+      ? t("Part of {0}", offPlan.addOnName)
+      : PAGE_ACCESS_DECISION_LABELS[decision];
 
   return (
     <li className="flex flex-col gap-1.5 px-3 py-2" data-kind={kind.resource}>
@@ -156,9 +163,15 @@ function PageAccessKindRow({ kind }: { kind: PageAccessKind }) {
             {PAGE_ACCESS_USE_LABELS[kind.use]}
           </Badge>
         </div>
-        <Badge variant={kind.canRead ? "success" : kind.use === "READ" ? "danger" : "neutral"}>
-          {kind.canRead ? t("Can read") : t("No read")}
-        </Badge>
+        {offPlan ? (
+          <Badge variant="neutral" title={t("Not on your plan")}>
+            {t("Part of {0}", offPlan.addOnName)}
+          </Badge>
+        ) : (
+          <Badge variant={kind.canRead ? "success" : kind.use === "READ" ? "danger" : "neutral"}>
+            {kind.canRead ? t("Can read") : t("No read")}
+          </Badge>
+        )}
       </div>
       {withheld.length > 0 ? (
         <ul className="flex flex-wrap gap-1" aria-label={t("Withheld fields")}>
@@ -166,10 +179,10 @@ function PageAccessKindRow({ kind }: { kind: PageAccessKind }) {
             <li
               key={field.name}
               className="bg-warning-subtle text-warning-subtle-foreground border-warning-border rounded-badge border px-1.5 py-0.5 font-mono text-2xs"
-              title={PAGE_ACCESS_DECISION_LABELS[field.decision]}
+              title={decisionLabel(field.decision)}
             >
               {field.name}
-              <span className="sr-only"> {PAGE_ACCESS_DECISION_LABELS[field.decision]}</span>
+              <span className="sr-only"> {decisionLabel(field.decision)}</span>
             </li>
           ))}
         </ul>

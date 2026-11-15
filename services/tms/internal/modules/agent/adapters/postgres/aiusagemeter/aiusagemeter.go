@@ -15,10 +15,7 @@ import (
 	"go.uber.org/fx"
 )
 
-const (
-	hour        = 3600
-	centsPerUSD = 100
-)
+const hour = 3600
 
 type Params struct {
 	fx.In
@@ -29,68 +26,34 @@ type Params struct {
 type Result struct {
 	fx.Out
 
-	Spend       managedusageports.HourlyCounter `group:"managed_hourly_counters"`
-	Extractions managedusageports.HourlyCounter `group:"managed_hourly_counters"`
+	Pages managedusageports.HourlyCounter `group:"managed_hourly_counters"`
 }
 
 func New(p Params) Result {
-	return Result{
-		Spend:       &spend{db: p.DB},
-		Extractions: &extractions{db: p.DB},
-	}
+	return Result{Pages: &pages{db: p.DB}}
 }
 
-type spend struct {
+type pages struct {
 	db *postgres.Connection
 }
 
-func (c *spend) Meter() platformcatalog.MeterKey {
-	return platformcatalog.MeterAISpendCents
+func (c *pages) Meter() platformcatalog.MeterKey {
+	return platformcatalog.MeterDocumentIntelligencePages
 }
 
-func (c *spend) CountByHour(
-	ctx context.Context,
-	req *managedusageports.HourCountRequest,
-) ([]managedusageports.HourCount, error) {
-	ctx = dbscope.WithSystem(ctx, "add up the AI spend of each hour on this managed instance")
-	return dbtx.Read(ctx, c.db, func(ctx context.Context) ([]managedusageports.HourCount, error) {
-		u := aiusagedb.AIUsageRecords
-		cents := keel.CastInt64(
-			keel.NumericOf(u.CostUSD.Sum()).
-				Coalesce(0).
-				Mul(keel.CastNumeric(keel.Int64(centsPerUSD))).
-				Ceil(),
-		)
-		return byHour(ctx, c.db.Keel(ctx), &hourly{
-			meter:  c.Meter(),
-			value:  cents,
-			filter: u.CostUSD.IsNotNull(),
-			req:    req,
-		})
-	})
-}
-
-type extractions struct {
-	db *postgres.Connection
-}
-
-func (c *extractions) Meter() platformcatalog.MeterKey {
-	return platformcatalog.MeterDocumentAIExtractions
-}
-
-func (c *extractions) CountByHour(
+func (c *pages) CountByHour(
 	ctx context.Context,
 	req *managedusageports.HourCountRequest,
 ) ([]managedusageports.HourCount, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
-		"count the Document Intelligence extractions of each hour on this managed instance",
+		"add up the pages Document Intelligence extracted in each hour on this managed instance",
 	)
 	return dbtx.Read(ctx, c.db, func(ctx context.Context) ([]managedusageports.HourCount, error) {
 		u := aiusagedb.AIUsageRecords
 		return byHour(ctx, c.db.Keel(ctx), &hourly{
 			meter: c.Meter(),
-			value: keel.CastInt64(keel.Count()),
+			value: keel.CastInt64(keel.NumericOf(u.Pages.Sum()).Coalesce(0)),
 			filter: keel.And(
 				keel.BoolOf(u.Succeeded),
 				u.Feature.Eq(aiusage.FeatureDocumentIntelligenceExtract),

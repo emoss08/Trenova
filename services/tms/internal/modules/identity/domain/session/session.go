@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,6 +55,9 @@ type Session struct {
 	RiskDecisionID        pulid.ID   `json:"riskDecisionId,omitempty"`
 	IsPortalUser          bool       `json:"isPortalUser"`
 	IssuedBySignIn        bool       `json:"issuedBySignIn,omitempty"`
+	// Support binds a Trenova support session to its grant. It never outlives the grant, and
+	// sign-in checks the grant is live on every request.
+	Support *authctx.Support `json:"support,omitempty"`
 
 	RoleActivationRequired  bool   `json:"-"`
 	AuthenticatedSecretHash string `json:"-"`

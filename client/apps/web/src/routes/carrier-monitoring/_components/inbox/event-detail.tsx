@@ -176,17 +176,19 @@ function CarrierStanding({ carrierId }: { carrierId: string }) {
     <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
       <RiskLabel level={carrier.intelRiskLevel} />
       <span aria-hidden>·</span>
-      <span className={cn("tabular-nums", carrier.intelBlockingCount > 0 && "text-foreground")}>
+      <span
+        className={cn("tabular-nums", (carrier.intelBlockingCount ?? 0) > 0 && "text-foreground")}
+      >
         {t(
           "{0, plural, =0 {No blockers} one {# blocker} other {# blockers}}",
-          carrier.intelBlockingCount,
+          carrier.intelBlockingCount ?? 0,
         )}
       </span>
       <span aria-hidden>·</span>
       <span className="tabular-nums">
         {t(
           "{0, plural, =0 {No open changes} one {# open change} other {# open changes}}",
-          carrier.openIntelEventCount,
+          carrier.openIntelEventCount ?? 0,
         )}
       </span>
       {carrier.intelReviewRequired ? (

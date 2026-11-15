@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,13 +24,15 @@ const readOnlyExtensionName = "PlanReadOnlyGuard"
 type ReadOnlyParams struct {
 	fx.In
 
-	Plans  platformplanports.PlanService
-	Logger *zap.Logger
+	Plans    platformplanports.PlanService
+	Features platformcatalogports.FeatureGate
+	Logger   *zap.Logger
 }
 
 type ReadOnlyExtension struct {
-	plans platformplanports.PlanService
-	l     *zap.Logger
+	plans    platformplanports.PlanService
+	features platformcatalogports.FeatureGate
+	l        *zap.Logger
 }
 
 var _ interface {
@@ -39,8 +42,9 @@ var _ interface {
 
 func NewReadOnlyExtension(p ReadOnlyParams) *ReadOnlyExtension {
 	return &ReadOnlyExtension{
-		plans: p.Plans,
-		l:     p.Logger.Named("api.graphql.readonly"),
+		plans:    p.Plans,
+		features: p.Features,
+		l:        p.Logger.Named("api.graphql.readonly"),
 	}
 }
 
@@ -62,16 +66,12 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 	if authctx.UsesSupersededSessionSecret(ctx) {
 		return supersededSecretRefusal(ctx)
 	}
-	if !e.plans.EnforcesPlans() {
-		return nil
-	}
-
 	authCtx, ok := gqlctx.AuthContext(ctx)
 	if !ok || authCtx == nil || authCtx.OrganizationID.IsNil() || authCtx.BusinessUnitID.IsNil() {
 		return nil
 	}
 
-	err := planservice.Admit(ctx, e.plans, &planservice.AdmissionRequest{
+	err := planservice.Admit(ctx, e.plans, e.features, &planservice.AdmissionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  authCtx.OrganizationID,
 			BuID:   authCtx.BusinessUnitID,
@@ -84,7 +84,7 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 		return nil
 	}
 
-	e.l.Debug("GraphQL mutation refused by the organization's plan",
+	e.l.Debug("GraphQL mutation refused by the plan",
 		zap.String("operation", opCtx.OperationName),
 		zap.String("organizationId", authCtx.OrganizationID.String()),
 		zap.Error(err),

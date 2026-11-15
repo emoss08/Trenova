@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -71,6 +72,7 @@ type Params struct {
 	Schema      Schema
 	Loaders     *loadercore.Registry
 	Permissions permissionports.PermissionEngine
+	Plan        *onplan.Lookup
 }
 
 type Reader struct {
@@ -78,6 +80,7 @@ type Reader struct {
 	operations  map[string]Operation
 	loaders     *loadercore.Registry
 	permissions permissionports.PermissionEngine
+	plan        *onplan.Lookup
 	tracer      trace.Tracer
 }
 
@@ -103,6 +106,7 @@ func New(p Params) *Reader { //nolint:gocritic // fx params are passed by value
 		operations:  operations,
 		loaders:     p.Loaders,
 		permissions: p.Permissions,
+		plan:        p.Plan,
 		tracer:      otel.Tracer(tracerName),
 	}
 }
@@ -136,6 +140,7 @@ func (r *Reader) Read(
 	ctx = gqlctx.WithAuthContext(ctx, auth)
 	ctx = gqlctx.WithRequestID(ctx, req.RequestID)
 	ctx = gqlctx.WithPermissionMemo(ctx, gqlctx.NewPermissionMemo())
+	ctx = gqlctx.WithPlanMemo(ctx, r.plan.Memo())
 	ctx = gqlctx.WithResponseStatus(ctx, status)
 	ctx = gqlctx.WithFieldCeiling(ctx, ceiling)
 	groupCtx := ctx
@@ -161,6 +166,7 @@ func (r *Reader) Read(
 	span.SetAttributes(
 		attribute.Int("trenova.graphql.cost", cost),
 		attribute.Int("trenova.graphql.withheld", len(result.Withheld)),
+		attribute.Int("trenova.graphql.withheld_by_plan", len(result.WithheldByPlan)),
 	)
 	if len(result.Errors) > 0 {
 		span.SetAttributes(attribute.StringSlice("trenova.graphql.error_codes", errorCodes(result)))
@@ -272,7 +278,10 @@ func decode(
 	response *graphql.Response,
 	ceiling *gqlctx.FieldCeiling,
 ) (*graphqlreadports.GraphQLReadResult, error) {
-	result := &graphqlreadports.GraphQLReadResult{Withheld: ceiling.Withheld()}
+	result := &graphqlreadports.GraphQLReadResult{
+		Withheld:       ceiling.Withheld(),
+		WithheldByPlan: withheldByPlan(ceiling),
+	}
 	if response == nil {
 		return result, nil
 	}
@@ -287,6 +296,19 @@ func decode(
 	result.Errors = readErrors(response.Errors)
 
 	return result, nil
+}
+
+func withheldByPlan(ceiling *gqlctx.FieldCeiling) []graphqlreadports.WithheldByPlan {
+	entries := ceiling.WithheldByPlan()
+	if len(entries) == 0 {
+		return nil
+	}
+	out := make([]graphqlreadports.WithheldByPlan, 0, len(entries))
+	for _, entry := range entries {
+		out = append(out, graphqlreadports.WithheldByPlan{Path: entry.Path, Feature: entry.Feature})
+	}
+
+	return out
 }
 
 func readErrors(list gqlerror.List) []graphqlreadports.GraphQLReadError {

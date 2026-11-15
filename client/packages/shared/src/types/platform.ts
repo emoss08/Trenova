@@ -67,6 +67,8 @@ export type SessionIdlePolicy = z.infer<typeof sessionIdlePolicySchema>;
 
 export const publicConfigSchema = z.object({
   platformMode: platformModeSchema.default("self_hosted"),
+  /** Whether Trenova Cloud runs this instance and sells its plan (Managed Trenova). */
+  managed: z.boolean().catch(false).default(false),
   signupEnabled: z.boolean().catch(false).default(false),
   turnstileSiteKey: z
     .string()
@@ -86,6 +88,7 @@ export type PublicConfig = z.infer<typeof publicConfigSchema>;
 
 export const SELF_HOSTED_PUBLIC_CONFIG: Readonly<PublicConfig> = {
   platformMode: "self_hosted",
+  managed: false,
   signupEnabled: false,
   turnstileSiteKey: "",
   termsUrl: "",

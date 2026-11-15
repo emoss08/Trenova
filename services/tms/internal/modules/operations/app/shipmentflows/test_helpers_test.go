@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -50,6 +51,7 @@ func newCalculator(
 	fuel.EXPECT().ResolveShipmentCharge(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 
 	return shipmentcommercial.New(shipmentcommercial.Params{
+		Features:           plantest.AllFeatures(),
 		Logger:             zap.NewNop(),
 		RateEngine:         engine,
 		AccessorialRepo:    accessorialRepo,

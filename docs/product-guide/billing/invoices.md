@@ -3,6 +3,7 @@ path: /billing/invoices
 aliases: [bills, draft invoices, post invoice, send invoice, credit memo, void invoice, invoice dispute]
 related:
   - /billing/queue
+  - /billing/invoice-register
   - /billing/pending-approvals
   - /billing/reconciliation-exceptions
   - /billing/adjustment-batches
@@ -57,7 +58,7 @@ Keywords: contested invoice, short pay dispute, rate discrepancy
 3. When it is settled, select **Resolve** on the dispute and record the **Resolution**, or **Withdraw** to drop it without an outcome.
 
 ## Notes
-Opening the page needs read access to invoices. Voiding needs permission to cancel invoices, and sending by EDI needs permission to update them.
+Opening the page needs read access to invoices. The amounts of the payments and credits applied to an invoice need read access to customer payments, and its EDI 210 details read access to EDI; without that access they show as hidden. Voiding needs permission to cancel invoices, and sending by EDI needs permission to update them.
 
 Posting finalizes the invoice, records it in accounting and marks its billing queue item as posted. Only a posted invoice can be sent by EDI.
 

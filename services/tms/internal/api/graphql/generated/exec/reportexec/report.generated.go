@@ -32,6 +32,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "ReportDefinitionRevision", Implementors: []string{"ReportDefinitionRevision"}},
 		{Name: "ReportDisplayRule", Implementors: []string{"ReportDisplayRule"}},
 		{Name: "ReportFieldProtection", Implementors: []string{"ReportFieldProtection"}},
+		{Name: "ReportPlanDenial", Implementors: []string{"ReportPlanDenial"}},
+		{Name: "ReportPlanWithheld", Implementors: []string{"ReportPlanWithheld"}},
 		{Name: "ReportPreview", Implementors: []string{"ReportPreview"}},
 		{Name: "ReportPreviewColumn", Implementors: []string{"ReportPreviewColumn"}},
 		{Name: "ReportRun", Implementors: []string{"ReportRun"}},
@@ -130,6 +132,26 @@ var Shard = &gqlexec.Shard{
 					return obj.Definition, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:     "available",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CannedReport)
+					return obj.Available, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "planDenial",
+				HasChild:  true,
+				ChildType: "ReportPlanDenial",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CannedReport)
+					return obj.PlanDenial, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOReportPlanDenial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPlanDenial),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -623,6 +645,17 @@ var Shard = &gqlexec.Shard{
 					return obj.Entities, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNReportCatalogEntity2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportCatalogEntityᚄ),
+			},
+			{
+				Name:      "withheldByPlan",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ReportPlanWithheld",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalog)
+					return obj.WithheldByPlan, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNReportPlanWithheld2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPlanWithheldᚄ),
 			},
 		}},
 		{Object: "ReportCatalogEdge", Fields: []*gqlexec.Field{
@@ -1700,6 +1733,110 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
+		{Object: "ReportPlanDenial", Fields: []*gqlexec.Field{
+			{
+				Name:     "feature",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPlanDenial)
+					return obj.Feature, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "featureName",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPlanDenial)
+					return obj.FeatureName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "addOn",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPlanDenial)
+					return obj.AddOn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "addOnName",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPlanDenial)
+					return obj.AddOnName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "ReportPlanWithheld", Fields: []*gqlexec.Field{
+			{
+				Name:     "entity",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPlanWithheld)
+					return obj.Entity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "entityLabel",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPlanWithheld)
+					return obj.EntityLabel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "name",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPlanWithheld)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPlanWithheld)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "edge",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPlanWithheld)
+					return obj.Edge, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "denial",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ReportPlanDenial",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportPlanWithheld)
+					return obj.Denial, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNReportPlanDenial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPlanDenial),
+			},
+		}},
 		{Object: "ReportPreview", Fields: []*gqlexec.Field{
 			{
 				Name:      "columns",
@@ -2161,6 +2298,16 @@ var Shard = &gqlexec.Shard{
 					return obj.Withheld, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:      "withheldByPlan",
+				HasChild:  true,
+				ChildType: "ReportPlanDenial",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskCard)
+					return obj.WithheldByPlan, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOReportPlanDenial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPlanDenial),
 			},
 			{
 				Name:      "previous",
@@ -5486,6 +5633,30 @@ func marshalNReportFieldAccess2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return v
 }
 
+func marshalNReportPlanDenial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPlanDenial(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportPlanDenial) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportPlanDenial", v)
+}
+
+func marshalNReportPlanWithheld2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPlanWithheldᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ReportPlanWithheld) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ReportPlanWithheld]{
+		Elem:        marshalNReportPlanWithheld2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPlanWithheld,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNReportPlanWithheld2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPlanWithheld(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportPlanWithheld) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportPlanWithheld", v)
+}
+
 func marshalNReportPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportPreview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -5706,6 +5877,13 @@ func marshalOReportFieldProtection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ReportFieldProtection", v)
+}
+
+func marshalOReportPlanDenial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPlanDenial(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportPlanDenial) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportPlanDenial", v)
 }
 
 func marshalOReportPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportPreview) graphql.Marshaler {

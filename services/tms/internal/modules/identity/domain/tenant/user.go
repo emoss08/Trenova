@@ -99,6 +99,8 @@ type User struct {
 	CurrentOrganization *Organization              `json:"-"                     keel:"belongs:current_organization_id"`
 	Memberships         []*OrganizationMembership  `json:"memberships,omitempty" keel:"many:user_id"`
 	Assignments         []*rbac.UserRoleAssignment `json:"assignments,omitempty" keel:"many:user_id"`
+
+	OrganizationSetup *OrganizationSetup `json:"organizationSetup,omitempty" keel:"-"`
 }
 
 func (u *User) BeforeCreate(_ context.Context) error {

@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -87,6 +88,7 @@ type Params struct {
 	OccurrenceRepo detentionports.DetentionOccurrenceRepository
 	AgreementRepo  rateagreementports.RateAgreementRepository
 	Rechecks       billingqueueports.RecheckRequester
+	Features       platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -183,6 +185,7 @@ func NewService(p Params) *Service {
 			OccurrenceRepo: p.OccurrenceRepo,
 			AgreementRepo:  p.AgreementRepo,
 			InvoiceRepo:    p.InvoiceRepo,
+			Features:       p.Features,
 		}),
 	}
 }

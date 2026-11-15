@@ -30,7 +30,7 @@ func allowance(meter, app string, unit instanceapi.SpecAllowanceUnit) instanceap
 
 var allowances = []instanceapi.SpecAllowance{
 	allowance("shipments", "shipments.total", instanceapi.SpecAllowanceUnitCount),
-	allowance("ai_credits", "ai.spend_cents", instanceapi.SpecAllowanceUnitCents),
+	allowance("organizations", "organizations.total", instanceapi.SpecAllowanceUnitCount),
 	allowance("storage", "documents.storage_bytes", instanceapi.SpecAllowanceUnitBytes),
 	allowance("users", "", instanceapi.SpecAllowanceUnitCount),
 }
@@ -61,11 +61,11 @@ func TestMapsReadingsToCatalogMeters(t *testing.T) {
 			name:       "unmapped and negative dropped",
 			allowances: allowances,
 			in: []tms.Reading{
-				{Meter: "document_intelligence.extractions", Hour: hour, Quantity: 3},
-				{Meter: "ai.spend_cents", Hour: hour, Quantity: -1},
-				{Meter: "ai.spend_cents", Hour: hour.Add(-time.Hour), Quantity: 0},
+				{Meter: "document_intelligence.pages", Hour: hour, Quantity: 3},
+				{Meter: "organizations.total", Hour: hour, Quantity: -1},
+				{Meter: "organizations.total", Hour: hour.Add(-time.Hour), Quantity: 0},
 			},
-			want:    []instanceapi.UsageReading{{Meter: "ai_credits", Hour: hour.Add(-time.Hour)}},
+			want:    []instanceapi.UsageReading{{Meter: "organizations", Hour: hour.Add(-time.Hour)}},
 			dropped: 2,
 		},
 		{
@@ -223,7 +223,7 @@ func TestRelaysUsageBothWays(t *testing.T) {
 	for h := current.Add(-2 * time.Hour); !h.After(current); h = h.Add(time.Hour) {
 		tm.readings = append(tm.readings,
 			tms.Reading{Meter: "shipments.total", Hour: h, Quantity: 40},
-			tms.Reading{Meter: "document_intelligence.extractions", Hour: h, Quantity: 2},
+			tms.Reading{Meter: "document_intelligence.pages", Hour: h, Quantity: 2},
 		)
 	}
 	tm.readings = append(

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateengine"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -23,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -52,6 +54,7 @@ type StackOptions struct {
 	Hydrator   ratequoteports.ShipmentRatingHydrator
 	Agreements *rateagreementportsmock.MockRateAgreementRepository
 	Catalog    []*accessorialcharge.AccessorialCharge
+	Features   platformcatalogports.FeatureGate
 }
 
 type NoHydration struct{}
@@ -158,6 +161,11 @@ func NewStack(t *testing.T, opts StackOptions) *Stack {
 		Return(opts.Catalog, nil).
 		Maybe()
 
+	features := opts.Features
+	if features == nil {
+		features = plantest.AllFeatures()
+	}
+
 	stack.Engine = rateengine.New(rateengine.Params{
 		Logger:        zap.NewNop(),
 		AgreementRepo: agreements,
@@ -170,6 +178,7 @@ func NewStack(t *testing.T, opts StackOptions) *Stack {
 		Exchange:      exchangerateportsmock.NewMockExchangeRateService(t),
 		ModeProfile:   noModeProfile{},
 		Hydrator:      hydrator,
+		Features:      features,
 	})
 
 	return stack

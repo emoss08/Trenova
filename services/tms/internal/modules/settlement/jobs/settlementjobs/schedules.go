@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -18,6 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "settlement-batch-generation",
+			Feature:       platformcatalog.FeatureSettlement,
 			Description:   "Auto-generate driver settlement batches for closed pay periods",
 			Spec:          schedule.Every(time.Hour),
 			Workflow:      GenerateSettlementBatchesWorkflow,
@@ -29,6 +31,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "escrow-interest-accrual",
+			Feature:       platformcatalog.FeatureSettlement,
 			Description:   "Accrue quarterly escrow interest per 49 CFR 376.12(k)",
 			Spec:          schedule.Every(24 * time.Hour),
 			Workflow:      AccrueEscrowInterestWorkflow,

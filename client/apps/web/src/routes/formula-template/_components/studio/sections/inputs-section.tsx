@@ -11,6 +11,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { FormProvider, useWatch } from "react-hook-form";
 import { useStudio } from "../studio-context";
 import { SectionHead } from "./section-head";
+import { useStudioNova } from "@/components/tariff-studio/use-studio-nova";
 
 /**
  * The tariff's contract interface, read from its `input` declarations: each input with its
@@ -20,6 +21,7 @@ import { SectionHead } from "./section-head";
  */
 export function InputsSection() {
   const t = useT();
+  const nova = useStudioNova();
   const { check, errors, previewInputs, reveal, draftContent, applyFix } = useStudio();
   const declarations = check.inputs;
   const undescribed = declarations.filter((declaration) => !declaration.doc).length;
@@ -52,7 +54,7 @@ export function InputsSection() {
           "What a rate agreement sets for this tariff. The values here only price the preview.",
         )}
       >
-        {undescribed > 0 && (
+        {nova && undescribed > 0 && (
           <NovaButton
             busy={describe.isPending}
             disabled={errors > 0 || describe.isPending}

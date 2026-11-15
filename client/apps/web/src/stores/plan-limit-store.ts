@@ -1,4 +1,9 @@
-import { SIGNUPS_PAUSED_REASON, type PlanLimitNotice } from "@trenova/shared/lib/plan-limit";
+import {
+  SIGNUPS_PAUSED_REASON,
+  planRestrictionOfNotice,
+  type PlanLimitNotice,
+  type PlanLimitRequest,
+} from "@trenova/shared/lib/plan-limit";
 import { create } from "zustand";
 
 /**
@@ -11,7 +16,7 @@ export const PLAN_LIMIT_QUIET_MS = 8_000;
 export function planLimitKey(notice: PlanLimitNotice): string {
   return notice.kind === "quota"
     ? `quota:${notice.meter}`
-    : `restricted:${notice.capability}:${notice.reason}`;
+    : `restricted:${notice.feature}:${notice.reason}`;
 }
 
 export type PlanLimitDecision = "open" | "absorb" | "ignore";
@@ -22,23 +27,30 @@ export type PlanLimitDecision = "open" | "absorb" | "ignore";
  * - "absorb" leaves the dialog as it is — it is already open, or was just dismissed
  *   for this same limit — but still counts as explained, so no toast repeats it;
  * - "ignore" leaves it to the caller entirely: nobody is signed in (a signup page
- *   explains its own refusals), or the refusal is the signup wait list, which is not
- *   a limit on an organization.
+ *   explains its own refusals), the refusal is the signup wait list, which is not
+ *   a limit on an organization, or an add-on refused a read: the page or section that
+ *   asked explains it in place, naming the add-on (its error state, the route's error
+ *   boundary), so a page that cannot load never also opens a dialog.
  */
 export function decidePlanLimit({
   notice,
+  request,
   isAuthenticated,
   openNotice,
   lastDismissed,
   now,
 }: {
   notice: PlanLimitNotice;
+  request: PlanLimitRequest;
   isAuthenticated: boolean;
   openNotice: PlanLimitNotice | null;
   lastDismissed: { key: string; at: number } | null;
   now: number;
 }): PlanLimitDecision {
   if (!isAuthenticated) {
+    return "ignore";
+  }
+  if (request === "read" && planRestrictionOfNotice(notice) !== null) {
     return "ignore";
   }
   if (notice.kind === "restricted" && notice.reason === SIGNUPS_PAUSED_REASON) {

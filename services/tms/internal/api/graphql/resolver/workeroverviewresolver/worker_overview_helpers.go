@@ -59,7 +59,10 @@ func (r *Deps) OverviewSections(
 	}
 }
 
-// AttentionAccess is what the home tile may count for the reader. Leave is
+// AttentionAccess is what the home tile may count for the reader. The PTO
+// liability and the overdue training count each follow their own resource, and
+// the permission engine refuses both when the plan leaves out their HR Suite
+// feature. Leave is
 // counted across their team when their leave grant reaches only their team.
 func (r *Deps) AttentionAccess(
 	ctx context.Context,
@@ -73,6 +76,13 @@ func (r *Deps) AttentionAccess(
 			permission.OpRead,
 		),
 		Leave: r.HasPermission(ctx, authCtx, permission.ResourceWorkerLeave, permission.OpRead),
+		PTO:   r.HasPermission(ctx, authCtx, permission.ResourceWorkerPTO, permission.OpRead),
+		Training: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceWorkerTraining,
+			permission.OpRead,
+		),
 	}
 	if !access.Leave {
 		return access, nil

@@ -25,6 +25,7 @@ func TestNewScheduler_WithProviders(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -43,6 +44,7 @@ func TestNewScheduler_WithProviders(t *testing.T) {
 	s := NewScheduler(SchedulerParams{
 		Client:         mc,
 		TemporalConfig: &temporalconfig.Config{},
+		Features:       allOn(),
 		Logger:         logger,
 		LC:             lc,
 		Providers:      []Provider{provider},
@@ -68,6 +70,7 @@ func TestNewScheduler_NoProviders(t *testing.T) {
 	s := NewScheduler(SchedulerParams{
 		Client:         mc,
 		TemporalConfig: &temporalconfig.Config{},
+		Features:       allOn(),
 		Logger:         logger,
 		LC:             lc,
 		Providers:      []Provider{},
@@ -87,14 +90,16 @@ func TestScheduler_Start_NoProviders(t *testing.T) {
 		scheduleClient: &mockScheduleClient{},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 
 	s := &Scheduler{
 		reconciler: reconciler,
 		registry:   registry,
 		config:     &temporalconfig.Config{},
 		logger:     logger.Named("scheduler"),
+		interval:   time.Hour,
 	}
+	t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
 	err := s.Start(t.Context())
 	assert.NoError(t, err)
@@ -113,6 +118,7 @@ func TestScheduler_Start_WithProviders_Success(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -127,14 +133,16 @@ func TestScheduler_Start_WithProviders_Success(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 
 	s := &Scheduler{
 		reconciler: reconciler,
 		registry:   registry,
 		config:     &temporalconfig.Config{},
 		logger:     logger.Named("scheduler"),
+		interval:   time.Hour,
 	}
+	t.Cleanup(func() { _ = s.Stop(context.Background()) })
 
 	err := s.Start(t.Context())
 	assert.NoError(t, err)
@@ -160,7 +168,7 @@ func TestScheduler_Start_WithProviders_Error(t *testing.T) {
 		scheduleClient: &mockScheduleClient{},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 
 	s := &Scheduler{
 		reconciler: reconciler,
@@ -241,7 +249,7 @@ func TestScheduler_GetReconciler(t *testing.T) {
 		scheduleClient: &mockScheduleClient{},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 
 	s := &Scheduler{
 		reconciler: reconciler,
@@ -266,6 +274,7 @@ func TestScheduler_ForceReconcile(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -280,7 +289,7 @@ func TestScheduler_ForceReconcile(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 
 	s := &Scheduler{
 		reconciler: reconciler,
@@ -310,6 +319,7 @@ func TestScheduler_ForceReconcile_Error(t *testing.T) {
 				Spec:      Every(30 * time.Minute),
 				Workflow:  dummyWorkflow,
 				TaskQueue: "test-queue",
+				Feature:   testFeature,
 			},
 		},
 	}
@@ -321,7 +331,7 @@ func TestScheduler_ForceReconcile_Error(t *testing.T) {
 		},
 	}
 
-	reconciler := NewReconciler(mc, registry, logger)
+	reconciler := NewReconciler(mc, registry, allOn(), logger)
 
 	s := &Scheduler{
 		reconciler: reconciler,

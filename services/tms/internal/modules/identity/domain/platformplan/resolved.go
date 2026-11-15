@@ -63,14 +63,6 @@ func (r *ResolvedPlan) Limit(meter platformcatalog.MeterKey) (Limit, bool) {
 	return r.Plan.Limit(meter)
 }
 
-func (r *ResolvedPlan) Allows(capability Capability) bool {
-	if r == nil {
-		return true
-	}
-
-	return r.Plan.Allows(capability)
-}
-
 func (r *ResolvedPlan) AllowsWrites() bool {
 	if !r.IsManaged() {
 		return true

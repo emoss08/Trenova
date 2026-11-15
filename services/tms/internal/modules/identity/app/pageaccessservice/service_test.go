@@ -5,13 +5,16 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pageaccess"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -83,12 +86,24 @@ func newService(
 	roles permissionports.RoleRepository,
 ) *pageaccessservice.Service {
 	t.Helper()
+	return newServiceOn(t, eng, roles, plantest.AllFeatures())
+}
+
+func newServiceOn(
+	t *testing.T,
+	eng permissionports.PermissionEngine,
+	roles permissionports.RoleRepository,
+	gate platformcatalogports.FeatureGate,
+) *pageaccessservice.Service {
+	t.Helper()
 	manifest, err := pageaccess.Load([]byte(fixture))
 	require.NoError(t, err)
+	registry := permissioncatalog.NewRegistry()
 	return pageaccessservice.NewWithManifest(pageaccessservice.Params{
 		Engine:   eng,
 		Roles:    roles,
-		Registry: permissioncatalog.NewRegistry(),
+		Registry: registry,
+		Plan:     onplan.New(registry, gate),
 	}, manifest)
 }
 
@@ -174,6 +189,64 @@ func TestPreview_ADraftRoleSeesALinkedKindThroughItsViewOnly(t *testing.T) {
 	assert.Equal(t, []pageaccess.Use{
 		pageaccess.UseRequired, pageaccess.UseDeclared, pageaccess.UseReference,
 	}, order, "kinds come strongest use first")
+}
+
+func TestPreview_AKindThePlanLeavesOutIsWithheldFromARoleThatGrantsIt(t *testing.T) {
+	t.Parallel()
+
+	feature, ok := permissioncatalog.NewRegistry().FeatureOf("worker")
+	require.True(t, ok)
+	svc := newServiceOn(t, &engine{}, permissionportsmock.NewMockRoleRepository(t),
+		plantest.Without(feature))
+	access, err := svc.Preview(t.Context(), &pageaccessservice.PreviewRequest{
+		Tenant:   tenant,
+		Location: "/shipments",
+		Draft: &pageaccessservice.RoleDraft{
+			MaxSensitivity: permission.SensitivityInternal,
+			Permissions: []pageaccessservice.DraftPermission{
+				grant("shipment", permission.OpRead),
+				grant("worker", permission.OpRead),
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	worker := kind(t, access, "worker")
+	assert.False(t, worker.CanRead, "nobody reads a kind the plan leaves out")
+	require.NotNil(t, worker.PlanDenial)
+	assert.Equal(t, feature, worker.PlanDenial.Feature)
+	assert.Equal(t, map[string]pageaccessservice.Decision{
+		"phoneNumber": pageaccessservice.DecisionWithheldPlan,
+		"wholeName":   pageaccessservice.DecisionWithheldPlan,
+	}, decisions(worker), "the reference view is withheld too")
+	assert.Equal(t, 2, worker.Withheld)
+
+	shipment := kind(t, access, "shipment")
+	assert.True(t, shipment.CanRead)
+	assert.Nil(t, shipment.PlanDenial)
+}
+
+func TestPreview_EveryFeatureOnLeavesNoKindWithheldByThePlan(t *testing.T) {
+	t.Parallel()
+
+	svc := newService(t, &engine{}, permissionportsmock.NewMockRoleRepository(t))
+	access, err := svc.Preview(t.Context(), &pageaccessservice.PreviewRequest{
+		Tenant:   tenant,
+		Location: "/shipments",
+		Draft: &pageaccessservice.RoleDraft{
+			MaxSensitivity: permission.SensitivityInternal,
+			Permissions: []pageaccessservice.DraftPermission{
+				grant("shipment", permission.OpRead),
+				grant("worker", permission.OpRead),
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	for _, k := range access.Kinds {
+		assert.Nilf(t, k.PlanDenial, "%s is on the plan", k.Resource)
+	}
+	assert.True(t, kind(t, access, "worker").CanRead)
 }
 
 func TestPreview_TheKindsReadShowsTheWholeLinkedRecord(t *testing.T) {

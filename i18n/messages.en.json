@@ -150,6 +150,33 @@
       "rules/tariff"
     ]
   },
+  "\"{0}\" is part of the {1} add-on, which is not on your plan": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "\"{0}\" on {1} is not included in your plan": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "\"{0}\" on {1} is part of the {2} add-on, which is not on your plan": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "\"{0}\" paused — no shipments will generate until resumed": {
     "sites": 1,
     "scope": [
@@ -3579,6 +3606,15 @@
       "apps/web/components"
     ]
   },
+  "A DOT number is 1 to 8 digits": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "A DOT number is required to import a carrier": {
     "sites": 2,
     "scope": [
@@ -3729,6 +3765,15 @@
       "go/other"
     ]
   },
+  "A SCAC code is four letters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "A SCAC is 2 to 4 letters": {
     "sites": 1,
     "scope": [
@@ -3790,6 +3835,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "A Trenova staff address at {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "A US or Canadian state or province, by name or code, as its two-letter code": {
@@ -8875,6 +8929,15 @@
       "edi/lading"
     ]
   },
+  "A message sent by Trenova has no email profile": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A message that arrived on a monitored address was read and turned out to need a decision.": {
     "sites": 1,
     "scope": [
@@ -13555,6 +13618,15 @@
       "go/other"
     ]
   },
+  "A system email credential is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A table you watch changes": {
     "sites": 1,
     "scope": [
@@ -15737,15 +15809,6 @@
       "routes/agent-control"
     ]
   },
-  "AI spend": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "AI tune-ups": {
     "sites": 1,
     "scope": [
@@ -15982,7 +16045,7 @@
     ]
   },
   "API key is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -15999,14 +16062,22 @@
       "go/other"
     ]
   },
+  "API key must be 20 to 512 printable characters with no spaces": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "API keys": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
-      "apps/web/lib",
       "routes/admin"
     ]
   },
@@ -17024,13 +17095,14 @@
     ]
   },
   "Access": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -19919,15 +19991,6 @@
       "go/other"
     ]
   },
-  "Add Trenova's vetted rating library, from per mile to per CWT, as drafts.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Add US federal holidays": {
     "sites": 1,
     "scope": [
@@ -21239,6 +21302,15 @@
       "go/other"
     ]
   },
+  "Add it from your Trenova account.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "Add item": {
     "sites": 2,
     "scope": [
@@ -22135,6 +22207,15 @@
       "routes/fleet-safety"
     ]
   },
+  "Add your company's address and identifiers to continue": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/routes"
+    ]
+  },
   "Add your first widget": {
     "sites": 1,
     "scope": [
@@ -22206,6 +22287,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Add-ons on your plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Add-ons you can add": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Added": {
@@ -22606,7 +22705,7 @@
     ]
   },
   "Address Line 1": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -22614,6 +22713,7 @@
     "areas": [
       "go/other",
       "routes/admin",
+      "routes/auth",
       "routes/carrier",
       "routes/worker"
     ]
@@ -22692,7 +22792,7 @@
     ]
   },
   "Address line 1 is required": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -22799,12 +22899,13 @@
     ]
   },
   "Address must be 150 characters or fewer": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/auth"
     ]
   },
   "Address must be an email address": {
@@ -22940,6 +23041,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Adds {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Adjust PTO balance": {
@@ -24040,15 +24150,6 @@
       "api/writecoverage"
     ]
   },
-  "Agent automation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "Agent cannot be empty": {
     "sites": 2,
     "scope": [
@@ -24259,15 +24360,6 @@
       "go/other"
     ]
   },
-  "Agent portal automation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "Agent principals cannot reassign billing charges": {
     "sites": 1,
     "scope": [
@@ -24437,15 +24529,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Agent web search": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "Agent work reaches the trail within a minute of happening. Widen the range, pick another agent or person, or include evaluations.": {
@@ -26278,15 +26361,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "All {0} standard templates exist in your organization.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "All {0} would go through as shown.": {
@@ -28147,6 +28221,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "An administrator needs to finish setting up your organization before you can use Trenova. Ask them to sign in and complete it, then sign in again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
     ]
   },
   "An administrator uploads a certificate once. It lasts two years and needs no sign-in.": {
@@ -35633,15 +35716,6 @@
       "apps/web/components"
     ]
   },
-  "Ask an administrator of your organization about changing the plan.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "Ask an administrator of your organization to restore the subscription.": {
     "sites": 1,
     "scope": [
@@ -35661,6 +35735,15 @@
     ]
   },
   "Ask an administrator to choose a provider for Nova.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Ask an administrator to choose an AI provider.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -36177,6 +36260,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Ask your dispatcher.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/_components"
+    ]
+  },
+  "Ask your organization's administrator about adding it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "Ask {0}": {
@@ -38527,6 +38628,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "At most {0} support grants may be live at once. Revoke one first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "At most {0} texts can be embedded in one request": {
@@ -49031,7 +49141,7 @@
     ]
   },
   "Cancel": {
-    "sites": 332,
+    "sites": 333,
     "scope": [
       "go",
       "ts"
@@ -51750,15 +51860,6 @@
     ],
     "areas": [
       "routes/carrier"
-    ]
-  },
-  "Carrier intelligence lookups": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "Carrier intelligence prune": {
@@ -55962,6 +56063,15 @@
       "routes/admin"
     ]
   },
+  "Check the spelling, or try a PRO or BOL number.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Check the spelling, try a PRO or BOL number, or ask Nova.": {
     "sites": 1,
     "scope": [
@@ -56591,6 +56701,15 @@
     "areas": [
       "apps/web/components",
       "routes/agent-control"
+    ]
+  },
+  "Choose 1, 4, 24 or 72 hours": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Choose CSV or JSON Lines": {
@@ -57790,6 +57909,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Choose read-only or full access": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Choose ready to bill or ready to close": {
@@ -59092,7 +59220,7 @@
     ]
   },
   "City": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "go",
       "ts"
@@ -59104,6 +59232,7 @@
       "go/other",
       "routes/admin",
       "routes/agent-control",
+      "routes/auth",
       "routes/carrier",
       "routes/carrier-tracking-public",
       "routes/customer",
@@ -59222,14 +59351,15 @@
     ]
   },
   "City must be 100 characters or fewer": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/types",
-      "go/other"
+      "go/other",
+      "routes/auth"
     ]
   },
   "City must be 100 characters or less": {
@@ -63328,6 +63458,15 @@
       "go/other"
     ]
   },
+  "Company details": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Company driver": {
     "sites": 3,
     "scope": [
@@ -63368,21 +63507,23 @@
     ]
   },
   "Company name": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/auth",
       "routes/onboarding"
     ]
   },
   "Company name must be 100 characters or fewer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/auth"
     ]
   },
   "Company owned": {
@@ -66923,7 +67064,7 @@
     ]
   },
   "Continue": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -69000,7 +69141,7 @@
     ]
   },
   "Cost / mile": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -76134,7 +76275,7 @@
     ]
   },
   "DOT number": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -76142,6 +76283,7 @@
     "areas": [
       "go/other",
       "routes/admin",
+      "routes/auth",
       "routes/carrier",
       "routes/customer",
       "routes/desk"
@@ -87597,6 +87739,15 @@
       "go/other"
     ]
   },
+  "Document Intelligence pages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Document Management": {
     "sites": 2,
     "scope": [
@@ -87779,7 +87930,7 @@
     ]
   },
   "Document extraction": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -88014,6 +88165,26 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Document storage is full": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Document storage is nearly full": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "go/other"
     ]
   },
   "Document template does not exist": {
@@ -92565,7 +92736,7 @@
     ]
   },
   "EDI": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -92575,6 +92746,7 @@
       "apps/web/config",
       "apps/web/lib",
       "go/other",
+      "packages/shared/lib",
       "packages/shared/types",
       "routes/admin",
       "routes/agent-control",
@@ -93818,6 +93990,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Each document's page beside its details.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Each document's page beside what Nova read from it.": {
@@ -96000,6 +96181,24 @@
       "go/other"
     ]
   },
+  "Email Trenova sends for this instance has reached its hourly limit. Try again in {0} minutes, or add an email profile in the email settings.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Email Trenova sends for this organization only reaches its own people, and {0} is not one of them. An administrator can add an email profile in the email settings to email anyone else.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Email a customer a reminder of every overdue invoice it has that is not in dispute, with an optional note. It is one email per currency, to the invoice recipients on its email profile, and it goes whatever the reminder schedule says, so use it when a collector asks or a promise to pay was broken, never for a customer waiting on a promise that has not yet fallen due. The email is entered in the customer's collections history.": {
     "sites": 1,
     "scope": [
@@ -96582,6 +96781,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Email type is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Email type is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Email {0, plural, one {# invoice} other {# invoices}} to the customers they bill, as their billing profiles say.": {
@@ -97961,6 +98178,33 @@
       "routes/worker"
     ]
   },
+  "End Trenova support access?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "End a support access grant and its sessions at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "End access": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "End agreement": {
     "sites": 1,
     "scope": [
@@ -98098,6 +98342,15 @@
       "routes/worker"
     ]
   },
+  "End session": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "End the enrollments on this plan before archiving it": {
     "sites": 1,
     "scope": [
@@ -98180,7 +98433,7 @@
     ]
   },
   "Ended": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -98189,6 +98442,7 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/factoring-company"
@@ -98219,6 +98473,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Ended by {0} on {1}: {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Ended on its own {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Ended the PTO policy assignment": {
@@ -98302,6 +98574,15 @@
     "areas": [
       "apps/web/lib",
       "routes/benefits"
+    ]
+  },
+  "Ending…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Endorsement": {
@@ -98404,6 +98685,15 @@
       "routes/factoring-company"
     ]
   },
+  "Ends after": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Ends employment: closes PTO and pay assignments and cancels upcoming time off.": {
     "sites": 1,
     "scope": [
@@ -98429,6 +98719,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Ends {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Enforce SSO": {
@@ -98868,12 +99167,13 @@
     ]
   },
   "Enter ZIP code": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/auth"
     ]
   },
   "Enter a 5-digit ZIP code": {
@@ -98894,6 +99194,15 @@
       "go/other"
     ]
   },
+  "Enter a Trenova staff email address": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Enter a USDOT or MC number to pull a carrier and check it against your vetting rules before you import it.": {
     "sites": 1,
     "scope": [
@@ -98903,13 +99212,23 @@
       "routes/carrier-sourcing"
     ]
   },
-  "Enter a city": {
+  "Enter a ZIP code": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "routes/auth"
+    ]
+  },
+  "Enter a city": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "routes/auth"
     ]
   },
   "Enter a cron expression or pick a preset.": {
@@ -99047,6 +99366,15 @@
       "packages/shared/types"
     ]
   },
+  "Enter a plain email address with no special characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Enter a port from 1 to 65535": {
     "sites": 1,
     "scope": [
@@ -99093,12 +99421,13 @@
     ]
   },
   "Enter a street address": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/auth"
     ]
   },
   "Enter a time of day": {
@@ -99189,12 +99518,13 @@
     ]
   },
   "Enter address": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/auth"
     ]
   },
   "Enter all eight letters of the code, like ABCD-EFGH": {
@@ -99281,12 +99611,13 @@
     ]
   },
   "Enter city": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/auth"
     ]
   },
   "Enter customer reference": {
@@ -99479,12 +99810,13 @@
     ]
   },
   "Enter organization name": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/auth"
     ]
   },
   "Enter role name": {
@@ -99506,12 +99838,13 @@
     ]
   },
   "Enter suite or unit number": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/auth"
     ]
   },
   "Enter target percentage": {
@@ -99586,6 +99919,15 @@
       "go/other"
     ]
   },
+  "Enter the ZIP code of your registered address": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Enter the address you sign in with and we'll send you a link to choose a new password.": {
     "sites": 1,
     "scope": [
@@ -99614,6 +99956,15 @@
     ]
   },
   "Enter the amount to bill": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Enter the city of your registered address": {
     "sites": 1,
     "scope": [
       "go"
@@ -99991,12 +100342,22 @@
     ]
   },
   "Enter your company name": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/auth"
+    ]
+  },
+  "Enter your company's DOT number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Enter your current password": {
@@ -102208,6 +102569,15 @@
       "routes/home"
     ]
   },
+  "Every add-on is on your plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Every address mail arrives on": {
     "sites": 1,
     "scope": [
@@ -102906,6 +103276,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Every gallery report that fits is part of an add-on your plan does not include. Show reports from add-ons to see what they cover.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Every gallon bought for a tractor, keyed by hand or imported from a fuel card statement. Tax-paid gallons credit the jurisdiction they were bought in on the quarterly IFTA return.": {
@@ -104524,6 +104903,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Everything you entered is kept. It comes back if you add {0} again from your Trenova account.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Everything — leave all unchecked to include all of it": {
@@ -109286,6 +109674,15 @@
       "routes/shipment"
     ]
   },
+  "Extraction needs an AI provider": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Extraction source": {
     "sites": 1,
     "scope": [
@@ -110950,15 +111347,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Failed to install standard templates": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Failed to link carrier": {
@@ -118696,6 +119084,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "From address must be a plain email address of at most 254 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "From another Trenova organization": {
     "sites": 1,
     "scope": [
@@ -118787,6 +119184,15 @@
     ]
   },
   "From name is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "From name must be 1 to 40 printable characters with no leading or trailing space": {
     "sites": 1,
     "scope": [
       "go"
@@ -119764,12 +120170,21 @@
     ]
   },
   "Full access": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/components",
+      "routes/admin"
+    ]
+  },
+  "Full access never includes managing users, roles or sign-in, API keys, stored credentials, bank or remittance details, or exporting data.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/admin"
     ]
   },
@@ -121704,6 +122119,15 @@
       "go/other"
     ]
   },
+  "Give a Trenova staff member access for a set time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Give a case to someone, or take over one that is owned by another person": {
     "sites": 1,
     "scope": [
@@ -122715,6 +123139,33 @@
       "apps/web/lib"
     ]
   },
+  "Grant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Grant Trenova support access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Grant access": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Grant and revoke overrides of blocking findings": {
     "sites": 1,
     "scope": [
@@ -122744,6 +123195,15 @@
       "routes/admin"
     ]
   },
+  "Granted by {0} on {1} for {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Granted {0}, expires {1}": {
     "sites": 1,
     "scope": [
@@ -122751,6 +123211,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Granting…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "GraphQL request failed": {
@@ -125190,7 +125659,7 @@
     ]
   },
   "Hidden": {
-    "sites": 18,
+    "sites": 21,
     "scope": [
       "ts"
     ],
@@ -125562,6 +126031,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Hide what support did": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Hide {0}": {
@@ -132114,6 +132592,15 @@
       "routes/billing-queue"
     ]
   },
+  "Included in your plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Included on a posted carrier settlement.": {
     "sites": 1,
     "scope": [
@@ -133166,15 +133653,6 @@
       "routes/dispatch-console"
     ]
   },
-  "Install": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Install Trenova Capture": {
     "sites": 2,
     "scope": [
@@ -133209,24 +133687,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Install standard templates": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
-  "Install standard templates?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Installed pgvector: {0}": {
@@ -133554,13 +134014,12 @@
     ]
   },
   "Integrations": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
-      "apps/web/lib",
       "routes/admin"
     ]
   },
@@ -135107,6 +135566,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Invitations, password resets and notifications go out from {0} until a profile is assigned to General. Email to anyone outside your organization needs your own profile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Invite": {
@@ -137652,6 +138120,24 @@
       "rules/tariff"
     ]
   },
+  "It is built on {0}, from the {1} add-on, which is not on your plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
+  "It is built on {0}, which your plan does not include.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "It is built on {0}, which your role cannot read. Ask an administrator for access, or start a new report.": {
     "sites": 1,
     "scope": [
@@ -138683,7 +139169,7 @@
     ]
   },
   "Its result is not shown here and its file cannot be downloaded.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -139088,6 +139574,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Joined your plan: {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Joins": {
@@ -142773,6 +143268,15 @@
       "apps/web/hooks"
     ]
   },
+  "Last entered by {0} on {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Last error": {
     "sites": 3,
     "scope": [
@@ -145356,6 +145860,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Left your plan: {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Left {0}": {
     "sites": 6,
     "scope": [
@@ -145718,6 +146231,25 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Let a named Trenova staff member into this organization for a set time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Let a named Trenova staff member into this organization for a set time, and see everything they did": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Let agents act on this portal": {
@@ -148004,7 +148536,7 @@
     ]
   },
   "Live": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -149875,6 +150407,15 @@
       "routes/shipment"
     ]
   },
+  "Loading support access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Loading surcharge programs": {
     "sites": 1,
     "scope": [
@@ -150889,6 +151430,15 @@
       "routes/agent-control"
     ]
   },
+  "Loading what support did": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Loading what this grant means": {
     "sites": 1,
     "scope": [
@@ -150968,6 +151518,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Loading your plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Loading your team": {
@@ -154995,7 +155554,7 @@
     ]
   },
   "Margin": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -160152,15 +160711,6 @@
     ],
     "areas": [
       "apps/web/types"
-    ]
-  },
-  "Model usage cost this month.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "Model's mistakes": {
@@ -167892,6 +168442,15 @@
       "go/other"
     ]
   },
+  "No AI provider is chosen for reading documents, so uploaded files are stored but not read and no shipment draft is built.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "No AI provider is configured for the formula assistant": {
     "sites": 1,
     "scope": [
@@ -170729,6 +171288,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "No driver yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "No driver, carrier or customer billing email is on file for invoice {0}; enter a recipient": {
@@ -178766,6 +179334,17 @@
       "go/other"
     ]
   },
+  "Not on your plan": {
+    "sites": 8,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/lib",
+      "packages/shared/components"
+    ]
+  },
   "Not open yet": {
     "sites": 1,
     "scope": [
@@ -180644,6 +181223,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Nothing has been done under this access.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Nothing has been indexed yet. Indexing starts on its own within the hour.": {
@@ -184068,7 +184656,7 @@
     ]
   },
   "Nova read this page": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -186689,6 +187277,15 @@
       "routes/agent-control"
     ]
   },
+  "On your plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "On your routes": {
     "sites": 2,
     "scope": [
@@ -187180,6 +187777,15 @@
     ],
     "areas": [
       "routes/freight-outlook"
+    ]
+  },
+  "One named Trenova staff member may enter this organization until the access ends. Everything they do is in the audit log, and you can end it at any time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "One notice per obligation": {
@@ -188430,6 +189036,33 @@
       "go/other"
     ]
   },
+  "Only a person in this organization may change Trenova support access": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "Only a person in this organization may grant support access": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a person in this organization may revoke support access": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only a person keeps memories on the Desk": {
     "sites": 1,
     "scope": [
@@ -188960,6 +189593,15 @@
     ],
     "areas": [
       "routes/worker-credential-type"
+    ]
+  },
+  "Only add-on reports match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Only adjustment cost events may carry a negative amount": {
@@ -190928,6 +191570,15 @@
       "apps/web/config"
     ]
   },
+  "Open Your plan to see what it adds.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Open a case": {
     "sites": 1,
     "scope": [
@@ -191856,7 +192507,7 @@
     ]
   },
   "Open it to rank drivers": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -192393,6 +193044,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Open the audit entry": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Open the billing queue": {
@@ -195077,7 +195737,7 @@
     ]
   },
   "Organization": {
-    "sites": 33,
+    "sites": 35,
     "scope": [
       "go",
       "ts"
@@ -195311,6 +195971,15 @@
       "go/other"
     ]
   },
+  "Organization setup": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Organization that receives documents delivered over this profile.": {
     "sites": 1,
     "scope": [
@@ -195384,14 +196053,24 @@
     ]
   },
   "Organizations": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "go/other",
       "routes/auth"
+    ]
+  },
+  "Organizations on this Trenova instance.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Orientation": {
@@ -196407,15 +197086,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Outbound email": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "Outbound enabled": {
@@ -199016,6 +199686,15 @@
       "routes/intake"
     ]
   },
+  "Pages of the documents Document Intelligence read this period.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Pages per document": {
     "sites": 1,
     "scope": [
@@ -199854,6 +200533,17 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Part of {0}": {
+    "sites": 7,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "packages/shared/components",
+      "routes/home"
     ]
   },
   "Part of {0}; the rest stays as proposed unless you change it below.": {
@@ -200886,6 +201576,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Past the included amount, storage is billed as overage from your Trenova account.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Past the notice deadline — no longer defensible": {
@@ -206996,6 +207695,15 @@
     ],
     "areas": [
       "api/helpers"
+    ]
+  },
+  "Plan Restricted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "Plan an organization's nightly agent quality sweep and run each changed agent's suite": {
@@ -213897,6 +214605,15 @@
       "go/other"
     ]
   },
+  "Provider must be Resend or Postmark": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Provider name": {
     "sites": 1,
     "scope": [
@@ -219513,6 +220230,15 @@
       "routes/agent-control"
     ]
   },
+  "Read from the page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Read from the portal, outside your organization. Check anything you act on.": {
     "sites": 1,
     "scope": [
@@ -219538,6 +220264,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Read from this page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Read from {0}": {
@@ -219852,6 +220587,15 @@
       "routes/agent-control"
     ]
   },
+  "Read this page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Read together from {0, plural, one {# call} other {# calls}}": {
     "sites": 1,
     "scope": [
@@ -219993,13 +220737,15 @@
     ]
   },
   "Read-only": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
       "api/writecoverage",
-      "go/other"
+      "go/other",
+      "routes/admin"
     ]
   },
   "Read-only access": {
@@ -220428,6 +221174,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Reading this page…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Reading what came back…": {
@@ -221038,7 +221793,7 @@
     ]
   },
   "Reason": {
-    "sites": 79,
+    "sites": 81,
     "scope": [
       "go",
       "ts"
@@ -222232,6 +222987,15 @@
     ]
   },
   "Recent activity could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Recent changes": {
     "sites": 1,
     "scope": [
       "ts"
@@ -223894,6 +224658,15 @@
   },
   "Record the SAP referral before the evaluation that followed it": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Record the Trenova support access grants that ended on their own": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -233327,6 +234100,15 @@
       "routes/service-failure"
     ]
   },
+  "Resolved, or no longer needed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Resolved:": {
     "sites": 1,
     "scope": [
@@ -236529,7 +237311,7 @@
     ]
   },
   "Revoke": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -236670,7 +237452,7 @@
     ]
   },
   "Revoked": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -239975,12 +240757,13 @@
     ]
   },
   "SCAC code": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/auth",
       "routes/onboarding"
     ]
   },
@@ -241460,6 +242243,15 @@
       "apps/web/components"
     ]
   },
+  "Save and continue": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Save and return to Draft": {
     "sites": 1,
     "scope": [
@@ -242411,12 +243203,13 @@
     ]
   },
   "Saving": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/auth",
       "routes/billing-queue",
       "routes/intake"
     ]
@@ -243215,6 +244008,15 @@
       "apps/web/components"
     ]
   },
+  "Say why Trenova support needs access, in at most 500 characters": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Say why both sides stay as they are": {
     "sites": 2,
     "scope": [
@@ -243631,6 +244433,15 @@
     ]
   },
   "Say why this statement is being billed before its cycle closes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Say why you are ending this access, in at most 500 characters": {
     "sites": 1,
     "scope": [
       "go"
@@ -245964,7 +246775,25 @@
       "routes/desk"
     ]
   },
+  "Search records and pages, or run a command…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Search records and pages, run a command, or ask Nova…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Search records, jump to pages and run commands": {
     "sites": 1,
     "scope": [
       "ts"
@@ -247861,12 +248690,13 @@
     ]
   },
   "Select a state": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/auth"
     ]
   },
   "Select a status": {
@@ -247921,12 +248751,13 @@
     ]
   },
   "Select a timezone": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/auth"
     ]
   },
   "Select a tractor": {
@@ -249628,13 +250459,14 @@
     ]
   },
   "Select timezone": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/auth",
       "routes/edi",
       "routes/onboarding",
       "routes/recurring-shipment"
@@ -251336,7 +252168,7 @@
     ]
   },
   "Sender": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -251402,7 +252234,7 @@
     ]
   },
   "Sender is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -251951,6 +252783,15 @@
       "apps/web/lib",
       "packages/shared/components",
       "routes/desk"
+    ]
+  },
+  "Sent by Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "Sent by hand": {
@@ -253992,6 +254833,16 @@
     "areas": [
       "template/account.invite.email",
       "template/driverportal.invitation.email"
+    ]
+  },
+  "Set up your organization": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/routes",
+      "routes/auth"
     ]
   },
   "Set up your {0} account": {
@@ -258289,11 +259140,12 @@
     ]
   },
   "Show more": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/desk"
     ]
   },
@@ -258304,6 +259156,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Show older access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Show older analyses": {
@@ -258431,6 +259292,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Show reports from add-ons": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Show rounds for {0}": {
@@ -258683,6 +259553,15 @@
     ],
     "areas": [
       "routes/dash-control"
+    ]
+  },
+  "Show what support did": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Show where": {
@@ -259394,13 +260273,14 @@
     ]
   },
   "Sign out": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/routes",
       "packages/shared/components",
+      "routes/auth",
       "routes/settings"
     ]
   },
@@ -260197,12 +261077,11 @@
     ]
   },
   "Single sign-on": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
       "routes/admin"
     ]
   },
@@ -263588,6 +264467,15 @@
       "routes/org-structure"
     ]
   },
+  "Staff member's email": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Stage a Comdata, EFS or WEX statement for review": {
     "sites": 1,
     "scope": [
@@ -263744,7 +264632,16 @@
       "go/other"
     ]
   },
-  "Standard templates already installed": {
+  "Standard template": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Standard templates cannot be changed. Fork it to make a template of your own.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -264159,7 +265056,7 @@
     ]
   },
   "Start from": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -265014,7 +265911,7 @@
     ]
   },
   "State": {
-    "sites": 39,
+    "sites": 41,
     "scope": [
       "go",
       "ts"
@@ -265026,6 +265923,7 @@
       "packages/shared/lib",
       "routes/admin",
       "routes/agent-control",
+      "routes/auth",
       "routes/carrier",
       "routes/carrier-tracking-public",
       "routes/customer",
@@ -265107,7 +266005,7 @@
     ]
   },
   "State is required": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -268458,12 +269356,13 @@
     ]
   },
   "Suite/unit": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/auth"
     ]
   },
   "Sum": {
@@ -268768,6 +269667,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Support access can be granted only to a Trenova staff address at {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Support access is not ready on this instance yet. Try again in a few minutes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Supporting document": {
@@ -269957,6 +270874,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "System email is sent by Trenova on your behalf": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
     ]
   },
   "System key cannot be longer than 50 characters": {
@@ -272274,7 +273200,7 @@
     ]
   },
   "Tender": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -273468,15 +274394,6 @@
       "routes/desk"
     ]
   },
-  "Text messages": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "Text node must contain text": {
     "sites": 1,
     "scope": [
@@ -274665,6 +275582,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "The Document Intelligence pages for this period are used up. Turn on overage from your Trenova account to keep extracting, or wait for the next period.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The EDI message it was read from": {
@@ -280552,6 +281478,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The driver app is not part of your company's plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/_components"
     ]
   },
   "The driver arrived before the slot and waited for it. Most docks won't work a truck early.": {
@@ -289016,6 +289951,15 @@
       "routes/reports"
     ]
   },
+  "The preview and runs are refused until your plan includes them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "The preview could not be drawn": {
     "sites": 1,
     "scope": [
@@ -290420,6 +291364,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "The reading of this document couldn't be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "The reason is shown on each one.": {
@@ -293598,15 +294551,6 @@
       "rules/tariff"
     ]
   },
-  "The standard template {0} does not pass its own tests on this server": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The start date cannot be in the future": {
     "sites": 2,
     "scope": [
@@ -295023,6 +295967,15 @@
       "routes/rate-agreement"
     ]
   },
+  "The ticket or problem support is looking into": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The tier's name, if the policy gave it one.": {
     "sites": 1,
     "scope": [
@@ -295760,7 +296713,7 @@
       "routes/trailer"
     ]
   },
-  "The unit is count, cents or bytes": {
+  "The unit is count or bytes": {
     "sites": 1,
     "scope": [
       "go"
@@ -298071,15 +299024,6 @@
       "routes/formula-template"
     ]
   },
-  "They are drafts: check their tests and send each for review before it rates.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "They are in the purchases table now and will be counted the next time the quarter's return is computed.": {
     "sites": 1,
     "scope": [
@@ -298522,15 +299466,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as drafts. Each one carries its own tests and rates shipments once someone else approves it. Templates you already have are left untouched.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "This adjustment could not be read. It may have been decided by someone else; refresh the queue to see what is still waiting.": {
@@ -300787,6 +301722,15 @@
       "go/other"
     ]
   },
+  "This feature is part of the {0} add-on, which is not on your plan": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This feature requires a valid Google Maps API key.": {
     "sites": 1,
     "scope": [
@@ -301462,6 +302406,15 @@
       "go/other"
     ]
   },
+  "This installation is not on a Managed Trenova plan, so every feature is on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "This interchange has no IEA: the file ended early": {
     "sites": 2,
     "scope": [
@@ -301785,6 +302738,16 @@
       "rules/tariff"
     ]
   },
+  "This is not on your plan.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components",
+      "packages/shared/lib"
+    ]
+  },
   "This is not true: {0}": {
     "sites": 2,
     "scope": [
@@ -301821,6 +302784,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "This is part of the {0} add-on, which is not on your plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "This is past 28 significant digits": {
@@ -303006,6 +303978,15 @@
       "go/other"
     ]
   },
+  "This organization has sent as many invitations as it may in an hour. Try again in {0} minutes, or add an email profile in the email settings.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This organization is connected to {0}. Disconnect {0} before connecting {1}, so the same documents never reach two sets of books.": {
     "sites": 1,
     "scope": [
@@ -303139,6 +304120,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This page hasn't been read yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "This page is not in the document": {
@@ -304060,6 +305050,33 @@
       "routes/reports"
     ]
   },
+  "This report reads data from the {0} add-on, which is not on your plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "This report reads data your plan does not include.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "This report reads data your plan does not include: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This report references data you do not have access to: {0}": {
     "sites": 2,
     "scope": [
@@ -304211,6 +305228,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This report's data is not on your plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "This report's definition could not be read": {
@@ -304865,6 +305891,15 @@
       "routes/intake"
     ]
   },
+  "This staff member already has access. Revoke it to grant different access": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This state restricts holiday movement; an override cannot lift that": {
     "sites": 1,
     "scope": [
@@ -304993,6 +306028,15 @@
   },
   "This summary is certified; uncertify it before changing a figure": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This support access has already ended": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -307369,7 +308413,7 @@
     ]
   },
   "Timezone": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -307378,6 +308422,7 @@
       "go/other",
       "routes/admin",
       "routes/agent-control",
+      "routes/auth",
       "routes/desk",
       "routes/edi",
       "routes/location",
@@ -311940,6 +312985,15 @@
       "go/other"
     ]
   },
+  "Trenova Support Access": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Trenova Value (Minor)": {
     "sites": 1,
     "scope": [
@@ -312010,6 +313064,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Trenova could not read your organization's details. Try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
     ]
   },
   "Trenova could not revoke it just now. Try again in a moment.": {
@@ -312192,6 +313255,15 @@
       "apps/web/components"
     ]
   },
+  "Trenova prints these on your invoices, rate confirmations and other documents. You can change them later in organization settings.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Trenova raises no such alert": {
     "sites": 2,
     "scope": [
@@ -312309,6 +313381,61 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Trenova support access": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/admin"
+    ]
+  },
+  "Trenova support access is not available on this installation, so nobody at Trenova can enter it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trenova support access is not available on this instance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trenova support has never had access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Trenova support session started": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trenova support session: {0}, ends {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Trenova to Trenova": {
@@ -313043,7 +314170,7 @@
     ]
   },
   "Try again": {
-    "sites": 83,
+    "sites": 84,
     "scope": [
       "ts"
     ],
@@ -313054,6 +314181,7 @@
       "packages/shared/components",
       "routes/admin",
       "routes/agent-control",
+      "routes/auth",
       "routes/billing-queue",
       "routes/capture",
       "routes/carrier-tracking-public",
@@ -313156,6 +314284,15 @@
     ]
   },
   "Try everything instead, or ask Nova — it reads records the search index doesn't, like stop notes and email.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Try everything instead, or check the spelling.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -313579,6 +314716,25 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Turn on overage from your Trenova account to keep extracting, or wait for the next period.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Turn on overage from your Trenova account to keep uploading, or delete documents you no longer need.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/lib"
     ]
   },
   "Turn on scanning and printing into Trenova": {
@@ -321446,7 +322602,7 @@
     ]
   },
   "View": {
-    "sites": 137,
+    "sites": 138,
     "scope": [
       "go",
       "ts"
@@ -322522,6 +323678,15 @@
     ]
   },
   "View stops": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "View support access grants and what was done under each": {
     "sites": 1,
     "scope": [
       "go"
@@ -324120,6 +325285,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Waiting on an administrator": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
     ]
   },
   "Waiting on an answer. You can ask again, do it yourself, or accept the risk.": {
@@ -326146,6 +327320,15 @@
     ]
   },
   "Webhook secret": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Webhook secret must be at most 512 printable characters with no spaces": {
     "sites": 1,
     "scope": [
       "go"
@@ -328638,6 +329821,15 @@
       "apps/web/components"
     ]
   },
+  "What support did could not be loaded. You may not be able to read the audit log.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "What taught it": {
     "sites": 1,
     "scope": [
@@ -329920,6 +331112,16 @@
       "apps/dash/_components"
     ]
   },
+  "What your plan includes, the add-ons it does not, and recent changes": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin",
+      "routes/section-index"
+    ]
+  },
   "What your values would do": {
     "sites": 1,
     "scope": [
@@ -330612,6 +331814,15 @@
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "When it is full, uploads stop. Turn on overage from your Trenova account, or delete documents you no longer need.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "When it runs": {
@@ -331320,6 +332531,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "When you need help, grant one named Trenova staff member access for a set time. It ends on its own, and you can end it sooner.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "When you save": {
@@ -337212,6 +338432,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Would add {0}. Add it from your Trenova account.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Would be forfeited": {
     "sites": 1,
     "scope": [
@@ -339515,6 +340744,15 @@
       "go/other"
     ]
   },
+  "You do not have permission to read this formula template's inputs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "You do not have permission to read {0}": {
     "sites": 1,
     "scope": [
@@ -339633,13 +340871,15 @@
     ]
   },
   "You don't have access to {0}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "packages/shared/components",
-      "routes/desk"
+      "routes/desk",
+      "routes/factoring"
     ]
   },
   "You don't have an escrow account.": {
@@ -339697,7 +340937,7 @@
     ]
   },
   "You don't have permission to perform this action": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -340812,6 +342052,15 @@
       "apps/web/components"
     ]
   },
+  "Your details are saved, but Trenova could not reach the server to continue. Check your connection and try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Your details, sessions and security": {
     "sites": 1,
     "scope": [
@@ -340846,6 +342095,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "Your document storage is full. Turn on overage from your Trenova account to keep uploading, or delete documents you no longer need.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Your draft is preserved — retry or discard it from the comment.": {
@@ -341248,6 +342506,15 @@
       "packages/shared/components"
     ]
   },
+  "Your organization could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Your organization enforces this rule as a block, so this pairing can't be assigned.": {
     "sites": 1,
     "scope": [
@@ -341293,13 +342560,22 @@
       "go/other"
     ]
   },
-  "Your organization is not entitled to this feature": {
+  "Your organization is not set up yet": {
     "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "api/middleware"
+      "routes/auth"
+    ]
+  },
+  "Your organization is set up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
     ]
   },
   "Your organization only": {
@@ -341536,6 +342812,25 @@
       "go/other"
     ]
   },
+  "Your plan": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/admin"
+    ]
+  },
+  "Your plan could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Your plan does not include agent automation, so profiles are not written.": {
     "sites": 1,
     "scope": [
@@ -341552,6 +342847,51 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Your plan has no add-ons. It includes everything listed above.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Your plan has not changed yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Your plan includes {0} organization(s), and this instance has them all. Add organizations to your plan from your Trenova account to create another.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Your plan started with the base plan alone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Your plan started with {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Your profile": {
@@ -342164,13 +343504,23 @@
     ]
   },
   "ZIP code": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "routes/admin"
+      "routes/admin",
+      "routes/auth"
+    ]
+  },
+  "ZIP code is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "ZIP code needs 5 digits.": {
@@ -343793,6 +345143,15 @@
       "go/other"
     ]
   },
+  "an administrator": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "an analysis": {
     "sites": 1,
     "scope": [
@@ -345042,6 +346401,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "customer payments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "customers": {
@@ -348064,6 +349432,15 @@
       "go/other"
     ]
   },
+  "factoring schedules": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "failed at": {
     "sites": 1,
     "scope": [
@@ -349865,6 +351242,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "name@{0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "national {0}": {
@@ -352850,11 +354236,12 @@
     ]
   },
   "tenders": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "packages/shared/lib",
       "routes/inbox"
     ]
   },
@@ -355156,15 +356543,6 @@
       "routes/desk"
     ]
   },
-  "{0, plural, one {# already existed and was skipped.} other {# already existed and were skipped.}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "{0, plural, one {# application in period} other {# applications in period}}": {
     "sites": 1,
     "scope": [
@@ -356683,6 +358061,15 @@
       "routes/inbox"
     ]
   },
+  "{0, plural, one {# hidden} other {# hidden}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0, plural, one {# hold released} other {# holds released}}": {
     "sites": 1,
     "scope": [
@@ -356702,13 +358089,14 @@
     ]
   },
   "{0, plural, one {# hour} other {# hours}}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/lib",
+      "routes/admin",
       "routes/inbox"
     ]
   },
@@ -360737,6 +362125,15 @@
       "routes/rate-agreement"
     ]
   },
+  "{0, plural, one {Everything you entered with it is kept and comes back if you add it again.} other {Everything you entered with them is kept and comes back if you add them again.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0, plural, one {Expired # day ago} other {Expired # days ago}}": {
     "sites": 3,
     "scope": [
@@ -360917,15 +362314,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "{0, plural, one {Installed # standard template} other {Installed # standard templates}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "{0, plural, one {Invoice for # shipment} other {Invoice for # shipments}} · {1}": {
@@ -362260,6 +363648,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Your plan includes # organization.} other {Your plan includes # organizations.}} Add organizations to your plan from your Trenova account to create another.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "{0, plural, one {a carrier backed out once} other {carriers backed out # times}}": {
@@ -364030,6 +365427,24 @@
       "routes/org-structure"
     ]
   },
+  "{0} are not included in your plan": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} are part of the {1} add-on, which is not on your plan": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} asked first, and a person approved it.": {
     "sites": 1,
     "scope": [
@@ -365543,7 +366958,7 @@
     ]
   },
   "{0} days": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -365552,6 +366967,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/collections",
+      "routes/home",
       "routes/worker"
     ]
   },
@@ -368175,6 +369591,15 @@
       "rules/tariff"
     ]
   },
+  "{0} is a standard template, so it cannot be changed. Duplicate or fork it to make a template of your own": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} is a system agent and is open to everyone who can use the assistant": {
     "sites": 1,
     "scope": [
@@ -368882,6 +370307,15 @@
       "routes/reports"
     ]
   },
+  "{0} is no longer on your plan": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} is no longer ready to move up a tier on this agent": {
     "sites": 1,
     "scope": [
@@ -369522,6 +370956,25 @@
       "go/other"
     ]
   },
+  "{0} is not on your plan": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/reports"
+    ]
+  },
+  "{0} is not on your plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "{0} is not one of Prepaid, Collect or ThirdParty": {
     "sites": 1,
     "scope": [
@@ -369640,6 +371093,15 @@
   },
   "{0} is not valid": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} is now on your plan": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -369783,6 +371245,24 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} is part of the {1} add-on, which is not on your plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
+  "{0} is part of the {1} add-on, which is not on your plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "{0} is past due.": {
@@ -371158,6 +372638,15 @@
       "routes/carrier-sourcing"
     ]
   },
+  "{0} loses access now, and any session they have open ends at once.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} loses one": {
     "sites": 2,
     "scope": [
@@ -372133,15 +373622,6 @@
       "go/other"
     ]
   },
-  "{0} not available": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "{0} not covered": {
     "sites": 1,
     "scope": [
@@ -372161,11 +373641,12 @@
     ]
   },
   "{0} not found within your organization": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/handlers",
       "go/other"
     ]
   },
@@ -372437,6 +373918,24 @@
     ],
     "areas": [
       "routes/freight-outlook"
+    ]
+  },
+  "{0} of the {1} your plan includes is used, so uploads are stopped.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} of the {1} your plan includes is used.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} of {1, plural, one {# call} other {# calls}}": {

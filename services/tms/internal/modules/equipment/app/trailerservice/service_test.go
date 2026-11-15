@@ -34,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -343,6 +344,7 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
+		Features:           plantest.AllFeatures(),
 		FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 		Hydrator:           ratingtest.NoHydration{},
 		BillingControlRepo: ratingtest.NoBillingControl{},
@@ -580,6 +582,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
+		Features:           plantest.AllFeatures(),
 		FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 		Hydrator:           ratingtest.NoHydration{},
 		BillingControlRepo: ratingtest.NoBillingControl{},
@@ -635,6 +638,7 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
+		Features:           plantest.AllFeatures(),
 		FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 		Hydrator:           ratingtest.NoHydration{},
 		BillingControlRepo: ratingtest.NoBillingControl{},

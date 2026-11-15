@@ -506,6 +506,7 @@ func (s *Service) deliver(
 	}
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo: from.tenant,
+		Type:       email.TypeCustomerStatement,
 		Purpose:    email.PurposeBilling,
 		To:         d.recipients.To,
 		CC:         d.recipients.CC,

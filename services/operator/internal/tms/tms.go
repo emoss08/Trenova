@@ -79,6 +79,29 @@ type Administrator struct {
 	InviteTokenSHA256 string `json:"inviteTokenSha256,omitempty"`
 }
 
+type SystemEmail struct {
+	Provider      string `json:"provider"`
+	APIKey        string `json:"apiKey"`
+	FromAddress   string `json:"fromAddress"`
+	FromName      string `json:"fromName"`
+	WebhookSecret string `json:"webhookSecret"`
+}
+
+func (e SystemEmail) String() string {
+	return "system email sender " + e.Provider + " from " + e.FromAddress
+}
+
+func (e SystemEmail) GoString() string {
+	return e.String()
+}
+
+type HeldSystemEmail struct {
+	Configured  bool   `json:"configured"`
+	Provider    string `json:"provider,omitempty"`
+	FromAddress string `json:"fromAddress,omitempty"`
+	Fingerprint string `json:"fingerprint,omitempty"`
+}
+
 type Tokens interface {
 	Token(ctx context.Context) (string, error)
 	Refresh(ctx context.Context) (string, error)
@@ -142,6 +165,41 @@ func (c *Client) PutState(ctx context.Context, state State) error {
 	return nil
 }
 
+func (c *Client) PutFeatures(ctx context.Context, features []string) error {
+	if features == nil {
+		features = []string{}
+	}
+	body, err := sonic.Marshal(struct {
+		Features []string `json:"features"`
+	}{Features: features})
+	if err != nil {
+		return fmt.Errorf("send the feature list to the TMS: %w", err)
+	}
+	u := c.base.JoinPath("managed", "v1", "features")
+	if _, err = c.do(ctx, http.MethodPut, u, body, http.StatusNoContent); err != nil {
+		return fmt.Errorf("send the feature list to the TMS: %w", err)
+	}
+	return nil
+}
+
+func (c *Client) HeldFeatures(ctx context.Context) ([]string, error) {
+	u := c.base.JoinPath("managed", "v1", "features")
+	out, err := c.do(ctx, http.MethodGet, u, nil, http.StatusOK)
+	if err != nil {
+		return nil, fmt.Errorf("read the features the TMS holds: %w", err)
+	}
+	var held struct {
+		Features []string `json:"features"`
+	}
+	if err = sonic.Unmarshal(out, &held); err != nil {
+		return nil, fmt.Errorf("read the features the TMS holds: %w", err)
+	}
+	if held.Features == nil {
+		held.Features = []string{}
+	}
+	return held.Features, nil
+}
+
 func (c *Client) InstallInvite(ctx context.Context, invite Invite) (Administrator, error) {
 	invite.ExpiresAt = invite.ExpiresAt.UTC()
 	body, err := sonic.Marshal(invite)
@@ -158,6 +216,39 @@ func (c *Client) InstallInvite(ctx context.Context, invite Invite) (Administrato
 		return Administrator{}, fmt.Errorf("install the first administrator's invite: %w", err)
 	}
 	return admin, nil
+}
+
+func (c *Client) SystemEmail(ctx context.Context) (HeldSystemEmail, error) {
+	u := c.base.JoinPath("managed", "v1", "system-email")
+	out, err := c.do(ctx, http.MethodGet, u, nil, http.StatusOK)
+	if err != nil {
+		return HeldSystemEmail{}, fmt.Errorf("read the TMS's system email sender: %w", err)
+	}
+	var held HeldSystemEmail
+	if err = sonic.Unmarshal(out, &held); err != nil {
+		return HeldSystemEmail{}, fmt.Errorf("read the TMS's system email sender: %w", err)
+	}
+	return held, nil
+}
+
+func (c *Client) PutSystemEmail(ctx context.Context, sender SystemEmail) error {
+	body, err := sonic.Marshal(sender)
+	if err != nil {
+		return errors.New("send the system email sender to the TMS: cannot encode it")
+	}
+	u := c.base.JoinPath("managed", "v1", "system-email")
+	if _, err = c.do(ctx, http.MethodPut, u, body, http.StatusNoContent); err != nil {
+		return fmt.Errorf("send the system email sender to the TMS: %w", err)
+	}
+	return nil
+}
+
+func (c *Client) DeleteSystemEmail(ctx context.Context) error {
+	u := c.base.JoinPath("managed", "v1", "system-email")
+	if _, err := c.do(ctx, http.MethodDelete, u, nil, http.StatusNoContent); err != nil {
+		return fmt.Errorf("remove the TMS's system email sender: %w", err)
+	}
+	return nil
 }
 
 func (c *Client) do(

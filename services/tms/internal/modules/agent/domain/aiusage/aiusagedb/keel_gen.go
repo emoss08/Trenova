@@ -71,12 +71,13 @@ var aIUsageRecordsTable = schema.Table{
 		{Name: "advisor_cost_usd", Quoted: `"advisor_cost_usd"`, Field: "AdvisorCostUSD", Kind: schema.KindOther, Flags: schema.FlagNullable, Label: `Advisor Cost USD`, JSON: `advisorCostUsd`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "batched", Quoted: `"batched"`, Field: "Batched", Kind: schema.KindBool, Flags: 0, Label: `Batched`, Doc: `Batched is an attempt the provider answered through its batch API, at the batch discount: CostUSD is already discounted.`, JSON: `batched`},
+		{Name: "pages", Quoted: `"pages"`, Field: "Pages", Kind: schema.KindInt64, Flags: 0, Label: `Pages`, JSON: `pages`},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 41, 42, 44},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 41, 42, 44, 45},
 	Returning:  []int32{35},
 	Version:    -1,
 	AutoID:     0,
@@ -140,6 +141,7 @@ type AIUsageRecordsTable struct {
 	AdvisorCostUSD          keelkinds.DecimalDecimalCol
 	CreatedAt               keel.Int64Col
 	Batched                 keel.BoolCol
+	Pages                   keel.Int64Col
 }
 
 // AIUsageRecords references the ai_usage_records table.
@@ -190,6 +192,7 @@ var AIUsageRecords = &AIUsageRecordsTable{
 	AdvisorCostUSD:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 42}}},
 	CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 43}},
 	Batched:                 keel.BoolCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 44}},
+	Pages:                   keel.Int64Col{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 45}},
 }
 
 // BuildAIUsageRecords builds the table of ai_usage_records for ref. Generated relation and alias methods call it.
@@ -241,6 +244,7 @@ func BuildAIUsageRecords(r *keel.Ref) *AIUsageRecordsTable {
 		AdvisorCostUSD:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 42}}},
 		CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
 		Batched:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 44}},
+		Pages:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
 	}
 }
 
@@ -721,6 +725,8 @@ func ptrAIUsageRecord(p unsafe.Pointer, c int32) any {
 		return &r.CreatedAt
 	case 44:
 		return &r.Batched
+	case 45:
+		return (*int64)(unsafe.Pointer(&r.Pages))
 	}
 	return nil
 }
@@ -884,6 +890,8 @@ func valueAIUsageRecord(p unsafe.Pointer, c int32) any {
 		return r.CreatedAt
 	case 44:
 		return r.Batched
+	case 45:
+		return int64(r.Pages)
 	}
 	return nil
 }

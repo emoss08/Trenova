@@ -2,6 +2,7 @@ import type { Notification } from "@trenova/shared/types/notification";
 import { describe, expect, it } from "vitest";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { readFileSync } from "node:fs";
+import { BASE_ONLY_UNAVAILABLE, unavailableFeatures } from "@/test/plan";
 import { resolve } from "node:path";
 import {
   buildNotificationCatalog,
@@ -339,7 +340,7 @@ describe("notification registry — assistant replies", () => {
 });
 
 describe("notification catalog", () => {
-  const catalog = buildNotificationCatalog();
+  const catalog = buildNotificationCatalog([]);
   const types = catalog.flatMap((category) => category.types);
 
   it("lists every kind once, grouped by the registry's category", () => {
@@ -627,5 +628,45 @@ describe("notification registry — the latest times a subject came up", () => {
     ).toEqual([]);
     expect(notificationRecent({ data: { recent: "three" } })).toEqual([]);
     expect(notificationRecent({ data: null })).toEqual([]);
+  });
+});
+
+describe("notification catalog on a plan", () => {
+  it("offers nothing that belongs to an add-on on a base-only plan", () => {
+    const catalog = buildNotificationCatalog(BASE_ONLY_UNAVAILABLE);
+    const names = catalog.map((category) => category.name);
+    const keys = catalog.flatMap((category) => category.types.map((type) => type.key));
+
+    for (const name of [
+      "Assistant",
+      "AI Control",
+      "Exceptions",
+      "EDI",
+      "Carrier Intelligence",
+      "Dispatch",
+      "Accounting",
+      "Data alert",
+    ]) {
+      expect(names).not.toContain(name);
+    }
+    expect(keys).not.toContain("dash.pto_requested");
+    expect(keys).not.toContain("credential_expired");
+    expect(names).toContain("Mentions");
+    expect(names).toContain("Billing");
+    expect(names).toContain("Reports");
+    expect(names).toContain("System");
+  });
+
+  it("drops only the kinds of the add-on the plan leaves out", () => {
+    const catalog = buildNotificationCatalog(unavailableFeatures("ai.audit_trail"));
+    const aiControl = catalog.find((category) => category.name === "AI Control");
+
+    expect(aiControl?.types.map((type) => type.key)).toEqual([
+      "agent.proposals_pending",
+      "agent.proposals_reminder",
+      "agent.tool_promoted",
+      "agent.tool_demoted",
+      "agent.quality_regression",
+    ]);
   });
 });

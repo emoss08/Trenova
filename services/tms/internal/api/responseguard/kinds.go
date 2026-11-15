@@ -55,6 +55,7 @@ const domainPackagePrefix = "github.com/emoss08/trenova/internal/modules/"
 var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[shipment.Stop]():                               permission.ResourceShipmentStop,
 	reflect.TypeFor[customerpayment.Payment]():                     permission.ResourceCustomerPayment,
+	reflect.TypeFor[customerpayment.Application]():                 permission.ResourceCustomerPayment,
 	reflect.TypeFor[billingqueue.BillingQueueItem]():               permission.ResourceBillingQueue,
 	reflect.TypeFor[factoring.Agreement]():                         permission.ResourceFactoringAgreement,
 	reflect.TypeFor[factoring.Noa]():                               permission.ResourceFactoringNoa,

@@ -2,6 +2,7 @@ package watchtowerservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
@@ -16,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
@@ -40,6 +43,9 @@ type ProjectorParams struct {
 	// Events wakes the agents that subscribe to an item's event when a sweep
 	// first raises it.
 	Events agenteventports.AgentEventPublisher
+	// Features is the plan: the watchtower is Trenova AI, so nothing is
+	// projected, routed or announced without it.
+	Features platformcatalogports.FeatureGate
 }
 
 // Projector is the watchtower's write face: what the sources put on the
@@ -64,6 +70,7 @@ type Projector struct {
 	notifications *notificationservice.Service
 	owners        caseownerports.Service
 	events        agenteventports.AgentEventPublisher
+	features      platformcatalogports.FeatureGate
 	now           func() int64
 }
 
@@ -77,6 +84,7 @@ func NewProjector(p ProjectorParams) *Projector {
 		notifications: p.Notifications,
 		owners:        p.Owners,
 		events:        p.Events,
+		features:      p.Features,
 		now:           timeutils.NowUnix,
 	}
 }
@@ -148,6 +156,14 @@ func (p *Projector) project(
 	ctx context.Context,
 	input watchtowerports.WatchtowerItemInput,
 ) (*watchtower.Item, string, error) {
+	watching, err := p.features.Enabled(ctx, platformcatalog.FeatureAIWatchtower)
+	if err != nil {
+		return nil, "", fmt.Errorf("read whether the plan includes the watchtower: %w", err)
+	}
+	if !watching {
+		return nil, "", nil
+	}
+
 	item := ItemFromInput(input)
 	multiErr := errortypes.NewMultiError()
 	item.Validate(multiErr)

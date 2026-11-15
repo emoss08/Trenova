@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -40,12 +41,20 @@ type GraphQLReadResult struct {
 	// Withheld is every field the read did not show, by its path without
 	// list indices.
 	Withheld []string
+	// WithheldByPlan is every field the read did not show because the
+	// organization's plan does not include its feature.
+	WithheldByPlan []WithheldByPlan
 	// Cost is the operation's complexity, which the caller's budget was
 	// charged.
 	Cost int
 	// RetryAfter is how long the caller's budget needs before a read of
 	// this cost would be admitted, when the budget refused it.
 	RetryAfter time.Duration
+}
+
+type WithheldByPlan struct {
+	Path    string
+	Feature platformcatalog.FeatureKey
 }
 
 type GraphQLReadError struct {

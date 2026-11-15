@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/types/search"
 	"github.com/stretchr/testify/mock"
@@ -288,7 +289,7 @@ func shipmentSearchWithViews(
 		}},
 		permissions: engine,
 		visibility:  everyRecordVisible{},
-		views:       refview.NewPort(refview.New(permissioncatalog.NewRegistry()), engine),
+		views:       refview.NewPort(plantest.Views(nil), engine),
 	}
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{

@@ -2,6 +2,7 @@ package aianalyticsjobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "ai-analytics-refresh",
+			Feature:       platformcatalog.FeatureAgentAutomation,
 			Description:   "Work out each organization's AI analytics from its newest runs, turns and calls",
 			Spec:          schedule.Cron("*/5 * * * *"),
 			Workflow:      RefreshAIAnalyticsWorkflow,

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -20,6 +21,7 @@ func NewScheduleProvider() *ScheduleProvider { return &ScheduleProvider{} }
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{{
 		ID:            ReconcileScheduleID,
+		Feature:       platformcatalog.FeatureAgentAutomation,
 		Description:   "Close and pick up the agent waits whose workflow vanished",
 		Spec:          schedule.Every(reconcileEvery),
 		Workflow:      ReconcileAgentWaitsWorkflow,

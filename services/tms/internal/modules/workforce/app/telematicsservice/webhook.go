@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -156,6 +157,9 @@ func (s *Service) dispatchEventSideEffects(
 	switch event.Kind {
 	case telematicsports.ProviderEventKindGeofenceEntry,
 		telematicsports.ProviderEventKindStopArrival:
+		if !s.detectsVisits(ctx, tenantInfo) {
+			return
+		}
 		s.applyStopEvent(ctx, &stopEvent{
 			tenantInfo:   tenantInfo,
 			record:       record,
@@ -164,6 +168,9 @@ func (s *Service) dispatchEventSideEffects(
 		})
 	case telematicsports.ProviderEventKindGeofenceExit,
 		telematicsports.ProviderEventKindStopDeparture:
+		if !s.detectsVisits(ctx, tenantInfo) {
+			return
+		}
 		s.applyStopEvent(ctx, &stopEvent{
 			tenantInfo:   tenantInfo,
 			record:       record,
@@ -285,4 +292,15 @@ func (s *Service) resolveEventWorker(
 	if workerID, ok := workersByExternalID[providerDriverID]; ok {
 		record.WorkerID = workerID
 	}
+}
+
+func (s *Service) detectsVisits(ctx context.Context, tenantInfo pagination.TenantInfo) bool {
+	on, err := s.features.Enabled(ctx, platformcatalog.FeatureCustomerTracking)
+	if err != nil {
+		s.l.Warn("failed to ask whether customer tracking is on the plan",
+			zap.String("organizationId", tenantInfo.OrgID.String()),
+			zap.Error(err))
+		return false
+	}
+	return on
 }

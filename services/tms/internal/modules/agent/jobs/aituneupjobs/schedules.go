@@ -2,6 +2,7 @@ package aituneupjobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "ai-tune-ups",
+			Feature:       platformcatalog.FeatureAgentAutomation,
 			Description:   "Work out each organization's AI tune-ups from the last 30 days of runs",
 			Spec:          schedule.Cron("40 3 * * *"),
 			Workflow:      ComputeAITuneUpsWorkflow,

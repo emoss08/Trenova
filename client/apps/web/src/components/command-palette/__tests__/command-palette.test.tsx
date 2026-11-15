@@ -8,6 +8,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
+import { BASE_ONLY_UNAVAILABLE, seedPlan } from "@/test/plan";
 import { Operation } from "@trenova/shared/types/permission";
 import type { PaletteIntent } from "../palette-model";
 import type { HomeInput, RemoteState } from "../palette-sections";
@@ -565,5 +566,63 @@ describe("CommandPalette", () => {
 
     const row = screen.getByRole("option", { name: /Acme Freight/ });
     expect([...row.querySelectorAll("mark")].map((mark) => mark.textContent)).toEqual(["Acme"]);
+  });
+});
+
+describe("CommandPalette on a plan without Trenova AI", () => {
+  beforeEach(() => {
+    seedPlan(READS_EVERY_KIND, BASE_ONLY_UNAVAILABLE);
+  });
+
+  it("offers no way to ask Nova for a question", async () => {
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "Tell me about SEED-PAY-002?");
+
+    expect(screen.queryByRole("option", { name: /Ask Nova/ })).toBeNull();
+    await waitFor(() =>
+      expect(remoteArgs.at(-1)).toEqual({
+        enabled: true,
+        query: "Tell me about SEED-PAY-002?",
+        scope: "all",
+      }),
+    );
+  });
+
+  it("ends a search with what was found, not a way to ask", async () => {
+    remoteState.current = { groups: [], loading: false, error: false, ready: true };
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "workers");
+
+    for (const option of screen.getAllByRole("option")) {
+      expect(option).not.toHaveAccessibleName(/Ask Nova/);
+    }
+  });
+
+  it("says nothing matched without offering to ask instead, and names Nova nowhere", async () => {
+    remoteState.current = { groups: [], loading: false, error: false, ready: true };
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "zzzzqqq");
+
+    expect(screen.getByText("Nothing called “zzzzqqq”")).toBeInTheDocument();
+    expect(screen.queryByText("Try asking instead")).toBeNull();
+    expect(screen.queryByText(/Nova/)).toBeNull();
+    expect(document.querySelector('[data-slot="nova-badge"]')).toBeNull();
+    expect(input()).toHaveAttribute("placeholder", "Search records and pages, or run a command…");
+  });
+
+  it("never asks Nova on Enter", async () => {
+    const user = userEvent.setup();
+    renderPalette();
+
+    await user.type(input(), "Tell me about SEED-PAY-002?");
+    await user.keyboard("{Enter}");
+
+    expect(ask).not.toHaveBeenCalled();
   });
 });

@@ -1,8 +1,11 @@
 package tmstest
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -20,11 +23,13 @@ type Server struct {
 	readings []tms.Reading
 	since    []time.Time
 	states   []tms.State
+	features [][]string
 	refused  int
 	fail     int
 	invites  []tms.Invite
 	spoiled  map[string]bool
 	setUp    bool
+	email    *tms.SystemEmail
 }
 
 func New(t testing.TB, token string) *Server {
@@ -33,7 +38,12 @@ func New(t testing.TB, token string) *Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /managed/v1/readings", s.getReadings)
 	mux.HandleFunc("PUT /managed/v1/state", s.putState)
+	mux.HandleFunc("PUT /managed/v1/features", s.putFeatures)
+	mux.HandleFunc("GET /managed/v1/features", s.getFeatures)
 	mux.HandleFunc("PUT /managed/v1/first-administrator/invite", s.putInvite)
+	mux.HandleFunc("GET /managed/v1/system-email", s.getSystemEmail)
+	mux.HandleFunc("PUT /managed/v1/system-email", s.putSystemEmail)
+	mux.HandleFunc("DELETE /managed/v1/system-email", s.deleteSystemEmail)
 	srv := httptest.NewServer(s.authenticate(mux))
 	t.Cleanup(srv.Close)
 	s.URL = srv.URL
@@ -68,6 +78,21 @@ func (s *Server) States() []tms.State {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return append([]tms.State(nil), s.states...)
+}
+
+func (s *Server) Features() [][]string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([][]string(nil), s.features...)
+}
+
+func (s *Server) LastFeatures() ([]string, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if len(s.features) == 0 {
+		return nil, false
+	}
+	return append([]string{}, s.features[len(s.features)-1]...), true
 }
 
 func (s *Server) SetAdministratorSetUp(setUp bool) {
@@ -149,6 +174,35 @@ func (s *Server) putState(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *Server) putFeatures(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Features []string `json:"features"`
+	}
+	if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&body); err != nil ||
+		body.Features == nil {
+		problem(w, http.StatusBadRequest, "Invalid feature list")
+		return
+	}
+	s.mu.Lock()
+	s.features = append(s.features, body.Features)
+	s.mu.Unlock()
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) getFeatures(w http.ResponseWriter, _ *http.Request) {
+	held, _ := s.LastFeatures()
+	if held == nil {
+		held = []string{}
+	}
+	out, err := sonic.Marshal(map[string]any{"features": held})
+	if err != nil {
+		problem(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(out)
+}
+
 func (s *Server) putInvite(w http.ResponseWriter, r *http.Request) {
 	var invite tms.Invite
 	if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&invite); err != nil ||
@@ -170,6 +224,70 @@ func (s *Server) putInvite(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(out)
+}
+
+func (s *Server) SystemEmail() *tms.SystemEmail {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.email == nil {
+		return nil
+	}
+	held := *s.email
+	return &held
+}
+
+func (s *Server) getSystemEmail(w http.ResponseWriter, _ *http.Request) {
+	s.mu.Lock()
+	held := tms.HeldSystemEmail{}
+	if s.email != nil {
+		held = tms.HeldSystemEmail{
+			Configured:  true,
+			Provider:    s.email.Provider,
+			FromAddress: s.email.FromAddress,
+			Fingerprint: fingerprint(s.email),
+		}
+	}
+	s.mu.Unlock()
+	out, err := sonic.Marshal(held)
+	if err != nil {
+		problem(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(out)
+}
+
+func (s *Server) putSystemEmail(w http.ResponseWriter, r *http.Request) {
+	var sender tms.SystemEmail
+	if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&sender); err != nil ||
+		sender.Provider == "" || len(sender.APIKey) < 20 || sender.FromAddress == "" ||
+		sender.FromName == "" {
+		problem(w, http.StatusBadRequest, "Invalid system email sender")
+		return
+	}
+	s.mu.Lock()
+	s.email = &sender
+	s.mu.Unlock()
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) deleteSystemEmail(w http.ResponseWriter, _ *http.Request) {
+	s.mu.Lock()
+	s.email = nil
+	s.mu.Unlock()
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func fingerprint(sender *tms.SystemEmail) string {
+	sum := sha256.Sum256([]byte(strings.Join([]string{
+		"trenova.system-email.v1",
+		sender.Provider,
+		sender.FromAddress,
+		sender.FromName,
+		sender.APIKey,
+		sender.WebhookSecret,
+	}, "\n")))
+	return hex.EncodeToString(sum[:])
 }
 
 func problem(w http.ResponseWriter, status int, title string) {

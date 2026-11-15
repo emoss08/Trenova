@@ -244,7 +244,7 @@ type Shipment {
   "The sum of the freight lines."
   freightChargeAmount: Decimal!
   "The values the shipment's tariff prices with, by input name. Each value is a Tariff wire value."
-  tariffInputs: JSON!
+  tariffInputs: JSON
   "The freight the shipment bills, line by line, as its last rating produced it."
   freightLines: [ShipmentFreightLine!]!
   totalChargeAmount: Decimal
@@ -287,7 +287,8 @@ type Shipment {
   customer: ShipmentCustomer
   billToCustomer: ShipmentCustomer
   owner: User
-  formulaTemplate: ShipmentFormulaTemplate
+  "The formula template that rates the shipment, for a caller who may read formula templates."
+  formulaTemplate: ShipmentFormulaTemplate @authorizes(resource: "formula_template")
   "Every allocation on the shipment, across freight and accessorials."
   chargeAllocations: [ChargeAllocation!]!
   """
@@ -397,20 +398,20 @@ name the quote rather than repeating it: the quote holds the full explanation,
 and copying it here would let the two drift.
 """
 type ShipmentRatingDetail {
-  formulaTemplateId: String!
-  formulaTemplateName: String!
+  formulaTemplateId: String
+  formulaTemplateName: String
   ratedAt: Timestamp!
   "The template version that rated the shipment. Zero when it was rated by hand."
-  versionNumber: Int!
+  versionNumber: Int
   "The bill the tariff produced. Null when the tariff refused or the shipment is rated by hand."
   bill: TariffBill
   "The tariff's reason for refusing to rate the shipment."
-  refusal: String!
+  refusal: String
   "Every best and worst the tariff evaluated, in the order they ran."
-  choices: [TariffChoice!]!
+  choices: [TariffChoice!]
   "The inputs the tariff priced with, by name. Each value is a Tariff wire value."
-  inputs: JSON!
-  skipped: [ShipmentRatingSkip!]!
+  inputs: JSON
+  skipped: [ShipmentRatingSkip!]
   """
   The values each statement of the tariff took and the table lookups it made, for the
   people who may read formula templates. Null for everyone else and for a hand rate.
@@ -425,7 +426,7 @@ type ShipmentRatingDetail {
   source: String!
   explanation: String!
   "True while the bill's reviews wait on a person's approval, which holds the shipment out of billing."
-  awaitingReview: Boolean!
+  awaitingReview: Boolean
   "Who approved the reviews this rating carries, and when. Null until a person approves them."
   reviewApproval: ShipmentRatingReviewApproval
 }
@@ -523,7 +524,7 @@ type ShipmentCustomer @kind(resource: "customer") {
   ediPartner: EdiPartner
 }
 
-type ShipmentFormulaTemplate {
+type ShipmentFormulaTemplate @kind(resource: "formula_template") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -731,7 +732,7 @@ type ShipmentAdditionalCharge {
   unit: Int!
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
-  isDetention: Boolean!
+  isDetention: Boolean
   "Whether the shipment's tariff billed this charge."
   isTariff: Boolean!
   "The tariff's label for the charge."
@@ -1268,8 +1269,8 @@ type ShipmentDispatchCounts {
   uncovered: Int!
 }
 
-type ShipmentDetentionWatchlist {
-  items: [ShipmentDetentionWatchlistItem!]!
+type ShipmentDetentionWatchlist @kind(resource: "detention") {
+  items: [ShipmentDetentionWatchlistItem!]
 }
 
 type ShipmentDetentionWatchlistItem {

@@ -449,6 +449,142 @@ func (_c *MockFormulaTemplateRepository_FindByNames_Call) RunAndReturn(run func(
 	return _c
 }
 
+// ListStandardKeys provides a mock function for the type MockFormulaTemplateRepository
+func (_mock *MockFormulaTemplateRepository) ListStandardKeys(ctx context.Context, req formulatemplateports.ListStandardKeysRequest) ([]string, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListStandardKeys")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, formulatemplateports.ListStandardKeysRequest) ([]string, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, formulatemplateports.ListStandardKeysRequest) []string); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, formulatemplateports.ListStandardKeysRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateRepository_ListStandardKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListStandardKeys'
+type MockFormulaTemplateRepository_ListStandardKeys_Call struct {
+	*mock.Call
+}
+
+// ListStandardKeys is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req formulatemplateports.ListStandardKeysRequest
+func (_e *MockFormulaTemplateRepository_Expecter) ListStandardKeys(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_ListStandardKeys_Call {
+	return &MockFormulaTemplateRepository_ListStandardKeys_Call{Call: _e.mock.On("ListStandardKeys", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateRepository_ListStandardKeys_Call) Run(run func(ctx context.Context, req formulatemplateports.ListStandardKeysRequest)) *MockFormulaTemplateRepository_ListStandardKeys_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 formulatemplateports.ListStandardKeysRequest
+		if args[1] != nil {
+			arg1 = args[1].(formulatemplateports.ListStandardKeysRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_ListStandardKeys_Call) Return(strings []string, err error) *MockFormulaTemplateRepository_ListStandardKeys_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_ListStandardKeys_Call) RunAndReturn(run func(ctx context.Context, req formulatemplateports.ListStandardKeysRequest) ([]string, error)) *MockFormulaTemplateRepository_ListStandardKeys_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// NonStandardIDs provides a mock function for the type MockFormulaTemplateRepository
+func (_mock *MockFormulaTemplateRepository) NonStandardIDs(ctx context.Context, req formulatemplateports.GetFormulaTemplatesByIDsRequest) ([]pulid.ID, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for NonStandardIDs")
+	}
+
+	var r0 []pulid.ID
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, formulatemplateports.GetFormulaTemplatesByIDsRequest) ([]pulid.ID, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, formulatemplateports.GetFormulaTemplatesByIDsRequest) []pulid.ID); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pulid.ID)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, formulatemplateports.GetFormulaTemplatesByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateRepository_NonStandardIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NonStandardIDs'
+type MockFormulaTemplateRepository_NonStandardIDs_Call struct {
+	*mock.Call
+}
+
+// NonStandardIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req formulatemplateports.GetFormulaTemplatesByIDsRequest
+func (_e *MockFormulaTemplateRepository_Expecter) NonStandardIDs(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_NonStandardIDs_Call {
+	return &MockFormulaTemplateRepository_NonStandardIDs_Call{Call: _e.mock.On("NonStandardIDs", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateRepository_NonStandardIDs_Call) Run(run func(ctx context.Context, req formulatemplateports.GetFormulaTemplatesByIDsRequest)) *MockFormulaTemplateRepository_NonStandardIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 formulatemplateports.GetFormulaTemplatesByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(formulatemplateports.GetFormulaTemplatesByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_NonStandardIDs_Call) Return(iDs []pulid.ID, err error) *MockFormulaTemplateRepository_NonStandardIDs_Call {
+	_c.Call.Return(iDs, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_NonStandardIDs_Call) RunAndReturn(run func(ctx context.Context, req formulatemplateports.GetFormulaTemplatesByIDsRequest) ([]pulid.ID, error)) *MockFormulaTemplateRepository_NonStandardIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByID provides a mock function for the type MockFormulaTemplateRepository
 func (_mock *MockFormulaTemplateRepository) GetByID(ctx context.Context, req formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error) {
 	ret := _mock.Called(ctx, req)

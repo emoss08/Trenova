@@ -14,11 +14,11 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       formulaTemplateService.list({ limit }, { signal }),
   }),
-  /** The inputs a template version declares; no version is the one that bills today. */
-  inputs: (templateId: string, versionNumber: number | null) => ({
-    queryKey: [templateId, versionNumber ?? "billing"],
+  /** The inputs a rating method prices with today, on any plan for a standard template. */
+  inputs: (templateId: string) => ({
+    queryKey: [templateId],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
-      formulaTemplateService.getDeclaredInputs(templateId, versionNumber, { signal }),
+      formulaTemplateService.getDeclaredInputs(templateId, { signal }),
   }),
   usage: (templateId: string) => ({
     queryKey: [templateId],

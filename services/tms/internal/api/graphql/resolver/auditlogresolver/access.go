@@ -117,8 +117,11 @@ func (r *Deps) recordAccess(
 		return auditports.EntryAccess{}, err
 	}
 	if result == nil || !result.Allowed {
-		return auditports.EntryAccess{}, errortypes.NewAuthorizationError(
-			"You don't have permission to read this record's history",
+		return auditports.EntryAccess{}, permissionports.DeniedError(
+			result,
+			errortypes.NewAuthorizationError(
+				"You don't have permission to read this record's history",
+			),
 		)
 	}
 	if narrowed(result.DataScope) {

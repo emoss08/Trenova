@@ -101,7 +101,7 @@ func TestSetStateThenDecide(t *testing.T) {
 	assert.True(t, d.Allowed)
 	assert.False(t, d.Managed, "no state yet: nothing is limited")
 
-	require.NoError(t, svc.SetState(t.Context(), &managedusage.State{
+	change, err := svc.SetState(t.Context(), &managedusage.State{
 		WindowStart: now - hour,
 		WindowEnd:   now + hour,
 		Meters: []managedusage.Meter{{
@@ -111,7 +111,10 @@ func TestSetStateThenDecide(t *testing.T) {
 			Allowance: 5,
 			Stopped:   true,
 		}},
-	}))
+	})
+	require.NoError(t, err)
+	assert.Nil(t, change.Previous, "the first state has nothing before it")
+	assert.Equal(t, repo.state.ReceivedAt, change.Current.ReceivedAt)
 	assert.Equal(t, now, repo.state.ReceivedAt)
 	assert.Equal(t, managedusage.CurrentStateID, repo.state.ID)
 
@@ -127,7 +130,7 @@ func TestTheStateIsCached(t *testing.T) {
 	repo := &fakeRepo{}
 	svc := newService(repo, nil, nil)
 	for range 5 {
-		_, err := svc.Decide(t.Context(), platformcatalog.MeterAISpendCents, 1)
+		_, err := svc.Decide(t.Context(), platformcatalog.MeterShipmentsTotal, 1)
 		require.NoError(t, err)
 	}
 	assert.Equal(t, 1, repo.gets)
@@ -137,7 +140,7 @@ func TestAReadFailureIsReturned(t *testing.T) {
 	t.Parallel()
 
 	svc := newService(&fakeRepo{err: errors.New("down")}, nil, nil)
-	_, err := svc.Decide(t.Context(), platformcatalog.MeterAISpendCents, 1)
+	_, err := svc.Decide(t.Context(), platformcatalog.MeterShipmentsTotal, 1)
 	require.Error(t, err)
 }
 
@@ -146,7 +149,7 @@ func TestSetStateRefusesAnInvalidState(t *testing.T) {
 
 	repo := &fakeRepo{}
 	svc := newService(repo, nil, nil)
-	err := svc.SetState(t.Context(), &managedusage.State{WindowStart: 1})
+	_, err := svc.SetState(t.Context(), &managedusage.State{WindowStart: 1})
 	require.Error(t, err)
 	assert.Nil(t, repo.state)
 }
@@ -221,4 +224,145 @@ func TestReadingsReturnAReaderFailure(t *testing.T) {
 	})
 	_, err := svc.Readings(t.Context(), current)
 	require.Error(t, err)
+}
+
+func storageState(quantity, allowance int64, overage bool) *managedusage.State {
+	return &managedusage.State{
+		WindowStart: now - hour,
+		WindowEnd:   now + hour,
+		Overage:     overage,
+		Meters: []managedusage.Meter{{
+			Meter:     platformcatalog.MeterDocumentStorageBytes,
+			Unit:      managedusage.UnitBytes,
+			Quantity:  quantity,
+			Allowance: allowance,
+		}},
+	}
+}
+
+func TestALevelMeterIsDecidedOnTheLiveLevelNotTheRelayedQuantity(t *testing.T) {
+	t.Parallel()
+
+	storage := &fakeLevel{meter: platformcatalog.MeterDocumentStorageBytes, level: 400}
+	svc := newService(
+		&fakeRepo{state: storageState(1000, 1000, false)},
+		nil,
+		[]managedusageports.LevelReader{storage},
+	)
+
+	d, err := svc.Decide(t.Context(), platformcatalog.MeterDocumentStorageBytes, 600)
+	require.NoError(t, err)
+	assert.True(t, d.Allowed, "deleting documents frees room before the next relay")
+	assert.Equal(t, int64(400), d.Used)
+
+	d, err = svc.Decide(t.Context(), platformcatalog.MeterDocumentStorageBytes, 601)
+	require.NoError(t, err)
+	assert.False(t, d.Allowed)
+	assert.Equal(t, managedusage.ReasonAllowance, d.Reason)
+}
+
+func TestALevelMeterTheStateDoesNotNameIsNotRead(t *testing.T) {
+	t.Parallel()
+
+	orgs := &fakeLevel{meter: platformcatalog.MeterOrganizationsTotal, err: errors.New("unread")}
+	svc := newService(
+		&fakeRepo{state: storageState(0, 1000, false)},
+		nil,
+		[]managedusageports.LevelReader{orgs},
+	)
+
+	d, err := svc.Decide(t.Context(), platformcatalog.MeterOrganizationsTotal, 1)
+	require.NoError(t, err)
+	assert.True(t, d.Allowed)
+	assert.False(t, d.Managed)
+}
+
+func TestSetStateReportsThePreviousState(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{state: storageState(100, 1000, false)}
+	svc := newService(repo, nil, nil)
+
+	change, err := svc.SetState(t.Context(), storageState(900, 1000, false))
+	require.NoError(t, err)
+	require.NotNil(t, change.Previous)
+	previous, _ := change.Previous.Meter(platformcatalog.MeterDocumentStorageBytes)
+	current, _ := change.Current.Meter(platformcatalog.MeterDocumentStorageBytes)
+	assert.Equal(t, int64(100), previous.Quantity)
+	assert.Equal(t, int64(900), current.Quantity)
+}
+
+type recordingObserver struct {
+	changes []*managedusageports.StateChange
+	err     error
+}
+
+func (r *recordingObserver) StateChanged(
+	_ context.Context,
+	change *managedusageports.StateChange,
+) error {
+	r.changes = append(r.changes, change)
+	return r.err
+}
+
+func TestTheReceiverTellsEveryObserverAndAFailingOneDoesNotFailTheWrite(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	failing := &recordingObserver{err: errors.New("down")}
+	working := &recordingObserver{}
+	receiver := managedusageservice.NewReceiver(managedusageservice.ReceiverParams{
+		Usage:     newService(repo, nil, nil),
+		Observers: []managedusageports.StateObserver{failing, working},
+		Logger:    zap.NewNop(),
+	})
+
+	require.NoError(t, receiver.SetState(t.Context(), storageState(10, 1000, false)))
+	require.Len(t, failing.changes, 1)
+	require.Len(t, working.changes, 1)
+	assert.NotNil(t, repo.state)
+}
+
+func TestTheReceiverTellsNoObserverOfAnInvalidState(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingObserver{}
+	receiver := managedusageservice.NewReceiver(managedusageservice.ReceiverParams{
+		Usage:     newService(&fakeRepo{}, nil, nil),
+		Observers: []managedusageports.StateObserver{observer},
+		Logger:    zap.NewNop(),
+	})
+
+	require.Error(t, receiver.SetState(t.Context(), &managedusage.State{WindowStart: 1}))
+	assert.Empty(t, observer.changes)
+}
+
+func TestReadingsListTheFourAppMeters(t *testing.T) {
+	t.Parallel()
+
+	current := now - now%hour
+	svc := newService(
+		&fakeRepo{},
+		[]managedusageports.HourlyCounter{
+			&fakeCounter{meter: platformcatalog.MeterShipmentsTotal},
+			&fakeCounter{meter: platformcatalog.MeterDocumentIntelligencePages},
+		},
+		[]managedusageports.LevelReader{
+			&fakeLevel{meter: platformcatalog.MeterDocumentStorageBytes, level: 1},
+			&fakeLevel{meter: platformcatalog.MeterOrganizationsTotal, level: 2},
+		},
+	)
+
+	readings, err := svc.Readings(t.Context(), current)
+	require.NoError(t, err)
+	meters := make([]platformcatalog.MeterKey, 0, len(readings))
+	for _, r := range readings {
+		meters = append(meters, r.Meter)
+	}
+	assert.ElementsMatch(t, []platformcatalog.MeterKey{
+		platformcatalog.MeterShipmentsTotal,
+		platformcatalog.MeterDocumentIntelligencePages,
+		platformcatalog.MeterDocumentStorageBytes,
+		platformcatalog.MeterOrganizationsTotal,
+	}, meters)
 }

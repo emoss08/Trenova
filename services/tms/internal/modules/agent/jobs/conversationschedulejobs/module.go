@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
@@ -28,6 +29,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            ReconcileScheduleID,
+			Feature:       platformcatalog.FeatureAIDesk,
 			Description:   "Keep one schedule behind every request scheduled in a conversation",
 			Spec:          schedule.Every(reconcileEvery),
 			Workflow:      ReconcileConversationSchedulesWorkflow,

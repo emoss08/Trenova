@@ -107,4 +107,5 @@ type AIUsageRecord struct {
 	// Batched is an attempt the provider answered through its batch API, at the
 	// batch discount: CostUSD is already discounted.
 	Batched bool `json:"batched" keel:"batched"`
+	Pages   int  `json:"pages"   keel:"pages"`
 }

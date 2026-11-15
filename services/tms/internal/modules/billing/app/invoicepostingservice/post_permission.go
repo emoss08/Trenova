@@ -32,7 +32,7 @@ func (s *Service) guardPoster(
 		return nil
 	}
 
-	return errortypes.NewAuthorizationError(
+	return permissionports.DeniedError(result, errortypes.NewAuthorizationError(
 		"Your role cannot post invoices. Ask someone who can post invoices to post this one.",
-	)
+	))
 }

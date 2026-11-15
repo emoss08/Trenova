@@ -1,8 +1,8 @@
-import { formatCurrency, formatFileSize } from "@trenova/shared/lib/utils";
+import { formatFileSize } from "@trenova/shared/lib/utils";
 import { translateLabel } from "@trenova/shared/i18n/labels";
 import { translate } from "@trenova/shared/i18n/runtime";
 
-export type PlanMeterUnit = "count" | "bytes" | "cents";
+export type PlanMeterUnit = "count" | "bytes";
 export type PlanMeterWindow = "lifetime" | "month" | "item";
 
 export type PlanMeterDefinition = {
@@ -90,11 +90,17 @@ export const PLAN_METERS: Readonly<Record<string, PlanMeterDefinition>> = {
     unit: "count",
     window: "month",
   },
-  "ai.spend_cents": {
-    label: "AI spend",
-    description: "Model usage cost this month.",
-    unit: "cents",
+  "document_intelligence.pages": {
+    label: "Document Intelligence pages",
+    description: "Pages of the documents Document Intelligence read this period.",
+    unit: "count",
     window: "month",
+  },
+  "organizations.total": {
+    label: "Organizations",
+    description: "Organizations on this Trenova instance.",
+    unit: "count",
+    window: "lifetime",
   },
 };
 
@@ -130,9 +136,6 @@ export function formatPlanMeterValue(meterKey: string, value: number): string {
   if (unit === "bytes") {
     return formatFileSize(value);
   }
-  if (unit === "cents") {
-    return formatCurrency(value / 100);
-  }
   return countFormatter.format(value);
 }
 
@@ -146,27 +149,6 @@ export function comparePlanMeters(a: string, b: string): number {
   if (ai === -1) return 1;
   if (bi === -1) return -1;
   return ai - bi;
-}
-
-/**
- * What each capability a plan can withhold is called, keyed as the server names it
- * (platformplan.Capability). Why a plan withholds one is the edition's to explain.
- */
-export const PLAN_CAPABILITY_LABELS: Readonly<Record<string, { label: string }>> = {
-  "email.outbound": { label: "Outbound email" },
-  integrations: { label: "Integrations" },
-  api_keys: { label: "API keys" },
-  "agent.automation": { label: "Agent automation" },
-  "agent.web_search": { label: "Agent web search" },
-  "agent.portal_automation": { label: "Agent portal automation" },
-  "carrier_intelligence.paid": { label: "Carrier intelligence lookups" },
-  document_intelligence: { label: "Document extraction" },
-  sms: { label: "Text messages" },
-  sso: { label: "Single sign-on" },
-};
-
-export function planCapabilityLabel(capability: string): string {
-  return PLAN_CAPABILITY_LABELS[capability]?.label ?? humanizeKey(capability);
 }
 
 export function planDisplayName(planKey: string, planName?: string): string {

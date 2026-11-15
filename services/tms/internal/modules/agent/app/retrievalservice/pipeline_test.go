@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -645,4 +646,27 @@ func TestDocumentTextEmbeddable(t *testing.T) {
 	assert.False(t, DocumentTextEmbeddable(registry, document.OwnerResource("user")))
 	assert.False(t, DocumentTextEmbeddable(registry, document.OwnerResource("unknown_thing")))
 	assert.False(t, DocumentTextEmbeddable(nil, permission.ResourceShipment))
+}
+
+// Search by meaning is Trenova AI: without it nothing is indexed, and a batch
+// already queued embeds nothing.
+func TestPlanIndexesNothingOnABaseOnlyPlan(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(activeSettings())
+	svc.features = plantest.BaseOnly()
+
+	plan, err := svc.Plan(t.Context(), testTenant)
+	require.NoError(t, err)
+	assert.False(t, plan.Active)
+	assert.Equal(t, airetrieval.UnavailableReasonDisabled, plan.Reason)
+
+	result, err := svc.IndexBatch(t.Context(), &retrievalports.RetrievalIndexBatchRequest{
+		TenantInfo: testTenant,
+		ModelKey:   activeKey,
+	})
+	require.NoError(t, err)
+	assert.Zero(t, result.Indexed)
+	assert.Empty(t, svc.embeddings.requests)
+	assert.Empty(t, svc.repo.updated)
 }

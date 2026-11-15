@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -166,4 +167,8 @@ func (o *PodDocumentObserver) settlePaperExceptions(
 				zap.String("exception", raised.ID.String()), zap.Error(err))
 		}
 	}
+}
+
+func (o *PodDocumentObserver) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureAIWatchtower
 }

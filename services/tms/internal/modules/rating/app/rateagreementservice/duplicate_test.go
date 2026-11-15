@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -103,10 +105,11 @@ func TestDuplicate_CopiesTheContractAsAFreshDraft(t *testing.T) {
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		Validator:    testValidator(),
-		AuditService: audit,
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+		AuditService:     audit,
 	})
 
 	duplicate, err := svc.Duplicate(t.Context(), &DuplicateRateAgreementRequest{

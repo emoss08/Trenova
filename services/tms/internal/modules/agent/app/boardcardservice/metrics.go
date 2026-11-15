@@ -57,17 +57,32 @@ type shipmentCards struct {
 	} `json:"dispatch"`
 }
 
+// metricAllowed reports whether the reader may see a figure, and the plan's
+// denial when the figure's feature is off the plan (the costing figures need
+// Accounting & Cash), in which case it is neither read nor shown, as on the
+// home page.
 func (s *Service) metricAllowed(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 	key string,
-) (bool, error) {
+) (bool, *permissionports.PlanDenial, error) {
 	definition, ok := homelayout.MetricDefinitionFor(key)
 	if !ok {
-		return false, nil
+		return false, nil, nil
+	}
+	if definition.Feature != "" {
+		denial, off, err := s.plan.Feature(ctx, definition.Feature)
+		if err != nil {
+			return false, nil, fmt.Errorf("read whether the plan includes %s: %w", key, err)
+		}
+		if off {
+			return false, &denial, nil
+		}
 	}
 
-	return s.allowed(ctx, actor, definition.Resource, definition.Operation)
+	allowed, err := s.allowed(ctx, actor, definition.Resource, definition.Operation)
+
+	return allowed, nil, err
 }
 
 func (s *Service) readMetrics(
@@ -78,7 +93,7 @@ func (s *Service) readMetrics(
 ) error {
 	wanted := make([]string, 0, len(keys))
 	for _, key := range keys {
-		allowed, err := s.metricAllowed(ctx, actor, key)
+		allowed, _, err := s.metricAllowed(ctx, actor, key)
 		if err != nil {
 			return err
 		}

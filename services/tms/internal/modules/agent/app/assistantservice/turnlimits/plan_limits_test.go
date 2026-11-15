@@ -9,11 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-func TestAssertWithinPlanRefusesOnceTheMonthsSpendIsGone(t *testing.T) {
+func TestAssertWithinPlanAsksOnlyTheMessageMeter(t *testing.T) {
 	t.Parallel()
 
 	tenant := plantest.Tenant()
@@ -22,21 +23,23 @@ func TestAssertWithinPlanRefusesOnceTheMonthsSpendIsGone(t *testing.T) {
 		TenantInfo: tenant,
 		Meter:      platformcatalog.MeterAIAssistantMessages,
 		Quantity:   0,
-	}).Return(&platformplanports.QuotaDecision{Allowed: true}, nil)
+	}).Return(&platformplanports.QuotaDecision{Allowed: true}, nil).Once()
+
+	require.NoError(t, (&Limits{Quota: guard}).AssertWithinPlan(t.Context(), tenant))
+}
+
+func TestAssertMayAskAsksOnlyTheMessageMeter(t *testing.T) {
+	t.Parallel()
+
+	tenant := plantest.Tenant()
+	guard := platformplanportsmock.NewMockQuotaGuard(t)
 	guard.EXPECT().Check(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: tenant,
-		Meter:      platformcatalog.MeterAISpendCents,
+		Meter:      platformcatalog.MeterAIAssistantMessages,
 		Quantity:   1,
-	}).Return(&platformplanports.QuotaDecision{
-		Meter:   platformcatalog.MeterAISpendCents,
-		Plan:    platformplan.PlanKeyFreeDemo,
-		Limit:   150,
-		Used:    150,
-		Allowed: false,
-	}, nil)
+	}).Return(&platformplanports.QuotaDecision{Allowed: true}, nil).Once()
 
-	err := (&Limits{Quota: guard}).AssertWithinPlan(t.Context(), tenant)
-	require.True(t, errortypes.IsQuotaExceededError(err))
+	require.NoError(t, (&Limits{Quota: guard}).AssertMayAsk(t.Context(), pulid.Nil, tenant))
 }
 
 func TestAssertWithinPlanRefusesATurnPastTheMessageLimit(t *testing.T) {

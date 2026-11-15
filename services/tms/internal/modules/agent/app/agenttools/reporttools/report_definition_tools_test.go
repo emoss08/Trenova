@@ -16,12 +16,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeReportWriter struct {
+	// offPlan is the refusal a built-in report off the plan gets.
+	offPlan error
+
 	entries     []*canned.Entry
 	definitions []*report.ReportDefinition
 
@@ -102,6 +106,14 @@ func (f *fakeReportWriter) NewCannedFork(
 	req *reporting.ForkCannedRequest,
 ) *report.ReportDefinition {
 	return reporting.NewCannedFork(entry, req, testCatalogVersion)
+}
+
+func (f *fakeReportWriter) RequireCannedOnPlan(
+	context.Context,
+	pagination.TenantInfo,
+	*canned.Entry,
+) error {
+	return f.offPlan
 }
 
 func (f *fakeReportWriter) UpdateDefinition(

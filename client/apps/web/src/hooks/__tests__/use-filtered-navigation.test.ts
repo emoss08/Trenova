@@ -1,6 +1,7 @@
 import { canAccessNavEntry, filterNavModules } from "@/hooks/use-filtered-navigation";
 import type { NavAccessContext } from "@/hooks/use-filtered-navigation";
 import type { NavGroup, NavItem, NavModule } from "@/config/navigation.types";
+import { PlanFeature } from "@/lib/plan-feature";
 import {
   OrganizationCapability,
   type OrganizationCapabilities,
@@ -212,5 +213,59 @@ describe("platform-scoped entries", () => {
       canAccessNavEntry(unscoped, { ...context(brokerageOn), platformMode: "enterprise" }),
     ).toBe(true);
     expect(canAccessNavEntry(unscoped, context(brokerageOn))).toBe(true);
+  });
+});
+
+describe("entries of an add-on the plan leaves out", () => {
+  const outlook: NavItem = {
+    id: "freight-outlook",
+    label: "Freight outlook",
+    path: "/dispatch/outlook",
+    resource: Resource.ShipmentMove,
+    planFeature: PlanFeature.DispatchIntelligence,
+  };
+  const readsMoves = context(brokerageOn, { [Resource.ShipmentMove]: Operation.Read });
+
+  it("hides an entry whose feature the manifest lists as unavailable", () => {
+    expect(
+      canAccessNavEntry(outlook, {
+        ...readsMoves,
+        unavailableFeatures: [
+          {
+            feature: "tms.dispatch_intelligence",
+            featureName: "Dispatch intelligence",
+            addOn: "DSP",
+            addOnName: "Dispatch Intelligence",
+          },
+        ],
+      }),
+    ).toBe(false);
+  });
+
+  it("shows it when the plan includes the feature, or on an install without plans", () => {
+    expect(canAccessNavEntry(outlook, { ...readsMoves, unavailableFeatures: [] })).toBe(true);
+    expect(canAccessNavEntry(outlook, readsMoves)).toBe(true);
+  });
+
+  it("drops a module whose every entry the plan leaves out", () => {
+    const module: NavModule = {
+      id: "dispatch",
+      label: "Dispatch",
+      icon: () => null,
+      basePath: "/dispatch",
+      navigation: [outlook],
+    };
+    const modules = filterNavModules([module], {
+      ...readsMoves,
+      unavailableFeatures: [
+        {
+          feature: "tms.dispatch_intelligence",
+          featureName: "Dispatch intelligence",
+          addOn: "DSP",
+          addOnName: "Dispatch Intelligence",
+        },
+      ],
+    });
+    expect(modules).toEqual([]);
   });
 });

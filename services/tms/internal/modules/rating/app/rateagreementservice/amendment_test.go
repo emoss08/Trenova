@@ -148,8 +148,7 @@ func TestPlanRefusesToSucceedALaneWhoseWindowAlreadyClosed(t *testing.T) {
 	)
 
 	assert.Nil(t, plan)
-	require.NotNil(t, planErr)
-	assert.True(t, planErr.HasErrors())
+	require.Error(t, planErr)
 }
 
 func TestSameTermsSeesThroughDecimalRepresentation(t *testing.T) {

@@ -28,14 +28,15 @@ type ModelFailure struct {
 }
 
 type PlanRefusal struct {
-	Code       string `json:"code"`
-	Message    string `json:"message"`
-	Meter      string `json:"meter,omitempty"`
-	Limit      int64  `json:"limit,omitempty"`
-	Used       int64  `json:"used,omitempty"`
-	Capability string `json:"capability,omitempty"`
-	Reason     string `json:"reason,omitempty"`
-	Plan       string `json:"plan,omitempty"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Meter   string `json:"meter,omitempty"`
+	Limit   int64  `json:"limit,omitempty"`
+	Used    int64  `json:"used,omitempty"`
+	Feature string `json:"feature,omitempty"`
+	AddOn   string `json:"addOn,omitempty"`
+	Reason  string `json:"reason,omitempty"`
+	Plan    string `json:"plan,omitempty"`
 }
 
 func planRefusalOf(err error) *PlanRefusal {
@@ -51,11 +52,12 @@ func planRefusalOf(err error) *PlanRefusal {
 	}
 	if restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err); ok {
 		return &PlanRefusal{
-			Code:       string(errortypes.ErrPlanRestricted),
-			Message:    restriction.Message,
-			Capability: restriction.Capability,
-			Reason:     restriction.Reason,
-			Plan:       restriction.Plan,
+			Code:    string(errortypes.ErrPlanRestricted),
+			Message: restriction.Error(),
+			Feature: restriction.Feature,
+			AddOn:   restriction.AddOn,
+			Reason:  restriction.Reason,
+			Plan:    restriction.Plan,
 		}
 	}
 
@@ -67,7 +69,11 @@ func (r *PlanRefusal) Err() error {
 		return errortypes.NewQuotaExceededError(r.Meter, r.Limit, r.Used, r.Plan)
 	}
 
-	return errortypes.NewPlanRestrictionError(r.Capability, r.Reason, r.Plan)
+	if r.Feature != "" {
+		return errortypes.NewFeatureRestrictionError(r.Feature, r.AddOn)
+	}
+
+	return errortypes.NewPlanRestrictionError(r.Reason, r.Plan)
 }
 
 // refusal is a business error as data: the message key the error handler

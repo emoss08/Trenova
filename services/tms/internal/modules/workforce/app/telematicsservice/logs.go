@@ -45,6 +45,9 @@ func (s *Service) GetWorkerHOSLogs(
 	startAt int64,
 	endAt int64,
 ) ([]*WorkerHOSLogEntry, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	externalID, err := s.workerExternalID(ctx, tenantInfo, workerID)
 	if err != nil {
 		return nil, err
@@ -79,6 +82,9 @@ func (s *Service) GetWorkerHOSDailyLogs(
 	startDate string,
 	endDate string,
 ) ([]*WorkerHOSDailyLog, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	externalID, err := s.workerExternalID(ctx, tenantInfo, workerID)
 	if err != nil {
 		return nil, err
@@ -113,6 +119,9 @@ func (s *Service) GetWorkerFormSubmissions(
 	startAt int64,
 	endAt int64,
 ) ([]*WorkerFormSubmission, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	externalID, err := s.workerExternalID(ctx, tenantInfo, workerID)
 	if err != nil {
 		return nil, err
@@ -144,6 +153,9 @@ func (s *Service) GetHOSCertificationSummary(
 	startDate string,
 	endDate string,
 ) ([]*HOSCertificationSummary, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	mappings, err := s.repo.ListWorkerMappings(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

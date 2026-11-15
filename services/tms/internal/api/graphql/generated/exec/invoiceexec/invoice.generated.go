@@ -447,13 +447,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "ratingNotes",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
 					return obj.RatingNotes, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+				Marshal: gqlexec.Marshal(marshalOString2ᚕstringᚄ),
 			},
 			{
 				Name:       "relatedInvoices",
@@ -505,7 +504,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "appliedAmount",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				ChildErr:   errNoChild10,
@@ -513,7 +511,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").AppliedAmount(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
 				Name:     "settlementStatus",
@@ -713,7 +711,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "openBalance",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				ChildErr:   errNoChild10,
@@ -721,21 +718,19 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").OpenBalance(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
 				Name:     "balanceDueMinor",
-				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
 					return obj.BalanceDueMinor, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int64),
+				Marshal: gqlexec.Marshal(marshalOInt2int64),
 			},
 			{
 				Name:       "creditRemaining",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				ChildErr:   errNoChild10,
@@ -743,7 +738,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").CreditRemaining(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
 				Name:       "daysPastDue",
@@ -758,7 +753,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "paymentApplications",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
@@ -767,11 +761,10 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").PaymentApplications(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomerPaymentApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplicationᚄ),
+				Marshal: gqlexec.Marshal(marshalOCustomerPaymentApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplicationᚄ),
 			},
 			{
 				Name:       "creditApplications",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
@@ -780,17 +773,16 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").CreditApplications(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ),
+				Marshal: gqlexec.Marshal(marshalOCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ),
 			},
 			{
 				Name:     "ediSendStatus",
-				NonNull:  true,
 				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
 					return obj.EDISendStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceEDISendStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐEDISendStatus),
+				Marshal: gqlexec.Marshal(marshalOInvoiceEDISendStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐEDISendStatus),
 			},
 			{
 				Name:     "lastEdiMessageId",
@@ -812,17 +804,15 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastEdiError",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.Invoice)
 					return obj.LastEDIError, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:       "ediSendPlan",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
@@ -831,7 +821,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[InvoiceResolver](ec, "Invoice@invoice").EDISendPlan(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceEDISendPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceportsᚐInvoiceEDISendPlan),
+				Marshal: gqlexec.Marshal(marshalOInvoiceEDISendPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceportsᚐInvoiceEDISendPlan),
 			},
 			{
 				Name:     "version",
@@ -1108,33 +1098,30 @@ var Shard = &gqlexec.Shard{
 		{Object: "InvoiceEDISendPlan", Fields: []*gqlexec.Field{
 			{
 				Name:     "invoiceId",
-				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceports.InvoiceEDISendPlan)
 					return obj.InvoiceID, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
 				Name:     "enabled",
-				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceports.InvoiceEDISendPlan)
 					return obj.Enabled, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:     "autoSend",
-				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceports.InvoiceEDISendPlan)
 					return obj.AutoSend, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:     "partnerId",
@@ -1147,13 +1134,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "partnerName",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceports.InvoiceEDISendPlan)
 					return obj.PartnerName, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "ladingVersionId",
@@ -1166,13 +1152,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "communicationMethod",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceports.InvoiceEDISendPlan)
 					return obj.CommunicationMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "status",
@@ -1195,13 +1180,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastError",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceports.InvoiceEDISendPlan)
 					return obj.LastError, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "sentAt",
@@ -1214,13 +1198,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "blockers",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoiceports.InvoiceEDISendPlan)
 					return obj.Blockers, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+				Marshal: gqlexec.Marshal(marshalOString2ᚕstringᚄ),
 			},
 		}},
 		{Object: "InvoiceEDISendResult", Fields: []*gqlexec.Field{
@@ -1711,12 +1694,12 @@ type InvoiceResolver interface {
 	SubtotalAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
 	OtherAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
 	TotalAmount(ctx context.Context, obj *invoice.Invoice) (*string, error)
-	AppliedAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
+	AppliedAmount(ctx context.Context, obj *invoice.Invoice) (*string, error)
 	VoidDisposition(ctx context.Context, obj *invoice.Invoice) (*invoice.VoidDisposition, error)
 	ReferenceInvoice(ctx context.Context, obj *invoice.Invoice) (*invoice.Invoice, error)
 	MemoKind(ctx context.Context, obj *invoice.Invoice) (*invoice.MemoKind, error)
-	OpenBalance(ctx context.Context, obj *invoice.Invoice) (string, error)
-	CreditRemaining(ctx context.Context, obj *invoice.Invoice) (string, error)
+	OpenBalance(ctx context.Context, obj *invoice.Invoice) (*string, error)
+	CreditRemaining(ctx context.Context, obj *invoice.Invoice) (*string, error)
 	DaysPastDue(ctx context.Context, obj *invoice.Invoice) (*int, error)
 	PaymentApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.Application, error)
 	CreditApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.CreditMemoApplication, error)
@@ -2189,28 +2172,12 @@ func marshalNCreateInvoicesResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "CreateInvoicesResult", v)
 }
 
-func marshalNCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerpayment.CreditMemoApplication) graphql.Marshaler {
-	return gqlexec.List[*customerpayment.CreditMemoApplication]{
-		Elem:        marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplication,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
 func marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplication(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerpayment.CreditMemoApplication) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CreditMemoApplication", v)
-}
-
-func marshalNCustomerPaymentApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplicationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerpayment.Application) graphql.Marshaler {
-	return gqlexec.List[*customerpayment.Application]{
-		Elem:        marshalNCustomerPaymentApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplication,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNCustomerPaymentApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplication(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerpayment.Application) graphql.Marshaler {
@@ -2316,14 +2283,6 @@ func marshalNInvoiceDisputeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 		gqlexec.NullViolation(ctx)
 	}
 	return res
-}
-
-func marshalNInvoiceEDISendPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceportsᚐInvoiceEDISendPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceports.InvoiceEDISendPlan) graphql.Marshaler {
-	if v == nil {
-		gqlexec.NullViolation(ctx)
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "InvoiceEDISendPlan", v)
 }
 
 func marshalNInvoiceEDISendResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceportsᚐInvoiceEDISendResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceports.InvoiceEDISendResult) graphql.Marshaler {
@@ -2438,15 +2397,6 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	return gqlexec.List[string]{
-		Elem:        marshalNString2string,
-		NonNull:     true,
-		NonNullElem: true,
-		Scalar:      true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
@@ -2471,11 +2421,30 @@ func marshalOAccessorialMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
+func marshalOBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	return res
+}
+
+func marshalOCreditMemoApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplicationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerpayment.CreditMemoApplication) graphql.Marshaler {
+	return gqlexec.List[*customerpayment.CreditMemoApplication]{
+		Elem:        marshalNCreditMemoApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐCreditMemoApplication,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Customer", v)
+}
+
+func marshalOCustomerPaymentApplication2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplicationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerpayment.Application) graphql.Marshaler {
+	return gqlexec.List[*customerpayment.Application]{
+		Elem:        marshalNCustomerPaymentApplication2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋcustomerpaymentᚐApplication,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
@@ -2507,6 +2476,11 @@ func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
+func marshalOInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	return res
+}
+
 func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -2520,6 +2494,18 @@ func marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Invoice", v)
+}
+
+func marshalOInvoiceEDISendPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceportsᚐInvoiceEDISendPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceports.InvoiceEDISendPlan) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "InvoiceEDISendPlan", v)
+}
+
+func marshalOInvoiceEDISendStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐEDISendStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoice.EDISendStatus) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
 }
 
 func marshalOInvoiceLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoice.InvoiceLine) graphql.Marshaler {
@@ -2555,6 +2541,14 @@ func marshalOOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋop
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	return res
+}
+
+func marshalOString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {

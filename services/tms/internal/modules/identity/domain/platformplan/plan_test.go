@@ -3,9 +3,9 @@ package platformplan_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,14 +33,9 @@ func TestFreeDemoDefaults(t *testing.T) {
 		platformcatalog.MeterDocumentStorageBytes:    {Max: 104857600, Window: platformplan.WindowLifetime},
 		platformcatalog.MeterDocumentFileBytes:       {Max: 10485760, Window: platformplan.WindowPerItem},
 		platformcatalog.MeterAIAssistantMessages:     {Max: 25, Window: platformplan.WindowMonthly},
-		platformcatalog.MeterAISpendCents:            {Max: 150, Window: platformplan.WindowMonthly},
 	}
 	assert.Equal(t, expected, plan.Limits)
 
-	for _, capability := range platformplan.AllCapabilities() {
-		assert.True(t, plan.Restricts(capability), "free demo must restrict %s", capability)
-		assert.False(t, plan.Allows(capability))
-	}
 	assert.False(t, plan.IsUnlimited())
 }
 
@@ -95,15 +90,11 @@ func TestUnlimited(t *testing.T) {
 	plan := platformplan.Unlimited()
 	assert.True(t, plan.IsUnlimited())
 	assert.Empty(t, plan.MeterKeys())
-	for _, capability := range platformplan.AllCapabilities() {
-		assert.True(t, plan.Allows(capability))
-	}
 	_, ok := plan.Limit(platformcatalog.MeterShipmentsTotal)
 	assert.False(t, ok)
 
 	var nilPlan *platformplan.Plan
 	assert.True(t, nilPlan.IsUnlimited())
-	assert.True(t, nilPlan.Allows(platformplan.CapabilitySSO))
 }
 
 func TestCatalog(t *testing.T) {
@@ -130,16 +121,12 @@ func TestCatalog(t *testing.T) {
 func TestEnumsAreValid(t *testing.T) {
 	t.Parallel()
 
-	for _, capability := range platformplan.AllCapabilities() {
-		assert.True(t, capability.IsValid())
-	}
 	for _, window := range platformplan.AllWindows() {
 		assert.True(t, window.IsValid())
 	}
 	for _, key := range platformplan.AllPlanKeys() {
 		assert.True(t, key.IsValid())
 	}
-	assert.False(t, platformplan.Capability("teleport").IsValid())
 	assert.False(t, platformplan.Window("hourly").IsValid())
 	assert.False(t, platformplan.PlanKey("gold").IsValid())
 }
@@ -167,7 +154,6 @@ func TestResolvedPlan(t *testing.T) {
 	assert.Equal(t, subscription.StatusTrialing, trialing.Status)
 	assert.True(t, trialing.AllowsWrites())
 	assert.True(t, trialing.AllowsLogin())
-	assert.False(t, trialing.Allows(platformplan.CapabilityAPIKeys))
 
 	readOnly := platformplan.NewManaged(freeDemo, sub, 1_500)
 	assert.Equal(t, subscription.StatusReadOnly, readOnly.Status)
@@ -189,12 +175,10 @@ func TestResolvedPlan(t *testing.T) {
 	assert.False(t, internal.IsManaged())
 	assert.True(t, internal.AllowsWrites())
 	assert.True(t, internal.AllowsLogin())
-	assert.True(t, internal.Allows(platformplan.CapabilitySSO))
 	assert.Equal(t, platformplan.PlanKeyUnlimited, internal.Key())
 
 	var none *platformplan.ResolvedPlan
 	assert.Equal(t, platformplan.PlanKeyUnlimited, none.Key())
-	assert.True(t, none.Allows(platformplan.CapabilitySMS))
 	assert.True(t, none.AllowsWrites())
 }
 
@@ -210,4 +194,11 @@ func TestTrialEndingMeters(t *testing.T) {
 
 	var nilPlan *platformplan.Plan
 	assert.False(t, nilPlan.EndsTrial(platformcatalog.MeterShipmentsTotal))
+}
+
+func TestNoPlanLimitsAISpend(t *testing.T) {
+	t.Parallel()
+
+	_, limited := platformplan.DefaultFreeDemoLimits()[platformcatalog.MeterKey("ai.spend_cents")]
+	assert.False(t, limited, "AI runs on the customer's own provider; there are no usage credits")
 }

@@ -28,28 +28,32 @@ func TestRoleAccess_ReadsWhatItsGrantsImply(t *testing.T) {
 	t.Parallel()
 
 	registry := permissioncatalog.NewRegistry()
-	access := refview.NewRoleAccess(registry, permissioncatalog.GrantsOf(
-		role(
+	access := refview.NewRoleAccess(
+		registry,
+		everyFeature(registry),
+		permissioncatalog.GrantsOf(role(
 			permission.SensitivityInternal,
 			grant(permission.ResourceCustomer, permission.OpUpdate),
-		),
-	))
+		)),
+	)
 
 	assert.True(t, access.Reads(t.Context(), permission.ResourceCustomer), "update brings read")
 	assert.False(t, access.Reads(t.Context(), permission.ResourceWorker))
-	assert.True(t, access.Allows(permission.ResourceCustomer.String(), permission.OpUpdate))
-	assert.False(t, access.Allows(permission.ResourceCustomer.String(), permission.OpExport))
+	customer := permission.ResourceCustomer.String()
+	assert.True(t, access.Allows(t.Context(), customer, permission.OpUpdate))
+	assert.False(t, access.Allows(t.Context(), customer, permission.OpExport))
 }
 
 func TestRoleAccess_HoldsALinkedRecordsViewToTheRolesCeiling(t *testing.T) {
 	t.Parallel()
 
-	views := refview.New(permissioncatalog.NewRegistry())
+	views := allOn()
 	public := refview.NewRoleAccess(
 		nil,
+		everyFeature(nil),
 		permissioncatalog.GrantsOf(role(permission.SensitivityPublic)),
 	)
-	internal := refview.NewRoleAccess(nil, permissioncatalog.GrantsOf(
+	internal := refview.NewRoleAccess(nil, everyFeature(nil), permissioncatalog.GrantsOf(
 		role(permission.SensitivityPublic),
 		role(permission.SensitivityInternal),
 	))
@@ -67,12 +71,13 @@ func TestRoleAccess_HoldsALinkedRecordsViewToTheRolesCeiling(t *testing.T) {
 func TestDecidePart_APartOfALinkedRecordNeedsItsKindsRead(t *testing.T) {
 	t.Parallel()
 
-	views := refview.New(permissioncatalog.NewRegistry())
+	views := allOn()
 	none := refview.NewRoleAccess(
 		nil,
+		everyFeature(nil),
 		permissioncatalog.GrantsOf(role(permission.SensitivityInternal)),
 	)
-	reader := refview.NewRoleAccess(nil, permissioncatalog.GrantsOf(
+	reader := refview.NewRoleAccess(nil, everyFeature(nil), permissioncatalog.GrantsOf(
 		role(permission.SensitivityInternal, grant(permission.ResourceShipment, permission.OpRead)),
 	))
 
@@ -82,6 +87,7 @@ func TestDecidePart_APartOfALinkedRecordNeedsItsKindsRead(t *testing.T) {
 		views.DecidePart(
 			t.Context(),
 			none,
+			permission.ResourceShipment,
 			permission.ResourceShipment,
 			"proNumber",
 			refview.Nested,
@@ -95,10 +101,12 @@ func TestDecidePart_APartOfALinkedRecordNeedsItsKindsRead(t *testing.T) {
 			t.Context(),
 			reader,
 			permission.ResourceShipment,
+			permission.ResourceShipment,
 			"status",
 			refview.Nested,
 		),
 	)
 	assert.Equal(t, refview.Visible,
-		views.DecidePart(t.Context(), none, permission.ResourceShipment, "status", refview.Root))
+		views.DecidePart(t.Context(), none, permission.ResourceShipment,
+			permission.ResourceShipment, "status", refview.Root))
 }

@@ -29,6 +29,7 @@ type AIUsageAttribution struct {
 	// DefinitionVersion is the agent definition's version as the call was
 	// made. Nil when the caller is no agent.
 	DefinitionVersion *int64 `json:",omitempty"`
+	Pages             int    `json:",omitempty"`
 }
 
 func (a *AIUsageAttribution) Evaluates() bool {

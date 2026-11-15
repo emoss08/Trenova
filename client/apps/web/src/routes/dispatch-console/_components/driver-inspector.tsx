@@ -1,5 +1,6 @@
 import { HoverGlideGroup } from "@/components/hover-glide";
 import type { DispatchBoardDriver, DispatchDriverMoveMatch } from "@/lib/graphql/dispatch-console";
+import { PlanFeature } from "@/lib/plan-feature";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import { formatTimeAgo } from "@/lib/time-utils";
 import type { TimeRange } from "@/lib/timeline/time-scale";
@@ -9,6 +10,7 @@ import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useNow } from "@trenova/shared/hooks/use-now";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn, formatCompactCurrency, formatCentsWhole } from "@trenova/shared/lib/utils";
@@ -130,7 +132,9 @@ export function DriverInspector({
   const availability = availabilityMeta(driver.availability);
   const hours = hoursLeft(driver, t);
   const nextTimeOff = driver.timeOff[0];
-  const planned = driver.plannedMove ?? null;
+  // The planned move is the planner's, which is Dispatch Intelligence.
+  const plannerOnPlan = usePlanFeature(PlanFeature.DispatchIntelligence).available;
+  const planned = plannerOnPlan ? (driver.plannedMove ?? null) : null;
   const where =
     driver.formattedLocation ||
     (driver.city ? t("{0}, {1}", driver.city, driver.stateAbbreviation) : t("Location unknown"));

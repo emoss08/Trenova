@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditalertpolicyrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditexportrepository"
@@ -23,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/pushsubscriptionrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/reportrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/sidebarpreferencerepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/systememailrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/tableconfigurationrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/tablelayoutrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/tcaallowlistrepository"
@@ -48,11 +50,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/pagetourservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/plannotice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/sidebarpreferenceservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/supportaccessnotice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/systememailservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
@@ -94,6 +99,9 @@ func SharedOptions() fx.Option {
 			pushsubscriptionrepository.New,
 			integrationrepository.New,
 			emailrepository.New,
+			emailrepository.NewRecipientDirectory,
+			emailrepository.NewSystemMessageLocator,
+			systememailrepository.New,
 			tcasubscriptionrepository.New,
 			tcaallowlistrepository.New,
 			notificationrepository.New,
@@ -130,6 +138,8 @@ func SharedOptions() fx.Option {
 			customfieldservice.New,
 			customfieldservice.NewValuesService,
 			func(s *customfieldservice.ValuesService) customfieldports.NamedValues { return s },
+			systememailservice.New,
+			func(s *systememailservice.Service) emailports.SystemSenders { return s },
 			emailservice.New,
 			func(s *emailservice.Service) emailports.EmailService { return s },
 			func(s *emailservice.Service) emailports.EmailSenderResolver { return s },
@@ -137,6 +147,9 @@ func SharedOptions() fx.Option {
 			googlemapsservice.NewAutoCompleteService,
 			dataentrycontrolservice.New,
 			notificationservice.New,
+			supportaccessnotice.New,
+			plannotice.New,
+			func(n *supportaccessnotice.Notifier) supportaccessports.Notifier { return n },
 			notificationpreferenceservice.New,
 			tablechangealertservice.New,
 			tablechangealertservice.NewConsumer,

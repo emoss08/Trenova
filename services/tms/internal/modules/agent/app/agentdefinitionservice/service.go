@@ -20,12 +20,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -60,7 +59,7 @@ type Params struct {
 	// Access sets who may use an agent in the transaction that saves it.
 	Access      agentdefinitionports.AgentAccessService
 	Permissions permissionports.PermissionEngine
-	Plans       platformplanports.PlanService
+	Features    platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -78,7 +77,7 @@ type Service struct {
 	extensions  agentextensionports.AgentExtensionGate
 	access      agentdefinitionports.AgentAccessService
 	permissions permissionports.PermissionEngine
-	plans       platformplanports.PlanService
+	features    platformcatalogports.FeatureGate
 }
 
 func New(p Params) agentdefinitionports.AgentDefinitionService {
@@ -97,7 +96,7 @@ func New(p Params) agentdefinitionports.AgentDefinitionService {
 		extensions:  p.Extensions,
 		access:      p.Access,
 		permissions: p.Permissions,
-		plans:       p.Plans,
+		features:    p.Features,
 	}
 }
 
@@ -149,7 +148,7 @@ func (s *Service) Create(
 	if err := s.checkDataAccess(ctx, definition, nil, actor); err != nil {
 		return nil, err
 	}
-	if err := s.requireAutomation(ctx, req.TenantInfo, definition, nil); err != nil {
+	if err := s.requireAutomation(ctx, definition, nil); err != nil {
 		return nil, err
 	}
 	if err := s.schedule(definition); err != nil {
@@ -197,7 +196,7 @@ func (s *Service) Update(
 	if err = s.checkDataAccess(ctx, &updated, &previous, actor); err != nil {
 		return nil, err
 	}
-	if err = s.requireAutomation(ctx, req.TenantInfo, &updated, &previous); err != nil {
+	if err = s.requireAutomation(ctx, &updated, &previous); err != nil {
 		return nil, err
 	}
 	if scheduleChanged(&previous, &updated) {
@@ -465,7 +464,6 @@ func automated(definition *agentdefinition.Definition) bool {
 
 func (s *Service) requireAutomation(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
 	updated, previous *agentdefinition.Definition,
 ) error {
 	if !automated(updated) {
@@ -475,12 +473,7 @@ func (s *Service) requireAutomation(
 		return nil
 	}
 
-	return planservice.RequireCapability(
-		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityAgentAutomation,
-	)
+	return platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureAgentAutomation)
 }
 
 func scheduleChanged(previous, updated *agentdefinition.Definition) bool {

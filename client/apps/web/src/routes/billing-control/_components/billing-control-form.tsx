@@ -29,6 +29,7 @@ import {
   unratedShipmentDispositionChoices,
 } from "@/lib/choices";
 import { billingControl } from "@/lib/queries/billing-control";
+import { useBillingQueueReviewOnPlan } from "@/lib/billing-queue-nova-plan";
 import { billingControlService } from "@/services/billing-control";
 import type { BillingControl } from "@/types/billing-control";
 import { billingControlSchema } from "@/types/billing-control";
@@ -299,6 +300,12 @@ function BillingQueueCard() {
 
   const { control } = useFormContext<BillingControl>();
   const mode = useWatch({ control, name: "queueAutoApproveMode" });
+  // Nova's review is an agent's work that Nova presents: without Trenova AI on the plan the
+  // queue has no review to turn on and nothing to approve on Nova's word.
+  const novaReviews = useBillingQueueReviewOnPlan();
+  const approveModes = novaReviews
+    ? queueAutoApproveModeChoices
+    : queueAutoApproveModeChoices.filter((choice) => choice.value !== "WhenAgentAgrees");
 
   return (
     <Card>
@@ -312,24 +319,26 @@ function BillingQueueCard() {
       </CardHeader>
       <CardContent className="max-w-prose">
         <FormGroup cols={1}>
-          <FormControl>
-            <SwitchField
-              control={control}
-              name="queueAgentReviewEnabled"
-              label={t("Nova reviews each item")}
-              description={t(
-                "Nova compares each item's charges with its contract, its paperwork and this customer's recent invoices, reads its documents, and writes the queue's brief. It only advises; the five checks still decide. Its cost shows under Billing queue review in AI usage.",
-              )}
-              position="left"
-            />
-          </FormControl>
+          {novaReviews ? (
+            <FormControl>
+              <SwitchField
+                control={control}
+                name="queueAgentReviewEnabled"
+                label={t("Nova reviews each item")}
+                description={t(
+                  "Nova compares each item's charges with its contract, its paperwork and this customer's recent invoices, reads its documents, and writes the queue's brief. It only advises; the five checks still decide. Its cost shows under Billing queue review in AI usage.",
+                )}
+                position="left"
+              />
+            </FormControl>
+          ) : null}
           <FormControl className="max-w-[420px]">
             <SelectField
               control={control}
               name="queueAutoApproveMode"
               label={t("Approve on its own")}
               description={
-                mode === "WhenAgentAgrees"
+                mode === "WhenAgentAgrees" && novaReviews
                   ? t(
                       "An item is approved without a biller once all five checks clear and Nova agrees with the charges.",
                     )
@@ -337,7 +346,7 @@ function BillingQueueCard() {
                     ? t("An item is approved without a biller once all five checks clear.")
                     : t("Every item waits for a biller to approve it.")
               }
-              options={queueAutoApproveModeChoices}
+              options={approveModes}
               required
             />
           </FormControl>

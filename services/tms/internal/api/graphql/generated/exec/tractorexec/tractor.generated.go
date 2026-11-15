@@ -393,13 +393,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "iftaQualified",
-				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tractor.Tractor)
 					return obj.IFTAQualified, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:     "ownershipType",
@@ -1487,6 +1486,11 @@ func marshalNTractorEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋ
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "TractorEdge", v)
+}
+
+func marshalOBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	return res
 }
 
 func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {

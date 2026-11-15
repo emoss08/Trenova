@@ -216,7 +216,7 @@ func (s *Service) SaveApp(
 	if err := validateSaveApp(req); err != nil {
 		return nil, err
 	}
-	if err := s.kit.RequireIntegrations(ctx, req.TenantInfo); err != nil {
+	if err := s.kit.RequireAccounting(ctx); err != nil {
 		return nil, err
 	}
 	provider, err := s.kit.Provider(req.IntegrationType)

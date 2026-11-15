@@ -89,8 +89,12 @@ func (r *FactoringInvoiceStateResolver) Invoice(ctx context.Context, obj *factor
 	if obj == nil || !loadercore.Available(ctx) {
 		return nil, nil
 	}
-	if _, err := r.RequireAuth(ctx); err != nil {
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
 		return nil, err
+	}
+	if !r.HasPermission(ctx, authCtx, permission.ResourceInvoice, permission.OpRead) {
+		return nil, nil
 	}
 	return billingloaders.InvoiceByID(ctx, obj.InvoiceID.String())
 }

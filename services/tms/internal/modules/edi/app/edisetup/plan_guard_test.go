@@ -5,18 +5,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/require"
 )
 
-func TestEDIConnectionsAndPartnersRefuseWhenThePlanRestrictsIntegrations(t *testing.T) {
+func TestEDIConnectionsAndPartnersRefuseWhenTheEDIAddOnIsOff(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{
-		plans:  plantest.Restricting(t, platformplan.CapabilityIntegrations),
-		secret: ediprofilesecret.New(ediprofilesecret.Params{}),
+		features: plantest.Without(platformcatalog.FeatureEDIIntegration),
+		secret:   ediprofilesecret.New(ediprofilesecret.Params{}),
 	}
 	tenant := plantest.Tenant()
 

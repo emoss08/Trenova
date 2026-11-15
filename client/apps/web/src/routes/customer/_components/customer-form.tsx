@@ -6,6 +6,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { statusChoices, statusUpdatePreferenceChoices } from "@/lib/choices";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { Customer } from "@trenova/shared/types/customer";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -13,6 +14,8 @@ import { useFormContext, useWatch } from "react-hook-form";
 export function CustomerForm() {
   const t = useT();
 
+  const { available: tracking } = usePlanFeature("tms.customer_tracking");
+  const { available: brokerage } = usePlanFeature("tms.carrier_brokerage");
   const { control } = useFormContext<Customer>();
   const brokerVettingEnabled = useWatch({ control, name: "brokerVettingEnabled" });
 
@@ -189,66 +192,72 @@ export function CustomerForm() {
               description={t("Broker operating authority docket number, digits only.")}
             />
           </FormControl>
-          <FormControl cols="full">
-            <SwitchField
-              control={control}
-              name="brokerVettingEnabled"
-              label={t("Vet as a broker")}
-              description={t(
-                "Check this customer's broker authority, surety bond and insurance with the connected carrier intelligence provider, and flag it when something lapses.",
-              )}
-            />
-          </FormControl>
+          {brokerage ? (
+            <FormControl cols="full">
+              <SwitchField
+                control={control}
+                name="brokerVettingEnabled"
+                label={t("Vet as a broker")}
+                description={t(
+                  "Check this customer's broker authority, surety bond and insurance with the connected carrier intelligence provider, and flag it when something lapses.",
+                )}
+              />
+            </FormControl>
+          ) : null}
         </FormGroup>
       </FormSection>
 
-      <FormSection
-        title={t("Check calls")}
-        description={t(
-          "How long this customer's brokered loads may go without word from the carrier before they are raised",
-        )}
-      >
-        <FormGroup cols={1}>
-          <FormControl>
-            <NumberField
-              control={control}
-              name="checkCallIntervalHours"
-              label={t("Check call window")}
-              placeholder={t("Organization default")}
-              description={t(
-                "From 1 to 72 hours. Leave empty to use the window set in dispatch controls.",
-              )}
-              sideText="hours"
-              min={1}
-              max={72}
-            />
-          </FormControl>
-        </FormGroup>
-      </FormSection>
+      {tracking ? (
+        <>
+          <FormSection
+            title={t("Check calls")}
+            description={t(
+              "How long this customer's brokered loads may go without word from the carrier before they are raised",
+            )}
+          >
+            <FormGroup cols={1}>
+              <FormControl>
+                <NumberField
+                  control={control}
+                  name="checkCallIntervalHours"
+                  label={t("Check call window")}
+                  placeholder={t("Organization default")}
+                  description={t(
+                    "From 1 to 72 hours. Leave empty to use the window set in dispatch controls.",
+                  )}
+                  sideText="hours"
+                  min={1}
+                  max={72}
+                />
+              </FormControl>
+            </FormGroup>
+          </FormSection>
 
-      <FormSection
-        title={t("Arrival projections")}
-        description={t(
-          "How much slack under a stop's window counts as at risk for this customer's loads",
-        )}
-      >
-        <FormGroup cols={1}>
-          <FormControl>
-            <NumberField
-              control={control}
-              name="etaRiskThresholdMinutes"
-              label={t("At-risk threshold")}
-              placeholder={t("Organization default")}
-              description={t(
-                "From 0 to 1440 minutes. Leave empty to use the threshold set in dispatch controls.",
-              )}
-              sideText="minutes"
-              min={0}
-              max={1440}
-            />
-          </FormControl>
-        </FormGroup>
-      </FormSection>
+          <FormSection
+            title={t("Arrival projections")}
+            description={t(
+              "How much slack under a stop's window counts as at risk for this customer's loads",
+            )}
+          >
+            <FormGroup cols={1}>
+              <FormControl>
+                <NumberField
+                  control={control}
+                  name="etaRiskThresholdMinutes"
+                  label={t("At-risk threshold")}
+                  placeholder={t("Organization default")}
+                  description={t(
+                    "From 0 to 1440 minutes. Leave empty to use the threshold set in dispatch controls.",
+                  )}
+                  sideText="minutes"
+                  min={0}
+                  max={1440}
+                />
+              </FormControl>
+            </FormGroup>
+          </FormSection>
+        </>
+      ) : null}
 
       <FormSection
         title={t("Shipment consolidation")}
@@ -291,38 +300,40 @@ export function CustomerForm() {
         </FormGroup>
       </FormSection>
 
-      <FormSection
-        title={t("Status updates")}
-        description={t(
-          "What this customer asked to be told as their freight moves, and who hears it",
-        )}
-      >
-        <FormGroup cols={2}>
-          <FormControl>
-            <SelectField
-              control={control}
-              name="statusUpdatePreference"
-              label={t("Send status updates")}
-              options={statusUpdatePreferenceChoices}
-              placeholder={t("Select a preference")}
-              description={t(
-                "The customer update desk emails these as each stop is reached or left. A customer set to Nothing is never emailed about a stop.",
-              )}
-            />
-          </FormControl>
-          <FormControl>
-            <InputField
-              control={control}
-              name="statusUpdateRecipients"
-              label={t("Status update recipients")}
-              placeholder="ops@acme.example, dispatch@acme.example"
-              description={t(
-                "Comma separated. Leave empty to fall back to the notice profile's own recipients.",
-              )}
-            />
-          </FormControl>
-        </FormGroup>
-      </FormSection>
+      {tracking ? (
+        <FormSection
+          title={t("Status updates")}
+          description={t(
+            "What this customer asked to be told as their freight moves, and who hears it",
+          )}
+        >
+          <FormGroup cols={2}>
+            <FormControl>
+              <SelectField
+                control={control}
+                name="statusUpdatePreference"
+                label={t("Send status updates")}
+                options={statusUpdatePreferenceChoices}
+                placeholder={t("Select a preference")}
+                description={t(
+                  "The customer update desk emails these as each stop is reached or left. A customer set to Nothing is never emailed about a stop.",
+                )}
+              />
+            </FormControl>
+            <FormControl>
+              <InputField
+                control={control}
+                name="statusUpdateRecipients"
+                label={t("Status update recipients")}
+                placeholder="ops@acme.example, dispatch@acme.example"
+                description={t(
+                  "Comma separated. Leave empty to fall back to the notice profile's own recipients.",
+                )}
+              />
+            </FormControl>
+          </FormGroup>
+        </FormSection>
+      ) : null}
     </div>
   );
 }

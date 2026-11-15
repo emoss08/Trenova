@@ -8,6 +8,7 @@ import {
   nullableIntegerSchema,
   nullableStringSchema,
   optionalStringSchema,
+  planWithheldSchema,
   relationSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
@@ -43,7 +44,7 @@ export const tractorSchema = z.object({
   registrationExpiry: nullableIntegerSchema,
   externalId: optionalStringSchema.default(""),
   fuelType: iftaFuelTypeSchema.default("Diesel"),
-  iftaQualified: z.boolean().default(true),
+  iftaQualified: planWithheldSchema(z.boolean(), true),
 
   equipmentType: relationSchema(equipmentTypeSchema),
   equipmentManufacturer: relationSchema(equipmentManufacturerSchema),

@@ -14,7 +14,7 @@ import (
 func TestClassifyMakesAPlanLimitNonRetryableAndKeepsItWhole(t *testing.T) {
 	t.Parallel()
 
-	quota := errortypes.NewQuotaExceededError("ai.spend_cents", 150, 152, "free_demo")
+	quota := errortypes.NewQuotaExceededError("ai.assistant_messages", 150, 152, "free_demo")
 	classified := Classify(quota)
 
 	var appErr *temporal.ApplicationError
@@ -25,7 +25,7 @@ func TestClassifyMakesAPlanLimitNonRetryableAndKeepsItWhole(t *testing.T) {
 
 	failure := modelcallcontract.FailureOf(classified)
 	require.NotNil(t, failure.Plan)
-	assert.Equal(t, "ai.spend_cents", failure.Plan.Meter)
+	assert.Equal(t, "ai.assistant_messages", failure.Plan.Meter)
 
 	restored, ok := errors.AsType[*errortypes.QuotaExceededError](failure.Err())
 	require.True(t, ok)
@@ -37,11 +37,42 @@ func TestClassifyMakesAPlanLimitNonRetryableAndKeepsItWhole(t *testing.T) {
 func TestClassifyCarriesAPlanRestrictionThrough(t *testing.T) {
 	t.Parallel()
 
-	restriction := errortypes.NewPlanRestrictionError("document_intelligence", "plan_restricted", "free_demo")
+	restriction := errortypes.NewFeatureRestrictionError(
+		"document_intelligence.ai",
+		"Document Intelligence",
+	)
+	failure := modelcallcontract.FailureOf(Classify(restriction))
+
+	require.NotNil(t, failure.Plan)
+	assert.Equal(t, "document_intelligence.ai", failure.Plan.Feature)
+	assert.Equal(t, "Document Intelligence", failure.Plan.AddOn)
+	assert.Equal(
+		t,
+		"This feature is part of the Document Intelligence add-on, which is not on your plan",
+		failure.Plan.Message,
+	)
+	restored, ok := errors.AsType[*errortypes.PlanRestrictionError](failure.Err())
+	require.True(t, ok)
+	assert.Equal(t, "document_intelligence.ai", restored.Feature)
+	assert.Equal(t, "Document Intelligence", restored.AddOn)
+	assert.Equal(t, errortypes.PlanRestrictionReasonPlan, restored.Reason)
+	assert.Equal(t, restriction.Error(), restored.Error())
+}
+
+func TestClassifyCarriesASubscriptionRestrictionThrough(t *testing.T) {
+	t.Parallel()
+
+	restriction := errortypes.NewPlanRestrictionError(
+		errortypes.PlanRestrictionReasonReadOnly,
+		"free_demo",
+	)
 	failure := modelcallcontract.FailureOf(Classify(restriction))
 
 	require.NotNil(t, failure.Plan)
 	restored, ok := errors.AsType[*errortypes.PlanRestrictionError](failure.Err())
 	require.True(t, ok)
-	assert.Equal(t, "document_intelligence", restored.Capability)
+	assert.Empty(t, restored.Feature)
+	assert.Equal(t, errortypes.PlanRestrictionReasonReadOnly, restored.Reason)
+	assert.Equal(t, "free_demo", restored.Plan)
+	assert.Equal(t, "This organization's trial has ended and it is now read-only", restored.Error())
 }

@@ -193,6 +193,7 @@ function manifest(): PermissionManifest {
     ),
     routeAccess: {},
     availableOrgs: [],
+    unavailableFeatures: [],
     checksum: "abc123",
     expiresAt: 1_782_403_304,
   } as unknown as PermissionManifest;
@@ -267,6 +268,8 @@ describe("asset-only admin links", () => {
 
     const { result } = renderAdminLinks("cloud");
 
-    expect(result.current).toHaveLength(appAdminLinks.filter((link) => !link.disabled).length);
+    expect(result.current).toHaveLength(
+      appAdminLinks.filter((link) => !link.disabled && !link.managedOnly).length,
+    );
   });
 });

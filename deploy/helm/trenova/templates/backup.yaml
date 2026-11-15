@@ -1,0 +1,94 @@
+{{- if .Values.backup.enabled }}
+{{- $cluster := include "trenova.postgresCluster" . -}}
+{{- $secret := required "backup.existingSecret is needed: a Secret with ACCESS_KEY_ID, ACCESS_SECRET_KEY and ACCESS_REGION for the backups bucket" .Values.backup.existingSecret -}}
+{{- $path := required "backup.destinationPath is needed: s3://<bucket>/<prefix>/" .Values.backup.destinationPath -}}
+{{- /*
+Point-in-time backups with CloudNativePG's Barman Cloud plugin: WAL archived
+as it is written and a base backup every day, to S3-compatible storage, each
+object encrypted at rest, pruned to retentionPolicy. The credential is read by
+the plugin beside PostgreSQL alone; no application pod mounts it.
+*/ -}}
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: {{ include "trenova.backupStore" . }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "backup") | nindent 4 }}
+  annotations:
+    # A restore reads the backups after the release that took them is gone.
+    helm.sh/resource-policy: keep
+spec:
+  retentionPolicy: {{ .Values.backup.retentionPolicy | quote }}
+  configuration:
+    destinationPath: {{ $path | quote }}
+    {{- with .Values.backup.endpointURL }}
+    endpointURL: {{ . | quote }}
+    {{- end }}
+    s3Credentials:
+      accessKeyId:
+        name: {{ $secret }}
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: {{ $secret }}
+        key: ACCESS_SECRET_KEY
+      region:
+        name: {{ $secret }}
+        key: ACCESS_REGION
+    wal:
+      compression: {{ .Values.backup.compression }}
+      encryption: {{ .Values.backup.encryption | quote }}
+    data:
+      compression: {{ .Values.backup.compression }}
+      encryption: {{ .Values.backup.encryption | quote }}
+      jobs: 2
+---
+# A base backup every day, and one at once when the cluster is new. A
+# hibernated database cannot be backed up, so the schedule waits while it is.
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: {{ $cluster }}-daily
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "backup") | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  immediate: true
+  suspend: {{ .Values.postgres.hibernate }}
+  backupOwnerReference: self
+  cluster:
+    name: {{ $cluster }}
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+{{- with .Values.postgres.restore }}
+{{- if and $.Values.networkPolicy.enabled (ne .generation ($.Values.postgres.generation | default "")) }}
+---
+# A database being restored beside the live one: only the CloudNativePG
+# operator and its own instances reach it until it is switched to.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" $ "component" (printf "postgres-%s" .generation)) }}
+  labels:
+    {{- include "trenova.labels" (dict "root" $ "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: {{ include "trenova.postgresClusterOf" (dict "root" $ "generation" .generation) }}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $.Values.networkPolicy.cnpgNamespace }}
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ include "trenova.postgresClusterOf" (dict "root" $ "generation" .generation) }}
+      ports:
+        - port: 8000
+          protocol: TCP
+        - port: 5432
+          protocol: TCP
+{{- end }}
+{{- end }}
+{{- end }}

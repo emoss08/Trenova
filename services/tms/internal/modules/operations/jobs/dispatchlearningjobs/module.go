@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.uber.org/fx"
@@ -48,6 +49,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "dispatch-style-learning",
+			Feature:       platformcatalog.FeatureDispatchIntelligence,
 			Description:   learnDescription,
 			Spec:          schedule.Every(15 * time.Minute),
 			Workflow:      LearnDispatchStyleWorkflow,

@@ -3,4 +3,4 @@ import type { TypedDocumentString, DeskReportRunCardQuery, DeskReportRunCardQuer
 
 export const DeskReportRunsDocument = {"__meta__":{"kind":"query","name":"DeskReportRuns","hash":"sha256:37b69b2aa5736905607b36033bc2267cb887777a286c91ec14689f35211007cc"}} as unknown as TypedDocumentString<DeskReportRunsQuery, DeskReportRunsQueryVariables>;
 export const DeskReportSchedulesDocument = {"__meta__":{"kind":"query","name":"DeskReportSchedules","hash":"sha256:dbe796fc8196874edf880e1c92f74a2b19ffa222fac5f948b8efc178982f1929"}} as unknown as TypedDocumentString<DeskReportSchedulesQuery, DeskReportSchedulesQueryVariables>;
-export const DeskReportRunCardDocument = {"__meta__":{"kind":"query","name":"DeskReportRunCard","hash":"sha256:85165f358eb275399d5d921d566c63dc57704fe1b6c578f60a5ed010bf92d6f2"}} as unknown as TypedDocumentString<DeskReportRunCardQuery, DeskReportRunCardQueryVariables>;
+export const DeskReportRunCardDocument = {"__meta__":{"kind":"query","name":"DeskReportRunCard","hash":"sha256:314e47a1bed4bb8466829af13f1149ccd4ee61b296536a68f25afbb1c1eb2059"}} as unknown as TypedDocumentString<DeskReportRunCardQuery, DeskReportRunCardQueryVariables>;

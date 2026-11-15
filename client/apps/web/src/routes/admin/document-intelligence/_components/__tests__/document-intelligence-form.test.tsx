@@ -14,8 +14,9 @@ vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: false, isLoading: false }),
 }));
 
-vi.mock("@/hooks/use-plan-restrictions", () => ({
-  usePlanRestrictions: () => [],
+vi.mock("@trenova/shared/hooks/use-plan-feature", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@trenova/shared/hooks/use-plan-feature")>()),
+  usePlanFeature: () => ({ available: true, featureName: "", addOnName: "" }),
 }));
 
 const CONTROL: DocumentControl = {

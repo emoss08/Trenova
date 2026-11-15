@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
@@ -42,6 +43,7 @@ type CarrierLifecycleEvent struct {
 }
 
 type CarrierLifecycleObserver interface {
+	platformcatalogports.FeatureObserver
 	CarrierSaved(ctx context.Context, event *CarrierLifecycleEvent)
 	CarriersUsed(ctx context.Context, tenantInfo pagination.TenantInfo, carrierIDs []pulid.ID)
 }

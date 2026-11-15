@@ -18,13 +18,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -204,6 +208,7 @@ func newFixture() *fixture {
 		receivables:   f.receivables,
 		activity:      f.activity,
 		organizations: fakeOrganizations{},
+		plan:          plantest.AllOn(),
 		now:           func() time.Time { return now },
 	}
 
@@ -546,4 +551,37 @@ func TestCardRefusesWhatIsNotABoardOfThisConversation(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.False(t, errors.Is(err, errArtifactGone))
+}
+
+// Margin and cost per mile are computed from the costing setup, which is
+// Accounting & Cash: without it the card neither reads nor shows them, as the
+// home page locks them, and the model is told why in the plan's words.
+func TestCostingFiguresNeedAccountingAndCash(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.svc.plan = onplan.New(
+		permissioncatalog.Default(),
+		plantest.Without(platformcatalog.FeatureAccounting),
+	)
+	shown := parsed(t, map[string]any{
+		"title": "The day", "verdict": "Steady [today][1].",
+		"blocks": []any{map[string]any{"type": "figures", "figures": []any{
+			map[string]any{"label": "Active", "metric": "activeShipments"},
+			map[string]any{"label": "Margin", "metric": "marginPercent"},
+			map[string]any{"label": "Cost per mile", "metric": "costPerMile"},
+		}}},
+	})
+
+	err := f.svc.Check(t.Context(), f.request(shown))
+	mistake, ok := errors.AsType[*agentruntimeports.PublishMistake](err)
+	require.True(t, ok, "expected a mistake for the model, got %v", err)
+	assert.Contains(t, mistake.Reason, "Accounting & Cash add-on, which is not on your plan")
+
+	filled, err := f.svc.Fill(t.Context(), f.request(shown))
+	require.NoError(t, err)
+	figures := filled.Blocks[0].Figures
+	assert.Equal(t, "41", board.FormatValue(figures[0].Value))
+	assert.Nil(t, figures[1].Value)
+	assert.Nil(t, figures[2].Value)
 }

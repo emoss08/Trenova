@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 
@@ -52,10 +54,11 @@ func TestCreate_WritesTheInitialHeaderVersion(t *testing.T) {
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		Validator:    testValidator(),
-		AuditService: audit,
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+		AuditService:     audit,
 	})
 
 	created, err := svc.Create(t.Context(), agreement, pulid.MustNew("usr_"))
@@ -89,10 +92,11 @@ func TestUpdate_ChangedHeaderTermsWriteTheNextVersion(t *testing.T) {
 		Once()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		Validator:    testValidator(),
-		AuditService: audit,
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+		AuditService:     audit,
 	})
 
 	updated, err := svc.Update(t.Context(), &edited, testActor())
@@ -117,10 +121,11 @@ func TestUpdate_UnchangedHeaderTermsWriteNoVersion(t *testing.T) {
 	repo, audit := updateHarness(t, original)
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		Validator:    testValidator(),
-		AuditService: audit,
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
+		AuditService:     audit,
 	})
 
 	updated, err := svc.Update(t.Context(), &restated, testActor())

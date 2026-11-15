@@ -96,7 +96,7 @@ func (s *Service) Fetch(ctx context.Context, req *FetchRequest) (*FetchResult, e
 		}
 	}
 
-	if err = s.requirePaidLookups(ctx, req.TenantInfo); err != nil {
+	if err = s.requirePaidLookups(ctx); err != nil {
 		return nil, err
 	}
 

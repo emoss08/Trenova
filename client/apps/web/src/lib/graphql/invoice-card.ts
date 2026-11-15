@@ -18,8 +18,8 @@ export type DeskInvoice = Omit<DeskInvoiceResponse, "referenceInvoice" | "relate
   relatedInvoices: DeskInvoiceNeighbor[];
 };
 export type DeskInvoiceChargeGroup = DeskInvoice["chargeSummary"][number];
-export type DeskInvoicePayment = DeskInvoice["paymentApplications"][number];
-export type DeskInvoiceCredit = DeskInvoice["creditApplications"][number];
+export type DeskInvoicePayment = NonNullable<DeskInvoice["paymentApplications"]>[number];
+export type DeskInvoiceCredit = NonNullable<DeskInvoice["creditApplications"]>[number];
 export type DeskInvoiceDispute = DeskInvoice["disputes"][number];
 
 /**

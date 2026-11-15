@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
@@ -21,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/textcase"
 	"go.uber.org/fx"
 )
 
@@ -33,6 +35,7 @@ type Params struct {
 	Engine   permissionports.PermissionEngine
 	Roles    permissionports.RoleRepository
 	Registry *permissioncatalog.Registry
+	Plan     *onplan.Lookup
 }
 
 type Service struct {
@@ -61,7 +64,7 @@ func NewWithManifest(p Params, manifest *pageaccess.Manifest) *Service {
 		engine:   p.Engine,
 		roles:    p.Roles,
 		registry: p.Registry,
-		views:    refview.New(p.Registry),
+		views:    refview.New(p.Registry, p.Plan),
 		manifest: manifest,
 		readBy:   readBy,
 	}
@@ -73,6 +76,7 @@ const (
 	DecisionVisible             Decision = "visible"
 	DecisionWithheldKind        Decision = "withheld_kind"
 	DecisionWithheldSensitivity Decision = "withheld_sensitivity"
+	DecisionWithheldPlan        Decision = "withheld_plan"
 )
 
 type Requirement struct {
@@ -97,6 +101,8 @@ type Field struct {
 	Decision Decision
 }
 
+// Kind is one kind a screen depends on. PlanDenial is set when the
+// organization's plan leaves the kind out, so nobody sees it.
 type Kind struct {
 	Resource     string
 	ResourceName string
@@ -104,6 +110,7 @@ type Kind struct {
 	CanRead      bool
 	Fields       []Field
 	Withheld     int
+	PlanDenial   *permissionports.PlanDenial
 }
 
 // Access is what a screen needs and what a person or a role would see on
@@ -160,7 +167,7 @@ func (s *Service) ForCaller(
 		return nil, err
 	}
 
-	return s.describe(ctx, screen, person), nil
+	return s.describe(ctx, s.views.Request(), screen, person), nil
 }
 
 // RoleDraft is a role as the editor holds it before it is saved.
@@ -202,10 +209,13 @@ func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*Access, er
 		return nil, nil //nolint:nilnil // no screen is at that location
 	}
 
+	views := s.views.Request()
+
 	return s.describe(
 			ctx,
+			views,
 			screen,
-			roleAccess{RoleAccess: refview.NewRoleAccess(s.registry, grants)},
+			roleAccess{RoleAccess: refview.NewRoleAccess(s.registry, views.Plan(), grants)},
 		),
 		nil
 }
@@ -312,8 +322,8 @@ type roleAccess struct {
 	refview.RoleAccess
 }
 
-func (a roleAccess) allows(_ context.Context, resource string, op permission.Operation) bool {
-	return a.Allows(resource, op)
+func (a roleAccess) allows(ctx context.Context, resource string, op permission.Operation) bool {
+	return a.Allows(ctx, resource, op)
 }
 
 // personAccess is a person's grants for the checks a screen needs, asked of
@@ -435,7 +445,12 @@ var useOrder = []pageaccess.Use{
 	pageaccess.UseReference,
 }
 
-func (s *Service) describe(ctx context.Context, screen *pageaccess.Screen, a access) *Access {
+func (s *Service) describe(
+	ctx context.Context,
+	views *refview.Views,
+	screen *pageaccess.Screen,
+	a access,
+) *Access {
 	out := &Access{
 		Path:       screen.Path,
 		Name:       screen.Name,
@@ -471,8 +486,11 @@ func (s *Service) describe(ctx context.Context, screen *pageaccess.Screen, a acc
 			CanRead:      a.Reads(ctx, resource),
 			Fields:       make([]Field, 0, len(linked[kind])),
 		}
+		if denial, off, err := views.Plan().Resource(ctx, kind); err == nil && off {
+			k.PlanDenial = &denial
+		}
 		for _, name := range linked[kind] {
-			field := s.decide(ctx, a, resource, name)
+			field := s.decide(ctx, views, a, resource, name)
 			if field.Decision != DecisionVisible {
 				k.Withheld++
 			}
@@ -496,20 +514,31 @@ func (s *Service) describe(ctx context.Context, screen *pageaccess.Screen, a acc
 
 func (s *Service) decide(
 	ctx context.Context,
+	views *refview.Views,
 	a access,
 	kind permission.Resource,
 	name string,
 ) Field {
 	var decision refview.Decision
 	inView := false
-	if _, field, part := strings.Cut(name, "."); part {
-		decision = s.views.DecidePart(ctx, a, kind, field, refview.Nested)
+	if typeName, field, part := strings.Cut(name, "."); part {
+		decision = views.DecidePart(ctx, a, s.partKind(typeName, kind), kind, field, refview.Nested)
 	} else {
-		inView = s.views.InView(kind, name)
-		decision = s.views.Decide(ctx, a, kind, name, refview.Nested)
+		inView = views.InView(kind, name)
+		decision = views.Decide(ctx, a, kind, name, refview.Nested)
 	}
 
 	return Field{Name: name, InView: inView, Decision: decisionOf(decision)}
+}
+
+// partKind is the kind of a part a screen names by its type, such as Move
+// under a shipment: the resource the type is named for, or the carrier's
+// when it has none of its own.
+func (s *Service) partKind(typeName string, carrier permission.Resource) permission.Resource {
+	if own := textcase.ConvertCamelToSnake(typeName); s.registry.HasResource(own) {
+		return permission.Resource(own)
+	}
+	return carrier
 }
 
 func decisionOf(d refview.Decision) Decision {
@@ -520,6 +549,8 @@ func decisionOf(d refview.Decision) Decision {
 		return DecisionWithheldSensitivity
 	case refview.WithheldKind:
 		return DecisionWithheldKind
+	case refview.WithheldPlan:
+		return DecisionWithheldPlan
 	default:
 		return DecisionWithheldKind
 	}

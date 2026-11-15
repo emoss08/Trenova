@@ -285,13 +285,17 @@ func mapDispatchBoardTenderSummary(
 		return nil
 	}
 
+	status, mode := summary.Status, summary.Mode
+	rank, offers := int(summary.CurrentRank), summary.OfferCount
+	carrierName := summary.CurrentCarrierName
+
 	return &gqlmodel.DispatchBoardTenderSummary{
 		ID:                    summary.ID.String(),
-		Status:                summary.Status,
-		Mode:                  summary.Mode,
-		CurrentRank:           int(summary.CurrentRank),
-		OfferCount:            summary.OfferCount,
-		CurrentCarrierName:    summary.CurrentCarrierName,
+		Status:                &status,
+		Mode:                  &mode,
+		CurrentRank:           &rank,
+		OfferCount:            &offers,
+		CurrentCarrierName:    &carrierName,
 		CurrentOfferExpiresAt: gqlscalar.IntPtr(summary.CurrentOfferExpiresAt),
 	}
 }

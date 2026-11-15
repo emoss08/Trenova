@@ -114,6 +114,7 @@ func (m *AuthMiddleware) authenticateWithSession(c *gin.Context) error {
 		IsPortalUser:           sess.IsPortalUser,
 		MustChangePassword:     sess.MustChangePassword,
 		Locale:                 sess.Locale,
+		Support:                sess.Support,
 	})
 
 	if sess.AuthenticatedSecretHash != sess.SecretHash {

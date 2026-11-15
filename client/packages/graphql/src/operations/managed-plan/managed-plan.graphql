@@ -1,0 +1,37 @@
+query ManagedPlan {
+  managedPlan {
+    managed
+    base {
+      key
+      name
+    }
+    included {
+      key
+      name
+      features {
+        key
+        name
+      }
+    }
+    available {
+      key
+      name
+      features {
+        key
+        name
+      }
+    }
+    changes {
+      changedAt
+      starting
+      left {
+        key
+        name
+      }
+      joined {
+        key
+        name
+      }
+    }
+  }
+}

@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/operations/app/checkcallservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,12 +22,14 @@ type Params struct {
 	Service      checkcallports.CheckCallService
 	ErrorHandler *helpers.ErrorHandler
 	RateLimiter  *middleware.RateLimiter
+	Features     *middleware.FeatureGuard
 }
 
 type Handler struct {
 	service     checkcallports.CheckCallService
 	eh          *helpers.ErrorHandler
 	rateLimiter *middleware.RateLimiter
+	features    *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
@@ -33,12 +37,17 @@ func New(p Params) *Handler {
 		service:     p.Service,
 		eh:          p.ErrorHandler,
 		rateLimiter: p.RateLimiter,
+		features:    p.Features,
 	}
 }
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/carrier-tracking-links")
 	api.Use(h.rateLimiter.ByPublicToken(tokenParam))
+	api.Use(h.features.RequireFeature(
+		platformcatalog.FeatureCustomerTracking,
+		middleware.AnswerError(checkcallservice.InvalidLinkError),
+	))
 	api.GET("/:token/", h.preview)
 	api.POST("/:token/check-calls/", h.post)
 }

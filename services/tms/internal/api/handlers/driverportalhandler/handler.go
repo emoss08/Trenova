@@ -2,6 +2,7 @@ package driverportalhandler
 
 import (
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
@@ -28,6 +29,7 @@ type Params struct {
 	Records      *driverportalrecordsservice.Service
 	Logger       *zap.Logger
 	ErrorHandler *helpers.ErrorHandler
+	Features     *middleware.FeatureGuard
 }
 
 type Handler struct {
@@ -36,6 +38,7 @@ type Handler struct {
 	records     *driverportalrecordsservice.Service
 	l           *zap.Logger
 	eh          *helpers.ErrorHandler
+	features    *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
@@ -45,19 +48,27 @@ func New(p Params) *Handler {
 		records:     p.Records,
 		l:           p.Logger.With(zap.String("handler", "driver-portal")),
 		eh:          p.ErrorHandler,
+		features:    p.Features,
 	}
 }
 
 const maxUploadBodyBytes = 64 << 20
 
+func (h *Handler) requireDriverPay() gin.HandlerFunc {
+	return h.features.RequireFeature(
+		platformcatalog.FeatureDriverPortal,
+		middleware.AnswerPlanRestricted(platformcatalog.FeatureDriverPortal),
+	)
+}
+
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	api := rg.Group("/portal/")
+	api := rg.Group("/portal/", h.requireDriverPay())
 	api.GET("invitations/preview", h.previewInvitation)
 	api.POST("invitations/accept", h.acceptInvitation)
 }
 
 func (h *Handler) RegisterProtectedRoutes(rg *gin.RouterGroup) {
-	api := rg.Group("/portal/", responseguard.SelfScoped())
+	api := rg.Group("/portal/", h.requireDriverPay(), responseguard.SelfScoped())
 	api.GET("document-types/", h.listShipmentDocumentTypes)
 	api.GET("loads/:shipmentID/documents/", h.listLoadDocuments)
 	api.POST("loads/:shipmentID/documents/", middleware.NewBodyLimit(maxUploadBodyBytes), h.uploadLoadDocument)

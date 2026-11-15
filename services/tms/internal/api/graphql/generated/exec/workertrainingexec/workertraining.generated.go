@@ -1307,14 +1307,13 @@ var Shard = &gqlexec.Shard{
 		{Object: "WorkerTrainingSummaryItem", Fields: []*gqlexec.Field{
 			{
 				Name:      "course",
-				NonNull:   true,
 				HasChild:  true,
 				ChildType: "TrainingCourse",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workertraining.TrainingSummaryItem)
 					return obj.Course, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐTrainingCourse),
+				Marshal: gqlexec.Marshal(marshalOTrainingCourse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkertrainingᚐTrainingCourse),
 			},
 			{
 				Name:      "record",

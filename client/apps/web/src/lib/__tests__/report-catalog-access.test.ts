@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  isRemovable,
   listedFields,
+  planAddOns,
   rootEntities,
   unavailableRefs,
   withoutRefs,
@@ -79,6 +81,78 @@ describe("report catalog access", () => {
         group: undefined,
       },
       { ref: { field: "gone" }, label: "gone", entityLabel: "Shipment", access: "Missing" },
+    ]);
+  });
+
+  it("names the add-on of a field, an edge and a table the plan leaves out", () => {
+    const ir: ReportIR = {
+      entity: "shipment",
+      columns: [
+        { id: "c1", kind: "measure", ref: { field: "detentionMinutes" } },
+        {
+          id: "c2",
+          kind: "dimension",
+          ref: { path: ["factoringSubmission"], field: "status" },
+        },
+      ],
+    };
+
+    expect(unavailableRefs(index, ir)).toEqual([
+      {
+        ref: { field: "detentionMinutes" },
+        label: "Detention Minutes",
+        entityLabel: "Shipment",
+        access: "NotOnPlan",
+        addOnName: "Rating & Revenue Recovery",
+        feature: "tms.detention",
+        featureName: "Detention",
+      },
+      {
+        ref: { path: ["factoringSubmission"], field: "status" },
+        label: "Factoring Submission",
+        entityLabel: "Shipment",
+        access: "NotOnPlan",
+        addOnName: "Accounting & Cash",
+        feature: "tms.factoring",
+        featureName: "Factoring",
+      },
+    ]);
+    const onWithheldTable: ReportIR = {
+      entity: "submission",
+      columns: [{ id: "c1", kind: "dimension", ref: { field: "status" } }],
+    };
+    expect(unavailableRefs(index, onWithheldTable)).toEqual([
+      {
+        ref: { field: "status" },
+        label: "status",
+        entityLabel: "Factoring Submissions",
+        access: "NotOnPlan",
+        addOnName: "Accounting & Cash",
+        feature: "tms.factoring",
+        featureName: "Factoring",
+      },
+    ]);
+  });
+
+  it("keeps what the plan leaves out when the unavailable fields are removed", () => {
+    const ir: ReportIR = {
+      entity: "shipment",
+      columns: [
+        { id: "c1", kind: "measure", ref: { field: "detentionMinutes" } },
+        { id: "c2", kind: "dimension", ref: { path: ["customer"], field: "dotNumber" } },
+      ],
+    };
+
+    const problems = unavailableRefs(index, ir);
+    const next = withoutRefs(ir, problems.filter(isRemovable));
+
+    expect(next.columns.map((column) => column.id)).toEqual(["c1"]);
+    expect(planAddOns(problems)).toEqual([
+      {
+        feature: "tms.detention",
+        featureName: "Detention",
+        addOnName: "Rating & Revenue Recovery",
+      },
     ]);
   });
 

@@ -29,10 +29,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/httpsafe"
@@ -58,7 +56,6 @@ type Params struct {
 	Usage    aiusageports.AIUsageRepository
 	Metrics  *metrics.Registry
 	Breakers llmports.ProviderBreakerRepository
-	Quota    platformplanports.QuotaGuard
 	// Spend, Slots and Keys enforce each provider's monthly cap and calls at
 	// once, and record when its key was last used.
 	Spend aiproviderports.AIProviderSpendService
@@ -68,6 +65,9 @@ type Params struct {
 	Advisors aiproviderports.AIProviderAdvisorRecorder
 	// Files reads the files a person attached, for a model that reads files itself.
 	Files conversationports.MessageFileReader
+	// Features is the organization's plan: a task is served only when a
+	// feature that pays for it is on.
+	Features platformcatalogports.FeatureGate
 }
 
 type Engine struct {
@@ -79,7 +79,6 @@ type Engine struct {
 	Encryption *encryptionservice.Service
 	Adapters   *adapterregistry.Registry
 	Usage      aiusageports.AIUsageRepository
-	Quota      platformplanports.QuotaGuard
 	GenAI      *aimetrics.GenAI
 	// health rests a provider that keeps failing, so a turn does not pay for
 	// attempts on a provider that is down before reaching one that is up.
@@ -91,6 +90,8 @@ type Engine struct {
 	Files conversationports.MessageFileReader
 	// advisors records the API's refusal of a provider's advisor.
 	Advisors aiproviderports.AIProviderAdvisorRecorder
+	// Features is the plan every provider is resolved under (OnPlan).
+	Features platformcatalogports.FeatureGate
 	// pause waits out a backoff. It is a field so tests can count the waits
 	// instead of sitting through them.
 	Pause func(ctx context.Context, wait time.Duration) error
@@ -115,29 +116,17 @@ func NewEngine(p *Params) *Engine {
 		Repo:          p.Repo,
 		Encryption:    p.Encryption,
 		Usage:         p.Usage,
-		Quota:         quotaservice.OrUnlimited(p.Quota),
 		GenAI:         p.Metrics.GenAI(),
 		Adapters:      p.Adapters,
 		Health:        NewProviderHealth(nil).Share(p.Breakers, logger),
 		Limits:        NewProviderLimits(p),
 		Files:         p.Files,
 		Advisors:      p.Advisors,
+		Features:      p.Features,
 		Pause:         pauseFor,
 		Clients:       make(map[bool]*http.Client, 2),
 		StreamClients: make(map[bool]*http.Client, 2),
 	}
-}
-
-func (s *Engine) AssertWithinSpend(ctx context.Context, tenantInfo pagination.TenantInfo) error {
-	if tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
-		return nil
-	}
-
-	return quotaservice.Preflight(ctx, s.Quota, &platformplanports.QuotaRequest{
-		TenantInfo: tenantInfo,
-		Meter:      platformcatalog.MeterAISpendCents,
-		Quantity:   1,
-	})
 }
 
 type RunRequest struct {
@@ -229,7 +218,7 @@ func (s *Engine) CandidatesFor(
 
 func (s *Engine) routedFor(ctx context.Context, req *RunRequest) ([]*aiprovider.Provider, error) {
 	if req.Nova {
-		nova, err := s.NovaProvider(ctx, req.TenantInfo)
+		nova, err := s.NovaProvider(ctx, req.TenantInfo, req.Task)
 		if err != nil {
 			return nil, err
 		}
@@ -248,13 +237,31 @@ func (s *Engine) routedFor(ctx context.Context, req *RunRequest) ([]*aiprovider.
 	return usable, nil
 }
 
+// OnPlan refuses a task the organization's plan does not pay for. Every call
+// reaches a provider through UsableFor or NovaProvider, and both ask it
+// first, so no model is called, and no embedding made, for work off the plan.
+// The refusal names the add-on and is llmports.ErrNoProviderConfigured.
+func (s *Engine) OnPlan(ctx context.Context, task aitask.Task) error {
+	if task == "" {
+		task = aitask.TaskGeneral
+	}
+
+	return llmports.RequireTask(ctx, s.Features, task)
+}
+
 // NovaProvider is the provider the tenant chose for Nova, as Nova calls it:
 // its credential and limits with Nova's model and price. Without one, or
-// with it turned off, Nova does not run and the error says what to set up.
+// with it turned off, Nova does not run and the error says what to set up;
+// off the plan it does not run for the task and the error names the add-on.
 func (s *Engine) NovaProvider(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
+	task aitask.Task,
 ) (*aiprovider.Provider, error) {
+	if err := s.OnPlan(ctx, task); err != nil {
+		return nil, err
+	}
+
 	provider, err := s.Repo.GetNova(ctx, tenant)
 	if err != nil {
 		return nil, err
@@ -295,6 +302,10 @@ func (s *Engine) UsableFor(
 	task aitask.Task,
 	tenant pagination.TenantInfo,
 ) ([]*aiprovider.Provider, error) {
+	if err := s.OnPlan(ctx, task); err != nil {
+		return nil, err
+	}
+
 	usable, err := s.servingTask(ctx, task, tenant, nil)
 	if err != nil {
 		return nil, err

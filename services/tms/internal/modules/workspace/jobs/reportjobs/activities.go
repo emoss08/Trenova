@@ -141,6 +141,11 @@ func classifyCompileError(err error) error {
 			multiErr.Error(), ErrTypeReportValidation, err,
 		)
 	}
+	if restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err); ok {
+		return temporal.NewNonRetryableApplicationError(
+			restriction.Error(), ErrTypeReportPlan, err,
+		)
+	}
 	var authzErr *errortypes.AuthorizationError
 	if errors.As(err, &authzErr) {
 		return temporal.NewNonRetryableApplicationError(

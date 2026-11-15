@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/requestwording"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerplay"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -87,7 +88,7 @@ type novaWriter struct {
 	asked     *llmports.NovaTask
 }
 
-func (n *novaWriter) Available(context.Context, pagination.TenantInfo) (bool, error) {
+func (n *novaWriter) Available(context.Context, pagination.TenantInfo, aitask.Task) (bool, error) {
 	return n.available, nil
 }
 

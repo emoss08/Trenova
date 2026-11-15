@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/temporal"
@@ -74,6 +75,7 @@ func Schedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            CaptureEvalCaseCandidatesScheduleID,
+			Feature:       platformcatalog.FeatureAgentAutomation,
 			Description:   "Capture decided proposals as candidate evaluation cases",
 			Spec:          schedule.Every(evalCaseCaptureEvery),
 			Workflow:      CaptureEvalCaseCandidatesWorkflow,
@@ -85,6 +87,7 @@ func Schedules() []*schedule.Schedule {
 		},
 		{
 			ID:            PurgeEvalCasesScheduleID,
+			Feature:       platformcatalog.FeatureAgentAutomation,
 			Description:   "Purge expired evaluation cases and those of deleted conversations",
 			Spec:          schedule.Cron("45 4 * * *"),
 			Workflow:      PurgeEvalCasesWorkflow,

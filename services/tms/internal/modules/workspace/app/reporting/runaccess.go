@@ -41,6 +41,9 @@ func (s *Service) authorizeStoredRun(
 	if errors.As(err, &authzErr) {
 		return authzErr
 	}
+	if restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err); ok {
+		return restriction
+	}
 	s.l.Warn("stored report run no longer compiles",
 		zap.String("runId", run.ID.String()), zap.Error(err))
 

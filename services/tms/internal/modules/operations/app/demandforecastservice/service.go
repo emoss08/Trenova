@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandfit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
@@ -46,6 +48,7 @@ type Params struct {
 	Holidays      orgholidayports.OrgHolidayRepository
 	Controls      dispatchcontrolports.DispatchControlRepository
 	Organizations tenantports.OrganizationRepository
+	Features      platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -56,6 +59,7 @@ type Service struct {
 	models        *otter.Cache[modelKey, *demandforecast.Index]
 	controls      dispatchcontrolports.DispatchControlRepository
 	organizations tenantports.OrganizationRepository
+	features      platformcatalogports.FeatureGate
 	clock         func() int64
 }
 
@@ -76,6 +80,7 @@ func New(p Params) *Service {
 		}),
 		controls:      p.Controls,
 		organizations: p.Organizations,
+		features:      p.Features,
 		clock:         timeutils.NowUnix,
 	}
 }
@@ -235,6 +240,14 @@ func (s *Service) Standing(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*demandforecast.Standing, error) {
+	if err := platformcatalogports.RequireFeature(
+		ctx,
+		s.features,
+		platformcatalog.FeatureDispatchIntelligence,
+	); err != nil {
+		return nil, err
+	}
+
 	quality, err := s.repo.Quality(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/yaml"
 
+	"github.com/emoss08/trenova/operator/internal/backup"
 	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
@@ -26,6 +27,8 @@ import (
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
 	"github.com/emoss08/trenova/operator/internal/release"
+	"github.com/emoss08/trenova/operator/internal/storage"
+	"github.com/emoss08/trenova/operator/internal/systememail"
 	"github.com/emoss08/trenova/operator/internal/tms"
 	"github.com/emoss08/trenova/operator/internal/usage"
 	"github.com/emoss08/trenova/operator/internal/values"
@@ -50,6 +53,8 @@ type config struct {
 	tmsURL          string
 	healthAddr      string
 	logLevel        slog.Level
+	storagePrivate  string
+	capacity        values.Capacity
 }
 
 func main() {
@@ -151,6 +156,26 @@ func run(logger *slog.Logger) error {
 		}),
 		Usage:          usage.New(usage.Params{ControlPlane: cp, TMS: tmsClient}),
 		Administrators: tmsClient,
+		Features:       tmsClient,
+		SystemEmail: systememail.New(&systememail.Params{
+			TMS:          tmsClient,
+			ControlPlane: cp,
+			Logger:       logger,
+		}),
+		Storage: storage.New(&storage.Params{
+			PrivateEndpoint: cfg.storagePrivate,
+			Client:          kube,
+			ControlPlane:    cp,
+			CORS:            storage.S3CORS{},
+			Namespace:       cfg.targetNamespace,
+			Logger:          logger,
+		}),
+		Backups: backup.New(&backup.Params{
+			Dynamic:   dyn,
+			Namespace: cfg.targetNamespace,
+			Release:   cfg.release,
+			Logger:    logger,
+		}),
 		Commands: commands.New(&commands.Params{
 			Kube:      kube,
 			Namespace: cfg.targetNamespace,
@@ -158,6 +183,7 @@ func run(logger *slog.Logger) error {
 			Chart:     chartName,
 			Logger:    logger,
 		}),
+		Capacity:   cfg.capacity,
 		Base:       base,
 		Namespace:  cfg.namespace,
 		Logger:     logger,
@@ -184,6 +210,8 @@ func run(logger *slog.Logger) error {
 		"release", cfg.release,
 		"chart", firstNonEmpty(cfg.chartPath, cfg.chartRef),
 		"tms", cfg.tmsURL,
+		"storagePrivateEndpoint", cfg.storagePrivate,
+		"capacityCapped", cfg.capacity.Set(),
 	)
 	return loop.Run(ctx)
 }
@@ -269,6 +297,14 @@ func (c *lazyClient) Secrets(ctx context.Context) (instanceapi.InstanceSecrets, 
 	return api.Secrets(ctx)
 }
 
+func (c *lazyClient) Storage(ctx context.Context) (instanceapi.InstanceStorage, error) {
+	api, err := c.client()
+	if err != nil {
+		return instanceapi.InstanceStorage{}, err
+	}
+	return api.Storage(ctx)
+}
+
 func (c *lazyClient) Renew(ctx context.Context, csrPEM []byte) (credential.Issued, error) {
 	api, err := c.client()
 	if err != nil {
@@ -326,6 +362,22 @@ func load() (config, error) {
 			"TRENOVA_OPERATOR_USAGE_INTERVAL must be at most 15m: windows are billed 30m after they end",
 		)
 	}
+	cfg.storagePrivate = env("TRENOVA_OPERATOR_STORAGE_PRIVATE_ENDPOINT", "")
+	if !storage.ValidPrivateEndpoint(cfg.storagePrivate) {
+		return config{}, fmt.Errorf(
+			"TRENOVA_OPERATOR_STORAGE_PRIVATE_ENDPOINT %q must be http(s)://host[:port]",
+			cfg.storagePrivate,
+		)
+	}
+	for key, into := range map[string]*int64{
+		"TRENOVA_OPERATOR_NODE_VCPU":       &cfg.capacity.VCPU,
+		"TRENOVA_OPERATOR_NODE_MEMORY_GIB": &cfg.capacity.MemoryGiB,
+		"TRENOVA_OPERATOR_NODE_DISK_GIB":   &cfg.capacity.DiskGiB,
+	} {
+		if *into, err = count(key); err != nil {
+			return config{}, err
+		}
+	}
 	cfg.tmsURL = env("TRENOVA_OPERATOR_TMS_URL", fmt.Sprintf(
 		"http://%s.%s.svc:%d",
 		values.APIService(cfg.release),
@@ -372,6 +424,15 @@ func duration(key string, def time.Duration) (time.Duration, error) {
 		return 0, fmt.Errorf("%s: %q is not a duration of at least 1s", key, raw)
 	}
 	return d, nil
+}
+
+func count(key string) (int64, error) {
+	raw := env(key, "0")
+	n, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || n < 0 || n > 1024 {
+		return 0, fmt.Errorf("%s: %q is not a whole number from 0 to 1024", key, raw)
+	}
+	return n, nil
 }
 
 func booleanOr(key string, def bool) (bool, error) {

@@ -19,6 +19,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "PageAccessEndpoint", Implementors: []string{"PageAccessEndpoint"}},
 		{Name: "PageAccessField", Implementors: []string{"PageAccessField"}},
 		{Name: "PageAccessKind", Implementors: []string{"PageAccessKind"}},
+		{Name: "PageAccessPlanDenial", Implementors: []string{"PageAccessPlanDenial"}},
 		{Name: "PageAccessRequirement", Implementors: []string{"PageAccessRequirement"}},
 		{Name: "PageAccessScreen", Implementors: []string{"PageAccessScreen"}},
 		{Name: "RoleResourceGuide", Implementors: []string{"RoleResourceGuide"}},
@@ -236,6 +237,58 @@ var Shard = &gqlexec.Shard{
 					return obj.Withheld, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "planDenial",
+				HasChild:  true,
+				ChildType: "PageAccessPlanDenial",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAccessKind)
+					return obj.PlanDenial, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOPageAccessPlanDenial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAccessPlanDenial),
+			},
+		}},
+		{Object: "PageAccessPlanDenial", Fields: []*gqlexec.Field{
+			{
+				Name:     "feature",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAccessPlanDenial)
+					return obj.Feature, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "featureName",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAccessPlanDenial)
+					return obj.FeatureName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "addOn",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAccessPlanDenial)
+					return obj.AddOn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "addOnName",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.PageAccessPlanDenial)
+					return obj.AddOnName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 		{Object: "PageAccessRequirement", Fields: []*gqlexec.Field{
@@ -902,6 +955,13 @@ func marshalOPageAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋg
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "PageAccess", v)
+}
+
+func marshalOPageAccessPlanDenial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageAccessPlanDenial(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageAccessPlanDenial) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "PageAccessPlanDenial", v)
 }
 
 func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {

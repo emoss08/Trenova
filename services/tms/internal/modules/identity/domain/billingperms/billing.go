@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 const (
@@ -37,6 +38,7 @@ func billingResources() []*permissionspec.ResourceDefinition {
 func invoiceRunResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceInvoiceRun.String(),
+		Feature:     platformcatalog.FeatureBilling,
 		DisplayName: "Invoice Run",
 		Description: "Consolidated invoice batch preview and commit",
 		Category:    "Billing",
@@ -76,6 +78,7 @@ func invoiceRunResource() *permissionspec.ResourceDefinition {
 func invoiceDisputeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceInvoiceDispute.String(),
+		Feature:       platformcatalog.FeatureBilling,
 		DisplayName:   "Invoice Dispute",
 		Description:   "Dispute cases raised against posted invoices",
 		Category:      "Billing",
@@ -131,6 +134,7 @@ func invoiceDisputeResource() *permissionspec.ResourceDefinition {
 func invoiceResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceInvoice.String(),
+		Feature:     platformcatalog.FeatureBilling,
 		DisplayName: "Invoice",
 		Description: "Invoice management",
 		Category:    "Billing",
@@ -185,6 +189,7 @@ func invoiceResource() *permissionspec.ResourceDefinition {
 		},
 		DefaultSensitivity: permission.SensitivityRestricted,
 		FieldSensitivities: invoiceFieldSensitivities(),
+		FieldFeatures:      invoiceFieldFeatures(),
 		Scopes: []permissionspec.ScopeSupport{
 			{
 				Scope:      permission.DataScopeOwn,
@@ -331,10 +336,17 @@ func invoiceFieldSensitivities() map[string]permission.FieldSensitivity {
 
 func billingQueueResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
-		Resource:      permission.ResourceBillingQueue.String(),
-		DisplayName:   "Billing Queue",
-		Description:   "Billing queue review and approval",
-		Category:      "Billing",
+		Resource:    permission.ResourceBillingQueue.String(),
+		Feature:     platformcatalog.FeatureBilling,
+		DisplayName: "Billing Queue",
+		Description: "Billing queue review and approval",
+		Category:    "Billing",
+		FieldFeatures: map[string]platformcatalog.FeatureKey{
+			"agentVerdict":    platformcatalog.FeatureAgentAutomation,
+			"agentSummary":    platformcatalog.FeatureAgentAutomation,
+			"agentReviewedAt": platformcatalog.FeatureAgentAutomation,
+			"agentReads":      platformcatalog.FeatureAgentAutomation,
+		},
 		Operations: []permissionspec.OperationDefinition{
 			{
 				Operation:   permission.OpRead,
@@ -389,6 +401,7 @@ func billingQueueResource() *permissionspec.ResourceDefinition {
 func accessorialChargeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceAccessorialCharge.String(),
+		Feature:            platformcatalog.FeatureBilling,
 		DisplayName:        "Accessorial Charge",
 		Description:        "Accessorial charge definitions",
 		Category:           "Billing",
@@ -401,6 +414,7 @@ func accessorialChargeResource() *permissionspec.ResourceDefinition {
 func chargeTypeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceChargeType.String(),
+		Feature:            platformcatalog.FeatureBilling,
 		DisplayName:        "Charge Type",
 		Description:        "Charge type definitions",
 		Category:           "Billing",
@@ -412,6 +426,7 @@ func chargeTypeResource() *permissionspec.ResourceDefinition {
 func revenueCodeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceRevenueCode.String(),
+		Feature:            platformcatalog.FeatureBilling,
 		DisplayName:        "Revenue Code",
 		Description:        "Revenue code definitions",
 		Category:           "Billing",
@@ -423,6 +438,7 @@ func revenueCodeResource() *permissionspec.ResourceDefinition {
 func formulaTemplateResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceFormulaTemplate.String(),
+		Feature:     platformcatalog.FeatureRating,
 		DisplayName: "Formula Template",
 		Description: "Rate formula templates",
 		Category:    "Billing",
@@ -460,6 +476,7 @@ func formulaTemplateResource() *permissionspec.ResourceDefinition {
 func formulaLibraryResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceFormulaLibrary.String(),
+		Feature:     platformcatalog.FeatureRating,
 		DisplayName: "Formula Library",
 		Description: "Organization formula libraries that rate formula templates import",
 		Category:    "Billing",
@@ -502,6 +519,7 @@ func formulaLibraryResource() *permissionspec.ResourceDefinition {
 func fuelSurchargeProgramResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceFuelSurchargeProgram.String(),
+		Feature:            platformcatalog.FeatureBilling,
 		DisplayName:        "Fuel Surcharge Program",
 		Description:        "Fuel surcharge programs, fuel price indices, and DOE weekly price data",
 		Category:           "Fuel & tax",
@@ -514,6 +532,7 @@ func fuelSurchargeProgramResource() *permissionspec.ResourceDefinition {
 func detentionPolicyResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceDetentionPolicy.String(),
+		Feature:     platformcatalog.FeatureDetention,
 		DisplayName: "Detention Policy",
 		Description: "Contractual detention terms, rate tiers and notice requirements",
 		Category:    "Detention",
@@ -530,6 +549,7 @@ func detentionPolicyResource() *permissionspec.ResourceDefinition {
 func detentionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceDetention.String(),
+		Feature:     platformcatalog.FeatureDetention,
 		DisplayName: "Detention",
 		Description: "Detention at stops: the detention desk, its occurrences and the intelligence over them",
 		Category:    "Detention",
@@ -552,6 +572,7 @@ func detentionResource() *permissionspec.ResourceDefinition {
 func factoringAgreementResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceFactoringAgreement.String(),
+		Feature:     platformcatalog.FeatureFactoring,
 		DisplayName: "Factoring Agreement",
 		Description: "Advance, reserve, fee and recourse terms agreed with a factor",
 		Category:    "Billing",
@@ -618,6 +639,7 @@ func factoringAgreementResource() *permissionspec.ResourceDefinition {
 func factoringNoaResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceFactoringNoa.String(),
+		Feature:     platformcatalog.FeatureFactoring,
 		DisplayName: "Notice of Assignment",
 		Description: "Notices telling customers to pay a factor instead",
 		Category:    "Billing",
@@ -671,6 +693,7 @@ func factoringNoaResource() *permissionspec.ResourceDefinition {
 func factoringSubmissionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceFactoringSubmission.String(),
+		Feature:       platformcatalog.FeatureFactoring,
 		DisplayName:   "Factoring Schedule",
 		Description:   "Schedules of accounts sent to a factor, with each invoice's expected funding",
 		Category:      "Billing",
@@ -748,6 +771,19 @@ func factoringSubmissionResource() *permissionspec.ResourceDefinition {
 			"transportTarget":       permission.SensitivityInternal,
 			"updatedAt":             permission.SensitivityInternal,
 			"version":               permission.SensitivityInternal,
+			"verdict":               permission.SensitivityInternal,
+			"failedChecks":          permission.SensitivityInternal,
+			"readySince":            permission.SensitivityInternal,
+			"evaluatedAt":           permission.SensitivityInternal,
+			"checks":                permission.SensitivityInternal,
+			"code":                  permission.SensitivityInternal,
+			"passed":                permission.SensitivityInternal,
+			"message":               permission.SensitivityInternal,
+			"fix":                   permission.SensitivityInternal,
+			"documentTypeId":        permission.SensitivityInternal,
+			"documentTypeName":      permission.SensitivityInternal,
+			"shipmentId":            permission.SensitivityInternal,
+			"shipmentPro":           permission.SensitivityInternal,
 			"advanceMinor":          permission.SensitivityRestricted,
 			"expectedAdvanceMinor":  permission.SensitivityRestricted,
 			"expectedFeeMinor":      permission.SensitivityRestricted,
@@ -762,6 +798,7 @@ func factoringSubmissionResource() *permissionspec.ResourceDefinition {
 func factoringReserveResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceFactoringReserve.String(),
+		Feature:     platformcatalog.FeatureFactoring,
 		DisplayName: "Factoring Reserve",
 		Description: "What factors funded, held in reserve, released and charged back, booked to the ledger",
 		Category:    "Billing",
@@ -800,6 +837,7 @@ func factoringReserveResource() *permissionspec.ResourceDefinition {
 func factoringRemittanceResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceFactoringRemittance.String(),
+		Feature:        platformcatalog.FeatureFactoring,
 		DisplayName:    "Factoring Remittance",
 		Description:    "A factor's funding or reserve report, matched to schedule items before it is booked",
 		Category:       "Billing",

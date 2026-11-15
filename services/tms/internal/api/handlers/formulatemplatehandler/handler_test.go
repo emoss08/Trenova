@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice/standardcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
@@ -45,6 +47,13 @@ func TestList_ReturnsTheTemplatesWithTheirSource(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, fixtureOptions{granted: authorGrants()})
+	catalog, err := standardcatalog.Load()
+	require.NoError(t, err)
+	installed := make([]string, 0, len(catalog))
+	for _, entry := range catalog {
+		installed = append(installed, entry.Key)
+	}
+	f.repo.On("ListStandardKeys", mock.Anything, mock.Anything).Return(installed, nil)
 	f.repo.On("List", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*formulatemplate.FormulaTemplate]{
 			Items: []*formulatemplate.FormulaTemplate{{

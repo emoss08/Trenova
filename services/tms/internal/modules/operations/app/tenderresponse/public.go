@@ -6,10 +6,10 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// invalidTokenError uses one piece of copy for every failure mode — missing,
+// InvalidTokenError uses one piece of copy for every failure mode — missing,
 // expired, used, revoked — so the public endpoint leaks nothing about which
 // one applied.
-func invalidTokenError() error {
+func InvalidTokenError() error {
 	return errortypes.NewValidationError(
 		"token",
 		errortypes.ErrInvalid,

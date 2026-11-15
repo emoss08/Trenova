@@ -280,72 +280,6 @@
       "rest": []
     },
     {
-      "path": "/accounting/ar/invoices",
-      "name": "Invoice register",
-      "requires": [
-        {
-          "resource": "invoice",
-          "operation": "read"
-        }
-      ],
-      "operations": [
-        "AccountingBriefing",
-        "ArAgingSummary",
-        "ArAgingTrend",
-        "ArCashFlowForecast",
-        "ArCollectionsWorklist",
-        "ArCustomerLedger",
-        "ArCustomerProfile",
-        "ArCustomerStatement",
-        "ArDashboardKpis",
-        "ArDsoTrend",
-        "ArOpenItems",
-        "ArPaymentStats",
-        "ArTopOverdueCustomers",
-        "BulkEditFields",
-        "DataTableAggregates",
-        "DataTableFacets",
-        "DataTableInsightFields",
-        "DeskInvoiceCard",
-        "ExportTableView",
-        "InvoiceArContext",
-        "InvoiceRegister",
-        "LateChargePreview",
-        "MyBulkEdit",
-        "MyTableLayout",
-        "PreviewBulkEdit",
-        "ResetMyTableLayout",
-        "SaveMyTableLayout",
-        "ScheduleTableView",
-        "ShipmentInvoices",
-        "StartBulkEdit",
-        "UndoMyBulkEdit",
-        "VoidInvoice"
-      ],
-      "rest": [
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/email-attempts/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/send-plan/"
-        },
-        {
-          "method": "GET",
-          "path": "/tables/"
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/"
-        }
-      ]
-    },
-    {
       "path": "/accounting/ar/late-charges",
       "name": "Late charges",
       "requires": [
@@ -2096,6 +2030,10 @@
         {
           "method": "GET",
           "path": "/documents/extraction-status/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/"
         }
       ]
     },
@@ -2399,6 +2337,10 @@
         {
           "method": "GET",
           "path": "/documents/extraction-status/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/"
         }
       ]
     },
@@ -3236,6 +3178,20 @@
       ]
     },
     {
+      "path": "/admin/plan",
+      "name": "Your plan",
+      "requires": [
+        {
+          "resource": "organization",
+          "operation": "update"
+        }
+      ],
+      "operations": [
+        "ManagedPlan"
+      ],
+      "rest": []
+    },
+    {
       "path": "/admin/roles",
       "name": "Roles",
       "requires": [
@@ -3595,6 +3551,18 @@
           "path": "/tables/:param/compose/"
         }
       ]
+    },
+    {
+      "path": "/admin/support-access",
+      "name": "Trenova support access",
+      "requires": [
+        {
+          "resource": "support_access",
+          "operation": "read"
+        }
+      ],
+      "operations": [],
+      "rest": []
     },
     {
       "path": "/admin/table-change-alerts",
@@ -4358,6 +4326,10 @@
       "rest": [
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
+        },
+        {
+          "method": "GET",
           "path": "/tables/"
         },
         {
@@ -4769,6 +4741,10 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
+        },
+        {
+          "method": "GET",
           "path": "/search/global/"
         }
       ]
@@ -5176,6 +5152,10 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
+        },
+        {
+          "method": "GET",
           "path": "/search/global/"
         }
       ]
@@ -5206,6 +5186,10 @@
         "UndoMyBulkEdit"
       ],
       "rest": [
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
+        },
         {
           "method": "GET",
           "path": "/tables/"
@@ -5618,6 +5602,10 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
+        },
+        {
+          "method": "GET",
           "path": "/search/global/"
         }
       ]
@@ -6024,6 +6012,10 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
+        },
+        {
+          "method": "GET",
           "path": "/search/global/"
         }
       ]
@@ -6058,6 +6050,10 @@
         "UndoMyBulkEdit"
       ],
       "rest": [
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
+        },
         {
           "method": "POST",
           "path": "/rate-matrices/"
@@ -6447,6 +6443,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -6469,6 +6469,72 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
+        }
+      ]
+    },
+    {
+      "path": "/billing/invoice-register",
+      "name": "Invoice register",
+      "requires": [
+        {
+          "resource": "invoice",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "AccountingBriefing",
+        "ArAgingSummary",
+        "ArAgingTrend",
+        "ArCashFlowForecast",
+        "ArCollectionsWorklist",
+        "ArCustomerLedger",
+        "ArCustomerProfile",
+        "ArCustomerStatement",
+        "ArDashboardKpis",
+        "ArDsoTrend",
+        "ArOpenItems",
+        "ArPaymentStats",
+        "ArTopOverdueCustomers",
+        "BulkEditFields",
+        "DataTableAggregates",
+        "DataTableFacets",
+        "DataTableInsightFields",
+        "DeskInvoiceCard",
+        "ExportTableView",
+        "InvoiceArContext",
+        "InvoiceRegister",
+        "LateChargePreview",
+        "MyBulkEdit",
+        "MyTableLayout",
+        "PreviewBulkEdit",
+        "ResetMyTableLayout",
+        "SaveMyTableLayout",
+        "ScheduleTableView",
+        "ShipmentInvoices",
+        "StartBulkEdit",
+        "UndoMyBulkEdit",
+        "VoidInvoice"
+      ],
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/email-attempts/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/send-plan/"
+        },
+        {
+          "method": "GET",
+          "path": "/tables/"
+        },
+        {
+          "method": "POST",
+          "path": "/tables/:param/compose/"
         }
       ]
     },
@@ -6836,6 +6902,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -7156,6 +7226,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -7178,6 +7252,10 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
         },
         {
           "method": "GET",
@@ -7230,6 +7308,10 @@
         "UndoMyBulkEdit"
       ],
       "rest": [
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
+        },
         {
           "method": "POST",
           "path": "/rate-agreements/"
@@ -7609,6 +7691,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -7760,6 +7846,10 @@
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/"
         },
         {
           "method": "POST",
@@ -8487,6 +8577,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -8565,6 +8659,10 @@
         {
           "method": "GET",
           "path": "/locations/"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
         },
         {
           "method": "GET",
@@ -9461,6 +9559,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -9559,6 +9661,10 @@
         {
           "method": "GET",
           "path": "/locations/"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
         },
         {
           "method": "GET",
@@ -10350,6 +10456,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -10428,6 +10538,10 @@
         {
           "method": "GET",
           "path": "/locations/"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
         },
         {
           "method": "GET",
@@ -10962,6 +11076,10 @@
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/"
         },
         {
           "method": "POST",
@@ -11688,6 +11806,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -11766,6 +11888,10 @@
         {
           "method": "GET",
           "path": "/locations/"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
         },
         {
           "method": "GET",
@@ -12235,6 +12361,10 @@
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/"
         },
         {
           "method": "POST",
@@ -14998,6 +15128,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -15020,6 +15154,10 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
         },
         {
           "method": "POST",
@@ -15375,6 +15513,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -15397,6 +15539,10 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
         },
         {
           "method": "POST",
@@ -15965,6 +16111,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -15987,6 +16137,10 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
         },
         {
           "method": "POST",
@@ -16947,6 +17101,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -16997,6 +17155,10 @@
         {
           "method": "GET",
           "path": "/integrations/samsara/workers/sync/readiness/"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
         },
         {
           "method": "POST",
@@ -18663,6 +18825,10 @@
           "path": "/documents/resource/:param/:param/packet-summary/"
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/"
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/"
         },
@@ -18709,6 +18875,10 @@
         {
           "method": "GET",
           "path": "/locations/"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs"
         },
         {
           "method": "POST",
@@ -19302,6 +19472,10 @@
         {
           "method": "GET",
           "path": "/documents/resource/:param/:param/packet-summary/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/"
         },
         {
           "method": "POST",

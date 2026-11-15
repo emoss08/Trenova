@@ -58,6 +58,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -1131,6 +1132,7 @@ func newIntegrationHarness(
 		),
 		WorkflowStarter: starter,
 		Engine: invoiceadjustmentengine.New(invoiceadjustmentengine.Params{
+			Features:           plantest.AllFeatures(),
 			Logger:             logger,
 			Repo:               adjustmentRepo,
 			InvoiceRepo:        invoiceRepo,
@@ -1153,6 +1155,7 @@ func newIntegrationHarness(
 			),
 			AuditService: noopAuditService{},
 			Commercial: shipmentcommercial.New(shipmentcommercial.Params{
+				Features:        plantest.AllFeatures(),
 				Logger:          zap.NewNop(),
 				RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
 				AccessorialRepo: fakeAccessorialRepo{},
@@ -1184,6 +1187,7 @@ func (h *integrationHarness) buildService(
 		),
 		WorkflowStarter: starter,
 		Engine: invoiceadjustmentengine.New(invoiceadjustmentengine.Params{
+			Features:    plantest.AllFeatures(),
 			Logger:      zap.NewNop(),
 			Repo:        h.adjustmentRepo,
 			InvoiceRepo: h.invoiceRepo,
@@ -1217,6 +1221,7 @@ func (h *integrationHarness) buildService(
 			),
 			AuditService: noopAuditService{},
 			Commercial: shipmentcommercial.New(shipmentcommercial.Params{
+				Features:        plantest.AllFeatures(),
 				Logger:          zap.NewNop(),
 				RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
 				AccessorialRepo: fakeAccessorialRepo{},

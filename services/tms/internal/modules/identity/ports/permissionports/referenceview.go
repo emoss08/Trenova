@@ -18,6 +18,9 @@ const (
 	// LinkedFieldWithheldSensitivity is a field ranked above the caller's
 	// ceiling.
 	LinkedFieldWithheldSensitivity
+	// LinkedFieldWithheldPlan is a field of a kind, or of a feature of its
+	// own, that the organization's plan does not include.
+	LinkedFieldWithheldPlan
 )
 
 // ReferenceViews is how a surface outside the identity module asks the
@@ -45,4 +48,12 @@ type PersonGrants struct {
 type LinkedFields interface {
 	Reads(ctx context.Context, kind permission.Resource) bool
 	Decide(ctx context.Context, kind permission.Resource, field string) LinkedFieldDecision
+	// PlanDenial names the feature the organization's plan withholds a field
+	// of a kind for; an empty field asks about the kind alone. A plan that
+	// could not be read is an error, and the field is withheld for it.
+	PlanDenial(
+		ctx context.Context,
+		kind permission.Resource,
+		field string,
+	) (PlanDenial, bool, error)
 }

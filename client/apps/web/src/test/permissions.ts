@@ -16,6 +16,7 @@ export function permissionManifest(permissions: Record<string, number>): Permiss
     permissions,
     routeAccess: {},
     availableOrgs: [],
+    unavailableFeatures: [],
     checksum: "test",
     expiresAt: 1_782_403_304,
   } as PermissionManifest;

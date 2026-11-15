@@ -177,7 +177,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "agents",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
@@ -186,7 +185,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*rbac.Role)
 					return gqlexec.Resolver[RoleResolver](ec, "Role@role").Agents(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ),
+				Marshal: gqlexec.Marshal(marshalOAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ),
 			},
 		}},
 		{Object: "RoleConnection", Fields: []*gqlexec.Field{
@@ -321,14 +320,6 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentdefinition.Definition) graphql.Marshaler {
-	return gqlexec.List[*agentdefinition.Definition]{
-		Elem:        marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
 func marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdefinition.Definition) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -407,6 +398,13 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalOAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentdefinition.Definition) graphql.Marshaler {
+	return gqlexec.List[*agentdefinition.Definition]{
+		Elem:        marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalOID2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐIDᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []pulid.ID) graphql.Marshaler {

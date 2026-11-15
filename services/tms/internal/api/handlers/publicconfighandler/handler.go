@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
@@ -21,12 +22,14 @@ type Params struct {
 
 	PlatformConfig *platformconfig.Config
 	SecurityConfig *securityconfig.Config
+	ManagedConfig  *managedconfig.Config
 	ErrorHandler   *helpers.ErrorHandler
 }
 
 type Handler struct {
 	platformConfig *platformconfig.Config
 	securityConfig *securityconfig.Config
+	managedConfig  *managedconfig.Config
 	eh             *helpers.ErrorHandler
 }
 
@@ -34,6 +37,7 @@ func New(p Params) *Handler {
 	return &Handler{
 		platformConfig: p.PlatformConfig,
 		securityConfig: p.SecurityConfig,
+		managedConfig:  p.ManagedConfig,
 		eh:             p.ErrorHandler,
 	}
 }
@@ -57,6 +61,7 @@ func (h *Handler) publicConfig(c *gin.Context) {
 func (h *Handler) Build(context.Context) (*kernelports.PublicConfig, error) {
 	return &kernelports.PublicConfig{
 		PlatformMode: string(h.platformConfig.GetMode()),
+		Managed:      h.managedConfig.Enabled,
 		Session:      publicSessionPolicy(&h.securityConfig.Session),
 	}, nil
 }

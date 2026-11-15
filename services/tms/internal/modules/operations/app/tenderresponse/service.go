@@ -175,7 +175,7 @@ func (s *Service) resolveToken(
 	rawToken string,
 ) (context.Context, *tender.TenderOfferToken, *tender.TenderOffer, error) {
 	if rawToken == "" {
-		return ctx, nil, nil, invalidTokenError()
+		return ctx, nil, nil, InvalidTokenError()
 	}
 
 	token, err := s.repo.GetTokenByHash(ctx, tokenutils.Hash(rawToken))
@@ -183,7 +183,7 @@ func (s *Service) resolveToken(
 		return ctx, nil, nil, err
 	}
 	if token == nil || !token.IsUsable(timeutils.NowUnix()) {
-		return ctx, nil, nil, invalidTokenError()
+		return ctx, nil, nil, InvalidTokenError()
 	}
 
 	tenantInfo := pagination.TenantInfo{
@@ -201,7 +201,7 @@ func (s *Service) resolveToken(
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return ctx, nil, nil, invalidTokenError()
+			return ctx, nil, nil, InvalidTokenError()
 		}
 		return ctx, nil, nil, err
 	}
@@ -231,7 +231,7 @@ func (s *Service) PreviewByToken(
 	)
 	if err != nil {
 		s.l.Warn("failed to build public tender offer view", zap.Error(err))
-		return nil, invalidTokenError()
+		return nil, InvalidTokenError()
 	}
 
 	return &PublicOfferView{

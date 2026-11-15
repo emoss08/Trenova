@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/turnlimits"
 	"github.com/emoss08/trenova/internal/modules/agent/app/paletteanswer"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/palettequestion"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/palettejobs/palettecontract"
@@ -198,7 +199,7 @@ func (m monthly) GetOrCreate(
 
 type anyTask struct{}
 
-func (anyTask) Available(context.Context, pagination.TenantInfo) (bool, error) {
+func (anyTask) Available(context.Context, pagination.TenantInfo, aitask.Task) (bool, error) {
 	return true, nil
 }
 

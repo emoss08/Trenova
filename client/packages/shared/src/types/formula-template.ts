@@ -113,6 +113,12 @@ export const formulaTemplateSchema = z.object({
   sourceTemplateId: z.string().nullish(),
   sourceVersionNumber: z.number().nullish(),
   currentVersionNumber: z.number().optional(),
+  /**
+   * The catalogue entry a standard template was installed from; empty for a template the
+   * organization wrote. A standard template prices shipments on every plan and is never changed:
+   * it is duplicated or forked to make one of the organization's own.
+   */
+  standardKey: z.string().nullish(),
   billing: billingVersionSchema.nullish(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
@@ -545,15 +551,6 @@ export const readinessResponseSchema = z.object({
   coverage: readinessCoverageSchema.nullish().transform((value) => value ?? null),
 });
 export type ReadinessResponse = z.output<typeof readinessResponseSchema>;
-
-export const installStandardsResponseSchema = z.object({
-  installed: listFormulaTemplateResponseSchema,
-  skipped: z
-    .array(z.string())
-    .nullish()
-    .transform((v) => v ?? []),
-});
-export type InstallStandardsResponse = z.output<typeof installStandardsResponseSchema>;
 
 /** Someone who may approve: holds the resource's approve permission, and is not the author. */
 export const formulaReviewerSchema = z.object({

@@ -148,9 +148,12 @@ Keywords: version history, rollback, compare versions, schedule activation
 Keywords: duplicate tariff, fork, export JSON, import templates, standard templates
 1. Open [Formula templates](/billing/configuration-files/formula-templates).
 2. Right-click a template for **Fork template**, **View lineage**, **Duplicate**, **Export** or **Archive**, or tick several and use **Duplicate**, **Export** or **Archive** in the bar that appears.
-3. To bring templates in, select **New formula template** and choose **Import templates** (from a file exported from Trenova) or **Install standard templates** (Trenova's standard rating methods, each with its own tests).
+3. To bring templates in, select **New formula template** and choose **Import templates** (from a file exported from Trenova).
+4. Trenova's standard rating methods (Flat Rate, Per Mile, Per CWT and the rest, each with its own tests) are already in the list on every plan. A standard template cannot be changed: to adjust one, **Duplicate** it or open it and choose **Fork template**, then edit the copy.
 
 ## Notes
+Writing, editing and opening formula templates is part of the Rating add-on. Without it, the standard templates still price shipments: the **Rating method** on a shipment, a rate agreement lane and the billing fallback lists them, but this page and the studio say they are not on your plan. Templates your organization wrote while it had Rating are kept; shipments and lanes that use them keep their saved charges and are not re-rated by them until Rating is back on the plan.
+
 Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it. Someone who submitted a template, or edited the revision under review, cannot approve it unless their role has the "Approve own changes" permission for formula templates, which administrators have; an approval made that way is recorded in the audit log as approved without a second reviewer.
 
 Nova needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the Nova tab says which is missing. Every amount Nova shows comes from the same rating engine that bills shipments.

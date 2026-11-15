@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -75,6 +76,7 @@ func newPostingTestService(
 ) *Service {
 	return &Service{
 		l:                zap.NewNop(),
+		features:         plantest.AllFeatures(),
 		db:               invoiceservicetest.FakeTx{},
 		repo:             repo,
 		billingQueueRepo: queueRepo,

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,13 +22,22 @@ import (
 	"go.uber.org/zap"
 )
 
+type featureGate struct {
+	disabled map[platformcatalog.FeatureKey]bool
+}
+
+func (g featureGate) Enabled(_ context.Context, feature platformcatalog.FeatureKey) (bool, error) {
+	return !g.disabled[feature], nil
+}
+
 type guardCase struct {
-	plans  platformplanports.PlanService
-	tenant pagination.TenantInfo
-	apiKey bool
-	method string
-	route  string
-	path   string
+	plans    platformplanports.PlanService
+	features featureGate
+	tenant   pagination.TenantInfo
+	apiKey   bool
+	method   string
+	route    string
+	path     string
 }
 
 func serveThroughGuard(t *testing.T, tc guardCase) (*httptest.ResponseRecorder, bool) {
@@ -37,7 +48,8 @@ func serveThroughGuard(t *testing.T, tc guardCase) (*httptest.ResponseRecorder, 
 	_, engine := gin.CreateTestContext(recorder)
 
 	guard := NewReadOnlyGuard(ReadOnlyGuardParams{
-		Plans: tc.plans,
+		Plans:    tc.plans,
+		Features: tc.features,
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &appconfig.Config{},
@@ -158,23 +170,57 @@ func TestReadOnlyGuardRefusesReadsOnceExpiredExceptTheAccountShell(t *testing.T)
 	}
 }
 
-func TestReadOnlyGuardRefusesAPIKeysWhenThePlanRestrictsThem(t *testing.T) {
+func TestReadOnlyGuardRefusesAPIKeysWhenTheInstanceLacksTheFeature(t *testing.T) {
 	t.Parallel()
 
 	tenant := plantest.Tenant()
-	plans := plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusTrialing))
+	withoutAPIKeys := featureGate{disabled: map[platformcatalog.FeatureKey]bool{
+		platformcatalog.FeatureAPIKeys: true,
+	}}
+
+	for _, plans := range []platformplanports.PlanService{
+		planservice.NewUnlimited(),
+		plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusTrialing)),
+	} {
+		recorder, reached := serveThroughGuard(t, guardCase{
+			plans:    plans,
+			features: withoutAPIKeys,
+			tenant:   tenant,
+			apiKey:   true,
+			method:   http.MethodGet,
+			route:    "/api/v1/shipments/",
+		})
+
+		assert.False(t, reached)
+		assert.Equal(t, http.StatusForbidden, recorder.Code)
+		assert.Contains(t, recorder.Body.String(), "plan-restricted")
+		assert.Contains(t, recorder.Body.String(), string(platformcatalog.FeatureAPIKeys))
+	}
 
 	recorder, reached := serveThroughGuard(t, guardCase{
-		plans:  plans,
-		tenant: tenant,
+		plans:    planservice.NewUnlimited(),
+		features: withoutAPIKeys,
+		tenant:   tenant,
+		method:   http.MethodGet,
+		route:    "/api/v1/shipments/",
+	})
+	assert.True(t, reached)
+	assert.Equal(t, http.StatusNoContent, recorder.Code)
+}
+
+func TestReadOnlyGuardLetsAPIKeysThroughWhenTheInstanceHasTheFeature(t *testing.T) {
+	t.Parallel()
+
+	recorder, reached := serveThroughGuard(t, guardCase{
+		plans:  planservice.NewUnlimited(),
+		tenant: plantest.Tenant(),
 		apiKey: true,
-		method: http.MethodGet,
+		method: http.MethodPost,
 		route:  "/api/v1/shipments/",
 	})
 
-	assert.False(t, reached)
-	assert.Equal(t, http.StatusForbidden, recorder.Code)
-	assert.Contains(t, recorder.Body.String(), platformplan.CapabilityAPIKeys.String())
+	assert.True(t, reached)
+	assert.Equal(t, http.StatusNoContent, recorder.Code)
 }
 
 func TestReadOnlyGuardLetsATrialOrganizationWrite(t *testing.T) {

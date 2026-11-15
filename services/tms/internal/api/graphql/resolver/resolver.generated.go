@@ -91,6 +91,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/latechargeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationcategoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/managedplanexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/manualjournalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/notificationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orderexec"
@@ -119,6 +120,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sidebarpreferenceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/storedmileageexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/supportaccessexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablechangealertexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tableconfigurationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablelayoutexec"
@@ -230,6 +232,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/latechargeresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/locationcategoryresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/locationresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/managedplanresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/manualjournalresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/notificationresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orderresolver"
@@ -258,6 +261,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/sidebarpreferenceresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/storedmileageresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/supportaccessresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/tablechangealertresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/tableconfigurationresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/tablelayoutresolver"
@@ -783,6 +787,10 @@ func FromServices(s *Services) *Resolver {
 		Core:                    s.Core,
 		LocationCategoryService: s.LocationCategoryService,
 	}
+	managedplanDeps := &managedplanresolver.Deps{
+		Core:               s.Core,
+		ManagedPlanService: s.ManagedPlanService,
+	}
 	manualjournalDeps := &manualjournalresolver.Deps{
 		Core:                 s.Core,
 		ManualJournalService: s.ManualJournalService,
@@ -985,6 +993,10 @@ func FromServices(s *Services) *Resolver {
 	storedmileageDeps := &storedmileageresolver.Deps{
 		Core:                 s.Core,
 		StoredMileageService: s.StoredMileageService,
+	}
+	supportaccessDeps := &supportaccessresolver.Deps{
+		Core:                 s.Core,
+		SupportAccessService: s.SupportAccessService,
 	}
 	tablechangealertDeps := &tablechangealertresolver.Deps{
 		Core:                    s.Core,
@@ -1386,6 +1398,7 @@ func FromServices(s *Services) *Resolver {
 	shipmentMutation := &shipmentresolver.MutationResolver{Deps: shipmentDeps}
 	shipmentboardMutation := &shipmentboardresolver.MutationResolver{Deps: shipmentboardDeps}
 	sidebarpreferenceMutation := &sidebarpreferenceresolver.MutationResolver{Deps: sidebarpreferenceDeps}
+	supportaccessMutation := &supportaccessresolver.MutationResolver{Deps: supportaccessDeps}
 	tableconfigurationMutation := &tableconfigurationresolver.MutationResolver{Deps: tableconfigurationDeps}
 	tablelayoutMutation := &tablelayoutresolver.MutationResolver{Deps: tablelayoutDeps}
 	telematicsMutation := &telematicsresolver.MutationResolver{Deps: telematicsDeps}
@@ -1515,6 +1528,7 @@ func FromServices(s *Services) *Resolver {
 	latechargeQuery := &latechargeresolver.QueryResolver{Deps: latechargeDeps}
 	locationQuery := &locationresolver.QueryResolver{Deps: locationDeps}
 	locationcategoryQuery := &locationcategoryresolver.QueryResolver{Deps: locationcategoryDeps}
+	managedplanQuery := &managedplanresolver.QueryResolver{Deps: managedplanDeps}
 	manualjournalQuery := &manualjournalresolver.QueryResolver{Deps: manualjournalDeps}
 	notificationQuery := &notificationresolver.QueryResolver{Deps: notificationDeps}
 	orderQuery := &orderresolver.QueryResolver{Deps: orderDeps}
@@ -1543,6 +1557,7 @@ func FromServices(s *Services) *Resolver {
 	shipmenttypeQuery := &shipmenttyperesolver.QueryResolver{Deps: shipmenttypeDeps}
 	sidebarpreferenceQuery := &sidebarpreferenceresolver.QueryResolver{Deps: sidebarpreferenceDeps}
 	storedmileageQuery := &storedmileageresolver.QueryResolver{Deps: storedmileageDeps}
+	supportaccessQuery := &supportaccessresolver.QueryResolver{Deps: supportaccessDeps}
 	tablechangealertQuery := &tablechangealertresolver.QueryResolver{Deps: tablechangealertDeps}
 	tableconfigurationQuery := &tableconfigurationresolver.QueryResolver{Deps: tableconfigurationDeps}
 	tablelayoutQuery := &tablelayoutresolver.QueryResolver{Deps: tablelayoutDeps}
@@ -1945,6 +1960,7 @@ func FromServices(s *Services) *Resolver {
 			"Mutation@shipment":                                    shipmentMutation,
 			"Mutation@shipmentboard":                               shipmentboardMutation,
 			"Mutation@sidebarpreference":                           sidebarpreferenceMutation,
+			"Mutation@supportaccess":                               supportaccessMutation,
 			"Mutation@tableconfiguration":                          tableconfigurationMutation,
 			"Mutation@tablelayout":                                 tablelayoutMutation,
 			"Mutation@telematics":                                  telematicsMutation,
@@ -2074,6 +2090,7 @@ func FromServices(s *Services) *Resolver {
 			"Query@latecharge":                                     latechargeQuery,
 			"Query@location":                                       locationQuery,
 			"Query@locationcategory":                               locationcategoryQuery,
+			"Query@managedplan":                                    managedplanQuery,
 			"Query@manualjournal":                                  manualjournalQuery,
 			"Query@notification":                                   notificationQuery,
 			"Query@order":                                          orderQuery,
@@ -2102,6 +2119,7 @@ func FromServices(s *Services) *Resolver {
 			"Query@shipmenttype":                                   shipmenttypeQuery,
 			"Query@sidebarpreference":                              sidebarpreferenceQuery,
 			"Query@storedmileage":                                  storedmileageQuery,
+			"Query@supportaccess":                                  supportaccessQuery,
 			"Query@tablechangealert":                               tablechangealertQuery,
 			"Query@tableconfiguration":                             tableconfigurationQuery,
 			"Query@tablelayout":                                    tablelayoutQuery,
@@ -2509,6 +2527,7 @@ var (
 	_ shipmentexec.MutationResolver                                    = (*shipmentresolver.MutationResolver)(nil)
 	_ shipmentboardexec.MutationResolver                               = (*shipmentboardresolver.MutationResolver)(nil)
 	_ sidebarpreferenceexec.MutationResolver                           = (*sidebarpreferenceresolver.MutationResolver)(nil)
+	_ supportaccessexec.MutationResolver                               = (*supportaccessresolver.MutationResolver)(nil)
 	_ tableconfigurationexec.MutationResolver                          = (*tableconfigurationresolver.MutationResolver)(nil)
 	_ tablelayoutexec.MutationResolver                                 = (*tablelayoutresolver.MutationResolver)(nil)
 	_ telematicsexec.MutationResolver                                  = (*telematicsresolver.MutationResolver)(nil)
@@ -2638,6 +2657,7 @@ var (
 	_ latechargeexec.QueryResolver                                     = (*latechargeresolver.QueryResolver)(nil)
 	_ locationexec.QueryResolver                                       = (*locationresolver.QueryResolver)(nil)
 	_ locationcategoryexec.QueryResolver                               = (*locationcategoryresolver.QueryResolver)(nil)
+	_ managedplanexec.QueryResolver                                    = (*managedplanresolver.QueryResolver)(nil)
 	_ manualjournalexec.QueryResolver                                  = (*manualjournalresolver.QueryResolver)(nil)
 	_ notificationexec.QueryResolver                                   = (*notificationresolver.QueryResolver)(nil)
 	_ orderexec.QueryResolver                                          = (*orderresolver.QueryResolver)(nil)
@@ -2666,6 +2686,7 @@ var (
 	_ shipmenttypeexec.QueryResolver                                   = (*shipmenttyperesolver.QueryResolver)(nil)
 	_ sidebarpreferenceexec.QueryResolver                              = (*sidebarpreferenceresolver.QueryResolver)(nil)
 	_ storedmileageexec.QueryResolver                                  = (*storedmileageresolver.QueryResolver)(nil)
+	_ supportaccessexec.QueryResolver                                  = (*supportaccessresolver.QueryResolver)(nil)
 	_ tablechangealertexec.QueryResolver                               = (*tablechangealertresolver.QueryResolver)(nil)
 	_ tableconfigurationexec.QueryResolver                             = (*tableconfigurationresolver.QueryResolver)(nil)
 	_ tablelayoutexec.QueryResolver                                    = (*tablelayoutresolver.QueryResolver)(nil)

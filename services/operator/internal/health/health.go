@@ -71,6 +71,7 @@ type CheckParams struct {
 	HelmRevision int
 	Stopped      bool
 	Hibernated   bool
+	Generation   string
 }
 
 func (c *Checker) Check(ctx context.Context, p CheckParams) ([]Component, error) {
@@ -94,7 +95,7 @@ func (c *Checker) Check(ctx context.Context, p CheckParams) ([]Component, error)
 		s := &sets.Items[i]
 		found = append(found, checked{statefulSet(s), podSelector(s.Spec.Selector)})
 	}
-	pg, cluster := c.postgres(ctx, p.Hibernated)
+	pg, cluster := c.postgres(ctx, p.Hibernated, p.Generation)
 	found = append(found, checked{
 		comp: pg,
 		pods: labels.SelectorFromSet(labels.Set{labelCNPGCluster: cluster}),
@@ -195,10 +196,14 @@ func statefulSet(s *appsv1.StatefulSet) Component {
 func (c *Checker) postgres(
 	ctx context.Context,
 	hibernated bool,
+	generation string,
 ) (comp Component, clusterName string) {
 	name := c.release + "-postgres"
 	if c.release != c.chart && !strings.Contains(c.release, c.chart) {
 		name = c.release + "-" + c.chart + "-postgres"
+	}
+	if generation != "" {
+		name += "-" + generation
 	}
 	obj, err := c.dynamic.Resource(clusterResource).
 		Namespace(c.namespace).

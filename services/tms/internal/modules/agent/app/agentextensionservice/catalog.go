@@ -3,7 +3,7 @@ package agentextensionservice
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 var categoryLabels = map[agentextension.Category]string{
@@ -13,14 +13,14 @@ var categoryLabels = map[agentextension.Category]string{
 
 type capabilityDefinition struct {
 	Label string
-	Plan  platformplan.Capability
+	Plan  platformcatalog.FeatureKey
 	Tools []agentextensionports.AgentExtensionTool
 }
 
 var capabilityDefinitions = map[agentextension.Capability]capabilityDefinition{
 	agentextension.CapabilityPortalAutomation: {
 		Label: "Portal work",
-		Plan:  platformplan.CapabilityAgentPortalAutomation,
+		Plan:  platformcatalog.FeatureAIDesk,
 		Tools: []agentextensionports.AgentExtensionTool{
 			{
 				Name:        "web_list_portal_sites",
@@ -41,7 +41,7 @@ var capabilityDefinitions = map[agentextension.Capability]capabilityDefinition{
 	},
 	agentextension.CapabilityWebResearch: {
 		Label: "Web research",
-		Plan:  platformplan.CapabilityAgentWebSearch,
+		Plan:  platformcatalog.FeatureAIDesk,
 		Tools: []agentextensionports.AgentExtensionTool{
 			{
 				Name:        "web_search",

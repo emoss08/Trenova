@@ -26,7 +26,17 @@ function homeData(analytics: Partial<ShipmentAnalyticsData>): HomeData {
 }
 
 function widget(key: string): HomeWidget {
-  return { id: "wgt_01", key, title: "", w: 1, h: 1, config: {} } as unknown as HomeWidget;
+  return {
+    id: "wgt_01",
+    key,
+    label: key,
+    title: "",
+    w: 1,
+    h: 1,
+    planLock: null,
+    lockedMetrics: [],
+    config: {},
+  } as unknown as HomeWidget;
 }
 
 function Wrapper({ children }: { children: ReactNode }) {
@@ -60,6 +70,45 @@ describe("withheld shipment analytics", () => {
 
     expect(screen.getByText("Acme Foods")).toBeInTheDocument();
     expect(screen.getAllByText("Hidden")).toHaveLength(1);
+  });
+
+  it("never fills a withheld detention watchlist with the sample rows", () => {
+    expect(
+      mergeShipmentAnalyticsWithDefaults({ detentionWatchlist: null }).detentionWatchlist,
+    ).toBeNull();
+    expect(
+      mergeShipmentAnalyticsWithDefaults({
+        detentionWatchlist: { items: null },
+      } as unknown as Parameters<typeof mergeShipmentAnalyticsWithDefaults>[0]).detentionWatchlist,
+      "a reader who cannot read detention gets the list withheld",
+    ).toBeNull();
+  });
+
+  it("draws nothing for a detention watchlist the server did not read", () => {
+    const { container } = render(
+      <DetentionWatchWidget
+        widget={widget("detention-watch")}
+        data={homeData({ detentionWatchlist: null })}
+      />,
+      { wrapper: Wrapper },
+    );
+
+    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByText(/You don't have access/)).toBeNull();
+    expect(screen.queryByText("Nothing dwelling past threshold.")).toBeNull();
+  });
+
+  it("keeps the skeleton while the detention watchlist is still loading", () => {
+    const { container } = render(
+      <DetentionWatchWidget
+        widget={widget("detention-watch")}
+        data={{ ...homeData({ detentionWatchlist: null }), shipmentAnalyticsLoading: true }}
+      />,
+      { wrapper: Wrapper },
+    );
+
+    expect(container).not.toBeEmptyDOMElement();
+    expect(screen.getByText("Detention watch")).toBeInTheDocument();
   });
 
   it("tells a withheld driver apart from an unassigned pickup", () => {
@@ -133,6 +182,45 @@ describe("withheld shipment analytics", () => {
     );
     expect(shown?.display).toBe("18.5%");
     expect(shown?.sub).toBe("3 unprofitable loads");
+  });
+
+  // The costing figures are computed from the costing setup, which belongs to Accounting & Cash.
+  // A plan without it answers a locked card: the figures are named by their add-on, never drawn
+  // as the zeroes the card carries.
+  it("locks the margin and the cost per mile when the plan leaves out costing", () => {
+    const data = homeData({
+      profitability: {
+        ...defaultAnalyticsData.profitability,
+        planDenial: {
+          feature: "tms.accounting",
+          featureName: "Accounting",
+          addOn: "ACC",
+          addOnName: "Accounting & Cash",
+        },
+      },
+    });
+
+    for (const key of ["marginPercent", "costPerMile"]) {
+      const metric = resolveMetric(key, data);
+      expect(metric?.lockedFeature, key).toBe("tms.accounting");
+      expect(metric?.display, key).toBe("");
+    }
+  });
+
+  it("keeps the revenue per mile when only costing is locked", () => {
+    const data = homeData({
+      profitability: {
+        ...defaultAnalyticsData.profitability,
+        planDenial: {
+          feature: "tms.accounting",
+          featureName: "Accounting",
+          addOn: "ACC",
+          addOnName: "Accounting & Cash",
+        },
+      },
+    });
+
+    expect(resolveMetric("revenuePerMile", data)?.lockedFeature).toBeUndefined();
   });
 
   it("keeps a withheld lane heatmap apart from one that has not loaded", () => {

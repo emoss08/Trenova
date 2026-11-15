@@ -1,11 +1,12 @@
-import { PlanCapability } from "@/lib/plan-capability";
-import { createPlanCapabilityLoader } from "@/lib/plan-capability-loader";
+import { PlanFeature } from "@/lib/plan-feature";
+import { createPlanFeatureLoader } from "@/lib/plan-feature-loader";
 import {
   anyOfLoaders,
   combineLoaders,
   createCapabilityLoader,
   createPermissionLoader,
 } from "@/lib/route-permission";
+import { managedInstanceLoader } from "@/lib/managed-instance";
 import {
   onboardingExitRedirect,
   loadOnboardingSnapshot,
@@ -171,7 +172,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/organization/email-profiles",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.EmailOutbound),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EmailProfile),
             ),
             async lazy() {
@@ -184,7 +185,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/organization/email-logs",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.EmailOutbound),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EmailLog),
             ),
             async lazy() {
@@ -256,6 +257,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             loader: combineLoaders(
               protectedLoader,
               createPermissionLoader(Resource.Shipment, Operation.Create),
+              createPlanFeatureLoader(PlanFeature.DocumentIntelligence),
             ),
             async lazy() {
               const { ShipmentImportPage } = await import("@/routes/shipment/import-page");
@@ -301,7 +303,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/edi/overview",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
@@ -313,7 +315,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/edi/partners",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
@@ -325,7 +327,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/edi/communication-profiles",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
@@ -337,7 +339,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/edi/mapping-profiles",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
@@ -349,7 +351,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/edi/lading",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
@@ -361,7 +363,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/edi/lading/:partnerId",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
@@ -373,7 +375,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/edi/transfers/inbound",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EDI),
               // A tender's record link opens here; one we sent is carried to the outbound page.
               async ({ request }) => {
@@ -396,7 +398,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/edi/transfers/outbound",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
@@ -408,7 +410,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/edi/messages",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
@@ -420,7 +422,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/edi/inbound-files",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
@@ -432,7 +434,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/edi/flows",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPlanFeatureLoader(PlanFeature.Administration),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
@@ -454,7 +456,11 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
           },
           {
             path: "/billing/factoring",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanFeatureLoader(PlanFeature.Factoring),
+              createPermissionLoader(Resource.Invoice),
+            ),
             async lazy() {
               const { FactoringPage } = await import("@/routes/factoring/page");
               return { Component: FactoringPage };
@@ -709,6 +715,14 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             async lazy() {
               const { InvoicesPage } = await import("@/routes/invoice/page");
               return { Component: InvoicesPage };
+            },
+          },
+          {
+            path: "/billing/invoice-register",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            async lazy() {
+              const { InvoiceRegisterPage } = await import("@/routes/invoice-register/page");
+              return { Component: InvoiceRegisterPage };
             },
           },
           {
@@ -1035,14 +1049,6 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             async lazy() {
               const { AROpenItemsPage } = await import("@/routes/ar-open-items/page");
               return { Component: AROpenItemsPage };
-            },
-          },
-          {
-            path: "/accounting/ar/invoices",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
-            async lazy() {
-              const { InvoiceRegisterPage } = await import("@/routes/invoice-register/page");
-              return { Component: InvoiceRegisterPage };
             },
           },
           {
@@ -1529,6 +1535,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             loader: combineLoaders(
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPlanFeatureLoader(PlanFeature.DispatchIntelligence),
               createPermissionLoader(Resource.ShipmentMove),
               createPrefetchLoader(lazyPrefetch(() => import("@/routes/freight-outlook/page"))),
             ),
@@ -1827,7 +1834,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             path: "/dispatch/carrier-monitoring",
             loader: combineLoaders(
               protectedLoader,
-              createPlanCapabilityLoader(PlanCapability.CarrierIntelligencePaid),
+              createPlanFeatureLoader(PlanFeature.CarrierBrokerage),
               createPermissionLoader(Resource.CarrierIntelligence),
             ),
             async lazy() {
@@ -1840,7 +1847,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             loader: combineLoaders(
               protectedLoader,
               createCapabilityLoader(OrganizationCapability.Brokerage),
-              createPlanCapabilityLoader(PlanCapability.CarrierIntelligencePaid),
+              createPlanFeatureLoader(PlanFeature.CarrierBrokerage),
               createPermissionLoader(Resource.CarrierSourcing),
             ),
             async lazy() {
@@ -1985,7 +1992,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
               {
                 path: "agent-control",
                 loader: combineLoaders(
-                  createPlanCapabilityLoader(PlanCapability.AgentAutomation),
+                  createPlanFeatureLoader(PlanFeature.AgentAutomation),
                   createPermissionLoader(Resource.AgentControl, Operation.Read),
                 ),
                 async lazy() {
@@ -2039,7 +2046,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
               {
                 path: "capture",
                 loader: combineLoaders(
-                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
+                  createPlanFeatureLoader(PlanFeature.DocumentIntelligence),
                   createPermissionLoader(Resource.CaptureProfile, Operation.Read),
                 ),
                 async lazy() {
@@ -2050,7 +2057,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
               {
                 path: "document-intelligence",
                 loader: combineLoaders(
-                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
+                  createPlanFeatureLoader(PlanFeature.DocumentIntelligence),
                   createPermissionLoader(Resource.DocumentControl, Operation.Read),
                 ),
                 async lazy() {
@@ -2197,7 +2204,7 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
               {
                 path: "integrations",
                 loader: combineLoaders(
-                  createPlanCapabilityLoader(PlanCapability.Integrations),
+                  createPlanFeatureLoader(PlanFeature.Administration),
                   createPermissionLoader(Resource.Integration, Operation.Read),
                 ),
                 async lazy() {
@@ -2269,12 +2276,37 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
               {
                 path: "api-keys",
                 loader: combineLoaders(
-                  createPlanCapabilityLoader(PlanCapability.APIKeys),
+                  createPlanFeatureLoader(PlanFeature.APIKeys),
                   createPermissionLoader(Resource.APIKey, Operation.Read),
                 ),
                 async lazy() {
                   const { APIKeysPage } = await import("@/routes/admin/api-keys/page");
                   return { Component: APIKeysPage };
+                },
+              },
+              {
+                path: "support-access",
+                loader: combineLoaders(
+                  createPermissionLoader(Resource.SupportAccess, Operation.Read),
+                  createPrefetchLoader(
+                    lazyPrefetch(() => import("@/routes/admin/support-access/page")),
+                  ),
+                ),
+                async lazy() {
+                  const { SupportAccessPage } = await import("@/routes/admin/support-access/page");
+                  return { Component: SupportAccessPage };
+                },
+              },
+              {
+                path: "plan",
+                loader: combineLoaders(
+                  managedInstanceLoader,
+                  createPermissionLoader(Resource.Organization, Operation.Update),
+                  createPrefetchLoader(lazyPrefetch(() => import("@/routes/admin/plan/page"))),
+                ),
+                async lazy() {
+                  const { PlanPage } = await import("@/routes/admin/plan/page");
+                  return { Component: PlanPage };
                 },
               },
               {

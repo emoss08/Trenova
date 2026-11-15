@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/drivermessage"
 	"github.com/emoss08/trenova/internal/modules/agent/app/playsend/playsendtest"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -33,7 +35,7 @@ func TestSenderReachesADriverWithALoginInDash(t *testing.T) {
 		workerID: {Name: "Laura Wright", OnDash: true, Phone: "+15555550100"},
 	}}
 	texts := &playsendtest.Texts{}
-	sender := playsendtest.Messages(drivers, &playsendtest.Plans{Texts: true}, texts)
+	sender := playsendtest.Messages(drivers, plantest.AllFeatures(), texts)
 	sent := message(workerID)
 
 	reach, err := sender.Reach(t.Context(), sent)
@@ -61,7 +63,7 @@ func TestSenderTextsADriverWithNoLoginWhenThePlanIncludesTexts(t *testing.T) {
 		workerID: {Name: "Theresa Aguilar", Phone: "+15555550123"},
 	}}
 	texts := &playsendtest.Texts{}
-	sender := playsendtest.Messages(drivers, &playsendtest.Plans{Texts: true}, texts)
+	sender := playsendtest.Messages(drivers, plantest.AllFeatures(), texts)
 
 	reach, err := sender.Reach(t.Context(), message(workerID))
 	require.NoError(t, err)
@@ -91,7 +93,7 @@ func TestSenderReachesNobodyWithoutALoginOrATextableNumber(t *testing.T) {
 	}}
 	texts := &playsendtest.Texts{}
 
-	noTexts := playsendtest.Messages(drivers, &playsendtest.Plans{}, texts)
+	noTexts := playsendtest.Messages(drivers, plantest.Without(platformcatalog.FeatureAdministration), texts)
 	reach, err := noTexts.Reach(t.Context(), message(withNumber))
 	require.NoError(t, err)
 	assert.Equal(t, drivermessage.ChannelNone, reach.Channel)
@@ -99,7 +101,7 @@ func TestSenderReachesNobodyWithoutALoginOrATextableNumber(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, drivermessage.ChannelNone, channel)
 
-	withTexts := playsendtest.Messages(drivers, &playsendtest.Plans{Texts: true}, texts)
+	withTexts := playsendtest.Messages(drivers, plantest.AllFeatures(), texts)
 	channel, err = withTexts.Send(t.Context(), message(bare))
 	require.NoError(t, err)
 	assert.Equal(t, drivermessage.ChannelNone, channel)

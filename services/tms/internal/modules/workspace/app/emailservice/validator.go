@@ -38,6 +38,11 @@ func (v *Validator) ValidateSend(
 		multiErr.Add("", errortypes.ErrRequired, "Email request is required")
 		return multiErr.Err()
 	}
+	if req.Type == "" {
+		multiErr.Add("type", errortypes.ErrRequired, "Email type is required")
+	} else if !req.Type.IsValid() {
+		multiErr.Add("type", errortypes.ErrInvalid, "Email type is invalid")
+	}
 	if req.Purpose == "" {
 		req.Purpose = email.PurposeGeneral
 	}

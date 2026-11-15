@@ -12,6 +12,7 @@ import {
   nullableIntegerSchema,
   nullableStringSchema,
   optionalStringSchema,
+  planWithheldSchema,
   tenantInfoSchema,
 } from "./helpers";
 import { locationSchema } from "./location";
@@ -709,15 +710,15 @@ export type RatingReviewApproval = z.infer<typeof ratingReviewApprovalSchema>;
  * that priced it.
  */
 export const ratingDetailSchema = z.object({
-  formulaTemplateId: z.string(),
-  formulaTemplateName: z.string(),
+  formulaTemplateId: planWithheldSchema(z.string(), ""),
+  formulaTemplateName: planWithheldSchema(z.string(), ""),
   ratedAt: z.number(),
   versionNumber: z.number().nullish(),
   bill: storedTariffBillSchema.nullish(),
   /** Why the tariff refused to rate, in its author's words; the shipment then has no bill. */
   refusal: z.string().nullish(),
   /** Every `best` and `worst` the rating evaluated: which option won and what each came to. */
-  choices: storedTariffChoicesSchema.optional(),
+  choices: storedTariffChoicesSchema.nullish(),
   /** The input values the tariff ran with, resolved shipment over rule over agreement over default. */
   inputs: tariffFormInputValuesSchema.nullish(),
   /** Charges a contract, fuel program or detention policy would have added, left to the tariff. */
@@ -793,7 +794,7 @@ const shipmentBaseSchema = z.object({
    * The tariff's input values the shipment carries: written by adopting a
    * contract (its resolved values) or by hand, and reapplied on every re-rate.
    */
-  tariffInputs: tariffFormInputValuesSchema.default({}),
+  tariffInputs: planWithheldSchema(tariffFormInputValuesSchema, {}),
   totalChargeAmount: decimalStringSchema.default(0),
   pieces: nullableIntegerSchema,
   weight: nullableIntegerSchema,

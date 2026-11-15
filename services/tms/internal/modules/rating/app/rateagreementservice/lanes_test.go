@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
@@ -74,9 +76,10 @@ func TestListLanes_BoundsThePageBeforeReading(t *testing.T) {
 				Once()
 
 			svc := New(Params{
-				Logger:    zap.NewNop(),
-				Repo:      repo,
-				Validator: testValidator(),
+				Logger:           zap.NewNop(),
+				Repo:             repo,
+				Validator:        testValidator(),
+				PricingTemplates: plantest.AllPricingTemplates(),
 			})
 
 			page, err := svc.ListLanes(
@@ -119,9 +122,10 @@ func TestListLanes_PassesNotFoundThrough(t *testing.T) {
 		Once()
 
 	svc := New(Params{
-		Logger:    zap.NewNop(),
-		Repo:      repo,
-		Validator: testValidator(),
+		Logger:           zap.NewNop(),
+		Repo:             repo,
+		Validator:        testValidator(),
+		PricingTemplates: plantest.AllPricingTemplates(),
 	})
 
 	page, err := svc.ListLanes(t.Context(), &rateagreementports.ListRateAgreementLanesRequest{

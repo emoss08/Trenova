@@ -19,13 +19,18 @@ WORKDIR /build/services/tms
 # into the image. An empty GOCACHEPROG keeps it off whatever the base sets.
 ENV CGO_ENABLED=0 GOCACHEPROG=
 
+# GO_BUILD_JOBS is how many packages to compile at once. Unset, Go uses every
+# core; a laptop build sets it low (the control plane's task local:images) so
+# the machine stays usable.
 FROM source AS build-tms
-RUN go build -tags nomsgpack -ldflags="-s -w" -o /build/trenova ./cmd/cli
+ARG GO_BUILD_JOBS=
+RUN go build ${GO_BUILD_JOBS:+-p ${GO_BUILD_JOBS}} -tags nomsgpack -ldflags="-s -w" -o /build/trenova ./cmd/cli
 
 # trenova-db links the migrations; the server binary above links only the
 # schema version it requires (schema/version_gen.go).
 FROM source AS build-db
-RUN go build -tags nomsgpack -ldflags="-s -w" -o /build/trenova-db ./cmd/db
+ARG GO_BUILD_JOBS=
+RUN go build ${GO_BUILD_JOBS:+-p ${GO_BUILD_JOBS}} -tags nomsgpack -ldflags="-s -w" -o /build/trenova-db ./cmd/db
 
 FROM alpine:3.21@sha256:ee16d92f96db08d9d2d07da48555a27f3a69d8f0759021dbc601195ed0d2b5bd AS runtime
 

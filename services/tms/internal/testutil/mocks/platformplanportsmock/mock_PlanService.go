@@ -19,10 +19,19 @@ func NewMockPlanService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockPlanService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockPlanService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -40,6 +49,50 @@ func (_m *MockPlanService) EXPECT() *MockPlanService_Expecter {
 	return &MockPlanService_Expecter{mock: &_m.Mock}
 }
 
+// EnforcesPlans provides a mock function for the type MockPlanService
+func (_mock *MockPlanService) EnforcesPlans() bool {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnforcesPlans")
+	}
+
+	var r0 bool
+	if returnFunc, ok := ret.Get(0).(func() bool); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	return r0
+}
+
+// MockPlanService_EnforcesPlans_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnforcesPlans'
+type MockPlanService_EnforcesPlans_Call struct {
+	*mock.Call
+}
+
+// EnforcesPlans is a helper method to define mock.On call
+func (_e *MockPlanService_Expecter) EnforcesPlans() *MockPlanService_EnforcesPlans_Call {
+	return &MockPlanService_EnforcesPlans_Call{Call: _e.mock.On("EnforcesPlans")}
+}
+
+func (_c *MockPlanService_EnforcesPlans_Call) Run(run func()) *MockPlanService_EnforcesPlans_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockPlanService_EnforcesPlans_Call) Return(b bool) *MockPlanService_EnforcesPlans_Call {
+	_c.Call.Return(b)
+	return _c
+}
+
+func (_c *MockPlanService_EnforcesPlans_Call) RunAndReturn(run func() bool) *MockPlanService_EnforcesPlans_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Invalidate provides a mock function for the type MockPlanService
 func (_mock *MockPlanService) Invalidate(orgID pulid.ID) {
 	_mock.Called(orgID)
@@ -53,7 +106,7 @@ type MockPlanService_Invalidate_Call struct {
 
 // Invalidate is a helper method to define mock.On call
 //   - orgID pulid.ID
-func (_e *MockPlanService_Expecter) Invalidate(orgID interface{}) *MockPlanService_Invalidate_Call {
+func (_e *MockPlanService_Expecter) Invalidate(orgID any) *MockPlanService_Invalidate_Call {
 	return &MockPlanService_Invalidate_Call{Call: _e.mock.On("Invalidate", orgID)}
 }
 
@@ -77,113 +130,6 @@ func (_c *MockPlanService_Invalidate_Call) Return() *MockPlanService_Invalidate_
 
 func (_c *MockPlanService_Invalidate_Call) RunAndReturn(run func(orgID pulid.ID)) *MockPlanService_Invalidate_Call {
 	_c.Run(run)
-	return _c
-}
-
-// EnforcesPlans provides a mock function for the type MockPlanService
-func (_mock *MockPlanService) EnforcesPlans() bool {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for EnforcesPlans")
-	}
-
-	var r0 bool
-	if returnFunc, ok := ret.Get(0).(func() bool); ok {
-		r0 = returnFunc()
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-	return r0
-}
-
-// MockPlanService_IsCloud_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnforcesPlans'
-type MockPlanService_IsCloud_Call struct {
-	*mock.Call
-}
-
-// EnforcesPlans is a helper method to define mock.On call
-func (_e *MockPlanService_Expecter) EnforcesPlans() *MockPlanService_IsCloud_Call {
-	return &MockPlanService_IsCloud_Call{Call: _e.mock.On("EnforcesPlans")}
-}
-
-func (_c *MockPlanService_IsCloud_Call) Run(run func()) *MockPlanService_IsCloud_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockPlanService_IsCloud_Call) Return(b bool) *MockPlanService_IsCloud_Call {
-	_c.Call.Return(b)
-	return _c
-}
-
-func (_c *MockPlanService_IsCloud_Call) RunAndReturn(run func() bool) *MockPlanService_IsCloud_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RequireCapability provides a mock function for the type MockPlanService
-func (_mock *MockPlanService) RequireCapability(ctx context.Context, tenantInfo pagination.TenantInfo, capability platformplan.Capability) error {
-	ret := _mock.Called(ctx, tenantInfo, capability)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RequireCapability")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, platformplan.Capability) error); ok {
-		r0 = returnFunc(ctx, tenantInfo, capability)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockPlanService_RequireCapability_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RequireCapability'
-type MockPlanService_RequireCapability_Call struct {
-	*mock.Call
-}
-
-// RequireCapability is a helper method to define mock.On call
-//   - ctx context.Context
-//   - tenantInfo pagination.TenantInfo
-//   - capability platformplan.Capability
-func (_e *MockPlanService_Expecter) RequireCapability(ctx interface{}, tenantInfo interface{}, capability interface{}) *MockPlanService_RequireCapability_Call {
-	return &MockPlanService_RequireCapability_Call{Call: _e.mock.On("RequireCapability", ctx, tenantInfo, capability)}
-}
-
-func (_c *MockPlanService_RequireCapability_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, capability platformplan.Capability)) *MockPlanService_RequireCapability_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 pagination.TenantInfo
-		if args[1] != nil {
-			arg1 = args[1].(pagination.TenantInfo)
-		}
-		var arg2 platformplan.Capability
-		if args[2] != nil {
-			arg2 = args[2].(platformplan.Capability)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockPlanService_RequireCapability_Call) Return(err error) *MockPlanService_RequireCapability_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockPlanService_RequireCapability_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, capability platformplan.Capability) error) *MockPlanService_RequireCapability_Call {
-	_c.Call.Return(run)
 	return _c
 }
 
@@ -212,7 +158,7 @@ type MockPlanService_RequireWritable_Call struct {
 // RequireWritable is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenantInfo pagination.TenantInfo
-func (_e *MockPlanService_Expecter) RequireWritable(ctx interface{}, tenantInfo interface{}) *MockPlanService_RequireWritable_Call {
+func (_e *MockPlanService_Expecter) RequireWritable(ctx any, tenantInfo any) *MockPlanService_RequireWritable_Call {
 	return &MockPlanService_RequireWritable_Call{Call: _e.mock.On("RequireWritable", ctx, tenantInfo)}
 }
 
@@ -281,7 +227,7 @@ type MockPlanService_Resolve_Call struct {
 //   - ctx context.Context
 //   - orgID pulid.ID
 //   - buID pulid.ID
-func (_e *MockPlanService_Expecter) Resolve(ctx interface{}, orgID interface{}, buID interface{}) *MockPlanService_Resolve_Call {
+func (_e *MockPlanService_Expecter) Resolve(ctx any, orgID any, buID any) *MockPlanService_Resolve_Call {
 	return &MockPlanService_Resolve_Call{Call: _e.mock.On("Resolve", ctx, orgID, buID)}
 }
 

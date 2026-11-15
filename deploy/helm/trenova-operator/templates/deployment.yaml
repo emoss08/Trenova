@@ -64,6 +64,14 @@ spec:
               value: {{ .Values.usageInterval | quote }}
             - name: TRENOVA_OPERATOR_LOG_LEVEL
               value: {{ .Values.logLevel | quote }}
+            - name: TRENOVA_OPERATOR_STORAGE_PRIVATE_ENDPOINT
+              value: {{ .Values.storage.privateEndpoint | quote }}
+            - name: TRENOVA_OPERATOR_NODE_VCPU
+              value: {{ .Values.node.vcpu | int64 | quote }}
+            - name: TRENOVA_OPERATOR_NODE_MEMORY_GIB
+              value: {{ .Values.node.memoryGiB | int64 | quote }}
+            - name: TRENOVA_OPERATOR_NODE_DISK_GIB
+              value: {{ .Values.node.diskGiB | int64 | quote }}
             # Helm keeps its registry login and cache under these.
             - name: HOME
               value: /tmp

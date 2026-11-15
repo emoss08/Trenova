@@ -7,10 +7,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -70,6 +74,17 @@ func newService(
 	fits *fakeFitStarter,
 ) (*Service, *fakeLearning) {
 	t.Helper()
+
+	return newServiceOn(t, stored, fits, plantest.AllFeatures())
+}
+
+func newServiceOn(
+	t *testing.T,
+	stored *dispatchcontrol.DispatchControl,
+	fits *fakeFitStarter,
+	gate platformcatalogports.FeatureGate,
+) (*Service, *fakeLearning) {
+	t.Helper()
 	repo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	repo.EXPECT().
 		GetByOrgID(mock.Anything, dispatchcontrolports.GetDispatchControlRequest{
@@ -92,11 +107,12 @@ func newService(
 	return New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
-		Validator:    NewValidator(ValidatorParams{}),
+		Validator:    NewValidator(),
 		AuditService: audit,
 		Fields:       allFields{},
 		Learning:     learning,
 		Forecasts:    fits,
+		Features:     gate,
 	}), learning
 }
 
@@ -148,4 +164,110 @@ func TestUpdate_SavesTheSettingWhenTheFitCannotStartNow(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, updated.AnticipateFreight)
 	assert.Len(t, fits.started, 1)
+}
+
+func TestUpdate_WithoutDispatchIntelligenceAnticipationCannotBeTurnedOn(t *testing.T) {
+	t.Parallel()
+
+	repo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
+	repo.EXPECT().
+		GetByOrgID(mock.Anything, mock.Anything).
+		Return(control(false), nil).
+		Once()
+	fits := &fakeFitStarter{}
+	svc := New(Params{
+		Logger:       zap.NewNop(),
+		Repo:         repo,
+		Validator:    NewValidator(),
+		AuditService: auditportsmock.NewMockAuditService(t),
+		Fields:       allFields{},
+		Learning:     &fakeLearning{},
+		Forecasts:    fits,
+		Features:     plantest.Without(platformcatalog.FeatureDispatchIntelligence),
+	})
+
+	updated, err := svc.Update(t.Context(), control(true), actor)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsPlanRestrictionError(err))
+	assert.Nil(t, updated)
+	assert.Empty(t, fits.started, "no fit starts off the plan")
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
+func TestUpdate_WithoutDispatchIntelligenceAnticipationCanBeLeftOrTurnedOff(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		before bool
+		after  bool
+	}{
+		{name: "left on", before: true, after: true},
+		{name: "turned off", before: true},
+		{name: "left off"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			fits := &fakeFitStarter{}
+			svc, _ := newServiceOn(
+				t,
+				control(tt.before),
+				fits,
+				plantest.Without(platformcatalog.FeatureDispatchIntelligence),
+			)
+
+			updated, err := svc.Update(t.Context(), control(tt.after), actor)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.after, updated.AnticipateFreight)
+			assert.Empty(t, fits.started)
+		})
+	}
+}
+
+func TestUpdate_TurningOnThePlannerOrStyleLearningNeedsDispatchIntelligence(t *testing.T) {
+	t.Parallel()
+
+	for name, turnOn := range map[string]func(*dispatchcontrol.DispatchControl){
+		"auto assignment":         func(c *dispatchcontrol.DispatchControl) { c.EnableAutoAssignment = true },
+		"proposed coverage":       func(c *dispatchcontrol.DispatchControl) { c.AutoProposeCoverage = true },
+		"learning dispatch style": func(c *dispatchcontrol.DispatchControl) { c.LearnDispatchStyle = true },
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			stored := control(false)
+			stored.EnableAutoAssignment = false
+			stored.AutoProposeCoverage = false
+			stored.LearnDispatchStyle = false
+			next := control(false)
+			next.EnableAutoAssignment = false
+			next.AutoProposeCoverage = false
+			next.LearnDispatchStyle = false
+			turnOn(next)
+
+			repo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
+			repo.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(stored, nil).Once()
+			learning := &fakeLearning{}
+			svc := New(Params{
+				Logger:       zap.NewNop(),
+				Repo:         repo,
+				Validator:    NewValidator(),
+				AuditService: auditportsmock.NewMockAuditService(t),
+				Fields:       allFields{},
+				Learning:     learning,
+				Forecasts:    &fakeFitStarter{},
+				Features:     plantest.Without(platformcatalog.FeatureDispatchIntelligence),
+			})
+
+			updated, err := svc.Update(t.Context(), next, actor)
+
+			require.Nil(t, updated)
+			assert.True(t, errortypes.IsPlanRestrictionError(err))
+			repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+		})
+	}
 }

@@ -17,6 +17,7 @@ type EmailSender struct {
 	ReplyTo    string
 	Suppressed []string
 	Refused    bool
+	ViaTrenova bool
 }
 
 func (s *EmailSender) Address() string {

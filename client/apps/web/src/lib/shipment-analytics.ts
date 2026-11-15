@@ -26,6 +26,11 @@ export type ShipmentAnalyticsData = {
     unprofitableCount: number | null;
     shipmentCount: number;
     totalMiles: number;
+    /**
+     * Set when the plan leaves out the costing setup the figures are computed from. Nothing was
+     * computed: the figures are locked, not zero.
+     */
+    planDenial?: { feature: string; featureName: string; addOn: string; addOnName: string } | null;
   };
   activeShipments: {
     count: number;
@@ -92,10 +97,14 @@ export type ShipmentAnalyticsData = {
   hosNearLimit: {
     items: { driverId: string; name: string; hoursLeftLabel: string; tone: Tone }[];
   };
+  /**
+   * Null when the organization's plan leaves detention out, or for a reader who cannot read
+   * detention, whose list comes back withheld.
+   */
   detentionWatchlist: {
     /** `customer` is null when the reader's ceiling withholds the customer's name. */
     items: { shipmentId: string; customer: string | null; dwellLabel: string; tone: Tone }[];
-  };
+  } | null;
   /**
    * Null for a reader who cannot read customers: the figures about each customer need customer
    * read, and the order of the names alone would rank them.
@@ -271,6 +280,22 @@ export const defaultAnalyticsData: ShipmentAnalyticsData = {
   },
 };
 
+/**
+ * The detention watchlist as the server answered it: null when the plan left it out, or when its
+ * list came back withheld from a reader who cannot read detention; never the sample rows then.
+ */
+function detentionWatchlistOf(
+  value: DeepPartial<ShipmentAnalyticsData>["detentionWatchlist"],
+): ShipmentAnalyticsData["detentionWatchlist"] {
+  if (value === null || (value as { items?: unknown } | undefined)?.items === null) {
+    return null;
+  }
+  return (
+    (value as ShipmentAnalyticsData["detentionWatchlist"] | undefined) ??
+    defaultAnalyticsData.detentionWatchlist
+  );
+}
+
 export function mergeShipmentAnalyticsWithDefaults(
   data: DeepPartial<ShipmentAnalyticsData>,
 ): ShipmentAnalyticsData {
@@ -299,9 +324,7 @@ export function mergeShipmentAnalyticsWithDefaults(
     hosNearLimit:
       (data.hosNearLimit as ShipmentAnalyticsData["hosNearLimit"] | undefined) ??
       defaultAnalyticsData.hosNearLimit,
-    detentionWatchlist:
-      (data.detentionWatchlist as ShipmentAnalyticsData["detentionWatchlist"] | undefined) ??
-      defaultAnalyticsData.detentionWatchlist,
+    detentionWatchlist: detentionWatchlistOf(data.detentionWatchlist),
     customerMix:
       data.customerMix === null
         ? null

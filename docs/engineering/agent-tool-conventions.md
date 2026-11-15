@@ -95,6 +95,18 @@ tool's name, and a rename migrates it (`agent_rename_tool`). The command palette
 search terms or parameter descriptions that reads as a tool name (a namespace, then a verb a
 tool in it uses) and is not one, so a rename cannot leave the old name behind.
 
+## A tool names its resource or its feature
+
+A tool is offered only when the organization's plan includes what it does, and the plan is
+read from the tool: its policy's `Resource`, whose feature the permission catalog records,
+and, when the work is an add-on's beyond that resource, the policy's `Feature`
+(`querytool.ReadSpec.Feature` for a read). The demand forecast reads under shipment-move
+access and names Dispatch Intelligence; the shipment draft and the import page's edits read
+what Document Intelligence extracted and name it. Such a tool is withheld from the turn and
+refused at dispatch when its feature is off, naming the add-on.
+`TestEveryToolNamesItsResourceOrItsFeature` in `agenttoolcatalog` fails a tool whose resource
+belongs to no feature and that names none.
+
 ## Parameters
 
 | Kind | Convention |

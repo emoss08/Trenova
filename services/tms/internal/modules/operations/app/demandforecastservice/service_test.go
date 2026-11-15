@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandfit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
@@ -18,6 +19,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgholidayports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -216,6 +219,7 @@ func newServiceWithFits(
 		Holidays:      &fakeHolidays{},
 		Controls:      controls,
 		Organizations: organizations,
+		Features:      plantest.AllFeatures(),
 	})
 	svc.clock = func() int64 { return testNow }
 
@@ -485,6 +489,24 @@ func TestStanding_StillAnswersWhenTheRefitCannotStart(t *testing.T) {
 	assert.Same(t, quality, standing.Quality)
 	assert.False(t, standing.Refitting)
 	assert.Len(t, fits.started, 1)
+}
+
+func TestStanding_IsRefusedWithoutDispatchIntelligence(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepository{
+		quality: &demandforecast.Quality{Status: demandforecast.StatusInsufficientHistory},
+	}
+	fits := &fakeFits{}
+	svc := newServiceWithFits(repo, fits, nil, nil)
+	svc.features = plantest.Without(platformcatalog.FeatureDispatchIntelligence)
+
+	standing, err := svc.Standing(t.Context(), tenantInfo)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsPlanRestrictionError(err))
+	assert.Nil(t, standing)
+	assert.Empty(t, fits.started, "no fit starts off the plan")
 }
 
 func TestStanding_ReturnsTheRepositoryErrorWithoutRefitting(t *testing.T) {

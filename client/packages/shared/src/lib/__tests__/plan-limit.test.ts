@@ -6,8 +6,11 @@ import {
   planLimitFromError,
   planLimitFromGraphQLErrors,
   planLimitFromProblem,
+  planRestrictedResponse,
+  planRestrictionOf,
   reportPlanLimit,
   setPlanLimitHandler,
+  type PlanLimitHandler,
   type PlanLimitNotice,
 } from "@trenova/shared/lib/plan-limit";
 
@@ -70,7 +73,8 @@ describe("planLimitFromProblem", () => {
   it("reads a plan restriction with its reason", () => {
     expect(planLimitFromProblem(403, readOnlyProblem)).toMatchObject({
       kind: "restricted",
-      capability: "",
+      feature: "",
+      addOn: "",
       reason: "subscription_read_only",
       plan: "free_demo",
     });
@@ -200,7 +204,12 @@ describe("transports report plan-limit refusals", () => {
                 extensions: {
                   code: "PLAN_RESTRICTED",
                   type: "plan-restricted",
-                  params: { capability: "integrations", reason: "", plan: "free_demo" },
+                  params: {
+                    feature: "platform.administration",
+                    addOn: "",
+                    reason: "",
+                    plan: "free_demo",
+                  },
                 },
               },
             ],
@@ -218,7 +227,7 @@ describe("transports report plan-limit refusals", () => {
     expect(handler).toHaveBeenCalledTimes(1);
     expect(handler.mock.calls[0][0]).toMatchObject({
       kind: "restricted",
-      capability: "integrations",
+      feature: "platform.administration",
     });
     expect(isExplainedError(error)).toBe(true);
   });
@@ -234,7 +243,10 @@ describe("transports report plan-limit refusals", () => {
               {
                 message: "restricted",
                 path: ["organization", "integrations"],
-                extensions: { code: "PLAN_RESTRICTED", params: { capability: "integrations" } },
+                extensions: {
+                  code: "PLAN_RESTRICTED",
+                  params: { feature: "platform.administration" },
+                },
               },
             ],
           },
@@ -249,12 +261,106 @@ describe("transports report plan-limit refusals", () => {
   });
 });
 
+describe("both transports tell the handler whether a read or a write was refused", () => {
+  const addOnRefusal = {
+    type: `${PROBLEM_BASE}plan-restricted`,
+    title: "Plan Restricted",
+    status: 403,
+    code: "PLAN_RESTRICTED",
+    params: { feature: "tms.factoring", addOn: "Accounting & Cash" },
+  };
+  let handler: ReturnType<typeof vi.fn<PlanLimitHandler>>;
+
+  beforeEach(() => {
+    clearCsrfToken();
+    setCsrfToken("csrf");
+    handler = vi.fn<PlanLimitHandler>(() => false);
+    setPlanLimitHandler(handler);
+  });
+
+  afterEach(() => {
+    setPlanLimitHandler(null);
+    clearCsrfToken();
+    vi.unstubAllGlobals();
+  });
+
+  it("a REST GET is a read and a POST a write", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse(addOnRefusal, 403)),
+    );
+
+    await api.get("/factoring-companies/").catch(() => undefined);
+    await api.post("/factoring-companies/", {}).catch(() => undefined);
+
+    expect(handler.mock.calls.map(([notice, request]) => [notice.kind, request])).toEqual([
+      ["restricted", "read"],
+      ["restricted", "write"],
+    ]);
+  });
+
+  it("a GraphQL query is a read and a mutation a write", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse(
+          {
+            data: null,
+            errors: [
+              {
+                message: "refused",
+                extensions: { code: "PLAN_RESTRICTED", params: addOnRefusal.params },
+              },
+            ],
+          },
+          200,
+        ),
+      ),
+    );
+
+    await requestGraphQL({ document: "query Q { factoringCompanies { id } }" }).catch(
+      () => undefined,
+    );
+    await requestGraphQL({ document: "mutation M { assignFactoring { id } }" }).catch(
+      () => undefined,
+    );
+
+    expect(handler.mock.calls.map(([, request]) => request)).toEqual(["read", "write"]);
+  });
+
+  it("reads the add-on refusal off a thrown error, and nothing off other refusals", () => {
+    expect(planRestrictionOf(new ApiRequestError(403, addOnRefusal))).toEqual({
+      feature: "tms.factoring",
+      addOn: "Accounting & Cash",
+    });
+    expect(planRestrictionOf(new ApiRequestError(403, readOnlyProblem))).toBeNull();
+    expect(planRestrictionOf(new ApiRequestError(402, quotaProblem))).toBeNull();
+  });
+});
+
+describe("planRestrictedResponse", () => {
+  it("is the body the API sends for the same refusal", async () => {
+    const response = planRestrictedResponse({
+      feature: "tms.factoring",
+      addOn: "Accounting & Cash",
+    });
+
+    expect(response.status).toBe(403);
+    const body = (await response.json()) as Record<string, unknown>;
+    expect(planLimitFromProblem(403, body)).toMatchObject({
+      kind: "restricted",
+      feature: "tms.factoring",
+      addOn: "Accounting & Cash",
+    });
+  });
+});
+
 describe("reportPlanLimit", () => {
   afterEach(() => setPlanLimitHandler(null));
 
   it("reports nothing and explains nothing without a handler", () => {
     const error = new ApiRequestError(402, quotaProblem);
-    expect(reportPlanLimit(error)).toBe(false);
+    expect(reportPlanLimit(error, "write")).toBe(false);
     expect(isExplainedError(error)).toBe(false);
   });
 
@@ -265,7 +371,7 @@ describe("reportPlanLimit", () => {
     });
     const error = new ApiRequestError(402, quotaProblem);
 
-    expect(reportPlanLimit(error)).toBe(false);
+    expect(reportPlanLimit(error, "write")).toBe(false);
     expect(isExplainedError(error)).toBe(false);
     consoleError.mockRestore();
   });

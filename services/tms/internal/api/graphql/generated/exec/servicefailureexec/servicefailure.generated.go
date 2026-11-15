@@ -241,33 +241,30 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "x12StatusCodeOverride",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*servicefailure.ServiceFailure)
 					return obj.X12StatusCodeOverride, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "x12ReasonCodeOverride",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*servicefailure.ServiceFailure)
 					return obj.X12ReasonCodeOverride, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "x12ExceptionCode",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*servicefailure.ServiceFailure)
 					return obj.X12ExceptionCode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "detectedAt",

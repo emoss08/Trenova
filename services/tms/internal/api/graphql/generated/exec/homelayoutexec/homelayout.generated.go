@@ -17,7 +17,9 @@ var Shard = &gqlexec.Shard{
 	Objects: []*gqlexec.Object{
 		{Name: "HomeLayout", Implementors: []string{"HomeLayout"}},
 		{Name: "HomeLayoutPreset", Implementors: []string{"HomeLayoutPreset"}},
+		{Name: "HomeLockedMetric", Implementors: []string{"HomeLockedMetric"}},
 		{Name: "HomeMetricOption", Implementors: []string{"HomeMetricOption"}},
+		{Name: "HomePlanLock", Implementors: []string{"HomePlanLock"}},
 		{Name: "HomeWidget", Implementors: []string{"HomeWidget"}},
 		{Name: "HomeWidgetCatalog", Implementors: []string{"HomeWidgetCatalog"}},
 		{Name: "HomeWidgetCategory", Implementors: []string{"HomeWidgetCategory"}},
@@ -247,6 +249,39 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
 			},
 		}},
+		{Object: "HomeLockedMetric", Fields: []*gqlexec.Field{
+			{
+				Name:     "metric",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomeLockedMetric)
+					return obj.Metric, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomeLockedMetric)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "lock",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "HomePlanLock",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomeLockedMetric)
+					return obj.Lock, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNHomePlanLock2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomePlanLock),
+			},
+		}},
 		{Object: "HomeMetricOption", Fields: []*gqlexec.Field{
 			{
 				Name:     "key",
@@ -265,6 +300,58 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.HomeMetricOption)
 					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "planLock",
+				HasChild:  true,
+				ChildType: "HomePlanLock",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomeMetricOption)
+					return obj.PlanLock, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOHomePlanLock2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomePlanLock),
+			},
+		}},
+		{Object: "HomePlanLock", Fields: []*gqlexec.Field{
+			{
+				Name:     "feature",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomePlanLock)
+					return obj.Feature, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "featureName",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomePlanLock)
+					return obj.FeatureName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "addOn",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomePlanLock)
+					return obj.AddOn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "addOnName",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomePlanLock)
+					return obj.AddOnName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -287,6 +374,16 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.HomeWidget)
 					return obj.Key, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomeWidget)
+					return obj.Label, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -329,6 +426,27 @@ var Shard = &gqlexec.Shard{
 					return obj.Config, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNHomeWidgetConfig2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetConfig),
+			},
+			{
+				Name:      "planLock",
+				HasChild:  true,
+				ChildType: "HomePlanLock",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomeWidget)
+					return obj.PlanLock, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOHomePlanLock2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomePlanLock),
+			},
+			{
+				Name:      "lockedMetrics",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "HomeLockedMetric",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomeWidget)
+					return obj.LockedMetrics, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNHomeLockedMetric2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLockedMetricᚄ),
 			},
 		}},
 		{Object: "HomeWidgetCatalog", Fields: []*gqlexec.Field{
@@ -639,6 +757,16 @@ var Shard = &gqlexec.Shard{
 					return obj.MaxH, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "planLock",
+				HasChild:  true,
+				ChildType: "HomePlanLock",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.HomeWidgetOption)
+					return obj.PlanLock, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOHomePlanLock2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomePlanLock),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -1403,6 +1531,22 @@ func marshalNHomeLayoutSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return v
 }
 
+func marshalNHomeLockedMetric2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLockedMetricᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.HomeLockedMetric) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.HomeLockedMetric]{
+		Elem:        marshalNHomeLockedMetric2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLockedMetric,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNHomeLockedMetric2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeLockedMetric(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.HomeLockedMetric) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "HomeLockedMetric", v)
+}
+
 func marshalNHomeMetricOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeMetricOptionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.HomeMetricOption) graphql.Marshaler {
 	return gqlexec.List[*gqlmodel.HomeMetricOption]{
 		Elem:        marshalNHomeMetricOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeMetricOption,
@@ -1417,6 +1561,14 @@ func marshalNHomeMetricOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "HomeMetricOption", v)
+}
+
+func marshalNHomePlanLock2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomePlanLock(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.HomePlanLock) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "HomePlanLock", v)
 }
 
 func marshalNHomeWidget2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomeWidgetᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.HomeWidget) graphql.Marshaler {
@@ -1531,6 +1683,13 @@ func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalOHomePlanLock2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHomePlanLock(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.HomePlanLock) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "HomePlanLock", v)
 }
 
 func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {

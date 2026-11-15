@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -167,10 +168,12 @@ func TestValidateMemoRequest(t *testing.T) {
 		t.Parallel()
 		req := memoRequest(tenantInfo, customerID, billingvocab.BillTypeCreditMemo)
 		req.Lines[1].Amount = decimal.RequireFromString("1000000000")
-		multiErr := validateMemoRequest(req)
-		require.NotNil(t, multiErr)
+		err := validateMemoRequest(req)
+		require.Error(t, err)
+		multiErr, ok := errors.AsType[*errortypes.MultiError](err)
+		require.True(t, ok)
 		require.Len(t, multiErr.Errors, 1)
-		assert.Equal(t, "lines[1].amount", multiErr.Errors[0].Field)
+		assert.Equal(t, "lines[1].amount", multiErr.Errors[0].Field())
 	})
 }
 
@@ -365,6 +368,7 @@ func newMemoFixture(t *testing.T, number string) *memoFixture {
 		SequenceGenerator:  testutil.TestSequenceGenerator{SingleValue: number},
 		AuditService:       &mocks.NoopAuditService{},
 		Realtime:           &mocks.NoopRealtimeService{},
+		Features:           plantest.AllFeatures(),
 	})
 
 	return f

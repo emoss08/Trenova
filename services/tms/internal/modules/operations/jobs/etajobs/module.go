@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/etajobs/etacontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
@@ -59,6 +60,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            SweepScheduleID,
+			Feature:       platformcatalog.FeatureCustomerTracking,
 			Description:   sweepDescription,
 			Spec:          schedule.Every(sweepInterval),
 			Workflow:      ShipmentEtaSweepWorkflow,

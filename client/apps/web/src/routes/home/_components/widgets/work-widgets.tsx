@@ -141,7 +141,13 @@ export function ExceptionsWidget({ widget }: WidgetProps) {
 export function DetentionWatchWidget({ widget, data }: WidgetProps) {
   const t = useT();
 
-  const all = data.shipmentAnalytics.detentionWatchlist.items;
+  const watchlist = data.shipmentAnalytics.detentionWatchlist;
+
+  // The server reads no watchlist when the plan leaves detention out or the reader cannot read
+  // detention, and leaves this widget off Home for both, so a list it did not read draws nothing.
+  if (!data.shipmentAnalyticsLoading && watchlist === null) return null;
+
+  const all = watchlist?.items ?? [];
   // A limit of 0 means "as many as fit", matching the queue lists.
   const items = all.slice(0, widget.config.limit || undefined);
 

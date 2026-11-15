@@ -1,4 +1,5 @@
 import type { DispatchBoardDriver, DispatchBoardMove } from "@/lib/graphql/dispatch-console";
+import { PlanFeature } from "@/lib/plan-feature";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import { watchtower } from "@/lib/queries/watchtower";
 import { useDispatchConsoleStore, type PreflightTarget } from "@/stores/dispatch-console-store";
@@ -7,6 +8,7 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { useNow } from "@trenova/shared/hooks/use-now";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -94,9 +96,12 @@ export function DispatchConsoleContent({ actions }: { actions: DispatchActions }
     refetch: () => void boardQuery.refetch(),
   };
 
+  // The exceptions are the Watchtower's, so a plan without it never asks for them.
+  const watchtowerOnPlan = usePlanFeature(PlanFeature.AIWatchtower).available;
   const exceptionsQuery = useQuery({
     ...watchtower.dispatchExceptions(),
     refetchInterval: EXCEPTIONS_REFETCH_MS,
+    enabled: watchtowerOnPlan,
   });
   const exceptionItems = exceptionsQuery.data?.items ?? [];
   const exceptionsMore = exceptionsQuery.data?.hasNextPage ?? false;

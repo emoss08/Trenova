@@ -66,7 +66,7 @@ func TestManagedUsageProviderStopsAtTheAllowance(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, res.Allowed)
 	var quota *errortypes.QuotaExceededError
-	require.ErrorAs(t, usageservice.LimitError(res), &quota)
+	require.ErrorAs(t, usageservice.LimitError(res, 101), &quota)
 
 	res, err = p.CheckLimit(t.Context(), &platformcatalogports.UsageLimitCheckRequest{
 		MeterKey: platformcatalog.MeterDocumentUploads,
@@ -86,4 +86,44 @@ func TestManagedUsageProviderReturnsAGateFailure(t *testing.T) {
 		Quantity: 1,
 	})
 	require.Error(t, err)
+}
+
+func storageGate(overage bool) *fakeGate {
+	return &fakeGate{state: &managedusage.State{
+		WindowStart: 1,
+		WindowEnd:   2,
+		Overage:     overage,
+		Meters: []managedusage.Meter{{
+			Meter:     platformcatalog.MeterDocumentStorageBytes,
+			Unit:      managedusage.UnitBytes,
+			Quantity:  1000,
+			Allowance: 1000,
+		}},
+	}}
+}
+
+func TestAnUploadAtTheStorageLimitIsRefusedWithTheStorageWordingWhenOverageIsOff(t *testing.T) {
+	t.Parallel()
+
+	err := usageservice.CheckDocumentBytesLimit(
+		t.Context(),
+		usageservice.NewManagedUsageProvider(storageGate(false)),
+		usageservice.DocumentBytesUsageParams{Bytes: 1},
+	)
+
+	var quota *errortypes.QuotaExceededError
+	require.ErrorAs(t, err, &quota)
+	assert.Equal(t, string(platformcatalog.MeterDocumentStorageBytes), quota.Meter)
+	assert.Contains(t, quota.Message, "Turn on overage from your Trenova account")
+	assert.Contains(t, quota.Message, "delete documents")
+}
+
+func TestAnUploadAtTheStorageLimitIsAllowedWhenOverageIsOn(t *testing.T) {
+	t.Parallel()
+
+	require.NoError(t, usageservice.CheckDocumentBytesLimit(
+		t.Context(),
+		usageservice.NewManagedUsageProvider(storageGate(true)),
+		usageservice.DocumentBytesUsageParams{Bytes: 1},
+	))
 }

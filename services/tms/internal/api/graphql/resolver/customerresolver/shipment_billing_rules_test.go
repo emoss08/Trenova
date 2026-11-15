@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -42,8 +43,9 @@ func TestShipmentCustomerBillingRules_NeedsShipmentReadNotCustomerRead(t *testin
 	resolver := &QueryResolver{&Deps{
 		Core: &resolvercore.Core{PermissionEngine: engine},
 		CustomerService: customerservice.New(customerservice.Params{
-			Logger: zap.NewNop(),
-			Repo:   repo,
+			Logger:     zap.NewNop(),
+			Repo:       repo,
+			PlanFields: plantest.Keeper(nil),
 		}),
 	}}
 	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{

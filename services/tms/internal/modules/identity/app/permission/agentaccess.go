@@ -66,7 +66,18 @@ func (e *engine) AgentsUsable(
 			return nil, err
 		}
 
-		return &permissionports.UsableAgents{Assistant: result.Allowed}, nil
+		return &permissionports.UsableAgents{
+			Assistant:  result.Allowed,
+			PlanDenial: result.PlanDenial,
+		}, nil
+	}
+
+	denial, offPlan, err := e.newPlanGate().Resource(ctx, req.Resource)
+	if err != nil {
+		return nil, err
+	}
+	if offPlan {
+		return &permissionports.UsableAgents{PlanDenial: &denial}, nil
 	}
 
 	load, err := e.getOrComputePermissions(ctx, actor.UserID, actor.OrganizationID)
@@ -112,6 +123,9 @@ func (e *engine) MayUseAgent(
 	if err != nil {
 		return false, err
 	}
+	if usable.PlanDenial != nil {
+		return false, usable.PlanDenial.Restriction()
+	}
 
 	return usable.Allows(definition), nil
 }
@@ -122,6 +136,11 @@ func (e *engine) RoleCoverage(
 ) ([]permissionports.RoleCoverage, error) {
 	if req == nil || len(req.RoleIDs) == 0 {
 		return []permissionports.RoleCoverage{}, nil
+	}
+
+	offPlan, err := e.newPlanGate().offPlan(ctx, coverageResources(req.Required)...)
+	if err != nil {
+		return nil, err
 	}
 
 	closure, err := e.roleRepo.GetRolesWithInheritance(ctx, req.RoleIDs)
@@ -142,16 +161,27 @@ func (e *engine) RoleCoverage(
 		if !ok {
 			continue
 		}
-		coverage = append(coverage, e.coverageOf(role, byID, req.Required))
+		coverage = append(coverage, e.coverageOf(role, byID, req.Required, offPlan))
 	}
 
 	return coverage, nil
+}
+
+func coverageResources(required []permissionports.RequiredGrant) []permission.Resource {
+	resources := make([]permission.Resource, 0, len(required)+1)
+	resources = append(resources, permission.ResourceAssistant)
+	for _, grant := range required {
+		resources = append(resources, grant.Resource)
+	}
+
+	return resources
 }
 
 func (e *engine) coverageOf(
 	role *rbac.Role,
 	byID map[pulid.ID]*rbac.Role,
 	required []permissionports.RequiredGrant,
+	offPlan map[permission.Resource]bool,
 ) permissionports.RoleCoverage {
 	perms := e.inheritedPermissions(role, byID)
 	result := permissionports.RoleCoverage{
@@ -159,20 +189,12 @@ func (e *engine) coverageOf(
 		Coverage:         agentreach.CoverageNone,
 		MissingResources: []permission.Resource{},
 	}
-	if _, ok := e.resolveResourcePermission(
-		perms,
-		permission.ResourceAssistant.String(),
-		permission.OpCreate,
-	); !ok {
+	if !e.grantedOnPlan(perms, offPlan, permission.ResourceAssistant, permission.OpCreate) {
 		return result
 	}
 
 	for _, grant := range required {
-		if _, ok := e.resolveResourcePermission(
-			perms,
-			grant.Resource.String(),
-			grant.Operation,
-		); ok {
+		if e.grantedOnPlan(perms, offPlan, grant.Resource, grant.Operation) {
 			continue
 		}
 		if !slices.Contains(result.MissingResources, grant.Resource) {
@@ -186,6 +208,20 @@ func (e *engine) coverageOf(
 	}
 
 	return result
+}
+
+func (e *engine) grantedOnPlan(
+	perms *permissionports.CachedPermissions,
+	offPlan map[permission.Resource]bool,
+	resource permission.Resource,
+	operation permission.Operation,
+) bool {
+	if offPlan[resource] {
+		return false
+	}
+	_, ok := e.resolveResourcePermission(perms, resource.String(), operation)
+
+	return ok
 }
 
 func (e *engine) inheritedPermissions(

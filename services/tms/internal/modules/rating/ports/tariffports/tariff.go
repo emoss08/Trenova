@@ -24,6 +24,7 @@ type Template struct {
 	Imports       []tarifftypes.Import
 	Tables        []tarifftypes.TablePin
 	Libraries     []rules.TariffLibrary
+	Standard      bool
 }
 
 type Resolver interface {

@@ -227,7 +227,7 @@ func (t *ForkReportTool) request(
 }
 
 func (t *ForkReportTool) Preview(
-	_ context.Context,
+	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
 	if err := toolguard.GuardPreview(t, params); err != nil {
@@ -236,6 +236,9 @@ func (t *ForkReportTool) Preview(
 
 	request, entry, err := t.request(params)
 	if err != nil {
+		return nil, err
+	}
+	if err = t.reports.RequireCannedOnPlan(ctx, request.TenantInfo, entry); err != nil {
 		return nil, err
 	}
 

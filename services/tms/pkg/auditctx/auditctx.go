@@ -21,6 +21,16 @@ type Source struct {
 	// AgentID is the agent whose tool call made the change, so what people
 	// later change of an agent's work can be traced to the agent that did it.
 	AgentID string
+	// Support is set for everything a Trenova support session does.
+	Support *Support
+}
+
+// Support names the Trenova support grant and staff member behind a change.
+type Support struct {
+	GrantID         string
+	PrincipalUserID string
+	StaffEmail      string
+	StaffName       string
 }
 
 type sourceKey struct{}
@@ -52,5 +62,17 @@ func WithAgent(ctx context.Context, agentID string) context.Context {
 	}
 	source := From(ctx)
 	source.AgentID = agentID
+	return context.WithValue(ctx, sourceKey{}, source)
+}
+
+// WithSupport marks every audit entry written under ctx as Trenova support, on the support
+// channel.
+func WithSupport(ctx context.Context, support Support) context.Context {
+	if support.GrantID == "" {
+		return ctx
+	}
+	source := From(ctx)
+	source.Support = &support
+	source.Channel = ChannelSupport
 	return context.WithValue(ctx, sourceKey{}, source)
 }

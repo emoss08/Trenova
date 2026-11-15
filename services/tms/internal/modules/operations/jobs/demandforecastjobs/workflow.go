@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/demandforecastjobs/demandforecastcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"go.temporal.io/sdk/activity"
@@ -14,7 +16,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const tenantPageSize = 100
+const (
+	tenantPageSize     = 100
+	FitStatusNotOnPlan = "not_on_plan"
+)
 
 var fitActivityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 10 * time.Minute,
@@ -51,12 +56,14 @@ type ActivitiesParams struct {
 
 	Forecasts demandforecastports.Service
 	Tenants   demandforecastports.TenantLister
+	Features  platformcatalogports.FeatureGate
 	Logger    *zap.Logger
 }
 
 type Activities struct {
 	forecasts demandforecastports.Service
 	tenants   demandforecastports.TenantLister
+	features  platformcatalogports.FeatureGate
 	l         *zap.Logger
 }
 
@@ -64,6 +71,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		forecasts: p.Forecasts,
 		tenants:   p.Tenants,
+		features:  p.Features,
 		l:         p.Logger.Named("temporal.demand-forecast"),
 	}
 }
@@ -164,6 +172,14 @@ func (a *Activities) FitDemandForecastActivity(
 	ctx context.Context,
 	payload *TenantPayload,
 ) (*FitResult, error) {
+	onPlan, err := a.features.Enabled(ctx, platformcatalog.FeatureDispatchIntelligence)
+	if err != nil {
+		return nil, err
+	}
+	if !onPlan {
+		return &FitResult{Status: FitStatusNotOnPlan}, nil
+	}
+
 	if activity.IsActivity(ctx) {
 		activity.RecordHeartbeat(ctx, "fitting")
 	}

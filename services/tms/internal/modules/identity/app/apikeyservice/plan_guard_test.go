@@ -4,18 +4,18 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreateAPIKeyRefusesWhenThePlanRestrictsAPIKeys(t *testing.T) {
+func TestCreateAPIKeyRefusesWhenAPIKeysAreOff(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{plans: plantest.Restricting(t, platformplan.CapabilityAPIKeys)}
+	svc := &Service{features: plantest.Without(platformcatalog.FeatureAPIKeys)}
 
 	resp, err := svc.CreateAPIKey(t.Context(), plantest.Tenant(), &apikeyports.CreateAPIKeyRequest{
 		Name: "integration",
@@ -29,10 +29,10 @@ func TestCreateAPIKeyRefusesWhenThePlanRestrictsAPIKeys(t *testing.T) {
 	require.True(t, errortypes.IsPlanRestrictionError(err))
 }
 
-func TestRotateAPIKeyRefusesWhenThePlanRestrictsAPIKeys(t *testing.T) {
+func TestRotateAPIKeyRefusesWhenAPIKeysAreOff(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{plans: plantest.Restricting(t, platformplan.CapabilityAPIKeys)}
+	svc := &Service{features: plantest.Without(platformcatalog.FeatureAPIKeys)}
 
 	resp, err := svc.RotateAPIKey(t.Context(), plantest.Tenant(), pulid.MustNew("ak_"))
 

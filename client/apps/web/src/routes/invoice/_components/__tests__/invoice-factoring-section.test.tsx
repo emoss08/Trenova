@@ -5,6 +5,8 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { BASE_ONLY_UNAVAILABLE, seedPlan } from "@/test/plan";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { InvoiceFactoringSection } from "../invoice-factoring-section";
 
 const mocks = vi.hoisted(() => ({
@@ -123,6 +125,7 @@ function factoring(overrides: Partial<InvoiceFactoring> = {}): InvoiceFactoring 
     factoringAgreementId: "facagr_1",
     factoringCompany: { id: "fac_1", code: "RTS", name: "RTS Financial" },
     factoringState: state(),
+    factoringStateWithheld: false,
     ...overrides,
   };
 }
@@ -144,6 +147,18 @@ function renderSection(value: Invoice = invoice) {
 }
 
 describe("invoice factoring section", () => {
+  it("draws the readiness withheld for a reader who cannot read factoring schedules", async () => {
+    mocks.fetchInvoiceFactoring.mockResolvedValue(
+      factoring({ factoringState: null, factoringStateWithheld: true }),
+    );
+    renderSection();
+
+    const section = await loadedSection();
+    expect(within(section).getAllByText("Hidden")).toHaveLength(2);
+    expect(within(section).queryByText("Not yet")).toBeNull();
+    expect(within(section).queryByText("Not ready")).toBeNull();
+  });
+
   it("stays out of the way of an invoice that was never assigned to a factor", () => {
     renderSection({ ...invoice, factoringCompanyId: null } as Invoice);
 
@@ -159,11 +174,11 @@ describe("invoice factoring section", () => {
     expect(within(section).getByText("Not ready")).toBeInTheDocument();
     expect(within(section).getByRole("link", { name: /RTS Financial/ })).toHaveAttribute(
       "href",
-      "/billing/configuration-files/factoring-companies?panelType=edit&panelEntityId=fac_1",
+      "/billing/configuration-files/factoring-companies/fac_1",
     );
     expect(within(section).getByRole("link", { name: /View agreement/ })).toHaveAttribute(
       "href",
-      "/billing/configuration-files/factoring-companies?section=agreements&agreement=facagr_1",
+      "/billing/configuration-files/factoring-companies/agreements/facagr_1",
     );
     expect(within(section).getByText("The customer is disputing the invoice")).toBeInTheDocument();
     expect(within(section).queryByText("Posted with an open balance")).toBeNull();
@@ -356,5 +371,17 @@ describe("invoice factoring section", () => {
     expect(within(section).queryByText("The customer is disputing the invoice")).toBeNull();
     expect(within(section).getByText("Why it stays out")).toBeInTheDocument();
     expect(within(section).getByText("Customer pays us directly")).toBeInTheDocument();
+  });
+});
+
+describe("invoice factoring section on a plan without factoring", () => {
+  afterEach(() => usePermissionStore.getState().clearPermissions());
+
+  it("draws nothing and reads nothing, even for an invoice that names a factor", () => {
+    seedPlan({}, BASE_ONLY_UNAVAILABLE);
+    const { container } = renderSection();
+
+    expect(container).toBeEmptyDOMElement();
+    expect(mocks.fetchInvoiceFactoring).not.toHaveBeenCalled();
   });
 });

@@ -50,6 +50,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -389,6 +390,7 @@ func operationsServices(conn *postgres.Connection, services *agentread.ResolverP
 		servicefailurereasoncodeservice.Params{Logger: logger, Repo: reasons})
 	services.ServiceFailureSvc = servicefailureservice.New(servicefailureservice.Params{
 		Logger: logger, Repo: failures, ReasonCodeRepo: reasons,
+		PlanFields: plantest.Keeper(nil),
 	})
 	services.DetentionReview = detentionreview.New(detentionreview.Params{
 		OccurrenceRepo: detentionrepository.NewOccurrenceRepository(

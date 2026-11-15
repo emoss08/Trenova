@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/scopepolicytest"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,6 +29,7 @@ func newTestService(t *testing.T) (*Service, *apikeyportsmock.MockAPIKeyReposito
 
 	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	svc := &Service{
+		features: plantest.AllFeatures(),
 		repo:     repo,
 		engine:   &mocks.AllowAllPermissionEngine{},
 		registry: permissioncatalog.NewRegistry(),

@@ -5,7 +5,7 @@ import type { TariffInputDeclaration } from "@trenova/shared/types/tariff";
 /** The inputs a template's billing version declares; idle while no template is chosen. */
 export function useTemplateInputs(templateId: string | null | undefined) {
   return useQuery({
-    ...formulaTemplate.inputs(templateId ?? "", null),
+    ...formulaTemplate.inputs(templateId ?? ""),
     enabled: Boolean(templateId),
   });
 }
@@ -21,7 +21,7 @@ export function useTemplatesInputs(templateIds: readonly string[]): {
 } {
   const distinct = [...new Set(templateIds.filter(Boolean))];
   return useQueries({
-    queries: distinct.map((templateId) => formulaTemplate.inputs(templateId, null)),
+    queries: distinct.map((templateId) => formulaTemplate.inputs(templateId)),
     combine: (results) => {
       const byTemplate = new Map<string, readonly TariffInputDeclaration[]>();
       results.forEach((result, index) => {

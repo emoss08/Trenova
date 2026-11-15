@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/emailutils"
@@ -86,12 +87,12 @@ func (i *Inputs) Normalize() Inputs {
 		State:            strings.ToUpper(stringutils.WithDefault(i.State, DefaultState)),
 		City: stringutils.WithDefault(
 			stringutils.CollapseWhitespace(i.City),
-			PlaceholderCity,
+			tenant.PlaceholderCity,
 		),
-		PostalCode:   stringutils.WithDefault(i.PostalCode, PlaceholderPostalCode),
+		PostalCode:   stringutils.WithDefault(i.PostalCode, tenant.PlaceholderPostalCode),
 		AddressLine1: stringutils.CollapseWhitespace(i.AddressLine1),
-		SCAC:         strings.ToUpper(stringutils.WithDefault(i.SCAC, PlaceholderSCAC)),
-		DOTNumber:    stringutils.WithDefault(i.DOTNumber, PlaceholderDOTNumber),
+		SCAC:         strings.ToUpper(stringutils.WithDefault(i.SCAC, tenant.PlaceholderSCAC)),
+		DOTNumber:    stringutils.WithDefault(i.DOTNumber, tenant.PlaceholderDOTNumber),
 	}
 }
 

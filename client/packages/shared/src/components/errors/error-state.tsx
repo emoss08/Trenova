@@ -1,9 +1,18 @@
+import { PlanLockedNotice, useCanManagePlan } from "@trenova/shared/components/plan-locked";
 import { Button } from "@trenova/shared/components/ui/button";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useOnlineStatus } from "@trenova/shared/hooks/use-online-status";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { type ErrorDescription, describeError } from "@trenova/shared/lib/error-presentation";
 import { cn } from "@trenova/shared/lib/utils";
-import { LogIn01Icon, RefreshCcw01Icon, RefreshCw02Icon } from "@trenova/shared/components/icons";
+import {
+  Lock01Icon,
+  LogIn01Icon,
+  RefreshCcw01Icon,
+  RefreshCw02Icon,
+} from "@trenova/shared/components/icons";
+import { planLockedGuidance, planLockedSentence } from "@trenova/shared/lib/plan-copy";
+import type { PlanRestriction } from "@trenova/shared/lib/plan-limit";
 import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ERROR_ICONS, ERROR_TONE_WELL, errorCopy } from "./error-copy";
 import { ErrorDetails, ErrorReference } from "./error-details";
@@ -126,6 +135,70 @@ function ErrorActions({ description, onRetry, size, extra }: ErrorActionsProps) 
   );
 }
 
+type PlanRestrictedStateProps = {
+  plan: PlanRestriction;
+  layout: ErrorStateLayout;
+  actions?: ReactNode;
+  className?: string;
+};
+
+// PlanRestrictedState is what a read the organization's plan refuses shows in place of the
+// failure: not an error, so no retry and no technical details, but the add-on it is part of
+// and who can add it.
+function PlanRestrictedState({ plan, layout, actions, className }: PlanRestrictedStateProps) {
+  const t = useT();
+  const titleId = useId();
+  const { featureName } = usePlanFeature(plan.feature);
+  const managesPlan = useCanManagePlan();
+
+  if (layout === "compact") {
+    return (
+      <section
+        role="status"
+        aria-labelledby={titleId}
+        data-slot="error-state"
+        data-kind="plan-restricted"
+        className={cn(
+          "animate-rise border-border bg-card flex w-full items-start gap-3 rounded-lg border p-3",
+          className,
+        )}
+      >
+        <span
+          aria-hidden
+          className={cn(
+            "flex size-7 shrink-0 items-center justify-center rounded-md border",
+            ERROR_TONE_WELL.neutral,
+          )}
+        >
+          <Lock01Icon className="size-3.5" />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <h3 id={titleId} className="text-sm font-semibold">
+            {t("Not on your plan")}
+          </h3>
+          <p className="text-foreground-muted text-xs text-pretty">
+            {planLockedSentence(t, featureName, plan.addOn)}
+          </p>
+          <p className="text-foreground-muted text-xs text-pretty">
+            {planLockedGuidance(t, managesPlan)}
+          </p>
+        </div>
+        {actions ? <div className="flex shrink-0 items-center gap-1.5">{actions}</div> : null}
+      </section>
+    );
+  }
+
+  return (
+    <PlanLockedNotice
+      featureName={featureName}
+      addOnName={plan.addOn}
+      variant="page"
+      actions={actions}
+      className={cn(layout === "section" ? "py-12" : layout === "sheet" ? "py-8" : "", className)}
+    />
+  );
+}
+
 // ErrorState is the one way Trenova says something failed. It classifies the error, says what
 // happened and what to do in plain words, and keeps the machinery (status, reference, stack)
 // behind a disclosure a person can copy to support in one click.
@@ -151,6 +224,17 @@ export function ErrorState({
   const online = useRetryOnReconnect(description, onRetry);
   const kind = description.kind === "network" && !online ? "offline" : description.kind;
   const resolved = kind === description.kind ? description : { ...description, kind };
+
+  if (resolved.kind === "plan-restricted" && resolved.plan) {
+    return (
+      <PlanRestrictedState
+        plan={resolved.plan}
+        layout={layout}
+        actions={actions}
+        className={className}
+      />
+    );
+  }
 
   const copy = errorCopy(t, resolved);
   const heading = title ?? copy.title;

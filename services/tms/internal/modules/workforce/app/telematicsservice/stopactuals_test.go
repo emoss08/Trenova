@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentmoveportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -125,6 +126,7 @@ func newStopHarness(t *testing.T, stops ...*shipment.Stop) *stopHarness {
 			dispatchControlRepo: dispatch,
 			watchtower:          tower,
 			waits:               &recordedWaitNotices{},
+			features:            plantest.AllFeatures(),
 			l:                   zap.NewNop(),
 		},
 		repo:    repo,

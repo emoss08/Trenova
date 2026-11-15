@@ -18,6 +18,48 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for BackupHealthWalArchiving.
+const (
+	Failing BackupHealthWalArchiving = "failing"
+	Healthy BackupHealthWalArchiving = "healthy"
+	Unknown BackupHealthWalArchiving = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the BackupHealthWalArchiving enum.
+func (e BackupHealthWalArchiving) Valid() bool {
+	switch e {
+	case Failing:
+		return true
+	case Healthy:
+		return true
+	case Unknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BackupRequestStatusPhase.
+const (
+	BackupRequestStatusPhaseCompleted BackupRequestStatusPhase = "completed"
+	BackupRequestStatusPhaseFailed    BackupRequestStatusPhase = "failed"
+	BackupRequestStatusPhaseRunning   BackupRequestStatusPhase = "running"
+)
+
+// Valid indicates whether the value is a known member of the BackupRequestStatusPhase enum.
+func (e BackupRequestStatusPhase) Valid() bool {
+	switch e {
+	case BackupRequestStatusPhaseCompleted:
+		return true
+	case BackupRequestStatusPhaseFailed:
+		return true
+	case BackupRequestStatusPhaseRunning:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CommandKind.
 const (
 	CollectLogs CommandKind = "collect_logs"
@@ -38,16 +80,16 @@ func (e CommandKind) Valid() bool {
 
 // Defines values for CommandResultStatus.
 const (
-	Failed    CommandResultStatus = "failed"
-	Succeeded CommandResultStatus = "succeeded"
+	CommandResultStatusFailed    CommandResultStatus = "failed"
+	CommandResultStatusSucceeded CommandResultStatus = "succeeded"
 )
 
 // Valid indicates whether the value is a known member of the CommandResultStatus enum.
 func (e CommandResultStatus) Valid() bool {
 	switch e {
-	case Failed:
+	case CommandResultStatusFailed:
 		return true
-	case Succeeded:
+	case CommandResultStatusSucceeded:
 		return true
 	default:
 		return false
@@ -162,6 +204,30 @@ func (e ProblemCode) Valid() bool {
 	}
 }
 
+// Defines values for RestoreProgressPhase.
+const (
+	RestoreProgressPhaseFailed    RestoreProgressPhase = "failed"
+	RestoreProgressPhasePreparing RestoreProgressPhase = "preparing"
+	RestoreProgressPhaseReady     RestoreProgressPhase = "ready"
+	RestoreProgressPhaseSwitched  RestoreProgressPhase = "switched"
+)
+
+// Valid indicates whether the value is a known member of the RestoreProgressPhase enum.
+func (e RestoreProgressPhase) Valid() bool {
+	switch e {
+	case RestoreProgressPhaseFailed:
+		return true
+	case RestoreProgressPhasePreparing:
+		return true
+	case RestoreProgressPhaseReady:
+		return true
+	case RestoreProgressPhaseSwitched:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SpecAllowanceUnit.
 const (
 	SpecAllowanceUnitBytes SpecAllowanceUnit = "bytes"
@@ -252,6 +318,24 @@ func (e SpecReleaseChannel) Valid() bool {
 	}
 }
 
+// Defines values for SystemEmailCredentialProvider.
+const (
+	Postmark SystemEmailCredentialProvider = "Postmark"
+	Resend   SystemEmailCredentialProvider = "Resend"
+)
+
+// Valid indicates whether the value is a known member of the SystemEmailCredentialProvider enum.
+func (e SystemEmailCredentialProvider) Valid() bool {
+	switch e {
+	case Postmark:
+		return true
+	case Resend:
+		return true
+	default:
+		return false
+	}
+}
+
 // AdministratorStatus Where the first administrator's handoff stands on the instance, reported once the spec has
 // an `invite` and the instance answered for it.
 type AdministratorStatus struct {
@@ -262,6 +346,45 @@ type AdministratorStatus struct {
 	SetUp bool `json:"setUp"`
 }
 
+// BackupHealth The instance's backups as the operator reads them from the cluster: the last base backup,
+// how far back the backups reach, and whether WAL archiving works. Report it with every status
+// report once the instance has backup storage; left out, staff see the last one reported.
+type BackupHealth struct {
+	// FirstRecoverabilityPoint The earliest time the database can be restored to.
+	FirstRecoverabilityPoint *time.Time `json:"firstRecoverabilityPoint,omitempty"`
+
+	// LastArchivedWalAt When the newest WAL segment was archived; the archiving lag is now minus this.
+	LastArchivedWalAt *time.Time `json:"lastArchivedWalAt,omitempty"`
+
+	// LastBaseBackupAt When the newest completed base backup finished.
+	LastBaseBackupAt *time.Time `json:"lastBaseBackupAt,omitempty"`
+	LastBaseBackupId *string    `json:"lastBaseBackupId,omitempty"`
+
+	// Message Why archiving or the last backup failed, in one line.
+	Message *string `json:"message,omitempty"`
+
+	// Request How the base backup the spec's `backup` asks for goes, by its `id`.
+	Request *BackupRequestStatus `json:"request,omitempty"`
+
+	// WalArchiving Whether WAL segments reach the backups bucket.
+	WalArchiving BackupHealthWalArchiving `json:"walArchiving"`
+}
+
+// BackupHealthWalArchiving Whether WAL segments reach the backups bucket.
+type BackupHealthWalArchiving string
+
+// BackupRequestStatus How the base backup the spec's `backup` asks for goes, by its `id`.
+type BackupRequestStatus struct {
+	BackupId    *string                  `json:"backupId,omitempty"`
+	CompletedAt *time.Time               `json:"completedAt,omitempty"`
+	Id          string                   `json:"id"`
+	Message     *string                  `json:"message,omitempty"`
+	Phase       BackupRequestStatusPhase `json:"phase"`
+}
+
+// BackupRequestStatusPhase defines model for BackupRequestStatus.Phase.
+type BackupRequestStatusPhase string
+
 // Command defines model for Command.
 type Command struct {
 	// Component A component as the status report names it, such as `api`. Required for `collect_logs`.
@@ -270,8 +393,9 @@ type Command struct {
 	IssuedAt  time.Time          `json:"issuedAt"`
 
 	// Kind `restart` restarts the named component's workload, or every Trenova workload when no
-	// component is named; the database is restarted only when it is named. `collect_logs`
-	// returns the named component's most recent log lines.
+	// component is named. The database is never restarted this way: a restart of everything
+	// leaves it running, and naming it fails. `collect_logs` returns the named component's
+	// most recent log lines.
 	Kind CommandKind `json:"kind"`
 
 	// Lines For `collect_logs`, how many of the most recent lines to return.
@@ -279,8 +403,9 @@ type Command struct {
 }
 
 // CommandKind `restart` restarts the named component's workload, or every Trenova workload when no
-// component is named; the database is restarted only when it is named. `collect_logs`
-// returns the named component's most recent log lines.
+// component is named. The database is never restarted this way: a restart of everything
+// leaves it running, and naming it fails. `collect_logs` returns the named component's
+// most recent log lines.
 type CommandKind string
 
 // CommandList defines model for CommandList.
@@ -346,6 +471,12 @@ type InstanceSecrets struct {
 
 	// RlsScopeKeyId The TMS's `database.rls.scopeKeyId`.
 	RlsScopeKeyId string `json:"rlsScopeKeyId"`
+
+	// SystemEmail The credential of the sender Trenova supplies for the instance's system email, present
+	// while the spec names one (`systemEmail`). Unlike the keys above it may change: a rotation
+	// is a new credential and a new fingerprint in the spec. Keep it only in memory and never
+	// log it; the instance stores it encrypted and never returns it.
+	SystemEmail *SystemEmailCredential `json:"systemEmail,omitempty"`
 }
 
 // InstanceSpec What the instance should be. `schemaVersion` changes when a field's meaning changes; an
@@ -358,8 +489,18 @@ type InstanceSpec struct {
 	AiProvider InstanceSpecAiProvider `json:"aiProvider"`
 	Allowances []SpecAllowance        `json:"allowances"`
 
+	// Backup Take one base backup now, before a version update, unless one has completed for this `id`.
+	// Report how it goes as `backup.request` on the status report. A later revision carries the
+	// same request until another replaces it.
+	Backup *SpecBackupRequest `json:"backup,omitempty"`
+
 	// Components Extra workloads to run, such as `docling` for Document Intelligence.
 	Components []string `json:"components"`
+
+	// Database The database the instance runs on, once a restore has replaced its first one: `generation`
+	// names it, and it was restored from `sourceGeneration`'s backups (empty for the first
+	// database) to `targetTime`. Absent while the instance runs on its first database.
+	Database *SpecDatabase `json:"database,omitempty"`
 
 	// Features The TMS catalog features to turn on.
 	Features []string `json:"features"`
@@ -386,8 +527,21 @@ type InstanceSpec struct {
 
 	// Release The Trenova release the instance runs. Staff point each channel at a version; every spec
 	// on the channel names it, and a new version reaches instances as a new spec revision.
-	Release       SpecRelease               `json:"release"`
+	Release SpecRelease `json:"release"`
+
+	// Restore Restore the database to `targetTime` from the backups of the database the instance runs on
+	// (`sourceGeneration`), into a new database named by `generation`, beside the live one. The
+	// live database keeps serving and is never touched. Report how it goes as `restore` on the
+	// status report. A later revision switches to it by naming it as `database`; one without
+	// `restore` or a matching `database` means remove the new database.
+	Restore       *SpecRestore              `json:"restore,omitempty"`
 	SchemaVersion InstanceSpecSchemaVersion `json:"schemaVersion"`
+
+	// SystemEmail The sender Trenova supplies for the instance's system email (invitations, password resets,
+	// notifications). Absent when Trenova supplies none: the operator then removes any the
+	// instance holds. The credential itself is never in the spec; the operator fetches it from
+	// `getSecrets` when the instance does not already hold one with this fingerprint.
+	SystemEmail *SpecSystemEmail `json:"systemEmail,omitempty"`
 }
 
 // InstanceSpecAiProvider Whose AI keys the instance uses.
@@ -401,6 +555,21 @@ type InstanceSpecLifecycle string
 
 // InstanceSpecSchemaVersion defines model for InstanceSpec.SchemaVersion.
 type InstanceSpecSchemaVersion int
+
+// InstanceStorage defines model for InstanceStorage.
+type InstanceStorage struct {
+	Backups StorageBucket `json:"backups"`
+
+	// BackupsPrefix Where in the backups bucket the backup tool keeps base backups and WAL.
+	BackupsPrefix string        `json:"backupsPrefix"`
+	Documents     StorageBucket `json:"documents"`
+
+	// Endpoint The S3 API's URL, such as `https://s3.bhs.io.cloud.ovh.net`.
+	Endpoint string `json:"endpoint"`
+
+	// Region The region requests are signed for, such as `bhs`.
+	Region string `json:"region"`
+}
 
 // IssuedCertificate defines model for IssuedCertificate.
 type IssuedCertificate struct {
@@ -450,6 +619,19 @@ type RenewCertificateRequest struct {
 	Csr string `json:"csr"`
 }
 
+// RestoreProgress How the restore the spec's `restore` asks for goes: `preparing` while the new database is
+// restored, `ready` once it accepts connections at `recoveredTo`, `failed` if it cannot be, and
+// `switched` once the instance runs on it after a revision names it as `database`.
+type RestoreProgress struct {
+	Id          openapi_types.UUID   `json:"id"`
+	Message     *string              `json:"message,omitempty"`
+	Phase       RestoreProgressPhase `json:"phase"`
+	RecoveredTo *time.Time           `json:"recoveredTo,omitempty"`
+}
+
+// RestoreProgressPhase defines model for RestoreProgress.Phase.
+type RestoreProgressPhase string
+
 // SpecAdministratorInvite A one-time link for the first administrator to choose their password. The control plane
 // holds the token and emails the link, `https://<hostname>/auth/reset?token=<token>&purpose=invite`;
 // the instance holds only its SHA-256, as an account invite for the administrator, and
@@ -477,6 +659,23 @@ type SpecAllowance struct {
 
 // SpecAllowanceUnit defines model for SpecAllowance.Unit.
 type SpecAllowanceUnit string
+
+// SpecBackupRequest Take one base backup now, before a version update, unless one has completed for this `id`.
+// Report how it goes as `backup.request` on the status report. A later revision carries the
+// same request until another replaces it.
+type SpecBackupRequest struct {
+	Id          string    `json:"id"`
+	RequestedAt time.Time `json:"requestedAt"`
+}
+
+// SpecDatabase The database the instance runs on, once a restore has replaced its first one: `generation`
+// names it, and it was restored from `sourceGeneration`'s backups (empty for the first
+// database) to `targetTime`. Absent while the instance runs on its first database.
+type SpecDatabase struct {
+	Generation       string    `json:"generation"`
+	SourceGeneration string    `json:"sourceGeneration"`
+	TargetTime       time.Time `json:"targetTime"`
+}
 
 // SpecFirstAdministrator The instance's first organization and its administrator: the person who ordered it, and
 // their organization's name, as they were when it was ordered. The first install creates
@@ -546,6 +745,31 @@ type SpecRelease struct {
 // SpecReleaseChannel defines model for SpecRelease.Channel.
 type SpecReleaseChannel string
 
+// SpecRestore Restore the database to `targetTime` from the backups of the database the instance runs on
+// (`sourceGeneration`), into a new database named by `generation`, beside the live one. The
+// live database keeps serving and is never touched. Report how it goes as `restore` on the
+// status report. A later revision switches to it by naming it as `database`; one without
+// `restore` or a matching `database` means remove the new database.
+type SpecRestore struct {
+	Generation       string             `json:"generation"`
+	Id               openapi_types.UUID `json:"id"`
+	SourceGeneration string             `json:"sourceGeneration"`
+	TargetTime       time.Time          `json:"targetTime"`
+}
+
+// SpecSystemEmail The sender Trenova supplies for the instance's system email (invitations, password resets,
+// notifications). Absent when Trenova supplies none: the operator then removes any the
+// instance holds. The credential itself is never in the spec; the operator fetches it from
+// `getSecrets` when the instance does not already hold one with this fingerprint.
+type SpecSystemEmail struct {
+	// Fingerprint The lowercase hex SHA-256 of the credential, the same value the instance reports:
+	// SHA-256 over `trenova.system-email.v1`, `provider`, `fromAddress`, `fromName`,
+	// `apiKey` and `webhookSecret` (empty when absent), joined by a line feed (`\n`), in
+	// that order. A new credential has a new fingerprint, which is how a rotation reaches
+	// the instance.
+	Fingerprint string `json:"fingerprint"`
+}
+
 // StatusReport defines model for StatusReport.
 type StatusReport struct {
 	// Administrator Where the first administrator's handoff stands on the instance, reported once the spec has
@@ -553,8 +777,19 @@ type StatusReport struct {
 	Administrator *AdministratorStatus `json:"administrator,omitempty"`
 
 	// AppliedRevision The spec revision the instance runs; absent before the first converge.
-	AppliedRevision *int64            `json:"appliedRevision,omitempty"`
-	Components      []ComponentStatus `json:"components"`
+	AppliedRevision *int64 `json:"appliedRevision,omitempty"`
+
+	// Backup The instance's backups as the operator reads them from the cluster: the last base backup,
+	// how far back the backups reach, and whether WAL archiving works. Report it with every status
+	// report once the instance has backup storage; left out, staff see the last one reported.
+	Backup     *BackupHealth     `json:"backup,omitempty"`
+	Components []ComponentStatus `json:"components"`
+
+	// Features The TMS catalog features the instance holds now, as it reads them, so staff can see
+	// whether it has taken up its spec's `features`. Report the whole list each time; left
+	// out, the last list reported stands. Only staff see it, and it entitles and bills
+	// nothing: the spec says what the instance should hold.
+	Features *[]string `json:"features,omitempty"`
 
 	// FinalBackup The backup taken after the instance applied a `decommissioned` spec, reported with that
 	// revision as `appliedRevision`. It is kept for 7 days after the instance is torn down.
@@ -566,9 +801,47 @@ type StatusReport struct {
 	// Ready Whether every component is ready and the post-deploy checks pass.
 	Ready bool `json:"ready"`
 
+	// Restore How the restore the spec's `restore` asks for goes: `preparing` while the new database is
+	// restored, `ready` once it accepts connections at `recoveredTo`, `failed` if it cannot be, and
+	// `switched` once the instance runs on it after a revision names it as `database`.
+	Restore *RestoreProgress `json:"restore,omitempty"`
+
 	// Version The Trenova release running.
 	Version *string `json:"version,omitempty"`
 }
+
+// StorageBucket defines model for StorageBucket.
+type StorageBucket struct {
+	AccessKeyId     string `json:"accessKeyId"`
+	Bucket          string `json:"bucket"`
+	SecretAccessKey string `json:"secretAccessKey"`
+}
+
+// SystemEmailCredential The credential of the sender Trenova supplies for the instance's system email, present
+// while the spec names one (`systemEmail`). Unlike the keys above it may change: a rotation
+// is a new credential and a new fingerprint in the spec. Keep it only in memory and never
+// log it; the instance stores it encrypted and never returns it.
+type SystemEmailCredential struct {
+	// ApiKey The provider API key (a Postmark server token or a Resend API key).
+	ApiKey string `json:"apiKey"`
+
+	// FromAddress The address system email is sent from, on a domain Trenova verified with the provider.
+	FromAddress openapi_types.Email `json:"fromAddress"`
+
+	// FromName The brand in the display name. The instance sends as `<organization name> via <fromName>`.
+	FromName string `json:"fromName"`
+
+	// Provider The email provider the credential is for.
+	Provider SystemEmailCredentialProvider `json:"provider"`
+
+	// WebhookSecret What the provider's delivery webhooks prove themselves with: the Svix signing secret
+	// (`whsec_…`) for Resend, `user:password` of the webhook's basic authentication for
+	// Postmark. Absent when bounces are not reported to the instance.
+	WebhookSecret *string `json:"webhookSecret,omitempty"`
+}
+
+// SystemEmailCredentialProvider The email provider the credential is for.
+type SystemEmailCredentialProvider string
 
 // UsageAck defines model for UsageAck.
 type UsageAck struct {
@@ -771,7 +1044,9 @@ type ClientInterface interface {
 	// code pepper. The answer is the same every time, so an instance that is reinstalled, or
 	// restored from a backup onto new infrastructure, still reads its data. Fetch them when the
 	// cluster holds no copy, keep them only in a Secret, and never log them. The first fetch makes
-	// them.
+	// them. While the spec names a system email sender (`systemEmail`), the answer also carries
+	// its credential, which the operator fetches when the instance does not hold that
+	// fingerprint and keeps only in memory.
 	//
 	// Corresponds with GET /v1/secrets (the `GetSecrets` operationId).
 	GetSecrets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -798,6 +1073,20 @@ type ClientInterface interface {
 	//
 	// Corresponds with PUT /v1/status (the `ReportStatus` operationId).
 	ReportStatus(ctx context.Context, body ReportStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetStorage The instance's object storage
+	//
+	// The instance's two buckets and a credential for each, scoped to that bucket alone: the
+	// documents bucket, which the TMS reads and writes, and the backups bucket, which only
+	// PostgreSQL's backup tool may write. Keep the backups credential where the application's
+	// pods cannot read it, so a compromised application cannot delete its backups. The answer is
+	// the same until the provider makes new credentials. Fetch it when the cluster holds no copy,
+	// keep the credentials only in Secrets, and never log them. `404 not_found` means the instance
+	// has no object storage of its own (its infrastructure was made by hand): keep documents in
+	// the chart's own store and take no backups.
+	//
+	// Corresponds with GET /v1/storage (the `GetStorage` operationId).
+	GetStorage(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ReportUsageWithBody Report usage, and learn what may continue
 	//
@@ -951,7 +1240,9 @@ func (c *Client) CompleteCommand(ctx context.Context, commandId openapi_types.UU
 // code pepper. The answer is the same every time, so an instance that is reinstalled, or
 // restored from a backup onto new infrastructure, still reads its data. Fetch them when the
 // cluster holds no copy, keep them only in a Secret, and never log them. The first fetch makes
-// them.
+// them. While the spec names a system email sender (`systemEmail`), the answer also carries
+// its credential, which the operator fetches when the instance does not hold that
+// fingerprint and keeps only in memory.
 //
 // Corresponds with GET /v1/secrets (the `GetSecrets` operationId).
 func (c *Client) GetSecrets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -1009,6 +1300,30 @@ func (c *Client) ReportStatusWithBody(ctx context.Context, contentType string, b
 // Corresponds with PUT /v1/status (the `ReportStatus` operationId).
 func (c *Client) ReportStatus(ctx context.Context, body ReportStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewReportStatusRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetStorage The instance's object storage
+//
+// The instance's two buckets and a credential for each, scoped to that bucket alone: the
+// documents bucket, which the TMS reads and writes, and the backups bucket, which only
+// PostgreSQL's backup tool may write. Keep the backups credential where the application's
+// pods cannot read it, so a compromised application cannot delete its backups. The answer is
+// the same until the provider makes new credentials. Fetch it when the cluster holds no copy,
+// keep the credentials only in Secrets, and never log them. `404 not_found` means the instance
+// has no object storage of its own (its infrastructure was made by hand): keep documents in
+// the chart's own store and take no backups.
+//
+// Corresponds with GET /v1/storage (the `GetStorage` operationId).
+func (c *Client) GetStorage(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStorageRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1298,6 +1613,33 @@ func NewReportStatusRequestWithBody(server string, contentType string, body io.R
 	return req, nil
 }
 
+// NewGetStorageRequest constructs an http.Request for the GetStorage method
+func NewGetStorageRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/storage")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewReportUsageRequest calls the generic ReportUsage builder with application/json body
 func NewReportUsageRequest(server string, body ReportUsageJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -1449,7 +1791,9 @@ type ClientWithResponsesInterface interface {
 	// code pepper. The answer is the same every time, so an instance that is reinstalled, or
 	// restored from a backup onto new infrastructure, still reads its data. Fetch them when the
 	// cluster holds no copy, keep them only in a Secret, and never log them. The first fetch makes
-	// them.
+	// them. While the spec names a system email sender (`systemEmail`), the answer also carries
+	// its credential, which the operator fetches when the instance does not hold that
+	// fingerprint and keeps only in memory.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -1480,6 +1824,22 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PUT /v1/status (the `ReportStatus` operationId).
 	ReportStatusWithResponse(ctx context.Context, body ReportStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*ReportStatusResponse, error)
+
+	// GetStorageWithResponse The instance's object storage
+	//
+	// The instance's two buckets and a credential for each, scoped to that bucket alone: the
+	// documents bucket, which the TMS reads and writes, and the backups bucket, which only
+	// PostgreSQL's backup tool may write. Keep the backups credential where the application's
+	// pods cannot read it, so a compromised application cannot delete its backups. The answer is
+	// the same until the provider makes new credentials. Fetch it when the cluster holds no copy,
+	// keep the credentials only in Secrets, and never log them. `404 not_found` means the instance
+	// has no object storage of its own (its infrastructure was made by hand): keep documents in
+	// the chart's own store and take no backups.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/storage (the `GetStorage` operationId).
+	GetStorageWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStorageResponse, error)
 
 	// ReportUsageWithBodyWithResponse Report usage, and learn what may continue
 	//
@@ -1932,6 +2292,82 @@ func (r ReportStatusResponse) ContentType() string {
 	return ""
 }
 
+// GetStorageResponse200Headers the declared response headers of an HTTP 200 response for GetStorage
+type GetStorageResponse200Headers struct {
+	CacheControl *string
+}
+
+// GetStorageResponse429Headers the declared response headers of an HTTP 429 response for GetStorage
+type GetStorageResponse429Headers struct {
+	RetryAfter *int
+}
+
+type GetStorageResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *InstanceStorage
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetStorageResponse200Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetStorageResponse429Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetStorageResponse) GetJSON200() *InstanceStorage {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetStorageResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetStorageResponse) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetStorageResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r GetStorageResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetStorageResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetStorageResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetStorageResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ReportUsageResponse429Headers the declared response headers of an HTTP 429 response for ReportUsage
 type ReportUsageResponse429Headers struct {
 	RetryAfter *int
@@ -2098,7 +2534,9 @@ func (c *ClientWithResponses) CompleteCommandWithResponse(ctx context.Context, c
 // code pepper. The answer is the same every time, so an instance that is reinstalled, or
 // restored from a backup onto new infrastructure, still reads its data. Fetch them when the
 // cluster holds no copy, keep them only in a Secret, and never log them. The first fetch makes
-// them.
+// them. While the spec names a system email sender (`systemEmail`), the answer also carries
+// its credential, which the operator fetches when the instance does not hold that
+// fingerprint and keeps only in memory.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -2152,6 +2590,28 @@ func (c *ClientWithResponses) ReportStatusWithResponse(ctx context.Context, body
 		return nil, err
 	}
 	return ParseReportStatusResponse(rsp)
+}
+
+// GetStorageWithResponse The instance's object storage
+//
+// The instance's two buckets and a credential for each, scoped to that bucket alone: the
+// documents bucket, which the TMS reads and writes, and the backups bucket, which only
+// PostgreSQL's backup tool may write. Keep the backups credential where the application's
+// pods cannot read it, so a compromised application cannot delete its backups. The answer is
+// the same until the provider makes new credentials. Fetch it when the cluster holds no copy,
+// keep the credentials only in Secrets, and never log them. `404 not_found` means the instance
+// has no object storage of its own (its infrastructure was made by hand): keep documents in
+// the chart's own store and take no backups.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/storage (the `GetStorage` operationId).
+func (c *ClientWithResponses) GetStorageWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStorageResponse, error) {
+	rsp, err := c.GetStorage(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetStorageResponse(rsp)
 }
 
 // ReportUsageWithBodyWithResponse Report usage, and learn what may continue
@@ -2567,6 +3027,76 @@ func ParseReportStatusResponse(rsp *http.Response) (*ReportStatusResponse, error
 	switch {
 	case rsp.StatusCode == 429:
 		var headers ReportStatusResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetStorageResponse parses an HTTP response from a GetStorageWithResponse call
+func ParseGetStorageResponse(rsp *http.Response) (*GetStorageResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetStorageResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InstanceStorage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetStorageResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetStorageResponse429Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

@@ -85,7 +85,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("/duplicate", requireDuplicate, h.duplicate)
 	api.POST("/import", requireCreate, h.importTemplates)
 	api.GET("/standards", requireRead, h.listStandards)
-	api.POST("/install-standards", requireCreate, h.installStandards)
 	requireAssistant := h.pm.RequirePermission(
 		permission.ResourceAssistant.String(),
 		permission.OpCreate,
@@ -125,4 +124,20 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		requireApprove,
 		h.updateVersionEffectiveDate,
 	)
+
+	requirePricing := h.pm.RequireAnyPermission(
+		middleware.PermissionCheck{
+			Resource:  permission.ResourceShipment.String(),
+			Operation: permission.OpRead,
+		},
+		middleware.PermissionCheck{
+			Resource:  permission.ResourceRateAgreement.String(),
+			Operation: permission.OpRead,
+		},
+		middleware.PermissionCheck{
+			Resource:  permission.ResourceBillingControl.String(),
+			Operation: permission.OpRead,
+		},
+	)
+	rg.GET("/pricing-templates/:templateID/inputs", requirePricing, h.pricingInputs)
 }

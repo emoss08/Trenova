@@ -26,7 +26,9 @@ import {
 import { pageThreadSchema, type PageThread } from "@/types/assistant";
 import {
   documentExtractionStatusSchema,
+  documentStorageStatusSchema,
   type DocumentExtractionStatus,
+  type DocumentStorageStatus,
 } from "@/types/document-control";
 import { z } from "zod";
 import { extractionFrom, type Extraction } from "@/lib/document-reading/extraction-payload";
@@ -97,6 +99,15 @@ export class DocumentService {
       signal: options?.signal,
     });
     return safeParse(documentExtractionStatusSchema, response, "Document Extraction Status");
+  }
+
+  public async getStorageStatus(options?: {
+    signal?: AbortSignal;
+  }): Promise<DocumentStorageStatus> {
+    const response = await api.get<DocumentStorageStatus>("/documents/storage/", {
+      signal: options?.signal,
+    });
+    return safeParse(documentStorageStatusSchema, response, "Document Storage Status");
   }
 
   public async listActiveUploadSessions(

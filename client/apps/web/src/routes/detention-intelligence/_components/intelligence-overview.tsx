@@ -7,6 +7,8 @@ import { downloadCsv, exportFilename } from "@/lib/data-table-export";
 import { ArrowRightIcon, Download01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { formatRelativeTime } from "@trenova/shared/i18n/format";
@@ -53,6 +55,8 @@ export function IntelligenceBrief({
   updatedAt: number;
 }) {
   const t = useT();
+  // The summary is the records' own; it is signed as Nova's only on a plan with Trenova AI.
+  const novaOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
   const segments = data.summary.flatMap((paragraph, index) =>
     index === 0
       ? paragraph.segments
@@ -69,8 +73,12 @@ export function IntelligenceBrief({
     >
       <div className="flex min-w-0 flex-col gap-2">
         <span className="flex items-center gap-2 text-xs text-muted-foreground">
-          <NovaBadge size="sm" />
-          <span className="font-medium text-foreground">{t("Nova")}</span>
+          {novaOnPlan ? (
+            <>
+              <NovaBadge size="sm" />
+              <span className="font-medium text-foreground">{t("Nova")}</span>
+            </>
+          ) : null}
           {t("Detention intelligence")}
         </span>
         <p className="text-lg leading-relaxed text-pretty text-muted-foreground">

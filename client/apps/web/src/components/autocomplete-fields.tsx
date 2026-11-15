@@ -1,6 +1,8 @@
 import type { FieldRequired } from "@trenova/shared/lib/field-rules";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { usePermission } from "@/hooks/use-permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { benefitPlanTypeLabel } from "@trenova/shared/lib/benefits";
 import { describeShiftPattern } from "@trenova/shared/lib/scheduling";
 import type {
@@ -1492,15 +1494,21 @@ export function ControlledFormulaTemplateAutocompleteField({
   );
 }
 
+/**
+ * The rating method a shipment, lane or fallback prices with. The server lists the standard
+ * templates on every plan and the organization's own only with Rating, so the picker offers
+ * what the person may choose; the way to author a new one shows only to someone who may.
+ */
 export function FormulaTemplateAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   const t = useT();
+  const { allowed: mayAuthor } = usePermission(Resource.FormulaTemplate, Operation.Create);
 
   return (
     <AutocompleteField<GraphQLSelectOption, T>
       graphql={formulaTemplateSelectOptionsGraphQL}
-      popoutLink="billing/configuration-files/formula-templates"
+      popoutLink={mayAuthor ? "billing/configuration-files/formula-templates" : undefined}
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (

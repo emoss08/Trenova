@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -63,6 +64,7 @@ type Params struct {
 	BillingCtrlRepo   tenantports.BillingControlRepository
 	AccessorialRepo   accessorialchargeports.AccessorialChargeRepository
 	FuelResolver      fuelsurchargeports.FuelSurchargeResolver
+	Features          platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -90,6 +92,7 @@ type Service struct {
 	lifecycle         carrierintelports.CarrierLifecycleObserver
 	accessorialRepo   accessorialchargeports.AccessorialChargeRepository
 	fuelResolver      fuelsurchargeports.FuelSurchargeResolver
+	features          platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service {
@@ -116,6 +119,7 @@ func New(p Params) *Service {
 		billingCtrlRepo:   p.BillingCtrlRepo,
 		accessorialRepo:   p.AccessorialRepo,
 		fuelResolver:      p.FuelResolver,
+		features:          p.Features,
 	}
 }
 
@@ -303,9 +307,7 @@ func (s *Service) AssignToMove(
 		s.reaccrueMove(ctx, req.TenantInfo, req.ShipmentMoveID)
 	}
 	s.withdrawLiveTender(ctx, req.TenantInfo, req.ShipmentMoveID)
-	if s.lifecycle != nil {
-		s.lifecycle.CarriersUsed(ctx, req.TenantInfo, []pulid.ID{req.CarrierID})
-	}
+	s.carriersUsed(ctx, req.TenantInfo, req.CarrierID)
 
 	return result, nil
 }
@@ -684,4 +686,25 @@ func shipmentIDOf(assignment *shipment.CarrierAssignment) pulid.ID {
 		return pulid.Nil
 	}
 	return assignment.ShipmentMove.ShipmentID
+}
+
+func (s *Service) carriersUsed(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	carrierID pulid.ID,
+) {
+	if s.lifecycle == nil {
+		return
+	}
+	observers, err := platformcatalogports.Observing(
+		ctx,
+		s.features,
+		[]carrierintelports.CarrierLifecycleObserver{s.lifecycle},
+	)
+	if err != nil {
+		s.l.Warn("carrier lifecycle observer skipped", zap.Error(err))
+	}
+	for _, observer := range observers {
+		observer.CarriersUsed(ctx, tenantInfo, []pulid.ID{carrierID})
+	}
 }

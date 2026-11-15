@@ -32,6 +32,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { useReducedMotionConfig } from "motion/react";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
+import { useBillingQueueReviewOnPlan } from "@/lib/billing-queue-nova-plan";
 import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
 
 function checkLabel(key: BillingCheckKey, t: TranslateFn): string {
@@ -80,6 +81,8 @@ export function BillingQueueReviewChecks({
   // Reduced motion, asked for in Trenova or in the system (MotionConfig carries
   // both), means no pulse and no smooth scroll: the review is simply brought into view.
   const reduceMotion = useReducedMotionConfig() ?? false;
+  // Nova's note is drawn only on a plan that includes its review.
+  const novaReviews = useBillingQueueReviewOnPlan();
   // Two names on the same keyframes, so a second call replays the pulse.
   const pulse =
     called && !reduceMotion
@@ -116,7 +119,7 @@ export function BillingQueueReviewChecks({
   });
 
   const review = item.status === "InReview" ? item.review : null;
-  const hasNote = Boolean(item.agentSummary && item.agentVerdict);
+  const hasNote = novaReviews && Boolean(item.agentSummary && item.agentVerdict);
   if (!review && !hasNote) {
     return null;
   }

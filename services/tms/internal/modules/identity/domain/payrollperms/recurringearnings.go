@@ -3,6 +3,7 @@ package payrollperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 const (
@@ -13,6 +14,7 @@ func recurringEarningResources() []*permissionspec.ResourceDefinition {
 	return []*permissionspec.ResourceDefinition{
 		{
 			Resource:           permission.ResourceRecurringEarning.String(),
+			Feature:            platformcatalog.FeatureSettlement,
 			DisplayName:        "Recurring Earning",
 			Description:        "Recurring driver earning schedules such as per diem and bonuses",
 			Category:           "Payroll",
@@ -45,6 +47,7 @@ func recurringEarningResources() []*permissionspec.ResourceDefinition {
 
 		{
 			Resource:           permission.ResourcePayCode.String(),
+			Feature:            platformcatalog.FeatureSettlement,
 			DisplayName:        "Pay Code",
 			Description:        "Carrier-defined earning and deduction codes with GL account mappings",
 			Category:           "Payroll",

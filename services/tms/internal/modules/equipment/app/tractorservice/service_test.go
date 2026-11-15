@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,6 +40,7 @@ func newLocateTestService(
 		assignmentRepo: assignmentRepo,
 		continuityRepo: continuityRepo,
 		locationRepo:   locationRepo,
+		planFields:     plantest.Keeper(nil),
 	}
 }
 

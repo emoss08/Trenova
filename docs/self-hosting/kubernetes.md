@@ -118,6 +118,7 @@ The ones you are most likely to change:
 | `tms.config` | Merged over the TMS configuration the chart renders; see `services/tms/config/config.example.yaml` |
 | `tms.extraEnv` | Integration credentials and other `TRENOVA_*` settings, as env entries (`valueFrom` works) |
 | `*.resources`, `postgres.parameters` | Sizing; raise `shared_buffers` with the PostgreSQL memory limit |
+| `postgres.smartShutdownTimeout`, `postgres.stopDelay` | How long a PostgreSQL restart waits for clients (15 seconds) before a fast, clean shutdown, and how long it may take in all (300 seconds) |
 | `secrets.existingSecret`, `postgres.existingSecret` | Secrets you manage; see [Secrets](#secrets) |
 | `stopped`, `postgres.hibernate` | Stop every workload but PostgreSQL, and PostgreSQL too, keeping every volume; set both back to `false` to start again |
 

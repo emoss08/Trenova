@@ -10,18 +10,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/scim"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/slugutil"
@@ -42,7 +41,7 @@ type Params struct {
 	Auditor        permissionports.SecurityAuditor
 	Logger         *zap.Logger
 	SecurityConfig *securityconfig.Config
-	Plans          platformplanports.PlanService
+	Features       platformcatalogports.FeatureGate
 	RoleGrants     permissionports.RoleGrantGuard
 	DB             kernelports.Transactor
 	Provisioning   scimports.DirectoryGrants
@@ -54,7 +53,7 @@ type service struct {
 	validator *Validator
 	auditor   permissionports.SecurityAuditor
 	l         *zap.Logger
-	plans     platformplanports.PlanService
+	features  platformcatalogports.FeatureGate
 	issuers   httpsafe.Policy
 	grants    permissionports.RoleGrantGuard
 	db        kernelports.Transactor
@@ -68,7 +67,7 @@ func New(p Params) iamports.IAMService {
 		validator: p.Validator,
 		auditor:   p.Auditor,
 		l:         p.Logger.Named("service.iam"),
-		plans:     p.Plans,
+		features:  p.Features,
 		issuers:   p.SecurityConfig.SSOIssuerPolicy(),
 		grants:    p.RoleGrants,
 		db:        p.DB,
@@ -76,8 +75,8 @@ func New(p Params) iamports.IAMService {
 	}
 }
 
-func (s *service) requireSSO(ctx context.Context, tenantInfo pagination.TenantInfo) error {
-	return planservice.RequireCapability(ctx, s.plans, tenantInfo, platformplan.CapabilitySSO)
+func (s *service) requireSSO(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureIdentity)
 }
 
 func (s *service) ListIdentityProviders(
@@ -92,7 +91,7 @@ func (s *service) CreateIdentityProvider(
 	tenantInfo pagination.TenantInfo,
 	req *iamports.IdentityProviderRequest,
 ) (*iam.IdentityProvider, error) {
-	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+	if err := s.requireSSO(ctx); err != nil {
 		return nil, err
 	}
 	entity, err := s.identityProviderFromRequest(tenantInfo, req, nil)
@@ -122,7 +121,7 @@ func (s *service) UpdateIdentityProvider(
 	id pulid.ID,
 	req *iamports.IdentityProviderRequest,
 ) (*iam.IdentityProvider, error) {
-	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+	if err := s.requireSSO(ctx); err != nil {
 		return nil, err
 	}
 	existing, err := s.repo.GetIdentityProvider(ctx, tenantInfo, id)
@@ -335,7 +334,7 @@ func (s *service) CreateSCIMDirectory(
 	tenantInfo pagination.TenantInfo,
 	entity *iam.SCIMDirectory,
 ) (*iam.SCIMDirectory, error) {
-	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+	if err := s.requireSSO(ctx); err != nil {
 		return nil, err
 	}
 	entity.OrganizationID = tenantInfo.OrgID
@@ -618,7 +617,7 @@ func (s *service) CreateSCIMGroupRoleMapping(
 	directoryID pulid.ID,
 	entity *iam.SCIMGroupRoleMapping,
 ) (*iam.SCIMGroupRoleMapping, error) {
-	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+	if err := s.requireSSO(ctx); err != nil {
 		return nil, err
 	}
 	entity.OrganizationID = tenantInfo.OrgID

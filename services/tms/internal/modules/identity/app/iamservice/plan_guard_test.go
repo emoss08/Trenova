@@ -4,17 +4,17 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/require"
 )
 
-func TestSSOAndSCIMWritesRefuseWhenThePlanRestrictsSSO(t *testing.T) {
+func TestSSOAndSCIMWritesRefuseWhenSecurityAndIdentityIsOff(t *testing.T) {
 	t.Parallel()
 
-	svc := &service{plans: plantest.Restricting(t, platformplan.CapabilitySSO)}
+	svc := &service{features: plantest.Without(platformcatalog.FeatureIdentity)}
 	tenant := plantest.Tenant()
 
 	provider, err := svc.CreateIdentityProvider(t.Context(), tenant, &iamports.IdentityProviderRequest{})

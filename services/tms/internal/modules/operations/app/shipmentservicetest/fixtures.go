@@ -1,6 +1,7 @@
 package shipmentservicetest
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
@@ -54,8 +55,13 @@ func MakeStop(
 	return stop
 }
 
-func AssertErrorField(t *testing.T, multiErr *errortypes.MultiError, field string) {
+func AssertErrorField(t *testing.T, err error, field string) {
 	t.Helper()
+
+	multiErr, ok := errors.AsType[*errortypes.MultiError](err)
+	if !ok {
+		t.Fatalf("expected validation error on field %s, got %v", field, err)
+	}
 
 	for _, validationErr := range multiErr.Errors {
 		if validationErr.Field() == field {

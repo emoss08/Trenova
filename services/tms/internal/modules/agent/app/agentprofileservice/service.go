@@ -16,11 +16,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -59,7 +60,7 @@ type Params struct {
 	DispatchControls dispatchcontrolports.DispatchControlRepository
 	BillingControls  tenantports.BillingControlRepository
 	ShipmentControls tenantports.ShipmentControlRepository
-	Plans            platformplanports.PlanService
+	Features         platformcatalogports.FeatureGate
 	Scheduler        agentprofileports.Scheduler
 	Audit            auditports.AuditService
 	Realtime         realtimeports.RealtimeService
@@ -77,7 +78,7 @@ type Service struct {
 	dispatchControls dispatchcontrolports.DispatchControlRepository
 	billingControls  tenantports.BillingControlRepository
 	shipmentControls tenantports.ShipmentControlRepository
-	plans            platformplanports.PlanService
+	features         platformcatalogports.FeatureGate
 	scheduler        agentprofileports.Scheduler
 	audit            auditports.AuditService
 	realtime         realtimeports.RealtimeService
@@ -102,7 +103,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		dispatchControls: p.DispatchControls,
 		billingControls:  p.BillingControls,
 		shipmentControls: p.ShipmentControls,
-		plans:            p.Plans,
+		features:         p.Features,
 		scheduler:        p.Scheduler,
 		audit:            p.Audit,
 		realtime:         p.Realtime,
@@ -263,16 +264,12 @@ func (s *Service) gate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (agentprofileports.SkipReason, error) {
-	if err := s.plans.RequireCapability(
-		ctx,
-		tenantInfo,
-		platformplan.CapabilityAgentAutomation,
-	); err != nil {
+	if err := platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureAgentAutomation); err != nil {
 		if errortypes.IsPlanRestrictionError(err) {
 			return agentprofileports.SkipNotAllowed, nil
 		}
 
-		return "", fmt.Errorf("read the organization's plan: %w", err)
+		return "", fmt.Errorf("read the agent automation feature: %w", err)
 	}
 
 	control, err := s.controls.GetOrCreate(ctx, tenantInfo)
@@ -334,6 +331,9 @@ func (s *Service) workOutFacts(
 	if err != nil {
 		return nil, "", err
 	}
+	if org, err = s.onPlan(ctx, org); err != nil {
+		return nil, "", err
+	}
 
 	return OrganizationFacts(&OrganizationInputs{
 		Organization:    org,
@@ -343,6 +343,28 @@ func (s *Service) workOutFacts(
 		ShipmentControl: s.shipmentControl(ctx, tenantInfo),
 		WindowDays:      agentprofileports.OrganizationWindowDays,
 	}), org.Name, nil
+}
+
+func (s *Service) onPlan(
+	ctx context.Context,
+	org *tenant.Organization,
+) (*tenant.Organization, error) {
+	if !org.BrokerageEnabled {
+		return org, nil
+	}
+
+	brokerage, err := s.features.Enabled(ctx, platformcatalog.FeatureCarrierBrokerage)
+	if err != nil {
+		return nil, fmt.Errorf("ask whether carrier brokerage is on the plan: %w", err)
+	}
+	if brokerage {
+		return org, nil
+	}
+
+	effective := *org
+	effective.BrokerageEnabled = false
+
+	return &effective, nil
 }
 
 // The settings are optional facts: a setting that cannot be read is left out

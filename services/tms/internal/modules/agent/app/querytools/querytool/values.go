@@ -97,7 +97,10 @@ func InputTexts(inputs tarifftypes.Inputs) map[string]string {
 type ViewRun struct {
 	Outcome  SearchOutcome
 	Withheld []string
-	More     bool
+	// WithheldByPlan says, per add-on, which fields the organization's plan
+	// does not include.
+	WithheldByPlan []string
+	More           bool
 }
 
 func PointerSeconds(seconds *int64) int64 {

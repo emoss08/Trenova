@@ -2332,6 +2332,11 @@ type CannedReport struct {
 	Tags          []string       `json:"tags"`
 	DefaultFormat string         `json:"defaultFormat"`
 	Definition    map[string]any `json:"definition"`
+	// Whether the organization's plan includes everything the report reads. An
+	// unavailable report cannot be run, customized or explored.
+	Available bool `json:"available"`
+	// The add-on the report needs, when it is not available.
+	PlanDenial *ReportPlanDenial `json:"planDenial,omitempty"`
 }
 
 type CapacityMatch struct {
@@ -4813,13 +4818,13 @@ type DispatchBoardSummary struct {
 // The live tender riding on a move, condensed to what a board card chip needs: where the
 // waterfall stands and which carrier is currently holding the offer.
 type DispatchBoardTenderSummary struct {
-	ID                    string        `json:"id"`
-	Status                tender.Status `json:"status"`
-	Mode                  tender.Mode   `json:"mode"`
-	CurrentRank           int           `json:"currentRank"`
-	OfferCount            int           `json:"offerCount"`
-	CurrentCarrierName    string        `json:"currentCarrierName"`
-	CurrentOfferExpiresAt *int          `json:"currentOfferExpiresAt,omitempty"`
+	ID                    string         `json:"id"`
+	Status                *tender.Status `json:"status,omitempty"`
+	Mode                  *tender.Mode   `json:"mode,omitempty"`
+	CurrentRank           *int           `json:"currentRank,omitempty"`
+	OfferCount            *int           `json:"offerCount,omitempty"`
+	CurrentCarrierName    *string        `json:"currentCarrierName,omitempty"`
+	CurrentOfferExpiresAt *int           `json:"currentOfferExpiresAt,omitempty"`
 }
 
 type DispatchBulkAssignResult struct {
@@ -7291,6 +7296,13 @@ type GrantCarrierIntelOverrideInput struct {
 	ExpiresAt *int   `json:"expiresAt,omitempty"`
 }
 
+type GrantSupportAccessInput struct {
+	StaffEmail    string             `json:"staffEmail"`
+	Reason        string             `json:"reason"`
+	DurationHours int                `json:"durationHours"`
+	Scope         SupportAccessScope `json:"scope"`
+}
+
 type HandOffWatchtowerItemInput struct {
 	// Start this agent on the item's subject; omit to publish the item's event to whoever subscribes.
 	AgentDefinitionID *string `json:"agentDefinitionId,omitempty"`
@@ -7484,20 +7496,49 @@ type HomeLayoutPreset struct {
 	UpdatedAt          int           `json:"updatedAt"`
 }
 
+// One measure of a metric strip that the plan leaves out, while the rest of the
+// strip is on the plan.
+type HomeLockedMetric struct {
+	Metric string        `json:"metric"`
+	Label  string        `json:"label"`
+	Lock   *HomePlanLock `json:"lock"`
+}
+
 type HomeMetricOption struct {
 	Key   string `json:"key"`
 	Label string `json:"label"`
+	// Set when the plan leaves the measure out; it cannot be chosen.
+	PlanLock *HomePlanLock `json:"planLock,omitempty"`
+}
+
+// The add-on a widget or a measure needs that the organization's plan does not
+// include. A locked widget keeps its place on the home screen and the server reads
+// nothing for it; the client draws the add-on's name in its slot.
+type HomePlanLock struct {
+	Feature     string `json:"feature"`
+	FeatureName string `json:"featureName"`
+	AddOn       string `json:"addOn"`
+	AddOnName   string `json:"addOnName"`
 }
 
 // One card on the home canvas. Position is not stored: widgets are an ordered
 // list that the client packs into the grid, so order alone defines the layout.
 type HomeWidget struct {
-	ID     string            `json:"id"`
-	Key    string            `json:"key"`
+	ID  string `json:"id"`
+	Key string `json:"key"`
+	// The widget's name in the catalog, so a locked widget can be named without
+	// loading the catalog.
+	Label  string            `json:"label"`
 	Title  *string           `json:"title,omitempty"`
 	W      int               `json:"w"`
 	H      int               `json:"h"`
 	Config *HomeWidgetConfig `json:"config"`
+	// Set when the plan leaves the whole widget out. A widget the reader has no
+	// permission for is not returned at all; this is only ever the plan.
+	PlanLock *HomePlanLock `json:"planLock,omitempty"`
+	// The measures of a metric strip the plan leaves out. Empty for every other
+	// widget, and for a strip whose measures are all on the plan.
+	LockedMetrics []*HomeLockedMetric `json:"lockedMetrics"`
 }
 
 type HomeWidgetCatalog struct {
@@ -7565,6 +7606,9 @@ type HomeWidgetOption struct {
 	MinH             int     `json:"minH"`
 	MaxW             int     `json:"maxW"`
 	MaxH             int     `json:"maxH"`
+	// Set when the plan leaves the widget out: it is listed so an administrator can
+	// see it exists and which add-on carries it, and it cannot be added.
+	PlanLock *HomePlanLock `json:"planLock,omitempty"`
 }
 
 type HosCertificationSummary struct {
@@ -8063,6 +8107,43 @@ type MFAAuthenticatorEdge struct {
 	Cursor string                `json:"cursor"`
 }
 
+// What a Managed Trenova instance's plan includes and what it does not.
+type ManagedPlan struct {
+	// False on a self-hosted install, where every feature is on and every list here is empty.
+	Managed bool `json:"managed"`
+	// What the base plan includes.
+	Base []*ManagedPlanFeature `json:"base"`
+	// The add-ons on the plan.
+	Included []*ManagedPlanAddOn `json:"included"`
+	// The add-ons not on the plan.
+	Available []*ManagedPlanAddOn `json:"available"`
+	// The most recent changes to the plan that moved an add-on, newest first, at most 20.
+	Changes []*ManagedPlanChange `json:"changes"`
+}
+
+// An add-on Trenova sells, with the features it adds, in catalogue order. The key is for the client's own bookkeeping and is never shown.
+type ManagedPlanAddOn struct {
+	Key      string                `json:"key"`
+	Name     string                `json:"name"`
+	Features []*ManagedPlanFeature `json:"features"`
+}
+
+// One change Trenova made to the plan. The first entry an instance ever received is its starting plan: starting is true and joined lists what it included.
+type ManagedPlanChange struct {
+	ChangedAt int  `json:"changedAt"`
+	Starting  bool `json:"starting"`
+	// Add-ons that left the plan. What was entered with them is kept.
+	Left []*ManagedPlanAddOn `json:"left"`
+	// Add-ons that joined the plan.
+	Joined []*ManagedPlanAddOn `json:"joined"`
+}
+
+// A feature of the plan, by the name a person reads. The key is for the client's own bookkeeping and is never shown.
+type ManagedPlanFeature struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+}
+
 type ManualJournalConnection struct {
 	Edges      []*ManualJournalEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
@@ -8176,7 +8257,7 @@ type MyCarrierIntelligence struct {
 }
 
 type MySettlementList struct {
-	Items []*driversettlement.Settlement `json:"items"`
+	Items []*driversettlement.Settlement `json:"items,omitempty"`
 	Total int                            `json:"total"`
 	// Whether total was counted; false when it is the planner's estimate of a list too large to count.
 	TotalExact bool `json:"totalExact"`
@@ -8443,6 +8524,20 @@ type PageAccessKind struct {
 	CanRead      bool               `json:"canRead"`
 	Fields       []*PageAccessField `json:"fields"`
 	Withheld     int                `json:"withheld"`
+	// Set when the organization's plan leaves the kind out, so nobody sees it.
+	PlanDenial *PageAccessPlanDenial `json:"planDenial,omitempty"`
+}
+
+// The add-on a kind belongs to, named because the organization's plan does not include it.
+type PageAccessPlanDenial struct {
+	// The feature's key.
+	Feature string `json:"feature"`
+	// The feature's name, such as Factoring.
+	FeatureName string `json:"featureName"`
+	// The add-on's key.
+	AddOn string `json:"addOn"`
+	// The add-on's name, such as Accounting & Cash.
+	AddOnName string `json:"addOnName"`
 }
 
 type PageAccessPreviewInput struct {
@@ -9359,7 +9454,9 @@ type ReportBand struct {
 
 // The report catalog as the caller may use it: every kind they can read, and
 // every kind they cannot read that they can still reach through a join, with
-// only its reference-view fields available.
+// only its reference-view fields available. Tables, fields and edges the
+// organization's plan leaves out are not in entities; they are listed in
+// withheldByPlan.
 type ReportCatalog struct {
 	Version string `json:"version"`
 	// The engine's rules a builder offers: operators per value type with their
@@ -9368,6 +9465,8 @@ type ReportCatalog struct {
 	// operators, column naming and definition limits.
 	Rules    map[string]any         `json:"rules"`
 	Entities []*ReportCatalogEntity `json:"entities"`
+	// What the organization's plan leaves out of the catalog, with the add-on each needs.
+	WithheldByPlan []*ReportPlanWithheld `json:"withheldByPlan"`
 }
 
 type ReportCatalogEdge struct {
@@ -9605,6 +9704,35 @@ type ReportParameterInput struct {
 	Entity *string `json:"entity,omitempty"`
 }
 
+// The add-on a part of the product belongs to, named because the
+// organization's plan does not include it.
+type ReportPlanDenial struct {
+	// The feature's key.
+	Feature string `json:"feature"`
+	// The feature's name, such as Factoring.
+	FeatureName string `json:"featureName"`
+	// The add-on's key.
+	AddOn string `json:"addOn"`
+	// The add-on's name, such as Accounting & Cash.
+	AddOnName string `json:"addOnName"`
+}
+
+// A table, or a field or edge of a table on the plan, that the organization's
+// plan leaves out of the catalog. It is never offered to build with; it names
+// what a saved report reads that its plan does not include.
+type ReportPlanWithheld struct {
+	// The key of the table.
+	Entity string `json:"entity"`
+	// The table's label: its plural for a whole table, its singular for a field or edge.
+	EntityLabel string `json:"entityLabel"`
+	// The field's key or the edge's name; absent for a whole table.
+	Name  *string `json:"name,omitempty"`
+	Label string  `json:"label"`
+	// Whether name is an edge.
+	Edge   bool              `json:"edge"`
+	Denial *ReportPlanDenial `json:"denial"`
+}
+
 type ReportPreview struct {
 	Columns []*ReportPreviewColumn `json:"columns"`
 	// Detail and subtotal rows, each an array of values in column order.
@@ -9681,8 +9809,11 @@ type ReportRunDeskCard struct {
 	// kept, after the run expired, and when the result is withheld.
 	Sample *ReportPreview `json:"sample,omitempty"`
 	// Why a finished run's result is not shown: access (the person can no longer
-	// read everything it shows) or changed (the report no longer runs as it did).
+	// read everything it shows), plan (it reads data the organization's plan no
+	// longer includes) or changed (the report no longer runs as it did).
 	Withheld *string `json:"withheld,omitempty"`
+	// The add-on the run's report needs, when withheld is plan.
+	WithheldByPlan *ReportPlanDenial `json:"withheldByPlan,omitempty"`
 	// The person's previous finished run of the same report with the same parameters.
 	Previous *ReportRunDeskPrevious `json:"previous,omitempty"`
 	// The schedule the run came from.
@@ -9981,6 +10112,11 @@ type ReviseDeskMemoryInput struct {
 	Scope   *agentmemory.MemoryScope `json:"scope,omitempty"`
 	RoleID  *string                  `json:"roleId,omitempty"`
 	Version int                      `json:"version"`
+}
+
+type RevokeSupportAccessInput struct {
+	ID     string `json:"id"`
+	Reason string `json:"reason"`
 }
 
 type RewordWatchtowerPlayInput struct {
@@ -10521,7 +10657,7 @@ type Shipment struct {
 	// The sum of the freight lines.
 	FreightChargeAmount string `json:"freightChargeAmount"`
 	// The values the shipment's tariff prices with, by input name. Each value is a Tariff wire value.
-	TariffInputs map[string]any `json:"tariffInputs"`
+	TariffInputs map[string]any `json:"tariffInputs,omitempty"`
 	// The freight the shipment bills, line by line, as its last rating produced it.
 	FreightLines           []*ShipmentFreightLine `json:"freightLines"`
 	TotalChargeAmount      *string                `json:"totalChargeAmount,omitempty"`
@@ -10562,7 +10698,8 @@ type Shipment struct {
 	Customer          *ShipmentCustomer           `json:"customer,omitempty"`
 	BillToCustomer    *ShipmentCustomer           `json:"billToCustomer,omitempty"`
 	Owner             *tenant.User                `json:"owner,omitempty"`
-	FormulaTemplate   *ShipmentFormulaTemplate    `json:"formulaTemplate,omitempty"`
+	// The formula template that rates the shipment, for a caller who may read formula templates.
+	FormulaTemplate *ShipmentFormulaTemplate `json:"formulaTemplate,omitempty"`
 	// Every allocation on the shipment, across freight and accessorials.
 	ChargeAllocations []*shipment.ChargeAllocation `json:"chargeAllocations"`
 	// What each payer owes. Populated when the shipment is read with its charges;
@@ -10611,7 +10748,7 @@ type ShipmentAdditionalCharge struct {
 	Unit                   int            `json:"unit"`
 	FuelSurchargeProgramID *string        `json:"fuelSurchargeProgramId,omitempty"`
 	FuelSurchargeDetail    map[string]any `json:"fuelSurchargeDetail,omitempty"`
-	IsDetention            bool           `json:"isDetention"`
+	IsDetention            *bool          `json:"isDetention,omitempty"`
 	// Whether the shipment's tariff billed this charge.
 	IsTariff bool `json:"isTariff"`
 	// The tariff's label for the charge.
@@ -11367,7 +11504,7 @@ type ShipmentDetentionWatch struct {
 }
 
 type ShipmentDetentionWatchlist struct {
-	Items []*ShipmentDetentionWatchlistItem `json:"items"`
+	Items []*ShipmentDetentionWatchlistItem `json:"items,omitempty"`
 }
 
 type ShipmentDetentionWatchlistItem struct {
@@ -12001,20 +12138,20 @@ type ShipmentQuickFilterInput struct {
 // name the quote rather than repeating it: the quote holds the full explanation,
 // and copying it here would let the two drift.
 type ShipmentRatingDetail struct {
-	FormulaTemplateID   string `json:"formulaTemplateId"`
-	FormulaTemplateName string `json:"formulaTemplateName"`
-	RatedAt             int    `json:"ratedAt"`
+	FormulaTemplateID   *string `json:"formulaTemplateId,omitempty"`
+	FormulaTemplateName *string `json:"formulaTemplateName,omitempty"`
+	RatedAt             int     `json:"ratedAt"`
 	// The template version that rated the shipment. Zero when it was rated by hand.
-	VersionNumber int `json:"versionNumber"`
+	VersionNumber *int `json:"versionNumber,omitempty"`
 	// The bill the tariff produced. Null when the tariff refused or the shipment is rated by hand.
 	Bill *TariffBill `json:"bill,omitempty"`
 	// The tariff's reason for refusing to rate the shipment.
-	Refusal string `json:"refusal"`
+	Refusal *string `json:"refusal,omitempty"`
 	// Every best and worst the tariff evaluated, in the order they ran.
-	Choices []*TariffChoice `json:"choices"`
+	Choices []*TariffChoice `json:"choices,omitempty"`
 	// The inputs the tariff priced with, by name. Each value is a Tariff wire value.
-	Inputs  map[string]any        `json:"inputs"`
-	Skipped []*ShipmentRatingSkip `json:"skipped"`
+	Inputs  map[string]any        `json:"inputs,omitempty"`
+	Skipped []*ShipmentRatingSkip `json:"skipped,omitempty"`
 	// The values each statement of the tariff took and the table lookups it made, for the
 	// people who may read formula templates. Null for everyone else and for a hand rate.
 	Trace         map[string]any `json:"trace,omitempty"`
@@ -12027,7 +12164,7 @@ type ShipmentRatingDetail struct {
 	Source      string `json:"source"`
 	Explanation string `json:"explanation"`
 	// True while the bill's reviews wait on a person's approval, which holds the shipment out of billing.
-	AwaitingReview bool `json:"awaitingReview"`
+	AwaitingReview *bool `json:"awaitingReview,omitempty"`
 	// Who approved the reviews this rating carries, and when. Null until a person approves them.
 	ReviewApproval *ShipmentRatingReviewApproval `json:"reviewApproval,omitempty"`
 }
@@ -12322,10 +12459,11 @@ type ShipmentValidationResponse struct {
 	Valid bool `json:"valid"`
 }
 
+// The shipment board's watch tiles: aggregates of the organization's shipments, so a card of the shipment kind.
 type ShipmentWatchlist struct {
 	Deliveries *ShipmentDeliveryWatch  `json:"deliveries"`
 	Uncovered  *ShipmentUncoveredWatch `json:"uncovered"`
-	Detention  *ShipmentDetentionWatch `json:"detention"`
+	Detention  *ShipmentDetentionWatch `json:"detention,omitempty"`
 	Billing    *ShipmentBillingWatch   `json:"billing"`
 }
 
@@ -12519,6 +12657,57 @@ type SubmitMyExpenseInput struct {
 	AmountMinor  int     `json:"amountMinor"`
 	Description  string  `json:"description"`
 	IncurredDate *int    `json:"incurredDate,omitempty"`
+}
+
+// Time-limited access an administrator gave one named Trenova staff member to this organization.
+type SupportAccessGrant struct {
+	ID            string              `json:"id"`
+	StaffEmail    string              `json:"staffEmail"`
+	Reason        string              `json:"reason"`
+	Scope         SupportAccessScope  `json:"scope"`
+	DurationHours int                 `json:"durationHours"`
+	Status        SupportAccessStatus `json:"status"`
+	GrantedByName *string             `json:"grantedByName,omitempty"`
+	GrantedAt     int                 `json:"grantedAt"`
+	ExpiresAt     int                 `json:"expiresAt"`
+	RevokedAt     *int                `json:"revokedAt,omitempty"`
+	RevokedByName *string             `json:"revokedByName,omitempty"`
+	RevokeReason  *string             `json:"revokeReason,omitempty"`
+	// When staff last entered under this grant.
+	LastEnteredAt *int `json:"lastEnteredAt,omitempty"`
+	// The staff member's name as the control plane last asserted it.
+	LastStaffName *string `json:"lastStaffName,omitempty"`
+}
+
+type SupportAccessGrantConnection struct {
+	Edges      []*SupportAccessGrantEdge `json:"edges"`
+	PageInfo   *PageInfo                 `json:"pageInfo"`
+	TotalCount *int                      `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type SupportAccessGrantEdge struct {
+	Node   *SupportAccessGrant `json:"node"`
+	Cursor string              `json:"cursor"`
+}
+
+type SupportAccessSettings struct {
+	// False on a self-hosted install, and on a managed one until the control plane has delivered its keys.
+	Available bool `json:"available"`
+	// The Trenova staff email domain grants are limited to.
+	StaffDomain *string `json:"staffDomain,omitempty"`
+	// The lengths, in hours, a grant may have.
+	Durations     []int `json:"durations"`
+	MaxLiveGrants int   `json:"maxLiveGrants"`
+}
+
+// The caller's own session, when Trenova support opened it.
+type SupportSession struct {
+	StaffName  string             `json:"staffName"`
+	StaffEmail string             `json:"staffEmail"`
+	Scope      SupportAccessScope `json:"scope"`
+	EndsAt     int                `json:"endsAt"`
 }
 
 type TCASubscriptionConnection struct {
@@ -16229,17 +16418,20 @@ const (
 	PageAccessDecisionWithheldKind PageAccessDecision = "WITHHELD_KIND"
 	// Above the reader's sensitivity ceiling.
 	PageAccessDecisionWithheldSensitivity PageAccessDecision = "WITHHELD_SENSITIVITY"
+	// The kind, or the field, belongs to an add-on the organization's plan does not include.
+	PageAccessDecisionWithheldPlan PageAccessDecision = "WITHHELD_PLAN"
 )
 
 var AllPageAccessDecision = []PageAccessDecision{
 	PageAccessDecisionVisible,
 	PageAccessDecisionWithheldKind,
 	PageAccessDecisionWithheldSensitivity,
+	PageAccessDecisionWithheldPlan,
 }
 
 func (e PageAccessDecision) IsValid() bool {
 	switch e {
-	case PageAccessDecisionVisible, PageAccessDecisionWithheldKind, PageAccessDecisionWithheldSensitivity:
+	case PageAccessDecisionVisible, PageAccessDecisionWithheldKind, PageAccessDecisionWithheldSensitivity, PageAccessDecisionWithheldPlan:
 		return true
 	}
 	return false
@@ -18207,6 +18399,119 @@ func (e *StopType) UnmarshalJSON(b []byte) error {
 }
 
 func (e StopType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// How much a Trenova support grant lets staff do: read only, or an administrator's reach less what support may never do.
+type SupportAccessScope string
+
+const (
+	SupportAccessScopeReadOnly SupportAccessScope = "ReadOnly"
+	SupportAccessScopeFull     SupportAccessScope = "Full"
+)
+
+var AllSupportAccessScope = []SupportAccessScope{
+	SupportAccessScopeReadOnly,
+	SupportAccessScopeFull,
+}
+
+func (e SupportAccessScope) IsValid() bool {
+	switch e {
+	case SupportAccessScopeReadOnly, SupportAccessScopeFull:
+		return true
+	}
+	return false
+}
+
+func (e SupportAccessScope) String() string {
+	return string(e)
+}
+
+func (e *SupportAccessScope) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SupportAccessScope(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SupportAccessScope", str)
+	}
+	return nil
+}
+
+func (e SupportAccessScope) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SupportAccessScope) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SupportAccessScope) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SupportAccessStatus string
+
+const (
+	SupportAccessStatusLive    SupportAccessStatus = "Live"
+	SupportAccessStatusExpired SupportAccessStatus = "Expired"
+	SupportAccessStatusRevoked SupportAccessStatus = "Revoked"
+)
+
+var AllSupportAccessStatus = []SupportAccessStatus{
+	SupportAccessStatusLive,
+	SupportAccessStatusExpired,
+	SupportAccessStatusRevoked,
+}
+
+func (e SupportAccessStatus) IsValid() bool {
+	switch e {
+	case SupportAccessStatusLive, SupportAccessStatusExpired, SupportAccessStatusRevoked:
+		return true
+	}
+	return false
+}
+
+func (e SupportAccessStatus) String() string {
+	return string(e)
+}
+
+func (e *SupportAccessStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SupportAccessStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SupportAccessStatus", str)
+	}
+	return nil
+}
+
+func (e SupportAccessStatus) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SupportAccessStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SupportAccessStatus) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

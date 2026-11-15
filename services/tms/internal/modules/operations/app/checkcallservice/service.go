@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
@@ -40,6 +41,7 @@ type Params struct {
 	EmailService        emailports.EmailService
 	AuditService        auditports.AuditService
 	Observers           []checkcallports.CheckCallObserver `group:"check_call_observers"`
+	Features            platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -60,6 +62,7 @@ type Service struct {
 	emailService        emailports.EmailService
 	auditService        auditports.AuditService
 	observers           []checkcallports.CheckCallObserver
+	features            platformcatalogports.FeatureGate
 	now                 func() int64
 }
 
@@ -82,6 +85,7 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 		emailService:        p.EmailService,
 		auditService:        p.AuditService,
 		observers:           p.Observers,
+		features:            p.Features,
 		now:                 timeutils.NowUnix,
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -30,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -312,6 +314,10 @@ type observedCalls struct {
 	moves []pulid.ID
 }
 
+func (o *observedCalls) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureCustomerTracking
+}
+
 func (o *observedCalls) CheckCallRecorded(
 	_ context.Context,
 	_ pagination.TenantInfo,
@@ -414,6 +420,7 @@ func newHarness(t *testing.T) *harness {
 		EmailService:        h.email,
 		AuditService:        &mocks.NoopAuditService{},
 		Observers:           []checkcallports.CheckCallObserver{h.observer},
+		Features:            plantest.AllFeatures(),
 	})
 	h.svc.now = func() int64 { return testNow }
 	return h

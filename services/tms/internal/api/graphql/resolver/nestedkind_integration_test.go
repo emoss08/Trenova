@@ -39,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -255,11 +256,15 @@ func screenClient(
 				Moves:     crossref.MoveColumns(),
 			}),
 			CustomFieldsValuesService: customFields,
+			PlanFields:                plantest.Keeper(nil),
 		}),
 	})
 	server := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: root}))
 	server.AddTransport(transport.POST{})
-	server.Use(gqlext.NewFieldGuardExtension(gqlext.FieldGuardParams{PermissionEngine: engine}))
+	server.Use(gqlext.NewFieldGuardExtension(gqlext.FieldGuardParams{
+		PermissionEngine: engine,
+		Plan:             plantest.AllOn(),
+	}))
 
 	auth := &authctx.AuthContext{
 		PrincipalType:  "user",

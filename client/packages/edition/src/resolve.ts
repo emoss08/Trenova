@@ -9,12 +9,6 @@ import { EDITION_ROUTE_MOUNTS } from "./types";
 import type { ReactNode } from "react";
 import type { RouteObject } from "react-router";
 
-const NO_RESTRICTIONS: readonly string[] = Object.freeze([]);
-
-function useNoRestrictions(): readonly string[] {
-  return NO_RESTRICTIONS;
-}
-
 function EmptySlot(): ReactNode {
   return null;
 }
@@ -23,11 +17,7 @@ function FallbackLoginPrompt({ fallback }: LoginPromptProps): ReactNode {
   return fallback;
 }
 
-export const NO_PLAN: EditionPlan = Object.freeze({
-  useRestrictions: useNoRestrictions,
-  loadRestrictions: async () => NO_RESTRICTIONS,
-  restrictedRedirect: "/",
-});
+export const NO_PLAN: EditionPlan = Object.freeze({});
 
 /** Declares an edition. Identity at runtime; it exists so the definition is type-checked. */
 export function defineEdition(definition: EditionDefinition): EditionDefinition {

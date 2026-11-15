@@ -88,7 +88,7 @@ func Operations(
 	w := &linkWalker{
 		schema:    schema,
 		kinds:     kinds,
-		views:     refview.New(registry),
+		views:     refview.NewCatalog(registry),
 		checks:    checks,
 		fragments: make(map[string]*ast.FragmentDefinition, len(fragments)),
 	}
@@ -139,7 +139,7 @@ func LinkedFields(
 	if err != nil {
 		return nil, err
 	}
-	views := refview.New(registry)
+	views := refview.NewCatalog(registry)
 	var found []LinkedField
 	for i := range accesses {
 		for _, s := range accesses[i].Selections {
@@ -163,7 +163,7 @@ func LinkedFields(
 
 // BeyondView reports whether a selection is withheld from a caller who
 // cannot read its kind.
-func BeyondView(views *refview.Views, s Selection) bool {
+func BeyondView(views *refview.Catalog, s Selection) bool {
 	return s.Reach == refview.Nested && (s.Part || !views.InView(s.Kind, s.Field))
 }
 
@@ -185,7 +185,7 @@ func RequiredReads(op *ast.OperationDefinition) []permission.Resource {
 type linkWalker struct {
 	schema    *ast.Schema
 	kinds     map[string]permission.Resource
-	views     *refview.Views
+	views     *refview.Catalog
 	checks    RootChecks
 	fragments map[string]*ast.FragmentDefinition
 	op        *ast.OperationDefinition
@@ -263,6 +263,9 @@ func (w *linkWalker) field(parent *ast.Definition, f *ast.Field, frame linkFrame
 	}
 	if kind, ok := w.kinds[child.Name]; ok {
 		next.record = w.reach(kind, next)
+		if !isRoot(parent.Name) && Authorizes(def, kind) {
+			next.record = &recordContext{kind: kind, reach: refview.Root}
+		}
 		next.rootRecord = isRoot(parent.Name)
 		next.through = false
 		w.reached(next.record)
@@ -311,6 +314,7 @@ func (w *linkWalker) reach(kind permission.Resource, frame linkFrame) *recordCon
 	if frame.record != nil && w.views.PartOf(kind, frame.record.kind) {
 		carrier := *frame.record
 		carrier.part = carrier.part || carrier.kind != kind
+		carrier.own = kind
 		return &carrier
 	}
 

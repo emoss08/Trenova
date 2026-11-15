@@ -104,6 +104,7 @@ func (s *Sender) Compose(ctx context.Context, req *Request) (*Composed, error) {
 		Send: &emailports.SendEmailRequest{
 			TenantInfo:     req.TenantInfo,
 			ProfileID:      req.ProfileID,
+			Type:           email.TypeCustomerRequest,
 			Purpose:        email.PurposeBilling,
 			To:             req.To,
 			Subject:        rendered.Subject,
@@ -133,6 +134,7 @@ func (s *Sender) CanSend(ctx context.Context, tenantInfo pagination.TenantInfo) 
 	}
 	_, err := s.senders.ResolveSender(ctx, &emailports.SendEmailRequest{
 		TenantInfo: tenantInfo,
+		Type:       email.TypeCustomerRequest,
 		Purpose:    email.PurposeBilling,
 	})
 

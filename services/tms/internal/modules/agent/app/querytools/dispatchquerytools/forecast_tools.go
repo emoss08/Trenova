@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandfit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
@@ -91,6 +92,7 @@ func (t *forecastDemandTool) ParamSchema() map[string]any {
 func (t *forecastDemandTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceShipmentMove,
+		Feature:  platformcatalog.FeatureDispatchIntelligence,
 	})
 }
 

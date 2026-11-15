@@ -16,7 +16,11 @@ import {
 } from "@trenova/shared/types/organization-capability";
 import type { ReactNode } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
-import { dispatchControlTabs, type DispatchControlTab } from "../dispatch-control-tabs";
+import {
+  dispatchControlTabs,
+  useDispatchControlPlan,
+  type DispatchControlTab,
+} from "../dispatch-control-tabs";
 import { AssignmentTab } from "./assignment-tab";
 import { ComplianceTab } from "./compliance-tab";
 import { CostsTab } from "./costs-tab";
@@ -45,9 +49,11 @@ export default function DispatchControlForm() {
   const { handleSubmit, reset, getFieldState } = form;
 
   const capabilities = useOrgCapabilities();
+  const plan = useDispatchControlPlan();
   const specs = dispatchControlTabs({
     runsAssets: hasOrganizationCapability(capabilities, OrganizationCapability.AssetOperations),
     brokers: hasOrganizationCapability(capabilities, OrganizationCapability.Brokerage),
+    plan,
   });
   const [openTab, selectTab] = useSettingsTab(specs);
 

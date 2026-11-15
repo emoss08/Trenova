@@ -4,6 +4,7 @@ import { navigationConfig } from "@/config/navigation.config";
 import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
+import { PlanFeature } from "@/lib/plan-feature";
 import { pageFavorite } from "@/lib/queries/page-favorite";
 import {
   globalSearchService,
@@ -14,6 +15,7 @@ import { useRecentRecords } from "@/stores/recent-records-store";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { isMacPlatform } from "@trenova/shared/lib/shortcuts";
@@ -145,7 +147,9 @@ export function usePaletteCatalog(unreadNotifications: number): PaletteCatalog {
   const capabilities = useOrgCapabilities();
   const { theme } = useTheme();
   const mac = isMacPlatform();
-  const canUseAssistant = hasPermission(Resource.Assistant, Operation.Read);
+  // Nova is Trenova AI's: its commands and "Ask Nova about this" need it on the plan.
+  const novaOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
+  const canUseAssistant = hasPermission(Resource.Assistant, Operation.Read) && novaOnPlan;
   const assistantHidden = useAssistantHidden();
   const canCreateShipment = hasPermission(Resource.Shipment, Operation.Create);
   const currentHref = `${pathname}${search}${hash}`;

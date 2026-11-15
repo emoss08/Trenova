@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,6 +44,7 @@ type Params struct {
 	PersistedOps   *PersistedOperationManifest
 	Server         *gqlhandler.Server
 	Metrics        *metrics.Registry
+	Plan           *onplan.Lookup
 }
 
 type Handler struct {
@@ -54,6 +56,7 @@ type Handler struct {
 	persistedOps   *PersistedOperationManifest
 	server         *gqlhandler.Server
 	metrics        *httpmetrics.GraphQL
+	plan           *onplan.Lookup
 }
 
 func New(p Params) *Handler {
@@ -66,6 +69,7 @@ func New(p Params) *Handler {
 		persistedOps:   p.PersistedOps,
 		server:         p.Server,
 		metrics:        p.Metrics.GraphQL,
+		plan:           p.Plan,
 	}
 }
 
@@ -110,6 +114,7 @@ func (h *Handler) handle(c *gin.Context) {
 		UserAgent: c.Request.UserAgent(),
 	})
 	reqCtx = gqlctx.WithPermissionMemo(reqCtx, gqlctx.NewPermissionMemo())
+	reqCtx = gqlctx.WithPlanMemo(reqCtx, h.plan.Memo())
 	responseStatus := gqlctx.NewResponseStatus()
 	reqCtx = gqlctx.WithResponseStatus(reqCtx, responseStatus)
 	reqCtx = h.loaders.Attach(reqCtx, pagination.TenantInfo{

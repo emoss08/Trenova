@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/subjectaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
@@ -51,16 +52,13 @@ func (s *Access) AssertPageTurn(
 		)
 	}
 	if thread.HasSubject() {
-		allowed, err := s.MayReadSubject(ctx, actor, thread.SubjectType)
-		if err != nil {
-			return err
-		}
-		if !allowed {
-			return errortypes.NewAuthorizationError(
+		return subjectaccess.Refusal(
+			ctx, s.Permissions, actor, thread.SubjectType,
+			errortypes.NewAuthorizationError(
 				"You no longer have access to the {0} this conversation is about.",
 				thread.SubjectType.Noun(),
-			)
-		}
+			),
+		)
 	}
 
 	return nil

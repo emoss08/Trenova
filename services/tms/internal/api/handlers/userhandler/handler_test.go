@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/validationtest"
+
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -55,6 +57,7 @@ type setupOptions struct {
 	roleRepo    *permissionportsmock.MockRoleRepository
 	sessionRepo *sessionportsmock.MockSessionRepository
 	storage     *kernelportsmock.MockClient
+	orgs        *tenantportsmock.MockOrganizationService
 	permEngine  permissionports.PermissionEngine
 	mfa         sessionports.MFAService
 	cfg         *config.Config
@@ -81,6 +84,9 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	}
 	if opts.storage == nil {
 		opts.storage = kernelportsmock.NewMockClient(t)
+	}
+	if opts.orgs == nil {
+		opts.orgs = organizationsReturning(t, completeOrganization())
 	}
 	if opts.cfg == nil {
 		opts.cfg = &config.Config{
@@ -130,8 +136,10 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		RoleRepo:         opts.roleRepo,
 		Notifier:         &permchangetest.Recorder{},
 		PermissionEngine: opts.permEngine,
-		Validator:        roleservice.NewValidator(roleservice.ValidatorParams{}),
-		Registry:         permissioncatalog.NewEmptyRegistry(),
+		Validator: roleservice.NewValidator(roleservice.ValidatorParams{
+			Integrity: validationtest.NewIntegrity(),
+		}),
+		Registry: permissioncatalog.NewEmptyRegistry(),
 	})
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
@@ -147,6 +155,7 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	return userhandler.New(userhandler.Params{
 		Service:              userSvc,
 		RoleService:          roleSvc,
+		Organizations:        opts.orgs,
 		PermissionEngine:     opts.permEngine,
 		MFA:                  opts.mfa,
 		SecurityConfig:       &opts.cfg.Security,

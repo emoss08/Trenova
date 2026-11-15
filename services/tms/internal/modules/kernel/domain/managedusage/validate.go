@@ -35,7 +35,7 @@ func (s *State) Validate() error {
 		}
 		seen[m.Meter] = struct{}{}
 		if !m.Unit.IsValid() {
-			field.Add("unit", errortypes.ErrInvalid, "The unit is count, cents or bytes")
+			field.Add("unit", errortypes.ErrInvalid, "The unit is count or bytes")
 		}
 		if m.Quantity < 0 {
 			field.Add("quantity", errortypes.ErrInvalid, "The quantity cannot be negative")

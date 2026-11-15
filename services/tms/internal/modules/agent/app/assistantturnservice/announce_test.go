@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -57,6 +58,7 @@ func announcing(turns assistantturnports.AssistantTurnRepository) (*Service, *re
 
 	return &Service{
 		l: zap.NewNop(), turns: turns, realtime: realtime, chapters: agenttest.QuietChapters{},
+		features: plantest.AllFeatures(),
 	}, realtime
 }
 

@@ -3,6 +3,8 @@ package formulatemplateimportservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/formulatemplatetest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -29,7 +31,7 @@ func setupTest(t *testing.T) *testDeps {
 		VersionRepo:  kit.VersionRepo,
 		Checker:      kit.Checker,
 		Resolver:     kit.Resolver,
-		AuditService: kit.AuditSvc,
+		AuditService: kit.AuditSvc, Features: plantest.AllFeatures(),
 	})
 	return &testDeps{
 		repo:        kit.Repo,

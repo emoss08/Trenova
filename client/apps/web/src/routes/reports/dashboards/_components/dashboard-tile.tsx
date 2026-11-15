@@ -3,6 +3,8 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useReportPreview } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
+import { planRestrictionOf } from "@trenova/shared/lib/plan-limit";
+import { PlanLockedNotice } from "@trenova/shared/components/plan-locked";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReportChartSpec, ReportDashboardFilter, ReportDashboardTile } from "@/types/report";
 import { AlertCircleIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
@@ -91,8 +93,9 @@ export function DashboardTileBody({
   // saved dashboard, so a tile you just added previews immediately instead of
   // waiting to be persisted. Authorization is unchanged: the preview compiles
   // and authorizes the same IR the report itself would run.
+  const offPlan = report.planDenial != null;
   const resolved = useMemo(() => {
-    if (tile.kind === "text" || !report.ir) return null;
+    if (tile.kind === "text" || !report.ir || offPlan) return null;
     const scoped = tile.limit ? { ...report.ir, limit: tile.limit } : report.ir;
     return applyTileFilters(irToInput(scoped), tile, {
       filters,
@@ -101,7 +104,7 @@ export function DashboardTileBody({
       tileFilterValues,
       params,
     });
-  }, [tile, report.ir, filters, filterValues, tileFilters, tileFilterValues, params]);
+  }, [tile, report.ir, offPlan, filters, filterValues, tileFilters, tileFilterValues, params]);
 
   const data = useReportPreview(resolved?.definition ?? null, resolved?.params);
 
@@ -117,10 +120,35 @@ export function DashboardTileBody({
     return <TileSkeleton />;
   }
 
+  if (report.planDenial) {
+    return (
+      <PlanLockedNotice
+        variant="card"
+        title={report.name}
+        featureName={report.planDenial.featureName}
+        addOnName={report.planDenial.addOnName}
+        className="m-2 min-h-0 flex-1"
+      />
+    );
+  }
+
   // Without a resolved report there is nothing to query, and a disabled query
   // would otherwise sit on "pending" forever.
   if (!report.ir) {
     return <TileMessage>{t("This tile's report is no longer available.")}</TileMessage>;
+  }
+
+  const restriction = data.isError ? planRestrictionOf(data.error) : null;
+  if (restriction) {
+    return (
+      <PlanLockedNotice
+        variant="card"
+        title={report.name}
+        featureName=""
+        addOnName={restriction.addOn}
+        className="m-2 min-h-0 flex-1"
+      />
+    );
   }
 
   if (data.isError) {

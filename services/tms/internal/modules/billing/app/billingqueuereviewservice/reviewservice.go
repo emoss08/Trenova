@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -41,6 +42,7 @@ type Params struct {
 	AgreementRepo   rateagreementports.RateAgreementRepository
 	DriverNotifier  *drivernotificationservice.Service
 	DocumentContent documentports.DocumentContentService
+	Features        platformcatalogports.FeatureGate
 }
 
 // Service is the review a biller does from one item: settling and
@@ -94,6 +96,7 @@ func New(p Params) billingqueueports.BillingQueueReviewService {
 			OccurrenceRepo: p.OccurrenceRepo,
 			AgreementRepo:  p.AgreementRepo,
 			InvoiceRepo:    p.InvoiceRepo,
+			Features:       p.Features,
 		}),
 	}
 }

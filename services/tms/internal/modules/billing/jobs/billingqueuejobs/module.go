@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.uber.org/fx"
@@ -27,6 +28,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            RecheckSweepScheduleID,
+			Feature:       platformcatalog.FeatureBilling,
 			Description:   "Mark queue items whose checks are missing or stale as due and wake the tenants with due items",
 			Spec:          schedule.Every(recheckSweepInterval),
 			Workflow:      BillingQueueRecheckSweepWorkflow,
@@ -38,6 +40,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            NovaGenerationSweepScheduleID,
+			Feature:       platformcatalog.FeatureAgentAutomation,
 			Description:   "Write, in bulk, the reviews and briefs billing queues are missing",
 			Spec:          schedule.Every(novaGenerationSweepInterval),
 			Workflow:      BillingQueueNovaGenerationSweepWorkflow,

@@ -1,6 +1,7 @@
 package planservice_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,23 +19,43 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func requireReason(t *testing.T, err error, reason, capability string) {
+type featureGate struct {
+	disabled map[platformcatalog.FeatureKey]bool
+}
+
+func (g featureGate) Enabled(_ context.Context, feature platformcatalog.FeatureKey) (bool, error) {
+	return !g.disabled[feature], nil
+}
+
+func allFeatures() featureGate {
+	return featureGate{}
+}
+
+func withoutAPIKeys() featureGate {
+	return featureGate{disabled: map[platformcatalog.FeatureKey]bool{
+		platformcatalog.FeatureAPIKeys: true,
+	}}
+}
+
+func requireRestriction(t *testing.T, err error, reason, feature, plan string) {
 	t.Helper()
 
 	restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err)
 	require.True(t, ok, "expected a plan restriction, got %v", err)
 	assert.Equal(t, reason, restriction.Reason)
-	assert.Equal(t, capability, restriction.Capability)
+	assert.Equal(t, feature, restriction.Feature)
+	assert.Empty(t, restriction.AddOn)
+	assert.Equal(t, plan, restriction.Plan)
 }
 
-func TestAdmitIgnoresNonCloudAndUnscopedRequests(t *testing.T) {
+func TestAdmitIgnoresUnenforcedPlansAndUnscopedRequests(t *testing.T) {
 	t.Parallel()
 
-	require.NoError(t, planservice.Admit(t.Context(), nil, &planservice.AdmissionRequest{Write: true}))
 	require.NoError(t, planservice.Admit(
 		t.Context(),
 		planservice.NewUnlimited(),
-		&planservice.AdmissionRequest{TenantInfo: plantest.Tenant(), Write: true},
+		allFeatures(),
+		&planservice.AdmissionRequest{TenantInfo: plantest.Tenant(), Write: true, APIKey: true},
 	))
 
 	plans := platformplanportsmock.NewMockPlanService(t)
@@ -41,6 +63,7 @@ func TestAdmitIgnoresNonCloudAndUnscopedRequests(t *testing.T) {
 	require.NoError(t, planservice.Admit(
 		t.Context(),
 		plans,
+		allFeatures(),
 		&planservice.AdmissionRequest{TenantInfo: pagination.TenantInfo{}, Write: true},
 	))
 }
@@ -51,11 +74,12 @@ func TestAdmitLetsUnmanagedOrganizationsThrough(t *testing.T) {
 	tenant := plantest.Tenant()
 	plans := plantest.Cloud(t, tenant, plantest.Unmanaged(tenant))
 
-	require.NoError(t, planservice.Admit(t.Context(), plans, &planservice.AdmissionRequest{
-		TenantInfo: tenant,
-		Write:      true,
-		APIKey:     true,
-	}))
+	require.NoError(t, planservice.Admit(
+		t.Context(),
+		plans,
+		allFeatures(),
+		&planservice.AdmissionRequest{TenantInfo: tenant, Write: true, APIKey: true},
+	))
 }
 
 func TestAdmitRefusesWritesWhileReadOnly(t *testing.T) {
@@ -64,15 +88,19 @@ func TestAdmitRefusesWritesWhileReadOnly(t *testing.T) {
 	tenant := plantest.Tenant()
 	plans := plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusReadOnly))
 
-	err := planservice.Admit(t.Context(), plans, &planservice.AdmissionRequest{
+	err := planservice.Admit(t.Context(), plans, allFeatures(), &planservice.AdmissionRequest{
 		TenantInfo: tenant,
 		Write:      true,
 	})
-	requireReason(t, err, platformplan.ReasonSubscriptionReadOnly, "")
+	requireRestriction(t, err, platformplan.ReasonSubscriptionReadOnly, "", "free_demo")
+	assert.Equal(t, "This organization's trial has ended and it is now read-only", err.Error())
 
-	require.NoError(t, planservice.Admit(t.Context(), plans, &planservice.AdmissionRequest{
-		TenantInfo: tenant,
-	}))
+	require.NoError(t, planservice.Admit(
+		t.Context(),
+		plans,
+		allFeatures(),
+		&planservice.AdmissionRequest{TenantInfo: tenant},
+	))
 }
 
 func TestAdmitRefusesEverythingOnceExpiredUnlessAllowed(t *testing.T) {
@@ -81,43 +109,85 @@ func TestAdmitRefusesEverythingOnceExpiredUnlessAllowed(t *testing.T) {
 	tenant := plantest.Tenant()
 	plans := plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusExpired))
 
-	err := planservice.Admit(t.Context(), plans, &planservice.AdmissionRequest{TenantInfo: tenant})
-	requireReason(t, err, platformplan.ReasonSubscriptionExpired, "")
+	err := planservice.Admit(
+		t.Context(),
+		plans,
+		allFeatures(),
+		&planservice.AdmissionRequest{TenantInfo: tenant},
+	)
+	requireRestriction(t, err, platformplan.ReasonSubscriptionExpired, "", "free_demo")
+	assert.Equal(t, "This organization's trial has expired", err.Error())
 
-	require.NoError(t, planservice.Admit(t.Context(), plans, &planservice.AdmissionRequest{
-		TenantInfo: tenant,
-		ExpiredOK:  true,
-	}))
+	require.NoError(t, planservice.Admit(
+		t.Context(),
+		plans,
+		allFeatures(),
+		&planservice.AdmissionRequest{TenantInfo: tenant, ExpiredOK: true},
+	))
 
-	err = planservice.Admit(t.Context(), plans, &planservice.AdmissionRequest{
+	err = planservice.Admit(t.Context(), plans, allFeatures(), &planservice.AdmissionRequest{
 		TenantInfo: tenant,
 		ExpiredOK:  true,
 		Write:      true,
 	})
-	requireReason(t, err, platformplan.ReasonSubscriptionExpired, "")
+	requireRestriction(t, err, platformplan.ReasonSubscriptionExpired, "", "free_demo")
 }
 
-func TestAdmitRefusesAPIKeysWhenThePlanRestrictsThem(t *testing.T) {
+func TestAdmitReportsExpiryBeforeAMissingAPIKeyFeature(t *testing.T) {
+	t.Parallel()
+
+	tenant := plantest.Tenant()
+	plans := plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusExpired))
+
+	err := planservice.Admit(t.Context(), plans, withoutAPIKeys(), &planservice.AdmissionRequest{
+		TenantInfo: tenant,
+		APIKey:     true,
+	})
+	requireRestriction(t, err, platformplan.ReasonSubscriptionExpired, "", "free_demo")
+}
+
+func TestAdmitRefusesAnAPIKeyWhenTheInstanceLacksTheFeature(t *testing.T) {
+	t.Parallel()
+
+	tenant := plantest.Tenant()
+
+	err := planservice.Admit(
+		t.Context(),
+		planservice.NewUnlimited(),
+		withoutAPIKeys(),
+		&planservice.AdmissionRequest{TenantInfo: tenant, APIKey: true},
+	)
+	requireRestriction(t, err, errortypes.PlanRestrictionReasonPlan, "platform.api_keys", "")
+	assert.Equal(t, "This feature is not available on your organization's plan", err.Error())
+
+	plans := plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusTrialing))
+	err = planservice.Admit(t.Context(), plans, withoutAPIKeys(), &planservice.AdmissionRequest{
+		TenantInfo: tenant,
+		APIKey:     true,
+		Write:      true,
+	})
+	requireRestriction(t, err, errortypes.PlanRestrictionReasonPlan, "platform.api_keys", "")
+
+	require.NoError(t, planservice.Admit(
+		t.Context(),
+		plans,
+		withoutAPIKeys(),
+		&planservice.AdmissionRequest{TenantInfo: tenant, Write: true},
+	))
+}
+
+func TestAdmitAllowsAnAPIKeyWhenTheInstanceHasTheFeature(t *testing.T) {
 	t.Parallel()
 
 	tenant := plantest.Tenant()
 	plans := plantest.Cloud(t, tenant, plantest.FreeDemo(t, tenant, subscription.StatusTrialing))
 
-	err := planservice.Admit(t.Context(), plans, &planservice.AdmissionRequest{
-		TenantInfo: tenant,
-		APIKey:     true,
-	})
-	requireReason(
-		t,
-		err,
-		platformplan.ReasonPlanRestricted,
-		platformplan.CapabilityAPIKeys.String(),
-	)
-
-	require.NoError(t, planservice.Admit(t.Context(), plans, &planservice.AdmissionRequest{
-		TenantInfo: tenant,
-		Write:      true,
-	}))
+	require.NoError(t, planservice.Admit(
+		t.Context(),
+		plans,
+		allFeatures(),
+		&planservice.AdmissionRequest{TenantInfo: tenant, APIKey: true, Write: true},
+	))
 }
 
 func TestAdmitReturnsResolutionErrors(t *testing.T) {
@@ -129,56 +199,13 @@ func TestAdmitReturnsResolutionErrors(t *testing.T) {
 	plans.EXPECT().EnforcesPlans().Return(true)
 	plans.EXPECT().Resolve(mock.Anything, tenant.OrgID, tenant.BuID).Return(nil, boom)
 
-	err := planservice.Admit(t.Context(), plans, &planservice.AdmissionRequest{TenantInfo: tenant})
-	require.ErrorIs(t, err, boom)
-}
-
-func TestRequireCapabilityHelperToleratesNoPlanService(t *testing.T) {
-	t.Parallel()
-
-	require.NoError(t, planservice.RequireCapability(
-		t.Context(),
-		nil,
-		plantest.Tenant(),
-		platformplan.CapabilitySMS,
-	))
-
-	plans := plantest.Restricting(t, platformplan.CapabilitySMS)
-	err := planservice.RequireCapability(
+	err := planservice.Admit(
 		t.Context(),
 		plans,
-		plantest.Tenant(),
-		platformplan.CapabilitySMS,
+		allFeatures(),
+		&planservice.AdmissionRequest{TenantInfo: tenant},
 	)
-	require.True(t, errortypes.IsPlanRestrictionError(err))
-}
-
-func TestAllowsSeparatesRestrictionsFromFailures(t *testing.T) {
-	t.Parallel()
-
-	tenant := plantest.Tenant()
-
-	allowed, err := planservice.Allows(t.Context(), nil, tenant, platformplan.CapabilitySSO)
-	require.NoError(t, err)
-	assert.True(t, allowed)
-
-	allowed, err = planservice.Allows(
-		t.Context(),
-		plantest.Restricting(t, platformplan.CapabilitySSO),
-		tenant,
-		platformplan.CapabilitySSO,
-	)
-	require.NoError(t, err)
-	assert.False(t, allowed)
-
-	boom := errors.New("resolve failed")
-	plans := platformplanportsmock.NewMockPlanService(t)
-	plans.EXPECT().
-		RequireCapability(mock.Anything, tenant, platformplan.CapabilitySSO).
-		Return(boom)
-	allowed, err = planservice.Allows(t.Context(), plans, tenant, platformplan.CapabilitySSO)
 	require.ErrorIs(t, err, boom)
-	assert.False(t, allowed)
 }
 
 func TestRequireWritableHelperDelegates(t *testing.T) {
@@ -187,7 +214,10 @@ func TestRequireWritableHelperDelegates(t *testing.T) {
 	tenant := plantest.Tenant()
 	require.NoError(t, planservice.RequireWritable(t.Context(), nil, tenant))
 
-	refusal := errortypes.NewPlanRestrictionError("", platformplan.ReasonSubscriptionReadOnly, "free_demo")
+	refusal := errortypes.NewPlanRestrictionError(
+		platformplan.ReasonSubscriptionReadOnly,
+		"free_demo",
+	)
 	plans := platformplanportsmock.NewMockPlanService(t)
 	plans.EXPECT().RequireWritable(mock.Anything, tenant).Return(refusal)
 	require.ErrorIs(t, planservice.RequireWritable(t.Context(), plans, tenant), refusal)

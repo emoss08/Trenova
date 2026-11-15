@@ -43,6 +43,9 @@ var authOnlyAllowlist = map[string]string{
 
 	"QueryResolver.HomeWidgetCatalog": "static catalog of widgets; carries no resource data",
 
+	"QueryResolver.CurrentSupportSession": "describes only the caller's own session: the " +
+		"Trenova support banner's staff name, scope and end, null for everyone else",
+
 	"MutationResolver.CreateTableConfiguration": "anyone may keep a private view; the service " +
 		"refuses to publish one to the organization without table_configuration:create",
 	"MutationResolver.UpdateTableConfiguration": "only the owner may change a view, and the " +

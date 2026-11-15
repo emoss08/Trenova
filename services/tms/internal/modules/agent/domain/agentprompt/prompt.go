@@ -149,7 +149,9 @@ const (
 // stable prefix: the tool section names what find_tools can load by area of
 // Trenova instead of listing each tool the turn did not open with, and it and
 // the person's profile sit in the cached part; a lookup handed to another
-// agent says it changes nothing.
+// agent says it changes nothing. A plan without some add-ons adds a section
+// naming them (buildPlanSection); with every add-on on the prompt is
+// unchanged, so the version is too.
 const PromptVersion = "agent-definition/v11"
 
 // SystemPrompt is a system prompt in the two parts a provider's prompt cache
@@ -201,6 +203,7 @@ func BuildSystemPromptParts(
 		section(&stable, buildToolSection(rc))
 	}
 
+	section(&stable, buildPlanSection(rc.NotOnPlan))
 	section(&stable, buildDelegateSection(rc.Delegates))
 
 	if rc.Artifacts && d.OutputMode != agentdefinition.OutputReport {
@@ -1035,6 +1038,43 @@ func buildPendingProposalSection(pending []agentturn.PendingProposal, requestabl
 			builder.WriteString(stringutils.Ellipsize(rationale, maxPendingProposalRationaleChars))
 		}
 	}
+
+	return builder.String()
+}
+
+// buildPlanSection names the add-ons the organization's plan leaves out. No
+// tool for them is offered or can be found, so without it a model asked about
+// one either said Trenova cannot do it or guessed; with it, it says the work
+// is part of an add-on the plan does not include. One line per add-on, so it
+// is bounded by the catalog; nothing when every add-on is on.
+func buildPlanSection(addOns []agentturn.PlanAddOn) string {
+	if len(addOns) == 0 {
+		return ""
+	}
+
+	var builder strings.Builder
+	builder.WriteString("## The organization's plan\n")
+	builder.WriteString("These add-ons are not on this organization's plan. No tool for " +
+		"them exists here, and find_tools cannot load one:")
+	for _, addOn := range addOns {
+		builder.WriteString("\n- ")
+		builder.WriteString(addOn.Name)
+		if len(addOn.Features) == 0 {
+			continue
+		}
+		builder.WriteString(" (")
+		builder.WriteString(strings.Join(addOn.Features, ", "))
+		if addOn.MoreFeatures > 0 {
+			builder.WriteString(" and ")
+			builder.WriteString(strconv.Itoa(addOn.MoreFeatures))
+			builder.WriteString(" more")
+		}
+		builder.WriteString(")")
+	}
+	builder.WriteString("\n\nWhen a request needs one of them, say it is part of that add-on, " +
+		"which is not on the organization's plan, and that an administrator can add it. " +
+		"Do not guess at the answer or look for it another way, and do everything else " +
+		"that was asked.")
 
 	return builder.String()
 }

@@ -8,11 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -22,6 +21,7 @@ import (
 type structuredCall struct {
 	tenant     pagination.TenantInfo
 	documentID pulid.ID
+	pages      int
 	feature    aiusage.Feature
 	task       aitask.Task
 	metric     string
@@ -32,7 +32,7 @@ type structuredCall struct {
 }
 
 func (c *structuredCall) novaTask(maxTokens int) *llmports.NovaTask {
-	attribution := documentAttribution(c.tenant, c.documentID, c.feature)
+	attribution := documentAttribution(c.tenant, c.documentID, c.feature, c.pages)
 
 	return &llmports.NovaTask{
 		Name:         c.task,
@@ -52,10 +52,14 @@ func documentAttribution(
 	tenant pagination.TenantInfo,
 	documentID pulid.ID,
 	feature aiusage.Feature,
+	pages int,
 ) aiusageports.AIUsageAttribution {
 	attribution := aiusageports.AIUsageAttribution{
 		UserID:  tenant.UserID,
 		Feature: feature,
+	}
+	if feature == aiusage.FeatureDocumentIntelligenceExtract {
+		attribution.Pages = billedPages(pages)
 	}
 	if documentID.IsNotNil() {
 		attribution.Subject = aiusage.Subject{
@@ -120,7 +124,7 @@ func (s *Service) recordAIUsage(operation string, success bool, outcome string) 
 }
 
 func (s *Service) admit(ctx context.Context, call *structuredCall) error {
-	if err := s.requireDocumentIntelligence(ctx, call.tenant); err != nil {
+	if err := s.requireDocumentIntelligence(ctx); err != nil {
 		return err
 	}
 	if call.feature != aiusage.FeatureDocumentIntelligenceExtract {
@@ -129,19 +133,19 @@ func (s *Service) admit(ctx context.Context, call *structuredCall) error {
 
 	return quotaservice.Preflight(ctx, s.quota, &platformplanports.QuotaRequest{
 		TenantInfo: call.tenant,
-		Meter:      platformcatalog.MeterDocumentAIExtractions,
-		Quantity:   1,
+		Meter:      platformcatalog.MeterDocumentIntelligencePages,
+		Quantity:   int64(billedPages(call.pages)),
 	})
 }
 
-func (s *Service) requireDocumentIntelligence(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) error {
-	return planservice.RequireCapability(
+func billedPages(pages int) int {
+	return max(pages, 1)
+}
+
+func (s *Service) requireDocumentIntelligence(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(
 		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityDocumentIntelligence,
+		s.features,
+		platformcatalog.FeatureDocumentIntelligence,
 	)
 }

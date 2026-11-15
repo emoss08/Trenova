@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -71,6 +72,7 @@ type Params struct {
 	CustomerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	AccountingPolicy   *accountingcontrolpolicyservice.Service
 	Realtime           realtimeports.RealtimeService
+	Features           platformcatalogports.FeatureGate
 }
 
 // Engine computes what an invoice adjustment would do and carries out an
@@ -106,6 +108,7 @@ type Engine struct {
 	customerLedgerRepo customerledgerports.CustomerLedgerProjectionRepository
 	accountingPolicy   *accountingcontrolpolicyservice.Service
 	realtime           realtimeports.RealtimeService
+	features           platformcatalogports.FeatureGate
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -139,6 +142,7 @@ func New(p Params) *Engine {
 		customerLedgerRepo: p.CustomerLedgerRepo,
 		accountingPolicy:   p.AccountingPolicy,
 		realtime:           p.Realtime,
+		features:           p.Features,
 	}
 	engine.credits = p.CreditApplier
 

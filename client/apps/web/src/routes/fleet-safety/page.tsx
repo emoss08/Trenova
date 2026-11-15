@@ -37,7 +37,10 @@ export function FleetSafetyPage() {
   const { allowed: canReadFleet } = usePermission(Resource.WorkerSafetyEvent, Operation.Read);
   const { allowed: canReadIntel } = usePermission(Resource.CarrierIntelligence, Operation.Read);
 
-  const activeView: FleetSafetyView = !canReadFleet && canReadIntel ? "my-dot" : view;
+  // My DOT reads carrier intelligence, which is Carrier & Brokerage's: a link to it from a plan
+  // or a role without that read opens on the fleet rather than on a refusal.
+  const activeView: FleetSafetyView =
+    !canReadFleet && canReadIntel ? "my-dot" : view === "my-dot" && !canReadIntel ? "fleet" : view;
 
   return (
     <PageLayout

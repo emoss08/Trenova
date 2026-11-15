@@ -47,12 +47,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -105,10 +104,10 @@ type ActivitiesParams struct {
 	RunCloser   agentruntimeports.RunCloser
 	// Chases and EventRuns are the queued agent work whose lost wakes the
 	// expiry sweep makes up for.
-	Chases        *podchasecontract.Routine
-	EventRuns     *agenteventcontract.Queue
-	Schedules     *agentcontract.DefinitionSchedules
-	PlatformPlans platformplanports.PlanService
+	Chases    *podchasecontract.Routine
+	EventRuns *agenteventcontract.Queue
+	Schedules *agentcontract.DefinitionSchedules
+	Features  platformcatalogports.FeatureGate
 	// Waits reads the wait whose ending started a run that picks up work.
 	Waits agentwaitports.AgentWaitRepository
 	// CaseOptions reads the option a person chose on a record's case, for a
@@ -145,7 +144,7 @@ type Activities struct {
 	runCloser        agentruntimeports.RunCloser
 	queuedWork       []queuedWaker
 	schedules        *agentcontract.DefinitionSchedules
-	platformPlans    platformplanports.PlanService
+	features         platformcatalogports.FeatureGate
 	waits            agentwaitports.AgentWaitRepository
 	caseOptions      recordcaseports.RecordCaseRepository
 }
@@ -185,7 +184,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		runCloser:        p.RunCloser,
 		queuedWork:       []queuedWaker{p.Chases, p.EventRuns},
 		schedules:        p.Schedules,
-		platformPlans:    p.PlatformPlans,
+		features:         p.Features,
 		waits:            p.Waits,
 		caseOptions:      p.CaseOptions,
 	}
@@ -720,14 +719,9 @@ func (a *Activities) StartScheduledRunActivity(
 	tenant := pagination.TenantInfo{OrgID: payload.OrganizationID, BuID: payload.BusinessUnitID}
 	now := timeutils.NowUnix()
 
-	allowed, err := planservice.Allows(
-		ctx,
-		a.platformPlans,
-		tenant,
-		platformplan.CapabilityAgentAutomation,
-	)
+	allowed, err := a.features.Enabled(ctx, platformcatalog.FeatureAgentAutomation)
 	if err != nil {
-		return nil, fmt.Errorf("resolve the organization's plan: %w", err)
+		return nil, fmt.Errorf("resolve the agent automation feature: %w", err)
 	}
 	if !allowed {
 		return &StartScheduledRunResult{Skipped: "plan_restricted"}, nil

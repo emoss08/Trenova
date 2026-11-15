@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,6 +30,10 @@ const (
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	rg.POST(
 		extensionwebwatch.WebWatchWebhookPrefix+"/:orgID/:buID/:watchID/",
+		h.features.RequireFeature(
+			platformcatalog.FeatureAgentAutomation,
+			middleware.AnswerStatus(http.StatusNotFound),
+		),
 		h.receiveWatchDelivery,
 	)
 }

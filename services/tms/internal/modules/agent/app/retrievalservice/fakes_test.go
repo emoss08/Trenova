@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -430,6 +431,7 @@ func newTestService(settings *airetrieval.Settings) *testService {
 		Registry:   permissioncatalog.NewRegistry(),
 		Embeddings: embeddings,
 		Signals:    signals,
+		Features:   plantest.AllFeatures(),
 	})
 	service.now = func() int64 { return 1_800_000_000 }
 

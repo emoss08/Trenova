@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
@@ -29,6 +30,7 @@ type ShipmentUIPolicy struct {
 }
 
 type ShipmentMutationObserver interface {
+	platformcatalogports.FeatureObserver
 	AfterShipmentUpdate(
 		ctx context.Context,
 		original *shipment.Shipment,
@@ -38,6 +40,7 @@ type ShipmentMutationObserver interface {
 }
 
 type MoveStatusObserver interface {
+	platformcatalogports.FeatureObserver
 	AfterMoveStatusChange(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

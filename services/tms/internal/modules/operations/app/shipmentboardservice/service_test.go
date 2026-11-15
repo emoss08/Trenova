@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -18,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -91,7 +94,7 @@ type stubNova struct {
 	ready bool
 }
 
-func (s stubNova) Available(context.Context, pagination.TenantInfo) (bool, error) {
+func (s stubNova) Available(context.Context, pagination.TenantInfo, aitask.Task) (bool, error) {
 	return s.ready, nil
 }
 
@@ -137,9 +140,14 @@ type Dependencies struct {
 	Integrations  integrationports.IntegrationRepository
 	Maps          MapsReadiness
 	Cache         shipmentboardports.ShipmentBoardCache
+	Features      platformcatalogports.FeatureGate
 }
 
 func NewWithDependencies(d *Dependencies) *Service {
+	features := d.Features
+	if features == nil {
+		features = plantest.AllFeatures()
+	}
 	return &Service{
 		repo:          d.Repo,
 		quickFilters:  d.QuickFilters,
@@ -148,6 +156,7 @@ func NewWithDependencies(d *Dependencies) *Service {
 		integrations:  d.Integrations,
 		maps:          d.Maps,
 		cache:         d.Cache,
+		features:      features,
 		l:             zap.NewNop(),
 	}
 }
@@ -250,6 +259,25 @@ func TestCapabilities(t *testing.T) {
 	assert.Equal(t, tenant.OperationTypeAsset, caps.OperationType)
 	assert.False(t, caps.HOS)
 	assert.False(t, caps.Maps)
+}
+
+func TestCapabilitiesTreatBrokerageAsOffWithoutCarrierBrokerage(t *testing.T) {
+	t.Parallel()
+
+	svc := NewWithDependencies(&Dependencies{
+		Nova: stubNova{},
+		Organizations: &stubOrgs{caps: &tenantports.OrganizationCapabilities{
+			BrokerageEnabled:       true,
+			AssetOperationsEnabled: true,
+		}},
+		Integrations: &stubIntegrations{},
+		Maps:         stubMaps{},
+		Features:     plantest.BaseOnly(),
+	})
+
+	caps, err := svc.Capabilities(t.Context(), pagination.TenantInfo{})
+	require.NoError(t, err)
+	assert.Equal(t, tenant.OperationTypeAsset, caps.OperationType)
 }
 
 func TestStageSummaryZeroFillsEveryStage(t *testing.T) {

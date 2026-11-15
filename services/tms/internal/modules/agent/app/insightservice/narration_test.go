@@ -46,7 +46,7 @@ type answeringNova struct {
 	calls int
 }
 
-func (n *answeringNova) Available(context.Context, pagination.TenantInfo) (bool, error) {
+func (n *answeringNova) Available(context.Context, pagination.TenantInfo, aitask.Task) (bool, error) {
 	return true, nil
 }
 

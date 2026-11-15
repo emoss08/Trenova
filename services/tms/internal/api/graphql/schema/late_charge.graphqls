@@ -44,19 +44,19 @@ type LateChargeAssessmentResult {
 }
 
 "A late charge recorded on one invoice for one period."
-type LateChargeAssessment {
+type LateChargeAssessment @kind(resource: "accounts_receivable") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
   customerId: ID!
-  sourceInvoiceId: ID!
-  periodIndex: Int!
-  periodStart: Timestamp!
-  periodEnd: Timestamp!
-  asOfDate: Timestamp!
-  basisOpenBalanceMinor: Int!
-  ratePercent: Decimal!
-  chargeMinor: Int!
+  sourceInvoiceId: ID
+  periodIndex: Int
+  periodStart: Timestamp
+  periodEnd: Timestamp
+  asOfDate: Timestamp
+  basisOpenBalanceMinor: Int
+  ratePercent: Decimal
+  chargeMinor: Int
   debitMemoInvoiceId: ID
   debitMemoLineId: ID
   runKey: String!
@@ -74,8 +74,8 @@ input LateChargeAssessmentInput {
 }
 
 extend type Invoice {
-  "Late charges assessed on this invoice, newest first."
-  lateChargeAssessments: [LateChargeAssessment!]!
+  "Late charges assessed on this invoice, newest first; null when the plan leaves out Accounting & Cash."
+  lateChargeAssessments: [LateChargeAssessment!]
 }
 
 extend type Query {

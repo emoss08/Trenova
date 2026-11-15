@@ -3,6 +3,7 @@ import {
   nullableTextSchema,
   nullableIntegerSchema,
   optionalStringSchema,
+  planWithheldSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
 import { stopTypeSchema } from "@trenova/shared/types/shipment";
@@ -104,9 +105,9 @@ export const serviceFailureSchema = z.object({
   lateMinutes: z.number().int(),
   notes: nullableTextSchema,
   internalNotes: nullableTextSchema,
-  x12StatusCodeOverride: optionalStringSchema.default(""),
-  x12ReasonCodeOverride: optionalStringSchema.default(""),
-  x12ExceptionCode: optionalStringSchema.default(""),
+  x12StatusCodeOverride: planWithheldSchema(z.string(), ""),
+  x12ReasonCodeOverride: planWithheldSchema(z.string(), ""),
+  x12ExceptionCode: planWithheldSchema(z.string(), ""),
   detectedAt: z.number().int(),
   reviewedAt: nullableTimestampSchema,
   reviewedById: z.string().nullable().optional(),
@@ -130,9 +131,9 @@ export const serviceFailureUpdateSchema = z.object({
   clearReasonCode: z.boolean().default(false),
   notes: nullableTextSchema,
   internalNotes: nullableTextSchema,
-  x12StatusCodeOverride: optionalStringSchema.default(""),
-  x12ReasonCodeOverride: optionalStringSchema.default(""),
-  x12ExceptionCode: optionalStringSchema.default(""),
+  x12StatusCodeOverride: planWithheldSchema(z.string(), ""),
+  x12ReasonCodeOverride: planWithheldSchema(z.string(), ""),
+  x12ExceptionCode: planWithheldSchema(z.string(), ""),
   version: z.number().int().default(0),
 });
 

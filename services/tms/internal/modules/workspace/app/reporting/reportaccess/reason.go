@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/keel/analytics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
 )
@@ -19,6 +20,8 @@ func (r *Resolver) Reason(ctx context.Context, d *Denial) string {
 	switch {
 	case d.Use.Decision == Available:
 		return ""
+	case d.Use.Decision == NotOnPlan:
+		return planReason(locale, d, entity, plural)
 	case d.Label == "" && d.Use.Decision == NeedsKindRead:
 		return i18n.Translate(locale, "you do not have read access to {0}", plural)
 	case d.Label == "" && d.Use.Decision == NeedsExport:
@@ -82,6 +85,11 @@ func (r *Resolver) Need(use Use) string {
 		return use.Kind.String() + " export"
 	case OwnScopeUnsupported:
 		return use.Kind.String() + " access beyond your own records"
+	case NotOnPlan:
+		if use.Plan == nil || use.Plan.AddOnName == "" {
+			return "a plan that includes it"
+		}
+		return "the " + use.Plan.AddOnName + " add-on"
 	default:
 		return "access"
 	}
@@ -111,8 +119,11 @@ func (a *Access) Refusal(ctx context.Context, err error) error {
 	if analytics.ErrorCode(err) != analytics.CodeDenied {
 		return err
 	}
-	reasons := make([]string, 0, len(a.denials))
 	denials := a.Denials()
+	if restriction := a.planRefusal(ctx, denials); restriction != nil {
+		return restriction
+	}
+	reasons := make([]string, 0, len(denials))
 	for i := range denials {
 		if reason := a.resolver.Reason(
 			ctx,
@@ -132,4 +143,59 @@ func (a *Access) Refusal(ctx context.Context, err error) error {
 		"This report references data you do not have access to: {0}",
 		strings.Join(reasons, "; "),
 	)
+}
+
+func planReason(locale i18n.Locale, d *Denial, entity, plural string) string {
+	addOn := ""
+	if d.Use.Plan != nil {
+		addOn = d.Use.Plan.AddOnName
+	}
+	switch {
+	case addOn == "" && d.Label == "":
+		return i18n.Translate(locale, "{0} are not included in your plan", plural)
+	case addOn == "":
+		return i18n.Translate(locale, "\"{0}\" on {1} is not included in your plan", d.Label, entity)
+	case d.Label == "":
+		return i18n.Translate(
+			locale,
+			"{0} are part of the {1} add-on, which is not on your plan",
+			plural,
+			addOn,
+		)
+	default:
+		return i18n.Translate(
+			locale,
+			"\"{0}\" on {1} is part of the {2} add-on, which is not on your plan",
+			d.Label,
+			entity,
+			addOn,
+		)
+	}
+}
+
+var planRefusalMessage = errortypes.BaseError{
+	Message: "This report reads data your plan does not include: {0}",
+}
+
+func (a *Access) planRefusal(ctx context.Context, denials []Denial) error {
+	var first *permissionports.PlanDenial
+	reasons := make([]string, 0, 1)
+	for i := range denials {
+		if denials[i].Use.Decision != NotOnPlan || denials[i].Use.Plan == nil {
+			continue
+		}
+		if first == nil {
+			first = denials[i].Use.Plan
+		}
+		if reason := a.resolver.Reason(ctx, &denials[i]); !slices.Contains(reasons, reason) {
+			reasons = append(reasons, reason)
+		}
+	}
+	if first == nil {
+		return nil
+	}
+	restriction := first.Restriction()
+	restriction.Message = planRefusalMessage.Message
+	restriction.Args = []any{strings.Join(reasons, "; ")}
+	return restriction
 }

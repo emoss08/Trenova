@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
@@ -22,10 +23,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -73,8 +77,10 @@ type Params struct {
 	UserRepository      tenantports.UserRepository
 	AgentGrants         permissionports.RoleAgentGrantRepository
 	AgentRoles          permissionports.AgentRoleSource
+	SupportPrincipals   supportaccessports.Principals
 	Registry            *permissioncatalog.Registry
 	RouteRegistry       *routeaccess.RouteRegistry
+	Plan                *onplan.Lookup
 	DatabaseConfig      *databaseconfig.Config
 	Metrics             *metrics.Registry
 	Logger              *zap.Logger
@@ -90,8 +96,10 @@ type engine struct {
 	userRepo          tenantports.UserRepository
 	agentGrants       permissionports.RoleAgentGrantRepository
 	agentRoles        permissionports.AgentRoleSource
+	support           supportaccessports.Principals
 	registry          *permissioncatalog.Registry
 	routeRegistry     *routeaccess.RouteRegistry
+	plan              *onplan.Lookup
 	databaseEnforcing bool
 	metrics           *metrics.Registry
 	l                 *zap.Logger
@@ -109,8 +117,10 @@ func NewEngine(p Params) permissionports.PermissionEngine {
 		userRepo:          p.UserRepository,
 		agentGrants:       p.AgentGrants,
 		agentRoles:        p.AgentRoles,
+		support:           p.SupportPrincipals,
 		registry:          p.Registry,
 		routeRegistry:     p.RouteRegistry,
+		plan:              p.Plan,
 		databaseEnforcing: p.DatabaseConfig.RLS.Enforced(),
 		metrics:           p.Metrics,
 		l:                 p.Logger.Named("service.permission-engine"),
@@ -124,6 +134,16 @@ func (e *engine) Check(
 	start := time.Now()
 	log := e.checkLogger("Check", req)
 	req = requestInSession(ctx, req)
+
+	denial, offPlan, err := e.newPlanGate().Resource(ctx, req.Resource)
+	if err != nil {
+		log.Error("failed to read the plan", zap.Error(err))
+		return nil, err
+	}
+	if offPlan {
+		return deniedByPlan(denial, start), nil
+	}
+
 	ctx = e.withoutActivatedRoles(
 		ctx,
 		req.PrincipalType,
@@ -655,24 +675,79 @@ func (e *engine) CheckBatch(
 		req.BusinessUnitID,
 	)
 
-	var err error
-	switch req.PrincipalType {
-	case permissionports.PrincipalTypeAPIKey:
-		err = e.checkAPIKeyBatch(ctx, req, results)
-	case permissionports.PrincipalTypeAgent:
-		err = e.checkAgentBatch(ctx, req, results)
-	default:
-		err = e.checkUserBatch(ctx, req, results)
+	plan := e.newPlanGate()
+	onPlan := make([]int, 0, len(req.Checks))
+	for i, check := range req.Checks {
+		denial, offPlan, err := plan.Resource(ctx, check.Resource)
+		if err != nil {
+			return nil, err
+		}
+		if offPlan {
+			results[i] = *deniedByPlan(denial, start)
+			continue
+		}
+		onPlan = append(onPlan, i)
 	}
-	if err != nil {
+
+	if err := e.checkOnPlan(ctx, req, results, onPlan); err != nil {
 		return nil, err
+	}
+
+	cacheHit := false
+	if len(onPlan) > 0 {
+		cacheHit = results[onPlan[0]].CacheHit
 	}
 
 	return &permissionports.BatchPermissionCheckResult{
 		Results:       results,
-		CacheHit:      results[0].CacheHit,
+		CacheHit:      cacheHit,
 		CheckDuration: time.Since(start).Milliseconds(),
 	}, nil
+}
+
+func (e *engine) checkOnPlan(
+	ctx context.Context,
+	req *permissionports.BatchPermissionCheckRequest,
+	results []permissionports.PermissionCheckResult,
+	onPlan []int,
+) error {
+	if len(onPlan) == 0 {
+		return nil
+	}
+	if len(onPlan) == len(req.Checks) {
+		return e.checkPrincipalBatch(ctx, req, results)
+	}
+
+	scoped := *req
+	scoped.Checks = make([]permissionports.ResourceOperationCheck, len(onPlan))
+	for j, i := range onPlan {
+		scoped.Checks[j] = req.Checks[i]
+	}
+
+	evaluated := make([]permissionports.PermissionCheckResult, len(onPlan))
+	if err := e.checkPrincipalBatch(ctx, &scoped, evaluated); err != nil {
+		return err
+	}
+	for j, i := range onPlan {
+		results[i] = evaluated[j]
+	}
+
+	return nil
+}
+
+func (e *engine) checkPrincipalBatch(
+	ctx context.Context,
+	req *permissionports.BatchPermissionCheckRequest,
+	results []permissionports.PermissionCheckResult,
+) error {
+	switch req.PrincipalType {
+	case permissionports.PrincipalTypeAPIKey:
+		return e.checkAPIKeyBatch(ctx, req, results)
+	case permissionports.PrincipalTypeAgent:
+		return e.checkAgentBatch(ctx, req, results)
+	default:
+		return e.checkUserBatch(ctx, req, results)
+	}
 }
 
 func batchCheckRequest(
@@ -859,12 +934,24 @@ func (e *engine) GetLightManifest(
 	}
 
 	perms := load.perms
+	plan := e.newPlanGate()
+	unavailable, err := plan.Unavailable(ctx)
+	if err != nil {
+		log.Error("failed to read the plan", zap.Error(err))
+		return nil, err
+	}
 	permissions := e.lightResourceBitmasks(perms)
+	if err = plan.withhold(ctx, permissions); err != nil {
+		log.Error("failed to read the plan", zap.Error(err))
+		return nil, err
+	}
+
 	return e.newLightManifest(
 		userID,
 		orgID,
 		permission.FieldSensitivity(perms.MaxSensitivity),
 		permissions,
+		unavailable,
 		orgSummaries,
 		activeRoleIDs,
 		authorizedRoleIDs,
@@ -969,6 +1056,7 @@ func (e *engine) newLightManifest(
 	userID, orgID pulid.ID,
 	maxSensitivity permission.FieldSensitivity,
 	permissions map[string]uint32,
+	unavailable []permissionports.PlanDenial,
 	orgSummaries []permissionports.OrgSummary,
 	activeRoleIDs []pulid.ID,
 	authorizedRoleIDs []pulid.ID,
@@ -990,6 +1078,7 @@ func (e *engine) newLightManifest(
 		Permissions:            permissions,
 		RouteAccess:            e.computeRouteAccess(permissions),
 		AvailableOrgs:          orgSummaries,
+		UnavailableFeatures:    unavailable,
 		ExpiresAt:              expiresAt,
 	}
 	manifest.Checksum = e.computeChecksum(manifest)
@@ -1016,7 +1105,7 @@ func (e *engine) GetResourcePermissions(
 		return nil, err
 	}
 
-	return e.resourceDetail(load.perms, resource), nil
+	return e.resourceDetailOnPlan(ctx, e.newPlanGate(), load.perms, resource)
 }
 
 func (e *engine) GetResourcePermissionsBatch(
@@ -1040,14 +1129,36 @@ func (e *engine) GetResourcePermissionsBatch(
 		return nil, err
 	}
 
+	plan := e.newPlanGate()
 	for _, resource := range resources {
 		if _, seen := details[resource]; seen || !e.registered(resource) {
 			continue
 		}
-		details[resource] = e.resourceDetail(load.perms, resource)
+		detail, detailErr := e.resourceDetailOnPlan(ctx, plan, load.perms, resource)
+		if detailErr != nil {
+			return nil, detailErr
+		}
+		details[resource] = detail
 	}
 
 	return details, nil
+}
+
+func (e *engine) resourceDetailOnPlan(
+	ctx context.Context,
+	plan planGate,
+	perms *permissionports.CachedPermissions,
+	resource string,
+) (*permissionports.ResourcePermissionDetail, error) {
+	denial, offPlan, err := plan.Resource(ctx, resource)
+	if err != nil {
+		return nil, err
+	}
+	if offPlan {
+		return offPlanDetail(perms, resource, denial), nil
+	}
+
+	return e.resourceDetail(perms, resource), nil
 }
 
 func (e *engine) registered(resource string) bool {
@@ -1095,7 +1206,13 @@ func (e *engine) GetEffectivePermissions(
 	}
 	e.metrics.Permission.RecordClosureSize(len(roles))
 
-	return e.buildEffectivePermissions(userID, orgID, roles), nil
+	effective := e.buildEffectivePermissions(userID, orgID, roles)
+	if err = e.newPlanGate().markEffective(ctx, effective); err != nil {
+		log.Error("failed to read the plan", zap.Error(err))
+		return nil, err
+	}
+
+	return effective, nil
 }
 
 func (e *engine) checkAPIKeyPermission(
@@ -1258,6 +1375,15 @@ func (e *engine) getOrComputePermissions(
 	userID, orgID pulid.ID,
 ) (permissionLoadResult, error) {
 	result := permissionLoadResult{}
+	if supportaccess.IsPrincipalID(userID) {
+		perms, err := e.support.Permissions(ctx, userID, orgID)
+		if err != nil {
+			return result, err
+		}
+		result.perms = perms
+		return result, nil
+	}
+
 	key := permissionports.PermissionCacheKey{
 		UserID:  userID,
 		OrgID:   orgID,
@@ -1603,18 +1729,25 @@ func (e *engine) computeChecksum(manifest *permissionports.LightPermissionManife
 		permissions[i] = resourceBitmask{Resource: k, Bitmask: manifest.Permissions[k]}
 	}
 
+	unavailable := make([]platformcatalog.FeatureKey, len(manifest.UnavailableFeatures))
+	for i, denial := range manifest.UnavailableFeatures {
+		unavailable[i] = denial.Feature
+	}
+
 	data := struct {
 		ActiveRoleIDs          []pulid.ID
 		AuthorizedRoleIDs      []pulid.ID
 		RequiresRoleActivation bool
 		MaxSensitivity         string
 		Permissions            []resourceBitmask
+		UnavailableFeatures    []platformcatalog.FeatureKey `json:",omitempty"`
 	}{
 		ActiveRoleIDs:          manifest.ActiveRoleIDs,
 		AuthorizedRoleIDs:      manifest.AuthorizedRoleIDs,
 		RequiresRoleActivation: manifest.RequiresRoleActivation,
 		MaxSensitivity:         string(manifest.MaxSensitivity),
 		Permissions:            permissions,
+		UnavailableFeatures:    unavailable,
 	}
 
 	bytes, _ := sonic.Marshal(data)

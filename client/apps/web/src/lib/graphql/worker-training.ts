@@ -57,8 +57,18 @@ import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-t
 
 export type TrainingCourseRow = TrainingCourseFieldsFragment;
 export type WorkerTrainingRecordRow = WorkerTrainingRecordFieldsFragment;
-export type WorkerTrainingSummary = WorkerTrainingSummaryQuery["workerTrainingSummary"];
-export type WorkerTrainingSummaryItem = WorkerTrainingSummary["items"][number];
+type RawTrainingSummary = WorkerTrainingSummaryQuery["workerTrainingSummary"];
+type RawTrainingSummaryItem = RawTrainingSummary["items"][number];
+/**
+ * A training slot. The server answers its course null only when the organization's plan leaves
+ * out Training and performance, and a slot with no course is no slot, so it is left out.
+ */
+export type WorkerTrainingSummaryItem = Omit<RawTrainingSummaryItem, "course"> & {
+  course: NonNullable<RawTrainingSummaryItem["course"]>;
+};
+export type WorkerTrainingSummary = Omit<RawTrainingSummary, "items"> & {
+  items: WorkerTrainingSummaryItem[];
+};
 
 export const TRAINING_COURSE_LIST_KEY = "training-course-list";
 export const TRAINING_COURSES_KEY = "training-courses";
@@ -115,7 +125,11 @@ export async function fetchWorkerTrainingSummary(
     variables: { workerId },
     signal: options?.signal,
   });
-  return data.workerTrainingSummary;
+  const summary = data.workerTrainingSummary;
+  return {
+    ...summary,
+    items: summary.items.filter((item): item is WorkerTrainingSummaryItem => item.course != null),
+  };
 }
 
 export async function createTrainingCourse(input: TrainingCourseInput): Promise<TrainingCourseRow> {

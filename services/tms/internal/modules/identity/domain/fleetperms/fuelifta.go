@@ -3,6 +3,7 @@ package fleetperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func fuelAndIFTAResources() []*permissionspec.ResourceDefinition {
@@ -19,6 +20,7 @@ func fuelAndIFTAResources() []*permissionspec.ResourceDefinition {
 func fuelCardResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceFuelCard.String(),
+		Feature:       platformcatalog.FeatureFuelTax,
 		DisplayName:   "Fuel Card",
 		Description:   "Fuel cards issued by a card provider and assigned to a driver or tractor",
 		Category:      "Fuel & tax",
@@ -56,6 +58,7 @@ func fuelCardResource() *permissionspec.ResourceDefinition {
 func fuelPurchaseResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceFuelPurchase.String(),
+		Feature:     platformcatalog.FeatureFuelTax,
 		DisplayName: "Fuel Purchase",
 		Description: "Fuel bought for a tractor, recorded by hand or imported from a card statement",
 		Category:    "Fuel & tax",
@@ -111,6 +114,7 @@ func fuelPurchaseResource() *permissionspec.ResourceDefinition {
 func fuelPurchaseImportResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceFuelPurchaseImport.String(),
+		Feature:        platformcatalog.FeatureFuelTax,
 		DisplayName:    "Fuel Purchase Import",
 		Description:    "A fuel card statement staged for review before its rows become purchases",
 		Category:       "Fuel & tax",
@@ -145,6 +149,7 @@ func fuelPurchaseImportResource() *permissionspec.ResourceDefinition {
 func iftaJurisdictionMileageResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceIFTAJurisdictionMileage.String(),
+		Feature:     platformcatalog.FeatureFuelTax,
 		DisplayName: "Jurisdiction Mileage",
 		Description: "Miles a tractor ran in a jurisdiction that routing did not capture, " +
 			"such as deadhead between shipments",
@@ -183,6 +188,7 @@ func iftaJurisdictionMileageResource() *permissionspec.ResourceDefinition {
 func iftaReturnResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceIFTAReturn.String(),
+		Feature:     platformcatalog.FeatureFuelTax,
 		DisplayName: "IFTA Return",
 		Description: "Quarterly fuel tax return built from jurisdiction miles and tax-paid gallons",
 		Category:    "Fuel & tax",
@@ -241,6 +247,7 @@ func iftaReturnResource() *permissionspec.ResourceDefinition {
 func iftaTaxRateResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceIFTATaxRate.String(),
+		Feature:     platformcatalog.FeatureFuelTax,
 		DisplayName: "IFTA Tax Rate",
 		Description: "Published per-gallon fuel tax rates by jurisdiction, quarter and fuel type. " +
 			"This data is global: it has no organization column and every tenant " +

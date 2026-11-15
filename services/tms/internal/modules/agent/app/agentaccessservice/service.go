@@ -406,15 +406,15 @@ func (s *Service) authorize(
 	}
 
 	for _, resource := range resources {
-		allowed, err := s.allowed(ctx, actor, resource)
+		result, err := s.updateCheck(ctx, actor, resource)
 		if err != nil {
 			return err
 		}
-		if !allowed {
-			return errortypes.NewAuthorizationError(
+		if result == nil || !result.Allowed {
+			return permissionports.DeniedError(result, errortypes.NewAuthorizationError(
 				"You don't have permission to perform this action: {0} {1}",
 				resource, permission.OpUpdate,
-			)
+			))
 		}
 	}
 
@@ -427,12 +427,25 @@ func (s *Service) allowed(
 	actor *permissionports.RequestActor,
 	resource permission.Resource,
 ) (bool, error) {
-	result, err := s.permissions.Check(ctx, actor.PermissionCheck(resource, permission.OpUpdate))
+	result, err := s.updateCheck(ctx, actor, resource)
 	if err != nil {
-		return false, fmt.Errorf("check %s permission: %w", resource, err)
+		return false, err
 	}
 
 	return result != nil && result.Allowed, nil
+}
+
+func (s *Service) updateCheck(
+	ctx context.Context,
+	actor *permissionports.RequestActor,
+	resource permission.Resource,
+) (*permissionports.PermissionCheckResult, error) {
+	result, err := s.permissions.Check(ctx, actor.PermissionCheck(resource, permission.OpUpdate))
+	if err != nil {
+		return nil, fmt.Errorf("check %s permission: %w", resource, err)
+	}
+
+	return result, nil
 }
 
 type idList struct {

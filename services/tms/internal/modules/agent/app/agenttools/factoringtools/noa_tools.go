@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -351,7 +352,7 @@ func (t *SendFactoringNoaTool) Preview(
 		return factoringkit.Refused(summary, err)
 	}
 
-	send := messageRequest(&plan.Message)
+	send := messageRequest(&plan.Message, email.TypeFactoringNoticeOfAssignment)
 	sender, err := outboundpreview.ResolveEmailSender(ctx, t.senders, send)
 	if err != nil {
 		return nil, err
@@ -670,8 +671,12 @@ func (t *ReleaseFactoringNoaTool) Preview(
 	return update.PlanPreview(summary + " The customer's invoices stop being ready to factor."), nil
 }
 
-func messageRequest(message *factoringports.MessagePlan) *emailports.SendEmailRequest {
+func messageRequest(
+	message *factoringports.MessagePlan,
+	typ email.Type,
+) *emailports.SendEmailRequest {
 	send := &emailports.SendEmailRequest{
+		Type:    typ,
 		To:      message.To,
 		CC:      message.CC,
 		BCC:     message.BCC,

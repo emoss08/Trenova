@@ -1,15 +1,6 @@
 package platformcatalog
 
 const (
-	ProductTMS                  = ProductKey("tms")
-	ProductWorkforce            = ProductKey("workforce")
-	ProductDocumentIntelligence = ProductKey("document_intelligence")
-	ProductIntegrations         = ProductKey("integrations")
-	ProductAnalytics            = ProductKey("analytics")
-	ProductPlatform             = ProductKey("platform")
-)
-
-const (
 	FeatureCoreTMS                 = FeatureKey("tms.core")
 	FeatureDispatch                = FeatureKey("tms.dispatch")
 	FeatureBilling                 = FeatureKey("tms.billing")
@@ -38,13 +29,25 @@ const (
 	FeatureSamsaraIntegration      = FeatureKey("integrations.samsara")
 	FeatureGoogleMapsIntegration   = FeatureKey("integrations.google_maps")
 	FeatureRealtimeNotifications   = FeatureKey("platform.realtime_notifications")
+	FeatureRating                  = FeatureKey("tms.rating")
+	FeatureDetention               = FeatureKey("tms.detention")
+	FeatureFactoring               = FeatureKey("tms.factoring")
+	FeatureFuelTax                 = FeatureKey("tms.fuel_tax")
+	FeatureCarrierBrokerage        = FeatureKey("tms.carrier_brokerage")
+	FeatureCustomerTracking        = FeatureKey("tms.customer_tracking")
+	FeatureDispatchIntelligence    = FeatureKey("tms.dispatch_intelligence")
+	FeatureAIDesk                  = FeatureKey("ai.desk")
+	FeatureAIWatchtower            = FeatureKey("ai.watchtower")
+	FeatureAITriage                = FeatureKey("ai.triage")
+	FeatureAIAuditTrail            = FeatureKey("ai.audit_trail")
+	FeatureIdentity                = FeatureKey("platform.identity")
 )
 
 const (
 	MeterAPIRequests                = MeterKey("api.requests")
 	MeterDocumentUploads            = MeterKey("documents.uploads")
 	MeterDocumentAIClassifications  = MeterKey("document_intelligence.classifications")
-	MeterDocumentAIExtractions      = MeterKey("document_intelligence.extractions")
+	MeterDocumentIntelligencePages  = MeterKey("document_intelligence.pages")
 	MeterGlobalSearchQueries        = MeterKey("platform.search_queries")
 	MeterTableChangeEvents          = MeterKey("platform.table_change_events")
 	MeterIntegrationSyncRuns        = MeterKey("integrations.sync_runs")
@@ -62,5 +65,5 @@ const (
 	MeterDocumentStorageBytes       = MeterKey("documents.storage_bytes")
 	MeterDocumentFileBytes          = MeterKey("documents.file_bytes")
 	MeterAIAssistantMessages        = MeterKey("ai.assistant_messages")
-	MeterAISpendCents               = MeterKey("ai.spend_cents")
+	MeterOrganizationsTotal         = MeterKey("organizations.total")
 )

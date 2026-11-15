@@ -37,6 +37,9 @@ import {
 } from "@/components/record-memories/record-memories";
 import { LocationForm } from "./location-form";
 import { LocationGeofenceMap } from "./location-geofence-editor";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
+import { cn } from "@trenova/shared/lib/utils";
 
 type LocationFormInput = z.input<typeof locationSchema>;
 type LocationFormReturn = UseFormReturn<LocationFormInput, unknown, Location>;
@@ -384,18 +387,25 @@ function DialogShell({
   onValidSubmit,
   after,
 }: DialogShellProps) {
+  // The geofence map is Google Maps, part of Visibility: without it the dialog is the form.
+  const mapsOnPlan = usePlanFeature(PlanFeature.GoogleMaps).available;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        size="2xl"
-        className="grid h-[80vh] max-h-200 w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 lg:grid-cols-[minmax(0,440px)_1fr]"
+        size={mapsOnPlan ? "2xl" : "md"}
+        className={
+          mapsOnPlan
+            ? "grid h-[80vh] max-h-200 w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 lg:grid-cols-[minmax(0,440px)_1fr]"
+            : "grid h-[80vh] max-h-200 grid-cols-1 gap-0 overflow-hidden p-0"
+        }
       >
         <FormProvider {...form}>
           <Form
             id={FORM_ID}
             onSubmit={form.handleSubmit(onValidSubmit)}
-            className="flex h-full min-h-0 min-w-0 flex-col border-r"
+            className={cn("flex h-full min-h-0 min-w-0 flex-col", mapsOnPlan && "border-r")}
           >
             <div className="border-border flex items-center justify-between border-b px-3 py-2">
               <div className="flex shrink-0 flex-col gap-1">
@@ -422,9 +432,11 @@ function DialogShell({
               {footer}
             </div>
           </Form>
-          <div className="relative hidden h-full min-h-0 lg:block">
-            <LocationGeofenceMap />
-          </div>
+          {mapsOnPlan ? (
+            <div className="relative hidden h-full min-h-0 lg:block">
+              <LocationGeofenceMap />
+            </div>
+          ) : null}
         </FormProvider>
       </DialogContent>
     </Dialog>

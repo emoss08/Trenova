@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -147,6 +148,48 @@ func (f *fakeAdmins) set(answer tms.Administrator, err error) {
 	f.answer, f.err = answer, err
 }
 
+type fakeFeatures struct {
+	mu      sync.Mutex
+	lists   [][]string
+	err     error
+	held    []string
+	heldErr error
+}
+
+func (f *fakeFeatures) HeldFeatures(context.Context) ([]string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.heldErr != nil {
+		return nil, f.heldErr
+	}
+	return append([]string{}, f.held...), nil
+}
+
+func (f *fakeFeatures) hold(features []string, err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.held, f.heldErr = features, err
+}
+
+func (f *fakeFeatures) PutFeatures(_ context.Context, features []string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.lists = append(f.lists, append([]string{}, features...))
+	return f.err
+}
+
+func (f *fakeFeatures) calls() [][]string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([][]string(nil), f.lists...)
+}
+
+func (f *fakeFeatures) fail(err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.err = err
+}
+
 type world struct {
 	cp       *controlplanetest.Server
 	kube     *fake.Clientset
@@ -155,6 +198,8 @@ type world struct {
 	releases *countingReleases
 	usage    *fakeUsage
 	admins   *fakeAdmins
+	features *fakeFeatures
+	email    *fakeSystemEmail
 	now      time.Time
 }
 
@@ -192,7 +237,15 @@ func newWorldWith(
 		&http.Client{Transport: transport, Timeout: 10 * time.Second},
 	)
 	require.NoError(t, err)
-	w := &world{cp: cp, kube: kube, health: &fakeHealth{}, admins: &fakeAdmins{}, now: time.Now()}
+	w := &world{
+		cp:       cp,
+		kube:     kube,
+		health:   &fakeHealth{},
+		admins:   &fakeAdmins{},
+		features: &fakeFeatures{},
+		email:    &fakeSystemEmail{},
+		now:      time.Now(),
+	}
 	w.usage = &fakeUsage{now: func() time.Time { return w.now }}
 	var relayer reconcile.Usage = w.usage
 	if relay != nil {
@@ -237,6 +290,8 @@ func newWorldWith(
 		}),
 		Usage:          relayer,
 		Administrators: w.admins,
+		Features:       w.features,
+		SystemEmail:    w.email,
 		Base:           map[string]any{"clamav": map[string]any{"enabled": true}},
 		Namespace:      "trenova-system",
 		Logger:         logger,
@@ -559,7 +614,7 @@ func TestRelaysUsageBetweenTheTMSAndTheControlPlane(t *testing.T) {
 	current := w.now.UTC().Truncate(time.Hour)
 	srv.SetReadings([]tms.Reading{
 		{Meter: app, Hour: current, Quantity: 12},
-		{Meter: "ai.spend_cents", Hour: current, Quantity: 250},
+		{Meter: "organizations.total", Hour: current, Quantity: 2},
 	})
 	w.health.set(true)
 
@@ -578,7 +633,7 @@ func TestRelaysUsageBetweenTheTMSAndTheControlPlane(t *testing.T) {
 
 	reports := w.cp.UsageReports()
 	require.Len(t, reports, 1)
-	require.Len(t, reports[0].Readings, 1, "ai.spend_cents has no allowance here")
+	require.Len(t, reports[0].Readings, 1, "organizations.total has no allowance here")
 	since := srv.Since()
 	require.Equal(t, w.now.UTC().Truncate(time.Hour).Add(-2*time.Hour), since[len(since)-1])
 	states := srv.States()
@@ -831,4 +886,229 @@ func TestTheInviteWaitsWhileSuspended(t *testing.T) {
 	require.True(t, w.lastReport(t).Ready)
 	require.Empty(t, w.admins.calls())
 	require.Nil(t, w.lastReport(t).Administrator)
+}
+
+func specWithFeatures(id uuid.UUID, features ...string) instanceapi.InstanceSpec {
+	spec := controlplanetest.Spec(id)
+	spec.Features = append([]string{}, features...)
+	return spec
+}
+
+func TestSendsTheSpecsFeaturesToTheTMSOnEveryTick(t *testing.T) {
+	t.Parallel()
+	w := newWorldWith(t, specWithFeatures(uuid.New(), "tms.accounting", "ai.desk"), nil)
+
+	w.loop.Tick(t.Context())
+	require.Empty(t, w.features.calls(), "not before the TMS is ready")
+
+	w.health.set(true)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Equal(t, [][]string{{"tms.accounting", "ai.desk"}}, w.features.calls())
+
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Equal(
+		t,
+		[][]string{{"tms.accounting", "ai.desk"}, {"tms.accounting", "ai.desk"}},
+		w.features.calls(),
+		"sent again so a restarted or restored TMS has it",
+	)
+}
+
+func TestAChangedFeatureListIsSentOnTheNextTick(t *testing.T) {
+	t.Parallel()
+	id := uuid.New()
+	w := newWorldWith(t, specWithFeatures(id, "tms.accounting"), nil)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	w.cp.SetSpec(specWithFeatures(id, "tms.accounting", "ai.desk"))
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+
+	w.cp.SetSpec(specWithFeatures(id))
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+
+	require.Equal(
+		t,
+		[][]string{{"tms.accounting"}, {"tms.accounting", "ai.desk"}, {}},
+		w.features.calls(),
+	)
+}
+
+func TestNoFeaturesAreSentWhileSuspendedOrDecommissioned(t *testing.T) {
+	t.Parallel()
+	for _, lifecycle := range []instanceapi.InstanceSpecLifecycle{
+		instanceapi.Suspended,
+		instanceapi.Decommissioned,
+	} {
+		t.Run(string(lifecycle), func(t *testing.T) {
+			t.Parallel()
+			spec := specWithFeatures(uuid.New(), "ai.desk")
+			spec.Lifecycle = lifecycle
+			w := newWorldWith(t, spec, nil)
+			w.health.set(true)
+			w.loop.Tick(t.Context())
+			w.now = w.now.Add(15 * time.Second)
+			w.loop.Tick(t.Context())
+			require.True(t, w.lastReport(t).Ready)
+			require.Empty(t, w.features.calls())
+		})
+	}
+}
+
+func TestAFeatureFailureIsLoggedAndRetried(t *testing.T) {
+	t.Parallel()
+	w := newWorldWith(t, specWithFeatures(uuid.New(), "ai.desk"), nil)
+	w.health.set(true)
+	w.features.fail(errors.New("the TMS answered 503"))
+
+	w.loop.Tick(t.Context())
+	r := w.lastReport(t)
+	require.True(t, r.Ready, "a failed feature list never holds the report back")
+	require.Nil(t, r.Message)
+	require.Equal(t, 1, w.releases.applies)
+	require.Equal(t, 1, w.usage.count(), "nor the usage relay")
+
+	w.features.fail(nil)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Equal(
+		t,
+		[][]string{{"ai.desk"}, {"ai.desk"}},
+		w.features.calls(),
+		"retried on the next tick",
+	)
+}
+
+func TestReportsTheFeaturesTheTMSHolds(t *testing.T) {
+	t.Parallel()
+	w := newWorldWith(t, specWithFeatures(uuid.New(), "tms.accounting", "ai.desk"), nil)
+	w.features.hold([]string{"tms.accounting"}, nil)
+
+	w.loop.Tick(t.Context())
+	require.Nil(t, w.lastReport(t).Features, "not read before the TMS is ready")
+
+	w.health.set(true)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	r := w.lastReport(t)
+	require.True(t, r.Ready)
+	require.NotNil(t, r.Features)
+	require.Equal(t, []string{"tms.accounting"}, *r.Features)
+
+	sent := len(w.cp.Reports())
+	w.features.hold([]string{"tms.accounting", "ai.desk"}, nil)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Len(t, w.cp.Reports(), sent+1, "a changed list is reported at once")
+	require.Equal(t, []string{"tms.accounting", "ai.desk"}, *w.lastReport(t).Features)
+}
+
+func TestAFailedFeatureReadLeavesTheFeaturesOutOfTheReport(t *testing.T) {
+	t.Parallel()
+	w := newWorldWith(t, specWithFeatures(uuid.New(), "ai.desk"), nil)
+	w.health.set(true)
+	w.features.hold(nil, errors.New("the TMS answered 503"))
+
+	w.loop.Tick(t.Context())
+
+	r := w.lastReport(t)
+	require.True(t, r.Ready, "a failed read never holds the report back")
+	require.Nil(t, r.Message)
+	require.Nil(t, r.Features)
+	require.Equal(t, [][]string{{"ai.desk"}}, w.features.calls())
+}
+
+type fakeSystemEmail struct {
+	mu      sync.Mutex
+	desired []*instanceapi.SpecSystemEmail
+	err     error
+}
+
+func (f *fakeSystemEmail) Sync(_ context.Context, desired *instanceapi.SpecSystemEmail) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.desired = append(f.desired, desired)
+	return f.err
+}
+
+func (f *fakeSystemEmail) calls() []*instanceapi.SpecSystemEmail {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]*instanceapi.SpecSystemEmail(nil), f.desired...)
+}
+
+func (f *fakeSystemEmail) fail(err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.err = err
+}
+
+func specWithSystemEmail(id uuid.UUID, fingerprint string) instanceapi.InstanceSpec {
+	spec := controlplanetest.Spec(id)
+	if fingerprint != "" {
+		spec.SystemEmail = &instanceapi.SpecSystemEmail{Fingerprint: fingerprint}
+	}
+	return spec
+}
+
+func TestBringsTheTMSsSystemEmailSenderToTheSpecOnceReady(t *testing.T) {
+	t.Parallel()
+	fingerprint := strings.Repeat("a", 64)
+	w := newWorldWith(t, specWithSystemEmail(uuid.New(), fingerprint), nil)
+
+	w.loop.Tick(t.Context())
+	require.Empty(t, w.email.calls(), "not before the TMS is ready")
+
+	w.health.set(true)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	calls := w.email.calls()
+	require.Len(t, calls, 1)
+	require.NotNil(t, calls[0])
+	require.Equal(t, fingerprint, calls[0].Fingerprint)
+}
+
+func TestAnInstanceWithoutATrenovaSenderAsksForItsRemoval(t *testing.T) {
+	t.Parallel()
+	w := newWorldWith(t, specWithSystemEmail(uuid.New(), ""), nil)
+	w.health.set(true)
+
+	w.loop.Tick(t.Context())
+
+	calls := w.email.calls()
+	require.Len(t, calls, 1)
+	require.Nil(t, calls[0])
+}
+
+func TestNoSystemEmailIsSentWhileSuspended(t *testing.T) {
+	t.Parallel()
+	spec := specWithSystemEmail(uuid.New(), strings.Repeat("b", 64))
+	spec.Lifecycle = instanceapi.Suspended
+	w := newWorldWith(t, spec, nil)
+	w.health.set(true)
+
+	w.loop.Tick(t.Context())
+
+	require.Empty(t, w.email.calls())
+}
+
+func TestASystemEmailFailureIsLoggedAndRetried(t *testing.T) {
+	t.Parallel()
+	w := newWorldWith(t, specWithSystemEmail(uuid.New(), strings.Repeat("c", 64)), nil)
+	w.health.set(true)
+	w.email.fail(errors.New("the TMS answered 503"))
+
+	w.loop.Tick(t.Context())
+	r := w.lastReport(t)
+	require.True(t, r.Ready, "a failed system email sync never holds the report back")
+	require.Equal(t, 1, w.usage.count(), "nor the usage relay")
+
+	w.email.fail(nil)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Len(t, w.email.calls(), 2, "retried on the next tick")
 }

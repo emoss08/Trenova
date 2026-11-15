@@ -231,7 +231,7 @@ export const billingTermsSchema = z.object({
     .array(z.string())
     .nullish()
     .transform((value) => value ?? []),
-  creditHold: z.boolean().default(false),
+  creditHold: z.boolean().nullish(),
 });
 
 export const billingDocumentTileSchema = z.object({

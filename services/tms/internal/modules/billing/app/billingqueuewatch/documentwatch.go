@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -183,4 +184,8 @@ func withoutRetired(
 	}
 
 	return packet, rotations, true
+}
+
+func (o *DocumentObserver) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureBilling
 }

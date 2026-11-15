@@ -2,6 +2,7 @@ package fuelpricejobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "eia-fuel-price-refresh",
+			Feature:       platformcatalog.FeatureBilling,
 			Description:   "Ingest weekly DOE/EIA diesel prices for all enabled tenants (Tue-Sat to cover holiday-delayed publications)",
 			Spec:          schedule.Cron("0 16 * * 2-6"),
 			Workflow:      RefreshFuelPricesWorkflow,

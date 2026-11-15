@@ -3,15 +3,13 @@ package carrierintelsourcingservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -27,7 +25,7 @@ type Params struct {
 	SubjectRepo    carrierintelports.CarrierIntelSubjectRepository
 	UsStateRepo    usstateports.UsStateRepository
 	CarrierService *carrierservice.Service
-	Plans          platformplanports.PlanService
+	Features       platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -38,7 +36,7 @@ type Service struct {
 	subjectRepo    carrierintelports.CarrierIntelSubjectRepository
 	usStateRepo    usstateports.UsStateRepository
 	carrierService carrierintelservice.CarrierWriter
-	plans          platformplanports.PlanService
+	features       platformcatalogports.FeatureGate
 	now            func() int64
 }
 
@@ -52,19 +50,15 @@ func New(p Params) *Service {
 		subjectRepo:    p.SubjectRepo,
 		usStateRepo:    p.UsStateRepo,
 		carrierService: p.CarrierService,
-		plans:          p.Plans,
+		features:       p.Features,
 		now:            timeutils.NowUnix,
 	}
 }
 
-func (s *Service) requirePaidLookups(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) error {
-	return planservice.RequireCapability(
+func (s *Service) requirePaidLookups(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(
 		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityCarrierIntelligencePaid,
+		s.features,
+		platformcatalog.FeatureCarrierBrokerage,
 	)
 }

@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -268,6 +270,13 @@ func (s *Service) SendEDI(
 	req *invoiceports.SendInvoiceEDIRequest,
 	actor *permissionports.RequestActor,
 ) (*invoiceports.InvoiceEDISendResult, error) {
+	if err := platformcatalogports.RequireFeature(
+		ctx,
+		s.features,
+		platformcatalog.FeatureEDIIntegration,
+	); err != nil {
+		return nil, err
+	}
 	entity, _, err := s.planEDISend(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -286,6 +295,14 @@ func (s *Service) EnqueueAfterPost(
 	actor *permissionports.RequestActor,
 ) {
 	if entity == nil {
+		return
+	}
+	ediOn, err := s.features.Enabled(ctx, platformcatalog.FeatureEDIIntegration)
+	if err != nil {
+		s.l.Warn("failed to resolve invoice EDI plan after post", zap.Error(err))
+		return
+	}
+	if !ediOn {
 		return
 	}
 	plans, err := s.ResolveEDISendPlans(ctx, &invoiceports.ResolveInvoiceEDISendPlansRequest{

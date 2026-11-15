@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -44,6 +46,7 @@ type Params struct {
 	AgentRunService     agentruntimeports.AgentRunService
 	Executor            *proposalexecutor.Service
 	WorkerRepo          workerports.WorkerRepository
+	Features            platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -56,6 +59,7 @@ type Service struct {
 	runService          agentruntimeports.AgentRunService
 	executor            *proposalexecutor.Service
 	workerRepo          workerports.WorkerRepository
+	features            platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service {
@@ -69,6 +73,7 @@ func New(p Params) *Service {
 		runService:          p.AgentRunService,
 		executor:            p.Executor,
 		workerRepo:          p.WorkerRepo,
+		features:            p.Features,
 	}
 }
 
@@ -76,6 +81,10 @@ func (s *Service) Plan(
 	ctx context.Context,
 	req *dispatchconsoleports.DispatchPlanRequest,
 ) (*dispatchconsoleports.DispatchPlan, error) {
+	if err := s.requirePlanner(ctx); err != nil {
+		return nil, err
+	}
+
 	control, err := s.dispatchControlRepo.GetOrCreate(
 		ctx,
 		req.TenantInfo.OrgID,
@@ -140,6 +149,18 @@ func (s *Service) Plan(
 	}
 
 	return plan, nil
+}
+
+func (s *Service) requirePlanner(ctx context.Context) error {
+	if err := platformcatalogports.RequireFeature(
+		ctx,
+		s.features,
+		platformcatalog.FeatureDispatchIntelligence,
+	); err != nil {
+		return err
+	}
+
+	return platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureAIDesk)
 }
 
 func (s *Service) recordPlan(

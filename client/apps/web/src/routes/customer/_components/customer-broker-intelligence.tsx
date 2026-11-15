@@ -196,7 +196,7 @@ export function CustomerBrokerIntelligence({ customerId }: { customerId: string 
   const snapshot = customer.brokerIntelligence;
   const server: SavedBrokerSettings = {
     dotNumber: customer.dotNumber,
-    brokerVettingEnabled: customer.brokerVettingEnabled,
+    brokerVettingEnabled: customer.brokerVettingEnabled ?? false,
   };
 
   if (!customer.brokerVettingEnabled) {

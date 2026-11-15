@@ -1,4 +1,6 @@
+import { planRestrictionOfResource } from "@/lib/resource-plan";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { PLAN_RESTRICTED_CODE, planRestrictedResponse } from "@trenova/shared/lib/plan-limit";
 import { getOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { isSessionExpiry } from "@trenova/shared/lib/error-presentation";
 import { isPathScopedLoader, pathScopedLoader } from "@trenova/shared/lib/session-loader";
@@ -60,6 +62,13 @@ export function createPermissionLoader(
     }
 
     if (!usePermissionStore.getState().hasPermission(resource, operation)) {
+      // A resource the plan leaves out is missing from the manifest too: say which add-on
+      // the page is part of instead of blaming the person's roles.
+      const restriction = await planRestrictionOfResource(resource);
+      if (restriction) {
+        throw planRestrictedResponse(restriction);
+      }
+
       const operationLabel = getOperationLabel(operation);
       throw new Response(`Missing permission: ${resource}:${operationLabel}`, {
         status: 403,
@@ -110,15 +119,34 @@ export function combineLoaders(...loaders: LoaderFunction[]): LoaderFunction {
   return loaders.some(isPathScopedLoader) ? pathScopedLoader(combined) : combined;
 }
 
+async function isPlanRefusal(refusal: Response): Promise<boolean> {
+  if (!refusal.headers.get("Content-Type")?.includes("json")) {
+    return false;
+  }
+  try {
+    const body: unknown = await refusal.clone().json();
+    return (
+      typeof body === "object" &&
+      body !== null &&
+      (body as { code?: unknown }).code === PLAN_RESTRICTED_CODE
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Lets a person in when any one of the gates does, for a page whose parts answer to
  * different permissions and which shows each person the parts they may read. A gate
- * that sends them elsewhere (to sign in) is obeyed; only when every gate refuses is the
- * last refusal the answer.
+ * that sends them elsewhere (to sign in) is obeyed. When every gate refuses, the page is
+ * said to be off the plan only when the plan refused every gate (the first plan refusal
+ * names the add-on); otherwise the last permission refusal is the answer, the rule the
+ * server's RequireAnyPermission follows.
  */
 export function anyOfLoaders(...loaders: LoaderFunction[]): LoaderFunction {
   const any: LoaderFunction = async (args) => {
-    let refusal: unknown = null;
+    let planRefusal: Response | null = null;
+    let permissionRefusal: Response | null = null;
     for (const loader of loaders) {
       try {
         return await loader(args);
@@ -126,10 +154,14 @@ export function anyOfLoaders(...loaders: LoaderFunction[]): LoaderFunction {
         if (!(error instanceof Response) || error.status !== 403) {
           throw error;
         }
-        refusal = error;
+        if (await isPlanRefusal(error)) {
+          planRefusal ??= error;
+        } else {
+          permissionRefusal = error;
+        }
       }
     }
-    throw refusal;
+    throw permissionRefusal ?? planRefusal;
   };
   return loaders.some(isPathScopedLoader) ? pathScopedLoader(any) : any;
 }

@@ -1,11 +1,18 @@
+import { queryClient } from "@/lib/query-client";
 import {
   anyOfLoaders,
   createPermissionLoader,
   ensurePermissionManifest,
 } from "@/lib/route-permission";
 import { ApiRequestError } from "@trenova/shared/lib/api";
+import { planRestrictedResponse } from "@trenova/shared/lib/plan-limit";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import { Operation, Resource } from "@trenova/shared/types/permission";
+import {
+  Operation,
+  Resource,
+  type PermissionManifest,
+  type UnavailableFeature,
+} from "@trenova/shared/types/permission";
 import type { LoaderFunctionArgs } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -169,6 +176,36 @@ describe("anyOfLoaders, for a page whose parts answer to different permissions",
     expect(await (thrown as Response).text()).toBe("Missing permission: agent_proposal:Read");
   });
 
+  const offPlan = (addOn: string) => () => {
+    throw planRestrictedResponse({ feature: "tms.factoring", addOn });
+  };
+
+  it("says the page is off the plan only when the plan refused every gate", async () => {
+    const loader = anyOfLoaders(offPlan("Accounting & Cash"), offPlan("Trenova AI"));
+
+    const { thrown } = await settle(Promise.resolve(loader(args)));
+
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).status).toBe(403);
+    expect(await (thrown as Response).json()).toMatchObject({
+      code: "PLAN_RESTRICTED",
+      params: { addOn: "Accounting & Cash" },
+    });
+  });
+
+  it("reports the permission refusal when any gate was refused by the roles", async () => {
+    for (const loader of [
+      anyOfLoaders(refuse("watchtower:Read"), offPlan("Accounting & Cash")),
+      anyOfLoaders(offPlan("Accounting & Cash"), refuse("watchtower:Read")),
+    ]) {
+      const { thrown } = await settle(Promise.resolve(loader(args)));
+
+      expect(thrown).toBeInstanceOf(Response);
+      expect((thrown as Response).status).toBe(403);
+      expect(await (thrown as Response).text()).toBe("Missing permission: watchtower:Read");
+    }
+  });
+
   it("obeys a gate that sends the person to sign in, without asking the next", async () => {
     const next = vi.fn(() => null);
     const toLogin = new Response(null, { status: 302, headers: { Location: "/login" } });
@@ -180,10 +217,152 @@ describe("anyOfLoaders, for a page whose parts answer to different permissions",
 
   it("does not hide a failure that is not a refusal", async () => {
     const failure = new TypeError("Failed to fetch");
-    const loader = anyOfLoaders(() => {
-      throw failure;
-    }, () => null);
+    const loader = anyOfLoaders(
+      () => {
+        throw failure;
+      },
+      () => null,
+    );
 
     expect((await settle(Promise.resolve(loader(args)))).thrown).toBe(failure);
+  });
+});
+
+describe("createPermissionLoader for a resource missing from the manifest", () => {
+  const factoring: UnavailableFeature = {
+    feature: "tms.factoring",
+    featureName: "Factoring",
+    addOn: "ACC",
+    addOnName: "Accounting & Cash",
+  };
+
+  // GET /me/permissions: the plan leaves Factoring out, so factoring companies are not in
+  // permissions; customers are left out by the person's roles.
+  function manifest(unavailableFeatures: UnavailableFeature[]): PermissionManifest {
+    return {
+      version: "1.0",
+      userId: "usr_1",
+      organizationId: "org_1",
+      activeRoleIds: [],
+      authorizedRoleIds: [],
+      activeRoles: [],
+      authorizedRoles: [],
+      requiresRoleActivation: false,
+      maxSensitivity: "internal",
+      permissions: { [Resource.Shipment]: Operation.Read },
+      routeAccess: {},
+      availableOrgs: [],
+      unavailableFeatures,
+      checksum: "abc",
+      expiresAt: 1_900_000_000,
+    };
+  }
+
+  // GET /permissions/resources: the catalogue declares each resource's feature.
+  const catalogue = [
+    {
+      category: "Billing",
+      resources: [
+        {
+          resource: Resource.FactoringCompany,
+          displayName: "Factoring Company",
+          description: "",
+          category: "Billing",
+          feature: "tms.factoring",
+          operations: [],
+          defaultSensitivity: "internal",
+        },
+        {
+          resource: Resource.Customer,
+          displayName: "Customer",
+          description: "",
+          category: "Billing",
+          feature: "tms.billing",
+          operations: [],
+          defaultSensitivity: "internal",
+        },
+      ],
+    },
+  ];
+
+  let catalogueReads = 0;
+
+  function serve(current: PermissionManifest) {
+    catalogueReads = 0;
+    usePermissionStore.setState({ manifest: current, lastFetched: Date.now() });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = new URL(
+          input instanceof Request ? input.url : String(input),
+          "http://localhost",
+        );
+        const json = (body: unknown) =>
+          new Response(JSON.stringify(body), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        if (url.pathname.endsWith("/me/permissions")) return json(current);
+        if (url.pathname.endsWith("/permissions/resources")) {
+          catalogueReads += 1;
+          return json(catalogue);
+        }
+        throw new Error(`unexpected request to ${url.pathname}`);
+      }),
+    );
+  }
+
+  function run(resource: string) {
+    const loader = createPermissionLoader(resource, Operation.Read);
+    return settle(
+      Promise.resolve(
+        loader({
+          request: new Request(`http://localhost/${resource}`),
+          params: {},
+          context: undefined,
+        } as unknown as LoaderFunctionArgs),
+      ),
+    );
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    queryClient.clear();
+    usePermissionStore.getState().clearPermissions();
+  });
+
+  it("throws the plan refusal, naming the add-on, for a resource the plan leaves out", async () => {
+    serve(manifest([factoring]));
+
+    const { thrown } = await run(Resource.FactoringCompany);
+
+    expect(thrown).toBeInstanceOf(Response);
+    const refusal = thrown as Response;
+    expect(refusal.status).toBe(403);
+    expect(await refusal.json()).toEqual({
+      type: "plan-restricted",
+      title: "Plan Restricted",
+      status: 403,
+      code: "PLAN_RESTRICTED",
+      params: { feature: "tms.factoring", addOn: "Accounting & Cash" },
+    });
+  });
+
+  it("throws the permission refusal for a resource the person's roles leave out", async () => {
+    serve(manifest([factoring]));
+
+    const { thrown } = await run(Resource.Customer);
+
+    expect(thrown).toBeInstanceOf(Response);
+    expect(await (thrown as Response).text()).toBe("Missing permission: customer:Read");
+  });
+
+  it("does not read the catalogue when the plan leaves nothing out", async () => {
+    serve(manifest([]));
+
+    const { thrown } = await run(Resource.FactoringCompany);
+
+    expect(await (thrown as Response).text()).toBe("Missing permission: factoring_company:Read");
+    expect(catalogueReads).toBe(0);
   });
 });

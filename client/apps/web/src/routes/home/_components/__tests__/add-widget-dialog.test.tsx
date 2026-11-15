@@ -269,4 +269,40 @@ describe("AddWidgetDialog", () => {
     expect(cardNames()).toEqual([]);
     expect(screen.queryByText("Nothing matches")).toBeNull();
   });
+
+  // A widget the plan leaves out is listed so an administrator can see which add-on carries it,
+  // and it cannot be added: it would only land as a locked card.
+  it("lists a widget that needs an add-on, names the add-on and refuses to add it", async () => {
+    const user = userEvent.setup();
+    const lockedCatalog = {
+      ...CATALOG,
+      widgets: [
+        ...CATALOG.widgets,
+        option({
+          key: "ar-snapshot",
+          label: "Receivables snapshot",
+          category: "pulse",
+          planLock: {
+            feature: "tms.accounting",
+            featureName: "Accounting",
+            addOn: "ACC",
+            addOnName: "Accounting & Cash",
+          },
+        }),
+      ],
+    } as unknown as HomeWidgetCatalog;
+    const { onAdd } = renderGallery({ catalog: lockedCatalog });
+
+    const card = screen.getByRole("button", { name: /Receivables snapshot/ });
+    expect(within(card).getByText("Part of Accounting & Cash")).toBeInTheDocument();
+    expect(card).toBeDisabled();
+
+    await user.click(card);
+    expect(onAdd).not.toHaveBeenCalled();
+
+    // The widgets on the plan carry no mark.
+    expect(
+      within(screen.getByRole("button", { name: /Billing queue/ })).queryByText(/^Part of/),
+    ).toBeNull();
+  });
 });

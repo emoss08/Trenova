@@ -96,6 +96,11 @@ fragment CommodityReference on Commodity {
   fragile
 }
 
+fragment CreditMemoApplicationReference on CreditMemoApplication {
+  id
+  status
+}
+
 fragment CustomerReference on Customer {
   id
   stateId
@@ -131,6 +136,10 @@ fragment CustomerPaymentReference on CustomerPayment {
   status
   paymentMethod
   referenceNumber
+}
+
+fragment CustomerPaymentApplicationReference on CustomerPaymentApplication {
+  id
 }
 
 fragment DOTRandomDrawReference on DOTRandomDraw {
@@ -256,10 +265,6 @@ fragment FactoringCompanyReference on FactoringCompany {
   name
 }
 
-fragment FactoringInvoiceStateReference on FactoringInvoiceState {
-  customerId
-}
-
 fragment FactoringSubmissionReference on FactoringSubmission {
   id
   number
@@ -365,6 +370,10 @@ fragment InvoiceDisputeReference on InvoiceDispute {
   reasonCode
   openedAt
   resolvedAt
+}
+
+fragment InvoiceEDISendPlanReference on InvoiceEDISendPlan {
+  status
 }
 
 fragment JournalEntryReference on JournalEntry {

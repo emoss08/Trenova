@@ -161,10 +161,20 @@ func (f *Engine) Run(ctx context.Context, req *analytics.Request) (*analytics.St
 	return nil, ErrNotExecuted
 }
 
+type Plan interface {
+	Resource(ctx context.Context, resource string) (permissionports.PlanDenial, bool, error)
+}
+
 type PermissionReader struct {
 	permissionports.PermissionEngine
 
 	denied map[string]bool
+	plan   Plan
+}
+
+func (c *PermissionReader) WithPlan(plan Plan) *PermissionReader {
+	c.plan = plan
+	return c
 }
 
 func NewPermissionReader(denied []permission.Resource) *PermissionReader {
@@ -176,24 +186,55 @@ func NewPermissionReader(denied []permission.Resource) *PermissionReader {
 }
 
 func (c *PermissionReader) GetResourcePermissionsBatch(
-	_ context.Context,
+	ctx context.Context,
 	_, _ pulid.ID,
 	resources []string,
 ) (map[string]*permissionports.ResourcePermissionDetail, error) {
 	out := make(map[string]*permissionports.ResourcePermissionDetail, len(resources))
 	for _, resource := range resources {
-		ops := []permission.Operation{permission.OpRead, permission.OpExport}
-		if c.denied[resource] {
-			ops = nil
+		detail, err := c.detail(ctx, resource)
+		if err != nil {
+			return nil, err
 		}
-		out[resource] = &permissionports.ResourcePermissionDetail{
-			Resource:       resource,
-			Operations:     ops,
-			DataScope:      permission.DataScopeOrganization,
-			MaxSensitivity: permission.SensitivityConfidential,
-		}
+		out[resource] = detail
 	}
 	return out, nil
+}
+
+func (c *PermissionReader) GetResourcePermissions(
+	ctx context.Context,
+	_, _ pulid.ID,
+	resource string,
+) (*permissionports.ResourcePermissionDetail, error) {
+	return c.detail(ctx, resource)
+}
+
+func (c *PermissionReader) detail(
+	ctx context.Context,
+	resource string,
+) (*permissionports.ResourcePermissionDetail, error) {
+	detail := &permissionports.ResourcePermissionDetail{
+		Resource:       resource,
+		Operations:     []permission.Operation{permission.OpRead, permission.OpExport},
+		DataScope:      permission.DataScopeOrganization,
+		MaxSensitivity: permission.SensitivityConfidential,
+	}
+	if c.denied[resource] {
+		detail.Operations = nil
+	}
+	if c.plan == nil {
+		return detail, nil
+	}
+	denial, off, err := c.plan.Resource(ctx, resource)
+	if err != nil {
+		return nil, err
+	}
+	if off {
+		detail.Operations = []permission.Operation{}
+		detail.DataScope = ""
+		detail.PlanDenial = &denial
+	}
+	return detail, nil
 }
 
 type FieldGroups struct {

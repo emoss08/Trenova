@@ -9713,7 +9713,7 @@ type CarrierIntelFinding {
   overrideExpiresAt: Timestamp
 }
 
-type CarrierIntelSnapshot {
+type CarrierIntelSnapshot @kind(resource: "carrier_intelligence") {
   id: ID!
   subjectType: CarrierIntelSubjectType!
   subjectId: String!
@@ -9795,7 +9795,7 @@ type CarrierIntelEventConnection {
   totalCountExact: Boolean!
 }
 
-type CarrierMonitoringEnrollment {
+type CarrierMonitoringEnrollment @kind(resource: "carrier_intelligence") {
   id: ID!
   subjectType: CarrierIntelSubjectType!
   subjectId: String!
@@ -9994,7 +9994,7 @@ type CarrierIntelFetchResult {
   changeCount: Int!
 }
 
-type CarrierIntelProspectLookup {
+type CarrierIntelProspectLookup @kind(resource: "carrier_sourcing") {
   snapshot: CarrierIntelSnapshot!
   existingCarrierId: ID
 }
@@ -10092,7 +10092,7 @@ type CarrierIntelMonitoringStatus {
   reviewQueueCount: Int!
 }
 
-type MyCarrierIntelligence {
+type MyCarrierIntelligence @kind(resource: "carrier_intelligence") {
   configured: Boolean!
   dotNumber: String
   snapshot: CarrierIntelSnapshot
@@ -10113,18 +10113,18 @@ extend type DispatchCarrierEligibility {
 
 extend type Carrier {
   intelRiskLevel: String
-  intelReviewRequired: Boolean!
-  intelBlockingCount: Int!
+  intelReviewRequired: Boolean
+  intelBlockingCount: Int
   intelligence: CarrierIntelSnapshot @goField(forceResolver: true)
-  openIntelEventCount: Int! @goField(forceResolver: true)
+  openIntelEventCount: Int @goField(forceResolver: true)
   monitoringEnrollment: CarrierMonitoringEnrollment @goField(forceResolver: true)
 }
 
 extend type Customer {
   dotNumber: String
   mcNumber: String
-  brokerVettingEnabled: Boolean!
-  brokerIntelligence: CarrierIntelSnapshot @goField(forceResolver: true)
+  brokerVettingEnabled: Boolean
+  brokerIntelligence: CarrierIntelSnapshot @goField(forceResolver: true) @authorizes(resource: "carrier_intelligence")
 }
 
 input CarrierIntelEventFilterInput {
@@ -11530,33 +11530,33 @@ type CustomerBillingProfile {
   hasBillingControlOverrides: Boolean!
   creditLimit: Decimal
   """Open receivables, net of unapplied cash and credits, as of creditReviewedAt. Kept by the credit review, not entered."""
-  creditBalance: Decimal!
-  creditStatus: CustomerCreditStatus!
-  enforceCreditLimit: Boolean!
-  autoCreditHold: Boolean!
-  creditHoldReason: String!
+  creditBalance: Decimal
+  creditStatus: CustomerCreditStatus
+  enforceCreditLimit: Boolean
+  autoCreditHold: Boolean
+  creditHoldReason: String
   """True when the credit review placed the current Hold or Warning; only the review lifts it."""
-  creditHoldAutomatic: Boolean!
+  creditHoldAutomatic: Boolean
   """When creditBalance was last recomputed from the receivables ledger."""
   creditReviewedAt: Timestamp
   "Whether a posted invoice is emailed to the customer as soon as its PDF is made, without anyone sending it. Email must also be allowed by emailInvoiceEnabled."
   autoSendInvoiceOnGeneration: Boolean!
   "Whether the organization's payment reminders may email this customer about overdue invoices."
-  sendPaymentReminders: Boolean!
+  sendPaymentReminders: Boolean
   "Whether the organization's monthly statements may be emailed to this customer."
-  sendStatements: Boolean!
+  sendStatements: Boolean
   "Whether invoices may be emailed to this customer."
   emailInvoiceEnabled: Boolean!
   "Whether invoices are sent to this customer's EDI partner as an 210."
-  ediInvoiceEnabled: Boolean!
+  ediInvoiceEnabled: Boolean
   invoiceNumberFormat: CustomerInvoiceNumberFormat!
   customerInvoicePrefix: String!
   invoiceCopies: Int!
   revenueAccountId: ID
   arAccountId: ID
-  applyLateCharges: Boolean!
+  applyLateCharges: Boolean
   lateChargeRate: Decimal
-  gracePeriodDays: Int!
+  gracePeriodDays: Int
   taxExempt: Boolean!
   taxExemptNumber: String!
   enforceCustomerBillingReq: Boolean!
@@ -11645,7 +11645,7 @@ type Customer {
   What this customer asked to be told as their freight moves. None is the
   default: a customer who never opted in is not emailed about a stop.
   """
-  statusUpdatePreference: CustomerStatusUpdatePreference!
+  statusUpdatePreference: CustomerStatusUpdatePreference
   """
   Who receives those updates, comma separated. Empty falls back to the
   notice profile's own recipients.
@@ -11893,15 +11893,15 @@ enum CustomerPaymentMethod {
   Other
 }
 
-type CustomerPaymentApplication {
+type CustomerPaymentApplication @kind(resource: "customer_payment") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
-  customerPaymentId: ID!
-  invoiceId: ID!
-  appliedAmountMinor: Int!
-  shortPayAmountMinor: Int!
-  lineNumber: Int!
+  customerPaymentId: ID
+  invoiceId: ID
+  appliedAmountMinor: Int
+  shortPayAmountMinor: Int
+  lineNumber: Int
   createdAt: Timestamp!
   updatedAt: Timestamp!
   invoice: Invoice
@@ -11914,20 +11914,20 @@ enum CreditMemoApplicationStatus {
 }
 
 "Part of a posted credit memo used to settle an invoice."
-type CreditMemoApplication {
+type CreditMemoApplication @kind(resource: "customer_payment") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
-  creditMemoInvoiceId: ID!
-  invoiceId: ID!
-  appliedAmountMinor: Int!
-  accountingDate: Timestamp!
-  lineNumber: Int!
+  creditMemoInvoiceId: ID
+  invoiceId: ID
+  appliedAmountMinor: Int
+  accountingDate: Timestamp
+  lineNumber: Int
   status: CreditMemoApplicationStatus!
   unappliedAt: Timestamp
   unappliedById: ID
-  unappliedReason: String!
-  createdById: ID!
+  unappliedReason: String
+  createdById: ID
   createdAt: Timestamp!
   updatedAt: Timestamp!
   creditMemo: Invoice
@@ -12039,9 +12039,9 @@ extend type Mutation {
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
   reverseCustomerPayment(input: ReverseCustomerPaymentInput!): CustomerPayment!
   "Settles open invoices of the same customer with a posted credit memo."
-  applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
+  applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]! @authorizes(resource: "invoice")
   "Takes one credit memo application back."
-  unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
+  unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication! @authorizes(resource: "invoice")
 }
 `, BuiltIn: false},
 	{Name: "../schema/customertracking.graphqls", Input: `"A part of a shipment a customer's tracking link may show."
@@ -14382,13 +14382,13 @@ type DispatchEndMarket {
 The live tender riding on a move, condensed to what a board card chip needs: where the
 waterfall stands and which carrier is currently holding the offer.
 """
-type DispatchBoardTenderSummary {
+type DispatchBoardTenderSummary @kind(resource: "tender") {
   id: ID!
-  status: TenderStatus!
-  mode: TenderMode!
-  currentRank: Int!
-  offerCount: Int!
-  currentCarrierName: String!
+  status: TenderStatus
+  mode: TenderMode
+  currentRank: Int
+  offerCount: Int
+  currentCarrierName: String
   currentOfferExpiresAt: Timestamp
 }
 
@@ -16073,7 +16073,7 @@ type PortalEscrowSummary {
 }
 
 type MySettlementList {
-  items: [DriverSettlement!]!
+  items: [DriverSettlement!]
   total: Int!
   "Whether total was counted; false when it is the planner's estimate of a list too large to count."
   totalExact: Boolean!
@@ -19585,18 +19585,19 @@ type FactoringCheck {
 }
 
 "Whether an invoice is ready to factor, and why not."
-type FactoringInvoiceState @kind(resource: "invoice") {
-  invoiceId: ID!
+type FactoringInvoiceState @kind(resource: "factoring_submission") {
+  invoiceId: ID
   factoringCompanyId: ID
-  customerId: ID!
-  verdict: FactoringVerdict!
-  checks: [FactoringCheck!]!
-  failedChecks: Int!
-  openBalanceMinor: Int!
+  customerId: ID
+  verdict: FactoringVerdict
+  checks: [FactoringCheck!]
+  failedChecks: Int
+  openBalanceMinor: Int
   "When the invoice became ready; null while it is not."
   readySince: Timestamp
-  evaluatedAt: Timestamp!
-  invoice: Invoice
+  evaluatedAt: Timestamp
+  "The invoice, for a caller who may read invoices; null for anyone else."
+  invoice: Invoice @authorizes(resource: "invoice")
   customer: Customer
   factoringCompany: FactoringCompany
 }
@@ -19619,7 +19620,7 @@ type FactoringVerdictTotals {
   amountMinor: Int!
 }
 
-type FactoringSummary @kind(resource: "invoice") {
+type FactoringSummary @kind(resource: "factoring_submission") {
   ready: FactoringVerdictTotals!
   notReady: FactoringVerdictTotals!
   "On a schedule with the factor or being sent to it."
@@ -20415,7 +20416,7 @@ input DiscardFactoringRemittanceInput {
 }
 
 extend type Invoice {
-  factoringOverride: InvoiceFactoringOverride!
+  factoringOverride: InvoiceFactoringOverride
   "Why the invoice stays out of factoring; null unless it is excluded."
   factoringOverrideReason: String
   "The agreement in force when the invoice posted."
@@ -22764,16 +22765,53 @@ type HomeWidgetConfig {
 }
 
 """
+The add-on a widget or a measure needs that the organization's plan does not
+include. A locked widget keeps its place on the home screen and the server reads
+nothing for it; the client draws the add-on's name in its slot.
+"""
+type HomePlanLock {
+  feature: String!
+  featureName: String!
+  addOn: String!
+  addOnName: String!
+}
+
+"""
+One measure of a metric strip that the plan leaves out, while the rest of the
+strip is on the plan.
+"""
+type HomeLockedMetric {
+  metric: String!
+  label: String!
+  lock: HomePlanLock!
+}
+
+"""
 One card on the home canvas. Position is not stored: widgets are an ordered
 list that the client packs into the grid, so order alone defines the layout.
 """
 type HomeWidget {
   id: String!
   key: String!
+  """
+  The widget's name in the catalog, so a locked widget can be named without
+  loading the catalog.
+  """
+  label: String!
   title: String
   w: Int!
   h: Int!
   config: HomeWidgetConfig!
+  """
+  Set when the plan leaves the whole widget out. A widget the reader has no
+  permission for is not returned at all; this is only ever the plan.
+  """
+  planLock: HomePlanLock
+  """
+  The measures of a metric strip the plan leaves out. Empty for every other
+  widget, and for a strip whose measures are all on the plan.
+  """
+  lockedMetrics: [HomeLockedMetric!]!
 }
 
 type HomeLayout {
@@ -22801,6 +22839,11 @@ type HomeWidgetOption {
   minH: Int!
   maxW: Int!
   maxH: Int!
+  """
+  Set when the plan leaves the widget out: it is listed so an administrator can
+  see it exists and which add-on carries it, and it cannot be added.
+  """
+  planLock: HomePlanLock
 }
 
 type HomeWidgetCategory {
@@ -22812,6 +22855,10 @@ type HomeWidgetCategory {
 type HomeMetricOption {
   key: String!
   label: String!
+  """
+  Set when the plan leaves the measure out; it cannot be chosen.
+  """
+  planLock: HomePlanLock
 }
 
 type HomeWidgetCatalog {
@@ -24566,13 +24613,13 @@ type Invoice {
   "Whether this invoice bills only part of what its shipments charged."
   isSplitBill: Boolean!
   "Notes the tariffs that rated the invoice's shipments put on their bills."
-  ratingNotes: [String!]!
+  ratingNotes: [String!]
   "Other invoices that bill any shipment on this one, split-bill siblings first."
   relatedInvoices: [Invoice!]!
   subtotalAmount: Decimal!
   otherAmount: Decimal!
   totalAmount: Decimal
-  appliedAmount: Decimal!
+  appliedAmount: Decimal
   settlementStatus: InvoiceSettlementStatus!
   disputeStatus: InvoiceDisputeStatus!
   sendStatus: InvoiceSendStatus!
@@ -24602,26 +24649,33 @@ type Invoice {
   memoReason: String!
   memoKind: InvoiceMemoKind
   "What is still owed on an open invoice or debit memo; zero on anything else."
-  openBalance: Decimal!
+  openBalance: Decimal
   "Open balance in minor units, kept by the database for filtering and sorting."
-  balanceDueMinor: Int!
+  balanceDueMinor: Int
   "How much of a posted credit memo has not yet been applied to an invoice."
-  creditRemaining: Decimal!
+  creditRemaining: Decimal
   "Days past the due date for an open invoice; null when nothing is owed or overdue."
   daysPastDue: Int
-  "Cash applied against this invoice, newest first, reversed payments included."
-  paymentApplications: [CustomerPaymentApplication!]!
+  """
+  Cash applied against this invoice, newest first, reversed payments included.
+  Null when the organization's plan leaves out Accounting & Cash.
+  """
+  paymentApplications: [CustomerPaymentApplication!]
   """
   Credit memo applications touching this invoice: the credits that settled it,
-  or, on a credit memo, the invoices it settled.
+  or, on a credit memo, the invoices it settled. Null when the organization's
+  plan leaves out Accounting & Cash.
   """
-  creditApplications: [CreditMemoApplication!]!
-  ediSendStatus: InvoiceEDISendStatus!
+  creditApplications: [CreditMemoApplication!]
+  ediSendStatus: InvoiceEDISendStatus
   lastEdiMessageId: ID
   ediSentAt: Timestamp
-  lastEdiError: String!
-  "Whether and where this invoice's outbound EDI 210 can go."
-  ediSendPlan: InvoiceEDISendPlan!
+  lastEdiError: String
+  """
+  Whether and where this invoice's outbound EDI 210 can go. Null when the
+  organization's plan leaves out EDI & Integrations.
+  """
+  ediSendPlan: InvoiceEDISendPlan
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -24713,23 +24767,23 @@ type CreateInvoicesResult {
 }
 
 "Whether an invoice's outbound 210 can go, where it would go, and where the last attempt stands."
-type InvoiceEDISendPlan {
-  invoiceId: ID!
+type InvoiceEDISendPlan @kind(resource: "edi") {
+  invoiceId: ID
   "The customer's EDI invoicing switch."
-  enabled: Boolean!
+  enabled: Boolean
   "Whether posting queues the 210 without a hand on it."
-  autoSend: Boolean!
+  autoSend: Boolean
   partnerId: ID
-  partnerName: String!
+  partnerName: String
   "The version of the partner's Lading project that would write the 210."
   ladingVersionId: ID
-  communicationMethod: String!
+  communicationMethod: String
   status: InvoiceEDISendStatus!
   lastMessageId: ID
-  lastError: String!
+  lastError: String
   sentAt: Timestamp
   "Why a send cannot happen right now; empty when it can."
-  blockers: [String!]!
+  blockers: [String!]
 }
 
 type InvoiceEDISendResult {
@@ -25582,19 +25636,19 @@ type LateChargeAssessmentResult {
 }
 
 "A late charge recorded on one invoice for one period."
-type LateChargeAssessment {
+type LateChargeAssessment @kind(resource: "accounts_receivable") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
   customerId: ID!
-  sourceInvoiceId: ID!
-  periodIndex: Int!
-  periodStart: Timestamp!
-  periodEnd: Timestamp!
-  asOfDate: Timestamp!
-  basisOpenBalanceMinor: Int!
-  ratePercent: Decimal!
-  chargeMinor: Int!
+  sourceInvoiceId: ID
+  periodIndex: Int
+  periodStart: Timestamp
+  periodEnd: Timestamp
+  asOfDate: Timestamp
+  basisOpenBalanceMinor: Int
+  ratePercent: Decimal
+  chargeMinor: Int
   debitMemoInvoiceId: ID
   debitMemoLineId: ID
   runKey: String!
@@ -25612,8 +25666,8 @@ input LateChargeAssessmentInput {
 }
 
 extend type Invoice {
-  "Late charges assessed on this invoice, newest first."
-  lateChargeAssessments: [LateChargeAssessment!]!
+  "Late charges assessed on this invoice, newest first; null when the plan leaves out Accounting & Cash."
+  lateChargeAssessments: [LateChargeAssessment!]
 }
 
 extend type Query {
@@ -25769,6 +25823,48 @@ input LocationCategoryInput {
 extend type Mutation {
   createLocationCategory(input: LocationCategoryInput!): LocationCategory!
   updateLocationCategory(id: ID!, input: LocationCategoryInput!): LocationCategory!
+}
+`, BuiltIn: false},
+	{Name: "../schema/managed_plan.graphqls", Input: `"A feature of the plan, by the name a person reads. The key is for the client's own bookkeeping and is never shown."
+type ManagedPlanFeature {
+  key: String!
+  name: String!
+}
+
+"An add-on Trenova sells, with the features it adds, in catalogue order. The key is for the client's own bookkeeping and is never shown."
+type ManagedPlanAddOn {
+  key: String!
+  name: String!
+  features: [ManagedPlanFeature!]!
+}
+
+"One change Trenova made to the plan. The first entry an instance ever received is its starting plan: starting is true and joined lists what it included."
+type ManagedPlanChange {
+  changedAt: Timestamp!
+  starting: Boolean!
+  "Add-ons that left the plan. What was entered with them is kept."
+  left: [ManagedPlanAddOn!]!
+  "Add-ons that joined the plan."
+  joined: [ManagedPlanAddOn!]!
+}
+
+"What a Managed Trenova instance's plan includes and what it does not."
+type ManagedPlan {
+  "False on a self-hosted install, where every feature is on and every list here is empty."
+  managed: Boolean!
+  "What the base plan includes."
+  base: [ManagedPlanFeature!]!
+  "The add-ons on the plan."
+  included: [ManagedPlanAddOn!]!
+  "The add-ons not on the plan."
+  available: [ManagedPlanAddOn!]!
+  "The most recent changes to the plan that moved an add-on, newest first, at most 20."
+  changes: [ManagedPlanChange!]!
+}
+
+extend type Query {
+  "What this instance's plan includes, the add-ons it does not, and its recent changes. Needs the organization update permission."
+  managedPlan: ManagedPlan!
 }
 `, BuiltIn: false},
 	{Name: "../schema/manual_journal.graphqls", Input: `enum ManualJournalStatus {
@@ -26403,6 +26499,20 @@ enum PageAccessDecision {
   WITHHELD_KIND
   "Above the reader's sensitivity ceiling."
   WITHHELD_SENSITIVITY
+  "The kind, or the field, belongs to an add-on the organization's plan does not include."
+  WITHHELD_PLAN
+}
+
+"The add-on a kind belongs to, named because the organization's plan does not include it."
+type PageAccessPlanDenial {
+  "The feature's key."
+  feature: String!
+  "The feature's name, such as Factoring."
+  featureName: String!
+  "The add-on's key."
+  addOn: String!
+  "The add-on's name, such as Accounting & Cash."
+  addOnName: String!
 }
 
 "A permission a screen's route or one of its REST endpoints checks."
@@ -26439,6 +26549,8 @@ type PageAccessKind {
   canRead: Boolean!
   fields: [PageAccessField!]!
   withheld: Int!
+  "Set when the organization's plan leaves the kind out, so nobody sees it."
+  planDenial: PageAccessPlanDenial
 }
 
 """
@@ -27819,9 +27931,44 @@ type ReportCatalogEntity {
 }
 
 """
+The add-on a part of the product belongs to, named because the
+organization's plan does not include it.
+"""
+type ReportPlanDenial {
+  "The feature's key."
+  feature: String!
+  "The feature's name, such as Factoring."
+  featureName: String!
+  "The add-on's key."
+  addOn: String!
+  "The add-on's name, such as Accounting & Cash."
+  addOnName: String!
+}
+
+"""
+A table, or a field or edge of a table on the plan, that the organization's
+plan leaves out of the catalog. It is never offered to build with; it names
+what a saved report reads that its plan does not include.
+"""
+type ReportPlanWithheld {
+  "The key of the table."
+  entity: String!
+  "The table's label: its plural for a whole table, its singular for a field or edge."
+  entityLabel: String!
+  "The field's key or the edge's name; absent for a whole table."
+  name: String
+  label: String!
+  "Whether name is an edge."
+  edge: Boolean!
+  denial: ReportPlanDenial!
+}
+
+"""
 The report catalog as the caller may use it: every kind they can read, and
 every kind they cannot read that they can still reach through a join, with
-only its reference-view fields available.
+only its reference-view fields available. Tables, fields and edges the
+organization's plan leaves out are not in entities; they are listed in
+withheldByPlan.
 """
 type ReportCatalog {
   version: String!
@@ -27833,6 +27980,8 @@ type ReportCatalog {
   """
   rules: JSON!
   entities: [ReportCatalogEntity!]!
+  "What the organization's plan leaves out of the catalog, with the add-on each needs."
+  withheldByPlan: [ReportPlanWithheld!]!
 }
 
 # --- Canned reports ----------------------------------------------------------
@@ -27846,6 +27995,13 @@ type CannedReport {
   tags: [String!]!
   defaultFormat: String!
   definition: JSON!
+  """
+  Whether the organization's plan includes everything the report reads. An
+  unavailable report cannot be run, customized or explored.
+  """
+  available: Boolean!
+  "The add-on the report needs, when it is not available."
+  planDenial: ReportPlanDenial
 }
 
 # --- Report definitions ------------------------------------------------------
@@ -28294,9 +28450,12 @@ type ReportRunDeskCard {
   sample: ReportPreview
   """
   Why a finished run's result is not shown: access (the person can no longer
-  read everything it shows) or changed (the report no longer runs as it did).
+  read everything it shows), plan (it reads data the organization's plan no
+  longer includes) or changed (the report no longer runs as it did).
   """
   withheld: String
+  "The add-on the run's report needs, when withheld is plan."
+  withheldByPlan: ReportPlanDenial
   "The person's previous finished run of the same report with the same parameters."
   previous: ReportRunDeskPrevious
   "The schedule the run came from."
@@ -28463,9 +28622,9 @@ extend type Mutation {
   updatedAt: Timestamp!
   """
   The agents restricted to roles that this role is granted. Empty for a reader
-  who may not read agents.
+  who may not read agents, and null when the organization's plan leaves agents out.
   """
-  agents: [AgentDefinition!]!
+  agents: [AgentDefinition!]
 }
 
 type RoleEdge {
@@ -29328,9 +29487,9 @@ type ServiceFailure {
   Three-character X12 codes that replace the ones derived from the failure type
   when the 214 is built; blank means derive.
   """
-  x12StatusCodeOverride: String!
-  x12ReasonCodeOverride: String!
-  x12ExceptionCode: String!
+  x12StatusCodeOverride: String
+  x12ReasonCodeOverride: String
+  x12ExceptionCode: String
   detectedAt: Timestamp!
   reviewedAt: Timestamp
   resolvedAt: Timestamp
@@ -29826,7 +29985,7 @@ type Shipment {
   "The sum of the freight lines."
   freightChargeAmount: Decimal!
   "The values the shipment's tariff prices with, by input name. Each value is a Tariff wire value."
-  tariffInputs: JSON!
+  tariffInputs: JSON
   "The freight the shipment bills, line by line, as its last rating produced it."
   freightLines: [ShipmentFreightLine!]!
   totalChargeAmount: Decimal
@@ -29869,7 +30028,8 @@ type Shipment {
   customer: ShipmentCustomer
   billToCustomer: ShipmentCustomer
   owner: User
-  formulaTemplate: ShipmentFormulaTemplate
+  "The formula template that rates the shipment, for a caller who may read formula templates."
+  formulaTemplate: ShipmentFormulaTemplate @authorizes(resource: "formula_template")
   "Every allocation on the shipment, across freight and accessorials."
   chargeAllocations: [ChargeAllocation!]!
   """
@@ -29979,20 +30139,20 @@ name the quote rather than repeating it: the quote holds the full explanation,
 and copying it here would let the two drift.
 """
 type ShipmentRatingDetail {
-  formulaTemplateId: String!
-  formulaTemplateName: String!
+  formulaTemplateId: String
+  formulaTemplateName: String
   ratedAt: Timestamp!
   "The template version that rated the shipment. Zero when it was rated by hand."
-  versionNumber: Int!
+  versionNumber: Int
   "The bill the tariff produced. Null when the tariff refused or the shipment is rated by hand."
   bill: TariffBill
   "The tariff's reason for refusing to rate the shipment."
-  refusal: String!
+  refusal: String
   "Every best and worst the tariff evaluated, in the order they ran."
-  choices: [TariffChoice!]!
+  choices: [TariffChoice!]
   "The inputs the tariff priced with, by name. Each value is a Tariff wire value."
-  inputs: JSON!
-  skipped: [ShipmentRatingSkip!]!
+  inputs: JSON
+  skipped: [ShipmentRatingSkip!]
   """
   The values each statement of the tariff took and the table lookups it made, for the
   people who may read formula templates. Null for everyone else and for a hand rate.
@@ -30007,7 +30167,7 @@ type ShipmentRatingDetail {
   source: String!
   explanation: String!
   "True while the bill's reviews wait on a person's approval, which holds the shipment out of billing."
-  awaitingReview: Boolean!
+  awaitingReview: Boolean
   "Who approved the reviews this rating carries, and when. Null until a person approves them."
   reviewApproval: ShipmentRatingReviewApproval
 }
@@ -30105,7 +30265,7 @@ type ShipmentCustomer @kind(resource: "customer") {
   ediPartner: EdiPartner
 }
 
-type ShipmentFormulaTemplate {
+type ShipmentFormulaTemplate @kind(resource: "formula_template") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -30313,7 +30473,7 @@ type ShipmentAdditionalCharge {
   unit: Int!
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
-  isDetention: Boolean!
+  isDetention: Boolean
   "Whether the shipment's tariff billed this charge."
   isTariff: Boolean!
   "The tariff's label for the charge."
@@ -30850,8 +31010,8 @@ type ShipmentDispatchCounts {
   uncovered: Int!
 }
 
-type ShipmentDetentionWatchlist {
-  items: [ShipmentDetentionWatchlistItem!]!
+type ShipmentDetentionWatchlist @kind(resource: "detention") {
+  items: [ShipmentDetentionWatchlistItem!]
 }
 
 type ShipmentDetentionWatchlistItem {
@@ -32310,10 +32470,11 @@ type ShipmentBillingWatch {
   moreCustomers: Int!
 }
 
-type ShipmentWatchlist {
+"The shipment board's watch tiles: aggregates of the organization's shipments, so a card of the shipment kind."
+type ShipmentWatchlist @kind(resource: "shipment") {
   deliveries: ShipmentDeliveryWatch!
   uncovered: ShipmentUncoveredWatch!
-  detention: ShipmentDetentionWatch!
+  detention: ShipmentDetentionWatch
   billing: ShipmentBillingWatch!
 }
 
@@ -32503,6 +32664,96 @@ type StoredMileageConnection {
 extend type Query {
   storedMileages(input: DataTableConnectionInput!): StoredMileageConnection!
   storedMileage(id: ID!): StoredMileage
+}
+`, BuiltIn: false},
+	{Name: "../schema/support_access.graphqls", Input: `"How much a Trenova support grant lets staff do: read only, or an administrator's reach less what support may never do."
+enum SupportAccessScope {
+  ReadOnly
+  Full
+}
+
+enum SupportAccessStatus {
+  Live
+  Expired
+  Revoked
+}
+
+"Time-limited access an administrator gave one named Trenova staff member to this organization."
+type SupportAccessGrant {
+  id: ID!
+  staffEmail: String!
+  reason: String!
+  scope: SupportAccessScope!
+  durationHours: Int!
+  status: SupportAccessStatus!
+  grantedByName: String
+  grantedAt: Timestamp!
+  expiresAt: Timestamp!
+  revokedAt: Timestamp
+  revokedByName: String
+  revokeReason: String
+  "When staff last entered under this grant."
+  lastEnteredAt: Timestamp
+  "The staff member's name as the control plane last asserted it."
+  lastStaffName: String
+}
+
+type SupportAccessGrantEdge {
+  node: SupportAccessGrant!
+  cursor: String!
+}
+
+type SupportAccessGrantConnection {
+  edges: [SupportAccessGrantEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+type SupportAccessSettings {
+  "False on a self-hosted install, and on a managed one until the control plane has delivered its keys."
+  available: Boolean!
+  "The Trenova staff email domain grants are limited to."
+  staffDomain: String
+  "The lengths, in hours, a grant may have."
+  durations: [Int!]!
+  maxLiveGrants: Int!
+}
+
+"The caller's own session, when Trenova support opened it."
+type SupportSession {
+  staffName: String!
+  staffEmail: String!
+  scope: SupportAccessScope!
+  endsAt: Timestamp!
+}
+
+input GrantSupportAccessInput {
+  staffEmail: String!
+  reason: String!
+  durationHours: Int!
+  scope: SupportAccessScope!
+}
+
+input RevokeSupportAccessInput {
+  id: ID!
+  reason: String!
+}
+
+extend type Query {
+  supportAccessSettings: SupportAccessSettings!
+  "Support access grants, live and past, newest first. List what was done under one with auditEntries filtered by principalId equal to the grant's id."
+  supportAccessGrants(input: DataTableConnectionInput!): SupportAccessGrantConnection!
+  supportAccessGrant(id: ID!): SupportAccessGrant
+  currentSupportSession: SupportSession
+}
+
+extend type Mutation {
+  "Let a named Trenova staff member into this organization for a set time."
+  grantSupportAccess(input: GrantSupportAccessInput!): SupportAccessGrant!
+  "End a support grant and every session under it at once."
+  revokeSupportAccess(input: RevokeSupportAccessInput!): SupportAccessGrant!
 }
 `, BuiltIn: false},
 	{Name: "../schema/table_change_alert.graphqls", Input: `type TCASubscription @kind(resource: "table_change_alert") {
@@ -32938,7 +33189,7 @@ type Organization {
   postalCode: String!
   timezone: String!
   taxId: String!
-  brokerageEnabled: Boolean!
+  brokerageEnabled: Boolean
   assetOperationsEnabled: Boolean!
   version: Int!
   createdAt: Timestamp!
@@ -33400,7 +33651,7 @@ type Tractor {
   """
   Whether the tractor's miles and fuel enter the IFTA return.
   """
-  iftaQualified: Boolean!
+  iftaQualified: Boolean
   "Who owns the tractor: the company, a lessor, or the owner-operator who drives it."
   ownershipType: EquipmentOwnershipType!
   "The owner-operator who owns the tractor, when it is theirs."
@@ -34972,7 +35223,7 @@ type WorkerProfile {
   terminationDate: Timestamp
   physicalDueDate: Timestamp
   mvrDueDate: Timestamp
-  complianceStatus: ComplianceStatus!
+  complianceStatus: ComplianceStatus
   """
   Roster roll-ups: the worker's training and safety standing denormalised onto
   the profile so the workers list can filter and sort on them. They are a cache
@@ -34980,9 +35231,9 @@ type WorkerProfile {
   re-checked by the nightly compliance sweep. Read the worker overview or the
   per-area summaries for the live answer.
   """
-  trainingHealth: WorkerTrainingHealth!
-  safetyRating: SafetyRating!
-  safetyScore: Int!
+  trainingHealth: WorkerTrainingHealth
+  safetyRating: SafetyRating
+  safetyScore: Int
   """
   When the worker's soonest required credential expires, and when their soonest
   required course falls due. Null when nothing does.
@@ -34994,11 +35245,11 @@ type WorkerProfile {
   ledgers so the roster can filter and sort on it. Only Prohibited blocks
   dispatch; Unknown and Pending warn.
   """
-  drugAlcoholStatus: DrugAlcoholStatus!
+  drugAlcoholStatus: DrugAlcoholStatus
   isQualified: Boolean!
   disqualificationReason: String!
-  lastComplianceCheck: Timestamp!
-  lastMvrCheck: Timestamp!
+  lastComplianceCheck: Timestamp
+  lastMvrCheck: Timestamp
   lastDrugTest: Timestamp @protected(group: Personal)
   eldExempt: Boolean!
   shortHaulExempt: Boolean!
@@ -35574,7 +35825,7 @@ type WorkerCredential {
 }
 
 type WorkerCredentialSummaryItem {
-  credentialType: WorkerCredentialType!
+  credentialType: WorkerCredentialType
   credential: WorkerCredential
   health: WorkerCredentialHealth!
   daysUntilExpiry: Int
@@ -37193,7 +37444,11 @@ links to always agree. Counts cover active workers only.
 type WorkerRosterAttention {
   activeWorkers: Int!
   nonCompliant: Int!
-  trainingOverdue: Int!
+  """
+  Null for a reader without worker_training read, and when the plan leaves out
+  the HR Suite talent feature.
+  """
+  trainingOverdue: Int
   atRisk: Int!
   expiringSoon: Int!
   """
@@ -37203,9 +37458,11 @@ type WorkerRosterAttention {
   """
   reviewsAwaitingSignOff: Int
   """
-  Total accrued time off the organisation is carrying, in days.
+  Total accrued time off the organisation is carrying, in days. Null for a
+  reader without worker_pto read, and when the plan leaves out the HR Suite time
+  off feature.
   """
-  ptoLiabilityDays: Decimal!
+  ptoLiabilityDays: Decimal
   """
   Leave cases waiting on a medical certification the employee owes. Past the
   deadline the employer may deny the leave (29 CFR 825.313), so this is a
@@ -37670,7 +37927,7 @@ type WorkerTrainingRecord {
 }
 
 type WorkerTrainingSummaryItem {
-  course: TrainingCourse!
+  course: TrainingCourse
   record: WorkerTrainingRecord
   health: WorkerTrainingHealth!
   daysUntilDue: Int

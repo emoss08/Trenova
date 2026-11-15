@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -86,6 +87,11 @@ func newTestHandler(repo *tokenRepo) *Handler {
 	return New(Params{
 		Service:      service,
 		ErrorHandler: errorHandler,
+		Features: middleware.NewFeatureGuard(middleware.FeatureGuardParams{
+			Features:     plantest.AllFeatures(),
+			ErrorHandler: errorHandler,
+			Logger:       zap.NewNop(),
+		}),
 		RateLimiter: middleware.NewRateLimiter(middleware.RateLimiterParams{
 			SecurityConfig: &cfg.Security,
 			Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),

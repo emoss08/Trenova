@@ -14,7 +14,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
@@ -31,15 +33,17 @@ type Params struct {
 
 	Service      *inboundintake.Service
 	ErrorHandler *helpers.ErrorHandler
+	Features     *middleware.FeatureGuard
 }
 
 type Handler struct {
-	service *inboundintake.Service
-	eh      *helpers.ErrorHandler
+	service  *inboundintake.Service
+	eh       *helpers.ErrorHandler
+	features *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
-	return &Handler{service: p.Service, eh: p.ErrorHandler}
+	return &Handler{service: p.Service, eh: p.ErrorHandler, features: p.Features}
 }
 
 // RegisterPublicRoutes mounts the ingest endpoint.
@@ -48,7 +52,14 @@ func New(p Params) *Handler {
 // /webhooks/email/, where the outbound delivery hooks already own the segment
 // after the provider name with a wildcard.
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
-	rg.POST(webhookRoute, h.receive)
+	rg.POST(
+		webhookRoute,
+		h.features.RequireFeature(
+			platformcatalog.FeatureAITriage,
+			middleware.AnswerStatus(http.StatusNotFound),
+		),
+		h.receive,
+	)
 }
 
 const (

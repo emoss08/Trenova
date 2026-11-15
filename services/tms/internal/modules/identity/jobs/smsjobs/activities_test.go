@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
 
 	"github.com/emoss08/trenova/internal/infrastructure/sms"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/require"
@@ -18,13 +18,13 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestSendSMSActivityRefusesWithoutCallingTwilioWhenThePlanRestrictsSMS(t *testing.T) {
+func TestSendSMSActivityRefusesWithoutCallingTwilioWhenAdministrationIsOff(t *testing.T) {
 	t.Parallel()
 
 	tenant := plantest.Tenant()
 	activities := &Activities{
-		logger: zap.NewNop(),
-		plans:  plantest.Restricting(t, platformplan.CapabilitySMS),
+		logger:   zap.NewNop(),
+		features: plantest.Without(platformcatalog.FeatureAdministration),
 	}
 
 	var s testsuite.WorkflowTestSuite

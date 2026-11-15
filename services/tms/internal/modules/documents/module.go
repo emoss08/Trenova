@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundupkeep"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundviews"
 	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
+	"github.com/emoss08/trenova/internal/modules/documents/app/storagequotaservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
@@ -83,6 +84,8 @@ func SharedOptions() fx.Option {
 			documenttemplaterepository.NewGeneratedRepository,
 			documentrepository.New,
 			documentmeter.New,
+			storagequotaservice.New,
+			storagequotaservice.NewWarnings,
 			documentaiextractionrepository.New,
 			documentcontentrepository.New,
 			documentsearchprojectionrepository.New,

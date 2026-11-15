@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turntaint"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/filterwords"
+	"github.com/emoss08/trenova/internal/modules/agent/app/planwording"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
@@ -87,6 +88,9 @@ func (s *Dispatcher) dispatch(ctx context.Context, p *DispatchParams) toolcall.R
 		refusal.Verdict = aitrace.OutcomeDenied
 		refusal.Reason = "its extension is turned off or not set up"
 
+		return refusal
+	}
+	if refusal, refused := s.access.PlanRefusal(ctx, req, call.Name); refused {
 		return refusal
 	}
 	if !s.access.HoldsFor(ctx, req, call.Name) && !s.access.Reachable(req, p.beyond) {
@@ -706,6 +710,22 @@ func (s *Dispatcher) authorize(
 
 		return toolcall.Refused(aitrace.OutcomeFailed, "its permission could not be checked",
 			"Tool %q could not be authorized. Try again later.", toolName), true
+	}
+
+	if result.PlanDenial != nil {
+		s.logger.Info("agent tool call refused by the plan",
+			zap.String("tool", toolName),
+			zap.String("principal", actor.PrincipalID.String()),
+			zap.String("resource", resource.String()),
+			zap.String("feature", string(result.PlanDenial.Feature)),
+		)
+
+		return toolcall.Refused(
+			aitrace.OutcomeDenied,
+			planwording.Reason(result.PlanDenial),
+			"%s",
+			planwording.Refusal(fmt.Sprintf("Tool %q", toolName), result.PlanDenial, actor.IsAgent()),
+		), true
 	}
 
 	if !result.Allowed {

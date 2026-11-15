@@ -104,6 +104,7 @@ export function finishedCard(): ReportRunDeskCard {
       truncated: true,
     },
     withheld: null,
+    withheldByPlan: null,
     previous: {
       runId: "rrun_0",
       completedAt: 1_792_509_246,

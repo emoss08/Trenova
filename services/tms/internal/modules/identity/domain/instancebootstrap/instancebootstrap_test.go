@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,7 @@ func fieldsOf(t *testing.T, inputs *Inputs) []string {
 
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, err := range multiErr.Errors {
-		fields = append(fields, err.Field)
+		fields = append(fields, err.Field())
 	}
 
 	return fields
@@ -48,12 +49,12 @@ func TestNormalizeAppliesDefaultsAndCanonicalForms(t *testing.T) {
 	assert.Equal(t, DefaultTimezone, got.Timezone)
 	assert.Equal(t, "TX", got.State)
 	assert.Equal(t, "ACME", got.SCAC)
-	assert.Equal(t, PlaceholderCity, got.City)
-	assert.Equal(t, PlaceholderPostalCode, got.PostalCode)
-	assert.Equal(t, PlaceholderDOTNumber, got.DOTNumber)
+	assert.Equal(t, tenant.PlaceholderCity, got.City)
+	assert.Equal(t, tenant.PlaceholderPostalCode, got.PostalCode)
+	assert.Equal(t, tenant.PlaceholderDOTNumber, got.DOTNumber)
 
 	assert.Equal(t, DefaultState, validInputs().Normalize().State)
-	assert.Equal(t, PlaceholderSCAC, validInputs().Normalize().SCAC)
+	assert.Equal(t, tenant.PlaceholderSCAC, validInputs().Normalize().SCAC)
 }
 
 func TestValidateAcceptsTheMinimalInputs(t *testing.T) {

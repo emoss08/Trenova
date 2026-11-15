@@ -1,6 +1,8 @@
+import { PlanFeature } from "@/lib/plan-feature";
 import { shipmentBoard } from "@/lib/queries/shipment-board";
 import type { ShipmentBoardCapabilities } from "@/lib/graphql/shipment-board";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { createContext, use, type ReactNode } from "react";
 
 export type BoardCapabilities = ShipmentBoardCapabilities & {
@@ -22,6 +24,8 @@ export function toBoardCapabilities(raw: ShipmentBoardCapabilities): BoardCapabi
  * What this workspace can do: an AI provider, its own drivers, carriers, an
  * ELD, a map. Every conditional on the board reads it here, so turning a
  * capability on or off is one server fact rather than a branch per component.
+ * A capability that belongs to an add-on is on only while the plan includes it:
+ * the briefing and insights are Trenova AI's, the ELD and the map Visibility's.
  */
 export function ShipmentCapabilitiesProvider({ children }: { children: ReactNode }) {
   const { data } = useSuspenseQuery({ ...shipmentBoard.capabilities(), staleTime: 60_000 });
@@ -36,7 +40,16 @@ export function BoardCapabilitiesProvider({
   value: ShipmentBoardCapabilities;
   children: ReactNode;
 }) {
-  return <CapabilitiesContext value={toBoardCapabilities(value)}>{children}</CapabilitiesContext>;
+  const aiOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
+  const hosOnPlan = usePlanFeature(PlanFeature.Samsara).available;
+  const mapsOnPlan = usePlanFeature(PlanFeature.GoogleMaps).available;
+  const capabilities = toBoardCapabilities({
+    ...value,
+    ai: value.ai && aiOnPlan,
+    hos: value.hos && hosOnPlan,
+    maps: value.maps && mapsOnPlan,
+  });
+  return <CapabilitiesContext value={capabilities}>{children}</CapabilitiesContext>;
 }
 
 export function useShipmentCapabilities(): BoardCapabilities {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -86,4 +87,8 @@ func (o *ShipmentObserver) OnShipmentEvent(ctx context.Context, event *shipmente
 		return nil
 	}
 	return err
+}
+
+func (o *ShipmentObserver) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureEDIIntegration
 }

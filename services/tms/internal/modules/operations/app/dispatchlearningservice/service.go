@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchlearning"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
@@ -32,6 +34,7 @@ type Params struct {
 	Controls     dispatchcontrolports.DispatchControlRepository
 	AuditService auditports.AuditService
 	Clock        timeutils.Clock
+	Features     platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -40,6 +43,7 @@ type Service struct {
 	controls dispatchcontrolports.DispatchControlRepository
 	audit    auditports.AuditService
 	clock    timeutils.Clock
+	features platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service {
@@ -49,6 +53,7 @@ func New(p Params) *Service {
 		controls: p.Controls,
 		audit:    p.AuditService,
 		clock:    p.Clock,
+		features: p.Features,
 	}
 }
 
@@ -89,6 +94,9 @@ func (s *Service) Get(
 	ctx context.Context,
 	req *dispatchlearningports.GetStyleRequest,
 ) (*dispatchlearningports.Style, error) {
+	if err := s.requireIntelligence(ctx); err != nil {
+		return nil, err
+	}
 	control, err := s.controls.GetOrCreate(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
 	if err != nil {
 		return nil, err
@@ -105,6 +113,9 @@ func (s *Service) Reset(
 	ctx context.Context,
 	req *dispatchlearningports.ResetStyleRequest,
 ) (*dispatchlearningports.Style, error) {
+	if err := s.requireIntelligence(ctx); err != nil {
+		return nil, err
+	}
 	control, err := s.controls.GetOrCreate(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
 	if err != nil {
 		return nil, err
@@ -150,6 +161,14 @@ func (s *Service) Reset(
 	}
 
 	return ViewOf(saved, control.LearnDispatchStyle), nil
+}
+
+func (s *Service) requireIntelligence(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(
+		ctx,
+		s.features,
+		platformcatalog.FeatureDispatchIntelligence,
+	)
 }
 
 func (s *Service) Learn(

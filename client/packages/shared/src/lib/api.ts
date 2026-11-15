@@ -13,10 +13,11 @@ import {
   parseProblemType,
 } from "@trenova/shared/types/errors";
 import { API_BASE_URL } from "./constants";
-import { reportPlanLimit } from "./plan-limit";
+import { reportPlanLimit, type PlanLimitRequest } from "./plan-limit";
 import { reportSessionContextStale, withSessionContextHeaders } from "./session-context";
 import { filenameFromDisposition } from "./utils";
 import { withRequestDeadline } from "@trenova/shared/lib/request-errors";
+import { recordWithholdings, withholdingsOfHeaders } from "@trenova/shared/lib/withheld";
 
 const CSRF_HEADER_NAME =
   (import.meta.env.VITE_CSRF_HEADER_NAME as string | undefined) ?? "X-CSRF-Token";
@@ -143,14 +144,18 @@ export class ApiRequestError extends Error {
  * the refusal of a tab another tab's sign-in or organization switch left behind, is handed
  * to the app — once, whichever request helper made the call.
  */
-function failedRequest(error: ApiRequestError): ApiRequestError {
-  reportPlanLimit(error);
+function failedRequest(error: ApiRequestError, request: PlanLimitRequest): ApiRequestError {
+  reportPlanLimit(error, request);
   reportSessionContextStale(error);
   return error;
 }
 
 function isUnsafeMethod(method: string | undefined): boolean {
   return UNSAFE_METHODS.has((method ?? "GET").toUpperCase());
+}
+
+function requestKind(method: string | undefined): PlanLimitRequest {
+  return isUnsafeMethod(method) ? "write" : "read";
 }
 
 export function setCsrfToken(token: string | null | undefined): void {
@@ -285,10 +290,12 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     });
 
     if (!response.ok) {
-      await rejectResponse(response, translate("Request failed"));
+      await rejectResponse(response, translate("Request failed"), requestKind(method));
     }
 
-    return readBody<T>(response);
+    const body = await readBody<T>(response);
+    recordWithholdings(body, withholdingsOfHeaders(response.headers));
+    return body;
   });
 }
 
@@ -311,7 +318,11 @@ async function readBody<T>(response: Response): Promise<T> {
  * own responses (an event stream) uses it too, so its refusals reach the same
  * dialogs as every other request's.
  */
-export async function responseError(response: Response, title: string): Promise<ApiRequestError> {
+export async function responseError(
+  response: Response,
+  title: string,
+  request: PlanLimitRequest,
+): Promise<ApiRequestError> {
   const errorData = await response.json().catch(() => ({
     type: "internal-error",
     title,
@@ -321,11 +332,18 @@ export async function responseError(response: Response, title: string): Promise<
   }));
   const parsed = apiErrorResponseSchema.safeParse(errorData);
   const validatedData = parsed.success ? parsed.data : errorData;
-  return failedRequest(new ApiRequestError(response.status, validatedData, retryAfterOf(response)));
+  return failedRequest(
+    new ApiRequestError(response.status, validatedData, retryAfterOf(response)),
+    request,
+  );
 }
 
-async function rejectResponse(response: Response, title: string): Promise<never> {
-  throw await responseError(response, title);
+async function rejectResponse(
+  response: Response,
+  title: string,
+  request: PlanLimitRequest,
+): Promise<never> {
+  throw await responseError(response, title, request);
 }
 
 /** A generated file the server sent back, named as the server named it. */
@@ -345,7 +363,7 @@ async function fileRequest(
   });
 
   if (!response.ok) {
-    await rejectResponse(response, translate("Download failed"));
+    await rejectResponse(response, translate("Download failed"), requestKind(method));
   }
 
   return {
@@ -371,7 +389,7 @@ async function uploadRequest<T>(
   });
 
   if (!response.ok) {
-    await rejectResponse(response, translate("Upload failed"));
+    await rejectResponse(response, translate("Upload failed"), "write");
   }
 
   return readBody<T>(response);
@@ -430,7 +448,7 @@ async function uploadWithProgress<T>(
         }
         const parsed = apiErrorResponseSchema.safeParse(errorData);
         const validatedData = parsed.success ? parsed.data : errorData;
-        reject(failedRequest(new ApiRequestError(xhr.status, validatedData)));
+        reject(failedRequest(new ApiRequestError(xhr.status, validatedData), "write"));
       }
     });
 

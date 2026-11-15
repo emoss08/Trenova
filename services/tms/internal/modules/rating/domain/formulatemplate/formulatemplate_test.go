@@ -35,7 +35,7 @@ func validTemplate() *FormulaTemplate {
 func fieldsOf(multiErr *errortypes.MultiError) []string {
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, err := range multiErr.Errors {
-		fields = append(fields, err.Field)
+		fields = append(fields, err.Field())
 	}
 	return fields
 }
@@ -265,4 +265,36 @@ func TestVersionTag_IsValid(t *testing.T) {
 
 	assert.True(t, VersionTagStable.IsValid())
 	assert.False(t, VersionTag("Golden").IsValid())
+}
+
+func TestStandardTemplatesRefuseChange(t *testing.T) {
+	t.Parallel()
+
+	standard := validTemplate()
+	standard.StandardKey = "per_mile"
+	assert.True(t, standard.IsStandard())
+
+	err := standard.RefuseStandardChange()
+	require.Error(t, err)
+	assert.True(t, errortypes.IsBusinessError(err), "a business error the person reads, got %T", err)
+
+	own := validTemplate()
+	assert.False(t, own.IsStandard())
+	require.NoError(t, own.RefuseStandardChange())
+
+	var missing *FormulaTemplate
+	assert.False(t, missing.IsStandard())
+}
+
+func TestSeedFromTemplateNeverCopiesTheStandardKey(t *testing.T) {
+	t.Parallel()
+
+	standard := validTemplate()
+	standard.StandardKey = "per_mile"
+
+	copied := SeedFromTemplate(standard).Build()
+
+	assert.Empty(t, copied.StandardKey, "a duplicate of a standard template is the organization's own")
+	require.NotNil(t, copied.SourceTemplateID)
+	assert.Equal(t, standard.ID, *copied.SourceTemplateID)
 }

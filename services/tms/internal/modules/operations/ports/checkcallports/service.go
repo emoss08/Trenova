@@ -3,6 +3,7 @@ package checkcallports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
@@ -168,6 +169,7 @@ type CheckCallService interface {
 }
 
 type CheckCallObserver interface {
+	platformcatalogports.FeatureObserver
 	CheckCallRecorded(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

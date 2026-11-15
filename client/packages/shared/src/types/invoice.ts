@@ -11,6 +11,7 @@ import {
   nullableEnumSchema,
   nullableIntegerSchema,
   nullableStringSchema,
+  planWithheldSchema,
   tenantInfoSchema,
 } from "./helpers";
 import { invoiceDetailSchema, invoiceSectionKeySchema } from "./customer";
@@ -473,7 +474,7 @@ export const invoiceSchema = z.object({
   factoringCompanyId: nullableStringSchema,
   factoringCompany: invoiceFactorSchema.nullish().transform((value) => value ?? undefined),
   /** Default follows the customer's factoring; Exclude keeps the invoice on the organization's own receivables. */
-  factoringOverride: z.enum(["Default", "Exclude"]).default("Default"),
+  factoringOverride: planWithheldSchema(z.enum(["Default", "Exclude"]), "Default"),
   /** Whether this invoice bills only part of what its shipments charged. */
   isSplitBill: z.boolean().default(false),
   subtotalAmount: decimalStringSchema,
@@ -514,8 +515,8 @@ export const invoiceSchema = z.object({
   referenceInvoiceId: nullableStringSchema,
   memoReason: nullableStringSchema,
   memoKind: nullableEnumSchema(invoiceMemoKindSchema),
-  balanceDueMinor: z.number().int().optional().default(0),
-  ediSendStatus: invoiceEdiSendStatusSchema.default("NotSent"),
+  balanceDueMinor: z.number().int().nullish(),
+  ediSendStatus: invoiceEdiSendStatusSchema.nullish(),
   lastEdiMessageId: nullableStringSchema,
   ediSentAt: nullableIntegerSchema,
   lastEdiError: nullableStringSchema,

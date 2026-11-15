@@ -264,13 +264,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "brokerageEnabled",
-				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.Organization)
 					return obj.BrokerageEnabled, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:     "assetOperationsEnabled",
@@ -928,6 +927,11 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
+	return res
+}
+
+func marshalOBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
 	return res
 }
 

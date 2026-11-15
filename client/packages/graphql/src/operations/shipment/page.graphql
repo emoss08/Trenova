@@ -823,7 +823,7 @@ query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
   }
 }
 
-query ShipmentPageAnalytics($input: ShipmentAnalyticsInput!) {
+query ShipmentPageAnalytics($input: ShipmentAnalyticsInput!) @requiresRead(kind: "detention") {
   shipmentAnalytics(input: $input) {
     page
     activeShipments {

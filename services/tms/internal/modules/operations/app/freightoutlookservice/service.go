@@ -5,6 +5,8 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
@@ -32,6 +34,7 @@ type Params struct {
 	Controls     dispatchcontrolports.DispatchControlRepository
 	Positionings driverpositioningports.LiveReader
 	Clock        timeutils.Clock
+	Features     platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -41,6 +44,7 @@ type Service struct {
 	controls     dispatchcontrolports.DispatchControlRepository
 	positionings driverpositioningports.LiveReader
 	clock        timeutils.Clock
+	features     platformcatalogports.FeatureGate
 }
 
 var _ freightoutlookports.Service = (*Service)(nil)
@@ -53,6 +57,7 @@ func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In paramete
 		controls:     p.Controls,
 		positionings: p.Positionings,
 		clock:        p.Clock,
+		features:     p.Features,
 	}
 }
 
@@ -71,6 +76,9 @@ func (s *Service) Outlook(
 	ctx context.Context,
 	req *freightoutlookports.Request,
 ) (*freightoutlookports.Outlook, error) {
+	if err := s.requireDispatchIntelligence(ctx); err != nil {
+		return nil, err
+	}
 	snap, err := s.snapshot(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
@@ -116,6 +124,9 @@ func (s *Service) Area(
 	ctx context.Context,
 	req *freightoutlookports.AreaRequest,
 ) (*freightoutlookports.AreaDetail, error) {
+	if err := s.requireDispatchIntelligence(ctx); err != nil {
+		return nil, err
+	}
 	snap, err := s.snapshot(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
@@ -478,4 +489,12 @@ func departuresOf(rows []demandforecastports.Departure) []freightmove.Departure 
 	}
 
 	return out
+}
+
+func (s *Service) requireDispatchIntelligence(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(
+		ctx,
+		s.features,
+		platformcatalog.FeatureDispatchIntelligence,
+	)
 }

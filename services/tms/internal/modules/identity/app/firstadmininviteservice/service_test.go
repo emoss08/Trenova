@@ -184,6 +184,25 @@ func TestInstallIsIdempotentByHash(t *testing.T) {
 	assert.Len(t, d.auditor.Changes(), 1)
 }
 
+func TestInstallingTheSameInviteAgainLeavesTheEmailedLinkRedeemable(t *testing.T) {
+	t.Parallel()
+
+	d := newDeps(t, awaitingAdmin())
+	_, err := d.svc.Install(t.Context(), invite(hashA, 24*time.Hour))
+	require.NoError(t, err)
+	emailed := d.tokens.rows[0]
+
+	d.svc.now = func() int64 { return testNow + int64((5 * time.Minute).Seconds()) }
+	result, err := d.svc.Install(t.Context(), invite(hashA, 24*time.Hour))
+	require.NoError(t, err)
+
+	assert.Equal(t, hashA, result.InviteTokenSHA256)
+	assert.Len(t, d.tokens.invalidated, 1, "only the first install retires earlier links")
+	assert.Nil(t, emailed.InvalidatedAt)
+	assert.Nil(t, emailed.UsedAt)
+	assert.True(t, emailed.IsRedeemable(testNow+int64((10*time.Minute).Seconds())))
+}
+
 func TestInstallCapsTheExpiryAtTheInviteTTL(t *testing.T) {
 	t.Parallel()
 
@@ -304,7 +323,7 @@ func TestInstallValidatesTheInvite(t *testing.T) {
 			var multiErr *errortypes.MultiError
 			require.ErrorAs(t, err, &multiErr)
 			require.Len(t, multiErr.Errors, 1)
-			assert.Equal(t, tt.field, multiErr.Errors[0].Field)
+			assert.Equal(t, tt.field, multiErr.Errors[0].Field())
 			assert.Empty(t, d.tokens.rows)
 		})
 	}

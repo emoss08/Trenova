@@ -56,6 +56,9 @@ func (s *Service) UpdateVersionEffectiveDate(
 		log.Error("failed to get formula template", zap.Error(err))
 		return nil, err
 	}
+	if err = template.RefuseStandardChange(); err != nil {
+		return nil, err
+	}
 
 	if template.Status != formulatemplate.StatusActive {
 		return nil, errortypes.NewValidationError(

@@ -230,8 +230,10 @@ Templates, under `/api/v1/formula-templates`:
   findings, the bill or the refusal or the error, the trace, the lookups and the server's run of
   the tests, and the `choices` its `best` and `worst` blocks made); `POST /scaffold-test`
   (`tariff.scaffoldTest` on a real shipment).
-- `GET /standards`, `POST /install-standards`, `POST /duplicate`, `POST /bulk-update-status`
-  (archiving one in use needs `confirmInUse`), `POST /import` (export version `2.0`).
+- `GET /standards`, `POST /duplicate`, `POST /bulk-update-status` (archiving one in use needs
+  `confirmInUse`), `POST /import` (export version `2.0`).
+- `GET /api/v1/pricing-templates/:id/inputs` (`{inputs}`), the read a shipment, lane or re-rate
+  form makes for its rating method on every plan.
 - `GET /:id/usage`, `/versions` (and `/versions/<n>`, `/versions/scheduled`), `POST /:id/versions`,
   `/rollback`, `/fork`, `GET /:id/compare`, `/lineage`.
 - `GET /:id/readiness` (keys `details`, `source`, `warnings`, `tests`, `coverage`, `status`,

@@ -3,7 +3,7 @@ package carrierintelsourcingservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +14,7 @@ func TestPaidCarrierLookupsRefuseWhenThePlanRestrictsThem(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{
-		plans: plantest.Restricting(t, platformplan.CapabilityCarrierIntelligencePaid),
+		features: plantest.Without(platformcatalog.FeatureCarrierBrokerage),
 	}
 	tenant := plantest.Tenant()
 

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/receivablenotice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -172,6 +173,7 @@ func NewScheduleProvider() *ScheduleProvider {
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{{
 		ID:          "payment-reminder-sweep",
+		Feature:     platformcatalog.FeatureAccounting,
 		Description: "Email customers the payment reminders their schedule says are due",
 		// Mid-morning on the US east coast, after the overnight late-charge run
 		// and credit sweep, so a reminder lists the charges they raised.

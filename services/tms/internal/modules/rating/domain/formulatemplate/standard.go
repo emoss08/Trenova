@@ -1,5 +1,22 @@
 package formulatemplate
 
+import "github.com/emoss08/trenova/pkg/errortypes"
+
+func (ft *FormulaTemplate) IsStandard() bool {
+	return ft != nil && ft.StandardKey != ""
+}
+
+func (ft *FormulaTemplate) RefuseStandardChange() error {
+	if !ft.IsStandard() {
+		return nil
+	}
+
+	return errortypes.NewBusinessError(
+		"{0} is a standard template, so it cannot be changed. Duplicate or fork it to make a template of your own",
+		ft.Name,
+	)
+}
+
 const (
 	StandardFlatRate          = "Flat Rate"
 	StandardPerMile           = "Per Mile"

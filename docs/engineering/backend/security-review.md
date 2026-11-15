@@ -102,6 +102,11 @@ else they can reach.
 - Trust in another system's assurance is opt-in (`AllowFederatedMFA`).
 - A session field that decides access belongs in the seal (`authstore/seal.go`). Tag a new one
   `omitempty`, so the seal of every live session stays valid while the field is empty.
+- Someone from outside the organization signs in only as a principal of their own. A Trenova
+  support session is the grant's `sup_` principal, never a person row, so a user id never
+  credits a customer's person with what support did; a new person-only path (self-service,
+  sign-in settings) must hold for it too, and a new sensitive resource must be classified in
+  `supportaccess/policy.go` ([managed-mode.md](../managed-mode.md#support-access)).
 
 ## Stepping outside the tenant
 

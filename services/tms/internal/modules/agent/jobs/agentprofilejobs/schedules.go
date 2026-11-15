@@ -2,6 +2,7 @@ package agentprofilejobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:          "agent-profiles",
+			Feature:     platformcatalog.FeatureAgentAutomation,
 			Description: "Write the agent profiles of every organization and the people who talk to its agents",
 			// Once a day, in the small hours across the US, off the hour so it
 			// does not contend with the jobs that start on it. A profile

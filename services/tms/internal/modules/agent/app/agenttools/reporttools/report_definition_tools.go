@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 // maxReportTags bounds the tags one call may attach. A report with fifty tags
@@ -56,6 +57,7 @@ type reportDefinitionWriter interface {
 	NewDefinition(req *reporting.SaveDefinitionRequest) *report.ReportDefinition
 	ApplyDefinitionSave(existing *report.ReportDefinition, req *reporting.SaveDefinitionRequest)
 	NewCannedFork(entry *canned.Entry, req *reporting.ForkCannedRequest) *report.ReportDefinition
+	RequireCannedOnPlan(ctx context.Context, tenant pagination.TenantInfo, entry *canned.Entry) error
 }
 
 func reportingRequestFrom(params *agenttoolports.ToolExecuteParams) reporting.Request {

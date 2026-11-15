@@ -254,6 +254,52 @@ func (r *repository) FindByNames(
 	)
 }
 
+func (r *repository) ListStandardKeys(
+	ctx context.Context,
+	req formulatemplateports.ListStandardKeysRequest,
+) ([]string, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
+		ft := formulatemplatedb.FormulaTemplates
+		keys, err := keel.Into[string](
+			ctx,
+			r.db.Keel(ctx),
+			ft.Pick(ft.StandardKey).Where(ft.StandardKey.IsNotNull()),
+		)
+		if err != nil {
+			r.l.Error("failed to list standard template keys", zap.Error(err))
+			return nil, err
+		}
+
+		return keys, nil
+	})
+}
+
+func (r *repository) NonStandardIDs(
+	ctx context.Context,
+	req formulatemplateports.GetFormulaTemplatesByIDsRequest,
+) ([]pulid.ID, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		if len(req.TemplateIDs) == 0 {
+			return []pulid.ID{}, nil
+		}
+
+		ft := formulatemplatedb.FormulaTemplates
+		ids, err := keel.Into[pulid.ID](
+			ctx,
+			r.db.Keel(ctx),
+			ft.Pick(ft.ID).
+				Where(ft.ID.In(req.TemplateIDs...), ft.StandardKey.IsNull()).
+				Limit(len(req.TemplateIDs)),
+		)
+		if err != nil {
+			r.l.Error("failed to find the templates that are not standard", zap.Error(err))
+			return nil, err
+		}
+
+		return ids, nil
+	})
+}
+
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
 	req *formulatemplateports.BulkUpdateFormulaTemplateStatusRequest,
@@ -428,6 +474,9 @@ func (r *repository) SelectOptions(
 			ft := formulatemplatedb.FormulaTemplates
 			q := ft.Pick(ft.ID, ft.Name, ft.Description).
 				Where(ft.Status.Eq(formulatemplate.StatusActive))
+			if req.StandardOnly {
+				q = q.Where(ft.StandardKey.IsNotNull())
+			}
 
 			return listquery.SelectOptions(
 				ctx,

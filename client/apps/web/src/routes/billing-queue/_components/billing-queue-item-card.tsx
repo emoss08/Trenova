@@ -26,6 +26,7 @@ import { billingQueueItemLabel } from "@/lib/billing-queue-label";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { holdReasonLabel } from "@/lib/billing-queue-checks";
 import { recordPath } from "@/config/record-links";
+import { useBillingQueueReviewOnPlan } from "@/lib/billing-queue-nova-plan";
 
 type RowNote = {
   text: string;
@@ -116,9 +117,11 @@ export function BillingQueueItemCard({
     allocated != null && shipmentTotal != null && Math.abs(allocated - shipmentTotal) >= 0.005;
   const amount = isPartial ? allocated : (shipmentTotal ?? allocated);
   const isTerminal = item.status === "Approved" || item.status === "Canceled";
-  const note = rowNote(item, t);
+  // Nova's verdict is drawn only on a plan that includes its review.
+  const novaReviews = useBillingQueueReviewOnPlan();
+  const note = rowNote(novaReviews ? item : { ...item, agentVerdict: null, agentSummary: null }, t);
 
-  const showMeter = item.lane === "Ready" && !item.agentVerdict;
+  const showMeter = item.lane === "Ready" && !(novaReviews && item.agentVerdict);
 
   return (
     <ContextMenu>

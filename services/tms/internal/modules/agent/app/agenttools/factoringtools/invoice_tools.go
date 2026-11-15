@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
@@ -341,7 +342,7 @@ func (t *RequestMissingFactoringDocumentTool) Preview(
 	if err != nil {
 		return factoringkit.Refused(summary, err)
 	}
-	send := messageRequest(&plan.Message)
+	send := messageRequest(&plan.Message, email.TypeFactoringDocumentRequest)
 	sender, err := outboundpreview.ResolveEmailSender(ctx, t.senders, send)
 	if err != nil {
 		return nil, err

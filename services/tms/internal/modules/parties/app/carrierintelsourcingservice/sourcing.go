@@ -6,9 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -118,7 +117,7 @@ func (s *Service) SearchCarriers(ctx context.Context, query *SourcingQuery) (*So
 	if err := validateSourcingQuery(query); err != nil {
 		return nil, err
 	}
-	if err := s.requirePaidLookups(ctx, query.TenantInfo); err != nil {
+	if err := s.requirePaidLookups(ctx); err != nil {
 		return nil, err
 	}
 	limit := query.Limit
@@ -407,12 +406,7 @@ func (s *Service) AutocompleteCarriers(
 	if len(query) < minAutocompleteChars {
 		return []carrierintelports.CarrierIntelSuggestion{}, nil
 	}
-	allowed, err := planservice.Allows(
-		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityCarrierIntelligencePaid,
-	)
+	allowed, err := s.features.Enabled(ctx, platformcatalog.FeatureCarrierBrokerage)
 	if err != nil {
 		return nil, err
 	}

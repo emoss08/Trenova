@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/receivablenotice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -173,6 +174,7 @@ func NewScheduleProvider() *ScheduleProvider {
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{{
 		ID:          "customer-statement-sweep",
+		Feature:     platformcatalog.FeatureAccounting,
 		Description: "Email customers the statement of the month just closed",
 		// Daily, so an organization's chosen day is never missed; the month is
 		// sent once. Mid-morning on the US east coast, after the overnight

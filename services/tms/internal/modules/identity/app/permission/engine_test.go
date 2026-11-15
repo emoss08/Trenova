@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -16,10 +17,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,6 +80,7 @@ func setupTestEngine(
 		Return(nil, nil).
 		Maybe()
 
+	registry := permissioncatalog.NewRegistry()
 	e := &engine{
 		roleRepo:          roleRepo,
 		rbacRepo:          &rbactest.Repository{},
@@ -85,14 +89,19 @@ func setupTestEngine(
 		iamRepo:           noPolicies,
 		agentGrants:       &fakeAgentGrants{},
 		settings:          &stubAccessSettings{},
-		registry:          permissioncatalog.NewRegistry(),
+		registry:          registry,
 		routeRegistry:     routeaccess.NewRouteRegistry(),
+		plan:              onplan.New(registry, plantest.AllFeatures()),
 		databaseEnforcing: true,
 		metrics:           metricsRegistry,
 		l:                 logger.Named("test.permission-engine"),
 	}
 
 	return e, roleRepo, cacheRepo, userRepo
+}
+
+func (e *engine) withPlan(gate platformcatalogports.FeatureGate) {
+	e.plan = onplan.New(e.registry, gate)
 }
 
 func TestCheck_AllowedByPermission(t *testing.T) {

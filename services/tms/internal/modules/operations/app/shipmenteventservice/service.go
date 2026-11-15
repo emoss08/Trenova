@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,6 +29,7 @@ type Params struct {
 	Repo      shipmenteventports.ShipmentEventRepository
 	Realtime  realtimeports.RealtimeService
 	Observers []shipmenteventports.ShipmentEventObserver `group:"shipment_event_observers"`
+	Features  platformcatalogports.FeatureGate
 }
 
 type service struct {
@@ -35,6 +37,7 @@ type service struct {
 	repo      shipmenteventports.ShipmentEventRepository
 	realtime  realtimeports.RealtimeService
 	observers []shipmenteventports.ShipmentEventObserver
+	features  platformcatalogports.FeatureGate
 }
 
 func New(p Params) shipmenteventports.ShipmentEventService {
@@ -43,6 +46,7 @@ func New(p Params) shipmenteventports.ShipmentEventService {
 		repo:      p.Repo,
 		realtime:  p.Realtime,
 		observers: p.Observers,
+		features:  p.Features,
 	}
 }
 
@@ -98,10 +102,16 @@ func (s *service) announce(
 }
 
 func (s *service) notifyObservers(ctx context.Context, event *shipmentevent.Event) {
-	for _, observer := range s.observers {
-		if observer == nil {
-			continue
-		}
+	observers, gateErr := platformcatalogports.Observing(ctx, s.features, s.observers)
+	if gateErr != nil {
+		s.l.Warn(
+			"shipment event observer failed",
+			zap.Error(gateErr),
+			zap.String("eventId", event.ID.String()),
+			zap.String("eventType", string(event.Type)),
+		)
+	}
+	for _, observer := range observers {
 		if err := observer.OnShipmentEvent(ctx, event); err != nil {
 			s.l.Warn(
 				"shipment event observer failed",

@@ -58,6 +58,7 @@ type FormulaTemplate struct {
 	SourceTemplateID     *pulid.ID               `json:"sourceTemplateId"     keel:"source_template_id"`
 	SourceVersionNumber  *int64                  `json:"sourceVersionNumber"  keel:"source_version_number"`
 	CurrentVersionNumber int64                   `json:"currentVersionNumber" keel:"current_version_number"`
+	StandardKey          string                  `json:"standardKey"          keel:"standard_key,nullzero"`
 	CreatedAt            int64                   `json:"createdAt"            keel:"created_at,autocreate"`
 	UpdatedAt            int64                   `json:"updatedAt"            keel:"updated_at,autoupdate"`
 

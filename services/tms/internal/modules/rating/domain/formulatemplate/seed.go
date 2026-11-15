@@ -21,7 +21,8 @@ type Seed struct {
 	TestCount   int32
 	Metadata    map[string]any
 
-	Status Status
+	Status      Status
+	StandardKey string
 
 	SourceTemplateID    *pulid.ID
 	SourceVersionNumber *int64
@@ -61,6 +62,7 @@ func (s Seed) Build() *FormulaTemplate {
 		TestCount:            s.TestCount,
 		Status:               status,
 		Metadata:             metadata,
+		StandardKey:          s.StandardKey,
 		SourceTemplateID:     s.SourceTemplateID,
 		SourceVersionNumber:  s.SourceVersionNumber,
 		CurrentVersionNumber: 1,

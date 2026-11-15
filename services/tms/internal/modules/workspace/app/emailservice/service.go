@@ -17,13 +17,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -59,9 +59,14 @@ type Params struct {
 	AuditService       auditports.AuditService
 	WorkflowStarter    kernelports.WorkflowStarter
 	Storage            kernelports.Client
-	Plans              platformplanports.PlanService
+	Features           platformcatalogports.FeatureGate
 	Realtime           realtimeports.RealtimeService
 	IntegrationConfig  *integrationconfig.Config
+	SystemSenders      emailports.SystemSenders
+	Directory          emailports.RecipientDirectory
+	SystemMessages     emailports.SystemMessageLocator
+	RateLimits         kernelports.RateLimitStore
+	Organizations      tenantports.OrganizationRepository
 }
 
 // ObserverParams are the observers told when a message changes. They are
@@ -87,8 +92,13 @@ type Service struct {
 	providerSenders    map[email.Provider]ProviderSender
 	workflowStarter    kernelports.WorkflowStarter
 	storage            kernelports.Client
-	plans              platformplanports.PlanService
+	features           platformcatalogports.FeatureGate
 	realtime           realtimeports.RealtimeService
+	systemSenders      emailports.SystemSenders
+	directory          emailports.RecipientDirectory
+	systemMessages     emailports.SystemMessageLocator
+	rateLimits         kernelports.RateLimitStore
+	organizations      tenantports.OrganizationRepository
 	observers          atomic.Pointer[[]emailports.EmailMessageObserver]
 	observersMu        sync.Mutex
 }
@@ -115,8 +125,13 @@ func New(p Params) *Service {
 		},
 		workflowStarter: p.WorkflowStarter,
 		storage:         p.Storage,
-		plans:           p.Plans,
+		features:        p.Features,
 		realtime:        p.Realtime,
+		systemSenders:   p.SystemSenders,
+		directory:       p.Directory,
+		systemMessages:  p.SystemMessages,
+		rateLimits:      p.RateLimits,
+		organizations:   p.Organizations,
 	}
 }
 
@@ -333,13 +348,13 @@ func (s *Service) Send(
 	ctx context.Context,
 	req *emailports.SendEmailRequest,
 ) (*email.Message, error) {
-	if err := s.requireOutbound(ctx, req.TenantInfo, req.Purpose); err != nil {
+	if err := s.requireOutbound(ctx, req.Purpose); err != nil {
 		return nil, err
 	}
 	if multiErr := s.validator.ValidateSend(ctx, req); multiErr != nil {
 		return nil, multiErr
 	}
-	profile, err := s.resolveProfile(ctx, req)
+	route, err := s.route(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -354,22 +369,21 @@ func (s *Service) Send(
 		)
 	}
 	req.To, req.CC, req.BCC = split.To, split.CC, split.BCC
+	if route.trenova != nil {
+		if err = s.admitTrenovaSend(ctx, req); err != nil {
+			return nil, err
+		}
+	}
 
 	if req.IdempotencyKey == "" {
 		req.IdempotencyKey = newIdempotencyKey()
 	}
-	fromEmail := senderEmail(req, profile)
 	msg := &email.Message{
 		BusinessUnitID: req.TenantInfo.BuID,
 		OrganizationID: req.TenantInfo.OrgID,
-		ProfileID:      profile.ID,
 		Purpose:        req.Purpose,
-		Provider:       profile.Provider,
 		IdempotencyKey: req.IdempotencyKey,
 		Status:         email.MessageStatusQueued,
-		FromEmail:      fromEmail,
-		FromName:       profile.SenderName,
-		ReplyToEmail:   profile.ReplyToEmail,
 		ToRecipients:   mailtext.NormalizeEmailAddresses(req.To),
 		CCRecipients:   mailtext.NormalizeEmailAddresses(req.CC),
 		BCCRecipients:  mailtext.NormalizeEmailAddresses(req.BCC),
@@ -377,6 +391,7 @@ func (s *Service) Send(
 		BodyTextSize:   int64(len(req.Text)),
 		BodyHTMLSize:   int64(len(req.HTML)),
 	}
+	route.stamp(msg, req)
 	stored, created, err := s.repo.CreateMessageOnce(ctx, msg)
 	if err != nil {
 		return nil, err
@@ -400,20 +415,15 @@ func (s *Service) Send(
 	return msg, nil
 }
 
-func (s *Service) requireOutbound(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	purpose email.Purpose,
-) error {
+func (s *Service) requireOutbound(ctx context.Context, purpose email.Purpose) error {
 	if purpose == email.PurposeAuthentication {
 		return nil
 	}
 
-	return planservice.RequireCapability(
+	return platformcatalogports.RequireFeature(
 		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityEmailOutbound,
+		s.features,
+		platformcatalog.FeatureAdministration,
 	)
 }
 
@@ -499,6 +509,7 @@ func (s *Service) TestSend(
 	return s.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
 		ProfileID:      profileID,
+		Type:           email.TypeProfileTest,
 		Purpose:        email.PurposeGeneral,
 		To:             []string{req.To},
 		Subject:        req.Subject,
@@ -526,10 +537,7 @@ func (s *Service) SendPersisted(
 	if err != nil {
 		return nil, err
 	}
-	if planErr := s.requireOutbound(ctx, pagination.TenantInfo{
-		OrgID: msg.OrganizationID,
-		BuID:  msg.BusinessUnitID,
-	}, msg.Purpose); planErr != nil {
+	if planErr := s.requireOutbound(ctx, msg.Purpose); planErr != nil {
 		return s.markFailed(ctx, msg, fmt.Errorf("%w: %w", ErrNonRetryableSend, planErr))
 	}
 	msg.Status = email.MessageStatusSending
@@ -538,25 +546,9 @@ func (s *Service) SendPersisted(
 		return nil, err
 	}
 
-	sender, ok := s.providerSenders[msg.Provider]
-	if !ok {
-		return s.markFailed(
-			ctx,
-			msg,
-			fmt.Errorf(
-				"%w: no sender registered for email provider %s",
-				ErrNonRetryableSend,
-				msg.Provider,
-			),
-		)
-	}
-
-	cfg, err := s.integrationService.GetRuntimeConfig(ctx, pagination.TenantInfo{
-		OrgID: msg.OrganizationID,
-		BuID:  msg.BusinessUnitID,
-	}, sender.IntegrationType())
+	sender, config, err := s.providerFor(ctx, msg)
 	if err != nil {
-		return s.markFailed(ctx, msg, providerConfigurationError(msg.Provider, err))
+		return s.markFailed(ctx, msg, err)
 	}
 	attachments, err := s.providerAttachments(ctx, req.TenantInfo, msg.ID)
 	if err != nil {
@@ -567,7 +559,7 @@ func (s *Service) SendPersisted(
 	}
 
 	result, err := sender.Send(ctx, SendProviderRequest{
-		Config: cfg.Config,
+		Config: config,
 		Message: SendProviderMessage{
 			IdempotencyKey: msg.IdempotencyKey,
 			From:           mailtext.FormatEmailAddress(msg.FromName, msg.FromEmail),
@@ -583,6 +575,9 @@ func (s *Service) SendPersisted(
 			OpenTracking:   req.OpenTracking,
 		},
 	})
+	if err != nil && msg.Sender == email.SenderTrenova {
+		return s.markFailed(ctx, msg, s.trenovaSendFailure(msg, config, err))
+	}
 	if err != nil {
 		return s.markFailed(ctx, msg, s.describeSenderRejection(ctx, msg, err))
 	}
@@ -597,6 +592,31 @@ func (s *Service) SendPersisted(
 	}
 	s.messageChanged(ctx, msg, nil)
 	return msg, nil
+}
+
+func (s *Service) providerFor(
+	ctx context.Context,
+	msg *email.Message,
+) (ProviderSender, map[string]string, error) {
+	if msg.Sender == email.SenderTrenova {
+		return s.trenovaProvider(ctx, msg)
+	}
+	sender, ok := s.providerSenders[msg.Provider]
+	if !ok {
+		return nil, nil, fmt.Errorf(
+			"%w: no sender registered for email provider %s",
+			ErrNonRetryableSend,
+			msg.Provider,
+		)
+	}
+	cfg, err := s.integrationService.GetRuntimeConfig(ctx, pagination.TenantInfo{
+		OrgID: msg.OrganizationID,
+		BuID:  msg.BusinessUnitID,
+	}, sender.IntegrationType())
+	if err != nil {
+		return nil, nil, providerConfigurationError(msg.Provider, err)
+	}
+	return sender, cfg.Config, nil
 }
 
 func (s *Service) persistAttachments(
@@ -1101,11 +1121,15 @@ func (s *Service) messageChanged(ctx context.Context, msg *email.Message, event 
 	if msg == nil {
 		return
 	}
-	observers := s.observers.Load()
-	if observers == nil {
+	registered := s.observers.Load()
+	if registered == nil {
 		return
 	}
-	for _, observer := range *observers {
+	observers, err := platformcatalogports.Observing(ctx, s.features, *registered)
+	if err != nil {
+		s.l.Warn("email message observers skipped", zap.Error(err))
+	}
+	for _, observer := range observers {
 		observer.EmailMessageChanged(ctx, emailports.EmailMessageChange{Message: msg, Event: event})
 	}
 }

@@ -1,3 +1,4 @@
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ServiceFailureReasonCodeAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
@@ -24,6 +25,7 @@ function reasonCodeAppliesToForStop(
 
 export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormProps) {
   const t = useT();
+  const edi = usePlanFeature("integrations.edi").available;
 
   const { control } = useFormContext<ServiceFailureUpdate>();
   const appliesTo = reasonCodeAppliesToForStop(stopType);
@@ -75,43 +77,45 @@ export function ServiceFailureForm({ disabled, stopType }: ServiceFailureFormPro
         </FormControl>
       </FormGroup>
 
-      <FormSection
-        title={t("EDI overrides")}
-        description={t("Overrides apply only to this failure.")}
-      >
-        <FormGroup cols={3}>
-          <FormControl>
-            <InputField
-              control={control}
-              name="x12StatusCodeOverride"
-              label={t("Status code")}
-              placeholder={t("SD")}
-              maxLength={3}
-              disabled={disabled}
-            />
-          </FormControl>
-          <FormControl>
-            <InputField
-              control={control}
-              name="x12ReasonCodeOverride"
-              label={t("Reason code")}
-              placeholder={t("NS")}
-              maxLength={3}
-              disabled={disabled}
-            />
-          </FormControl>
-          <FormControl>
-            <InputField
-              control={control}
-              name="x12ExceptionCode"
-              label={t("Exception code")}
-              placeholder={t("A3")}
-              maxLength={3}
-              disabled={disabled}
-            />
-          </FormControl>
-        </FormGroup>
-      </FormSection>
+      {edi ? (
+        <FormSection
+          title={t("EDI overrides")}
+          description={t("Overrides apply only to this failure.")}
+        >
+          <FormGroup cols={3}>
+            <FormControl>
+              <InputField
+                control={control}
+                name="x12StatusCodeOverride"
+                label={t("Status code")}
+                placeholder={t("SD")}
+                maxLength={3}
+                disabled={disabled}
+              />
+            </FormControl>
+            <FormControl>
+              <InputField
+                control={control}
+                name="x12ReasonCodeOverride"
+                label={t("Reason code")}
+                placeholder={t("NS")}
+                maxLength={3}
+                disabled={disabled}
+              />
+            </FormControl>
+            <FormControl>
+              <InputField
+                control={control}
+                name="x12ExceptionCode"
+                label={t("Exception code")}
+                placeholder={t("A3")}
+                maxLength={3}
+                disabled={disabled}
+              />
+            </FormControl>
+          </FormGroup>
+        </FormSection>
+      ) : null}
     </div>
   );
 }

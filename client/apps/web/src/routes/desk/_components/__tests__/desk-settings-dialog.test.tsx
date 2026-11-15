@@ -23,6 +23,7 @@ function grant(permissions: Record<string, number>) {
       permissions,
       routeAccess: {},
       availableOrgs: [],
+      unavailableFeatures: [],
       checksum: "abc123",
       expiresAt: 1_782_403_304,
     } as PermissionManifest,

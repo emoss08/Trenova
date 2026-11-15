@@ -2,6 +2,7 @@ package formulatemplatejobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "formula-template-expire-stale-submissions",
+			Feature:       platformcatalog.FeatureRating,
 			Description:   "Return formula templates and libraries waiting in review for more than 14 days to draft",
 			Spec:          schedule.Cron("0 6 * * *"),
 			Workflow:      ExpireStaleSubmissionsWorkflow,

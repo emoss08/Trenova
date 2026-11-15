@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentmoveportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -113,6 +114,7 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 		holdRepo:       holdRepo,
 		controlRepo:    controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -163,6 +165,7 @@ func TestBulkUpdateStatus_RejectsInvalidTransition(t *testing.T) {
 		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		controlRepo:  tenantportsmock.NewMockShipmentControlRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -229,6 +232,7 @@ func TestSplitMove_RejectsNonSimpleMove(t *testing.T) {
 		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		controlRepo:  tenantportsmock.NewMockShipmentControlRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -369,6 +373,7 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -491,6 +496,7 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 		holdRepo:       holdRepo,
 		controlRepo:    controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -605,6 +611,7 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 		holdRepo:       holdRepo,
 		controlRepo:    controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -684,6 +691,7 @@ func TestUpdateStatus_RejectsTrailerAlreadyInProgressOnAnotherMove(t *testing.T)
 		controlRepo:    tenantportsmock.NewMockShipmentControlRepository(t),
 		continuityRepo: equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -759,6 +767,7 @@ func TestUpdateStatus_RejectsTractorAlreadyInProgressOnAnotherMove(t *testing.T)
 		controlRepo:    tenantportsmock.NewMockShipmentControlRepository(t),
 		continuityRepo: equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -907,6 +916,7 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 		controlRepo:    controlRepo,
 		continuityRepo: continuityRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},
@@ -967,6 +977,7 @@ func TestUpdateStatus_RejectsDeliveryBlockingHold(t *testing.T) {
 		holdRepo:     holdRepo,
 		controlRepo:  tenantportsmock.NewMockShipmentControlRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Features:           plantest.AllFeatures(),
 			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
 			Hydrator:           ratingtest.NoHydration{},
 			BillingControlRepo: ratingtest.NoBillingControl{},

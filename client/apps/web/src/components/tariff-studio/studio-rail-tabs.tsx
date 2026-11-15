@@ -6,6 +6,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 import type { TariffTestsState } from "./use-tariff-tests";
+import { useStudioNova } from "./use-studio-nova";
 
 /** True from the first time a flag is raised, so a piece opened once stays mounted. */
 export function useOnceOpened(open: boolean): boolean {
@@ -47,6 +48,7 @@ export function StudioRailTabs<Tab extends string>({
   onClose: () => void;
 }) {
   const t = useT();
+  const nova = useStudioNova();
   const total = tests.status === "ran" ? tests.passed + tests.failed : 0;
   const allPass = tests.status === "ran" && total > 0 && tests.failed === 0;
 
@@ -81,18 +83,22 @@ export function StudioRailTabs<Tab extends string>({
             )}
           </button>
         ))}
-        <span className="flex-1" />
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "nova"}
-          onClick={() => onTab("nova")}
-          className={cn(tabClass(tab === "nova"), "fs-nova-tab")}
-        >
-          <NovaBadge size="xs" className="fs-nova-badge" />
-          {t("Nova")}
-          {novaBusy && <Spinner className="size-3" />}
-        </button>
+        {nova ? (
+          <>
+            <span className="flex-1" />
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "nova"}
+              onClick={() => onTab("nova")}
+              className={cn(tabClass(tab === "nova"), "fs-nova-tab")}
+            >
+              <NovaBadge size="xs" className="fs-nova-badge" />
+              {t("Nova")}
+              {novaBusy && <Spinner className="size-3" />}
+            </button>
+          </>
+        ) : null}
       </div>
       <Button
         type="button"

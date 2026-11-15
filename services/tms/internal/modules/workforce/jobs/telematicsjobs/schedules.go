@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -20,6 +21,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "samsara-telematics-poll",
+			Feature:       platformcatalog.FeatureSamsaraIntegration,
 			Description:   "Poll Samsara vehicle positions and HOS clocks for all enabled tenants",
 			Spec:          schedule.Every(5 * time.Minute),
 			Workflow:      TelematicsPollWorkflow,
@@ -31,6 +33,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "telematics-retention-sweep",
+			Feature:       platformcatalog.FeatureSamsaraIntegration,
 			Description:   "Prune telematics events older than 90 days and HOS violations older than a year",
 			Spec:          schedule.Cron("0 9 * * *"),
 			Workflow:      TelematicsRetentionWorkflow,
@@ -42,6 +45,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "samsara-telematics-sweep",
+			Feature:       platformcatalog.FeatureSamsaraIntegration,
 			Description:   "Sync Samsara vehicle mappings and ingest HOS violations for all enabled tenants",
 			Spec:          schedule.Every(2 * time.Hour),
 			Workflow:      TelematicsSweepWorkflow,

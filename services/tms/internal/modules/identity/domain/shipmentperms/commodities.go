@@ -3,12 +3,14 @@ package shipmentperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func commodityResources() []*permissionspec.ResourceDefinition {
 	return []*permissionspec.ResourceDefinition{
 		{
 			Resource:    permission.ResourceCommodity.String(),
+			Feature:     platformcatalog.FeatureCoreTMS,
 			DisplayName: "Commodity",
 			Description: "Commodity definitions",
 			Category:    "Shipments",
@@ -33,6 +35,7 @@ func commodityResources() []*permissionspec.ResourceDefinition {
 
 		{
 			Resource:           permission.ResourceHazardousMaterial.String(),
+			Feature:            platformcatalog.FeatureCoreTMS,
 			DisplayName:        "Hazardous Material",
 			Description:        "Hazardous material definitions",
 			Category:           "Shipments",
@@ -70,6 +73,7 @@ func commodityResources() []*permissionspec.ResourceDefinition {
 
 		{
 			Resource:           permission.ResourceHazmatSegregationRule.String(),
+			Feature:            platformcatalog.FeatureCoreTMS,
 			DisplayName:        "Hazmat Segregation Rule",
 			Description:        "Hazmat segregation rule definitions",
 			Category:           "Shipments",

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
@@ -682,6 +683,15 @@ func (s *Service) syncCarrierRecord(
 	raised []carrierintelrule.Finding,
 ) {
 	if snapshot.NotFound {
+		return
+	}
+	brokerage, gateErr := s.features.Enabled(ctx, platformcatalog.FeatureCarrierBrokerage)
+	if gateErr != nil {
+		s.l.Warn("failed to apply carrier intelligence sync", zap.Error(gateErr),
+			zap.String("carrierId", in.subject.CarrierID.String()))
+		return
+	}
+	if !brokerage {
 		return
 	}
 

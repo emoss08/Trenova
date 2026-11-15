@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -150,6 +151,7 @@ type RefresherParams struct {
 	Routes           routeestimateports.RouteEstimator
 	Realtime         realtimeports.RealtimeService
 	Observers        []stopetaports.Observer `group:"stop_eta_observers"`
+	Features         platformcatalogports.FeatureGate
 	Logger           *zap.Logger
 }
 
@@ -164,6 +166,7 @@ type Refresher struct {
 	routes    routeestimateports.RouteEstimator
 	realtime  realtimeports.RealtimeService
 	observers []stopetaports.Observer
+	features  platformcatalogports.FeatureGate
 	l         *zap.Logger
 	now       func() time.Time
 }
@@ -182,6 +185,7 @@ func NewRefresher(
 		routes:    p.Routes,
 		realtime:  p.Realtime,
 		observers: p.Observers,
+		features:  p.Features,
 		l:         p.Logger.Named("shipment-eta-refresher"),
 		now:       time.Now,
 	}

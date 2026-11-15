@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -67,6 +68,7 @@ func TestPreviewResolve_IsTheResolutionResolveSaves(t *testing.T) {
 		l:              zap.NewNop(),
 		repo:           repo,
 		ediService:     ediSvc,
+		features:       plantest.AllFeatures(),
 	}
 	req := func() *servicefailureports.ServiceFailureLifecycleRequest {
 		return &servicefailureports.ServiceFailureLifecycleRequest{

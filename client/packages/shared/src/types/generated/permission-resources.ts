@@ -14,6 +14,7 @@ export const Resource = {
   Role: "role",
   AuditLog: "audit_log",
   SecurityAuditLog: "security_audit_log",
+  SupportAccess: "support_access",
   AuditLegalHold: "audit_legal_hold",
   TableConfiguration: "table_configuration",
   CustomFieldDefinition: "custom_field_definition",

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -366,6 +367,7 @@ func newBareWatchFixture(t *testing.T, webBase string) *watchFixture {
 		Encryption:   encryption,
 		AuditService: &agentextensiontest.RecordingAudit{},
 		Connectors:   connectors,
+		Features:     plantest.AllFeatures(),
 	})
 	w.svc = New(Params{
 		Logger:     zap.NewNop(),

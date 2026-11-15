@@ -224,7 +224,7 @@ func (s *Service) TestConnection(
 	if !spec.SupportsTestConnect {
 		return nil, errortypes.NewBusinessError("{0} cannot be tested", def.Name)
 	}
-	if err = s.requirePlan(ctx, tenantInfo, spec.Capability); err != nil {
+	if err = s.requirePlan(ctx, spec.Capability); err != nil {
 		return nil, err
 	}
 

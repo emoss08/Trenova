@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -37,10 +38,26 @@ func unavailable(reason airetrieval.UnavailableReason) retrievalports.RetrievalI
 	return retrievalports.RetrievalIndexPlan{Reason: reason}
 }
 
+// onPlan reports whether the plan includes search by meaning, which only
+// Trenova AI's Desk uses: without it nothing is embedded.
+func (s *Service) onPlan(ctx context.Context) (bool, error) {
+	enabled, err := s.features.Enabled(ctx, platformcatalog.FeatureAIDesk)
+	if err != nil {
+		return false, fmt.Errorf("read whether the plan includes search by meaning: %w", err)
+	}
+
+	return enabled, nil
+}
+
 func (s *Service) Plan(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (retrievalports.RetrievalIndexPlan, error) {
+	included, err := s.onPlan(ctx)
+	if err != nil || !included {
+		return unavailable(airetrieval.UnavailableReasonDisabled), err
+	}
+
 	availability, err := s.repo.VectorAvailability(ctx)
 	if err != nil {
 		return retrievalports.RetrievalIndexPlan{}, fmt.Errorf("check vector storage: %w", err)
@@ -251,6 +268,11 @@ func (s *Service) IndexBatch(
 		return result, fmt.Errorf(
 			"%w: an index batch needs a request", airetrieval.ErrInvalidStorageRequest,
 		)
+	}
+
+	included, err := s.onPlan(ctx)
+	if err != nil || !included {
+		return result, err
 	}
 
 	dimensions, ok := airetrieval.ModelKeyDimensions(req.ModelKey)

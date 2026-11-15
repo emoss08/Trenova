@@ -16,7 +16,9 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
    ├── escrow.Ensure: the Secret trenova-escrow, from GET /v1/secrets when missing or incomplete
    ├── health.Check: Deployments, StatefulSets, CNPG Cluster, the revision's release Job
    └── TMS managed API (:8090, bearer token): GET /managed/v1/readings, PUT /managed/v1/state,
-                                               PUT /managed/v1/first-administrator/invite
+                                               PUT /managed/v1/first-administrator/invite,
+                                               PUT /managed/v1/features,
+                                               GET|PUT|DELETE /managed/v1/system-email
 ```
 
 ## Packages
@@ -33,6 +35,9 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
 | `internal/health` | each component's readiness, read from the cluster |
 | `internal/tms` | the client of the TMS's managed API, and the token read from the release's app Secret |
 | `internal/usage` | the usage relay: readings from the TMS to the control plane, its answer back |
+| `internal/storage` | the instance's buckets: the documents and backups Secrets, fetched from `GET /v1/storage` when missing or incomplete, and the documents bucket's CORS rules for the instance's origin |
+| `internal/backup` | backups read from and asked of CloudNativePG: health for the status report, the base backup before an update, the final backup, and a restore's progress |
+| `internal/systememail` | the system email sender: the TMS brought to the spec's fingerprint, the credential fetched from `GET /v1/secrets` and kept only in memory |
 | `internal/reconcile` | the loop |
 | `internal/fakecp`, `internal/controlplanetest`, `cmd/controlplane-stub` | a control plane for tests: in process (`httptest`) and in a cluster (CI) |
 | `internal/tmstest` | the TMS's managed API for tests |
@@ -102,7 +107,8 @@ Every 15 seconds (`TRENOVA_OPERATOR_POLL_INTERVAL`):
    it is; pull the chart at `release.version` (cached, two versions);
 4. compare with the deployed release: apply only when the chart version or the values differ;
 5. read readiness; while the instance is active and ready and the spec has an invite, install it
-   in the TMS (below);
+   in the TMS (below), put the spec's features to the TMS (below), and bring the TMS's system
+   email sender to the spec (below);
 6. report when something changed, and at least every minute
    (`TRENOVA_OPERATOR_REPORT_INTERVAL`, at most 1m);
 7. relay usage when it is due (below).
@@ -126,7 +132,7 @@ first, and what the spec decides is merged over them:
 |---|---|
 | `hostname` | `domain`; `storageDomain` is `<first label>-files.<rest>` |
 | `instanceId` | `tms.instanceId` |
-| `components` contains `docling` | `docling.enabled` |
+| `components` contains `docling` | `docling.enabled`; its resources are rendered either way (see Sizing) |
 | (always) | `managed.enabled: true`, `managed.from`: the operator's own namespace |
 | (always) | `secrets.escrowSecret: trenova-escrow` |
 | (always) | `tms.config.ai.privateNetworkProviders: false`, `serverCloudCredentials: false`: a customer's administrator adds the instance's AI providers, so none may sit on a private address or sign in as the instance's own cloud identity, whatever the base values say |
@@ -134,23 +140,107 @@ first, and what the spec decides is merged over them:
 | `lifecycle: active` | `stopped: false`, `postgres.hibernate: false` |
 | `lifecycle: suspended` | `stopped: true`, `postgres.hibernate: true`: nothing runs, every volume is kept |
 | `lifecycle: decommissioned` | `stopped: true`, `postgres.hibernate: false`: PostgreSQL stays up for the final backup |
+| (storage from `GET /v1/storage`) | `minio.enabled: false`; `storage.bucket`, `region`, `autoCreateBucket: false`, `storage.external` (`endpoint`, `useSSL`, `publicEndpoint`, `existingSecret: trenova-storage`); `backup.enabled`, `destinationPath`, `endpointURL`, `existingSecret: trenova-backup-storage`. Without storage (a `404`), none of these: MinIO and no backups |
+| `database` | `postgres.generation`, `postgres.restoredFrom` (`sourceGeneration`, `targetTime`): the instance runs on the database a restore made |
+| `restore` | `postgres.restore` (`generation`, `sourceGeneration`, `targetTime`): a database restored beside the live one; left out once `database` names it, refused without storage |
 | `release.version` | the chart version (and so every Trenova image tag) |
 | `plan.vcpu`, `memoryGiB`, `diskGiB` | every component's requests and limits, Redis's `maxMemory`, PostgreSQL's memory settings and volume |
 
-**Sizing** (`internal/values/size.go`). 2 GiB and 0.5 vCPU are left to k3s, CloudNativePG and the
-operator. ClamAV's memory does not grow with the plan (it is the signature database: about
+**Sizing** (`internal/values/size.go`). 2 GiB and 0.6 vCPU are left to k3s, CloudNativePG, the
+operator and the release Job. ClamAV's memory does not grow with the plan (it is the signature database: about
 1.2 GiB, twice that while clamd reloads it each day), so it takes a fixed 3 GiB request and
 4 GiB limit, ClamAV's documented minimum and preferred container size, off the top. The rest
-is shared by weight among the components that run (PostgreSQL 28, API 12, worker 12, imaging
-10, docling 15, the rest 1 to 5; ClamAV 4 of the CPU), each with a floor (docling 2 GiB,
+is shared by weight among every component the chart can run (PostgreSQL 28, API 12, worker 12,
+imaging 10, docling 15, the rest 1 to 5; ClamAV 4 of the CPU), each with a floor (docling 2 GiB,
 PostgreSQL 1 GiB). Requests are the shares; memory limits are 1.5 times them (PostgreSQL 1.25). The imaging worker gets a CPU limit of half the plan's vCPUs, at least
 one, because its sandbox pool sizes itself by it. PostgreSQL's volume is 35% of the disk;
 `shared_buffers` is a quarter of its memory limit and `effective_cache_size` three quarters. A
-plan smaller than 2 vCPU, 8 GiB (10 GiB with ClamAV) and 40 GiB is refused. The values test renders every catalog
-plan and lifecycle through the real chart and its schema, and checks the requests fit.
+plan smaller than 2 vCPU, 9 GiB (12 GiB with ClamAV) and 40 GiB is refused: below that, every
+component together and the room a rollout needs no longer fit. The values test renders every
+catalog plan and lifecycle through the real chart and its schema, and checks the requests fit.
+
+**Room for a rollout.** A Helm upgrade applies every changed Deployment at once, and a Deployment
+that rolls starts its new pod before the old one stops: the API and the worker set
+`maxUnavailable: 0, maxSurge: 1` because they must keep serving, and the client, the imaging
+worker and Gotenberg keep Kubernetes's default (a 25% surge, one pod at one replica): the client
+serves every page, and the API calls the other two on its request paths. Kubernetes creates a
+second pod of all five at the same time, while the old ones still hold their requests. Nothing
+else needs a second pod: Temporal, gtc and docling are `Recreate` (docling's only caller is the
+worker's extraction activities, which retry and resubmit a lost task, so it stops before its
+replacement loads its models), a StatefulSet replaces a pod after the old one is gone,
+CloudNativePG restarts its one instance in place, and the release Job's pod is already counted
+with the workloads. The sizing holds room for the largest one of those five (`surge` in `shares`:
+the largest weight among them is added to the division once, for memory and for CPU), not for all
+five at once. That is enough: a new pod that does not fit waits `Pending`; each rollout that
+finishes stops its old pod and gives back exactly what its new pod took, so the smaller ones
+finish first if they were scheduled first and the largest always finds the held room free in the
+end. Holding room for all five together would cost PostgreSQL about 28% of its share at every
+plan size; holding the largest costs about 10% and makes an upgrade a little slower on a machine
+sized exactly to its plan. Before this, every share was requested and such a machine kept about
+1 GiB free at Sandbox while one new API pod asked for 1,325 MiB: the pod stayed `Pending`, the
+old pods kept serving, the rollout never finished and the
+instance never reported ready. What is held depends only on the machine and the full set of
+components, like every share, so turning docling on still changes nothing else.
+`TestEveryMachineFitsItsWorkloadsAndARollout` renders the chart at every plan size, both minimums
+and the local cap, with and without storage of ours and with ClamAV on and off, reads each
+Deployment's strategy from the manifests, and checks that every request plus the largest surge
+pod fits the node's allocatable memory and CPU; it fails too when the chart's rolling Deployments and the
+`surge` flags disagree, so a workload that changes its strategy changes its flag in the same
+change.
+
+**A component's share never depends on which other components are enabled.** It depends only on
+the machine (the plan, or the node when that is smaller) and on the installation's own
+configuration (ClamAV, which the operator chart's `trenovaValues` turns on for every instance on
+that cluster). Docling (the spec's `components: [docling]`, which Document Intelligence brings)
+and MinIO (on only when the instance has no storage of ours) are counted whether they run or not,
+and their resources are rendered either way. Turning one on or off therefore changes
+`docling.enabled` (or `minio.enabled`) and nothing else in the sizing: PostgreSQL's resources and
+parameters, and every running workload's resources, stay as they are, and CloudNativePG has
+nothing to restart. Before this, a purchase that turned docling on divided the machine again,
+changed `shared_buffers`, and restarted PostgreSQL under a running instance. Only a different
+machine (a plan change) divides it again. `TestTurningAComponentOnLeavesEveryOtherWorkloadAsItWas`
+holds the rule for every plan, with and without storage, and under the local node cap; keep it
+when a component is added: an optional component gets a share in `shares`, always counted.
+
+The cost is the share an instance does not use. A plan without Document Intelligence leaves
+docling's share idle, an instance with storage of ours leaves MinIO's, and the room for a rollout
+is idle between upgrades (ClamAV on at the plan sizes):
+
+| Machine | PostgreSQL (request, limit, `shared_buffers`) | API and worker (each) | Docling's share (idle on the base plan) | MinIO's share (idle with storage of ours) | Held for a rollout |
+|---|---|---|---|---|---|
+| 2 vCPU, 10 GiB, no ClamAV (the local cap) | 2,012 MiB, 2,515 MiB, 628 MB | 862 MiB, 189m | 2,048 MiB, 100m | 256 MiB, 37m | 862 MiB, 189m |
+| 4 vCPU, 16 GiB (Sandbox) | 2,766 MiB, 3,458 MiB, 864 MB | 1,185 MiB, 443m | 2,048 MiB, 236m | 296 MiB, 88m | 1,185 MiB, 443m |
+| 8 vCPU, 32 GiB (Production) | 6,790 MiB, 8,488 MiB, 2,122 MB | 2,910 MiB, 965m | 3,637 MiB, 514m | 727 MiB, 193m | 2,910 MiB, 965m |
+| 16 vCPU, 64 GiB (Production Plus) | 14,839 MiB, 18,548 MiB, 4,637 MB | 6,359 MiB, 2,008m | 7,949 MiB, 1,071m | 1,589 MiB, 401m | 6,359 MiB, 2,008m |
+
+Idle requests are not wasted memory on the node: nothing else is scheduled there, so the page
+cache and every limit above its request can still use it. They are room the scheduler keeps free.
 
 Only PostgreSQL's volume follows the plan: a StatefulSet's volume claims cannot change after it
 is created, so Redis, Meilisearch, MinIO and ClamAV keep the chart's sizes.
+
+**When PostgreSQL restarts** (a plan change, a new PostgreSQL image, a changed parameter,
+hibernation), CloudNativePG first waits for clients to disconnect, then asks for a fast shutdown.
+The API, the worker, Temporal and gtc hold pooled connections that never leave on their own, so
+the chart sets `smartShutdownTimeout: 15` (CloudNativePG's default, 180, held a restart for three
+minutes with the new API and worker pods waiting in `Init`) and `stopDelay: 300`, the pod's
+termination grace period, which bounds the fast shutdown and its checkpoint. A fast shutdown is a
+clean one: open sessions end, every committed transaction is already in the WAL and a shutdown
+checkpoint is written; the clients reconnect when the database is back. `switchoverDelay` keeps
+CloudNativePG's default: it applies only with replicas, and cutting it short could demote a
+primary before its replicas have every WAL record. A base backup still running 15 seconds into a
+stop fails and is reported (a pre-update backup as `failed`; the final backup is taken again);
+the pre-update backup completes before the control plane writes the version it guards, so the two
+do not overlap in the normal order. Nothing else in the chart or the operator waits on the long
+default: the release Job and the new API and worker pods wait for PostgreSQL to come back, not
+for it to stop.
+
+**A machine smaller than the plan.** The operator chart's `node` values (`vcpu`, `memoryGiB`,
+`diskGiB`; zero by default) say what the cluster really runs on. Set, the operator sizes the
+workloads for the smaller of the plan and the node in each dimension (`values.Capacity`), and
+the spec itself is untouched. The control plane's development-only local provider sets 2 vCPU,
+10 GiB and 40 GiB, with ClamAV off (one GiB above the smallest machine that fits), so every plan bought for "This computer" runs the same small
+instance on a laptop while the plan, its features and its allowances stay the real ones.
 
 ## Escrowed secrets
 
@@ -178,7 +268,8 @@ characters, the scope key ID 1 to 32 of `[A-Za-z0-9_-]`, the scope key standard 
 32 bytes. Values of any other shape are refused, and the report names the key and the rule, never
 the value. Until the Secret is in place nothing is installed or upgraded and the report says why;
 a 429 waits out `Retry-After` and a 401 goes to credential recovery, as for the spec. The values
-are never logged.
+are never logged. The same answer may carry the system email credential (`systemEmail`); the escrow
+Secret never holds it ([System email](#system-email)).
 
 ## The first administrator
 
@@ -198,10 +289,44 @@ learns to email the link and later that the administrator chose a password. A fa
 leaves `administrator` off the report and is retried on the next tick; it never holds converging
 or the report back. The token itself never reaches the operator.
 
+## The features an instance may use
+
+The spec's `features` are the TMS feature keys the customer bought. While the instance is active
+and ready, the operator puts them to the TMS (`PUT /managed/v1/features`) on every tick. The list
+is the complete set and sending it replaces what the TMS holds, so a changed list, or a TMS that
+was restarted or restored, is caught up on the next tick. The operator sends the list as the spec
+has it: the TMS ignores a key it does not know. A failure is logged and retried on the next tick;
+it never holds converging or the report back. What the TMS does with the list is in
+[managed-mode.md](managed-mode.md).
+
+## System email
+
+Trenova supplies each managed instance a sender for its system email (invitations, password
+resets, notifications; [managed-mode.md](managed-mode.md#system-email) has what the TMS does
+with it and the exact contract). The spec names it by fingerprint only, `systemEmail:
+{"fingerprint": "<hex>"}`; the credential is escrowed with the other secrets and comes from
+`GET /v1/secrets` (`systemEmail`). While the instance is active and ready, every tick
+(`internal/systememail.Relay.Sync`):
+
+1. `GET /managed/v1/system-email`;
+2. with no `systemEmail` in the spec, `DELETE` it when the TMS holds one; otherwise stop when the
+   TMS holds the spec's fingerprint;
+3. take the credential from memory when it has the spec's fingerprint, otherwise from
+   `GET /v1/secrets`, checking its fingerprint against the spec's; then
+   `PUT /managed/v1/system-email`.
+
+The credential is never written to a Secret, a log line or the status report; a TMS that was
+restarted or restored is caught up from memory without asking the control plane again. A rotation
+is a new fingerprint in the spec, so the next tick fetches and puts the new credential. A failure
+is logged and retried on the next tick and never holds converging or the report back. Secrets
+whose fingerprint does not match the spec (a rotation half published), or a 429, wait a minute
+(or `Retry-After`) before the control plane is asked again; a 401 goes to credential recovery.
+
 ## Usage relay
 
-The TMS counts metered actions (its app meters: `shipments.total`, `ai.spend_cents`,
-`document_intelligence.extractions`, `documents.storage_bytes`, …) and the control plane bills
+The TMS counts metered actions (its app meters: `shipments.total`, `document_intelligence.pages`,
+`documents.storage_bytes` and `organizations.total`, listed with their units and cap semantics in
+[managed-mode.md](managed-mode.md#what-the-control-plane-must-send)) and the control plane bills
 them against the subscription's allowances. The operator carries the readings one way and the
 answer the other (`internal/usage`), through the TMS's managed API: a listener on the API pods'
 port 8090 that the chart serves only with `managed.enabled`. The chart generates its bearer
@@ -239,6 +364,69 @@ recovery as the rest of the loop. A missing token (the release not deployed with
 yet), a TMS that refuses the token after it was read again, or an unreachable TMS are logged
 and retried the same way. The TMS keeps the last state it was sent until the next.
 
+## Storage and backups
+
+**The buckets.** A managed instance keeps documents and backups in two buckets of its own, made by
+the control plane's provider (its `0021-backups` decision). The operator fetches them with `GET
+/v1/storage` when the cluster holds no copy and keeps them in two Secrets in the target namespace,
+labelled `app.kubernetes.io/managed-by: trenova-operator`, never Helm resources:
+
+| Secret | Keys | Read by |
+|---|---|---|
+| `trenova-storage` | `accessKey`, `secretKey`, `endpoint`, `region`, `bucket` | the TMS (`storage.external.existingSecret`) |
+| `trenova-backup-storage` | `ACCESS_KEY_ID`, `ACCESS_SECRET_KEY`, `ACCESS_REGION`, `destinationPath`, `endpoint` | the Barman Cloud plugin beside PostgreSQL, through the chart's `ObjectStore`; no application pod |
+
+Each tick, before anything is applied, the operator reads both. Complete and well formed, they are
+used as they are. Missing or incomplete, both are fetched and written; values that are not an
+`https` endpoint, DNS bucket names, two different buckets and two different credentials are
+refused and nothing is applied, as for the escrowed secrets. A `404` means the instance has no
+storage of ours (its infrastructure was made by hand): the chart keeps MinIO and takes no backups,
+and the operator asks again ten minutes later. The credentials are never logged.
+
+**A private endpoint.** The operator chart's `storage.privateEndpoint` (empty by default) is
+where the operator and the release's pods reach the buckets when that is not the address the
+control plane gives, which browsers keep using: `storage.external.endpoint` and `useSSL` (from the
+scheme, so `http://` is allowed here and only here), `backup.endpointURL` and the CORS call use
+it; `publicEndpoint` stays the control plane's `https` address. The local provider sets it to its
+MinIO on the Docker network (`http://minio.trenova.internal:9000`), while browsers fetch documents
+through the local edge at `https://files.instances.localhost`.
+
+**CORS.** The TMS hands the browser presigned links to the documents bucket, so the bucket must
+admit the instance's origin. Once per origin, the operator puts the bucket's CORS rules (GET, HEAD
+and PUT from `https://<hostname>`) with the documents credential, signed with AWS Signature V4,
+and records the origin on the `trenova-storage` Secret (`trenova.app/cors-origin`). A failure is
+logged and retried five minutes later; it never holds converging.
+
+**Backups** are CloudNativePG's Barman Cloud plugin: the chart renders the `ObjectStore` (the
+backups bucket, `retentionPolicy: 30d`, server-side encryption) and a daily `ScheduledBackup`
+(suspended while PostgreSQL is hibernated), and the cluster archives WAL through the plugin under
+its own name. The plugin and cert-manager are installed once per VM by cloud-init. The operator
+creates two kinds of base backup itself, as CloudNativePG `Backup`s with `method: plugin`:
+
+- **before an update:** the spec's `backup.id`, as `trenova-backup-<last 16 hex digits>`, once the
+  revision carrying it is applied and the instance is active. It is reported on `backup.request`
+  (`running`, `completed` with its ID and time, or `failed` with the reason); the control plane
+  writes the new version only after `completed`.
+- **the final backup:** once a `decommissioned` revision is applied, `trenova-final-r<revision>`.
+  Completed, it is reported as `finalBackup` with that revision as `appliedRevision`; failed, it
+  is deleted ten minutes after it stopped and taken again, and the health message says so.
+
+**Health**, on every report while the instance has storage (`backup`): `walArchiving` from the
+cluster's `ContinuousArchiving` condition (`healthy`, `failing`, `unknown`), `lastArchivedWalAt`
+from the cluster's status, `lastBaseBackupAt` and `firstRecoverabilityPoint` from the object
+store's recovery window for the cluster, `lastBaseBackupId` from the newest completed `Backup`,
+and a `message` when archiving or the last backup failed. A change in any of them sends a report at
+once.
+
+**Restores.** A spec with `restore` renders a second cluster, `<release>-postgres-<generation>`,
+bootstrapped by recovery from the source generation's backups to the target time, with small
+requests and its own NetworkPolicy; the live cluster is unchanged. The operator reports it
+`preparing`, `ready` once the new cluster is healthy (with `recoveredTo`), or `failed` if it is
+not after six hours. A spec whose `database` names that generation switches to it: every
+connection follows the cluster's name, and once the instance is ready on that revision the
+operator hibernates every other cluster of the release (kept, never deleted) and reports
+`switched`. Readiness checks the cluster `database` names.
+
 ## Readiness
 
 A component is ready when its Deployment or StatefulSet has every replica updated and available
@@ -262,20 +450,34 @@ helm install trenova-operator oci://ghcr.io/emoss08/charts/trenova-operator \
 Its permissions are two namespaced Roles. In its own namespace it may read the enrolment Secret
 and create and update its identity Secret. In the target namespace (`trenova`) it may manage
 exactly the kinds the Trenova chart renders (Secrets, ConfigMaps, Services, Deployments,
-StatefulSets, Jobs, NetworkPolicies, Ingresses, CloudNativePG Clusters and ImageCatalogs; the
-Secrets permission also covers the escrow Secret) and read Pods, PVCs and Events. It has no cluster-wide permission: the namespace, which it keeps on
+StatefulSets, Jobs, NetworkPolicies, Ingresses, CloudNativePG Clusters, ImageCatalogs and
+ScheduledBackups, and Barman Cloud ObjectStores; the Secrets permission also covers the escrow and
+storage Secrets), CloudNativePG Backups, which it creates itself, and read Pods, PVCs and Events. It has no cluster-wide permission: the namespace, which it keeps on
 uninstall, is created by its chart.
 
 ## Tests
 
 - `go test ./...` in `services/operator`, against the in-process fake control plane, a fake
   Kubernetes, and Helm's memory storage with the real chart: enrolment, renewal, re-enrolment,
-  revocation, rate limits, every plan and lifecycle through the chart's schema, install and
+  revocation, rate limits, every plan and lifecycle through the chart's schema, the sizing
+  (every component together and a rollout's largest surge pod fit each plan, the minimums and the local
+  cap, read from the rendered chart; one GiB below a minimum does not; turning docling on changes no other
+  workload's values or manifest, at every plan, with and without storage and under the local
+  cap; a plan change divides again), PostgreSQL's shutdown settings, install and
   no-op detection, recovery, readiness, the escrowed secrets (fetched once, kept when present,
   restored when incomplete, refused when malformed, the install held until they are in place),
   the usage relay (mapping, chunking, scheduling, the token read again on a 401) against an
   in-process TMS, the first administrator (bootstrap values, invalid names and emails, the invite
-  installed, rechecked, replaced and reported, a failure omitted), and the loop end to end.
+  installed, rechecked, replaced and reported, a failure omitted), the system email sender (sent
+  when the fingerprint differs and not when equal, resent from memory, rotated, removed, retried,
+  a mismatch and a 429 waited out, the credential in no log line or error), the storage
+  Secrets (fetched once into two Secrets, the backups credential never in the application's,
+  restored when incomplete, refused when malformed, a `404` asked again only after ten minutes, the
+  CORS request signed for the bucket), backups (health from the cluster and object store, the
+  pre-update and final backups taken once and reported, a restore reported and only its switch
+  stopping the old database), the chart with storage (MinIO gone, the object store and schedule
+  rendered, the backups Secret named by nothing else, a restore beside the live database and after
+  its switch), and the loop end to end.
 - `.github/workflows/operator.yml` installs the operator on k3d against
   `cmd/controlplane-stub`, with every image built from the commit and the Trenova chart pushed
   to a registry in the cluster at the version the stub pins. It waits for a ready report on
@@ -289,5 +491,9 @@ uninstall, is created by its chart.
 
 ## Not in the operator yet
 
-- **The final backup.** A decommissioned instance keeps PostgreSQL up, and staff take the final
-  backup by hand, as `0008-instances` allows, until the operator takes backups.
+- **Final backup size.** The plugin's `Backup` status carries no size, so `finalBackup.sizeBytes`
+  is 0.
+- **Removing a database a restore replaced.** It stays hibernated, with its volume, until the
+  instance is torn down.
+- **CI.** `.github/workflows/helm.yml` renders no shape with `backup.enabled` and has no schema for
+  the Barman Cloud `ObjectStore`; the values tests render it through the chart instead.

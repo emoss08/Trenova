@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/triagewakejobs/triagewakecontract"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -20,6 +21,7 @@ func NewScheduleProvider() *ScheduleProvider { return &ScheduleProvider{} }
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{{
 		ID:            triagewakecontract.WakeDueScheduleID,
+		Feature:       platformcatalog.FeatureAITriage,
 		Description:   "Wake the snoozed and waiting inbound messages whose time has come",
 		Spec:          schedule.Every(wakeEvery),
 		Workflow:      WakeDueTriageWorkflow,

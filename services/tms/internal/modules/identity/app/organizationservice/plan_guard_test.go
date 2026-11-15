@@ -3,17 +3,17 @@ package organizationservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/require"
 )
 
-func TestSSOConfigurationRefusesWhenThePlanRestrictsSSO(t *testing.T) {
+func TestSSOConfigurationRefusesWhenSecurityAndIdentityIsOff(t *testing.T) {
 	t.Parallel()
 
-	svc := &service{plans: plantest.Restricting(t, platformplan.CapabilitySSO)}
+	svc := &service{features: plantest.Without(platformcatalog.FeatureIdentity)}
 	tenant := plantest.Tenant()
 
 	okta, err := svc.UpsertOktaSSOConfig(t.Context(), tenant, &tenantports.OktaSSOConfig{})

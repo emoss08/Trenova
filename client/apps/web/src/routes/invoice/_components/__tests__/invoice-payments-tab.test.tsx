@@ -91,8 +91,8 @@ function arContext(overrides: Partial<InvoiceArContext> = {}): InvoiceArContext 
         createdById: "usr_1",
         createdAt: NOW,
         updatedAt: NOW,
-        creditMemo: { id: "inv_cm", number: "CM-7", billType: "CreditMemo", status: "Posted" },
-        invoice: { id: "inv_1", number: "INV-1", billType: "Invoice", status: "Posted" },
+        creditMemo: { id: "inv_cm", number: "CM-7", status: "Posted" },
+        invoice: { id: "inv_1", number: "INV-1", status: "Posted" },
       },
     ],
     disputes: [],
@@ -164,5 +164,38 @@ describe("InvoicePaymentsTab", () => {
 
     expect(screen.getByText("No payments applied yet")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Unapply" })).toBeNull();
+  });
+
+  it("claims nothing was applied when the plan leaves the applications out", () => {
+    renderTab(arContext({ paymentApplications: null, creditApplications: null }));
+
+    expect(screen.queryByText("No payments applied yet")).toBeNull();
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.getByText("Open balance").nextSibling).toHaveTextContent("$750.00");
+  });
+
+  it("draws the figures of applications withheld from a reader who cannot read payments", () => {
+    const context = arContext();
+    renderTab({
+      ...context,
+      paymentApplications: context.paymentApplications!.map((row) => ({
+        ...row,
+        customerPaymentId: null,
+        invoiceId: null,
+        appliedAmountMinor: null,
+        shortPayAmountMinor: null,
+        lineNumber: null,
+      })),
+      creditApplications: context.creditApplications!.map((row) => ({
+        ...row,
+        appliedAmountMinor: null,
+        accountingDate: null,
+      })),
+    });
+
+    expect(screen.getByText("ACH-4411")).toBeInTheDocument();
+    expect(screen.getByText("CM-7")).toBeInTheDocument();
+    expect(screen.queryByText("$150.00")).toBeNull();
+    expect(screen.getAllByText("Hidden")).toHaveLength(4);
   });
 });

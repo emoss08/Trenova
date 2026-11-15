@@ -21,7 +21,7 @@ func TestDefaultClassifier_PlanErrors(t *testing.T) {
 	assert.Equal(t, helpers.ProblemTypeQuotaExceeded, classifier.Classify(quota))
 
 	restricted := fmt.Errorf("send: %w",
-		errortypes.NewPlanRestrictionError("email.outbound", "", "free_demo"))
+		errortypes.NewFeatureRestrictionError("ai.desk", "Trenova AI"))
 	assert.Equal(t, helpers.ProblemTypePlanRestricted, classifier.Classify(restricted))
 }
 
@@ -54,14 +54,45 @@ func TestSanitizer_ExtractParams_PlanErrors(t *testing.T) {
 	}, sanitizer.ExtractParams(errortypes.NewQuotaExceededError("documents.uploads", 25, 25, "free_demo")))
 
 	assert.Equal(t, map[string]string{
-		"capability": "",
-		"reason":     "subscription_read_only",
-		"plan":       "free_demo",
+		"feature": "",
+		"addOn":   "",
+		"reason":  "subscription_read_only",
+		"plan":    "free_demo",
 	}, sanitizer.ExtractParams(errortypes.NewPlanRestrictionError(
-		"",
 		errortypes.PlanRestrictionReasonReadOnly,
 		"free_demo",
 	)))
+
+	assert.Equal(t, map[string]string{
+		"feature": "ai.desk",
+		"addOn":   "Trenova AI",
+		"reason":  "plan_restricted",
+		"plan":    "",
+	}, sanitizer.ExtractParams(errortypes.NewFeatureRestrictionError("ai.desk", "Trenova AI")))
+}
+
+func TestProblemBuilder_FeatureRestrictionNamesTheAddOn(t *testing.T) {
+	t.Parallel()
+
+	err := errortypes.NewFeatureRestrictionError("ai.desk", "Trenova AI")
+	sanitizer := helpers.NewSanitizer(false)
+
+	problem := helpers.NewProblemBuilder("https://api.test/problems/").
+		WithLocale(i18n.EN).
+		WithType(helpers.ProblemTypePlanRestricted).
+		WithDetail(sanitizer.SanitizeMessage(err, helpers.ProblemTypePlanRestricted)).
+		WithParams(sanitizer.ExtractParams(err)).
+		Build()
+
+	assert.Equal(t, "https://api.test/problems/plan-restricted", problem.Type)
+	assert.Equal(t, http.StatusForbidden, problem.Status)
+	assert.Equal(
+		t,
+		"This feature is part of the Trenova AI add-on, which is not on your plan",
+		problem.Detail,
+	)
+	assert.Equal(t, "ai.desk", problem.Params["feature"])
+	assert.Equal(t, "Trenova AI", problem.Params["addOn"])
 }
 
 func TestProblemBuilder_QuotaExceeded(t *testing.T) {

@@ -138,6 +138,7 @@ function ServiceFailureCard({
   rowOrder: readonly string[];
 }) {
   const t = useT();
+  const sentCodes = ediCodes(record, t);
   const access = useCardAccess(SERVICE_FAILURE_SECTIONS);
   const id = record.id;
   const load = record.shipment ?? null;
@@ -350,12 +351,14 @@ function ServiceFailureCard({
         />
       )}
 
-      <CardSection
-        title={t("Sent on the 214")}
-        aside={<span>{t("Last changed {0}", cardMoment(record.updatedAt))}</span>}
-      >
-        <EdiCodes codes={ediCodes(record, t)} />
-      </CardSection>
+      {sentCodes.length > 0 ? (
+        <CardSection
+          title={t("Sent on the 214")}
+          aside={<span>{t("Last changed {0}", cardMoment(record.updatedAt))}</span>}
+        >
+          <EdiCodes codes={sentCodes} />
+        </CardSection>
+      ) : null}
 
       <CardBar>
         <CardBarHint>{t("Review, resolve or void it on its page")}</CardBarHint>

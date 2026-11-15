@@ -36,8 +36,12 @@ func (s *structured) CompleteStructured(
 // serves is whether the organization has a provider chosen for Nova.
 type serves bool
 
-func (s serves) NovaReady(context.Context, pagination.TenantInfo) (bool, error) {
-	return bool(s), nil
+func (s serves) NovaReady(context.Context, pagination.TenantInfo, aitask.Task) error {
+	if !s {
+		return llmports.ErrNoProviderConfigured
+	}
+
+	return nil
 }
 
 func tenant() pagination.TenantInfo {

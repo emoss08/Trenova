@@ -3,6 +3,7 @@ import { chargeLineBasis } from "@trenova/shared/lib/tariff-lines";
 import type {
   DeskInvoice,
   DeskInvoiceChargeGroup,
+  DeskInvoiceCredit,
   DeskInvoiceDispute,
   DeskInvoiceNeighbor,
 } from "@/lib/graphql/invoice-card";
@@ -19,6 +20,7 @@ import {
   accountingSyncStateLabel,
 } from "@/lib/accounting-sync";
 import type { AccountingSyncRecord } from "@/lib/graphql/accounting-sync-ledger";
+import { invoiceEdiSendBlocker } from "@/lib/invoice-actions";
 import type { AccountingSyncRecordStatus } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { invoiceVoidBlocker } from "@trenova/shared/types/invoice";
@@ -238,15 +240,29 @@ export function headFacts(record: DeskInvoice, now: number, t: TranslateFn): str
   return facts;
 }
 
-/** What settled an invoice, in cents: payments still standing and credits still applied. */
+/**
+ * What settled an invoice, in cents: payments still standing and credits still applied. The
+ * applications are null when the organization's plan leaves out Accounting & Cash, and an
+ * amount is null for a reader who cannot read customer payments; neither adds to the sum.
+ */
 function settled(record: DeskInvoice): { paid: number; credited: number } {
-  const paid = record.paymentApplications
+  const paid = (record.paymentApplications ?? [])
     .filter((application) => application.payment?.status !== "Reversed")
-    .reduce((sum, application) => sum + application.appliedAmountMinor, 0);
-  const credited = record.creditApplications
+    .reduce((sum, application) => sum + (application.appliedAmountMinor ?? 0), 0);
+  const credited = (record.creditApplications ?? [])
     .filter((application) => application.status === "Applied")
-    .reduce((sum, application) => sum + application.appliedAmountMinor, 0);
+    .reduce((sum, application) => sum + (application.appliedAmountMinor ?? 0), 0);
   return { paid, credited };
+}
+
+/** An applied amount, or the word a withheld one reads as. */
+function appliedAmount(
+  minor: number | null,
+  currency: string,
+  t: TranslateFn,
+  format: (minor: number, currency: string) => string,
+): string {
+  return minor === null ? t("Hidden") : format(minor, currency);
 }
 
 export type OwedSegment = {
@@ -564,6 +580,9 @@ export function chargeFoot(record: DeskInvoice, t: TranslateFn): FootRow[] {
   if (credited > 0) {
     rows.push({ label: t("Credited"), value: less(credited, currency), kind: "less" });
   }
+  if (record.openBalance == null) {
+    return rows;
+  }
   rows.push({
     label: t("Balance due"),
     value: money(record.openBalance, currency),
@@ -589,7 +608,7 @@ export type RemitRow = {
 /** What settled an invoice, newest first: payments as remittance stubs, credit memos applied. */
 export function remittance(record: DeskInvoice, t: TranslateFn): RemitRow[] {
   const currency = record.currencyCode;
-  const payments = record.paymentApplications.map((application): RemitRow => {
+  const payments = (record.paymentApplications ?? []).map((application): RemitRow => {
     const paid = application.payment;
     const reversed = paid?.status === "Reversed";
     const method = paid ? choiceLabel(paymentMethodChoices, paid.paymentMethod) : t("Payment");
@@ -601,17 +620,17 @@ export function remittance(record: DeskInvoice, t: TranslateFn): RemitRow[] {
       kind: "payment",
       title: reference ? t("{0} · ref {1}", method, reference) : method,
       tag:
-        application.shortPayAmountMinor > 0
-          ? t("Short {0}", centsMoney(application.shortPayAmountMinor, currency))
+        (application.shortPayAmountMinor ?? 0) > 0
+          ? t("Short {0}", centsMoney(application.shortPayAmountMinor ?? 0, currency))
           : "",
       line: reversed ? t("{0} · reversed", received) : received,
-      amount: less(application.appliedAmountMinor, currency),
+      amount: appliedAmount(application.appliedAmountMinor, currency, t, less),
       undone: reversed,
       open: null,
       at,
     };
   });
-  const credits = record.creditApplications.map((application): RemitRow => ({
+  const credits = (record.creditApplications ?? []).map((application): RemitRow => ({
     key: application.id,
     kind: "credit",
     title: application.creditMemo
@@ -619,37 +638,40 @@ export function remittance(record: DeskInvoice, t: TranslateFn): RemitRow[] {
       : t("Credit memo"),
     tag: "",
     line: appliedLine(application, t),
-    amount: less(application.appliedAmountMinor, currency),
+    amount: appliedAmount(application.appliedAmountMinor, currency, t, less),
     undone: application.status === "Unapplied",
     open: application.creditMemo ? { entity: "invoice", id: application.creditMemo.id } : null,
-    at: application.accountingDate,
+    at: application.accountingDate ?? application.createdAt,
   }));
   return [...payments, ...credits].sort((a, b) => b.at - a.at);
 }
 
-function appliedLine(application: DeskInvoice["creditApplications"][number], t: TranslateFn) {
+function appliedLine(application: DeskInvoiceCredit, t: TranslateFn) {
+  if (application.accountingDate === null) {
+    return t("Hidden");
+  }
   const applied = cardDay(application.accountingDate);
   if (application.status !== "Unapplied") {
     return t("Applied {0}", applied);
   }
   const back = t("Applied {0}, taken back {1}", applied, cardDay(application.unappliedAt));
-  const reason = application.unappliedReason.trim();
+  const reason = (application.unappliedReason ?? "").trim();
   return reason ? t("{0} · {1}", back, reason) : back;
 }
 
 /** The invoices a credit memo settled, a use taken back kept and struck through. */
 export function creditUses(record: DeskInvoice, t: TranslateFn): RemitRow[] {
   const currency = record.currencyCode;
-  return record.creditApplications.map((application) => ({
+  return (record.creditApplications ?? []).map((application) => ({
     key: application.id,
     kind: "credit",
     title: application.invoice ? t("Invoice {0}", application.invoice.number) : t("An invoice"),
     tag: "",
     line: appliedLine(application, t),
-    amount: centsMoney(application.appliedAmountMinor, currency),
+    amount: appliedAmount(application.appliedAmountMinor, currency, t, centsMoney),
     undone: application.status === "Unapplied",
     open: application.invoice ? { entity: "invoice", id: application.invoice.id } : null,
-    at: application.accountingDate,
+    at: application.accountingDate ?? application.createdAt,
   }));
 }
 
@@ -726,10 +748,10 @@ export function voidBlocker(record: DeskInvoice, t: TranslateFn): string | null 
   const blocker = invoiceVoidBlocker(
     { status: record.status, appliedAmount: Number(record.appliedAmount) },
     {
-      paymentApplications: record.paymentApplications.filter(
+      paymentApplications: (record.paymentApplications ?? []).filter(
         (application) => application.payment?.status !== "Reversed",
       ).length,
-      creditApplications: record.creditApplications.filter(
+      creditApplications: (record.creditApplications ?? []).filter(
         (application) => application.status !== "Unapplied",
       ).length,
     },
@@ -831,12 +853,28 @@ export function emailChannel(
 
 export type EdiReading = ChannelReading & { messageId: string | null };
 
-/** How the invoice's EDI 210 went: sent where, sending, failed with why, or why it cannot go. */
-export function ediChannel(record: DeskInvoice, t: TranslateFn): EdiReading {
+/**
+ * How the invoice's EDI 210 went: sent where, sending, failed with why, or why it cannot go.
+ * Null when the organization's plan leaves EDI out, so the card shows no EDI channel; for a
+ * reader who cannot read EDI, the plan's switch is withheld and the channel says so.
+ */
+export function ediChannel(record: DeskInvoice, t: TranslateFn): EdiReading | null {
   const plan = record.ediSendPlan;
-  const partner = plan.partnerName.trim() || record.customer?.name || record.billToName;
+  if (!plan) {
+    return null;
+  }
+  const partner = (plan.partnerName ?? "").trim() || record.customer?.name || record.billToName;
   const messageId = plan.lastMessageId ?? record.lastEdiMessageId;
-  const error = plan.lastError.trim() || record.lastEdiError.trim();
+  const error = (plan.lastError ?? "").trim() || (record.lastEdiError ?? "").trim();
+  if (plan.enabled === null) {
+    return {
+      state: t("Hidden"),
+      tone: "idle",
+      detail: invoiceEdiSendBlocker(record.status, plan, t) ?? "",
+      why: false,
+      messageId: null,
+    };
+  }
   if (!plan.enabled) {
     return {
       state: t("Not set up"),
@@ -875,11 +913,12 @@ export function ediChannel(record: DeskInvoice, t: TranslateFn): EdiReading {
     case "NotSent":
       break;
   }
-  if (plan.blockers.length > 0) {
+  const blockers = plan.blockers ?? [];
+  if (blockers.length > 0) {
     return {
       state: t("Cannot send"),
       tone: "warn",
-      detail: plan.blockers.join(" "),
+      detail: blockers.join(" "),
       why: true,
       messageId: null,
     };

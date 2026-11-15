@@ -1,5 +1,5 @@
 {
-  "version": "sha256:98b78fa65513c6785715cbb0c01ca7156e5e361150f9a58eb0d02596df5d3854",
+  "version": "sha256:dac3d0bdf91c16a8833384fc269120a73965d03ce4f30c1d14399e1f211a492f",
   "screens": [
     {
       "path": "/",
@@ -229,6 +229,7 @@
       ],
       "reads": [
         "detention_policy",
+        "formula_template",
         "location",
         "shipment"
       ],
@@ -244,6 +245,7 @@
         "worker"
       ],
       "declared": [
+        "detention",
         "location_category"
       ]
     },
@@ -404,10 +406,12 @@
       ],
       "references": [
         "customer",
-        "customer_payment",
         "user"
       ],
       "declared": [
+        "accounts_receivable",
+        "customer_payment",
+        "edi",
         "invoice_dispute"
       ]
     },
@@ -440,99 +444,6 @@
       "reads": [],
       "references": [],
       "declared": []
-    },
-    {
-      "path": "/accounting/ar/invoices",
-      "name": "Invoice register",
-      "requires": [
-        {
-          "resource": "invoice",
-          "operation": "read"
-        }
-      ],
-      "operations": [
-        "AccountingBriefing",
-        "ArAgingSummary",
-        "ArAgingTrend",
-        "ArCashFlowForecast",
-        "ArCollectionsWorklist",
-        "ArCustomerLedger",
-        "ArCustomerProfile",
-        "ArCustomerStatement",
-        "ArDashboardKpis",
-        "ArDsoTrend",
-        "ArOpenItems",
-        "ArPaymentStats",
-        "ArTopOverdueCustomers",
-        "BulkEditFields",
-        "DataTableAggregates",
-        "DataTableFacets",
-        "DataTableInsightFields",
-        "DeskInvoiceCard",
-        "ExportTableView",
-        "InvoiceArContext",
-        "InvoiceRegister",
-        "LateChargePreview",
-        "MyBulkEdit",
-        "MyTableLayout",
-        "PreviewBulkEdit",
-        "ResetMyTableLayout",
-        "SaveMyTableLayout",
-        "ScheduleTableView",
-        "ShipmentInvoices",
-        "StartBulkEdit",
-        "UndoMyBulkEdit",
-        "VoidInvoice"
-      ],
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/",
-          "requires": [
-            {
-              "resource": "invoice",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/email-attempts/:param",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/send-plan/",
-          "requires": [
-            {
-              "resource": "invoice",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/tables/",
-          "requires": []
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/",
-          "requires": []
-        }
-      ],
-      "reads": [
-        "invoice"
-      ],
-      "references": [
-        "customer",
-        "customer_payment",
-        "report",
-        "user"
-      ],
-      "declared": [
-        "invoice_dispute"
-      ]
     },
     {
       "path": "/accounting/ar/late-charges",
@@ -605,10 +516,12 @@
       ],
       "references": [
         "customer",
-        "customer_payment",
         "user"
       ],
       "declared": [
+        "accounts_receivable",
+        "customer_payment",
+        "edi",
         "invoice_dispute"
       ]
     },
@@ -3316,7 +3229,9 @@
       "references": [
         "report"
       ],
-      "declared": []
+      "declared": [
+        "detention"
+      ]
     },
     {
       "path": "/admin/audit-logs",
@@ -3472,6 +3387,16 @@
             {
               "resource": "document",
               "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
             }
           ]
         }
@@ -3757,7 +3682,9 @@
       "references": [
         "carrier"
       ],
-      "declared": []
+      "declared": [
+        "tender"
+      ]
     },
     {
       "path": "/admin/distance-controls",
@@ -3955,6 +3882,16 @@
             {
               "resource": "document",
               "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
             }
           ]
         }
@@ -4307,6 +4244,7 @@
       ],
       "reads": [
         "detention_policy",
+        "formula_template",
         "location",
         "shipment"
       ],
@@ -4322,6 +4260,7 @@
         "worker"
       ],
       "declared": [
+        "detention",
         "location_category"
       ]
     },
@@ -4558,6 +4497,7 @@
       ],
       "reads": [
         "detention_policy",
+        "formula_template",
         "location",
         "shipment"
       ],
@@ -4573,6 +4513,7 @@
         "worker"
       ],
       "declared": [
+        "detention",
         "location_category"
       ]
     },
@@ -5319,6 +5260,23 @@
       ]
     },
     {
+      "path": "/admin/plan",
+      "name": "Your plan",
+      "requires": [
+        {
+          "resource": "organization",
+          "operation": "update"
+        }
+      ],
+      "operations": [
+        "ManagedPlan"
+      ],
+      "endpoints": [],
+      "reads": [],
+      "references": [],
+      "declared": []
+    },
+    {
       "path": "/admin/roles",
       "name": "Roles",
       "requires": [
@@ -5955,6 +5913,21 @@
       "references": [
         "report"
       ],
+      "declared": []
+    },
+    {
+      "path": "/admin/support-access",
+      "name": "Trenova support access",
+      "requires": [
+        {
+          "resource": "support_access",
+          "operation": "read"
+        }
+      ],
+      "operations": [],
+      "endpoints": [],
+      "reads": [],
+      "references": [],
       "declared": []
     },
     {
@@ -6598,6 +6571,7 @@
       "reads": [
         "accounting_integration",
         "accounting_sync",
+        "carrier_intelligence",
         "customer",
         "factoring_agreement",
         "factoring_company",
@@ -6608,12 +6582,15 @@
         "invoice"
       ],
       "references": [
-        "customer_payment",
         "document_type",
         "report",
         "user"
       ],
       "declared": [
+        "accounts_receivable",
+        "customer_payment",
+        "edi",
+        "factoring_submission",
         "invoice_dispute"
       ]
     },
@@ -6938,6 +6915,7 @@
         "report"
       ],
       "declared": [
+        "factoring_submission",
         "user"
       ]
     },
@@ -6995,7 +6973,9 @@
         "customer",
         "document_type"
       ],
-      "declared": []
+      "declared": [
+        "factoring_submission"
+      ]
     },
     {
       "path": "/billing/configuration-files/factoring-companies/new",
@@ -7068,7 +7048,9 @@
         "customer",
         "document_type"
       ],
-      "declared": []
+      "declared": [
+        "factoring_submission"
+      ]
     },
     {
       "path": "/billing/configuration-files/formula-libraries",
@@ -7097,6 +7079,11 @@
         "UndoMyBulkEdit"
       ],
       "endpoints": [
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
         {
           "method": "GET",
           "path": "/tables/",
@@ -7859,6 +7846,11 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
+        {
+          "method": "GET",
           "path": "/search/global/",
           "requires": []
         }
@@ -8616,6 +8608,11 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
+        {
+          "method": "GET",
           "path": "/search/global/",
           "requires": []
         }
@@ -8657,6 +8654,11 @@
         "UndoMyBulkEdit"
       ],
       "endpoints": [
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
         {
           "method": "GET",
           "path": "/tables/",
@@ -9417,6 +9419,11 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
+        {
+          "method": "GET",
           "path": "/search/global/",
           "requires": []
         }
@@ -10173,6 +10180,11 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
+        {
+          "method": "GET",
           "path": "/search/global/",
           "requires": []
         }
@@ -10218,6 +10230,11 @@
         "UndoMyBulkEdit"
       ],
       "endpoints": [
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
         {
           "method": "POST",
           "path": "/rate-matrices/",
@@ -10562,7 +10579,9 @@
         "document_type",
         "report"
       ],
-      "declared": []
+      "declared": [
+        "factoring_submission"
+      ]
     },
     {
       "path": "/billing/factoring/remittances/:id",
@@ -10695,7 +10714,9 @@
         "customer",
         "document_type"
       ],
-      "declared": []
+      "declared": [
+        "factoring_submission"
+      ]
     },
     {
       "path": "/billing/factoring/submissions/:id",
@@ -10929,6 +10950,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -11002,7 +11033,104 @@
         "customer",
         "document_type"
       ],
-      "declared": []
+      "declared": [
+        "factoring_submission"
+      ]
+    },
+    {
+      "path": "/billing/invoice-register",
+      "name": "Invoice register",
+      "requires": [
+        {
+          "resource": "invoice",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "AccountingBriefing",
+        "ArAgingSummary",
+        "ArAgingTrend",
+        "ArCashFlowForecast",
+        "ArCollectionsWorklist",
+        "ArCustomerLedger",
+        "ArCustomerProfile",
+        "ArCustomerStatement",
+        "ArDashboardKpis",
+        "ArDsoTrend",
+        "ArOpenItems",
+        "ArPaymentStats",
+        "ArTopOverdueCustomers",
+        "BulkEditFields",
+        "DataTableAggregates",
+        "DataTableFacets",
+        "DataTableInsightFields",
+        "DeskInvoiceCard",
+        "ExportTableView",
+        "InvoiceArContext",
+        "InvoiceRegister",
+        "LateChargePreview",
+        "MyBulkEdit",
+        "MyTableLayout",
+        "PreviewBulkEdit",
+        "ResetMyTableLayout",
+        "SaveMyTableLayout",
+        "ScheduleTableView",
+        "ShipmentInvoices",
+        "StartBulkEdit",
+        "UndoMyBulkEdit",
+        "VoidInvoice"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/",
+          "requires": [
+            {
+              "resource": "invoice",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/email-attempts/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/send-plan/",
+          "requires": [
+            {
+              "resource": "invoice",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/tables/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/tables/:param/compose/",
+          "requires": []
+        }
+      ],
+      "reads": [
+        "invoice"
+      ],
+      "references": [
+        "customer",
+        "report",
+        "user"
+      ],
+      "declared": [
+        "accounts_receivable",
+        "customer_payment",
+        "edi",
+        "invoice_dispute"
+      ]
     },
     {
       "path": "/billing/invoices",
@@ -11744,6 +11872,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -11929,7 +12067,6 @@
       "references": [
         "commodity",
         "customer",
-        "customer_payment",
         "document_type",
         "location",
         "tractor",
@@ -11937,6 +12074,10 @@
         "worker"
       ],
       "declared": [
+        "accounts_receivable",
+        "customer_payment",
+        "edi",
+        "factoring_submission",
         "invoice_dispute",
         "shipment",
         "user"
@@ -12473,6 +12614,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -12531,6 +12682,11 @@
               "operation": "read"
             }
           ]
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
         },
         {
           "method": "GET",
@@ -12634,6 +12790,11 @@
         "UndoMyBulkEdit"
       ],
       "endpoints": [
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
         {
           "method": "POST",
           "path": "/rate-agreements/",
@@ -13316,6 +13477,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -13634,6 +13805,16 @@
             {
               "resource": "document",
               "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
             }
           ]
         },
@@ -15003,6 +15184,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -15204,6 +15395,11 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
+        {
+          "method": "GET",
           "path": "/rate-agreements/:param/",
           "requires": [
             {
@@ -15382,7 +15578,6 @@
       ],
       "references": [
         "commodity",
-        "customer_payment",
         "document_type",
         "equipment_manufacturer",
         "equipment_type",
@@ -15391,7 +15586,10 @@
         "organization"
       ],
       "declared": [
+        "accounts_receivable",
         "carrier",
+        "customer_payment",
+        "edi",
         "escrow_account",
         "fiscal_period",
         "fuel_card",
@@ -16889,6 +17087,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -17135,6 +17343,11 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
+        {
+          "method": "GET",
           "path": "/rate-agreements/:param/",
           "requires": [
             {
@@ -17316,7 +17529,6 @@
         "agent_definition",
         "agent_run",
         "commodity",
-        "customer_payment",
         "document_type",
         "equipment_manufacturer",
         "equipment_type",
@@ -17325,7 +17537,10 @@
         "organization"
       ],
       "declared": [
+        "accounts_receivable",
         "carrier",
+        "customer_payment",
+        "edi",
         "escrow_account",
         "fiscal_period",
         "fuel_card",
@@ -18658,6 +18873,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -18859,6 +19084,11 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
+        {
+          "method": "GET",
           "path": "/rate-agreements/:param/",
           "requires": [
             {
@@ -19037,7 +19267,6 @@
       ],
       "references": [
         "commodity",
-        "customer_payment",
         "document_type",
         "equipment_manufacturer",
         "equipment_type",
@@ -19046,7 +19275,10 @@
         "organization"
       ],
       "declared": [
+        "accounts_receivable",
         "carrier",
+        "customer_payment",
+        "edi",
         "escrow_account",
         "fiscal_period",
         "fuel_card",
@@ -19933,6 +20165,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -20015,7 +20257,9 @@
         "document_type",
         "user"
       ],
-      "declared": []
+      "declared": [
+        "factoring_submission"
+      ]
     },
     {
       "path": "/desk/v/:viewThreadId/:slug",
@@ -21298,6 +21542,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -21499,6 +21753,11 @@
         },
         {
           "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
+        },
+        {
+          "method": "GET",
           "path": "/rate-agreements/:param/",
           "requires": [
             {
@@ -21677,7 +21936,6 @@
       ],
       "references": [
         "commodity",
-        "customer_payment",
         "document_type",
         "equipment_manufacturer",
         "equipment_type",
@@ -21686,7 +21944,10 @@
         "organization"
       ],
       "declared": [
+        "accounts_receivable",
         "carrier",
+        "customer_payment",
+        "edi",
         "escrow_account",
         "fiscal_period",
         "fuel_card",
@@ -21868,7 +22129,9 @@
         "ImportSourcedCarrier"
       ],
       "endpoints": [],
-      "reads": [],
+      "reads": [
+        "carrier_sourcing"
+      ],
       "references": [],
       "declared": []
     },
@@ -22306,6 +22569,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -22492,7 +22765,9 @@
         "tender"
       ],
       "references": [],
-      "declared": []
+      "declared": [
+        "tender"
+      ]
     },
     {
       "path": "/dispatch/locations",
@@ -28090,6 +28365,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -28148,6 +28433,11 @@
               "operation": "read"
             }
           ]
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
         },
         {
           "method": "POST",
@@ -28448,9 +28738,7 @@
       "references": [
         "accessorial_charge",
         "commodity",
-        "customer_payment",
         "document_type",
-        "edi",
         "equipment_manufacturer",
         "fleet_code",
         "location",
@@ -28459,6 +28747,9 @@
         "worker"
       ],
       "declared": [
+        "accounts_receivable",
+        "customer_payment",
+        "edi",
         "invoice_dispute",
         "shipment"
       ]
@@ -28887,6 +29178,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -28945,6 +29246,11 @@
               "operation": "read"
             }
           ]
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
         },
         {
           "method": "POST",
@@ -29245,9 +29551,7 @@
       "references": [
         "accessorial_charge",
         "commodity",
-        "customer_payment",
         "document_type",
-        "edi",
         "equipment_manufacturer",
         "fleet_code",
         "location",
@@ -29256,6 +29560,9 @@
         "worker"
       ],
       "declared": [
+        "accounts_receivable",
+        "customer_payment",
+        "edi",
         "invoice_dispute",
         "shipment"
       ]
@@ -29950,6 +30257,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -30008,6 +30325,11 @@
               "operation": "read"
             }
           ]
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
         },
         {
           "method": "POST",
@@ -30287,9 +30609,7 @@
       "references": [
         "accessorial_charge",
         "commodity",
-        "customer_payment",
         "document_type",
-        "edi",
         "fuel_card",
         "location",
         "report",
@@ -30299,6 +30619,9 @@
         "worker"
       ],
       "declared": [
+        "accounts_receivable",
+        "customer_payment",
+        "edi",
         "invoice_dispute",
         "shipment"
       ]
@@ -30519,7 +30842,9 @@
           ]
         }
       ],
-      "reads": [],
+      "reads": [
+        "carrier_intelligence"
+      ],
       "references": [],
       "declared": []
     },
@@ -31491,6 +31816,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -31604,6 +31939,11 @@
               "operation": "read"
             }
           ]
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
         },
         {
           "method": "POST",
@@ -31927,9 +32267,7 @@
       "references": [
         "accessorial_charge",
         "commodity",
-        "customer_payment",
         "document_type",
-        "edi",
         "fleet_code",
         "location",
         "report",
@@ -31938,6 +32276,9 @@
         "worker_policy"
       ],
       "declared": [
+        "accounts_receivable",
+        "customer_payment",
+        "edi",
         "invoice_dispute",
         "performance_review",
         "shift_template",
@@ -34294,6 +34635,16 @@
           ]
         },
         {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "POST",
           "path": "/documents/uploads/",
           "requires": [
@@ -34407,6 +34758,11 @@
               "operation": "read"
             }
           ]
+        },
+        {
+          "method": "GET",
+          "path": "/pricing-templates/:param/inputs",
+          "requires": []
         },
         {
           "method": "POST",
@@ -34768,15 +35124,16 @@
       "references": [
         "accessorial_charge",
         "commodity",
-        "customer_payment",
         "document_type",
-        "edi",
         "report",
         "tractor",
         "trailer",
         "worker"
       ],
       "declared": [
+        "accounts_receivable",
+        "customer_payment",
+        "edi",
         "invoice_dispute",
         "location_category",
         "service_failure_reason_code",
@@ -35623,6 +35980,16 @@
             {
               "resource": "document",
               "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/storage/",
+          "requires": [
+            {
+              "resource": "organization",
+              "operation": "update"
             }
           ]
         },
@@ -36633,16 +37000,7 @@
       "name": "ApplyCreditMemo",
       "type": "mutation",
       "reads": [],
-      "linked": [
-        {
-          "kind": "invoice",
-          "fields": [
-            "billType",
-            "number",
-            "status"
-          ]
-        }
-      ],
+      "linked": [],
       "declared": []
     },
     {
@@ -37980,7 +38338,9 @@
     {
       "name": "CarrierIntelLookup",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "carrier_sourcing"
+      ],
       "linked": [],
       "declared": []
     },
@@ -38008,7 +38368,9 @@
     {
       "name": "CarrierIntelReviewQueue",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "carrier_intelligence"
+      ],
       "linked": [],
       "declared": []
     },
@@ -38022,7 +38384,9 @@
     {
       "name": "CarrierIntelSnapshotHistory",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "carrier_intelligence"
+      ],
       "linked": [],
       "declared": []
     },
@@ -38077,7 +38441,9 @@
     {
       "name": "CarrierMonitoringEnrollmentTable",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "carrier_intelligence"
+      ],
       "linked": [],
       "declared": []
     },
@@ -39007,6 +39373,7 @@
       "name": "CustomerBrokerIntelligence",
       "type": "query",
       "reads": [
+        "carrier_intelligence",
         "customer"
       ],
       "linked": [],
@@ -39667,10 +40034,38 @@
         {
           "kind": "customer_payment",
           "fields": [
+            "accountingDate",
+            "appliedAmountMinor",
+            "createdAt",
+            "creditMemo",
+            "invoice",
+            "payment",
             "paymentDate",
             "paymentMethod",
             "referenceNumber",
+            "shortPayAmountMinor",
+            "status",
+            "unappliedAt",
+            "unappliedReason"
+          ]
+        },
+        {
+          "kind": "edi",
+          "fields": [
+            "blockers",
+            "communicationMethod",
+            "enabled",
+            "lastError",
+            "lastMessageId",
+            "partnerName",
+            "sentAt",
             "status"
+          ]
+        },
+        {
+          "kind": "invoice",
+          "fields": [
+            "number"
           ]
         },
         {
@@ -39696,6 +40091,8 @@
         }
       ],
       "declared": [
+        "customer_payment",
+        "edi",
         "invoice_dispute"
       ]
     },
@@ -40274,8 +40671,22 @@
       "name": "DispatchBoard",
       "type": "query",
       "reads": [],
-      "linked": [],
-      "declared": []
+      "linked": [
+        {
+          "kind": "tender",
+          "fields": [
+            "currentCarrierName",
+            "currentOfferExpiresAt",
+            "currentRank",
+            "mode",
+            "offerCount",
+            "status"
+          ]
+        }
+      ],
+      "declared": [
+        "tender"
+      ]
     },
     {
       "name": "DispatchCallOffPositioning",
@@ -40302,8 +40713,22 @@
       "name": "DispatchDriverMoves",
       "type": "query",
       "reads": [],
-      "linked": [],
-      "declared": []
+      "linked": [
+        {
+          "kind": "tender",
+          "fields": [
+            "currentCarrierName",
+            "currentOfferExpiresAt",
+            "currentRank",
+            "mode",
+            "offerCount",
+            "status"
+          ]
+        }
+      ],
+      "declared": [
+        "tender"
+      ]
     },
     {
       "name": "DispatchForecastQuality",
@@ -40330,8 +40755,22 @@
       "name": "DispatchMove",
       "type": "query",
       "reads": [],
-      "linked": [],
-      "declared": []
+      "linked": [
+        {
+          "kind": "tender",
+          "fields": [
+            "currentCarrierName",
+            "currentOfferExpiresAt",
+            "currentRank",
+            "mode",
+            "offerCount",
+            "status"
+          ]
+        }
+      ],
+      "declared": [
+        "tender"
+      ]
     },
     {
       "name": "DispatchMoveCandidates",
@@ -40877,6 +41316,7 @@
       "name": "ExceptionShipments",
       "type": "query",
       "reads": [
+        "formula_template",
         "shipment"
       ],
       "linked": [
@@ -41297,6 +41737,7 @@
       "name": "FactoringInvoiceStateTable",
       "type": "query",
       "reads": [
+        "factoring_submission",
         "invoice"
       ],
       "linked": [
@@ -41537,7 +41978,7 @@
       "name": "FactoringSummary",
       "type": "query",
       "reads": [
-        "invoice"
+        "factoring_submission"
       ],
       "linked": [],
       "declared": []
@@ -42081,6 +42522,21 @@
       ],
       "linked": [
         {
+          "kind": "accounts_receivable",
+          "fields": [
+            "asOfDate",
+            "basisOpenBalanceMinor",
+            "chargeMinor",
+            "debitMemo",
+            "debitMemoInvoiceId",
+            "periodEnd",
+            "periodIndex",
+            "periodStart",
+            "ratePercent",
+            "sourceInvoiceId"
+          ]
+        },
+        {
           "kind": "customer",
           "fields": [
             "code",
@@ -42090,9 +42546,49 @@
         {
           "kind": "customer_payment",
           "fields": [
+            "accountingDate",
+            "appliedAmountMinor",
+            "createdAt",
+            "createdById",
+            "creditMemo",
+            "creditMemoInvoiceId",
+            "customerPaymentId",
+            "invoice",
+            "invoiceId",
+            "lineNumber",
+            "payment",
             "paymentDate",
             "paymentMethod",
             "referenceNumber",
+            "shortPayAmountMinor",
+            "status",
+            "unappliedAt",
+            "unappliedById",
+            "unappliedReason",
+            "updatedAt"
+          ]
+        },
+        {
+          "kind": "edi",
+          "fields": [
+            "autoSend",
+            "blockers",
+            "communicationMethod",
+            "enabled",
+            "invoiceId",
+            "ladingVersionId",
+            "lastError",
+            "lastMessageId",
+            "partnerId",
+            "partnerName",
+            "sentAt",
+            "status"
+          ]
+        },
+        {
+          "kind": "invoice",
+          "fields": [
+            "number",
             "status"
           ]
         },
@@ -42115,6 +42611,9 @@
         }
       ],
       "declared": [
+        "accounts_receivable",
+        "customer_payment",
+        "edi",
         "invoice_dispute"
       ]
     },
@@ -42138,9 +42637,29 @@
             "code",
             "name"
           ]
+        },
+        {
+          "kind": "factoring_submission",
+          "fields": [
+            "checks",
+            "customer",
+            "customerId",
+            "evaluatedAt",
+            "factoringCompany",
+            "factoringCompanyId",
+            "failedChecks",
+            "invoice",
+            "invoiceId",
+            "openBalanceMinor",
+            "readySince",
+            "submission",
+            "verdict"
+          ]
         }
       ],
-      "declared": []
+      "declared": [
+        "factoring_submission"
+      ]
     },
     {
       "name": "InvoiceRegister",
@@ -42410,6 +42929,13 @@
       ]
     },
     {
+      "name": "ManagedPlan",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "ManualJournalTable",
       "type": "query",
       "reads": [
@@ -42608,7 +43134,9 @@
     {
       "name": "MyCarrierIntelligence",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "carrier_intelligence"
+      ],
       "linked": [],
       "declared": []
     },
@@ -44772,6 +45300,7 @@
       "name": "ShipmentDetail",
       "type": "query",
       "reads": [
+        "formula_template",
         "shipment"
       ],
       "linked": [
@@ -44933,8 +45462,17 @@
       "name": "ShipmentPageAnalytics",
       "type": "query",
       "reads": [],
-      "linked": [],
-      "declared": []
+      "linked": [
+        {
+          "kind": "detention",
+          "fields": [
+            "items"
+          ]
+        }
+      ],
+      "declared": [
+        "detention"
+      ]
     },
     {
       "name": "ShipmentProfitability",
@@ -45025,7 +45563,9 @@
     {
       "name": "ShipmentWatchlist",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "shipment"
+      ],
       "linked": [],
       "declared": []
     },
@@ -45442,22 +45982,14 @@
       "name": "UnapplyCreditMemoApplication",
       "type": "mutation",
       "reads": [],
-      "linked": [
-        {
-          "kind": "invoice",
-          "fields": [
-            "billType",
-            "number",
-            "status"
-          ]
-        }
-      ],
+      "linked": [],
       "declared": []
     },
     {
       "name": "UnassignedShipments",
       "type": "query",
       "reads": [
+        "formula_template",
         "shipment"
       ],
       "linked": [
@@ -46283,14 +46815,80 @@
       "name": "VetCarrier",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "carrier_intelligence",
+          "fields": [
+            "advisoryCodes",
+            "blockingCodes",
+            "carrierId",
+            "confirmedAt",
+            "depth",
+            "depthFetchedAt",
+            "docketNumber",
+            "dotNumber",
+            "effectiveAsOf",
+            "fetchedAt",
+            "fetchedDepth",
+            "findings",
+            "hasRawPayload",
+            "notFound",
+            "policyVersion",
+            "profile",
+            "provider",
+            "providerRef",
+            "reviewNote",
+            "reviewState",
+            "reviewedAt",
+            "reviewedById",
+            "riskLevel",
+            "source",
+            "sourceAsOf",
+            "subjectId",
+            "subjectType"
+          ]
+        }
+      ],
       "declared": []
     },
     {
       "name": "VetCustomerBroker",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "carrier_intelligence",
+          "fields": [
+            "advisoryCodes",
+            "blockingCodes",
+            "carrierId",
+            "confirmedAt",
+            "depth",
+            "depthFetchedAt",
+            "docketNumber",
+            "dotNumber",
+            "effectiveAsOf",
+            "fetchedAt",
+            "fetchedDepth",
+            "findings",
+            "hasRawPayload",
+            "notFound",
+            "policyVersion",
+            "profile",
+            "provider",
+            "providerRef",
+            "reviewNote",
+            "reviewState",
+            "reviewedAt",
+            "reviewedById",
+            "riskLevel",
+            "source",
+            "sourceAsOf",
+            "subjectId",
+            "subjectType"
+          ]
+        }
+      ],
       "declared": []
     },
     {

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:02271825da3c73de52e39a10900efe0fb873c690a50daba6003f8ce30e29803f",
+  "version": "sha256:9647e2c1a42473055bd1eedf00f54dac85b6a73db540b0b5a64ed1faa273c9bf",
   "modules": [
     {
       "id": "home",
@@ -595,97 +595,6 @@
       "inNavigation": true
     },
     {
-      "path": "/accounting/ar/invoices",
-      "name": "Invoice register",
-      "module": "accounting",
-      "breadcrumb": [
-        "Accounting management",
-        "Accounts receivable",
-        "Invoice register"
-      ],
-      "description": "Every invoice issued, with its bill-to, shipper, dates and settlement status.",
-      "summary": "The invoice register lists every invoice your organization has issued, as a ledger rather than a work queue. Each row shows **Invoice #**, **Type**, **Status**, **Bill To**, **Shipper**, **Invoice date**, **Due date**, **Total**, **Open**, **Past due**, **Settlement**, **Dispute**, **EDI**, **Scope** and **Split**. The **Shipper** column is only filled in when the invoice bills someone other than the shipper.\n\nAccounting and AR staff use it to look up any invoice, current or historical, check whether it has been paid, and jump to the invoice or the shipment behind it.",
-      "requires": [
-        {
-          "resource": "invoice",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "invoice list",
-        "invoice ledger",
-        "all invoices",
-        "issued invoices",
-        "invoice history",
-        "billed invoices"
-      ],
-      "tasks": [
-        {
-          "title": "Find an invoice",
-          "keywords": [
-            "search invoices",
-            "invoice number",
-            "look up invoice",
-            "unpaid invoices",
-            "disputed invoices"
-          ],
-          "steps": [
-            "Open [Invoice register](/accounting/ar/invoices).",
-            "Type in the search box, or use **Filter** to add conditions on columns such as **Invoice #**, **Bill To**, **Status**, **Settlement**, **Dispute** or **Invoice date**.",
-            "Select a column heading to sort by it, for example **Due date** or **Open**."
-          ]
-        },
-        {
-          "title": "Open an invoice",
-          "keywords": [
-            "view invoice",
-            "invoice detail"
-          ],
-          "steps": [
-            "Open [Invoice register](/accounting/ar/invoices).",
-            "Select the row or its **Invoice #**. The invoice opens in the [Invoices](/billing/invoices) workspace.",
-            "Or right-click the row and choose **Open in workspace**."
-          ]
-        },
-        {
-          "title": "See the shipment an invoice billed",
-          "keywords": [
-            "invoice shipment",
-            "load for invoice"
-          ],
-          "steps": [
-            "Open [Invoice register](/accounting/ar/invoices).",
-            "Right-click the row and choose **View shipment**. The shipment opens in a new browser tab. The option only appears when the invoice is tied to a shipment."
-          ]
-        },
-        {
-          "title": "Void an invoice",
-          "keywords": [
-            "cancel invoice",
-            "reverse invoice",
-            "void"
-          ],
-          "steps": [
-            "Open [Invoice register](/accounting/ar/invoices).",
-            "Right-click the row and choose **Void**.",
-            "Enter the **Reason** and choose a **Freight disposition**: **Release freight for rebilling** sends the billing queue items back for a fresh invoice; **Do not rebill** cancels them.",
-            "Select **Void invoice**."
-          ]
-        }
-      ],
-      "notes": "- Opening the page needs read access to invoices. The register has no create button; invoices are created from the billing queue. - **Void** is unavailable once any payment has been applied to the invoice, and is hidden on invoices that are already voided. - A draft is voided at once. A posted invoice is voided through a full-reversal credit memo; when that reversal needs an approver, the dialog shows **Void requested; awaiting reversal approval** and the invoice reads voided only once the reversal is approved.",
-      "related": [
-        "/billing/invoices",
-        "/accounting/ar/open-items",
-        "/accounting/ar/payments",
-        "/accounting/ar/aging"
-      ],
-      "covers": [],
-      "createAction": null,
-      "inNavigation": true
-    },
-    {
       "path": "/accounting/ar/late-charges",
       "name": "Late charges",
       "module": "accounting",
@@ -767,7 +676,7 @@
       ],
       "notes": "- Opening the page needs read access to accounts receivable. **Assess now** only appears for people who can create invoices. - A notice above the table says how the nightly run is set: **Automatic** raises and posts the memos each night, **Preview only** writes nothing, and **Disabled** means **Assess now** stays unavailable even though you can still preview. - Each invoice period is charged only once, so running again cannot double-charge a customer. - Customers whose charges for a run add up to less than the **Minimum late charge** are skipped.",
       "related": [
-        "/accounting/ar/invoices",
+        "/billing/invoice-register",
         "/accounting/ar/aging",
         "/billing/configuration-files/customers"
       ],
@@ -964,7 +873,7 @@
       "related": [
         "/accounting/ar/open-items",
         "/accounting/ar/customer-ledger",
-        "/accounting/ar/invoices",
+        "/billing/invoice-register",
         "/accounting/reconciliation/bank-receipts"
       ],
       "covers": [],
@@ -5945,6 +5854,79 @@
       "inNavigation": true
     },
     {
+      "path": "/admin/plan",
+      "name": "Your plan",
+      "module": "admin",
+      "breadcrumb": [
+        "Organization settings",
+        "Organization",
+        "Your plan"
+      ],
+      "description": "What your plan includes, the add-ons it does not, and recent changes",
+      "summary": "On a Managed Trenova instance, Trenova sells a base plan and add-ons such as Dispatch Intelligence or Trenova AI. This page shows an administrator what the plan includes, each add-on on the plan and what it adds, and each add-on that is not on it and what it would add. Nothing on this page changes the plan: add or drop an add-on from your Trenova account.\n\n**Recent changes** lists when an add-on joined or left the plan. When an add-on leaves, its pages and actions are hidden and its background work stops, but everything you entered with it is kept and comes back if you add it again. Administrators are also notified each time an add-on joins or leaves.",
+      "requires": [
+        {
+          "resource": "organization",
+          "operation": "update"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "subscription",
+        "what our plan includes",
+        "add-ons",
+        "which add-ons we have",
+        "plan changes",
+        "dropped add-on"
+      ],
+      "tasks": [
+        {
+          "title": "See what your plan includes",
+          "keywords": [
+            "subscription",
+            "which features do we have",
+            "what are we paying for"
+          ],
+          "steps": [
+            "Open [Your plan](/admin/plan).",
+            "Read **Included in your plan** and **Add-ons on your plan**."
+          ]
+        },
+        {
+          "title": "See what an add-on would add",
+          "keywords": [
+            "upgrade",
+            "buy an add-on",
+            "more features"
+          ],
+          "steps": [
+            "Open [Your plan](/admin/plan).",
+            "Read **Add-ons you can add**. Add one from your Trenova account."
+          ]
+        },
+        {
+          "title": "See when an add-on left the plan",
+          "keywords": [
+            "dropped add-on",
+            "feature disappeared",
+            "missing page"
+          ],
+          "steps": [
+            "Open [Your plan](/admin/plan).",
+            "Read **Recent changes**."
+          ]
+        }
+      ],
+      "notes": "Needs permission to update the organization. The page exists only on a Managed Trenova instance; a self-hosted install has every feature.",
+      "related": [
+        "/admin/organization-settings",
+        "/admin/support-access"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
       "path": "/admin/roles",
       "name": "Roles",
       "module": "admin",
@@ -6564,6 +6546,87 @@
         "/admin/distance-controls",
         "/admin/distance-overrides",
         "/admin/distance-profiles"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/admin/support-access",
+      "name": "Trenova support access",
+      "module": "admin",
+      "breadcrumb": [
+        "Organization settings",
+        "Organization",
+        "Trenova support access"
+      ],
+      "description": "Let a named Trenova staff member into this organization for a set time, and see everything they did",
+      "summary": "Trenova support can look at your organization only when you let them. On a Managed Trenova instance an administrator grants one named Trenova staff member access, says why, and chooses how long it lasts (1, 4, 24 or 72 hours) and whether it is **Read-only** or **Full access**. Staff never have a password here: each time they enter, Trenova's control plane signs a one-use pass for that staff member, and your instance lets them in only while a grant for exactly that address is live. The access ends on its own, and you can end it sooner.\n\nEverything done under a grant is in the audit log, credited to \"Trenova support\" with the staff member's address, and listed under the grant on this page. Administrators who can see this page are notified each time a support session starts, and every page of a support session shows a bar naming the staff member and when the session ends.\n\nFull access is an administrator's reach with exceptions that never change: support may not manage users, roles or sign-in settings, create API keys, grant or end support access, see or change stored credentials (integrations, AI provider keys, single sign-on, mailboxes), change bank or factoring remittance details, or export data in bulk.",
+      "requires": [
+        {
+          "resource": "support_access",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "giving Trenova support access",
+        "let Trenova in",
+        "support login",
+        "vendor access",
+        "staff access",
+        "impersonation",
+        "support session"
+      ],
+      "tasks": [
+        {
+          "title": "Grant Trenova support access",
+          "keywords": [
+            "let support in",
+            "give access",
+            "open a support session",
+            "allow staff"
+          ],
+          "steps": [
+            "Open [Trenova support access](/admin/support-access).",
+            "Select **Grant access**.",
+            "Enter the **Staff member's email** Trenova gave you. Only a Trenova staff address is accepted.",
+            "Enter the **Reason**, such as the ticket you opened.",
+            "Choose how long under **Ends after**, and **Read-only** or **Full access** under **Access**.",
+            "Select **Grant access**. Tell the staff member they can enter now."
+          ]
+        },
+        {
+          "title": "See what support did",
+          "keywords": [
+            "support activity",
+            "audit support",
+            "what did Trenova change"
+          ],
+          "steps": [
+            "Open [Trenova support access](/admin/support-access).",
+            "On the grant, select **Show what support did**.",
+            "Select an entry to open it in the [audit log](/admin/audit-logs)."
+          ]
+        },
+        {
+          "title": "End support access now",
+          "keywords": [
+            "revoke support",
+            "remove access",
+            "stop support session"
+          ],
+          "steps": [
+            "Open [Trenova support access](/admin/support-access).",
+            "On a live grant, select **End access**.",
+            "Enter the **Reason** and select **End access**. Any session the staff member has open ends at once."
+          ]
+        }
+      ],
+      "notes": "- Needs the Trenova Support Access permission: View to see this page, Grant to grant, Revoke to end. It is never given to an API key or an agent, and a support session cannot use it. - A staff member has at most one live grant at a time, and at most five grants are live at once. - Self-hosted installations have no support access: nobody at Trenova can enter them.",
+      "related": [
+        "/admin/audit-logs",
+        "/admin/users"
       ],
       "covers": [],
       "createAction": null,
@@ -8009,11 +8072,12 @@
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates).",
             "Right-click a template for **Fork template**, **View lineage**, **Duplicate**, **Export** or **Archive**, or tick several and use **Duplicate**, **Export** or **Archive** in the bar that appears.",
-            "To bring templates in, select **New formula template** and choose **Import templates** (from a file exported from Trenova) or **Install standard templates** (Trenova's standard rating methods, each with its own tests)."
+            "To bring templates in, select **New formula template** and choose **Import templates** (from a file exported from Trenova).",
+            "Trenova's standard rating methods (Flat Rate, Per Mile, Per CWT and the rest, each with its own tests) are already in the list on every plan. A standard template cannot be changed: to adjust one, **Duplicate** it or open it and choose **Fork template**, then edit the copy."
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it. Someone who submitted a template, or edited the revision under review, cannot approve it unless their role has the \"Approve own changes\" permission for formula templates, which administrators have; an approval made that way is recorded in the audit log as approved without a second reviewer.\n\nNova needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the Nova tab says which is missing. Every amount Nova shows comes from the same rating engine that bills shipments.\n\nProperties are tests: they run on every change, show as dots in the outline and must pass before review. Coverage counts the template's own file; a library's parts are covered by the library's tests.\n\nOnly an active template rates shipments. A template version pins the version of every library it imports and of every rate matrix it reads, so changing a library or publishing a matrix version never changes what an approved template bills. Rejecting archives the template; use **Request changes** to send it back for more work instead. Submitting needs a name, a description, a source with no errors and every test passing.",
+      "notes": "Writing, editing and opening formula templates is part of the Rating add-on. Without it, the standard templates still price shipments: the **Rating method** on a shipment, a rate agreement lane and the billing fallback lists them, but this page and the studio say they are not on your plan. Templates your organization wrote while it had Rating are kept; shipments and lanes that use them keep their saved charges and are not re-rated by them until Rating is back on the plan.\n\nViewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it. Someone who submitted a template, or edited the revision under review, cannot approve it unless their role has the \"Approve own changes\" permission for formula templates, which administrators have; an approval made that way is recorded in the audit log as approved without a second reviewer.\n\nNova needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the Nova tab says which is missing. Every amount Nova shows comes from the same rating engine that bills shipments.\n\nProperties are tests: they run on every change, show as dots in the outline and must pass before review. Coverage counts the template's own file; a library's parts are covered by the library's tests.\n\nOnly an active template rates shipments. A template version pins the version of every library it imports and of every rate matrix it reads, so changing a library or publishing a matrix version never changes what an approved template bills. Rejecting archives the template; use **Request changes** to send it back for more work instead. Submitting needs a name, a description, a source with no errors and every test passing.",
       "related": [
         "/billing/rate-agreements",
         "/billing/configuration-files/formula-libraries",
@@ -8462,6 +8526,96 @@
       "inNavigation": true
     },
     {
+      "path": "/billing/invoice-register",
+      "name": "Invoice register",
+      "module": "billing",
+      "breadcrumb": [
+        "Billing management",
+        "Invoice register"
+      ],
+      "description": "Every invoice issued, with its bill-to, shipper, dates and settlement status.",
+      "summary": "The invoice register lists every invoice your organization has issued, as a ledger rather than a work queue. Each row shows **Invoice #**, **Type**, **Status**, **Bill To**, **Shipper**, **Invoice date**, **Due date**, **Total**, **Open**, **Past due**, **Settlement**, **Dispute**, **EDI**, **Scope** and **Split**. The **Shipper** column is only filled in when the invoice bills someone other than the shipper.\n\nBilling and AR staff use it to look up any invoice, current or historical, check whether it has been paid, and jump to the invoice or the shipment behind it. It sits in the Billing menu, just below Invoices.",
+      "requires": [
+        {
+          "resource": "invoice",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "invoice list",
+        "invoice ledger",
+        "all invoices",
+        "issued invoices",
+        "invoice history",
+        "billed invoices"
+      ],
+      "tasks": [
+        {
+          "title": "Find an invoice",
+          "keywords": [
+            "search invoices",
+            "invoice number",
+            "look up invoice",
+            "unpaid invoices",
+            "disputed invoices"
+          ],
+          "steps": [
+            "Open [Invoice register](/billing/invoice-register).",
+            "Type in the search box, or use **Filter** to add conditions on columns such as **Invoice #**, **Bill To**, **Status**, **Settlement**, **Dispute** or **Invoice date**.",
+            "Select a column heading to sort by it, for example **Due date** or **Open**."
+          ]
+        },
+        {
+          "title": "Open an invoice",
+          "keywords": [
+            "view invoice",
+            "invoice detail"
+          ],
+          "steps": [
+            "Open [Invoice register](/billing/invoice-register).",
+            "Select the row or its **Invoice #**. The invoice opens in the [Invoices](/billing/invoices) workspace.",
+            "Or right-click the row and choose **Open in workspace**."
+          ]
+        },
+        {
+          "title": "See the shipment an invoice billed",
+          "keywords": [
+            "invoice shipment",
+            "load for invoice"
+          ],
+          "steps": [
+            "Open [Invoice register](/billing/invoice-register).",
+            "Right-click the row and choose **View shipment**. The shipment opens in a new browser tab. The option only appears when the invoice is tied to a shipment."
+          ]
+        },
+        {
+          "title": "Void an invoice",
+          "keywords": [
+            "cancel invoice",
+            "reverse invoice",
+            "void"
+          ],
+          "steps": [
+            "Open [Invoice register](/billing/invoice-register).",
+            "Right-click the row and choose **Void**.",
+            "Enter the **Reason** and choose a **Freight disposition**: **Release freight for rebilling** sends the billing queue items back for a fresh invoice; **Do not rebill** cancels them.",
+            "Select **Void invoice**."
+          ]
+        }
+      ],
+      "notes": "- Opening the page needs read access to invoices. The register has no create button; invoices are created from the billing queue. - **Void** is unavailable once any payment has been applied to the invoice, and is hidden on invoices that are already voided. - A draft is voided at once. A posted invoice is voided through a full-reversal credit memo; when that reversal needs an approver, the dialog shows **Void requested; awaiting reversal approval** and the invoice reads voided only once the reversal is approved.",
+      "related": [
+        "/billing/invoices",
+        "/accounting/ar/open-items",
+        "/accounting/ar/payments",
+        "/accounting/ar/aging"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
       "path": "/billing/invoices",
       "name": "Invoices",
       "module": "billing",
@@ -8576,9 +8730,10 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to invoices. Voiding needs permission to cancel invoices, and sending by EDI needs permission to update them.\n\nPosting finalizes the invoice, records it in accounting and marks its billing queue item as posted. Only a posted invoice can be sent by EDI.\n\nAn invoice with customer payments or credit memos applied cannot be voided until they are unapplied on the **Payments** tab. Depending on the adjustment policy, a void or adjustment may wait for approval on [Pending approvals](/billing/pending-approvals) before it takes effect.\n\nWhile a dispute is open, late charges on the invoice pause. To record a payment against an open invoice, use **Record payment** on the **Payments** tab, which opens [Customer payments](/accounting/ar/payments) with the invoice selected.",
+      "notes": "Opening the page needs read access to invoices. The amounts of the payments and credits applied to an invoice need read access to customer payments, and its EDI 210 details read access to EDI; without that access they show as hidden. Voiding needs permission to cancel invoices, and sending by EDI needs permission to update them.\n\nPosting finalizes the invoice, records it in accounting and marks its billing queue item as posted. Only a posted invoice can be sent by EDI.\n\nAn invoice with customer payments or credit memos applied cannot be voided until they are unapplied on the **Payments** tab. Depending on the adjustment policy, a void or adjustment may wait for approval on [Pending approvals](/billing/pending-approvals) before it takes effect.\n\nWhile a dispute is open, late charges on the invoice pause. To record a payment against an open invoice, use **Record payment** on the **Payments** tab, which opens [Customer payments](/accounting/ar/payments) with the invoice selected.",
       "related": [
         "/billing/queue",
+        "/billing/invoice-register",
         "/billing/pending-approvals",
         "/billing/reconciliation-exceptions",
         "/billing/adjustment-batches"
@@ -16872,7 +17027,7 @@
         "Email Profile(s)"
       ],
       "description": "Manage verified sender identities and route email purposes to the right provider profile.",
-      "summary": "Email profiles are the sender identities the organization sends email from. Each profile names an email provider (Resend or Postmark), the sender name and verified sender email recipients see, and an optional reply-to address.\n\nThe **Purpose assignments** panel at the top of the page routes each kind of email to a profile: General, Billing, Reporting, Operations, Authentication and Notifications. Below it, the table lists every profile with its **Profile**, **Sender**, **Provider**, **Status**, **Reply-To** and **Updated** columns. Administrators use the page to set up and maintain outgoing email.",
+      "summary": "Email profiles are the sender identities the organization sends email from. Each profile names an email provider (Resend or Postmark), the sender name and verified sender email recipients see, and an optional reply-to address.\n\nThe **Purpose assignments** panel at the top of the page routes each kind of email to a profile: General, Billing, Reporting, Operations, Authentication and Notifications. Below it, the table lists every profile with its **Profile**, **Sender**, **Provider**, **Status**, **Reply-To** and **Updated** columns. Administrators use the page to set up and maintain outgoing email.\n\n### What Trenova sends for you On Trenova Cloud, Trenova sends your organization's own system email for you when no profile covers it: invitations to new users and drivers, password resets, notification emails and digests, reminders about proposals waiting on someone, records shared with a colleague, and scheduled reports to your own users. It goes out from Trenova's address as \"<your organization> via Trenova\", and the page shows **System email is sent by Trenova on your behalf** while it does. It only reaches your own users (and the people you invite), and it stops being used as soon as you assign a profile to **General**.\n\nEmail to anyone outside your organization always needs your own profile and domain: invoices, statements, payment reminders, status updates and tracking links, tender offers, rate confirmations, detention notices, factoring letters, replies to inbound email, and test sends. Without a profile, these are not sent and Trenova says an email profile is needed.",
       "requires": [
         {
           "resource": "email_profile",
@@ -16886,7 +17041,9 @@
         "email sender",
         "outgoing email settings",
         "Resend",
-        "Postmark"
+        "Postmark",
+        "system email",
+        "sent by Trenova"
       ],
       "tasks": [
         {
@@ -18080,7 +18237,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to reports. **New report**, **New dashboard**, **Duplicate** and customizing a gallery report need create permission; **Schedules** needs export permission on reports. Each card shows whether the report is **Shared** or **Private**, set by its **Visibility** when saved.\n\n**Schedules** lists the schedules you set up, and on a report you own every schedule on it, because deleting the report deletes them too. A schedule runs with the permissions of the person who set it up, and only they can change, turn off or delete it; a teammate's schedule shows **Set up by a teammate**.",
+      "notes": "Needs read access to reports. **New report**, **New dashboard**, **Duplicate** and customizing a gallery report need create permission; **Schedules** needs export permission on reports. Each card shows whether the report is **Shared** or **Private**, set by its **Visibility** when saved.\n\nA gallery report that reads data from an add-on your organization's plan does not include is shown as a locked card with **Not on your plan** and the add-on it is part of. It cannot be explored, run or customized, and the dashboard tile picker does not offer it, until the add-on is added.\n\nA dashboard tile whose report reads an add-on the plan does not include shows a locked card naming the add-on, and a dashboard export leaves that tile out and names it on the first sheet. A scheduled run of such a report fails, and its owner is told which add-on it needs.\n\n**Schedules** lists the schedules you set up, and on a report you own every schedule on it, because deleting the report deletes them too. A schedule runs with the permissions of the person who set it up, and only they can change, turn off or delete it; a teammate's schedule shows **Set up by a teammate**.",
       "related": [
         "/reports/runs",
         "/reports/builder",
@@ -18212,7 +18369,7 @@
           ]
         }
       ],
-      "notes": "Needs create permission for reports. **Save** stays disabled until the report has at least one column, and **Run** works only for a report whose status is **Active**. A report flagged **Needs attention** has a problem (for example a field that no longer exists) described at the top of the builder.\n\nThe entity picker lists only the kinds of record your role can read. The field catalog decides each field by the same rule as the preview and runs, so a field you can add always compiles, and a saved report someone with a wider role built may name fields that are locked for you.",
+      "notes": "Needs create permission for reports. **Save** stays disabled until the report has at least one column, and **Run** works only for a report whose status is **Active**. A report flagged **Needs attention** has a problem (for example a field that no longer exists) described at the top of the builder.\n\nThe entity picker lists only the kinds of record your role can read. The field catalog decides each field by the same rule as the preview and runs, so a field you can add always compiles, and a saved report someone with a wider role built may name fields that are locked for you.\n\nKinds of record and fields that belong to an add-on your organization's plan does not include are not offered at all. A saved report that uses them lists each one with the add-on it is part of; they stay in the report, and the preview and runs are refused until the plan includes them.",
       "related": [
         "/reports",
         "/reports/explore",

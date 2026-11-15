@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensiontest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -55,6 +56,7 @@ func newFixture(t *testing.T) *fixture {
 		Encryption:   encryption,
 		AuditService: f.audit,
 		Connectors:   connectors,
+		Features:     plantest.AllFeatures(),
 	})
 	f.svc = New(Params{
 		Logger:       zap.NewNop(),

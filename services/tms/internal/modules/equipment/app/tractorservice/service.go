@@ -36,6 +36,7 @@ type Params struct {
 	AuditService              auditports.AuditService
 	Realtime                  realtimeports.RealtimeService
 	CustomFieldsValuesService *customfieldservice.ValuesService
+	PlanFields                permissionports.PlanFieldKeeper
 }
 
 type Service struct {
@@ -49,6 +50,7 @@ type Service struct {
 	auditService              auditports.AuditService
 	realtime                  realtimeports.RealtimeService
 	customFieldsValuesService *customfieldservice.ValuesService
+	planFields                permissionports.PlanFieldKeeper
 }
 
 func New(p Params) *Service {
@@ -63,6 +65,7 @@ func New(p Params) *Service {
 		auditService:              p.AuditService,
 		realtime:                  p.Realtime,
 		customFieldsValuesService: p.CustomFieldsValuesService,
+		planFields:                p.PlanFields,
 	}
 }
 

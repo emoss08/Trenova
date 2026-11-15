@@ -3,6 +3,7 @@ package reportdashboardservice
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -72,6 +73,8 @@ func (s *Service) ExportDashboard(
 	}
 
 	sheets := make([]render.DashboardSheet, 0, len(tiles))
+	omitted := make([]render.DashboardValue, 0)
+	var restriction *errortypes.PlanRestrictionError
 	timezone := ""
 	for i := range tiles {
 		tile := &tiles[i]
@@ -90,14 +93,26 @@ func (s *Service) ExportDashboard(
 
 		result, previewErr := s.engine.Preview(prepared.Context, &prepared.Request)
 		if previewErr != nil {
+			tileErr := reporting.EngineError(prepared.Context, prepared.Access, previewErr)
+			if planErr, ok := errors.AsType[*errortypes.PlanRestrictionError](tileErr); ok {
+				restriction = planErr
+				omitted = append(omitted, render.DashboardValue{
+					Name:  tile.Title,
+					Value: planErr.Error(),
+				})
+				continue
+			}
 			s.l.Error("dashboard tile failed to export",
 				zap.String("dashboardId", req.DashboardID.String()),
 				zap.String("tileId", tile.TileID),
 				zap.Error(previewErr))
-			return nil, reporting.EngineError(prepared.Context, prepared.Access, previewErr)
+			return nil, tileErr
 		}
 
 		sheets = append(sheets, render.DashboardSheet{Title: tile.Title, Result: result.Reader()})
+	}
+	if len(sheets) == 0 && restriction != nil {
+		return nil, restriction
 	}
 
 	var buf bytes.Buffer
@@ -111,6 +126,7 @@ func (s *Service) ExportDashboard(
 		Filters:     dashboardValues(dashboard.Layout, req.FilterValues),
 		Params:      paramValues(req.ParamValues),
 		Sheets:      sheets,
+		Omitted:     omitted,
 		Sink:        &buf,
 	}); renderErr != nil {
 		s.l.Error("failed to render dashboard export", zap.Error(renderErr))

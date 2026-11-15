@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -83,7 +84,7 @@ type nova struct {
 	err  error
 }
 
-func (n nova) Available(context.Context, pagination.TenantInfo) (bool, error) {
+func (n nova) Available(context.Context, pagination.TenantInfo, aitask.Task) (bool, error) {
 	return n.err == nil, nil
 }
 

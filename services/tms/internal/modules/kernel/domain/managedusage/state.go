@@ -15,13 +15,12 @@ type Unit string
 
 const (
 	UnitCount = Unit("count")
-	UnitCents = Unit("cents")
 	UnitBytes = Unit("bytes")
 )
 
 func (u Unit) IsValid() bool {
 	switch u {
-	case UnitCount, UnitCents, UnitBytes:
+	case UnitCount, UnitBytes:
 		return true
 	default:
 		return false

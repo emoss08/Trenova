@@ -15,6 +15,8 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
+import { PlanFeature } from "@/lib/plan-feature";
 import {
   CAPABILITIES,
   getProfile,
@@ -200,6 +202,8 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     staleTime: 30_000,
   });
   const commentCount = commentCountData?.count ?? 0;
+  // The customer's tracking page is Visibility's: without it the shipment has no such tab.
+  const trackingOnPlan = usePlanFeature(PlanFeature.CustomerTracking).available;
   const { data: serviceFailures } = useQuery({
     queryKey: ["shipment-service-failure-count", row?.id],
     queryFn: () => serviceFailureService.listByShipment(row!.id!, "limit=100"),
@@ -265,16 +269,20 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         shipment: row,
       },
     },
-    {
-      value: "customer-tracking",
-      label: t("Customer Tracking"),
-      icon: Share07Icon,
-      hideFooter: true,
-      content: ShipmentCustomerTrackingTab,
-      contentProps: {
-        shipment: row,
-      },
-    },
+    ...(trackingOnPlan
+      ? [
+          {
+            value: "customer-tracking",
+            label: t("Customer Tracking"),
+            icon: Share07Icon,
+            hideFooter: true,
+            content: ShipmentCustomerTrackingTab,
+            contentProps: {
+              shipment: row,
+            },
+          },
+        ]
+      : []),
     {
       value: "check-calls",
       label: checkCallCount > 0 ? t("Check Calls ({0})", checkCallCount) : t("Check Calls"),

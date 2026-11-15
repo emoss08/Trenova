@@ -41,10 +41,6 @@ func (s *Background) SubmitBackground(
 		return nil, errortypes.NewBusinessError(completionengine.AIDisabledMessage)
 	}
 
-	if err := s.AssertWithinSpend(ctx, req.TenantInfo); err != nil {
-		return nil, err
-	}
-
 	run := completionengine.StructuredRun(req)
 
 	usable, err := s.CandidatesFor(ctx, run)

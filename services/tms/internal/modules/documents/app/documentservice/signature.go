@@ -140,9 +140,9 @@ func (s *Service) authorizeSignature(ctx context.Context, req *SetSignatureReque
 		return err
 	}
 	if result == nil || !result.Allowed {
-		return errortypes.NewAuthorizationError(
+		return permissionports.DeniedError(result, errortypes.NewAuthorizationError(
 			"You don't have permission to change this document",
-		)
+		))
 	}
 
 	return nil

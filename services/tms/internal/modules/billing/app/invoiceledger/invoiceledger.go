@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -37,6 +39,7 @@ type Poster struct {
 	Policy   Policy
 	Writer   journalposting.Writer
 	Ledger   LedgerAppender
+	Features platformcatalogports.FeatureGate
 }
 
 type Request struct {
@@ -102,6 +105,13 @@ func IdempotencyKey(invoiceID pulid.ID) string {
 func (p *Poster) Plan(ctx context.Context, req *Request) (*Plan, error) {
 	entity := req.Invoice
 	if entity == nil || req.ActorID.IsNil() || p.Controls == nil || p.Policy == nil {
+		return nil, ErrNoLedgerEntry
+	}
+	accounting, err := p.Features.Enabled(ctx, platformcatalog.FeatureAccounting)
+	if err != nil {
+		return nil, fmt.Errorf("ask whether accounting is on the plan: %w", err)
+	}
+	if !accounting {
 		return nil, ErrNoLedgerEntry
 	}
 

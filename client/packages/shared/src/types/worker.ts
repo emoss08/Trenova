@@ -7,6 +7,7 @@ import {
   nullableIntegerSchema,
   nullableStringSchema,
   optionalStringSchema,
+  planWithheldSchema,
   statusSchema,
   tenantInfoSchema,
 } from "./helpers";
@@ -130,25 +131,25 @@ export const workerProfileSchema = z.object({
   terminationDate: nullableIntegerSchema,
   physicalDueDate: nullableIntegerSchema,
   mvrDueDate: nullableIntegerSchema,
-  complianceStatus: complianceStatusSchema,
+  complianceStatus: planWithheldSchema(complianceStatusSchema, "Pending"),
   /**
    * Roster roll-ups. The server keeps these on the profile so the workers list
    * can filter and sort on training and safety without replaying every record
    * for every row. They are a cache; the worker overview has the live answer.
    */
-  trainingHealth: workerTrainingHealthSchema.default("Current"),
-  safetyRating: safetyRatingSchema.default("Excellent"),
-  safetyScore: z.number().int().default(100),
+  trainingHealth: planWithheldSchema(workerTrainingHealthSchema, "Current"),
+  safetyRating: planWithheldSchema(safetyRatingSchema, "Excellent"),
+  safetyScore: planWithheldSchema(z.number().int(), 100),
   nextCredentialExpiry: nullableIntegerSchema,
   nextTrainingDue: nullableIntegerSchema,
-  drugAlcoholStatus: drugAlcoholStatusSchema.default("Unknown"),
-  returnToDutyStatus: returnToDutyStatusSchema.default("NotRequired"),
+  drugAlcoholStatus: planWithheldSchema(drugAlcoholStatusSchema, "Unknown"),
+  returnToDutyStatus: planWithheldSchema(returnToDutyStatusSchema, "NotRequired"),
   lastClearinghouseQueryAt: nullableIntegerSchema,
   nextClearinghouseQueryDue: nullableIntegerSchema,
   isQualified: z.boolean().default(false),
   disqualificationReason: nullableStringSchema,
-  lastComplianceCheck: z.number().int().default(0),
-  lastMvrCheck: z.number().int().default(0),
+  lastComplianceCheck: planWithheldSchema(z.number().int(), 0),
+  lastMvrCheck: planWithheldSchema(z.number().int(), 0),
   lastDrugTest: z.number().int().nullish(),
   eldExempt: z.boolean().default(false),
   shortHaulExempt: z.boolean().default(false),

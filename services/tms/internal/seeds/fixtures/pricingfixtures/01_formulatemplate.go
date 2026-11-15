@@ -47,6 +47,7 @@ func RunFormulaTemplates(ctx context.Context, r *seed.Run) error {
 			Inputs:         tarifftypes.InputDeclsFrom(checked.check.Inputs),
 			TestCount:      checked.testCount,
 			Status:         formulatemplate.StatusActive,
+			StandardKey:    entry.Key,
 		}.Build()
 		tmpl.ID = pulid.MustNew("ft_")
 		tmpl.ApprovedByID = &admin.ID

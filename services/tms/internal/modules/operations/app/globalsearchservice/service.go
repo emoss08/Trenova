@@ -399,6 +399,14 @@ func (r readsOnly) Decide(
 	return permissionports.LinkedFieldWithheldKind
 }
 
+func (readsOnly) PlanDenial(
+	context.Context,
+	permission.Resource,
+	string,
+) (permissionports.PlanDenial, bool, error) {
+	return permissionports.PlanDenial{}, false, nil
+}
+
 func (s *Service) definitions() []entitySearchDefinition {
 	return []entitySearchDefinition{
 		{

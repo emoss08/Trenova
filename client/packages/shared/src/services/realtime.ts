@@ -399,7 +399,7 @@ export class RealtimeClient {
     // refusal tells the tab, and the stream keeps retrying so it reconnects if the session
     // comes back to this one.
     if (response.status === 409) {
-      await responseError(response, translate("Request failed"));
+      await responseError(response, translate("Request failed"), "read");
       return this.backoff();
     }
     if (response.status === 429 || response.status === 503) {

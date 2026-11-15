@@ -93,6 +93,7 @@ function manifest(overrides: Record<string, unknown> = {}) {
     permissions: {},
     routeAccess: {},
     availableOrgs: [{ id: "org_1", name: "Alpha Logistics" }],
+    unavailableFeatures: [],
     checksum: "abc",
     expiresAt: 1782403304,
     ...overrides,

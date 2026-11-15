@@ -52,58 +52,6 @@ func (w Window) IsValid() bool {
 	}
 }
 
-type Capability string
-
-const (
-	CapabilityEmailOutbound           = Capability("email.outbound")
-	CapabilityIntegrations            = Capability("integrations")
-	CapabilityAPIKeys                 = Capability("api_keys")
-	CapabilityAgentAutomation         = Capability("agent.automation")
-	CapabilityAgentWebSearch          = Capability("agent.web_search")
-	CapabilityAgentPortalAutomation   = Capability("agent.portal_automation")
-	CapabilityCarrierIntelligencePaid = Capability("carrier_intelligence.paid")
-	CapabilityDocumentIntelligence    = Capability("document_intelligence")
-	CapabilitySMS                     = Capability("sms")
-	CapabilitySSO                     = Capability("sso")
-)
-
-func AllCapabilities() []Capability {
-	return []Capability{
-		CapabilityEmailOutbound,
-		CapabilityIntegrations,
-		CapabilityAPIKeys,
-		CapabilityAgentAutomation,
-		CapabilityAgentWebSearch,
-		CapabilityAgentPortalAutomation,
-		CapabilityCarrierIntelligencePaid,
-		CapabilityDocumentIntelligence,
-		CapabilitySMS,
-		CapabilitySSO,
-	}
-}
-
-func (c Capability) String() string {
-	return string(c)
-}
-
-func (c Capability) IsValid() bool {
-	switch c {
-	case CapabilityEmailOutbound,
-		CapabilityIntegrations,
-		CapabilityAPIKeys,
-		CapabilityAgentAutomation,
-		CapabilityAgentWebSearch,
-		CapabilityAgentPortalAutomation,
-		CapabilityCarrierIntelligencePaid,
-		CapabilityDocumentIntelligence,
-		CapabilitySMS,
-		CapabilitySSO:
-		return true
-	default:
-		return false
-	}
-}
-
 type Origin string
 
 const (

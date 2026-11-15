@@ -9,11 +9,13 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { documentNeedsSignature } from "@/lib/document-signature";
 import type { ExtractedField, Extraction } from "@/lib/document-reading/extraction-payload";
+import { PlanFeature } from "@/lib/plan-feature";
 import { billingQueue } from "@/lib/queries/billing-queue";
 import { documentReading } from "@/lib/queries/document-reading";
 import { documentService } from "@/services/document";
 import { billingQueueService } from "@/services/billing-queue";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -21,6 +23,7 @@ import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Form } from "@trenova/shared/components/ui/form";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
@@ -185,6 +188,9 @@ export function BillingQueueDocumentDetails({
   const bulk = useBulkRun();
   const { allowed: canUpdate } = usePermission(Resource.Document, Operation.Update);
   const { allowed: canDelete } = usePermission(Resource.Document, Operation.Delete);
+  // Reading the page is Document Intelligence; it is Nova's reading only with Trenova AI.
+  const readsDocuments = usePlanFeature(PlanFeature.DocumentIntelligence).available;
+  const novaOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
   const [signing, setSigning] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -362,14 +368,17 @@ export function BillingQueueDocumentDetails({
 
       <ScrollArea maskVariant="card" className="min-h-0 flex-1">
         <div className="flex flex-col gap-4 px-4.5 py-4">
-          <NovaReading
-            state={readingState}
-            placing={placing}
-            kind={reading?.kindLabel ?? ""}
-            summary={fields.length > 0 ? novaSummary(fields, t) : factsSummary(facts, t)}
-            reading={readNow.isPending}
-            onRead={() => readNow.mutate()}
-          />
+          {readsDocuments ? (
+            <NovaReading
+              state={readingState}
+              placing={placing}
+              kind={reading?.kindLabel ?? ""}
+              summary={fields.length > 0 ? novaSummary(fields, t) : factsSummary(facts, t)}
+              reading={readNow.isPending}
+              onRead={() => readNow.mutate()}
+              nova={novaOnPlan}
+            />
+          ) : null}
 
           <Form
             onSubmit={(event) => void form.handleSubmit((values) => save.mutate(values))(event)}
@@ -685,7 +694,10 @@ export function BillingQueueDocumentDetails({
   );
 }
 
-/** What Nova made of the page, or how to have it read. */
+/**
+ * What Nova made of the page, or how to have it read. Without Trenova AI on the plan the
+ * reading is Document Intelligence's alone: it wears the assist mark and never names Nova.
+ */
 function NovaReading({
   state,
   placing,
@@ -693,6 +705,7 @@ function NovaReading({
   summary,
   reading,
   onRead,
+  nova,
 }: {
   state: ReadingState;
   placing: boolean;
@@ -700,8 +713,10 @@ function NovaReading({
   summary: string;
   reading: boolean;
   onRead: () => void;
+  nova: boolean;
 }) {
   const t = useT();
+  const readHeading = nova ? t("Nova read this page") : t("Read from this page");
 
   if (state === "loading") {
     return <Skeleton className="h-14 w-full" />;
@@ -710,7 +725,9 @@ function NovaReading({
     return (
       <Alert size="sm" variant="warning">
         <AlertDescription>
-          {t("Nova's reading of this document couldn't be loaded.")}
+          {nova
+            ? t("Nova's reading of this document couldn't be loaded.")
+            : t("The reading of this document couldn't be loaded.")}
         </AlertDescription>
       </Alert>
     );
@@ -718,16 +735,20 @@ function NovaReading({
 
   return (
     <div className="border-border bg-muted flex gap-2.5 rounded-md border px-3 py-2.5">
-      <NovaBadge
-        size="sm"
-        className="mt-0.5"
-        spin={state === "reading" || reading ? "always" : "none"}
-      />
+      {nova ? (
+        <NovaBadge
+          size="sm"
+          className="mt-0.5"
+          spin={state === "reading" || reading ? "always" : "none"}
+        />
+      ) : (
+        <AssistMark className="text-foreground-muted mt-0.5 size-3.5 shrink-0" aria-hidden />
+      )}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         {state === "read" && summary ? (
           <>
             <p className="leading-4.5">
-              <span className="font-semibold">{t("Nova read this page")}</span>
+              <span className="font-semibold">{readHeading}</span>
               <span> · {summary}</span>
             </p>
             <span className="text-foreground-muted text-xs">
@@ -739,7 +760,7 @@ function NovaReading({
         ) : state === "read" ? (
           <>
             <p className="leading-4.5">
-              <span className="font-semibold">{t("Nova read this page")}</span>
+              <span className="font-semibold">{readHeading}</span>
               <span>
                 {" · "}
                 {kind && kind !== "Other" && kind !== "Document"
@@ -757,13 +778,17 @@ function NovaReading({
             </div>
           </>
         ) : state === "reading" ? (
-          <p className="leading-4.5">{t("Nova is reading this page…")}</p>
+          <p className="leading-4.5">
+            {nova ? t("Nova is reading this page…") : t("Reading this page…")}
+          </p>
         ) : (
           <>
-            <p className="leading-4.5">{t("Nova hasn't read this page yet.")}</p>
+            <p className="leading-4.5">
+              {nova ? t("Nova hasn't read this page yet.") : t("This page hasn't been read yet.")}
+            </p>
             <div>
               <Button size="xs" variant="outline" isLoading={reading} onClick={onRead}>
-                {t("Read with Nova")}
+                {nova ? t("Read with Nova") : t("Read this page")}
               </Button>
             </div>
           </>
@@ -789,6 +814,21 @@ function FactCell({
   children: ReactNode;
 }) {
   const t = useT();
+  // A value read off the page is marked only on a plan that reads pages, and as Nova's only
+  // with Trenova AI.
+  const readsDocuments = usePlanFeature(PlanFeature.DocumentIntelligence).available;
+  const novaOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
+  const mark =
+    !read || !readsDocuments ? null : novaOnPlan ? (
+      <NovaBadge size="xs" className="size-2.25" label={t("Read by Nova")} />
+    ) : (
+      <AssistMark
+        role="img"
+        aria-hidden={false}
+        aria-label={t("Read from the page")}
+        className="text-foreground-muted size-2.5 shrink-0"
+      />
+    );
 
   return (
     // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- pointing at a fact lights where it was read; the control inside is the keyboard's way in
@@ -803,7 +843,7 @@ function FactCell({
     >
       <span className="text-foreground-muted flex items-center gap-1.25 text-xs font-medium">
         {label}
-        {read ? <NovaBadge size="xs" className="size-2.25" label={t("Read by Nova")} /> : null}
+        {mark}
       </span>
       {children}
     </div>

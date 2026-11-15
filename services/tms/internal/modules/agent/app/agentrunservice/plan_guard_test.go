@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -17,7 +17,7 @@ func TestStartForDefinitionRefusesBackgroundRunsThePlanRestricts(t *testing.T) {
 	workflows := kernelportsmock.NewMockWorkflowStarter(t)
 	svc := &Service{
 		workflows: workflows,
-		plans:     plantest.Restricting(t, platformplan.CapabilityAgentAutomation),
+		features:  plantest.Without(platformcatalog.FeatureAgentAutomation),
 	}
 
 	run, err := svc.StartForDefinition(

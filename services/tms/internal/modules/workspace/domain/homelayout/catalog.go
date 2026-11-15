@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 type CategoryDefinition struct {
@@ -13,10 +14,17 @@ type CategoryDefinition struct {
 	Description string
 }
 
-// WidgetDefinition is the code-resident contract for one widget. Resource may
-// be empty, which means the widget carries no gate of its own because its
+// WidgetDefinition is the code-resident contract for one widget, and it names
+// what the widget needs: Resource is the permission resource whose read gates
+// its data, and Feature is the plan feature it belongs to when that is not the
+// resource's own, or when it has no resource. Every widget names at least one.
+// AlsoReads names further resources its data needs read on, such as the
+// detention behind the detention watch, and each gates it the way Resource does.
+// A widget with no Resource carries no permission gate of its own because its
 // contents are individually permission-filtered as they render (the attention
-// grid and the quick-action launcher both work this way).
+// grid and the quick-action launcher both work this way). When the plan leaves
+// out the feature of Resource or of an AlsoReads resource, or Feature, the
+// widget is locked, not dropped.
 type WidgetDefinition struct {
 	Key              string
 	Label            string
@@ -24,6 +32,8 @@ type WidgetDefinition struct {
 	Category         string
 	Resource         permission.Resource
 	Operation        permission.Operation
+	Feature          platformcatalog.FeatureKey
+	AlsoReads        []permission.Resource
 	ConfigKind       ConfigKind
 	AnalyticsInclude string
 	DefaultW         int
@@ -34,19 +44,28 @@ type WidgetDefinition struct {
 	MaxH             int
 }
 
-// RequiresPermission reports whether the widget carries a gate of its own.
-func (d WidgetDefinition) RequiresPermission() bool {
-	return d.Resource != ""
+// NamesGate reports whether the widget declares the resource or the feature it
+// needs. A widget that names neither is a definition error.
+func (d WidgetDefinition) NamesGate() bool {
+	return d.Resource != "" || d.Feature != ""
 }
 
 // MetricDefinition names one number a KPI widget can display. Metrics come from
 // the analytics providers that already compute them, so a KPI widget never
-// introduces a query of its own.
+// introduces a query of its own. Feature is the plan feature the figure needs
+// when it is not the resource's own: the costing figures are computed from the
+// costing setup, which belongs to Accounting & Cash, while the reader's access
+// to them is shipment read.
 type MetricDefinition struct {
 	Key       string
 	Label     string
 	Resource  permission.Resource
 	Operation permission.Operation
+	Feature   platformcatalog.FeatureKey
+}
+
+func (d MetricDefinition) NamesGate() bool {
+	return d.Resource != "" || d.Feature != ""
 }
 
 func CategoryCatalog() []CategoryDefinition {
@@ -96,6 +115,7 @@ func workWidgets() []WidgetDefinition {
 			Label:       "Needs attention",
 			Description: "Every open queue across billing, operations, and EDI in one grid",
 			Category:    CategoryWork,
+			Feature:     platformcatalog.FeatureCoreTMS,
 			ConfigKind:  ConfigKindNone,
 			DefaultW:    4, DefaultH: 4, MinW: 3, MinH: 3, MaxW: 12, MaxH: 8,
 		},
@@ -131,6 +151,7 @@ func workWidgets() []WidgetDefinition {
 			Category:    CategoryWork,
 			Resource:    permission.ResourceShipment,
 			Operation:   permission.OpRead,
+			AlsoReads:   []permission.Resource{permission.ResourceDetention},
 			ConfigKind:  ConfigKindQueue,
 			DefaultW:    4, DefaultH: 5, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
 		},
@@ -349,6 +370,7 @@ func orientationWidgets() []WidgetDefinition {
 			Label:       "Quick actions",
 			Description: "Create anything you have permission to create",
 			Category:    CategoryOrientation,
+			Feature:     platformcatalog.FeatureCoreTMS,
 			ConfigKind:  ConfigKindNone,
 			DefaultW:    4, DefaultH: 3, MinW: 3, MinH: 2, MaxW: 12, MaxH: 6,
 		},
@@ -357,6 +379,7 @@ func orientationWidgets() []WidgetDefinition {
 			Label:       "Favorites",
 			Description: "The pages you starred",
 			Category:    CategoryOrientation,
+			Feature:     platformcatalog.FeatureCoreTMS,
 			ConfigKind:  ConfigKindNone,
 			DefaultW:    4, DefaultH: 4, MinW: 3, MinH: 2, MaxW: 12, MaxH: 8,
 		},
@@ -395,6 +418,7 @@ func orientationWidgets() []WidgetDefinition {
 			Label:       "Notifications",
 			Description: "Unread notifications, most urgent first",
 			Category:    CategoryOrientation,
+			Feature:     platformcatalog.FeatureRealtimeNotifications,
 			ConfigKind:  ConfigKindQueue,
 			DefaultW:    4, DefaultH: 4, MinW: 3, MinH: 2, MaxW: 12, MaxH: 8,
 		},
@@ -408,6 +432,7 @@ func commsWidgets() []WidgetDefinition {
 			Label:       "Announcement",
 			Description: "A note from an administrator, pinned to everyone assigned this home screen",
 			Category:    CategoryComms,
+			Feature:     platformcatalog.FeatureCoreTMS,
 			ConfigKind:  ConfigKindText,
 			DefaultW:    12,
 			DefaultH:    2,
@@ -423,6 +448,7 @@ func commsWidgets() []WidgetDefinition {
 			Category:    CategoryComms,
 			Resource:    permission.ResourceShipment,
 			Operation:   permission.OpRead,
+			Feature:     platformcatalog.FeatureGoogleMapsIntegration,
 			ConfigKind:  ConfigKindNone,
 			DefaultW:    6, DefaultH: 6, MinW: 4, MinH: 4, MaxW: 12, MaxH: 12,
 		},
@@ -442,6 +468,11 @@ func MetricCatalog() []MetricDefinition {
 		}
 	}
 
+	costing := func(metric MetricDefinition) MetricDefinition {
+		metric.Feature = platformcatalog.FeatureAccounting
+		return metric
+	}
+
 	return []MetricDefinition{
 		shipment("activeShipments", "Active shipments"),
 		shipment("revenueToday", "Revenue today"),
@@ -450,9 +481,9 @@ func MetricCatalog() []MetricDefinition {
 		shipment("atRisk", "At risk"),
 		shipment("unassigned", "Unassigned"),
 		shipment("readyToDispatch", "Ready to dispatch"),
-		shipment("marginPercent", "Margin %"),
+		costing(shipment("marginPercent", "Margin %")),
 		shipment("revenuePerMile", "Revenue per mile"),
-		shipment("costPerMile", "Cost per mile"),
+		costing(shipment("costPerMile", "Cost per mile")),
 		shipment("movesLate", "Late moves"),
 		shipment("movesDueNow", "Moves due now"),
 		shipment("movesDueToday", "Moves due today"),

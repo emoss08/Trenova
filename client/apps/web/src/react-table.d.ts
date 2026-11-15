@@ -42,6 +42,11 @@ declare module "@tanstack/react-table" {
     defaultFilterOperator?: FilterOperator;
     exportable?: boolean;
     exportValue?: (row: any) => unknown;
+    /**
+     * The add-on feature this column's values belong to (a server feature key, never shown).
+     * The table leaves the column out when the organization's plan does not include it.
+     */
+    planFeature?: string;
     [key: string]: any;
   }
 }

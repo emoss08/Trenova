@@ -21,6 +21,7 @@ import type { TariffContext, TariffRange } from "@trenova/shared/types/tariff";
 import { nanoid } from "nanoid";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { useFormContext, useFormState, useWatch } from "react-hook-form";
+import { useStudioNova } from "@/components/tariff-studio/use-studio-nova";
 
 export type LibraryStudioMode = "create" | "edit";
 export type LibraryStudioTab = "tests" | "reference" | "usage" | "history" | "nova";
@@ -138,22 +139,26 @@ export function LibraryStudioProvider({
   const stacked = useMediaQuery("(max-width: 899px)");
   const [railOpen, setRailOpen] = useStudioRail(stacked);
   const [tab, setTabState] = useState<LibraryStudioTab>("tests");
+  // Nova is Trenova AI's: without it on the plan its tab never opens and nothing asks it.
+  const nova = useStudioNova();
   const setTab = useCallback(
     (next: LibraryStudioTab) => {
+      if (next === "nova" && !nova) return;
       setTabState(next);
       setRailOpen(true);
     },
-    [setRailOpen],
+    [nova, setRailOpen],
   );
 
   const [novaRequest, setNovaRequest] = useState<PageRequest | null>(null);
   const askNova = useCallback(
     (question?: string) => {
+      if (!nova) return;
       setTab("nova");
       const trimmed = question?.trim();
       if (trimmed) setNovaRequest({ key: nanoid(), text: trimmed });
     },
-    [setTab],
+    [nova, setTab],
   );
   const clearNovaRequest = useCallback((key: string) => {
     setNovaRequest((current) => (current?.key === key ? null : current));

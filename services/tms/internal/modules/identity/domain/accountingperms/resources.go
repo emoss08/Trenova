@@ -3,6 +3,7 @@ package accountingperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 const (
@@ -38,6 +39,7 @@ func Resources() []*permissionspec.ResourceDefinition {
 func accountingControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceAccountingControl.String(),
+		Feature:            platformcatalog.FeatureAccounting,
 		DisplayName:        "Accounting Control",
 		Description:        "Accounting policy and posting control configuration",
 		Category:           "Accounting",
@@ -49,6 +51,7 @@ func accountingControlResource() *permissionspec.ResourceDefinition {
 func accountingIntegrationResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAccountingIntegration.String(),
+		Feature:     platformcatalog.FeatureAccounting,
 		DisplayName: "Accounting Integration",
 		Description: "The connection to the organization's accounting system and how Trenova maps to it",
 		Category:    "Accounting",
@@ -139,6 +142,7 @@ func accountingIntegrationResource() *permissionspec.ResourceDefinition {
 func accountingSyncResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAccountingSync.String(),
+		Feature:     platformcatalog.FeatureAccounting,
 		DisplayName: "Accounting Sync",
 		Description: "What has been sent to the accounting system, what failed and where the two disagree",
 		Category:    "Accounting",
@@ -166,6 +170,7 @@ func accountingSyncResource() *permissionspec.ResourceDefinition {
 func billingControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceBillingControl.String(),
+		Feature:            platformcatalog.FeatureBilling,
 		DisplayName:        "Billing Control",
 		Description:        "Billing policy and workflow control configuration",
 		Category:           "Billing",
@@ -177,6 +182,7 @@ func billingControlResource() *permissionspec.ResourceDefinition {
 func costingControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceCostingControl.String(),
+		Feature:            platformcatalog.FeatureAccounting,
 		DisplayName:        "Costing Control",
 		Description:        "Cost per mile and shipment profitability estimation configuration",
 		Category:           "Accounting",
@@ -191,6 +197,7 @@ func costingControlResource() *permissionspec.ResourceDefinition {
 func invoiceAdjustmentControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceInvoiceAdjustmentControl.String(),
+		Feature:            platformcatalog.FeatureBilling,
 		DisplayName:        "Invoice Adjustment Control",
 		Description:        "Invoice adjustment policy and approval control configuration",
 		Category:           "Billing",
@@ -202,6 +209,7 @@ func invoiceAdjustmentControlResource() *permissionspec.ResourceDefinition {
 func accountTypeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceAccountType.String(),
+		Feature:            platformcatalog.FeatureAccounting,
 		DisplayName:        "Account Type",
 		Description:        "Chart of accounts type definitions",
 		Category:           "Accounting",
@@ -213,6 +221,7 @@ func accountTypeResource() *permissionspec.ResourceDefinition {
 func generalLedgerAccountResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceGeneralLedgerAccount.String(),
+		Feature:            platformcatalog.FeatureAccounting,
 		DisplayName:        "General Ledger Account",
 		Description:        "GL account management",
 		Category:           "Accounting",
@@ -244,6 +253,7 @@ func generalLedgerAccountResource() *permissionspec.ResourceDefinition {
 func divisionCodeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceDivisionCode.String(),
+		Feature:            platformcatalog.FeatureAccounting,
 		DisplayName:        "Division Code",
 		Description:        "Division code definitions",
 		Category:           "Accounting",
@@ -255,6 +265,7 @@ func divisionCodeResource() *permissionspec.ResourceDefinition {
 func fiscalYearResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceFiscalYear.String(),
+		Feature:     platformcatalog.FeatureAccounting,
 		DisplayName: "Fiscal Year",
 		Description: "Fiscal year management",
 		Category:    "Accounting",
@@ -341,6 +352,7 @@ func fiscalYearResource() *permissionspec.ResourceDefinition {
 func fiscalPeriodResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceFiscalPeriod.String(),
+		Feature:     platformcatalog.FeatureAccounting,
 		DisplayName: "Fiscal Period",
 		Description: "Fiscal period management",
 		Category:    "Accounting",
@@ -436,6 +448,7 @@ func fiscalPeriodResource() *permissionspec.ResourceDefinition {
 func manualJournalResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceManualJournal.String(),
+		Feature:       platformcatalog.FeatureAccounting,
 		DisplayName:   "Manual Journal",
 		Description:   "Manual journal request workflow and approvals",
 		Category:      "Accounting",
@@ -530,6 +543,7 @@ func manualJournalResource() *permissionspec.ResourceDefinition {
 func journalReversalResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceJournalReversal.String(),
+		Feature:       platformcatalog.FeatureAccounting,
 		DisplayName:   "Journal Reversal",
 		Description:   "Journal reversal workflow and posting",
 		Category:      "Accounting",
@@ -593,6 +607,7 @@ func journalReversalResource() *permissionspec.ResourceDefinition {
 func journalEntryResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceJournalEntry.String(),
+		Feature:     platformcatalog.FeatureAccounting,
 		DisplayName: "Journal Entry",
 		Description: "Journal entry details and source drill-down",
 		Category:    "Accounting",
@@ -717,6 +732,7 @@ func journalEntryFieldSensitivities() map[string]permission.FieldSensitivity {
 func customerPaymentResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceCustomerPayment.String(),
+		Feature:       platformcatalog.FeatureAccounting,
 		DisplayName:   "Customer Payment",
 		Description:   "Customer payment posting and applications",
 		Category:      "Accounting",
@@ -781,6 +797,7 @@ func customerPaymentResource() *permissionspec.ResourceDefinition {
 func accountsReceivableResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAccountsReceivable.String(),
+		Feature:     platformcatalog.FeatureAccounting,
 		DisplayName: "Accounts Receivable",
 		Description: "AR ledger and aging reporting",
 		Category:    "Accounting",
@@ -824,6 +841,7 @@ func accountsReceivableResource() *permissionspec.ResourceDefinition {
 func bankReceiptResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceBankReceipt.String(),
+		Feature:     platformcatalog.FeatureAccounting,
 		DisplayName: "Bank Receipt",
 		Description: "Imported bank receipts and payment matching",
 		Category:    "Accounting",
@@ -876,6 +894,7 @@ func bankReceiptResource() *permissionspec.ResourceDefinition {
 func accountingReportResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAccountingReport.String(),
+		Feature:     platformcatalog.FeatureAccounting,
 		DisplayName: "Accounting Report",
 		Description: "Trial balance, income statement, and balance sheet reporting",
 		Category:    "Accounting",
@@ -911,6 +930,7 @@ func accountingReportResource() *permissionspec.ResourceDefinition {
 func bankReceiptWorkItemResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceBankReceiptWorkItem.String(),
+		Feature:     platformcatalog.FeatureAccounting,
 		DisplayName: "Bank Receipt Work Item",
 		Description: "Reconciliation exception queue for bank receipts",
 		Category:    "Accounting",

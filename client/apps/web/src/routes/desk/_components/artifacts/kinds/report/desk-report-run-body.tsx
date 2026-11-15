@@ -314,6 +314,25 @@ function RunNotes({ card, expired }: { card: ReportRunDeskCard; expired: boolean
   if (run.status !== "succeeded") {
     return null;
   }
+  if (card.withheld === "plan") {
+    const addOnName = card.withheldByPlan?.addOnName ?? "";
+    return (
+      <div className="dk-rr-note dk-warn">
+        <ArtIcon name="lock" size={14} />
+        <div>
+          <b>
+            {addOnName
+              ? t(
+                  "This report reads data from the {0} add-on, which is not on your plan.",
+                  addOnName,
+                )
+              : t("This report reads data your plan does not include.")}
+          </b>
+          {t("Its result is not shown here and its file cannot be downloaded.")}
+        </div>
+      </div>
+    );
+  }
   if (card.withheld) {
     return (
       <div className="dk-rr-note dk-warn">
@@ -504,7 +523,8 @@ function RunActions({
   });
   const path = reportsPath(card.report);
   const finished = run.status === "succeeded" && !expired;
-  const downloadable = finished && run.rowCount > 0 && card.withheld !== "access";
+  const downloadable =
+    finished && run.rowCount > 0 && card.withheld !== "access" && card.withheld !== "plan";
   const runAgainFirst = !finished && !isRunActive(run.status);
 
   const runAgain = mayRun && !isRunActive(run.status) && (

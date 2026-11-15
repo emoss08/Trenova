@@ -113,6 +113,7 @@ func UsageRow(ctx context.Context, attempt *UsageAttempt) *aiusage.AIUsageRecord
 		DelegateCallID:    attempt.Attribution.DelegateCallID,
 		Attempt:           attempt.Attempt,
 		Failover:          attempt.Failover,
+		Pages:             attempt.Attribution.Pages,
 		AgentDefinitionVersion: intutils.ClonePointer(
 			attempt.Attribution.DefinitionVersion,
 		),

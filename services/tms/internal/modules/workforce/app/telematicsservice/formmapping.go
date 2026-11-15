@@ -34,6 +34,9 @@ func (s *Service) ListFormMappings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*telematics.FormMapping, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	return s.repo.ListFormMappings(ctx, &telematicsports.ListFormMappingsRequest{
 		TenantInfo: tenantInfo,
 	})
@@ -44,6 +47,9 @@ func (s *Service) GetFormMapping(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*telematics.FormMapping, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	return s.repo.GetFormMapping(ctx, tenantInfo, id)
 }
 
@@ -51,6 +57,9 @@ func (s *Service) SaveFormMapping(
 	ctx context.Context,
 	req *SaveFormMappingRequest,
 ) (*telematics.FormMapping, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	if err := validateFormMappingRequest(req); err != nil {
 		return nil, err
 	}
@@ -92,6 +101,9 @@ func (s *Service) DeleteFormMapping(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) error {
+	if err := s.requireSamsara(ctx); err != nil {
+		return err
+	}
 	return s.repo.DeleteFormMapping(ctx, tenantInfo, id)
 }
 

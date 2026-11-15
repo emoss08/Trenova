@@ -11,15 +11,15 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -46,8 +46,9 @@ type Params struct {
 	StorageConfig  *storageconfig.Config
 	Validator      *Validator
 	Encryption     *encryptionservice.Service
-	Plans          platformplanports.PlanService
+	Features       platformcatalogports.FeatureGate
 	ContentGate    contentscanports.Gate
+	PlanFields     permissionports.PlanFieldKeeper
 }
 
 type service struct {
@@ -60,9 +61,10 @@ type service struct {
 	storageCfg   *storageconfig.Config
 	v            *Validator
 	enc          *encryptionservice.Service
-	plans        platformplanports.PlanService
+	features     platformcatalogports.FeatureGate
 	issuers      httpsafe.Policy
 	contentGate  contentscanports.Gate
+	planFields   permissionports.PlanFieldKeeper
 }
 
 func New(p Params) tenantports.OrganizationService {
@@ -76,9 +78,10 @@ func New(p Params) tenantports.OrganizationService {
 		storageCfg:   p.StorageConfig,
 		v:            p.Validator,
 		enc:          p.Encryption,
-		plans:        p.Plans,
+		features:     p.Features,
 		issuers:      p.SecurityConfig.SSOIssuerPolicy(),
 		contentGate:  p.ContentGate,
+		planFields:   p.PlanFields,
 	}
 }
 
@@ -108,6 +111,10 @@ func (s *service) Update(
 	entity *tenant.Organization,
 ) (*tenant.Organization, error) {
 	log := s.l.With(zap.String("operation", "Update"), zap.String("orgID", entity.ID.String()))
+
+	if err := s.keepPlanFields(ctx, entity); err != nil {
+		return nil, err
+	}
 
 	if err := s.v.ValidateUpdate(ctx, entity); err != nil {
 		return nil, err
@@ -446,11 +453,10 @@ func (s *service) UpsertMicrosoftSSOConfig(
 			"Microsoft Entra ID SSO configuration is required",
 		)
 	}
-	if err := planservice.RequireCapability(
+	if err := platformcatalogports.RequireFeature(
 		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilitySSO,
+		s.features,
+		platformcatalog.FeatureIdentity,
 	); err != nil {
 		return nil, err
 	}
@@ -593,11 +599,10 @@ func (s *service) UpsertOktaSSOConfig(
 			"Okta SSO configuration is required",
 		)
 	}
-	if err := planservice.RequireCapability(
+	if err := platformcatalogports.RequireFeature(
 		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilitySSO,
+		s.features,
+		platformcatalog.FeatureIdentity,
 	); err != nil {
 		return nil, err
 	}
@@ -714,4 +719,18 @@ func microsoftTenantIDFromIssuer(issuerURL string) string {
 	}
 
 	return parts[len(parts)-2]
+}
+
+// keepPlanFields keeps an update from changing the organization's settings
+// that belong to an add-on its plan leaves out, such as whether brokerage is
+// on without Carrier & Brokerage, before the update is validated.
+func (s *service) keepPlanFields(ctx context.Context, entity *tenant.Organization) error {
+	stored, err := s.repo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: entity.ID, BuID: entity.BusinessUnitID},
+	})
+	if err != nil {
+		return err
+	}
+
+	return s.planFields.Keep(ctx, permission.ResourceOrganization, entity, stored)
 }

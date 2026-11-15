@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	notificationdomain "github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
@@ -55,6 +57,7 @@ type ConsumerParams struct {
 	Redis        *redis.Client
 	SubRepo      tablechangealertports.TCASubscriptionRepository
 	NotifService *notificationservice.Service
+	Features     platformcatalogports.FeatureGate
 }
 
 type Consumer struct {
@@ -62,6 +65,7 @@ type Consumer struct {
 	redis        *redis.Client
 	subRepo      tablechangealertports.TCASubscriptionRepository
 	notifService *notificationservice.Service
+	features     platformcatalogports.FeatureGate
 	cancel       context.CancelFunc
 }
 
@@ -71,6 +75,7 @@ func NewConsumer(p ConsumerParams) *Consumer {
 		redis:        p.Redis,
 		subRepo:      p.SubRepo,
 		notifService: p.NotifService,
+		features:     p.Features,
 	}
 }
 
@@ -278,6 +283,14 @@ func (c *Consumer) trimLoop(ctx context.Context) {
 
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (c *Consumer) processMessage(ctx context.Context, msg redis.XMessage) error {
+	alerts, err := c.features.Enabled(ctx, platformcatalog.FeatureTableChangeAlerts)
+	if err != nil {
+		return fmt.Errorf("ask whether change alerts are on the plan: %w", err)
+	}
+	if !alerts {
+		return nil
+	}
+
 	payloadStr, ok := msg.Values["payload"].(string)
 	if !ok {
 		return errors.New("message payload is not a string")

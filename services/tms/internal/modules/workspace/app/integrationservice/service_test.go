@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -99,8 +100,9 @@ func TestListCatalogIncludesBackendCardMetadata(t *testing.T) {
 	}
 
 	svc := New(Params{
-		Logger: zap.NewNop(),
-		Repo:   repo,
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
+		Repo:     repo,
 	})
 
 	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
@@ -138,8 +140,9 @@ func TestListCatalogSamsaraConfiguredFalseWithoutToken(t *testing.T) {
 	}
 
 	svc := New(Params{
-		Logger: zap.NewNop(),
-		Repo:   repo,
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
+		Repo:     repo,
 	})
 
 	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
@@ -155,8 +158,9 @@ func TestListCatalogSortedBySortOrderThenName(t *testing.T) {
 
 	repo := &stubIntegrationRepo{}
 	svc := New(Params{
-		Logger: zap.NewNop(),
-		Repo:   repo,
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
+		Repo:     repo,
 	})
 
 	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
@@ -186,8 +190,9 @@ func TestListCatalogIncludesNetSuiteUnderAccounting(t *testing.T) {
 	t.Parallel()
 
 	svc := New(Params{
-		Logger: zap.NewNop(),
-		Repo:   &stubIntegrationRepo{},
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
+		Repo:     &stubIntegrationRepo{},
 	})
 
 	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
@@ -204,7 +209,8 @@ func TestListCatalogIncludesQuickBooksUnderAccounting(t *testing.T) {
 	t.Parallel()
 
 	svc := New(Params{
-		Logger: zap.NewNop(),
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
 		Repo: &stubIntegrationRepo{
 			listByTenantResult: []*integration.Integration{
 				{Type: integration.TypeQuickBooksOnline, Enabled: true},
@@ -229,8 +235,9 @@ func TestListCatalogIncludesPlannedEmailProviderLogos(t *testing.T) {
 
 	repo := &stubIntegrationRepo{}
 	svc := New(Params{
-		Logger: zap.NewNop(),
-		Repo:   repo,
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
+		Repo:     repo,
 	})
 
 	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
@@ -266,6 +273,7 @@ func TestUpdateResendConfigAllowsEnabledWithoutWebhookSecret(t *testing.T) {
 		getByTypeErr: errortypes.NewNotFoundError("integration not found"),
 	}
 	svc := New(Params{
+		Features:     plantest.AllFeatures(),
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		Encryption:   encryption,
@@ -301,6 +309,7 @@ func TestUpdatePostmarkConfigGeneratesWebhookToken(t *testing.T) {
 		getByTypeErr: errortypes.NewNotFoundError("integration not found"),
 	}
 	svc := New(Params{
+		Features:     plantest.AllFeatures(),
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		Encryption:   encryption,
@@ -380,6 +389,7 @@ func TestGetClientRuntimeConfigAllowsBrowserSafeIntegrations(t *testing.T) {
 		},
 	}
 	svc := New(Params{
+		Features:   plantest.AllFeatures(),
 		Logger:     zap.NewNop(),
 		Repo:       repo,
 		Encryption: encryption,
@@ -414,7 +424,8 @@ func TestGetClientRuntimeConfigReturnsReadinessForUnconfiguredIntegration(t *tes
 	t.Parallel()
 
 	svc := New(Params{
-		Logger: zap.NewNop(),
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
 		Repo: &stubIntegrationRepo{
 			getByTypeErr: errortypes.NewNotFoundError("integration not found"),
 		},
@@ -438,7 +449,8 @@ func TestGetClientRuntimeConfigReturnsDisabledReadinessWithoutConfig(t *testing.
 	t.Parallel()
 
 	svc := New(Params{
-		Logger: zap.NewNop(),
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
 		Repo: &stubIntegrationRepo{
 			getByTypeResult: &integration.Integration{
 				Type:    integration.TypeOANDAExchangeRates,
@@ -468,8 +480,9 @@ func TestGetClientRuntimeConfigRejectsServerSideIntegrations(t *testing.T) {
 	t.Parallel()
 
 	svc := New(Params{
-		Logger: zap.NewNop(),
-		Repo:   &stubIntegrationRepo{},
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
+		Repo:     &stubIntegrationRepo{},
 	})
 
 	resp, err := svc.GetClientRuntimeConfig(

@@ -20,7 +20,7 @@ type nova struct {
 	task *llmports.NovaTask
 }
 
-func (n *nova) Available(context.Context, pagination.TenantInfo) (bool, error) {
+func (n *nova) Available(context.Context, pagination.TenantInfo, aitask.Task) (bool, error) {
 	return n.err == nil, nil
 }
 

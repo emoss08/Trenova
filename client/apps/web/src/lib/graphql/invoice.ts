@@ -55,8 +55,12 @@ function unmaskCreatedInvoices(result: MaskedCreateInvoicesResult): CreateInvoic
 export type RelatedInvoice = InvoiceRelatedFieldsFragment;
 export type InvoiceDisputeCase = InvoiceDisputeFieldsFragment;
 export type InvoiceCreditApplication = CreditMemoApplicationFieldsFragment;
-export type InvoicePaymentApplicationRow = InvoiceArFieldsFragment["paymentApplications"][number];
-export type InvoiceLateChargeAssessment = InvoiceArFieldsFragment["lateChargeAssessments"][number];
+export type InvoicePaymentApplicationRow = NonNullable<
+  InvoiceArFieldsFragment["paymentApplications"]
+>[number];
+export type InvoiceLateChargeAssessment = NonNullable<
+  InvoiceArFieldsFragment["lateChargeAssessments"]
+>[number];
 export type InvoiceEdiPlan = InvoiceEdiSendPlanFieldsFragment;
 export type VoidInvoiceResult = VoidInvoiceMutation["voidInvoice"];
 export type CreatedMemo = CreateMemoMutation["createMemo"];
@@ -67,7 +71,11 @@ type ArContextBase = NonNullable<InvoiceArContextQuery["invoice"]>;
 /**
  * The resolver-computed side of an invoice, unmasked into one flat shape: who
  * it bills on behalf of, its siblings, what is still owed, what settled it,
- * its disputes and late charges, and where its EDI 210 stands.
+ * its disputes and late charges, and where its EDI 210 stands. The payments,
+ * credits and late charges are null when the organization's plan leaves out
+ * Accounting & Cash, and the EDI plan when it leaves out EDI; a reader without
+ * customer payment, receivables or EDI read gets their rows with those
+ * figures null.
  */
 export type InvoiceArContext = Omit<
   ArContextBase,
@@ -86,10 +94,10 @@ export type InvoiceArContext = Omit<
   > & {
     relatedInvoices: RelatedInvoice[];
     referenceInvoice: RelatedInvoice | null;
-    creditApplications: InvoiceCreditApplication[];
+    creditApplications: InvoiceCreditApplication[] | null;
     disputes: InvoiceDisputeCase[];
     openDispute: InvoiceDisputeCase | null;
-    ediSendPlan: InvoiceEdiPlan;
+    ediSendPlan: InvoiceEdiPlan | null;
   };
 
 /**
@@ -119,14 +127,17 @@ function unmaskArContext(invoice: ArContextBase): InvoiceArContext {
     referenceInvoice: ar.referenceInvoice
       ? getFragmentData(InvoiceRelatedFieldsFragmentDoc, ar.referenceInvoice)
       : null,
-    creditApplications: ar.creditApplications.map((row) =>
-      getFragmentData(CreditMemoApplicationFieldsFragmentDoc, row),
-    ),
+    creditApplications:
+      ar.creditApplications?.map((row) =>
+        getFragmentData(CreditMemoApplicationFieldsFragmentDoc, row),
+      ) ?? null,
     disputes: ar.disputes.map((row) => getFragmentData(InvoiceDisputeFieldsFragmentDoc, row)),
     openDispute: ar.openDispute
       ? getFragmentData(InvoiceDisputeFieldsFragmentDoc, ar.openDispute)
       : null,
-    ediSendPlan: getFragmentData(InvoiceEdiSendPlanFieldsFragmentDoc, ar.ediSendPlan),
+    ediSendPlan: ar.ediSendPlan
+      ? getFragmentData(InvoiceEdiSendPlanFieldsFragmentDoc, ar.ediSendPlan)
+      : null,
   };
 }
 

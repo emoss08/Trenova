@@ -1,7 +1,6 @@
 package billingqueuemapping
 
 import (
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -91,7 +90,7 @@ func TestBillingQueueItemConnectionCarriesTheRowsHeadlineAndCursors(t *testing.T
 	total := 41
 
 	conn, err := BillingQueueItemConnectionToModel(
-		context.Background(),
+		allOn(t),
 		&pagination.CursorListResult[*billingqueue.BillingQueueItem]{
 			Items:           []*billingqueue.BillingQueueItem{item},
 			HasNextPage:     true,

@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -25,10 +25,10 @@ type Params struct {
 	ControlNumberRepo  edipartnerports.EDIControlNumberRepository
 	DocumentTypeRepo   edipartnerports.EDIDocumentTypeRepository
 	Encryption         *encryptionservice.Service
+	Features           platformcatalogports.FeatureGate
 	Logger             *zap.Logger
 	MappingProfileRepo edipartnerports.EDIMappingProfileRepository
 	PartnerRepo        edipartnerports.EDIPartnerRepository
-	Plans              platformplanports.PlanService
 	ProfileRepo        edipartnerports.EDICommunicationProfileRepository
 	Secret             *ediprofilesecret.Service
 	TransactionSetRepo edipartnerports.EDITransactionSetRepository
@@ -42,10 +42,10 @@ type Service struct {
 	controlNumberRepo  edipartnerports.EDIControlNumberRepository
 	documentTypeRepo   edipartnerports.EDIDocumentTypeRepository
 	encryption         *encryptionservice.Service
+	features           platformcatalogports.FeatureGate
 	l                  *zap.Logger
 	mappingProfileRepo edipartnerports.EDIMappingProfileRepository
 	partnerRepo        edipartnerports.EDIPartnerRepository
-	plans              platformplanports.PlanService
 	profileRepo        edipartnerports.EDICommunicationProfileRepository
 	transactionSetRepo edipartnerports.EDITransactionSetRepository
 	transport          editransportports.EDITransportDispatcher
@@ -64,7 +64,7 @@ func New(p Params) *Service {
 		l:                  p.Logger.Named("service.edi"),
 		mappingProfileRepo: p.MappingProfileRepo,
 		partnerRepo:        p.PartnerRepo,
-		plans:              p.Plans,
+		features:           p.Features,
 		profileRepo:        p.ProfileRepo,
 		transactionSetRepo: p.TransactionSetRepo,
 		transport:          p.Transport,

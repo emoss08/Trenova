@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -313,7 +314,11 @@ func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
 		emailSenders:     noSuppressedRecipients{},
 		billingRepo:      billingRepo,
 		edi: invoiceediservice.New(
-			invoiceediservice.Params{Logger: zap.NewNop(), CustomerRepo: customerRepo},
+			invoiceediservice.Params{
+				Logger:       zap.NewNop(),
+				CustomerRepo: customerRepo,
+				Features:     plantest.AllFeatures(),
+			},
 		),
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{Logger: zap.NewNop()},

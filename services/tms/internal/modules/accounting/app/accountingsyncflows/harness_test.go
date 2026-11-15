@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -117,6 +118,7 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Orgs:        fakeOrganizations{timezone: cfg.timezone},
 		Ledger:      h.ledger,
 		Dispatcher:  h.dispatcher,
+		Features:    plantest.AllFeatures(),
 	})
 	h.svc = wire(&wiring{
 		Logger:        zap.NewNop(),

@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
 	"helm.sh/helm/v3/pkg/chart"
 
+	"github.com/emoss08/trenova/operator/internal/backup"
 	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
@@ -23,13 +25,16 @@ import (
 )
 
 const (
-	maxComponents = 50
-	maxMessage    = 500
-	usageRetry    = time.Minute
-	usageTimeout  = time.Minute
-	defaultUsage  = 15 * time.Minute
-	inviteRecheck = time.Minute
-	inviteTimeout = 30 * time.Second
+	maxComponents  = 50
+	maxMessage     = 500
+	maxFeatures    = 100
+	usageRetry     = time.Minute
+	usageTimeout   = time.Minute
+	defaultUsage   = 15 * time.Minute
+	inviteRecheck  = time.Minute
+	inviteTimeout  = 30 * time.Second
+	featureTimeout = 30 * time.Second
+	emailTimeout   = 30 * time.Second
 )
 
 type ControlPlane interface {
@@ -75,6 +80,23 @@ type Administrators interface {
 	InstallInvite(ctx context.Context, invite tms.Invite) (tms.Administrator, error)
 }
 
+type Features interface {
+	PutFeatures(ctx context.Context, features []string) error
+	HeldFeatures(ctx context.Context) ([]string, error)
+}
+
+type SystemEmail interface {
+	Sync(ctx context.Context, desired *instanceapi.SpecSystemEmail) error
+}
+
+type Storage interface {
+	Ensure(ctx context.Context, hostname string) (values.Storage, error)
+}
+
+type Backups interface {
+	Run(ctx context.Context, in backup.Input) backup.Result
+}
+
 type inviteAsked struct {
 	tokenSHA256 string
 	at          time.Time
@@ -90,6 +112,12 @@ type Loop struct {
 	escrow   Escrow
 	usage    Usage
 	admins   Administrators
+	features Features
+	email    SystemEmail
+	storage  Storage
+	backups  Backups
+	located  values.Storage
+	capacity values.Capacity
 	commands Commands
 	base     map[string]any
 	ownNS    string
@@ -121,8 +149,15 @@ type Params struct {
 	Escrow         Escrow
 	Usage          Usage
 	Administrators Administrators
+	Features       Features
+	SystemEmail    SystemEmail
+	// Storage and Backups are optional: without them the instance keeps
+	// documents in the chart's own store and takes no backups.
+	Storage Storage
+	Backups Backups
 	// Commands is optional: without it the operator carries out none.
 	Commands   Commands
+	Capacity   values.Capacity
 	Base       map[string]any
 	Namespace  string
 	Logger     *slog.Logger
@@ -150,7 +185,12 @@ func New(p *Params) *Loop {
 		escrow:   p.Escrow,
 		usage:    p.Usage,
 		admins:   p.Administrators,
+		features: p.Features,
+		email:    p.SystemEmail,
+		storage:  p.Storage,
+		backups:  p.Backups,
 		commands: p.Commands,
+		capacity: p.Capacity,
 		base:     p.Base,
 		ownNS:    p.Namespace,
 		logger:   p.Logger,
@@ -236,6 +276,10 @@ func (l *Loop) Tick(ctx context.Context) {
 	}
 	l.heartbeat.Store(l.now().UnixNano())
 	report.Administrator = l.administrator(ctx, report.Ready)
+	l.backupReport(ctx, &report)
+	l.sendFeatures(ctx, report.Ready)
+	report.Features = l.heldFeatures(ctx, report.Ready)
+	l.sendSystemEmail(ctx, report.Ready)
 	if l.shouldReport(report) {
 		if err = l.cp.ReportStatus(ctx, report); err != nil {
 			if !l.handle(ctx, err) {
@@ -300,6 +344,60 @@ func (l *Loop) administrator(ctx context.Context, ready bool) *instanceapi.Admin
 	return answer
 }
 
+func (l *Loop) sendFeatures(ctx context.Context, ready bool) {
+	if l.features == nil || !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
+		return
+	}
+	run, cancel := context.WithTimeout(ctx, featureTimeout)
+	defer cancel()
+	if err := l.features.PutFeatures(run, l.desired.Spec.Features); err != nil {
+		l.logger.Warn("cannot send the feature list to the TMS; retrying", "error", err)
+		return
+	}
+	l.logger.Debug("feature list sent", "features", len(l.desired.Spec.Features))
+}
+
+func (l *Loop) heldFeatures(ctx context.Context, ready bool) *[]string {
+	if l.features == nil || !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
+		return nil
+	}
+	run, cancel := context.WithTimeout(ctx, featureTimeout)
+	defer cancel()
+	held, err := l.features.HeldFeatures(run)
+	if err != nil {
+		l.logger.Warn(
+			"cannot read the features the TMS holds; the report leaves them out",
+			"error",
+			err,
+		)
+		return nil
+	}
+	if held == nil {
+		held = []string{}
+	}
+	if len(held) > maxFeatures {
+		held = held[:maxFeatures]
+	}
+	return &held
+}
+
+func (l *Loop) sendSystemEmail(ctx context.Context, ready bool) {
+	if l.email == nil || !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
+		return
+	}
+	run, cancel := context.WithTimeout(ctx, emailTimeout)
+	defer cancel()
+	err := l.email.Sync(run, l.desired.Spec.SystemEmail)
+	if err == nil {
+		return
+	}
+	if errors.Is(err, controlplane.ErrUnauthenticated) {
+		l.handle(ctx, err)
+		return
+	}
+	l.logger.Warn("cannot bring the TMS's system email sender up to date; retrying", "error", err)
+}
+
 func (l *Loop) relayUsage(ctx context.Context, ready bool) {
 	if l.usage == nil || !ready || l.desired.Spec.Lifecycle != instanceapi.Active ||
 		l.now().Before(l.usageNext) {
@@ -344,7 +442,18 @@ func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 			own,
 		)), true
 	}
-	rendered, err := values.Render(&l.desired.Spec, l.base, l.ownNS)
+	located, err := l.objectStorage(ctx)
+	if err != nil {
+		if l.handle(ctx, err) {
+			return report, false
+		}
+		l.logger.Error("cannot keep the instance's storage; nothing is applied", "error", err)
+		return l.notReady(report, "nothing is applied without the instance's storage: "+err.Error()), true
+	}
+	l.located = located
+	spec := l.desired.Spec
+	spec.Plan = l.capacity.Fit(spec.Plan)
+	rendered, err := values.Render(&spec, l.base, l.ownNS, located)
 	if err != nil {
 		return l.notReady(report, err.Error()), true
 	}
@@ -426,10 +535,67 @@ func (l *Loop) apply(
 func healthParams(revision int, vals map[string]any) health.CheckParams {
 	stopped, _ := vals["stopped"].(bool)
 	hibernated := false
+	generation := ""
 	if pg, ok := vals["postgres"].(map[string]any); ok {
 		hibernated, _ = pg["hibernate"].(bool)
+		generation, _ = pg["generation"].(string)
 	}
-	return health.CheckParams{HelmRevision: revision, Stopped: stopped, Hibernated: hibernated}
+	return health.CheckParams{
+		HelmRevision: revision,
+		Stopped:      stopped,
+		Hibernated:   hibernated,
+		Generation:   generation,
+	}
+}
+
+func (l *Loop) objectStorage(ctx context.Context) (values.Storage, error) {
+	if l.storage == nil {
+		return values.Storage{}, nil
+	}
+	return l.storage.Ensure(ctx, l.desired.Spec.Hostname)
+}
+
+func (l *Loop) backupReport(ctx context.Context, report *instanceapi.StatusReport) {
+	if l.backups == nil {
+		return
+	}
+	applied := report.AppliedRevision != nil && *report.AppliedRevision == l.desired.Revision
+	res := l.backups.Run(ctx, backup.Input{
+		Spec:     &l.desired.Spec,
+		Revision: l.desired.Revision,
+		Applied:  applied,
+		Ready:    report.Ready,
+		Storage:  l.located,
+	})
+	report.Backup = res.Health
+	report.Restore = res.Restore
+	if res.Final != nil && applied {
+		report.FinalBackup = res.Final
+	}
+}
+
+func backupSummary(r instanceapi.StatusReport) string {
+	out := ""
+	if b := r.Backup; b != nil {
+		out += string(b.WalArchiving) + "|" + str(b.Message) + "|" + stamp(b.LastBaseBackupAt)
+		if q := b.Request; q != nil {
+			out += "|" + q.Id + "/" + string(q.Phase)
+		}
+	}
+	if p := r.Restore; p != nil {
+		out += "|" + p.Id.String() + "/" + string(p.Phase)
+	}
+	if f := r.FinalBackup; f != nil {
+		out += "|final/" + f.Id
+	}
+	return out
+}
+
+func stamp(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.UTC().Format(time.RFC3339)
 }
 
 func (l *Loop) notReady(report instanceapi.StatusReport, msg string) instanceapi.StatusReport {
@@ -451,7 +617,16 @@ func (l *Loop) shouldReport(r instanceapi.StatusReport) bool {
 		value(r.AppliedRevision) != value(l.last.AppliedRevision) ||
 		str(r.Version) != str(l.last.Version) ||
 		str(r.Message) != str(l.last.Message) ||
-		!sameAdministrator(r.Administrator, l.last.Administrator)
+		!sameAdministrator(r.Administrator, l.last.Administrator) ||
+		!sameFeatures(r.Features, l.last.Features) ||
+		backupSummary(r) != backupSummary(l.last)
+}
+
+func sameFeatures(held, last *[]string) bool {
+	if held == nil {
+		return true
+	}
+	return last != nil && slices.Equal(*held, *last)
 }
 
 func sameAdministrator(a, b *instanceapi.AdministratorStatus) bool {

@@ -63,10 +63,10 @@ func (s *Service) authorize(
 			return err
 		}
 		if result == nil || !result.Allowed {
-			return errortypes.NewAuthorizationError(
+			return permissionports.DeniedError(result, errortypes.NewAuthorizationError(
 				"This fix changes {0}, which you do not have permission to change",
 				perm.resource.String(),
-			)
+			))
 		}
 	}
 	return nil

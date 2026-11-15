@@ -156,7 +156,11 @@ export const useAuthStore = create<AuthState>()(
       checkAuth: async () => (await get().checkSession()).status === "signed_in",
 
       setUser: (user: User | null) => {
-        set({ user, restored: null, isAuthenticated: !!user });
+        set({
+          user: keepOrganizationSetup(user, get().user),
+          restored: null,
+          isAuthenticated: !!user,
+        });
       },
 
       clearAuth: () => {
@@ -175,6 +179,22 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
+
+/**
+ * Only the session check's read of the user says whether the organization is set up. A
+ * user returned by any other self write (a password change, a settings save) leaves it
+ * out, and must not lift the setup gate in the meantime, so the last answer for the same
+ * organization stands until the next session check replaces it.
+ */
+export function keepOrganizationSetup(next: User | null, previous: User | null): User | null {
+  if (!next || next.organizationSetup || !previous?.organizationSetup) {
+    return next;
+  }
+  if (next.currentOrganizationId !== previous.currentOrganizationId) {
+    return next;
+  }
+  return { ...next, organizationSetup: previous.organizationSetup };
+}
 
 /**
  * Timestamps arrive as UTC epoch seconds and are rendered by

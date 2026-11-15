@@ -240,6 +240,7 @@ function card(state) {
     timezone: TIMEZONE,
     sample: rankedSample(),
     withheld: null,
+    withheldByPlan: null,
     previous: {
       runId: "rrun_mock_revenue_before",
       completedAt: state.anchor - 7 * DAY,

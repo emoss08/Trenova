@@ -25,6 +25,7 @@ import {
   timezoneChoices,
 } from "@/lib/choices";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { Customer } from "@trenova/shared/types/customer";
 import { useMemo } from "react";
@@ -35,6 +36,9 @@ import { CustomerFactoringNoa } from "./customer-factoring-noa";
 
 export function CustomerBillingProfileForm() {
   const t = useT();
+  const { available: accounting } = usePlanFeature("tms.accounting");
+  const { available: factoring } = usePlanFeature("tms.factoring");
+  const { available: edi } = usePlanFeature("integrations.edi");
 
   const { control } = useFormContext<Customer>();
 
@@ -139,74 +143,76 @@ export function CustomerBillingProfileForm() {
           </FormControl>
         </FormGroup>
       </FormSection>
-      <FormSection
-        title={t("Credit management")}
-        description={t("Set credit limits and automatic hold rules to manage financial exposure")}
-      >
-        <FormGroup cols={2}>
-          <FormControl>
-            <SelectField
-              control={control}
-              name="billingProfile.creditStatus"
-              label={t("Credit status")}
-              placeholder={t("Select a status")}
-              description={t(
-                "With the credit limit enforced, 'Hold' and 'Suspended' stop new shipments from being booked for this customer. A status you set here stays until someone changes it.",
-              )}
-              options={creditStatusChoices}
-            />
-          </FormControl>
-          <FormControl>
-            <NumberField
-              control={control}
-              name="billingProfile.creditLimit"
-              label={t("Credit limit")}
-              placeholder="0.00"
-              description={t(
-                "The most this customer may owe on open invoices. Leave empty for no limit.",
-              )}
-            />
-          </FormControl>
-          <FormControl cols="full">
-            <CreditExposureSummary />
-          </FormControl>
-          <FormControl cols="full">
-            <SwitchField
-              control={control}
-              name="billingProfile.enforceCreditLimit"
-              label={t("Enforce credit limit")}
-              outlined
-              description={t(
-                "Turns on credit control for this customer: a 'Hold' or 'Suspended' status stops new shipments from being booked for them.",
-              )}
-            />
-          </FormControl>
-          <FormControl cols="full">
-            <SwitchField
-              control={control}
-              name="billingProfile.autoCreditHold"
-              label={t("Auto credit hold")}
-              outlined
-              description={t(
-                "Put the customer on hold when open receivables go over the credit limit, warn at 90% of it, and lift the hold once they are paid back under. An automatic hold stops new shipments but not billing.",
-              )}
-            />
-          </FormControl>
-          {showCreditHoldReason && (
-            <FormControl cols="full">
-              <TextareaField
+      {accounting ? (
+        <FormSection
+          title={t("Credit management")}
+          description={t("Set credit limits and automatic hold rules to manage financial exposure")}
+        >
+          <FormGroup cols={2}>
+            <FormControl>
+              <SelectField
                 control={control}
-                name="billingProfile.creditHoldReason"
-                label={t("Hold reason")}
-                placeholder={t("e.g., Past due on Invoice #1234, awaiting payment...")}
+                name="billingProfile.creditStatus"
+                label={t("Credit status")}
+                placeholder={t("Select a status")}
                 description={t(
-                  "Why this customer is on hold or suspended. Dispatch sees it when a shipment for them is refused.",
+                  "With the credit limit enforced, 'Hold' and 'Suspended' stop new shipments from being booked for this customer. A status you set here stays until someone changes it.",
+                )}
+                options={creditStatusChoices}
+              />
+            </FormControl>
+            <FormControl>
+              <NumberField
+                control={control}
+                name="billingProfile.creditLimit"
+                label={t("Credit limit")}
+                placeholder="0.00"
+                description={t(
+                  "The most this customer may owe on open invoices. Leave empty for no limit.",
                 )}
               />
             </FormControl>
-          )}
-        </FormGroup>
-      </FormSection>
+            <FormControl cols="full">
+              <CreditExposureSummary />
+            </FormControl>
+            <FormControl cols="full">
+              <SwitchField
+                control={control}
+                name="billingProfile.enforceCreditLimit"
+                label={t("Enforce credit limit")}
+                outlined
+                description={t(
+                  "Turns on credit control for this customer: a 'Hold' or 'Suspended' status stops new shipments from being booked for them.",
+                )}
+              />
+            </FormControl>
+            <FormControl cols="full">
+              <SwitchField
+                control={control}
+                name="billingProfile.autoCreditHold"
+                label={t("Auto credit hold")}
+                outlined
+                description={t(
+                  "Put the customer on hold when open receivables go over the credit limit, warn at 90% of it, and lift the hold once they are paid back under. An automatic hold stops new shipments but not billing.",
+                )}
+              />
+            </FormControl>
+            {showCreditHoldReason && (
+              <FormControl cols="full">
+                <TextareaField
+                  control={control}
+                  name="billingProfile.creditHoldReason"
+                  label={t("Hold reason")}
+                  placeholder={t("e.g., Past due on Invoice #1234, awaiting payment...")}
+                  description={t(
+                    "Why this customer is on hold or suspended. Dispatch sees it when a shipment for them is refused.",
+                  )}
+                />
+              </FormControl>
+            )}
+          </FormGroup>
+        </FormSection>
+      ) : null}
       <FormSection
         title={t("Invoice configuration")}
         description={t(
@@ -260,26 +266,30 @@ export function CustomerBillingProfileForm() {
               )}
             />
           </FormControl>
-          <FormControl>
-            <SwitchField
-              control={control}
-              name="billingProfile.sendPaymentReminders"
-              label={t("Send payment reminders")}
-              description={t(
-                "Email this customer when invoices go past due, on the schedule in billing control. Turn off for a customer who must never receive an automated reminder.",
-              )}
-            />
-          </FormControl>
-          <FormControl cols="full">
-            <SwitchField
-              control={control}
-              name="billingProfile.sendStatements"
-              label={t("Send monthly statements")}
-              description={t(
-                "Email this customer a statement of its account each month when billing control sends monthly statements. A statement can still be emailed by hand from its statement page.",
-              )}
-            />
-          </FormControl>
+          {accounting ? (
+            <>
+              <FormControl>
+                <SwitchField
+                  control={control}
+                  name="billingProfile.sendPaymentReminders"
+                  label={t("Send payment reminders")}
+                  description={t(
+                    "Email this customer when invoices go past due, on the schedule in billing control. Turn off for a customer who must never receive an automated reminder.",
+                  )}
+                />
+              </FormControl>
+              <FormControl cols="full">
+                <SwitchField
+                  control={control}
+                  name="billingProfile.sendStatements"
+                  label={t("Send monthly statements")}
+                  description={t(
+                    "Email this customer a statement of its account each month when billing control sends monthly statements. A statement can still be emailed by hand from its statement page.",
+                  )}
+                />
+              </FormControl>
+            </>
+          ) : null}
           <FormControl cols="full">
             <div className="flex flex-col gap-2 rounded-md border p-3">
               <p className="text-xs font-medium">{t("Invoice delivery")}</p>
@@ -292,19 +302,21 @@ export function CustomerBillingProfileForm() {
                   "Invoices may be emailed to this customer. Auto-send after posting needs this on.",
                 )}
               />
-              <SwitchField
-                control={control}
-                name="billingProfile.ediInvoiceEnabled"
-                label={t("EDI invoices (210)")}
-                outlined
-                description={
-                  ediPartner
-                    ? t("Posted invoices are sent to {0} as an EDI 210.", ediPartner.name)
-                    : t(
-                        "Sends posted invoices to the customer's EDI partner as an EDI 210. Link an active outbound partner with a 210 document profile first, or every send is refused as unconfigured.",
-                      )
-                }
-              />
+              {edi ? (
+                <SwitchField
+                  control={control}
+                  name="billingProfile.ediInvoiceEnabled"
+                  label={t("EDI invoices (210)")}
+                  outlined
+                  description={
+                    ediPartner
+                      ? t("Posted invoices are sent to {0} as an EDI 210.", ediPartner.name)
+                      : t(
+                          "Sends posted invoices to the customer's EDI partner as an EDI 210. Link an active outbound partner with a 210 document profile first, or every send is refused as unconfigured.",
+                        )
+                  }
+                />
+              ) : null}
             </div>
           </FormControl>
           {customerId ? (
@@ -325,30 +337,34 @@ export function CustomerBillingProfileForm() {
               </div>
             </FormControl>
           ) : null}
-          <FormControl>
-            <GLAccountAutocompleteField
-              control={control}
-              name="billingProfile.revenueAccountId"
-              label={t("Revenue account")}
-              placeholder={t("Select a revenue account")}
-              description={t(
-                "GL account where revenue from this customer's shipments is posted. Overrides the organization default revenue account.",
-              )}
-              clearable
-            />
-          </FormControl>
-          <FormControl>
-            <GLAccountAutocompleteField
-              control={control}
-              name="billingProfile.arAccountId"
-              label={t("Accounts receivable")}
-              placeholder={t("Select an AR account")}
-              description={t(
-                "GL account for tracking this customer's outstanding invoices. Overrides the organization default AR account.",
-              )}
-              clearable
-            />
-          </FormControl>
+          {accounting ? (
+            <>
+              <FormControl>
+                <GLAccountAutocompleteField
+                  control={control}
+                  name="billingProfile.revenueAccountId"
+                  label={t("Revenue account")}
+                  placeholder={t("Select a revenue account")}
+                  description={t(
+                    "GL account where revenue from this customer's shipments is posted. Overrides the organization default revenue account.",
+                  )}
+                  clearable
+                />
+              </FormControl>
+              <FormControl>
+                <GLAccountAutocompleteField
+                  control={control}
+                  name="billingProfile.arAccountId"
+                  label={t("Accounts receivable")}
+                  placeholder={t("Select an AR account")}
+                  description={t(
+                    "GL account for tracking this customer's outstanding invoices. Overrides the organization default AR account.",
+                  )}
+                  clearable
+                />
+              </FormControl>
+            </>
+          ) : null}
           <FormControl cols="full">
             <DocumentTypeMultiSelectField
               control={control}
@@ -482,45 +498,49 @@ export function CustomerBillingProfileForm() {
         description={t("Configure penalty rates for overdue invoices and tax exemption status")}
       >
         <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="billingProfile.applyLateCharges"
-              label={t("Apply late charges")}
-              description={t(
-                "Automatically assess a percentage-based late fee on invoices that remain unpaid past the grace period.",
+          {accounting ? (
+            <>
+              <FormControl className="min-h-[3em]">
+                <SwitchField
+                  control={control}
+                  name="billingProfile.applyLateCharges"
+                  label={t("Apply late charges")}
+                  description={t(
+                    "Automatically assess a percentage-based late fee on invoices that remain unpaid past the grace period.",
+                  )}
+                  position="left"
+                />
+              </FormControl>
+              {applyLateCharges && (
+                <div className="flex flex-col pl-10">
+                  <FormControl className="min-h-[3em] max-w-[400px]">
+                    <NumberField
+                      control={control}
+                      name="billingProfile.lateChargeRate"
+                      label={t("Late charge rate")}
+                      placeholder="1.50"
+                      sideText="%"
+                      description={t(
+                        "Monthly percentage applied to the overdue balance after the grace period expires.",
+                      )}
+                    />
+                  </FormControl>
+                  <FormControl className="min-h-[3em] max-w-[400px]">
+                    <NumberField
+                      control={control}
+                      name="billingProfile.gracePeriodDays"
+                      label={t("Grace period")}
+                      placeholder="0"
+                      sideText="days"
+                      description={t(
+                        "Number of days after the invoice due date before late charges begin accruing.",
+                      )}
+                    />
+                  </FormControl>
+                </div>
               )}
-              position="left"
-            />
-          </FormControl>
-          {applyLateCharges && (
-            <div className="flex flex-col pl-10">
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <NumberField
-                  control={control}
-                  name="billingProfile.lateChargeRate"
-                  label={t("Late charge rate")}
-                  placeholder="1.50"
-                  sideText="%"
-                  description={t(
-                    "Monthly percentage applied to the overdue balance after the grace period expires.",
-                  )}
-                />
-              </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <NumberField
-                  control={control}
-                  name="billingProfile.gracePeriodDays"
-                  label={t("Grace period")}
-                  placeholder="0"
-                  sideText="days"
-                  description={t(
-                    "Number of days after the invoice due date before late charges begin accruing.",
-                  )}
-                />
-              </FormControl>
-            </div>
-          )}
+            </>
+          ) : null}
           <FormControl className="min-h-[3em]">
             <SwitchField
               control={control}
@@ -580,28 +600,30 @@ export function CustomerBillingProfileForm() {
           )}
         </FormGroup>
       </FormSection>
-      <FormSection
-        title={t("Factoring")}
-        description={t(
-          "Assign this customer's invoices to a factoring company you sell your receivables to",
-        )}
-      >
-        <FormGroup cols={1}>
-          <FormControl className="min-h-[3em] max-w-[400px]">
-            <FactoringCompanyAutocompleteField
-              control={control}
-              name="billingProfile.factoringCompanyId"
-              label={t("Factoring company")}
-              placeholder={t("Not factored")}
-              clearable
-              description={t(
-                "Invoices posted from now on are remitted to this factor, print its notice of assignment, and are left out of payment reminders. Invoices already posted keep the factor they were posted with.",
-              )}
-            />
-          </FormControl>
-          <CustomerFactoringNoa />
-        </FormGroup>
-      </FormSection>
+      {factoring ? (
+        <FormSection
+          title={t("Factoring")}
+          description={t(
+            "Assign this customer's invoices to a factoring company you sell your receivables to",
+          )}
+        >
+          <FormGroup cols={1}>
+            <FormControl className="min-h-[3em] max-w-[400px]">
+              <FactoringCompanyAutocompleteField
+                control={control}
+                name="billingProfile.factoringCompanyId"
+                label={t("Factoring company")}
+                placeholder={t("Not factored")}
+                clearable
+                description={t(
+                  "Invoices posted from now on are remitted to this factor, print its notice of assignment, and are left out of payment reminders. Invoices already posted keep the factor they were posted with.",
+                )}
+              />
+            </FormControl>
+            <CustomerFactoringNoa />
+          </FormGroup>
+        </FormSection>
+      ) : null}
       <FormSection
         title={t("Billing automation")}
         description={t(

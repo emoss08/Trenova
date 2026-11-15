@@ -3,6 +3,7 @@ package shipmentboardservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -29,6 +30,9 @@ func (s *Service) Capabilities(
 			tenantports.GetOrganizationCapabilitiesRequest{TenantInfo: tenantInfo},
 		)
 		if err != nil {
+			return err
+		}
+		if caps, err = tenantports.CapabilitiesOnPlan(gctx, s.features, caps); err != nil {
 			return err
 		}
 		out.OperationType = tenant.OperationTypeOf(
@@ -64,5 +68,5 @@ func (s *Service) Capabilities(
 // novaReady reports whether Nova, which writes the board's briefings and
 // insights, runs for the tenant.
 func (s *Service) novaReady(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
-	return s.nova.Available(ctx, tenantInfo)
+	return s.nova.Available(ctx, tenantInfo, aitask.TaskDailyBriefing)
 }

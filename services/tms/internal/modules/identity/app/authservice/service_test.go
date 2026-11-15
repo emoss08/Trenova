@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/portalaccessportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -77,6 +78,7 @@ func setupTest(t *testing.T) *testDeps {
 		authEvents: events,
 		throttle:   sessiontest.OpenThrottle{},
 		plans:      planservice.NewUnlimited(),
+		features:   plantest.AllFeatures(),
 		mfa:        &fakeMFA{},
 		turns:      &turnStopper{},
 		activation: roleActivationPolicy{},

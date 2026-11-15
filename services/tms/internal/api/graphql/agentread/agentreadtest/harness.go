@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.opentelemetry.io/otel/attribute"
@@ -65,6 +66,7 @@ func NewReader(t testing.TB, opts Options) *agentread.Reader {
 			ReadOnly: gqlext.NewReadOnlyExtension(gqlext.ReadOnlyParams{Logger: logger}),
 			FieldGuard: gqlext.NewFieldGuardExtension(gqlext.FieldGuardParams{
 				PermissionEngine: opts.Engine,
+				Plan:             plantest.AllOn(),
 			}),
 			QueryBudget: gqlext.NewQueryBudgetExtension(gqlext.QueryBudgetParams{}),
 		},
@@ -72,6 +74,7 @@ func NewReader(t testing.TB, opts Options) *agentread.Reader {
 		Schema:      agentread.NewSchema(resolvers),
 		Loaders:     loadercore.NewRegistry(loadercore.RegistryParams{}),
 		Permissions: opts.Engine,
+		Plan:        plantest.AllOn(),
 	})
 }
 

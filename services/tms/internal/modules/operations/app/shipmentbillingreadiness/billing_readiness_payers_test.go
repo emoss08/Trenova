@@ -109,10 +109,10 @@ func TestApplyPayerReadiness_UnionsTheSecondPayersRequirements(t *testing.T) {
 	require.Empty(t, readiness.MissingRequirements, "Intel alone is satisfied")
 	require.True(t, readiness.ShouldAutoApproveBilling)
 
-	applyPayerReadiness(readiness, entity, resolution, map[pulid.ID]*customer.Customer{
+	applyPayerReadiness(readiness, entity, resolution, creditEnforced(map[pulid.ID]*customer.Customer{
 		intel.ID:       intel,
 		amdCustomer.ID: amdCustomer,
-	}, docs)
+	}), docs)
 
 	require.Len(t, readiness.Requirements, 2, "the POD is shared; AMD adds the PO")
 	require.Len(t, readiness.MissingRequirements, 1)
@@ -165,10 +165,10 @@ func TestApplyPayerReadiness_BlocksOnASecondaryPayersCreditHold(t *testing.T) {
 	}
 
 	readiness := buildShipmentBillingReadiness(entity, intel.BillingProfile, control, nil)
-	applyPayerReadiness(readiness, entity, resolution, map[pulid.ID]*customer.Customer{
+	applyPayerReadiness(readiness, entity, resolution, creditEnforced(map[pulid.ID]*customer.Customer{
 		intel.ID:       intel,
 		amdCustomer.ID: amdCustomer,
-	}, nil)
+	}), nil)
 
 	require.Len(t, readiness.ValidationFailures, 1)
 	assert.Equal(t, "credit_hold", readiness.ValidationFailures[0].Code)
@@ -208,7 +208,7 @@ func TestApplyPayerReadiness_CreditHoldWithoutEnforcementIsOnlyReported(t *testi
 		nil,
 		nil,
 	)
-	applyPayerReadiness(readiness, entity, resolution, payers, nil)
+	applyPayerReadiness(readiness, entity, resolution, creditEnforced(payers), nil)
 
 	assert.Empty(t, readiness.ValidationFailures)
 	assert.False(t, readiness.Payers[1].CreditHold)
@@ -262,10 +262,10 @@ func TestApplyPayerReadiness_AutoApprovalNeedsEveryPayer(t *testing.T) {
 			}
 
 			readiness := buildShipmentBillingReadiness(entity, intel.BillingProfile, control, nil)
-			applyPayerReadiness(readiness, entity, resolution, map[pulid.ID]*customer.Customer{
+			applyPayerReadiness(readiness, entity, resolution, creditEnforced(map[pulid.ID]*customer.Customer{
 				intel.ID:       intel,
 				amdCustomer.ID: amdCustomer,
-			}, nil)
+			}), nil)
 
 			assert.Equal(t, tc.wantApproval, readiness.ShouldAutoApproveBilling)
 			assert.Equal(t, tc.intelOptsIn, readiness.Payers[0].ShouldAutoApproveBilling)
@@ -284,7 +284,7 @@ func TestApplyPayerReadiness_ToleratesMissingInputs(t *testing.T) {
 	applyPayerReadiness(readiness, entity, nil, nil, nil)
 	assert.Nil(t, readiness.Payers)
 
-	applyPayerReadiness(readiness, entity, resolution, map[pulid.ID]*customer.Customer{}, nil)
+	applyPayerReadiness(readiness, entity, resolution, creditEnforced(map[pulid.ID]*customer.Customer{}), nil)
 	require.Len(t, readiness.Payers, 2, "unknown payers are still listed, unnamed")
 	assert.Empty(t, readiness.Payers[1].PayerName)
 	assert.False(t, readiness.ShouldAutoApproveBilling)
@@ -363,4 +363,43 @@ func TestPreviewForResolutionMapsPositionalAllocationsToPlaceholderIDs(t *testin
 		share.AccessorialAmount.Equal(decimal.NewFromInt(130)),
 		"both charges resolve against the payer",
 	)
+}
+
+func creditEnforced(payers map[pulid.ID]*customer.Customer) *Sources {
+	return &Sources{Payers: payers, creditHolds: true}
+}
+
+func TestApplyPayerReadiness_ACreditHoldDoesNotBlockWithoutAccounting(t *testing.T) {
+	t.Parallel()
+
+	entity, resolution, amd := splitReadinessFixture(t)
+	control := autoTransferControl()
+
+	intel := &customer.Customer{
+		ID:             entity.CustomerID,
+		Name:           "Intel",
+		BillingProfile: &customer.CustomerBillingProfile{AutoTransfer: true, AutoApprove: true},
+	}
+	amdCustomer := &customer.Customer{
+		ID:   amd,
+		Name: "AMD",
+		BillingProfile: &customer.CustomerBillingProfile{
+			AutoTransfer:       true,
+			AutoApprove:        true,
+			EnforceCreditLimit: true,
+			CreditStatus:       customer.CreditStatusHold,
+		},
+	}
+
+	readiness := buildShipmentBillingReadiness(entity, intel.BillingProfile, control, nil)
+	applyPayerReadiness(readiness, entity, resolution, &Sources{
+		Payers: map[pulid.ID]*customer.Customer{
+			intel.ID:       intel,
+			amdCustomer.ID: amdCustomer,
+		},
+	}, nil)
+
+	assert.Empty(t, readiness.ValidationFailures)
+	require.Len(t, readiness.Payers, 2)
+	assert.False(t, readiness.Payers[1].CreditHold)
 }

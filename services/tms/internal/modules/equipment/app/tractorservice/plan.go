@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
@@ -25,6 +26,15 @@ func (s *Service) PlanCreate(
 	ctx context.Context,
 	entity *tractor.Tractor,
 ) (*tractor.Tractor, error) {
+	if err := s.planFields.Keep(
+		ctx,
+		permission.ResourceTractor,
+		entity,
+		&tractor.Tractor{IFTAQualified: true},
+	); err != nil {
+		return nil, err
+	}
+
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -36,10 +46,6 @@ func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *tractor.Tractor,
 ) (*kernelports.RecordChange[tractor.Tractor], error) {
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
 	original, err := s.repo.GetByID(ctx, tractorports.GetTractorByIDRequest{
 		ID: entity.GetID(),
 		TenantInfo: pagination.TenantInfo{
@@ -49,6 +55,14 @@ func (s *Service) PlanUpdate(
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if err = s.planFields.Keep(ctx, permission.ResourceTractor, entity, original); err != nil {
+		return nil, err
+	}
+
+	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+		return nil, multiErr
 	}
 
 	return &kernelports.RecordChange[tractor.Tractor]{Before: original, After: entity}, nil

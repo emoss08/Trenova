@@ -519,6 +519,7 @@ func (s *Service) sendInvitationEmail(
 
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     p.TenantInfo,
+		Type:           email.TypeDriverPortalInvitation,
 		Purpose:        email.PurposeGeneral,
 		To:             []string{p.To},
 		Subject:        rendered.Subject,

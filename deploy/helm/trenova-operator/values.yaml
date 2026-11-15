@@ -39,9 +39,29 @@ chart:
   # (the CI install): the operator would then run whatever the registry serves.
   verify: true
 
+# Where the operator and the release's pods reach the instance's object
+# storage, when not at the address the control plane gives (which browsers
+# use): a private endpoint inside the provider's network, http or https, such
+# as a local instance's MinIO on its Docker network. Empty: the control
+# plane's address for both.
+storage:
+  privateEndpoint: ""
+
+# The machine the cluster really runs on, when it is smaller than the plan
+# the spec names: a local development instance, where every plan runs on the
+# same small machine. Workloads are sized for the smaller of the two in each
+# dimension. Zero: the plan's size.
+node:
+  vcpu: 0
+  memoryGiB: 0
+  diskGiB: 0
+
 # Values every release of the Trenova chart gets on this cluster, under what
 # the spec decides: the hostname, the size, the lifecycle, the components and
 # the version. The ingress, storage classes and image overrides belong here.
+# ClamAV is part of the machine's sizing: changing clamav.enabled here divides
+# every instance's resources again and restarts its PostgreSQL once, which a
+# component the spec turns on (docling) never does.
 trenovaValues:
   clamav:
     enabled: true

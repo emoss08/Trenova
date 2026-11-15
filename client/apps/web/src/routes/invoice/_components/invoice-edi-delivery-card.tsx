@@ -1,5 +1,7 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { sendInvoiceEdi, type InvoiceArContext } from "@/lib/graphql/invoice";
 import { invalidateInvoiceQueries } from "@/lib/queries/invoice";
 import { useQueryClient } from "@tanstack/react-query";
@@ -7,6 +9,7 @@ import { InvoiceEdiSendStatusBadge } from "@trenova/shared/components/status-bad
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import type { Invoice } from "@trenova/shared/types/invoice";
@@ -17,7 +20,9 @@ import { invoiceEdiSendBlocker } from "@/lib/invoice-actions";
 /**
  * The EDI half of delivery: whether the customer takes an 210, which partner
  * gets it, what stands in the way, and where the last send got to. Sits next
- * to the email card so an operator sees both channels at once.
+ * to the email card so an operator sees both channels at once. Nothing is drawn
+ * when the organization's plan leaves EDI out, and the plan's details are drawn
+ * withheld for a reader who cannot read EDI.
  */
 export function InvoiceEdiDeliveryCard({
   invoice,
@@ -31,9 +36,12 @@ export function InvoiceEdiDeliveryCard({
   const t = useT();
   const queryClient = useQueryClient();
   const { allowed: canSend } = usePermission(Resource.Invoice, Operation.Update);
+  // EDI invoicing is the EDI add-on's: without it there is no card, not even while loading.
+  const ediOnPlan = usePlanFeature(PlanFeature.EDI).available;
   const plan = arContext?.ediSendPlan;
   const blocker = invoiceEdiSendBlocker(invoice.status, arContext?.ediSendPlan, t);
   const sent = plan?.status === "Sent";
+  const blockers = plan?.blockers ?? [];
 
   const send = useApiMutation({
     resourceName: "invoice EDI",
@@ -42,6 +50,10 @@ export function InvoiceEdiDeliveryCard({
       invalidateInvoiceQueries(queryClient);
     },
   });
+
+  if (!ediOnPlan || (arContext && plan === null)) {
+    return null;
+  }
 
   return (
     <div className="border-border rounded-md border p-4" data-testid="invoice-edi-delivery">
@@ -53,6 +65,8 @@ export function InvoiceEdiDeliveryCard({
           </div>
           {isLoading && !plan ? (
             <Skeleton className="mt-2 h-4 w-48" />
+          ) : plan?.enabled === null ? (
+            <WithheldValue kind="edi" className="mt-1" />
           ) : !plan?.enabled ? (
             <p className="text-muted-foreground mt-1 text-sm">
               {t("EDI invoicing is not enabled for this customer")}
@@ -79,9 +93,9 @@ export function InvoiceEdiDeliveryCard({
         ) : null}
       </div>
 
-      {plan?.enabled && plan.blockers.length > 0 ? (
+      {plan?.enabled && blockers.length > 0 ? (
         <ul className="mt-3 space-y-1">
-          {plan.blockers.map((item) => (
+          {blockers.map((item) => (
             <li key={item}>
               <Alert variant="warning" size="sm">
                 <AlertTriangleIcon />

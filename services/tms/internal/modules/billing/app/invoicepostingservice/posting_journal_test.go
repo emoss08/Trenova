@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -136,6 +137,7 @@ func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
 		Once()
 	svc := &Service{
 		l:                 zap.NewNop(),
+		features:          plantest.AllFeatures(),
 		accountingRepo:    accountingRepo,
 		billingRepo:       noBillingControl{},
 		permissions:       &mocks.AllowAllPermissionEngine{},
@@ -198,6 +200,7 @@ func TestCreateInvoiceJournalPostingSkipsWhenRecognitionPolicyDoesNotAllowInvoic
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	svc := &Service{
 		l:                 zap.NewNop(),
+		features:          plantest.AllFeatures(),
 		accountingRepo:    accountingRepo,
 		billingRepo:       noBillingControl{},
 		permissions:       &mocks.AllowAllPermissionEngine{},
@@ -246,6 +249,7 @@ func TestCreateInvoiceJournalPostingSkipsWhenAutoPostDisabled(t *testing.T) {
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	svc := &Service{
 		l:                 zap.NewNop(),
+		features:          plantest.AllFeatures(),
 		accountingRepo:    accountingRepo,
 		billingRepo:       noBillingControl{},
 		permissions:       &mocks.AllowAllPermissionEngine{},
@@ -305,4 +309,39 @@ func TestResolveInvoicePostingPeriodUsesNextOpenPeriod(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resolved.Period)
 	assert.Equal(t, int64(1_700_001_000), resolved.AccountingDate)
+}
+
+func TestCreateInvoiceJournalPostingWritesNoJournalWithoutAccounting(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	now := int64(1_700_000_000)
+
+	svc := &Service{
+		l:                 zap.NewNop(),
+		features:          plantest.BaseOnly(),
+		accountingRepo:    tenantportsmock.NewMockAccountingControlRepository(t),
+		billingRepo:       noBillingControl{},
+		permissions:       &mocks.AllowAllPermissionEngine{},
+		journalRepo:       journalentryportsmock.NewMockJournalPostingRepository(t),
+		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		fiscalPeriodRepo:  fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
+		rec: invoiceaction.NewRecorder(
+			invoiceaction.RecorderParams{Logger: zap.NewNop()},
+		),
+	}
+
+	err := svc.createInvoiceJournalPosting(t.Context(), &invoice.Invoice{
+		ID:               pulid.MustNew("inv_"),
+		OrganizationID:   orgID,
+		BusinessUnitID:   buID,
+		CustomerID:       pulid.MustNew("cus_"),
+		Number:           "INV-1001",
+		BillType:         billingvocab.BillTypeInvoice,
+		TotalAmountMinor: 13500,
+		PostedAt:         &now,
+	}, testutil.NewSessionActor(pulid.MustNew("usr_"), orgID, buID))
+
+	require.NoError(t, err, "the invoice still posts")
 }

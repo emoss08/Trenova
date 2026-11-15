@@ -56,6 +56,9 @@ func (s *Service) CreateVersion(
 		log.Error("failed to get template", zap.Error(err))
 		return nil, err
 	}
+	if err = template.RefuseStandardChange(); err != nil {
+		return nil, err
+	}
 
 	if err = s.PrepareContent(ctx, template); err != nil {
 		return nil, err
@@ -171,6 +174,9 @@ func (s *Service) Rollback(
 	currentTemplate, err := s.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
 	if err != nil {
 		log.Error("failed to get current template", zap.Error(err))
+		return nil, err
+	}
+	if err = currentTemplate.RefuseStandardChange(); err != nil {
 		return nil, err
 	}
 

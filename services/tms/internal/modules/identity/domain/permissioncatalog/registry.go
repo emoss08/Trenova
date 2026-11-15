@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/reportperms"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentperms"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/workerperms"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 type Registry struct {
@@ -57,6 +58,22 @@ func (r *Registry) Register(def *permissionspec.ResourceDefinition) error {
 	if def.Resource == "" {
 		return errors.New("resource name is required")
 	}
+	if def.Feature == "" {
+		return fmt.Errorf("resource %s declares no feature", def.Resource)
+	}
+	if _, known := platformcatalog.Lookup(def.Feature); !known {
+		return fmt.Errorf("resource %s declares unknown feature %q", def.Resource, def.Feature)
+	}
+	for field, feature := range def.FieldFeatures {
+		if _, known := platformcatalog.Lookup(feature); !known {
+			return fmt.Errorf("field %s of resource %s declares unknown feature %q",
+				field, def.Resource, feature)
+		}
+		if feature == def.Feature {
+			return fmt.Errorf("field %s of resource %s declares %q, the resource's own feature",
+				field, def.Resource, feature)
+		}
+	}
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -85,6 +102,46 @@ func (r *Registry) Get(resource string) (*permissionspec.ResourceDefinition, boo
 
 	def, ok := r.resources[resource]
 	return def, ok
+}
+
+func (r *Registry) FeatureOf(resource string) (platformcatalog.FeatureKey, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	def, ok := r.resources[resource]
+	if !ok {
+		return "", false
+	}
+	return def.Feature, true
+}
+
+// FieldFeatureOf is the feature a field of a resource belongs to when it is
+// not the resource's own, such as an invoice's factoring company.
+func (r *Registry) FieldFeatureOf(resource, field string) (platformcatalog.FeatureKey, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	def, ok := r.resources[resource]
+	if !ok {
+		return "", false
+	}
+	feature, declared := def.FieldFeatures[field]
+	return feature, declared
+}
+
+// DeclaresFieldFeature reports whether any resource declares a field of this
+// API name as belonging to a feature of its own.
+func (r *Registry) DeclaresFieldFeature(field string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, def := range r.resources {
+		if _, declared := def.FieldFeatures[field]; declared {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (r *Registry) GetChildren(parent string) []string {
@@ -282,6 +339,8 @@ func (r *Registry) registerAll() {
 		complianceperms.Resources(),
 		reportperms.Resources(),
 	) {
-		_ = r.Register(def)
+		if err := r.Register(def); err != nil {
+			panic(fmt.Sprintf("permission catalog: %v", err))
+		}
 	}
 }

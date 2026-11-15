@@ -457,7 +457,7 @@ type CarrierIntelFinding {
   overrideExpiresAt: Timestamp
 }
 
-type CarrierIntelSnapshot {
+type CarrierIntelSnapshot @kind(resource: "carrier_intelligence") {
   id: ID!
   subjectType: CarrierIntelSubjectType!
   subjectId: String!
@@ -539,7 +539,7 @@ type CarrierIntelEventConnection {
   totalCountExact: Boolean!
 }
 
-type CarrierMonitoringEnrollment {
+type CarrierMonitoringEnrollment @kind(resource: "carrier_intelligence") {
   id: ID!
   subjectType: CarrierIntelSubjectType!
   subjectId: String!
@@ -738,7 +738,7 @@ type CarrierIntelFetchResult {
   changeCount: Int!
 }
 
-type CarrierIntelProspectLookup {
+type CarrierIntelProspectLookup @kind(resource: "carrier_sourcing") {
   snapshot: CarrierIntelSnapshot!
   existingCarrierId: ID
 }
@@ -836,7 +836,7 @@ type CarrierIntelMonitoringStatus {
   reviewQueueCount: Int!
 }
 
-type MyCarrierIntelligence {
+type MyCarrierIntelligence @kind(resource: "carrier_intelligence") {
   configured: Boolean!
   dotNumber: String
   snapshot: CarrierIntelSnapshot
@@ -857,18 +857,18 @@ extend type DispatchCarrierEligibility {
 
 extend type Carrier {
   intelRiskLevel: String
-  intelReviewRequired: Boolean!
-  intelBlockingCount: Int!
+  intelReviewRequired: Boolean
+  intelBlockingCount: Int
   intelligence: CarrierIntelSnapshot @goField(forceResolver: true)
-  openIntelEventCount: Int! @goField(forceResolver: true)
+  openIntelEventCount: Int @goField(forceResolver: true)
   monitoringEnrollment: CarrierMonitoringEnrollment @goField(forceResolver: true)
 }
 
 extend type Customer {
   dotNumber: String
   mcNumber: String
-  brokerVettingEnabled: Boolean!
-  brokerIntelligence: CarrierIntelSnapshot @goField(forceResolver: true)
+  brokerVettingEnabled: Boolean
+  brokerIntelligence: CarrierIntelSnapshot @goField(forceResolver: true) @authorizes(resource: "carrier_intelligence")
 }
 
 input CarrierIntelEventFilterInput {

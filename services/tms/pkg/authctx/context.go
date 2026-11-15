@@ -146,6 +146,7 @@ type SessionAuthContextParams struct {
 	MustChangePassword     bool
 	Locale                 string
 	RoleActivation         bool
+	Support                *Support
 }
 
 func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
@@ -170,6 +171,7 @@ func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
 	if c.Request == nil {
 		return
 	}
+	bindSupport(c, p.Support, p.UserID)
 	c.Request = c.Request.WithContext(BindSession(c.Request.Context(), SessionAttributes{
 		UserID:                 p.UserID,
 		ActiveRoleIDs:          p.ActiveRoleIDs,
@@ -245,6 +247,13 @@ type AuthContext struct {
 	RiskDecisionID         pulid.ID
 	IsPortalUser           bool
 	CaptureDeviceID        pulid.ID
+	// Support is set when a Trenova support session made the request.
+	Support *Support
+}
+
+// IsSupport reports whether a Trenova support session made the request.
+func (ac *AuthContext) IsSupport() bool {
+	return ac != nil && ac.Support != nil
 }
 
 // IsCaptureDevice reports whether a paired capture device made the request.
@@ -424,6 +433,11 @@ func authContextFromGin(c *gin.Context) *AuthContext {
 			c,
 			string(CaptureDeviceIDKey),
 			pulid.Nil,
+		),
+		Support: helpers.ContextValueOr[*Support](
+			c,
+			string(SupportKey),
+			nil,
 		),
 	}
 }

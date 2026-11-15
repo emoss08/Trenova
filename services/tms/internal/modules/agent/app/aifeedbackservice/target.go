@@ -608,10 +608,10 @@ func (s *Service) requireRead(
 		return err
 	}
 	if result == nil || !result.Allowed {
-		return errortypes.NewAuthorizationError(
+		return permissionports.DeniedError(result, errortypes.NewAuthorizationError(
 			"You do not have permission to read {0}",
 			resource.String(),
-		)
+		))
 	}
 
 	return nil

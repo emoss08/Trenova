@@ -49,7 +49,7 @@ func fieldsOf(t *testing.T, err error) []string {
 	require.ErrorAs(t, err, &multiErr)
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, e := range multiErr.Errors {
-		fields = append(fields, e.Field)
+		fields = append(fields, e.Field())
 	}
 
 	return fields

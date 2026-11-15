@@ -266,6 +266,12 @@ func (s *Service) buildAS2MDNResult(
 	return result, nil
 }
 
+func (s *Service) RefuseAS2Message(
+	req *ReceiveAS2MessageRequest,
+) (*ReceiveAS2MessageResult, error) {
+	return s.buildAS2MDNResult(req, &editransport.AS2Config{}, "", s.unknownPairFailure(req))
+}
+
 func (s *Service) unknownPairFailure(req *ReceiveAS2MessageRequest) error {
 	_, err := as2.ParseMessage(req.ContentType, req.Body, &as2.ParseMessageOptions{
 		TransferEncoding:     req.TransferEncoding,

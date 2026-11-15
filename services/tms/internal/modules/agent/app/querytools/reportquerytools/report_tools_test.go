@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -101,7 +102,7 @@ func catalogResolver(t *testing.T, engine permissionports.PermissionEngine) *rep
 		Catalog:  catalog,
 		Engine:   engine,
 		Registry: registry,
-		Views:    refview.NewPort(refview.New(registry), engine),
+		Views:    refview.NewPort(plantest.Views(registry), engine),
 		Fields:   allGroups{},
 	})
 	require.NoError(t, err)

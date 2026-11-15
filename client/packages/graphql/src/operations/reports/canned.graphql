@@ -8,5 +8,11 @@ query CannedReports {
     tags
     defaultFormat
     definition
+    available
+    planDenial {
+      feature
+      featureName
+      addOnName
+    }
   }
 }

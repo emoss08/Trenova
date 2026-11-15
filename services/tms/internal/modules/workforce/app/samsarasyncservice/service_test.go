@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 
 	"io"
 	"net/http"
@@ -161,7 +162,8 @@ func samsaraIntegration(
 	require.NoError(t, err)
 
 	return integrationservice.New(integrationservice.Params{
-		Logger: zap.NewNop(),
+		Features: plantest.AllFeatures(),
+		Logger:   zap.NewNop(),
 		Repo: &fakeIntegrationRepo{record: &integration.Integration{
 			Type:    integration.TypeSamsara,
 			Enabled: true,
@@ -198,8 +200,9 @@ func setupTestService(t *testing.T) (*Service, *workerportsmock.MockWorkerReposi
 		Logger: zap.NewNop(),
 		Repo:   repo,
 		IntegrationService: integrationservice.New(integrationservice.Params{
-			Logger: zap.NewNop(),
-			Repo:   &fakeIntegrationRepo{},
+			Features: plantest.AllFeatures(),
+			Logger:   zap.NewNop(),
+			Repo:     &fakeIntegrationRepo{},
 		}),
 	}), repo
 }

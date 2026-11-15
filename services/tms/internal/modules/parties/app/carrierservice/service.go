@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -31,6 +32,7 @@ type Params struct {
 	Realtime     realtimeports.RealtimeService
 	DB           kernelports.Transactor
 	Sync         accountingsyncports.AccountingSyncEnqueuer
+	Features     platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -42,6 +44,7 @@ type Service struct {
 	observer     carrierintelports.CarrierLifecycleObserver
 	db           kernelports.Transactor
 	sync         accountingsyncports.AccountingSyncEnqueuer
+	features     platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service {
@@ -53,6 +56,7 @@ func New(p Params) *Service {
 		realtime:     p.Realtime,
 		db:           p.DB,
 		sync:         p.Sync,
+		features:     p.Features,
 	}
 }
 
@@ -329,5 +333,15 @@ func (s *Service) notifyObserver(
 	if s.observer == nil {
 		return
 	}
-	s.observer.CarrierSaved(ctx, event)
+	observers, err := platformcatalogports.Observing(
+		ctx,
+		s.features,
+		[]carrierintelports.CarrierLifecycleObserver{s.observer},
+	)
+	if err != nil {
+		s.l.Warn("carrier lifecycle observer skipped", zap.Error(err))
+	}
+	for _, observer := range observers {
+		observer.CarrierSaved(ctx, event)
+	}
 }

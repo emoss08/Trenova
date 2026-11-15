@@ -35,6 +35,7 @@ function manifest(): PermissionManifest {
     ),
     routeAccess: {},
     availableOrgs: [],
+    unavailableFeatures: [],
     checksum: "abc123",
     expiresAt: 1_782_403_304,
   } as unknown as PermissionManifest;

@@ -65,6 +65,11 @@ query DeskReportRunCard($id: ID!) {
       ...ReportPreviewFields
     }
     withheld
+    withheldByPlan {
+      feature
+      featureName
+      addOnName
+    }
     previous {
       runId
       completedAt

@@ -28,6 +28,7 @@ import { BILLING_QUEUE_OPEN_LANES } from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
 import { billingQueueStatsQuery } from "../billing-queue-queries";
 import { LANE_DOT, laneLabel } from "./billing-queue-lanes";
+import { useBillingQueueAssist } from "./use-billing-queue-assist";
 
 /** Briefs already typed out in this session; a brief types once, then reads still. */
 const typedBriefs = new Set<number>();
@@ -53,7 +54,7 @@ export function BillingQueueOverview({
   activeLanes: readonly BillingQueueLane[];
   onLaneSelect: (lane: BillingQueueLane) => void;
 }) {
-  const { data: assist } = useQuery(billingQueue.assist());
+  const assist = useBillingQueueAssist();
   const { data: brief } = useQuery({ ...billingQueue.brief(), enabled: assist?.brief === true });
   const { data: generation } = useQuery({
     ...billingQueueNova.generation(),

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -235,9 +236,9 @@ func (h *Handler) allowShipmentRead(c *gin.Context, authCtx *authctx.AuthContext
 	}
 
 	if !result.Allowed {
-		h.eh.HandleError(c, errortypes.NewAuthorizationError(
+		h.eh.HandleError(c, permissionports.DeniedError(result, errortypes.NewAuthorizationError(
 			"You don't have permission to read shipments",
-		))
+		)))
 		return false
 	}
 

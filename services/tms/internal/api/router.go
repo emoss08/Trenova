@@ -102,6 +102,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttrackingpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/supportentryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablequeryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/telematicshandler"
@@ -215,6 +216,7 @@ type RouterParams struct {
 	RateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
 	CarrierTrackingPublicHandler    *carriertrackingpublichandler.Handler
 	ShipmentTrackingPublicHandler   *shipmenttrackingpublichandler.Handler
+	SupportEntryHandler             *supportentryhandler.Handler
 	GoogleMapsHandler               *googlemapshandler.Handler
 	AccountingControlHandler        *accountingcontrolhandler.Handler
 	AccountsReceivableHandler       *accountsreceivablehandler.Handler
@@ -343,6 +345,7 @@ type Router struct {
 	rateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
 	carrierTrackingPublicHandler    *carriertrackingpublichandler.Handler
 	shipmentTrackingPublicHandler   *shipmenttrackingpublichandler.Handler
+	supportEntryHandler             *supportentryhandler.Handler
 	googleMapsHandler               *googlemapshandler.Handler
 	accountingControlHandler        *accountingcontrolhandler.Handler
 	accountsReceivableHandler       *accountsreceivablehandler.Handler
@@ -473,6 +476,7 @@ func NewRouter(p RouterParams) *Router {
 		rateConfirmationPublicHandler:   p.RateConfirmationPublicHandler,
 		carrierTrackingPublicHandler:    p.CarrierTrackingPublicHandler,
 		shipmentTrackingPublicHandler:   p.ShipmentTrackingPublicHandler,
+		supportEntryHandler:             p.SupportEntryHandler,
 		googleMapsHandler:               p.GoogleMapsHandler,
 		accountingControlHandler:        p.AccountingControlHandler,
 		accountsReceivableHandler:       p.AccountsReceivableHandler,
@@ -605,6 +609,7 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	r.rateConfirmationPublicHandler.RegisterPublicRoutes(rg)
 	r.carrierTrackingPublicHandler.RegisterPublicRoutes(rg)
 	r.shipmentTrackingPublicHandler.RegisterPublicRoutes(rg)
+	r.supportEntryHandler.RegisterPublicRoutes(rg)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together

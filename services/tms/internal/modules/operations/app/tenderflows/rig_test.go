@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"go.uber.org/zap"
 )
 
@@ -85,6 +86,7 @@ func (s *rig) assemble() {
 		Invalidator:      s.invalidator,
 		Notifications:    s.notifications,
 		DispatchControls: s.dispatchControls,
+		Features:         plantest.AllFeatures(),
 	})
 	s.creator = tendercreate.New(tendercreate.Params{
 		Logger:                s.l,
@@ -136,6 +138,7 @@ func (s *rig) assemble() {
 		Workflows:   s.workflows,
 		Invalidator: s.invalidator,
 		Effects:     s.effects,
+		Features:    plantest.AllFeatures(),
 	})
 	s.escalator = tenderescalation.New(tenderescalation.Params{
 		Logger:  s.l,

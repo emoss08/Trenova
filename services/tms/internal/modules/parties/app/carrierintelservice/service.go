@@ -8,10 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -62,7 +61,7 @@ type Params struct {
 	// Publisher wakes whichever agent covers carrier risk on a finding the
 	// tower would show a person.
 	Publisher agenteventports.AgentEventPublisher
-	Plans     platformplanports.PlanService
+	Features  platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -87,7 +86,7 @@ type Service struct {
 	publisher       agenteventports.AgentEventPublisher
 	interactiveWait time.Duration
 	breaker         *circuitBreaker
-	plans           platformplanports.PlanService
+	features        platformcatalogports.FeatureGate
 	now             func() int64
 }
 
@@ -127,20 +126,16 @@ func New(p Params) *Service {
 		publisher:       p.Publisher,
 		interactiveWait: p.CarrierIntelligenceConfig.GetInteractiveWait(),
 		breaker:         newCircuitBreaker(),
-		plans:           p.Plans,
+		features:        p.Features,
 		now:             timeutils.NowUnix,
 	}
 }
 
-func (s *Service) requirePaidLookups(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) error {
-	return planservice.RequireCapability(
+func (s *Service) requirePaidLookups(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(
 		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityCarrierIntelligencePaid,
+		s.features,
+		platformcatalog.FeatureCarrierBrokerage,
 	)
 }
 

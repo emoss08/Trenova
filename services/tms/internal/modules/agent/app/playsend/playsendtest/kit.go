@@ -10,13 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/drivermessage"
 	"github.com/emoss08/trenova/internal/modules/agent/app/requestemail"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -69,26 +66,6 @@ func (d *Drivers) Preview(
 	return preview, nil
 }
 
-// Plans is the organization's plan for a test: whether it includes text
-// messages.
-type Plans struct {
-	platformplanports.PlanService
-
-	Texts bool
-}
-
-func (p *Plans) RequireCapability(
-	_ context.Context,
-	_ pagination.TenantInfo,
-	capability platformplan.Capability,
-) error {
-	if capability == platformplan.CapabilitySMS && !p.Texts {
-		return errortypes.NewPlanRestrictionError(capability.String(), "", "")
-	}
-
-	return nil
-}
-
 // Texts records the text messages a test sent.
 type Texts struct {
 	kernelports.WorkflowStarter
@@ -108,8 +85,12 @@ func (t *Texts) StartWorkflow(
 }
 
 // Messages builds the driver message sender over the test's drivers.
-func Messages(drivers *Drivers, plans *Plans, texts *Texts) *drivermessage.Sender {
-	return drivermessage.New(drivers, plans, texts)
+func Messages(
+	drivers *Drivers,
+	features platformcatalogports.FeatureGate,
+	texts *Texts,
+) *drivermessage.Sender {
+	return drivermessage.New(drivers, features, texts)
 }
 
 // Mail is the request mailer for a test: what was rendered and sent.

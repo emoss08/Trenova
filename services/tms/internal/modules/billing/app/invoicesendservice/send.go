@@ -345,6 +345,7 @@ func (s *Service) SendFromWorkflow(
 			message, sendErr = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 				TenantInfo:   req.TenantInfo,
 				ProfileID:    profile.ID,
+				Type:         email.TypeInvoice,
 				Purpose:      email.PurposeBilling,
 				To:           plan.Recipients.To,
 				CC:           plan.Recipients.CC,
@@ -546,6 +547,7 @@ func (s *Service) checkSuppressedRecipients(
 	sender, err := s.emailSenders.ResolveSender(ctx, &emailports.SendEmailRequest{
 		TenantInfo: tenantInfo,
 		ProfileID:  profile.ID,
+		Type:       email.TypeInvoice,
 		Purpose:    email.PurposeBilling,
 		To:         plan.Recipients.To,
 		CC:         plan.Recipients.CC,

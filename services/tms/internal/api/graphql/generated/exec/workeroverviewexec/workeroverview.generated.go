@@ -254,13 +254,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "trainingOverdue",
-				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return obj.TrainingOverdue, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
 				Name:     "atRisk",
@@ -293,7 +292,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "ptoLiabilityDays",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				ChildErr:   errNoChild5,
@@ -301,7 +299,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return gqlexec.Resolver[WorkerRosterAttentionResolver](ec, "WorkerRosterAttention@workeroverview").PTOLiabilityDays(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
 				Name:     "leaveCertificationsOutstanding",
@@ -326,7 +324,7 @@ type QueryResolver interface {
 }
 
 type WorkerRosterAttentionResolver interface {
-	PTOLiabilityDays(ctx context.Context, obj *workeroverviewservice.RosterAttention) (string, error)
+	PTOLiabilityDays(ctx context.Context, obj *workeroverviewservice.RosterAttention) (*string, error)
 }
 
 var (
@@ -354,14 +352,6 @@ func field_Query_workerOverview_args(ctx context.Context, ec *gqlexec.Exec, rawA
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
 }
 
 func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
@@ -445,6 +435,14 @@ func marshalNWorkerStanding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
+	return res
+}
+
+func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
 	return res
 }
 

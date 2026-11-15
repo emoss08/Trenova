@@ -1,0 +1,41 @@
+"A feature of the plan, by the name a person reads. The key is for the client's own bookkeeping and is never shown."
+type ManagedPlanFeature {
+  key: String!
+  name: String!
+}
+
+"An add-on Trenova sells, with the features it adds, in catalogue order. The key is for the client's own bookkeeping and is never shown."
+type ManagedPlanAddOn {
+  key: String!
+  name: String!
+  features: [ManagedPlanFeature!]!
+}
+
+"One change Trenova made to the plan. The first entry an instance ever received is its starting plan: starting is true and joined lists what it included."
+type ManagedPlanChange {
+  changedAt: Timestamp!
+  starting: Boolean!
+  "Add-ons that left the plan. What was entered with them is kept."
+  left: [ManagedPlanAddOn!]!
+  "Add-ons that joined the plan."
+  joined: [ManagedPlanAddOn!]!
+}
+
+"What a Managed Trenova instance's plan includes and what it does not."
+type ManagedPlan {
+  "False on a self-hosted install, where every feature is on and every list here is empty."
+  managed: Boolean!
+  "What the base plan includes."
+  base: [ManagedPlanFeature!]!
+  "The add-ons on the plan."
+  included: [ManagedPlanAddOn!]!
+  "The add-ons not on the plan."
+  available: [ManagedPlanAddOn!]!
+  "The most recent changes to the plan that moved an add-on, newest first, at most 20."
+  changes: [ManagedPlanChange!]!
+}
+
+extend type Query {
+  "What this instance's plan includes, the add-ons it does not, and its recent changes. Needs the organization update permission."
+  managedPlan: ManagedPlan!
+}

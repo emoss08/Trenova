@@ -21,4 +21,5 @@ export const PAGE_ACCESS_DECISION_LABELS = defineLabels({
   VISIBLE: "Shown",
   WITHHELD_KIND: "Needs read",
   WITHHELD_SENSITIVITY: "Above ceiling",
+  WITHHELD_PLAN: "Not on your plan",
 }) satisfies Record<PageAccessDecision, string>;

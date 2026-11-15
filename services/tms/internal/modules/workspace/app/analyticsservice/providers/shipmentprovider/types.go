@@ -1,5 +1,7 @@
 package shipmentprovider
 
+import "github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+
 type ActiveShipmentsCard struct {
 	Count               int                       `json:"count"`
 	ChangeFromYesterday int                       `json:"changeFromYesterday"`
@@ -126,13 +128,17 @@ type LaneHeatmapCard struct {
 	Total      int                `json:"total"`
 }
 
+// ProfitabilityCard carries the fleet's cost per mile and margin. PlanDenial is
+// set, and every figure left at zero, when the plan leaves out the costing
+// setup the figures are computed from: nothing was computed.
 type ProfitabilityCard struct {
-	AvgCPM            float64  `json:"avgCpm"`
-	AvgMarginPct      *float64 `json:"avgMarginPct"`
-	HasMargin         bool     `json:"hasMargin"`
-	UnprofitableCount *int     `json:"unprofitableCount"`
-	ShipmentCount     int      `json:"shipmentCount"`
-	TotalMiles        float64  `json:"totalMiles"`
+	AvgCPM            float64                     `json:"avgCpm"`
+	AvgMarginPct      *float64                    `json:"avgMarginPct"`
+	HasMargin         bool                        `json:"hasMargin"`
+	UnprofitableCount *int                        `json:"unprofitableCount"`
+	ShipmentCount     int                         `json:"shipmentCount"`
+	TotalMiles        float64                     `json:"totalMiles"`
+	PlanDenial        *permissionports.PlanDenial `json:"planDenial,omitempty"`
 }
 
 // DispatchCard counts the next day's moves the way the dispatch board reads

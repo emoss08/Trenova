@@ -20,10 +20,22 @@ export const workersPageTabParser = parseAsStringLiteral(tabValues)
   })
   .withDefault("workers");
 
-export default function WorkersContent() {
+/**
+ * The roster, and beside it the paid-time-off tab when the plan includes time off. Without it
+ * the roster stands alone: no tab strip with one tab, and no time-off reads.
+ */
+export default function WorkersContent({ timeOffOnPlan }: { timeOffOnPlan: boolean }) {
   const t = useT();
 
   const [tab, setTab] = useQueryState(WORKERS_PAGE_TAB_PARAM, workersPageTabParser);
+
+  if (!timeOffOnPlan) {
+    return (
+      <DataTableLazyComponent>
+        <WorkerTable />
+      </DataTableLazyComponent>
+    );
+  }
 
   return (
     <Tabs

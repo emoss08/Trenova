@@ -57,6 +57,9 @@ func (s *Service) EvaluateDriverFeasibility(
 	ctx context.Context,
 	req *FeasibilityRequest,
 ) ([]*DriverFeasibility, error) {
+	if err := s.requireSamsara(ctx); err != nil {
+		return nil, err
+	}
 	states, err := s.repo.ListWorkerHOSStates(ctx, &telematicsports.ListWorkerHOSStatesRequest{
 		TenantInfo:    req.TenantInfo,
 		IncludeWorker: true,

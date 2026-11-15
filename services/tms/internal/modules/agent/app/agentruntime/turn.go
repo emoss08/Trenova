@@ -547,6 +547,7 @@ func (s *Service) describeToolSet(
 ) {
 	rc.ToolsDisclosed = tools.Disclosed
 	rc.ReachesBeyond = len(tools.Beyond) > 0
+	rc.NotOnPlan = tools.NotOnPlan
 	if tools.Searchable() {
 		rc.ToolMap = s.access.ToolMap(slices.Concat(tools.Allowed, tools.Beyond))
 	}

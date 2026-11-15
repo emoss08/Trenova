@@ -3,6 +3,7 @@ module github.com/emoss08/trenova/operator
 go 1.26.0
 
 require (
+	github.com/aws/aws-sdk-go-v2 v1.47.6
 	github.com/bytedance/sonic v1.15.4
 	github.com/google/go-containerregistry v0.21.7
 	github.com/google/uuid v1.6.0
@@ -29,6 +30,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
+	github.com/aws/smithy-go v1.28.8 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect

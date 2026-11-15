@@ -280,7 +280,7 @@ func TestUpdate_RefusesToKeepTheKeyForANewServer(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, e := range multiErr.Errors {
-		fields = append(fields, e.Field)
+		fields = append(fields, e.Field())
 	}
 	assert.Contains(t, fields, "apiKey")
 }

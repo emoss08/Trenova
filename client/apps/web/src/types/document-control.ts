@@ -57,7 +57,17 @@ export const documentExtractionStatusSchema = z.object({
   extractionAvailable: z.boolean(),
 });
 
+export const documentStorageStatusSchema = z.object({
+  managed: z.boolean(),
+  used: z.number(),
+  included: z.number(),
+  overage: z.boolean(),
+  warning: z.boolean(),
+  stopped: z.boolean(),
+});
+
 export type DocumentControl = z.infer<typeof documentControlSchema>;
 export type DocumentControlResource = z.infer<typeof documentControlResourceSchema>;
 export type ExtractionModelReason = z.infer<typeof extractionModelReasonSchema>;
 export type DocumentExtractionStatus = z.infer<typeof documentExtractionStatusSchema>;
+export type DocumentStorageStatus = z.infer<typeof documentStorageStatusSchema>;

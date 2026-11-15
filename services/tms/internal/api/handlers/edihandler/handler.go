@@ -22,6 +22,7 @@ type Params struct {
 	AS2Service           *ediinboundas2.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	Features             *middleware.FeatureGuard
 }
 
 type Handler struct {
@@ -32,6 +33,7 @@ type Handler struct {
 	as2Service     *ediinboundas2.Service
 	eh             *helpers.ErrorHandler
 	pm             *middleware.PermissionMiddleware
+	features       *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
@@ -43,6 +45,7 @@ func New(p Params) *Handler {
 		as2Service:     p.AS2Service,
 		eh:             p.ErrorHandler,
 		pm:             p.PermissionMiddleware,
+		features:       p.Features,
 	}
 }
 

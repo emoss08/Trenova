@@ -4,6 +4,7 @@ import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { useCannedReports, useReportDefinition } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
+import { PlanLockedNotice } from "@trenova/shared/components/plan-locked";
 import { useSearchParams, useParams } from "react-router";
 import { ExploreView } from "./_components/explore-view";
 
@@ -75,6 +76,16 @@ export function ReportExplorePage() {
 
   const entry = canned.data?.find((report) => report.key === cannedKey);
   if (!entry) return <NotFound what="This gallery report no longer exists." />;
+  if (!entry.available) {
+    return (
+      <PlanLockedNotice
+        variant="page"
+        title={entry.name}
+        featureName={entry.planDenial?.featureName ?? ""}
+        addOnName={entry.planDenial?.addOnName ?? ""}
+      />
+    );
+  }
 
   return (
     <ExploreView

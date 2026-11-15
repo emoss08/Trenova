@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchlearningports"
@@ -28,6 +30,7 @@ type Params struct {
 	Fields       permissionports.FieldAccess
 	Learning     dispatchlearningports.LearningStarter
 	Forecasts    demandforecastports.FitStarter
+	Features     platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -38,6 +41,7 @@ type Service struct {
 	fields       permissionports.FieldAccess
 	learning     dispatchlearningports.LearningStarter
 	forecasts    demandforecastports.FitStarter
+	features     platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In parameter struct by value
@@ -49,6 +53,7 @@ func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In paramete
 		fields:       p.Fields,
 		learning:     p.Learning,
 		forecasts:    p.Forecasts,
+		features:     p.Features,
 	}
 }
 
@@ -84,6 +89,17 @@ func (s *Service) Update(
 	}
 	entity.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
 
+	anticipating := entity.AnticipateFreight && !original.AnticipateFreight
+	if anticipating || turnsOnPlanning(original, entity) {
+		if err = platformcatalogports.RequireFeature(
+			ctx,
+			s.features,
+			platformcatalog.FeatureDispatchIntelligence,
+		); err != nil {
+			return nil, err
+		}
+	}
+
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -104,7 +120,7 @@ func (s *Service) Update(
 		}
 	}
 
-	if updatedEntity.AnticipateFreight && !original.AnticipateFreight {
+	if anticipating && updatedEntity.AnticipateFreight {
 		if err = s.forecasts.StartFitting(ctx, pagination.TenantInfo{
 			OrgID: updatedEntity.OrganizationID,
 			BuID:  updatedEntity.BusinessUnitID,
@@ -132,4 +148,10 @@ func (s *Service) Update(
 	}
 
 	return updatedEntity, nil
+}
+
+func turnsOnPlanning(original, next *dispatchcontrol.DispatchControl) bool {
+	return (next.EnableAutoAssignment && !original.EnableAutoAssignment) ||
+		(next.AutoProposeCoverage && !original.AutoProposeCoverage) ||
+		(next.LearnDispatchStyle && !original.LearnDispatchStyle)
 }

@@ -1,5 +1,6 @@
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { NarrativeSegments } from "@/components/narrative-segments";
+import { PlanFeature } from "@/lib/plan-feature";
 import type { AuditActorStat, AuditOverview, AuditReview } from "@/lib/graphql/audit-overview";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -9,6 +10,7 @@ import {
   type SegmentedControlItem,
 } from "@trenova/shared/components/ui/segmented-control";
 import { useNow } from "@trenova/shared/hooks/use-now";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { formatNumber, formatRelativeTime } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { describeError } from "@trenova/shared/lib/error-presentation";
@@ -138,6 +140,8 @@ export default function AuditOverviewBand({
   onOpenReview,
 }: AuditOverviewProps) {
   const t = useT();
+  // The sentence is the records' own; it is signed as Nova's only on a plan with Trenova AI.
+  const novaOnPlan = usePlanFeature(PlanFeature.AIDesk).available;
   const query = useAuditOverview(days);
   const overview = query.data;
 
@@ -187,8 +191,12 @@ export default function AuditOverviewBand({
       <div className="grid items-start gap-x-8 gap-y-3 md:grid-cols-[minmax(0,1fr)_auto]">
         <div className="flex min-w-0 flex-col gap-1.5">
           <span className="flex items-center gap-2 text-xs text-muted-foreground">
-            <NovaBadge size="sm" />
-            <span className="font-medium text-foreground">{t("Nova")}</span>
+            {novaOnPlan ? (
+              <>
+                <NovaBadge size="sm" />
+                <span className="font-medium text-foreground">{t("Nova")}</span>
+              </>
+            ) : null}
             {days === 1
               ? t("Today in the audit log")
               : t("The last {0} days in the audit log", days)}

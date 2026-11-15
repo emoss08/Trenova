@@ -68,24 +68,38 @@ func (e *QuotaExceededError) LogFields() LogFields {
 
 type PlanRestrictionError struct {
 	BaseError
-	Capability string `json:"capability"`
-	Reason     string `json:"reason"`
-	Plan       string `json:"plan"`
+	Feature string `json:"feature"`
+	AddOn   string `json:"addOn"`
+	Reason  string `json:"reason"`
+	Plan    string `json:"plan"`
 }
 
-func NewPlanRestrictionError(capability, reason, plan string) *PlanRestrictionError {
-	if reason == "" {
-		reason = PlanRestrictionReasonPlan
-	}
-
+func NewPlanRestrictionError(reason, plan string) *PlanRestrictionError {
 	return &PlanRestrictionError{
 		BaseError: BaseError{
 			Code:    ErrPlanRestricted,
 			Message: planRestrictionMessage(reason),
 		},
-		Capability: capability,
-		Reason:     reason,
-		Plan:       plan,
+		Reason: reason,
+		Plan:   plan,
+	}
+}
+
+func NewFeatureRestrictionError(feature, addOn string) *PlanRestrictionError {
+	base := BaseError{
+		Code:    ErrPlanRestricted,
+		Message: planRestrictionMessages.Plan.Message,
+	}
+	if addOn != "" {
+		base.Message = planRestrictionMessages.AddOn.Message
+		base.Args = []any{addOn}
+	}
+
+	return &PlanRestrictionError{
+		BaseError: base,
+		Feature:   feature,
+		AddOn:     addOn,
+		Reason:    PlanRestrictionReasonPlan,
 	}
 }
 
@@ -104,12 +118,16 @@ func planRestrictionMessage(reason string) string {
 
 var planRestrictionMessages = struct {
 	Plan          BaseError
+	AddOn         BaseError
 	ReadOnly      BaseError
 	Expired       BaseError
 	SignupsPaused BaseError
 }{
 	Plan: BaseError{
 		Message: "This feature is not available on your organization's plan",
+	},
+	AddOn: BaseError{
+		Message: "This feature is part of the {0} add-on, which is not on your plan",
 	},
 	ReadOnly: BaseError{
 		Message: "This organization's trial has ended and it is now read-only",
@@ -129,9 +147,10 @@ func IsPlanRestrictionError(err error) bool {
 
 func (e *PlanRestrictionError) Params() map[string]string {
 	return map[string]string{
-		"capability": e.Capability,
-		"reason":     e.Reason,
-		"plan":       e.Plan,
+		"feature": e.Feature,
+		"addOn":   e.AddOn,
+		"reason":  e.Reason,
+		"plan":    e.Plan,
 	}
 }
 
@@ -147,7 +166,8 @@ func (e *PlanRestrictionError) WithContext(ctx *ErrorContext) *PlanRestrictionEr
 
 func (e *PlanRestrictionError) LogFields() LogFields {
 	fields := e.BaseError.LogFields()
-	fields["plan_capability"] = e.Capability
+	fields["plan_feature"] = e.Feature
+	fields["plan_add_on"] = e.AddOn
 	fields["plan_reason"] = e.Reason
 	fields["plan_key"] = e.Plan
 	return fields

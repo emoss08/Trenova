@@ -48,6 +48,7 @@ var formulaTemplatesTable = schema.Table{
 		{Name: "source_template_id", Quoted: `"source_template_id"`, Field: "SourceTemplateID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Source Template ID`, JSON: `sourceTemplateId`},
 		{Name: "source_version_number", Quoted: `"source_version_number"`, Field: "SourceVersionNumber", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Source Version Number`, JSON: `sourceVersionNumber`},
 		{Name: "current_version_number", Quoted: `"current_version_number"`, Field: "CurrentVersionNumber", Kind: schema.KindInt64, Flags: 0, Label: `Current Version Number`, JSON: `currentVersionNumber`},
+		{Name: "standard_key", Quoted: `"standard_key"`, Field: "StandardKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Standard Key`, JSON: `standardKey`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
@@ -57,14 +58,14 @@ var formulaTemplatesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 20, 21, 22, 24},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 20, 21, 22, 23, 25},
 	Returning:    nil,
 	Version:      19,
 	AutoID:       0,
-	AutoCreate:   23,
-	AutoUpdate:   24,
+	AutoCreate:   24,
+	AutoUpdate:   25,
 	IDPrefix:     "ft_",
 	New:          newFormulaTemplate,
 	NewN:         newNFormulaTemplate,
@@ -105,6 +106,7 @@ type FormulaTemplatesTable struct {
 	SourceTemplateID     keelkinds.PulidIDCol
 	SourceVersionNumber  keel.Int64Col
 	CurrentVersionNumber keel.Int64Col
+	StandardKey          keel.StringCol
 	CreatedAt            keel.Int64Col
 	UpdatedAt            keel.Int64Col
 }
@@ -135,8 +137,9 @@ var FormulaTemplates = &FormulaTemplatesTable{
 	SourceTemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 20}}},
 	SourceVersionNumber:  keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 21}},
 	CurrentVersionNumber: keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 22}},
-	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 23}},
-	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 24}},
+	StandardKey:          keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 23}},
+	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 24}},
+	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 25}},
 }
 
 // BuildFormulaTemplates builds the table of formula_templates for ref. Generated relation and alias methods call it.
@@ -166,8 +169,9 @@ func BuildFormulaTemplates(r *keel.Ref) *FormulaTemplatesTable {
 		SourceTemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		SourceVersionNumber:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		CurrentVersionNumber: keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
-		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+		StandardKey:          keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
+		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 	}
 }
 
@@ -615,8 +619,10 @@ func ptrFormulaTemplate(p unsafe.Pointer, c int32) any {
 	case 22:
 		return &r.CurrentVersionNumber
 	case 23:
-		return &r.CreatedAt
+		return &r.StandardKey
 	case 24:
+		return &r.CreatedAt
+	case 25:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -708,8 +714,13 @@ func valueFormulaTemplate(p unsafe.Pointer, c int32) any {
 	case 22:
 		return r.CurrentVersionNumber
 	case 23:
-		return r.CreatedAt
+		if r.StandardKey == "" {
+			return nil
+		}
+		return r.StandardKey
 	case 24:
+		return r.CreatedAt
+	case 25:
 		return r.UpdatedAt
 	}
 	return nil

@@ -1,14 +1,17 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
+import { PlanLockedNotice } from "@trenova/shared/components/plan-locked";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { Switch } from "@trenova/shared/components/ui/switch";
 import { useCannedReports, useForkCannedReport } from "@/hooks/use-reports";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { usePermissions } from "@/hooks/use-permission";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { CannedReport } from "@/lib/graphql/reports";
 import { Resource } from "@trenova/shared/types/permission";
 import { parseReportIR, type ReportParameterDef } from "@/types/report";
 import { PlayIcon, RulerIcon, TableIcon } from "@trenova/shared/components/icons";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
@@ -19,6 +22,12 @@ import {
 } from "../reports-page-state";
 import { CategoryGroupHeader, ReportCard, ReportGridEmpty } from "./report-card-chrome";
 import { RunReportDialog, type RunReportTarget } from "./run-report-dialog";
+
+/**
+ * Whether the person chose to see the gallery reports their plan's add-ons leave out. Off by
+ * default: a report nobody can run is clutter, so it stays out of the way until asked for.
+ */
+export const SHOW_ADD_ON_REPORTS_STORAGE_KEY = "reports-gallery-show-add-on-reports";
 
 type RunDialogState = {
   target: RunReportTarget;
@@ -114,8 +123,13 @@ export function CannedGallery({
   const { canCreate, canExport } = usePermissions(Resource.Report);
   const [runDialog, setRunDialog] = useState<RunDialogState | null>(null);
   const [customizingKey, setCustomizingKey] = useState<string | null>(null);
+  const [showAddOnReports, setShowAddOnReports] = useLocalStorage(
+    SHOW_ADD_ON_REPORTS_STORAGE_KEY,
+    false,
+  );
+  const switchId = useId();
 
-  const filtered = useMemo(() => {
+  const matching = useMemo(() => {
     const term = search.trim().toLowerCase();
     return (cannedReports ?? [])
       .filter((report) => {
@@ -136,7 +150,16 @@ export function CannedGallery({
       })
       .sort(compareReportsBySort(sortBy));
   }, [cannedReports, search, sortBy, category]);
+  // The control is offered only when the plan leaves some gallery report out; a plan that
+  // includes them all has nothing to hide.
+  const offPlanTotal = (cannedReports ?? []).filter((report) => !report.available).length;
+  const hiddenCount = showAddOnReports ? 0 : matching.filter((report) => !report.available).length;
+  const filtered = useMemo(
+    () => (showAddOnReports ? matching : matching.filter((report) => report.available)),
+    [matching, showAddOnReports],
+  );
   const groups = useMemo(() => groupByReportCategory(filtered), [filtered]);
+  const filtering = search.trim() !== "" || category !== "all";
 
   if (isLoading) {
     return (
@@ -165,19 +188,51 @@ export function CannedGallery({
 
   return (
     <>
-      {filtered.length === 0 ? (
+      {offPlanTotal > 0 ? (
+        <div className="flex items-center justify-end gap-2 px-4 pt-3">
+          {hiddenCount > 0 ? (
+            <span className="text-xs text-foreground-subtle">
+              {t("{0, plural, one {# hidden} other {# hidden}}", hiddenCount)}
+            </span>
+          ) : null}
+          <Switch
+            id={switchId}
+            size="sm"
+            checked={showAddOnReports}
+            onCheckedChange={(checked) => setShowAddOnReports(checked)}
+            aria-label={t("Show reports from add-ons")}
+          />
+          <label htmlFor={switchId} className="text-sm text-muted-foreground">
+            {t("Show reports from add-ons")}
+          </label>
+        </div>
+      ) : null}
+      {filtered.length === 0 && hiddenCount > 0 ? (
         <div className="grid p-4">
           <ReportGridEmpty
             variant="reports"
-            title={
-              search.trim() || category !== "all" ? "Nothing matches" : "Nothing in the gallery"
+            title={t("Only add-on reports match")}
+            description={t(
+              "Every gallery report that fits is part of an add-on your plan does not include. Show reports from add-ons to see what they cover.",
+            )}
+            action={
+              <Button size="sm" onClick={() => setShowAddOnReports(true)}>
+                {t("Show reports from add-ons")}
+              </Button>
             }
+          />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="grid p-4">
+          <ReportGridEmpty
+            variant="reports"
+            title={filtering ? "Nothing matches" : "Nothing in the gallery"}
             description={
-              search.trim() || category !== "all"
+              filtering
                 ? "No gallery report fits the search and filters. Widen them, or clear them to see the whole gallery."
                 : "The gallery is where ready-made reports live. Once some are published, they appear here to run as they are or copy into your own."
             }
-            onClearFilters={search.trim() || category !== "all" ? onClearFilters : undefined}
+            onClearFilters={filtering ? onClearFilters : undefined}
           />
         </div>
       ) : (
@@ -186,24 +241,34 @@ export function CannedGallery({
             <section key={group.key} className="space-y-3">
               <CategoryGroupHeader label={t(group.label)} count={group.items.length} />
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                {group.items.map((report) => (
-                  <CannedReportCard
-                    key={report.key}
-                    report={report}
-                    canRun={canExport}
-                    canCustomize={canCreate}
-                    customizing={customizingKey === report.key}
-                    onRun={() =>
-                      setRunDialog({
-                        target: { cannedKey: report.key },
-                        name: report.name,
-                        defaultFormat: report.defaultFormat,
-                        parameters: parseReportIR(report.definition)?.parameters ?? [],
-                      })
-                    }
-                    onCustomize={() => handleCustomize(report)}
-                  />
-                ))}
+                {group.items.map((report) =>
+                  report.available ? (
+                    <CannedReportCard
+                      key={report.key}
+                      report={report}
+                      canRun={canExport}
+                      canCustomize={canCreate}
+                      customizing={customizingKey === report.key}
+                      onRun={() =>
+                        setRunDialog({
+                          target: { cannedKey: report.key },
+                          name: report.name,
+                          defaultFormat: report.defaultFormat,
+                          parameters: parseReportIR(report.definition)?.parameters ?? [],
+                        })
+                      }
+                      onCustomize={() => handleCustomize(report)}
+                    />
+                  ) : (
+                    <PlanLockedNotice
+                      key={report.key}
+                      variant="card"
+                      title={report.name}
+                      featureName={report.planDenial?.featureName ?? ""}
+                      addOnName={report.planDenial?.addOnName ?? ""}
+                    />
+                  ),
+                )}
               </div>
             </section>
           ))}

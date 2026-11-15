@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -85,6 +86,7 @@ func newFixture(defs ...*agentdefinition.Definition) *fixture {
 	}
 	f.publisher = agentevents.New(agentevents.Params{
 		Logger:      zap.NewNop(),
+		Features:    plantest.AllFeatures(),
 		Waits:       quietWaits{},
 		Definitions: f.definitions,
 		EventRuns:   f.eventRuns,

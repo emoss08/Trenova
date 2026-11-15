@@ -1,6 +1,7 @@
 package assistantturnservice
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
@@ -32,7 +33,7 @@ func TestStartRefusesAPersonsQuestionPastTheMonthlyMessageLimit(t *testing.T) {
 		Limit:   25,
 		Used:    25,
 	}, nil)
-	svc := &Service{l: zap.NewNop(), quota: guard}
+	svc := &Service{l: zap.NewNop(), quota: guard, features: plantest.AllFeatures()}
 
 	for _, origin := range []conversationturn.AssistantTurnOrigin{"", conversationturn.AssistantTurnOriginPerson} {
 		turn, err := svc.Start(t.Context(), StartRequest{
@@ -50,8 +51,8 @@ func TestStartRefusesScheduledTurnsThePlanRestricts(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{
-		l:     zap.NewNop(),
-		plans: plantest.Restricting(t, platformplan.CapabilityAgentAutomation),
+		l:        zap.NewNop(),
+		features: plantest.Without(platformcatalog.FeatureAgentAutomation),
 	}
 
 	turn, err := svc.Start(t.Context(), StartRequest{
@@ -68,13 +69,43 @@ func TestAssertPlanAllowsLetsFollowUpsThrough(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{
-		l:     zap.NewNop(),
-		quota: platformplanportsmock.NewMockQuotaGuard(t),
-		plans: platformplanportsmock.NewMockPlanService(t),
+		l:        zap.NewNop(),
+		quota:    platformplanportsmock.NewMockQuotaGuard(t),
+		features: plantest.AllFeatures(),
 	}
 
 	require.NoError(t, svc.assertPlanAllows(t.Context(), StartRequest{
 		TenantInfo: plantest.Tenant(),
 		Origin:     conversationturn.AssistantTurnOriginDecisionFollowUp,
 	}))
+}
+
+func TestStartRefusesEveryTurnWithoutTheDesk(t *testing.T) {
+	t.Parallel()
+
+	svc := &Service{
+		l:        zap.NewNop(),
+		quota:    platformplanportsmock.NewMockQuotaGuard(t),
+		features: plantest.BaseOnly(),
+	}
+
+	for _, origin := range []conversationturn.AssistantTurnOrigin{
+		"",
+		conversationturn.AssistantTurnOriginPerson,
+		conversationturn.AssistantTurnOriginDecisionFollowUp,
+		conversationturn.AssistantTurnOriginScheduled,
+		conversationturn.AssistantTurnOriginCompaction,
+		conversationturn.AssistantTurnOriginWaitResolved,
+	} {
+		turn, err := svc.Start(t.Context(), StartRequest{
+			ThreadID:   pulid.MustNew("thr_"),
+			TenantInfo: plantest.Tenant(),
+			Origin:     origin,
+		})
+
+		require.Nil(t, turn)
+		restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err)
+		require.Truef(t, ok, "%q: expected a plan restriction, got %v", origin, err)
+		require.Equal(t, "Trenova AI", restriction.AddOn)
+	}
 }

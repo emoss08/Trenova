@@ -22,6 +22,7 @@ const categories: ResourceCategory[] = [
         description: "Customer management",
         category: "Billing",
         defaultSensitivity: "internal",
+        feature: "tms.core",
         operations: [
           { operation: "read", displayName: "View", description: "View customers", implies: [] },
           {
@@ -45,6 +46,7 @@ const categories: ResourceCategory[] = [
         category: "Billing",
         parentResource: "customer",
         defaultSensitivity: "internal",
+        feature: "tms.core",
         operations: [
           { operation: "read", displayName: "View", description: "View contacts", implies: [] },
         ],
@@ -60,6 +62,7 @@ const categories: ResourceCategory[] = [
         description: "Categories for locations",
         category: "Dispatch",
         defaultSensitivity: "internal",
+        feature: "tms.core",
         operations: [
           { operation: "read", displayName: "View", description: "View categories", implies: [] },
         ],
@@ -291,6 +294,7 @@ describe("RolePermissionMatrix advanced access", () => {
           description: "A worker record",
           category: "Human resources",
           defaultSensitivity: "internal",
+          feature: "tms.core",
           operations: [
             { operation: "read", displayName: "View", description: "View", implies: [] },
           ],

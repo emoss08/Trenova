@@ -5,6 +5,8 @@ import {
 } from "@/lib/graphql/worker-overview";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { cn } from "@trenova/shared/lib/utils";
 import { rosterViews, type RosterViewId } from "@trenova/shared/lib/worker-roster-views";
 import { getTodayDate } from "@trenova/shared/lib/date";
@@ -18,7 +20,7 @@ type Tone = "critical" | "warning" | "muted";
 type Line = {
   view: RosterViewId;
   label: string;
-  count: number;
+  count: number | null;
   tone: Tone;
 };
 
@@ -29,6 +31,13 @@ type Line = {
  */
 export function WorkerAttentionWidget({ widget }: WidgetProps) {
   const t = useT();
+
+  // Each line belongs to an add-on: compliance and expiries to Safety & Compliance's driver
+  // compliance, the safety watch list to its safety events, overdue training to the HR Suite.
+  // A line whose add-on the plan leaves out is not drawn at all.
+  const compliance = usePlanFeature(PlanFeature.WorkforceCompliance).available;
+  const safety = usePlanFeature(PlanFeature.WorkforceSafety).available;
+  const talent = usePlanFeature(PlanFeature.WorkforceTalent).available;
 
   const { data, isLoading } = useQuery({
     queryKey: [WORKER_ROSTER_ATTENTION_KEY],
@@ -48,38 +57,88 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
   }
 
   const lines: Line[] = [
-    {
-      view: "non-compliant",
-      label: t("Non-compliant"),
-      count: data?.nonCompliant ?? 0,
-      tone: "critical",
-    },
-    {
-      view: "training-overdue",
-      label: t("Training overdue"),
-      count: data?.trainingOverdue ?? 0,
-      tone: "critical",
-    },
-    { view: "at-risk", label: t("Safety at risk"), count: data?.atRisk ?? 0, tone: "critical" },
-    {
-      view: "expiring-soon",
-      label: t("Expiring in 30 days"),
-      count: data?.expiringSoon ?? 0,
-      tone: "warning",
-    },
+    ...(compliance
+      ? [
+          {
+            view: "non-compliant",
+            label: t("Non-compliant"),
+            count: data?.nonCompliant ?? 0,
+            tone: "critical",
+          } satisfies Line,
+        ]
+      : []),
+    ...(talent
+      ? [
+          {
+            view: "training-overdue",
+            label: t("Training overdue"),
+            count: data?.trainingOverdue ?? null,
+            tone: "critical",
+          } satisfies Line,
+        ]
+      : []),
+    ...(safety
+      ? [
+          {
+            view: "at-risk",
+            label: t("Safety at risk"),
+            count: data?.atRisk ?? 0,
+            tone: "critical",
+          } satisfies Line,
+        ]
+      : []),
+    ...(compliance
+      ? [
+          {
+            view: "expiring-soon",
+            label: t("Expiring in 30 days"),
+            count: data?.expiringSoon ?? 0,
+            tone: "warning",
+          } satisfies Line,
+        ]
+      : []),
   ];
 
-  const allClear = lines.every((line) => line.count === 0);
+  const shown = lines.filter((line) => line.count !== null);
+  const allClear = shown.every((line) => line.count === 0);
+  const standings = data
+    ? [
+        data.reviewsAwaitingSignOff == null ? null : (
+          <Standing
+            key="reviews"
+            label={t("Reviews to sign")}
+            value={String(data.reviewsAwaitingSignOff)}
+            muted={data.reviewsAwaitingSignOff === 0}
+          />
+        ),
+        data.ptoLiabilityDays == null ? null : (
+          <Standing
+            key="pto"
+            label={t("PTO liability")}
+            value={t("{0} days", formatPtoDayTotal(data.ptoLiabilityDays))}
+            muted={Number(data.ptoLiabilityDays) === 0}
+          />
+        ),
+        data.leaveCertificationsOutstanding == null ? null : (
+          <Standing
+            key="leave"
+            label={t("Certifications owed")}
+            value={String(data.leaveCertificationsOutstanding)}
+            muted={data.leaveCertificationsOutstanding === 0}
+          />
+        ),
+      ].filter(Boolean)
+    : [];
 
   return (
     <WidgetShell title={widget.title || t("Workforce attention")} href="/hr/workers">
-      {allClear ? (
+      {shown.length === 0 ? null : allClear ? (
         <p className="text-muted-foreground px-1.5 py-2 text-xs">
           {t("Every active worker is compliant, in date and off the watch list.")}
         </p>
       ) : (
         <div className="flex flex-col gap-0.5">
-          {lines.map((line) => (
+          {shown.map((line) => (
             <Link
               key={line.view}
               to={rosterViewHref(line.view)}
@@ -92,8 +151,14 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
                 className={cn(
                   "font-semibold tabular-nums",
                   line.count === 0 && "text-muted-foreground",
-                  line.count > 0 && line.tone === "critical" && "text-danger-foreground",
-                  line.count > 0 && line.tone === "warning" && "text-warning-foreground",
+                  line.count !== null &&
+                    line.count > 0 &&
+                    line.tone === "critical" &&
+                    "text-danger-foreground",
+                  line.count !== null &&
+                    line.count > 0 &&
+                    line.tone === "warning" &&
+                    "text-warning-foreground",
                 )}
               >
                 {line.count}
@@ -104,27 +169,16 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
       )}
       {data ? (
         <>
-          <dl className="border-border/60 mt-2 grid grid-cols-3 gap-x-2 border-t pt-2">
-            {data.reviewsAwaitingSignOff == null ? null : (
-              <Standing
-                label={t("Reviews to sign")}
-                value={String(data.reviewsAwaitingSignOff)}
-                muted={data.reviewsAwaitingSignOff === 0}
-              />
-            )}
-            <Standing
-              label={t("PTO liability")}
-              value={`${formatPtoDayTotal(data.ptoLiabilityDays)} days`}
-              muted={Number(data.ptoLiabilityDays) === 0}
-            />
-            {data.leaveCertificationsOutstanding == null ? null : (
-              <Standing
-                label={t("Certifications owed")}
-                value={String(data.leaveCertificationsOutstanding)}
-                muted={data.leaveCertificationsOutstanding === 0}
-              />
-            )}
-          </dl>
+          {standings.length > 0 ? (
+            <dl
+              className={cn(
+                "grid grid-cols-3 gap-x-2",
+                shown.length > 0 && "border-border/60 mt-2 border-t pt-2",
+              )}
+            >
+              {standings}
+            </dl>
+          ) : null}
           <p className="text-muted-foreground mt-1.5 px-1.5 text-xs">
             {t("{0, plural, one {# active worker} other {# active workers}}", data.activeWorkers)}
           </p>
@@ -138,8 +192,8 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
  * A figure with no list behind it: none of reviews, the PTO liability or the
  * leave certifications owed has a roster view that would show the same number,
  * so these read as standing totals rather than as links that promise a
- * filtered list. Reviews and leave are granted on their own; the server sends
- * null for a reader who may not read them, and the figure is left out.
+ * filtered list. The server sends null for a figure the reader may not read or
+ * whose add-on the plan leaves out, and the figure is left out.
  */
 function Standing({ label, value, muted }: { label: string; value: string; muted: boolean }) {
   return (

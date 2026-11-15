@@ -5,8 +5,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,6 +19,10 @@ import (
 type recordingObserver struct {
 	mu      sync.Mutex
 	changes []emailports.EmailMessageChange
+}
+
+func (o *recordingObserver) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureAdministration
 }
 
 func (o *recordingObserver) EmailMessageChanged(_ context.Context, change emailports.EmailMessageChange) {
@@ -46,7 +52,9 @@ func TestRegisterObservers_HandsTheGraphsObserversToTheEmailService(t *testing.T
 	var svc *Service
 	app := fxtest.New(t,
 		fx.Provide(
-			func() *Service { return &Service{invoiceRepo: noInvoiceAttempts{}} },
+			func() *Service {
+				return &Service{invoiceRepo: noInvoiceAttempts{}, features: plantest.AllFeatures()}
+			},
 			func(email *Service) emailports.EmailService { return email },
 			fx.Annotate(
 				func(emailports.EmailService) emailports.EmailMessageObserver { return observer },
@@ -71,7 +79,7 @@ func TestObserve_AddsToTheObserversAlreadyRegistered(t *testing.T) {
 	t.Parallel()
 
 	first, second := &recordingObserver{}, &recordingObserver{}
-	svc := &Service{}
+	svc := &Service{features: plantest.AllFeatures()}
 	svc.messageChanged(t.Context(), &email.Message{}, nil)
 
 	svc.Observe(first)

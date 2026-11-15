@@ -19,8 +19,12 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@/hooks/use-plan-restrictions", () => ({
-  usePlanRestrictions: () => mocks.restrictions,
+vi.mock("@trenova/shared/hooks/use-plan-feature", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@trenova/shared/hooks/use-plan-feature")>()),
+  usePlanFeature: (feature: string) =>
+    (mocks.restrictions as readonly string[]).includes(feature)
+      ? { available: false, featureName: "Agents", addOnName: "Trenova AI" }
+      : { available: true, featureName: "", addOnName: "" },
 }));
 
 vi.mock("@/lib/queries/document-control", () => ({
@@ -93,7 +97,7 @@ describe("ExtractionNeedsProviderAlert", () => {
 
   it("hides the link when the plan withholds agent automation", async () => {
     grantProviderSetup();
-    mocks.restrictions = ["agent.automation"];
+    mocks.restrictions = ["platform.agent_automation"];
     mocks.status = NO_PROVIDER;
 
     renderAlert();

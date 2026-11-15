@@ -19,6 +19,20 @@ enum PageAccessDecision {
   WITHHELD_KIND
   "Above the reader's sensitivity ceiling."
   WITHHELD_SENSITIVITY
+  "The kind, or the field, belongs to an add-on the organization's plan does not include."
+  WITHHELD_PLAN
+}
+
+"The add-on a kind belongs to, named because the organization's plan does not include it."
+type PageAccessPlanDenial {
+  "The feature's key."
+  feature: String!
+  "The feature's name, such as Factoring."
+  featureName: String!
+  "The add-on's key."
+  addOn: String!
+  "The add-on's name, such as Accounting & Cash."
+  addOnName: String!
 }
 
 "A permission a screen's route or one of its REST endpoints checks."
@@ -55,6 +69,8 @@ type PageAccessKind {
   canRead: Boolean!
   fields: [PageAccessField!]!
   withheld: Int!
+  "Set when the organization's plan leaves the kind out, so nobody sees it."
+  planDenial: PageAccessPlanDenial
 }
 
 """

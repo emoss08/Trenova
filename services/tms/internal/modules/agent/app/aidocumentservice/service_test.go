@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -88,6 +89,7 @@ func newTestService(t *testing.T, completion *stubCompletion) *Service {
 
 	return &Service{
 		logger:   zap.NewNop(),
+		features: plantest.AllFeatures(),
 		cfg:      &cfg.AI,
 		metrics:  registry,
 		nova:     nova,

@@ -1,3 +1,4 @@
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
@@ -472,6 +473,7 @@ const OPERATING_MODEL_PRESETS: SegmentedControlItem<OrganizationCapabilityPreset
 
 function OperatingModelForm() {
   const t = useT();
+  const brokerage = usePlanFeature("tms.carrier_brokerage").available;
 
   const { control, setValue } = useFormContext<OrganizationSettings>();
   const brokerageEnabled = useWatch({ control, name: "brokerageEnabled" });
@@ -531,16 +533,18 @@ function OperatingModelForm() {
             </span>
           </div>
           <FormGroup cols={1}>
-            <FormControl>
-              <SwitchField
-                control={control}
-                name="brokerageEnabled"
-                label={t("Brokerage features")}
-                description={t(
-                  "Shows carriers, routing guides, tendering, and carrier settlements. Turning this off hides them from menus and navigation; it does not restrict permissions or API access.",
-                )}
-              />
-            </FormControl>
+            {brokerage ? (
+              <FormControl>
+                <SwitchField
+                  control={control}
+                  name="brokerageEnabled"
+                  label={t("Brokerage features")}
+                  description={t(
+                    "Shows carriers, routing guides, tendering, and carrier settlements. Turning this off hides them from menus and navigation; it does not restrict permissions or API access.",
+                  )}
+                />
+              </FormControl>
+            ) : null}
             <FormControl>
               <SwitchField
                 control={control}

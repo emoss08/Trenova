@@ -237,6 +237,9 @@ func (r *reader) read(
 			"Whether you may read this could not be checked. Try again in a moment.",
 		), params
 	}
+	if check.PlanDenial != nil {
+		return refused(check.PlanDenial.Restriction().Error() + "."), params
+	}
 	if !check.Allowed {
 		return refused(
 			fmt.Sprintf("The person asking cannot read %s records.", resource.String()),

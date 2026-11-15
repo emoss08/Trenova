@@ -8,5 +8,6 @@ type PublicSessionPolicy struct {
 
 type PublicConfig struct {
 	PlatformMode string              `json:"platformMode"`
+	Managed      bool                `json:"managed"`
 	Session      PublicSessionPolicy `json:"session"`
 }

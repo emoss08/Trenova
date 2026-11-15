@@ -17,6 +17,7 @@ const (
 	ErrTypeReportAuthorization = "REPORT_AUTHORIZATION"
 	ErrTypeReportTooExpensive  = "REPORT_TOO_EXPENSIVE"
 	ErrTypeReportBusy          = "REPORT_BUSY"
+	ErrTypeReportPlan          = "PLAN_RESTRICTED"
 )
 
 const busyRetryDelay = 15 * time.Second
@@ -31,6 +32,7 @@ var prepareActivityOptions = workflow.ActivityOptions{
 		NonRetryableErrorTypes: []string{
 			ErrTypeReportValidation,
 			ErrTypeReportAuthorization,
+			ErrTypeReportPlan,
 		},
 	},
 }
@@ -132,6 +134,7 @@ func RunReportWorkflow(
 			NonRetryableErrorTypes: []string{
 				ErrTypeReportValidation,
 				ErrTypeReportAuthorization,
+				ErrTypeReportPlan,
 				ErrTypeReportTooExpensive,
 			},
 		},

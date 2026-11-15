@@ -3,19 +3,14 @@ package edisetup
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 )
 
-func (s *Service) requireIntegrations(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) error {
-	return planservice.RequireCapability(
+func (s *Service) requireEDIIntegration(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(
 		ctx,
-		s.plans,
-		tenantInfo,
-		platformplan.CapabilityIntegrations,
+		s.features,
+		platformcatalog.FeatureEDIIntegration,
 	)
 }

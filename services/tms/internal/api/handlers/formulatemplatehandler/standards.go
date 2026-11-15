@@ -4,8 +4,11 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,28 +31,50 @@ func (h *Handler) listStandards(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, standards)
 }
 
-// @Summary Install the standard formula template library for this organization
-// @ID installStandardFormulaTemplates
+// @Summary Get the inputs a rating method prices a shipment with
+// @ID getPricingTemplateInputs
 // @Tags Formula Templates
 // @Produce json
-// @Success 200 {object} formulatemplateimportservice.InstallStandardsResponse
+// @Param templateID path string true "Formula template ID"
+// @Success 200 {object} formulatemplateservice.PricingInputs
+// @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
-// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
-// @Router /formula-templates/install-standards [post]
-func (h *Handler) installStandards(c *gin.Context) {
+// @Router /pricing-templates/{templateID}/inputs [get]
+func (h *Handler) pricingInputs(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	result, err := h.imports.InstallStandards(c.Request.Context(), pagination.TenantInfo{
-		OrgID:  authCtx.OrganizationID,
-		BuID:   authCtx.BusinessUnitID,
-		UserID: authCtx.UserID,
-	})
+	id, err := pulid.MustParse(c.Param("templateID"))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, result)
+	mayReadCustom, err := h.pm.Allowed(
+		c,
+		permission.ResourceFormulaTemplate.String(),
+		permission.OpRead,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	inputs, err := h.service.PricingInputs(
+		c.Request.Context(),
+		&formulatemplateservice.PricingInputsRequest{
+			TenantInfo:    pagination.FromAuthAsUser(authCtx),
+			TemplateID:    id,
+			MayReadCustom: mayReadCustom,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	helpers.JSON(c, http.StatusOK, inputs)
 }

@@ -500,10 +500,11 @@ type ShipmentBillingWatch {
   moreCustomers: Int!
 }
 
-type ShipmentWatchlist {
+"The shipment board's watch tiles: aggregates of the organization's shipments, so a card of the shipment kind."
+type ShipmentWatchlist @kind(resource: "shipment") {
   deliveries: ShipmentDeliveryWatch!
   uncovered: ShipmentUncoveredWatch!
-  detention: ShipmentDetentionWatch!
+  detention: ShipmentDetentionWatch
   billing: ShipmentBillingWatch!
 }
 

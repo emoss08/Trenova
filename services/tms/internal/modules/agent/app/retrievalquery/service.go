@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/lrucache"
@@ -34,6 +36,9 @@ type Params struct {
 	Repository retrievalports.AIRetrievalRepository
 	Embeddings aiusageports.EmbeddingService
 	Shared     retrievalports.QueryVectorCache
+	// Features is the plan: search by meaning is Trenova AI's Desk, so
+	// without it a search is by keyword and no query is embedded.
+	Features platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -41,6 +46,7 @@ type Service struct {
 	repo       retrievalports.AIRetrievalRepository
 	embeddings aiusageports.EmbeddingService
 	shared     retrievalports.QueryVectorCache
+	features   platformcatalogports.FeatureGate
 	vectors    lrucache.Cache[queryKey, retrievalports.QueryVector]
 }
 
@@ -57,6 +63,7 @@ func New(p Params) *Service {
 		repo:       p.Repository,
 		embeddings: p.Embeddings,
 		shared:     p.Shared,
+		features:   p.Features,
 		vectors: lrucache.NewExpirable[queryKey, retrievalports.QueryVector](
 			queryCacheSize,
 			queryCacheTTL,
@@ -188,6 +195,13 @@ func (s *Service) Availability(
 	if err := validateTenant(tenant); err != nil {
 		return airetrieval.Availability{}, err
 	}
+	included, err := s.onPlan(ctx)
+	if err != nil {
+		return airetrieval.Availability{}, err
+	}
+	if !included {
+		return airetrieval.Availability{Reason: airetrieval.UnavailableReasonDisabled}, nil
+	}
 
 	storage, err := s.repo.VectorAvailability(ctx)
 	if err != nil {
@@ -227,10 +241,29 @@ func (s *Service) Availability(
 	return storage, nil
 }
 
+// onPlan reports whether the plan includes search by meaning. Without it
+// retrieval reads as turned off: keyword search is unaffected.
+func (s *Service) onPlan(ctx context.Context) (bool, error) {
+	enabled, err := s.features.Enabled(ctx, platformcatalog.FeatureAIDesk)
+	if err != nil {
+		return false, fmt.Errorf("read whether the plan includes search by meaning: %w", err)
+	}
+
+	return enabled, nil
+}
+
 func (s *Service) searchable(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (*airetrieval.Settings, airetrieval.UnavailableReason, error) {
+	included, err := s.onPlan(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+	if !included {
+		return nil, airetrieval.UnavailableReasonDisabled, nil
+	}
+
 	storage, err := s.repo.VectorAvailability(ctx)
 	if err != nil {
 		return nil, "", fmt.Errorf("read vector storage availability: %w", err)

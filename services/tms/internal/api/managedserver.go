@@ -15,9 +15,14 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/managedfeaturesservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/systememailservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -26,6 +31,7 @@ import (
 const (
 	managedReadingsPath = "/managed/v1/readings"
 	managedStatePath    = "/managed/v1/state"
+	managedFeaturesPath = "/managed/v1/features"
 	managedInvitePath   = "/managed/v1/first-administrator/invite"
 	managedMaxBody      = 1 << 20
 	managedMaxInvite    = 4 << 10
@@ -38,21 +44,48 @@ type ManagedUsage interface {
 	SetState(ctx context.Context, state *managedusage.State) error
 }
 
+type ManagedFeatures interface {
+	State(ctx context.Context) (*managedfeatures.State, error)
+	SetFeatures(ctx context.Context, features []platformcatalog.FeatureKey) error
+}
+
 type ManagedServerParams struct {
 	fx.In
 
-	Config  *managedconfig.Config
-	Usage   *managedusageservice.Service
-	Invites instancebootstrapports.FirstAdministratorInviteService
-	Logger  *zap.Logger
-	LC      fx.Lifecycle
+	Config   *managedconfig.Config
+	Usage    *managedusageservice.Receiver
+	Features *managedfeaturesservice.Receiver
+	Invites  instancebootstrapports.FirstAdministratorInviteService
+	Logger   *zap.Logger
+	LC       fx.Lifecycle
+
+	SystemEmail *systememailservice.Service
+
+	SupportAccess *supportaccessservice.Service
+}
+
+type ManagedHandlerParams struct {
+	Usage    ManagedUsage
+	Features ManagedFeatures
+	Invites  instancebootstrapports.FirstAdministratorInviteService
+	Token    string
+	Logger   *zap.Logger
+
+	SystemEmail ManagedSystemEmail
+
+	SupportAccess ManagedSupportAccess
 }
 
 type managedHandler struct {
-	usage   ManagedUsage
-	invites instancebootstrapports.FirstAdministratorInviteService
-	token   []byte
-	l       *zap.Logger
+	usage    ManagedUsage
+	features ManagedFeatures
+	invites  instancebootstrapports.FirstAdministratorInviteService
+	token    []byte
+	l        *zap.Logger
+
+	systemEmail ManagedSystemEmail
+
+	support ManagedSupportAccess
 }
 
 type managedInvite struct {
@@ -88,6 +121,15 @@ type managedState struct {
 	Meters  []managedusage.Meter `json:"meters"`
 }
 
+type managedFeatureList struct {
+	Features *[]platformcatalog.FeatureKey `json:"features"`
+}
+
+type managedHeldFeatures struct {
+	Features   []platformcatalog.FeatureKey `json:"features"`
+	ReceivedAt string                       `json:"receivedAt,omitempty"`
+}
+
 type managedProblem struct {
 	Type   string `json:"type"`
 	Title  string `json:"title"`
@@ -95,17 +137,26 @@ type managedProblem struct {
 	Detail string `json:"detail,omitempty"`
 }
 
-func NewManagedHandler(
-	usage ManagedUsage,
-	invites instancebootstrapports.FirstAdministratorInviteService,
-	token string,
-	logger *zap.Logger,
-) http.Handler {
-	h := &managedHandler{usage: usage, invites: invites, token: []byte(token), l: logger}
+func NewManagedHandler(p *ManagedHandlerParams) http.Handler {
+	h := &managedHandler{
+		usage:    p.Usage,
+		features: p.Features,
+		invites:  p.Invites,
+		token:    []byte(p.Token),
+		l:        p.Logger,
+
+		systemEmail: p.SystemEmail,
+
+		support: p.SupportAccess,
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET "+managedReadingsPath, h.readings)
 	mux.HandleFunc("PUT "+managedStatePath, h.setState)
+	mux.HandleFunc("GET "+managedFeaturesPath, h.heldFeatures)
+	mux.HandleFunc("PUT "+managedFeaturesPath, h.setFeatures)
 	mux.HandleFunc("PUT "+managedInvitePath, h.installInvite)
+	h.routeSystemEmail(mux)
+	h.routeSupportAccess(mux)
 	return h.authenticate(mux)
 }
 
@@ -117,7 +168,17 @@ func StartManagedServer(p ManagedServerParams) {
 	server := &http.Server{
 		Addr: net.JoinHostPort(p.Config.GetHost(), strconv.Itoa(p.Config.GetPort())),
 		Handler: http.TimeoutHandler(
-			NewManagedHandler(p.Usage, p.Invites, p.Config.Token, logger),
+			NewManagedHandler(&ManagedHandlerParams{
+				Usage:    p.Usage,
+				Features: p.Features,
+				Invites:  p.Invites,
+				Token:    p.Config.Token,
+				Logger:   logger,
+
+				SystemEmail: p.SystemEmail,
+
+				SupportAccess: p.SupportAccess,
+			}),
 			managedTimeout,
 			"",
 		),
@@ -217,6 +278,46 @@ func (h *managedHandler) setState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *managedHandler) setFeatures(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, managedMaxBody))
+	if err != nil {
+		h.problem(w, http.StatusRequestEntityTooLarge, "the body is larger than 1 MiB")
+		return
+	}
+	var in managedFeatureList
+	if err = sonic.Unmarshal(body, &in); err != nil || in.Features == nil {
+		h.problem(
+			w,
+			http.StatusBadRequest,
+			"the body must be {features} with features an array of feature keys",
+		)
+		return
+	}
+	if err = h.features.SetFeatures(r.Context(), *in.Features); err != nil {
+		h.l.Error("cannot record the feature list from the operator", zap.Error(err))
+		h.problem(w, http.StatusInternalServerError, "")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *managedHandler) heldFeatures(w http.ResponseWriter, r *http.Request) {
+	state, err := h.features.State(r.Context())
+	if err != nil {
+		h.l.Error("cannot read the feature list for the operator", zap.Error(err))
+		h.problem(w, http.StatusInternalServerError, "")
+		return
+	}
+	out := managedHeldFeatures{Features: []platformcatalog.FeatureKey{}}
+	if state != nil {
+		if state.Features != nil {
+			out.Features = state.Features
+		}
+		out.ReceivedAt = time.Unix(state.ReceivedAt, 0).UTC().Format(time.RFC3339)
+	}
+	h.json(w, http.StatusOK, out)
 }
 
 func (h *managedHandler) installInvite(w http.ResponseWriter, r *http.Request) {

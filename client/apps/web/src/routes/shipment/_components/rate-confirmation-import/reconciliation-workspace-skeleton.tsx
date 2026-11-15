@@ -3,6 +3,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { AIActivityPanelSkeleton } from "./ai-activity-panel-skeleton";
 import { DocumentPreviewPanelSkeleton } from "./document-preview-panel-skeleton";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 
 /**
  * The reconciliation workspace while its code is read: the document, the review column and the
@@ -94,6 +96,7 @@ function ReviewColumnSkeleton() {
 
 export function ReconciliationWorkspaceSkeleton() {
   const t = useT();
+  const assistantShown = usePlanFeature(PlanFeature.AIDesk).available;
 
   return (
     <div className="flex min-h-0 flex-1" aria-busy aria-label={t("Loading the reconciliation")}>
@@ -102,13 +105,17 @@ export function ReconciliationWorkspaceSkeleton() {
           <DocumentPreviewPanelSkeleton />
         </div>
         <span className="bg-border w-px shrink-0 self-stretch" />
-        <div className="min-w-0 flex-40">
+        <div className={cn("min-w-0", assistantShown ? "flex-40" : "flex-65")}>
           <ReviewColumnSkeleton />
         </div>
-        <span className="bg-border w-px shrink-0 self-stretch" />
-        <div className="min-w-0 flex-25">
-          <AIActivityPanelSkeleton />
-        </div>
+        {assistantShown ? (
+          <>
+            <span className="bg-border w-px shrink-0 self-stretch" />
+            <div className="min-w-0 flex-25">
+              <AIActivityPanelSkeleton />
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );

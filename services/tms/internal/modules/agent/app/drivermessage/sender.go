@@ -8,11 +8,10 @@ import (
 	"go.temporal.io/sdk/client"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
@@ -61,25 +60,25 @@ type Notifier interface {
 // the number is read here and handed to nobody.
 type Sender struct {
 	drivers   Notifier
-	plans     platformplanports.PlanService
+	features  platformcatalogports.FeatureGate
 	workflows kernelports.WorkflowStarter
 }
 
 func New(
 	drivers Notifier,
-	plans platformplanports.PlanService,
+	features platformcatalogports.FeatureGate,
 	workflows kernelports.WorkflowStarter,
 ) *Sender {
-	return &Sender{drivers: drivers, plans: plans, workflows: workflows}
+	return &Sender{drivers: drivers, features: features, workflows: workflows}
 }
 
 // Provide builds the Sender over the driver notification service.
 func Provide(
 	drivers *drivernotificationservice.Service,
-	plans platformplanports.PlanService,
+	features platformcatalogports.FeatureGate,
 	workflows kernelports.WorkflowStarter,
 ) *Sender {
-	return New(drivers, plans, workflows)
+	return New(drivers, features, workflows)
 }
 
 // Message is a message from the office to one driver.
@@ -148,7 +147,7 @@ func (s *Sender) Reach(ctx context.Context, message *Message) (*Reach, error) {
 	switch {
 	case notice.Reachable:
 		reach.Channel = ChannelDash
-	case notice.Text != nil && s.texts(ctx, message.TenantInfo):
+	case notice.Text != nil && s.texts(ctx):
 		reach.Channel = ChannelText
 		reach.text = notice.Text
 	}
@@ -156,13 +155,13 @@ func (s *Sender) Reach(ctx context.Context, message *Message) (*Reach, error) {
 	return reach, nil
 }
 
-// Texts reports whether the organization's plan includes text messages.
-func (s *Sender) Texts(ctx context.Context, tenant pagination.TenantInfo) bool {
-	return s.texts(ctx, tenant)
+// Texts reports whether text messages are on.
+func (s *Sender) Texts(ctx context.Context) bool {
+	return s.texts(ctx)
 }
 
-func (s *Sender) texts(ctx context.Context, tenant pagination.TenantInfo) bool {
-	allowed, err := planservice.Allows(ctx, s.plans, tenant, platformplan.CapabilitySMS)
+func (s *Sender) texts(ctx context.Context) bool {
+	allowed, err := s.features.Enabled(ctx, platformcatalog.FeatureAdministration)
 
 	return err == nil && allowed
 }
@@ -174,7 +173,7 @@ func (s *Sender) texts(ctx context.Context, tenant pagination.TenantInfo) bool {
 func (s *Sender) Send(ctx context.Context, message *Message) (Channel, error) {
 	request := message.Notification()
 	notice, err := s.drivers.Preview(ctx, request)
-	if err == nil && !notice.Reachable && notice.Text != nil && s.texts(ctx, message.TenantInfo) {
+	if err == nil && !notice.Reachable && notice.Text != nil && s.texts(ctx) {
 		return ChannelText, s.sendText(ctx, message, notice.Text)
 	}
 

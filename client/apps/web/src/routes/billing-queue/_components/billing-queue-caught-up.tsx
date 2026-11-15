@@ -9,6 +9,7 @@ import type { BillingQueueLane, BillingQueueStats } from "@trenova/shared/types/
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { useBulkRun } from "./use-bulk-run";
+import { useBillingQueueAssist } from "./use-billing-queue-assist";
 
 /** Lanes that still hold work for a biller; the queue is caught up when they are empty. */
 const WORK_LANES: readonly BillingQueueLane[] = [
@@ -49,7 +50,7 @@ export function BillingQueueCaughtUp({
   const t = useT();
   const rt = useRichT();
   const { allowed: canPost } = usePermission(Resource.Invoice, Operation.Post);
-  const { data: assist } = useQuery(billingQueue.assist());
+  const assist = useBillingQueueAssist();
   const { data: recommendations = [] } = useQuery(billingQueue.recommendations());
   const bulk = useBulkRun();
 

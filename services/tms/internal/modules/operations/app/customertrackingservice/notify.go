@@ -326,6 +326,7 @@ func (s *Service) send(
 	}
 	message, err := s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     sc.tenant,
+		Type:           email.TypeCustomerStatusUpdate,
 		Purpose:        email.PurposeOperations,
 		To:             to,
 		Subject:        rendered.Subject,

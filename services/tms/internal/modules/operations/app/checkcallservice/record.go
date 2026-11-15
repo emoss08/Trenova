@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/zap"
 )
 
 const carrierLinkReferencePrefix = "carrier_tracking_link:"
@@ -72,10 +74,12 @@ func (s *Service) record(
 	if len(s.observers) > 0 {
 		tenant, shipmentID, moveID := in.tenant, in.move.ShipmentID, in.move.ID
 		kernelports.AfterCommit(ctx, func(runCtx context.Context) {
-			for _, observer := range s.observers {
-				if observer != nil {
-					observer.CheckCallRecorded(runCtx, tenant, shipmentID, moveID)
-				}
+			observers, gateErr := platformcatalogports.Observing(runCtx, s.features, s.observers)
+			if gateErr != nil {
+				s.l.Warn("check call observers skipped", zap.Error(gateErr))
+			}
+			for _, observer := range observers {
+				observer.CheckCallRecorded(runCtx, tenant, shipmentID, moveID)
 			}
 		})
 	}

@@ -31,6 +31,7 @@ type Params struct {
 	Service              *userservice.Service
 	RoleService          *roleservice.Service
 	PasswordReset        *passwordresetservice.Service
+	Organizations        tenantports.OrganizationService
 	PermissionEngine     permissionports.PermissionEngine
 	MFA                  sessionports.MFAService
 	SecurityConfig       *securityconfig.Config
@@ -42,6 +43,7 @@ type Handler struct {
 	service        *userservice.Service
 	roleService    *roleservice.Service
 	passwordReset  *passwordresetservice.Service
+	organizations  tenantports.OrganizationService
 	permEngine     permissionports.PermissionEngine
 	mfa            sessionports.MFAService
 	securityConfig *securityconfig.Config
@@ -55,6 +57,7 @@ func New(p Params) *Handler {
 		service:        p.Service,
 		roleService:    p.RoleService,
 		passwordReset:  p.PasswordReset,
+		organizations:  p.Organizations,
 		permEngine:     p.PermissionEngine,
 		mfa:            p.MFA,
 		securityConfig: p.SecurityConfig,
@@ -260,7 +263,47 @@ func (h *Handler) me(c *gin.Context) {
 		return
 	}
 
+	setup, err := h.organizationSetup(c, authCtx)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	entity.OrganizationSetup = setup
+
 	respondWithSelf(c, entity)
+}
+
+func (h *Handler) organizationSetup(
+	c *gin.Context,
+	authCtx *authctx.AuthContext,
+) (*tenant.OrganizationSetup, error) {
+	req := tenantports.GetOrganizationByIDRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+	}
+	org, err := h.organizations.GetByID(c.Request.Context(), req)
+	if err != nil {
+		return nil, err
+	}
+
+	setup := org.Setup()
+	if setup.Complete {
+		return setup, nil
+	}
+
+	setup.CanComplete, err = h.pm.Allowed(
+		c,
+		permission.ResourceOrganization.String(),
+		permission.OpUpdate,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return setup, nil
 }
 
 // @Summary Get user role assignments

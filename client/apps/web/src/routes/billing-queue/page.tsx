@@ -3,6 +3,7 @@ import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-l
 import { billingQueue } from "@/lib/queries/billing-queue";
 import type { RoutePrefetch, RoutePrefetchEntry } from "@/lib/route-prefetch";
 import { useQuery } from "@tanstack/react-query";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import type { OpenStatement } from "@trenova/shared/types/statement";
 import { createLoader, useQueryStates } from "nuqs";
@@ -18,6 +19,7 @@ import {
 import { BillingQueueDocumentReview } from "./_components/billing-queue-document-review";
 import { BillingQueueOverview } from "./_components/billing-queue-overview";
 import { useOpenFirstItem } from "./use-open-first-item";
+import { billingQueueAssistOnPlan } from "@/lib/billing-queue-nova-plan";
 import { LANES_FOLDED_BY_DEFAULT } from "./_components/billing-queue-lanes";
 import { BillingQueueCaughtUp, isCaughtUp } from "./_components/billing-queue-caught-up";
 import { activeQueueFilterCount } from "./_components/billing-queue-filters";
@@ -107,9 +109,13 @@ export const prefetch: RoutePrefetch = ({ request }) => {
   const openLanes = BILLING_QUEUE_OPEN_LANES.filter((lane) =>
     lanes.length > 0 ? lanes.includes(lane) : !LANES_FOLDED_BY_DEFAULT.includes(lane),
   );
+  // What Nova does here is asked only on a plan that has Nova.
+  const assistOnPlan = billingQueueAssistOnPlan(usePermissionStore.getState().manifest);
+  if (assistOnPlan.review || assistOnPlan.search) {
+    list.push(billingQueue.assist());
+  }
   list.push(
     billingQueueStatsQuery(),
-    billingQueue.assist(),
     billingQueue.recommendations(),
     billingQueueFilterPresetsQuery(),
     ...openLanes.map((lane) => billingQueueLaneQuery(lane, filters)),

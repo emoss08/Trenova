@@ -1,0 +1,89 @@
+"How much a Trenova support grant lets staff do: read only, or an administrator's reach less what support may never do."
+enum SupportAccessScope {
+  ReadOnly
+  Full
+}
+
+enum SupportAccessStatus {
+  Live
+  Expired
+  Revoked
+}
+
+"Time-limited access an administrator gave one named Trenova staff member to this organization."
+type SupportAccessGrant {
+  id: ID!
+  staffEmail: String!
+  reason: String!
+  scope: SupportAccessScope!
+  durationHours: Int!
+  status: SupportAccessStatus!
+  grantedByName: String
+  grantedAt: Timestamp!
+  expiresAt: Timestamp!
+  revokedAt: Timestamp
+  revokedByName: String
+  revokeReason: String
+  "When staff last entered under this grant."
+  lastEnteredAt: Timestamp
+  "The staff member's name as the control plane last asserted it."
+  lastStaffName: String
+}
+
+type SupportAccessGrantEdge {
+  node: SupportAccessGrant!
+  cursor: String!
+}
+
+type SupportAccessGrantConnection {
+  edges: [SupportAccessGrantEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+type SupportAccessSettings {
+  "False on a self-hosted install, and on a managed one until the control plane has delivered its keys."
+  available: Boolean!
+  "The Trenova staff email domain grants are limited to."
+  staffDomain: String
+  "The lengths, in hours, a grant may have."
+  durations: [Int!]!
+  maxLiveGrants: Int!
+}
+
+"The caller's own session, when Trenova support opened it."
+type SupportSession {
+  staffName: String!
+  staffEmail: String!
+  scope: SupportAccessScope!
+  endsAt: Timestamp!
+}
+
+input GrantSupportAccessInput {
+  staffEmail: String!
+  reason: String!
+  durationHours: Int!
+  scope: SupportAccessScope!
+}
+
+input RevokeSupportAccessInput {
+  id: ID!
+  reason: String!
+}
+
+extend type Query {
+  supportAccessSettings: SupportAccessSettings!
+  "Support access grants, live and past, newest first. List what was done under one with auditEntries filtered by principalId equal to the grant's id."
+  supportAccessGrants(input: DataTableConnectionInput!): SupportAccessGrantConnection!
+  supportAccessGrant(id: ID!): SupportAccessGrant
+  currentSupportSession: SupportSession
+}
+
+extend type Mutation {
+  "Let a named Trenova staff member into this organization for a set time."
+  grantSupportAccess(input: GrantSupportAccessInput!): SupportAccessGrant!
+  "End a support grant and every session under it at once."
+  revokeSupportAccess(input: RevokeSupportAccessInput!): SupportAccessGrant!
+}

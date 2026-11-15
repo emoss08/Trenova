@@ -207,6 +207,15 @@ func (s *service) planUpdate(
 		next.ReasonCode = reason
 	}
 
+	if err = s.planFields.Keep(
+		ctx,
+		permission.ResourceServiceFailure,
+		&next,
+		original,
+	); err != nil {
+		return nil, nil, err
+	}
+
 	if multiErr := validateServiceFailure(&next); multiErr != nil {
 		return nil, nil, multiErr
 	}

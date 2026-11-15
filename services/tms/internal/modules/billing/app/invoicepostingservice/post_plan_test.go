@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -191,6 +192,7 @@ func newPostFixture(t *testing.T) *postFixture {
 
 	f.svc = &Service{
 		l:                  zap.NewNop(),
+		features:           plantest.AllFeatures(),
 		adjustmentCtrlRepo: adjustmentControls,
 		pdf: invoicepdfservice.New(
 			invoicepdfservice.Params{Logger: zap.NewNop(), Repo: pdfInvoices},
@@ -208,9 +210,11 @@ func newPostFixture(t *testing.T) *postFixture {
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		auditService:      &mocks.NoopAuditService{},
 		realtime:          &mocks.NoopRealtimeService{},
-		edi: invoiceediservice.New(
-			invoiceediservice.Params{Logger: zap.NewNop(), CustomerRepo: customers},
-		),
+		edi: invoiceediservice.New(invoiceediservice.Params{
+			Logger:       zap.NewNop(),
+			CustomerRepo: customers,
+			Features:     plantest.AllFeatures(),
+		}),
 		validator: invoicevalidation.NewValidator(
 			invoicevalidation.ValidatorParams{
 				Logger:           zap.NewNop(),

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -59,6 +60,7 @@ type Params struct {
 	Registry       *permissioncatalog.Registry
 	Permissions    permissionports.PermissionEngine
 	Organizations  tenantports.OrganizationRepository
+	Features       platformcatalogports.FeatureGate
 	Vectorizer     retrievalports.QueryVectorizer
 	CatalogVectors retrievalports.CatalogVectorIndex
 }
@@ -68,6 +70,7 @@ type Service struct {
 	catalog       *productguide.Catalog
 	permissions   permissionports.PermissionEngine
 	organizations tenantports.OrganizationRepository
+	features      platformcatalogports.FeatureGate
 	index         []indexedPage
 	rarity        map[string]float64
 	resources     *permissioncatalog.Registry
@@ -110,6 +113,7 @@ func newService(
 		catalog:       catalog,
 		permissions:   p.Permissions,
 		organizations: p.Organizations,
+		features:      p.Features,
 		index:         index,
 		rarity:        rarity,
 		resources:     p.Registry,
@@ -516,6 +520,10 @@ func (s *Service) access(
 	)
 	if err != nil {
 		return nil, fmt.Errorf("read what this organization operates: %w", err)
+	}
+	capabilities, err = tenantports.CapabilitiesOnPlan(ctx, s.features, capabilities)
+	if err != nil {
+		return nil, err
 	}
 	result.capabilities = *capabilities
 

@@ -31,6 +31,7 @@ import { presentInputs } from "../use-live-preview";
 import { ExplainPanel, type ExplainState } from "./explain-panel";
 import { SectionHead } from "./section-head";
 import { StartCard } from "./start-card";
+import { useStudioNova } from "@/components/tariff-studio/use-studio-nova";
 
 function MaterialBanner() {
   const rt = useRichT();
@@ -66,6 +67,8 @@ function MaterialBanner() {
  */
 export function SourceSection() {
   const t = useT();
+  // Explaining the tariff is Nova's, which only a plan with Trenova AI has.
+  const nova = useStudioNova();
   const {
     mode,
     check,
@@ -141,18 +144,22 @@ export function SourceSection() {
           "The tariff: its inputs, the charges it bills, its total rules and its tests, in one file.",
         )}
       >
-        <Button
-          type="button"
-          variant="outline"
-          size="xs"
-          className="gap-1.5"
-          disabled={empty || errors > 0 || explainMutation.isPending}
-          onClick={() => explainMutation.mutate()}
-        >
-          <BookOpen01Icon className="size-3" />
-          {t("Explain")}
-        </Button>
-        <NovaButton onClick={() => askNova()}>{t("Ask Nova")}</NovaButton>
+        {nova ? (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              className="gap-1.5"
+              disabled={empty || errors > 0 || explainMutation.isPending}
+              onClick={() => explainMutation.mutate()}
+            >
+              <BookOpen01Icon className="size-3" />
+              {t("Explain")}
+            </Button>
+            <NovaButton onClick={() => askNova()}>{t("Ask Nova")}</NovaButton>
+          </>
+        ) : null}
       </SectionHead>
 
       <NewerVersionNotice />
@@ -243,7 +250,7 @@ export function SourceSection() {
         />
       </div>
 
-      {explain && (
+      {nova && explain && (
         <ExplainPanel
           source={source}
           state={explain}

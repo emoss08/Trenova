@@ -15,12 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -58,7 +57,7 @@ type Params struct {
 	AuditService auditports.AuditService
 	Budgets      agentbudgetports.AgentBudgetService
 	Activity     agentactivityports.AgentActivityPublisher
-	Plans        platformplanports.PlanService
+	Features     platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -70,7 +69,7 @@ type Service struct {
 	audit       auditports.AuditService
 	budgets     agentbudgetports.AgentBudgetService
 	activity    agentactivityports.AgentActivityPublisher
-	plans       platformplanports.PlanService
+	features    platformcatalogports.FeatureGate
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -84,7 +83,7 @@ func New(p Params) agentruntimeports.AgentRunService {
 		audit:       p.AuditService,
 		budgets:     p.Budgets,
 		activity:    p.Activity,
-		plans:       p.Plans,
+		features:    p.Features,
 	}
 }
 func (s *Service) StartForDefinition(
@@ -92,12 +91,7 @@ func (s *Service) StartForDefinition(
 	req *agentruntimeports.StartAgentRunForDefinitionRequest,
 	actor *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
-	if err := planservice.RequireCapability(
-		ctx,
-		s.plans,
-		req.TenantInfo,
-		platformplan.CapabilityAgentAutomation,
-	); err != nil {
+	if err := platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureAgentAutomation); err != nil {
 		return nil, err
 	}
 

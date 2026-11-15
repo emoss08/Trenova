@@ -1,6 +1,7 @@
 import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { SidebarLayout } from "@/components/navigation";
 import { SessionIdleTimeout } from "@/components/session-idle-timeout";
+import { SupportSessionBanner } from "@/components/session-context/support-session-banner";
 import { lazyComponent } from "@/lib/lazy-component";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
 import { usePermissionPolling } from "@/hooks/use-permission-polling";
@@ -11,11 +12,16 @@ import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Suspense, type ReactNode } from "react";
 import { Outlet } from "react-router";
 
-// Only a session that owes a password change or a role choice meets a gate, so the
-// sign-in frame and forms they draw are read when one is shown, not by every session.
+// Only a session that owes a password change, a role choice or its organization's details
+// meets a gate, so the sign-in frame and forms they draw are read when one is shown, not by
+// every session.
 const loadSessionGates = () => import("./session-gates");
 const PasswordChangeGate = lazyComponent(loadSessionGates, (module) => module.PasswordChangeGate);
 const RoleActivationGate = lazyComponent(loadSessionGates, (module) => module.RoleActivationGate);
+const OrganizationSetupGate = lazyComponent(
+  loadSessionGates,
+  (module) => module.OrganizationSetupGate,
+);
 
 /**
  * Everything a signed-in session owes before a page may render: the polling
@@ -34,6 +40,7 @@ export function AppSession({ children }: { children: (outlet: ReactNode) => Reac
     <>
       <SessionContent>{children}</SessionContent>
       <SessionIdleTimeout />
+      <SupportSessionBanner />
     </>
   );
 }
@@ -64,6 +71,20 @@ function SessionContent({ children }: { children: (outlet: ReactNode) => ReactNo
     return (
       <Suspense fallback={<LoadingSkeleton />}>
         <RoleActivationGate.Component key={manifest.organizationId} manifest={manifest} />
+      </Suspense>
+    );
+  }
+
+  // After the role gate: whether this person may fill the organization in depends on the
+  // roles the session has active.
+  const organizationSetup = user?.organizationSetup;
+  if (organizationSetup && !organizationSetup.complete) {
+    return (
+      <Suspense fallback={<LoadingSkeleton />}>
+        <OrganizationSetupGate.Component
+          key={user?.currentOrganizationId}
+          setup={organizationSetup}
+        />
       </Suspense>
     );
   }

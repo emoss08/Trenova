@@ -245,6 +245,11 @@ metadata:
     {{- include "trenova.labels" $c | nindent 4 }}
 spec:
   replicas: {{ include "trenova.replicas" (dict "root" . "replicas" 1) }}
+  {{- /* Only the worker's extraction activities call docling, and they retry
+  and resubmit a lost task, so it stops before its replacement starts: a
+  second copy of its models would need room the node keeps for the API's. */}}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "trenova.selectorLabels" $c | nindent 6 }}

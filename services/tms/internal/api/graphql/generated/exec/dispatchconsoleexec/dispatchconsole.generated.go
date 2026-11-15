@@ -1326,53 +1326,48 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "status",
-				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DispatchBoardTenderSummary)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTenderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐStatus),
+				Marshal: gqlexec.Marshal(marshalOTenderStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐStatus),
 			},
 			{
 				Name:     "mode",
-				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DispatchBoardTenderSummary)
 					return obj.Mode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐMode),
+				Marshal: gqlexec.Marshal(marshalOTenderMode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐMode),
 			},
 			{
 				Name:     "currentRank",
-				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DispatchBoardTenderSummary)
 					return obj.CurrentRank, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
 				Name:     "offerCount",
-				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DispatchBoardTenderSummary)
 					return obj.OfferCount, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
 				Name:     "currentCarrierName",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DispatchBoardTenderSummary)
 					return obj.CurrentCarrierName, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "currentOfferExpiresAt",
@@ -6140,22 +6135,6 @@ func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.Mode) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
-func marshalNTenderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.Status) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
 func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
@@ -6258,6 +6237,22 @@ func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func marshalOTenderMode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.Mode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOTenderStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.Status) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
 	return res
 }
 

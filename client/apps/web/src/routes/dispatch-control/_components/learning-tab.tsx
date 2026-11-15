@@ -32,7 +32,6 @@ export function LearningTab({
   const t = useT();
   const { control } = useFormContext<DispatchControl>();
   const enableAutoAssignment = useWatch({ control, name: "enableAutoAssignment" });
-
   return (
     <SettingsSections>
       <SettingsReveal show={!enableAutoAssignment}>

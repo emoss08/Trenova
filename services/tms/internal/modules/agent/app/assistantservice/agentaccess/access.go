@@ -34,6 +34,9 @@ func (s *Access) AssertMayUseAgent(
 	}
 
 	allowed, err := s.Permissions.MayUseAgent(ctx, actor, definition)
+	if errortypes.IsPlanRestrictionError(err) {
+		return err
+	}
 	if err != nil {
 		return fmt.Errorf("check access to agent %s: %w", definition.ID, err)
 	}

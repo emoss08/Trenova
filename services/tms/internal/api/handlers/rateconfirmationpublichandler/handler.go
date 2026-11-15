@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -18,12 +19,14 @@ type Params struct {
 	Service      *rateconfirmationservice.Service
 	ErrorHandler *helpers.ErrorHandler
 	RateLimiter  *middleware.RateLimiter
+	Features     *middleware.FeatureGuard
 }
 
 type Handler struct {
 	service     *rateconfirmationservice.Service
 	eh          *helpers.ErrorHandler
 	rateLimiter *middleware.RateLimiter
+	features    *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
@@ -31,6 +34,7 @@ func New(p Params) *Handler {
 		service:     p.Service,
 		eh:          p.ErrorHandler,
 		rateLimiter: p.RateLimiter,
+		features:    p.Features,
 	}
 }
 
@@ -41,6 +45,10 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/rate-confirmation-links")
 	api.Use(h.rateLimiter.ByPublicToken(tokenParam))
+	api.Use(h.features.RequireFeature(
+		platformcatalog.FeatureCarrierBrokerage,
+		middleware.AnswerError(rateconfirmationservice.InvalidTokenError),
+	))
 	api.GET("/:token/", h.preview)
 	api.POST("/:token/confirm/", h.confirm)
 }

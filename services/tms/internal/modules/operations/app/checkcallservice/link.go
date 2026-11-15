@@ -329,6 +329,7 @@ func (s *Service) sendLinkEmail(
 	}
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo:     tenantInfo,
+		Type:           email.TypeCarrierTrackingLink,
 		Purpose:        email.PurposeGeneral,
 		To:             []string{link.RecipientEmail},
 		Subject:        rendered.Subject,

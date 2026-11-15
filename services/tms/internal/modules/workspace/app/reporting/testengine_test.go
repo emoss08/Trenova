@@ -5,34 +5,47 @@ import (
 
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
 type engineOptions struct {
-	denied  []permission.Resource
-	groups  protectedfield.GroupSet
-	failure error
+	denied   []permission.Resource
+	groups   protectedfield.GroupSet
+	failure  error
+	plan     platformcatalogports.FeatureGate
+	registry *permissioncatalog.Registry
 }
 
 func engineService(t *testing.T, opts engineOptions) (*Service, *reportingtest.Engine) {
 	t.Helper()
 	catalog := reportingtest.ReportCatalog(t)
-	reader := reportingtest.NewPermissionReader(opts.denied)
-	registry := permissioncatalog.NewRegistry()
+	registry := opts.registry
+	if registry == nil {
+		registry = permissioncatalog.NewRegistry()
+	}
+	gate := opts.plan
+	if gate == nil {
+		gate = plantest.AllFeatures()
+	}
+	lookup := onplan.New(registry, gate)
+	reader := reportingtest.NewPermissionReader(opts.denied).WithPlan(lookup)
 	access, err := reportaccess.New(reportaccess.Params{
 		Catalog:  catalog,
 		Engine:   reader,
 		Registry: registry,
-		Views:    refview.NewPort(refview.New(registry), reader),
+		Views:    refview.NewPort(refview.New(registry, lookup), reader),
 		Fields:   reportingtest.FieldGroups{Groups: opts.groups},
 	})
 	require.NoError(t, err)

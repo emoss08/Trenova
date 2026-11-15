@@ -102,23 +102,21 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "intelReviewRequired",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carrier.Carrier)
 					return obj.IntelReviewRequired, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:     "intelBlockingCount",
-				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carrier.Carrier)
 					return obj.IntelBlockingCount, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2int),
 			},
 			{
 				Name:       "intelligence",
@@ -134,7 +132,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "openIntelEventCount",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				ChildErr:   errNoChild2,
@@ -142,7 +139,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*carrier.Carrier)
 					return gqlexec.Resolver[CarrierResolver](ec, "Carrier@carrierintelligence").OpenIntelEventCount(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
 				Name:       "monitoringEnrollment",
@@ -4911,13 +4908,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "brokerVettingEnabled",
-				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customer.Customer)
 					return obj.BrokerVettingEnabled, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+				Marshal: gqlexec.Marshal(marshalOBoolean2bool),
 			},
 			{
 				Name:       "brokerIntelligence",
@@ -5618,7 +5614,7 @@ type CarrierMonitoringEnrollmentResolver interface {
 
 type CarrierResolver interface {
 	Intelligence(ctx context.Context, obj *carrier.Carrier) (*carrierintelsnapshot.CarrierIntelSnapshot, error)
-	OpenIntelEventCount(ctx context.Context, obj *carrier.Carrier) (int, error)
+	OpenIntelEventCount(ctx context.Context, obj *carrier.Carrier) (*int, error)
 	MonitoringEnrollment(ctx context.Context, obj *carrier.Carrier) (*carrierintelenrollment.CarrierMonitoringEnrollment, error)
 }
 
@@ -8088,6 +8084,11 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
+func marshalOBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	return res
+}
+
 func marshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *bool) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -8308,6 +8309,11 @@ func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 		return graphql.Null
 	}
 	res := graphql.MarshalID(*v)
+	return res
+}
+
+func marshalOInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	return res
 }
 

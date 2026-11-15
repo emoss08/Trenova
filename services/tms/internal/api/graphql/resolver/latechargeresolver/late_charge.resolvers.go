@@ -34,8 +34,9 @@ func (r *InvoiceResolver) LateChargeAssessments(ctx context.Context, obj *invoic
 	return billingloaders.LateChargeAssessmentsByInvoiceID(ctx, obj.ID.String())
 }
 
-func (r *LateChargeAssessmentResolver) RatePercent(ctx context.Context, obj *latecharge.LateChargeAssessment) (string, error) {
-	return obj.RatePercent.String(), nil
+func (r *LateChargeAssessmentResolver) RatePercent(ctx context.Context, obj *latecharge.LateChargeAssessment) (*string, error) {
+	rate := obj.RatePercent.String()
+	return &rate, nil
 }
 
 func (r *LateChargeLineResolver) RatePercent(ctx context.Context, obj *latechargeports.LateChargeLine) (string, error) {

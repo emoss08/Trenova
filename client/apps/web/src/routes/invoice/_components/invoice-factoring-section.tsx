@@ -11,6 +11,8 @@ import { SectionPanel } from "@/components/section-panel";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import {
   INVOICE_FACTORING_OVERRIDE_LABELS,
   INVOICE_FACTORING_OVERRIDE_VALUES,
@@ -33,6 +35,7 @@ import {
 } from "@trenova/shared/components/ui/description-list";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
@@ -70,9 +73,11 @@ type OverrideValues = z.infer<typeof overrideSchema>;
  * assigned when it posted, whether it is ready, the checks it fails, and the
  * control that keeps it on the organization's own receivables. Shown only
  * for an invoice assigned to a factor or kept out of one, the only invoices
- * readiness is worked out for.
+ * readiness is worked out for, and only on a plan that includes factoring.
  */
 export function InvoiceFactoringSection({ invoice }: { invoice: Invoice }) {
+  const factoringOnPlan = usePlanFeature(PlanFeature.Factoring).available;
+  if (!factoringOnPlan) return null;
   if (!invoice.factoringCompanyId && invoice.factoringOverride !== "Exclude") {
     return null;
   }
@@ -94,7 +99,7 @@ function InvoiceFactoring({ invoice }: { invoice: Invoice }) {
     );
   }
 
-  if (!data || (!data.factoringCompany && !data.factoringState)) {
+  if (!data || (!data.factoringCompany && !data.factoringState && !data.factoringStateWithheld)) {
     return null;
   }
 
@@ -109,7 +114,13 @@ function FactoringPanel({ factoring }: { factoring: InvoiceFactoring }) {
     <SectionPanel
       title={t("Factoring")}
       count={state?.failedChecks}
-      action={state ? <FactoringVerdictBadge verdict={state.verdict} /> : null}
+      action={
+        state ? (
+          <FactoringVerdictBadge verdict={state.verdict} />
+        ) : factoring.factoringStateWithheld ? (
+          <WithheldValue kind="factoring_submission" />
+        ) : null
+      }
       help={t(
         "An invoice assigned to a factor is remitted to it and carries its notice of assignment. It can be sold once every check passes.",
       )}
@@ -146,7 +157,13 @@ function FactoringPanel({ factoring }: { factoring: InvoiceFactoring }) {
             {state?.readySince ? formatUnixDateTimeShort(state.readySince) : <DescriptionEmpty />}
           </DescriptionItem>
           <DescriptionItem label={t("Checked")}>
-            {state ? formatUnixDateTimeShort(state.evaluatedAt) : t("Not yet")}
+            {state ? (
+              formatUnixDateTimeShort(state.evaluatedAt)
+            ) : factoring.factoringStateWithheld ? (
+              <WithheldValue kind="factoring_submission" />
+            ) : (
+              t("Not yet")
+            )}
           </DescriptionItem>
           {state?.submission ? (
             <>
@@ -217,12 +234,12 @@ function OverrideForm({ factoring }: { factoring: InvoiceFactoring }) {
 
   const form = useForm<OverrideValues>({
     resolver: zodResolver(overrideSchema) as Resolver<OverrideValues>,
-    defaultValues: { override: factoring.factoringOverride, reason: "" },
+    defaultValues: { override: factoring.factoringOverride ?? "Default", reason: "" },
   });
   const { reset } = form;
 
   useEffect(() => {
-    reset({ override: factoring.factoringOverride, reason: "" });
+    reset({ override: factoring.factoringOverride ?? "Default", reason: "" });
   }, [factoring.id, factoring.factoringOverride, reset]);
 
   const override = useWatch({ control: form.control, name: "override" });
@@ -247,7 +264,7 @@ function OverrideForm({ factoring }: { factoring: InvoiceFactoring }) {
       <div className="border-t p-3">
         <DescriptionList layout="inline">
           <DescriptionItem label={t("Factoring")}>
-            {INVOICE_FACTORING_OVERRIDE_LABELS[factoring.factoringOverride]}
+            {INVOICE_FACTORING_OVERRIDE_LABELS[factoring.factoringOverride ?? "Default"]}
           </DescriptionItem>
           {factoring.factoringOverrideReason ? (
             <DescriptionItem label={t("Why it stays out")}>
@@ -263,7 +280,7 @@ function OverrideForm({ factoring }: { factoring: InvoiceFactoring }) {
     value,
     label: INVOICE_FACTORING_OVERRIDE_LABELS[value],
   }));
-  const changed = override !== factoring.factoringOverride;
+  const changed = override !== (factoring.factoringOverride ?? "Default");
 
   return (
     <div className="border-t p-3">
@@ -312,7 +329,9 @@ function OverrideForm({ factoring }: { factoring: InvoiceFactoring }) {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => reset({ override: factoring.factoringOverride, reason: "" })}
+            onClick={() =>
+              reset({ override: factoring.factoringOverride ?? "Default", reason: "" })
+            }
           >
             {t("Cancel")}
           </Button>

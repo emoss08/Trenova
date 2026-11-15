@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -297,7 +298,8 @@ func (h *integrationHarness) repairService() *journalrepairservice.Service {
 		Policy: accountingcontrolpolicyservice.New(
 			accountingcontrolpolicyservice.Params{Logger: logger},
 		),
-		Now: func() int64 { return 1_800_000_000 },
+		Features: plantest.AllFeatures(),
+		Now:      func() int64 { return 1_800_000_000 },
 	})
 }
 

@@ -1,3 +1,5 @@
+import { PlanFeature } from "@/lib/plan-feature";
+import { usePlanFeature, useUnavailableFeatures } from "@trenova/shared/hooks/use-plan-feature";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -35,6 +37,7 @@ import {
 } from "@trenova/shared/lib/worker-standing";
 import { CheckIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
 import { ptoTypeLabel } from "./pto/worker-pto-balances";
+import { isWorkerTabOnPlan } from "./worker-panel-tabs";
 
 type WorkerOverviewTabProps = {
   workerId: string;
@@ -49,6 +52,7 @@ type WorkerOverviewTabProps = {
  * everything else is type and space.
  */
 export default function WorkerOverviewTab({ workerId, onOpenTab }: WorkerOverviewTabProps) {
+  const unavailable = useUnavailableFeatures();
   const { data, isLoading } = useQuery({
     queryKey: [WORKER_OVERVIEW_KEY, workerId],
     queryFn: ({ signal }) => fetchWorkerOverview(workerId, { signal }),
@@ -72,7 +76,10 @@ export default function WorkerOverviewTab({ workerId, onOpenTab }: WorkerOvervie
   return (
     <div className="flex flex-col gap-5">
       <Identity overview={data} />
-      <Attention concerns={data.concerns} onOpenTab={onOpenTab} />
+      <Attention
+        concerns={data.concerns.filter((concern) => isWorkerTabOnPlan(concern.tab, unavailable))}
+        onOpenTab={onOpenTab}
+      />
       <RecordSections overview={data} onOpenTab={onOpenTab} />
       <AtAGlance overview={data} />
     </div>
@@ -81,6 +88,8 @@ export default function WorkerOverviewTab({ workerId, onOpenTab }: WorkerOvervie
 
 function Identity({ overview }: { overview: WorkerOverview }) {
   const t = useT();
+  // Compliance is Safety & Compliance's; without it the worker has no compliance to show.
+  const complianceOnPlan = usePlanFeature(PlanFeature.WorkforceCompliance).available;
 
   const meta = workerStandingMeta(overview.standing);
   const { worker } = overview;
@@ -130,9 +139,15 @@ function Identity({ overview }: { overview: WorkerOverview }) {
         <DescriptionItem label={t("Dispatch")}>
           {worker.canBeAssigned ? "Assignable" : "Held"}
         </DescriptionItem>
-        <DescriptionItem label={t("Compliance")}>
-          {worker.profile?.complianceStatus ?? <DescriptionEmpty />}
-        </DescriptionItem>
+        {complianceOnPlan ? (
+          <DescriptionItem label={t("Compliance")}>
+            {worker.profile && worker.profile.complianceStatus == null ? (
+              <WithheldValue plan="workforce.compliance" />
+            ) : (
+              (worker.profile?.complianceStatus ?? <DescriptionEmpty />)
+            )}
+          </DescriptionItem>
+        ) : null}
         <DescriptionItem label={t("Qualified")}>
           {worker.profile?.isQualified ? "Yes" : "No"}
         </DescriptionItem>
@@ -203,23 +218,26 @@ function RecordSections({
   onOpenTab: (tab: string) => void;
 }) {
   const t = useT();
+  // A part of the record whose add-on the plan leaves out has no tab to open, so no card.
+  const unavailable = useUnavailableFeatures();
+  const onPlan = (tab: string) => isWorkerTabOnPlan(tab, unavailable);
 
   const cards = [
-    overview.credentials ? (
+    overview.credentials && onPlan("credentials") ? (
       <CredentialsCard
         key="credentials"
         summary={overview.credentials}
         onOpen={() => onOpenTab("credentials")}
       />
     ) : null,
-    overview.training ? (
+    overview.training && onPlan("training") ? (
       <TrainingCard
         key="training"
         summary={overview.training}
         onOpen={() => onOpenTab("training")}
       />
     ) : null,
-    overview.safety ? (
+    overview.safety && onPlan("safety") ? (
       <SafetyCard key="safety" card={overview.safety} onOpen={() => onOpenTab("safety")} />
     ) : null,
     overview.checklist ? (
@@ -229,10 +247,10 @@ function RecordSections({
         onOpen={() => onOpenTab("checklist")}
       />
     ) : null,
-    overview.pto ? (
+    overview.pto && onPlan("pto") ? (
       <PTOCard key="pto" balances={overview.pto} onOpen={() => onOpenTab("pto")} />
     ) : null,
-    overview.lastReview || overview.openReview || overview.nextReviewAt ? (
+    (overview.lastReview || overview.openReview || overview.nextReviewAt) && onPlan("reviews") ? (
       <ReviewsCard
         key="reviews"
         last={overview.lastReview ?? null}

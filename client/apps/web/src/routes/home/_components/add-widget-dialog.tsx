@@ -24,6 +24,7 @@ import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { widgetVisualFor, WidgetSketch } from "./widget-gallery-visuals";
 import { useRichT } from "@trenova/shared/i18n/rich";
+import { planLockedSentence } from "@trenova/shared/lib/plan-copy";
 
 /** How long a card keeps its "Added" confirmation before settling back. */
 const ADDED_FEEDBACK_MS = 1200;
@@ -454,6 +455,10 @@ function WidgetCard({
 
   const { icon: Icon, shape } = widgetVisualFor(option.key);
   const needsSetup = option.configKind !== "none" && option.configKind !== "queue";
+  // A widget the plan leaves out is listed so its add-on is findable, and cannot be added:
+  // it would only land as a locked card on the home screen it was added to.
+  const lock = option.planLock;
+  const unavailable = disabled || lock != null;
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     const direction = ARROW_DIRECTIONS[event.key];
@@ -469,13 +474,14 @@ function WidgetCard({
           <button
             type="button"
             data-widget-card
-            disabled={disabled}
+            disabled={unavailable}
+            aria-disabled={unavailable}
             onClick={onAdd}
             onKeyDown={handleKeyDown}
             className={cn(
               "group/widget-card border-border bg-card relative flex flex-col gap-2 rounded-lg border p-2.5 text-left transition-all",
               "ui-focus-ring",
-              disabled
+              unavailable
                 ? "cursor-not-allowed opacity-45"
                 : "hover:border-brand/45 hover:bg-accent/30",
               added && "border-success-border bg-success-subtle",
@@ -485,7 +491,7 @@ function WidgetCard({
       >
         <span className="relative block">
           <WidgetSketch shape={shape} />
-          <AddAffordance added={added} hidden={disabled} />
+          <AddAffordance added={added} hidden={unavailable} />
         </span>
 
         <span className="flex min-w-0 items-start gap-2">
@@ -495,6 +501,11 @@ function WidgetCard({
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="flex min-w-0 items-center gap-1.5">
               <span className="min-w-0 flex-1 truncate text-xs font-medium">{t(option.label)}</span>
+              {lock != null && (
+                <Badge variant="neutral" className="shrink-0" data-plan-lock={lock.addOn}>
+                  {t("Part of {0}", lock.addOnName)}
+                </Badge>
+              )}
               {onCanvas > 0 && (
                 <Badge
                   variant="neutral"
@@ -513,13 +524,17 @@ function WidgetCard({
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-56">
         <span className="flex flex-col gap-0.5">
-          <span>
-            {t(
-              "Lands {0} columns wide and {1} rows tall. Resize it on the canvas.",
-              option.defaultW,
-              option.defaultH,
-            )}
-          </span>
+          {lock != null ? (
+            <span>{planLockedSentence(t, t(option.label), lock.addOnName)}</span>
+          ) : (
+            <span>
+              {t(
+                "Lands {0} columns wide and {1} rows tall. Resize it on the canvas.",
+                option.defaultW,
+                option.defaultH,
+              )}
+            </span>
+          )}
           {needsSetup && (
             <span className="text-background/70">
               {t("You choose what it shows before it lands.")}

@@ -8,7 +8,10 @@ import (
 
 type SecretPurpose string
 
-const SecretPurposeFactoringTransport SecretPurpose = "factoring_transport_secret" // #nosec G101 -- AAD label, not a credential.
+const (
+	SecretPurposeFactoringTransport SecretPurpose = "factoring_transport_secret" // #nosec G101 -- AAD label, not a credential.
+	SecretPurposeSystemEmail        SecretPurpose = "system_email_credential"    // #nosec G101 -- AAD label, not a credential.
+)
 
 type SecretScope struct {
 	Purpose    SecretPurpose

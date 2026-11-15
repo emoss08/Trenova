@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func settlementResources() []*permissionspec.ResourceDefinition {
@@ -25,6 +26,7 @@ func settlementResources() []*permissionspec.ResourceDefinition {
 func driverPayProfileResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceDriverPayProfile.String(),
+		Feature:     platformcatalog.FeatureSettlement,
 		DisplayName: "Driver Pay Profile",
 		Description: "Driver pay package configuration and worker pay assignments",
 		Category:    "Payroll",
@@ -83,6 +85,7 @@ func driverPayProfileResource() *permissionspec.ResourceDefinition {
 func recurringDeductionResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceRecurringDeduction.String(),
+		Feature:            platformcatalog.FeatureSettlement,
 		DisplayName:        "Recurring Deduction",
 		Description:        "Recurring driver deduction schedules",
 		Category:           "Payroll",
@@ -122,6 +125,7 @@ func recurringDeductionResource() *permissionspec.ResourceDefinition {
 func payAdvanceResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourcePayAdvance.String(),
+		Feature:       platformcatalog.FeatureSettlement,
 		DisplayName:   "Pay Advance",
 		Description:   "Driver cash and money-code advances",
 		Category:      "Payroll",
@@ -163,6 +167,7 @@ func payAdvanceResource() *permissionspec.ResourceDefinition {
 func escrowAccountResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceEscrowAccount.String(),
+		Feature:       platformcatalog.FeatureSettlement,
 		DisplayName:   "Escrow Account",
 		Description:   "Owner-operator escrow accounts and ledgers",
 		Category:      "Payroll",
@@ -207,6 +212,7 @@ func escrowAccountResource() *permissionspec.ResourceDefinition {
 func driverSettlementResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceDriverSettlement.String(),
+		Feature:     platformcatalog.FeatureSettlement,
 		DisplayName: "Driver Settlement",
 		Description: "Driver and owner-operator settlement statements and batches",
 		Category:    "Payroll",
@@ -341,6 +347,7 @@ func driverSettlementFieldSensitivities() map[string]permission.FieldSensitivity
 func settlementControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceSettlementControl.String(),
+		Feature:            platformcatalog.FeatureSettlement,
 		DisplayName:        "Settlement Control",
 		Description:        "Settlement pay period, trigger, and exception policy configuration",
 		Category:           "Payroll",
@@ -352,6 +359,7 @@ func settlementControlResource() *permissionspec.ResourceDefinition {
 func settlementDisputeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceSettlementDispute.String(),
+		Feature:       platformcatalog.FeatureSettlement,
 		DisplayName:   "Settlement Dispute",
 		Description:   "Driver-submitted settlement disputes and their resolution",
 		Category:      "Payroll",
@@ -394,6 +402,7 @@ func settlementDisputeResource() *permissionspec.ResourceDefinition {
 func driverExpenseResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceDriverExpense.String(),
+		Feature:     platformcatalog.FeatureSettlement,
 		DisplayName: "Driver Expense",
 		Description: "Driver-submitted expenses pending reimbursement review",
 		Category:    "Payroll",
@@ -436,6 +445,7 @@ func driverExpenseResource() *permissionspec.ResourceDefinition {
 func dashControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceDashControl.String(),
+		Feature:            platformcatalog.FeatureDriverPortal,
 		DisplayName:        "Dash Control",
 		Description:        "Driver portal (Dash) feature toggles — what drivers can see and do",
 		Category:           "Payroll",
@@ -447,6 +457,7 @@ func dashControlResource() *permissionspec.ResourceDefinition {
 func driverPortalResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceDriverPortal.String(),
+		Feature:     platformcatalog.FeatureDriverPortal,
 		DisplayName: "Driver Portal",
 		Description: "Driver portal (Dash) access management and invitations",
 		Category:    "Payroll",

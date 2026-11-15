@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/scopepolicytest"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -32,19 +33,21 @@ func setupPermissionHandler(
 	logger := zap.NewNop()
 
 	registry := permissioncatalog.NewEmptyRegistry()
-	_ = registry.Register(&permissionspec.ResourceDefinition{
+	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    "test_resource",
 		DisplayName: "Test Resource",
 		Category:    "test",
-	})
-	_ = registry.Register(&permissionspec.ResourceDefinition{
+		Feature:     platformcatalog.FeatureCoreTMS,
+	}))
+	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    "test_owned",
 		DisplayName: "Test Owned",
 		Category:    "test",
+		Feature:     platformcatalog.FeatureCoreTMS,
 		Scopes: []permissionspec.ScopeSupport{
 			{Scope: permission.DataScopeOwn, EnforcedBy: permissionspec.ScopeEnforcedByDatabase},
 		},
-	})
+	}))
 
 	cfg := &config.Config{App: appconfig.Config{Debug: true}}
 	errorHandler := helpers.NewErrorHandler(
@@ -284,6 +287,7 @@ func TestPermissionHandler_GetAvailableResources_TranslatesAndFollowsTheRail(t *
 		Resource:    "invoice",
 		DisplayName: "Invoice",
 		Category:    "Billing",
+		Feature:     platformcatalog.FeatureBilling,
 		Operations: []permissionspec.OperationDefinition{
 			{Operation: permission.OpRead, DisplayName: "View"},
 		},
@@ -292,6 +296,7 @@ func TestPermissionHandler_GetAvailableResources_TranslatesAndFollowsTheRail(t *
 		Resource:    "assistant",
 		DisplayName: "Desk",
 		Category:    "Desk",
+		Feature:     platformcatalog.FeatureAIDesk,
 	}))
 
 	cfg := &config.Config{App: appconfig.Config{Debug: true}}

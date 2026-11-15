@@ -70,7 +70,11 @@ links to always agree. Counts cover active workers only.
 type WorkerRosterAttention {
   activeWorkers: Int!
   nonCompliant: Int!
-  trainingOverdue: Int!
+  """
+  Null for a reader without worker_training read, and when the plan leaves out
+  the HR Suite talent feature.
+  """
+  trainingOverdue: Int
   atRisk: Int!
   expiringSoon: Int!
   """
@@ -80,9 +84,11 @@ type WorkerRosterAttention {
   """
   reviewsAwaitingSignOff: Int
   """
-  Total accrued time off the organisation is carrying, in days.
+  Total accrued time off the organisation is carrying, in days. Null for a
+  reader without worker_pto read, and when the plan leaves out the HR Suite time
+  off feature.
   """
-  ptoLiabilityDays: Decimal!
+  ptoLiabilityDays: Decimal
   """
   Leave cases waiting on a medical certification the employee owes. Past the
   deadline the employer may deny the leave (29 CFR 825.313), so this is a

@@ -127,7 +127,7 @@ type WorkerTrainingRecord {
 }
 
 type WorkerTrainingSummaryItem {
-  course: TrainingCourse!
+  course: TrainingCourse
   record: WorkerTrainingRecord
   health: WorkerTrainingHealth!
   daysUntilDue: Int

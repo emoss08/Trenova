@@ -67,6 +67,65 @@ func TestReadsAndSendsState(t *testing.T) {
 	require.Empty(t, states[1].Meters)
 }
 
+func TestSendsTheFeatureList(t *testing.T) {
+	t.Parallel()
+	srv := tmstest.New(t, "token")
+	c := client(t, fake.NewClientset(secretWith("token")), srv.URL)
+
+	require.NoError(t, c.PutFeatures(t.Context(), []string{"tms.accounting", "ai.desk"}))
+	got, ok := srv.LastFeatures()
+	require.True(t, ok)
+	require.Equal(t, []string{"tms.accounting", "ai.desk"}, got)
+
+	require.NoError(t, c.PutFeatures(t.Context(), nil))
+	got, ok = srv.LastFeatures()
+	require.True(t, ok)
+	require.Equal(t, []string{}, got, "a nil list is sent as an empty list, never null")
+	require.Equal(t, [][]string{{"tms.accounting", "ai.desk"}, {}}, srv.Features())
+	require.Zero(t, srv.Refused())
+}
+
+func TestReadsTheFeaturesTheTMSHolds(t *testing.T) {
+	t.Parallel()
+	srv := tmstest.New(t, "token")
+	c := client(t, fake.NewClientset(secretWith("token")), srv.URL)
+
+	held, err := c.HeldFeatures(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, []string{}, held, "a TMS that was sent nothing holds an empty list")
+
+	require.NoError(t, c.PutFeatures(t.Context(), []string{"tms.accounting", "ai.desk"}))
+	held, err = c.HeldFeatures(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, []string{"tms.accounting", "ai.desk"}, held)
+
+	srv.FailNext(1)
+	_, err = c.HeldFeatures(t.Context())
+	var se *tms.StatusError
+	require.ErrorAs(t, err, &se)
+	require.Equal(t, 503, se.Status)
+}
+
+func TestAFeatureListTheTMSRefusesIsAnError(t *testing.T) {
+	t.Parallel()
+	srv := tmstest.New(t, "token")
+	c := client(t, fake.NewClientset(secretWith("token")), srv.URL)
+
+	srv.FailNext(1)
+	err := c.PutFeatures(t.Context(), []string{"ai.desk"})
+	var se *tms.StatusError
+	require.ErrorAs(t, err, &se)
+	require.Equal(t, 503, se.Status)
+	require.Equal(t, "Unavailable", se.Title)
+	require.Empty(t, srv.Features())
+
+	srv.SetToken("rotated-elsewhere")
+	err = c.PutFeatures(t.Context(), []string{"ai.desk"})
+	require.ErrorIs(t, err, tms.ErrUnauthorized)
+	require.Equal(t, 2, srv.Refused(), "refused, then refused again with the token read again")
+	require.Empty(t, srv.Features())
+}
+
 func TestRereadsTheTokenWhenRefused(t *testing.T) {
 	t.Parallel()
 	srv := tmstest.New(t, "old")
@@ -197,4 +256,52 @@ func TestInstallsTheFirstAdministratorsInvite(t *testing.T) {
 	_, err = c.InstallInvite(t.Context(), tms.Invite{TokenSHA256: "short", ExpiresAt: expires})
 	require.ErrorAs(t, err, &se)
 	require.Equal(t, 400, se.Status)
+}
+
+func TestSendsReadsAndRemovesTheSystemEmailSender(t *testing.T) {
+	t.Parallel()
+	srv := tmstest.New(t, "token")
+	c := client(t, fake.NewClientset(secretWith("token")), srv.URL)
+
+	held, err := c.SystemEmail(t.Context())
+	require.NoError(t, err)
+	require.False(t, held.Configured)
+
+	sender := tms.SystemEmail{
+		Provider:      "Postmark",
+		APIKey:        "pm-client-0123456789abcdef0123",
+		FromAddress:   "no-reply@mail.trenova.app",
+		FromName:      "Trenova",
+		WebhookSecret: "user:password",
+	}
+	require.NoError(t, c.PutSystemEmail(t.Context(), sender))
+	require.Equal(t, &sender, srv.SystemEmail())
+
+	held, err = c.SystemEmail(t.Context())
+	require.NoError(t, err)
+	require.True(t, held.Configured)
+	require.Equal(t, "Postmark", held.Provider)
+	require.Equal(t, "no-reply@mail.trenova.app", held.FromAddress)
+	require.Len(t, held.Fingerprint, 64)
+
+	require.NoError(t, c.DeleteSystemEmail(t.Context()))
+	require.Nil(t, srv.SystemEmail())
+}
+
+func TestASystemEmailSenderTheTMSRefusesNamesNoSecret(t *testing.T) {
+	t.Parallel()
+	srv := tmstest.New(t, "token")
+	c := client(t, fake.NewClientset(secretWith("token")), srv.URL)
+
+	srv.FailNext(1)
+	err := c.PutSystemEmail(t.Context(), tms.SystemEmail{
+		Provider:    "Postmark",
+		APIKey:      "pm-refused-0123456789abcdef012",
+		FromAddress: "no-reply@mail.trenova.app",
+		FromName:    "Trenova",
+	})
+	var se *tms.StatusError
+	require.ErrorAs(t, err, &se)
+	require.NotContains(t, err.Error(), "pm-refused-0123456789abcdef012")
+	require.Nil(t, srv.SystemEmail())
 }

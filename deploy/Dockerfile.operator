@@ -16,7 +16,9 @@ RUN go mod download
 COPY services/operator/ ./
 
 FROM source AS build-operator
-RUN go build -trimpath -ldflags="-s -w" -o /out/trenova-operator ./cmd/operator
+# How many packages to compile at once; unset, every core.
+ARG GO_BUILD_JOBS=
+RUN go build ${GO_BUILD_JOBS:+-p ${GO_BUILD_JOBS}} -trimpath -ldflags="-s -w" -o /out/trenova-operator ./cmd/operator
 
 FROM source AS build-stub
 RUN go build -trimpath -ldflags="-s -w" -o /out/controlplane-stub ./cmd/controlplane-stub

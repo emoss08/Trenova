@@ -2,6 +2,7 @@ package agentplanservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -12,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -74,6 +77,8 @@ func (f *fakeAgents) GetByID(
 type fakeAccess struct {
 	granted map[pulid.ID]bool
 	checked []pulid.ID
+	// offPlan is the plan's refusal when the plan leaves the assistant out.
+	offPlan error
 }
 
 func (f *fakeAccess) MayUseAgent(
@@ -82,6 +87,9 @@ func (f *fakeAccess) MayUseAgent(
 	definition *agentdefinition.Definition,
 ) (bool, error) {
 	f.checked = append(f.checked, definition.ID)
+	if f.offPlan != nil {
+		return false, f.offPlan
+	}
 
 	return definition.OpenToEveryone() || f.granted[definition.ID], nil
 }
@@ -288,5 +296,22 @@ func TestDecideOwn_AStepFromAnotherConversationIsNotYours(t *testing.T) {
 	_, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
 
 	assert.True(t, errortypes.IsNotFoundError(err))
+	assert.Empty(t, f.decider.decided)
+}
+
+// Without Trenova AI the refusal is the plan's, naming the add-on, not a
+// grant an administrator could add to one of the caller's roles.
+func TestDecideOwn_RefusesInThePlansWordsWhenThePlanLeavesOutTheAssistant(t *testing.T) {
+	t.Parallel()
+
+	f := newOwnFixture(t)
+	f.access.offPlan = plantest.Restriction(platformcatalog.FeatureAIDesk)
+
+	_, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
+
+	restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err)
+	require.True(t, ok, "expected a plan restriction, got %v", err)
+	assert.Equal(t, "Trenova AI", restriction.AddOn)
+	assert.False(t, errortypes.IsAuthorizationError(err))
 	assert.Empty(t, f.decider.decided)
 }

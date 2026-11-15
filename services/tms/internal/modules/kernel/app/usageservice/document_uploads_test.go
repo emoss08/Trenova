@@ -57,6 +57,6 @@ func TestCheckDocumentBytesLimit(t *testing.T) {
 func TestLimitError_FallsBackToAuthorization(t *testing.T) {
 	t.Parallel()
 
-	err := LimitError(&platformcatalogports.UsageLimitCheckResult{Reason: "plan_inactive"})
+	err := LimitError(&platformcatalogports.UsageLimitCheckResult{Reason: "plan_inactive"}, 1)
 	assert.True(t, errortypes.IsAuthorizationError(err))
 }

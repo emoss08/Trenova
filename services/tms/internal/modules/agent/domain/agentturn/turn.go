@@ -130,6 +130,19 @@ type RuntimeContext struct {
 	OrganizationProfile string
 	// UserProfile is what the person's own records say they work on.
 	UserProfile string
+	// NotOnPlan are the add-ons the organization's plan leaves out. No tool
+	// for them is offered, and the prompt names them so the model can say a
+	// request is part of one rather than guess. Empty when everything is on.
+	NotOnPlan []PlanAddOn
+}
+
+// PlanAddOn is one add-on the organization's plan leaves out: its name and
+// the features of it that are off, the first few by name and the rest
+// counted.
+type PlanAddOn struct {
+	Name         string
+	Features     []string
+	MoreFeatures int
 }
 
 // Clock is the moment the turn runs as of: when its context was built, or

@@ -62,9 +62,9 @@ type ServiceFailure {
   Three-character X12 codes that replace the ones derived from the failure type
   when the 214 is built; blank means derive.
   """
-  x12StatusCodeOverride: String!
-  x12ReasonCodeOverride: String!
-  x12ExceptionCode: String!
+  x12StatusCodeOverride: String
+  x12ReasonCodeOverride: String
+  x12ExceptionCode: String
   detectedAt: Timestamp!
   reviewedAt: Timestamp
   resolvedAt: Timestamp

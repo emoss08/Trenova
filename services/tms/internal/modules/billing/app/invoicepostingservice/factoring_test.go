@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,6 +41,7 @@ func factoringService(
 		customerRepo:  customers,
 		factoringRepo: factors,
 		agreementRepo: &factoringservicetest.FakeAgreements{},
+		features:      plantest.AllFeatures(),
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{Logger: zap.NewNop()},
 		),

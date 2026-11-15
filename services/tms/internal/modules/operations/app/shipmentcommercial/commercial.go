@@ -3,11 +3,14 @@ package shipmentcommercial
 
 import (
 	"context"
+	"fmt"
 	"math"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsync"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -23,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -52,6 +56,7 @@ type Params struct {
 	FuelSurcharge      fuelsurchargeports.FuelSurchargeResolver
 	DetentionEngine    *detentionsync.Service
 	Hydrator           ratequoteports.ShipmentRatingHydrator
+	Features           platformcatalogports.FeatureGate
 }
 
 type Calculator struct {
@@ -64,6 +69,7 @@ type Calculator struct {
 	fuelSurcharge      fuelsurchargeports.FuelSurchargeResolver
 	detentionEngine    *detentionsync.Service
 	hydrator           ratequoteports.ShipmentRatingHydrator
+	features           platformcatalogports.FeatureGate
 	now                func() int64
 }
 
@@ -78,6 +84,7 @@ func New(p Params) *Calculator {
 		fuelSurcharge:      p.FuelSurcharge,
 		detentionEngine:    p.DetentionEngine,
 		hydrator:           p.Hydrator,
+		features:           p.Features,
 		now:                timeutils.NowUnix,
 	}
 }
@@ -192,7 +199,7 @@ func (c *Calculator) calculateCommercialTotals(
 		return nil, err
 	}
 
-	own, err := c.rateOwn(ctx, entity, userID, sync.rated)
+	own, billHeld, err := c.rateOwnOnPlan(ctx, entity, userID, sync.rated)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +209,7 @@ func (c *Calculator) calculateCommercialTotals(
 		return nil, err
 	}
 
-	if !entity.RateLocked {
+	if !entity.RateLocked && !billHeld {
 		if err = c.applyBill(ctx, entity, own, pass); err != nil {
 			return nil, err
 		}
@@ -243,12 +250,34 @@ func (c *Calculator) calculateCommercialTotals(
 		return nil, err
 	}
 
+	detail := entity.RatingDetail
+	if !billHeld {
+		detail = c.ratingDetail(entity, own, pass)
+	}
+
 	return &commercialTotals{
 		freight: freight,
 		other:   other.Sum,
-		detail:  c.ratingDetail(entity, own, pass),
+		detail:  detail,
 		pass:    pass,
 	}, nil
+}
+
+func (c *Calculator) rateOwnOnPlan(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	userID pulid.ID,
+	rated *ratequoteports.RatedShipment,
+) (*ratequoteports.RatedShipment, bool, error) {
+	own, err := c.rateOwn(ctx, entity, userID, rated)
+	if errortypes.IsPlanRestrictionError(err) {
+		return nil, true, nil
+	}
+	if err != nil {
+		return nil, false, err
+	}
+
+	return own, false, nil
 }
 
 func freightOf(entity *shipment.Shipment) decimal.Decimal {
@@ -462,6 +491,14 @@ func (c *Calculator) syncDetentionCharge(
 	pass *ratingPass,
 ) error {
 	if entity == nil || control == nil {
+		return nil
+	}
+
+	detention, err := c.features.Enabled(ctx, platformcatalog.FeatureDetention)
+	if err != nil {
+		return fmt.Errorf("ask whether detention is on the plan: %w", err)
+	}
+	if !detention {
 		return nil
 	}
 

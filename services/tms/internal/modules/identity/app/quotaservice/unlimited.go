@@ -55,14 +55,13 @@ func (g *UnlimitedQuotaGuard) Usage(
 	plan := platformplan.Unlimited()
 
 	return &platformplanports.QuotaUsageSummary{
-		OrganizationID:         tenantInfo.OrgID,
-		BusinessUnitID:         tenantInfo.BuID,
-		Plan:                   plan.Key,
-		PlanName:               plan.Name,
-		Origin:                 platformplan.OriginSelfHosted,
-		Unlimited:              true,
-		RestrictedCapabilities: []platformplan.Capability{},
-		Meters:                 []platformplanports.QuotaMeterUsage{},
-		CheckedAt:              time.Now().Unix(),
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Plan:           plan.Key,
+		PlanName:       plan.Name,
+		Origin:         platformplan.OriginSelfHosted,
+		Unlimited:      true,
+		Meters:         []platformplanports.QuotaMeterUsage{},
+		CheckedAt:      time.Now().Unix(),
 	}, nil
 }

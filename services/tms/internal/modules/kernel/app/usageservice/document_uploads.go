@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -55,7 +56,7 @@ func CheckDocumentUploadLimit(
 		return err
 	}
 	if !result.Allowed {
-		return LimitError(result)
+		return LimitError(result, quantity)
 	}
 
 	return nil
@@ -102,14 +103,23 @@ func CheckDocumentBytesLimit(
 			return err
 		}
 		if !result.Allowed {
-			return LimitError(result)
+			return LimitError(result, params.Bytes)
 		}
 	}
 
 	return nil
 }
 
-func LimitError(result *platformcatalogports.UsageLimitCheckResult) error {
+func LimitError(result *platformcatalogports.UsageLimitCheckResult, requested int64) error {
+	if result.Reason == ReasonQuotaExceeded && result.Plan == PlanManaged {
+		return managedusage.Refusal(
+			result.MeterKey,
+			result.Limit,
+			result.Used,
+			requested,
+			result.Plan,
+		)
+	}
 	if result.Reason == ReasonQuotaExceeded {
 		return errortypes.NewQuotaExceededError(
 			string(result.MeterKey),

@@ -165,14 +165,14 @@ func allowances() []instanceapi.SpecAllowance {
 	}
 	return []instanceapi.SpecAllowance{
 		allowance("shipments", "shipments.total", instanceapi.SpecAllowanceUnitCount, 5000, false),
-		allowance("ai_credits", "ai.spend_cents", instanceapi.SpecAllowanceUnitCents, 2000, true),
 		allowance(
-			"document_extractions",
-			"document_intelligence.extractions",
+			"document_intelligence_pages",
+			"document_intelligence.pages",
 			instanceapi.SpecAllowanceUnitCount,
-			500,
-			true,
+			1000,
+			false,
 		),
+		allowance("organizations", "organizations.total", instanceapi.SpecAllowanceUnitCount, 1, true),
 		allowance(
 			"document_storage",
 			"documents.storage_bytes",

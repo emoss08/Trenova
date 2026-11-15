@@ -22,12 +22,8 @@ func (h *Harness) Converse(
 	talk *llmports.NovaConversation,
 	events llmports.NovaEvents,
 ) (*llmports.NovaAnswer, error) {
-	available, err := h.Available(ctx, talk.TenantInfo)
-	if err != nil {
+	if err := h.providers.NovaReady(ctx, talk.TenantInfo, talk.Name); err != nil {
 		return nil, err
-	}
-	if !available {
-		return nil, llmports.ErrNoProviderConfigured
 	}
 
 	run := &conversation{

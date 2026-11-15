@@ -27,6 +27,11 @@ export type MetricValue = {
   sub?: string;
   sparkline?: number[];
   href: string;
+  /**
+   * The feature key of the add-on that carries this figure when the plan leaves it out. A
+   * locked figure is not drawn at all.
+   */
+  lockedFeature?: string;
 };
 
 const SHIPMENTS_HREF = "/shipment-management/shipments";
@@ -37,7 +42,34 @@ function minorToMajor(minor: number | null | undefined): number {
   return (minor ?? 0) / 100;
 }
 
+/**
+ * The costing figures are computed from the costing setup, which the plan may leave out. When
+ * it does the figure is locked, with the add-on that carries it, and nothing is drawn for it.
+ */
+function lockedCostingMetric(key: string, analytics: ShipmentAnalyticsData): MetricValue | null {
+  const label = COSTING_METRICS[key];
+  const denial = analytics.profitability.planDenial;
+  if (!label || !denial) return null;
+  return {
+    key,
+    label: label(),
+    shape: "stat",
+    display: "",
+    raw: 0,
+    href: SHIPMENTS_HREF,
+    lockedFeature: denial.feature,
+  };
+}
+
+const COSTING_METRICS: Record<string, () => string> = {
+  marginPercent: () => translate("Margin"),
+  costPerMile: () => translate("Cost / mile"),
+};
+
 function shipmentMetric(key: string, analytics: ShipmentAnalyticsData): MetricValue | null {
+  const locked = lockedCostingMetric(key, analytics);
+  if (locked) return locked;
+
   switch (key) {
     case "activeShipments":
       return {

@@ -1,3 +1,4 @@
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   EquipmentManufacturerAutocompleteField,
@@ -200,6 +201,7 @@ function TelematicsSection({ control }: { control: Control<Tractor> }) {
 
 function FuelTaxSection({ control }: { control: Control<Tractor> }) {
   const t = useT();
+  const fuelTax = usePlanFeature("tms.fuel_tax").available;
 
   return (
     <FormSection title={t("Fuel & IFTA")}>
@@ -216,19 +218,21 @@ function FuelTaxSection({ control }: { control: Control<Tractor> }) {
             )}
           />
         </FormControl>
-        <FormControl>
-          <SwitchField
-            control={control}
-            name="iftaQualified"
-            label={t("IFTA qualified")}
-            description={t("Count this unit's miles and fuel on the quarterly return.")}
-            tooltip={t(
-              "Only IFTA-qualified units count toward the quarterly return. Turn this off for yard tractors, pickups under 26,001 lb GVW, and units that never leave the base jurisdiction.",
-            )}
-            position="left"
-            outlined
-          />
-        </FormControl>
+        {fuelTax ? (
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="iftaQualified"
+              label={t("IFTA qualified")}
+              description={t("Count this unit's miles and fuel on the quarterly return.")}
+              tooltip={t(
+                "Only IFTA-qualified units count toward the quarterly return. Turn this off for yard tractors, pickups under 26,001 lb GVW, and units that never leave the base jurisdiction.",
+              )}
+              position="left"
+              outlined
+            />
+          </FormControl>
+        ) : null}
       </FormGroup>
     </FormSection>
   );

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
@@ -50,6 +51,7 @@ func Providers() []any {
 func draftPolicy(name string) agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(name, &querytool.ReadSpec{
 		Resource:  permission.ResourceDocument,
+		Feature:   platformcatalog.FeatureDocumentIntelligence,
 		Scope:     agenttooltrust.ToolScopeSelf,
 		Effect:    agenttooltrust.ToolEffectPresent,
 		Rationale: draftRationale,

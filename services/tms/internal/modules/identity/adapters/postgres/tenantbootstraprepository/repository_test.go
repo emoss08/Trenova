@@ -3,6 +3,7 @@ package tenantbootstraprepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/stretchr/testify/require"
@@ -21,4 +22,12 @@ func TestBootstrapRequiresOrganizationAndOwner(t *testing.T) {
 		Organization: &tenant.Organization{},
 	})
 	require.ErrorIs(t, err, ErrOwnerRequired)
+}
+
+func TestASelfHostedInstanceDoesNotLimitOrganizations(t *testing.T) {
+	t.Parallel()
+
+	repo := &repository{quota: quotaservice.NewUnlimited()}
+
+	require.NoError(t, repo.admitOrganization(t.Context(), nil))
 }

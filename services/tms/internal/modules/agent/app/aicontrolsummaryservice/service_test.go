@@ -159,7 +159,7 @@ type completion struct {
 	calls int
 }
 
-func (c *completion) Available(context.Context, pagination.TenantInfo) (bool, error) {
+func (c *completion) Available(context.Context, pagination.TenantInfo, aitask.Task) (bool, error) {
 	return true, nil
 }
 

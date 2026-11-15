@@ -13,11 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -50,7 +49,7 @@ type ActivitiesParams struct {
 	Controls       tenantports.AgentControlRepository
 	Tenants        tenantports.TenantSyncRepository
 	Orgs           tenantports.OrganizationRepository
-	Plans          platformplanports.PlanService
+	Features       platformcatalogports.FeatureGate
 }
 
 type Activities struct {
@@ -64,7 +63,7 @@ type Activities struct {
 	controls       tenantports.AgentControlRepository
 	tenants        tenantports.TenantSyncRepository
 	orgs           tenantports.OrganizationRepository
-	plans          platformplanports.PlanService
+	features       platformcatalogports.FeatureGate
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -79,7 +78,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		controls:       p.Controls,
 		tenants:        p.Tenants,
 		orgs:           p.Orgs,
-		plans:          p.Plans,
+		features:       p.Features,
 	}
 }
 
@@ -259,12 +258,7 @@ func (a *Activities) isDue(
 	tenantInfo pagination.TenantInfo,
 	now int64,
 ) (bool, error) {
-	allowed, err := planservice.Allows(
-		ctx,
-		a.plans,
-		tenantInfo,
-		platformplan.CapabilityAgentAutomation,
-	)
+	allowed, err := a.features.Enabled(ctx, platformcatalog.FeatureAIDesk)
 	if err != nil || !allowed {
 		return false, err
 	}

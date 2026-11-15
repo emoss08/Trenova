@@ -40,10 +40,23 @@ func MayReadResource(
 	actor *permissionports.RequestActor,
 	resource permission.Resource,
 ) (bool, error) {
-	if engine == nil || actor == nil {
-		return false, nil
+	result, err := check(ctx, engine, actor, resource)
+	if err != nil {
+		return false, err
 	}
 
+	return result.Allowed, nil
+}
+
+func check(
+	ctx context.Context,
+	engine permissionports.PermissionEngine,
+	actor *permissionports.RequestActor,
+	resource permission.Resource,
+) (*permissionports.PermissionCheckResult, error) {
+	if engine == nil || actor == nil {
+		return &permissionports.PermissionCheckResult{}, nil
+	}
 	result, err := engine.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
@@ -55,10 +68,39 @@ func MayReadResource(
 		Operation:      permission.OpRead,
 	})
 	if err != nil {
-		return false, err
+		return nil, err
+	}
+	if result == nil {
+		return &permissionports.PermissionCheckResult{}, nil
 	}
 
-	return result.Allowed, nil
+	return result, nil
+}
+
+// Refusal is nil when the person may read the record a conversation is
+// about. Otherwise it is the plan's refusal, naming the add-on, when the
+// plan leaves the record's kind out, and denied when the person lacks the
+// grant.
+func Refusal(
+	ctx context.Context,
+	engine permissionports.PermissionEngine,
+	actor *permissionports.RequestActor,
+	subjectType agent.SubjectType,
+	denied error,
+) error {
+	resource, names := subjectType.Resource()
+	if !names {
+		return nil
+	}
+	result, err := check(ctx, engine, actor, resource)
+	if err != nil {
+		return fmt.Errorf("check access to the conversation's subject: %w", err)
+	}
+	if result.Allowed {
+		return nil
+	}
+
+	return permissionports.DeniedError(result, denied)
 }
 
 // AssertReadable refuses a conversation about a record the person may not
@@ -69,16 +111,8 @@ func AssertReadable(
 	actor *permissionports.RequestActor,
 	subjectType agent.SubjectType,
 ) error {
-	allowed, err := MayRead(ctx, engine, actor, subjectType)
-	if err != nil {
-		return err
-	}
-	if !allowed {
-		return errortypes.NewValidationError(
-			"subjectType", errortypes.ErrForbidden,
-			"You do not have access to the record this conversation would be about",
-		)
-	}
-
-	return nil
+	return Refusal(ctx, engine, actor, subjectType, errortypes.NewValidationError(
+		"subjectType", errortypes.ErrForbidden,
+		"You do not have access to the record this conversation would be about",
+	))
 }

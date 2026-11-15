@@ -117,6 +117,7 @@ type AIExtractRequest struct {
 	FileName   string
 	Text       string
 	Pages      []AIDocumentPage
+	PageCount  int
 }
 
 type AIExtractResult struct {
@@ -167,6 +168,7 @@ type AIBackgroundExtractPollRequest struct {
 	// at a provider, because guessing wrong reads another endpoint's call.
 	ProviderID  pulid.ID
 	SubmittedAt int64
+	PageCount   int
 }
 
 type AIBackgroundExtractPollResult struct {

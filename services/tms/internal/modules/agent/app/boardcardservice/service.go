@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/planwording"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
@@ -22,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -46,6 +48,9 @@ type Params struct {
 	Audit         auditports.AuditService
 	Organizations tenantports.OrganizationRepository
 	Attention     deskattentionports.DeskAttentionService
+	// Plan withholds a figure whose feature the plan leaves out: the costing
+	// figures are Accounting & Cash.
+	Plan permissionports.PlanFeatures
 }
 
 type permissionChecker interface {
@@ -107,7 +112,15 @@ type Service struct {
 	activity      activityReader
 	organizations orgzone.OrganizationReader
 	attention     deskattentionports.DeskAttentionService
+	plan          planFeatures
 	now           func() time.Time
+}
+
+type planFeatures interface {
+	Feature(
+		ctx context.Context,
+		feature platformcatalog.FeatureKey,
+	) (permissionports.PlanDenial, bool, error)
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
@@ -122,6 +135,7 @@ func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 		activity:      p.Audit,
 		organizations: p.Organizations,
 		attention:     p.Attention,
+		plan:          p.Plan,
 		now:           time.Now,
 	}
 }
@@ -278,9 +292,13 @@ func (s *Service) Check(ctx context.Context, req *assistantports.BoardFillReques
 		}
 	}
 	for _, key := range req.Board.Metrics() {
-		allowed, err := s.metricAllowed(ctx, req.Actor, key)
+		allowed, denial, err := s.metricAllowed(ctx, req.Actor, key)
 		if err != nil {
 			return err
+		}
+		if denial != nil {
+			return mistake("the %s metric is not available: %s, so leave it out and say "+
+				"so if the person asked for it", key, planwording.Restriction(denial))
 		}
 		if !allowed {
 			return mistake("the person may not read the %s metric, so leave it out", key)

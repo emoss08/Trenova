@@ -343,12 +343,15 @@ type StructuredCompleter interface {
 	) (*StructuredCompletionResult, error)
 }
 
-// ProviderAvailability reports whether Nova can run for a tenant. The Nova
-// harness asks it; a feature asks the harness (TaskRunner.Available).
+// ProviderAvailability reports whether Nova can run a task for a tenant. The
+// Nova harness asks it; a feature asks the harness (TaskRunner.Available).
 type ProviderAvailability interface {
-	// NovaReady reports whether Nova can run for the tenant: AI is on and the
-	// organization has an enabled provider chosen for Nova.
-	NovaReady(ctx context.Context, tenant pagination.TenantInfo) (bool, error)
+	// NovaReady is nil when Nova can run the task for the tenant: AI is on,
+	// the plan pays for the task (RequireTask) and the organization has an
+	// enabled provider chosen for Nova. When it cannot, the error says why
+	// and is ErrNoProviderConfigured; any other error is a failure to find
+	// out.
+	NovaReady(ctx context.Context, tenant pagination.TenantInfo, task aitask.Task) error
 }
 
 // ScriptProviders reads the code-mode settings of the chat providers, which

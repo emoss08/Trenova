@@ -12,6 +12,7 @@ import { useHotkey } from "@tanstack/react-hotkeys";
 import { useAppDialogOpen, useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useAssistantEnabled } from "./assistant/use-assistant-enabled";
 import { usePageAccessOffered } from "@/hooks/use-permission";
+import { isFeatureOnPlan, useUnavailableFeatures } from "@trenova/shared/hooks/use-plan-feature";
 
 const ASSISTANT_KEYBIND_ID = "assistant";
 const PAGE_ACCESS_KEYBIND_ID = "page-access";
@@ -20,6 +21,19 @@ export function KeyboardShortcutsDialog() {
   const t = useT();
   const assistantEnabled = useAssistantEnabled();
   const pageAccessOffered = usePageAccessOffered();
+  // A shortcut for something the plan leaves out is not listed, and a group left with none
+  // is not drawn.
+  const unavailable = useUnavailableFeatures();
+  const groups = keybindGroups
+    .filter((group) => isFeatureOnPlan(unavailable, group.planFeature))
+    .map((group) => ({
+      ...group,
+      keybinds: group.keybinds
+        .filter((keybind) => isFeatureOnPlan(unavailable, keybind.planFeature))
+        .filter((keybind) => assistantEnabled || keybind.id !== ASSISTANT_KEYBIND_ID)
+        .filter((keybind) => pageAccessOffered || keybind.id !== PAGE_ACCESS_KEYBIND_ID),
+    }))
+    .filter((group) => group.keybinds.length > 0);
 
   const open = useAppDialogOpen("shortcuts");
   const setDialogOpen = useAppDialogsStore((state) => state.setDialogOpen);
@@ -47,31 +61,28 @@ export function KeyboardShortcutsDialog() {
         </DialogHeader>
         <div className="-mx-4 max-h-[60vh] overflow-y-auto px-4">
           <div className="flex flex-col gap-4">
-            {keybindGroups.map((group) => (
+            {groups.map((group) => (
               <div key={group.id} className="flex flex-col gap-2">
                 <h3 className="text-muted-foreground text-xs font-medium">{t(group.label)}</h3>
                 <div className="flex flex-col">
-                  {group.keybinds
-                    .filter((keybind) => assistantEnabled || keybind.id !== ASSISTANT_KEYBIND_ID)
-                    .filter((keybind) => pageAccessOffered || keybind.id !== PAGE_ACCESS_KEYBIND_ID)
-                    .map((keybind) => (
-                      <div
-                        key={keybind.id}
-                        className="hover:bg-muted/50 flex items-center justify-between rounded-md px-2 py-1.5"
-                      >
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-medium">{t(keybind.label)}</span>
-                          <span className="text-muted-foreground text-xs">
-                            {t(keybind.description)}
-                          </span>
-                        </div>
-                        <KbdGroup>
-                          {keybindKeys(keybind.keys).map((key) => (
-                            <Kbd key={key}>{key}</Kbd>
-                          ))}
-                        </KbdGroup>
+                  {group.keybinds.map((keybind) => (
+                    <div
+                      key={keybind.id}
+                      className="hover:bg-muted/50 flex items-center justify-between rounded-md px-2 py-1.5"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-sm font-medium">{t(keybind.label)}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {t(keybind.description)}
+                        </span>
                       </div>
-                    ))}
+                      <KbdGroup>
+                        {keybindKeys(keybind.keys).map((key) => (
+                          <Kbd key={key}>{key}</Kbd>
+                        ))}
+                      </KbdGroup>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

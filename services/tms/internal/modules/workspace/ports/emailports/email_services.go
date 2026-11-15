@@ -18,6 +18,7 @@ var ErrNoEmailProfile = errors.New("no email profile is set up")
 type SendEmailRequest struct {
 	TenantInfo     pagination.TenantInfo `json:"-"`
 	ProfileID      pulid.ID              `json:"profileId"`
+	Type           email.Type            `json:"type"`
 	Purpose        email.Purpose         `json:"purpose"`
 	FromEmail      string                `json:"fromEmail"`
 	To             []string              `json:"to"`

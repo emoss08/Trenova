@@ -2,8 +2,10 @@ package novaharness
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -60,24 +62,35 @@ func New(p Params) *Harness {
 	}
 }
 
-// Available reports whether Nova can run for the tenant: AI is on and the
-// organization has an enabled provider chosen for Nova.
-func (h *Harness) Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
-	return h.providers.NovaReady(ctx, tenantInfo)
+// Available reports whether Nova can run the task for the tenant: AI is on,
+// the organization's plan pays for the task and the organization has an
+// enabled provider chosen for Nova.
+func (h *Harness) Available(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	task aitask.Task,
+) (bool, error) {
+	err := h.providers.NovaReady(ctx, tenantInfo, task)
+	switch {
+	case err == nil:
+		return true, nil
+	case errors.Is(err, llmports.ErrNoProviderConfigured):
+		return false, nil
+	default:
+		return false, err
+	}
 }
 
-// Run does the task and decodes the answer into out.
+// Run does the task and decodes the answer into out. A task Nova cannot run
+// is refused before anything is dispatched, with why: off the plan it names
+// the add-on, and either way it is llmports.ErrNoProviderConfigured.
 func (h *Harness) Run(
 	ctx context.Context,
 	task *llmports.NovaTask,
 	out any,
 ) (*llmports.StructuredCompletionResult, error) {
-	available, err := h.Available(ctx, task.TenantInfo)
-	if err != nil {
+	if err := h.providers.NovaReady(ctx, task.TenantInfo, task.Name); err != nil {
 		return nil, err
-	}
-	if !available {
-		return nil, llmports.ErrNoProviderConfigured
 	}
 	if len(task.Reads) > 0 && h.onWorker(ctx) {
 		return h.investigate(ctx, task, out)

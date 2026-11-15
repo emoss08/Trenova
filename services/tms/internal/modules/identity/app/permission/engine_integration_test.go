@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rolerepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
@@ -22,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
@@ -210,12 +212,14 @@ func setupIntegrationEngine(t *testing.T) (*engine, *integrationEnv, *redis.Clie
 	metricsRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
+	registry := permissioncatalog.NewRegistry()
 	eng := &engine{
 		roleRepo:          rolerepository.New(rolerepository.Params{DB: conn, Logger: zap.NewNop()}),
 		cacheRepo:         cacheRepo,
 		userRepo:          userrepository.New(userrepository.Params{DB: conn, Logger: zap.NewNop()}),
-		registry:          permissioncatalog.NewRegistry(),
+		registry:          registry,
 		routeRegistry:     routeaccess.NewRouteRegistry(),
+		plan:              onplan.New(registry, plantest.AllFeatures()),
 		databaseEnforcing: true,
 		metrics:           metricsRegistry,
 		l:                 zap.NewNop().Named("test.permission-engine"),

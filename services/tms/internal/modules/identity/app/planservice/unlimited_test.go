@@ -3,8 +3,8 @@ package planservice_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +30,6 @@ func TestUnlimitedPlanService(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, platformplan.OriginSelfHosted, resolved.Origin)
 	assert.True(t, resolved.Plan.IsUnlimited())
-	require.NoError(t, svc.RequireCapability(t.Context(), ti, platformplan.CapabilitySMS))
 	require.NoError(t, svc.RequireWritable(t.Context(), ti))
 	svc.Invalidate(ti.OrgID)
 }

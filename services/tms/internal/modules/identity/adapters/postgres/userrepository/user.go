@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -68,6 +69,7 @@ func tenantUsers(orgID pulid.ID) keel.Query[*tenant.User] {
 	return u.Where(
 		u.CurrentOrganizationID.Eq(orgID),
 		u.Username.Ne(tenant.SystemUsername),
+		keel.Not(u.ID.Text().HasPrefix(supportaccess.PrincipalIDPrefix)),
 	)
 }
 

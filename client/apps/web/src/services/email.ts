@@ -3,8 +3,8 @@ import { safeParse } from "@trenova/shared/lib/parse";
 import {
   emailMessageListSchema,
   emailMessageSchema,
-  emailProfileAssignmentSchema,
   emailProfileListSchema,
+  emailRoutingSchema,
   emailSuppressionListSchema,
   testEmailProfileRequestSchema,
   type EmailProfileAssignment,
@@ -31,12 +31,12 @@ export class EmailService {
 
   public async listAssignments() {
     const response = await api.get("/email-profiles/assignments/");
-    return safeParse(emailProfileAssignmentSchema.array(), response, "Email Profile Assignments");
+    return safeParse(emailRoutingSchema, response, "Email Profile Assignments");
   }
 
   public async updateAssignments(assignments: EmailProfileAssignment[]) {
     const response = await api.put("/email-profiles/assignments/", assignments);
-    return safeParse(emailProfileAssignmentSchema.array(), response, "Email Profile Assignments");
+    return safeParse(emailRoutingSchema, response, "Email Profile Assignments");
   }
 
   public async listLogs(params = "") {

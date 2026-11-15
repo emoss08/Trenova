@@ -89,7 +89,10 @@ func (s *Service) Get(
 		return nil, err
 	}
 	if result == nil || !result.Allowed {
-		return nil, errortypes.NewAuthorizationError("You cannot read this agent")
+		return nil, permissionports.DeniedError(
+			result,
+			errortypes.NewAuthorizationError("You cannot read this agent"),
+		)
 	}
 
 	// Read through the definition first, so an id from another organization

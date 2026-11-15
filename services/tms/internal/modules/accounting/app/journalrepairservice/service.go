@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceledger"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementjournal"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
@@ -33,6 +34,7 @@ type Deps struct {
 	Ledger   invoiceledger.LedgerAppender
 	Numbers  journalposting.Numberer
 	Policy   invoiceledger.Policy
+	Features platformcatalogports.FeatureGate
 	Now      func() int64
 }
 
@@ -101,6 +103,7 @@ func (s *Service) poster() *invoiceledger.Poster {
 		Policy:   s.deps.Policy,
 		Writer:   s.writer(),
 		Ledger:   s.deps.Ledger,
+		Features: s.deps.Features,
 	}
 }
 

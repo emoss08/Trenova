@@ -1,5 +1,6 @@
 import { HoverGlideGroup } from "@/components/hover-glide";
 import type { DispatchBoardMove, DispatchCandidate } from "@/lib/graphql/dispatch-console";
+import { PlanFeature } from "@/lib/plan-feature";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { ChevronDownIcon } from "@trenova/shared/components/icons";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
@@ -7,6 +8,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBox, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatClockDurationMs, formatMinutesSpan } from "@trenova/shared/lib/date";
 import { cn, formatCentsWhole } from "@trenova/shared/lib/utils";
@@ -19,6 +21,7 @@ import { FindingList, FindingSummary, findingKey } from "./finding-list";
 
 export const MAX_HOTKEY_RANK = 9;
 const INITIAL_VISIBLE = 6;
+const NO_STANDINGS: ReadonlyMap<string, CandidatePlanStanding> = new Map();
 
 /** A driver can be picked from here only with a tractor and nothing blocking them. */
 export function isPickable(candidate: DispatchCandidate): boolean {
@@ -279,7 +282,11 @@ export function CandidateList({
   const restId = useId();
   const shared = sharedFindings(candidates);
   const sharedKeys = new Set(shared.map(findingKey));
-  const standings = planStandings(move);
+  // The plan is the planner's, which is Dispatch Intelligence: without it no driver is the
+  // plan's pick and no cost is measured against what the plan chose.
+  const plannerOnPlan = usePlanFeature(PlanFeature.DispatchIntelligence).available;
+  const standings = plannerOnPlan ? planStandings(move) : NO_STANDINGS;
+  const preferenceFloorCents = plannerOnPlan ? preferenceFloorOf(move) : 0;
 
   const renderCandidate = (candidate: DispatchCandidate, index: number) => (
     <div key={candidate.workerId}>
@@ -292,7 +299,7 @@ export function CandidateList({
         canAssign={canAssign}
         onArm={onArm}
         sharedKeys={sharedKeys}
-        preferenceFloorCents={preferenceFloorOf(move)}
+        preferenceFloorCents={preferenceFloorCents}
       />
       {candidate.workerId === armedWorkerId ? (
         <ArmedPreflight

@@ -8,6 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -15,30 +16,31 @@ import (
 const sealKeyLabel = "trenova session seal v1"
 
 type sealedFields struct {
-	ID                    pulid.ID   `json:"id"`
-	SecretHash            string     `json:"secretHash"`
-	PreviousSecretHash    string     `json:"previousSecretHash"`
-	PreviousSecretUntil   int64      `json:"previousSecretUntil"`
-	SessionEpoch          int64      `json:"sessionEpoch"`
-	UserID                pulid.ID   `json:"userId"`
-	BusinessUnitID        pulid.ID   `json:"businessUnitId"`
-	OrganizationID        pulid.ID   `json:"organizationId"`
-	ActiveRoleIDs         []pulid.ID `json:"activeRoleIds"`
-	AuthProvider          string     `json:"authProvider"`
-	ExternalIdentityID    string     `json:"externalIdentityId"`
-	ExternalSubject       string     `json:"externalSubject"`
-	ExternalIssuer        string     `json:"externalIssuer,omitempty"`
-	AuthenticatorAAL      int        `json:"authenticatorAal"`
-	FederationFAL         int        `json:"federationFal"`
-	MFAAuthenticatedAt    int64      `json:"mfaAuthenticatedAt"`
-	LastReauthenticatedAt int64      `json:"lastReauthenticatedAt"`
-	RiskDecision          string     `json:"riskDecision"`
-	RiskDecisionID        pulid.ID   `json:"riskDecisionId"`
-	IsPortalUser          bool       `json:"isPortalUser"`
-	IssuedBySignIn        bool       `json:"issuedBySignIn"`
-	MustChangePassword    bool       `json:"mustChangePassword"`
-	ExpiresAt             int64      `json:"expiresAt"`
-	CreatedAt             int64      `json:"createdAt"`
+	ID                    pulid.ID         `json:"id"`
+	SecretHash            string           `json:"secretHash"`
+	PreviousSecretHash    string           `json:"previousSecretHash"`
+	PreviousSecretUntil   int64            `json:"previousSecretUntil"`
+	SessionEpoch          int64            `json:"sessionEpoch"`
+	UserID                pulid.ID         `json:"userId"`
+	BusinessUnitID        pulid.ID         `json:"businessUnitId"`
+	OrganizationID        pulid.ID         `json:"organizationId"`
+	ActiveRoleIDs         []pulid.ID       `json:"activeRoleIds"`
+	AuthProvider          string           `json:"authProvider"`
+	ExternalIdentityID    string           `json:"externalIdentityId"`
+	ExternalSubject       string           `json:"externalSubject"`
+	ExternalIssuer        string           `json:"externalIssuer,omitempty"`
+	AuthenticatorAAL      int              `json:"authenticatorAal"`
+	FederationFAL         int              `json:"federationFal"`
+	MFAAuthenticatedAt    int64            `json:"mfaAuthenticatedAt"`
+	LastReauthenticatedAt int64            `json:"lastReauthenticatedAt"`
+	RiskDecision          string           `json:"riskDecision"`
+	RiskDecisionID        pulid.ID         `json:"riskDecisionId"`
+	IsPortalUser          bool             `json:"isPortalUser"`
+	IssuedBySignIn        bool             `json:"issuedBySignIn"`
+	MustChangePassword    bool             `json:"mustChangePassword"`
+	ExpiresAt             int64            `json:"expiresAt"`
+	CreatedAt             int64            `json:"createdAt"`
+	Support               *authctx.Support `json:"support,omitempty"`
 }
 
 func (r *sessionRepository) sealOf(sess *session.Session) (string, error) {
@@ -71,6 +73,7 @@ func (r *sessionRepository) sealOf(sess *session.Session) (string, error) {
 		MustChangePassword:    sess.MustChangePassword,
 		ExpiresAt:             sess.ExpiresAt,
 		CreatedAt:             sess.CreatedAt,
+		Support:               sess.Support,
 	})
 	if err != nil {
 		return "", err

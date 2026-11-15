@@ -36,6 +36,10 @@ type AccessParams struct {
 	// unless the bench forces them.
 	Scripts  llmports.ScriptProviders
 	Registry *permissioncatalog.Registry
+	// Plan is what the organization's plan leaves out: a tool whose feature
+	// is off is neither offered nor run, and the turn is told which add-ons
+	// it lacks.
+	Plan permissionports.PlanFeatures
 }
 
 // Params is what the process's tool access is built from.
@@ -55,6 +59,7 @@ type Params struct {
 	Disclosures    agenttoolports.ToolDisclosureObserver
 	Scripts        llmports.ScriptProviders
 	Registry       *permissioncatalog.Registry
+	Plan           permissionports.PlanFeatures
 }
 
 // New is the process's one tool access, shared by the agent runtime and the
@@ -76,6 +81,7 @@ func New(p Params) *Access {
 		Disclosures:    p.Disclosures,
 		Scripts:        p.Scripts,
 		Registry:       p.Registry,
+		Plan:           p.Plan,
 	})
 }
 
@@ -95,6 +101,7 @@ type Access struct {
 	threshold   *int
 	registry    *permissioncatalog.Registry
 	scripts     llmports.ScriptProviders
+	plan        permissionports.PlanFeatures
 }
 
 func NewAccess(p *AccessParams) *Access {
@@ -112,5 +119,6 @@ func NewAccess(p *AccessParams) *Access {
 		threshold:   p.Threshold,
 		registry:    p.Registry,
 		scripts:     p.Scripts,
+		plan:        p.Plan,
 	}
 }

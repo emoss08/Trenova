@@ -1,18 +1,35 @@
 import {
   formatPlanMeterValue,
-  planCapabilityLabel,
   planDisplayName,
   planMeterDefinition,
   type PlanMeterWindow,
 } from "@/lib/plan-meters";
 import type { PlanLimitCopy } from "@trenova/edition";
+import { planFeatureOf } from "@trenova/shared/hooks/use-plan-feature";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import {
+  canManagePlan,
+  planLockedGuidance,
+  planLockedSentence,
+} from "@trenova/shared/lib/plan-copy";
 import {
   SUBSCRIPTION_READ_ONLY_REASON,
   type PlanLimitNotice,
 } from "@trenova/shared/lib/plan-limit";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 
 type Lines = Pick<PlanLimitCopy, "title" | "description" | "guidance">;
+
+/**
+ * What an add-on refusal is about, in names: the feature's from the permission manifest, the
+ * add-on's from the refusal itself (the manifest's when the refusal names none), and whether
+ * the person manages the organization and so adds it themselves. Never a key or a code.
+ */
+export type PlanRestrictionNames = {
+  featureName: string;
+  addOnName: string;
+  canManagePlan: boolean;
+};
 
 /**
  * What a plan-limit refusal says beyond its figures. The host's wording names no plan
@@ -22,7 +39,7 @@ export type PlanLimitWording = {
   planName: (planKey: string) => string;
   quotaGuidance: (window: PlanMeterWindow, t: TranslateFn) => string;
   readOnly: (t: TranslateFn) => Lines;
-  restricted: (capability: string, planName: string, t: TranslateFn) => Lines;
+  restricted: (names: PlanRestrictionNames, t: TranslateFn) => Lines;
 };
 
 export const GENERIC_PLAN_LIMIT_WORDING: PlanLimitWording = {
@@ -39,12 +56,55 @@ export const GENERIC_PLAN_LIMIT_WORDING: PlanLimitWording = {
     ),
     guidance: t("Ask an administrator of your organization to restore the subscription."),
   }),
-  restricted: (capability, _planName, t) => ({
-    title: t("{0} not available", t(planCapabilityLabel(capability))),
-    description: t("This part of Trenova is not included in your current plan."),
-    guidance: t("Ask an administrator of your organization about changing the plan."),
+  restricted: ({ featureName, addOnName, canManagePlan: managesPlan }, t) => ({
+    title: featureName ? t("{0} is not on your plan", featureName) : t("Not on your plan"),
+    description:
+      featureName || addOnName
+        ? planLockedSentence(t, featureName, addOnName)
+        : t("This part of Trenova is not included in your current plan."),
+    guidance: planLockedGuidance(t, managesPlan),
   }),
 };
+
+const MANAGED_PLAN = "managed";
+
+/**
+ * What frees room on a managed instance, keyed by the meter the refusal names. Overage is
+ * turned on and allowances are added in the Trenova account, never priced here.
+ */
+const MANAGED_QUOTA_GUIDANCE: Readonly<
+  Record<string, (limit: number | null, t: TranslateFn) => string>
+> = {
+  "documents.storage_bytes": (_limit, t) =>
+    t(
+      "Turn on overage from your Trenova account to keep uploading, or delete documents you no longer need.",
+    ),
+  "document_intelligence.pages": (_limit, t) =>
+    t("Turn on overage from your Trenova account to keep extracting, or wait for the next period."),
+  "organizations.total": (limit, t) =>
+    t(
+      "{0, plural, one {Your plan includes # organization.} other {Your plan includes # organizations.}} Add organizations to your plan from your Trenova account to create another.",
+      limit ?? 0,
+    ),
+};
+
+function managedQuotaGuidance(notice: PlanLimitNotice, t: TranslateFn): string | null {
+  if (notice.kind !== "quota" || notice.plan !== MANAGED_PLAN) {
+    return null;
+  }
+  return MANAGED_QUOTA_GUIDANCE[notice.meter]?.(notice.limit, t) ?? null;
+}
+
+/** The names an add-on refusal is explained with, read from the permission manifest. */
+export function planRestrictionNames(feature: string, addOn: string): PlanRestrictionNames {
+  const { manifest, hasPermission } = usePermissionStore.getState();
+  const plan = planFeatureOf(manifest, feature);
+  return {
+    featureName: plan.featureName,
+    addOnName: addOn || plan.addOnName,
+    canManagePlan: canManagePlan(hasPermission),
+  };
+}
 
 /**
  * The words the plan-limit dialog shows for one refusal. A quota names the meter, how
@@ -86,7 +146,7 @@ export function planLimitCopy(
     return {
       title: t("{0} limit reached", label),
       description,
-      guidance: wording.quotaGuidance(meter.window, t),
+      guidance: managedQuotaGuidance(notice, t) ?? wording.quotaGuidance(meter.window, t),
       usage,
     };
   }
@@ -95,5 +155,8 @@ export function planLimitCopy(
     return { ...wording.readOnly(t), usage: null };
   }
 
-  return { ...wording.restricted(notice.capability, planName, t), usage: null };
+  return {
+    ...wording.restricted(planRestrictionNames(notice.feature, notice.addOn), t),
+    usage: null,
+  };
 }

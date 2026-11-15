@@ -109,6 +109,7 @@ func (t *EmailCustomerTool) compose(
 	composed.Send = &emailports.SendEmailRequest{
 		TenantInfo:     tenant,
 		ProfileID:      profileID,
+		Type:           email.TypeCustomerUpdate,
 		Purpose:        email.PurposeOperations,
 		To:             recipients,
 		Subject:        rendered.Subject,

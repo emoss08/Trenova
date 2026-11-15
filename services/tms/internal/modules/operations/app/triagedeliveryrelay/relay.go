@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -114,4 +115,8 @@ func statusIn(metadata map[string]any, key string) shipmentvocab.Status {
 	}
 
 	return shipmentvocab.Status(value)
+}
+
+func (r *Relay) ObserverFeature() platformcatalog.FeatureKey {
+	return platformcatalog.FeatureAITriage
 }

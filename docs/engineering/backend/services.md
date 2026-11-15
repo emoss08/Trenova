@@ -87,6 +87,42 @@ the `permissionports.PermissionEngine` and checks itself. Data scopes ("own", "t
 by RLS and `pkg/readscope`, not by `WHERE` clauses a service adds. Read
 [permissions.md](../permissions.md) before adding a check, a resource or an operation.
 
+A service that writes a base record a client sent back calls
+`permissionports.PlanFieldKeeper.Keep` with the stored record before it validates, so a field the
+plan withholds (`FieldFeatures`) keeps its stored value; see "What the plan withholds" in
+[reference-views.md](../reference-views.md#what-the-plan-withholds)
+(`operations/app/shipmenteffects/planfields.go`).
+
+## Add-ons a base flow sets in motion
+
+An add-on that is off does no work and changes nothing, even when a base action would set it in
+motion ([permissions.md](../permissions.md#what-the-plan-includes)).
+
+- **Base code asks the gate before calling into an add-on**, once, where it crosses: a
+  `platformcatalogports.FeatureGate.Enabled` check that skips the add-on step and leaves the
+  base flow whole (`shipmentcommercial.Calculator.syncDetentionCharge`: no detention charge is
+  added or removed without Detention). An add-on service that a base flow or a base permission
+  reaches also calls `platformcatalogports.RequireFeature` at its entry, so a direct caller gets
+  `PLAN_RESTRICTED` (`freightoutlookservice.Service.Outlook`). A gate error is an error, handled
+  as the step's own failure is at that site: never an allow, never a new hard failure.
+- **The add-on's entry refuses before any work.** When the only refusal is deep inside (the
+  model call, after records were read or a workflow started), add `RequireFeature` at the
+  service's entry, once, where every caller passes (`dispatchautoassignservice.Plan`,
+  `customertrackingservice`'s link and preview methods, `telematicsservice`'s reads). A base
+  flow that would start add-on work asks the gate before it starts it
+  (`paperworkcontract.Requester.RequestRead`, `dispatchcoveragewatch`). Work that an add-on's
+  output feeds into another add-on (the planner records Trenova AI proposals) requires both.
+- **An integration names its feature.** `integrationservice.planFeature` maps an integration
+  type to the add-on feature it belongs to (Samsara, Google Maps); enabling, testing or reading
+  its runtime configuration is refused or not ready without it.
+- **An observer names its feature.** Every observer port embeds
+  `platformcatalogports.FeatureObserver`, and each implementation returns its catalogue constant
+  from `ObserverFeature()` in its own file (a base observer names its base feature). The code that
+  notifies a list filters it with `platformcatalogports.Observing`, which asks the gate once per
+  distinct feature and returns the gate errors to log as an observer failure
+  (`shipmenteventservice.notifyObservers`). `TestEveryObserverNamesAKnownFeature` reads every
+  declaration in the tree.
+
 ## After the write
 
 - **Audit**: `auditService.LogAction(ctx, …)` with the request's `ctx`, inside the write's

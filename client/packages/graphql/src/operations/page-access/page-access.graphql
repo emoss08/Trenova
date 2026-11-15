@@ -33,6 +33,12 @@ fragment PageAccessFields on PageAccess {
       inView
       decision
     }
+    planDenial {
+      feature
+      featureName
+      addOn
+      addOnName
+    }
   }
 }
 

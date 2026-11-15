@@ -1,6 +1,6 @@
 ---
 path: /organization/email-profiles
-aliases: [sender identity, from address, email sender, outgoing email settings, Resend, Postmark]
+aliases: [sender identity, from address, email sender, outgoing email settings, Resend, Postmark, system email, sent by Trenova]
 related:
   - /organization/email-logs
 ---
@@ -15,6 +15,20 @@ General, Billing, Reporting, Operations, Authentication and Notifications. Below
 lists every profile with its **Profile**, **Sender**, **Provider**, **Status**, **Reply-To** and
 **Updated** columns. Administrators use the page to set
 up and maintain outgoing email.
+
+### What Trenova sends for you
+On Trenova Cloud, Trenova sends your organization's own system email for you when no profile
+covers it: invitations to new users and drivers, password resets, notification emails and
+digests, reminders about proposals waiting on someone, records shared with a colleague, and
+scheduled reports to your own users. It goes out from Trenova's address as "<your organization>
+via Trenova", and the page shows **System email is sent by Trenova on your behalf** while it does.
+It only reaches your own users (and the people you invite), and it stops being used as soon as
+you assign a profile to **General**.
+
+Email to anyone outside your organization always needs your own profile and domain: invoices,
+statements, payment reminders, status updates and tracking links, tender offers, rate
+confirmations, detention notices, factoring letters, replies to inbound email, and test sends.
+Without a profile, these are not sent and Trenova says an email profile is needed.
 
 ## Tasks
 

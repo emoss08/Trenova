@@ -261,8 +261,25 @@ function Lifecycle() {
 
 function SaveControl() {
   const t = useT();
-  const { mode, dirty, isSubmitting, save } = useStudio();
+  const { mode, template, dirty, isSubmitting, save } = useStudio();
   const keys = formatShortcut("S");
+
+  if (mode === "edit" && template?.standardKey) {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <span className="text-foreground-muted flex items-center gap-1 px-1 text-sm">
+              {t("Standard template")}
+            </span>
+          }
+        />
+        <TooltipContent>
+          {t("Standard templates cannot be changed. Fork it to make a template of your own.")}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
 
   if (mode === "edit" && !dirty && !isSubmitting) {
     return (

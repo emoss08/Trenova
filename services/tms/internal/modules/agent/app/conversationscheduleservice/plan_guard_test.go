@@ -3,8 +3,8 @@ package conversationscheduleservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,7 +15,7 @@ func TestCreateRefusesScheduledRequestsThePlanRestricts(t *testing.T) {
 	t.Parallel()
 
 	tenant := plantest.Tenant()
-	svc := &Service{plans: plantest.Restricting(t, platformplan.CapabilityAgentAutomation)}
+	svc := &Service{features: plantest.Without(platformcatalog.FeatureAgentAutomation)}
 
 	result, err := svc.Create(t.Context(), CreateRequest{
 		ThreadID: pulid.MustNew("thr_"),

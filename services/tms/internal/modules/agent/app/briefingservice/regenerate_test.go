@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +39,7 @@ func TestRegenerate_WritesTheOneRoleOnAWorker(t *testing.T) {
 		Written:   1,
 		Briefings: []*briefing.Briefing{written},
 	}}
-	svc := &Service{l: zap.NewNop(), days: days}
+	svc := &Service{l: zap.NewNop(), features: plantest.AllFeatures(), days: days}
 
 	got, err := svc.Regenerate(t.Context(), briefingports.GetBriefingRequest{
 		TenantInfo:   tenant,
@@ -61,7 +62,7 @@ func TestRegenerate_AnUnknownRoleWritesTheGeneralPage(t *testing.T) {
 	days := &fakeDays{result: &briefingports.WriteBriefingResult{
 		Briefings: []*briefing.Briefing{{ID: pulid.MustNew("brf_")}},
 	}}
-	svc := &Service{l: zap.NewNop(), days: days}
+	svc := &Service{l: zap.NewNop(), features: plantest.AllFeatures(), days: days}
 
 	_, err := svc.Regenerate(t.Context(), briefingports.GetBriefingRequest{RoleKey: "Nobody"}, nil)
 	require.NoError(t, err)
@@ -74,7 +75,7 @@ func TestRegenerate_AnUnknownRoleWritesTheGeneralPage(t *testing.T) {
 func TestRegenerate_NoPageWrittenIsAnError(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{l: zap.NewNop(), days: &fakeDays{result: &briefingports.WriteBriefingResult{}}}
+	svc := &Service{l: zap.NewNop(), features: plantest.AllFeatures(), days: &fakeDays{result: &briefingports.WriteBriefingResult{}}}
 
 	_, err := svc.Regenerate(t.Context(), briefingports.GetBriefingRequest{}, nil)
 	require.Error(t, err)

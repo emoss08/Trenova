@@ -12,6 +12,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 // The documented shape of GET /api/v1/system/public-config.
 const cloudConfig = {
   platformMode: "cloud",
+  managed: false,
   signupEnabled: true,
   turnstileSiteKey: "1x00000000000000000000AA",
   termsUrl: "https://trenova.app/legal/terms/",

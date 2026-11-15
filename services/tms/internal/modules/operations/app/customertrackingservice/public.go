@@ -29,7 +29,7 @@ type resolvedLink struct {
 	profile  *trackingprofile.Profile
 }
 
-func invalidLinkError() error {
+func InvalidLinkError() error {
 	return errortypes.NewValidationError(
 		"token",
 		errortypes.ErrInvalid,
@@ -44,14 +44,14 @@ func invalidLinkError() error {
 func (s *Service) resolveToken(ctx context.Context, token string) (*resolvedLink, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
-		return nil, invalidLinkError()
+		return nil, InvalidLinkError()
 	}
 	link, err := s.links.GetByHash(ctx, tokenutils.Hash(token))
 	if err != nil {
 		return nil, err
 	}
 	if !link.IsUsable(s.now()) {
-		return nil, invalidLinkError()
+		return nil, InvalidLinkError()
 	}
 
 	tenant := pagination.TenantInfo{OrgID: link.OrganizationID, BuID: link.BusinessUnitID}
@@ -59,19 +59,19 @@ func (s *Service) resolveToken(ctx context.Context, token string) (*resolvedLink
 	sh, err := s.loadShipment(ctx, tenant, link.ShipmentID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, invalidLinkError()
+			return nil, InvalidLinkError()
 		}
 		return nil, err
 	}
 	if sh.CustomerID != link.CustomerID {
-		return nil, invalidLinkError()
+		return nil, InvalidLinkError()
 	}
 	profile, err := s.profiles.GetByCustomer(ctx, tenant, sh.CustomerID)
 	if err != nil {
 		return nil, err
 	}
 	if !profile.LinkEnabled {
-		return nil, invalidLinkError()
+		return nil, InvalidLinkError()
 	}
 	return &resolvedLink{ctx: ctx, link: link, tenant: tenant, shipment: sh, profile: profile}, nil
 }
@@ -107,6 +107,9 @@ func (s *Service) PreviewForShipment(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) (*customertrackingports.PublicTrackingView, error) {
+	if err := s.requireTracking(ctx); err != nil {
+		return nil, err
+	}
 	sh, err := s.loadShipment(ctx, tenantInfo, shipmentID)
 	if err != nil {
 		return nil, err
@@ -316,7 +319,7 @@ func (s *Service) DownloadPodByToken(
 		return nil, err
 	}
 	if !resolved.profile.Shows(trackingprofile.FieldProofOfDelivery) {
-		return nil, invalidLinkError()
+		return nil, InvalidLinkError()
 	}
 	ctx = resolved.ctx
 	pods, err := s.facts.LatestPods(ctx, resolved.tenant, []pulid.ID{resolved.shipment.ID})

@@ -16,6 +16,14 @@ describe("permissionManifestSchema", () => {
       permissions: {},
       routeAccess: {},
       availableOrgs: [],
+      unavailableFeatures: [
+        {
+          feature: "tms.accounting",
+          featureName: "Accounting",
+          addOn: "ACC",
+          addOnName: "Accounting & Cash",
+        },
+      ],
       checksum: "abc123",
       expiresAt: 1782403304,
     });

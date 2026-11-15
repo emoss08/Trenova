@@ -49,7 +49,7 @@ export default defineEdition({
   navItems: [{ moduleId, groupId?, after?, item: { id, label, path, icon?, resource?, platformMode? } }],
   slots: { AppBanner, RootHost, LoginPrompt },
   protectedLoaders: [loader],                     // after the session check; first non-null wins
-  plan: { useRestrictions, loadRestrictions, restrictedRedirect, usagePath?, limitCopy? },
+  plan: { usagePath?, limitCopy? },
   messages: { es: () => import(...), "zh-TW": ..., "zh-CN": ... },
 });
 ```
@@ -65,12 +65,18 @@ export default defineEdition({
   `RootHost` once at the router root, `LoginPrompt` the line under the sign-in heading
   (it receives the host's line as `fallback` and must render it when it has nothing to
   add).
-- **Plan**: the host owns `PlanCapability`, the `planCapability` filters on navigation,
-  `createPlanCapabilityLoader` and the plan-limit dialog for `QUOTA_EXCEEDED` /
-  `PLAN_RESTRICTED` / 402 — all of which do nothing without a plan source. The edition
-  supplies the restrictions (hook and loader), where a withheld route redirects, the
-  plan page the dialog links to, and its own wording (`limitCopy`, usually
-  `planLimitCopy(notice, t, wording)` from `@/lib/plan-limit-copy`).
+- **Plan**: which features the organization's plan leaves out, and what they and their add-ons
+  are called, come from the server on every install: the permission manifest's
+  `unavailableFeatures` (empty on a self-hosted install). The host reads it with
+  `usePlanFeature` / `planFeatureOf` (`@trenova/shared/hooks/use-plan-feature`) and owns
+  everything that follows from it: navigation entries' `planFeature`, `createPlanFeatureLoader`
+  and `createPermissionLoader` throwing the plan refusal (the route's error boundary draws
+  `PlanLocked variant="page"`), `PlanLocked` cards and `WithheldValue plan=…`, and the
+  plan-limit dialog for `QUOTA_EXCEEDED` / `PLAN_RESTRICTED` / 402. An add-on refusal of a
+  read is left to the page's error state; a write opens the dialog. The edition supplies only
+  the plan page the dialog links to (`usagePath`) and its own wording (`limitCopy`, usually
+  `planLimitCopy(notice, t, wording)` from `@/lib/plan-limit-copy`). Names are never hand-kept
+  in the client, and no feature key or add-on code is shown.
 - **Messages**: see below.
 
 The onboarding wizard is public and is not an edition feature; its gate reads
@@ -142,6 +148,9 @@ private build.
 
 The server builds one product. There is no edition registry, no config sections, route groups,
 GraphQL extension group or public-config contributors for an overlay to join. The platform ports
-(`PlanService`, `QuotaGuard`, `EntitlementProvider`, `BillingProvider`, `UsageProvider`,
+(`PlanService`, `QuotaGuard`, `FeatureGate`, `BillingProvider`, `UsageProvider`,
 `EditionInfo`) keep their self-hosted implementations; decide behaviour from an injected port,
-never from `platform.mode`.
+never from `platform.mode`. A paid add-on is a feature, not a plan capability: ask the
+instance-wide `FeatureGate` (`platformcatalogports.RequireFeature`), which takes no tenant. Background
+schedules ask it too: each one names its feature, and one whose feature is off is paused
+([jobs.md](backend/jobs.md#a-schedule-names-its-feature)).

@@ -290,6 +290,7 @@ func (s *Service) Send(
 
 	if _, err = s.emailService.Send(ctx, &emailports.SendEmailRequest{
 		TenantInfo: tenantInfo,
+		Type:       email.TypeRateConfirmation,
 		Purpose:    email.PurposeNotifications,
 		To:         recipients,
 		Subject:    message.Subject,

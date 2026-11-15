@@ -12,11 +12,6 @@ import (
 
 type PlanService interface {
 	Resolve(ctx context.Context, orgID, buID pulid.ID) (*platformplan.ResolvedPlan, error)
-	RequireCapability(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		capability platformplan.Capability,
-	) error
 	RequireWritable(ctx context.Context, tenantInfo pagination.TenantInfo) error
 	EnforcesPlans() bool
 	Invalidate(orgID pulid.ID)
@@ -50,23 +45,25 @@ type QuotaMeterUsage struct {
 	Remaining   int64                    `json:"remaining"`
 	WindowStart int64                    `json:"windowStart,omitempty"`
 	WindowEnd   int64                    `json:"windowEnd,omitempty"`
+	HardCap     bool                     `json:"hardCap,omitempty"`
+	Stopped     bool                     `json:"stopped,omitempty"`
 }
 
 type QuotaUsageSummary struct {
-	OrganizationID         pulid.ID                  `json:"organizationId"`
-	BusinessUnitID         pulid.ID                  `json:"businessUnitId"`
-	Plan                   platformplan.PlanKey      `json:"plan"`
-	PlanName               string                    `json:"planName"`
-	Origin                 platformplan.Origin       `json:"origin"`
-	Unlimited              bool                      `json:"unlimited"`
-	SubscriptionID         pulid.ID                  `json:"subscriptionId,omitempty"`
-	Status                 subscription.Status       `json:"status,omitempty"`
-	TrialEndsAt            int64                     `json:"trialEndsAt,omitempty"`
-	ReadOnlyUntil          int64                     `json:"readOnlyUntil,omitempty"`
-	SubscribedAt           int64                     `json:"subscribedAt,omitempty"`
-	RestrictedCapabilities []platformplan.Capability `json:"restrictedCapabilities"`
-	Meters                 []QuotaMeterUsage         `json:"meters"`
-	CheckedAt              int64                     `json:"checkedAt"`
+	OrganizationID pulid.ID             `json:"organizationId"`
+	BusinessUnitID pulid.ID             `json:"businessUnitId"`
+	Plan           platformplan.PlanKey `json:"plan"`
+	PlanName       string               `json:"planName"`
+	Origin         platformplan.Origin  `json:"origin"`
+	Unlimited      bool                 `json:"unlimited"`
+	Overage        bool                 `json:"overage,omitempty"`
+	SubscriptionID pulid.ID             `json:"subscriptionId,omitempty"`
+	Status         subscription.Status  `json:"status,omitempty"`
+	TrialEndsAt    int64                `json:"trialEndsAt,omitempty"`
+	ReadOnlyUntil  int64                `json:"readOnlyUntil,omitempty"`
+	SubscribedAt   int64                `json:"subscribedAt,omitempty"`
+	Meters         []QuotaMeterUsage    `json:"meters"`
+	CheckedAt      int64                `json:"checkedAt"`
 }
 
 type QuotaGuard interface {

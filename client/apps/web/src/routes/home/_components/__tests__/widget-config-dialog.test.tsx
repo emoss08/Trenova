@@ -87,8 +87,8 @@ function option(configKind: string, label = "Widget"): HomeWidgetOption {
 }
 
 const METRICS = [
-  { key: "activeShipments", label: "Active shipments" },
-  { key: "revenueToday", label: "Revenue today" },
+  { key: "activeShipments", label: "Active shipments", planLock: null },
+  { key: "revenueToday", label: "Revenue today", planLock: null },
 ];
 
 function renderDialog(

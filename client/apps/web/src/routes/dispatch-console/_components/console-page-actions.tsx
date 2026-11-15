@@ -1,12 +1,14 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CapabilityGate } from "@/components/capability-gate";
 import { usePermission } from "@/hooks/use-permission";
+import { PlanFeature } from "@/lib/plan-feature";
 import {
   FlipBackwardIcon,
   HorizontalBarChart03Icon,
   Rows03Icon,
 } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { cn } from "@trenova/shared/lib/utils";
 import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
@@ -38,6 +40,11 @@ export function ConsolePageActions({
   const t = useT();
   const { mode, setMode, timelineAvailable } = useDispatchView();
   const { allowed: mayAssign } = usePermission(Resource.ShipmentMove, Operation.Assign);
+  // The planner is Dispatch Intelligence, and what it plans is recorded as Nova's proposals
+  // for a person to decide, which is Trenova AI: the button needs both on the plan.
+  const planner = usePlanFeature(PlanFeature.DispatchIntelligence);
+  const proposals = usePlanFeature(PlanFeature.AIDesk);
+  const mayPropose = mayAssign && planner.available && proposals.available;
 
   return (
     <div className="flex items-center gap-2">
@@ -73,7 +80,7 @@ export function ConsolePageActions({
         </div>
       )}
 
-      <span className="bg-border h-4 w-px" aria-hidden />
+      {timelineAvailable ? <span className="bg-border h-4 w-px" aria-hidden /> : null}
 
       <Button
         size="sm"
@@ -89,8 +96,9 @@ export function ConsolePageActions({
       </Button>
 
       {/* Proposing coverage plans driver and tractor pairings, which the API refuses for
-          an organization without asset operations or a person who may not assign. */}
-      {mayAssign ? (
+          an organization without asset operations or a person who may not assign, and
+          which exists only on a plan with the planner and Nova's proposals. */}
+      {mayPropose ? (
         <CapabilityGate capability={OrganizationCapability.AssetOperations}>
           <Button
             size="sm"

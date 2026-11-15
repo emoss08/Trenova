@@ -1,8 +1,10 @@
 import type { DispatchBoardDriver, DispatchBoardMove } from "@/lib/graphql/dispatch-console";
 import type { WatchtowerItem } from "@/lib/graphql/watchtower";
+import { PlanFeature } from "@/lib/plan-feature";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { EmptyTableSketch } from "@trenova/shared/components/ui/empty-table";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
+import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Ref } from "react";
@@ -58,6 +60,8 @@ function TabButton({
 
 function KeyLegend() {
   const t = useT();
+  // A and D decide Nova's proposals, which only a plan with Trenova AI has.
+  const decidesProposals = usePlanFeature(PlanFeature.AIDesk).available;
   const key = (label: string) => <Kbd className="h-4 min-w-4 text-3xs">{label}</Kbd>;
 
   return (
@@ -67,14 +71,18 @@ function KeyLegend() {
         {key("K")}
         {t("next and previous")}
       </span>
-      <span className="inline-flex items-center gap-1">
-        {key("A")}
-        {t("approve proposal")}
-      </span>
-      <span className="inline-flex items-center gap-1">
-        {key("D")}
-        {t("decline")}
-      </span>
+      {decidesProposals ? (
+        <>
+          <span className="inline-flex items-center gap-1">
+            {key("A")}
+            {t("approve proposal")}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            {key("D")}
+            {t("decline")}
+          </span>
+        </>
+      ) : null}
       <span className="inline-flex items-center gap-1">
         {key("1")}–{key("9")}
         {t("pick a driver")}
@@ -151,8 +159,14 @@ export function QueuePane({
 }) {
   const t = useT();
 
+  // Exceptions are the Watchtower's, so a plan without it has no such tab, and a link to
+  // it opens the moves.
+  const showsExceptions = usePlanFeature(PlanFeature.AIWatchtower).available;
   // Drivers are employed drivers, so only a fleet sees them.
-  const activeTab: QueueTab = tab === "drivers" && !showsDrivers ? "moves" : tab;
+  const activeTab: QueueTab =
+    (tab === "drivers" && !showsDrivers) || (tab === "exceptions" && !showsExceptions)
+      ? "moves"
+      : tab;
   const { capacityFilter, driverSearch, setCapacityFilter, setDriverSearch } = useDispatchRail();
   // The column heading and the key legend belong to rows; the skeleton, the error sheet
   // and the empty sheet draw their own.
@@ -181,13 +195,15 @@ export function QueuePane({
           count={moveCount === null ? null : String(moveCount)}
           onSelect={onTab}
         />
-        <TabButton
-          id="exceptions"
-          active={activeTab === "exceptions"}
-          label={t("Exceptions")}
-          count={exceptionCount}
-          onSelect={onTab}
-        />
+        {showsExceptions ? (
+          <TabButton
+            id="exceptions"
+            active={activeTab === "exceptions"}
+            label={t("Exceptions")}
+            count={exceptionCount}
+            onSelect={onTab}
+          />
+        ) : null}
         {showsDrivers ? (
           <TabButton
             id="drivers"

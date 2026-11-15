@@ -224,6 +224,7 @@ export function publicTemplate(state, t) {
     sourceTemplateId: t.sourceTemplateId,
     sourceVersionNumber: t.sourceVersionNumber,
     currentVersionNumber: t.currentVersionNumber,
+    standardKey: t.standardKey ?? "",
     billing: approved
       ? { versionNumber: approved.versionNumber, effectiveFrom: approved.createdAt }
       : null,
@@ -913,24 +914,11 @@ function listStandards() {
   return STANDARDS.map((standard) => ({ ...standard }));
 }
 
-function installStandards(state) {
-  const names = new Set([...studio(state).templates.values()].map((t) => t.name));
-  const installed = [];
-  const skipped = [];
-  for (const standard of STANDARDS) {
-    if (names.has(standard.name)) {
-      skipped.push(standard.name);
-      continue;
-    }
-    installed.push(
-      newTemplate(
-        state,
-        { ...standard },
-        { changeMessage: "Installed from the standard templates" },
-      ),
-    );
-  }
-  return { installed: installed.map((t) => publicTemplate(state, t)), skipped };
+/** The inputs a rating method prices with: the base read every plan's shipment form makes. */
+function pricingInputs(state, path) {
+  const id = new RegExp(`/pricing-templates/(${ID})/inputs`).exec(path)?.[1];
+  const t = id ? studio(state).templates.get(id) : null;
+  return t ? { inputs: publicTemplate(state, t).inputs ?? [] } : notFound("Formula template");
 }
 
 // --- Review ----------------------------------------------------------------------------------
@@ -1367,12 +1355,12 @@ const withTemplate = (fn) => (s, p) => {
 };
 
 export const FORMULA_ROUTES = [
+  ["GET", new RegExp(`^/api/v1/pricing-templates/${ID}/inputs/?$`), pricingInputs],
   ["GET", route(""), listTemplates],
   ["POST", route(""), createTemplate],
   ["GET", route("/context"), studioContext],
   ["POST", route("/context/cells"), contextCells],
   ["GET", route("/standards"), listStandards],
-  ["POST", route("/install-standards"), installStandards],
   ["POST", route("/test"), preview],
   ["POST", route("/scaffold-test"), scaffoldTest],
   ["POST", route("/duplicate"), duplicateTemplates],

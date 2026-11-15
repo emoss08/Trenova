@@ -3,6 +3,7 @@ package shipmentperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func operationsResources() []*permissionspec.ResourceDefinition {
@@ -36,6 +37,7 @@ func operationsResources() []*permissionspec.ResourceDefinition {
 func orderResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceOrder.String(),
+		Feature:     platformcatalog.FeatureCoreTMS,
 		DisplayName: "Order",
 		Description: "Commercial order management (groups shipments/legs under one customer order)",
 		Category:    "Shipments",
@@ -75,6 +77,7 @@ func orderResource() *permissionspec.ResourceDefinition {
 func shipmentResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceShipment.String(),
+		Feature:     platformcatalog.FeatureCoreTMS,
 		DisplayName: "Shipment",
 		Description: "Shipment management",
 		Category:    "Shipments",
@@ -131,6 +134,7 @@ func shipmentResource() *permissionspec.ResourceDefinition {
 		FieldSensitivities: map[string]permission.FieldSensitivity{
 			"profitabilityEstimate": permission.SensitivityConfidential,
 		},
+		FieldFeatures: shipmentFieldFeatures(),
 		Scopes: []permissionspec.ScopeSupport{
 			{
 				Scope:      permission.DataScopeOwn,
@@ -143,6 +147,7 @@ func shipmentResource() *permissionspec.ResourceDefinition {
 func recurringShipmentResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceRecurringShipment.String(),
+		Feature:        platformcatalog.FeatureCoreTMS,
 		DisplayName:    "Recurring Shipment",
 		Description:    "Recurring shipment series management and scheduled generation",
 		Category:       "Shipments",
@@ -176,6 +181,7 @@ func recurringShipmentResource() *permissionspec.ResourceDefinition {
 func shipmentCommentResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceShipmentComment.String(),
+		Feature:        platformcatalog.FeatureCoreTMS,
 		DisplayName:    "Shipment Comment",
 		Description:    "Shipment comment management",
 		Category:       "Shipments",
@@ -229,6 +235,7 @@ func shipmentCommentResource() *permissionspec.ResourceDefinition {
 func shipmentMoveResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceShipmentMove.String(),
+		Feature:        platformcatalog.FeatureDispatch,
 		DisplayName:    "Shipment Move",
 		Description:    "Shipment move management",
 		Category:       "Dispatch",
@@ -262,12 +269,18 @@ func shipmentMoveResource() *permissionspec.ResourceDefinition {
 			"externalDriverName":  permission.SensitivityInternal,
 			"externalDriverPhone": permission.SensitivityRestricted,
 		},
+		FieldFeatures: map[string]platformcatalog.FeatureKey{
+			"ackStatus": platformcatalog.FeatureDriverPortal,
+			"ackAt":     platformcatalog.FeatureDriverPortal,
+			"ackReason": platformcatalog.FeatureDriverPortal,
+		},
 	}
 }
 
 func shipmentStopResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceShipmentStop.String(),
+		Feature:        platformcatalog.FeatureCoreTMS,
 		DisplayName:    "Shipment Stop",
 		Description:    "Shipment stop management",
 		Category:       "Shipments",
@@ -287,12 +300,16 @@ func shipmentStopResource() *permissionspec.ResourceDefinition {
 			},
 		},
 		DefaultSensitivity: permission.SensitivityInternal,
+		FieldFeatures: map[string]platformcatalog.FeatureKey{
+			"countDetentionOverride": platformcatalog.FeatureDetention,
+		},
 	}
 }
 
 func workerDispatchHoldResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceWorkerDispatchHold.String(),
+		Feature:     platformcatalog.FeatureDispatch,
 		DisplayName: "Driver Dispatch Hold",
 		Description: "Whether a driver can be given new freight. Held apart from the " +
 			"worker record on purpose: taking somebody off the board until a paper is " +
@@ -319,6 +336,7 @@ func workerDispatchHoldResource() *permissionspec.ResourceDefinition {
 func driverPositioningResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceDriverPositioning.String(),
+		Feature:     platformcatalog.FeatureDispatchIntelligence,
 		DisplayName: "Driver Positioning",
 		Description: "Sending an empty driver toward an area where freight is coming, from " +
 			"the freight outlook. The driver is told in Dash, and the forecast and the " +
@@ -349,6 +367,7 @@ func driverPositioningResource() *permissionspec.ResourceDefinition {
 func shipmentHoldResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourceShipmentHold.String(),
+		Feature:        platformcatalog.FeatureCoreTMS,
 		DisplayName:    "Shipment Hold",
 		Description:    "Shipment hold management",
 		Category:       "Shipments",
@@ -377,6 +396,7 @@ func shipmentHoldResource() *permissionspec.ResourceDefinition {
 func jurisdictionRuleOverrideResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceJurisdictionRuleOverride.String(),
+		Feature:     platformcatalog.FeatureDispatch,
 		DisplayName: "Carrier Override",
 		Description: "This organization's stricter posture on a jurisdiction. " +
 			"Unlike a jurisdiction rule these are yours alone, and an override can " +
@@ -412,6 +432,7 @@ func jurisdictionRuleOverrideResource() *permissionspec.ResourceDefinition {
 func jurisdictionRuleResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceJurisdictionRule.String(),
+		Feature:     platformcatalog.FeatureDispatch,
 		DisplayName: "Jurisdiction Rule",
 		Description: "Shared oversize and overweight limits per state. " +
 			"This data is global: it has no organization column and every tenant " +
@@ -447,6 +468,7 @@ func jurisdictionRuleResource() *permissionspec.ResourceDefinition {
 func permitResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:       permission.ResourcePermit.String(),
+		Feature:        platformcatalog.FeatureCoreTMS,
 		DisplayName:    "Oversize Permit",
 		Description:    "Oversize and overweight permits and their derived requirements",
 		Category:       "Shipments",
@@ -480,6 +502,7 @@ func permitResource() *permissionspec.ResourceDefinition {
 func serviceFailureResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceServiceFailure.String(),
+		Feature:     platformcatalog.FeatureCoreTMS,
 		DisplayName: "Service Failure",
 		Description: "Service failure investigation and approval records",
 		Category:    "Shipments",
@@ -516,12 +539,18 @@ func serviceFailureResource() *permissionspec.ResourceDefinition {
 			},
 		},
 		DefaultSensitivity: permission.SensitivityInternal,
+		FieldFeatures: map[string]platformcatalog.FeatureKey{
+			"x12StatusCodeOverride": platformcatalog.FeatureEDIIntegration,
+			"x12ReasonCodeOverride": platformcatalog.FeatureEDIIntegration,
+			"x12ExceptionCode":      platformcatalog.FeatureEDIIntegration,
+		},
 	}
 }
 
 func serviceFailureReasonCodeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceServiceFailureReasonCode.String(),
+		Feature:       platformcatalog.FeatureCoreTMS,
 		DisplayName:   "Service Failure Reason Code",
 		Description:   "Service failure reason code reference data",
 		Category:      "Shipments",
@@ -565,6 +594,7 @@ func serviceFailureReasonCodeResource() *permissionspec.ResourceDefinition {
 func shipmentTypeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceShipmentType.String(),
+		Feature:            platformcatalog.FeatureCoreTMS,
 		DisplayName:        "Shipment Type",
 		Description:        "Shipment type definitions",
 		Category:           "Shipments",
@@ -588,6 +618,7 @@ func shipmentTypeResource() *permissionspec.ResourceDefinition {
 func dispatchControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceDispatchControl.String(),
+		Feature:            platformcatalog.FeatureDispatch,
 		DisplayName:        "Dispatch Control",
 		Description:        "Dispatch settings and configuration",
 		Category:           "Dispatch",
@@ -602,6 +633,7 @@ func dispatchControlResource() *permissionspec.ResourceDefinition {
 func distanceProfileResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceDistanceProfile.String(),
+		Feature:            platformcatalog.FeatureDispatch,
 		DisplayName:        "Distance Profile",
 		Description:        "Distance calculation routing profiles",
 		Category:           "Dispatch",
@@ -613,6 +645,7 @@ func distanceProfileResource() *permissionspec.ResourceDefinition {
 func distanceOverrideResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceDistanceOverride.String(),
+		Feature:            platformcatalog.FeatureDispatch,
 		DisplayName:        "Distance Override",
 		Description:        "Lane-specific distance overrides",
 		Category:           "Dispatch",
@@ -624,6 +657,7 @@ func distanceOverrideResource() *permissionspec.ResourceDefinition {
 func distanceControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceDistanceControl.String(),
+		Feature:            platformcatalog.FeatureDispatch,
 		DisplayName:        "Distance Control",
 		Description:        "Distance calculation settings and profile assignments",
 		Category:           "Dispatch",
@@ -635,6 +669,7 @@ func distanceControlResource() *permissionspec.ResourceDefinition {
 func storedMileageResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceStoredMileage.String(),
+		Feature:            platformcatalog.FeatureDispatch,
 		DisplayName:        "Stored Mileage",
 		Description:        "Reusable stored mileage lane records",
 		Category:           "Dispatch",
@@ -646,6 +681,7 @@ func storedMileageResource() *permissionspec.ResourceDefinition {
 func dataEntryControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceDataEntryControl.String(),
+		Feature:            platformcatalog.FeatureCoreTMS,
 		DisplayName:        "Data Entry Control",
 		Description:        "Data entry case formatting settings",
 		Category:           "Organization settings",
@@ -657,6 +693,7 @@ func dataEntryControlResource() *permissionspec.ResourceDefinition {
 func shipmentControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceShipmentControl.String(),
+		Feature:            platformcatalog.FeatureCoreTMS,
 		DisplayName:        "Shipment Control",
 		Description:        "Shipment control settings and configuration",
 		Category:           "Shipments",
@@ -668,6 +705,7 @@ func shipmentControlResource() *permissionspec.ResourceDefinition {
 func holdReasonResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceHoldReason.String(),
+		Feature:     platformcatalog.FeatureCoreTMS,
 		DisplayName: "Hold Reason",
 		Description: "Hold reason management",
 		Category:    "Shipments",

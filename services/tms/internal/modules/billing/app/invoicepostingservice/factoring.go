@@ -2,10 +2,12 @@ package invoicepostingservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedocument"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,6 +26,13 @@ func (s *Service) assignFactoring(
 	tenantInfo pagination.TenantInfo,
 ) error {
 	if entity.CustomerID.IsNil() {
+		return nil
+	}
+	factoring, err := s.features.Enabled(ctx, platformcatalog.FeatureFactoring)
+	if err != nil {
+		return fmt.Errorf("ask whether factoring is on the plan: %w", err)
+	}
+	if !factoring {
 		return nil
 	}
 	if entity.FactoringOverride.Excludes() {

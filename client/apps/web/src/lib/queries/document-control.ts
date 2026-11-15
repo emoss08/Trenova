@@ -12,4 +12,9 @@ export const documentControl = createQueryKeys("documentControl", {
     queryFn: async ({ signal }: { signal: AbortSignal }) =>
       documentService.getExtractionStatus({ signal }),
   }),
+  storageStatus: () => ({
+    queryKey: ["storage-status"],
+    queryFn: async ({ signal }: { signal: AbortSignal }) =>
+      documentService.getStorageStatus({ signal }),
+  }),
 });

@@ -157,7 +157,7 @@ func TestMemoLinesFromInputCollectsEveryLineError(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, fieldErr := range multiErr.Errors {
-		fields = append(fields, fieldErr.Field)
+		fields = append(fields, fieldErr.Field())
 	}
 	assert.ElementsMatch(t, []string{
 		"lines[0].description",

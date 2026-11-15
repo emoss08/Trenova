@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -405,6 +406,7 @@ func newHarness() *harness {
 		documents:       h.documents,
 		orgRepo:         fakeOrgs{},
 		auditService:    &mocks.NoopAuditService{},
+		features:        plantest.AllFeatures(),
 		now:             func() int64 { return h.now },
 	}
 	return h

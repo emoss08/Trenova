@@ -3,6 +3,7 @@ package complianceperms
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
 func Resources() []*permissionspec.ResourceDefinition {
@@ -20,6 +21,7 @@ func Resources() []*permissionspec.ResourceDefinition {
 func qualificationResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceQualification.String(),
+		Feature:     platformcatalog.FeatureWorkforceCompliance,
 		DisplayName: "Qualification",
 		Description: "Driver qualification management",
 		Category:    "Human resources",
@@ -59,6 +61,7 @@ func qualificationResource() *permissionspec.ResourceDefinition {
 func documentResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceDocument.String(),
+		Feature:     platformcatalog.FeatureDocumentManagement,
 		DisplayName: "Document",
 		Description: "Uploaded document records and intelligence output",
 		Category:    "Documents",
@@ -78,12 +81,22 @@ func documentResource() *permissionspec.ResourceDefinition {
 			permission.OpReject,
 		), permission.OpCreate, "Create", "Upload documents and cancel uploads"), permission.OpUpdate, "Update", "Modify documents and restore deleted ones"),
 		DefaultSensitivity: permission.SensitivityInternal,
+		FieldFeatures: map[string]platformcatalog.FeatureKey{
+			"detectedKind":        platformcatalog.FeatureDocumentIntelligence,
+			"shipmentDraftStatus": platformcatalog.FeatureDocumentIntelligence,
+			"deliveryFacts":       platformcatalog.FeatureDocumentIntelligence,
+			"contentStatus":       platformcatalog.FeatureDocumentIntelligence,
+			"contentError":        platformcatalog.FeatureDocumentIntelligence,
+			"hasExtractedText":    platformcatalog.FeatureDocumentIntelligence,
+			"processingProfile":   platformcatalog.FeatureDocumentIntelligence,
+		},
 	}
 }
 
 func documentTypeResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceDocumentType.String(),
+		Feature:     platformcatalog.FeatureDocumentManagement,
 		DisplayName: "Document Type",
 		Description: "Document type configuration and classification targets",
 		Category:    "Documents",
@@ -102,6 +115,7 @@ func documentTypeResource() *permissionspec.ResourceDefinition {
 func documentControlResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceDocumentControl.String(),
+		Feature:            platformcatalog.FeatureDocumentManagement,
 		DisplayName:        "Document Control",
 		Description:        "Document extraction settings",
 		Category:           "Documents",
@@ -116,6 +130,7 @@ func documentControlResource() *permissionspec.ResourceDefinition {
 func captureBatchResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceCaptureBatch.String(),
+		Feature:     platformcatalog.FeatureDocumentManagement,
 		DisplayName: "Intake",
 		Description: "Scans and print jobs waiting in intake, and filing them onto records",
 		Category:    "Intake",
@@ -158,6 +173,7 @@ func captureBatchResource() *permissionspec.ResourceDefinition {
 func captureDeviceResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:      permission.ResourceCaptureDevice.String(),
+		Feature:       platformcatalog.FeatureDocumentManagement,
 		DisplayName:   "Capture Device",
 		Description:   "Paired Trenova Capture installs across the organization",
 		Category:      "Intake",
@@ -181,6 +197,7 @@ func captureDeviceResource() *permissionspec.ResourceDefinition {
 func captureProfileResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:           permission.ResourceCaptureProfile.String(),
+		Feature:            platformcatalog.FeatureDocumentManagement,
 		DisplayName:        "Capture Profile",
 		Description:        "Named scan settings offered to people who scan",
 		Category:           "Intake",

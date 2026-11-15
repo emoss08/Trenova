@@ -10,9 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -24,7 +23,7 @@ type Params struct {
 	Logger      *zap.Logger
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	EventRuns   agenteventports.EventRunQueue
-	Plans       platformplanports.PlanService
+	Features    platformcatalogports.FeatureGate
 	Waits       agentwaitports.AgentWaitNotifier
 	Routines    []agenteventports.EventRoutine `group:"agent_event_routines"`
 }
@@ -33,7 +32,7 @@ type Publisher struct {
 	l           *zap.Logger
 	definitions agentdefinitionports.AgentDefinitionRepository
 	eventRuns   agenteventports.EventRunQueue
-	plans       platformplanports.PlanService
+	features    platformcatalogports.FeatureGate
 	waits       agentwaitports.AgentWaitNotifier
 	routines    []agenteventports.EventRoutine
 	// attachments are bound after the graph is built, by
@@ -50,7 +49,7 @@ func New(p Params) *Publisher {
 		l:           p.Logger.Named("service.agentevents"),
 		definitions: p.Definitions,
 		eventRuns:   p.EventRuns,
-		plans:       p.Plans,
+		features:    p.Features,
 		waits:       p.Waits,
 		routines:    p.Routines,
 	}
@@ -143,12 +142,7 @@ func (p *Publisher) Publish(ctx context.Context, event *agenteventports.AgentEve
 		}
 	}
 
-	allowed, err := planservice.Allows(
-		ctx,
-		p.plans,
-		event.TenantInfo,
-		platformplan.CapabilityAgentAutomation,
-	)
+	allowed, err := p.features.Enabled(ctx, platformcatalog.FeatureAgentAutomation)
 	if err != nil {
 		log.Error("failed to resolve the organization's plan for an agent event", zap.Error(err))
 		return

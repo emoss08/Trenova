@@ -8,15 +8,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -51,7 +50,7 @@ type Params struct {
 	AuditService    auditports.AuditService
 	DriverNotify    *drivernotificationservice.Service
 	Realtime        realtimeports.RealtimeService
-	Plans           platformplanports.PlanService
+	Features        platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -65,7 +64,7 @@ type Service struct {
 	auditService    auditports.AuditService
 	driverNotify    *drivernotificationservice.Service
 	realtime        realtimeports.RealtimeService
-	plans           platformplanports.PlanService
+	features        platformcatalogports.FeatureGate
 }
 
 const maxPTOChartRangeSeconds int64 = 366 * 24 * 60 * 60
@@ -84,7 +83,7 @@ func New(p Params) *Service {
 		auditService:    p.AuditService,
 		driverNotify:    p.DriverNotify,
 		realtime:        p.Realtime,
-		plans:           p.Plans,
+		features:        p.Features,
 	}
 }
 
@@ -449,7 +448,7 @@ func (s *Service) sendTransitionSMS(
 	target worker.PTOStatus,
 	log *zap.Logger,
 ) {
-	allowed, err := planservice.Allows(ctx, s.plans, req.TenantInfo, platformplan.CapabilitySMS)
+	allowed, err := s.features.Enabled(ctx, platformcatalog.FeatureAdministration)
 	if err != nil {
 		log.Error("failed to resolve the organization's plan for PTO SMS", zap.Error(err))
 		return

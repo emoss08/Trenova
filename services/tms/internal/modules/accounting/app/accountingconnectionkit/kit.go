@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"go.uber.org/fx"
@@ -30,7 +30,7 @@ type Params struct {
 	Watchtower   watchtowerports.WatchtowerProjector
 	Publisher    agenteventports.AgentEventPublisher
 	Refresher    accountingconnectionports.AccountingReferenceRefresher
-	Plans        platformplanports.PlanService
+	Features     platformcatalogports.FeatureGate
 	Certificates accountingconnectionports.AccountingPendingCertificateRepository
 }
 
@@ -47,7 +47,7 @@ type Kit struct {
 	watchtower   watchtowerports.WatchtowerProjector
 	publisher    agenteventports.AgentEventPublisher
 	refresher    accountingconnectionports.AccountingReferenceRefresher
-	plans        platformplanports.PlanService
+	features     platformcatalogports.FeatureGate
 	certificates accountingconnectionports.AccountingPendingCertificateRepository
 }
 
@@ -66,7 +66,7 @@ func New(p Params) *Kit {
 		watchtower:   p.Watchtower,
 		publisher:    p.Publisher,
 		refresher:    p.Refresher,
-		plans:        p.Plans,
+		features:     p.Features,
 		certificates: p.Certificates,
 	}
 }

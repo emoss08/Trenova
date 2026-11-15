@@ -2,6 +2,7 @@ package insightjobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
@@ -16,6 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:          "insight-refresh",
+			Feature:     platformcatalog.FeatureAIDesk,
 			Description: "Recompute home-screen operational insights for every organization",
 			// Every six hours, offset off the hour so it does not contend with the
 			// nightly reporting jobs. The numbers describe a 30-day window, so

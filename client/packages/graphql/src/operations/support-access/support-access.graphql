@@ -1,0 +1,83 @@
+fragment SupportAccessGrantFields on SupportAccessGrant {
+  id
+  staffEmail
+  reason
+  scope
+  durationHours
+  status
+  grantedByName
+  grantedAt
+  expiresAt
+  revokedAt
+  revokedByName
+  revokeReason
+  lastEnteredAt
+  lastStaffName
+}
+
+query SupportAccessSettings {
+  supportAccessSettings {
+    available
+    staffDomain
+    durations
+    maxLiveGrants
+  }
+}
+
+query SupportAccessGrants($input: DataTableConnectionInput!) {
+  supportAccessGrants(input: $input) {
+    edges {
+      node {
+        ...SupportAccessGrantFields
+      }
+    }
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+mutation GrantSupportAccess($input: GrantSupportAccessInput!) {
+  grantSupportAccess(input: $input) {
+    ...SupportAccessGrantFields
+  }
+}
+
+mutation RevokeSupportAccess($input: RevokeSupportAccessInput!) {
+  revokeSupportAccess(input: $input) {
+    ...SupportAccessGrantFields
+  }
+}
+
+query CurrentSupportSession {
+  currentSupportSession {
+    staffName
+    staffEmail
+    scope
+    endsAt
+  }
+}
+
+fragment SupportAccessActionFields on AuditEntry {
+  id
+  timestamp
+  resource
+  operation
+  action
+  entityRef
+  comment
+  channel
+}
+
+query SupportAccessActions($input: DataTableConnectionInput!) {
+  auditEntries(input: $input) {
+    edges {
+      node {
+        ...SupportAccessActionFields
+      }
+    }
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

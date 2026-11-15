@@ -75,6 +75,16 @@ export const defaultedEnumSchema = <T extends z.ZodEnum>(schema: T, fallback: z.
   z.preprocess((value) => (value === "" || value == null ? fallback : value), schema);
 
 /**
+ * A value of an add-on that a base record holds and the organization's plan may withhold (the
+ * server's `FieldFeatures`): `null` when the plan leaves the add-on out. A form reads it as its
+ * default and hides the control the add-on owns; the server keeps the stored value on save, so
+ * the default is never written. A screen that shows the value asks `usePlanFeature` and draws
+ * `WithheldValue` instead.
+ */
+export const planWithheldSchema = <T extends z.ZodType>(schema: T, fallback: z.output<T>) =>
+  z.preprocess((value) => (value == null ? fallback : value), schema);
+
+/**
  * A PULID the server leaves unset.
  *
  * `pulid.ID.MarshalJSON` (shared/pulid/pulid.go) returns the literal `null` for

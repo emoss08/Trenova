@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
@@ -48,6 +49,7 @@ type Params struct {
 	Watchtower          watchtowerports.WatchtowerProjector
 	Waits               agentwaitports.AgentWaitNotifier
 	HomeVisits          telematicsports.HomeVisitRecorder
+	Features            platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -66,6 +68,7 @@ type Service struct {
 	watchtower          watchtowerports.WatchtowerProjector
 	waits               agentwaitports.AgentWaitNotifier
 	homeVisits          telematicsports.HomeVisitRecorder
+	features            platformcatalogports.FeatureGate
 	l                   *zap.Logger
 }
 
@@ -86,6 +89,7 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 		watchtower:          p.Watchtower,
 		waits:               p.Waits,
 		homeVisits:          p.HomeVisits,
+		features:            p.Features,
 		l:                   p.Logger.Named("telematics-service"),
 	}
 }

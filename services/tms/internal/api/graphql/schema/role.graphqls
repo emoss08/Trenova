@@ -13,9 +13,9 @@ type Role {
   updatedAt: Timestamp!
   """
   The agents restricted to roles that this role is granted. Empty for a reader
-  who may not read agents.
+  who may not read agents, and null when the organization's plan leaves agents out.
   """
-  agents: [AgentDefinition!]!
+  agents: [AgentDefinition!]
 }
 
 type RoleEdge {

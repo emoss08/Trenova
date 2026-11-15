@@ -208,9 +208,9 @@ func (s *Service) mayRead(
 		return err
 	}
 	if !result.Allowed {
-		return errortypes.NewAuthorizationError(
+		return permissionports.DeniedError(result, errortypes.NewAuthorizationError(
 			fmt.Sprintf("You do not have %s access to %s", operation, policy.Resource.String()),
-		)
+		))
 	}
 
 	return nil

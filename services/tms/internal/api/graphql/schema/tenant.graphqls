@@ -29,7 +29,7 @@ type Organization {
   postalCode: String!
   timezone: String!
   taxId: String!
-  brokerageEnabled: Boolean!
+  brokerageEnabled: Boolean
   assetOperationsEnabled: Boolean!
   version: Int!
   createdAt: Timestamp!
