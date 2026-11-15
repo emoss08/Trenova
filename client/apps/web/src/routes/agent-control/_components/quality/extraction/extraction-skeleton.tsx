@@ -1,7 +1,7 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import { DataTableSkeleton } from "@trenova/shared/components/data-table/data-table-skeleton";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { useQueryState } from "nuqs";
 import type { ReactNode } from "react";
 import {
   EXTRACTION_VIEW_PARAM,
@@ -102,7 +102,7 @@ function ExtractionBodySkeleton({ view }: { view: ExtractionView }) {
  * and the view the address names, each laid out where the loaded one lands.
  */
 export function ExtractionViewSkeleton() {
-  const [view] = useQueryState(EXTRACTION_VIEW_PARAM, extractionViewParser);
+  const [view] = useSearchValue(EXTRACTION_VIEW_PARAM, extractionViewParser);
 
   return (
     <div className="flex min-w-0 flex-col gap-4" aria-busy="true">

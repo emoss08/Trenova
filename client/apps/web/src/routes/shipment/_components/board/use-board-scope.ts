@@ -1,7 +1,7 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import type { ShipmentBoardScopeInput } from "@trenova/graphql/generated/graphql";
-import { useQueryStates } from "nuqs";
 import { useMemo } from "react";
 import { useShipmentBoardUrl } from "./url-state";
 
@@ -11,7 +11,7 @@ import { useShipmentBoardUrl } from "./url-state";
  * counts always describe the same rows the table pages through.
  */
 export function useBoardScope(): ShipmentBoardScopeInput {
-  const [{ query, fieldFilters, filterGroups }] = useQueryStates(searchParamsParser);
+  const [{ query, fieldFilters, filterGroups }] = useSearchState(searchParamsParser);
   const [{ qf }] = useShipmentBoardUrl();
   const timezone = useUserTimezone();
   return useMemo(

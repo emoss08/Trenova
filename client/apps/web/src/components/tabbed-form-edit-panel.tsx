@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   useEditPanelActionPreference,
@@ -23,7 +24,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { API_ENDPOINTS } from "@trenova/shared/types/server";
-import { parseAsString, useQueryState } from "nuqs";
+import { parseAsString } from "nuqs";
 import {
   Suspense,
   useCallback,
@@ -153,7 +154,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   const pendingActionRef = useRef<EditPanelSaveAction>(defaultAction);
   const hasFormTabs = formTabs.length > 0;
   const defaultTab = hasFormTabs ? formTabs[0].value : "details";
-  const [requestedTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault(defaultTab));
+  const [requestedTab, setActiveTab] = useSearchValue("tab", parseAsString.withDefault(defaultTab));
   // A link to a tab this panel does not offer (one the plan leaves out, or one that was
   // renamed) opens on the first tab rather than on an empty panel.
   const offeredTabs = hasFormTabs

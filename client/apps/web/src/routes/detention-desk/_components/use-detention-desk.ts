@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { detention } from "@/lib/queries/detention";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -13,7 +14,8 @@ import {
   type DeskSortId,
 } from "@trenova/shared/lib/detention";
 import type { DeskEntry } from "@trenova/shared/types/detention";
-import { debounce, parseAsString, parseAsStringLiteral, useQueryStates } from "nuqs";
+import { parseAsString, parseAsStringLiteral } from "nuqs";
+import { useUrlSearch } from "@/hooks/use-url-search";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 /** Refresh cadence for the board and for the local ticking clocks. */
@@ -57,7 +59,11 @@ export function useNowSeconds(): number {
  */
 export function useDetentionDesk() {
   const nowSeconds = useNowSeconds();
-  const [{ lane, sort, q, stop }, setDesk] = useQueryStates(deskParsers, URL_OPTIONS);
+  const [{ lane, sort, q, stop }, setDesk] = useSearchState(deskParsers, URL_OPTIONS);
+  // The box holds what is typed, and the board filters on it as it is typed; the URL catches
+  // up once typing stops.
+  const commitSearch = useCallback((next: string) => void setDesk({ q: next }), [setDesk]);
+  const [search, setSearch] = useUrlSearch({ query: q, onCommit: commitSearch, delay: 250 });
 
   const { data, isLoading, isError, isFetching, dataUpdatedAt, refetch } = useQuery({
     ...detention.desk(),
@@ -75,10 +81,12 @@ export function useDetentionDesk() {
   const visible = useMemo(
     () =>
       sortDeskEntriesBy(
-        entries.filter((entry) => matchesDeskFilter(entry, lane) && matchesDeskSearch(entry, q)),
+        entries.filter(
+          (entry) => matchesDeskFilter(entry, lane) && matchesDeskSearch(entry, search),
+        ),
         sort,
       ),
-    [entries, lane, q, sort],
+    [entries, lane, search, sort],
   );
 
   // Stops whose notice can still be sent inside the contractual window — the only
@@ -87,11 +95,6 @@ export function useDetentionDesk() {
 
   const setLane = useCallback((next: DeskFilterId) => void setDesk({ lane: next }), [setDesk]);
   const setSort = useCallback((next: DeskSortId) => void setDesk({ sort: next }), [setDesk]);
-  // The box reads from state on the keystroke; the URL catches up once typing stops.
-  const setSearch = useCallback(
-    (next: string) => void setDesk({ q: next }, { limitUrlUpdates: debounce(250) }),
-    [setDesk],
-  );
   const selectStop = useCallback(
     (occurrenceId: string | null) => void setDesk({ stop: occurrenceId }),
     [setDesk],
@@ -112,7 +115,7 @@ export function useDetentionDesk() {
     noticeQueue,
     lane,
     sort,
-    search: q,
+    search,
     selectedId: stop,
     isFiltered,
     isLoading,

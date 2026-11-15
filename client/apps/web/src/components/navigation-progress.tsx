@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useRouterState } from "@tanstack/react-router";
+import { usePageChanging } from "@/hooks/use-page-changing";
 
 const INITIAL_PROGRESS = 0.15;
 const MAX_TRICKLE_PROGRESS = 0.94;
@@ -20,7 +20,7 @@ function trickleAmount(progress: number) {
 }
 
 export function NavigationProgress() {
-  const isNavigating = useRouterState({ select: (state) => state.status === "pending" });
+  const isNavigating = usePageChanging();
 
   const [phase, setPhase] = useState<LoaderPhase>("idle");
   const [progress, setProgress] = useState(0);

@@ -8,7 +8,7 @@ related:
   - /admin/agent-control
 covers:
   - /admin/roles/new
-  - /admin/roles/:id/edit
+  - /admin/roles/$id/edit
 ---
 
 ## What it's for

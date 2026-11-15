@@ -91,7 +91,8 @@ function WorklistRow({ item }: { item: ARWorklistItem }) {
 
   return (
     <Link
-      to={`/accounting/ar/collections?customerId=${encodeURIComponent(item.customerId)}`}
+      to="/accounting/ar/collections"
+      search={{ customerId: item.customerId }}
       className="hover:bg-surface-hover ui-focus-ring flex items-center gap-3 px-3 py-2 transition-colors"
     >
       <Badge variant={SEVERITY_TONE[severity]} className="w-16">

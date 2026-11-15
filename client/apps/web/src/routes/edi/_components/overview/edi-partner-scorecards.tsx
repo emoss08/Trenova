@@ -67,7 +67,8 @@ export function EDIPartnerScorecards({ scorecards }: { scorecards: EDIPartnerSco
               <TableRow key={card.partnerId}>
                 <TableCell>
                   <Link
-                    to={`/edi/messages?query=${encodeURIComponent(card.partnerCode)}`}
+                    to="/edi/messages"
+                    search={{ query: card.partnerCode }}
                     className="flex flex-col hover:underline"
                     title={t("Open messages filtered to {0}", card.partnerName)}
                   >

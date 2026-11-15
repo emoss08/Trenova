@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatFileSize } from "@/components/documents/document-upload-zone";
 import type { RejectedFile } from "@/lib/document-upload-files";
@@ -15,7 +16,6 @@ import type { PanelMode, Row, RowAction } from "@trenova/shared/types/data-table
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useQueryStates } from "nuqs";
 import { recordPath } from "@/config/record-links";
 import { createContext, use, useCallback, useMemo, useState, type ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
@@ -120,9 +120,9 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Reuse the same nuqs parser the existing DataTable uses so deep-links to
-  // ?panelType=edit&panelEntityId=<id> still open the shipment editor.
-  const [searchParams, setSearchParams] = useQueryStates(panelSearchParamsParser);
+  // The same keys the data table's panel reads, so ?panelType=edit&panelEntityId=<id> opens the
+  // shipment editor from the board too.
+  const [searchParams, setSearchParams] = useSearchState(panelSearchParamsParser);
   const { panelType, panelEntityId } = searchParams;
   const panelMode: PanelMode = panelType ?? "create";
   const uploadShipmentId = uploadShipment?.id ?? "";

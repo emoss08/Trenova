@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
@@ -13,12 +14,11 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
-import { useQueryStates } from "nuqs";
 import { activeInboundBucket, inboundBucketFilter, type InboundBucket } from "./inbound-filters";
 
 export function InboundSummary({ overview }: { overview: AccountingInboundOverview }) {
   const t = useT();
-  const [filters, setFilters] = useQueryStates({
+  const [filters, setFilters] = useSearchState({
     ...tableFilterSearchParamsParser,
     ...tablePaginationSearchParamsParser,
   });

@@ -3,7 +3,7 @@ import "@trenova/shared/styles/app.css";
 import type { Decorator, Preview } from "@storybook/react-vite";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LazyMotion, domMax } from "motion/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { useMemo } from "react";
 
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
@@ -31,7 +31,7 @@ const withAppProviders: Decorator = (Story, context) => {
     return (
       <LazyMotion features={domMax}>
         <QueryClientProvider client={queryClient}>
-          <NuqsTestingAdapter hasMemory>
+          <TestRouter>
             <ThemeProvider
               key={theme}
               defaultTheme={theme}
@@ -42,7 +42,7 @@ const withAppProviders: Decorator = (Story, context) => {
               </div>
               <Toaster position="top-center" />
             </ThemeProvider>
-          </NuqsTestingAdapter>
+          </TestRouter>
         </QueryClientProvider>
       </LazyMotion>
     );

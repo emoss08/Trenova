@@ -44,6 +44,8 @@ describe("leaveEndedSession", () => {
       configurable: true,
       value: {
         ...window.location,
+        pathname: "/",
+        search: "",
         assign: (url: string) => mocks.calls.push(`assign ${url}`),
       },
     });
@@ -81,6 +83,36 @@ describe("leaveEndedSession", () => {
       "clear cache",
       "assign /login?signed_out=expired",
     ]);
+  });
+
+  it("carries the page the session expired on to the sign-in, beside the notice", async () => {
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: {
+        ...window.location,
+        pathname: "/billing/invoices",
+        search: "?status=open",
+      },
+    });
+
+    leaveExpiredSession();
+    await vi.waitFor(() => expect(mocks.calls).toHaveLength(4));
+
+    expect(mocks.calls.at(-1)).toBe(
+      "assign /login?signed_out=expired&redirect=%2Fbilling%2Finvoices%3Fstatus%3Dopen",
+    );
+  });
+
+  it("stays on the sign-in page when the session expires there", async () => {
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...window.location, pathname: "/login", search: "" },
+    });
+
+    leaveExpiredSession();
+    await vi.waitFor(() => expect(mocks.calls).toHaveLength(3));
+
+    expect(mocks.calls).toEqual(["tell the other tabs", "clear auth", "clear cache"]);
   });
 
   it("does nothing when the tab is already signed out", () => {

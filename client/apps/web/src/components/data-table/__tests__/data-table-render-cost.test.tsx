@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ColumnDef, DataTableExpansion, RowAction } from "@trenova/shared/types/data-table";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import React from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { DataTable } from "../data-table";
@@ -179,9 +179,9 @@ function renderBoard() {
   );
   render(
     <QueryClientProvider client={queryClient}>
-      <NuqsTestingAdapter hasMemory searchParams="?pageSize=100">
+      <TestRouter search="?pageSize=100">
         <Board />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

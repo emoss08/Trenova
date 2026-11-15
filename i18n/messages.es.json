@@ -14560,6 +14560,7 @@
   "Invoice minor-unit total must equal the sum of line minor units": "El total en unidades menores de la factura debe coincidir con la suma de las unidades menores de las líneas",
   "Invoice minus expected": "Factura menos lo esperado",
   "Invoice minus expected · tolerance": "Factura menos lo esperado · tolerancia",
+  "Invoice not found": "Factura no encontrada",
   "Invoice number": "Número de factura",
   "Invoice number cannot be longer than 100 characters": "El número de factura no puede superar los 100 caracteres",
   "Invoice number copied": "Número de factura copiado",

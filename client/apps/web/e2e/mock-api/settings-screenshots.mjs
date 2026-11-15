@@ -167,7 +167,7 @@ const SHOTS = [
     name: "email-link",
     colorScheme: "light",
     act: async (page) => {
-      await page.goto(`${APP}/?settings=notifications`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${APP}/settings?section=notifications`, { waitUntil: "domcontentloaded" });
       await page.waitForURL("**/settings");
       await settingsReady(page);
     },

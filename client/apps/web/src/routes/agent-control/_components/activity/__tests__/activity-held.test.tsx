@@ -4,7 +4,6 @@ import { stubLayout } from "@/test/layout";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { decidable } from "../activity-model";
@@ -36,9 +35,7 @@ function wrap(children: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter>
-        <TestRouter>{children}</TestRouter>
-      </NuqsTestingAdapter>
+      <TestRouter>{children}</TestRouter>
     </QueryClientProvider>
   );
 }

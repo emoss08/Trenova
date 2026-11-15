@@ -6,7 +6,7 @@ related:
   - /
 covers:
   - /admin/home-layouts/new
-  - /admin/home-layouts/:id
+  - /admin/home-layouts/$id
 ---
 
 ## What it's for

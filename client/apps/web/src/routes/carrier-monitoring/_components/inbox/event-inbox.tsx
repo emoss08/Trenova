@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { ResolveEventDialog } from "@/components/carrier-intelligence/resolve-event-dialog";
 import { useCarrierIntelLabels } from "@/components/carrier-intelligence/use-carrier-intel-labels";
 import { useEventPresenter } from "@/components/carrier-intelligence/use-event-presenter";
@@ -30,7 +31,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
 import { RefreshCw02Icon } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { EventDetail } from "./event-detail";
 import { EventList } from "./event-list";
@@ -142,7 +142,7 @@ export function EventInbox({ canUpdate, scopeCounts }: EventInboxProps) {
   const labels = useCarrierIntelLabels();
   const now = useNowSeconds();
   const isWide = useMediaQuery(WIDE_LAYOUT_QUERY);
-  const [params, setParams] = useQueryStates(inboxSearchParams);
+  const [params, setParams] = useSearchState(inboxSearchParams);
 
   const state = useMemo<InboxFilterState>(
     () => ({

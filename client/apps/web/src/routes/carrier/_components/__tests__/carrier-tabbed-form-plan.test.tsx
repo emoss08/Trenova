@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { BASE_ONLY_UNAVAILABLE, seedPlan, unavailableFeatures } from "@/test/plan";
 import { cleanup, render, screen } from "@testing-library/react";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CarrierTabbedForm } from "../carrier-tabbed-form";
 
@@ -20,9 +20,9 @@ vi.mock("@/components/record-memories/record-memories", () => ({
 
 function renderForm(searchParams = "") {
   return render(
-    <NuqsTestingAdapter searchParams={searchParams}>
+    <TestRouter search={searchParams}>
       <CarrierTabbedForm carrierId="car_01" />
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

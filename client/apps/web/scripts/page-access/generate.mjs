@@ -32,6 +32,7 @@ import {
   sourcePaths,
 } from "../product-guide/sources.mjs";
 import { ModuleGraph, graphPaths } from "./imports.mjs";
+import { ROUTE_SHELLS } from "../../vite/route-shells.mjs";
 
 const WEB_ROOT = new URL("../..", import.meta.url).pathname;
 const REPO_ROOT = join(WEB_ROOT, "..", "..", "..");
@@ -103,8 +104,18 @@ function build() {
   // alone. What the shell loads lazily (the assistant, the palette, the page
   // access panel) and the pages the router loads are not on every screen, so
   // a screen that imports one of them runs it.
+  // A route file's page and loader are split into a chunk of their own (vite/file-routes.ts),
+  // so what it imports from the route folders loads with its page, not with the shell; only
+  // the shell layouts keep theirs in the entry.
+  const pagesDir = join(paths.src, "pages");
+  const routesDir = join(paths.src, "routes");
+  const shellLayouts = new Set(ROUTE_SHELLS.map((id) => join(pagesDir, `${id.slice(1)}.tsx`)));
+  const splitAway = (from, target) =>
+    from.startsWith(`${pagesDir}/`) &&
+    !shellLayouts.has(from) &&
+    target.startsWith(`${routesDir}/`);
   const shell = graph.closure([graph.paths.main], {
-    follow: (_from, _target, dynamic) => !dynamic,
+    follow: (from, target, dynamic) => !dynamic && !splitAway(from, target),
   });
 
   const screens = [];

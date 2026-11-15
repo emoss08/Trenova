@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
@@ -5,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Monitor01Icon, Settings01Icon, Sliders01Icon } from "@trenova/shared/components/icons";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { parseAsStringLiteral } from "nuqs";
 import { lazy } from "react";
 import { CaptureSettingsSkeleton } from "./skeleton";
 import { FleetPanel } from "./_components/fleet-panel";
@@ -30,7 +31,7 @@ export function CaptureAdminPage() {
   const visible = TABS.filter((tab) =>
     tab === "settings" ? canSettings : tab === "profiles" ? canProfiles : canComputers,
   );
-  const [requested, setTab] = useQueryState(
+  const [requested, setTab] = useSearchValue(
     "tab",
     parseAsStringLiteral(TABS).withDefault(visible[0] ?? "profiles"),
   );

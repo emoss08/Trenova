@@ -2,11 +2,16 @@ import { act, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NavigationProgress } from "../navigation-progress";
 
-const navigationState = vi.hoisted(() => ({ state: "idle" as "idle" | "loading" }));
+// "loading" is on its way to another page; "query" is pending on the page it is on.
+const navigationState = vi.hoisted(() => ({ state: "idle" as "idle" | "loading" | "query" }));
 
 vi.mock("@tanstack/react-router", () => ({
-  useRouterState: ({ select }: { select: (state: { status: "idle" | "pending" }) => unknown }) =>
-    select({ status: navigationState.state === "idle" ? "idle" : "pending" }),
+  useRouterState: ({ select }: { select: (state: unknown) => unknown }) =>
+    select({
+      status: navigationState.state === "idle" ? "idle" : "pending",
+      location: { pathname: navigationState.state === "loading" ? "/customers" : "/shipments" },
+      resolvedLocation: { pathname: "/shipments" },
+    }),
 }));
 
 describe("NavigationProgress", () => {
@@ -16,6 +21,12 @@ describe("NavigationProgress", () => {
   });
 
   it("renders nothing while idle", () => {
+    const { container } = render(<NavigationProgress />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("stays away while only the query changes, as when a dialog opens over a table", () => {
+    navigationState.state = "query";
     const { container } = render(<NavigationProgress />);
     expect(container.firstChild).toBeNull();
   });

@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { OrganizationCapabilities } from "@trenova/shared/types/organization-capability";
 import type { User } from "@trenova/shared/types/user";
@@ -91,9 +91,9 @@ type Outline = { tabs: number; sections: number };
 
 function skeletonOutline(searchParams = ""): Outline {
   const { container } = render(
-    <NuqsTestingAdapter searchParams={searchParams}>
+    <TestRouter search={searchParams}>
       <DispatchControlSkeleton />
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
   return {
     tabs: container.querySelectorAll('[data-slot="tab-skeleton"]').length,
@@ -104,11 +104,11 @@ function skeletonOutline(searchParams = ""): Outline {
 async function formOutline(searchParams = ""): Promise<Outline> {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const { container } = render(
-    <NuqsTestingAdapter searchParams={searchParams}>
+    <TestRouter search={searchParams}>
       <QueryClientProvider client={queryClient}>
         <DispatchControlForm />
       </QueryClientProvider>
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
   await screen.findByText("Service failure monitoring");
   return {
@@ -172,9 +172,9 @@ describe("DispatchControlSkeleton", () => {
     signIn({ brokerageEnabled: true, assetOperationsEnabled: true });
 
     render(
-      <NuqsTestingAdapter>
+      <TestRouter>
         <DispatchControlSkeleton />
-      </NuqsTestingAdapter>,
+      </TestRouter>,
     );
 
     const root = screen.getByLabelText("Loading settings");

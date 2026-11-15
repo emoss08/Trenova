@@ -1,18 +1,18 @@
-import { Link } from "@trenova/shared/components/link";
-import { useT } from "@trenova/shared/i18n/use-t";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useReportPreview } from "@/hooks/use-reports";
-import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { planRestrictionOf } from "@trenova/shared/lib/plan-limit";
-import { PlanLockedNotice } from "@trenova/shared/components/plan-locked";
-import { cn } from "@trenova/shared/lib/utils";
 import type { ReportChartSpec, ReportDashboardFilter, ReportDashboardTile } from "@/types/report";
 import { AlertCircleIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
+import { Link } from "@trenova/shared/components/link";
+import { PlanLockedNotice } from "@trenova/shared/components/plan-locked";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
+import { planRestrictionOf } from "@trenova/shared/lib/plan-limit";
+import { cn } from "@trenova/shared/lib/utils";
 import { useMemo } from "react";
-import { irToInput } from "../../builder/_components/builder-state";
 import { ReportChart, type CategorySelect } from "../../_components/report-chart";
 import { ResultGrid } from "../../_components/result-grid";
+import { irToInput } from "../../builder/_components/builder-state";
 import { applyTileFilters } from "./dashboard-state";
 import { useTileReport } from "./use-tile-report";
 

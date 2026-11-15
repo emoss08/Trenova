@@ -63,7 +63,10 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
               <span>
                 {t("Target")}{" "}
                 {transfer.targetShipmentId ? (
-                  <Link to={`/shipment-management/shipments?item=${transfer.targetShipmentId}`}>
+                  <Link
+                    to="/shipment-management/shipments"
+                    search={{ item: transfer.targetShipmentId }}
+                  >
                     {t("Open shipment")}
                   </Link>
                 ) : (

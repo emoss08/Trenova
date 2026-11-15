@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { BASE_ONLY_UNAVAILABLE, seedPlan, unavailableFeatures } from "@/test/plan";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/autocomplete-fields", () => ({
@@ -29,11 +29,11 @@ const row = { ...buildTractorDefaults(), id: "trac_77", version: 4, code: "TRC-1
 function renderPanel(searchParams = "") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   return render(
-    <NuqsTestingAdapter searchParams={searchParams}>
+    <TestRouter search={searchParams}>
       <QueryClientProvider client={client}>
         <TractorPanel open mode="edit" row={row} onOpenChange={() => {}} />
       </QueryClientProvider>
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

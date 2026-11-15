@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
@@ -11,7 +12,6 @@ import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/component
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryStates } from "nuqs";
 import { Activity, lazy, useState, type ReactNode } from "react";
 import { useParams } from "@tanstack/react-router";
 import {
@@ -91,7 +91,7 @@ export function FactoringCompanyPage() {
 
 function FactoringCompanyView({ company }: { company: FactoringCompanyRecord }) {
   const t = useT();
-  const [state, setState] = useQueryStates(factoringCompanyPageParsers);
+  const [state, setState] = useSearchState(factoringCompanyPageParsers);
   const overview = useQuery(factoringQueries.overview(company.id));
   const [importing, setImporting] = useState(false);
   const { allowed: canImport } = usePermission(Resource.FactoringRemittance, Operation.Create);

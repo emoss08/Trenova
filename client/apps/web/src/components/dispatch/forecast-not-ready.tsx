@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { Link } from "@trenova/shared/components/link";
 import { ForecastChecked, ForecastHistoryMeters } from "@/components/dispatch/forecast-history";
 import { usePermission } from "@/hooks/use-permission";
@@ -8,7 +9,7 @@ import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { ReactNode } from "react";
-const DISPATCH_CONTROLS_PATH = "/admin/dispatch-controls/";
+const DISPATCH_CONTROLS_PATH = appPath("/admin/dispatch-controls");
 
 /**
  * Why there is no outlook yet, drawn as the page it will become: the forecast has not proven

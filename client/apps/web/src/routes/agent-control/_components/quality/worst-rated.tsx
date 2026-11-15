@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { DataTable } from "@/components/data-table/data-table";
 import { recordPath } from "@/config/record-links";
@@ -15,7 +16,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryState } from "nuqs";
 import { useMemo } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { QUALITY_AGENT_PARAM, qualityAgentParser } from "../../ai-control-tabs";
@@ -185,7 +185,7 @@ function WorstRatedPanel({ open, onOpenChange, row }: DataTablePanelProps<AgentW
 export default function WorstRatedTable() {
   const t = useT();
   const navigate = useAIControlNavigation();
-  const [agentId] = useQueryState(QUALITY_AGENT_PARAM, qualityAgentParser);
+  const [agentId] = useSearchValue(QUALITY_AGENT_PARAM, qualityAgentParser);
   const columns = useMemo(() => getWorstRatedColumns(t), [t]);
   const graphql = useMemo(() => createAgentWorstRatedTableGraphQLConfig(agentId), [agentId]);
 

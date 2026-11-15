@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useDeskSetting } from "@/stores/desk-settings-store";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import type { VirtualRow, VirtualRowsHandle } from "@/components/virtual-rows";
@@ -13,7 +14,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQueryStates } from "nuqs";
 import { useNavigate } from "@tanstack/react-router";
 import { LANES, laneLabel, laneOf, minutesLeft, type Lane } from "../watchtower/lanes";
 import { useWatchtowerActions } from "../watchtower/use-watchtower-actions";
@@ -101,7 +101,7 @@ export function NeedsAttention({
   // The item open beside the list lives in the address, as the lens, the
   // search and the filters do. So a link sent to someone opens on the same
   // item in the same list, and a reload comes back to it.
-  const [address, setAddress] = useQueryStates(NEEDS_ITEM_ADDRESS, { history: "replace" });
+  const [address, setAddress] = useSearchState(NEEDS_ITEM_ADDRESS, { history: "replace" });
   const narrowed = isNarrowed(filters);
   const askedItem = address.item;
 

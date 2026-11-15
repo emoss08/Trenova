@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
@@ -16,7 +17,7 @@ import {
   User01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { parseAsString, useQueryState } from "nuqs";
+import { parseAsString } from "nuqs";
 import { useCallback, useEffect } from "react";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
 import { ComplianceTab, EmploymentTab, GeneralTab } from "./worker-form-tabs";
@@ -82,7 +83,7 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
 
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("general"));
+  const [activeTab, setActiveTab] = useSearchValue("tab", parseAsString.withDefault("general"));
 
   const {
     formState: { isSubmitting, errors },

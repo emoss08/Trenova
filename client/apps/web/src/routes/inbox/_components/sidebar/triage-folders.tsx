@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { HoverGlideGroup } from "@/components/hover-glide";
 import type { InboundClassification, InboundMailbox, TriageView } from "@/lib/graphql/inbox";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
@@ -44,7 +45,7 @@ import {
 import { useTriageActions } from "../use-triage-actions";
 
 /** Where a source's settings live: the mailbox administration page. */
-const SOURCES_PATH = "/admin/inbound-mailboxes";
+const SOURCES_PATH = appPath("/admin/inbound-mailboxes");
 
 export type TriageFoldersProps = {
   folder: TriageFolder;

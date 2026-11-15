@@ -1,8 +1,9 @@
+import { type OnUrlUpdateFunction } from "@trenova/shared/testing/test-router";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { reassignChargeResultSchema } from "@trenova/shared/types/billing-queue";
-import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { useController, type Control, type FieldValues } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BillingQueueReassignChargeDialog } from "../billing-queue-reassign-charge-dialog";
@@ -84,7 +85,7 @@ function renderDialog({
   const onOpenChange = vi.fn();
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <NuqsTestingAdapter searchParams={`?item=${item.id}`} onUrlUpdate={onUrlUpdate}>
+    <TestRouter search={`?item=${item.id}`} onUrlUpdate={onUrlUpdate}>
       <QueryClientProvider client={client}>
         <BillingQueueReassignChargeDialog
           open
@@ -93,7 +94,7 @@ function renderDialog({
           line={line}
         />
       </QueryClientProvider>
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
   return { item, onOpenChange };
 }

@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
@@ -58,7 +59,6 @@ import {
   PackageCheckIcon,
   Send01Icon,
 } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import { lazy, useEffect, useMemo, useRef, useState } from "react";
 import { InvoicePostDialog } from "./invoice-post-dialog";
 import { toast } from "@trenova/shared/components/ui/toast";
@@ -87,7 +87,7 @@ const INVOICE_SEND_HISTORY_PAGE_SIZE = 20;
 /** Shares the invoice on the tab in front, the way every record is shared. */
 function InvoiceShare({ invoice }: { invoice: Invoice }) {
   const t = useT();
-  const [{ tab }] = useQueryStates(invoiceDetailTabSearchParamsParser);
+  const [{ tab }] = useSearchState(invoiceDetailTabSearchParamsParser);
 
   return (
     <ShareDialog
@@ -110,7 +110,7 @@ export default function InvoiceDetailPane({
   // no Payments tab, and a link to that tab opens on the overview.
   const accountingOnPlan = usePlanFeature(PlanFeature.Accounting).available;
 
-  const [{ tab: requestedTab }, setTabState] = useQueryStates(invoiceDetailTabSearchParamsParser);
+  const [{ tab: requestedTab }, setTabState] = useSearchState(invoiceDetailTabSearchParamsParser);
   const tab = requestedTab === "payments" && !accountingOnPlan ? "overview" : requestedTab;
   const { data: invoice, isLoading } = useQuery({
     ...invoiceQueries.get(selectedInvoiceId ?? ""),

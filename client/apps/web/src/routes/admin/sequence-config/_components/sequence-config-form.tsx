@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Form } from "@trenova/shared/components/ui/form";
@@ -12,14 +13,14 @@ import {
 } from "@/types/sequence-config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { parseAsStringLiteral } from "nuqs";
 import { useCallback, useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { SequenceConfigPanel } from "./sequence-config-panel";
 import { SequenceConfigSidebar } from "./sequence-config-sidebar";
 
 const sectionParser = parseAsStringLiteral(sequenceTypes)
-  .withOptions({ history: "push", shallow: true })
+  .withOptions({ history: "push" })
   .withDefault(sequenceTypes[0]);
 
 export default function SequenceConfigForm() {
@@ -52,7 +53,7 @@ export default function SequenceConfigForm() {
     [mutateAsync],
   );
 
-  const [section, setSection] = useQueryState("section", sectionParser);
+  const [section, setSection] = useSearchValue("section", sectionParser);
 
   const indexByType = useMemo(() => {
     const map = {} as Record<SequenceType, number>;

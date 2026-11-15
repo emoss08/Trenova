@@ -43,9 +43,20 @@ export async function ensurePermissionManifest(): Promise<boolean> {
   }
 }
 
-/** Lets the person in when their roles grant `operation` on `resource`. */
+/**
+ * Lets the person in when their roles grant `operation` on `resource`. A preload (a hover over a
+ * link) decides from the manifest already held and never asks the server: the navigation that
+ * follows does, and presents the refusal.
+ */
 export function requirePermission(resource: string, operation: number = Operation.Read): RouteGate {
-  return async () => {
+  return async ({ cause }) => {
+    if (cause === "preload") {
+      if (!usePermissionStore.getState().hasPermission(resource, operation)) {
+        throw new RouteRefusal({ status: 403, statusText: "Preload refused" });
+      }
+      return;
+    }
+
     if (!(await ensurePermissionManifest())) {
       throw redirect({ href: "/login" });
     }

@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { usePermission } from "@/hooks/use-permission";
 import { agentExtension } from "@/lib/queries/agent-extension";
 import { assistant } from "@/lib/queries/assistant";
@@ -6,7 +7,6 @@ import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryStates } from "nuqs";
 import { useMemo, useRef, useState } from "react";
 import {
   EXTENSION_OPEN_PARAM,
@@ -70,7 +70,7 @@ export default function ExtensionsTab() {
       [WEB_WATCH_PARAM]: webWatch,
     },
     setOpenState,
-  ] = useQueryStates({
+  ] = useSearchState({
     [EXTENSION_OPEN_PARAM]: extensionOpenParser,
     [PORTAL_RUN_PARAM]: portalRunParser,
     [WEB_WATCH_PARAM]: webWatchParser,

@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
@@ -19,7 +20,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlugIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import { useCallback, type ReactNode } from "react";
 import { EventInbox } from "./inbox/event-inbox";
 import { monitoringHealth } from "./monitoring-health";
@@ -109,7 +109,7 @@ type MonitoringBodyProps = {
 
 function MonitoringBody({ status, canUpdate, canManage }: MonitoringBodyProps) {
   const t = useT();
-  const [{ tab }, setSearchParams] = useQueryStates(monitoringPageSearchParams);
+  const [{ tab }, setSearchParams] = useSearchState(monitoringPageSearchParams);
   const health = monitoringHealth(status);
 
   const usageQuery = useQuery({

@@ -1,20 +1,20 @@
-import { Link } from "@trenova/shared/components/link";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useQuery } from "@tanstack/react-query";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { ChevronRightIcon, ReceiptTextIcon } from "@trenova/shared/components/icons";
+import { InternalLink, Link } from "@trenova/shared/components/link";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { daysUntil, formatClockDurationMs, formatRange } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
 import {
   fetchMyHosState,
   fetchMyPeriodSummary,
   fetchMyRecentPayEvents,
 } from "@trenova/shared/lib/graphql/driver-portal";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronRightIcon, ReceiptTextIcon } from "@trenova/shared/components/icons";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import { m } from "motion/react";
-import { LoadCard } from "../_components/load-card";
 import { useDashProfile } from "../_components/dash-layout";
+import { LoadCard } from "../_components/load-card";
 import { useMyLoads } from "../_components/use-loads";
 
 function greeting(): string {
@@ -45,12 +45,12 @@ function Section({
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">{title}</h2>
         {to ? (
-          <Link
+          <InternalLink
             to={to}
             className="flex items-center text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             {toLabel} <ChevronRightIcon className="size-3.5" />
-          </Link>
+          </InternalLink>
         ) : null}
       </div>
       {children}

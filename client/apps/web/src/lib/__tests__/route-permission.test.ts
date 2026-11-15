@@ -352,3 +352,47 @@ describe("requirePermission for a resource missing from the manifest", () => {
     expect(catalogueReads).toBe(0);
   });
 });
+
+describe("requirePermission on a preload (a hover over a link)", () => {
+  const preload = { ...enterContext("/shipments/management"), cause: "preload" as const };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    usePermissionStore.getState().clearPermissions();
+  });
+
+  it("refuses from the manifest it holds without asking the server", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    usePermissionStore.setState({
+      manifest: { permissions: {} } as unknown as PermissionManifest,
+      lastFetched: Date.now(),
+      isLoading: false,
+    });
+
+    const { thrown } = await settle(
+      Promise.resolve(requirePermission(Resource.Shipment, Operation.Read)(preload)),
+    );
+
+    expect(thrown).toBeInstanceOf(RouteRefusal);
+    expect((thrown as RouteRefusal).status).toBe(403);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("lets a preload through when the held manifest grants the page", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    usePermissionStore.setState({
+      manifest: {
+        permissions: { [Resource.Shipment]: Operation.Read },
+      } as unknown as PermissionManifest,
+      lastFetched: Date.now(),
+      isLoading: false,
+    });
+
+    expect(
+      await settle(Promise.resolve(requirePermission(Resource.Shipment, Operation.Read)(preload))),
+    ).toEqual({ value: undefined, thrown: undefined });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});

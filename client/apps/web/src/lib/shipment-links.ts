@@ -1,6 +1,7 @@
+import { appPath } from "@/lib/app-path";
 import { buildCommandHref } from "@/components/command-palette/route-command-data";
 
-export const SHIPMENTS_PATH = "/shipment-management/shipments";
+export const SHIPMENTS_PATH = appPath("/shipment-management/shipments");
 
 /** The query parameter that starts a new shipment for one customer. */
 export const NEW_SHIPMENT_CUSTOMER_PARAM = "customerId";

@@ -1,6 +1,6 @@
 /**
  * The app's own description of itself, read statically: which pages exist and
- * what guards them (the router), where they sit and what they are called (the
+ * what guards them (the route files), where they sit and what they are called (the
  * navigation config), what each says about itself (its page header), and
  * where records open (the record-link registry).
  */
@@ -16,7 +16,7 @@ export function sourcePaths(webRoot) {
 
   return {
     src,
-    router: join(src, "router.tsx"),
+    pages: join(src, "pages"),
     navigation: join(src, "config", "navigation.config.ts"),
     recordLinks: join(src, "config", "record-links.ts"),
     recordKinds: join(shared, "types", "generated", "record-kinds.ts"),
@@ -60,75 +60,83 @@ export function loadMembers(paths) {
   };
 }
 
-function joinPath(parent, child) {
-  if (child.startsWith("/")) {
-    return child;
-  }
-
-  return `${parent.replace(/\/$/, "")}/${child}`;
-}
-
 function callName(node) {
   return node?.type === "CallExpression" && node.callee.type === "Identifier"
     ? node.callee.name
     : null;
 }
 
-/** Every loader call in a route's `loader`, flattening combineLoaders(…). */
-function loaderCalls(node) {
-  if (!node) {
-    return [];
-  }
-  if (callName(node) === "combineLoaders") {
-    return node.arguments.flatMap(loaderCalls);
-  }
-
-  return [node];
-}
-
-function isRedirectLoader(node) {
-  if (node?.type !== "ArrowFunctionExpression" && node?.type !== "FunctionExpression") {
-    return false;
-  }
-  let redirects = false;
-  walk(node.body, (child) => {
-    if (callName(child) === "redirect") {
-      redirects = true;
+/** The route's options object: the argument of `createFileRoute("<id>")({ … })`. */
+function fileRoute(program, file) {
+  let found = null;
+  walk(program, (node) => {
+    if (
+      found === null &&
+      node.type === "CallExpression" &&
+      callName(node.callee) === "createFileRoute" &&
+      node.callee.arguments[0]?.type === "Literal"
+    ) {
+      found = { id: node.callee.arguments[0].value, options: node.arguments[0] };
     }
   });
+  if (found === null || found.options?.type !== "ObjectExpression") {
+    throw new Error(`${file}: no createFileRoute("<id>")({ … })`);
+  }
 
-  return redirects;
+  return found;
 }
+
+/** The module and export each imported name comes from. */
+function importsOf(program) {
+  const imports = new Map();
+  for (const statement of program.body) {
+    if (statement.type !== "ImportDeclaration") continue;
+    for (const specifier of statement.specifiers) {
+      const imported =
+        specifier.type === "ImportSpecifier"
+          ? (specifier.imported.name ?? specifier.imported.value)
+          : null;
+      imports.set(specifier.local.name, {
+        specifier: statement.source.value,
+        exportName: imported,
+      });
+    }
+  }
+
+  return imports;
+}
+
+const REDIRECT_GATES = new Set(["redirectTo", "redirectKeepingSearch"]);
 
 /**
- * The module a lazy route loads, and the export it takes from it when it
- * destructures one (`const { FuelCardsPage } = await import(...)`). Two pages
- * can share a file; the export says which one this route renders.
+ * What a route's `beforeLoad: gates(…)` demands of everyone: each permission and capability
+ * gate passed to it directly. A gate that only needs one of several (`anyOfGates`) demands
+ * none of them on its own.
  */
-function lazyImport(lazyNode) {
-  let specifier = null;
-  let exportName = null;
-  walk(lazyNode, (child) => {
-    if (
-      specifier === null &&
-      child.type === "ImportExpression" &&
-      child.source.type === "Literal"
-    ) {
-      specifier = child.source.value;
-    }
-    if (exportName !== null || child.type !== "VariableDeclarator") {
-      return;
-    }
-    const init = child.init?.type === "AwaitExpression" ? child.init.argument : child.init;
-    if (init?.type === "ImportExpression" && child.id.type === "ObjectPattern") {
-      const first = child.id.properties.find((property) => property.type === "Property");
-      if (first?.key?.type === "Identifier") {
-        exportName = first.key.name;
+function gateDemands(beforeLoad, context) {
+  const demands = { requires: [], capabilities: [], redirects: false };
+  if (callName(beforeLoad) !== "gates") {
+    return demands;
+  }
+  for (const gate of beforeLoad.arguments) {
+    const name = callName(gate);
+    if (REDIRECT_GATES.has(name)) {
+      demands.redirects = true;
+    } else if (name === "requirePermission") {
+      const resource = evaluate(gate.arguments[0], context);
+      const operation = gate.arguments.length > 1 ? evaluate(gate.arguments[1], context) : "read";
+      if (resource !== UNKNOWN && operation !== UNKNOWN) {
+        demands.requires.push({ resource, operation });
+      }
+    } else if (name === "requireCapability") {
+      const capability = evaluate(gate.arguments[0], context);
+      if (capability !== UNKNOWN) {
+        demands.capabilities.push(capability);
       }
     }
-  });
+  }
 
-  return { specifier, exportName };
+  return demands;
 }
 
 function resolveModule(src, specifier) {
@@ -146,115 +154,98 @@ function resolveModule(src, specifier) {
 }
 
 /**
- * The route array a `routes` declaration holds, looking through a call that
- * wraps it whole, such as `withPathScopedRevalidation([...])`.
+ * The address a route id serves: pathless layouts (`_app`) and groups (`(public)`) dropped, the trailing `_` that
+ * keeps a route out of its namesake's layout removed, an index's trailing slash trimmed.
  */
-function routeArray(node) {
-  if (node?.type === "CallExpression" && node.arguments.length === 1) {
-    return node.arguments[0];
+function pathOf(routeId) {
+  const segments = routeId
+    .split("/")
+    .filter((segment) => segment !== "" && !segment.startsWith("_") && !segment.startsWith("("))
+    .map((segment) => segment.replace(/_$/, ""));
+
+  return `/${segments.join("/")}`;
+}
+
+const PROTECTED_LAYOUTS = ["/_app", "/_desk", "/_onboarding"];
+
+function readRouteFiles(paths, members) {
+  const context = { members };
+  const routes = new Map();
+  for (const entry of readdirSync(paths.pages, { recursive: true })) {
+    const file = join(paths.pages, entry);
+    if (!/\.tsx?$/.test(file) || entry.startsWith("__root")) continue;
+    const { program } = parseFile(file);
+    const { id, options } = fileRoute(program, file);
+    const props = new Map();
+    for (const property of options.properties) {
+      if (property.type === "Property") {
+        props.set(propertyName(property), property.value);
+      }
+    }
+    const component = props.get("component");
+    const page =
+      component?.type === "Identifier" ? (importsOf(program).get(component.name) ?? null) : null;
+    routes.set(id, {
+      id,
+      page,
+      ...gateDemands(props.get("beforeLoad"), context),
+    });
   }
 
-  return node;
+  return routes;
 }
 
 /**
- * The pages a signed-in person can open: every route under a protected
- * loader that renders a page rather than redirecting, with the permissions
- * and capabilities its loaders (and its parents') demand.
+ * The pages a signed-in person can open: every route under a signed-in layout that renders a
+ * page rather than redirecting, with the permissions and capabilities its gates (and its
+ * layouts') demand. A route's layouts are the routes whose ids lead its own; one kept out of
+ * its namesake's layout (`accounting_`) has an id no layout leads.
  */
 export function readRoutes(paths, members) {
-  const { program } = parseFile(paths.router);
-  const consts = topLevelConsts(program);
-  const routesNode = routeArray(consts.get("routes"));
-  if (routesNode?.type !== "ArrayExpression") {
-    throw new Error(`${paths.router}: routes is not an array literal`);
-  }
-
-  const context = { members };
+  const routes = readRouteFiles(paths, members);
   const pages = new Map();
 
-  const visit = (node, inherited) => {
-    if (node?.type !== "ObjectExpression") {
-      return;
+  // The catch-all draws a section's index (the links under a module); a route that draws the
+  // same page, like the admin area's own index, is that index too and not a page of its own.
+  const sectionIndexes = new Set(
+    [...routes.values()]
+      .filter((route) => route.page !== null && route.id.endsWith("/$"))
+      .map((route) => resolveModule(paths.src, route.page.specifier)),
+  );
+
+  // A route with children is a layout: its index, not the layout, is the page at its address.
+  const ids = [...routes.keys()];
+  const isLayout = (key) => ids.some((other) => other !== key && other.startsWith(`${key}/`));
+
+  for (const [key, route] of routes) {
+    if (route.redirects || route.page === null || isLayout(key)) continue;
+    if (!PROTECTED_LAYOUTS.some((layout) => key === layout || key.startsWith(`${layout}/`))) {
+      continue;
     }
-    const props = new Map();
-    for (const property of node.properties) {
-      if (property.type === "Property") {
-        props.set(propertyName(property), property);
+    // An index (`/_desk/desk/`) stands in the layout whose id is its own without the slash.
+    const segments = key.replace(/(.)\/$/, "$1").split("/");
+    const requires = [];
+    const capabilities = [];
+    for (let length = 2; length <= segments.length; length++) {
+      const at = segments.slice(0, length).join("/");
+      const layout = at === key ? undefined : routes.get(at);
+      if (layout) {
+        requires.push(...layout.requires);
+        capabilities.push(...layout.capabilities);
       }
     }
-
-    const pathValue = props.has("path") ? evaluate(props.get("path").value, context) : undefined;
-    const isIndex = props.has("index") && evaluate(props.get("index").value, context) === true;
-    const path =
-      typeof pathValue === "string" ? joinPath(inherited.path, pathValue) : inherited.path;
-
-    const loader = props.get("loader")?.value;
-    const redirect = isRedirectLoader(loader);
-    const requires = [...inherited.requires];
-    const capabilities = [...inherited.capabilities];
-    let isProtected = inherited.isProtected;
-    let isGuest = inherited.isGuest;
-
-    for (const call of loaderCalls(loader)) {
-      if (call?.type === "Identifier") {
-        if (call.name === "protectedLoader") isProtected = true;
-        if (call.name === "guestLoader") isGuest = true;
-        continue;
-      }
-      const name = callName(call);
-      if (name === "createPermissionLoader") {
-        const resource = evaluate(call.arguments[0], context);
-        const operation = call.arguments.length > 1 ? evaluate(call.arguments[1], context) : "read";
-        if (resource !== UNKNOWN && operation !== UNKNOWN) {
-          requires.push({ resource, operation });
-        }
-      } else if (name === "createCapabilityLoader") {
-        const capability = evaluate(call.arguments[0], context);
-        if (capability !== UNKNOWN) {
-          capabilities.push(capability);
-        }
-      }
-    }
-
-    const lazy = props.get("lazy");
-    const { specifier, exportName } = lazy
-      ? lazyImport(lazy.value ?? lazy)
-      : { specifier: null, exportName: null };
-    const file = resolveModule(paths.src, specifier);
-
-    if (
-      (typeof pathValue === "string" || isIndex) &&
-      !redirect &&
-      file &&
-      isProtected &&
-      !isGuest
-    ) {
-      pages.set(path, {
-        path,
-        file,
-        exportName,
-        requires: dedupeRequirements(requires),
-        capabilities: [...new Set(capabilities)],
-        hasParams: path.includes(":"),
-      });
-    }
-
-    const children = props.get("children")?.value;
-    if (children?.type === "ArrayExpression") {
-      for (const child of children.elements) {
-        visit(child, { path, requires, capabilities, isProtected, isGuest });
-      }
-    }
-  };
-
-  for (const element of routesNode.elements) {
-    visit(element, {
-      path: "",
-      requires: [],
-      capabilities: [],
-      isProtected: false,
-      isGuest: false,
+    requires.push(...route.requires);
+    capabilities.push(...route.capabilities);
+    const file = resolveModule(paths.src, route.page.specifier);
+    const path = pathOf(route.id);
+    if (!file || path.endsWith("/$") || sectionIndexes.has(file)) continue;
+    pages.set(path, {
+      path,
+      file,
+      exportName: route.page.exportName,
+      requires: dedupeRequirements(requires),
+      capabilities: [...new Set(capabilities)],
+      hasParams: path.includes("$"),
     });
   }
 

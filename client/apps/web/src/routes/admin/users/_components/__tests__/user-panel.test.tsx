@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { useController, type Control } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -94,7 +94,7 @@ function renderPanel(mode: "create" | "edit") {
     defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
   });
   return render(
-    <NuqsTestingAdapter>
+    <TestRouter>
       <QueryClientProvider client={queryClient}>
         <UserPanel
           open
@@ -103,7 +103,7 @@ function renderPanel(mode: "create" | "edit") {
           onOpenChange={() => {}}
         />
       </QueryClientProvider>
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

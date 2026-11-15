@@ -1,9 +1,9 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { tableConfiguration } from "@/lib/queries/table-configuration";
 import { BASE_ONLY_UNAVAILABLE, seedPlan, unavailableFeatures } from "@/test/plan";
 import { cleanup, render, screen } from "@testing-library/react";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { prefetch, WorkersPage } from "../page";
@@ -31,9 +31,9 @@ const GRANTS = {
 
 function renderPage(searchParams = "") {
   return render(
-    <NuqsTestingAdapter searchParams={searchParams}>
+    <TestRouter search={searchParams}>
       <WorkersPage />
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

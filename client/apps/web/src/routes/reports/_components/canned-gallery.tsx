@@ -76,7 +76,7 @@ function CannedReportCard({
             variant="ghost"
             size="sm"
             className="text-2xs h-6 gap-1 px-2"
-            render={<Link to={`/reports/explore?canned=${encodeURIComponent(report.key)}`} />}
+            render={<Link to="/reports/explore" search={{ canned: report.key }} />}
           >
             <TableIcon className="size-3" />
             {t("Explore")}

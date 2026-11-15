@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { BOARD_GROUPINGS, type BoardGrouping } from "@/lib/shipment-board/grouping";
 import { TIMELINE_RANGES, TIMELINE_ROW_MODES } from "@/lib/shipment-board/timeline";
 import { applicableQuickFilters, parseAsQuickFilters } from "@/lib/shipment-board/quick-filters";
@@ -9,7 +10,6 @@ import {
   parseAsBoolean,
   parseAsString,
   parseAsStringLiteral,
-  useQueryStates,
 } from "nuqs";
 
 export const BOARD_VIEWS = ["table", "timeline", "map"] as const;
@@ -59,7 +59,7 @@ export const shipmentBoardParser = {
  * server that would refuse the whole board for it.
  */
 export function useShipmentBoardUrl() {
-  const [state, setState] = useQueryStates(shipmentBoardParser, { history: "replace" });
+  const [state, setState] = useSearchState(shipmentBoardParser, { history: "replace" });
   const marginsVisible = useProtectedFieldAccess("Margins");
   const applicable = useMemo(
     () => ({ ...state, qf: applicableQuickFilters(state.qf, marginsVisible) }),

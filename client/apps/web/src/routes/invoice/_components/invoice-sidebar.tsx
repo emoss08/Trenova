@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { usePermission } from "@/hooks/use-permission";
@@ -30,7 +31,6 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Mail01Icon, SearchLgIcon, Send01Icon } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { invoiceSidebarSearchParamsParser } from "../use-invoice-state";
 import { InvoiceBulkConfirm, type InvoiceBulkKind } from "./invoice-bulk-confirm";
@@ -63,7 +63,7 @@ export function InvoiceSidebar({
   const t = useT();
   const { allowed: canPost } = usePermission(Resource.Invoice, Operation.Post);
 
-  const [searchParams, setSearchParams] = useQueryStates(invoiceSidebarSearchParamsParser);
+  const [searchParams, setSearchParams] = useSearchState(invoiceSidebarSearchParamsParser);
   const { status, query, billType, scope, dispute } = searchParams;
   const deferredSearch = useDeferredValue(query);
   const hasActiveFilters = Boolean(status || billType || scope || query || dispute);

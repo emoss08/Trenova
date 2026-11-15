@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { usePermission } from "@/hooks/use-permission";
 import { downloadCsv, exportFilename } from "@/lib/data-table-export";
 import type { AgentAnalytics, AIAnalyticsInput } from "@/lib/graphql/ai-analytics";
@@ -16,7 +17,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { FieldFilter } from "@trenova/shared/types/data-table";
 import type { AiAnalyticsWindow } from "@trenova/graphql/generated/graphql";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useQueryState } from "nuqs";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ANALYTICS_AGENT_PARAM,
@@ -93,12 +93,12 @@ export default function AnalyticsTab() {
   const go = useAIControlNavigation();
   const queryClient = useQueryClient();
   const timezone = useMemo(() => resolveUserTimezone(), []);
-  const [range, setRange] = useQueryState(ANALYTICS_WINDOW_PARAM, analyticsWindowParser);
-  const [compareBy, setCompareBy] = useQueryState(ANALYTICS_COMPARE_PARAM, analyticsCompareParser);
-  const [agentId, setAgentId] = useQueryState(ANALYTICS_AGENT_PARAM, analyticsAgentParser);
-  const [task, setTask] = useQueryState(ANALYTICS_TASK_PARAM, analyticsTaskParser);
-  const [openSeries, setOpenSeries] = useQueryState(ANALYTICS_SERIES_PARAM, analyticsSeriesParser);
-  const [openTool, setOpenTool] = useQueryState(ANALYTICS_TOOL_PARAM, analyticsToolParser);
+  const [range, setRange] = useSearchValue(ANALYTICS_WINDOW_PARAM, analyticsWindowParser);
+  const [compareBy, setCompareBy] = useSearchValue(ANALYTICS_COMPARE_PARAM, analyticsCompareParser);
+  const [agentId, setAgentId] = useSearchValue(ANALYTICS_AGENT_PARAM, analyticsAgentParser);
+  const [task, setTask] = useSearchValue(ANALYTICS_TASK_PARAM, analyticsTaskParser);
+  const [openSeries, setOpenSeries] = useSearchValue(ANALYTICS_SERIES_PARAM, analyticsSeriesParser);
+  const [openTool, setOpenTool] = useSearchValue(ANALYTICS_TOOL_PARAM, analyticsToolParser);
   const [hidden, setHidden] = useState<readonly string[]>([]);
   const [sheetsUsed, setSheetsUsed] = useState(Boolean(openSeries));
   if (openSeries && !sheetsUsed) {

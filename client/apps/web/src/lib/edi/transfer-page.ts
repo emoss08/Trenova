@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { ediService } from "@/services/edi";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { transferDirection } from "./transfer-sides";
@@ -19,7 +20,7 @@ export async function sentTransferPath(url: URL, signal?: AbortSignal): Promise<
     const transfer = await ediService.getTransfer(id, { signal });
     const organizationId = useAuthStore.getState().user?.currentOrganizationId;
     return transferDirection(transfer, organizationId) === "outbound"
-      ? `/edi/transfers/outbound${url.search}`
+      ? `${appPath("/edi/transfers/outbound")}${url.search}`
       : null;
   } catch (error) {
     reportFailure(error, { source: "background", operation: "getTransfer" });

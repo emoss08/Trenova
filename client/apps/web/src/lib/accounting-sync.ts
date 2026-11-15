@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { recordPath, type RecordEntityType } from "@/config/record-links";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import type {
@@ -25,13 +26,13 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import type { StatusPhase } from "@trenova/shared/lib/status-phase";
 
-export const ACCOUNTING_MAPPINGS_PATH = "/accounting/sync/mappings";
+export const ACCOUNTING_MAPPINGS_PATH = appPath("/accounting/sync/mappings");
 
-export const ACCOUNTING_SYNC_PATH = "/accounting/sync";
+export const ACCOUNTING_SYNC_PATH = appPath("/accounting/sync");
 
-export const ACCOUNTING_INBOUND_PATH = "/accounting/sync/inbound";
+export const ACCOUNTING_INBOUND_PATH = appPath("/accounting/sync/inbound");
 
-export const ACCOUNTING_DRIFT_PATH = "/accounting/sync/drift";
+export const ACCOUNTING_DRIFT_PATH = appPath("/accounting/sync/drift");
 
 const DRIFT_PHASES: Record<AccountingDriftStatus, StatusPhase> = {
   Open: "attention",
@@ -456,7 +457,7 @@ export function normalizeNetSuiteAccountId(value: string): string | null {
 }
 
 export function accountingSetupPath(system: AccountingSystem): string {
-  return `/admin/integrations?type=${system}`;
+  return `${appPath("/admin/integrations")}?type=${system}`;
 }
 
 export function accountingMappingPhase(state: AccountingMappingState): StatusPhase {

@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { DispatchBoardSummary } from "@/lib/graphql/dispatch-console";
 import { BASE_ONLY_UNAVAILABLE, seedPlan, unavailableFeatures } from "@/test/plan";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -5,7 +6,6 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource, type UnavailableFeature } from "@trenova/shared/types/permission";
 import type { User } from "@trenova/shared/types/user";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConsolePageActions } from "../console-page-actions";
 import { SummaryStrip } from "../summary-strip";
@@ -58,7 +58,7 @@ function signIn(unavailable: readonly UnavailableFeature[]) {
 
 function renderConsoleChrome() {
   return render(
-    <NuqsTestingAdapter searchParams="">
+    <TestRouter search="">
       <ConsolePageActions actions={actions} onPropose={vi.fn()} />
       <SummaryStrip
         summary={summary}
@@ -72,7 +72,7 @@ function renderConsoleChrome() {
         onShowOpenDrivers={vi.fn()}
         showsDrivers
       />
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

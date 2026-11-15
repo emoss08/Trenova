@@ -1,4 +1,4 @@
-import { TestRouter } from "@trenova/shared/testing/test-router";
+import { TestRouter, type OnUrlUpdateFunction } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -7,7 +7,6 @@ import {
   billingQueueStatsSchema,
   type BillingQueueLane,
 } from "@trenova/shared/types/billing-queue";
-import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import type { ReactElement } from "react";
 import { stubLayout } from "@/test/layout";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -123,12 +122,8 @@ function parsedStats(lanes: Partial<Record<BillingQueueLane, number>>) {
 function renderWithin(ui: ReactElement, searchParams = "", onUrlUpdate?: OnUrlUpdateFunction) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <TestRouter>
-      <QueryClientProvider client={client}>
-        <NuqsTestingAdapter searchParams={searchParams} onUrlUpdate={onUrlUpdate} hasMemory>
-          {ui}
-        </NuqsTestingAdapter>
-      </QueryClientProvider>
+    <TestRouter search={searchParams} onUrlUpdate={onUrlUpdate}>
+      <QueryClientProvider client={client}>{ui}</QueryClientProvider>
     </TestRouter>,
   );
 }

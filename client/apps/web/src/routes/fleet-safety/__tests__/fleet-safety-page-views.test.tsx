@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { BASE_ONLY_UNAVAILABLE, seedPlan } from "@/test/plan";
 import { cleanup, render, screen } from "@testing-library/react";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FleetSafetyPage } from "../page";
@@ -19,9 +19,9 @@ vi.mock("../_components/my-dot-intelligence", () => ({
 
 function renderPage(searchParams: string) {
   return render(
-    <NuqsTestingAdapter searchParams={searchParams}>
+    <TestRouter search={searchParams}>
       <FleetSafetyPage />
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

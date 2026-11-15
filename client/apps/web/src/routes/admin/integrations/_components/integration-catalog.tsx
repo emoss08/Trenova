@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ExternalLink } from "@/components/link";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -24,7 +25,6 @@ import { integration } from "@/lib/queries/integration";
 import { cn } from "@trenova/shared/lib/utils";
 import type { IntegrationCatalogItem } from "@/types/integration";
 import { useQuery } from "@tanstack/react-query";
-import { useQueryStates } from "nuqs";
 import {
   type IntegrationModalType,
   integrationCatalogSearchParamsParser,
@@ -214,7 +214,7 @@ function CatalogItemCard({ item, canConfigure, logo, onOpen }: CatalogItemCardPr
 export function IntegrationCatalogCard() {
   const t = useT();
 
-  const [searchParams, setSearchParams] = useQueryStates(integrationCatalogSearchParamsParser);
+  const [searchParams, setSearchParams] = useSearchState(integrationCatalogSearchParamsParser);
 
   const catalogQuery = useQuery({
     ...integration.catalog(),

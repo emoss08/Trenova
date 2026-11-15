@@ -1,5 +1,7 @@
 import { leaveRegardlessOfWork } from "@/lib/reload-guards";
 import { clearSessionCache } from "@/lib/session-cache";
+import { webSignInPaths } from "@/lib/sign-in-paths";
+import { returnPathFor } from "@trenova/shared/lib/router/return-path";
 import { announceSignedOut } from "@trenova/shared/lib/session-context";
 import { signInPathAfter } from "@trenova/shared/lib/sign-out-notice";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -42,7 +44,8 @@ export async function leaveEndedSession({
  * Ends a session the server has ended (a 401 on a request, or the live stream closed because
  * its session was signed out, revoked or expired). The session is gone for every tab, so they
  * are told rather than left to find out on their next request; the person still at this
- * screen keeps the browser's prompt for unsaved edits.
+ * screen keeps the browser's prompt for unsaved edits, and signing in again brings them back
+ * to the page they were on.
  */
 export function leaveExpiredSession(): void {
   if (!useAuthStore.getState().isAuthenticated) {
@@ -50,9 +53,16 @@ export function leaveExpiredSession(): void {
   }
 
   announceSignedOut();
+  const { pathname, search } = window.location;
   void leaveEndedSession({
     destination:
-      window.location.pathname === "/login" ? null : signInPathAfter("/login", "expired"),
+      pathname === webSignInPaths.loginPath
+        ? null
+        : signInPathAfter(
+            webSignInPaths.loginPath,
+            "expired",
+            returnPathFor(`${pathname}${search}`, webSignInPaths),
+          ),
     pastUnsavedWork: false,
   });
 }

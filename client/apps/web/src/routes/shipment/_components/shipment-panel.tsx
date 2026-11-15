@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
@@ -42,7 +43,7 @@ import {
   Share07Icon,
   ShippingContainerIcon,
 } from "@trenova/shared/components/icons";
-import { parseAsBoolean, useQueryState } from "nuqs";
+import { parseAsBoolean, parseAsString } from "nuqs";
 import { NEW_SHIPMENT_CUSTOMER_PARAM } from "@/lib/shipment-links";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { lazy } from "react";
@@ -153,7 +154,7 @@ const getDefaultValues = (customerId: string | null): ShipmentCreateInput => {
 export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Shipment>) {
   const t = useT();
 
-  const [customerId] = useQueryState(NEW_SHIPMENT_CUSTOMER_PARAM);
+  const [customerId] = useSearchValue(NEW_SHIPMENT_CUSTOMER_PARAM, parseAsString);
   const defaultValues = getDefaultValues(mode === "create" ? customerId : null);
   const withIdempotencyKey = useIdempotencyKey();
   const queryClient = useQueryClient();
@@ -317,7 +318,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     },
   ];
 
-  const [, setLoadPlannerOpen] = useQueryState("loadPlanner", parseAsBoolean.withDefault(false));
+  const [, setLoadPlannerOpen] = useSearchValue("loadPlanner", parseAsBoolean.withDefault(false));
 
   if (mode === "edit") {
     return (

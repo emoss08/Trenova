@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { DataTable } from "@/components/data-table/data-table";
 import { describeToolCall } from "@/components/assistant/tool-presentation";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
@@ -16,7 +17,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import { useQueryStates } from "nuqs";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import {
   CLEARED_TABLE_STATE,
@@ -64,7 +64,7 @@ const HoldingContext = createContext<ToolHolding>({ byTool: new Map(), agents: n
  */
 export default function ByAgentView() {
   const t = useT();
-  const [params, setParams] = useQueryStates(byAgentParsers);
+  const [params, setParams] = useSearchState(byAgentParsers);
   const stored = params[SAFETY_AGENTS_PARAM];
   const picked = useMemo(() => [...new Set(stored)].slice(0, MAX_COMPARED_AGENTS), [stored]);
   const agentsQuery = useQuery(assistant.agents(false));

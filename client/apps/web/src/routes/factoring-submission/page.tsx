@@ -71,7 +71,11 @@ export function FactoringSubmissionPage() {
   useBreadcrumbLabel(data?.number);
 
   const backButton = (
-    <Button variant="outline" size="sm" render={<Link to={`${FACTORING_PATH}?view=schedules`} />}>
+    <Button
+      variant="outline"
+      size="sm"
+      render={<Link to={FACTORING_PATH} search={{ view: "schedules" }} />}
+    >
       <ArrowLeftIcon className="size-3.5" />
       {t("Schedules")}
     </Button>

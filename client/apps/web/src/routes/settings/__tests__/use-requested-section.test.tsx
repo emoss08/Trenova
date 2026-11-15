@@ -1,5 +1,5 @@
 import { renderAtRoutes } from "@trenova/shared/testing/test-router";
-import { act, cleanup, screen } from "@testing-library/react";
+import { act, cleanup, screen, waitFor } from "@testing-library/react";
 import { useLocation } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SettingsSection } from "@/lib/settings-path";
@@ -57,7 +57,9 @@ describe("useRequestedSection", () => {
 
     flushFrames();
 
-    expect(screen.getByTestId("where")).toHaveTextContent("/settings?from=email");
+    await waitFor(() =>
+      expect(screen.getByTestId("where")).toHaveTextContent("/settings?from=email"),
+    );
   });
 
   it("drops a section it does not know without moving", async () => {
@@ -67,7 +69,7 @@ describe("useRequestedSection", () => {
     flushFrames();
 
     expect(jump).not.toHaveBeenCalled();
-    expect(screen.getByTestId("where")).toHaveTextContent(/^\/settings$/);
+    await waitFor(() => expect(screen.getByTestId("where")).toHaveTextContent(/^\/settings$/));
   });
 
   it("does nothing when the address names no section", async () => {

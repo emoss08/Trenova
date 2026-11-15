@@ -5,7 +5,7 @@ related:
   - /accounting/manual-journals
   - /accounting/reports/trial-balance
 covers:
-  - /accounting/journal-entries/:id
+  - /accounting/journal-entries/$id
 ---
 
 ## What it's for

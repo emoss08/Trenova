@@ -1,7 +1,7 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
-import { useQueryState } from "nuqs";
 import { Activity, lazy } from "react";
 import {
   USER_ROLES_COLUMN_COUNTS,
@@ -15,7 +15,7 @@ const RoleTable = lazy(() => import("@/routes/admin/roles/_components/role-table
 export default function UserRolesTable() {
   const t = useT();
 
-  const [activeTab, setActiveTab] = useQueryState("tab", userRolesTabParser);
+  const [activeTab, setActiveTab] = useSearchValue("tab", userRolesTabParser);
 
   return (
     <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as UserRolesTab)}>

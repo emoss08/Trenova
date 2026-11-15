@@ -6,7 +6,7 @@ related:
   - /billing/configuration-files/accessorial-charges
 covers:
   - /billing/configuration-files/formula-libraries/new
-  - /billing/configuration-files/formula-libraries/:id/edit
+  - /billing/configuration-files/formula-libraries/$id/edit
 ---
 
 ## What it's for

@@ -1,3 +1,9 @@
+import {
+  useSearchState,
+  useSearchValue,
+  type SearchState,
+  type SetSearchState,
+} from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -24,7 +30,6 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit02Icon, Key01Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
-import { useQueryState, useQueryStates } from "nuqs";
 import { memo, useCallback, useEffect, useMemo } from "react";
 import { type Resolver, useForm, useFormContext } from "react-hook-form";
 import {
@@ -47,21 +52,15 @@ import {
   toIdentityProvider,
 } from "./utils";
 
-type IdentityProviderPanelMode = "create" | "edit";
 type IdentityProviderRecord = IdentityProvider & Record<string, unknown>;
-type IdentityProviderPanelParams = {
-  editingProvider: string | null;
-  panelMode: IdentityProviderPanelMode;
-  panelOpen: boolean;
-};
-type SetIdentityProviderPanelParams = (values: {
-  editingProvider?: string | null;
-  panelMode?: IdentityProviderPanelMode | null;
-  panelOpen?: boolean | null;
-}) => Promise<URLSearchParams>;
+type IdentityProviderPanelParams = SearchState<typeof identityProviderPanelSearchParamsParser>;
+type IdentityProviderPanelMode = IdentityProviderPanelParams["panelMode"];
+type SetIdentityProviderPanelParams = SetSearchState<
+  typeof identityProviderPanelSearchParamsParser
+>;
 
 export function SignInTab({ organizationId }: { organizationId: string }) {
-  const [panelParams, setPanelParams] = useQueryStates(identityProviderPanelSearchParamsParser);
+  const [panelParams, setPanelParams] = useSearchState(identityProviderPanelSearchParamsParser);
   const providersQuery = useQuery({
     queryKey: [identityProviderQueryKey(organizationId)],
     queryFn: async () => organizationService.listIdentityProviders(organizationId),
@@ -127,7 +126,7 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
   const canCreate = useSecurityAccess().identityProviders.create;
 
   const queryClient = useQueryClient();
-  const [search, setSearch] = useQueryState("search", identityProviderSearchParser);
+  const [search, setSearch] = useSearchValue("search", identityProviderSearchParser);
   const filteredProviders = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return providers;

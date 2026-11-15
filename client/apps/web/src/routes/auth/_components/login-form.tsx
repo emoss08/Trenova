@@ -4,12 +4,14 @@ import { OktaLogo } from "@/components/logos/okta";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { emailSchema } from "@/lib/auth-validation";
 import { edition } from "@/lib/edition";
+import { webSignInPaths } from "@/lib/sign-in-paths";
 import { ssoChallengeFromHash } from "@/lib/sso-challenge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { SignOutNoticeAlert } from "@trenova/shared/components/session/sign-out-notice-alert";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { returnPathFrom } from "@trenova/shared/lib/router/return-path";
 import { signOutNoticeFrom } from "@trenova/shared/lib/sign-out-notice";
 import { authService } from "@trenova/shared/services/auth";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -65,7 +67,9 @@ export function LoginForm({
   const providers = providerQuery.data ?? [];
   const hasAnySso = providers.length > 0;
   const passwordEnabled = tenantMetadata?.passwordEnabled ?? true;
-  const returnTo = typeof window !== "undefined" ? `${window.location.origin}/` : "/";
+  const returnPath = returnPathFrom(searchParams, webSignInPaths);
+  const returnTo =
+    typeof window !== "undefined" ? `${window.location.origin}${returnPath}` : returnPath;
 
   const form = useForm<LoginRequest>({
     resolver: zodResolver(loginFormSchema),

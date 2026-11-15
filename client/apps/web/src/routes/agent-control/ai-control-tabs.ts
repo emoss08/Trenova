@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import {
   parseAsArrayOf,
   parseAsBoolean,
@@ -24,7 +25,7 @@ export type AIControlTab = (typeof aiControlTabValues)[number];
 export const AI_CONTROL_TAB_PARAM = "tab";
 
 export const aiControlTabParser = parseAsStringLiteral(aiControlTabValues)
-  .withOptions({ history: "push", shallow: true })
+  .withOptions({ history: "push" })
   .withDefault("overview");
 
 /** The Agents tab's filter: every agent, those with proposals waiting, those in shadow, or those off. */
@@ -34,15 +35,15 @@ export type AgentFilter = (typeof agentFilters)[number];
 export const AGENT_FILTER_PARAM = "agents";
 
 export const agentFilterParser = parseAsStringLiteral(agentFilters)
-  .withOptions({ history: "replace", shallow: true })
+  .withOptions({ history: "replace" })
   .withDefault("all");
 
 /** The agent open in the Agents tab's sheet; a link from anywhere on the page opens one. */
 export const AGENT_OPEN_PARAM = "openAgent";
 
-export const agentOpenParser = parseAsString.withOptions({ history: "push", shallow: true });
+export const agentOpenParser = parseAsString.withOptions({ history: "push" });
 
-export const AI_CONTROL_PATH = "/admin/agent-control";
+export const AI_CONTROL_PATH = appPath("/admin/agent-control");
 
 /** The Agents tab, with the given agent's sheet open when there is one. */
 export function aiControlAgentPath(agentId?: string | null): string {
@@ -62,16 +63,15 @@ export const BUILDER_STARTS = ["chat", "scheduled", "event", "blank"] as const;
 export type BuilderStart = (typeof BUILDER_STARTS)[number];
 
 export const AGENT_EDIT_PARAM = "editAgent";
-export const agentEditParser = parseAsString.withOptions({ history: "push", shallow: true });
+export const agentEditParser = parseAsString.withOptions({ history: "push" });
 
 /** An earlier version the builder loads as a draft when it opens, then drops from the address. */
 export const AGENT_RESTORE_PARAM = "restoreVersion";
-export const agentRestoreParser = parseAsInteger.withOptions({ history: "replace", shallow: true });
+export const agentRestoreParser = parseAsInteger.withOptions({ history: "replace" });
 
 export const AGENT_NEW_PARAM = "newAgent";
 export const agentNewParser = parseAsStringLiteral(BUILDER_STARTS).withOptions({
   history: "push",
-  shallow: true,
 });
 
 export const activityViews = [
@@ -87,7 +87,7 @@ export type ActivityView = (typeof activityViews)[number];
 export const ACTIVITY_VIEW_PARAM = "activity";
 
 export const activityViewParser = parseAsStringLiteral(activityViews)
-  .withOptions({ history: "replace", shallow: true })
+  .withOptions({ history: "replace" })
   .withDefault("runs");
 
 /** Safety is two tables: every tool's rule, and what picked agents make of the tools they hold. */
@@ -97,14 +97,14 @@ export type SafetyView = (typeof safetyViews)[number];
 export const SAFETY_VIEW_PARAM = "safety";
 
 export const safetyViewParser = parseAsStringLiteral(safetyViews)
-  .withOptions({ history: "replace", shallow: true })
+  .withOptions({ history: "replace" })
   .withDefault("rules");
 
 /** The agents compared under Safety, kept in the address so a comparison can be shared. */
 export const SAFETY_AGENTS_PARAM = "safetyAgents";
 
 export const safetyAgentsParser = parseAsArrayOf(parseAsString)
-  .withOptions({ history: "replace", shallow: true })
+  .withOptions({ history: "replace" })
   .withDefault([]);
 
 /**
@@ -120,7 +120,6 @@ export const QUALITY_VIEW_PARAM = "quality";
 /** No default: a link that names only a suite run opens its cases under Suite runs. */
 export const qualityViewParser = parseAsStringLiteral(qualityViews).withOptions({
   history: "replace",
-  shallow: true,
 });
 
 /** Narrows suite runs and worst-rated answers to one agent; links from notifications set it. */
@@ -128,8 +127,8 @@ export const QUALITY_AGENT_PARAM = "agent";
 /** Opens one suite run's cases in place of the runs. */
 export const QUALITY_SUITE_RUN_PARAM = "suiteRun";
 
-export const qualityAgentParser = parseAsString.withOptions({ history: "push", shallow: true });
-export const qualitySuiteRunParser = parseAsString.withOptions({ history: "push", shallow: true });
+export const qualityAgentParser = parseAsString.withOptions({ history: "push" });
+export const qualitySuiteRunParser = parseAsString.withOptions({ history: "push" });
 
 /** Narrows Retrieval's failed items to one source; a source's row sets it. */
 export const RETRIEVAL_SOURCE_PARAM = "retrievalSource";
@@ -139,7 +138,6 @@ export type RetrievalSource = (typeof retrievalSourceValues)[number];
 
 export const retrievalSourceParser = parseAsStringLiteral(retrievalSourceValues).withOptions({
   history: "replace",
-  shallow: true,
 });
 
 /**
@@ -152,7 +150,7 @@ export type AuditView = (typeof auditViews)[number];
 export const AUDIT_VIEW_PARAM = "audit";
 
 export const auditViewParser = parseAsStringLiteral(auditViews)
-  .withOptions({ history: "replace", shallow: true })
+  .withOptions({ history: "replace" })
   .withDefault("trail");
 
 /** A view below a rail row, whichever row it belongs to. */
@@ -182,36 +180,35 @@ export type ExtractionView = (typeof extractionViews)[number];
 export const EXTRACTION_VIEW_PARAM = "extraction";
 
 export const extractionViewParser = parseAsStringLiteral(extractionViews)
-  .withOptions({ history: "replace", shallow: true })
+  .withOptions({ history: "replace" })
   .withDefault("accuracy");
 
 /** How far back Analytics looks, and what it puts side by side. */
 export const ANALYTICS_WINDOW_PARAM = "window";
 export const analyticsWindowParser = parseAsStringLiteral(["Day", "Week", "Month"] as const)
-  .withOptions({ history: "replace", shallow: true })
+  .withOptions({ history: "replace" })
   .withDefault("Month");
 
 export const ANALYTICS_COMPARE_PARAM = "compare";
 export const analyticsCompareParser = parseAsStringLiteral(["Model", "Provider"] as const)
-  .withOptions({ history: "replace", shallow: true })
+  .withOptions({ history: "replace" })
   .withDefault("Model");
 
 /** Narrows Analytics to one agent's or one task's work. */
 export const ANALYTICS_AGENT_PARAM = "analyticsAgent";
 export const analyticsAgentParser = parseAsString.withOptions({
   history: "replace",
-  shallow: true,
 });
 
 export const ANALYTICS_TASK_PARAM = "analyticsTask";
-export const analyticsTaskParser = parseAsString.withOptions({ history: "replace", shallow: true });
+export const analyticsTaskParser = parseAsString.withOptions({ history: "replace" });
 
 /**
  * The page's dialogs and sheets that are not a table's own panel, each opened
  * by a key in the address so a link, a reload or the back button lands on it.
  * A table's panel keeps the shared panel keys; these sit beside them.
  */
-const dialogOptions = { history: "push", shallow: true } as const;
+const dialogOptions = { history: "push" } as const;
 
 /** The overview's organization-wide settings editor. */
 export const POLICY_EDITOR_PARAM = "policy";

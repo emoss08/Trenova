@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  isSettingsSection,
-  legacySettingsRedirect,
-  SETTINGS_SECTIONS,
-  settingsPath,
-} from "../settings-path";
+import { isSettingsSection, SETTINGS_SECTIONS, settingsPath } from "../settings-path";
 
 describe("settingsPath", () => {
   it("is the bare page when no section is named", () => {
@@ -26,23 +21,5 @@ describe("isSettingsSection", () => {
     expect(isSettingsSection("")).toBe(false);
     expect(isSettingsSection(null)).toBe(false);
     expect(isSettingsSection(undefined)).toBe(false);
-  });
-});
-
-describe("legacySettingsRedirect", () => {
-  it("sends an old email link to the notifications section of the page", () => {
-    expect(legacySettingsRedirect("?settings=notifications")).toBe(
-      "/settings?section=notifications",
-    );
-  });
-
-  it("opens Settings at the top for a section it does not know or an empty one", () => {
-    expect(legacySettingsRedirect("?settings=billing")).toBe("/settings");
-    expect(legacySettingsRedirect("?settings=")).toBe("/settings");
-  });
-
-  it("leaves an address without the old parameter alone", () => {
-    expect(legacySettingsRedirect("")).toBeNull();
-    expect(legacySettingsRedirect("?section=notifications")).toBeNull();
   });
 });

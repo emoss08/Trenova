@@ -6,7 +6,7 @@ related:
   - /accounting/reconciliation/work-queue
   - /accounting/reconciliation/summary
 covers:
-  - /accounting/reconciliation/import-batches/:batchId
+  - /accounting/reconciliation/import-batches/$batchId
 ---
 
 ## What it's for

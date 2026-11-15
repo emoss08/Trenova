@@ -2,7 +2,6 @@ import { TestRouter } from "@trenova/shared/testing/test-router";
 import { buildProfile } from "@/components/carrier-intelligence/__tests__/fixtures";
 import type { SourcingCandidate } from "@/lib/carrier-sourcing";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { type ReactNode, useState } from "react";
 
 export function buildCandidate(overrides: Partial<SourcingCandidate> = {}): SourcingCandidate {
@@ -33,9 +32,7 @@ export function TestProviders({ children }: { children: ReactNode }) {
   );
   return (
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter>
-        <TestRouter>{children}</TestRouter>
-      </NuqsTestingAdapter>
+      <TestRouter>{children}</TestRouter>
     </QueryClientProvider>
   );
 }

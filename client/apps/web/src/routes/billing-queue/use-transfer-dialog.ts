@@ -1,4 +1,4 @@
-import { useQueryStates } from "nuqs";
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useCallback, useState } from "react";
 import { transferRunSearchParamsParser } from "./use-billing-queue-state";
 
@@ -9,7 +9,7 @@ import { transferRunSearchParamsParser } from "./use-billing-queue-state";
  * again reattaches to a run that is still going.
  */
 export function useTransferDialog() {
-  const [{ transferRun }, setTransferParams] = useQueryStates(transferRunSearchParamsParser);
+  const [{ transferRun }, setTransferParams] = useSearchState(transferRunSearchParamsParser);
   const [open, setOpen] = useState(() => Boolean(transferRun));
 
   const onOpenChange = useCallback(

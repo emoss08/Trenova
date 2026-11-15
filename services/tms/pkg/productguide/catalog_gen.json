@@ -1,5 +1,5 @@
 {
-  "version": "sha256:9647e2c1a42473055bd1eedf00f54dac85b6a73db540b0b5a64ed1faa273c9bf",
+  "version": "sha256:01587da15428e420824307e54aea419e0bf19592c2ca60a986d330abc022be30",
   "modules": [
     {
       "id": "home",
@@ -589,7 +589,7 @@
         "/accounting/ar/payments"
       ],
       "covers": [
-        "/accounting/ar/customer-statement/:customerId"
+        "/accounting/ar/customer-statement/$customerId"
       ],
       "createAction": null,
       "inNavigation": true
@@ -1154,7 +1154,7 @@
         "/accounting/reports/trial-balance"
       ],
       "covers": [
-        "/accounting/journal-entries/:id"
+        "/accounting/journal-entries/$id"
       ],
       "createAction": null,
       "inNavigation": true
@@ -1460,7 +1460,7 @@
         "/accounting/reconciliation/summary"
       ],
       "covers": [
-        "/accounting/reconciliation/import-batches/:batchId"
+        "/accounting/reconciliation/import-batches/$batchId"
       ],
       "createAction": null,
       "inNavigation": true
@@ -4863,7 +4863,7 @@
       ],
       "covers": [
         "/admin/home-layouts/new",
-        "/admin/home-layouts/:id"
+        "/admin/home-layouts/$id"
       ],
       "createAction": null,
       "inNavigation": false
@@ -6097,7 +6097,7 @@
       ],
       "covers": [
         "/admin/roles/new",
-        "/admin/roles/:id/edit"
+        "/admin/roles/$id/edit"
       ],
       "createAction": null,
       "inNavigation": false
@@ -7741,7 +7741,7 @@
       ],
       "covers": [
         "/billing/configuration-files/formula-libraries/new",
-        "/billing/configuration-files/formula-libraries/:id/edit"
+        "/billing/configuration-files/formula-libraries/$id/edit"
       ],
       "createAction": null,
       "inNavigation": true
@@ -8087,7 +8087,7 @@
       ],
       "covers": [
         "/billing/configuration-files/formula-templates/new",
-        "/billing/configuration-files/formula-templates/:id/edit"
+        "/billing/configuration-files/formula-templates/$id/edit"
       ],
       "createAction": null,
       "inNavigation": true
@@ -8519,8 +8519,8 @@
         "/billing/invoices"
       ],
       "covers": [
-        "/billing/factoring/submissions/:id",
-        "/billing/factoring/remittances/:id"
+        "/billing/factoring/submissions/$id",
+        "/billing/factoring/remittances/$id"
       ],
       "createAction": null,
       "inNavigation": true
@@ -10863,12 +10863,12 @@
         "/admin/agent-control"
       ],
       "covers": [
-        "/desk/r/:kind/:id",
-        "/desk/handled/:id",
-        "/desk/t/:threadId",
-        "/desk/agents/:agentId",
-        "/desk/c/:threadId/a/:slug",
-        "/desk/v/:viewThreadId/:slug"
+        "/desk/r/$kind/$id",
+        "/desk/handled/$id",
+        "/desk/t/$threadId",
+        "/desk/agents/$agentId",
+        "/desk/c/$threadId/a/$slug",
+        "/desk/v/$viewThreadId/$slug"
       ],
       "createAction": null,
       "inNavigation": false
@@ -13443,7 +13443,7 @@
         "/edi/messages"
       ],
       "covers": [
-        "/edi/lading/:partnerId"
+        "/edi/lading/$partnerId"
       ],
       "createAction": null,
       "inNavigation": true
@@ -18245,7 +18245,7 @@
         "/insights"
       ],
       "covers": [
-        "/reports/dashboards/:dashboardId"
+        "/reports/dashboards/$dashboardId"
       ],
       "createAction": null,
       "inNavigation": true
@@ -18376,7 +18376,7 @@
         "/reports/runs"
       ],
       "covers": [
-        "/reports/builder/:definitionId"
+        "/reports/builder/$definitionId"
       ],
       "createAction": null,
       "inNavigation": false
@@ -18457,7 +18457,7 @@
         "/reports/runs"
       ],
       "covers": [
-        "/reports/explore/:definitionId"
+        "/reports/explore/$definitionId"
       ],
       "createAction": null,
       "inNavigation": false

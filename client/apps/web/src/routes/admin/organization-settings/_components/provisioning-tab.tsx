@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { directoryIdParser } from "@/hooks/use-organization-setting-state";
 import { organization } from "@/lib/queries/organization";
@@ -5,7 +6,6 @@ import { organizationService } from "@/services/organization";
 import type { SCIMDirectory } from "@trenova/shared/types/iam";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Users01Icon } from "@trenova/shared/components/icons";
-import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
 import { AuditTimeline } from "./provisioning/audit-timeline";
 import { emptyDirectory } from "./provisioning/constants";
@@ -36,7 +36,7 @@ export function ProvisioningTab({
   const [directoryPanelOpen, setDirectoryPanelOpen] = useState(false);
   const [editingDirectory, setEditingDirectory] = useState<SCIMDirectory | null>(null);
   const [directories, setDirectories] = useState<SCIMDirectory[]>([]);
-  const [directoryId, setDirectoryId] = useQueryState("directoryId", directoryIdParser);
+  const [directoryId, setDirectoryId] = useSearchValue("directoryId", directoryIdParser);
 
   const selectedDirectory = directories.find((directory) => directory.id === directoryId);
 

@@ -7,12 +7,12 @@ related:
   - /desk/triage
   - /admin/agent-control
 covers:
-  - /desk/r/:kind/:id
-  - /desk/handled/:id
-  - /desk/t/:threadId
-  - /desk/agents/:agentId
-  - /desk/c/:threadId/a/:slug
-  - /desk/v/:viewThreadId/:slug
+  - /desk/r/$kind/$id
+  - /desk/handled/$id
+  - /desk/t/$threadId
+  - /desk/agents/$agentId
+  - /desk/c/$threadId/a/$slug
+  - /desk/v/$viewThreadId/$slug
 ---
 
 ## What it's for

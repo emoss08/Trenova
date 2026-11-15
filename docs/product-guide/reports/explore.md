@@ -7,7 +7,7 @@ related:
   - /reports/builder
   - /reports/runs
 covers:
-  - /reports/explore/:definitionId
+  - /reports/explore/$definitionId
 ---
 
 ## What it's for

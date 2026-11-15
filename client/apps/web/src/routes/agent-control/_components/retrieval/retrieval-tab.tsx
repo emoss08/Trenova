@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { usePermission } from "@/hooks/use-permission";
 import type { AIRetrievalSourceType } from "@/lib/graphql/ai-retrieval";
 import { aiProvider } from "@/lib/queries/ai-provider";
@@ -6,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryState } from "nuqs";
 import { lazy, useCallback } from "react";
 import { REINDEX_PARAM, reindexParser } from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
@@ -35,7 +35,7 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
   const t = useT();
   const navigate = useAIControlNavigation();
   const { allowed: canUpdate } = usePermission(Resource.AIProvider, Operation.Update);
-  const [reindexing, setReindexing] = useQueryState(REINDEX_PARAM, reindexParser);
+  const [reindexing, setReindexing] = useSearchValue(REINDEX_PARAM, reindexParser);
   const patch = useRetrievalPatch();
 
   const status = useQuery({

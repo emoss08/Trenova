@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { FieldFilter } from "@trenova/shared/types/data-table";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type StubTableProps = {
@@ -43,9 +43,9 @@ function renderView(searchParams: Record<string, string> = {}) {
   const client = new QueryClient();
   return render(
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter searchParams={searchParams}>
+      <TestRouter search={searchParams}>
         <AuditTrailView onOpenExports={() => {}} />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

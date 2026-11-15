@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
@@ -20,12 +21,11 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryStates } from "nuqs";
 import { activeBucket, bucketCount, bucketFilter, type LedgerBucket } from "./ledger-filters";
 
 export function LedgerSummary({ summary }: { summary: AccountingSyncSummary }) {
   const t = useT();
-  const [filters, setFilters] = useQueryStates({
+  const [filters, setFilters] = useSearchState({
     ...tableFilterSearchParamsParser,
     ...tablePaginationSearchParamsParser,
   });

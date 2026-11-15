@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { Kept } from "@/components/kept";
 import { usePermission } from "@/hooks/use-permission";
 import { lazyComponent } from "@/lib/lazy-component";
@@ -9,7 +10,7 @@ import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { getStartOfDay, resolveUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryState } from "nuqs";
+import { parseAsString } from "nuqs";
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { pendingFilter } from "../decisions/decision-filters";
@@ -57,9 +58,9 @@ export function DeskNeeds() {
   const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
   const queryClient = useQueryClient();
-  // The lens is written beside the search and the filters, through nuqs, so one queue holds the
-  // whole address and a lens chosen while the search is still being written keeps it.
-  const [lensAddress, setLensAddress] = useQueryState("lens", { history: "replace" });
+  // The lens is written beside the search and the filters, each change one navigation built
+  // from the address as it stands, so a lens chosen while the search is written keeps it.
+  const [lensAddress, setLensAddress] = useSearchValue("lens", parseAsString);
 
   const lenses = NEEDS_LENSES.filter((value) => (value === "Decisions" ? canDecide : canWatch));
   const asked = lensFromParam(lensAddress);

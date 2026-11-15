@@ -1,10 +1,10 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { OrganizationSettings } from "@trenova/shared/types/organization";
 import type { User } from "@trenova/shared/types/user";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OrganizationSettingsForm from "../_components/organization-settings-form";
 import { OrganizationSettingsSkeleton } from "../skeleton";
@@ -56,11 +56,11 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <NuqsTestingAdapter>
+      <TestRouter>
         <LazyComponent fallback={<OrganizationSettingsSkeleton />}>
           <OrganizationSettingsForm />
         </LazyComponent>
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

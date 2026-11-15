@@ -1,5 +1,5 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useQueryStates } from "nuqs";
 import { useMemo } from "react";
 import type { NeedsHeadLens } from "../attention/needs-head";
 import { DecisionFilterMenu } from "./decision-filter-menu";
@@ -46,7 +46,7 @@ export function useDecisionsHead({
   total: number | null;
 } {
   const t = useT();
-  const [address, setAddress] = useQueryStates(DECISION_ADDRESS, { history: "replace" });
+  const [address, setAddress] = useSearchState(DECISION_ADDRESS, { history: "replace" });
   const filters = useMemo(() => decisionFiltersFromAddress(address), [address]);
   const setFilters = (next: DecisionFilters) => void setAddress(decisionAddressOf(next));
 

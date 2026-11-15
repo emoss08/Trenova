@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { AnalysisResult } from "@/components/assistant/analysis-result";
 import { analysisRunStatusAttrs, analysisViewOf } from "@/lib/analysis-run";
 import { formatWorkDuration } from "@/lib/ai-usage-format";
@@ -13,7 +14,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
-import { useQueryState } from "nuqs";
 import { useEffect, useRef, useState } from "react";
 import { ANALYSIS_RUN_PARAM, analysisRunParser } from "../../ai-control-tabs";
 import { AnalysisRunsSkeleton } from "./analysis-runs-skeleton";
@@ -35,7 +35,7 @@ export function AnalysisRuns() {
         ? { before: page.nextBefore, beforeId: page.nextBeforeId }
         : null,
   });
-  const [linkedRun] = useQueryState(ANALYSIS_RUN_PARAM, analysisRunParser);
+  const [linkedRun] = useSearchValue(ANALYSIS_RUN_PARAM, analysisRunParser);
 
   if (runs.isPending) {
     return <AnalysisRunsSkeleton />;

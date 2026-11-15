@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -5,7 +6,6 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { OrganizationCapabilities } from "@trenova/shared/types/organization-capability";
 import type { User } from "@trenova/shared/types/user";
 import { domMax, LazyMotion, MotionGlobalConfig } from "motion/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { DispatchControl } from "@/types/dispatch-control";
 import DispatchControlForm from "../_components/dispatch-control-form";
@@ -147,13 +147,13 @@ function renderForm() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   return render(
-    <NuqsTestingAdapter hasMemory>
+    <TestRouter>
       <LazyMotion features={domMax}>
         <QueryClientProvider client={queryClient}>
           <DispatchControlForm />
         </QueryClientProvider>
       </LazyMotion>
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

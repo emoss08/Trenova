@@ -1,4 +1,20 @@
+import type { AppRoutePath } from "@/lib/app-path";
 import type { RecordKind } from "@trenova/shared/types/generated/record-kinds";
+
+type IdTemplate<P extends string> = P extends `${infer Head}$${string}/${infer Rest}`
+  ? `${Head}{id}/${IdTemplate<Rest>}`
+  : P extends `${infer Head}$${string}`
+    ? // i18n-ignore: a type spelling a route path with its param as {id}; no text is shown
+      `${Head}{id}`
+    : P;
+
+/**
+ * A registered page path with each `$param` segment written `{id}`
+ * ("/reports/explore/$definitionId" is "/reports/explore/{id}"). A record link's
+ * path must be one, so renaming or removing the page it opens on fails to
+ * typecheck.
+ */
+export type RecordLinkPath = IdTemplate<AppRoutePath>;
 
 /**
  * Where a record opens.
@@ -23,7 +39,7 @@ export type RecordLink = {
   /** What the record is called, for a link's label. */
   label: string;
   /** The page it opens on; `{id}` marks a path segment carrying the id. */
-  path: string;
+  path: RecordLinkPath;
   /** Query parameters that open the record there. */
   params?: Readonly<Record<string, string>>;
 };

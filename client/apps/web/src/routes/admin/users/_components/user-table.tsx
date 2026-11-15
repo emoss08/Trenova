@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
@@ -10,7 +11,6 @@ import { Resource } from "@trenova/shared/types/permission";
 import type { User } from "@trenova/shared/types/user";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon, LayersTwo01Icon } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import { useCallback, useMemo } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./user-columns";
@@ -23,7 +23,7 @@ export default function UserTable() {
   const { onlineUserIDs } = useOnlineUsers();
   const columns = useMemo(() => getColumns(onlineUserIDs, t), [onlineUserIDs, t]);
   const queryClient = useQueryClient();
-  const [, setPanelSearchParams] = useQueryStates(panelSearchParamsParser);
+  const [, setPanelSearchParams] = useSearchState(panelSearchParamsParser);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: UserRow[], status: string) => {

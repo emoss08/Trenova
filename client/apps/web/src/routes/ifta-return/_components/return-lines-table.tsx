@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { Link } from "@trenova/shared/components/link";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -27,7 +28,7 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 import { Fragment } from "react";
-export const ADD_RATE_PATH = "/fuel/configuration-files/ifta-tax-rates?panelType=create";
+export const ADD_RATE_PATH = `${appPath("/fuel/configuration-files/ifta-tax-rates")}?panelType=create`;
 
 const RATE_SCALE = 4;
 const COLUMN_COUNT = 10;

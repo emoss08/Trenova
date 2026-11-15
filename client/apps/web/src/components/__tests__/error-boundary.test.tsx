@@ -108,7 +108,7 @@ function Shell() {
   );
 }
 
-async function renderRoutes(initialPath: string, gate?: () => never) {
+async function renderRoutes(initialPath: string, gate?: () => void) {
   const rootRoute = createRootRoute({ component: Shell });
   const routeTree = rootRoute.addChildren([
     createRoute({ getParentRoute: () => rootRoute, path: "/", component: () => <p>Home page</p> }),
@@ -154,7 +154,7 @@ describe("route errors", () => {
     expect(await screen.findByRole("heading", { name: "We can't find that page" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Go back" })).not.toBeInTheDocument();
 
-    await act(() => router.navigate({ to: "/elsewhere" }));
+    await act(() => router.navigate({ href: "/elsewhere" }));
 
     expect(await screen.findByRole("button", { name: "Go back" })).toBeVisible();
   });
@@ -174,5 +174,21 @@ describe("route errors", () => {
     expect(screen.getByText("App navigation")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Reload page" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Go to dashboard" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+  });
+
+  it("re-runs a failed gate and shows the page when the person tries again", async () => {
+    const gate = vi
+      .fn<() => void>()
+      .mockImplementationOnce(() => {
+        throw new TypeError("Failed to fetch");
+      })
+      .mockImplementation(() => {});
+    await renderRoutes("/shipments", gate);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByText("Shipments")).toBeVisible();
+    expect(gate).toHaveBeenCalledTimes(2);
   });
 });

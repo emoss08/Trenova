@@ -257,7 +257,7 @@ export function useRealtimeConnection() {
                           label: t("View report"),
                           onClick: () =>
                             navigateRef.current({
-                              to: "/billing-queue",
+                              to: "/billing/queue",
                               search: { transferRun: transferRunId },
                             }),
                         }

@@ -1,5 +1,5 @@
 import { recordPath } from "@/config/record-links";
-import { isAppPath } from "@/lib/app-path";
+import { appPath, isAppPath } from "@/lib/app-path";
 import { fetchAIAuditExportDownload } from "@/lib/graphql/ai-audit";
 import { downloadFromUrl } from "@trenova/shared/lib/utils";
 
@@ -10,9 +10,9 @@ export const AI_AUDIT_EXPORT_FAILED_EVENT = "ai_audit_export_failed";
 export const AI_AUDIT_CHAIN_MISMATCH_EVENT = "ai_audit_chain_mismatch";
 
 /** Where the trail's exports list opens, for a notice that names no single export. */
-export const AI_AUDIT_EXPORTS_PATH = "/admin/agent-control?tab=audit&audit=exports";
+export const AI_AUDIT_EXPORTS_PATH = `${appPath("/admin/agent-control")}?tab=audit&audit=exports`;
 /** Where the trail opens. */
-export const AI_AUDIT_TRAIL_PATH = "/admin/agent-control?tab=audit&audit=trail";
+export const AI_AUDIT_TRAIL_PATH = `${appPath("/admin/agent-control")}?tab=audit&audit=trail`;
 
 /**
  * Fetches the one-minute link to an export's file and downloads it. Only the

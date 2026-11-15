@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import {
   EXTRACTION_ACCURACY_KEY,
   fetchExtractionAccuracy,
@@ -8,7 +9,6 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
-import { useQueryState } from "nuqs";
 import { useMemo } from "react";
 import {
   EXTRACTION_VIEW_PARAM,
@@ -28,7 +28,7 @@ import { ProviderTrendsPanel } from "./provider-trends-panel";
  */
 export default function ExtractionView() {
   const t = useT();
-  const [view, setView] = useQueryState(EXTRACTION_VIEW_PARAM, extractionViewParser);
+  const [view, setView] = useSearchValue(EXTRACTION_VIEW_PARAM, extractionViewParser);
 
   const accuracy = useQuery({
     queryKey: [EXTRACTION_ACCURACY_KEY, EXTRACTION_WINDOW_DAYS],

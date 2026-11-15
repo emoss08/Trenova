@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { ASSISTANT_REPLY_READY, parseReplyReady } from "@/components/assistant/reply-ready";
 import {
   AI_AUDIT_CHAIN_MISMATCH_EVENT,
@@ -132,7 +133,7 @@ const ACTION = defineLabels({
   readReply: "Read the reply",
 });
 
-const EXCEPTIONS_PATH = "/desk/needs";
+const EXCEPTIONS_PATH = appPath("/desk/needs");
 
 const exceptionLink = (notification: Notification) =>
   notificationDataString(notification, "link") ?? EXCEPTIONS_PATH;
@@ -238,7 +239,7 @@ const invoiceLink = (notification: Notification) => {
 const dispatchConsoleLink = (notification: Notification) =>
   notificationDataString(notification, "link") ?? "/dispatch/console";
 
-const CARRIER_MONITORING_PATH = "/dispatch/carrier-monitoring";
+const CARRIER_MONITORING_PATH = appPath("/dispatch/carrier-monitoring");
 
 const carrierIntelLink = (notification: Notification) => {
   const link = notificationDataString(notification, "link");

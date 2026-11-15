@@ -6,7 +6,7 @@ related:
   - /edi/flows
   - /edi/messages
 covers:
-  - /edi/lading/:partnerId
+  - /edi/lading/$partnerId
 ---
 
 ## What it's for

@@ -1,8 +1,9 @@
+import { appPath } from "@/lib/app-path";
 import type { DeskAttentionGroup } from "@/lib/graphql/desk-attention";
 
 /** Where a record's case opens on the Desk. */
 export function casePath(kind: string, id: string): string {
-  return `/desk/r/${encodeURIComponent(kind)}/${encodeURIComponent(id)}`;
+  return appPath("/desk/r/$kind/$id", { kind, id });
 }
 
 /**
@@ -24,7 +25,7 @@ export function startsCase(state: unknown): boolean {
 
 /** Where one item opens in Needs you, chosen in the list with its detail beside it. */
 export function needsItemPath(itemId: string): string {
-  return `/desk/needs?item=${encodeURIComponent(itemId)}`;
+  return `${appPath("/desk/needs")}?item=${encodeURIComponent(itemId)}`;
 }
 
 /**

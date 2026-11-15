@@ -253,7 +253,7 @@
       ]
     },
     {
-      "path": "/accounting/ar/customer-statement/:customerId",
+      "path": "/accounting/ar/customer-statement/$customerId",
       "name": "Customer statement",
       "requires": [
         {
@@ -521,7 +521,7 @@
       ]
     },
     {
-      "path": "/accounting/journal-entries/:id",
+      "path": "/accounting/journal-entries/$id",
       "name": "Journal entry",
       "requires": [
         {
@@ -540,7 +540,7 @@
       "rest": []
     },
     {
-      "path": "/accounting/journal-entries/source/:type/:sourceId",
+      "path": "/accounting/journal-entries/source/$type/$sourceId",
       "name": "GL Postings — {0}",
       "requires": [
         {
@@ -789,7 +789,7 @@
       ]
     },
     {
-      "path": "/accounting/reconciliation/import-batches/:batchId",
+      "path": "/accounting/reconciliation/import-batches/$batchId",
       "name": "Import batch",
       "requires": [
         {
@@ -2435,7 +2435,7 @@
       "rest": []
     },
     {
-      "path": "/admin/home-layouts/:id",
+      "path": "/admin/home-layouts/$id",
       "name": "Home screens",
       "requires": [
         {
@@ -3228,7 +3228,7 @@
       ]
     },
     {
-      "path": "/admin/roles/:id/edit",
+      "path": "/admin/roles/$id/edit",
       "name": "",
       "requires": [
         {
@@ -4083,7 +4083,7 @@
       ]
     },
     {
-      "path": "/billing/configuration-files/factoring-companies/:id",
+      "path": "/billing/configuration-files/factoring-companies/$id",
       "name": "Factoring company",
       "requires": [
         {
@@ -4200,7 +4200,7 @@
       ]
     },
     {
-      "path": "/billing/configuration-files/factoring-companies/agreements/:id",
+      "path": "/billing/configuration-files/factoring-companies/agreements/$id",
       "name": "",
       "requires": [
         {
@@ -4256,7 +4256,7 @@
       "rest": []
     },
     {
-      "path": "/billing/configuration-files/factoring-companies/notices/:id",
+      "path": "/billing/configuration-files/factoring-companies/notices/$id",
       "name": "",
       "requires": [
         {
@@ -4339,7 +4339,7 @@
       ]
     },
     {
-      "path": "/billing/configuration-files/formula-libraries/:id/edit",
+      "path": "/billing/configuration-files/formula-libraries/$id/edit",
       "name": "",
       "requires": [
         {
@@ -5201,7 +5201,7 @@
       ]
     },
     {
-      "path": "/billing/configuration-files/formula-templates/:id/edit",
+      "path": "/billing/configuration-files/formula-templates/$id/edit",
       "name": "",
       "requires": [
         {
@@ -6247,7 +6247,7 @@
       ]
     },
     {
-      "path": "/billing/factoring/remittances/:id",
+      "path": "/billing/factoring/remittances/$id",
       "name": "Factor remittance",
       "requires": [
         {
@@ -6324,7 +6324,7 @@
       ]
     },
     {
-      "path": "/billing/factoring/submissions/:id",
+      "path": "/billing/factoring/submissions/$id",
       "name": "Factoring schedule",
       "requires": [
         {
@@ -8727,7 +8727,7 @@
       ]
     },
     {
-      "path": "/desk/agents/:agentId",
+      "path": "/desk/agents/$agentId",
       "name": "",
       "requires": [
         {
@@ -8739,7 +8739,7 @@
       "rest": []
     },
     {
-      "path": "/desk/c/:threadId/a/:slug",
+      "path": "/desk/c/$threadId/a/$slug",
       "name": "",
       "requires": [
         {
@@ -8751,7 +8751,7 @@
       "rest": []
     },
     {
-      "path": "/desk/handled/:id",
+      "path": "/desk/handled/$id",
       "name": "",
       "requires": [
         {
@@ -8854,7 +8854,7 @@
       ]
     },
     {
-      "path": "/desk/r/:kind/:id",
+      "path": "/desk/r/$kind/$id",
       "name": "",
       "requires": [
         {
@@ -9762,7 +9762,7 @@
       ]
     },
     {
-      "path": "/desk/t/:threadId",
+      "path": "/desk/t/$threadId",
       "name": "",
       "requires": [
         {
@@ -11112,7 +11112,7 @@
       ]
     },
     {
-      "path": "/desk/v/:viewThreadId/:slug",
+      "path": "/desk/v/$viewThreadId/$slug",
       "name": "",
       "requires": [
         {
@@ -13344,7 +13344,7 @@
       ]
     },
     {
-      "path": "/edi/lading/:partnerId",
+      "path": "/edi/lading/$partnerId",
       "name": "",
       "requires": [
         {
@@ -18020,7 +18020,7 @@
       ]
     },
     {
-      "path": "/reports/builder/:definitionId",
+      "path": "/reports/builder/$definitionId",
       "name": "",
       "requires": [
         {
@@ -18061,7 +18061,7 @@
       ]
     },
     {
-      "path": "/reports/dashboards/:dashboardId",
+      "path": "/reports/dashboards/$dashboardId",
       "name": "",
       "requires": [
         {
@@ -18143,7 +18143,7 @@
       ]
     },
     {
-      "path": "/reports/explore/:definitionId",
+      "path": "/reports/explore/$definitionId",
       "name": "",
       "requires": [
         {

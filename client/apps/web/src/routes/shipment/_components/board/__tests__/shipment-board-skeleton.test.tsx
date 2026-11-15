@@ -4,7 +4,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import type { ShipmentBoardCapabilities } from "@/lib/graphql/shipment-board";
 import { BoardCapabilitiesProvider } from "@/lib/shipment-board/capabilities";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BOARD_CELL_SKELETONS } from "../board-cell-skeletons";
 import { getColumns, SHIPMENT_HIDDEN_COLUMNS } from "../shipment-columns";
@@ -22,13 +21,11 @@ const CAPABILITIES: ShipmentBoardCapabilities = {
 function renderSkeleton(searchParams = "") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <TestRouter>
+    <TestRouter search={searchParams}>
       <QueryClientProvider client={client}>
-        <NuqsTestingAdapter searchParams={searchParams}>
-          <BoardCapabilitiesProvider value={CAPABILITIES}>
-            <ShipmentBoardSkeleton />
-          </BoardCapabilitiesProvider>
-        </NuqsTestingAdapter>
+        <BoardCapabilitiesProvider value={CAPABILITIES}>
+          <ShipmentBoardSkeleton />
+        </BoardCapabilitiesProvider>
       </QueryClientProvider>
     </TestRouter>,
   );

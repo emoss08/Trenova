@@ -1,21 +1,46 @@
 import { edition } from "@/lib/edition";
-import { lazyPage } from "@/lib/route-catalogs";
-import type { EditionRouteMount } from "@trenova/edition";
+import { Route as RootRoute } from "@/pages/__root";
+import { Route as AppRoute } from "@/pages/_app";
+import { Route as AdminRoute } from "@/pages/_app/admin";
+import { Route as GuestRoute } from "@/pages/_guest";
+import type { EditionRoute, EditionRouteMount } from "@trenova/edition";
+import { afterCatalogs } from "@trenova/shared/i18n/runtime";
 import { gates } from "@trenova/shared/lib/router/gates";
-import { createRoute, type AnyRoute } from "@tanstack/react-router";
+import { createRoute, lazyRouteComponent, type AnyRoute } from "@tanstack/react-router";
+
+const MOUNTS: Readonly<Record<EditionRouteMount, AnyRoute>> = {
+  protected: AppRoute,
+  admin: AdminRoute,
+  public: RootRoute,
+  guest: GuestRoute,
+};
+
+function editionRoute(parent: AnyRoute, route: EditionRoute): AnyRoute {
+  return createRoute({
+    getParentRoute: () => parent,
+    path: route.path,
+    beforeLoad: route.gates ? gates(...route.gates) : undefined,
+    component: lazyRouteComponent(
+      () =>
+        route
+          .page()
+          .then(afterCatalogs)
+          .then((page) => ({ page })),
+      "page",
+    ),
+  });
+}
 
 /**
- * The routes the installed edition adds at `mount`, under `parent`. They are not known when the
- * app is compiled, so they are typed `never` and stay out of the route tree's types: links to
- * the app's own pages are still checked against the pages that exist.
+ * Adds the installed edition's pages to the layouts they mount in. They are not known when the
+ * app is compiled, so they join the generated tree before the router is built and stay out of
+ * its types: links to the app's own pages are still checked against the pages that exist.
  */
-export function editionRoutes(parent: AnyRoute, mount: EditionRouteMount): never[] {
-  return edition.routes[mount].map((route) =>
-    createRoute({
-      getParentRoute: () => parent,
-      path: route.path,
-      beforeLoad: route.gates ? gates(...route.gates) : undefined,
-      component: lazyPage(() => route.page().then((page) => ({ page })), "page"),
-    }),
-  ) as never[];
+export function mountEditionRoutes(): void {
+  for (const [mount, parent] of Object.entries(MOUNTS) as [EditionRouteMount, AnyRoute][]) {
+    const routes = edition.routes[mount];
+    if (routes.length === 0) continue;
+    const children = (parent.children ?? []) as AnyRoute[];
+    parent.addChildren([...children, ...routes.map((route) => editionRoute(parent, route))]);
+  }
 }

@@ -13,6 +13,7 @@
   "Copy payment ID": "複製付款 ID",
   "GL postings": "總帳過帳",
   "Invalid application": "沖抵無效",
+  "Invoice not found": "找不到發票",
   "Loading open invoices…": "正在載入未結發票…",
   "NSF check, posted to wrong customer, ...": "存款不足支票、過帳至錯誤客戶等等",
   "No customer payments yet": "尚無客戶付款",

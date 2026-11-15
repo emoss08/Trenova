@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ExceptionsList } from "@/components/work-modules/exceptions-list";
@@ -18,7 +19,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
 import type { WidgetProps } from "../widget-registry";
 
-const SHIPMENTS_HREF = "/shipment-management/shipments";
+const SHIPMENTS_HREF = appPath("/shipment-management/shipments");
 
 /** Opening a load from the home screen lands on the shipment workspace with it expanded. */
 function shipmentHref(shipmentId: string): string {

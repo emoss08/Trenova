@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { PortalRunResult } from "@/components/assistant/portal-run-result";
 import { usePermission } from "@/hooks/use-permission";
 import { portalRunResultView, portalRunStatusAttrs, portalRunTitle } from "@/lib/portal-run";
@@ -12,7 +13,6 @@ import { formatUnixTime } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryState } from "nuqs";
 import { useEffect, useRef, useState } from "react";
 import { PORTAL_RUN_PARAM, portalRunParser } from "../../ai-control-tabs";
 import { PortalRunsSkeleton } from "./portal-runs-skeleton";
@@ -24,7 +24,7 @@ import { PortalRunsSkeleton } from "./portal-runs-skeleton";
 export function PortalRuns() {
   const t = useT();
   const runs = useQuery(agentExtension.portalRuns(""));
-  const [linkedRun] = useQueryState(PORTAL_RUN_PARAM, portalRunParser);
+  const [linkedRun] = useSearchValue(PORTAL_RUN_PARAM, portalRunParser);
 
   if (runs.isPending) {
     return <PortalRunsSkeleton />;

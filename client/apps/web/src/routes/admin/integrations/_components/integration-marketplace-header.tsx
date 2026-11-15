@@ -1,13 +1,13 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Input } from "@trenova/shared/components/ui/input";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import { integrationHeaderSearchParamsParser } from "../integration-marketplace-state";
 
 export function IntegrationMarketplaceHeader() {
   const t = useT();
 
-  const [searchParams, setSearchParams] = useQueryStates(integrationHeaderSearchParamsParser);
+  const [searchParams, setSearchParams] = useSearchState(integrationHeaderSearchParamsParser);
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

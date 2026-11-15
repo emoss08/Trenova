@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import ServiceTypeTable from "../service-type-table";
 import { seedDataTableQueries } from "@/test/data-table-queries";
 
@@ -86,9 +86,9 @@ function renderServiceTypeTable() {
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
   render(
     <QueryClientProvider client={queryClient}>
-      <NuqsTestingAdapter hasMemory resetUrlUpdateQueueOnMount={false}>
+      <TestRouter>
         <ServiceTypeTable />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
   return { invalidateSpy };

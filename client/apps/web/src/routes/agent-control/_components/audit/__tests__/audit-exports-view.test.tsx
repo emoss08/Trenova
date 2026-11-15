@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -35,9 +35,9 @@ const { DEFAULT_AUDIT_SCOPE, UNFILTERED_AUDIT_TABLE } = await import("../audit-m
 function renderView() {
   return render(
     <QueryClientProvider client={new QueryClient()}>
-      <NuqsTestingAdapter>
+      <TestRouter>
         <AuditExportsView />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

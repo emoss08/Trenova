@@ -1,8 +1,9 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { CalendarIcon, Users01Icon } from "@trenova/shared/components/icons";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { parseAsStringLiteral } from "nuqs";
 import { lazy } from "react";
 import { PTOBalanceSummaryCard } from "./pto/pto-balance-summary-card";
 import PTODataTable from "./pto/pto-table";
@@ -16,7 +17,6 @@ export const WORKERS_PAGE_TAB_PARAM = "pageTab";
 export const workersPageTabParser = parseAsStringLiteral(tabValues)
   .withOptions({
     history: "push",
-    shallow: true,
   })
   .withDefault("workers");
 
@@ -27,7 +27,7 @@ export const workersPageTabParser = parseAsStringLiteral(tabValues)
 export default function WorkersContent({ timeOffOnPlan }: { timeOffOnPlan: boolean }) {
   const t = useT();
 
-  const [tab, setTab] = useQueryState(WORKERS_PAGE_TAB_PARAM, workersPageTabParser);
+  const [tab, setTab] = useSearchValue(WORKERS_PAGE_TAB_PARAM, workersPageTabParser);
 
   if (!timeOffOnPlan) {
     return (

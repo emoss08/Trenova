@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { handleMutationError } from "@/hooks/use-api-mutation";
@@ -35,7 +36,7 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
-export const DISTANCE_CONTROLS_PATH = "/admin/distance-controls";
+export const DISTANCE_CONTROLS_PATH = appPath("/admin/distance-controls");
 
 const TONE_BADGE: Record<IftaProblemTone, BadgeVariant> = {
   danger: "danger",

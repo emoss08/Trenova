@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { DataTable } from "../data-table";
 import type { CellEditCommitFn } from "@trenova/shared/lib/cell-editing-feature";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
@@ -94,7 +94,7 @@ function renderTable(onCellEditCommit?: CellEditCommitFn<TestRow>) {
   );
   return render(
     <QueryClientProvider client={queryClient}>
-      <NuqsTestingAdapter hasMemory resetUrlUpdateQueueOnMount={false}>
+      <TestRouter>
         <DataTable<TestRow>
           columns={testColumns}
           name="test-table"
@@ -102,7 +102,7 @@ function renderTable(onCellEditCommit?: CellEditCommitFn<TestRow>) {
           graphql={testGraphQLConfig}
           onCellEditCommit={onCellEditCommit}
         />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

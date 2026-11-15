@@ -1,7 +1,6 @@
 import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -46,9 +45,7 @@ function renderPane() {
   render(
     <TestRouter>
       <QueryClientProvider client={client}>
-        <NuqsTestingAdapter>
-          <BillingQueueDetailPane selectedItemId="bqi_peak" onDocumentSelect={vi.fn()} />
-        </NuqsTestingAdapter>
+        <BillingQueueDetailPane selectedItemId="bqi_peak" onDocumentSelect={vi.fn()} />
       </QueryClientProvider>
     </TestRouter>,
   );
@@ -119,9 +116,7 @@ describe("billing queue review pane entrance", () => {
     const view = (selectedItemId: string) => (
       <TestRouter>
         <QueryClientProvider client={client}>
-          <NuqsTestingAdapter>
-            <BillingQueueDetailPane selectedItemId={selectedItemId} onDocumentSelect={vi.fn()} />
-          </NuqsTestingAdapter>
+          <BillingQueueDetailPane selectedItemId={selectedItemId} onDocumentSelect={vi.fn()} />
         </QueryClientProvider>
       </TestRouter>
     );

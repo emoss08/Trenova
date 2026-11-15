@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { useController, type Control } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -101,11 +101,11 @@ describe("TractorPanel fuel and IFTA fields", () => {
     } as never;
 
     render(
-      <NuqsTestingAdapter>
+      <TestRouter>
         <QueryClientProvider client={newQueryClient()}>
           <TractorPanel open mode="edit" row={row} onOpenChange={() => {}} />
         </QueryClientProvider>
-      </NuqsTestingAdapter>,
+      </TestRouter>,
     );
 
     await user.clear(screen.getByLabelText(/^Fuel type/));

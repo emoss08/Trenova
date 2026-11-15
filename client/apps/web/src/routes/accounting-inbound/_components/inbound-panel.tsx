@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
@@ -37,7 +38,6 @@ import { formatUnixDate, formatUnixDateTimeShort } from "@trenova/shared/lib/dat
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryStates } from "nuqs";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ignoreInboundSchema, type IgnoreInboundValues } from "./inbound-schemas";
@@ -53,7 +53,7 @@ export function InboundChangePanel({
   providerName,
 }: InboundChangePanelProps) {
   const t = useT();
-  const [{ panelEntityId }] = useQueryStates(panelSearchParamsParser);
+  const [{ panelEntityId }] = useSearchState(panelSearchParamsParser);
   const changeId = row?.id ?? panelEntityId;
   const fetched = useQuery({
     ...accountingSync.inboundChange(changeId ?? ""),

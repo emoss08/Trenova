@@ -27,7 +27,7 @@ code, read statically (nothing is imported or run):
 
 | Source | What it gives |
 |---|---|
-| `client/apps/web/src/router.tsx` | every page a signed-in person can open, and the permissions and capabilities its loaders (and its parents') demand |
+| `client/apps/web/src/pages/` | every page a signed-in person can open (a route file under a signed-in layout: `_app`, `_desk`, `_onboarding`), and the permissions and capabilities its `gates(…)` (and its layouts') demand; params are written `$name` |
 | `client/apps/web/src/config/navigation.config.ts` | module, group and label for each page; the create quick actions |
 | each page's `pageHeaderProps` | the page's own one-line description |
 | `client/apps/web/src/config/record-links.ts` | where each kind of record opens |

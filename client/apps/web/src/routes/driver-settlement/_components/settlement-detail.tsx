@@ -156,7 +156,8 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
       </p>
       {!isTerminal && (
         <Link
-          to={`/payroll/workspace?settlement=${settlement.id}`}
+          to="/payroll/workspace"
+          search={{ settlement: settlement.id }}
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 shrink-0 text-xs")}
         >
           <ArrowUpRightIcon className="size-3.5" />

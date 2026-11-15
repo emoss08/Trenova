@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import IftaJurisdictionMileageTable from "../ifta-jurisdiction-mileage-table";
 import { seedDataTableQueries } from "@/test/data-table-queries";
@@ -73,9 +73,9 @@ function renderTable() {
   );
   render(
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter hasMemory resetUrlUpdateQueueOnMount={false}>
+      <TestRouter>
         <IftaJurisdictionMileageTable />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

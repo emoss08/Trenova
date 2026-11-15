@@ -1,4 +1,4 @@
-import { useQueryStates } from "nuqs";
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useCallback } from "react";
 import { searchParamsParser } from "./use-data-table-state";
 
@@ -9,20 +9,9 @@ import { searchParamsParser } from "./use-data-table-state";
  * filters on fields it does not have.
  */
 export function useResetTableSearchParams(): () => void {
-  const [, setTableParams] = useQueryStates(searchParamsParser);
+  const [, setTableParams] = useSearchState(searchParamsParser);
 
   return useCallback(() => {
-    void setTableParams({
-      entityId: null,
-      modalType: null,
-      panelType: null,
-      panelEntityId: null,
-      pageIndex: null,
-      pageSize: null,
-      query: null,
-      fieldFilters: null,
-      filterGroups: null,
-      sort: null,
-    });
+    void setTableParams(null);
   }, [setTableParams]);
 }

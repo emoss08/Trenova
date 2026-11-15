@@ -46,8 +46,8 @@ export function usePageViewRegistration({
   rowCountExact,
 }: PageViewRegistrationInput) {
   const setTable = usePageViewStore((state) => state.setTable);
-  // Joined keys keep the effect keyed on content rather than on identity:
-  // nuqs hands back fresh arrays on every render.
+  // Joined keys keep the effect keyed on content rather than on identity, so a caller that
+  // builds its lists inline does not re-register the table on every render.
   const filtersKey = JSON.stringify(fieldFilters);
   const groupsKey = JSON.stringify(filterGroups);
   const sortKey = JSON.stringify(sort);

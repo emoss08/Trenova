@@ -1,13 +1,14 @@
+import { type UrlUpdateEvent } from "@trenova/shared/testing/test-router";
+import { withTestRouter } from "@trenova/shared/testing/test-router";
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { withNuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { describe, expect, it } from "vitest";
 import { ViewSwitch } from "../toolbar/board-controls";
 
 function renderSwitch(searchParams: string) {
   const updates: UrlUpdateEvent[] = [];
   render(<ViewSwitch />, {
-    wrapper: withNuqsTestingAdapter({
-      searchParams,
+    wrapper: withTestRouter({
+      search: searchParams,
       onUrlUpdate: (event) => updates.push(event),
     }),
   });

@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { FactoringVerdictBadge } from "@/components/factoring/factoring-badges";
@@ -23,7 +24,6 @@ import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { withheldAccessLabel } from "@trenova/shared/lib/reference-access";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { useQueryStates } from "nuqs";
 
 /**
  * One invoice's readiness: what it is worth, who it is assigned to, and each
@@ -36,7 +36,7 @@ export function FactoringInvoicePanel({
   row,
 }: DataTablePanelProps<FactoringInvoiceStateRow>) {
   const t = useT();
-  const [{ panelEntityId }] = useQueryStates(panelSearchParamsParser);
+  const [{ panelEntityId }] = useSearchState(panelSearchParamsParser);
   const invoiceId = row?.invoiceId ?? panelEntityId;
   const fetched = useQuery({
     ...factoringQueries.invoice(invoiceId ?? ""),

@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { Link } from "@trenova/shared/components/link";
 import { recordPath } from "@/config/record-links";
 import { usePermission } from "@/hooks/use-permission";
@@ -26,7 +27,7 @@ import { moveKey, windowOfSlot } from "./outlook-model";
 import { PanelSection, slotLabel, slotRange } from "./outlook-parts";
 import { useOutlookActions } from "./use-outlook-actions";
 
-const CONSOLE_PATH = "/dispatch/console";
+const CONSOLE_PATH = appPath("/dispatch/console");
 /** How long the pointer rests on a move before its card opens, and lingers after it leaves. */
 const CARD_DELAY_MS = 250;
 const CARD_CLOSE_MS = 80;

@@ -1,5 +1,6 @@
+import { type UrlUpdateEvent } from "@trenova/shared/testing/test-router";
+import { withTestRouter } from "@trenova/shared/testing/test-router";
 import { act, renderHook } from "@testing-library/react";
-import { withNuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useOpenShipmentRecord } from "../use-open-shipment-record";
 
@@ -8,8 +9,8 @@ const BOARD_URL = "?view=timeline&group=false&qf=late&collapsed=2";
 function renderOpenRecord(searchParams = BOARD_URL) {
   const updates: UrlUpdateEvent[] = [];
   const { result } = renderHook(() => useOpenShipmentRecord(), {
-    wrapper: withNuqsTestingAdapter({
-      searchParams,
+    wrapper: withTestRouter({
+      search: searchParams,
       onUrlUpdate: (event) => updates.push(event),
     }),
   });

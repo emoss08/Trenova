@@ -1,10 +1,10 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import type { DeskLensCounts } from "@/lib/graphql/desk-attention";
 import { watchtower } from "@/lib/queries/watchtower";
 import { useDeskSetting, useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
 import { severityMarkClass } from "../watchtower/severity";
 import type { RecordLens } from "./lens";
@@ -54,7 +54,7 @@ export function useAttentionHead({
   counts: DeskLensCounts | null;
 } {
   const t = useT();
-  const [address, setAddress] = useQueryStates(NEEDS_FILTER_ADDRESS, { history: "replace" });
+  const [address, setAddress] = useSearchState(NEEDS_FILTER_ADDRESS, { history: "replace" });
   const filters = useMemo(() => filtersFromAddress(address), [address]);
   const setFilters = (next: NeedsFilters) => void setAddress(addressOf(next));
 

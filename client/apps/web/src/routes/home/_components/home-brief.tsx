@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import type { Tone } from "@/components/kpi/tone";
@@ -12,7 +13,7 @@ import { partOfDay, resolveUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { TimeFormat } from "@trenova/shared/types/user";
 
-const SHIPMENTS_HREF = "/shipment-management/shipments";
+const SHIPMENTS_HREF = appPath("/shipment-management/shipments");
 
 /** The clock moves by the minute; checking this often keeps it within a few seconds of true. */
 const CLOCK_TICK_MS = 10_000;

@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BillingQueueFilters } from "../billing-queue-filters";
 
@@ -28,11 +28,11 @@ beforeEach(() => {
 
 function renderFilters(search = "") {
   render(
-    <NuqsTestingAdapter searchParams={search}>
+    <TestRouter search={search}>
       <QueryClientProvider client={new QueryClient()}>
         <BillingQueueFilters />
       </QueryClientProvider>
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

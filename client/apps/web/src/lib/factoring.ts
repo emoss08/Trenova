@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { parseTimeOfDay } from "@trenova/shared/lib/date";
 import { mailingAddressLines, type MailingAddress } from "@trenova/shared/lib/mailing-address";
 import type {
@@ -18,7 +19,7 @@ import type {
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import type { StatusPhase } from "@trenova/shared/lib/status-phase";
 
-export const FACTORING_PATH = "/billing/factoring";
+export const FACTORING_PATH = appPath("/billing/factoring");
 
 /** The most invoices one schedule of accounts carries; the server refuses more. */
 export const FACTORING_SUBMISSION_MAX_INVOICES = 200;

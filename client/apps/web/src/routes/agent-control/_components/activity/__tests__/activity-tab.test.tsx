@@ -1,9 +1,10 @@
+import { type OnUrlUpdateFunction } from "@trenova/shared/testing/test-router";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AgentActivitySummary } from "@/lib/graphql/agent-activity";
 import { stubLayout } from "@/test/layout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ActivityView } from "../../rail-items";
@@ -59,9 +60,7 @@ function renderTab(view: ActivityView, onUrlUpdate?: OnUrlUpdateFunction) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter hasMemory onUrlUpdate={onUrlUpdate}>
-        {children}
-      </NuqsTestingAdapter>
+      <TestRouter onUrlUpdate={onUrlUpdate}>{children}</TestRouter>
     </QueryClientProvider>
   );
   return render(<ActivityTab view={view} />, { wrapper });

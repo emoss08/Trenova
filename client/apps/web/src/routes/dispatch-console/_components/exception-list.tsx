@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { Link } from "@trenova/shared/components/link";
 import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import type { WatchtowerItem } from "@/lib/graphql/watchtower";
@@ -13,7 +14,7 @@ import { formatWhen } from "./format-when";
 import type { QueueRead } from "./move-queue";
 
 const EXCEPTION_COLUMNS = [{ label: "Due" }, { label: "Exception" }, { label: "Owner" }] as const;
-const WATCHTOWER_PATH = "/desk/needs?lens=watchtower";
+const WATCHTOWER_PATH = `${appPath("/desk/needs")}?lens=watchtower`;
 const EXCEPTION_ROW_ESTIMATE_PX = 52;
 
 function DueCell({ item, nowSeconds }: { item: WatchtowerItem; nowSeconds: number }) {

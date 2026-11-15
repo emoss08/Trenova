@@ -14,7 +14,7 @@ const fixture = `{
     {"path": "/shipments", "name": "Shipments", "requires": [{"resource": "shipment", "operation": "read"}],
      "operations": ["ShipmentList", "ShipmentDetail"], "endpoints": [], "reads": ["shipment"],
      "references": ["worker"], "declared": ["customer"]},
-    {"path": "/shipments/:id", "name": "", "requires": [], "operations": [], "endpoints": [],
+    {"path": "/shipments/$id", "name": "", "requires": [], "operations": [], "endpoints": [],
      "reads": [], "references": [], "declared": []},
     {"path": "/shipments/new", "name": "", "requires": [], "operations": [],
      "endpoints": [{"method": "POST", "path": "/shipments/", "requires": [{"resource": "customer", "operation": "read"}]}],
@@ -43,7 +43,7 @@ func TestScreen_FindsTheRouteALocationShows(t *testing.T) {
 		"/shipments":           "/shipments",
 		"/shipments/":          "/shipments",
 		"/shipments?tab=open":  "/shipments",
-		"/shipments/shp_123":   "/shipments/:id",
+		"/shipments/shp_123":   "/shipments/$id",
 		"/shipments/new":       "/shipments/new",
 		"/shipments/new#notes": "/shipments/new",
 	} {

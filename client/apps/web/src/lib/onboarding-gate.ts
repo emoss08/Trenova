@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { onboardingStateQueryOptions } from "@/lib/queries/onboarding";
 import { queryClient } from "@/lib/query-client";
 import { publicConfigQueryOptions } from "@trenova/shared/hooks/use-public-config";
@@ -5,7 +6,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { isCloudPlatform, type PublicConfig } from "@trenova/shared/types/platform";
 import type { OnboardingState } from "@/types/onboarding";
 
-export const ONBOARDING_PATH = "/onboarding";
+export const ONBOARDING_PATH = appPath("/onboarding");
 
 function normalizePathname(pathname: string): string {
   if (pathname === "/") {
@@ -54,7 +55,7 @@ export function onboardingExitRedirect({
   config: Pick<PublicConfig, "platformMode"> | undefined;
   state: Pick<OnboardingState, "required" | "status"> | null | undefined;
 }): string | null {
-  return onboardingPending(config, state) ? null : "/";
+  return onboardingPending(config, state) ? null : appPath("/");
 }
 
 export type OnboardingSnapshot = {

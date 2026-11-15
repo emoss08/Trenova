@@ -1,4 +1,10 @@
+import {
+  returnPathFor,
+  returnPathFrom,
+  type SignInPaths,
+} from "@trenova/shared/lib/router/return-path";
 import { announceSignedIn } from "@trenova/shared/lib/session-context";
+import { signInPathAfter } from "@trenova/shared/lib/sign-out-notice";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { redirect } from "@tanstack/react-router";
 
@@ -48,14 +54,20 @@ export function gates(...list: readonly RouteGate[]): RouteGate {
 
 /**
  * The session gate a signed-in route runs. Only a session the server refused (a 401) goes to
- * the login form. A check that could not reach a verdict — a rate limit, a server error, a
- * dropped connection — leaves a working session standing mid-navigation, so the page's own
- * queries retry, and on a cold load, where nothing proves a session, throws the original
- * failure to the route's error component, which presents it with a retry. A session that
- * passes has reached the app, so a tab still on a sign-in page is told it can follow.
+ * the login form, carrying the address the person asked for (unless it is home) so signing
+ * in brings them back to it. A check that could not reach a verdict — a rate limit, a server
+ * error, a dropped connection — leaves a working session standing mid-navigation, so the
+ * page's own queries retry, and on a cold load, where nothing proves a session, throws the
+ * original failure to the route's error component, which presents it with a retry. A session
+ * that passes has reached the app, so a tab still on a sign-in page is told it can follow. A
+ * preload (a hover over a link) never asks the server; the navigation that follows does.
  */
-export function requireSession(loginPath: string): RouteGate {
-  return async () => {
+export function requireSession(paths: SignInPaths): RouteGate {
+  return async ({ cause, location }) => {
+    if (cause === "preload") {
+      return;
+    }
+
     const session = await useAuthStore.getState().checkSession();
 
     switch (session.status) {
@@ -63,7 +75,13 @@ export function requireSession(loginPath: string): RouteGate {
         announceSignedIn();
         return;
       case "signed_out":
-        throw redirect({ href: loginPath });
+        throw redirect({
+          href: signInPathAfter(
+            paths.loginPath,
+            undefined,
+            returnPathFor(`${location.pathname}${location.searchStr}`, paths),
+          ),
+        });
       case "unreachable":
         if (useAuthStore.getState().isAuthenticated) {
           return;
@@ -73,11 +91,23 @@ export function requireSession(loginPath: string): RouteGate {
   };
 }
 
-/** Sends somebody already signed in away from a guest page (the sign-in form) to `home`. */
+/**
+ * Sends somebody already signed in away from a guest page (the sign-in form): to the safe
+ * return path the page was opened with, else to `home`. A preload never asks the server.
+ */
 export function requireGuest(home: string): RouteGate {
-  return async () => {
+  return async ({ cause, location }) => {
+    if (cause === "preload") {
+      return;
+    }
+
     if (await useAuthStore.getState().checkAuth()) {
-      throw redirect({ href: home });
+      throw redirect({
+        href: returnPathFrom(new URLSearchParams(location.searchStr), {
+          loginPath: location.pathname,
+          home,
+        }),
+      });
     }
   };
 }
@@ -86,15 +116,5 @@ export function requireGuest(home: string): RouteGate {
 export function redirectTo(href: string): RouteGate {
   return () => {
     throw redirect({ href, replace: true });
-  };
-}
-
-/**
- * An address that moved, for links already sent (stored notifications, bookmarks): sends the
- * person on to `path` with the query they came with.
- */
-export function redirectKeepingSearch(path: string): RouteGate {
-  return ({ location }) => {
-    throw redirect({ href: `${path}${location.searchStr}`, replace: true });
   };
 }

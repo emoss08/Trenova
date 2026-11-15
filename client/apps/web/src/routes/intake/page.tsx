@@ -22,7 +22,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BatchList } from "./_components/batch-list";
 import { BatchWorkspace } from "./_components/batch-workspace";
 import { IntakeRail } from "./_components/intake-rail";
-import { useUrlSearch } from "./_components/use-url-search";
+import { useUrlSearch } from "@/hooks/use-url-search";
 import {
   INTAKE_VIEWS,
   batchFilter,

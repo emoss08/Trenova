@@ -72,8 +72,8 @@ document, operationName, connectionKey })` derives the row type from the unmaske
   structurally satisfies it; add the field to the fragment instead.
 - Table queries request `totalCount` only on the first page (`includeTotalCount`); the
   table remembers the total per cursor scope.
-- Routes warm the cache through `lib/route-prefetch.ts` (`lazyPrefetch` +
-  `createPrefetchLoader`); a page module exports `prefetch` returning the query
+- Routes warm the cache through `lib/route-prefetch.ts` (`loader: pageLoader(prefetch)` in
+  the route file under `src/pages/`); a page module exports `prefetch` returning the query
   options it will read on mount, using the same key factories as the components.
 - After editing a `.graphql` operation run `pnpm --filter @trenova/graphql codegen`
   (or keep `pnpm dev` running, which watches); the server reloads the safelist on an

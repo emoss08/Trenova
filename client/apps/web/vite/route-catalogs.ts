@@ -10,7 +10,8 @@ import type { Plugin } from "vite";
 //    whichever code imports the module — its own route, or another folder borrowing a
 //    component — has asked for the strings it renders. Requiring a folder with no strings
 //    is a no-op.
-// 2. Every dynamic import of app code waits for the bundles its module graph required
+// 2. Every dynamic import of app code — a route's page chunk included, which runs after the
+//    router plugin has split the route — waits for the bundles its module graph required
 //    (`import("./panel").then(afterCatalogs)`), so a React.lazy component keeps showing its
 //    Suspense skeleton until it can render translated. When nothing is downloading — always,
 //    in English — the wait is a few microtasks.
@@ -62,6 +63,18 @@ export function routeCatalogFor(id: string, routesDir: string): string | null {
 }
 
 type DynamicImport = { specifier: string; end: number };
+
+const ROUTE_SPLIT = /\?tsr-split=[^&]*$/;
+
+/**
+ * splitRouteSource names the route file a split route chunk (`x.tsx?tsr-split=component`, which
+ * the router plugin cuts a route's page and loader into) comes from, so loading a page through
+ * its route waits for the page's strings like any other import of app code. Any other id is
+ * returned as it is.
+ */
+export function splitRouteSource(id: string): string {
+  return id.replace(ROUTE_SPLIT, "");
+}
 
 type AstNode = { type?: unknown; [key: string]: unknown };
 
@@ -124,7 +137,7 @@ export function routeCatalogs({ srcDir }: RouteCatalogsOptions): Plugin {
         for (const { specifier, end } of dynamicImports(code, file)) {
           const resolved = await this.resolve(specifier, id);
           if (resolved === null || resolved.external) continue;
-          if (appSourceFile(resolved.id, srcDir) !== null) waits.push(end);
+          if (appSourceFile(splitRouteSource(resolved.id), srcDir) !== null) waits.push(end);
         }
 
         const bundle = routeCatalogFor(id, routesDir);

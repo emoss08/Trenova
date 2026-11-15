@@ -7,4 +7,5 @@
     "singleQuote": false,
     "bracketSpacing": true,
     "trailingComma": "all",
+    "ignorePatterns": ["apps/*/src/route-tree.gen.ts"],
 }

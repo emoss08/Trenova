@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { DataTableProvider } from "@/contexts/data-table-context";
 import { useDataTableFilterSync } from "@/hooks/data-table/use-data-table-filter-sync";
 import { useDataTableLayout } from "@/hooks/data-table/use-data-table-layout";
@@ -105,7 +106,7 @@ import type {
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useDataTableCellWrites } from "@/hooks/data-table/use-data-table-cell-writes";
 import { RecordPresence } from "@/components/presence/data-table-viewers";
-import { parseAsInteger, useQueryStates } from "nuqs";
+import { parseAsInteger } from "nuqs";
 import {
   Activity,
   useCallback,
@@ -228,7 +229,7 @@ export function DataTable<TData extends Record<string, any>>({
     () => ({ ...searchParamsParser, pageSize: parseAsInteger.withDefault(defaultPageSize) }),
     [defaultPageSize],
   );
-  const [searchParams, setSearchParams] = useQueryStates(tableSearchParamsParser);
+  const [searchParams, setSearchParams] = useSearchState(tableSearchParamsParser);
   const { pageIndex, query, fieldFilters, filterGroups, sort, panelType, panelEntityId } =
     searchParams;
   const pageSize = resolvePageSize(searchParams.pageSize, pageSizeOptions);

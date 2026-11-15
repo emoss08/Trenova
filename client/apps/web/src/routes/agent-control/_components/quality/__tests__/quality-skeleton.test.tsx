@@ -1,5 +1,5 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { QualityView } from "../../../ai-control-tabs";
@@ -11,7 +11,7 @@ afterEach(() => {
 
 function renderSkeleton(view: QualityView, searchParams = "") {
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <NuqsTestingAdapter searchParams={searchParams}>{children}</NuqsTestingAdapter>
+    <TestRouter search={searchParams}>{children}</TestRouter>
   );
   return render(<QualityTabSkeleton view={view} />, { wrapper });
 }

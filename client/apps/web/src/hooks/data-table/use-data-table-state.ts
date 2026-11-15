@@ -5,50 +5,28 @@ import {
 } from "@trenova/shared/types/data-table";
 import { createParser, parseAsInteger, parseAsString, parseAsStringLiteral } from "nuqs";
 
-export const parseAsSortFields = createParser<SortField[]>({
-  parse: (value) => {
-    if (!value) return [];
-    try {
-      return JSON.parse(value) as SortField[];
-    } catch {
-      return [];
-    }
-  },
-  serialize: (value) => {
-    if (!value || value.length === 0) return "";
-    return JSON.stringify(value);
-  },
-}).withDefault([]);
+/**
+ * A list of records kept in the address as JSON: an empty list is no value, and one that does
+ * not read back (a link cut short, an edited address) is an empty list rather than an error.
+ */
+function parseAsJsonList<T>() {
+  return createParser<T[]>({
+    parse: (value) => {
+      try {
+        const parsed: unknown = JSON.parse(value);
+        return Array.isArray(parsed) ? (parsed as T[]) : [];
+      } catch {
+        return [];
+      }
+    },
+    serialize: (value) => (value.length === 0 ? "" : JSON.stringify(value)),
+    eq: (a, b) => a.length === b.length && JSON.stringify(a) === JSON.stringify(b),
+  }).withDefault([]);
+}
 
-export const parseAsFilterGroups = createParser<FilterGroup[]>({
-  parse: (value) => {
-    if (!value) return [];
-    try {
-      return JSON.parse(value) as FilterGroup[];
-    } catch {
-      return [];
-    }
-  },
-  serialize: (value) => {
-    if (!value || value.length === 0) return "";
-    return JSON.stringify(value);
-  },
-}).withDefault([]);
-
-export const parseAsFieldFilters = createParser<FieldFilter[]>({
-  parse: (value) => {
-    if (!value) return [];
-    try {
-      return JSON.parse(value) as FieldFilter[];
-    } catch {
-      return [];
-    }
-  },
-  serialize: (value) => {
-    if (!value || value.length === 0) return "";
-    return JSON.stringify(value);
-  },
-}).withDefault([]);
+const parseAsSortFields = parseAsJsonList<SortField>();
+export const parseAsFilterGroups = parseAsJsonList<FilterGroup>();
+export const parseAsFieldFilters = parseAsJsonList<FieldFilter>();
 
 export const entitySearchParamsParser = {
   entityId: parseAsString,
@@ -62,7 +40,7 @@ export const panelSearchParamsParser = {
 
 /** The sizes a table offers when it names none; the server serves at most 100 rows a page. */
 export const DEFAULT_PAGE_SIZE_OPTIONS: readonly number[] = [25, 50, 100];
-export const DEFAULT_PAGE_SIZE = 50;
+const DEFAULT_PAGE_SIZE = 50;
 
 export const tablePaginationSearchParamsParser = {
   pageIndex: parseAsInteger.withDefault(1),

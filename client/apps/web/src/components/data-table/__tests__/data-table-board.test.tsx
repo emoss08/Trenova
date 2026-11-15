@@ -1,8 +1,9 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { hashKey, QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { parseAsInteger, useQueryState } from "nuqs";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+import { parseAsInteger } from "nuqs";
 import React from "react";
 import { DataTable } from "../data-table";
 import { GROUP_TOGGLE_INTENT_DELAY_MS } from "../data-table-group-header";
@@ -122,7 +123,7 @@ function renderDataTable(
 ) {
   return render(
     <QueryClientProvider client={queryClient}>
-      <NuqsTestingAdapter hasMemory searchParams={searchParams}>
+      <TestRouter search={searchParams}>
         <DataTable<TestRow>
           columns={testColumns}
           name="test-table"
@@ -130,7 +131,7 @@ function renderDataTable(
           graphql={testGraphQLConfig}
           {...props}
         />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }
@@ -307,7 +308,7 @@ describe("DataTable grouping", () => {
 
     rerender(
       <QueryClientProvider client={createQueryClient()}>
-        <NuqsTestingAdapter hasMemory>
+        <TestRouter>
           <DataTable<TestRow>
             columns={testColumns}
             name="test-table"
@@ -315,7 +316,7 @@ describe("DataTable grouping", () => {
             graphql={testGraphQLConfig}
             grouping={grouping({ collapsedKeys: [] })}
           />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 
@@ -345,7 +346,7 @@ describe("DataTable grouping", () => {
 
     rerender(
       <QueryClientProvider client={createQueryClient()}>
-        <NuqsTestingAdapter hasMemory>
+        <TestRouter>
           <DataTable<TestRow>
             columns={testColumns}
             name="test-table"
@@ -353,7 +354,7 @@ describe("DataTable grouping", () => {
             graphql={testGraphQLConfig}
             grouping={grouping({ collapsedKeys: [] })}
           />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 
@@ -389,7 +390,7 @@ describe("DataTable grouping", () => {
     useDataTableQueryMock.mockImplementation(() => placeholder);
     rerender(
       <QueryClientProvider client={createQueryClient()}>
-        <NuqsTestingAdapter hasMemory>
+        <TestRouter>
           <DataTable<TestRow>
             columns={testColumns}
             name="test-table"
@@ -397,7 +398,7 @@ describe("DataTable grouping", () => {
             graphql={testGraphQLConfig}
             grouping={grouping({ collapsedKeys: [1] })}
           />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 
@@ -416,7 +417,7 @@ describe("DataTable grouping", () => {
 
     rerender(
       <QueryClientProvider client={queryClient}>
-        <NuqsTestingAdapter hasMemory>
+        <TestRouter>
           <DataTable<TestRow>
             columns={testColumns}
             name="test-table"
@@ -424,7 +425,7 @@ describe("DataTable grouping", () => {
             graphql={testGraphQLConfig}
             grouping={grouping({ collapsedKeys: [1] })}
           />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>,
     );
     const calls = useDataTableQueryMock.mock.calls as unknown[][];
@@ -478,7 +479,7 @@ describe("DataTable grouping", () => {
     });
     rerender(
       <QueryClientProvider client={createQueryClient()}>
-        <NuqsTestingAdapter hasMemory>
+        <TestRouter>
           <DataTable<TestRow>
             columns={testColumns}
             name="test-table"
@@ -486,7 +487,7 @@ describe("DataTable grouping", () => {
             graphql={testGraphQLConfig}
             grouping={byName}
           />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 
@@ -496,7 +497,7 @@ describe("DataTable grouping", () => {
     useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
     rerender(
       <QueryClientProvider client={createQueryClient()}>
-        <NuqsTestingAdapter hasMemory>
+        <TestRouter>
           <DataTable<TestRow>
             columns={testColumns}
             name="test-table"
@@ -504,7 +505,7 @@ describe("DataTable grouping", () => {
             graphql={testGraphQLConfig}
             grouping={byName}
           />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>,
     );
     expect(screen.getByText("Alice")).toBeTruthy();
@@ -571,9 +572,9 @@ function ExpandingTable({
 function renderExpanding(withKeyboard = false, onEdit?: (row: TestRow) => void) {
   return render(
     <QueryClientProvider client={createQueryClient()}>
-      <NuqsTestingAdapter hasMemory>
+      <TestRouter>
         <ExpandingTable withKeyboard={withKeyboard} onEdit={onEdit} />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }
@@ -690,7 +691,7 @@ describe("DataTable slots", () => {
     });
     const tree = (active: boolean) => (
       <QueryClientProvider client={queryClient}>
-        <NuqsTestingAdapter hasMemory>
+        <TestRouter>
           <DataTable<TestRow>
             columns={testColumns}
             name="test-table"
@@ -698,7 +699,7 @@ describe("DataTable slots", () => {
             graphql={testGraphQLConfig}
             alternateView={alternate(active)}
           />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>
     );
     const { rerender } = render(tree(false));
@@ -755,7 +756,7 @@ describe("DataTable slots", () => {
     const queryClient = createQueryClient();
     render(
       <QueryClientProvider client={queryClient}>
-        <NuqsTestingAdapter hasMemory>
+        <TestRouter>
           <div data-slot="page-body" data-testid="page-body">
             <DataTable<TestRow>
               columns={testColumns}
@@ -764,7 +765,7 @@ describe("DataTable slots", () => {
               graphql={testGraphQLConfig}
             />
           </div>
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 
@@ -858,7 +859,7 @@ describe("DataTable page sizes", () => {
 });
 
 function ShowAHundredRows() {
-  const [, setPageSize] = useQueryState("pageSize", parseAsInteger);
+  const [, setPageSize] = useSearchValue("pageSize", parseAsInteger);
   return (
     <button type="button" onClick={() => void setPageSize(100)}>
       Show 100
@@ -870,7 +871,7 @@ describe("DataTable while a page of another size loads", () => {
   let queryClient: QueryClient;
   const tree = () => (
     <QueryClientProvider client={queryClient}>
-      <NuqsTestingAdapter hasMemory>
+      <TestRouter>
         <ShowAHundredRows />
         <DataTable<TestRow>
           columns={testColumns}
@@ -878,7 +879,7 @@ describe("DataTable while a page of another size loads", () => {
           queryKey="test"
           graphql={testGraphQLConfig}
         />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>
   );
 

@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingListEmpty } from "@/components/billing/billing-empty";
 import { usePermission } from "@/hooks/use-permission";
@@ -27,7 +28,6 @@ import {
   UserPlus01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import { useDeferredValue, useEffect, useRef, useState } from "react";
 import {
   type BillingQueueListFilters,
@@ -96,7 +96,7 @@ export function BillingQueueSidebar({
 }) {
   const t = useT();
   const { allowed: canPost } = usePermission(Resource.Invoice, Operation.Post);
-  const [params, setParams] = useQueryStates(queueSidebarSearchParamsParser);
+  const [params, setParams] = useSearchState(queueSidebarSearchParamsParser);
   const deferredSearch = useDeferredValue(params.query);
   const assist = useBillingQueueAssist();
   const { data: stats } = useQuery(billingQueueStatsQuery());

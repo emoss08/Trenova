@@ -62,7 +62,11 @@ export function FactoringRemittancePage() {
   useBreadcrumbLabel(data?.fileName ?? undefined);
 
   const backButton = (
-    <Button variant="outline" size="sm" render={<Link to={`${FACTORING_PATH}?view=remittances`} />}>
+    <Button
+      variant="outline"
+      size="sm"
+      render={<Link to={FACTORING_PATH} search={{ view: "remittances" }} />}
+    >
       <ArrowLeftIcon className="size-3.5" />
       {t("Remittances")}
     </Button>

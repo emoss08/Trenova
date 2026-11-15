@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import {
@@ -7,7 +8,6 @@ import {
 import type { JournalReviewSummary } from "@/lib/graphql/journal-review";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { useQueryStates } from "nuqs";
 import {
   activeJournalReviewBucket,
   journalReviewBucketFilter,
@@ -16,7 +16,7 @@ import {
 
 export function JournalReviewSummaryStrip({ summary }: { summary: JournalReviewSummary }) {
   const t = useT();
-  const [filters, setFilters] = useQueryStates({
+  const [filters, setFilters] = useSearchState({
     ...tableFilterSearchParamsParser,
     ...tablePaginationSearchParamsParser,
   });

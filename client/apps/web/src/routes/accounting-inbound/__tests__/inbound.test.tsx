@@ -1,4 +1,4 @@
-import { TestRouter } from "@trenova/shared/testing/test-router";
+import { TestRouter, type UrlUpdateEvent } from "@trenova/shared/testing/test-router";
 import { InboundPaymentsLink } from "@/components/accounting-sync/inbound-payments-link";
 import type {
   AccountingInboundApplyPreview,
@@ -9,7 +9,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { activeInboundBucket, inboundBucketFilter } from "../_components/inbound-filters";
@@ -144,16 +143,8 @@ function renderWith(node: ReactNode, searchParams = "") {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   const view = render(
-    <TestRouter>
-      <QueryClientProvider client={client}>
-        <NuqsTestingAdapter
-          searchParams={searchParams}
-          hasMemory
-          onUrlUpdate={(event) => urls.push(event)}
-        >
-          {node}
-        </NuqsTestingAdapter>
-      </QueryClientProvider>
+    <TestRouter search={searchParams} onUrlUpdate={(event) => urls.push(event)}>
+      <QueryClientProvider client={client}>{node}</QueryClientProvider>
     </TestRouter>,
   );
   return { ...view, urls, client };

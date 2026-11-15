@@ -1,5 +1,5 @@
 import { queryClient } from "@/lib/query-client";
-import { routeTree } from "@/router";
+import { routeTree } from "@/route-tree.gen";
 import { gateOutcomeById } from "@/test/route-tree";
 import { publicConfigQueryOptions } from "@trenova/shared/hooks/use-public-config";
 import { ApiRequestError } from "@trenova/shared/lib/api";
@@ -12,13 +12,13 @@ import { createTestRouter } from "@trenova/shared/testing/test-router";
 import { isRedirect, type AnyRouter } from "@tanstack/react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// The page modules are not under test, and loading them would pull every page's code into
-// this run; the gates and the router's rules for when they run are kept exactly as they are.
-vi.mock("@/lib/route-catalogs", () => ({ lazyPage: () => () => null }));
-vi.mock("@/lib/route-prefetch", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/route-prefetch")>()),
-  prefetchPage: () => () => undefined,
-}));
+// The pages these tests open are not under test; their route files, gates and loaders are, so
+// each page module stands in as an empty page with nothing to prefetch.
+vi.mock("@/routes/invoice/page", () => ({ InvoicesPage: () => null }));
+vi.mock("@/routes/invoice-approval/page", () => ({ InvoiceApprovalPage: () => null }));
+vi.mock("@/routes/desk/page", () => ({ DeskPage: () => null, prefetch: () => [] }));
+vi.mock("@/routes/desk/triage-page", () => ({ DeskTriagePage: () => null }));
+vi.mock("@/routes/inbox/page", () => ({ prefetch: () => [] }));
 
 // The session check is GET /users/me/. Every failure the server sends is an RFC 9457
 // problem document; the rate limiter's carries Retry-After.
@@ -58,7 +58,7 @@ function answerSessionCheckWith(outcome: Response | Error) {
 
 // The gate of the pathless layout every signed-in page sits under: the one that guards them all.
 async function runProtectedGate(): Promise<{ thrown: unknown }> {
-  return { thrown: await gateOutcomeById("/app", { pathname: "/shipments/management" }) };
+  return { thrown: await gateOutcomeById("/_app", { pathname: "/shipments/management" }) };
 }
 
 function midSession() {
@@ -139,14 +139,16 @@ describe("the signed-in session gate", () => {
     expect(thrown).toBeUndefined();
   });
 
-  it("still sends an expired session to /login", async () => {
+  it("still sends an expired session to /login, carrying the page it was on", async () => {
     midSession();
     answerSessionCheckWith(problemResponse(401, "authentication-error", "Authentication Failed"));
 
     const { thrown } = await runProtectedGate();
 
     expect(isRedirect(thrown)).toBe(true);
-    expect((thrown as { options: { href?: string } }).options.href).toBe("/login");
+    expect((thrown as { options: { href?: string } }).options.href).toBe(
+      "/login?redirect=%2Fshipments%2Fmanagement",
+    );
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
   });
 });
@@ -237,7 +239,7 @@ describe("signed-in route revalidation", () => {
   });
 
   async function startAt(path: string) {
-    const router = createTestRouter(routeTree, [path]);
+    const router = createTestRouter(routeTree, [path], { queryClient });
     await router.load();
     return router;
   }

@@ -2,7 +2,6 @@ import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
@@ -212,9 +211,9 @@ describe("AgentRunPanel", () => {
 
   function renderPanel(queryClient: QueryClient, run: AgentRunRow = row) {
     return render(
-      <NuqsTestingAdapter>
+      <TestRouter>
         {wrap(<AgentRunPanel open onOpenChange={() => {}} mode="edit" row={run} />, queryClient)}
-      </NuqsTestingAdapter>,
+      </TestRouter>,
     );
   }
 

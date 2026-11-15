@@ -1,5 +1,6 @@
+import { type UrlUpdateEvent } from "@trenova/shared/testing/test-router";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { AGENT_OPEN_PARAM } from "../ai-control-tabs";
@@ -8,9 +9,9 @@ import { useAIControlNavigation } from "../use-ai-control-navigation";
 function setup(searchParams = "") {
   const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <NuqsTestingAdapter searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
+    <TestRouter search={searchParams} onUrlUpdate={onUrlUpdate}>
       {children}
-    </NuqsTestingAdapter>
+    </TestRouter>
   );
   const { result } = renderHook(() => useAIControlNavigation(), { wrapper });
   const lastParams = async () => {

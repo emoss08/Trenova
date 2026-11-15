@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
@@ -19,7 +20,6 @@ import { invoiceAdjustment } from "@/lib/queries/invoice-adjustment";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { LinkExternal01Icon } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useMemo } from "react";
 import { invoiceReconciliationSearchParamsParser } from "./use-invoice-reconciliation-state";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
@@ -32,7 +32,7 @@ const statusChoices = [
 export function InvoiceReconciliationPage() {
   const t = useT();
 
-  const [searchParams, setSearchParams] = useQueryStates(invoiceReconciliationSearchParamsParser);
+  const [searchParams, setSearchParams] = useSearchState(invoiceReconciliationSearchParamsParser);
   const { item: selectedExceptionId, query, status } = searchParams;
   const deferredQuery = useDeferredValue(query);
   const hasActiveFilters = Boolean(query || status);

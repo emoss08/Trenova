@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
@@ -20,7 +21,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { LinkExternal01Icon } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useMemo } from "react";
 import { invoiceAdjustmentBatchSearchParamsParser } from "./use-invoice-adjustment-batch-state";
 
@@ -36,7 +36,7 @@ const statusChoices = [
 export function InvoiceAdjustmentBatchPage() {
   const t = useT();
 
-  const [searchParams, setSearchParams] = useQueryStates(invoiceAdjustmentBatchSearchParamsParser);
+  const [searchParams, setSearchParams] = useSearchState(invoiceAdjustmentBatchSearchParamsParser);
   const { item: selectedBatchId, query, status } = searchParams;
   const deferredQuery = useDeferredValue(query);
   const hasActiveFilters = Boolean(query || status);

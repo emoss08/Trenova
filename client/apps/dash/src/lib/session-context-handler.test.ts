@@ -12,9 +12,16 @@ describe("handleDashSessionContextStatus", () => {
     useAuthStore.setState({ clearAuth });
     Object.defineProperty(window, "location", {
       configurable: true,
-      value: { ...window.location, assign },
+      value: { ...window.location, pathname: "/", search: "", assign },
     });
   });
+
+  function openPortalAt(pathname: string, search = "") {
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...window.location, pathname, search, assign },
+    });
+  }
 
   it("leaves for the portal sign-in, saying why, when the person signs out in another tab", () => {
     handleDashSessionContextStatus("signed-out");
@@ -44,6 +51,24 @@ describe("handleDashSessionContextStatus", () => {
     leaveDashExpiredSession();
 
     expect(clearAuth).toHaveBeenCalledTimes(1);
+    expect(assign).toHaveBeenCalledWith("/dash/login?signed_out=expired");
+  });
+
+  it("carries the portal page the session expired on to the portal sign-in", () => {
+    openPortalAt("/dash/pay/stl_1", "?tab=deductions");
+
+    leaveDashExpiredSession();
+
+    expect(assign).toHaveBeenCalledWith(
+      "/dash/login?signed_out=expired&redirect=%2Fdash%2Fpay%2Fstl_1%3Ftab%3Ddeductions",
+    );
+  });
+
+  it("carries nothing when the session expired on the portal's home", () => {
+    openPortalAt("/dash");
+
+    leaveDashExpiredSession();
+
     expect(assign).toHaveBeenCalledWith("/dash/login?signed_out=expired");
   });
 });

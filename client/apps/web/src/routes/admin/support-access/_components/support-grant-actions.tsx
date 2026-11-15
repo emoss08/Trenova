@@ -51,7 +51,8 @@ export function SupportGrantActions({ grantId }: { grantId: string }) {
               {formatUnixDateTime(action.timestamp)}
             </span>
             <Link
-              to={`/admin/audit-logs?entry=${encodeURIComponent(action.id)}`}
+              to="/admin/audit-logs"
+              search={{ entry: action.id }}
               className="text-foreground min-w-0 flex-1 truncate hover:underline"
             >
               {withoutRecordIds(action.comment ?? action.entityRef ?? "") ||

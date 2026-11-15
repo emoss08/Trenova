@@ -143,7 +143,8 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
       </p>
       {!isTerminal && (
         <Link
-          to={`/carrier-settlements/workspace?settlement=${settlement.id}`}
+          to="/carrier-settlements/workspace"
+          search={{ settlement: settlement.id }}
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 shrink-0 text-xs")}
         >
           <ArrowUpRightIcon className="size-3.5" />

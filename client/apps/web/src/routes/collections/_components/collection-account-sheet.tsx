@@ -116,13 +116,15 @@ function AccountBody({ customerId, view }: { customerId: string; view: Collectio
           <span className="flex gap-3">
             <Link
               className="rounded-control ui-focus-ring text-brand underline-offset-2 hover:underline"
-              to={`/accounting/ar/customer-ledger?customerId=${customerId}`}
+              to="/accounting/ar/customer-ledger"
+              search={{ customerId }}
             >
               {t("Ledger")}
             </Link>
             <Link
               className="rounded-control ui-focus-ring text-brand underline-offset-2 hover:underline"
-              to={`/accounting/ar/open-items?customerId=${customerId}`}
+              to="/accounting/ar/open-items"
+              search={{ customerId }}
             >
               {t("Open items")}
             </Link>

@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/billing-empty";
@@ -29,7 +30,7 @@ import {
   Link01Icon,
   SearchLgIcon,
 } from "@trenova/shared/components/icons";
-import { parseAsString, useQueryStates } from "nuqs";
+import { parseAsString } from "nuqs";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 
@@ -48,7 +49,7 @@ const STATUS_FILTERS: Array<{ label: string; value: BankReceiptStatus }> = [
 export function BankReceiptPage() {
   const t = useT();
 
-  const [searchParams, setSearchParams] = useQueryStates(bankReceiptSearchParams);
+  const [searchParams, setSearchParams] = useSearchState(bankReceiptSearchParams);
   const { item: selectedReceiptId, query, status } = searchParams;
   const deferredQuery = useDeferredValue(query);
   const hasActiveFilters = Boolean(query || status);

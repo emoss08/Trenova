@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import type {
   DetentionArrivalCell,
   DetentionFacility,
@@ -328,8 +329,8 @@ export const RECOVERY_LABELS = defineLabels({
 /** The share of notices due that should go out by their deadline; below it, notice is a leak. */
 export const NOTICE_ON_TIME_TARGET = 0.8;
 
-export const DETENTION_POLICIES_PATH = "/detention/configuration-files/detention-policies";
-export const DETENTION_DESK_PATH = "/detention/desk";
+export const DETENTION_POLICIES_PATH = appPath("/detention/configuration-files/detention-policies");
+export const DETENTION_DESK_PATH = appPath("/detention/desk");
 
 /**
  * What was billed less what drivers were paid for detention: the money the carrier kept. Null

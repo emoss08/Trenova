@@ -1,8 +1,11 @@
 import { useFollowSignInElsewhere } from "@trenova/shared/hooks/use-follow-sign-in-elsewhere";
+import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { returnPathFrom } from "@trenova/shared/lib/router/return-path";
 import { Metadata } from "@/components/metadata";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { clearSessionCache } from "@/lib/session-cache";
+import { webSignInPaths } from "@/lib/sign-in-paths";
 import { userService } from "@trenova/shared/services/user";
 import { authService } from "@trenova/shared/services/auth";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -46,6 +49,8 @@ export function AuthForm({
   const t = useT();
 
   const navigate = useNavigate();
+  const [searchParams] = useQueryParams();
+  const destination = returnPathFrom(searchParams, webSignInPaths);
   const fetchManifest = usePermissionStore((state) => state.fetchManifest);
   const clearPermissions = usePermissionStore((state) => state.clearPermissions);
   const tenantMetadata = tenantQuery?.data;
@@ -155,8 +160,8 @@ export function AuthForm({
   const handleHandoff = useCallback(() => {
     // Drop anything cached by an earlier session in this tab, including one that
     // expired without signing out, before the app loads for the new one.
-    void clearSessionCache().then(() => navigate({ to: "/", replace: true }));
-  }, [navigate]);
+    void clearSessionCache().then(() => navigate({ href: destination, replace: true }));
+  }, [destination, navigate]);
 
   // Signing in in another tab finishes this tab's sign-in too.
   useFollowSignInElsewhere(handleHandoff);

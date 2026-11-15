@@ -1,3 +1,5 @@
+import { type OnUrlUpdateFunction } from "@trenova/shared/testing/test-router";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type {
   AgentQualityControl,
   AgentQualityOverview,
@@ -17,7 +19,6 @@ import type {
   RowAction,
 } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import type { ComponentType, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { QualityView } from "../../../ai-control-tabs";
@@ -298,9 +299,9 @@ function renderTab(view: QualityView, searchParams = "", onUrlUpdate?: OnUrlUpda
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter hasMemory searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
+      <TestRouter search={searchParams} onUrlUpdate={onUrlUpdate}>
         {children}
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>
   );
   return render(<QualityTab view={view} />, { wrapper });

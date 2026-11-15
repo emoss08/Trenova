@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { billingQueueService } from "@/services/billing-queue";
@@ -15,7 +16,6 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import type { BillingQueueSearchIntent } from "@trenova/shared/types/billing-queue";
 import { BILLING_QUEUE_OPEN_LANES } from "@trenova/shared/types/billing-queue";
-import { useQueryStates } from "nuqs";
 import { useState } from "react";
 import { queueSidebarSearchParamsParser } from "../use-billing-queue-state";
 import { CLEARED_QUEUE_FILTERS } from "./billing-queue-filters";
@@ -38,7 +38,7 @@ type Chip = { key: string; label: string; clear: Partial<typeof CLEARED_QUEUE_FI
 export function BillingQueueSearch() {
   const t = useT();
   const now = useNow("minute");
-  const [params, setParams] = useQueryStates(queueSidebarSearchParamsParser);
+  const [params, setParams] = useSearchState(queueSidebarSearchParamsParser);
   const [payerName, setPayerName] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState<string | null>(null);
   const [unresolved, setUnresolved] = useState<string | null>(null);

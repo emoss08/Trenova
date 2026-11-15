@@ -1,7 +1,6 @@
 import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import BillingQueueDetailPane from "../billing-queue-detail-pane";
@@ -36,9 +35,7 @@ function renderWithin(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <TestRouter>
-      <QueryClientProvider client={client}>
-        <NuqsTestingAdapter>{ui}</NuqsTestingAdapter>
-      </QueryClientProvider>
+      <QueryClientProvider client={client}>{ui}</QueryClientProvider>
     </TestRouter>,
   );
 }

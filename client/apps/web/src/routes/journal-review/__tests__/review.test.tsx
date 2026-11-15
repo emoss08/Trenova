@@ -1,4 +1,4 @@
-import { TestRouter } from "@trenova/shared/testing/test-router";
+import { TestRouter, type UrlUpdateEvent } from "@trenova/shared/testing/test-router";
 import { recordPath } from "@/config/record-links";
 import type { JournalReviewLabels } from "@/hooks/use-journal-review-labels";
 import type { JournalReviewRow, JournalReviewSummary } from "@/lib/graphql/journal-review";
@@ -7,7 +7,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import type { ReactElement, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getJournalReviewColumns } from "../_components/review-columns";
@@ -62,16 +61,8 @@ function renderWith(node: ReactNode, searchParams = "") {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   const view = render(
-    <TestRouter>
-      <QueryClientProvider client={client}>
-        <NuqsTestingAdapter
-          searchParams={searchParams}
-          hasMemory
-          onUrlUpdate={(event) => urls.push(event)}
-        >
-          {node}
-        </NuqsTestingAdapter>
-      </QueryClientProvider>
+    <TestRouter search={searchParams} onUrlUpdate={(event) => urls.push(event)}>
+      <QueryClientProvider client={client}>{node}</QueryClientProvider>
     </TestRouter>,
   );
   return { ...view, urls };

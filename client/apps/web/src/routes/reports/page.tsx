@@ -1,3 +1,4 @@
+import { readSearchState, useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
@@ -19,7 +20,6 @@ import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ClockRewindIcon, PlusIcon, SearchLgIcon } from "@trenova/shared/components/icons";
-import { createLoader, useQueryStates } from "nuqs";
 import { useNavigate } from "@tanstack/react-router";
 import { CannedGallery } from "./_components/canned-gallery";
 import { DashboardGallery } from "./_components/dashboard-gallery";
@@ -38,7 +38,8 @@ import {
   type ReportTab,
 } from "./reports-page-state";
 
-const loadReportsSearch = createLoader(reportsPageSearchParamsParser);
+const loadReportsSearch = (search: URLSearchParams) =>
+  readSearchState(reportsPageSearchParamsParser, search);
 
 // Only the active tab's grid mounts, so only its list is worth starting. The library's
 // search box is debounced, which on first render is simply the URL value.
@@ -135,7 +136,7 @@ export function ReportsPage() {
 
   const navigate = useNavigate();
   const { allowed: canCreate } = usePermission(Resource.Report, Operation.Create);
-  const [params, setParams] = useQueryStates(reportsPageSearchParamsParser);
+  const [params, setParams] = useSearchState(reportsPageSearchParamsParser);
   const debouncedQuery = useDebounce(params.query, 300);
   const createDashboard = useCreateDashboardAction();
 

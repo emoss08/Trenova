@@ -1,6 +1,7 @@
+import { appPath } from "@/lib/app-path";
 import { parseAsString, parseAsStringLiteral } from "nuqs";
 
-export const FACTORING_COMPANIES_PATH = "/billing/configuration-files/factoring-companies";
+export const FACTORING_COMPANIES_PATH = appPath("/billing/configuration-files/factoring-companies");
 
 export const FACTORING_COMPANY_TABS = [
   "overview",

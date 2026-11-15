@@ -145,7 +145,7 @@ export function EntityRedirectLink({
 
   return (
     <Link
-      to={url}
+      href={url}
       target={panelOpen ? "_blank" : undefined}
       className={linkClassName}
       title={t("View {0}", entityId)}

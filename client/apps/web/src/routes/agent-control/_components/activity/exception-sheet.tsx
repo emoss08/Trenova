@@ -1,9 +1,9 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import type { AgentExceptionRow } from "@/lib/graphql/agent-activity-tables";
 import type { AgentResolutionState } from "@trenova/graphql/generated/graphql";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { useQueryState } from "nuqs";
 import { createContext, useContext } from "react";
 import { RUN_OPEN_PARAM, runOpenParser } from "../../ai-control-tabs";
 import { Ic } from "../kit/ic";
@@ -38,7 +38,7 @@ export function ExceptionSheet({
 }) {
   const t = useT();
   const actions = useContext(ExceptionActionsContext);
-  const [runId, setRunId] = useQueryState(RUN_OPEN_PARAM, runOpenParser);
+  const [runId, setRunId] = useSearchValue(RUN_OPEN_PARAM, runOpenParser);
   // The run opens over its exception, so closing the exception closes the run with it.
   const close = () => {
     void setRunId(null);

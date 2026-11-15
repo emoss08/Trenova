@@ -1,3 +1,4 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -5,7 +6,6 @@ import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { OrganizationCapabilities } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource, type PermissionManifest } from "@trenova/shared/types/permission";
 import type { User } from "@trenova/shared/types/user";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConsolePageActions } from "../console-page-actions";
 import type { DispatchActions } from "../use-dispatch-actions";
@@ -68,9 +68,9 @@ const actions = {
 
 function renderActions(onPropose = vi.fn()) {
   render(
-    <NuqsTestingAdapter searchParams="">
+    <TestRouter search="">
       <ConsolePageActions actions={actions} onPropose={onPropose} />
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
   return onPropose;
 }

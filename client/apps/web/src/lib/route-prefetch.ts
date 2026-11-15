@@ -1,5 +1,4 @@
-import { queryClient } from "@/lib/query-client";
-import type { QueryFunctionContext, QueryKey } from "@tanstack/react-query";
+import type { QueryClient, QueryFunctionContext, QueryKey } from "@tanstack/react-query";
 
 // Long enough to cover the gap between the loader firing a request and the page's own
 // useQuery subscribing to it, short enough that a page which opts into a shorter window
@@ -60,75 +59,57 @@ export type RoutePrefetch = (
   args: RoutePrefetchArgs,
 ) => RoutePrefetchList | Promise<RoutePrefetchList>;
 
-/** The part of the router's loader context a prefetch reads. */
-interface PrefetchLoaderContext {
+/** The part of the router's loader context a page's loader reads. */
+interface PageLoaderContext {
   readonly params: Readonly<Record<string, string | undefined>>;
   readonly location: { readonly searchStr: string };
   readonly cause: "preload" | "enter" | "stay";
+  readonly context: { readonly queryClient: QueryClient };
 }
 
 function isInfinite(options: RoutePrefetchEntry): options is RoutePrefetchInfiniteQuery {
   return "initialPageParam" in options;
 }
 
-function warm(options: RoutePrefetchEntry): void {
+function warm(queryClient: QueryClient, options: RoutePrefetchEntry): void {
   const shared = { ...options, staleTime: options.staleTime ?? PREFETCH_STALE_TIME_MS };
 
   // The page type is opaque at this seam: every entry carries its own queryFn,
   // and the two agree by construction inside the factory that produced them.
   const started = isInfinite(options)
     ? queryClient.prefetchInfiniteQuery(
-        shared as unknown as Parameters<typeof queryClient.prefetchInfiniteQuery>[0],
+        shared as unknown as Parameters<QueryClient["prefetchInfiniteQuery"]>[0],
       )
-    : queryClient.prefetchQuery(
-        shared as unknown as Parameters<typeof queryClient.prefetchQuery>[0],
-      );
+    : queryClient.prefetchQuery(shared as unknown as Parameters<QueryClient["prefetchQuery"]>[0]);
 
   void started.catch(() => undefined);
 }
 
-async function runPrefetch(prefetch: RoutePrefetch, args: RoutePrefetchArgs): Promise<void> {
+async function runPrefetch(
+  queryClient: QueryClient,
+  prefetch: RoutePrefetch,
+  args: RoutePrefetchArgs,
+): Promise<void> {
   const list = await prefetch(args);
   for (const options of list) {
-    warm(options);
+    warm(queryClient, options);
   }
 }
 
 /**
- * Wraps a prefetch list as a route loader that never blocks navigation: the fetches are
- * started and the loader returns immediately. A failed prefetch is not a failed navigation —
- * the page's own query will surface the error where the user can see it. A navigation that
- * stays on the page (a change of the query alone) warms nothing: the page's queries are
- * already subscribed and follow the query themselves.
+ * The loader of a page that knows what it will read. The page's chunk (its component and this
+ * loader, split together) has loaded and waited for its strings by the time this runs, so it
+ * starts the prefetch and returns without waiting for it: a failed prefetch is not a failed
+ * navigation, and the page's own query surfaces the error where the person can see it. A
+ * navigation that stays on the page (a change of the query alone) warms nothing: the page's
+ * queries are subscribed and follow the query themselves.
  */
-export function createPrefetchLoader(prefetch: RoutePrefetch) {
-  return ({ params, location, cause }: PrefetchLoaderContext): void => {
+export function pageLoader(prefetch: RoutePrefetch) {
+  return ({ params, location, cause, context }: PageLoaderContext): void => {
     if (cause === "stay") {
       return;
     }
     const searchParams = new URLSearchParams(location.searchStr);
-    runPrefetch(prefetch, { params, searchParams }).catch(() => undefined);
+    runPrefetch(context.queryClient, prefetch, { params, searchParams }).catch(() => undefined);
   };
-}
-
-function exportsPrefetch(module: object): module is { prefetch: RoutePrefetch } {
-  return "prefetch" in module && typeof module.prefetch === "function";
-}
-
-/**
- * Lets a page colocate its prefetch list with its component. The importer is the same
- * dynamic import the route's lazy component uses, so both resolve the one module promise the
- * bundler already holds and the page chunk is never loaded twice. A page module that
- * exports nothing called `prefetch` simply warms nothing.
- */
-export function lazyPrefetch(importer: () => Promise<object>): RoutePrefetch {
-  return async (args) => {
-    const module = await importer();
-    return exportsPrefetch(module) ? module.prefetch(args) : [];
-  };
-}
-
-/** The loader of a route whose page module exports `prefetch`. */
-export function prefetchPage(importer: () => Promise<object>) {
-  return createPrefetchLoader(lazyPrefetch(importer));
 }

@@ -1,7 +1,8 @@
+import { type OnUrlUpdateFunction } from "@trenova/shared/testing/test-router";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import MemoryTab from "../memory-tab";
 
@@ -74,11 +75,11 @@ function renderTab(onUrlUpdate?: OnUrlUpdateFunction) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   return render(
-    <NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>
+    <TestRouter onUrlUpdate={onUrlUpdate}>
       <QueryClientProvider client={client}>
         <MemoryTab />
       </QueryClientProvider>
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

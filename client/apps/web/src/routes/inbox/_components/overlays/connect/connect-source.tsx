@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { Link } from "@trenova/shared/components/link";
 import type { InboundMailbox, InboundProvider } from "@/lib/graphql/inbox";
 import { inbox } from "@/lib/queries/inbox";
@@ -59,7 +60,7 @@ const PROVIDERS = ["google", "microsoft", "other"] as const;
 type MailProvider = (typeof PROVIDERS)[number];
 
 /** Where a source's settings are kept, for what Triage itself does not set. */
-const SOURCES_PATH = "/admin/inbound-mailboxes";
+const SOURCES_PATH = appPath("/admin/inbound-mailboxes");
 
 function sourceText(t: TranslateFn, key: string): { title: string; detail: string } {
   switch (key) {

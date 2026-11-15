@@ -25,7 +25,7 @@ const fixture = `{
       "tasks": [{"title": "Post an invoice", "keywords": [], "steps": ["Open it."]}],
       "notes": "",
       "related": [],
-      "covers": ["/billing/invoices/:id/print"],
+      "covers": ["/billing/invoices/$id/print"],
       "createAction": null,
       "inNavigation": true
     },

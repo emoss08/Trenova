@@ -112,14 +112,14 @@ function organization(id: string, name: string, isCurrent: boolean) {
   };
 }
 
-function renderAuthForm() {
+function renderAuthForm(search?: string) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <TestRouter>
+      <TestRouter initialEntries={["/login"]} search={search}>
         <AuthForm />
       </TestRouter>
     </QueryClientProvider>,
@@ -187,8 +187,22 @@ describe("AuthForm", () => {
 
     new FakeBroadcastChannel("trenova-session-context").postMessage({ kind: "signed-in" });
 
-    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ to: "/", replace: true }));
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ href: "/", replace: true }));
     expect(mocks.login).not.toHaveBeenCalled();
+  });
+
+  it("returns to the address the person was going to when another tab signs in", async () => {
+    renderAuthForm("?redirect=%2Fbilling%2Finvoices%3Fstatus%3Dopen");
+    await screen.findByLabelText("Email");
+
+    new FakeBroadcastChannel("trenova-session-context").postMessage({ kind: "signed-in" });
+
+    await waitFor(() =>
+      expect(mocks.navigate).toHaveBeenCalledWith({
+        href: "/billing/invoices?status=open",
+        replace: true,
+      }),
+    );
   });
 
   it("transitions from login to a dedicated organization selection step", async () => {
@@ -239,9 +253,73 @@ describe("AuthForm", () => {
     await waitFor(() => expect(screen.getByText("Opening Alpha Logistics")).toBeInTheDocument());
     expect(screen.getByRole("heading", { name: "Welcome back, Test." })).toBeInTheDocument();
     expect(screen.queryByText(/\brole|permission/i)).toBeNull();
-    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ to: "/", replace: true }), {
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ href: "/", replace: true }), {
       timeout: 4000,
     });
+  });
+
+  it("returns to the address the person was going to once signed in", async () => {
+    mocks.getUserOrganizations.mockResolvedValue([organization("org_1", "Alpha Logistics", true)]);
+    mocks.fetchManifest.mockResolvedValue(
+      manifest({ activeRoleIds: [ADMIN_ROLE.id], activeRoles: [ADMIN_ROLE] }),
+    );
+
+    renderAuthForm("?signed_out=expired&redirect=%2Fbilling%2Finvoices%3Fstatus%3Dopen");
+    await submitCredentials();
+
+    await waitFor(
+      () =>
+        expect(mocks.navigate).toHaveBeenCalledWith({
+          href: "/billing/invoices?status=open",
+          replace: true,
+        }),
+      { timeout: 4000 },
+    );
+  });
+
+  it.each([
+    ["an address on another site", "?redirect=https%3A%2F%2Fevil.com%2Fphish"],
+    ["a protocol-relative address", "?redirect=%2F%2Fevil.com"],
+    ["an encoded protocol-relative address", "?redirect=%2F%252F%252Fevil.com"],
+    ["a javascript: address", "?redirect=javascript%3Aalert(1)"],
+    ["the sign-in page itself", "?redirect=%2Flogin"],
+  ])("goes home instead of following %s once signed in", async (_, search) => {
+    mocks.getUserOrganizations.mockResolvedValue([organization("org_1", "Alpha Logistics", true)]);
+    mocks.fetchManifest.mockResolvedValue(
+      manifest({ activeRoleIds: [ADMIN_ROLE.id], activeRoles: [ADMIN_ROLE] }),
+    );
+
+    renderAuthForm(search);
+    await submitCredentials();
+
+    await waitFor(() => expect(mocks.navigate).toHaveBeenCalledWith({ href: "/", replace: true }), {
+      timeout: 4000,
+    });
+    expect(mocks.navigate.mock.calls.map(([options]) => options)).toEqual(
+      mocks.navigate.mock.calls.map(() => ({ href: "/", replace: true })),
+    );
+  });
+
+  it("starts single sign-on with the safe return address", async () => {
+    mocks.listProviders.mockResolvedValue([{ id: "aip_1", name: "Okta", provider: "Okta" }]);
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TestRouter initialEntries={["/login/acme"]} search="?redirect=%2Fbilling%2Finvoices">
+          <AuthForm organizationSlug="acme" />
+        </TestRouter>
+      </QueryClientProvider>,
+    );
+
+    await screen.findByText("Continue with Okta");
+    expect(mocks.getSSOStartUrl).toHaveBeenCalledWith(
+      "aip_1",
+      "acme",
+      `${window.location.origin}/billing/invoices`,
+    );
   });
 
   it("ends the session when the user steps back out of the organization choice", async () => {

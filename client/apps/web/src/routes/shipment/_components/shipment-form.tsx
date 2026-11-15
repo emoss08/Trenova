@@ -1,10 +1,12 @@
 "use no memo";
+
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { File06Icon, Lock01Icon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { BillingQueueStatus } from "@trenova/shared/types/billing-queue";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { parseAsBoolean, useQueryState } from "nuqs";
+import { parseAsBoolean } from "nuqs";
 import { type ReactNode, lazy, Suspense } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { ShipmentFormSkeleton } from "../shipment-form-skeleton";
@@ -30,7 +32,7 @@ const BILLING_REVIEW_STATUSES: ReadonlySet<BillingQueueStatus> = new Set([
 export function ShipmentForm() {
   const t = useT();
 
-  const [loadPlannerOpen, setLoadPlannerOpen] = useQueryState(
+  const [loadPlannerOpen, setLoadPlannerOpen] = useSearchValue(
     "loadPlanner",
     parseAsBoolean.withDefault(false),
   );

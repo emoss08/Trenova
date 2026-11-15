@@ -22,6 +22,7 @@ export default defineConfig({
     "stats.html",
     "tmp/**",
     "packages/*/src/**/generated/**",
+    "apps/*/src/route-tree.gen.ts",
     "packages/*/scripts/**",
   ],
   rules: {

@@ -1,8 +1,9 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableSkeleton } from "@trenova/shared/components/data-table/data-table-skeleton";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { parseAsStringLiteral } from "nuqs";
 
 export const USER_ROLES_TABS = ["users", "roles"] as const;
 
@@ -32,7 +33,7 @@ const TAB_WIDTHS: Record<UserRolesTab, string> = {
  */
 export function UserRolesSkeleton() {
   const t = useT();
-  const [tab] = useQueryState("tab", userRolesTabParser);
+  const [tab] = useSearchValue("tab", userRolesTabParser);
 
   return (
     <div className="flex flex-col gap-2" aria-busy aria-label={t("Loading users and roles")}>

@@ -16,7 +16,7 @@ describe("shouldToastNotification", () => {
         eventType: "watchtower.critical",
         title: "Winter storm warning on I-80",
         data: {
-          link: "/desk/watchtower?item=wti_01",
+          link: "/desk/needs?lens=watchtower&item=wti_01",
           delivery: stamped(false),
         },
       }),

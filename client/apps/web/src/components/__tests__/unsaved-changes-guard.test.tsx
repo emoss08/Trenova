@@ -17,7 +17,7 @@ function Form({ when }: { when: boolean }) {
   return (
     <>
       <UnsavedChangesGuard when={when} />
-      <button type="button" onClick={() => void navigate({ to: "/elsewhere" })}>
+      <button type="button" onClick={() => void navigate({ href: "/elsewhere" })}>
         Leave
       </button>
       <button type="button" onClick={() => void navigate({ to: "/", search: { tab: "notes" } })}>

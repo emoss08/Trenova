@@ -4,7 +4,6 @@ import { stubLayout } from "@/test/layout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ExceptionActionsContext, ExceptionSheet } from "../exception-sheet";
@@ -33,9 +32,7 @@ function wrap(children: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter>
-        <TestRouter>{children}</TestRouter>
-      </NuqsTestingAdapter>
+      <TestRouter>{children}</TestRouter>
     </QueryClientProvider>
   );
 }

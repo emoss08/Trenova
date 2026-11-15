@@ -180,7 +180,7 @@ export function LateChargesPage() {
           <AlertDescription>
             <span>
               {notice.text}{" "}
-              <Link to="/billing/configuration-files/billing-control" className="underline">
+              <Link to="/admin/billing-controls" className="underline">
                 {t("Billing control")}
               </Link>
             </span>

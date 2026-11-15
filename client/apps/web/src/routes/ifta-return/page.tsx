@@ -1,9 +1,10 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { defaultIftaPeriod, periodFromSearch, type IftaPeriodKey } from "@/lib/ifta-return";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { parseAsString, useQueryStates } from "nuqs";
+import { parseAsString } from "nuqs";
 import { lazy, useCallback, useMemo } from "react";
 import { IftaReturnSkeleton } from "./_components/ifta-return-skeleton";
 import { iftaPeriodQuery, iftaReturnForPeriodQuery } from "./_components/queries";
@@ -32,7 +33,7 @@ export const prefetch: RoutePrefetch = ({ searchParams }) => {
 export function IftaReturnsPage() {
   const t = useT();
 
-  const [search, setSearch] = useQueryStates(periodParsers);
+  const [search, setSearch] = useSearchState(periodParsers);
   const fallback = useMemo(() => defaultIftaPeriod(nowUnix()), []);
   const period = periodFromSearch(search.year, search.quarter, fallback);
 

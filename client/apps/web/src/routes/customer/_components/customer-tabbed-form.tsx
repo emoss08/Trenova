@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -14,7 +15,7 @@ import {
   RecordMemories,
   useRecordMemoriesAvailable,
 } from "@/components/record-memories/record-memories";
-import { parseAsString, useQueryState } from "nuqs";
+import { parseAsString } from "nuqs";
 import { CustomerBillingProfileForm } from "./customer-billing-profile-form";
 import { CustomerBrokerIntelligence } from "./customer-broker-intelligence";
 import { CustomerEmailProfileForm } from "./customer-email-profile-form";
@@ -28,7 +29,7 @@ export type CustomerTabbedFormProps = {
 export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
   const t = useT();
 
-  const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("general"));
+  const [activeTab, setActiveTab] = useSearchValue("tab", parseAsString.withDefault("general"));
   const remembers = useRecordMemoriesAvailable() && Boolean(customerId);
   const tracking = usePlanFeature("tms.customer_tracking").available;
   const vetting = usePlanFeature("tms.carrier_brokerage").available && Boolean(customerId);

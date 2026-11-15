@@ -1,7 +1,7 @@
 import { useQueryErrorResetBoundary } from "@tanstack/react-query";
 import type React from "react";
 import type { ReactElement, ReactNode } from "react";
-import { createContext, Suspense, useCallback, useContext, useState } from "react";
+import { createContext, Suspense, useCallback, useContext, useEffect, useState } from "react";
 import { ErrorBoundary as ReactErrorBoundary, type FallbackProps } from "react-error-boundary";
 import {
   isNotFound,
@@ -165,9 +165,22 @@ function useHomeNavigation(homePath: string) {
  */
 export function RouteErrorBoundary({ error, homePath = "/", embedded }: RouteErrorBoundaryProps) {
   const t = useT();
+  const router = useRouter();
+  const { reset: resetQueryErrors } = useQueryErrorResetBoundary();
   const inFrame = useContext(RouteErrorEmbedding);
   const inPlace = embedded ?? inFrame;
   const { goHome, goBack, path } = useHomeNavigation(homePath);
+
+  // A suspense query that failed stays failed until its reset boundary is told otherwise, so
+  // the next render, a retry or a visit after navigating away, would re-throw the cached error.
+  useEffect(() => {
+    resetQueryErrors();
+  }, [resetQueryErrors]);
+
+  // Retrying re-runs the route's gates and loaders and resets the router's error boundary.
+  const retry = useCallback(() => {
+    void router.invalidate();
+  }, [router]);
 
   if (isNotFound(error) || (isRouteRefusal(error) && error.status === 404)) {
     return inPlace ? (
@@ -179,7 +192,11 @@ export function RouteErrorBoundary({ error, homePath = "/", embedded }: RouteErr
 
   // A page the organization's plan leaves out is not a failure: going home is the way on, so
   // it is the primary action, and no status code sits at the foot.
-  const isPlanRestricted = describeError(error).kind === "plan-restricted";
+  const description = describeError(error);
+  const isPlanRestricted = description.kind === "plan-restricted";
+  // A refused permission, a plan restriction or a missing page gives the same answer again, so
+  // only what can succeed on a second run offers the retry.
+  const onRetry = description.retryable ? retry : undefined;
 
   const homeAction = (
     <Button
@@ -194,7 +211,13 @@ export function RouteErrorBoundary({ error, homePath = "/", embedded }: RouteErr
 
   if (inPlace) {
     return (
-      <ErrorState error={error} layout="section" actions={homeAction} className="min-h-full" />
+      <ErrorState
+        error={error}
+        layout="section"
+        onRetry={onRetry}
+        actions={homeAction}
+        className="min-h-full"
+      />
     );
   }
 
@@ -202,7 +225,7 @@ export function RouteErrorBoundary({ error, homePath = "/", embedded }: RouteErr
     <StatusScreen
       meta={isRouteRefusal(error) && !isPlanRestricted ? String(error.status) : undefined}
     >
-      <ErrorState error={error} layout="screen" actions={homeAction} />
+      <ErrorState error={error} layout="screen" onRetry={onRetry} actions={homeAction} />
     </StatusScreen>
   );
 }

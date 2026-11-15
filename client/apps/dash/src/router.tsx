@@ -14,6 +14,7 @@ import {
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { DashLayout } from "./_components/dash-layout";
+import { dashSignInPaths } from "./lib/sign-in-paths";
 
 function DashRouteError(props: ErrorComponentProps) {
   return <RouteErrorBoundary {...props} homePath="/dash" />;
@@ -28,7 +29,7 @@ const rootRoute = createRootRoute({
 const signedInRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "signed-in",
-  beforeLoad: gates(requireSession("/dash/login")),
+  beforeLoad: gates(requireSession(dashSignInPaths)),
   component: DashLayout,
 });
 
@@ -36,7 +37,7 @@ export const routeTree = rootRoute.addChildren([
   createRoute({
     getParentRoute: () => rootRoute,
     path: "/dash/login",
-    beforeLoad: gates(requireGuest("/dash")),
+    beforeLoad: gates(requireGuest(dashSignInPaths.home)),
     component: lazyRouteComponent(() => import("./routes/login"), "DashLoginPage"),
   }),
   createRoute({

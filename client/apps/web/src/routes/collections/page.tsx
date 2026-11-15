@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
@@ -13,7 +14,6 @@ import { formatMinor } from "@trenova/shared/lib/money";
 import { collection } from "@/lib/queries/collection";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useQueryStates } from "nuqs";
 import { useDeferredValue } from "react";
 import { CollectionAccountSheet } from "./_components/collection-account-sheet";
 import { CollectionsTable } from "./_components/collections-table";
@@ -43,7 +43,7 @@ const SCOPE_LABEL: Record<(typeof COLLECTOR_SCOPES)[number], string> = defineLab
  */
 export function CollectionsPage() {
   const t = useT();
-  const [state, setState] = useQueryStates(collectionsSearchParamsParser);
+  const [state, setState] = useSearchState(collectionsSearchParamsParser);
   const search = useDeferredValue(state.query);
 
   const { data, isLoading, isError, refetch } = useQuery({

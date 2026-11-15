@@ -1,5 +1,6 @@
+import { type UrlUpdateEvent } from "@trenova/shared/testing/test-router";
+import { withTestRouter } from "@trenova/shared/testing/test-router";
 import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
-import { withNuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { describe, expect, it } from "vitest";
 import { GroupMenu } from "../toolbar/board-controls";
 import { useShipmentBoardUrl } from "../url-state";
@@ -7,8 +8,8 @@ import { useShipmentBoardUrl } from "../url-state";
 function renderMenu(searchParams: string) {
   const updates: UrlUpdateEvent[] = [];
   render(<GroupMenu />, {
-    wrapper: withNuqsTestingAdapter({
-      searchParams,
+    wrapper: withTestRouter({
+      search: searchParams,
       onUrlUpdate: (event) => updates.push(event),
     }),
   });
@@ -74,7 +75,7 @@ describe("GroupMenu", () => {
 describe("shipment board grouping in the URL", () => {
   function groupFrom(searchParams: string) {
     const { result } = renderHook(() => useShipmentBoardUrl(), {
-      wrapper: withNuqsTestingAdapter({ searchParams }),
+      wrapper: withTestRouter({ search: searchParams }),
     });
     return result.current[0];
   }

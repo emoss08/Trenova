@@ -77,10 +77,21 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
   component's own `<name>-skeleton.tsx`. The skeleton is the real layout in `ui-shimmer`,
   with `aria-busy` and an `aria-label`, and the component's own data-loading state draws the
   same skeleton. Never a spinner for a page or section.
-- Routes are registered in `apps/web/src/router.tsx` with a lazy import; a page that knows
-  what it will read exports `prefetch` and uses `createPrefetchLoader`/`lazyPrefetch`
-  (`lib/route-prefetch.ts`). A component that should start loading on hover is a
-  `lazyComponent` (`lib/lazy-component.ts`) and calls its `preload` on intent.
+- A page is a route file under `apps/web/src/pages/` (TanStack file routes; the plugin
+  generates `route-tree.gen.ts`, never edited by hand, and splits each route's page and
+  loader into one chunk). The file holds only the route's options: `beforeLoad: gates(…)`
+  for its checks, `component` imported from the page module in `src/routes/<folder>/`, and,
+  only when the page exports `prefetch` (what it will read), `loader: pageLoader(prefetch)`
+  (`lib/route-prefetch.ts`), which warms it through the router context's `queryClient` and
+  never blocks on it. The page chunk waits for its strings by itself (`vite/route-catalogs.ts`),
+  so a page with nothing to prefetch has no loader. Layouts are pathless
+  `_name` routes; a route kept out of its namesake's layout ends that segment in `_`. Gates
+  that ask the server return at once on `cause === "preload"`, since links preload on hover.
+  An old address is deleted with its page, never kept as a redirect. Links are TanStack's
+  `Link`/`navigate` with a typed `to` (and `params`); a path held as a string comes from
+  `appPath` (`lib/app-path.ts`), so a removed route fails the typecheck.
+- A component that should start loading on hover is a `lazyComponent`
+  (`lib/lazy-component.ts`) and calls its `preload` on intent.
 - Record links come from `recordPath` (`config/record-links.ts`), never hand-built.
 - Gate actions with `usePermission(Resource.X, Operation.Y)`; the server checks again, so
   this is for the interface, not for security.

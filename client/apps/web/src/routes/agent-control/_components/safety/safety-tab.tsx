@@ -1,10 +1,10 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import type { AgentEgressClass } from "@/lib/graphql/agent-safety";
 import { agentSafety } from "@/lib/queries/agent-safety";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useQueryStates } from "nuqs";
 import { lazy } from "react";
 import type { SafetyView } from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
@@ -30,7 +30,7 @@ const filterParsers = { fieldFilters: searchParamsParser.fieldFilters };
 export default function SafetyTab({ view }: { view: SafetyView }) {
   const t = useT();
   const navigate = useAIControlNavigation();
-  const [{ fieldFilters }] = useQueryStates(filterParsers);
+  const [{ fieldFilters }] = useSearchState(filterParsers);
   const summary = useQuery({
     ...agentSafety.summary(),
     staleTime: SAFETY_SUMMARY_STALE_MS,

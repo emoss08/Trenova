@@ -7,7 +7,7 @@ related:
   - /reports/explore
   - /insights
 covers:
-  - /reports/dashboards/:dashboardId
+  - /reports/dashboards/$dashboardId
 ---
 
 ## What it's for

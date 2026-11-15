@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -16,7 +17,7 @@ import {
 } from "@trenova/shared/types/customer-payment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { parseAsString, useQueryStates } from "nuqs";
+import { parseAsString } from "nuqs";
 import { useCallback, useEffect, useMemo } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
@@ -75,7 +76,7 @@ function RecordPaymentPanel({
   const t = useT();
 
   const queryClient = useQueryClient();
-  const [prefill, setPrefill] = useQueryStates(prefillParamsParser);
+  const [prefill, setPrefill] = useSearchState(prefillParamsParser);
   const prefilledInvoiceIds = useMemo(
     () => (prefill.invoiceIds ? prefill.invoiceIds.split(",").filter(Boolean) : []),
     [prefill.invoiceIds],

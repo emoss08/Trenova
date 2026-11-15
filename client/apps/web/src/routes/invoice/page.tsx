@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
@@ -8,7 +9,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@trenova/shared/components/ui/sheet";
-import { useQueryStates } from "nuqs";
 import { lazy, useCallback, useState } from "react";
 import { BillingQueueDocumentPreviewSkeleton } from "../billing-queue/_components/billing-queue-document-preview-skeleton";
 import {
@@ -26,7 +26,7 @@ const BillingQueueDocumentPreview = lazy(
 export function InvoicesPage() {
   const t = useT();
 
-  const [searchParams, setSearchParams] = useQueryStates(invoiceSelectionSearchParamsParser);
+  const [searchParams, setSearchParams] = useSearchState(invoiceSelectionSearchParamsParser);
   const selectedInvoiceId = searchParams.item;
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [selectedDocumentName, setSelectedDocumentName] = useState<string | null>(null);

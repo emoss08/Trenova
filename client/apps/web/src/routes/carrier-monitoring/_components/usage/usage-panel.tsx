@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { CarrierIntelUsageSummaryView } from "@/components/carrier-intelligence/usage-summary";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
@@ -15,13 +16,13 @@ import {
   RefreshCw02Icon,
   Settings01Icon,
 } from "@trenova/shared/components/icons";
-import { parseAsInteger, useQueryState } from "nuqs";
+import { parseAsInteger } from "nuqs";
 const USAGE_MONTHS_BACK = 24;
 
 export function UsagePanel() {
   const t = useT();
   const now = useNowSeconds();
-  const [month, setMonth] = useQueryState("month", parseAsInteger);
+  const [month, setMonth] = useSearchValue("month", parseAsInteger);
 
   const currentMonth = recentUsageMonths(now, 1)[0];
   const earliestMonth = shiftUsageMonth(currentMonth, -(USAGE_MONTHS_BACK - 1));

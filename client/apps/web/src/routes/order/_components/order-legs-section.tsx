@@ -236,7 +236,8 @@ export function OrderLegsSection() {
                           </Tooltip>
                         ))}
                       <Link
-                        to={`/shipment-management/shipments?item=${leg.id}`}
+                        to="/shipment-management/shipments"
+                        search={{ item: leg.id }}
                         className="hover:underline"
                       >
                         {leg.proNumber}

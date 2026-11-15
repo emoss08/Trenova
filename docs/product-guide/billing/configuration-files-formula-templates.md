@@ -9,7 +9,7 @@ related:
   - /billing/queue
 covers:
   - /billing/configuration-files/formula-templates/new
-  - /billing/configuration-files/formula-templates/:id/edit
+  - /billing/configuration-files/formula-templates/$id/edit
 ---
 
 ## What it's for

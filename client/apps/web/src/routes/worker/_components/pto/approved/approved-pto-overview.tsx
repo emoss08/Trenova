@@ -1,4 +1,4 @@
-import { useQueryStates } from "nuqs";
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import React, { lazy, Suspense, useCallback } from "react";
 import { usePTOFilters } from "../use-pto-filters";
 import {
@@ -19,8 +19,8 @@ const PTOMonthCalendar = lazy(() =>
 
 export function ApprovedPTOOverview() {
   const { defaultValues } = usePTOFilters();
-  const [searchParams, setSearchParams] = useQueryStates(ptoOverviewFiltersSearchParamsParser);
-  const [{ viewType }] = useQueryStates(ptoViewTypeSearchParamsParser);
+  const [searchParams, setSearchParams] = useSearchState(ptoOverviewFiltersSearchParamsParser);
+  const [{ viewType }] = useSearchState(ptoViewTypeSearchParamsParser);
   const filters = searchParams.ptoOverviewFilters ?? defaultValues;
   const onMonthChange = useCallback(
     (startDate: number, endDate: number) => {

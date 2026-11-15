@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { InfoPopover } from "@/components/info-popover";
 import { useResetTableSearchParams } from "@/hooks/data-table/use-reset-table-search-params";
 import {
@@ -20,7 +21,6 @@ import {
 } from "@trenova/shared/components/ui/segmented-control";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useQueryState } from "nuqs";
 import { lazy, useCallback, useMemo } from "react";
 import { firstAllowed, useSecurityAccess } from "./use-security-access";
 
@@ -52,7 +52,7 @@ export function ActivityTab() {
   const t = useT();
   const access = useSecurityAccess();
   const resetTable = useResetTableSearchParams();
-  const [requestedView, setActivityView] = useQueryState("activityView", activityViewParser);
+  const [requestedView, setActivityView] = useSearchValue("activityView", activityViewParser);
   const activityView =
     firstAllowed(requestedView, activityViewValues, access.activity) ?? requestedView;
   const viewItems = useMemo<SegmentedControlItem<ActivityViewValue>[]>(

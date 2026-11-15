@@ -1,8 +1,8 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { agentQuality } from "@/lib/queries/agent-quality";
 import { useQuery } from "@tanstack/react-query";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useQueryStates } from "nuqs";
 import { lazy, useCallback } from "react";
 import {
   QUALITY_SHEET_PARAM,
@@ -43,7 +43,7 @@ export default function QualityTab({ view }: { view: QualityView }) {
   const overview = useQuery({ ...agentQuality.overview(), staleTime: QUALITY_STALE_MS });
   const control = useQuery(agentQuality.control());
   const [{ [QUALITY_SHEET_PARAM]: openAgent, [SWEEP_SETTINGS_PARAM]: settingsOpen }, setDialogs] =
-    useQueryStates(qualityDialogParsers);
+    useSearchState(qualityDialogParsers);
   const setOpenAgent = useCallback(
     (agentId: string | null) => void setDialogs({ [QUALITY_SHEET_PARAM]: agentId }),
     [setDialogs],

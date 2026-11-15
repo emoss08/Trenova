@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -19,7 +20,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
@@ -131,7 +131,7 @@ export default function ProvidersTab() {
   }, [order, saved]);
 
   const [query, setQuery] = useState("");
-  const [address, setAddress] = useQueryStates(addressParsers);
+  const [address, setAddress] = useSearchState(addressParsers);
   const openId = address.panelType === "edit" ? address.panelEntityId : null;
   const setOpenId = useCallback(
     (id: string | null) =>

@@ -4,7 +4,7 @@ import { FavoriteToggle, HistoryNavigation, SidebarToggle } from "@/components/h
 import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { trailCrumbs } from "@/lib/route-utils";
 import { cn } from "@trenova/shared/lib/utils";
-import { useRouterState } from "@tanstack/react-router";
+import { usePageChanging } from "@/hooks/use-page-changing";
 
 /**
  * The two things every page bar leads with: the panel's fold and history.
@@ -28,7 +28,7 @@ export function PageBarControls({ className }: { className?: string }) {
 export function PageBarTrail({ title }: { title: string }) {
   const t = useT();
   const breadcrumbs = useBreadcrumbs();
-  const isLoading = useRouterState({ select: (state) => state.status === "pending" });
+  const isLoading = usePageChanging();
   const parents = trailCrumbs(breadcrumbs, title, (label) => t(label));
 
   if (parents.length === 0) {

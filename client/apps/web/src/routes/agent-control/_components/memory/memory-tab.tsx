@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import { agentControlQueryOptions } from "@/lib/graphql/agent-control";
@@ -22,7 +23,6 @@ import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryStates } from "nuqs";
 import { useMemo } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
@@ -79,7 +79,7 @@ export default function MemoryTab() {
   const retrievalQuery = useQuery(aiRetrieval.status());
   const controlQuery = useQuery(agentControlQueryOptions());
   const [{ panelType, [MEMORY_STARTER_PARAM]: starterKind }, setStarter] =
-    useQueryStates(starterParsers);
+    useSearchState(starterParsers);
 
   const wordsOnly = Boolean(retrievalQuery.data) && !retrievalQuery.data?.settings.activeModelKey;
   const learningOff = controlQuery.data?.learningOff ?? false;

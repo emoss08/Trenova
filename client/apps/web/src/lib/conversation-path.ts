@@ -1,6 +1,7 @@
+import { appPath } from "@/lib/app-path";
 import { recordAtLocation, recordPath } from "@/config/record-links";
 
-const DESK_PATH = "/desk";
+const DESK_PATH = appPath("/desk");
 
 /**
  * Whether a location is inside the Desk, which runs outside the app shell and

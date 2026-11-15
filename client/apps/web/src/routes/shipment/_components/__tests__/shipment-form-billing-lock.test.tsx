@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -20,9 +20,9 @@ afterEach(cleanup);
 function Harness({ values, children }: { values: Partial<Shipment>; children: ReactNode }) {
   const form = useForm<Shipment>({ defaultValues: values as Shipment });
   return (
-    <NuqsTestingAdapter>
+    <TestRouter>
       <FormProvider {...form}>{children}</FormProvider>
-    </NuqsTestingAdapter>
+    </TestRouter>
   );
 }
 

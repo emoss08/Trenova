@@ -1,4 +1,5 @@
-import { parseAsString, useQueryState } from "nuqs";
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
+import { parseAsString } from "nuqs";
 
 /** The query parameter a settings page keeps its open tab in, so a tab can be linked to. */
 export const SETTINGS_TAB_PARAM = "tab";
@@ -21,7 +22,7 @@ export type SettingsTabSpec<TField extends string = string> = {
 export function useSettingsTab(
   tabs: readonly Pick<SettingsTabSpec, "value">[],
 ): readonly [string, (value: string) => void] {
-  const [param, setParam] = useQueryState(SETTINGS_TAB_PARAM, parseAsString);
+  const [param, setParam] = useSearchValue(SETTINGS_TAB_PARAM, parseAsString);
   const first = tabs[0]?.value ?? "";
   const open = tabs.some((tab) => tab.value === param) ? (param as string) : first;
   const select = (value: string) => void setParam(value === first ? null : value);

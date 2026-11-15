@@ -1,5 +1,5 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it } from "vitest";
 import { UserRolesSkeleton } from "../user-roles-skeleton";
 
@@ -9,9 +9,9 @@ const hidden = { hidden: true } as const;
 
 function renderAt(searchParams: string) {
   return render(
-    <NuqsTestingAdapter searchParams={searchParams}>
+    <TestRouter search={searchParams}>
       <UserRolesSkeleton />
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

@@ -34,7 +34,7 @@ describe("conversationAtPath", () => {
 });
 
 describe("isDeskPath", () => {
-  it.each(["/desk", "/desk/", "/desk/t/athr_1", "/desk/watchtower"])("is true for %s", (path) => {
+  it.each(["/desk", "/desk/", "/desk/t/athr_1", "/desk/needs"])("is true for %s", (path) => {
     expect(isDeskPath(path)).toBe(true);
   });
 

@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { useQueryParams, type SetQueryParams } from "@trenova/shared/hooks/use-query-params";
 import type { VirtualRowsHandle } from "@/components/virtual-rows";
 import { Kept } from "@/components/kept";
@@ -117,7 +118,7 @@ const Reader = lazy(() =>
 
 /** Where the reader sits beside the list rather than in its place. */
 const WIDE_QUERY = "(min-width: 1024px)";
-const AI_CONTROL_PATH = "/admin/agent-control";
+const AI_CONTROL_PATH = appPath("/admin/agent-control");
 
 /**
  * Warms what the page reads on mount: the counts, the sources and views the

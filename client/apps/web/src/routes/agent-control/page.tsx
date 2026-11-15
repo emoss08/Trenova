@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { usePermission } from "@/hooks/use-permission";
 import { lazyComponent } from "@/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
@@ -5,7 +6,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowTotal } from "@trenova/shared/lib/row-total";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import { useQueryState } from "nuqs";
 import { useCallback, useMemo } from "react";
 import {
   ACTIVITY_VIEW_PARAM,
@@ -131,13 +131,13 @@ function preloadTab(tab: AIControlTab) {
 export function AgentControlPage() {
   const t = useT();
   const navigate = useAIControlNavigation();
-  const [tab] = useQueryState(AI_CONTROL_TAB_PARAM, aiControlTabParser);
-  const [activityView] = useQueryState(ACTIVITY_VIEW_PARAM, activityViewParser);
-  const [safetyView] = useQueryState(SAFETY_VIEW_PARAM, safetyViewParser);
-  const [qualityView] = useQueryState(QUALITY_VIEW_PARAM, qualityViewParser);
-  const [qualityAgent] = useQueryState(QUALITY_AGENT_PARAM, qualityAgentParser);
-  const [suiteRun] = useQueryState(QUALITY_SUITE_RUN_PARAM, qualitySuiteRunParser);
-  const [auditView] = useQueryState(AUDIT_VIEW_PARAM, auditViewParser);
+  const [tab] = useSearchValue(AI_CONTROL_TAB_PARAM, aiControlTabParser);
+  const [activityView] = useSearchValue(ACTIVITY_VIEW_PARAM, activityViewParser);
+  const [safetyView] = useSearchValue(SAFETY_VIEW_PARAM, safetyViewParser);
+  const [qualityView] = useSearchValue(QUALITY_VIEW_PARAM, qualityViewParser);
+  const [qualityAgent] = useSearchValue(QUALITY_AGENT_PARAM, qualityAgentParser);
+  const [suiteRun] = useSearchValue(QUALITY_SUITE_RUN_PARAM, qualitySuiteRunParser);
+  const [auditView] = useSearchValue(AUDIT_VIEW_PARAM, auditViewParser);
 
   const { allowed: canReadAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { allowed: canReadProviders } = usePermission(Resource.AIProvider, Operation.Read);

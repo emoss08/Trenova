@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
@@ -35,7 +36,6 @@ import {
   SearchLgIcon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
@@ -68,7 +68,7 @@ const KIND_LABELS: Record<InvoiceAdjustmentKind, string> = defineLabels({
 export function InvoiceApprovalPage() {
   const t = useT();
 
-  const [searchParams, setSearchParams] = useQueryStates(invoiceApprovalSearchParamsParser);
+  const [searchParams, setSearchParams] = useSearchState(invoiceApprovalSearchParamsParser);
   const { item: selectedAdjustmentId, query, kind } = searchParams;
   const deferredQuery = useDeferredValue(query);
   const hasActiveFilters = Boolean(query || kind);

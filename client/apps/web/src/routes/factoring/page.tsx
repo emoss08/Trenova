@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { recordPath } from "@/config/record-links";
@@ -10,7 +11,6 @@ import { tablePaginationSearchParamsParser } from "@/hooks/data-table/use-data-t
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useQueryStates } from "nuqs";
 import { lazy } from "react";
 import { FactoringSummaryStrip } from "./_components/factoring-summary";
 import { factoringSearchParamsParser, type FactoringTab } from "./use-factoring-state";
@@ -21,7 +21,7 @@ const RemittanceTable = lazy(() => import("./_components/factoring-remittance-ta
 
 export function FactoringPage() {
   const t = useT();
-  const [state, setState] = useQueryStates({
+  const [state, setState] = useSearchState({
     ...factoringSearchParamsParser,
     pageIndex: tablePaginationSearchParamsParser.pageIndex,
   });

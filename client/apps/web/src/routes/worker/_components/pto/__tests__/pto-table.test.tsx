@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import PTODataTable from "../pto-table";
 import { seedDataTableQueries } from "@/test/data-table-queries";
@@ -131,9 +131,9 @@ function renderTable() {
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
   render(
     <QueryClientProvider client={queryClient}>
-      <NuqsTestingAdapter hasMemory resetUrlUpdateQueueOnMount={false}>
+      <TestRouter>
         <PTODataTable />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
   return { invalidateSpy };

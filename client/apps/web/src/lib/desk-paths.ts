@@ -1,5 +1,7 @@
+import { appPath } from "@/lib/app-path";
+
 /** Needs you narrowed to what agents ask to change: the one place changes are decided. */
-export const DESK_DECISIONS_PATH = "/desk/needs?lens=decisions";
+export const DESK_DECISIONS_PATH = `${appPath("/desk/needs")}?lens=decisions`;
 
 /** Decisions opened on one change, or on the change one agent's run is waiting on. */
 export function deskDecisionPath(target: { proposal: string } | { run: string }): string {

@@ -1,7 +1,8 @@
+import { type OnUrlUpdateFunction } from "@trenova/shared/testing/test-router";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { DataTable } from "../data-table";
@@ -78,7 +79,7 @@ function renderTable(props: Props = {}, searchParams = "", onUrlUpdate?: OnUrlUp
   );
   render(
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter hasMemory searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
+      <TestRouter search={searchParams} onUrlUpdate={onUrlUpdate}>
         <DataTable<TestRow>
           columns={testColumns}
           name="Test record"
@@ -86,7 +87,7 @@ function renderTable(props: Props = {}, searchParams = "", onUrlUpdate?: OnUrlUp
           graphql={testGraphQLConfig}
           {...props}
         />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

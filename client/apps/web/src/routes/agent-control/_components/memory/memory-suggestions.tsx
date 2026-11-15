@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import {
   AGENT_MEMORY_LIST_KEY,
@@ -12,7 +13,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useQueryState } from "nuqs";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { MEMORY_SUGGESTION_PARAM, memorySuggestionParser } from "../../ai-control-tabs";
@@ -40,7 +40,7 @@ export function MemorySuggestions({ canDecide }: { canDecide: boolean }) {
     queryKey: agentMemorySuggestionsQueryKey,
     queryFn: ({ signal }) => fetchAgentMemorySuggestions({ signal }),
   });
-  const [editingId, setEditingId] = useQueryState(MEMORY_SUGGESTION_PARAM, memorySuggestionParser);
+  const [editingId, setEditingId] = useSearchValue(MEMORY_SUGGESTION_PARAM, memorySuggestionParser);
   const settle = useSettleSuggestion();
 
   const suggestions = suggestionsQuery.data ?? [];

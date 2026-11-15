@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import {
@@ -23,7 +24,6 @@ import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps, RowAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { AlertCircleIcon, ArrowLeftIcon, ListChecksIcon } from "@trenova/shared/components/icons";
-import { useQueryState } from "nuqs";
 import { useCallback, useMemo } from "react";
 import {
   QUALITY_AGENT_PARAM,
@@ -64,8 +64,8 @@ const RUN_TIME_FORMAT = {
  * same place in the address.
  */
 export default function SuiteRunsView() {
-  const [agentId] = useQueryState(QUALITY_AGENT_PARAM, qualityAgentParser);
-  const [suiteRunId] = useQueryState(QUALITY_SUITE_RUN_PARAM, qualitySuiteRunParser);
+  const [agentId] = useSearchValue(QUALITY_AGENT_PARAM, qualityAgentParser);
+  const [suiteRunId] = useSearchValue(QUALITY_SUITE_RUN_PARAM, qualitySuiteRunParser);
 
   return suiteRunId ? (
     <SuiteRunCases suiteRunId={suiteRunId} agentId={agentId} />
@@ -137,7 +137,7 @@ function SuiteRunsTable({ agentId }: { agentId: string | null }) {
 /** One suite run, read-only: what it scored, against what, and a square for every case. */
 function SuiteRunPanel({ open, onOpenChange, row }: DataTablePanelProps<AgentSuiteRunRow>) {
   const t = useT();
-  const [agentId] = useQueryState(QUALITY_AGENT_PARAM, qualityAgentParser);
+  const [agentId] = useSearchValue(QUALITY_AGENT_PARAM, qualityAgentParser);
   const openCases = useOpenCases(agentId);
   const run = open ? row : null;
 

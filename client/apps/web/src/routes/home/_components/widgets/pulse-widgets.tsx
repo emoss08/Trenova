@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
@@ -14,8 +15,8 @@ import { resolveMetric } from "../metric-values";
 import { WidgetEmpty, WidgetNeedsSetup, WidgetShell, WidgetSkeleton } from "../widget-shell";
 import type { WidgetProps } from "../widget-registry";
 
-const SHIPMENTS_HREF = "/shipment-management/shipments";
-const RECEIVABLES_HREF = "/accounting/ar/aging";
+const SHIPMENTS_HREF = appPath("/shipment-management/shipments");
+const RECEIVABLES_HREF = appPath("/accounting/ar/aging");
 
 export function KPIWidget({ widget, data }: WidgetProps) {
   const t = useT();

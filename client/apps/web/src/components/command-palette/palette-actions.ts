@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { recordPath } from "@/config/record-links";
 import { newShipmentForCustomerPath, SHIPMENTS_PATH } from "@/lib/shipment-links";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
@@ -39,7 +40,7 @@ export const ACTION_COPY_LINK = "copy-link";
 export const ACTION_COPY_ID = "copy-id";
 export const ACTION_PIN = "toggle-pin";
 
-export const CUSTOMER_LEDGER_PATH = "/accounting/ar/customer-ledger";
+export const CUSTOMER_LEDGER_PATH = appPath("/accounting/ar/customer-ledger");
 
 const UNASSIGNED_SHIPMENT_STATUSES = new Set(["New", "PartiallyAssigned"]);
 

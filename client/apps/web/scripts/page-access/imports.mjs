@@ -27,7 +27,6 @@ export function graphPaths(webRoot) {
     src,
     shared,
     main: join(src, "main.tsx"),
-    router: join(src, "router.tsx"),
   };
 }
 

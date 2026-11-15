@@ -2,6 +2,7 @@ import { useQueryParams } from "@trenova/shared/hooks/use-query-params";
 import { useFollowSignInElsewhere } from "@trenova/shared/hooks/use-follow-sign-in-elsewhere";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SignOutNoticeAlert } from "@trenova/shared/components/session/sign-out-notice-alert";
+import { returnPathFrom } from "@trenova/shared/lib/router/return-path";
 import { signOutNoticeFrom } from "@trenova/shared/lib/sign-out-notice";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -11,6 +12,7 @@ import type { MFAChallenge } from "@trenova/shared/types/mfa";
 import { m } from "motion/react";
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { dashSignInPaths } from "../lib/sign-in-paths";
 
 export function DashLoginPage() {
   const t = useT();
@@ -18,11 +20,12 @@ export function DashLoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useQueryParams();
   const signOutNotice = signOutNoticeFrom(searchParams);
+  const destination = returnPathFrom(searchParams, dashSignInPaths);
   const login = useAuthStore((state) => state.login);
   const verifyMFA = useAuthStore((state) => state.verifyMFA);
 
   // Signing in in another tab finishes this tab's sign-in too.
-  useFollowSignInElsewhere(() => void navigate({ to: "/dash", replace: true }));
+  useFollowSignInElsewhere(() => void navigate({ href: destination, replace: true }));
 
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +49,7 @@ export function DashLoginPage() {
         setChallenge(outcome.challenge);
         return;
       }
-      void navigate({ to: "/dash", replace: true });
+      void navigate({ href: destination, replace: true });
     } catch {
       setError(t("We couldn't sign you in. Check your email and password and try again."));
     } finally {
@@ -68,7 +71,7 @@ export function DashLoginPage() {
         code: useRecovery ? "" : code,
         recoveryCode: useRecovery ? code : "",
       });
-      void navigate({ to: "/dash", replace: true });
+      void navigate({ href: destination, replace: true });
     } catch {
       setError(t("That code didn't work. Check it and try again, or sign in again."));
     } finally {

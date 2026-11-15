@@ -1,7 +1,6 @@
 import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import InvoiceDetailPane from "../invoice-detail-pane";
 
@@ -27,9 +26,7 @@ function renderPane(selectedInvoiceId: string | null) {
   render(
     <TestRouter>
       <QueryClientProvider client={client}>
-        <NuqsTestingAdapter>
-          <InvoiceDetailPane selectedInvoiceId={selectedInvoiceId} onDocumentSelect={vi.fn()} />
-        </NuqsTestingAdapter>
+        <InvoiceDetailPane selectedInvoiceId={selectedInvoiceId} onDocumentSelect={vi.fn()} />
       </QueryClientProvider>
     </TestRouter>,
   );

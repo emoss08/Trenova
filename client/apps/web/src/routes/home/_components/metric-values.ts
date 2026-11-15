@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { DeltaTone } from "@/components/kpi/tone";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
@@ -34,9 +35,9 @@ export type MetricValue = {
   lockedFeature?: string;
 };
 
-const SHIPMENTS_HREF = "/shipment-management/shipments";
-const DISPATCH_HREF = "/dispatch/console";
-const RECEIVABLES_HREF = "/accounting/ar/aging";
+const SHIPMENTS_HREF = appPath("/shipment-management/shipments");
+const DISPATCH_HREF = appPath("/dispatch/console");
+const RECEIVABLES_HREF = appPath("/accounting/ar/aging");
 
 function minorToMajor(minor: number | null | undefined): number {
   return (minor ?? 0) / 100;

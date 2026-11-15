@@ -1,5 +1,5 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
-import { useQueryStates } from "nuqs";
 import { useCallback } from "react";
 import { useShipmentBoardUrl } from "./url-state";
 
@@ -11,7 +11,7 @@ import { useShipmentBoardUrl } from "./url-state";
  */
 export function useOpenShipmentRecord() {
   const [, setBoardUrl] = useShipmentBoardUrl();
-  const [, setPanel] = useQueryStates(panelSearchParamsParser);
+  const [, setPanel] = useSearchState(panelSearchParamsParser);
 
   return useCallback(
     (shipmentId: string) => {

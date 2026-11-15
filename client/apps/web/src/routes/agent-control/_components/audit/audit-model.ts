@@ -81,7 +81,7 @@ export function parseAuditScope(value: unknown): AuditTrailScope | null {
 export const AUDIT_SCOPE_PARAM = "trailScope";
 
 export const auditScopeParser = parseAsJson(parseAuditScope)
-  .withOptions({ history: "replace", shallow: true })
+  .withOptions({ history: "replace" })
   .withDefault(DEFAULT_AUDIT_SCOPE);
 
 function rangeFilters(range: AuditRange): FieldFilter[] {

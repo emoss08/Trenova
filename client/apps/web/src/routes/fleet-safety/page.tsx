@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
@@ -6,7 +7,7 @@ import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { RadarIcon, ShieldTickIcon } from "@trenova/shared/components/icons";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { parseAsStringLiteral } from "nuqs";
 import { lazy } from "react";
 import { FleetSafetySkeleton } from "./_components/fleet-safety-skeleton";
 import { MyDotSkeleton } from "./_components/my-dot-skeleton";
@@ -33,7 +34,7 @@ export const prefetch: RoutePrefetch = () => [
 export function FleetSafetyPage() {
   const t = useT();
 
-  const [view, setView] = useQueryState("view", viewParser);
+  const [view, setView] = useSearchValue("view", viewParser);
   const { allowed: canReadFleet } = usePermission(Resource.WorkerSafetyEvent, Operation.Read);
   const { allowed: canReadIntel } = usePermission(Resource.CarrierIntelligence, Operation.Read);
 

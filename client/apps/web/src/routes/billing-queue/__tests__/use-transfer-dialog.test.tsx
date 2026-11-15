@@ -1,5 +1,6 @@
+import { type UrlUpdateEvent } from "@trenova/shared/testing/test-router";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { act, renderHook } from "@testing-library/react";
-import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { useTransferDialog } from "../use-transfer-dialog";
@@ -9,9 +10,9 @@ function renderWithUrl(
   onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>(),
 ) {
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <NuqsTestingAdapter searchParams={searchParams} onUrlUpdate={onUrlUpdate} hasMemory>
+    <TestRouter search={searchParams} onUrlUpdate={onUrlUpdate}>
       {children}
-    </NuqsTestingAdapter>
+    </TestRouter>
   );
   return { ...renderHook(() => useTransferDialog(), { wrapper }), onUrlUpdate };
 }

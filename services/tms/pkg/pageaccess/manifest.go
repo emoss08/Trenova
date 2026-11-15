@@ -166,7 +166,7 @@ func matches(pattern string, segments []string) (int, bool) {
 	literals := 0
 	for i, part := range parts {
 		switch {
-		case strings.HasPrefix(part, ":"):
+		case strings.HasPrefix(part, "$"):
 			if segments[i] == "" {
 				return 0, false
 			}

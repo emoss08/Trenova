@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import {
   holdActionText,
@@ -10,7 +11,6 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { useQueryState } from "nuqs";
 import { createContext, useContext } from "react";
 import { RUN_OPEN_PARAM, runOpenParser } from "../../ai-control-tabs";
 import { Ic } from "../kit/ic";
@@ -44,7 +44,7 @@ export function ProposalSheet({
 }) {
   const t = useT();
   const actions = useContext(ProposalActionsContext);
-  const [runId, setRunId] = useQueryState(RUN_OPEN_PARAM, runOpenParser);
+  const [runId, setRunId] = useSearchValue(RUN_OPEN_PARAM, runOpenParser);
   // The run opens over its proposal, so closing the proposal closes the run with it.
   const close = () => {
     void setRunId(null);

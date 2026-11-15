@@ -1,23 +1,23 @@
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { CodeLigaturesPreference } from "@/components/code-ligatures-preference";
+import { MotionPreferenceProvider } from "@/components/motion-preference-provider";
+import { SessionQueryProvider } from "@/components/session-query-provider";
 import { APP_CATALOGS } from "@/lib/app-catalogs";
 import { edition } from "@/lib/edition";
 import { installPlanLimitHandler } from "@/lib/plan-limit-handler";
+import { queryClient } from "@/lib/query-client";
+import { retainShellQueries, sessionPersistence, sessionScope } from "@/lib/session-cache";
 import { installSessionContextHandler } from "@/lib/session-context-handler";
 import { leaveExpiredSession } from "@/lib/session-exit";
-import { queryClient } from "@/lib/query-client";
-import { SessionQueryProvider } from "@/components/session-query-provider";
-import { retainShellQueries, sessionPersistence, sessionScope } from "@/lib/session-cache";
 import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
-import { MotionPreferenceProvider } from "@/components/motion-preference-provider";
-import { CodeLigaturesPreference } from "@/components/code-ligatures-preference";
 import { I18nProvider } from "@trenova/shared/i18n/provider";
 import { registerCatalogSource } from "@trenova/shared/i18n/runtime";
+import { installFailureListeners } from "@trenova/shared/lib/failure-reporter";
 import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
 import { currentProfile, useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { ReactNode } from "react";
-import { installFailureListeners } from "@trenova/shared/lib/failure-reporter";
 
 // The transport cannot reach the router or the auth store, so the expiry path is wired here
 // instead; the teardown is the one protectedLoader's 401 branch does.
@@ -85,10 +85,6 @@ export function Providers({ children }: { children: ReactNode }) {
             <Toaster position="top-right" />
             <CodeLigaturesPreference />
           </MotionPreferenceProvider>
-          {/*<ReactQueryDevtools
-              buttonPosition="bottom-left"
-              initialIsOpen={false}
-            />*/}
         </ThemeProvider>
       </AppQueryProvider>
     </RootErrorBoundary>

@@ -1,3 +1,4 @@
+import { useSearchValue, useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { DataTable } from "@/components/data-table/data-table";
 import { tableFilterSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -20,7 +21,7 @@ import type {
   FieldFilter,
 } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import { parseAsArrayOf, parseAsString, useQueryState, useQueryStates } from "nuqs";
+import { parseAsArrayOf, parseAsString } from "nuqs";
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { RequestEntries } from "./audit-entry-parts";
 import { AuditInspector } from "./audit-inspector";
@@ -137,9 +138,9 @@ export default function AuditTrail({
   const t = useT();
   const timezone = useUserTimezone();
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [collapsed, setCollapsed] = useQueryState("collapsed", collapsedParser);
+  const [collapsed, setCollapsed] = useSearchValue("collapsed", collapsedParser);
   const [onePerRequest, setOnePerRequest] = useLocalStorage(ONE_PER_REQUEST_STORAGE_KEY, true);
-  const [filters] = useQueryStates(tableFilterSearchParamsParser);
+  const [filters] = useSearchState(tableFilterSearchParamsParser);
   const { data: overview } = useAuditOverview(days);
   const offHoursZone = overview?.timezone ?? null;
   const switchId = useId();

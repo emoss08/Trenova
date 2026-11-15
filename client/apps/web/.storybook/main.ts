@@ -58,7 +58,6 @@ const config: StorybookConfig = {
           "@base-ui/react/collapsible",
           "@tanstack/react-hotkeys",
           "@vis.gl/react-google-maps",
-          "nuqs/adapters/tanstack-router",
           "react-error-boundary",
           "react-easy-crop",
           "react-lazy-load-image-component",

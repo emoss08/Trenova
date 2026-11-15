@@ -243,7 +243,8 @@ export function StatementDetail({
                       formatCurrency(Number(statement.heldAmount ?? 0), statement.currencyCode),
                     )}{" "}
                     <Link
-                      to={`/billing/queue?view=shipments&query=${encodeURIComponent(statement.customerName)}`}
+                      to="/billing/queue"
+                      search={{ view: "shipments", query: statement.customerName }}
                       className="font-medium underline underline-offset-2"
                     >
                       {t("Review them")}

@@ -14560,6 +14560,7 @@
   "Invoice minor-unit total must equal the sum of line minor units": "發票的最小貨幣單位總額必須等於各明細最小貨幣單位的加總",
   "Invoice minus expected": "發票金額減預期金額",
   "Invoice minus expected · tolerance": "發票減預期 · 容差",
+  "Invoice not found": "找不到發票",
   "Invoice number": "發票號碼",
   "Invoice number cannot be longer than 100 characters": "發票號碼不得超過 100 個字元",
   "Invoice number copied": "已複製發票號碼",

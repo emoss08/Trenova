@@ -2,7 +2,7 @@ import { useResetTableSearchParams } from "@/hooks/data-table/use-reset-table-se
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import {
-  securityTabParser,
+  useSecurityTab,
   securityTabValues,
   type SecurityTabValue,
 } from "@/hooks/use-organization-setting-state";
@@ -14,7 +14,6 @@ import {
   Shield01Icon,
   Users01Icon,
 } from "@trenova/shared/components/icons";
-import { useQueryState } from "nuqs";
 import { Activity, useCallback, useMemo } from "react";
 import { ProvisioningTab } from "./provisioning-tab";
 import { ActivityTab } from "./security-access/activity-tab";
@@ -43,7 +42,7 @@ const SECURITY_TAB_ICONS: Record<SecurityTabValue, IconComponent> = {
 export function SecurityAccessWorkspace({ organizationId }: { organizationId: string }) {
   const t = useT();
   const access = useSecurityAccess();
-  const [requestedTab, setSecurityTab] = useQueryState("securityTab", securityTabParser);
+  const [requestedTab, setSecurityTab] = useSecurityTab();
   const securityTab = firstAllowed(requestedTab, securityTabValues, access.tabs);
   const visibleTabs = useMemo(
     () => securityTabValues.filter((value) => access.tabs[value]),

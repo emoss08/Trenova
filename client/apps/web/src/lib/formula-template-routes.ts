@@ -1,12 +1,11 @@
+import { appPath } from "@/lib/app-path";
 import { recordPath } from "@/config/record-links";
 import type { ImportTemplatesResponse } from "@trenova/shared/types/formula-template";
 
-const BASE = "/billing/configuration-files/formula-templates";
-
 /** Every route the Formula Studio navigates to, spelled once. */
 export const formulaTemplateRoutes = {
-  list: BASE,
-  new: `${BASE}/new`,
+  list: appPath("/billing/configuration-files/formula-templates"),
+  new: appPath("/billing/configuration-files/formula-templates/new"),
   edit: (templateId: string) => recordPath("formula_template", templateId),
 } as const;
 

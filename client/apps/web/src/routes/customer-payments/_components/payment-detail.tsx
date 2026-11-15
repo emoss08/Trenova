@@ -63,6 +63,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { ApplicationInvoice } from "./application-invoice";
 import { ApplyUnappliedForm } from "./apply-unapplied-form";
 
 export function PaymentDetail({ paymentId, onClose }: { paymentId: string; onClose: () => void }) {
@@ -111,7 +112,8 @@ function PaymentDetailView({
           </div>
           <AccountingSyncStateLine objectId={payment.id} className="mt-1" />
           <Link
-            to={`/accounting/ar/customer-ledger?customerId=${payment.customerId}`}
+            to="/accounting/ar/customer-ledger"
+            search={{ customerId: payment.customerId }}
             className="text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1 text-xs hover:underline"
           >
             {payment.customer
@@ -256,7 +258,7 @@ function ApplicationsSection({
       <p className="mb-2 text-sm font-medium">
         {t("Applications")}
         <span className="text-muted-foreground ml-1.5 text-xs font-normal">
-          {applications.length} {applications.length === 1 ? "invoice" : "invoices"}
+          {t("{0, plural, one {# invoice} other {# invoices}}", applications.length)}
         </span>
       </p>
       {applications.length === 0 ? (
@@ -280,25 +282,7 @@ function ApplicationsSection({
               {applications.map((application) => (
                 <TableRow key={application.id} className="transition-colors">
                   <TableCell className="py-2">
-                    <div className="flex flex-col">
-                      {application.invoice ? (
-                        <Link
-                          to={`/billing/invoices?item=${application.invoiceId}`}
-                          className="font-mono text-xs font-medium hover:underline"
-                        >
-                          {application.invoice.number}
-                        </Link>
-                      ) : (
-                        <span className="font-mono text-xs font-medium">
-                          {application.invoiceId}
-                        </span>
-                      )}
-                      {application.invoice ? (
-                        <span className="text-muted-foreground text-xs">
-                          {application.invoice.billToName}
-                        </span>
-                      ) : null}
-                    </div>
+                    <ApplicationInvoice invoice={application.invoice} />
                   </TableCell>
                   <TableCell className="py-2 text-xs">
                     {formatAccountingDate(application.invoice?.dueDate)}
@@ -391,7 +375,8 @@ function GLActivitySection({ paymentId }: { paymentId: string }) {
           ) : null}
         </p>
         <Link
-          to={`/accounting/journal-entries/source/CustomerPayment/${paymentId}`}
+          to="/accounting/journal-entries/source/$type/$sourceId"
+          params={{ type: "CustomerPayment", sourceId: paymentId }}
           className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs hover:underline"
         >
           {t("Open full view")}

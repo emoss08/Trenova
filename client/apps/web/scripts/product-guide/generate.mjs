@@ -130,7 +130,7 @@ function routePattern(path) {
     `^${path
       .split("/")
       .map((segment) =>
-        segment.startsWith(":") ? "[^/]+" : segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        segment.startsWith("$") ? "[^/]+" : segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
       )
       .join("/")}$`,
   );

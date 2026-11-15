@@ -4,7 +4,6 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type { BillingIssue, BillingQueueItem } from "@trenova/shared/types/billing-queue";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { clearPermissions, seedPermissions } from "@/test/permissions";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -82,11 +81,9 @@ function renderFromQuery(item: BillingQueueItem) {
   }
   return render(
     <TestRouter>
-      <NuqsTestingAdapter>
-        <QueryClientProvider client={client}>
-          <FromQuery />
-        </QueryClientProvider>
-      </NuqsTestingAdapter>
+      <QueryClientProvider client={client}>
+        <FromQuery />
+      </QueryClientProvider>
     </TestRouter>,
   );
 }
@@ -114,11 +111,9 @@ function renderTab(item: BillingQueueItem) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <TestRouter>
-      <NuqsTestingAdapter>
-        <QueryClientProvider client={client}>
-          <BillingQueueChargesTab item={item} />
-        </QueryClientProvider>
-      </NuqsTestingAdapter>
+      <QueryClientProvider client={client}>
+        <BillingQueueChargesTab item={item} />
+      </QueryClientProvider>
     </TestRouter>,
   );
 }

@@ -1,4 +1,5 @@
 "use no memo";
+import { appPath } from "@/lib/app-path";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CheckIcon,
@@ -39,7 +40,7 @@ const SEPARATOR_WIDTH = 17;
 const SCROLL_STEP = 320;
 const LEAVE_MS = 320;
 const OVERFLOW_FETCH_LIMIT = 500;
-const INTEGRATIONS_PATH = "/admin/integrations";
+const INTEGRATIONS_PATH = appPath("/admin/integrations");
 
 type DockItem =
   | { type: "label"; key: string; group: CapacityGroup }

@@ -1,5 +1,5 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render, screen } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it } from "vitest";
 import { AIControlTabSkeleton } from "../ai-control-tab-skeleton";
 import { aiControlTabValues, type AIControlTab, type RailView } from "../ai-control-tabs";
@@ -26,9 +26,9 @@ describe("AIControlTabSkeleton", () => {
   it.each(aiControlTabValues)("opens the %s tab on its own layout, not a bare table", (tab) => {
     const { view, label } = CASES[tab];
     const { container } = render(
-      <NuqsTestingAdapter>
+      <TestRouter>
         <AIControlTabSkeleton tab={tab} view={view} />
-      </NuqsTestingAdapter>,
+      </TestRouter>,
     );
 
     const root = container.firstElementChild;

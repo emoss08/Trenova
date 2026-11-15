@@ -1,8 +1,8 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { useQueryStates } from "nuqs";
 import { DataTable } from "../data-table";
 import { parseAsFieldFilters, parseAsFilterGroups } from "@/hooks/data-table/use-data-table-state";
 import type { ColumnDef, FieldFilter } from "@trenova/shared/types/data-table";
@@ -87,7 +87,7 @@ vi.mock("@trenova/shared/hooks/use-debounce", () => ({
 }));
 
 function ExternalFilterWriter({ fieldFilters }: { fieldFilters: FieldFilter[] }) {
-  const [, setParams] = useQueryStates({
+  const [, setParams] = useSearchState({
     fieldFilters: parseAsFieldFilters,
     filterGroups: parseAsFilterGroups,
   });
@@ -122,7 +122,7 @@ function renderHarness(externalFieldFilters: FieldFilter[]) {
       {/* resetUrlUpdateQueueOnMount runs in the adapter's render body, so any
           re-render wipes updates queued between an external click and their
           timeout-0 flush — disable it to keep external writes reliable. */}
-      <NuqsTestingAdapter hasMemory resetUrlUpdateQueueOnMount={false}>
+      <TestRouter>
         <ExternalFilterWriter fieldFilters={externalFieldFilters} />
         <DataTable<TestRow>
           columns={testColumns}
@@ -130,7 +130,7 @@ function renderHarness(externalFieldFilters: FieldFilter[]) {
           queryKey="test"
           graphql={testGraphQLConfig}
         />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }

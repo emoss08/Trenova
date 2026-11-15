@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { MultiSelectAutocomplete } from "@/components/fields/multi-select-field";
@@ -28,7 +29,7 @@ import {
   Trash01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { type inferParserType, useQueryStates } from "nuqs";
+import { type inferParserType } from "nuqs";
 import { useState } from "react";
 import type { FieldValues } from "react-hook-form";
 import {
@@ -121,7 +122,7 @@ function CustomerFilter({
 export function BillingQueueFilters() {
   const t = useT();
   const queryClient = useQueryClient();
-  const [params, setParams] = useQueryStates(queueSidebarSearchParamsParser);
+  const [params, setParams] = useSearchState(queueSidebarSearchParamsParser);
   const [savePresetOpen, setSavePresetOpen] = useState(false);
   const activeCount = activeQueueFilterCount(params);
   const hasActiveFilters = activeCount > 0 || Boolean(params.query);

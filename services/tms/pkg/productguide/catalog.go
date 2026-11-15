@@ -193,7 +193,7 @@ func Load(data []byte) (*Catalog, error) {
 func routePattern(path string) *regexp.Regexp {
 	segments := strings.Split(path, "/")
 	for i, segment := range segments {
-		if strings.HasPrefix(segment, ":") {
+		if strings.HasPrefix(segment, "$") {
 			segments[i] = "[^/]+"
 			continue
 		}

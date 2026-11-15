@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
@@ -20,7 +21,7 @@ import type {
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileSpreadsheetIcon, Trash01Icon } from "@trenova/shared/components/icons";
-import { useQueryState } from "nuqs";
+import { parseAsString } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
 import { DeleteFuelPurchaseDialog } from "./delete-fuel-purchase-dialog";
 import { getColumns } from "./fuel-purchase-columns";
@@ -82,7 +83,7 @@ export default function FuelPurchaseTable() {
   );
   const { allowed: canDelete } = usePermission(Resource.FuelPurchase, Operation.Delete);
   const { allowed: canImport } = usePermission(Resource.FuelPurchaseImport, Operation.Create);
-  const [importParam, setImportParam] = useQueryState(IMPORT_QUERY_PARAM);
+  const [importParam, setImportParam] = useSearchValue(IMPORT_QUERY_PARAM, parseAsString);
   const [deleting, setDeleting] = useState<FuelPurchaseRow | null>(null);
 
   const invalidate = useCallback(async () => {

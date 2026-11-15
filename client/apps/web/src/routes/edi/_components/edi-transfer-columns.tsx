@@ -93,7 +93,8 @@ export function getTransferColumns(
         row.original.targetShipmentId ? (
           <Link
             className="text-primary inline-flex items-center gap-1 underline-offset-4 hover:underline"
-            to={`/shipment-management/shipments?item=${row.original.targetShipmentId}`}
+            to="/shipment-management/shipments"
+            search={{ item: row.original.targetShipmentId }}
           >
             <Link01Icon className="size-3.5" />
             {t("Open shipment")}

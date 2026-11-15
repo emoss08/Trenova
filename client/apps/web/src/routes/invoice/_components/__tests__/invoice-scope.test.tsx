@@ -1,10 +1,9 @@
-import { TestRouter } from "@trenova/shared/testing/test-router";
+import { TestRouter, type OnUrlUpdateFunction } from "@trenova/shared/testing/test-router";
 import type { InvoiceTableRowFieldsFragment } from "@trenova/graphql/generated/graphql";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { periodRange } from "@/lib/billing-schedule";
@@ -35,17 +34,8 @@ const PERIOD_END = 1_789_325_147;
 function renderWithin(ui: ReactElement, searchParams = "", onUrlUpdate?: OnUrlUpdateFunction) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <TestRouter>
-      <QueryClientProvider client={client}>
-        <NuqsTestingAdapter
-          hasMemory
-          resetUrlUpdateQueueOnMount={false}
-          searchParams={searchParams}
-          onUrlUpdate={onUrlUpdate}
-        >
-          {ui}
-        </NuqsTestingAdapter>
-      </QueryClientProvider>
+    <TestRouter search={searchParams} onUrlUpdate={onUrlUpdate}>
+      <QueryClientProvider client={client}>{ui}</QueryClientProvider>
     </TestRouter>,
   );
 }

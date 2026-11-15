@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import {
@@ -18,7 +19,6 @@ import { phaseTone } from "@trenova/shared/lib/status-phase";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { XCloseIcon } from "@trenova/shared/components/icons";
-import { useQueryState } from "nuqs";
 import { useMemo } from "react";
 import { RETRIEVAL_SOURCE_PARAM, retrievalSourceParser } from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
@@ -94,7 +94,7 @@ function FailedEntryPanel({
 export default function FailedEntriesTable() {
   const t = useT();
   const navigate = useAIControlNavigation();
-  const [sourceType] = useQueryState(RETRIEVAL_SOURCE_PARAM, retrievalSourceParser);
+  const [sourceType] = useSearchValue(RETRIEVAL_SOURCE_PARAM, retrievalSourceParser);
   const columns = useMemo(() => getFailedEntryColumns(t), [t]);
   const graphql = useMemo(
     () => createAIRetrievalFailedEntryTableGraphQLConfig(sourceType),

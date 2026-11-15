@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import {
@@ -8,7 +9,6 @@ import {
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { EyeIcon } from "@trenova/shared/components/icons";
-import { useQueryState } from "nuqs";
 import { useMemo } from "react";
 import { EVALUATION_OPEN_PARAM, evaluationOpenParser } from "../../ai-control-tabs";
 import { getEvaluationColumns } from "./agent-evaluation-columns";
@@ -22,7 +22,7 @@ import { EvaluationDetailDialog } from "./evaluation-detail-dialog";
 export default function AgentEvaluationTable() {
   const t = useT();
   const columns = useMemo(() => getEvaluationColumns(t), [t]);
-  const [open, setOpen] = useQueryState(EVALUATION_OPEN_PARAM, evaluationOpenParser);
+  const [open, setOpen] = useSearchValue(EVALUATION_OPEN_PARAM, evaluationOpenParser);
 
   const contextMenuActions: RowAction<AgentEvaluationRow>[] = [
     {

@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { FuelPurchaseRow } from "@/lib/graphql/fuel-purchase";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { useController, type Control } from "react-hook-form";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -115,11 +115,11 @@ function newQueryClient() {
 
 function renderPanel() {
   return render(
-    <NuqsTestingAdapter>
+    <TestRouter>
       <QueryClientProvider client={newQueryClient()}>
         <FuelPurchasePanel open mode="edit" row={row} onOpenChange={() => {}} />
       </QueryClientProvider>
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

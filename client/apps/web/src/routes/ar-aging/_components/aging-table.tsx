@@ -72,7 +72,8 @@ export function AgingTable({
         accessorFn: (row) => row.customerName,
         cell: ({ row }) => (
           <Link
-            to={`/accounting/ar/customer-ledger?customerId=${row.original.customerId}`}
+            to="/accounting/ar/customer-ledger"
+            search={{ customerId: row.original.customerId }}
             className="text-xs font-medium hover:underline"
           >
             {row.original.customerName}

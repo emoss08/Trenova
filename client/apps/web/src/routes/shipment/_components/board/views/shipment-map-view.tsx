@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PlugIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -8,7 +9,7 @@ import { ShipmentMapPanelBoundary } from "../../map/map-boundary";
 
 const ShipmentMapPanel = lazy(() => import("../../map/shipment-map-panel"));
 
-const INTEGRATIONS_PATH = "/admin/integrations";
+const INTEGRATIONS_PATH = appPath("/admin/integrations");
 
 /** The live map, filling the board, when Google Maps is configured; otherwise a way to connect it. */
 export default function ShipmentMapView() {

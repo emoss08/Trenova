@@ -1,7 +1,7 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { DataTableSkeleton } from "@trenova/shared/components/data-table/data-table-skeleton";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useQueryState } from "nuqs";
 import {
   QUALITY_AGENT_PARAM,
   QUALITY_SUITE_RUN_PARAM,
@@ -82,8 +82,8 @@ function SuiteRunCasesSkeleton() {
  * place of the runs, a table narrowed to one agent, or document extraction's own layout.
  */
 export function QualityBodySkeleton({ view }: { view: QualityView }) {
-  const [agentId] = useQueryState(QUALITY_AGENT_PARAM, qualityAgentParser);
-  const [suiteRunId] = useQueryState(QUALITY_SUITE_RUN_PARAM, qualitySuiteRunParser);
+  const [agentId] = useSearchValue(QUALITY_AGENT_PARAM, qualityAgentParser);
+  const [suiteRunId] = useSearchValue(QUALITY_SUITE_RUN_PARAM, qualitySuiteRunParser);
 
   switch (view) {
     case "extraction":

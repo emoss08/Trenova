@@ -1,3 +1,5 @@
+import { RETURN_PATH_PARAM } from "@trenova/shared/lib/router/return-path";
+
 const SIGNED_OUT_PARAM = "signed_out";
 
 /**
@@ -9,13 +11,26 @@ export type SignOutNotice = "idle" | "expired" | "elsewhere";
 
 const NOTICES: ReadonlySet<string> = new Set<SignOutNotice>(["idle", "expired", "elsewhere"]);
 
-/** The sign-in page to land on once a session has ended, carrying the notice if there is one. */
-export function signInPathAfter(loginPath: string, notice?: SignOutNotice): string {
-  if (!notice) {
-    return loginPath;
+/**
+ * The sign-in page to land on once a session has ended or was never there, carrying the notice
+ * if there is one and the address to return to once signed in. `returnTo` must come from
+ * `returnPathFor`, which leaves out home and anything unsafe.
+ */
+export function signInPathAfter(
+  loginPath: string,
+  notice?: SignOutNotice,
+  returnTo?: string | null,
+): string {
+  const search = new URLSearchParams();
+  if (notice) {
+    search.set(SIGNED_OUT_PARAM, notice);
+  }
+  if (returnTo) {
+    search.set(RETURN_PATH_PARAM, returnTo);
   }
 
-  return `${loginPath}?${new URLSearchParams({ [SIGNED_OUT_PARAM]: notice }).toString()}`;
+  const query = search.toString();
+  return query ? `${loginPath}?${query}` : loginPath;
 }
 
 /** The notice the sign-in page was opened with, ignoring anything it does not know. */

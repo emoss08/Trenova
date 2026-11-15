@@ -1,6 +1,6 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { DataTableSkeleton } from "@trenova/shared/components/data-table/data-table-skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useQueryState } from "nuqs";
 import { SAFETY_AGENTS_PARAM, safetyAgentsParser, type SafetyView } from "../../ai-control-tabs";
 import {
   FigsSkeleton,
@@ -78,7 +78,7 @@ export function SafetyHeadSkeleton() {
  * address names, then their headers over the table, or the roster to pick from when none is.
  */
 export function ByAgentSkeleton() {
-  const [stored] = useQueryState(SAFETY_AGENTS_PARAM, safetyAgentsParser);
+  const [stored] = useSearchValue(SAFETY_AGENTS_PARAM, safetyAgentsParser);
   const picked = Math.min(new Set(stored).size, MAX_COMPARED_AGENTS);
 
   return (

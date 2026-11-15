@@ -1,3 +1,4 @@
+import { readSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { PlanFeature } from "@/lib/plan-feature";
@@ -7,7 +8,6 @@ import { planFeatureOf, usePlanFeature } from "@trenova/shared/hooks/use-plan-fe
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { createLoader } from "nuqs";
 import WorkersContent, {
   WORKERS_PAGE_TAB_PARAM,
   workersPageTabParser,
@@ -26,11 +26,15 @@ import {
 
 const WORKER_TABLE_NAME = "Worker";
 
-const loadWorkersSearch = createLoader({
-  [WORKERS_PAGE_TAB_PARAM]: workersPageTabParser,
-  ...ptoOverviewFiltersSearchParamsParser,
-  ...ptoViewTypeSearchParamsParser,
-});
+const loadWorkersSearch = (search: URLSearchParams) =>
+  readSearchState(
+    {
+      [WORKERS_PAGE_TAB_PARAM]: workersPageTabParser,
+      ...ptoOverviewFiltersSearchParamsParser,
+      ...ptoViewTypeSearchParamsParser,
+    },
+    search,
+  );
 
 // The approved-PTO chart sits above the tabs and fires for the month in the URL (or the
 // parser's default month) whenever the chart view is showing; the calendar view mounts

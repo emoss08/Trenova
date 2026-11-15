@@ -1,8 +1,8 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import type { PTOFilter, PTOType } from "@trenova/shared/types/worker";
 import { BarChart07Icon, CalendarDateIcon } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import { PTOFilterPopover } from "../pto-filter-popover";
 import { HeaderContent } from "../pto-header-components";
 import { usePTOFilters } from "../use-pto-filters";
@@ -20,8 +20,8 @@ const VIEW_ITEMS = [
 export function ApprovedPTOHeader() {
   const t = useT();
 
-  const [, setSearchParams] = useQueryStates(ptoOverviewFiltersSearchParamsParser);
-  const [{ viewType }, setViewType] = useQueryStates(ptoViewTypeSearchParamsParser);
+  const [, setSearchParams] = useSearchState(ptoOverviewFiltersSearchParamsParser);
+  const [{ viewType }, setViewType] = useSearchState(ptoViewTypeSearchParamsParser);
   const { defaultValues } = usePTOFilters();
 
   const handleFilterSubmit = (data: PTOFilter) => {

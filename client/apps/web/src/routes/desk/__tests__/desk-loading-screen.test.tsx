@@ -8,8 +8,8 @@ import { describe, expect, it } from "vitest";
 
 // The shell's own timing, so the screen under test opens when the app's does.
 const shellPending = {
-  pendingMs: routeById("/deskShell").options.pendingMs,
-  pendingMinMs: routeById("/deskShell").options.pendingMinMs,
+  pendingMs: routeById("/_desk").options.pendingMs,
+  pendingMinMs: routeById("/_desk").options.pendingMinMs,
 };
 
 function AppWideFallback() {
@@ -44,7 +44,7 @@ function deskStillOpening(path: string) {
 
 describe("Desk first load", () => {
   it("gives the Desk shell its own loading screen, drawn at once", () => {
-    const shell = routeById("/deskShell");
+    const shell = routeById("/_desk");
 
     expect(shell.options.component).toBe(DeskShellLayout);
     expect(shell.options.pendingComponent).toBe(DeskLoadingScreen);
@@ -122,7 +122,7 @@ describe("Desk loading screen", () => {
   });
 
   it("opens any other place on its strip and leaves the page to it", async () => {
-    const frame = await openAt("/desk/watchtower");
+    const frame = await openAt("/desk/scheduled");
 
     expect(frame.querySelector(".dk-tb .dk-sk-place")).not.toBeNull();
     expect(frame.querySelector(".dk-dy")).toBeNull();

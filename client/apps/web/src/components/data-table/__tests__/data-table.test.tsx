@@ -1,7 +1,7 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import React from "react";
 import { createPortal } from "react-dom";
 import { DataTable } from "../data-table";
@@ -136,7 +136,7 @@ function renderDataTable(props?: Partial<React.ComponentProps<typeof DataTable<T
   const queryClient = createQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <NuqsTestingAdapter hasMemory>
+      <TestRouter>
         <DataTable<TestRow>
           columns={testColumns}
           name="test-table"
@@ -144,7 +144,7 @@ function renderDataTable(props?: Partial<React.ComponentProps<typeof DataTable<T
           graphql={testGraphQLConfig}
           {...props}
         />
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>,
   );
 }
@@ -272,9 +272,9 @@ describe("DataTable", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <NuqsTestingAdapter hasMemory>
+        <TestRouter>
           <App />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 
@@ -463,14 +463,14 @@ describe("DataTable cursor total count", () => {
     const queryClient = createQueryClient();
     const tree = (graphql: typeof testGraphQLConfig) => (
       <QueryClientProvider client={queryClient}>
-        <NuqsTestingAdapter hasMemory>
+        <TestRouter>
           <DataTable<TestRow>
             columns={testColumns}
             name="test-table"
             queryKey="test"
             graphql={graphql}
           />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>
     );
 
@@ -516,9 +516,8 @@ describe("DataTable scope filters", () => {
     const queryClient = createQueryClient();
     render(
       <QueryClientProvider client={queryClient}>
-        <NuqsTestingAdapter
-          hasMemory
-          searchParams={{
+        <TestRouter
+          search={{
             fieldFilters: JSON.stringify([{ field: "name", operator: "eq", value: "Alice" }]),
           }}
         >
@@ -529,7 +528,7 @@ describe("DataTable scope filters", () => {
             graphql={testGraphQLConfig}
             scopeFilters={scopeFilters}
           />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>,
     );
 
@@ -547,7 +546,7 @@ describe("DataTable scope filters", () => {
     const queryClient = createQueryClient();
     const tree = (days: number) => (
       <QueryClientProvider client={queryClient}>
-        <NuqsTestingAdapter hasMemory>
+        <TestRouter>
           <DataTable<TestRow>
             columns={testColumns}
             name="test-table"
@@ -555,7 +554,7 @@ describe("DataTable scope filters", () => {
             graphql={testGraphQLConfig}
             scopeFilters={[{ field: "occurredAt", operator: "lastndays", value: days }]}
           />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>
     );
 
@@ -857,7 +856,7 @@ describe("DataTable linked record", () => {
     const queryClient = createQueryClient();
     return render(
       <QueryClientProvider client={queryClient}>
-        <NuqsTestingAdapter hasMemory searchParams={{ panelType: "edit", panelEntityId: id }}>
+        <TestRouter search={{ panelType: "edit", panelEntityId: id }}>
           <DataTable<TestRow>
             columns={testColumns}
             name="test-table"
@@ -866,7 +865,7 @@ describe("DataTable linked record", () => {
             TablePanel={RowPanel}
             {...props}
           />
-        </NuqsTestingAdapter>
+        </TestRouter>
       </QueryClientProvider>,
     );
   }

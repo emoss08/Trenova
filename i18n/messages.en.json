@@ -136424,6 +136424,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Invoice not found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/customer-payments"
+    ]
+  },
   "Invoice number": {
     "sites": 3,
     "scope": [
@@ -358229,13 +358238,14 @@
     ]
   },
   "{0, plural, one {# invoice} other {# invoices}}": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/accounting-dashboard",
+      "routes/customer-payments",
       "routes/desk",
       "routes/factoring",
       "routes/factoring-company",

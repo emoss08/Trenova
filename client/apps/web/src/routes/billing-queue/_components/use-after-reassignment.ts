@@ -1,8 +1,8 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { nextItemAfterReassignment, reassignSummary } from "@/lib/billing-queue-charges";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { BillingQueueItem, ReassignChargeResult } from "@trenova/shared/types/billing-queue";
-import { useQueryStates } from "nuqs";
 import { queueSelectionSearchParamsParser } from "../use-billing-queue-state";
 import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
 
@@ -14,7 +14,7 @@ import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
 export function useAfterReassignment(item: BillingQueueItem) {
   const t = useT();
   const invalidate = useInvalidateBillingQueue();
-  const [, setSelection] = useQueryStates(queueSelectionSearchParamsParser);
+  const [, setSelection] = useSearchState(queueSelectionSearchParamsParser);
 
   return (result: ReassignChargeResult, chargeName: string) => {
     invalidate();

@@ -1,7 +1,6 @@
 import { Link } from "@trenova/shared/components/link";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
-import { conversationPath } from "@/lib/conversation-path";
 import { assistant } from "@/lib/queries/assistant";
 import { useDeskMarginStore } from "@/stores/desk-margin-store";
 import { useQuery } from "@tanstack/react-query";
@@ -137,7 +136,9 @@ export function DeskView({ threadId, slug }: { threadId: string; slug: string })
           <span className="dk-vw-sp" />
           <Link
             className={buttonVariants({ variant: "ghost", size: "sm" })}
-            to={`${conversationPath(threadId)}?a=${encodeURIComponent(artifact.lineageId || artifact.id)}`}
+            to="/desk/t/$threadId"
+            params={{ threadId }}
+            search={{ a: artifact.lineageId || artifact.id }}
           >
             <DeskIcon name="chat" size={12} />
             {t("Open in the conversation")}

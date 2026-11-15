@@ -1,3 +1,4 @@
+import { useSearchValue, useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -16,7 +17,6 @@ import { formatList } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useQueryState, useQueryStates } from "nuqs";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -117,13 +117,13 @@ export default function AgentsTab() {
   const searchRef = useRef<HTMLInputElement>(null);
   useSlashFocus(searchRef);
 
-  const [filter, setFilter] = useQueryState(AGENT_FILTER_PARAM, agentFilterParser);
+  const [filter, setFilter] = useSearchValue(AGENT_FILTER_PARAM, agentFilterParser);
   const [
     { [AGENT_EDIT_PARAM]: editId, [AGENT_NEW_PARAM]: start, [AGENT_RESTORE_PARAM]: restoreVersion },
     setBuilder,
-  ] = useQueryStates(builderParsers);
+  ] = useSearchState(builderParsers);
   const [query, setQuery] = useState("");
-  const [openId, setOpenId] = useQueryState(AGENT_OPEN_PARAM, agentOpenParser);
+  const [openId, setOpenId] = useSearchValue(AGENT_OPEN_PARAM, agentOpenParser);
   const [menuOpen, setMenuOpen] = useState(false);
   const [removing, setRemoving] = useState<AgentDefinitionRow | null>(null);
 

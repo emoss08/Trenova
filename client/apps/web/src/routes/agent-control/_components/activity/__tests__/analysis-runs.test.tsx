@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AnalysisRun, AnalysisRunSummary, AnalysisRunsResponse } from "@/types/analysis";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -66,7 +66,7 @@ function renderRuns(search = "") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter searchParams={search}>{children}</NuqsTestingAdapter>
+      <TestRouter search={search}>{children}</TestRouter>
     </QueryClientProvider>
   );
   return render(<AnalysisRuns />, { wrapper });

@@ -1,3 +1,4 @@
+import { readSearchState, useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
@@ -11,7 +12,6 @@ import { ShipmentCapabilitiesProvider } from "@/lib/shipment-board/capabilities"
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlusIcon } from "@trenova/shared/components/icons";
-import { createLoader, useQueryStates } from "nuqs";
 import { useCallback } from "react";
 import { ShipmentBriefing } from "./_components/board/briefing/shipment-briefing";
 import { ShipmentBriefingSkeleton } from "./_components/board/briefing/shipment-briefing-skeleton";
@@ -31,7 +31,8 @@ import {
   shipmentPanelDetailQuery,
 } from "./_components/shipment-queries";
 
-const loadPanelSearch = createLoader(panelSearchParamsParser);
+const loadPanelSearch = (search: URLSearchParams) =>
+  readSearchState(panelSearchParamsParser, search);
 
 const board = lazyComponent(
   () => import("./_components/board/shipment-board"),
@@ -84,7 +85,7 @@ function ShipmentWorkspace() {
 
 export function ShipmentsPage() {
   const t = useT();
-  const [, setSearchParams] = useQueryStates(panelSearchParamsParser);
+  const [, setSearchParams] = useSearchState(panelSearchParamsParser);
   const canCreateShipment = usePermissionStore((state) =>
     state.hasPermission(Resource.Shipment, Operation.Create),
   );

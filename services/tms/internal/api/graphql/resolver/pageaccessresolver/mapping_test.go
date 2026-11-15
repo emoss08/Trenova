@@ -17,7 +17,7 @@ func TestPageAccessToModel_NamesTheAddOnAKindIsWithheldBy(t *testing.T) {
 
 	denial := permissionports.NewPlanDenial(platformcatalog.FeatureFactoring)
 	model := pageAccessToModel(&pageaccessservice.Access{
-		Path: "/billing/invoices/:id",
+		Path: "/billing/invoices/$id",
 		Kinds: []pageaccessservice.Kind{
 			{
 				Resource:     "factoring_company",

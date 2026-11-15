@@ -1,6 +1,6 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it } from "vitest";
 import { EDIPageSkeleton } from "../edi-skeleton";
 import type { EDIPageKind } from "../edi-types";
@@ -16,9 +16,9 @@ const hidden = { hidden: true } as const;
 
 function renderKind(kind: EDIPageKind, title = "EDI page", searchParams = "") {
   return render(
-    <NuqsTestingAdapter searchParams={searchParams}>
+    <TestRouter search={searchParams}>
       <EDIPageSkeleton kind={kind} title={title} />
-    </NuqsTestingAdapter>,
+    </TestRouter>,
   );
 }
 

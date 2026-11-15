@@ -38,7 +38,8 @@ export function TopOverdueCustomersCard({ className }: { className?: string }) {
           {rows.map((row, index) => (
             <li key={row.customerId}>
               <Link
-                to={`/accounting/ar/customer-ledger?customerId=${encodeURIComponent(row.customerId)}`}
+                to="/accounting/ar/customer-ledger"
+                search={{ customerId: row.customerId }}
                 className="hover:bg-surface-hover ui-focus-ring flex items-center gap-3 px-3 py-2 transition-colors"
               >
                 <span className="text-muted-foreground w-4 shrink-0 text-right font-mono text-xs tabular-nums">

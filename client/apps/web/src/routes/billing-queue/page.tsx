@@ -1,3 +1,4 @@
+import { readSearchState, useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { billingQueue } from "@/lib/queries/billing-queue";
@@ -6,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import type { OpenStatement } from "@trenova/shared/types/statement";
-import { createLoader, useQueryStates } from "nuqs";
 import { lazy, useCallback, useEffect, useRef, useState } from "react";
 import {
   BILLING_QUEUE_OPEN_LANES,
@@ -55,7 +55,8 @@ const StatementDetail = lazy(() =>
   })),
 );
 
-const loadQueueSearch = createLoader(queueSearchParamsParser);
+const loadQueueSearch = (search: URLSearchParams) =>
+  readSearchState(queueSearchParamsParser, search);
 
 const EMPTY_STATEMENTS: OpenStatement[] = [];
 
@@ -145,12 +146,12 @@ function useNowSeconds(): number {
 export function BillingQueuePage() {
   const t = useT();
 
-  const [viewParams, setViewParams] = useQueryStates(queueViewSearchParamsParser);
-  const [selectionParams, setSelectionParams] = useQueryStates(queueSelectionSearchParamsParser);
-  const [statementParams, setStatementParams] = useQueryStates(
+  const [viewParams, setViewParams] = useSearchState(queueViewSearchParamsParser);
+  const [selectionParams, setSelectionParams] = useSearchState(queueSelectionSearchParamsParser);
+  const [statementParams, setStatementParams] = useSearchState(
     statementSelectionSearchParamsParser,
   );
-  const [sidebarParams, setSidebarParams] = useQueryStates(queueSidebarSearchParamsParser);
+  const [sidebarParams, setSidebarParams] = useSearchState(queueSidebarSearchParamsParser);
   const transfer = useTransferDialog();
   const { view } = viewParams;
   const { item: selectedItemId } = selectionParams;

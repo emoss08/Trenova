@@ -1,3 +1,4 @@
+import { appPath } from "@/lib/app-path";
 import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
@@ -34,7 +35,7 @@ export const MY_DOT_PROFILE_SECTIONS = [
   "company",
 ] as const satisfies readonly CarrierIntelProfileSectionId[];
 
-const ORGANIZATION_SETTINGS_HREF = "/admin/organization-settings";
+const ORGANIZATION_SETTINGS_HREF = appPath("/admin/organization-settings");
 
 function IntegrationsButton() {
   const t = useT();

@@ -1,4 +1,5 @@
-import { useQueryState, type ParserBuilder } from "nuqs";
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
+import { type ParserBuilder } from "nuqs";
 import { useCallback } from "react";
 
 /**
@@ -9,7 +10,7 @@ export function useAddressedFlag(
   key: string,
   parser: ParserBuilder<boolean>,
 ): readonly [boolean, (open: boolean) => void] {
-  const [value, setValue] = useQueryState(key, parser);
+  const [value, setValue] = useSearchValue(key, parser);
   const setOpen = useCallback((open: boolean) => void setValue(open ? true : null), [setValue]);
   return [value === true, setOpen] as const;
 }

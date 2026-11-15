@@ -1,4 +1,4 @@
-import { routeTree } from "@/router";
+import { routeTree } from "@/route-tree.gen";
 import type { RouteGateContext } from "@trenova/shared/lib/router/gates";
 import { enterContext } from "@trenova/shared/testing/gate-context";
 import { createTestRouter } from "@trenova/shared/testing/test-router";
@@ -20,7 +20,7 @@ export function routeAt(fullPath: string): AnyRoute {
   return route;
 }
 
-/** The app's route with id `routeId` (a pathless layout: `/app`, `/deskShell`). */
+/** The app's route with id `routeId` (a pathless layout: `/_app`, `/_desk`). */
 export function routeById(routeId: string): AnyRoute {
   const route = (router.routesById as Record<string, AnyRoute | undefined>)[routeId];
   if (!route) {
@@ -49,11 +49,6 @@ export function layoutsAbove(fullPath: string): unknown[] {
     if (route.options.component) layouts.unshift(route.options.component);
   }
   return layouts;
-}
-
-/** Every full path the app registers. */
-export function registeredPaths(): string[] {
-  return Object.keys(router.routesByPath);
 }
 
 /**

@@ -21,7 +21,14 @@ export function DeskArtifactLinkPage() {
   const root = lineageQuery.data?.results[0];
 
   if (root) {
-    return <Navigate to={`/desk/t/${threadId}?a=${root.lineageId || root.id}`} replace />;
+    return (
+      <Navigate
+        to="/desk/t/$threadId"
+        params={{ threadId }}
+        search={{ a: root.lineageId || root.id }}
+        replace
+      />
+    );
   }
   if (lineageQuery.isError) {
     return (

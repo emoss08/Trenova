@@ -2,7 +2,6 @@ import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InvoiceApprovalPage } from "../page";
@@ -91,11 +90,9 @@ function renderPage(searchParams = "") {
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   render(
-    <TestRouter>
+    <TestRouter search={searchParams}>
       <QueryClientProvider client={client}>
-        <NuqsTestingAdapter searchParams={searchParams}>
-          <InvoiceApprovalPage />
-        </NuqsTestingAdapter>
+        <InvoiceApprovalPage />
       </QueryClientProvider>
     </TestRouter>,
   );

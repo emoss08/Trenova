@@ -2,8 +2,8 @@
 path: /billing/factoring
 aliases: [factoring queue, ready to factor, factoring readiness, sell invoices, schedule of accounts, factored invoices, NOA, notice of assignment, missing POD for factoring, submit to factor, factoring schedule, failed schedule, factor remittance, funding report, reserve report, remittance import, remittance exceptions, apply remittance, send invoices to the factoring company, submit invoices to the factor]
 covers:
-  - /billing/factoring/submissions/:id
-  - /billing/factoring/remittances/:id
+  - /billing/factoring/submissions/$id
+  - /billing/factoring/remittances/$id
 related:
   - /billing/configuration-files/factoring-companies
   - /billing/configuration-files/customers

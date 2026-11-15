@@ -1,6 +1,6 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import type { FieldFilter } from "@trenova/shared/types/data-table";
-import { useQueryStates } from "nuqs";
 import { useCallback } from "react";
 import { AUDIT_SCOPE_PARAM, auditScopeParser } from "./_components/audit/audit-model";
 import {
@@ -116,7 +116,7 @@ const isAuditView = (view: RailView): view is AuditView =>
  * opens.
  */
 export function useAIControlNavigation() {
-  const [, setParams] = useQueryStates(navigationParsers);
+  const [, setParams] = useSearchState(navigationParsers);
 
   return useCallback(
     (destination: AIControlDestination) => {

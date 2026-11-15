@@ -15,6 +15,24 @@ describe("sign-out notices", () => {
     expect(signInPathAfter("/dash/login", "expired")).toBe("/dash/login?signed_out=expired");
   });
 
+  it("carries the address to return to, beside the reason or alone", () => {
+    expect(signInPathAfter("/login", "expired", "/billing/invoices?status=open")).toBe(
+      "/login?signed_out=expired&redirect=%2Fbilling%2Finvoices%3Fstatus%3Dopen",
+    );
+    expect(signInPathAfter("/login", undefined, "/billing/invoices")).toBe(
+      "/login?redirect=%2Fbilling%2Finvoices",
+    );
+    expect(signInPathAfter("/login", "expired", null)).toBe("/login?signed_out=expired");
+  });
+
+  it("keeps the return address when the notice is dropped", () => {
+    const next = withoutSignOutNotice(
+      new URLSearchParams("signed_out=expired&redirect=%2Fbilling"),
+    );
+
+    expect(next.toString()).toBe("redirect=%2Fbilling");
+  });
+
   it("reads back the notices it writes", () => {
     expect(signOutNoticeFrom(new URLSearchParams("signed_out=idle"))).toBe("idle");
     expect(signOutNoticeFrom(new URLSearchParams("signed_out=expired"))).toBe("expired");

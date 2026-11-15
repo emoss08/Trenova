@@ -1,7 +1,6 @@
 import { TestRouter } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InvoiceSidebar } from "../invoice-sidebar";
 
@@ -30,11 +29,9 @@ beforeEach(() => {
 function renderSidebar(searchParams: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <TestRouter>
+    <TestRouter search={searchParams}>
       <QueryClientProvider client={client}>
-        <NuqsTestingAdapter searchParams={searchParams}>
-          <InvoiceSidebar selectedInvoiceId={null} onSelectInvoice={vi.fn()} />
-        </NuqsTestingAdapter>
+        <InvoiceSidebar selectedInvoiceId={null} onSelectInvoice={vi.fn()} />
       </QueryClientProvider>
     </TestRouter>,
   );

@@ -5,6 +5,7 @@ import {
   REQUIRE_CATALOG,
   routeCatalogFor,
   routeCatalogs,
+  splitRouteSource,
 } from "../../../vite/route-catalogs";
 
 const SRC = "/repo/client/apps/web/src";
@@ -27,6 +28,8 @@ type TransformHook = {
 // What Vite's resolver would answer: the app's aliases and relative paths land in src, a
 // package lands in node_modules, an unknown specifier resolves to nothing.
 function resolve(specifier: string, importer: string) {
+  // The router plugin's split route chunks are imported by their full id.
+  if (specifier.startsWith(`${SRC}/`)) return { id: specifier, external: false };
   if (specifier.startsWith("@/"))
     return { id: `${SRC}/${specifier.slice(2)}.tsx`, external: false };
   if (specifier.startsWith(".")) {
@@ -105,6 +108,23 @@ describe("routeCatalogFor", () => {
   });
 });
 
+describe("splitRouteSource", () => {
+  it("names the route file a split route chunk comes from", () => {
+    expect(splitRouteSource(`${SRC}/pages/_app/settings.tsx?tsr-split=loader---component`)).toBe(
+      `${SRC}/pages/_app/settings.tsx`,
+    );
+  });
+
+  it("leaves any other module id as it is", () => {
+    expect(splitRouteSource(`${SRC}/routes/shipment/page.tsx`)).toBe(
+      `${SRC}/routes/shipment/page.tsx`,
+    );
+    expect(splitRouteSource(`${SRC}/routes/shipment/logo.svg?raw`)).toBe(
+      `${SRC}/routes/shipment/logo.svg?raw`,
+    );
+  });
+});
+
 describe("dynamicImports", () => {
   it("finds lazy imports in TSX, however they are written", () => {
     const code = [
@@ -174,6 +194,14 @@ describe("routeCatalogs plugin", () => {
       `import("../shipment/shipment-preview").then(${AFTER_CATALOGS}).then((m) =>`,
     );
     expect(result?.code).not.toContain(REQUIRE_CATALOG);
+  });
+
+  it("holds a route's split page chunk until the page's strings land", async () => {
+    const chunk = `${SRC}/pages/_app/hr.scheduling.tsx?tsr-split=loader---component`;
+    const code = `const component = lazyRouteComponent(() => import("${chunk}"), "component");\n`;
+    const result = await transform(code, `${SRC}/pages/_app/hr.scheduling.tsx`);
+
+    expect(result?.code).toContain(`import("${chunk}").then(${AFTER_CATALOGS})`);
   });
 
   it("leaves imports of packages, externals and unresolvable specifiers alone", async () => {

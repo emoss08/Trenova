@@ -143,7 +143,12 @@ export function InvoicePaymentsTab({
             ) : null}
             {canRecordPayment && isOpen ? (
               <Link
-                to={`/accounting/ar/payments?panelType=create&customerId=${invoice.customerId}&invoiceIds=${invoice.id}`}
+                to="/accounting/ar/payments"
+                search={{
+                  panelType: "create",
+                  customerId: invoice.customerId,
+                  invoiceIds: invoice.id,
+                }}
                 className={cn(buttonVariants({ size: "sm" }))}
               >
                 <CoinsHandIcon className="size-3.5" />
@@ -241,7 +246,8 @@ function PaymentApplicationsTable({
                 <TableCell>
                   {paymentId ? (
                     <Link
-                      to={`/accounting/ar/payments?panelType=edit&panelEntityId=${paymentId}`}
+                      to="/accounting/ar/payments"
+                      search={{ panelType: "edit", panelEntityId: paymentId }}
                       className="font-mono text-xs font-medium hover:underline"
                     >
                       {row.payment?.referenceNumber || paymentId}

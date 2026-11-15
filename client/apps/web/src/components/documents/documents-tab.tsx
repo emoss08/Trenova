@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { ColorOptionValue } from "@/components/fields/select-components";
@@ -30,7 +31,7 @@ import type {
   ShipmentBillingRequirement,
 } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { parseAsBoolean, useQueryState } from "nuqs";
+import { parseAsBoolean } from "nuqs";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
@@ -133,7 +134,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   const readsDocuments = usePlanFeature(PlanFeature.DocumentIntelligence).available;
   const [replacementLineageId, setReplacementLineageId] = useState<string | undefined>(undefined);
 
-  const [isUploadOpen, setIsUploadOpen] = useQueryState(
+  const [isUploadOpen, setIsUploadOpen] = useSearchValue(
     "upload",
     parseAsBoolean.withDefault(false),
   );

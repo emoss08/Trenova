@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
@@ -16,7 +17,7 @@ import {
 } from "@/components/record-memories/record-memories";
 import { PlanFeature } from "@/lib/plan-feature";
 import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
-import { parseAsString, useQueryState } from "nuqs";
+import { parseAsString } from "nuqs";
 import { CarrierComplianceForm } from "./carrier-compliance-form";
 import { CarrierContactsForm } from "./carrier-contacts-form";
 import { CarrierForm } from "./carrier-form";
@@ -31,7 +32,7 @@ export type CarrierTabbedFormProps = {
 export function CarrierTabbedForm({ carrierId }: CarrierTabbedFormProps) {
   const t = useT();
 
-  const [requestedTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("identity"));
+  const [requestedTab, setActiveTab] = useSearchValue("tab", parseAsString.withDefault("identity"));
   const remembers = useRecordMemoriesAvailable() && Boolean(carrierId);
   // Carrier intelligence is Carrier & Brokerage's; without it the carrier has no such tab, and
   // a saved link to it opens on the identity.

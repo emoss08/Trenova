@@ -1,3 +1,4 @@
+import { useSearchValue, useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
@@ -21,7 +22,6 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { FieldFilter } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryState, useQueryStates } from "nuqs";
 import { lazy, type ReactNode } from "react";
 import type { RoutePrefetchArgs } from "@/lib/route-prefetch";
 import { AuditAlertPoliciesSkeleton } from "./_components/audit-alert-policies-skeleton";
@@ -46,9 +46,8 @@ const AuditExportsTable = lazy(() => import("./_components/audit-exports-table")
 const AuditLegalHoldsTable = lazy(() => import("./_components/audit-legal-holds-table"));
 const AuditAlertPolicies = lazy(() => import("./_components/audit-alert-policies"));
 
-const SIGN_IN_ACTIVITY_PATH =
-  "/admin/organization-settings?tab=security&securityTab=activity&activityView=auth";
-const AI_AUDIT_PATH = "/admin/agent-control?tab=audit&audit=trail";
+const SIGN_IN_ACTIVITY_SEARCH = { tab: "security", securityTab: "activity", activityView: "auth" };
+const AI_AUDIT_SEARCH = { tab: "audit", audit: "trail" };
 
 const RANGE_FIELD = "timestamp";
 const ACTOR_FIELD = "principalId";
@@ -151,11 +150,11 @@ export function AuditLogsPage() {
   const { allowed: canSeeSignIns } = usePermission(Resource.AuthEvent, Operation.Read);
   const { allowed: canSeeAIAudit } = usePermission(Resource.AIAuditTrail, Operation.Read);
 
-  const [requestedView, setView] = useQueryState(AUDIT_PARAMS.view, auditViewParser);
-  const [windowParam, setWindow] = useQueryState(AUDIT_PARAMS.window, auditWindowParser);
-  const [quick, setQuick] = useQueryState(AUDIT_PARAMS.quick, auditQuickViewParser);
-  const [entryId, setEntryId] = useQueryState(AUDIT_PARAMS.entry, auditEntryParser);
-  const [table, setTable] = useQueryStates(searchParamsParser);
+  const [requestedView, setView] = useSearchValue(AUDIT_PARAMS.view, auditViewParser);
+  const [windowParam, setWindow] = useSearchValue(AUDIT_PARAMS.window, auditWindowParser);
+  const [quick, setQuick] = useSearchValue(AUDIT_PARAMS.quick, auditQuickViewParser);
+  const [entryId, setEntryId] = useSearchValue(AUDIT_PARAMS.entry, auditEntryParser);
+  const [table, setTable] = useSearchState(searchParamsParser);
   const [folded, setFolded] = useLocalStorage(OVERVIEW_FOLDED_STORAGE_KEY, false);
   const resetTable = useResetTableSearchParams();
 
@@ -227,7 +226,7 @@ export function AuditLogsPage() {
                 variant="ghost"
                 size="sm"
                 nativeButton={false}
-                render={<Link to={SIGN_IN_ACTIVITY_PATH} />}
+                render={<Link to="/admin/organization-settings" search={SIGN_IN_ACTIVITY_SEARCH} />}
               >
                 <Key01Icon aria-hidden />
                 {t("Sign-in activity")}
@@ -238,7 +237,7 @@ export function AuditLogsPage() {
                 variant="ghost"
                 size="sm"
                 nativeButton={false}
-                render={<Link to={AI_AUDIT_PATH} />}
+                render={<Link to="/admin/agent-control" search={AI_AUDIT_SEARCH} />}
               >
                 <BotIcon aria-hidden />
                 {t("AI audit trail")}

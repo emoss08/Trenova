@@ -1,8 +1,7 @@
-import { TestRouter } from "@trenova/shared/testing/test-router";
+import { TestRouter, type OnUrlUpdateFunction } from "@trenova/shared/testing/test-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BankReceiptPage } from "../page";
@@ -42,11 +41,9 @@ vi.mock("@/components/billing/billing-workspace-layout", () => ({
 function renderPage(searchParams = "", onUrlUpdate?: OnUrlUpdateFunction) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <TestRouter>
+    <TestRouter search={searchParams} onUrlUpdate={onUrlUpdate}>
       <QueryClientProvider client={client}>
-        <NuqsTestingAdapter searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
-          <BankReceiptPage />
-        </NuqsTestingAdapter>
+        <BankReceiptPage />
       </QueryClientProvider>
     </TestRouter>,
   );

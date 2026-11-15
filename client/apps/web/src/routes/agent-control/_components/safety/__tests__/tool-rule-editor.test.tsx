@@ -1,8 +1,8 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { stubLayout } from "@/test/layout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -86,7 +86,7 @@ function renderSheet(rule = releaseHold) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter hasMemory>{children}</NuqsTestingAdapter>
+      <TestRouter>{children}</TestRouter>
     </QueryClientProvider>
   );
   return render(<ToolSheet policy={rule} holders={holders} onClose={() => {}} />, { wrapper });

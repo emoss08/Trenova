@@ -7,6 +7,7 @@ import { editionAlias } from "../../packages/edition/node/resolve-entry.ts";
 import { singletonPackages } from "../../singleton-packages.ts";
 import { captureDiscovery } from "./vite/capture-discovery.ts";
 import { chunkGroups } from "./vite/chunk-groups.ts";
+import { fileRoutes } from "./vite/file-routes.ts";
 import { routeCatalogs } from "./vite/route-catalogs.ts";
 import { serviceWorker } from "./vite/service-worker.ts";
 
@@ -26,6 +27,8 @@ export default defineConfig(({ command }) => ({
     },
   },
   plugins: [
+    // Before routeCatalogs, so the page chunks it splits routes into wait for their strings.
+    fileRoutes({ srcDir: path.resolve(dirname, "src") }),
     routeCatalogs({ srcDir: path.resolve(dirname, "src") }),
     captureDiscovery(),
     // Every component is compiled, by the React Compiler's Rust port in oxc-transform-react

@@ -1,3 +1,5 @@
+import { type OnUrlUpdateFunction } from "@trenova/shared/testing/test-router";
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { AgentSafetySummary } from "@/lib/graphql/agent-safety";
 import { stubLayout } from "@/test/layout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,7 +10,6 @@ import type {
   DataTableGraphQLSource,
   DataTablePanelProps,
 } from "@trenova/shared/types/data-table";
-import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import type { ComponentType, ReactNode } from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { definition, rule, safety, tool } from "./fixtures";
@@ -149,9 +150,9 @@ function renderTab(view: "rules" | "agents", searchParams = "", onUrlUpdate?: On
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter hasMemory searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
+      <TestRouter search={searchParams} onUrlUpdate={onUrlUpdate}>
         {children}
-      </NuqsTestingAdapter>
+      </TestRouter>
     </QueryClientProvider>
   );
   return render(<SafetyTab view={view} />, { wrapper });
@@ -265,7 +266,10 @@ describe("Tool rules", () => {
   });
 
   it("draws the rules from the rule connection with the agents that hold each tool", async () => {
-    table.rows = [rule({ name: "dispatch_assign_move", title: "Assign move" }, true), emailCustomer];
+    table.rows = [
+      rule({ name: "dispatch_assign_move", title: "Assign move" }, true),
+      emailCustomer,
+    ];
     renderTab("rules");
 
     const rules = await screen.findByRole("region", { name: "Tool Rule table" });
@@ -366,7 +370,10 @@ describe("By agent", () => {
   });
 
   it("opens a tool from an agent's row with that agent marked among the holders", async () => {
-    const email = tool("customer_send_email", { answer: "NEEDS_APPROVAL", tier: "ActWithApproval" });
+    const email = tool("customer_send_email", {
+      answer: "NEEDS_APPROVAL",
+      tier: "ActWithApproval",
+    });
     table.rows = [email];
     table.openRow = email;
     renderTab("agents", "?safetyAgents=agdef_1");

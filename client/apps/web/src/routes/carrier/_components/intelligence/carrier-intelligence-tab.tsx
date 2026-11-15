@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { Link } from "@trenova/shared/components/link";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CarrierIntelProfileView } from "@/components/carrier-intelligence/carrier-intel-profile-view";
@@ -24,7 +25,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlugIcon, ScanSearchIcon } from "@trenova/shared/components/icons";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { parseAsStringLiteral } from "nuqs";
 import { useCallback, useState, type ReactNode } from "react";
 import { IntelligenceEvents } from "./intelligence-events";
 import { IntelligenceFindings } from "./intelligence-findings";
@@ -48,7 +49,7 @@ export function CarrierIntelligenceTab({ carrierId }: CarrierIntelligenceTabProp
   const t = useT();
   const queryClient = useQueryClient();
   const refreshCarrierForm = useRefreshCarrierForm(carrierId);
-  const [view, setView] = useQueryState("intelView", intelViewParser);
+  const [view, setView] = useSearchValue("intelView", intelViewParser);
   const [vetOpen, setVetOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
 

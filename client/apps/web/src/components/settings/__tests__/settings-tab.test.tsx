@@ -1,5 +1,5 @@
+import { TestRouter } from "@trenova/shared/testing/test-router";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { tabHoldingError, useSettingsTab, type SettingsTabSpec } from "../settings-tab";
@@ -14,9 +14,9 @@ function address(searchParams: string, onUrlUpdate = vi.fn()) {
   return {
     onUrlUpdate,
     wrapper: ({ children }: { children: ReactNode }) => (
-      <NuqsTestingAdapter hasMemory searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
+      <TestRouter search={searchParams} onUrlUpdate={onUrlUpdate}>
         {children}
-      </NuqsTestingAdapter>
+      </TestRouter>
     ),
   };
 }
@@ -46,7 +46,7 @@ describe("the open tab of a settings page", () => {
 
     act(() => result.current[1]("rules"));
 
-    expect(result.current[0]).toBe("rules");
+    await waitFor(() => expect(result.current[0]).toBe("rules"));
     await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
     expect(onUrlUpdate.mock.lastCall?.[0].searchParams.get("tab")).toBe("rules");
   });
@@ -57,7 +57,7 @@ describe("the open tab of a settings page", () => {
 
     act(() => result.current[1]("assignment"));
 
-    expect(result.current[0]).toBe("assignment");
+    await waitFor(() => expect(result.current[0]).toBe("assignment"));
     await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
     expect(onUrlUpdate.mock.lastCall?.[0].searchParams.has("tab")).toBe(false);
   });

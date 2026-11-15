@@ -1,3 +1,5 @@
+import { updateSearch } from "@trenova/shared/hooks/use-search-state";
+import { parseSearch, stringifySearch } from "@trenova/shared/lib/router/search";
 import { useLocation, useRouter } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 
@@ -9,17 +11,15 @@ export type QueryParamsUpdate =
 
 export type SetQueryParams = (
   update: QueryParamsUpdate,
-  options?: { replace?: boolean; viewTransition?: boolean },
-) => void;
+  options?: { replace?: boolean },
+) => Promise<void>;
 
 /**
  * The address's query as URLSearchParams, for a page whose parsers and writers work on the
- * whole query (Triage's location, Intake's filter, the sign-in notices). Per-key state reads
- * better through nuqs. A change made from a function starts from the query the address holds
- * when it runs, not the one this render saw, so two quick changes do not drop each other, and
- * nuqs, which writes through the router too, merges what it still holds on top. A change of the
- * query alone keeps the page where it is scrolled and keeps what the history entry carried
- * (why the page was opened), as a filter changes the entry rather than starting another.
+ * whole query (Triage's location, Intake's filter, the sign-in notices); per-key state is
+ * useSearchState. A change made from a function starts from the query the address holds when
+ * it runs, not the one this render saw, so two quick changes keep each other. A change of the
+ * query alone keeps the page where it is scrolled and keeps what the history entry carried.
  */
 export function useQueryParams(): [URLSearchParams, SetQueryParams] {
   const router = useRouter();
@@ -27,21 +27,18 @@ export function useQueryParams(): [URLSearchParams, SetQueryParams] {
   const params = useMemo(() => new URLSearchParams(searchStr), [searchStr]);
 
   const setQueryParams = useCallback<SetQueryParams>(
-    (update, options) => {
-      const { pathname, searchStr: currentSearch, hash } = router.latestLocation;
-      const next =
-        typeof update === "function"
-          ? update(new URLSearchParams(currentSearch))
-          : new URLSearchParams(update);
-      const query = next.toString();
-      void router.navigate({
-        href: `${pathname}${query ? `?${query}` : ""}${hash ? `#${hash}` : ""}`,
-        replace: options?.replace,
-        viewTransition: options?.viewTransition,
-        resetScroll: false,
-        state: (current) => current,
-      });
-    },
+    (update, options) =>
+      updateSearch(router, (current) => {
+        const next =
+          typeof update === "function"
+            ? update(new URLSearchParams(stringifySearch(current)))
+            : new URLSearchParams(update);
+        return {
+          search: parseSearch(next.toString()),
+          push: !(options?.replace ?? false),
+          resetScroll: false,
+        };
+      }),
     [router],
   );
 

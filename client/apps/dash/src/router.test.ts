@@ -105,14 +105,16 @@ describe("the dash session gate", () => {
     expect(thrown).toBeUndefined();
   });
 
-  it("still sends an expired session to /dash/login", async () => {
+  it("still sends an expired session to /dash/login, carrying the page it was on", async () => {
     signedInUser(true);
     answerSessionCheckWith(problemResponse(401, "authentication-error", "Authentication Failed"));
 
     const { thrown } = await runProtectedGate();
 
     expect(isRedirect(thrown)).toBe(true);
-    expect((thrown as { options: { href?: string } }).options.href).toBe("/dash/login");
+    expect((thrown as { options: { href?: string } }).options.href).toBe(
+      "/dash/login?redirect=%2Fdash%2Floads",
+    );
   });
 });
 

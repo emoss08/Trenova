@@ -13,6 +13,7 @@
   "Copy payment ID": "Copiar el ID del pago",
   "GL postings": "Asientos contables",
   "Invalid application": "Aplicación no válida",
+  "Invoice not found": "Factura no encontrada",
   "Loading open invoices…": "Cargando las facturas abiertas…",
   "NSF check, posted to wrong customer, ...": "Cheque sin fondos, contabilizado al cliente equivocado, ...",
   "No customer payments yet": "Aún no hay pagos de clientes",

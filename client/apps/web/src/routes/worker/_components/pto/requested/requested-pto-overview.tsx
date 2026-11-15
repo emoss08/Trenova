@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
@@ -6,7 +7,6 @@ import { worker } from "@/lib/queries/worker";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { PTOFilter, PTOType } from "@trenova/shared/types/worker";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { PTOFilterPopover } from "../pto-filter-popover";
 import { HeaderContent } from "../pto-header-components";
@@ -22,7 +22,7 @@ import { UpcomingPTOCard } from "./upcoming-pto-card";
 export function RequestedPTOOverview() {
   const t = useT();
 
-  const [searchParams] = useQueryStates(requestPTOFiltersSearchParamsParser);
+  const [searchParams] = useSearchState(requestPTOFiltersSearchParamsParser);
   const user = useAuthStore((state) => state.user);
 
   const query = useInfiniteQuery({
@@ -162,7 +162,7 @@ function RequestedPTOOverviewOuter({ children }: { children: React.ReactNode }) 
 function RequestedPTOHeader() {
   const t = useT();
 
-  const [, setSearchParams] = useQueryStates(requestPTOFiltersSearchParamsParser);
+  const [, setSearchParams] = useSearchState(requestPTOFiltersSearchParamsParser);
   const { defaultValues } = usePTOFilters();
 
   const handleFilterSubmit = useCallback(

@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useSecurityAccess } from "../security-access/use-security-access";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -12,7 +13,6 @@ import { listSCIMDirectoriesGraphQL } from "@/lib/graphql/scim-directory";
 import type { SCIMDirectory } from "@trenova/shared/types/iam";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { PlusIcon, Users01Icon } from "@trenova/shared/components/icons";
-import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useRef } from "react";
 import { EmptyState, ErrorState, RowSkeleton, SecuritySection } from "../security-access/shared";
 
@@ -28,7 +28,7 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
   const t = useT();
   const access = useSecurityAccess();
 
-  const [selectedDirectoryId, setSelectedDirectoryId] = useQueryState(
+  const [selectedDirectoryId, setSelectedDirectoryId] = useSearchValue(
     "directoryId",
     directoryIdParser,
   );

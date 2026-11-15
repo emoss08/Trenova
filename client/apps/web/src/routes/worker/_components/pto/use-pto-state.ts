@@ -6,33 +6,21 @@ export const viewTypeChoices = ["chart", "calendar"] as const;
 export type PTOViewType = (typeof viewTypeChoices)[number];
 
 export const ptoSearchParamsParser = {
-  viewType: parseAsStringLiteral(viewTypeChoices)
-    .withOptions({
-      shallow: true,
-    })
-    .withDefault("chart"),
-  ptoOverviewFilters: parseAsJson(ptoFilterSchema)
-    .withOptions({
-      shallow: true,
-    })
-    .withDefault({
-      startDate: getStartOfMonth(),
-      endDate: getEndOfMonth(),
-      type: undefined,
-      workerId: undefined,
-      fleetCodeId: undefined,
-    }),
-  requestPTOFilters: parseAsJson(ptoFilterSchema)
-    .withOptions({
-      shallow: true,
-    })
-    .withDefault({
-      startDate: getStartOfMonth(),
-      endDate: getEndOfMonth(),
-      type: undefined,
-      workerId: undefined,
-      fleetCodeId: undefined,
-    }),
+  viewType: parseAsStringLiteral(viewTypeChoices).withDefault("chart"),
+  ptoOverviewFilters: parseAsJson(ptoFilterSchema).withDefault({
+    startDate: getStartOfMonth(),
+    endDate: getEndOfMonth(),
+    type: undefined,
+    workerId: undefined,
+    fleetCodeId: undefined,
+  }),
+  requestPTOFilters: parseAsJson(ptoFilterSchema).withDefault({
+    startDate: getStartOfMonth(),
+    endDate: getEndOfMonth(),
+    type: undefined,
+    workerId: undefined,
+    fleetCodeId: undefined,
+  }),
 };
 
 export const ptoViewTypeSearchParamsParser = {

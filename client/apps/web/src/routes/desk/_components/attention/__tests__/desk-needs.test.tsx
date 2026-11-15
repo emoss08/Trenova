@@ -2,7 +2,6 @@ import { TestRouter } from "@trenova/shared/testing/test-router";
 import type { DeskAttention, DeskAttentionFilter } from "@/lib/graphql/desk-attention";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { DecisionFilters } from "../../decisions/decision-filters";
 import { DeskNeeds } from "../desk-needs";
@@ -127,10 +126,8 @@ function renderAt(search: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <TestRouter initialEntries={[`/desk/needs${search}`]}>
-        <NuqsTestingAdapter searchParams={search}>
-          <DeskNeeds />
-        </NuqsTestingAdapter>
+      <TestRouter initialEntries={[`/desk/needs${search}`]} search={search}>
+        <DeskNeeds />
       </TestRouter>
     </QueryClientProvider>,
   );

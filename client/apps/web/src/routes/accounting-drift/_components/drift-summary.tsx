@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import {
@@ -7,12 +8,11 @@ import {
 import type { AccountingDriftOverview } from "@/lib/graphql/accounting-drift";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useQueryStates } from "nuqs";
 import { activeDriftBucket, driftBucketFilter, type DriftBucket } from "./drift-filters";
 
 export function DriftSummary({ overview }: { overview: AccountingDriftOverview }) {
   const t = useT();
-  const [filters, setFilters] = useQueryStates({
+  const [filters, setFilters] = useSearchState({
     ...tableFilterSearchParamsParser,
     ...tablePaginationSearchParamsParser,
   });

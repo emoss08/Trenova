@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { DataTable } from "@/components/data-table/data-table";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { usePermission } from "@/hooks/use-permission";
@@ -11,7 +12,6 @@ import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTableEmptyStateRenderProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryStates } from "nuqs";
 import { useCallback, useMemo } from "react";
 import { AUDIT_EXPORT_PARAM, auditExportParser } from "../../ai-control-tabs";
 import { useAddressedFlag } from "../../use-addressed-flag";
@@ -72,7 +72,7 @@ function TrailEmpty({ hasActiveFilters, onClearFilters }: DataTableEmptyStateRen
  */
 export default function AuditTrailView({ onOpenExports }: { onOpenExports: () => void }) {
   const t = useT();
-  const [params, setParams] = useQueryStates(trailParsers);
+  const [params, setParams] = useSearchState(trailParsers);
   const scope = params[AUDIT_SCOPE_PARAM];
   const { allowed: canExport } = usePermission(Resource.AIAuditTrail, Operation.Export);
   const { allowed: canPickAgent } = usePermission(Resource.AgentDefinition, Operation.Read);

@@ -1,3 +1,4 @@
+import { readSearchState, useSearchState } from "@trenova/shared/hooks/use-search-state";
 import {
   getRangeForDays,
   parseAnchorDate,
@@ -14,15 +15,13 @@ import {
 import type { DispatchBoardInput } from "@trenova/graphql/generated/graphql";
 import { startOfDay } from "date-fns";
 import {
-  createLoader,
-  debounce,
   parseAsArrayOf,
   parseAsBoolean,
   parseAsNumberLiteral,
   parseAsString,
   parseAsStringLiteral,
-  useQueryStates,
 } from "nuqs";
+import { useUrlSearch } from "@/hooks/use-url-search";
 import { useCallback, useMemo } from "react";
 import {
   CAPACITY_FILTERS,
@@ -104,7 +103,8 @@ export const dispatchRailParsers = {
 // Paging a board back and forth should not bury the browser's back button under history.
 const URL_OPTIONS = { history: "replace" } as const;
 
-const loadDispatchWindow = createLoader(dispatchWindowParsers);
+const loadDispatchWindow = (search: URLSearchParams) =>
+  readSearchState(dispatchWindowParsers, search);
 
 /**
  * The board query's input, built the same way whether the window comes from the hook
@@ -145,7 +145,7 @@ export function dispatchBoardInputFromSearch(searchParams: URLSearchParams): Dis
 }
 
 export function useDispatchWindow() {
-  const [{ at, zoom, covered, search, fleets, customers }, setWindow] = useQueryStates(
+  const [{ at, zoom, covered, search, fleets, customers }, setWindow] = useSearchState(
     dispatchWindowParsers,
     URL_OPTIONS,
   );
@@ -171,12 +171,14 @@ export function useDispatchWindow() {
     (next: boolean) => void setWindow({ covered: next }),
     [setWindow],
   );
-  // The box reads from state on the keystroke; the URL, and with it the board query,
-  // catches up once typing stops.
-  const setSearch = useCallback(
-    (next: string) => void setWindow({ search: next }, { limitUrlUpdates: debounce(300) }),
-    [setWindow],
-  );
+  // The box holds what is typed; the URL, and with it the board query, catches up once
+  // typing stops.
+  const commitSearch = useCallback((next: string) => void setWindow({ search: next }), [setWindow]);
+  const [searchText, setSearch] = useUrlSearch({
+    query: search,
+    onCommit: commitSearch,
+    delay: 300,
+  });
   const setFleets = useCallback((next: string[]) => void setWindow({ fleets: next }), [setWindow]);
   const setCustomers = useCallback(
     (next: string[]) => void setWindow({ customers: next }),
@@ -192,7 +194,7 @@ export function useDispatchWindow() {
     range,
     zoom,
     filters,
-    search,
+    search: searchText,
     fleetCodeIds: fleets,
     customerIds: customers,
     setSearch,
@@ -208,7 +210,7 @@ export function useDispatchWindow() {
 }
 
 export function useDispatchSelection() {
-  const [{ move, worker }, setSelection] = useQueryStates(dispatchSelectionParsers, URL_OPTIONS);
+  const [{ move, worker }, setSelection] = useSearchState(dispatchSelectionParsers, URL_OPTIONS);
 
   // A move and a driver are never both selected: the inspector answers one question at a
   // time, and which one is being asked is exactly what the selection encodes.
@@ -235,7 +237,7 @@ export function useDispatchSelection() {
 }
 
 export function useDispatchView() {
-  const [{ mode, tab, urgency }, setView] = useQueryStates(dispatchViewParsers, URL_OPTIONS);
+  const [{ mode, tab, urgency }, setView] = useSearchState(dispatchViewParsers, URL_OPTIONS);
   const capabilities = useOrgCapabilities();
 
   const setMode = useCallback((next: CenterMode) => void setView({ mode: next }), [setView]);
@@ -257,17 +259,19 @@ export function useDispatchView() {
 }
 
 export function useDispatchRail() {
-  const [{ capacity, q }, setRail] = useQueryStates(dispatchRailParsers, URL_OPTIONS);
+  const [{ capacity, q }, setRail] = useSearchState(dispatchRailParsers, URL_OPTIONS);
 
   const setCapacityFilter = useCallback(
     (next: CapacityFilter) => void setRail({ capacity: next }),
     [setRail],
   );
-  // The search box reads from state on the keystroke; the URL catches up once typing stops.
-  const setDriverSearch = useCallback(
-    (next: string) => void setRail({ q: next }, { limitUrlUpdates: debounce(250) }),
-    [setRail],
-  );
+  // The box holds what is typed; the URL catches up once typing stops.
+  const commitDriverSearch = useCallback((next: string) => void setRail({ q: next }), [setRail]);
+  const [driverSearch, setDriverSearch] = useUrlSearch({
+    query: q,
+    onCommit: commitDriverSearch,
+    delay: 250,
+  });
 
-  return { capacityFilter: capacity, driverSearch: q, setCapacityFilter, setDriverSearch };
+  return { capacityFilter: capacity, driverSearch, setCapacityFilter, setDriverSearch };
 }

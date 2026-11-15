@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { CopyIconButton } from "@/components/copy-icon-button";
 import { SectionPanel } from "@/components/section-panel";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
@@ -17,7 +18,6 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import type { ReactNode } from "react";
 import { Ic } from "../kit/ic";
 import { ReadSheet } from "../kit/read-sheet";
@@ -41,7 +41,7 @@ import {
  */
 export function AuditEventPanel({ open, onOpenChange, row }: DataTablePanelProps<AIAuditEventRow>) {
   const t = useT();
-  const [{ panelEntityId }] = useQueryStates(panelSearchParamsParser);
+  const [{ panelEntityId }] = useSearchState(panelSearchParamsParser);
   const id = row?.id ?? panelEntityId ?? "";
   const detail = useQuery({ ...aiAudit.event(id), enabled: open && id !== "" });
   const chain = useQuery({ ...aiAudit.chainStatus(), enabled: open });

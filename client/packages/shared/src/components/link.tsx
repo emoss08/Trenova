@@ -1,4 +1,6 @@
-import { Link as RouterLink, type LinkComponent } from "@tanstack/react-router";
+import { useForesight } from "@foresightjs/react";
+import { Link as RouterLink, useRouter, type LinkComponent } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 
 const EXACT = { exact: true } as const;
 const NO_ACTIVE_PROPS = {} as const;
@@ -15,3 +17,20 @@ const NO_ACTIVE_PROPS = {} as const;
 export const Link: LinkComponent<"a"> = (props) => (
   <RouterLink activeOptions={EXACT} activeProps={NO_ACTIVE_PROPS} {...props} />
 );
+
+export function InternalLink(
+  props: LinkComponent<"a"> & { to: string; children: ReactNode; className?: string },
+) {
+  const router = useRouter();
+  const { to, children } = props;
+
+  const { elementRef } = useForesight<HTMLAnchorElement>({
+    callback: () => router.preloadRoute({ to }),
+  });
+
+  return (
+    <RouterLink ref={elementRef} activeOptions={EXACT} activeProps={NO_ACTIVE_PROPS} {...props}>
+      {children}
+    </RouterLink>
+  );
+}

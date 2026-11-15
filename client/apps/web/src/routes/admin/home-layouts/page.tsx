@@ -156,7 +156,8 @@ function PresetRow({
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            to={`/admin/home-layouts/${preset.id}`}
+            to="/admin/home-layouts/$id"
+            params={{ id: preset.id }}
             className="truncate text-sm font-medium hover:underline"
           >
             {preset.name}
@@ -190,7 +191,7 @@ function PresetRow({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <Link to={`/admin/home-layouts/${preset.id}`}>
+        <Link to="/admin/home-layouts/$id" params={{ id: preset.id }}>
           <Button variant="outline" size="sm">
             {t("Edit")}
           </Button>

@@ -12,7 +12,7 @@ import { useImageUpload } from "@/components/image-upload/use-image-upload";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { useOrganizationBranding } from "@/hooks/use-organization-branding";
 import {
-  organizationSettingsTabParser,
+  useOrganizationSettingsTab,
   type OrganizationSettingsTabValue,
 } from "@/hooks/use-organization-setting-state";
 import { updateOrganizationSettingsGraphQL } from "@/lib/graphql/organization";
@@ -48,7 +48,6 @@ import {
 import { Building07Icon, Shield01Icon } from "@trenova/shared/components/icons";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { mailingAddressLines } from "@trenova/shared/lib/mailing-address";
-import { useQueryState } from "nuqs";
 import { Activity, useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 import { BrandingPreview, type BrandImageSlot, type BrandMark } from "./branding-preview";
@@ -83,7 +82,7 @@ function OrganizationSettingsTabs({ organizationId }: { organizationId: string }
     values: data,
   });
 
-  const [tab, setTab] = useQueryState("tab", organizationSettingsTabParser);
+  const [tab, setTab] = useOrganizationSettingsTab();
 
   const { handleSubmit, reset } = form;
 

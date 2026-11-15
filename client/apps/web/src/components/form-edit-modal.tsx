@@ -1,3 +1,4 @@
+import { useSearchState } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -20,7 +21,6 @@ import { type API_ENDPOINTS } from "@trenova/shared/types/server";
 import { TimeFormat } from "@trenova/shared/types/user";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDownIcon, ChevronUpIcon, XCloseIcon } from "@trenova/shared/components/icons";
-import { useQueryStates } from "nuqs";
 import React, { useCallback, useEffect, useRef, useTransition } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
@@ -80,10 +80,7 @@ export function FormEditModal<T extends FieldValues>({
 
   const dataTable = useOptionalDataTable<T, unknown>();
   const [isPending, startTransition] = useTransition();
-  const [searchParams, setSearchParams] = useQueryStates(entitySearchParamsParser, {
-    history: "replace",
-    throttleMs: 50,
-  });
+  const [searchParams, setSearchParams] = useSearchState(entitySearchParamsParser);
   const queryClient = useQueryClient();
 
   const {

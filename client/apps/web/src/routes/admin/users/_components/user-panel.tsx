@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
@@ -23,7 +24,7 @@ import {
   type UserCreateFormValues,
   type UserEditFormValues,
 } from "@trenova/shared/types/user";
-import { parseAsString, useQueryState } from "nuqs";
+import { parseAsString } from "nuqs";
 import { useMemo } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { UserForm, UserFormSkeleton } from "./user-form";
@@ -47,7 +48,7 @@ const EMPTY_EDIT_VALUES: UserEditFormValues = {
 };
 
 export function UserPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<UserRow>) {
-  const [panelEntityId] = useQueryState("panelEntityId", parseAsString);
+  const [panelEntityId] = useSearchValue("panelEntityId", parseAsString);
   const editUserId = row?.id ?? panelEntityId ?? undefined;
 
   if (mode === "edit") {

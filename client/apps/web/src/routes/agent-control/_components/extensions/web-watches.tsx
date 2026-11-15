@@ -1,3 +1,4 @@
+import { useSearchValue } from "@trenova/shared/hooks/use-search-state";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { agentExtension } from "@/lib/queries/agent-extension";
 import { assistant } from "@/lib/queries/assistant";
@@ -13,7 +14,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { useQueryState } from "nuqs";
 import { useEffect, useRef, useState } from "react";
 import { WEB_WATCH_PARAM, webWatchParser } from "../../ai-control-tabs";
 import { WebWatchesSkeleton } from "./web-watches-skeleton";
@@ -26,7 +26,7 @@ import { WebWatchesSkeleton } from "./web-watches-skeleton";
 export function WebWatches({ canUpdate }: { canUpdate: boolean }) {
   const t = useT();
   const watches = useQuery(agentExtension.webWatches());
-  const [linkedWatch] = useQueryState(WEB_WATCH_PARAM, webWatchParser);
+  const [linkedWatch] = useSearchValue(WEB_WATCH_PARAM, webWatchParser);
 
   if (watches.isPending) {
     return <WebWatchesSkeleton />;

@@ -6,7 +6,7 @@ related:
   - /accounting/ar/open-items
   - /accounting/ar/payments
 covers:
-  - /accounting/ar/customer-statement/:customerId
+  - /accounting/ar/customer-statement/$customerId
 ---
 
 ## What it's for
