@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { useTable } from "@tanstack/react-table";
 import { dataTableFeatures, selectDataTableViewState } from "@trenova/shared/lib/table-features";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import type { TableDensity, TableFormatRule } from "@/types/table-configuration";
+import { createDataTableViewStore } from "@/components/data-table/data-table-view-store";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useDataTableLayout } from "../use-data-table-layout";
@@ -32,17 +32,6 @@ const columns: ColumnDef<Row>[] = [
   { id: "status", accessorKey: "status" },
 ];
 const NO_ROWS: Row[] = [];
-const NO_RULES: TableFormatRule[] = [];
-
-type Props = {
-  density: TableDensity;
-  formatRules: TableFormatRule[];
-  activeViewId: string | null;
-  pinnedRowsCollapsed?: boolean;
-  markChangesSinceLastVisit?: boolean;
-  hideTotals?: boolean;
-  virtualized?: boolean;
-};
 
 function setup(savedLayout: unknown) {
   requestMock.mockResolvedValue({
@@ -55,16 +44,11 @@ function setup(savedLayout: unknown) {
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 
-  return renderHook(
-    ({
-      density,
-      formatRules,
-      activeViewId,
-      pinnedRowsCollapsed = false,
-      markChangesSinceLastVisit = false,
-      hideTotals = false,
-      virtualized = false,
-    }: Props) => {
+  const store = createDataTableViewStore("comfortable");
+  let renders = 0;
+  const hook = renderHook(
+    () => {
+      renders += 1;
       const table = useTable(
         {
           features: dataTableFeatures,
@@ -74,24 +58,12 @@ function setup(savedLayout: unknown) {
         },
         selectDataTableViewState,
       );
-      const layout = useDataTableLayout({
-        resource: "shipment",
-        table,
-        density,
-        formatRules,
-        activeViewId,
-        pinnedRowsCollapsed,
-        markChangesSinceLastVisit,
-        hideTotals,
-        virtualized,
-      });
+      const layout = useDataTableLayout({ resource: "shipment", table, viewStore: store });
       return { table, layout };
     },
-    {
-      wrapper,
-      initialProps: { density: "comfortable", formatRules: NO_RULES, activeViewId: null },
-    },
+    { wrapper },
   );
+  return Object.assign(hook, { store, renders: () => renders });
 }
 
 async function settle(hook: ReturnType<typeof setup>) {
@@ -205,7 +177,7 @@ describe("useDataTableLayout", () => {
     await settle(hook);
     await arm(hook);
 
-    hook.rerender({ density: "compact", formatRules: NO_RULES, activeViewId: null });
+    act(() => hook.store.getState().actions.setDensity("compact"));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
@@ -214,6 +186,24 @@ describe("useDataTableLayout", () => {
       "shipment",
       expect.objectContaining({ density: "compact" }),
     );
+  });
+
+  it("hears a change to the person's view without drawing anything again", async () => {
+    const hook = setup(null);
+    await settle(hook);
+    await arm(hook);
+    const before = hook.renders();
+
+    act(() => hook.store.getState().actions.setHideTotals(true));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+
+    expect(saveMock).toHaveBeenCalledWith(
+      "shipment",
+      expect.objectContaining({ hideTotals: true }),
+    );
+    expect(hook.renders()).toBe(before);
   });
 
   it("keeps widths inside what the server accepts", async () => {
@@ -259,12 +249,7 @@ describe("useDataTableLayout", () => {
     await arm(hook);
 
     act(() => hook.result.current.table.setRowPinning({ top: ["b", "a"], bottom: [] }));
-    hook.rerender({
-      density: "comfortable",
-      formatRules: NO_RULES,
-      activeViewId: null,
-      pinnedRowsCollapsed: true,
-    });
+    act(() => hook.store.getState().actions.setPinnedRowsCollapsed(true));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
@@ -280,12 +265,7 @@ describe("useDataTableLayout", () => {
     await settle(hook);
     await arm(hook);
 
-    hook.rerender({
-      density: "comfortable",
-      formatRules: NO_RULES,
-      activeViewId: null,
-      virtualized: true,
-    });
+    act(() => hook.store.getState().actions.setVirtualized(true));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
@@ -312,12 +292,7 @@ describe("useDataTableLayout", () => {
     await settle(hook);
     await arm(hook);
 
-    hook.rerender({
-      density: "comfortable",
-      formatRules: NO_RULES,
-      activeViewId: null,
-      markChangesSinceLastVisit: true,
-    });
+    act(() => hook.store.getState().actions.setMarkChangesSinceLastVisit(true));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
     });

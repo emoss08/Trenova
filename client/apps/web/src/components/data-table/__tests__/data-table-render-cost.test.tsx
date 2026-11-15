@@ -2,6 +2,7 @@ import { TestRouter } from "@trenova/shared/testing/test-router";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ColumnDef, DataTableExpansion, RowAction } from "@trenova/shared/types/data-table";
+import userEvent from "@testing-library/user-event";
 import React from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { DataTable } from "../data-table";
@@ -228,6 +229,20 @@ describe("DataTable render cost", () => {
     const checkboxes = screen.getAllByRole("checkbox", { name: "Select row" });
     expect(measure(() => fireEvent.click(checkboxes[10]))).toBeLessThanOrEqual(COLUMN_COUNT);
     expect(checkboxes[10].getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("turns on marking changes without redrawing the header row or any cell", async () => {
+    fireEvent.click(screen.getByRole("button", { name: /Display/ }));
+    const toggle = await screen.findByRole("switch", { name: /Mark changes since my last visit/ });
+    const user = userEvent.setup();
+    countHeaderRender.mockClear();
+    countCellRender.mockClear();
+
+    await user.click(toggle);
+
+    expect(toggle.getAttribute("aria-checked")).toBe("true");
+    expect(countCellRender).not.toHaveBeenCalled();
+    expect(countHeaderRender).not.toHaveBeenCalled();
   });
 
   it("ticks rows without redrawing the header row around them", () => {

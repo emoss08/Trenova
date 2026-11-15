@@ -37,7 +37,9 @@ export function DataTableBulkEdit({
           onStarted={(job) => trackBulkEditJob(job.id)}
         />
       ) : null}
-      {jobId ? <BulkEditProgress jobId={jobId} onDismiss={dismissBulkEditJob} onDone={onDone} /> : null}
+      {jobId ? (
+        <BulkEditProgress jobId={jobId} onDismiss={dismissBulkEditJob} onDone={onDone} />
+      ) : null}
     </>
   );
 }

@@ -32174,6 +32174,15 @@
       "routes/customer-payments"
     ]
   },
+  "Applied, with unsaved changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Applies To": {
     "sites": 3,
     "scope": [
@@ -74615,6 +74624,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Currently applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Currently in production": {

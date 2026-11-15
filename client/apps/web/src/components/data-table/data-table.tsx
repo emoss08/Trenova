@@ -823,7 +823,6 @@ export function DataTable<TData extends Record<string, any>>({
   // With every group collapsed there are headers but no rows for a total to sit under.
   const showTotalsRow = !hideTotals && hasTotals && !isEmpty;
 
-
   const cursorRowIds = useMemo(() => {
     if (pinnedRowsCollapsed || pinnedRowIds.length === 0) return pageRowIds;
     const pinned = new Set(pinnedRowIds);
@@ -1100,7 +1099,6 @@ export function DataTable<TData extends Record<string, any>>({
     table,
   ]);
 
-
   // Bulk edit is offered where the server has an editor for the table and the person
   // can change its rows; the server checks both again when the edit starts.
   const bulkEditFieldsQuery = useQuery({
@@ -1308,278 +1306,281 @@ export function DataTable<TData extends Record<string, any>>({
 
   return (
     <DataTableViewProvider store={viewStore}>
-    <DataTableProvider
-      isLoading={isLoadingPage}
-      table={table}
-      columns={tableColumns}
-      isPanelOpen={isPanelOpen}
-      panelMode={panelMode}
-      panelRow={panelRow}
-      getSelectedRows={getSelectedRows}
-      fitColumns={fitColumns}
-      fillDown={fillDown}
-      pasteFromClipboard={pasteFromClipboard}
-      openPanelCreate={openPanelCreate}
-      openPanelEdit={openPanelEdit}
-      closePanel={closePanel}
-      hasPanel={hasPanel}
-      canOpenPanel={canUpdate || enableReadOnlyPanel}
-      canCreate={canCreate}
-      canUpdate={canUpdate}
-      canExport={canExport}
-      pagination={pagination}
-    >
-      <PageViewRegistration
-        resource={resource ?? name}
-        query={query}
-        fieldFilters={baseQueryOptions.fieldFilters}
-        filterGroups={filterGroups}
-        sort={effectiveSort}
-        selection={selectionAtom}
-        columnVisibility={liveColumnVisibility}
-        columnIds={table.getAllLeafColumns().map((column) => column.id)}
-        rowCount={totalCount}
-        rowCountExact={totalCountExact}
-      />
-      <DataTablePanelWrapper>
-        <DataTablePanelContent>
-          <div className={TABLE_SHELL_CLASS}>
-            <DataTableToolbar
-              table={table}
-              columns={columns}
-              filterFields={filterFields}
-              query={query}
-              onSearchChange={handleSearchChange}
-              filters={filterItems}
-              onFiltersChange={handleFiltersChange}
-              sort={sort}
-              onSortChange={handleSortArrayChange}
-              fieldFilters={fieldFilters ?? []}
-              onAskApplied={handleAskApplied}
-              addRecordActions={resolvedAddRecordActions}
-              resource={name}
-              presenceResource={resource}
-              arrangement={arrangement}
-              onApplyConfig={handleApplyConfig}
-              hasSavedLayout={layout.hasSavedLayout}
-              canMarkChanges={!!name}
-              canShowTotals={!!name && hasTotals}
-              canVirtualize={!!name && !grouping}
-              onFitColumns={fitColumns}
-              onResetLayout={name ? handleResetLayout : undefined}
-              exportContext={{
-                permissionResource: resource,
-                graphql,
-                queryOptions: baseQueryOptions,
-                currentPageRows: currentPageResults ?? [],
-                totalCount,
-              }}
-              slots={toolbar}
-            />
-            <DataTableFilterChips
-              filters={filterItems}
-              onFiltersChange={handleFiltersChange}
-              query={query}
-              onClearQuery={() => handleSearchChange("")}
-              extraChips={toolbar?.chips}
-            />
-            <DataTableChangesBanner rows={tableData} />
-            {enableRowSelection && totalCount != null && (
-              <DataTableSelectionBanner
-                selection={selectionAtom}
-                pageRowIds={pageRowIds}
-                totalCount={totalCount}
-                totalCountExact={totalCountExact}
-                maxSelectable={BULK_SELECT_MAX}
-                onEditAllMatching={canBulkEdit ? editAllMatching : undefined}
-                onSelectAllMatching={handleSelectAllMatching}
-                onClearSelection={handleClearSelection}
+      <DataTableProvider
+        isLoading={isLoadingPage}
+        table={table}
+        columns={tableColumns}
+        isPanelOpen={isPanelOpen}
+        panelMode={panelMode}
+        panelRow={panelRow}
+        getSelectedRows={getSelectedRows}
+        fitColumns={fitColumns}
+        fillDown={fillDown}
+        pasteFromClipboard={pasteFromClipboard}
+        openPanelCreate={openPanelCreate}
+        openPanelEdit={openPanelEdit}
+        closePanel={closePanel}
+        hasPanel={hasPanel}
+        canOpenPanel={canUpdate || enableReadOnlyPanel}
+        canCreate={canCreate}
+        canUpdate={canUpdate}
+        canExport={canExport}
+        pagination={pagination}
+      >
+        <PageViewRegistration
+          resource={resource ?? name}
+          query={query}
+          fieldFilters={baseQueryOptions.fieldFilters}
+          filterGroups={filterGroups}
+          sort={effectiveSort}
+          selection={selectionAtom}
+          columnVisibility={liveColumnVisibility}
+          columnIds={table.getAllLeafColumns().map((column) => column.id)}
+          rowCount={totalCount}
+          rowCountExact={totalCountExact}
+        />
+        <DataTablePanelWrapper>
+          <DataTablePanelContent>
+            <div className={TABLE_SHELL_CLASS}>
+              <DataTableToolbar
+                table={table}
+                columns={columns}
+                filterFields={filterFields}
+                query={query}
+                onSearchChange={handleSearchChange}
+                filters={filterItems}
+                onFiltersChange={handleFiltersChange}
+                sort={sort}
+                onSortChange={handleSortArrayChange}
+                fieldFilters={fieldFilters ?? []}
+                onAskApplied={handleAskApplied}
+                addRecordActions={resolvedAddRecordActions}
+                resource={name}
+                presenceResource={resource}
+                arrangement={arrangement}
+                onApplyConfig={handleApplyConfig}
+                hasSavedLayout={layout.hasSavedLayout}
+                canMarkChanges={!!name}
+                canShowTotals={!!name && hasTotals}
+                canVirtualize={!!name && !grouping}
+                onFitColumns={fitColumns}
+                onResetLayout={name ? handleResetLayout : undefined}
+                exportContext={{
+                  permissionResource: resource,
+                  graphql,
+                  queryOptions: baseQueryOptions,
+                  currentPageRows: currentPageResults ?? [],
+                  totalCount,
+                }}
+                slots={toolbar}
               />
-            )}
-            {alternateView && alternateOpened ? (
-              <Activity mode={alternateActive ? "visible" : "hidden"}>
-                <div
-                  data-density={density}
-                  className={cn(TABLE_VIEWPORT_CLASS, density === "compact" && DENSITY_COMPACT_ROW)}
-                >
-                  {alternateView.render({ queryOptions: baseQueryOptions })}
-                </div>
-              </Activity>
-            ) : null}
-            <Activity mode={alternateActive ? "hidden" : "visible"}>
-              {isEmpty && !hasCollapsedGroups ? (
-                <div className="border-border bleed:rounded-none bleed:border-0 rounded-lg border">
-                  {renderEmptyState ? (
-                    renderEmptyState({ hasActiveFilters, onClearFilters: handleClearFilters })
-                  ) : (
-                    <DataTableEmptyState
-                      columns={emptyColumns}
-                      hasActiveFilters={hasActiveFilters}
-                      title={emptyTitle}
-                      onClearFilters={handleClearFilters}
-                      addRecord={hasActiveFilters ? undefined : defaultCreate}
-                    />
-                  )}
-                </div>
-              ) : (
-                <div ref={attachViewport} className={TABLE_VIEWPORT_CLASS}>
-                  {resizingPage ? (
-                    <div
-                      role="status"
-                      data-slot="table-page-loading"
-                      className="bg-canvas/60 animate-in fade-in-0 absolute inset-x-0 top-(--row-head-h) bottom-0 z-25 duration-150"
-                    >
-                      <div aria-hidden className="ui-shimmer h-0.5 w-full" />
-                      <div className="flex justify-center pt-6">
-                        <div className="border-border bg-popover text-foreground rounded-badge flex h-7 items-center gap-2 border px-2.5 text-xs font-medium">
-                          <Spinner className="size-3.5" />
-                          {t("{0, plural, one {Loading # row} other {Loading # rows}}", pageSize)}
+              <DataTableFilterChips
+                filters={filterItems}
+                onFiltersChange={handleFiltersChange}
+                query={query}
+                onClearQuery={() => handleSearchChange("")}
+                extraChips={toolbar?.chips}
+              />
+              <DataTableChangesBanner rows={tableData} />
+              {enableRowSelection && totalCount != null && (
+                <DataTableSelectionBanner
+                  selection={selectionAtom}
+                  pageRowIds={pageRowIds}
+                  totalCount={totalCount}
+                  totalCountExact={totalCountExact}
+                  maxSelectable={BULK_SELECT_MAX}
+                  onEditAllMatching={canBulkEdit ? editAllMatching : undefined}
+                  onSelectAllMatching={handleSelectAllMatching}
+                  onClearSelection={handleClearSelection}
+                />
+              )}
+              {alternateView && alternateOpened ? (
+                <Activity mode={alternateActive ? "visible" : "hidden"}>
+                  <div
+                    data-density={density}
+                    className={cn(
+                      TABLE_VIEWPORT_CLASS,
+                      density === "compact" && DENSITY_COMPACT_ROW,
+                    )}
+                  >
+                    {alternateView.render({ queryOptions: baseQueryOptions })}
+                  </div>
+                </Activity>
+              ) : null}
+              <Activity mode={alternateActive ? "hidden" : "visible"}>
+                {isEmpty && !hasCollapsedGroups ? (
+                  <div className="border-border bleed:rounded-none bleed:border-0 rounded-lg border">
+                    {renderEmptyState ? (
+                      renderEmptyState({ hasActiveFilters, onClearFilters: handleClearFilters })
+                    ) : (
+                      <DataTableEmptyState
+                        columns={emptyColumns}
+                        hasActiveFilters={hasActiveFilters}
+                        title={emptyTitle}
+                        onClearFilters={handleClearFilters}
+                        addRecord={hasActiveFilters ? undefined : defaultCreate}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div ref={attachViewport} className={TABLE_VIEWPORT_CLASS}>
+                    {resizingPage ? (
+                      <div
+                        role="status"
+                        data-slot="table-page-loading"
+                        className="bg-canvas/60 animate-in fade-in-0 absolute inset-x-0 top-(--row-head-h) bottom-0 z-25 duration-150"
+                      >
+                        <div aria-hidden className="ui-shimmer h-0.5 w-full" />
+                        <div className="flex justify-center pt-6">
+                          <div className="border-border bg-popover text-foreground rounded-badge flex h-7 items-center gap-2 border px-2.5 text-xs font-medium">
+                            <Spinner className="size-3.5" />
+                            {t("{0, plural, one {Loading # row} other {Loading # rows}}", pageSize)}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ) : null}
-                  <DataTableRefreshPill
-                    visible={liveRefresh.hasPendingUpdate}
-                    onRefresh={liveRefresh.applyStaged}
-                    onDismiss={liveRefresh.dismissStaged}
-                  />
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    modifiers={COLUMN_DRAG_MODIFIERS}
-                    onDragEnd={handleColumnDragEnd}
-                  >
-                    <Table
-                      role="grid"
-                      aria-label={name}
-                      aria-rowcount={
-                        totalCount != null && totalCountExact
-                          ? totalCount + 1 + table.getTopRows().length
-                          : -1
-                      }
-                      aria-colcount={visibleLeafColumns.length}
-                      aria-multiselectable
-                      aria-busy={isLoadingPage || resizingPage || undefined}
-                      data-density={density}
-                      className={cn(
-                        "border-separate border-spacing-0",
-                        // Density repoints the row-height token; the cells read it,
-                        // so the two densities stay the same table at two sizes
-                        // rather than one table with padding patched over it.
-                        density === "compact" && cn(DENSITY_COMPACT_ROW, DENSITY_COMPACT_CELLS),
-                      )}
-                      containerClassName={TABLE_CONTAINER_CLASS}
-                      // The fades sit between the sticky rows, which would otherwise
-                      // cover them: below the column header and the group header stuck
-                      // under it (h-9), and above the totals row, which measures itself.
-                      maskClassName={cn(
-                        "bottom-[var(--dt-foot-h,0px)]",
-                        grouping ? "top-[calc(var(--row-head-h)+2.25rem)]" : "top-(--row-head-h)",
-                      )}
-                      ref={tableElementRef}
+                    ) : null}
+                    <DataTableRefreshPill
+                      visible={liveRefresh.hasPendingUpdate}
+                      onRefresh={liveRefresh.applyStaged}
+                      onDismiss={liveRefresh.dismissStaged}
+                    />
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      modifiers={COLUMN_DRAG_MODIFIERS}
+                      onDragEnd={handleColumnDragEnd}
                     >
-                      <TableHeader className="sticky top-0 z-20">
-                        {table.getHeaderGroups().map((headerGroup) => (
-                          <TableRow
-                            key={headerGroup.id}
-                            aria-rowindex={1}
-                            className="hover:bg-transparent"
-                          >
-                            <SortableContext
-                              items={reorderableIds}
-                              strategy={horizontalListSortingStrategy}
+                      <Table
+                        role="grid"
+                        aria-label={name}
+                        aria-rowcount={
+                          totalCount != null && totalCountExact
+                            ? totalCount + 1 + table.getTopRows().length
+                            : -1
+                        }
+                        aria-colcount={visibleLeafColumns.length}
+                        aria-multiselectable
+                        aria-busy={isLoadingPage || resizingPage || undefined}
+                        data-density={density}
+                        className={cn(
+                          "border-separate border-spacing-0",
+                          // Density repoints the row-height token; the cells read it,
+                          // so the two densities stay the same table at two sizes
+                          // rather than one table with padding patched over it.
+                          density === "compact" && cn(DENSITY_COMPACT_ROW, DENSITY_COMPACT_CELLS),
+                        )}
+                        containerClassName={TABLE_CONTAINER_CLASS}
+                        // The fades sit between the sticky rows, which would otherwise
+                        // cover them: below the column header and the group header stuck
+                        // under it (h-9), and above the totals row, which measures itself.
+                        maskClassName={cn(
+                          "bottom-[var(--dt-foot-h,0px)]",
+                          grouping ? "top-[calc(var(--row-head-h)+2.25rem)]" : "top-(--row-head-h)",
+                        )}
+                        ref={tableElementRef}
+                      >
+                        <TableHeader className="sticky top-0 z-20">
+                          {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow
+                              key={headerGroup.id}
+                              aria-rowindex={1}
+                              className="hover:bg-transparent"
                             >
-                              {headerGroup.headers.map((header) => (
-                                <DataTableHeaderCell
-                                  key={header.id}
-                                  header={header}
-                                  facets={headerFacets}
-                                  facetField={
-                                    headerFacets
-                                      ? columnFacetField(
-                                          header.column,
-                                          filterFields,
-                                          headerFacets.facetable,
-                                        )
-                                      : null
-                                  }
-                                  sort={sort}
-                                  onSort={handleSortChange}
-                                />
-                              ))}
-                            </SortableContext>
-                          </TableRow>
-                        ))}
-                      </TableHeader>
-                      <DataTableBody
-                        table={table}
-                        columns={tableColumns}
-                        isLoading={isLoadingPage}
-                        contextMenuActions={contextMenuActions}
-                        onRowClick={handleRowClick}
-                        grouping={grouping}
-                        loadingGroupKeys={loadingGroupKeys}
-                        onGroupToggleIntent={prefetchGroupToggle}
-                        expansion={expansion}
-                        cursorRowId={cursorRowId}
-                        isFirstPage={zeroBasedPageIndex === 0}
-                        isLastPage={!cursorPageInfo?.hasNextPage}
-                        rowChanges={liveRefresh.changes}
-                        rowOffset={zeroBasedPageIndex * pageSize}
-                        pageSize={pageSize}
-                        tableRef={tableElementRef}
-                      />
-                      {showTotalsRow ? (
-                        <DataTableTotalsRow
-                          columns={visibleLeafColumns}
-                          totals={insights.totals}
-                          loading={insights.totalsLoading}
-                          summable={insights.summable}
+                              <SortableContext
+                                items={reorderableIds}
+                                strategy={horizontalListSortingStrategy}
+                              >
+                                {headerGroup.headers.map((header) => (
+                                  <DataTableHeaderCell
+                                    key={header.id}
+                                    header={header}
+                                    facets={headerFacets}
+                                    facetField={
+                                      headerFacets
+                                        ? columnFacetField(
+                                            header.column,
+                                            filterFields,
+                                            headerFacets.facetable,
+                                          )
+                                        : null
+                                    }
+                                    sort={sort}
+                                    onSort={handleSortChange}
+                                  />
+                                ))}
+                              </SortableContext>
+                            </TableRow>
+                          ))}
+                        </TableHeader>
+                        <DataTableBody
+                          table={table}
+                          columns={tableColumns}
+                          isLoading={isLoadingPage}
+                          contextMenuActions={contextMenuActions}
+                          onRowClick={handleRowClick}
+                          grouping={grouping}
+                          loadingGroupKeys={loadingGroupKeys}
+                          onGroupToggleIntent={prefetchGroupToggle}
+                          expansion={expansion}
+                          cursorRowId={cursorRowId}
+                          isFirstPage={zeroBasedPageIndex === 0}
+                          isLastPage={!cursorPageInfo?.hasNextPage}
+                          rowChanges={liveRefresh.changes}
+                          rowOffset={zeroBasedPageIndex * pageSize}
+                          pageSize={pageSize}
+                          tableRef={tableElementRef}
                         />
-                      ) : null}
-                    </Table>
-                  </DndContext>
-                </div>
+                        {showTotalsRow ? (
+                          <DataTableTotalsRow
+                            columns={visibleLeafColumns}
+                            totals={insights.totals}
+                            loading={insights.totalsLoading}
+                            summable={insights.summable}
+                          />
+                        ) : null}
+                      </Table>
+                    </DndContext>
+                  </div>
+                )}
+              </Activity>
+              {isEmpty || alternateActive ? null : (
+                <DataTablePagination
+                  table={table}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  mode="cursor"
+                  hasNextPage={cursorPageInfo?.hasNextPage}
+                  currentPageRowCount={currentPageRowCount}
+                  totalCount={totalCount}
+                  totalCountExact={totalCountExact}
+                  pageSizeOptions={pageSizeOptions}
+                  leading={footerLeading}
+                  figuresLoading={resizingPage}
+                />
               )}
-            </Activity>
-            {isEmpty || alternateActive ? null : (
-              <DataTablePagination
-                table={table}
-                onPageChange={handlePageChange}
-                onPageSizeChange={handlePageSizeChange}
-                mode="cursor"
-                hasNextPage={cursorPageInfo?.hasNextPage}
-                currentPageRowCount={currentPageRowCount}
-                totalCount={totalCount}
-                totalCountExact={totalCountExact}
-                pageSizeOptions={pageSizeOptions}
-                leading={footerLeading}
-                figuresLoading={resizingPage}
+            </div>
+          </DataTablePanelContent>
+          {TablePanel && (
+            <RecordPresence
+              resource={resource}
+              recordId={
+                isPanelOpen && panelMode === "edit" ? (panelRow?.id as string | undefined) : null
+              }
+            >
+              <TablePanel
+                open={isPanelOpen}
+                onOpenChange={handlePanelOpenChange}
+                mode={panelMode}
+                row={panelRow}
               />
-            )}
-          </div>
-        </DataTablePanelContent>
-        {TablePanel && (
-          <RecordPresence
-            resource={resource}
-            recordId={
-              isPanelOpen && panelMode === "edit" ? (panelRow?.id as string | undefined) : null
-            }
-          >
-            <TablePanel
-              open={isPanelOpen}
-              onOpenChange={handlePanelOpenChange}
-              mode={panelMode}
-              row={panelRow}
-            />
-          </RecordPresence>
+            </RecordPresence>
+          )}
+        </DataTablePanelWrapper>
+        <DataTableBulkEdit resource={resource} onDone={handleBulkEditDone} />
+        {enableRowSelection && resolvedDockActions.length > 0 && (
+          <DataTableDock table={table} actions={resolvedDockActions} totals={selectionTotals} />
         )}
-      </DataTablePanelWrapper>
-      <DataTableBulkEdit resource={resource} onDone={handleBulkEditDone} />
-      {enableRowSelection && resolvedDockActions.length > 0 && (
-        <DataTableDock table={table} actions={resolvedDockActions} totals={selectionTotals} />
-      )}
-    </DataTableProvider>
+      </DataTableProvider>
     </DataTableViewProvider>
   );
 }

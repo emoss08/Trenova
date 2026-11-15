@@ -20,11 +20,7 @@ import type {
   Table,
 } from "@trenova/shared/types/data-table";
 import type { ComposedTableQuery } from "@/types/table-query";
-import type {
-  TableArrangement,
-  TableConfig,
-  TableViewSource,
-} from "@/types/table-configuration";
+import type { TableArrangement, TableConfig, TableViewSource } from "@/types/table-configuration";
 import { useDataTableView, useDataTableViewActions } from "./data-table-view-context";
 import type { DataTableViewState } from "./data-table-view-store";
 import { ChevronDownIcon, Download01Icon, PlusIcon } from "@trenova/shared/components/icons";
