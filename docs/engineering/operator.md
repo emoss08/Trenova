@@ -769,6 +769,12 @@ ready (hibernated: the hibernation condition is true), and the release Job of th
 revision completed. The report is ready when the desired revision is applied and every component
 is ready; otherwise its message names the first one that is not.
 
+The chart's own readiness and liveness probes never use Kubernetes' 1-second default timeout: each
+sets `timeoutSeconds` of at least 3 (a few set more), so one slow second on a busy node does not
+take a component out of its Service and the ingress with it. A readiness probe's `failureThreshold`
+is never below 3. `TestNoReadinessOrLivenessProbeRunsOnTheOneSecondDefault` fails a new probe that
+leaves the default.
+
 ## Installing it
 
 [`deploy/helm/trenova-operator`](../../deploy/helm/trenova-operator), after the CloudNativePG

@@ -106,6 +106,7 @@ spec:
             tcpSocket:
               port: grpc
             periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 6
           {{- include "trenova.containerSecurity" (dict) | nindent 10 }}
           resources:
@@ -195,6 +196,7 @@ spec:
               path: /health
               port: http
             periodSeconds: 15
+            timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /health
@@ -306,6 +308,7 @@ spec:
               path: /health
               port: http
             periodSeconds: 15
+            timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /health
@@ -402,6 +405,7 @@ spec:
               path: /api/version
               port: http
             periodSeconds: 15
+            timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /
@@ -577,11 +581,13 @@ spec:
               path: /readyz
               port: metrics
             periodSeconds: 10
+            timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /livez
               port: metrics
             periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 6
           {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
           resources:

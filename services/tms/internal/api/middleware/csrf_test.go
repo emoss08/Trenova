@@ -56,6 +56,41 @@ func TestCSRFMiddleware_RejectsSessionUnsafeMethodWithoutToken(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
+	assert.Contains(t, w.Body.String(), "csrf-token-invalid")
+	assert.Contains(t, w.Body.String(), "CSRF_TOKEN_INVALID")
+}
+
+func TestCSRFMiddleware_RejectsTokenForAnotherSession(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	router := newCSRFMiddlewareRouter(t, authctx.PrincipalTypeUser)
+	token := csrfutil.Token(pulid.MustNew("ses_").String(), "test-session-secret")
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("X-CSRF-Token", token)
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "session-value"})
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+	assert.Contains(t, w.Body.String(), "csrf-token-invalid")
+	assert.Contains(t, w.Body.String(), "CSRF_TOKEN_INVALID")
+}
+
+func TestCSRFBrowserGuard_RefusalIsNotATokenRefusal(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	router := newCSRFBrowserGuardRouter(t, "enforce")
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Origin", "https://evil.example.test")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+	assert.NotContains(t, w.Body.String(), "csrf-token-invalid")
 }
 
 func TestCSRFMiddleware_AllowsSessionUnsafeMethodWithToken(t *testing.T) {

@@ -148,6 +148,11 @@ func TestNewDefaultClassifier(t *testing.T) {
 			expectedType: helpers.ProblemTypeSessionContextStale,
 		},
 		{
+			name:         "CSRFTokenInvalidError classifies as csrf token invalid",
+			err:          errortypes.NewCSRFTokenInvalidError(),
+			expectedType: helpers.ProblemTypeCSRFTokenInvalid,
+		},
+		{
 			name:         "unknown error classifies as internal",
 			err:          errors.New("unknown error"),
 			expectedType: helpers.ProblemTypeInternal,

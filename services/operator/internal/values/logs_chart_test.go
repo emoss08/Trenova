@@ -1,6 +1,7 @@
 package values_test
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -251,4 +252,37 @@ func TestTheOperatorIsToldWhereLokiIs(t *testing.T) {
 			`- name: TRENOVA_OPERATOR_LOKI_URL\s+value: "`+strings.ReplaceAll(url, ".", `\.`)+`"`,
 			template(t, out, "templates/deployment.yaml"), release)
 	}
+}
+
+func TestNoReadinessOrLivenessProbeRunsOnTheOneSecondDefault(t *testing.T) {
+	t.Parallel()
+	s := spec(plans[0], instanceapi.Active, "docling")
+	r, err := values.Render(&s, base(), operatorNS, values.Storage{})
+	require.NoError(t, err)
+
+	probes := 0
+	for _, d := range renderedDocs(t, r) {
+		if d["kind"] != "Deployment" && d["kind"] != "StatefulSet" {
+			continue
+		}
+		containers, _ := podSpec(d)["containers"].([]any)
+		for _, c := range containers {
+			container, _ := c.(map[string]any)
+			for _, kind := range []string{"readinessProbe", "livenessProbe"} {
+				probe, ok := container[kind].(map[string]any)
+				if !ok {
+					continue
+				}
+				probes++
+				where := fmt.Sprintf("%v %v %v", nestedField(d, "metadata", "name"), container["name"], kind)
+				timeout, _ := probe["timeoutSeconds"].(float64)
+				require.GreaterOrEqual(t, timeout, float64(3), where)
+				if kind == "readinessProbe" {
+					threshold, set := probe["failureThreshold"].(float64)
+					require.True(t, !set || threshold >= 3, where)
+				}
+			}
+		}
+	}
+	require.NotZero(t, probes)
 }

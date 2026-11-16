@@ -372,6 +372,105 @@ describe("requestGraphQL", () => {
   });
 });
 
+describe("requestGraphQL csrf recovery", () => {
+  let tokens: string[];
+  let posts: Response[];
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  function refusal(type: string, detail?: string): Response {
+    return new Response(
+      JSON.stringify({ type: `${PROBLEM_BASE}${type}`, title: type, detail, status: 403 }),
+      { status: 403, headers: { "Content-Type": "application/problem+json" } },
+    );
+  }
+
+  function postCalls(): [string, RequestInit][] {
+    return (fetchMock.mock.calls as [string, RequestInit][]).filter(
+      ([url]) => !url.includes("/auth/csrf"),
+    );
+  }
+
+  beforeEach(() => {
+    clearCsrfToken();
+    tokens = [];
+    posts = [];
+    fetchMock = vi.fn(async (url: string) => {
+      if (url.includes("/auth/csrf")) {
+        const token = tokens.shift();
+        return token === undefined
+          ? new Response("unavailable", { status: 503 })
+          : createGraphQLResponse({ csrfToken: token, headerName: "X-CSRF-Token" });
+      }
+      return posts.shift() ?? createGraphQLResponse({ data: { ok: true } });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    clearCsrfToken();
+    vi.unstubAllGlobals();
+  });
+
+  it("resends a refused mutation with the fresh token and the same idempotency key", async () => {
+    setCsrfToken("stale-token");
+    tokens = ["fresh-token"];
+    posts = [refusal("csrf-token-invalid"), createGraphQLResponse({ data: { createThing: true } })];
+
+    const result = await requestGraphQL<{ createThing: boolean }>({
+      document: "mutation CreateThing { createThing }",
+      idempotencyKey: "key-9",
+    });
+
+    expect(result).toEqual({ createThing: true });
+    const calls = postCalls();
+    expect(calls).toHaveLength(2);
+    const first = new Headers(calls[0]?.[1].headers);
+    const second = new Headers(calls[1]?.[1].headers);
+    expect(first.get("X-CSRF-Token")).toBe("stale-token");
+    expect(second.get("X-CSRF-Token")).toBe("fresh-token");
+    expect(second.get("Idempotency-Key")).toBe("key-9");
+    expect(calls[1]?.[1].body).toBe(calls[0]?.[1].body);
+    expect(fetchMock.mock.calls.length - calls.length).toBe(1);
+  });
+
+  it("throws the refusal when the resend is refused too", async () => {
+    setCsrfToken("stale-token");
+    tokens = ["fresh-token"];
+    posts = [refusal("csrf-token-invalid"), refusal("csrf-token-invalid")];
+
+    const error = await requestGraphQL({ document: "mutation CreateThing { createThing }" }).catch(
+      (e: unknown) => e,
+    );
+
+    expect(error).toBeInstanceOf(GraphQLRequestError);
+    expect((error as GraphQLRequestError).status).toBe(403);
+    expect(postCalls()).toHaveLength(2);
+  });
+
+  it("does not resend an ordinary authorization refusal", async () => {
+    setCsrfToken("token");
+    tokens = ["fresh-token"];
+    posts = [refusal("authorization-error")];
+
+    await expect(
+      requestGraphQL({ document: "mutation CreateThing { createThing }" }),
+    ).rejects.toBeInstanceOf(GraphQLRequestError);
+    expect(postCalls()).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not resend a browser provenance refusal", async () => {
+    setCsrfToken("token");
+    tokens = ["fresh-token"];
+    posts = [refusal("authorization-error", "CSRF browser provenance check failed")];
+
+    await expect(
+      requestGraphQL({ document: "mutation CreateThing { createThing }" }),
+    ).rejects.toBeInstanceOf(GraphQLRequestError);
+    expect(postCalls()).toHaveLength(1);
+  });
+});
+
 describe("requestGraphQL partial success", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 

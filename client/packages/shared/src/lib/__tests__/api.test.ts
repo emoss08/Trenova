@@ -214,6 +214,190 @@ describe("api csrf headers", () => {
   });
 });
 
+function problemResponse(type: string, detail?: string): Response {
+  return new Response(
+    JSON.stringify({
+      type: `https://trenova.app/problems/${type}`,
+      title: type,
+      detail,
+      status: 403,
+    }),
+    { status: 403, headers: { "Content-Type": "application/problem+json" } },
+  );
+}
+
+describe("api csrf recovery", () => {
+  let tokens: string[];
+  let writes: Response[];
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    clearCsrfToken();
+    tokens = [];
+    writes = [];
+    fetchMock = vi.fn(async (url: string) => {
+      if (url.includes("/auth/csrf")) {
+        const token = tokens.shift();
+        return token === undefined
+          ? new Response("unavailable", { status: 503 })
+          : createJsonResponse({ csrfToken: token, headerName: "X-CSRF-Token" });
+      }
+      return writes.shift() ?? createJsonResponse();
+    });
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    clearCsrfToken();
+    vi.unstubAllGlobals();
+  });
+
+  function writeCalls(): [string, RequestInit][] {
+    return (fetchMock.mock.calls as [string, RequestInit][]).filter(
+      ([url]) => !url.includes("/auth/csrf"),
+    );
+  }
+
+  function tokenCalls(): number {
+    return fetchMock.mock.calls.length - writeCalls().length;
+  }
+
+  it("fetches a fresh token and resends a refused write once", async () => {
+    setCsrfToken("stale-token");
+    tokens = ["fresh-token"];
+    writes = [problemResponse("csrf-token-invalid"), createJsonResponse({ id: "w1" })];
+
+    const result = await api.post<{ id: string }>(
+      "/widgets/",
+      { name: "Widget" },
+      { headers: { "Idempotency-Key": "key-1" } },
+    );
+
+    expect(result).toEqual({ id: "w1" });
+    const calls = writeCalls();
+    expect(calls).toHaveLength(2);
+    const first = new Headers(calls[0]?.[1].headers);
+    const second = new Headers(calls[1]?.[1].headers);
+    expect(first.get("X-CSRF-Token")).toBe("stale-token");
+    expect(second.get("X-CSRF-Token")).toBe("fresh-token");
+    expect(second.get("Idempotency-Key")).toBe("key-1");
+    expect(calls[1]?.[1].body).toBe(calls[0]?.[1].body);
+    expect(tokenCalls()).toBe(1);
+  });
+
+  it("recovers when the first token could not be fetched", async () => {
+    writes = [problemResponse("csrf-token-invalid")];
+
+    await expect(api.post("/widgets/", { name: "Widget" })).rejects.toBeInstanceOf(ApiRequestError);
+    expect(writeCalls()).toHaveLength(1);
+
+    tokens = ["fresh-token"];
+    writes = [createJsonResponse({ ok: true })];
+    await api.post("/widgets/", { name: "Widget" });
+
+    const last = new Headers(writeCalls().at(-1)?.[1].headers);
+    expect(last.get("X-CSRF-Token")).toBe("fresh-token");
+  });
+
+  it("does not cache a failed token fetch", async () => {
+    await api.post("/widgets/", { name: "Widget" });
+    expect(new Headers(writeCalls()[0]?.[1].headers).has("X-CSRF-Token")).toBe(false);
+
+    tokens = ["later-token"];
+    await api.post("/widgets/", { name: "Widget" });
+
+    expect(tokenCalls()).toBe(2);
+    expect(new Headers(writeCalls()[1]?.[1].headers).get("X-CSRF-Token")).toBe("later-token");
+  });
+
+  it("surfaces the refusal when the resend is refused too", async () => {
+    setCsrfToken("stale-token");
+    tokens = ["fresh-token"];
+    writes = [problemResponse("csrf-token-invalid"), problemResponse("csrf-token-invalid")];
+
+    const error = await api.post("/widgets/", { name: "Widget" }).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiRequestError);
+    expect((error as ApiRequestError).status).toBe(403);
+    expect((error as ApiRequestError).getProblemType()).toBe("csrf-token-invalid");
+    expect(writeCalls()).toHaveLength(2);
+    expect(tokenCalls()).toBe(1);
+  });
+
+  it("surfaces the refusal when no fresh token can be fetched", async () => {
+    setCsrfToken("stale-token");
+    writes = [problemResponse("csrf-token-invalid")];
+
+    await expect(api.post("/widgets/", { name: "Widget" })).rejects.toBeInstanceOf(ApiRequestError);
+    expect(writeCalls()).toHaveLength(1);
+  });
+
+  it("does not resend an ordinary authorization refusal", async () => {
+    setCsrfToken("token");
+    tokens = ["fresh-token"];
+    writes = [problemResponse("authorization-error")];
+
+    await expect(api.post("/widgets/", { name: "Widget" })).rejects.toBeInstanceOf(ApiRequestError);
+    expect(writeCalls()).toHaveLength(1);
+    expect(tokenCalls()).toBe(0);
+  });
+
+  it("does not resend a browser provenance refusal", async () => {
+    setCsrfToken("token");
+    tokens = ["fresh-token"];
+    writes = [problemResponse("authorization-error", "CSRF browser provenance check failed")];
+
+    await expect(api.post("/widgets/", { name: "Widget" })).rejects.toBeInstanceOf(ApiRequestError);
+    expect(writeCalls()).toHaveLength(1);
+  });
+
+  it("never resends a read", async () => {
+    tokens = ["fresh-token"];
+    writes = [problemResponse("csrf-token-invalid")];
+
+    await expect(api.get("/widgets/")).rejects.toBeInstanceOf(ApiRequestError);
+    expect(writeCalls()).toHaveLength(1);
+    expect(tokenCalls()).toBe(0);
+  });
+
+  it("does not replace a token the caller supplied", async () => {
+    tokens = ["fresh-token"];
+    writes = [problemResponse("csrf-token-invalid")];
+
+    await expect(
+      api.post("/widgets/", { name: "Widget" }, { headers: { "X-CSRF-Token": "explicit" } }),
+    ).rejects.toBeInstanceOf(ApiRequestError);
+    expect(writeCalls()).toHaveLength(1);
+  });
+
+  it("resends a refused multipart upload with the fresh token", async () => {
+    setCsrfToken("stale-token");
+    tokens = ["fresh-token"];
+    writes = [problemResponse("csrf-token-invalid"), createJsonResponse({ ok: true })];
+    const formData = new FormData();
+    formData.append("file", new Blob(["content"]), "document.txt");
+
+    await api.upload("/documents/upload/", formData);
+
+    const calls = writeCalls();
+    expect(calls).toHaveLength(2);
+    expect(new Headers(calls[1]?.[1].headers).get("X-CSRF-Token")).toBe("fresh-token");
+    expect(calls[1]?.[1].body).toBe(formData);
+  });
+
+  it("resends a refused download with the fresh token", async () => {
+    setCsrfToken("stale-token");
+    tokens = ["fresh-token"];
+    writes = [problemResponse("csrf-token-invalid"), new Response(new Blob(["pdf"]))];
+
+    await api.download("/reports/export/", "report.pdf", { method: "POST" });
+
+    const calls = writeCalls();
+    expect(calls).toHaveLength(2);
+    expect(new Headers(calls[1]?.[1].headers).get("X-CSRF-Token")).toBe("fresh-token");
+  });
+});
+
 describe("ApiRequestError constructor", () => {
   it("uses detail as message when present", () => {
     const err = makeError({ detail: "Something went wrong" });

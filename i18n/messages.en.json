@@ -48420,15 +48420,6 @@
       "api/middleware"
     ]
   },
-  "CSRF token required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/middleware"
-    ]
-  },
   "CSV": {
     "sites": 13,
     "scope": [
@@ -247984,6 +247975,15 @@
       "go/other"
     ]
   },
+  "Security Token Invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/helpers"
+    ]
+  },
   "Security alerts": {
     "sites": 1,
     "scope": [
@@ -304777,6 +304777,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "This page's security token is out of date. Reload the page to continue.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This pairing cannot run as planned.": {

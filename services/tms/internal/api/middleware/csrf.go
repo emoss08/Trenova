@@ -114,7 +114,7 @@ func (m *CSRFBrowserGuard) Guard() gin.HandlerFunc {
 func (m *CSRFMiddleware) reject(c *gin.Context) {
 	m.errorHandler.HandleError(
 		c,
-		errortypes.NewAuthorizationError("CSRF token required"),
+		errortypes.NewCSRFTokenInvalidError(),
 	)
 }
 
