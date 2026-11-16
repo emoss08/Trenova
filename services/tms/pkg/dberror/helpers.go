@@ -145,6 +145,18 @@ func IsReadOnlyTransaction(err error) bool {
 		ExtractCode(err) == pgerrcode.ReadOnlySQLTransaction
 }
 
+const SupportPaymentDestinationCode = "TRS01"
+
+func IsSupportPaymentDestinationRefusal(err error) bool {
+	return ExtractCode(err) == SupportPaymentDestinationCode
+}
+
+const SupportOutboundCode = "TRS02"
+
+func IsSupportOutboundRefusal(err error) bool {
+	return ExtractCode(err) == SupportOutboundCode
+}
+
 func IsRowLevelSecurityViolation(err error) bool {
 	details, ok := extractPostgresErrorDetails(err)
 	if !ok {

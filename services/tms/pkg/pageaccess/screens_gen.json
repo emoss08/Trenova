@@ -3562,6 +3562,9 @@
         }
       ],
       "operations": [
+        "AuditExportTable",
+        "AuditLegalHoldTable",
+        "RequestAuditExport",
         "RequestSupportLogs",
         "SupportLogRequests"
       ],

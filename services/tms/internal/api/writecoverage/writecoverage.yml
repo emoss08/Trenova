@@ -2824,6 +2824,9 @@ writes:
   "mutation grantSupportAccess":
     exempt: security
     reason: "Letting Trenova staff into the organization is a person's decision; no agent, API key or support session may grant it."
+  "mutation extendSupportAccess":
+    exempt: security
+    reason: "Keeping Trenova staff in the organization longer is a person's decision; no agent, API key or support session may extend it."
   "mutation requestSupportLogs":
     exempt: security
     reason: "Sends the whole instance's logs, which hold every organization's activity, to Trenova support; an administrator decides that disclosure, never an agent."

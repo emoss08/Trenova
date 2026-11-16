@@ -39,6 +39,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNSupportAccessGrant2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportAccessGrant),
 			},
 			{
+				Name:       "extendSupportAccess",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "SupportAccessGrant",
+				Args:       field_Mutation_extendSupportAccess_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@supportaccess").ExtendSupportAccess(ctx, fc.Args["input"].(gqlmodel.ExtendSupportAccessInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNSupportAccessGrant2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportAccessGrant),
+			},
+			{
 				Name:       "revokeSupportAccess",
 				NonNull:    true,
 				IsResolver: true,
@@ -171,9 +184,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNSupportAccessScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportAccessScope),
 			},
 			{
-				Name:     "durationHours",
+				Name:     "allowsAssistant",
 				NonNull:  true,
 				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportAccessGrant)
+					return obj.AllowsAssistant, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "durationHours",
+				NonNull:  true,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportAccessGrant)
 					return obj.DurationHours, nil
@@ -183,7 +206,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportAccessGrant)
 					return obj.Status, nil
@@ -202,7 +225,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "grantedAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportAccessGrant)
 					return obj.GrantedAt, nil
@@ -212,7 +235,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "expiresAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportAccessGrant)
 					return obj.ExpiresAt, nil
@@ -221,7 +244,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "revokedAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportAccessGrant)
 					return obj.RevokedAt, nil
@@ -247,8 +270,35 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
+				Name:     "extendedAt",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportAccessGrant)
+					return obj.ExtendedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "extendedByName",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportAccessGrant)
+					return obj.ExtendedByName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "activeAt",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportAccessGrant)
+					return obj.ActiveAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
 				Name:     "lastEnteredAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportAccessGrant)
 					return obj.LastEnteredAt, nil
@@ -290,7 +340,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportAccessGrantConnection)
 					return obj.TotalCount, nil
@@ -300,7 +350,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportAccessGrantConnection)
 					return obj.TotalCountExact, nil
@@ -335,7 +385,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "available",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportAccessSettings)
 					return obj.Available, nil
@@ -354,7 +404,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "durations",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportAccessSettings)
 					return obj.Durations, nil
@@ -364,12 +414,22 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "maxLiveGrants",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportAccessSettings)
 					return obj.MaxLiveGrants, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "limits",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportAccessSettings)
+					return obj.Limits, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
 		}},
 		{Object: "SupportLogRequest", Fields: []*gqlexec.Field{
@@ -416,7 +476,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "requestedAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportLogRequest)
 					return obj.RequestedAt, nil
@@ -425,7 +485,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "finishedAt",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportLogRequest)
 					return obj.FinishedAt, nil
@@ -446,7 +506,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "managed",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportLogRequests)
 					return obj.Managed, nil
@@ -456,7 +516,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "inFlight",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportLogRequests)
 					return obj.InFlight, nil
@@ -466,7 +526,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "remainingToday",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportLogRequests)
 					return obj.RemainingToday, nil
@@ -519,7 +579,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "endsAt",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.SupportSession)
 					return obj.EndsAt, nil
@@ -529,6 +589,7 @@ var Shard = &gqlexec.Shard{
 		}},
 	},
 	Inputs: []gqlexec.Input{
+		{Name: "ExtendSupportAccessInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputExtendSupportAccessInput)},
 		{Name: "GrantSupportAccessInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputGrantSupportAccessInput)},
 		{Name: "RequestSupportLogsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRequestSupportLogsInput)},
 		{Name: "RevokeSupportAccessInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRevokeSupportAccessInput)},
@@ -541,6 +602,7 @@ var Shard = &gqlexec.Shard{
 
 type MutationResolver interface {
 	GrantSupportAccess(ctx context.Context, input gqlmodel.GrantSupportAccessInput) (*gqlmodel.SupportAccessGrant, error)
+	ExtendSupportAccess(ctx context.Context, input gqlmodel.ExtendSupportAccessInput) (*gqlmodel.SupportAccessGrant, error)
 	RevokeSupportAccess(ctx context.Context, input gqlmodel.RevokeSupportAccessInput) (*gqlmodel.SupportAccessGrant, error)
 	RequestSupportLogs(ctx context.Context, input gqlmodel.RequestSupportLogsInput) (*gqlmodel.SupportLogRequest, error)
 }
@@ -557,10 +619,10 @@ var (
 	errNoChild0 = errors.New("field of type ID does not have child fields")
 	errNoChild1 = errors.New("field of type String does not have child fields")
 	errNoChild2 = errors.New("field of type SupportAccessScope does not have child fields")
-	errNoChild3 = errors.New("field of type Int does not have child fields")
-	errNoChild4 = errors.New("field of type SupportAccessStatus does not have child fields")
-	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild6 = errors.New("field of type Boolean does not have child fields")
+	errNoChild3 = errors.New("field of type Boolean does not have child fields")
+	errNoChild4 = errors.New("field of type Int does not have child fields")
+	errNoChild5 = errors.New("field of type SupportAccessStatus does not have child fields")
+	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
 	errNoChild7 = errors.New("field of type SupportLogPeriod does not have child fields")
 	errNoChild8 = errors.New("field of type SupportLogRequestStatus does not have child fields")
 )
@@ -570,6 +632,19 @@ func field_Mutation_grantSupportAccess_args(ctx context.Context, ec *gqlexec.Exe
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.GrantSupportAccessInput, error) {
 			return unmarshalNGrantSupportAccessInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐGrantSupportAccessInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_extendSupportAccess_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ExtendSupportAccessInput, error) {
+			return unmarshalNExtendSupportAccessInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExtendSupportAccessInput(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -630,6 +705,43 @@ func field_Query_supportAccessGrant_args(ctx context.Context, ec *gqlexec.Exec, 
 	return args, nil
 }
 
+func unmarshalInputExtendSupportAccessInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ExtendSupportAccessInput, error) {
+	var it gqlmodel.ExtendSupportAccessInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "durationHours"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "durationHours":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("durationHours"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.DurationHours = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputGrantSupportAccessInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.GrantSupportAccessInput, error) {
 	var it gqlmodel.GrantSupportAccessInput
 	if obj == nil {
@@ -641,7 +753,7 @@ func unmarshalInputGrantSupportAccessInput(ctx context.Context, ec *gqlexec.Exec
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"staffEmail", "reason", "durationHours", "scope"}
+	fieldsInOrder := [...]string{"staffEmail", "reason", "durationHours", "scope", "allowsAssistant"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -676,6 +788,13 @@ func unmarshalInputGrantSupportAccessInput(ctx context.Context, ec *gqlexec.Exec
 				return it, err
 			}
 			it.Scope = data
+		case "allowsAssistant":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allowsAssistant"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AllowsAssistant = data
 		}
 	}
 	return it, nil
@@ -752,8 +871,18 @@ func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exe
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
+func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNExtendSupportAccessInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExtendSupportAccessInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ExtendSupportAccessInput, error) {
+	res, err := unmarshalInputExtendSupportAccessInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -846,6 +975,15 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNString2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNSupportAccessGrant2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportAccessGrant(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.SupportAccessGrant) graphql.Marshaler {

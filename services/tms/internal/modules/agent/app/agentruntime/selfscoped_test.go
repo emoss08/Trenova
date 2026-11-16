@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -123,6 +124,83 @@ func TestRun_WithholdsASelfScopedToolFromAnAgentPrincipal(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.NotContains(t, requestTools(completion.Requests[0]), "home_add_widget")
+}
+
+func TestRun_TrenovaSupportHasNoOwnRecordsToChange(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("home_add_widget", map[string]any{"key": "kpi"}),
+		runtimetest.TextTurn("done"),
+	}}
+	service, _ := selfScopedRuntime(completion)
+	actor := runtimetest.Actor()
+	actor.PrincipalID = pulid.MustNew(supportaccess.PrincipalIDPrefix)
+	actor.UserID = actor.PrincipalID
+
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("home_add_widget"),
+		Actor:      actor,
+		Input:      "put on-time on my dashboard",
+	})
+	require.NoError(t, err)
+
+	assert.NotContains(t, requestTools(completion.Requests[0]), "home_add_widget",
+		"a support session is offered no tool that changes a person's own records")
+	assert.Empty(t, result.Actions, "and a call to one files nothing")
+	assert.True(t, result.Messages[2].ToolFailed)
+}
+
+func outboundRuntime(completion *scriptedCompletion) *Service {
+	email := actionTool("customer_email_update", agent.TierPropose, nil)
+	email.Egress = agent.EgressCustomerVisible
+	note := actionTool("shipment_add_note", agent.TierPropose, nil)
+	action := &stubActionRegistry{Tools: []agenttoolports.AgentTool{email, note}}
+
+	return newRuntime(completion, &stubQueryRegistry{}, action, &agenttest.StubPermissions{})
+}
+
+func TestRun_TrenovaSupportCannotSendToAnyoneOutsideTheOrganization(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("customer_email_update", map[string]any{"key": "eta"}),
+		runtimetest.TextTurn("done"),
+	}}
+	service := outboundRuntime(completion)
+	actor := runtimetest.Actor()
+	actor.PrincipalID = pulid.MustNew(supportaccess.PrincipalIDPrefix)
+	actor.UserID = actor.PrincipalID
+
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("customer_email_update", "shipment_add_note"),
+		Actor:      actor,
+		Input:      "tell the customer the new ETA",
+	})
+	require.NoError(t, err)
+
+	offered := requestTools(completion.Requests[0])
+	assert.NotContains(t, offered, "customer_email_update",
+		"a support session is offered no tool that reaches the customer's customers")
+	assert.Contains(t, offered, "shipment_add_note", "a tool that stays inside is still offered")
+	assert.Empty(t, result.Actions, "and a call to one files nothing")
+}
+
+func TestRun_APersonStillSendsThroughTheSameTool(t *testing.T) {
+	t.Parallel()
+
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.TextTurn("done"),
+	}}
+	service := outboundRuntime(completion)
+
+	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("customer_email_update", "shipment_add_note"),
+		Actor:      runtimetest.Actor(),
+		Input:      "tell the customer the new ETA",
+	})
+	require.NoError(t, err)
+	assert.Contains(t, requestTools(completion.Requests[0]), "customer_email_update")
 }
 
 // searchableQuery is a read with the words people use for it.

@@ -6,6 +6,14 @@ export function scopeLabel(t: Translate, scope: SupportAccessScope): string {
   return scope === "Full" ? t("Full access") : t("Read-only");
 }
 
+export function scopeDescription(t: Translate, scope: SupportAccessScope): string {
+  return scope === "Full"
+    ? t("Staff can do what an administrator can, except the things Trenova support can never do.")
+    : t(
+        "Staff can read what an administrator can, except the things Trenova support can never see, and cannot change anything.",
+      );
+}
+
 export function statusLabel(t: Translate, status: SupportAccessGrant["status"]): string {
   switch (status) {
     case "Live":

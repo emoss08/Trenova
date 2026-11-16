@@ -6,13 +6,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"go.uber.org/zap"
 )
 
 const (
 	ActionGranted        = "support_access.granted"
 	ActionRevoked        = "support_access.revoked"
+	ActionExtended       = "support_access.extended"
 	ActionExpired        = "support_access.expired"
 	ActionSessionStarted = "support_access.session_started"
 	ActionEntryRefused   = "support_access.entry_refused"
@@ -54,14 +57,31 @@ func (s *Service) record(ctx context.Context, c *change) {
 	})
 }
 
+func (s *Service) notify(ctx context.Context, notice *supportaccessports.Notice) {
+	noticeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), noticeTimeout)
+	defer cancel()
+	if err := s.notifier.SupportAccessChanged(noticeCtx, notice); err != nil {
+		s.l.Error(
+			"could not tell the organization's administrators about support access",
+			zap.String("grantID", notice.Grant.ID.String()),
+			zap.String("notice", string(notice.Kind)),
+			zap.Error(err),
+		)
+	}
+}
+
 func grantView(g *supportaccess.Grant, now int64) map[string]any {
 	view := map[string]any{
-		"staffEmail":    g.StaffEmail,
-		"reason":        g.Reason,
-		"scope":         g.Scope.String(),
-		"durationHours": g.DurationHours,
-		"expiresAt":     g.ExpiresAt,
-		"status":        g.StatusAt(now).String(),
+		"staffEmail":      g.StaffEmail,
+		"reason":          g.Reason,
+		"scope":           g.Scope.String(),
+		"allowsAssistant": g.AllowsAssistant,
+		"durationHours":   g.DurationHours,
+		"expiresAt":       g.ExpiresAt,
+		"status":          g.StatusAt(now).String(),
+	}
+	if g.ExtendedAt != nil {
+		view["extendedAt"] = *g.ExtendedAt
 	}
 	if g.RevokedAt != nil {
 		view["revokedAt"] = *g.RevokedAt

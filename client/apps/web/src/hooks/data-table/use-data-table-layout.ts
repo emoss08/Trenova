@@ -1,3 +1,4 @@
+import { useBackgroundWrites } from "@/hooks/use-background-writes";
 import { resetMyTableLayout, saveMyTableLayout } from "@/lib/graphql/table-layout";
 import { fromColumnPinningState } from "@/lib/data-table";
 import { tableLayout } from "@/lib/queries/table-layout";
@@ -83,6 +84,7 @@ export function useDataTableLayout<TData extends RowData>({
   const queryClient = useQueryClient();
   const enabled = resource !== "";
   const queryOptions = tableLayout.mine(resource);
+  const writes = useBackgroundWrites();
 
   const { data: hasSavedLayout = false, isPending } = useQuery({
     ...queryOptions,
@@ -97,6 +99,8 @@ export function useDataTableLayout<TData extends RowData>({
   const lastKeptRef = useRef<string | null>(null);
   const queueRef = useRef<Promise<unknown>>(Promise.resolve());
   const lastErrorRef = useRef<string | null>(null);
+  // A save asked for before the session was known, sent once it is.
+  const waitingRef = useRef(false);
   // When the person last had this table open: kept as it was through a visit, so
   // what changed since then stays marked, and moved to now only when they leave.
   const lastSeenAtRef = useRef(0);
@@ -136,11 +140,31 @@ export function useDataTableLayout<TData extends RowData>({
     }
     if (!enabled || !armedRef.current) return;
 
+    if (writes === "wait") {
+      waitingRef.current = true;
+      return;
+    }
+
     if (leaving) lastSeenAtRef.current = Math.floor(Date.now() / 1000);
     const layout = snapshot();
     const key = stableStringify(layout);
     if (key === lastKeptRef.current) return;
     lastKeptRef.current = key;
+
+    if (writes === "keep") {
+      const held = queryClient.getQueryData<MyTableLayoutQuery>(
+        queryOptions.queryKey,
+      )?.myTableLayout;
+      queryClient.setQueryData<MyTableLayoutQuery>(queryOptions.queryKey, {
+        myTableLayout: {
+          resource,
+          layout,
+          version: held?.version ?? 0,
+          updatedAt: Math.floor(Date.now() / 1000),
+        },
+      });
+      return;
+    }
 
     void enqueue(() => saveMyTableLayout(resource, layout))
       .then((saved) => {
@@ -159,6 +183,12 @@ export function useDataTableLayout<TData extends RowData>({
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout(() => flush(), SAVE_DELAY_MS);
   });
+
+  useEffect(() => {
+    if (writes === "wait" || !waitingRef.current) return;
+    waitingRef.current = false;
+    flush();
+  }, [writes, flush]);
 
   const store = table.store;
   useEffect(() => {

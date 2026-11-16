@@ -92,7 +92,16 @@ func newTestService(t *testing.T, providers ...*aiprovider.Provider) *Service {
 		Usage:      &fakeUsage{},
 		Features:   plantest.AllFeatures(),
 		BuiltIn:    &fakeBuiltIn{},
+		Support:    &fakeSupport{},
 	})
+}
+
+type fakeSupport struct {
+	refusal error
+}
+
+func (f *fakeSupport) AdmitModelCall(context.Context, pagination.TenantInfo) error {
+	return f.refusal
 }
 
 type fakeBuiltIn struct {

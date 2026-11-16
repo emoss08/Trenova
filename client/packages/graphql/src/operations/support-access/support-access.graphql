@@ -3,6 +3,7 @@ fragment SupportAccessGrantFields on SupportAccessGrant {
   staffEmail
   reason
   scope
+  allowsAssistant
   durationHours
   status
   grantedByName
@@ -11,6 +12,9 @@ fragment SupportAccessGrantFields on SupportAccessGrant {
   revokedAt
   revokedByName
   revokeReason
+  extendedAt
+  extendedByName
+  activeAt
   lastEnteredAt
   lastStaffName
 }
@@ -21,6 +25,7 @@ query SupportAccessSettings {
     staffDomain
     durations
     maxLiveGrants
+    limits
   }
 }
 
@@ -39,6 +44,12 @@ query SupportAccessGrants($input: DataTableConnectionInput!) {
 
 mutation GrantSupportAccess($input: GrantSupportAccessInput!) {
   grantSupportAccess(input: $input) {
+    ...SupportAccessGrantFields
+  }
+}
+
+mutation ExtendSupportAccess($input: ExtendSupportAccessInput!) {
+  extendSupportAccess(input: $input) {
     ...SupportAccessGrantFields
   }
 }

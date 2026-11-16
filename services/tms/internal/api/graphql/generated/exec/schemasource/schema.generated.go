@@ -32747,6 +32747,9 @@ type SupportAccessGrant {
   staffEmail: String!
   reason: String!
   scope: SupportAccessScope!
+  "Whether staff may use the assistant under this grant. Its answers are paid for by the organization's AI providers."
+  allowsAssistant: Boolean!
+  "The length, in hours, chosen when the grant was made or last extended."
   durationHours: Int!
   status: SupportAccessStatus!
   grantedByName: String
@@ -32755,6 +32758,11 @@ type SupportAccessGrant {
   revokedAt: Timestamp
   revokedByName: String
   revokeReason: String
+  "When an administrator last extended the grant."
+  extendedAt: Timestamp
+  extendedByName: String
+  "When staff last did something in a session open now; null when nobody is in the organization under this grant."
+  activeAt: Timestamp
   "When staff last entered under this grant."
   lastEnteredAt: Timestamp
   "The staff member's name as the control plane last asserted it."
@@ -32782,6 +32790,8 @@ type SupportAccessSettings {
   "The lengths, in hours, a grant may have."
   durations: [Int!]!
   maxLiveGrants: Int!
+  "What Trenova support can never do under any grant, one sentence each, in the reader's language. Built from the support policy itself."
+  limits: [String!]!
 }
 
 "The caller's own session, when Trenova support opened it."
@@ -32797,6 +32807,13 @@ input GrantSupportAccessInput {
   reason: String!
   durationHours: Int!
   scope: SupportAccessScope!
+  allowsAssistant: Boolean!
+}
+
+input ExtendSupportAccessInput {
+  id: ID!
+  "The new length, in hours, counted from now."
+  durationHours: Int!
 }
 
 input RevokeSupportAccessInput {
@@ -32869,6 +32886,8 @@ extend type Query {
 extend type Mutation {
   "Let a named Trenova staff member into this organization for a set time."
   grantSupportAccess(input: GrantSupportAccessInput!): SupportAccessGrant!
+  "Let a live support grant last longer, counted from now."
+  extendSupportAccess(input: ExtendSupportAccessInput!): SupportAccessGrant!
   "End a support grant and every session under it at once."
   revokeSupportAccess(input: RevokeSupportAccessInput!): SupportAccessGrant!
   "Send the instance's logs for a period to Trenova support, which keeps them for 30 days. Managed instances only; one request at a time for the whole instance."

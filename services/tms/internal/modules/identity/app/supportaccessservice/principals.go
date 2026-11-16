@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -95,16 +96,105 @@ func (p *Principals) Permissions(
 		return empty, nil
 	}
 
+	resources := p.resourcesFor(grant.Scope)
+	if grant.AllowsAssistant {
+		resources[permission.ResourceAssistant.String()] = assistantPermission()
+	}
 	return &permissionports.CachedPermissions{
 		MaxSensitivity: string(permission.SensitivityConfidential),
-		Resources:      p.resourcesFor(grant.Scope),
+		Resources:      resources,
 		ExpiresAt:      grant.ExpiresAt,
 	}, nil
 }
 
+func assistantPermission() *permissionports.CachedResourcePermission {
+	ops := make([]string, len(supportaccess.AssistantOperations))
+	for i, op := range supportaccess.AssistantOperations {
+		ops[i] = string(op)
+	}
+	return &permissionports.CachedResourcePermission{
+		Operations: ops,
+		DataScope:  string(permission.DataScopeOrganization),
+	}
+}
+
+func (p *Principals) AdmitModelCall(ctx context.Context, tenant pagination.TenantInfo) error {
+	principalID := supportPrincipalOf(ctx, tenant)
+	if principalID.IsNil() {
+		return nil
+	}
+	if !p.enabled {
+		return supportaccess.ErrModelCallRefused()
+	}
+	grant, err := p.liveGrant(ctx, tenant, principalID)
+	if errors.Is(err, supportaccess.ErrGrantNotFound) {
+		return supportaccess.ErrModelCallRefused()
+	}
+	if err != nil {
+		return err
+	}
+	if !grant.AllowsAssistant {
+		return supportaccess.ErrModelCallRefused()
+	}
+	return nil
+}
+
+func supportPrincipalOf(ctx context.Context, tenant pagination.TenantInfo) pulid.ID {
+	if supportaccess.IsPrincipalID(tenant.UserID) {
+		return tenant.UserID
+	}
+	if scoped, ok := dbscope.TenantFrom(ctx); ok && supportaccess.IsPrincipalID(scoped.UserID) {
+		return scoped.UserID
+	}
+	if attrs, ok := authctx.GetSessionAttributes(ctx); ok &&
+		supportaccess.IsPrincipalID(attrs.UserID) {
+		return attrs.UserID
+	}
+	return pulid.Nil
+}
+
+func (p *Principals) liveGrant(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	principalID pulid.ID,
+) (*supportaccess.Grant, error) {
+	grant, ok := p.cachedGrant(principalID)
+	if !ok {
+		read, err := p.grants.ByPrincipal(
+			dbscope.WithTenant(ctx, dbscope.Tenant{
+				OrganizationID: tenant.OrgID,
+				BusinessUnitID: tenant.BuID,
+				UserID:         principalID,
+			}),
+			pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID, UserID: principalID},
+			principalID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		p.cache.Set(principalID, principalGrant{grant: read})
+		grant = read
+	}
+	if grant.OrganizationID != tenant.OrgID || !grant.LiveAt(timeutils.NowUnix()) {
+		return nil, supportaccess.ErrGrantNotFound
+	}
+	return grant, nil
+}
+
+func (p *Principals) cachedGrant(principalID pulid.ID) (*supportaccess.Grant, bool) {
+	cached, ok := p.cache.GetIfPresent(principalID)
+	if !ok {
+		return nil, false
+	}
+	return cached.grant, true
+}
+
 // RequireLive reads the grant of a support session, uncached, and returns
 // supportaccess.ErrGrantNotFound unless it is live and bound to that session's principal.
-func (p *Principals) RequireLive(ctx context.Context, req *supportaccessports.RequireLiveRequest) error {
+func (p *Principals) RequireLive(
+	ctx context.Context,
+	req *supportaccessports.RequireLiveRequest,
+) error {
 	if !p.enabled {
 		return supportaccess.ErrGrantNotFound
 	}
@@ -161,7 +251,9 @@ func (p *Principals) grantOf(
 	return grant, nil
 }
 
-func (p *Principals) resourcesFor(scope supportaccess.Scope) map[string]*permissionports.CachedResourcePermission {
+func (p *Principals) resourcesFor(
+	scope supportaccess.Scope,
+) map[string]*permissionports.CachedResourcePermission {
 	p.once.Do(p.build)
 	switch scope {
 	case supportaccess.ScopeFull:

@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -69,6 +70,7 @@ type Params struct {
 	// feature that pays for it is on.
 	Features platformcatalogports.FeatureGate
 	BuiltIn  aiproviderports.BuiltInEmbedding
+	Support  supportaccessports.ModelCalls
 }
 
 type Engine struct {
@@ -94,6 +96,7 @@ type Engine struct {
 	// Features is the plan every provider is resolved under (OnPlan).
 	Features platformcatalogports.FeatureGate
 	BuiltIn  aiproviderports.BuiltInEmbedding
+	Support  supportaccessports.ModelCalls
 	// pause waits out a backoff. It is a field so tests can count the waits
 	// instead of sitting through them.
 	Pause func(ctx context.Context, wait time.Duration) error
@@ -126,6 +129,7 @@ func NewEngine(p *Params) *Engine {
 		Advisors:      p.Advisors,
 		Features:      p.Features,
 		BuiltIn:       p.BuiltIn,
+		Support:       p.Support,
 		Pause:         pauseFor,
 		Clients:       make(map[bool]*http.Client, 2),
 		StreamClients: make(map[bool]*http.Client, 2),
@@ -261,7 +265,7 @@ func (s *Engine) NovaProvider(
 	tenant pagination.TenantInfo,
 	task aitask.Task,
 ) (*aiprovider.Provider, error) {
-	if err := s.OnPlan(ctx, task); err != nil {
+	if err := s.admit(ctx, tenant, task); err != nil {
 		return nil, err
 	}
 
@@ -282,6 +286,20 @@ func (s *Engine) NovaProvider(
 	default:
 		return novamodel.Provider(provider), nil
 	}
+}
+
+func (s *Engine) admit(ctx context.Context, tenant pagination.TenantInfo, task aitask.Task) error {
+	if err := s.OnPlan(ctx, task); err != nil {
+		return err
+	}
+	if task == aitask.TaskEmbedding {
+		return nil
+	}
+	err := s.Support.AdmitModelCall(ctx, tenant)
+	if refusal, ok := errors.AsType[*errortypes.BusinessError](err); ok {
+		return refusal.WithInternal(llmports.ErrNoProviderConfigured)
+	}
+	return err
 }
 
 func requiredProvider(
@@ -305,7 +323,7 @@ func (s *Engine) UsableFor(
 	task aitask.Task,
 	tenant pagination.TenantInfo,
 ) ([]*aiprovider.Provider, error) {
-	if err := s.OnPlan(ctx, task); err != nil {
+	if err := s.admit(ctx, tenant, task); err != nil {
 		return nil, err
 	}
 

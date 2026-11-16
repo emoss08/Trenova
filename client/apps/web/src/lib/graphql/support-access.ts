@@ -5,11 +5,10 @@ import type {
   SupportAccessGrantFieldsFragment,
   SupportAccessSettingsQuery,
 } from "@trenova/graphql/generated/graphql";
-import {
-  DataTablePageInfoFieldsFragmentDoc,
-} from "@trenova/graphql/generated/documents/equipment/table";
+import { DataTablePageInfoFieldsFragmentDoc } from "@trenova/graphql/generated/documents/equipment/table";
 import {
   CurrentSupportSessionDocument,
+  ExtendSupportAccessDocument,
   GrantSupportAccessDocument,
   RevokeSupportAccessDocument,
   SupportAccessActionFieldsFragmentDoc,
@@ -107,6 +106,18 @@ export async function grantSupportAccess(
     variables: { input },
   });
   return getFragmentData(SupportAccessGrantFieldsFragmentDoc, data.grantSupportAccess);
+}
+
+export async function extendSupportAccess(
+  id: string,
+  durationHours: number,
+): Promise<SupportAccessGrant> {
+  const data = await requestGraphQL({
+    document: ExtendSupportAccessDocument,
+    operationName: "ExtendSupportAccess",
+    variables: { input: { id, durationHours } },
+  });
+  return getFragmentData(SupportAccessGrantFieldsFragmentDoc, data.extendSupportAccess);
 }
 
 export async function revokeSupportAccess(id: string, reason: string): Promise<SupportAccessGrant> {

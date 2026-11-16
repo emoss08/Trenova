@@ -772,8 +772,101 @@ full allows an administrator's reach less the deny list, and an operation refuse
 resource is taken off its parent too, so no parent grant reaches it. Every audit entry written in
 the session is credited to principal type `support` with the grant as principal and carries
 `supportGrantId` and `supportStaffEmail`, so the grants page lists a grant's actions by filtering
-the audit log by principal. The administrators who hold `support_access` read are notified when a
-session starts.
+the audit log by principal.
+
+A grant's end ends its sessions: revoking deletes them at once and every request reads the grant
+(`requireLiveSupport`), so a revoked or expired grant refuses the next request on any process and
+an open event stream ends at the session watch's next check; managed mode turned off answers every
+support request with no grant at all. A grant whose organization's plan has ended is refused like
+every other session by the plan guard. Extending a grant does not lengthen a session already open:
+it ends at the end it was opened with, and staff enter again (the grants page says so beside an
+extended grant). A presigned download link handed out during a session lives out its own short
+expiry after the grant ends; that is accepted, since it names one file the session could already
+read.
+
+### What a session may do
+
+- **Read-only writes nothing.** The plan's read-only guards also hold support: `ReadOnlyGuard`
+  refuses every unsafe REST method from a read-only support session
+  (`middleware.SupportWriteRefusal`) except the previews that write nothing, presence (which shows
+  the customer who is looking) and the assistant's own routes; `ReadOnlyExtension` refuses every
+  GraphQL mutation. Both answer 403 with "This Trenova support session is read-only…". Personal
+  writes (settings, favourites, saved views) are refused, not ignored, so the interface never
+  claims a change it did not make. The permission engine refuses the same writes again, since a
+  read-only grant holds only `read`.
+- **Every session**: no password change, no organization switch, no assistant schedule (a
+  schedule keeps running after the grant ends); a full session keeps its own preferences, which
+  go with the principal.
+- **Where money is sent is never support's.** `supportaccess.PaymentDestinations` names the
+  columns (invoice remittance instructions and factoring override, the billing control's default
+  terms that print as statement and reminder remittance text, the organization's address printed
+  as the remit-to on invoices, carrier remit-to fields, the factor a customer pays, a factoring
+  company's address, remittance text and notice of assignment). Migration
+  `20261231023400_support_access_completion.sql` puts `support_payment_destination_guard` on each
+  table with the same columns; it reads the transaction's signed scope and refuses a support
+  principal (`sup_` user) a change, or a new row carrying a value where `OnInsert`, with SQLSTATE
+  `TRS01`, which `helpers.NormalizeDatabaseError` turns into one sentence. It holds for every
+  writer: REST, GraphQL, bulk, imports, agent tools, an approved proposal and a workflow run in the
+  session's scope. `TestPaymentDestinations_TheDatabaseGuardsExactlyWhatThePolicyNames` keeps the
+  triggers and the list equal.
+- **Nothing leaves the organization at support's hand, whatever the scope.** A support principal
+  cannot send or schedule a message to anyone outside the organization (every email, test sends
+  included; outbound EDI; detention notices; replies to inbound mail; factoring submissions and
+  their transports), create or change a share, tracking or tender link or a scheduled report,
+  or change text and recipients outside readers see (invoice memo and email snapshot, invoice
+  line descriptions, a new invoice line whose words a person typed, order charge descriptions,
+  the billing control's invoice footer, document template versions, customer
+  status update recipients, the customer's email profile). `supportaccess.OutboundGuards` names
+  the tables and columns; migration `20261231023401_support_outbound_guard.sql` puts
+  `support_outbound_guard` on each (SQLSTATE `TRS02`, turned into one sentence by
+  `helpers.NormalizeDatabaseError`), which holds for every writer.
+  `TestOutbound_TheDatabaseGuardsExactlyWhatThePolicyNames` keeps the two equal. A typed
+  invoice line is told apart by `invoice_lines.typed_description`, which the memo service sets
+  (the only path that puts a caller's words on a line); lines rating, posting and adjustments
+  derive leave it false, so support still re-rates and posts. A new path that writes a caller's
+  text onto a line must set it. Above it,
+  `emailservice.Send` refuses a send whose request or transaction scope names a support principal
+  before anything is written, `customer_communication` is write-denied in the policy, and the
+  agent runtime and proposal executor refuse support any tool whose egress reaches outsiders
+  (`ToolPolicy.ReachesOutsiders`; withheld from its tool set too). The guard judges who
+  initiated the write, from the transaction's scope: a send the system started (a customer's own
+  scheduled statement run) or a person started earlier still goes out while a support session is
+  open. A send that a support action sets off in the same session (an invoice support posts that
+  would e-mail itself) is support's, and is refused with the sentence.
+- **The assistant is the grant's choice.** A grant says whether staff may use the assistant
+  (`allows_assistant`, off by default), because every answer is paid for by the organization's AI
+  providers. When it does, the principal also holds `assistant` read and create, whatever its
+  scope; tools still run under the grant, so a read-only session's assistant only reads. Every
+  model call is admitted by `supportaccessports.ModelCalls` in the completion engine (all but
+  embeddings): a call whose tenant, database scope or session names a support principal runs only
+  while that principal's grant is live and allows the assistant, otherwise it is refused with a
+  sentence and nothing is spent. Usage rows carry the support principal as their user.
+- **Approvals.** The agent runtime and the proposal executor check a support principal through the
+  engine like anyone, so it approves only what a full grant holds and the deny list leaves; it is
+  never the person a tainted change is held for (`ErrTaintedNeedsPerson`) and has no own records
+  for a self-scoped tool (withheld from its tool set and refused at dispatch).
+
+### Notifications
+
+The administrators holding `support_access` read are notified (`supportaccessnotice`, in-app) when
+a grant is made (`support_access.granted`), extended (`support_access.extended`), first entered
+(`support_access.first_entry`, high priority) and ended, by revocation or on its own
+(`support_access.ended`). The administrator who made the change is not told of their own act.
+
+### The grants page
+
+Admin > Trenova support access lists live and past grants with who granted, extended or ended
+each and why, whether staff may use the assistant, and "In your organization now" while a session
+of the grant was used in the last five minutes (`SupportAccessService.ActiveNow`, at most a page of
+session reads). An administrator who may grant may extend a live grant by 1, 4, 24 or 72 hours
+counted from now (never shorter than it already lasts; `ck_support_access_grants_expiry` keeps the
+end within 72 hours of the last extension) and anyone who may revoke may end it, whoever granted
+it. Each grant opens its activity, paged from the audit log by principal id, and exports it as CSV
+through the audit log's own export (`filters.principalId`), which needs `audit_log` export. The
+page says what each scope allows and lists what support can never do from
+`supportAccessSettings.limits`, the labels of the policy's own limits
+(`supportaccess.Limits`), so the page cannot promise less or more than the engine and the
+database enforce.
 
 ## Logs for Trenova support
 
@@ -874,7 +967,8 @@ the listener. A customer's own request needs no grant.
   request in flight and 5 a day for the whole instance, never per organization.
 - A support session is never a person: a new resource that holds a secret or controls sign-in
   must be classified in `supportaccess/policy.go`, and
-  `TestEverySensitiveResourceIsClassifiedForSupport` fails until it is.
+  `TestEverySensitiveResourceIsClassifiedForSupport` fails until it is. A new column that decides
+  where money is sent goes in `PaymentDestinations` and the guard's trigger in the same change.
 - Shipments are never hard-deleted, so counting them by `created_at` is a ledger. A meter whose
   source rows can be deleted needs its own append-only record before it is billed. Pages are read
   from `ai_usage_records`, which outlives the document; the extraction keeps its page count on

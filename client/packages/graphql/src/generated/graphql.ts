@@ -4675,6 +4675,12 @@ export type ExportTableViewInput = {
   view: TableExportViewInput;
 };
 
+export type ExtendSupportAccessInput = {
+  /** The new length, in hours, counted from now. */
+  durationHours: number;
+  id: string | number;
+};
+
 export type FacilityType =
   | 'ColdStorage'
   | 'CrossDock'
@@ -5473,6 +5479,7 @@ export type GrantCarrierIntelOverrideInput = {
 };
 
 export type GrantSupportAccessInput = {
+  allowsAssistant: boolean;
   durationHours: number;
   reason: string;
   scope: SupportAccessScope;
@@ -19960,12 +19967,12 @@ export type StoredMileageTableQueryVariables = Exact<{
 
 export type StoredMileageTableQuery = { storedMileages: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'StoredMileageTableRowFieldsFragment': StoredMileageTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type SupportAccessGrantFieldsFragment = { id: string, staffEmail: string, reason: string, scope: SupportAccessScope, durationHours: number, status: SupportAccessStatus, grantedByName: string | null, grantedAt: number, expiresAt: number, revokedAt: number | null, revokedByName: string | null, revokeReason: string | null, lastEnteredAt: number | null, lastStaffName: string | null } & { ' $fragmentName'?: 'SupportAccessGrantFieldsFragment' };
+export type SupportAccessGrantFieldsFragment = { id: string, staffEmail: string, reason: string, scope: SupportAccessScope, allowsAssistant: boolean, durationHours: number, status: SupportAccessStatus, grantedByName: string | null, grantedAt: number, expiresAt: number, revokedAt: number | null, revokedByName: string | null, revokeReason: string | null, extendedAt: number | null, extendedByName: string | null, activeAt: number | null, lastEnteredAt: number | null, lastStaffName: string | null } & { ' $fragmentName'?: 'SupportAccessGrantFieldsFragment' };
 
 export type SupportAccessSettingsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SupportAccessSettingsQuery = { supportAccessSettings: { available: boolean, staffDomain: string | null, durations: Array<number>, maxLiveGrants: number } };
+export type SupportAccessSettingsQuery = { supportAccessSettings: { available: boolean, staffDomain: string | null, durations: Array<number>, maxLiveGrants: number, limits: Array<string> } };
 
 export type SupportAccessGrantsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -19980,6 +19987,13 @@ export type GrantSupportAccessMutationVariables = Exact<{
 
 
 export type GrantSupportAccessMutation = { grantSupportAccess: { ' $fragmentRefs'?: { 'SupportAccessGrantFieldsFragment': SupportAccessGrantFieldsFragment } } };
+
+export type ExtendSupportAccessMutationVariables = Exact<{
+  input: ExtendSupportAccessInput;
+}>;
+
+
+export type ExtendSupportAccessMutation = { extendSupportAccess: { ' $fragmentRefs'?: { 'SupportAccessGrantFieldsFragment': SupportAccessGrantFieldsFragment } } };
 
 export type RevokeSupportAccessMutationVariables = Exact<{
   input: RevokeSupportAccessInput;
@@ -21818,7 +21832,7 @@ export { ShipmentRatingDetailFieldsFragmentDoc, ShipmentLocationFieldsFragmentDo
 export { UpdateSidebarPreferencesDocument } from "./documents/sidebar-preferences/mutations";
 export { SidebarPreferencesDocument, SidebarCustomizationOptionsDocument } from "./documents/sidebar-preferences/preferences";
 export { StoredMileageStopKeyFieldsFragmentDoc, StoredMileageTableRowFieldsFragmentDoc, StoredMileageTableDocument } from "./documents/stored-mileage/table";
-export { SupportAccessGrantFieldsFragmentDoc, SupportAccessActionFieldsFragmentDoc, SupportAccessSettingsDocument, SupportAccessGrantsDocument, GrantSupportAccessDocument, RevokeSupportAccessDocument, CurrentSupportSessionDocument, SupportAccessActionsDocument } from "./documents/support-access/support-access";
+export { SupportAccessGrantFieldsFragmentDoc, SupportAccessActionFieldsFragmentDoc, SupportAccessSettingsDocument, SupportAccessGrantsDocument, GrantSupportAccessDocument, ExtendSupportAccessDocument, RevokeSupportAccessDocument, CurrentSupportSessionDocument, SupportAccessActionsDocument } from "./documents/support-access/support-access";
 export { SupportLogRequestsDocument, RequestSupportLogsDocument } from "./documents/support-logs/support-logs";
 export { DeskTableChangeAlertsDocument } from "./documents/table-change-alert/desk";
 export { TcaSubscriptionTableRowFieldsFragmentDoc, TcaSubscriptionTableDocument } from "./documents/table-change-alert/table";

@@ -18016,6 +18016,12 @@ input ExportTableViewInput {
   view: TableExportViewInput!
 }
 
+input ExtendSupportAccessInput {
+  """The new length, in hours, counted from now."""
+  durationHours: Int!
+  id: ID!
+}
+
 """An account at an identity provider linked to a person here."""
 type ExternalIdentity {
   createdAt: Timestamp!
@@ -21038,6 +21044,7 @@ input GrantCarrierIntelOverrideInput {
 }
 
 input GrantSupportAccessInput {
+  allowsAssistant: Boolean!
   durationHours: Int!
   reason: String!
   scope: SupportAccessScope!
@@ -25019,6 +25026,8 @@ type Mutation {
   Saves a table's view as a report and runs it in the background, with no row limit beyond the report's own.
   """
   exportTableView(input: ExportTableViewInput!): TableExportResult!
+  """Let a live support grant last longer, counted from now."""
+  extendSupportAccess(input: ExtendSupportAccessInput!): SupportAccessGrant!
   """Files one proposed document onto a record, as the caller."""
   fileCaptureItem(id: ID!, input: FileCaptureItemInput!): CaptureItem!
   """
@@ -34949,8 +34958,20 @@ input SubmitMyExpenseInput {
 Time-limited access an administrator gave one named Trenova staff member to this organization.
 """
 type SupportAccessGrant {
+  """
+  When staff last did something in a session open now; null when nobody is in the organization under this grant.
+  """
+  activeAt: Timestamp
+  """
+  Whether staff may use the assistant under this grant. Its answers are paid for by the organization's AI providers.
+  """
+  allowsAssistant: Boolean!
+  """The length, in hours, chosen when the grant was made or last extended."""
   durationHours: Int!
   expiresAt: Timestamp!
+  """When an administrator last extended the grant."""
+  extendedAt: Timestamp
+  extendedByName: String
   grantedAt: Timestamp!
   grantedByName: String
   id: ID!
@@ -34997,6 +35018,10 @@ type SupportAccessSettings {
   available: Boolean!
   """The lengths, in hours, a grant may have."""
   durations: [Int!]!
+  """
+  What Trenova support can never do under any grant, one sentence each, in the reader's language. Built from the support policy itself.
+  """
+  limits: [String!]!
   maxLiveGrants: Int!
   """The Trenova staff email domain grants are limited to."""
   staffDomain: String

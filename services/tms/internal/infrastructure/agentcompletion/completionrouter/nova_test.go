@@ -33,6 +33,7 @@ func novaService(t *testing.T, repo *fakeRepo) *Service {
 		Adapters:   adapterregistry.NewRegistry(),
 		Clients:    make(map[bool]*http.Client, 2),
 		Features:   plantest.AllFeatures(),
+		Support:    &fakeSupport{},
 	})
 }
 

@@ -502,6 +502,7 @@ var grantsTable = schema.Table{
 		{Name: "staff_email", Quoted: `"staff_email"`, Field: "StaffEmail", Kind: schema.KindString, Flags: 0, Label: `Staff Email`, JSON: `staffEmail`},
 		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindString, Flags: 0, Label: `Reason`, JSON: `reason`},
 		{Name: "scope", Quoted: `"scope"`, Field: "Scope", Kind: schema.KindString, Flags: 0, Label: `Scope`, JSON: `scope`, Enum: enumScope[:]},
+		{Name: "allows_assistant", Quoted: `"allows_assistant"`, Field: "AllowsAssistant", Kind: schema.KindBool, Flags: 0, Label: `Allows Assistant`, JSON: `allowsAssistant`},
 		{Name: "duration_hours", Quoted: `"duration_hours"`, Field: "DurationHours", Kind: schema.KindInt64, Flags: 0, Label: `Duration Hours`, JSON: `durationHours`},
 		{Name: "principal_user_id", Quoted: `"principal_user_id"`, Field: "PrincipalUserID", Kind: schema.KindString, Flags: 0, Label: `Principal User ID`, JSON: `principalUserId`},
 		{Name: "granted_by_id", Quoted: `"granted_by_id"`, Field: "GrantedByID", Kind: schema.KindString, Flags: 0, Label: `Granted By ID`, JSON: `grantedById`},
@@ -510,6 +511,8 @@ var grantsTable = schema.Table{
 		{Name: "revoked_by_id", Quoted: `"revoked_by_id"`, Field: "RevokedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Revoked By ID`, JSON: `revokedById`},
 		{Name: "revoke_reason", Quoted: `"revoke_reason"`, Field: "RevokeReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Revoke Reason`, JSON: `revokeReason`},
 		{Name: "expiry_recorded_at", Quoted: `"expiry_recorded_at"`, Field: "ExpiryRecordedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Expiry Recorded At`, JSON: `expiryRecordedAt`},
+		{Name: "extended_at", Quoted: `"extended_at"`, Field: "ExtendedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Extended At`, JSON: `extendedAt`},
+		{Name: "extended_by_id", Quoted: `"extended_by_id"`, Field: "ExtendedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Extended By ID`, JSON: `extendedById`},
 		{Name: "last_entered_at", Quoted: `"last_entered_at"`, Field: "LastEnteredAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Entered At`, JSON: `lastEnteredAt`},
 		{Name: "last_staff_name", Quoted: `"last_staff_name"`, Field: "LastStaffName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Staff Name`, JSON: `lastStaffName`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
@@ -517,19 +520,20 @@ var grantsTable = schema.Table{
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	Relations: []schema.Relation{
-		{Name: "GrantedBy", Alias: "gb", Kind: schema.BelongsTo, Local: []int32{8}, Remote: []int32{0}, Label: `Granted By`, JSON: `grantedBy`},
-		{Name: "RevokedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{11}, Remote: []int32{0}, Label: `Revoked By`, JSON: `revokedBy`},
+		{Name: "GrantedBy", Alias: "gb", Kind: schema.BelongsTo, Local: []int32{9}, Remote: []int32{0}, Label: `Granted By`, JSON: `grantedBy`},
+		{Name: "RevokedBy", Alias: "rb", Kind: schema.BelongsTo, Local: []int32{12}, Remote: []int32{0}, Label: `Revoked By`, JSON: `revokedBy`},
+		{Name: "ExtendedBy", Alias: "eb", Kind: schema.BelongsTo, Local: []int32{16}, Remote: []int32{0}, Label: `Extended By`, JSON: `extendedBy`},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
 	Returning:  nil,
-	Version:    16,
+	Version:    19,
 	AutoID:     0,
-	AutoCreate: 17,
-	AutoUpdate: 18,
+	AutoCreate: 20,
+	AutoUpdate: 21,
 	IDPrefix:   "sag_",
 	New:        newGrant,
 	NewN:       newNGrant,
@@ -550,6 +554,7 @@ type GrantsTable struct {
 	StaffEmail       keel.StringCol
 	Reason           keel.StringCol
 	Scope            ScopeCol
+	AllowsAssistant  keel.BoolCol
 	DurationHours    keel.Int64Col
 	PrincipalUserID  keelkinds.PulidIDCol
 	GrantedByID      keelkinds.PulidIDCol
@@ -558,6 +563,8 @@ type GrantsTable struct {
 	RevokedByID      keelkinds.PulidIDCol
 	RevokeReason     keel.StringCol
 	ExpiryRecordedAt keel.Int64Col
+	ExtendedAt       keel.Int64Col
+	ExtendedByID     keelkinds.PulidIDCol
 	LastEnteredAt    keel.Int64Col
 	LastStaffName    keel.StringCol
 	Version          keel.Int64Col
@@ -574,19 +581,22 @@ var Grants = &GrantsTable{
 	StaffEmail:       keel.StringCol{Col: keel.Col{Ref: &grantsRef, Index: 3}},
 	Reason:           keel.StringCol{Col: keel.Col{Ref: &grantsRef, Index: 4}},
 	Scope:            ScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &grantsRef, Index: 5}}},
-	DurationHours:    keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 6}},
-	PrincipalUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &grantsRef, Index: 7}}},
-	GrantedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &grantsRef, Index: 8}}},
-	ExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 9}},
-	RevokedAt:        keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 10}},
-	RevokedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &grantsRef, Index: 11}}},
-	RevokeReason:     keel.StringCol{Col: keel.Col{Ref: &grantsRef, Index: 12}},
-	ExpiryRecordedAt: keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 13}},
-	LastEnteredAt:    keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 14}},
-	LastStaffName:    keel.StringCol{Col: keel.Col{Ref: &grantsRef, Index: 15}},
-	Version:          keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 16}},
-	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 17}},
-	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 18}},
+	AllowsAssistant:  keel.BoolCol{Col: keel.Col{Ref: &grantsRef, Index: 6}},
+	DurationHours:    keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 7}},
+	PrincipalUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &grantsRef, Index: 8}}},
+	GrantedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &grantsRef, Index: 9}}},
+	ExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 10}},
+	RevokedAt:        keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 11}},
+	RevokedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &grantsRef, Index: 12}}},
+	RevokeReason:     keel.StringCol{Col: keel.Col{Ref: &grantsRef, Index: 13}},
+	ExpiryRecordedAt: keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 14}},
+	ExtendedAt:       keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 15}},
+	ExtendedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &grantsRef, Index: 16}}},
+	LastEnteredAt:    keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 17}},
+	LastStaffName:    keel.StringCol{Col: keel.Col{Ref: &grantsRef, Index: 18}},
+	Version:          keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 19}},
+	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 20}},
+	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &grantsRef, Index: 21}},
 }
 
 // BuildGrants builds the table of support_access_grants for ref. Generated relation and alias methods call it.
@@ -599,19 +609,22 @@ func BuildGrants(r *keel.Ref) *GrantsTable {
 		StaffEmail:       keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Reason:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Scope:            ScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		DurationHours:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		PrincipalUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		GrantedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		ExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		RevokedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		RevokedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		RevokeReason:     keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		ExpiryRecordedAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		LastEnteredAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		LastStaffName:    keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		AllowsAssistant:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
+		DurationHours:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		PrincipalUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		GrantedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		RevokedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		RevokedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		RevokeReason:     keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		ExpiryRecordedAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		ExtendedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		ExtendedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		LastEnteredAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		LastStaffName:    keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
+		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 	}
 }
 
@@ -629,6 +642,11 @@ func (t *GrantsTable) GrantedBy() *tenantdb.UsersTable {
 // RevokedBy is the belongs relation.
 func (t *GrantsTable) RevokedBy() *tenantdb.UsersTable {
 	return keel.Path(t.Ref, 1, tenantdb.BuildUsers)
+}
+
+// ExtendedBy is the belongs relation.
+func (t *GrantsTable) ExtendedBy() *tenantdb.UsersTable {
+	return keel.Path(t.Ref, 2, tenantdb.BuildUsers)
 }
 
 // Get returns the support_access_grants row with the given key, or keel.ErrNotFound.
@@ -1023,30 +1041,36 @@ func ptrGrant(p unsafe.Pointer, c int32) any {
 	case 5:
 		return (*string)(unsafe.Pointer(&r.Scope))
 	case 6:
-		return (*int64)(unsafe.Pointer(&r.DurationHours))
+		return &r.AllowsAssistant
 	case 7:
-		return (*string)(unsafe.Pointer(&r.PrincipalUserID))
+		return (*int64)(unsafe.Pointer(&r.DurationHours))
 	case 8:
-		return (*string)(unsafe.Pointer(&r.GrantedByID))
+		return (*string)(unsafe.Pointer(&r.PrincipalUserID))
 	case 9:
-		return &r.ExpiresAt
+		return (*string)(unsafe.Pointer(&r.GrantedByID))
 	case 10:
-		return &r.RevokedAt
+		return &r.ExpiresAt
 	case 11:
-		return (*string)(unsafe.Pointer(&r.RevokedByID))
+		return &r.RevokedAt
 	case 12:
-		return &r.RevokeReason
+		return (*string)(unsafe.Pointer(&r.RevokedByID))
 	case 13:
-		return &r.ExpiryRecordedAt
+		return &r.RevokeReason
 	case 14:
-		return &r.LastEnteredAt
+		return &r.ExpiryRecordedAt
 	case 15:
-		return &r.LastStaffName
+		return &r.ExtendedAt
 	case 16:
-		return &r.Version
+		return (*string)(unsafe.Pointer(&r.ExtendedByID))
 	case 17:
-		return &r.CreatedAt
+		return &r.LastEnteredAt
 	case 18:
+		return &r.LastStaffName
+	case 19:
+		return &r.Version
+	case 20:
+		return &r.CreatedAt
+	case 21:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -1068,48 +1092,60 @@ func valueGrant(p unsafe.Pointer, c int32) any {
 	case 5:
 		return string(r.Scope)
 	case 6:
-		return int64(r.DurationHours)
+		return r.AllowsAssistant
 	case 7:
-		return string(r.PrincipalUserID)
+		return int64(r.DurationHours)
 	case 8:
-		return string(r.GrantedByID)
+		return string(r.PrincipalUserID)
 	case 9:
-		return r.ExpiresAt
+		return string(r.GrantedByID)
 	case 10:
+		return r.ExpiresAt
+	case 11:
 		if r.RevokedAt == nil {
 			return nil
 		}
 		return *r.RevokedAt
-	case 11:
+	case 12:
 		if r.RevokedByID == "" {
 			return nil
 		}
 		return string(r.RevokedByID)
-	case 12:
+	case 13:
 		if r.RevokeReason == "" {
 			return nil
 		}
 		return r.RevokeReason
-	case 13:
+	case 14:
 		if r.ExpiryRecordedAt == nil {
 			return nil
 		}
 		return *r.ExpiryRecordedAt
-	case 14:
+	case 15:
+		if r.ExtendedAt == nil {
+			return nil
+		}
+		return *r.ExtendedAt
+	case 16:
+		if r.ExtendedByID == "" {
+			return nil
+		}
+		return string(r.ExtendedByID)
+	case 17:
 		if r.LastEnteredAt == nil {
 			return nil
 		}
 		return *r.LastEnteredAt
-	case 15:
+	case 18:
 		if r.LastStaffName == "" {
 			return nil
 		}
 		return r.LastStaffName
-	case 16:
+	case 19:
 		return r.Version
-	case 17:
+	case 20:
 		return r.CreatedAt
-	case 18:
+	case 21:
 		return r.UpdatedAt
 	}
 	return nil
@@ -1122,6 +1158,8 @@ func attachGrant(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 		r.GrantedBy = (*tenant.User)(child)
 	case 1:
 		r.RevokedBy = (*tenant.User)(child)
+	case 2:
+		r.ExtendedBy = (*tenant.User)(child)
 	}
 }
 
@@ -1615,6 +1653,7 @@ func valueKeySet(p unsafe.Pointer, c int32) any {
 func init() {
 	grantsTable.Relations[0].Target = tenantdb.UsersSchema()
 	grantsTable.Relations[1].Target = tenantdb.UsersSchema()
+	grantsTable.Relations[2].Target = tenantdb.UsersSchema()
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

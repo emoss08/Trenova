@@ -57,7 +57,7 @@ func live(now int64) keel.Pred {
 
 func withActors(q keel.Query[*supportaccess.Grant]) keel.Query[*supportaccess.Grant] {
 	g := supportaccessdb.Grants
-	return q.Load(g.GrantedBy(), g.RevokedBy())
+	return q.Load(g.GrantedBy(), g.RevokedBy(), g.ExtendedBy())
 }
 
 func (r *grantRepository) Create(
@@ -156,6 +156,31 @@ func (r *grantRepository) Revoke(
 			g.RevokedAt.To(now),
 			g.RevokedByID.To(grant.RevokedByID),
 			g.RevokeReason.To(grant.RevokeReason),
+		)
+		if err != nil {
+			return nil, grantErrors.Map(err, grant.ID.String())
+		}
+		if len(rows) != 1 {
+			return nil, supportaccess.ErrGrantNotFound
+		}
+		return rows[0], nil
+	})
+}
+
+func (r *grantRepository) Extend(
+	ctx context.Context,
+	grant *supportaccess.Grant,
+	now int64,
+) (*supportaccess.Grant, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*supportaccess.Grant, error) {
+		g := supportaccessdb.Grants
+		rows, err := g.Where(g.ID.Eq(grant.ID), live(now)).UpdateReturning(
+			ctx,
+			r.db.Keel(ctx),
+			g.ExpiresAt.To(grant.ExpiresAt),
+			g.DurationHours.To(int64(grant.DurationHours)),
+			g.ExtendedAt.To(now),
+			g.ExtendedByID.To(grant.ExtendedByID),
 		)
 		if err != nil {
 			return nil, grantErrors.Map(err, grant.ID.String())

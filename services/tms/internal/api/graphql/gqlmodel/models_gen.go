@@ -6284,6 +6284,12 @@ type ExportTableViewInput struct {
 	Format string `json:"format"`
 }
 
+type ExtendSupportAccessInput struct {
+	ID string `json:"id"`
+	// The new length, in hours, counted from now.
+	DurationHours int `json:"durationHours"`
+}
+
 type ExternalIdentityConnection struct {
 	Edges      []*ExternalIdentityEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
@@ -7297,10 +7303,11 @@ type GrantCarrierIntelOverrideInput struct {
 }
 
 type GrantSupportAccessInput struct {
-	StaffEmail    string             `json:"staffEmail"`
-	Reason        string             `json:"reason"`
-	DurationHours int                `json:"durationHours"`
-	Scope         SupportAccessScope `json:"scope"`
+	StaffEmail      string             `json:"staffEmail"`
+	Reason          string             `json:"reason"`
+	DurationHours   int                `json:"durationHours"`
+	Scope           SupportAccessScope `json:"scope"`
+	AllowsAssistant bool               `json:"allowsAssistant"`
 }
 
 type HandOffWatchtowerItemInput struct {
@@ -12709,10 +12716,13 @@ type SubmitMyExpenseInput struct {
 
 // Time-limited access an administrator gave one named Trenova staff member to this organization.
 type SupportAccessGrant struct {
-	ID            string              `json:"id"`
-	StaffEmail    string              `json:"staffEmail"`
-	Reason        string              `json:"reason"`
-	Scope         SupportAccessScope  `json:"scope"`
+	ID         string             `json:"id"`
+	StaffEmail string             `json:"staffEmail"`
+	Reason     string             `json:"reason"`
+	Scope      SupportAccessScope `json:"scope"`
+	// Whether staff may use the assistant under this grant. Its answers are paid for by the organization's AI providers.
+	AllowsAssistant bool `json:"allowsAssistant"`
+	// The length, in hours, chosen when the grant was made or last extended.
 	DurationHours int                 `json:"durationHours"`
 	Status        SupportAccessStatus `json:"status"`
 	GrantedByName *string             `json:"grantedByName,omitempty"`
@@ -12721,6 +12731,11 @@ type SupportAccessGrant struct {
 	RevokedAt     *int                `json:"revokedAt,omitempty"`
 	RevokedByName *string             `json:"revokedByName,omitempty"`
 	RevokeReason  *string             `json:"revokeReason,omitempty"`
+	// When an administrator last extended the grant.
+	ExtendedAt     *int    `json:"extendedAt,omitempty"`
+	ExtendedByName *string `json:"extendedByName,omitempty"`
+	// When staff last did something in a session open now; null when nobody is in the organization under this grant.
+	ActiveAt *int `json:"activeAt,omitempty"`
 	// When staff last entered under this grant.
 	LastEnteredAt *int `json:"lastEnteredAt,omitempty"`
 	// The staff member's name as the control plane last asserted it.
@@ -12748,6 +12763,8 @@ type SupportAccessSettings struct {
 	// The lengths, in hours, a grant may have.
 	Durations     []int `json:"durations"`
 	MaxLiveGrants int   `json:"maxLiveGrants"`
+	// What Trenova support can never do under any grant, one sentence each, in the reader's language. Built from the support policy itself.
+	Limits []string `json:"limits"`
 }
 
 // A request from this organization to send the instance's logs to Trenova support.

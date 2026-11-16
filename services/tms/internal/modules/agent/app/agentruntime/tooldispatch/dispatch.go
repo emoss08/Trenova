@@ -186,7 +186,23 @@ func (s *Dispatcher) dispatchAction(
 	selfScoped bool,
 ) toolcall.Result {
 	req := p.req
+	if selfScoped && req.Actor.IsSupport() {
+		return toolcall.Refused(
+			aitrace.OutcomeDenied,
+			"it changes a person's own records, and Trenova support is not a person here",
+			"Tool %q changes a person's own records, and a Trenova support session has none.",
+			p.call.Name,
+		)
+	}
 	policy := s.Ruled(ctx, req, new(tool.Policy()))
+	if req.Actor.IsSupport() && policy.ReachesOutsiders() {
+		return toolcall.Refused(
+			aitrace.OutcomeDenied,
+			"it reaches people outside the organization, which Trenova support may never do",
+			"Tool %q sends to or changes what people outside the organization receive, which a Trenova support session may never do.",
+			p.call.Name,
+		)
+	}
 	if outcome, refused := s.prepareActionCall(ctx, p, tool, &policy, selfScoped); refused {
 		return outcome
 	}
@@ -724,7 +740,11 @@ func (s *Dispatcher) authorize(
 			aitrace.OutcomeDenied,
 			planwording.Reason(result.PlanDenial),
 			"%s",
-			planwording.Refusal(fmt.Sprintf("Tool %q", toolName), result.PlanDenial, actor.IsAgent()),
+			planwording.Refusal(
+				fmt.Sprintf("Tool %q", toolName),
+				result.PlanDenial,
+				actor.IsAgent(),
+			),
 		), true
 	}
 

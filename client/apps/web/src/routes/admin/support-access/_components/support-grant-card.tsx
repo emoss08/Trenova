@@ -11,31 +11,43 @@ import { durationLabel, scopeLabel, statusLabel, statusVariant } from "./support
 export function SupportGrantCard({
   grant,
   canRevoke,
+  canExtend,
   onRevoke,
+  onExtend,
 }: {
   grant: SupportAccessGrant;
   canRevoke: boolean;
+  canExtend: boolean;
   onRevoke: () => void;
+  onExtend: () => void;
 }) {
   const t = useT();
   const [showActions, setShowActions] = useState(false);
   const live = grant.status === "Live";
 
   return (
-    <div className="bg-card border-border flex flex-col rounded-lg border">
+    <div className="flex flex-col rounded-lg border border-border bg-card">
       <div className="flex items-start justify-between gap-3 p-4">
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-foreground truncate font-medium">{grant.staffEmail}</span>
+            <span className="truncate font-medium text-foreground">{grant.staffEmail}</span>
             <Badge variant={statusVariant(grant.status)} dot>
               {statusLabel(t, grant.status)}
             </Badge>
             <Badge variant={grant.scope === "Full" ? "warning" : "neutral"}>
               {scopeLabel(t, grant.scope)}
             </Badge>
+            {grant.allowsAssistant ? (
+              <Badge variant="neutral">{t("May use the assistant")}</Badge>
+            ) : null}
+            {live && grant.activeAt != null ? (
+              <Badge variant="info" dot>
+                {t("In your organization now")}
+              </Badge>
+            ) : null}
           </div>
-          <p className="text-foreground-muted text-sm">{grant.reason}</p>
-          <p className="text-foreground-subtle text-xs">
+          <p className="text-sm text-foreground-muted">{grant.reason}</p>
+          <p className="text-xs text-foreground-subtle">
             {t(
               "Granted by {0} on {1} for {2}",
               grant.grantedByName ?? t("an administrator"),
@@ -54,8 +66,23 @@ export function SupportGrantCard({
                   )
                 : t("Ended on its own {0}", formatUnixDateTime(grant.expiresAt))}
           </p>
+          {grant.extendedAt != null ? (
+            <p className="text-xs text-foreground-subtle">
+              {t(
+                "Extended by {0} on {1}",
+                grant.extendedByName ?? t("an administrator"),
+                formatUnixDateTime(grant.extendedAt),
+              )}
+              {live ? (
+                <>
+                  {" · "}
+                  {t("Staff enter again to use the added time")}
+                </>
+              ) : null}
+            </p>
+          ) : null}
           {grant.lastEnteredAt != null ? (
-            <p className="text-foreground-subtle text-xs">
+            <p className="text-xs text-foreground-subtle">
               {t(
                 "Last entered by {0} on {1}",
                 grant.lastStaffName ?? grant.staffEmail,
@@ -64,13 +91,22 @@ export function SupportGrantCard({
             </p>
           ) : null}
         </div>
-        {live && canRevoke ? (
-          <Button type="button" size="sm" variant="destructive" onClick={onRevoke}>
-            {t("End access")}
-          </Button>
+        {live && (canExtend || canRevoke) ? (
+          <div className="flex shrink-0 items-center gap-2">
+            {canExtend ? (
+              <Button type="button" size="sm" variant="secondary" onClick={onExtend}>
+                {t("Extend")}
+              </Button>
+            ) : null}
+            {canRevoke ? (
+              <Button type="button" size="sm" variant="destructive" onClick={onRevoke}>
+                {t("End access")}
+              </Button>
+            ) : null}
+          </div>
         ) : null}
       </div>
-      <div className="border-border-subtle border-t px-4 py-2">
+      <div className="border-t border-border-subtle px-4 py-2">
         <Button
           type="button"
           size="sm"
@@ -80,7 +116,7 @@ export function SupportGrantCard({
         >
           {showActions ? t("Hide what support did") : t("Show what support did")}
         </Button>
-        {showActions ? <SupportGrantActions grantId={grant.id} /> : null}
+        {showActions ? <SupportGrantActions grant={grant} /> : null}
       </div>
     </div>
   );

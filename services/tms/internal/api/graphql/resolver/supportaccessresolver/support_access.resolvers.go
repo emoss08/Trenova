@@ -30,16 +30,41 @@ func (r *MutationResolver) GrantSupportAccess(ctx context.Context, input gqlmode
 	}
 
 	grant, err := r.SupportAccessService.Grant(ctx, &supportaccessservice.GrantRequest{
-		TenantInfo:    resolvercore.TenantInfo(authCtx),
-		StaffEmail:    input.StaffEmail,
-		Reason:        input.Reason,
-		DurationHours: input.DurationHours,
-		Scope:         supportaccess.Scope(input.Scope),
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
+		StaffEmail:      input.StaffEmail,
+		Reason:          input.Reason,
+		DurationHours:   input.DurationHours,
+		Scope:           supportaccess.Scope(input.Scope),
+		AllowsAssistant: input.AllowsAssistant,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return grantToModel(grant, timeutils.NowUnix()), nil
+	return grantToModel(grant, timeutils.NowUnix(), nil), nil
+}
+
+func (r *MutationResolver) ExtendSupportAccess(ctx context.Context, input gqlmodel.ExtendSupportAccessInput) (*gqlmodel.SupportAccessGrant, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceSupportAccess, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+	if err = requirePerson(authCtx); err != nil {
+		return nil, err
+	}
+	grantID, err := pulid.MustParse(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	grant, err := r.SupportAccessService.Extend(ctx, &supportaccessservice.ExtendRequest{
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
+		GrantID:       grantID,
+		DurationHours: input.DurationHours,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return grantToModel(grant, timeutils.NowUnix(), nil), nil
 }
 
 func (r *MutationResolver) RevokeSupportAccess(ctx context.Context, input gqlmodel.RevokeSupportAccessInput) (*gqlmodel.SupportAccessGrant, error) {
@@ -63,7 +88,7 @@ func (r *MutationResolver) RevokeSupportAccess(ctx context.Context, input gqlmod
 	if err != nil {
 		return nil, err
 	}
-	return grantToModel(grant, timeutils.NowUnix()), nil
+	return grantToModel(grant, timeutils.NowUnix(), nil), nil
 }
 
 func (r *MutationResolver) RequestSupportLogs(ctx context.Context, input gqlmodel.RequestSupportLogsInput) (*gqlmodel.SupportLogRequest, error) {
@@ -110,6 +135,7 @@ func (r *QueryResolver) SupportAccessSettings(ctx context.Context) (*gqlmodel.Su
 		Available:     settings.Available,
 		Durations:     settings.Durations,
 		MaxLiveGrants: settings.MaxLiveGrants,
+		Limits:        limitsToModel(ctx, settings.Limits),
 	}
 	if settings.StaffDomain != "" {
 		out.StaffDomain = &settings.StaffDomain
@@ -135,7 +161,8 @@ func (r *QueryResolver) SupportAccessGrants(ctx context.Context, input gqlmodel.
 	if err != nil {
 		return nil, err
 	}
-	return grantConnectionToModel(result, timeutils.NowUnix())
+	active := r.SupportAccessService.ActiveNow(ctx, result.Items)
+	return grantConnectionToModel(result, timeutils.NowUnix(), active)
 }
 
 func (r *QueryResolver) SupportAccessGrant(ctx context.Context, id string) (*gqlmodel.SupportAccessGrant, error) {
@@ -152,7 +179,8 @@ func (r *QueryResolver) SupportAccessGrant(ctx context.Context, id string) (*gql
 	if err != nil {
 		return nil, err
 	}
-	return grantToModel(grant, timeutils.NowUnix()), nil
+	active := r.SupportAccessService.ActiveNow(ctx, []*supportaccess.Grant{grant})
+	return grantToModel(grant, timeutils.NowUnix(), active), nil
 }
 
 func (r *QueryResolver) CurrentSupportSession(ctx context.Context) (*gqlmodel.SupportSession, error) {

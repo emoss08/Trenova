@@ -85,7 +85,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 103 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 104 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 246 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 43 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
@@ -97,13 +97,13 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1150 writes: 691 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1151 writes: 692 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 447 |
-| Exempt | 699 |
-| — Security | 103 |
+| Exempt | 700 |
+| — Security | 104 |
 | — Configuration | 246 |
 | — User preference | 43 |
 | — Infrastructure | 49 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 55 |
 | — Duplicate | 10 |
 | **Pending** | **4** |
-| Total | 1150 |
+| Total | 1151 |
 
 Of the 451 writes an agent should be able to make, 447 have a tool (99%).
 
@@ -285,7 +285,7 @@ The writes no tool performs yet, and what the tool would do.
 | shipmenttype | 4 | 0 | 4 | 0 |
 | sidebarpreference | 1 | 0 | 1 | 0 |
 | storedmileage | 1 | 0 | 1 | 0 |
-| supportaccess | 3 | 0 | 3 | 0 |
+| supportaccess | 4 | 0 | 4 | 0 |
 | supportentry | 1 | 0 | 1 | 0 |
 | tablechangealert | 5 | 5 | 0 | 0 |
 | tableconfiguration | 6 | 1 | 5 | 0 |
@@ -2079,6 +2079,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation extendSupportAccess` | Exempt, security: Keeping Trenova staff in the organization longer is a person's decision; no agent, API key or support session may extend it. |
 | `mutation grantSupportAccess` | Exempt, security: Letting Trenova staff into the organization is a person's decision; no agent, API key or support session may grant it. |
 | `mutation requestSupportLogs` | Exempt, security: Sends the whole instance's logs, which hold every organization's activity, to Trenova support; an administrator decides that disclosure, never an agent. |
 | `mutation revokeSupportAccess` | Exempt, security: Ending Trenova support access is a person's decision about who may enter the organization. |

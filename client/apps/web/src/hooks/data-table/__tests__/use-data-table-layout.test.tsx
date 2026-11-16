@@ -8,11 +8,14 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useDataTableLayout } from "../use-data-table-layout";
 
-const { saveMock, resetMock, requestMock } = vi.hoisted(() => ({
+const { saveMock, resetMock, requestMock, writesMock } = vi.hoisted(() => ({
   saveMock: vi.fn(),
   resetMock: vi.fn(),
   requestMock: vi.fn(),
+  writesMock: vi.fn(),
 }));
+
+vi.mock("@/hooks/use-background-writes", () => ({ useBackgroundWrites: writesMock }));
 
 vi.mock("@/lib/graphql/table-layout", () => ({
   saveMyTableLayout: saveMock,
@@ -87,6 +90,7 @@ describe("useDataTableLayout", () => {
       updatedAt: 2,
     }));
     resetMock.mockResolvedValue(true);
+    writesMock.mockReturnValue("send");
   });
 
   afterEach(() => {
@@ -376,5 +380,62 @@ describe("useDataTableLayout", () => {
     });
 
     expect(saveMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a read-only support session's arrangement in memory and sends nothing", async () => {
+    writesMock.mockReturnValue("keep");
+    const hook = setup(null);
+    await settle(hook);
+    await arm(hook);
+
+    act(() => hook.result.current.table.setColumnOrder(["status", "name"]));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+    hook.unmount();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(saveMock).not.toHaveBeenCalled();
+    expect(hook.result.current.layout.readSaved()).toMatchObject({
+      columnOrder: ["status", "name"],
+    });
+  });
+
+  it("still sends a reset the person asked for in a read-only support session", async () => {
+    writesMock.mockReturnValue("keep");
+    const hook = setup({ columnOrder: ["status", "name"] });
+    await settle(hook);
+    await arm(hook);
+
+    await act(async () => {
+      await hook.result.current.layout.reset(() => undefined);
+    });
+
+    expect(resetMock).toHaveBeenCalledWith("shipment");
+  });
+
+  it("holds a save until it knows whose session it is, then sends it", async () => {
+    writesMock.mockReturnValue("wait");
+    const hook = setup(null);
+    await settle(hook);
+    await arm(hook);
+
+    act(() => hook.result.current.table.setColumnOrder(["status", "name"]));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    expect(saveMock).not.toHaveBeenCalled();
+
+    writesMock.mockReturnValue("send");
+    hook.rerender();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000);
+    });
+    expect(saveMock).toHaveBeenCalledWith(
+      "shipment",
+      expect.objectContaining({ columnOrder: ["status", "name"] }),
+    );
   });
 });

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:36f7fc0129eb6a747e19dd769e5af43fc5b9f28e6aebeb2a1ce2c3c8840f3cb2",
+  "version": "sha256:2b6ef0ca3af88b037a2b7db13a973f88ec3474dd19c1f2a66f3d54c5d904936d",
   "screens": [
     {
       "path": "/",
@@ -5925,13 +5925,20 @@
         }
       ],
       "operations": [
+        "AuditExportTable",
+        "AuditLegalHoldTable",
+        "RequestAuditExport",
         "RequestSupportLogs",
         "SupportLogRequests"
       ],
       "endpoints": [],
-      "reads": [],
+      "reads": [
+        "audit_legal_hold"
+      ],
       "references": [],
-      "declared": []
+      "declared": [
+        "user"
+      ]
     },
     {
       "path": "/admin/table-change-alerts",

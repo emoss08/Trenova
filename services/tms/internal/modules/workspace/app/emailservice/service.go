@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -355,6 +356,9 @@ func (s *Service) Send(
 	ctx context.Context,
 	req *emailports.SendEmailRequest,
 ) (*email.Message, error) {
+	if supportaccess.InitiatedBySupport(ctx, req.TenantInfo.UserID) {
+		return nil, supportaccess.ErrOutboundRefused()
+	}
 	if err := s.requireOutbound(ctx, req.Purpose); err != nil {
 		return nil, err
 	}

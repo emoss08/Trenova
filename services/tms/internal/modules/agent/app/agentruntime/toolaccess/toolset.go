@@ -994,12 +994,15 @@ func (s *Access) PermittedWith(
 		// signed-in person may arrange; it needs no grant, and nobody but a
 		// person has records of that kind.
 		if agenttoolports.IsSelfScoped(s.ToolNamed(name)) {
-			if actor.PrincipalType == permissionports.PrincipalTypeUser {
+			if actor.PrincipalType == permissionports.PrincipalTypeUser && !actor.IsSupport() {
 				permitted = append(permitted, name)
 			}
 			continue
 		}
 
+		if actor.IsSupport() && s.reachesOutsiders(name) {
+			continue
+		}
 		resource, operation, ok := s.ToolGate(name)
 		if !ok {
 			continue
@@ -1087,6 +1090,11 @@ func (s *Access) toolVerdicts(
 	}
 
 	return verdicts
+}
+
+func (s *Access) reachesOutsiders(name string) bool {
+	tool, ok := s.actionTools.Get(name)
+	return ok && tool.Policy().ReachesOutsiders()
 }
 
 // ToolNamed is the registered tool behind a name, read or write, or nil.
