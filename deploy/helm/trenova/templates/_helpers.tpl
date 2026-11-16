@@ -146,6 +146,12 @@ override to another repository or tag finds no entry and is used as given. */}}
 {{/* Pod-level settings every pod shares. Call with the root context. */}}
 {{- define "trenova.podCommon" -}}
 automountServiceAccountToken: false
+{{ include "trenova.podPlacement" . }}
+{{- end -}}
+
+{{/* What podCommon sets besides the service account token, for the one pod
+that calls the Kubernetes API (Alloy). Call with the root context. */}}
+{{- define "trenova.podPlacement" -}}
 enableServiceLinks: false
 {{- with .Values.imagePullSecrets }}
 imagePullSecrets:

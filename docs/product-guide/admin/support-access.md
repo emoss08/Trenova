@@ -1,6 +1,6 @@
 ---
 path: /admin/support-access
-aliases: [giving Trenova support access, let Trenova in, support login, vendor access, staff access, impersonation, support session]
+aliases: [giving Trenova support access, let Trenova in, support login, vendor access, staff access, impersonation, support session, send logs, share logs with support, diagnostic logs]
 related:
   - /admin/audit-logs
   - /admin/users
@@ -24,7 +24,21 @@ manage users, roles or sign-in settings, create API keys, grant or end support a
 change stored credentials (integrations, AI provider keys, single sign-on, mailboxes), change
 bank or factoring remittance details, or export data in bulk.
 
+On a Managed Trenova instance this page also sends the instance's logs to Trenova support when
+they are looking into a problem. You choose how far back the logs reach, and Trenova keeps them
+for 30 days. Staff can also pull logs themselves, but only while a grant names their address, and
+each pull is written to your audit log.
+
 ## Tasks
+
+### Send logs to Trenova support
+Keywords: send logs, share logs, diagnostic logs, logs for a ticket
+1. Open [Trenova support access](/admin/support-access).
+2. Under **Send logs to Trenova support**, choose **Last hour**, **Last 24 hours** or
+   **Last 7 days**.
+3. Select **Send logs**. The request shows **Requested**, then **Collecting**, then sent with the
+   date, without reloading the page. You are notified when it is sent or if it fails, with the
+   reason.
 
 ### Grant Trenova support access
 Keywords: let support in, give access, open a support session, allow staff
@@ -52,4 +66,9 @@ Keywords: revoke support, remove access, stop support session
 - Needs the Trenova Support Access permission: View to see this page, Grant to grant, Revoke to
   end. It is never given to an API key or an agent, and a support session cannot use it.
 - A staff member has at most one live grant at a time, and at most five grants are live at once.
-- Self-hosted installations have no support access: nobody at Trenova can enter them.
+- Self-hosted installations have no support access: nobody at Trenova can enter them, and they
+  cannot send logs to Trenova.
+- Sending logs needs the Organization Update permission, as Your plan does. The logs cover the
+  whole instance, every organization on it, so only one request can be under way at a time, and
+  the instance can send logs at most five times in 24 hours. A request the instance does not
+  finish in time is marked failed and says why.

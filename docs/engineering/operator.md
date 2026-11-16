@@ -15,10 +15,14 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
    │                                                    │
    ├── escrow.Ensure: the Secret trenova-escrow, from GET /v1/secrets when missing or incomplete
    ├── health.Check: Deployments, StatefulSets, CNPG Cluster, the revision's release Job
-   └── TMS managed API (:8090, bearer token): GET /managed/v1/readings, PUT /managed/v1/state,
-                                               PUT /managed/v1/first-administrator/invite,
-                                               PUT /managed/v1/features,
-                                               GET|PUT|DELETE /managed/v1/system-email
+   ├── TMS managed API (:8090, bearer token): GET /managed/v1/readings, PUT /managed/v1/state,
+   │                                           PUT /managed/v1/first-administrator/invite,
+   │                                           PUT /managed/v1/features,
+   │                                           GET|PUT|DELETE /managed/v1/system-email,
+   │                                           GET|PUT /managed/v1/log-requests,
+   │                                           POST /managed/v1/support/log-pulls
+   ├── Loki (:3100, no auth, the release's): label values and query_range, read only
+   └── the documents bucket: PUT and HEAD support/logs/<bundleId>.zip
 ```
 
 ## Packages
@@ -38,6 +42,11 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
 | `internal/storage` | the instance's buckets: the documents and backups Secrets, fetched from `GET /v1/storage` when missing or incomplete, and the documents bucket's CORS rules for the instance's origin |
 | `internal/backup` | backups read from and asked of CloudNativePG: health for the status report, the base backup before an update, the final backup, and a restore's progress |
 | `internal/systememail` | the system email sender: the TMS brought to the spec's fingerprint, the credential fetched from `GET /v1/secrets` and kept only in memory |
+| `internal/supportkeys` | the support access key set: the TMS brought to the spec's `support` when its instance id, staff domain or key ids differ |
+| `internal/commands` | what the control plane asks besides the spec: restarting a component, collecting its log lines, collecting a log bundle; the support access grant checked first for staff |
+| `internal/redact` | every value of every Secret in the release namespace, and anything shaped like a credential, removed from a log line |
+| `internal/logs` | log keeping: Loki read a page at a time, the last lines, log bundles (a zip in scratch space, uploaded to the documents bucket) on one background worker, and the log requests made in Trenova |
+| `internal/selfupgrade` | the operator's own version: its HelmChart moved to the spec's release, the move watched and undone when it fails |
 | `internal/reconcile` | the loop |
 | `internal/fakecp`, `internal/controlplanetest`, `cmd/controlplane-stub` | a control plane for tests: in process (`httptest`) and in a cluster (CI) |
 | `internal/tmstest` | the TMS's managed API for tests |
@@ -103,15 +112,29 @@ Every 15 seconds (`TRENOVA_OPERATOR_POLL_INTERVAL`):
 
 1. renew the certificate if it is due;
 2. `GET /v1/spec` with the last `ETag`, so an unchanged spec costs a 304;
-3. render the chart values; make sure the escrow Secret is there (below), and apply nothing until
+3. bring the operator itself to `release.version` ([Its own version](#its-own-version)); while it
+   is not there, apply nothing and report why;
+4. render the chart values; make sure the escrow Secret is there (below), and apply nothing until
    it is; pull the chart at `release.version` (cached, two versions);
-4. compare with the deployed release: apply only when the chart version or the values differ;
-5. read readiness; while the instance is active and ready and the spec has an invite, install it
-   in the TMS (below), put the spec's features to the TMS (below), and bring the TMS's system
-   email sender to the spec (below);
-6. report when something changed, and at least every minute
+5. compare with the deployed release: apply only when the chart version or the values differ;
+6. read readiness; while the instance is active and ready and the spec has an invite, install it
+   in the TMS (below), put the spec's features to the TMS (below), bring the TMS's system
+   email sender and support access keys to the spec, and read the features and live support
+   grants the TMS holds into the report (below);
+7. report when something changed, and at least every minute
    (`TRENOVA_OPERATOR_REPORT_INTERVAL`, at most 1m);
-7. relay usage when it is due (below).
+8. relay usage when it is due (below), then, while the instance is active and ready, take up the
+   log requests made in Trenova ([Logs](#logs)), within 30 seconds;
+9. carry out the control plane's commands ([Commands](#commands)). This runs on every tick whose
+   spec read succeeded, whatever happened in between: a failed apply or report is exactly when
+   staff need a component's logs or a restart. It waits only while the control plane asked the
+   operator to wait (a 429 or 503), and says so once.
+
+The loop's dependencies are all required: `reconcile.New` refuses a missing one by name, and the
+commands runner refuses one without its control plane. Nothing is checked by type assertion at
+run time. (Before this, the runner reached the control plane by asserting the loop's client had
+`Commands`; the client `cmd/operator` built did not, so the operator never asked for a command
+and said nothing: a staff request for logs waited 15 minutes and expired.)
 
 The applied revision is the desired revision whose rendered state is the deployed one. It needs
 no storage of its own: after a restart the operator renders the spec again and finds the release
@@ -122,6 +145,18 @@ pauses the loop until `Retry-After`. An unknown `schemaVersion` is reported and 
 **Recovery.** A release left `pending-*` by a crash mid-upgrade is rolled back to its last
 deployed revision before the next apply; one that never deployed is uninstalled and installed
 again. A failed release with a deployed one before it is upgraded over.
+
+A first install can fail partway (the database operator's webhook is not up yet) after some of
+its pods have started, so removing it has to leave nothing for the next one to trip over. The
+operator uninstalls it and waits until its resources are gone (foreground deletion), then deletes
+the volume claims labelled for the release: the ones a StatefulSet made are not the chart's, so an
+uninstall leaves them, half-written. Only then does it forget the release and install again.
+Helm's record of the release is kept until that is done (`KeepHistory`), so a cleanup that timed
+out or was interrupted is finished on the next tick and not skipped. Without the wait, the new
+install adopted a claim that was still being deleted and its pod stayed pending for good; without
+the volume step, Meilisearch refused a data directory it had not finished creating. This is only
+ever done to a release that never deployed. One with a deployed revision in its history keeps its
+volumes whatever state it is in, and one uninstalled by hand is not brought back.
 
 ## From spec to values
 
@@ -135,6 +170,7 @@ first, and what the spec decides is merged over them:
 | `components` contains `docling` | `docling.enabled`; its resources are rendered either way (see Sizing) |
 | (always) | `managed.enabled: true`, `managed.from`: the operator's own namespace |
 | (always) | `secrets.escrowSecret: trenova-escrow` |
+| (always) | `logs.enabled: true`, whatever the base values say: log keeping ([Logs](#logs)) |
 | (always) | `tms.config.ai.privateNetworkProviders: false`, `serverCloudCredentials: false`: a customer's administrator adds the instance's AI providers, so none may sit on a private address or sign in as the instance's own cloud identity, whatever the base values say |
 | `firstAdministrator` | `bootstrap.orgName`, `adminName`, `adminEmail`, and `bootstrap.adminSetup: link` |
 | `lifecycle: active` | `stopped: false`, `postgres.hibernate: false` |
@@ -151,12 +187,17 @@ operator and the release Job. ClamAV's memory does not grow with the plan (it is
 1.2 GiB, twice that while clamd reloads it each day), so it takes a fixed 3 GiB request and
 4 GiB limit, ClamAV's documented minimum and preferred container size, off the top. The rest
 is shared by weight among every component the chart can run (PostgreSQL 28, API 12, worker 12,
-imaging 10, docling 15, the rest 1 to 5; ClamAV 4 of the CPU), each with a floor (docling 2 GiB,
-PostgreSQL 1 GiB). Requests are the shares; memory limits are 1.5 times them (PostgreSQL 1.25). The imaging worker gets a CPU limit of half the plan's vCPUs, at least
-one, because its sandbox pool sizes itself by it. PostgreSQL's volume is 35% of the disk;
+imaging 10, docling 15, Loki 2, Alloy 0.5 of the memory and 1 of the CPU, the rest 1 to 5;
+ClamAV 4 of the CPU), each with a floor (docling 2 GiB, PostgreSQL 1 GiB, Loki 256 MiB, Alloy
+128 MiB). Requests are the shares; memory limits are 1.5 times them (PostgreSQL 1.25), and at
+least 1 GiB for Loki (a week-long query) and 512 MiB for Alloy. The imaging worker gets a CPU limit of half the plan's vCPUs, at least
+one, because its sandbox pool sizes itself by it. PostgreSQL's volume is 35% of the disk and
+Loki's 10% (at least 4 GiB);
 `shared_buffers` is a quarter of its memory limit and `effective_cache_size` three quarters. A
-plan smaller than 2 vCPU, 9 GiB (12 GiB with ClamAV) and 40 GiB is refused: below that, every
-component together and the room a rollout needs no longer fit. The values test renders every
+plan smaller than 2 vCPU, 10 GiB (13 GiB with ClamAV) and 40 GiB is refused: below that, every
+component together and the room a rollout needs no longer fit. (Log keeping moved it from 9 and
+12 GiB: at 9 GiB Loki's and Alloy's floors left the largest rollout pod about 90 MiB short of
+the node's allocatable memory.) The values test renders every
 catalog plan and lifecycle through the real chart and its schema, and checks the requests fit.
 
 **Room for a rollout.** A Helm upgrade applies every changed Deployment at once, and a Deployment
@@ -165,7 +206,8 @@ that rolls starts its new pod before the old one stops: the API and the worker s
 worker and Gotenberg keep Kubernetes's default (a 25% surge, one pod at one replica): the client
 serves every page, and the API calls the other two on its request paths. Kubernetes creates a
 second pod of all five at the same time, while the old ones still hold their requests. Nothing
-else needs a second pod: Temporal, gtc and docling are `Recreate` (docling's only caller is the
+else needs a second pod: Temporal, gtc, docling, Loki and Alloy are `Recreate` (Loki owns one
+`ReadWriteOnce` volume, and two Alloys would push every line twice; docling's only caller is the
 worker's extraction activities, which retry and resubmit a lost task, so it stops before its
 replacement loads its models), a StatefulSet replaces a pod after the old one is gone,
 CloudNativePG restarts its one instance in place, and the release Job's pod is already counted
@@ -208,16 +250,28 @@ is idle between upgrades (ClamAV on at the plan sizes):
 
 | Machine | PostgreSQL (request, limit, `shared_buffers`) | API and worker (each) | Docling's share (idle on the base plan) | MinIO's share (idle with storage of ours) | Held for a rollout |
 |---|---|---|---|---|---|
-| 2 vCPU, 10 GiB, no ClamAV (the local cap) | 2,012 MiB, 2,515 MiB, 628 MB | 862 MiB, 189m | 2,048 MiB, 100m | 256 MiB, 37m | 862 MiB, 189m |
-| 4 vCPU, 16 GiB (Sandbox) | 2,766 MiB, 3,458 MiB, 864 MB | 1,185 MiB, 443m | 2,048 MiB, 236m | 296 MiB, 88m | 1,185 MiB, 443m |
-| 8 vCPU, 32 GiB (Production) | 6,790 MiB, 8,488 MiB, 2,122 MB | 2,910 MiB, 965m | 3,637 MiB, 514m | 727 MiB, 193m | 2,910 MiB, 965m |
-| 16 vCPU, 64 GiB (Production Plus) | 14,839 MiB, 18,548 MiB, 4,637 MB | 6,359 MiB, 2,008m | 7,949 MiB, 1,071m | 1,589 MiB, 401m | 6,359 MiB, 2,008m |
+| 2 vCPU, 10 GiB, no ClamAV (the local cap) | 1,968 MiB, 2,461 MiB, 615 MB | 843 MiB, 184m | 2,048 MiB, 98m | 256 MiB, 36m | 843 MiB, 184m |
+| 4 vCPU, 16 GiB (Sandbox) | 2,707 MiB, 3,384 MiB, 846 MB | 1,160 MiB, 432m | 2,048 MiB, 230m | 290 MiB, 86m | 1,160 MiB, 432m |
+| 8 vCPU, 32 GiB (Production) | 6,645 MiB, 8,306 MiB, 2,076 MB | 2,847 MiB, 940m | 3,559 MiB, 501m | 711 MiB, 188m | 2,847 MiB, 940m |
+| 16 vCPU, 64 GiB (Production Plus) | 14,520 MiB, 18,150 MiB, 4,537 MB | 6,223 MiB, 1,957m | 7,778 MiB, 1,044m | 1,555 MiB, 391m | 6,223 MiB, 1,957m |
+
+Log keeping costs, at the same sizes (request, memory limit, CPU request; Loki's volume):
+
+| Machine | Loki | Alloy | Loki's volume |
+|---|---|---|---|
+| the local cap | 256 MiB, 1,024 MiB, 24m | 128 MiB, 512 MiB, 12m | 4 GiB |
+| Sandbox | 256 MiB, 1,024 MiB, 57m | 128 MiB, 512 MiB, 28m | 5 GiB |
+| Production | 474 MiB, 1,024 MiB, 125m | 128 MiB, 512 MiB, 62m | 20 GiB |
+| Production Plus | 1,037 MiB, 1,555 MiB, 261m | 259 MiB, 512 MiB, 130m | 50 GiB |
 
 Idle requests are not wasted memory on the node: nothing else is scheduled there, so the page
 cache and every limit above its request can still use it. They are room the scheduler keeps free.
 
 Only PostgreSQL's volume follows the plan: a StatefulSet's volume claims cannot change after it
-is created, so Redis, Meilisearch, MinIO and ClamAV keep the chart's sizes.
+is created, so Redis, Meilisearch, MinIO and ClamAV keep the chart's sizes. Loki's claim is its
+own object and takes the plan's size when it is made, then keeps it (the chart reads the live
+claim back): a claim can only grow, and k3s's `local-path` class cannot grow one, so following a
+plan change would fail the upgrade.
 
 **When PostgreSQL restarts** (a plan change, a new PostgreSQL image, a changed parameter,
 hibernation), CloudNativePG first waits for clients to disconnect, then asks for a fast shutdown.
@@ -239,7 +293,7 @@ for it to stop.
 `diskGiB`; zero by default) say what the cluster really runs on. Set, the operator sizes the
 workloads for the smaller of the plan and the node in each dimension (`values.Capacity`), and
 the spec itself is untouched. The control plane's development-only local provider sets 2 vCPU,
-10 GiB and 40 GiB, with ClamAV off (one GiB above the smallest machine that fits), so every plan bought for "This computer" runs the same small
+10 GiB and 40 GiB, with ClamAV off (the smallest machine that fits, since log keeping), so every plan bought for "This computer" runs the same small
 instance on a laptop while the plan, its features and its allowances stay the real ones.
 
 ## Escrowed secrets
@@ -299,6 +353,18 @@ has it: the TMS ignores a key it does not know. A failure is logged and retried 
 it never holds converging or the report back. What the TMS does with the list is in
 [managed-mode.md](managed-mode.md).
 
+The same request carries the spec's `addonEndings` as `addonEndings` (always, an empty list when
+the spec has none, so the TMS's list is replaced on every tick) and the spec's `account.planUrl`
+as `planUrl` (the control plane adds `account` to every spec it serves rather than storing it in
+a revision, and the spec's `ETag` changes with it, so a console that moves is fetched like a new
+revision; a spec without one sends none, and the TMS keeps what it holds)
+(`reconcile.featureList`, `tms.Client.PutFeatures`). It also always states the plan's end as
+`planEndsAt`: the spec's `account.endsAt` in UTC RFC 3339 while the plan is set to end, and `null`
+when it is not, so a kept plan clears what the TMS holds on the next tick. The control plane
+composes the end when it serves the spec and changes the `ETag` with it, so it arrives with no new
+revision; the operator needs no comparison of its own, since the list goes out every tick and the
+TMS stores and announces an end only when it differs from what it holds.
+
 ## System email
 
 Trenova supplies each managed instance a sender for its system email (invitations, password
@@ -321,6 +387,38 @@ is a new fingerprint in the spec, so the next tick fetches and puts the new cred
 is logged and retried on the next tick and never holds converging or the report back. Secrets
 whose fingerprint does not match the spec (a rotation half published), or a 429, wait a minute
 (or `Retry-After`) before the control plane is asked again; a 401 goes to credential recovery.
+
+## Support access
+
+Trenova staff enter an instance with an assertion the control plane signs, and only under a
+grant one of its organizations made ([managed-mode.md](managed-mode.md#support-access)). The
+operator carries two things for it.
+
+**The keys, in.** The spec's `support` (`instanceId`, `staffDomain`, `keys`, one to four Ed25519
+public JWKs) is composed by the control plane when it serves the spec, so a rotation changes the
+`ETag` with no new revision. While the instance is active and ready and the spec carries
+`support`, every tick (`internal/supportkeys.Relay.Sync`, within 30 seconds):
+
+1. `GET /managed/v1/support-access`, which answers the instance id, domain and key ids it holds,
+   never a key;
+2. stop when all three match (the key ids as a set, in any order);
+3. otherwise `PUT /managed/v1/support-access` with exactly `{instanceId, staffDomain, keys}`: the
+   TMS refuses an unknown field and an empty set, and the set it gets replaces the one it held.
+
+A spec without `support` sends nothing, and the TMS keeps what it holds. Logs and errors name the
+key ids, never a key. A failure is logged, put in the report's `message` when nothing else is
+there (`support access keys not delivered: …`) and retried on the next tick; it never holds
+converging, the feature list, the report or the usage relay back.
+
+**The grants, out.** While building each status report (every tick, while the instance is active
+and ready, within 30 seconds, like the held features), the operator reads
+`GET /managed/v1/support-access/grants` and puts the list in `supportGrants`: at most 100, each
+grant once, organization names cut to 200 characters and staff addresses lower-cased. A grant the
+contract cannot carry (an unknown scope, an organization id not shaped `org_` and 26 characters,
+an empty name) is logged and left out, since one bad item would make the control plane refuse the
+whole report. A changed list is reported at once. When the TMS is not up or the read
+fails, the field is left out and the control plane keeps the last list it was sent. The list says
+who each grant is for, in which organization, with what scope and until when; never who made it.
 
 ## Usage relay
 
@@ -381,7 +479,12 @@ used as they are. Missing or incomplete, both are fetched and written; values th
 `https` endpoint, DNS bucket names, two different buckets and two different credentials are
 refused and nothing is applied, as for the escrowed secrets. A `404` means the instance has no
 storage of ours (its infrastructure was made by hand): the chart keeps MinIO and takes no backups,
-and the operator asks again ten minutes later. The credentials are never logged.
+and the operator asks again ten minutes later, or at once when a new spec revision arrives. The
+control plane seals a new instance's storage when it records the provision, minutes after the
+operator first looked, and the revision that follows is the operator's cue: before it looked
+again only after ten minutes, and an instance whose storage arrived inside that window ran on
+MinIO without backups until the operator restarted. The spec does not say whether the instance
+has storage; the answer to `GET /v1/storage` is the only signal. The credentials are never logged.
 
 **A private endpoint.** The operator chart's `storage.privateEndpoint` (empty by default) is
 where the operator and the release's pods reach the buckets when that is not the address the
@@ -427,6 +530,204 @@ connection follows the cluster's name, and once the instance is ready on that re
 operator hibernates every other cluster of the release (kept, never deleted) and reports
 `switched`. Readiness checks the cluster `database` names.
 
+## Logs
+
+Every managed instance keeps its own logs for 7 days, separated by source (the chart's `logs`
+component, which the operator always turns on; off by default for a self-hosted install):
+
+- **Alloy** (`grafana/alloy`, one replica, `Recreate`) discovers the release's pods in the release
+  namespace only (`discovery.kubernetes` with `namespaces.names` and a label selector on the
+  release) and tails them through the Kubernetes API (`loki.source.kubernetes`), init containers
+  included. Its ServiceAccount is bound to a namespaced Role with exactly `pods: get, list, watch`
+  and `pods/log: get`: no hostPath, no DaemonSet, no ClusterRole. It is the one pod in the release
+  that mounts a service account token. Each line keeps three labels and no others: `component`
+  (the pod's `app.kubernetes.io/component`), `pod` and `container`. Every workload carries the
+  component label, PostgreSQL's pods through the CloudNativePG cluster's `inheritedMetadata`, the
+  release Job's pod through its template; a pod without one is not read.
+- **Loki** (`grafana/loki`, single binary, one replica, `Recreate`) keeps the lines on its own
+  claim (`<fullname>-loki`, 10% of the disk, at least 4 GiB, kept at its first size) in the TSDB
+  and filesystem stores. Its compactor deletes anything older than 168 hours
+  (`limits_config.retention_period`, `compactor.retention_enabled`), and lines older than that are
+  refused. No authentication, analytics reporting off, a ClusterIP Service `<fullname>-loki:3100`
+  in the release namespace. Its limits protect a small node: 4 MB/s ingestion (8 MB burst), 2 MB/s
+  per stream, 1,000 streams, lines over 256 KB cut, at most 5,000 lines per query, four queries in
+  parallel, a one-minute query timeout, and a 169-hour query range so the whole week can be read
+  in pages.
+- **Who reaches it.** Loki's NetworkPolicy admits Alloy and `managed.from` (the operator's
+  namespace, as for the managed API) on 3100, and lets Loki open no connections. Alloy's admits
+  nothing in and lets it reach Loki, DNS and the Kubernetes API (ports 443 and 6443; the chart
+  cannot know the API server's address, so the port is the bound, which
+  `logs.alloy.kubernetesAPI.to` can narrow).
+
+The operator reads Loki at `TRENOVA_OPERATOR_LOKI_URL`, which its chart derives from
+`target.release` and `target.namespace` (`http://<fullname>-loki.<namespace>.svc:3100`,
+`values.LokiService`). What it does with the lines (the bundles and the quick view) is in the
+design record's log contract and in `internal/commands`.
+
+**Cost**, at the sizes above: 384 MiB of requests and 1.5 GiB of limits on the local cap and
+Sandbox, about 0.6 GiB of requests at Production and 1.3 GiB at Production Plus, plus Loki's
+volume; it is why the smallest machine moved to 10 GiB.
+
+## Commands
+
+Staff ask an instance for things besides its spec from the admin; the instance takes no inbound
+connections, so the operator asks for them (`GET /v1/commands`) on every tick, carries each out
+once by ID (an answer lost on the way is sent again from memory for an hour, without doing the
+work again) and answers (`PUT /v1/commands/{id}`). Kinds:
+
+| Kind | What the operator does | Permissions |
+|---|---|---|
+| `restart`, a component | patches `kubectl.kubernetes.io/restartedAt` on the pod template of the Deployments and StatefulSets with that `app.kubernetes.io/component` (the names the status report uses); `postgres` is refused (CloudNativePG restarts it), `release` is a Job and has nothing to restart | `deployments`, `statefulsets`: `patch` |
+| `restart`, no component | the same for every Trenova workload | as above |
+| `collect_logs`, a component | with log keeping on, the last `lines` (default 200, at most 5,000) Loki keeps for the component over the last 7 days, across every pod it had, newest last. With it off, the last `lines` (at most 500) of every container of the component's newest five pods, init containers included (the release Job's steps are init containers; CloudNativePG's pods run the Barman Cloud plugin as one), and a crashing container's previous run first. Either way each line is prefixed with its pod and container, every value of every Secret in the namespace is removed, and the output stops at 256 KiB keeping the newest lines. Works for every component the report names, `postgres` and `release` included, because the chart labels their pods with it | `pods`: `list`; `pods/log`: `get`; `secrets`: `list` |
+| `collect_log_bundle`, a bundle and a period | the bundle ([Logs](#logs)); the command is answered when the bundle is stored, failed or refused | `secrets`: `list`, `get` (`trenova-storage`) |
+
+`collect_logs` and `collect_log_bundle` carry `requestedBy {kind, email, name}`; one without it is
+answered `failed`. For `kind: staff` the operator first asks the TMS
+(`POST /managed/v1/support/log-pulls {email, kind: "lines"|"bundle"}`), which audits the pull and
+answers 200 only while that staff address holds a live support access grant. A 403 answers the
+command (and the bundle) `refused` with a sentence staff can read; a TMS that cannot be reached
+answers it `failed`; neither reads a line. A customer's request needs no grant.
+
+A command that fails is answered `failed` with a one-line reason the control plane accepts.
+
+## Logs
+
+The Trenova chart keeps 7 days of every pod's lines in the release's Loki
+([`deploy/helm/trenova`](../../deploy/helm/trenova), `logs.enabled`), labelled `component`, `pod`
+and `container`; the operator chart passes its address as `TRENOVA_OPERATOR_LOKI_URL` (empty: log
+keeping is off, `collect_logs` reads the kubelet, and a bundle fails saying so).
+
+**Reading Loki** (`internal/logs/loki.go`): `GET /loki/api/v1/label/component/values` for the
+sources over the period, and `GET /loki/api/v1/query_range` with `{component="<name>"}`,
+`direction=backward`, `start` and `end` in nanoseconds (start inclusive, end exclusive) and
+`limit=2000`, newest first. The next page ends one nanosecond after the oldest entry of the last
+one, and entries at that boundary already taken are skipped by stream and line, so a timestamp
+shared across a page boundary is neither lost nor doubled. A page larger than 16 MiB is asked for
+again with half the limit (down to 10). Each request has 30 seconds and is tried four times with
+exponential backoff (`cenkalti/backoff/v5`) on a network error, a 429 or a 5xx; a 4xx fails at once.
+A component name is checked (`^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$`) before it reaches a query or a
+file name.
+
+**A bundle** (`internal/logs/bundle.go`) is a zip of one `<component>.log` per source, lines
+`timestamp pod container message`, oldest first, every line redacted and a line break inside a
+message written as `\n`, and `manifest.json` (instance, bundle, period, the caps, and per
+component its lines, bytes, oldest and newest kept line and whether and why it was cut). Caps
+(`DefaultCaps`): a period of at most 7 days, 128 MiB of lines per source and 256 MiB for the bundle.
+The bundle cap is shared: every source still reading gets an equal share of what is left, a source
+that runs out returns the rest to the others, and sharing stops when a share would fall under
+4 KiB. Lines are read newest first into a spill file per source, so a source cut at a cap keeps its
+newest lines (what support needs), then written into the zip backwards, oldest first. Nothing is
+held in memory beyond one page.
+
+**Scratch space** is the operator pod's `emptyDir` `/scratch` (`sizeLimit: 1Gi`;
+`TRENOVA_OPERATOR_SCRATCH_DIR`): at most 256 MiB of spill files plus the zip of them. Every file is
+removed whatever happens, and the worker clears leftovers when it starts.
+
+**Storing it**: `support/logs/<bundleId>.zip` in the instance's documents bucket, with the
+documents credential the operator already holds (`trenova-storage`, through the private endpoint
+when one is set), as one SigV4-signed `PUT` with its SHA-256 (the SDK's signer, as for CORS; an S3
+single `PUT` takes up to 5 GiB), tried three times on a 429 or 5xx. Never the backups bucket: its
+credential is the backup tool's alone and its prefix is the backup tool's. The object's metadata
+records the per-source counts, so a bundle the operator sees again (a command listed again after a
+restart) is found with a `HEAD` and reported without being collected or uploaded twice.
+
+**The worker.** Bundles run one at a time on a background worker (a queue of eight), never on the
+loop's tick. One that waited more than 25 minutes to start is failed without collecting (the
+control plane fails a bundle nobody started within 30); each must finish within 45 minutes of
+starting and 90 of being queued, inside the 2 hours after which the TMS and the control plane fail
+it. A report after the control plane has an outcome is answered 204 and changes nothing. The control plane hears
+`collecting`, then `stored` (key, size, per-source lines and whether cut) or `failed` (a sentence a
+person can read) through `PUT /v1/log-bundles/{bundleId}`, tried five times. A bundle the same
+process already finished answers from memory for an hour.
+
+**Requests made in Trenova** (`internal/logs/relay.go`), every tick while the instance is active
+and ready: `GET /managed/v1/log-requests` (requested and collecting, at most 10). For each request
+the operator is not already working on: a period over 7 days, or log keeping off, is answered
+`failed` to the TMS; otherwise it is registered with `POST /v1/log-bundles` (idempotent on the
+request ID, so a restart gets the same bundle back), the TMS is told `collecting` with the bundle
+ID, and the bundle is queued. When it ends the TMS is told `sent` with the bundle ID or `failed`
+with the message, and told again on the next tick while it still lists the request. A 409 from the
+TMS (the request already moved on) is left as it is. A 409 `conflict` from the control plane (a
+bundle already in flight, or the day's 10 used) is never retried: the TMS is told `failed` with the
+problem's `detail`, and nothing is collected.
+
+## Its own version
+
+The operator follows the release its instance runs. When the spec names release V and the
+operator runs another, it upgrades itself first and brings Trenova to V only once it runs V:
+a new chart may need a new operator (a value it renders, a kind it must be allowed to manage),
+while the new operator only meets the older chart for the minute until it applies V. The rule is
+the same downgrading. While the operator is not on V, nothing is applied: Trenova stays as it is,
+its health is still read and reported, `appliedRevision` stays on the last revision applied, and
+the report's message says why.
+
+**How.** k3s's helm-controller installs the operator from the `HelmChart` `kube-system/trenova-operator`
+(its release name is the chart's name). The operator patches that object's `spec.version` to V;
+helm-controller runs `helm upgrade` at V from the same OCI chart with the same values. The
+object's annotations record the move: `trenova.app/operator-upgrade-started`,
+`trenova.app/operator-upgrade-failed` and `-reason`. Once the operator at V runs, it clears them,
+and it rewrites `spec.version` to its own version if anything else moved it.
+
+**Why the HelmChart is not in k3s's manifests directory.** k3s's deploy controller
+(`pkg/deploy/controller.go`) reads `/var/lib/rancher/k3s/server/manifests` every 15 seconds; on
+its first pass after every k3s start it applies every file again without comparing checksums,
+through wrangler's apply, which builds a three-way merge (JSON merge for a custom resource) from
+the object's last-applied annotation, the file and the live object. Every field the file names is
+set back to the file's value. An operator that only patched a HelmChart written there would be
+put back to the version the machine was made with at the next k3s restart or reboot. A file
+named `x.yaml.skip` makes k3s ignore `x.yaml`; removing a file from the directory leaves what it
+created (only `--disable` deletes). So the machine creates the operator's HelmChart once, from
+`/etc/trenova/trenova-operator.yaml`, after k3s answers (`kubectl get … || kubectl create -f …`,
+which never overwrites one that exists): OVH's cloud-init bootstrap script does it, and the local
+provider runs the same command in its container. The control plane's `internal/provider/k3s`
+renders the file and the command for both.
+
+**When it fails.**
+
+- The operator's Deployment rolls with `maxSurge: 1, maxUnavailable: 0`, and its pods take the
+  Lease `trenova-operator` in their namespace: only the holder runs the loop. A new pod is ready
+  once it can read its identity and `GET /v1/spec` with it, before it holds the Lease; only then
+  does Kubernetes stop the old pod, which releases the Lease after its current tick. A new
+  operator that crashes or cannot reach the control plane never becomes ready, and the old one
+  keeps running the instance.
+- The old operator watches the move: the install Job `kube-system/helm-install-trenova-operator`
+  failing three times at V (a version the registry does not have; helm-controller retries up to
+  1,000 times by itself), its own Deployment at V reporting `ProgressDeadlineExceeded` (after
+  `progressDeadlineSeconds: 600`), or 20 minutes without a new operator taking over. It then puts
+  `spec.version` back to its own version, records V as failed with the reason, and reports
+  `operator.upgrade.phase: failed`. V is not tried again until the spec names another release,
+  or until staff delete `trenova.app/operator-upgrade-failed` from the HelmChart.
+- The HelmChart has `failurePolicy: retry`: after a failed `helm upgrade`, helm-controller
+  upgrades again over the failed release rather than uninstalling the operator, which its default
+  (`reinstall`) would do.
+
+**What is reported.** `operator` on every status report: `version` (the release it runs),
+`upgrade` (`version`, `phase` `upgrading` or `failed`) while it is not on the spec's release, and a
+one-line `message` (why an upgrade failed, or that a node manifest pins its version). The admin
+shows it on the instance page.
+
+**Existing machines.** Machines made before this kept the operator's HelmChart in
+`trenova-charts.yaml` in k3s's manifests directory, pinned to the version they were made with.
+Their operator reports that (`message`: the node's manifest pins the operator's version) and
+still moves itself on: it upgrades itself to V, and after a k3s restart, when k3s has put the
+pinned version back, the running operator rewrites `spec.version` to its own version again, which
+helm-controller follows within a minute. To make one converge for good, once, on the node:
+
+```bash
+touch /var/lib/rancher/k3s/server/manifests/trenova-charts.yaml.skip
+```
+
+k3s then ignores that file and leaves everything it created in place; nothing else in it changes
+after a machine is made. Never delete the operator's document from that file instead: k3s would
+apply the file without it and delete the HelmChart, which uninstalls the operator. An operator
+older than this feature (0.12.x) does not upgrade itself: move its HelmChart to the first release
+that does by hand, once (`kubectl -n kube-system patch helmchart trenova-operator --type merge
+-p '{"spec":{"version":"<release>"}}'` after the `.skip`).
+
+**Off.** An operator installed with `helm install` (CI, a self-managed cluster) finds no HelmChart
+and leaves its version alone; `selfUpgrade.enabled: false` turns the RBAC and the lookup off.
+
 ## Readiness
 
 A component is ready when its Deployment or StatefulSet has every replica updated and available
@@ -451,9 +752,14 @@ Its permissions are two namespaced Roles. In its own namespace it may read the e
 and create and update its identity Secret. In the target namespace (`trenova`) it may manage
 exactly the kinds the Trenova chart renders (Secrets, ConfigMaps, Services, Deployments,
 StatefulSets, Jobs, NetworkPolicies, Ingresses, CloudNativePG Clusters, ImageCatalogs and
-ScheduledBackups, and Barman Cloud ObjectStores; the Secrets permission also covers the escrow and
-storage Secrets), CloudNativePG Backups, which it creates itself, and read Pods, PVCs and Events. It has no cluster-wide permission: the namespace, which it keeps on
-uninstall, is created by its chart.
+ScheduledBackups, and Barman Cloud ObjectStores, and for log keeping PersistentVolumeClaims,
+ServiceAccounts, Roles and RoleBindings; the Secrets permission also covers the escrow and
+storage Secrets), CloudNativePG Backups, which it creates itself, and read Pods, their logs and
+Events. It can create Alloy's Role (pods and their logs, read) without the `escalate` or `bind`
+verbs because it holds those permissions itself. In its own namespace it also holds its Lease and reads its own Deployment. With
+`selfUpgrade.enabled` (the default), a third Role in `kube-system` lets it read and patch its own
+HelmChart and read its install Job, both by name. It has no cluster-wide permission: the
+namespace, which it keeps on uninstall, is created by its chart.
 
 ## Tests
 
@@ -470,14 +776,35 @@ uninstall, is created by its chart.
   in-process TMS, the first administrator (bootstrap values, invalid names and emails, the invite
   installed, rechecked, replaced and reported, a failure omitted), the system email sender (sent
   when the fingerprint differs and not when equal, resent from memory, rotated, removed, retried,
-  a mismatch and a 429 waited out, the credential in no log line or error), the storage
+  a mismatch and a 429 waited out, the credential in no log line or error), the support access
+  keys (delivered when the key ids, domain or instance differ, not when they match in any order,
+  not without `support`, a rotated set replacing the old, the key in no log line or error, a
+  failure in the message and retried) and live grants (reported, an empty list reported, left out
+  when the TMS could not be read, bounded and an unknown scope left out) against an in-process TMS
+  as strict as the real one, the storage
   Secrets (fetched once into two Secrets, the backups credential never in the application's,
-  restored when incomplete, refused when malformed, a `404` asked again only after ten minutes, the
-  CORS request signed for the bucket), backups (health from the cluster and object store, the
+  restored when incomplete, refused when malformed, a `404` asked again only after ten minutes or
+  at once on a new revision, the CORS request signed for the bucket), the commands (asked for on
+  every tick, carried out when the report or the apply fails, each component's logs init
+  containers and previous runs included, the loop and the runner refusing a missing dependency;
+  the support access grant refused, granted and unreachable for staff lines and bundles; a bundle
+  command collected once and answered when stored), log keeping (Loki's paging newest first
+  across shared timestamps and smaller pages for a large one, its request shape and retries; a
+  bundle's files oldest first, the per-source and shared caps and the manifest, redaction of every
+  line; Loki or storage failing partway leaving no scratch file and a `failed` bundle; a stored
+  bundle never uploaded twice, also after a restart; a Trenova request registered, collected,
+  stored and sent end to end against the fake control plane and TMS; the documents bucket's
+  signed `PUT` and `HEAD`), the operator's own version (moved first, Trenova held meanwhile, a version the registry lacks
+  or one that never becomes ready rolled back and not tried again, a pinned HelmChart reported),
+  backups (health from the cluster and object store, the
   pre-update and final backups taken once and reported, a restore reported and only its switch
   stopping the old database), the chart with storage (MinIO gone, the object store and schedule
   rendered, the backups Secret named by nothing else, a restore beside the live database and after
-  its switch), and the loop end to end.
+  its switch), log keeping (`logs_chart_test.go`: no ClusterRole, ClusterRoleBinding, DaemonSet
+  or hostPath anywhere, Alloy's Role exactly pods and their logs, Loki's 168-hour retention, both
+  NetworkPolicies, requests on every container, every workload labelled with its component,
+  nothing rendered with `logs.enabled: false`, the operator's Loki URL for every release name),
+  and the loop end to end.
 - `.github/workflows/operator.yml` installs the operator on k3d against
   `cmd/controlplane-stub`, with every image built from the commit and the Trenova chart pushed
   to a registry in the cluster at the version the stub pins. It waits for a ready report on

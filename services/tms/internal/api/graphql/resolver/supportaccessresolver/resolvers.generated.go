@@ -5,11 +5,13 @@ package supportaccessresolver
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	supportaccessservice "github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
+	supportlogservice "github.com/emoss08/trenova/internal/modules/identity/app/supportlogservice"
 )
 
 type Deps struct {
 	*resolvercore.Core
 	SupportAccessService *supportaccessservice.Service
+	SupportLogService    *supportlogservice.Service
 }
 
 type MutationResolver struct{ *Deps }

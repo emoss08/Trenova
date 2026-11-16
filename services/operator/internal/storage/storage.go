@@ -74,15 +74,16 @@ type CORS interface {
 }
 
 type Store struct {
-	private   string
-	client    kubernetes.Interface
-	cp        ControlPlane
-	cors      CORS
-	namespace string
-	logger    *slog.Logger
-	now       func() time.Time
-	noneUntil time.Time
-	corsAfter time.Time
+	private      string
+	client       kubernetes.Interface
+	cp           ControlPlane
+	cors         CORS
+	namespace    string
+	logger       *slog.Logger
+	now          func() time.Time
+	noneUntil    time.Time
+	noneRevision int64
+	corsAfter    time.Time
 }
 
 type Params struct {
@@ -111,8 +112,8 @@ func New(p *Params) *Store {
 	}
 }
 
-func (s *Store) Ensure(ctx context.Context, hostname string) (values.Storage, error) {
-	if s.now().Before(s.noneUntil) {
+func (s *Store) Ensure(ctx context.Context, hostname string, revision int64) (values.Storage, error) {
+	if revision == s.noneRevision && s.now().Before(s.noneUntil) {
 		return values.Storage{}, nil
 	}
 	secrets := s.client.CoreV1().Secrets(s.namespace)
@@ -133,10 +134,15 @@ func (s *Store) Ensure(ctx context.Context, hostname string) (values.Storage, er
 	}
 	fetched, err := s.cp.Storage(ctx)
 	if errors.Is(err, controlplane.ErrNoStorage) {
-		s.noneUntil = s.now().Add(noneRecheck)
-		s.logger.Info("the instance has no object storage of its own; documents stay in the chart's store, without backups")
+		s.noneUntil, s.noneRevision = s.now().Add(noneRecheck), revision
+		s.logger.Info(
+			"the instance has no object storage of its own; documents stay in the chart's store, without backups",
+			"revision", revision,
+			"recheck", s.noneUntil,
+		)
 		return values.Storage{}, nil
 	}
+	s.noneUntil, s.noneRevision = time.Time{}, 0
 	if err != nil {
 		return values.Storage{}, fmt.Errorf("fetch the instance's storage: %w", err)
 	}

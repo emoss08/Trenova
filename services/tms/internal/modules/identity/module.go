@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/ssoconfigrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/ssoidentitylinkrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/supportaccessrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/supportlogrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
@@ -74,6 +75,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/shipmentcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/supportlogservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/tenanttimezone"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
@@ -138,6 +140,9 @@ func SharedOptions() fx.Option {
 			supportaccessservice.NewPrincipals,
 			func(p *supportaccessservice.Principals) supportaccessports.Principals { return p },
 			supportaccessservice.New,
+			supportlogrepository.New,
+			supportlogservice.NewValidator,
+			supportlogservice.New,
 			organizationservice.NewValidator,
 			iamservice.NewValidator,
 			userservice.NewValidator,

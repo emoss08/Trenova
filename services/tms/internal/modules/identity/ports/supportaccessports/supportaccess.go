@@ -27,6 +27,26 @@ type FindLiveGrantRequest struct {
 	Now            int64
 }
 
+const MaxLiveGrantsPerStaff = 50
+
+type ListLiveForStaffRequest struct {
+	StaffEmail string
+	Now        int64
+	Limit      int
+}
+
+const MaxReportedGrants = 100
+
+type ListLiveRequest struct {
+	Now   int64
+	Limit int
+}
+
+type LiveGrant struct {
+	Grant            *supportaccess.Grant
+	OrganizationName string
+}
+
 type MarkEnteredRequest struct {
 	Grant     *supportaccess.Grant
 	StaffName string
@@ -53,6 +73,8 @@ type GrantRepository interface {
 	// FindLiveForEntry is the one lookup before a tenant is known: the live grant for an email
 	// in an organization, read under the system scope.
 	FindLiveForEntry(ctx context.Context, req *FindLiveGrantRequest) (*supportaccess.Grant, error)
+	ListLiveForStaff(ctx context.Context, req *ListLiveForStaffRequest) ([]*supportaccess.Grant, error)
+	ListLive(ctx context.Context, req *ListLiveRequest) ([]*LiveGrant, error)
 	// OrganizationBusinessUnit reads, under the system scope, the business unit of the
 	// organization a verified assertion names, so a refused entry is recorded in that
 	// organization's audit log.

@@ -83,14 +83,30 @@ func (f *fakeFeatureRepo) Replace(
 	if f.err != nil {
 		return nil, f.err
 	}
-	replacement := managedfeatures.Replace(f.state, req.Features, req.Now)
-	if !replacement.Changed() {
+	replacement := managedfeatures.Replace(f.state, req.Received, req.Now)
+	if !replacement.Updated() {
 		return replacement, nil
 	}
 	c := *replacement.Current
 	c.Features = slices.Clone(replacement.Current.Features)
 	f.state = &c
-	f.changes = append(f.changes, replacement.Change)
+	if replacement.Changed() {
+		f.changes = append(f.changes, replacement.Change)
+	}
+	return replacement, nil
+}
+
+func (f *fakeFeatureRepo) RemindPlanEnd(
+	_ context.Context,
+	now int64,
+) (*managedfeatures.Replacement, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	replacement := managedfeatures.RemindPlanEnd(f.state, now)
+	if replacement.Updated() {
+		c := *replacement.Current
+		f.state = &c
+	}
 	return replacement, nil
 }
 
@@ -267,6 +283,151 @@ func TestManagedSetFeaturesRefusesABodyThatIsNotAFeatureList(t *testing.T) {
 		"features not array": `{"features": "ai.desk"}`,
 		"keys not strings":   `{"features": [1, 2]}`,
 		"an array":           `["ai.desk"]`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := &fakeFeatureRepo{}
+			rec := serveFeatures(t, newFeatures(repo), http.MethodPut, managedToken, body)
+			assert.Equal(t, http.StatusBadRequest, rec.Code, rec.Body.String())
+			assert.Equal(t, "application/problem+json", rec.Header().Get("Content-Type"))
+			assert.Nil(t, repo.state)
+		})
+	}
+}
+
+func TestManagedSetFeaturesStoresThePlanURLAndAddOnEndings(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeFeatureRepo{}
+	features := newFeatures(repo)
+	rec := serveFeatures(t, features, http.MethodPut, managedToken, `{
+		"features": ["tms.accounting"],
+		"planUrl": "https://console.trenova.cloud/instances/0193/plan",
+		"addonEndings": [
+			{"addon": "ACC", "endsAt": "2026-12-14T00:00:00Z"},
+			{"addon": "ZZZ", "endsAt": "2026-12-14T00:00:00Z"}
+		]
+	}`)
+	require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+	require.NotNil(t, repo.state)
+	assert.Equal(t, "https://console.trenova.cloud/instances/0193/plan", repo.state.PlanURL)
+	assert.Equal(t, []managedfeatures.AddOnEnding{
+		{AddOn: platformcatalog.AddOnAccounting, EndsAt: 1_797_206_400},
+	}, repo.state.AddOnEndings, "an add-on the catalogue does not know is dropped")
+
+	rec = serveFeatures(t, features, http.MethodPut, managedToken, `{"features": ["tms.accounting"]}`)
+	require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+	assert.Equal(t, "https://console.trenova.cloud/instances/0193/plan", repo.state.PlanURL,
+		"a request without a plan URL keeps the stored one")
+	assert.Len(t, repo.state.AddOnEndings, 1, "a request without endings keeps the stored ones")
+
+	rec = serveFeatures(t, features, http.MethodPut, managedToken,
+		`{"features": ["tms.accounting"], "addonEndings": []}`)
+	require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+	assert.Empty(t, repo.state.AddOnEndings, "an empty list replaces the stored one")
+}
+
+func TestManagedSetFeaturesStoresTheFinalBackupDaysAndKeepsThemWhenUntold(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeFeatureRepo{}
+	features := newFeatures(repo)
+	rec := serveFeatures(t, features, http.MethodPut, managedToken,
+		`{"features": ["tms.accounting"], "finalBackupDays": 7}`)
+	require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+	require.NotNil(t, repo.state)
+	assert.Equal(t, 7, repo.state.FinalBackupDays)
+
+	for _, untold := range []string{
+		`{"features": ["tms.accounting"]}`,
+		`{"features": ["tms.accounting"], "finalBackupDays": 0}`,
+	} {
+		rec = serveFeatures(t, features, http.MethodPut, managedToken, untold)
+		require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+		assert.Equal(t, 7, repo.state.FinalBackupDays, "a request that does not say keeps the held number")
+	}
+}
+
+func TestManagedSetFeaturesRefusesAFinalBackupDayCountOutOfRange(t *testing.T) {
+	t.Parallel()
+
+	for _, days := range []string{"-1", "4000"} {
+		t.Run(days, func(t *testing.T) {
+			t.Parallel()
+
+			repo := &fakeFeatureRepo{}
+			rec := serveFeatures(t, newFeatures(repo), http.MethodPut, managedToken,
+				`{"features": [], "finalBackupDays": `+days+`}`)
+			assert.Equal(t, http.StatusBadRequest, rec.Code, rec.Body.String())
+			assert.Contains(t, rec.Body.String(), "finalBackupDays")
+			assert.Nil(t, repo.state)
+		})
+	}
+}
+
+func TestManagedSetFeaturesStoresThePlansEndAndANullClearsIt(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeFeatureRepo{}
+	features := newFeatures(repo)
+	rec := serveFeatures(t, features, http.MethodPut, managedToken,
+		`{"features": ["tms.accounting"], "planEndsAt": "2026-12-14T00:00:00Z"}`)
+	require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+	require.NotNil(t, repo.state)
+	assert.Equal(t, int64(1_797_206_400), repo.state.PlanEndsAt)
+
+	rec = serveFeatures(t, features, http.MethodPut, managedToken,
+		`{"features": ["tms.accounting"], "planEndsAt": null}`)
+	require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+	assert.Zero(t, repo.state.PlanEndsAt, "a plan that is not ending clears the end")
+}
+
+func TestManagedSetFeaturesStoresAPlanEndThatHasPassed(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeFeatureRepo{}
+	rec := serveFeatures(t, newFeatures(repo), http.MethodPut, managedToken,
+		`{"features": ["tms.accounting"], "planEndsAt": "2026-11-07T10:00:00Z"}`)
+	require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
+	require.NotNil(t, repo.state)
+	assert.Equal(t, int64(1_794_045_600), repo.state.PlanEndsAt, "the end stays while the instance is taken down")
+}
+
+func TestManagedSetFeaturesRefusesAPlanEndTooFarAheadOrMalformed(t *testing.T) {
+	t.Parallel()
+
+	for name, end := range map[string]string{
+		"more than a year":  "2028-01-01T00:00:00Z",
+		"not a time at all": "soon",
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := &fakeFeatureRepo{}
+			rec := serveFeatures(t, newFeatures(repo), http.MethodPut, managedToken,
+				`{"features": [], "planEndsAt": "`+end+`"}`)
+			assert.Equal(t, http.StatusBadRequest, rec.Code, rec.Body.String())
+			assert.Nil(t, repo.state)
+		})
+	}
+}
+
+func TestManagedSetFeaturesRefusesABadPlanURLOrEnding(t *testing.T) {
+	t.Parallel()
+
+	for name, body := range map[string]string{
+		"relative plan URL":      `{"features": [], "planUrl": "/instances/1/plan"}`,
+		"script plan URL":        `{"features": [], "planUrl": "javascript:alert(1)"}`,
+		"user information":       `{"features": [], "planUrl": "https://a:b@console.trenova.cloud/plan"}`,
+		"empty plan URL":         `{"features": [], "planUrl": ""}`,
+		"no host":                `{"features": [], "planUrl": "https:///plan"}`,
+		"too long":               `{"features": [], "planUrl": "https://console.trenova.cloud/` + strings.Repeat("a", 2048) + `"}`,
+		"lower-case add-on":      `{"features": [], "addonEndings": [{"addon": "acc", "endsAt": "2026-12-14T00:00:00Z"}]}`,
+		"an ending with no time": `{"features": [], "addonEndings": [{"addon": "ACC"}]}`,
+		"an ending not a time":   `{"features": [], "addonEndings": [{"addon": "ACC", "endsAt": "soon"}]}`,
+		"more than fifty endings": `{"features": [], "addonEndings": [` +
+			strings.TrimSuffix(strings.Repeat(`{"addon": "ACC", "endsAt": "2026-12-14T00:00:00Z"},`, 51), ",") + `]}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

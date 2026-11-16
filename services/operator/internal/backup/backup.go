@@ -249,7 +249,7 @@ func (m *Manager) final(
 		if id == "" {
 			id = name
 		}
-		return &instanceapi.FinalBackup{Id: clip(id, maxBackupID), CompletedAt: *done, SizeBytes: 0}
+		return &instanceapi.FinalBackup{Id: clip(id, maxBackupID), CompletedAt: *done}
 	case phaseFailed:
 		reason, _, _ := unstructured.NestedString(b.Object, "status", "error")
 		h.Message = message("the final backup failed, and is taken again: " + reason)

@@ -85,19 +85,93 @@ control plane or the operator is down, the instance keeps working on what it was
 
 Trenova is sold as a base plan plus add-ons. The spec's `features` names the feature keys the
 customer bought, and the operator sends that list on every reconcile tick (about every 15 seconds):
-`PUT /managed/v1/features` with `{"features": ["tms.accounting", "ai.desk"]}`, answered 204. The
-list is the whole set: it replaces what the instance holds, and an empty list means the base plan
-alone. `GET /managed/v1/features` answers what the instance holds, `{"features": [...],
+`PUT /managed/v1/features` with `{"features": ["tms.accounting", "ai.desk"], "planUrl": "https://…",
+"addonEndings": [{"addon": "ACC", "endsAt": "<RFC 3339>"}]}`, answered 204. The list is the whole
+set: it replaces what the instance holds, and an empty list means the base plan alone.
+`GET /managed/v1/features` answers what the instance holds, `{"features": [...],
 "receivedAt": "<RFC 3339>"}`, with an empty list and no `receivedAt` before the first one.
 
-`managed_feature_states` holds one row (`id = 'current'`, a global table) with the list as stored:
+The same request carries two more things from the spec, both optional and both kept when a
+request leaves them out:
+
+- **`planUrl`**, the spec's `account.planUrl`: the instance's plan page in the Trenova console
+  (`{console origin}/instances/{instanceId}/plan`), where add-ons are bought. The client renders it
+  as a link, so the listener refuses anything but an absolute `http` or `https` URL with a host and
+  no user information, at most 2,048 characters (`managedfeatures.Received.Validate`, a 400
+  naming `planUrl`). The control plane adds `account` to every spec it serves, from where its
+  console is served; no stored revision holds it, so every instance has it whenever it was
+  ordered, and a console that moves changes the spec's `ETag` and reaches every instance on the
+  next poll. A spec served without one makes the operator send none.
+- **`addonEndings`**, the spec's `addonEndings`: add-ons whose removal is scheduled, with when each
+  ends; they stay on the plan until then. The operator sends the list on every tick, an empty one
+  when the spec has none, so the instance's list is replaced each time. At most 50; each `addon`
+  is shaped like a catalogue add-on key (`^[A-Z][A-Z0-9]{1,9}$`) and `endsAt` is required, or the
+  request is refused with a 400. A well-shaped key the catalogue does not know is dropped and
+  logged (at warn when the state changes, then at most hourly while it is still sent), not refused,
+  for the same reason as an unknown feature. An add-on listed twice keeps its earliest end.
+- **`planEndsAt`**, the spec's `account.endsAt`: when the plan ends, the close of the period
+  already paid for, while an owner has set it to end. Unlike the two above it is a statement of
+  fact on every request: the operator always sends the key, an RFC 3339 time when the plan is
+  ending and `null` when it is not, so keeping the plan clears the end at once. A request without
+  the key is read as not ending. The control plane composes `account.endsAt` when it serves the
+  spec, and the spec's `ETag` changes with it, so the operator's next tick carries it with no new
+  revision. Once the plan has ended the control plane keeps serving the same end while the
+  instance is taken down, so the end may be in the past: the listener stores it and announces
+  nothing (withdrawing it would read as a plan that was kept). It refuses only an end before 1970
+  or more than 400 days ahead (a yearly period is the longest), with a 400 naming `planEndsAt`.
+- **`finalBackupDays`**, the spec's `account.finalBackupDays`: how many days the final backup is
+  kept after the instance is taken down. It is the control plane's retention setting (30 by
+  default), composed when the spec is served like the rest of `account`, and the operator sends it
+  whenever the spec has it. A request without it, or with 0, has not said, and the instance keeps
+  what it holds (`final_backup_days`, 30 until told). The listener refuses a value below 1 or above
+  3650 with a 400 naming `finalBackupDays`. A changed number is stored and announced to nobody.
+
+### The plan's end
+
+An owner never destroys a running instance: cancelling in the console sets the plan to end at the
+close of the period already paid for. The instance keeps running, add-ons included, until then;
+at that time the control plane decommissions it (a final backup kept for the control plane's
+retention, `finalBackupDays`, then teardown). Until then an owner or admin can keep the plan, which
+clears the end. Every sentence that says how long the final backup is kept takes the number from
+the stored state when it is written (the notifications' `PlanEndNotice.FinalBackupDays`, the page's
+`managedPlan.finalBackupDays`), never fixed text.
+
+The state row holds the end (`plan_ends_at`), the end the administrators were told about
+(`plan_end_announced`) and the end they were reminded of (`plan_end_reminded`), all Unix seconds
+like the rest of the row. `managedfeatures.Replace` decides the notice in the transaction that
+stores the list, so a repeated list or a retried request announces nothing twice:
+
+- an end that differs from the announced one is announced ("Your plan ends on {date}"); an end
+  learned less than three days ahead is marked reminded at once, since the announcement is enough;
+- no end while one was announced is a kept plan ("Your plan continues"), and clears both marks;
+- the same end again, or no end while none was announced, changes nothing.
+
+The three-day reminder ("Your plan ends in 3 days") runs on the `managed-plan-end-reminder`
+schedule (`workspace/jobs/planendjobs`, hourly, created only when `managed.enabled`): one
+activity calls `managedfeaturesports.PlanEndReminder`, which locks and reads the one state row,
+sends the reminder only when the end is less than three days away, not yet past and not yet
+reminded, and stores `plan_end_reminded` in the same transaction. It is bounded by construction:
+one row, one read, nothing while the plan is not ending.
+
+Every notice goes through the same observer as the add-on notices (`workspace/app/plannotice`),
+to each organization's administrators (`organization:update`, at most 25, `NotifyPermitted`),
+keyed `managed-plan:plan-end` so a later notice about the end replaces an open earlier one, and
+linking to `/admin/plan`. The receiver tells the observers after every stored change, and the
+observer publishes `managed_plan`/`updated` to each organization, so an open Your plan page
+refetches (`RESOURCE_QUERY_KEY_MAP.managed_plan` in `realtime-patching.ts`). The page shows the
+end as a warning notice above the usage, with Keep plan opening `manageUrl` for whoever sees it.
+
+`managed_feature_states` holds one row (`id = 'current'`, a global table) with the list, the plan
+URL (`plan_url`, null until one arrives) and the add-on endings (`addon_endings`), with the list as
+stored:
 `managedfeatures.Normalize` drops base features (always on), duplicates and keys the catalogue
 (`platformcatalog`) does not know, and sorts the rest, so the same set is always the same value.
 An unknown key is ignored rather than refused because a newer control plane may sell a feature
 this release does not have yet; refusing would stop the whole list from reaching the instance.
-`managedfeaturesservice.SetFeatures` compares the list with the stored one and writes nothing when
-it is equal; a change is stored with the receive time, drops the cache and is logged with the
-count, the features added and removed, and any ignored keys (at warn).
+`managedfeaturesservice.SetFeatures` validates the request, compares the list, the plan URL and the
+endings with the stored ones and writes nothing when all are equal; a change is stored with the
+receive time, drops the cache and is logged with the count, the features added and removed, the
+endings set and called off, and any ignored keys (at warn).
 
 `managedfeaturesservice.Service` is the `FeatureGate` in managed mode, read through the same
 30-second one-entry otter cache as the usage state:
@@ -124,9 +198,16 @@ Self-hosted installs keep `AllowAll`: every feature is on and the table is never
   nothing. A different one replaces `managed_feature_states` and inserts one row into
   `managed_feature_changes` (a global table: when, the keys `added` and `removed`, and `starting`)
   in the same transaction, then deletes every row but the newest 200. The first list an instance
-  receives is recorded with `starting = true`: it is the starting plan, not a change.
+  receives is recorded with `starting = true`: it is the starting plan, not a change. A change row
+  also records `ending` (an add-on on the plan newly set to end, or whose end moved, with its new
+  end) and `kept` (an add-on whose scheduled end was called off while it is still on the plan; one
+  that left on its day is `removed`, not kept). A new plan URL, or an ending for an add-on not on
+  the plan, updates the state row and records no change (`Replacement.Updated` against
+  `Replacement.Changed`).
 - **The notice.** `managedfeaturesservice.Receiver` (what the listener calls) tells the
-  `managed_plan_observers` fx group after a change, so the gate service that every module depends
+  `managed_plan_observers` fx group after a change to the feature list
+  (`Replacement.FeaturesChanged`; an ending, a call-off or a new plan URL tells nobody, so it never
+  makes every organization re-read its permissions), so the gate service that every module depends
   on never depends on the notification code (no fx cycle). `workspace/app/plannotice` is the
   member: it groups the change by add-on (`managedfeatures.Shift`) and, for every add-on that left
   (all its features off, at least one on before) or joined, notifies each organization's
@@ -140,12 +221,24 @@ Self-hosted installs keep `AllowAll`: every feature is on and the table is never
   record and the page shows it. The text is written with `i18n.T`, in the default language, as
   every stored notification is.
 - **The page.** `managedPlan` (GraphQL, `organization:update`) answers the base plan's features,
-  the add-ons on and off the plan with their features in catalogue order, and the 20 newest
-  changes that moved an add-on, worked out by walking back from the held list through the change
-  rows (`managedfeatures.History`). Self-hosted it answers `managed: false` with nothing else and
-  reads no table. The client knows the instance is managed from the public config's `managed`
-  (`GET /system/public-config`); the page (`/admin/plan`, "Your plan") and its admin link
-  (`managedOnly`) exist only then.
+  the add-ons on and off the plan with their features in catalogue order (an add-on on the plan
+  whose removal is scheduled carries `endsAt`), and the 20 newest changes that moved an add-on,
+  set one to end or kept one, worked out by walking back from the held list through the change
+  rows (`managedfeatures.History`). It also answers `manageUrl`, the stored plan URL (null until
+  one arrives), and `usage` for the current billing period (null without a usage state or with
+  one that has no window): the period, and per meter the catalogue's name for it in the reader's
+  language (`platformcatalog.Meters`, a meter the catalogue cannot name is left out), its unit,
+  `used`, `included`, `hardCap` and `stopped`. `used` is the state's quantity, except for a level
+  meter, which is read live the way `Decide` reads it (`managedusageservice.Usage`: one read per
+  level meter the state names, a handful). No price, SKU or machine size is ever answered.
+  Self-hosted it answers `managed: false` with nothing else and reads no table. The client knows
+  the instance is managed from the public config's `managed` (`GET /system/public-config`); the
+  page (`/admin/plan`, "Your plan") and its admin link (`managedOnly`) exist only then. The page
+  shows usage first, then the add-ons on the plan ("On", or "Ends {day}") and those that can be
+  added, what every plan includes, and recent changes. Its header's **Manage plan** opens
+  `manageUrl` in a new tab, and each add-on that can be added links to `manageUrl` with
+  `?add=<add-on key>` (any query the URL carries is kept), asking the console's plan page to open
+  with that add-on switched on, ready to confirm. Neither is drawn while `manageUrl` is null.
 
 ### A base flow that needs an add-on's record: the standard rating templates
 
@@ -231,6 +324,18 @@ The state (`PUT /managed/v1/state`) names each app meter the subscription sells,
 
 The readings (`GET /managed/v1/readings`) list exactly these four meters: the two counted meters
 for every hour from `since` to the current hour, the two levels for the current hour.
+
+The spec carries, beside the plan, what the operator passes to the TMS on every tick:
+
+- `account` (`planUrl`, `finalBackupDays`, `endsAt`), composed at serve time ([The feature
+  list](#the-feature-list)).
+- `support` (`instanceId`, `staffDomain`, one to four Ed25519 `keys`), composed at serve time; the
+  `ETag` changes with it ([Support access](#support-access)). Without it the instance can never
+  admit staff, so the control plane sends it for every managed instance.
+
+In return each status report carries `supportGrants`, the complete list of the instance's live
+grants, or leaves it out when the TMS could not be read ([The live
+grants](#the-live-grants-instance-to-operator-to-control-plane)).
 
 ## The first administrator
 
@@ -455,6 +560,44 @@ The set is one row, `managed_support_access_states` (`id = 'current'`, a global 
 through a 30-second one-entry cache like the feature list. Until a set arrives every entry is
 refused and the grants page says support access is not available.
 
+The control plane puts the set in the spec as `support` (`instanceId`, `staffDomain`, `keys`),
+composed when it serves the spec like `account`, so a rotation changes the `ETag` without a new
+revision. The operator reads `GET /managed/v1/support-access` on every tick while the instance is
+ready and active, and sends `PUT` with exactly `{instanceId, staffDomain, keys}` when the instance
+id, the domain or the set of key ids (in any order) differs. A spec without `support` sends
+nothing and the instance keeps what it holds.
+
+### The live grants (instance to operator to control plane)
+
+`GET /managed/v1/support-access/grants`, bearer `managed.token`, exists only on the managed
+listener, which a self-hosted instance never opens. It answers every live grant on the instance,
+across organizations, soonest to expire first, at most 100 (`supportaccessports.MaxReportedGrants`;
+an organization holds at most 5):
+
+```json
+{"grants": [
+  {"id": "sag_01J…", "organizationId": "org_01J…", "organizationName": "Acme Freight",
+   "staffEmail": "dana@trenova.app", "scope": "read_only", "expiresAt": "2027-01-15T08:00:00Z"}
+]}
+```
+
+- Live means not revoked, not past its expiry and its expiry not yet recorded. `scope` is
+  `read_only` or `full`; `expiresAt` is RFC 3339 in UTC; `organizationName` is the name the
+  organization has now.
+- It never carries who made the grant, the reason they gave, or anything done under it: those
+  stay in the organization's audit log.
+- `200` with an empty list when none is live, `401` for a wrong token, `500` with no detail.
+- One read under `dbscope.WithSystem` (listed in rlslint's allowlist): the grants through the
+  partial index `idx_support_access_grants_unrecorded_expiry`, then the organizations' names in one
+  batched lookup by id.
+
+The operator reads it while building each status report (the report is built every tick and sent
+when it changed or the minute is up, the way the held features are) and puts the list in the
+report's `supportGrants`. A changed list is reported at once. When the TMS is not up or the read
+fails the field is left out and the control plane keeps the last list; an empty list says no grant
+is live. The control plane keeps it for its staff, who see which organizations granted them
+access before they ask to enter.
+
 ### The assertion (control plane)
 
 A compact JWS, EdDSA (Ed25519) only, protected header
@@ -540,6 +683,76 @@ the session is credited to principal type `support` with the grant as principal 
 the audit log by principal. The administrators who hold `support_access` read are notified when a
 session starts.
 
+## Logs for Trenova support
+
+The instance keeps 7 days of its own logs, separated by source (Loki and Alloy in the chart; the
+operator collects and uploads them). Logs reach Trenova in two ways, and the TMS is the gate for
+both: an administrator sends them, or staff pull them under a live support grant. The cross-layer
+contract is in the control plane's `design-plans/managed-trenova/BUILD.md` ("Logs: design and
+contract"); this section is the TMS's half. Code: `identity/domain/supportlog`,
+`identity/app/supportlogservice`, `identity/adapters/postgres/supportlogrepository`,
+`identity/app/supportaccessservice/logpull.go`, `api/managedserver_logs.go`.
+
+### An administrator sends them
+
+Admin > Trenova support access > "Send logs to Trenova support" (GraphQL `supportLogRequests`,
+`requestSupportLogs`, both behind `organization:update` like Your plan, refused to an API key, an
+agent and a support session). The person picks the last hour, 24 hours or 7 days; the TMS stores a
+`support_log_requests` row with who asked (their user, and their name and email as they were then,
+since the operator and Trenova staff are shown them), the window (`since`, `until`), the status
+(`requested` → `collecting` → `sent` | `failed`), the bundle id the control plane gave, a failure
+sentence and its times. The bundle is kept 30 days in the instance's own object storage.
+
+- **Tenancy.** The row belongs to the asking organization (who asked is that organization's
+  data); the page lists that organization's 10 newest. The bounds are the instance's, because the
+  logs and the operator are shared: one request in flight for the whole instance (the partial
+  unique index `uq_support_log_requests_in_flight` on a constant, which row-level security does not
+  narrow, so it holds across organizations and against a race), and at most 5 requests in any 24
+  hours. The validator's business rule counts both under a system scope (`InstanceLoad`) to give
+  the person a sentence; the index is what decides a race. Because only one can be in flight, two
+  requests at once cannot both pass the daily count either.
+- **Timeouts.** `FailOverdueSupportLogRequestsWorkflow` (schedule
+  `support-log-request-timeout-sweep`, every 5 minutes, managed instances only) fails a request
+  still `requested` 30 minutes after it was made, or still `collecting` 2 hours after collecting
+  started, with a sentence saying so.
+- **Afterwards.** Every change publishes `support_log_request`/`created|updated` to the
+  organization (the page refetches), the request and its end are written to the security audit log
+  (`support_logs.requested`, `support_logs.sent`, `support_logs.failed`), and the person who asked
+  is notified when the logs are sent or the request fails (`supportlognotice`).
+
+### The listener contract
+
+| Call | Body | Answer |
+|---|---|---|
+| `GET /managed/v1/log-requests` | | `{"requests": [{"id", "status", "bundleId"?, "since", "until", "requestedBy": {"email", "name"}, "requestedAt"}]}`, times RFC 3339 UTC: the requests still `requested` or `collecting`, oldest first, at most 10; `bundleId` only once the request has one |
+| `PUT /managed/v1/log-requests/{id}` | `{"status": "collecting" \| "sent" \| "failed", "bundleId"?, "message"?}`, at most 16 KiB, no other field | 204; 400 for a malformed body, an unknown status, a bundle id that is not 1 to 100 of `[A-Za-z0-9_-]`, a message over 500 characters or `sent` with no bundle id held or given; 404 for an unknown id; 409 when the request already finished with another status, names another bundle, or changed meanwhile |
+| `POST /managed/v1/support/log-pulls` | `{"email", "kind": "lines" \| "bundle"}`, at most 4 KiB, no other field | 200 and an audit entry when that address holds a live grant; 403 otherwise; 400 for a malformed body |
+
+A `PUT` that repeats the request's current status (`collecting` twice, `sent` with the same
+bundle) changes nothing and answers 204, so the operator may retry.
+
+The list carries `collecting` requests too, so an operator that restarts in the middle of a
+collection picks the request up again rather than leaving the administrator waiting for the
+timeout. The operator keeps what it is working on in memory and skips those; after a restart it
+finds the `collecting` request, registers it with the control plane again (idempotent on the
+request id, so it gets the same bundle), reports `collecting` (a no-op) and collects again. The
+2-hour timeout stays as the backstop for an operator that never comes back. A `failed` with no message is
+stored as "The instance could not collect the logs." The message is shown to the administrators
+as written, so the operator sends one plain sentence with no secret or internal detail in it.
+
+### Staff pull them
+
+Before the operator carries out a staff command (`collect_logs` or `collect_log_bundle`) it posts
+the staff address to `/managed/v1/support/log-pulls`. The TMS normalizes the address exactly as an
+entry does (`supportaccess.NormalizeStaffEmail`, against the delivered staff domain), lists the
+live grants for it in every organization (one system-scoped read, `idx_support_access_grants_live_staff`),
+and writes `support_access.logs_pulled` into each of those organizations' audit logs, credited to
+the grant's support principal, saying Trenova support pulled log lines or a log bundle and who.
+Refused for any reason (keys not delivered, an address outside the staff domain, no grant, an
+expired or revoked one): `403` with the same empty problem, and the reason only in the
+instance's logs. No secret is compared on this path: the bearer token is, in constant time, by
+the listener. A customer's own request needs no grant.
+
 ## Rules that bite
 
 - The listener is reachable only from the operator: the chart's NetworkPolicy admits
@@ -556,6 +769,10 @@ session starts.
   with the same hash or nothing.
 - The support key route stores public keys only and answers key ids, never a key. It cannot grant
   access by itself: entry also needs a grant only the organization's administrator can make.
+- The log pull check grants nothing: it answers whether an administrator already let that staff
+  address in, and records the pull where they will see it. Every refusal looks the same.
+- Logs hold every organization's activity on the instance, so sending them is limited to one
+  request in flight and 5 a day for the whole instance, never per organization.
 - A support session is never a person: a new resource that holds a secret or controls sign-in
   must be classified in `supportaccess/policy.go`, and
   `TestEverySensitiveResourceIsClassifiedForSupport` fails until it is.

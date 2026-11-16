@@ -9,6 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func features(keys ...platformcatalog.FeatureKey) *managedfeatures.Received {
+	return &managedfeatures.Received{Features: keys}
+}
+
 func addOnNames(addOns []platformcatalog.AddOn) []string {
 	out := make([]string, 0, len(addOns))
 	for _, addOn := range addOns {
@@ -20,7 +24,7 @@ func addOnNames(addOns []platformcatalog.AddOn) []string {
 func TestReplaceRecordsTheFirstListAsTheStartingPlan(t *testing.T) {
 	t.Parallel()
 
-	r := managedfeatures.Replace(nil, []platformcatalog.FeatureKey{"ai.desk", "tms.core"}, 100)
+	r := managedfeatures.Replace(nil, features("ai.desk", "tms.core"), 100)
 
 	require.True(t, r.Changed())
 	assert.Nil(t, r.Previous)
@@ -38,10 +42,13 @@ func TestReplaceRecordsNothingForAnUnchangedList(t *testing.T) {
 		ID:       managedfeatures.CurrentStateID,
 		Features: []platformcatalog.FeatureKey{"ai.desk", "tms.accounting"},
 	}
-	r := managedfeatures.Replace(held, []platformcatalog.FeatureKey{
-		"tms.accounting", "ai.desk", "tms.core", "tms.teleport",
-	}, 200)
+	r := managedfeatures.Replace(
+		held,
+		features("tms.accounting", "ai.desk", "tms.core", "tms.teleport"),
+		200,
+	)
 
+	assert.False(t, r.Updated())
 	assert.False(t, r.Changed())
 	assert.Same(t, held, r.Current)
 }
@@ -50,7 +57,7 @@ func TestReplaceRecordsWhatWasAddedAndRemoved(t *testing.T) {
 	t.Parallel()
 
 	held := &managedfeatures.State{Features: []platformcatalog.FeatureKey{"tms.accounting"}}
-	r := managedfeatures.Replace(held, []platformcatalog.FeatureKey{"ai.desk"}, 300)
+	r := managedfeatures.Replace(held, features("ai.desk"), 300)
 
 	require.True(t, r.Changed())
 	assert.False(t, r.Change.Starting)
@@ -98,7 +105,7 @@ func TestShiftIgnoresAFeatureAddedToAnAddOnThatStaysOn(t *testing.T) {
 func TestViewListsAddOnsOnAndOffThePlanInCatalogueOrder(t *testing.T) {
 	t.Parallel()
 
-	view := managedfeatures.View([]platformcatalog.FeatureKey{"ai.desk", "tms.accounting"})
+	view := managedfeatures.View([]platformcatalog.FeatureKey{"ai.desk", "tms.accounting"}, nil)
 
 	included := make([]string, 0, len(view.Included))
 	for _, entry := range view.Included {

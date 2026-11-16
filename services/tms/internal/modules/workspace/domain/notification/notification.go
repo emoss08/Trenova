@@ -53,15 +53,19 @@ type Notification struct {
 	Version         int64          `json:"version"         keel:"version,version"`
 }
 
-func (n *Notification) BeforeCreate(_ context.Context) error {
+func (n *Notification) fillUnset() {
 	if n.Priority == "" {
 		n.Priority = PriorityMedium
 	}
-	if n.Channel == "" {
-		n.Channel = ChannelGlobal
-	}
 	if n.DeliveryStatus == "" {
 		n.DeliveryStatus = DeliveryStatusPending
+	}
+}
+
+func (n *Notification) BeforeCreate(_ context.Context) error {
+	n.fillUnset()
+	if n.Channel == "" {
+		n.Channel = ChannelGlobal
 	}
 	if n.MaxRetries == 0 {
 		n.MaxRetries = 3

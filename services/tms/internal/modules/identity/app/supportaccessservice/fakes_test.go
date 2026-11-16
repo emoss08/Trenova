@@ -141,6 +141,46 @@ func (s *grantStore) FindLiveForEntry(_ context.Context, req *supportaccessports
 	return nil, supportaccess.ErrGrantNotFound
 }
 
+func (s *grantStore) ListLiveForStaff(
+	_ context.Context,
+	req *supportaccessports.ListLiveForStaffRequest,
+) ([]*supportaccess.Grant, error) {
+	s.touch()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var out []*supportaccess.Grant
+	for _, g := range s.grants {
+		if g.StaffEmail == req.StaffEmail && g.LiveAt(req.Now) && len(out) < req.Limit {
+			copied := *g
+			out = append(out, &copied)
+		}
+	}
+	return out, nil
+}
+
+func (s *grantStore) ListLive(
+	_ context.Context,
+	req *supportaccessports.ListLiveRequest,
+) ([]*supportaccessports.LiveGrant, error) {
+	s.touch()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := []*supportaccessports.LiveGrant{}
+	for _, g := range s.grants {
+		if g.LiveAt(req.Now) {
+			copied := *g
+			out = append(out, &supportaccessports.LiveGrant{Grant: &copied})
+		}
+	}
+	slices.SortFunc(out, func(a, b *supportaccessports.LiveGrant) int {
+		return int(a.Grant.ExpiresAt - b.Grant.ExpiresAt)
+	})
+	if len(out) > req.Limit {
+		out = out[:req.Limit]
+	}
+	return out, nil
+}
+
 func (s *grantStore) OrganizationBusinessUnit(_ context.Context, orgID pulid.ID) (pulid.ID, error) {
 	s.touch()
 	s.mu.Lock()

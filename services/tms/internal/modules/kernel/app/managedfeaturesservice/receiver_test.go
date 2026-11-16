@@ -27,6 +27,10 @@ func (o *recordingObserver) PlanChanged(
 	return o.err
 }
 
+func received(features ...platformcatalog.FeatureKey) *managedfeatures.Received {
+	return &managedfeatures.Received{Features: features}
+}
+
 func newReceiver(
 	repo *fakeRepo,
 	observers ...managedfeaturesports.PlanObserver,
@@ -49,7 +53,7 @@ func TestAChangedListWritesOneChangeAndTellsTheObservers(t *testing.T) {
 	observer := &recordingObserver{}
 	receiver := newReceiver(repo, observer)
 
-	require.NoError(t, receiver.SetFeatures(t.Context(), []platformcatalog.FeatureKey{"ai.desk"}))
+	require.NoError(t, receiver.SetFeatures(t.Context(), received("ai.desk")))
 
 	require.Len(t, repo.changes, 1)
 	assert.Equal(t, []platformcatalog.FeatureKey{"ai.desk"}, repo.changes[0].Added)
@@ -72,8 +76,7 @@ func TestAnUnchangedListWritesNoChangeAndTellsNobody(t *testing.T) {
 	observer := &recordingObserver{}
 	receiver := newReceiver(repo, observer)
 
-	require.NoError(t, receiver.SetFeatures(t.Context(),
-		[]platformcatalog.FeatureKey{"ai.desk", "tms.core"}))
+	require.NoError(t, receiver.SetFeatures(t.Context(), received("ai.desk", "tms.core")))
 
 	assert.Empty(t, repo.changes)
 	assert.Empty(t, observer.seen)
@@ -86,7 +89,7 @@ func TestTheFirstListIsRecordedAsTheStartingPlan(t *testing.T) {
 	observer := &recordingObserver{}
 	receiver := newReceiver(repo, observer)
 
-	require.NoError(t, receiver.SetFeatures(t.Context(), []platformcatalog.FeatureKey{"ai.desk"}))
+	require.NoError(t, receiver.SetFeatures(t.Context(), received("ai.desk")))
 
 	require.Len(t, repo.changes, 1)
 	assert.True(t, repo.changes[0].Starting)
@@ -105,7 +108,7 @@ func TestAFailingObserverDoesNotFailTheListAndTheChangeIsKept(t *testing.T) {
 	after := &recordingObserver{}
 	receiver := newReceiver(repo, failing, after)
 
-	require.NoError(t, receiver.SetFeatures(t.Context(), nil))
+	require.NoError(t, receiver.SetFeatures(t.Context(), received()))
 
 	require.Len(t, repo.changes, 1)
 	assert.Equal(t, []platformcatalog.FeatureKey{}, repo.state.Features)
@@ -119,6 +122,72 @@ func TestAStoreFailureIsReturnedAndNobodyIsTold(t *testing.T) {
 	observer := &recordingObserver{}
 	receiver := newReceiver(&fakeRepo{err: down}, observer)
 
-	require.ErrorIs(t, receiver.SetFeatures(t.Context(), nil), down)
+	require.ErrorIs(t, receiver.SetFeatures(t.Context(), received()), down)
 	assert.Empty(t, observer.seen)
+}
+
+func TestAnEndingOnlyChangeIsRecordedAndToldWithTheFeaturesUnchanged(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{state: &managedfeatures.State{
+		ID:       managedfeatures.CurrentStateID,
+		Features: []platformcatalog.FeatureKey{"tms.accounting"},
+	}}
+	observer := &recordingObserver{}
+	receiver := newReceiver(repo, observer)
+	endings := []managedfeatures.AddOnEnding{
+		{AddOn: platformcatalog.AddOnAccounting, EndsAt: now + 86_400},
+	}
+
+	require.NoError(t, receiver.SetFeatures(t.Context(), &managedfeatures.Received{
+		Features:     []platformcatalog.FeatureKey{"tms.accounting"},
+		AddOnEndings: &endings,
+	}))
+
+	require.Len(t, repo.changes, 1)
+	assert.Equal(t, endings, repo.changes[0].Ending)
+	require.Len(t, observer.seen, 1, "every change to the plan is told, so open pages update")
+	assert.False(t, observer.seen[0].FeaturesChanged(), "but the features did not change")
+}
+
+func TestTheReminderIsSentOnceThreeDaysBeforeTheEnd(t *testing.T) {
+	t.Parallel()
+
+	ends := now + 2*86_400
+	repo := &fakeRepo{state: &managedfeatures.State{
+		ID:               managedfeatures.CurrentStateID,
+		PlanEndsAt:       ends,
+		PlanEndAnnounced: ends,
+	}}
+	observer := &recordingObserver{}
+	receiver := newReceiver(repo, observer)
+
+	first, err := receiver.RemindPlanEnd(t.Context())
+	require.NoError(t, err)
+	assert.True(t, first.Reminded)
+	assert.Equal(t, ends, first.EndsAt)
+	require.Len(t, observer.seen, 1)
+	assert.Equal(t, managedfeatures.PlanEndReminder, observer.seen[0].PlanEnd.Kind)
+
+	again, err := receiver.RemindPlanEnd(t.Context())
+	require.NoError(t, err)
+	assert.False(t, again.Reminded, "a reminder is sent once")
+	assert.Len(t, observer.seen, 1)
+}
+
+func TestNoReminderWhileThePlanIsNotEnding(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{state: &managedfeatures.State{ID: managedfeatures.CurrentStateID}}
+	observer := &recordingObserver{}
+	receiver := newReceiver(repo, observer)
+
+	result, err := receiver.RemindPlanEnd(t.Context())
+	require.NoError(t, err)
+	assert.False(t, result.Reminded)
+	assert.Empty(t, observer.seen)
+
+	result, err = newReceiver(&fakeRepo{}, observer).RemindPlanEnd(t.Context())
+	require.NoError(t, err)
+	assert.False(t, result.Reminded, "an instance that never received a list has nothing to remind")
 }

@@ -18,6 +18,10 @@ const (
 	SupportExpiryScheduleID   = "support-access-expiry-sweep"
 	SupportExpiryWorkflowName = "RecordSupportAccessExpiriesWorkflow"
 	supportExpiryEvery        = 5 * time.Minute
+
+	SupportLogTimeoutScheduleID   = "support-log-request-timeout-sweep"
+	SupportLogTimeoutWorkflowName = "FailOverdueSupportLogRequestsWorkflow"
+	supportLogTimeoutEvery        = 5 * time.Minute
 )
 
 type ScheduleProvider struct {
@@ -54,5 +58,15 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		TaskQueue:     temporaltype.TaskQueueSystem.String(),
 		OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 		Memo:          map[string]any{"purpose": SupportExpiryScheduleID},
+	}, &schedule.Schedule{
+		ID:      SupportLogTimeoutScheduleID,
+		Feature: platformcatalog.FeatureAdministration,
+		Description: "Fail the requests to send logs to Trenova support that the operator " +
+			"never picked up or never finished",
+		Spec:          schedule.Every(supportLogTimeoutEvery),
+		Workflow:      FailOverdueSupportLogRequestsWorkflow,
+		TaskQueue:     temporaltype.TaskQueueSystem.String(),
+		OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+		Memo:          map[string]any{"purpose": SupportLogTimeoutScheduleID},
 	})
 }

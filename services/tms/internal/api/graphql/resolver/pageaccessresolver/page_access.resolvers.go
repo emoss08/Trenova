@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/shared/i18n"
 )
 
 func (r *QueryResolver) PageAccess(ctx context.Context, location string) (*gqlmodel.PageAccess, error) {
@@ -27,7 +28,7 @@ func (r *QueryResolver) PageAccess(ctx context.Context, location string) (*gqlmo
 		return nil, err
 	}
 
-	return pageAccessToModel(access), nil
+	return pageAccessToModel(i18n.FromContext(ctx), access), nil
 }
 
 func (r *QueryResolver) PageAccessPreview(ctx context.Context, input gqlmodel.PageAccessPreviewInput) (*gqlmodel.PageAccess, error) {
@@ -55,7 +56,7 @@ func (r *QueryResolver) PageAccessPreview(ctx context.Context, input gqlmodel.Pa
 		return nil, err
 	}
 
-	return pageAccessToModel(access), nil
+	return pageAccessToModel(i18n.FromContext(ctx), access), nil
 }
 
 func (r *QueryResolver) PageAccessScreens(ctx context.Context) ([]*gqlmodel.PageAccessScreen, error) {

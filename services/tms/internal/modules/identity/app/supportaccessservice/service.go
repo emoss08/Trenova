@@ -362,6 +362,16 @@ func (s *Service) SetKeys(ctx context.Context, keys *supportaccess.KeySet) error
 	return nil
 }
 
+func (s *Service) LiveGrants(ctx context.Context) ([]*supportaccessports.LiveGrant, error) {
+	if !s.enabled {
+		return nil, errNotAvailable
+	}
+	return s.grants.ListLive(ctx, &supportaccessports.ListLiveRequest{
+		Now:   s.clock(),
+		Limit: supportaccessports.MaxReportedGrants,
+	})
+}
+
 // KeySet answers what the instance holds, for the operator to compare with what it sends.
 func (s *Service) KeySet(ctx context.Context) (*supportaccess.KeySet, error) {
 	if !s.enabled {

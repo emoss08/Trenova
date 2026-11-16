@@ -62,6 +62,7 @@ const (
 	keyMinio    = "minio"
 	keyDocling  = "docling"
 	keyClamAV   = "clamav"
+	keyLogs     = "logs"
 	keyMemory   = "memory"
 	keyCPU      = "cpu"
 )
@@ -132,6 +133,7 @@ func Render(
 		keyDocling:      map[string]any{"enabled": docling},
 		keyPostgres:     pg,
 		"managed":       managed(operatorNamespace),
+		keyLogs:         map[string]any{"enabled": true},
 		"secrets":       map[string]any{"escrowSecret": EscrowSecret},
 		"bootstrap":     admin,
 	})
@@ -293,6 +295,10 @@ func AppSecret(release string, base map[string]any) string {
 
 func APIService(release string) string {
 	return Fullname(release) + "-api"
+}
+
+func LokiService(release string) string {
+	return Fullname(release) + "-loki"
 }
 
 func lifecycle(l instanceapi.InstanceSpecLifecycle) (stopped, hibernate bool, err error) {

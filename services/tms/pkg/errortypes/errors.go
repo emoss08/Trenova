@@ -335,6 +335,11 @@ type Parameterized interface {
 	Params() map[string]string
 }
 
+type LocalizedParameterized interface {
+	Parameterized
+	LocalizedParams(locale i18n.Locale) map[string]string
+}
+
 func (e *BaseError) LocalizedMessage() (message string, args []any) {
 	return e.Message, e.Args
 }

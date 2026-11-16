@@ -1,5 +1,5 @@
 {
-  "version": "sha256:01587da15428e420824307e54aea419e0bf19592c2ca60a986d330abc022be30",
+  "version": "sha256:8f8d7993227cea237bc830f5f280009c1b3b771832286af7e3349810d82ddbf1",
   "modules": [
     {
       "id": "home",
@@ -5862,8 +5862,8 @@
         "Organization",
         "Your plan"
       ],
-      "description": "What your plan includes, the add-ons it does not, and recent changes",
-      "summary": "On a Managed Trenova instance, Trenova sells a base plan and add-ons such as Dispatch Intelligence or Trenova AI. This page shows an administrator what the plan includes, each add-on on the plan and what it adds, and each add-on that is not on it and what it would add. Nothing on this page changes the plan: add or drop an add-on from your Trenova account.\n\n**Recent changes** lists when an add-on joined or left the plan. When an add-on leaves, its pages and actions are hidden and its background work stops, but everything you entered with it is kept and comes back if you add it again. Administrators are also notified each time an add-on joins or leaves.",
+      "description": "What your plan includes, how much of it you have used and what you can add",
+      "summary": "On a Managed Trenova instance, Trenova sells a base plan and add-ons such as Dispatch Intelligence or Trenova AI. This page shows an administrator how much of the plan has been used this billing period, each add-on on the plan and each one that could be added, with what it adds, and what every plan includes. Nothing here changes the plan: **Manage plan** and each add-on's **Add** link open your Trenova account in a new tab, where the plan is changed.\n\n**Usage** shows each allowance for the current period: how much is used of what the plan includes. A bar turns amber when a metered allowance is nearly used. A limit the plan never goes past, such as the number of organizations, stays neutral even when it is reached.\n\nAn add-on whose removal has been scheduled stays on the plan, marked with the day it ends, until that day. **Recent changes** lists when an add-on joined or left the plan, when one was set to end, and when a scheduled end was called off and the add-on stays. When an add-on leaves, its pages and actions are hidden and its background work stops, but everything entered with it is kept and comes back if you add it again. Administrators are also notified each time an add-on joins or leaves.\n\nWhen an owner has set the plan to end, a notice at the top of the page says the day it ends. Trenova stays available until then, with everything the plan includes; after that, the workspace is taken down and a final backup is kept for the number of days Trenova sets, which the notice says. Administrators are notified when the plan is set to end, three days before it ends, and if it is kept.",
       "requires": [
         {
           "resource": "organization",
@@ -5877,9 +5877,41 @@
         "add-ons",
         "which add-ons we have",
         "plan changes",
-        "dropped add-on"
+        "dropped add-on",
+        "plan usage",
+        "how many shipments are left",
+        "storage used",
+        "buy an add-on",
+        "add-on ending"
       ],
       "tasks": [
+        {
+          "title": "Keep a plan that is set to end",
+          "keywords": [
+            "cancel cancellation",
+            "undo cancel",
+            "plan ending",
+            "workspace going away"
+          ],
+          "steps": [
+            "Open [Your plan](/admin/plan).",
+            "Select **Keep plan** in the notice at the top. Your Trenova account opens in a new tab, where an owner or admin keeps the plan."
+          ]
+        },
+        {
+          "title": "See how much of your plan you have used",
+          "keywords": [
+            "usage",
+            "shipments left",
+            "storage used",
+            "allowance",
+            "overage"
+          ],
+          "steps": [
+            "Open [Your plan](/admin/plan).",
+            "Read **Usage**. The period it covers is in the panel's header."
+          ]
+        },
         {
           "title": "See what your plan includes",
           "keywords": [
@@ -5889,11 +5921,11 @@
           ],
           "steps": [
             "Open [Your plan](/admin/plan).",
-            "Read **Included in your plan** and **Add-ons on your plan**."
+            "Read **On your plan** and **Included in every plan**. Select an add-on's name to see every feature it adds."
           ]
         },
         {
-          "title": "See what an add-on would add",
+          "title": "Add an add-on",
           "keywords": [
             "upgrade",
             "buy an add-on",
@@ -5901,23 +5933,24 @@
           ],
           "steps": [
             "Open [Your plan](/admin/plan).",
-            "Read **Add-ons you can add**. Add one from your Trenova account."
+            "In **You can add**, select **Add** beside the add-on. Your Trenova account opens in a new tab with that add-on ready to confirm."
           ]
         },
         {
-          "title": "See when an add-on left the plan",
+          "title": "See when an add-on leaves the plan",
           "keywords": [
             "dropped add-on",
             "feature disappeared",
-            "missing page"
+            "missing page",
+            "add-on ending"
           ],
           "steps": [
             "Open [Your plan](/admin/plan).",
-            "Read **Recent changes**."
+            "An add-on that is ending shows the day it ends in **On your plan**. **Recent changes** lists when it was set to end and when an add-on left."
           ]
         }
       ],
-      "notes": "Needs permission to update the organization. The page exists only on a Managed Trenova instance; a self-hosted install has every feature.",
+      "notes": "Needs permission to update the organization. The page exists only on a Managed Trenova instance; a self-hosted install has every feature. **Manage plan**, the **Add** links and **Usage** appear once Trenova has sent them to the instance.",
       "related": [
         "/admin/organization-settings",
         "/admin/support-access"
@@ -6561,7 +6594,7 @@
         "Trenova support access"
       ],
       "description": "Let a named Trenova staff member into this organization for a set time, and see everything they did",
-      "summary": "Trenova support can look at your organization only when you let them. On a Managed Trenova instance an administrator grants one named Trenova staff member access, says why, and chooses how long it lasts (1, 4, 24 or 72 hours) and whether it is **Read-only** or **Full access**. Staff never have a password here: each time they enter, Trenova's control plane signs a one-use pass for that staff member, and your instance lets them in only while a grant for exactly that address is live. The access ends on its own, and you can end it sooner.\n\nEverything done under a grant is in the audit log, credited to \"Trenova support\" with the staff member's address, and listed under the grant on this page. Administrators who can see this page are notified each time a support session starts, and every page of a support session shows a bar naming the staff member and when the session ends.\n\nFull access is an administrator's reach with exceptions that never change: support may not manage users, roles or sign-in settings, create API keys, grant or end support access, see or change stored credentials (integrations, AI provider keys, single sign-on, mailboxes), change bank or factoring remittance details, or export data in bulk.",
+      "summary": "Trenova support can look at your organization only when you let them. On a Managed Trenova instance an administrator grants one named Trenova staff member access, says why, and chooses how long it lasts (1, 4, 24 or 72 hours) and whether it is **Read-only** or **Full access**. Staff never have a password here: each time they enter, Trenova's control plane signs a one-use pass for that staff member, and your instance lets them in only while a grant for exactly that address is live. The access ends on its own, and you can end it sooner.\n\nEverything done under a grant is in the audit log, credited to \"Trenova support\" with the staff member's address, and listed under the grant on this page. Administrators who can see this page are notified each time a support session starts, and every page of a support session shows a bar naming the staff member and when the session ends.\n\nFull access is an administrator's reach with exceptions that never change: support may not manage users, roles or sign-in settings, create API keys, grant or end support access, see or change stored credentials (integrations, AI provider keys, single sign-on, mailboxes), change bank or factoring remittance details, or export data in bulk.\n\nOn a Managed Trenova instance this page also sends the instance's logs to Trenova support when they are looking into a problem. You choose how far back the logs reach, and Trenova keeps them for 30 days. Staff can also pull logs themselves, but only while a grant names their address, and each pull is written to your audit log.",
       "requires": [
         {
           "resource": "support_access",
@@ -6576,9 +6609,26 @@
         "vendor access",
         "staff access",
         "impersonation",
-        "support session"
+        "support session",
+        "send logs",
+        "share logs with support",
+        "diagnostic logs"
       ],
       "tasks": [
+        {
+          "title": "Send logs to Trenova support",
+          "keywords": [
+            "send logs",
+            "share logs",
+            "diagnostic logs",
+            "logs for a ticket"
+          ],
+          "steps": [
+            "Open [Trenova support access](/admin/support-access).",
+            "Under **Send logs to Trenova support**, choose **Last hour**, **Last 24 hours** or **Last 7 days**.",
+            "Select **Send logs**. The request shows **Requested**, then **Collecting**, then sent with the date, without reloading the page. You are notified when it is sent or if it fails, with the reason."
+          ]
+        },
         {
           "title": "Grant Trenova support access",
           "keywords": [
@@ -6623,7 +6673,7 @@
           ]
         }
       ],
-      "notes": "- Needs the Trenova Support Access permission: View to see this page, Grant to grant, Revoke to end. It is never given to an API key or an agent, and a support session cannot use it. - A staff member has at most one live grant at a time, and at most five grants are live at once. - Self-hosted installations have no support access: nobody at Trenova can enter them.",
+      "notes": "- Needs the Trenova Support Access permission: View to see this page, Grant to grant, Revoke to end. It is never given to an API key or an agent, and a support session cannot use it. - A staff member has at most one live grant at a time, and at most five grants are live at once. - Self-hosted installations have no support access: nobody at Trenova can enter them, and they cannot send logs to Trenova. - Sending logs needs the Organization Update permission, as Your plan does. The logs cover the whole instance, every organization on it, so only one request can be under way at a time, and the instance can send logs at most five times in 24 hours. A request the instance does not finish in time is marked failed and says why.",
       "related": [
         "/admin/audit-logs",
         "/admin/users"

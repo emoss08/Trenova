@@ -997,6 +997,7 @@ func FromServices(s *Services) *Resolver {
 	supportaccessDeps := &supportaccessresolver.Deps{
 		Core:                 s.Core,
 		SupportAccessService: s.SupportAccessService,
+		SupportLogService:    s.SupportLogService,
 	}
 	tablechangealertDeps := &tablechangealertresolver.Deps{
 		Core:                    s.Core,

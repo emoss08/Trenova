@@ -84,13 +84,14 @@ func New(p Params) *Handler {
 }
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
-	if !h.managed {
-		return
-	}
 	rg.POST("/support/enter", middleware.NewBodyLimit(maxBody), h.enter)
 }
 
 func (h *Handler) enter(c *gin.Context) {
+	if !h.managed {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	if !h.allow(c) {
 		return
 	}

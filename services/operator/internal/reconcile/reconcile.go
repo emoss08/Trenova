@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"slices"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -13,29 +15,40 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/emoss08/trenova/operator/internal/backup"
-	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/release"
+	"github.com/emoss08/trenova/operator/internal/selfupgrade"
 	"github.com/emoss08/trenova/operator/internal/tms"
 	"github.com/emoss08/trenova/operator/internal/usage"
 	"github.com/emoss08/trenova/operator/internal/values"
 )
 
 const (
-	maxComponents  = 50
-	maxMessage     = 500
-	maxFeatures    = 100
-	usageRetry     = time.Minute
-	usageTimeout   = time.Minute
-	defaultUsage   = 15 * time.Minute
-	inviteRecheck  = time.Minute
-	inviteTimeout  = 30 * time.Second
-	featureTimeout = 30 * time.Second
-	emailTimeout   = 30 * time.Second
+	maxComponents   = 50
+	maxMessage      = 500
+	maxVersion      = 64
+	maxFeatures     = 100
+	usageRetry      = time.Minute
+	usageTimeout    = time.Minute
+	defaultUsage    = 15 * time.Minute
+	inviteRecheck   = time.Minute
+	inviteTimeout   = 30 * time.Second
+	featureTimeout  = 30 * time.Second
+	emailTimeout    = 30 * time.Second
+	supportTimeout  = 30 * time.Second
+	maxGrants       = 100
+	maxGrantID      = 100
+	maxOrgName      = 200
+	maxStaffEmail   = 254
+	commandsTimeout = 2 * time.Minute
+
+	logRequestsTimeout = 30 * time.Second
 )
+
+var organizationID = regexp.MustCompile(`^org_[0-9A-HJKMNP-TV-Z]{26}$`)
 
 type ControlPlane interface {
 	Spec(ctx context.Context, etag string) (controlplane.Desired, bool, error)
@@ -70,10 +83,13 @@ type Usage interface {
 	Run(ctx context.Context, allowances []instanceapi.SpecAllowance) (usage.Result, error)
 }
 
-// Commands carries out what the control plane asks besides the spec:
-// restarts and log collection.
 type Commands interface {
-	Run(ctx context.Context, cp commands.ControlPlane) error
+	Run(ctx context.Context) error
+}
+
+type LogRequests interface {
+	Run(ctx context.Context) error
+	Relay(ctx context.Context) error
 }
 
 type Administrators interface {
@@ -81,7 +97,7 @@ type Administrators interface {
 }
 
 type Features interface {
-	PutFeatures(ctx context.Context, features []string) error
+	PutFeatures(ctx context.Context, list tms.FeatureList) error
 	HeldFeatures(ctx context.Context) ([]string, error)
 }
 
@@ -89,12 +105,24 @@ type SystemEmail interface {
 	Sync(ctx context.Context, desired *instanceapi.SpecSystemEmail) error
 }
 
+type SupportKeys interface {
+	Sync(ctx context.Context, desired *instanceapi.SpecSupport) error
+}
+
+type SupportGrants interface {
+	SupportGrants(ctx context.Context) ([]tms.SupportGrant, error)
+}
+
 type Storage interface {
-	Ensure(ctx context.Context, hostname string) (values.Storage, error)
+	Ensure(ctx context.Context, hostname string, revision int64) (values.Storage, error)
 }
 
 type Backups interface {
 	Run(ctx context.Context, in backup.Input) backup.Result
+}
+
+type Operator interface {
+	Converge(ctx context.Context, want string) selfupgrade.Status
 }
 
 type inviteAsked struct {
@@ -114,11 +142,15 @@ type Loop struct {
 	admins   Administrators
 	features Features
 	email    SystemEmail
+	keys     SupportKeys
+	grants   SupportGrants
 	storage  Storage
 	backups  Backups
+	commands Commands
+	logs     LogRequests
+	operator Operator
 	located  values.Storage
 	capacity values.Capacity
-	commands Commands
 	base     map[string]any
 	ownNS    string
 	logger   *slog.Logger
@@ -127,17 +159,18 @@ type Loop struct {
 	report   time.Duration
 	every    time.Duration
 
-	usageNext  time.Time
-	invite     inviteAsked
-	etag       string
-	desired    *controlplane.Desired
-	applied    int64
-	last       instanceapi.StatusReport
-	lastSent   time.Time
-	reported   bool
-	heartbeat  atomic.Int64
-	enrolled   atomic.Bool
-	retryAfter time.Time
+	usageNext    time.Time
+	invite       inviteAsked
+	etag         string
+	desired      *controlplane.Desired
+	applied      int64
+	last         instanceapi.StatusReport
+	lastSent     time.Time
+	reported     bool
+	heartbeat    atomic.Int64
+	enrolled     atomic.Bool
+	retryAfter   time.Time
+	commandsWait string
 }
 
 type Params struct {
@@ -151,23 +184,27 @@ type Params struct {
 	Administrators Administrators
 	Features       Features
 	SystemEmail    SystemEmail
-	// Storage and Backups are optional: without them the instance keeps
-	// documents in the chart's own store and takes no backups.
-	Storage Storage
-	Backups Backups
-	// Commands is optional: without it the operator carries out none.
-	Commands   Commands
-	Capacity   values.Capacity
-	Base       map[string]any
-	Namespace  string
-	Logger     *slog.Logger
-	Now        func() time.Time
-	Poll       time.Duration
-	Report     time.Duration
-	UsageEvery time.Duration
+	SupportKeys    SupportKeys
+	SupportGrants  SupportGrants
+	Storage        Storage
+	Backups        Backups
+	Commands       Commands
+	Logs           LogRequests
+	Operator       Operator
+	Capacity       values.Capacity
+	Base           map[string]any
+	Namespace      string
+	Logger         *slog.Logger
+	Now            func() time.Time
+	Poll           time.Duration
+	Report         time.Duration
+	UsageEvery     time.Duration
 }
 
-func New(p *Params) *Loop {
+func New(p *Params) (*Loop, error) {
+	if err := p.validate(); err != nil {
+		return nil, err
+	}
 	now := p.Now
 	if now == nil {
 		now = time.Now
@@ -187,9 +224,13 @@ func New(p *Params) *Loop {
 		admins:   p.Administrators,
 		features: p.Features,
 		email:    p.SystemEmail,
+		keys:     p.SupportKeys,
+		grants:   p.SupportGrants,
 		storage:  p.Storage,
 		backups:  p.Backups,
 		commands: p.Commands,
+		logs:     p.Logs,
+		operator: p.Operator,
 		capacity: p.Capacity,
 		base:     p.Base,
 		ownNS:    p.Namespace,
@@ -198,7 +239,47 @@ func New(p *Params) *Loop {
 		poll:     p.Poll,
 		report:   p.Report,
 		every:    every,
+	}, nil
+}
+
+func (p *Params) validate() error {
+	needs := []struct {
+		name    string
+		missing bool
+	}{
+		{"ControlPlane", p.ControlPlane == nil},
+		{"Credentials", p.Credentials == nil},
+		{"Charts", p.Charts == nil},
+		{"Releases", p.Releases == nil},
+		{"Health", p.Health == nil},
+		{"Escrow", p.Escrow == nil},
+		{"Usage", p.Usage == nil},
+		{"Administrators", p.Administrators == nil},
+		{"Features", p.Features == nil},
+		{"SystemEmail", p.SystemEmail == nil},
+		{"SupportKeys", p.SupportKeys == nil},
+		{"SupportGrants", p.SupportGrants == nil},
+		{"Storage", p.Storage == nil},
+		{"Backups", p.Backups == nil},
+		{"Commands", p.Commands == nil},
+		{"Logs", p.Logs == nil},
+		{"Operator", p.Operator == nil},
+		{"Base", p.Base == nil},
+		{"Namespace", p.Namespace == ""},
+		{"Logger", p.Logger == nil},
+		{"Poll", p.Poll <= 0},
+		{"Report", p.Report <= 0},
 	}
+	var missing []string
+	for _, n := range needs {
+		if n.missing {
+			missing = append(missing, n.name)
+		}
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("reconcile: the loop needs %s", strings.Join(missing, ", "))
+	}
+	return nil
 }
 
 func (l *Loop) Healthy() error {
@@ -224,6 +305,11 @@ func (l *Loop) Run(ctx context.Context) error {
 		}
 	}
 	l.enrolled.Store(true)
+	go func() {
+		if err := l.logs.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			l.logger.Error("the log bundle worker stopped", "error", err)
+		}
+	}()
 	ticker := time.NewTicker(l.poll)
 	defer ticker.Stop()
 	for {
@@ -255,6 +341,7 @@ func (l *Loop) Tick(ctx context.Context) {
 		return
 	}
 	l.enrolled.Store(true)
+	defer l.runCommands(ctx)
 	if changed {
 		l.desired, l.etag = &desired, desired.ETag
 		l.logger.Info(
@@ -280,6 +367,8 @@ func (l *Loop) Tick(ctx context.Context) {
 	l.sendFeatures(ctx, report.Ready)
 	report.Features = l.heldFeatures(ctx, report.Ready)
 	l.sendSystemEmail(ctx, report.Ready)
+	l.sendSupportKeys(ctx, &report)
+	report.SupportGrants = l.supportGrants(ctx, report.Ready)
 	if l.shouldReport(report) {
 		if err = l.cp.ReportStatus(ctx, report); err != nil {
 			if !l.handle(ctx, err) {
@@ -290,25 +379,47 @@ func (l *Loop) Tick(ctx context.Context) {
 		l.last, l.lastSent, l.reported = report, l.now(), true
 	}
 	l.relayUsage(ctx, report.Ready)
-	l.runCommands(ctx)
+	l.relayLogRequests(ctx, report.Ready)
 }
 
-// runCommands carries out what the control plane asked for since the last
-// tick. A failure here never stops the loop: the commands are asked for
-// again on the next one.
-func (l *Loop) runCommands(ctx context.Context) {
-	cp, ok := l.cp.(commands.ControlPlane)
-	if l.commands == nil || !ok {
+func (l *Loop) relayLogRequests(ctx context.Context, ready bool) {
+	if !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
 		return
 	}
-	if err := l.commands.Run(ctx, cp); err != nil && !l.handle(ctx, err) {
-		l.logger.Warn("cannot carry out the control plane's commands", "error", err)
+	run, cancel := context.WithTimeout(ctx, logRequestsTimeout)
+	defer cancel()
+	if err := l.logs.Relay(run); err != nil && !l.handle(ctx, err) {
+		l.logger.Warn("cannot carry out the log requests made in Trenova; retrying", "error", err)
 	}
+}
+
+func (l *Loop) runCommands(ctx context.Context) {
+	if l.now().Before(l.retryAfter) {
+		l.waitCommands("the control plane asked the operator to wait")
+		return
+	}
+	if l.commandsWait != "" {
+		l.logger.Info("carrying out the control plane's commands again")
+		l.commandsWait = ""
+	}
+	run, cancel := context.WithTimeout(ctx, commandsTimeout)
+	defer cancel()
+	if err := l.commands.Run(run); err != nil && !l.handle(ctx, err) {
+		l.logger.Warn("cannot carry out the control plane's commands; retrying", "error", err)
+	}
+}
+
+func (l *Loop) waitCommands(reason string) {
+	if l.commandsWait == reason {
+		return
+	}
+	l.commandsWait = reason
+	l.logger.Info("the control plane's commands wait", "reason", reason)
 }
 
 func (l *Loop) administrator(ctx context.Context, ready bool) *instanceapi.AdministratorStatus {
 	invite := l.desired.Spec.FirstAdministrator.Invite
-	if l.admins == nil || invite == nil || !ready ||
+	if invite == nil || !ready ||
 		l.desired.Spec.Lifecycle != instanceapi.Active {
 		l.invite = inviteAsked{}
 		return nil
@@ -345,20 +456,45 @@ func (l *Loop) administrator(ctx context.Context, ready bool) *instanceapi.Admin
 }
 
 func (l *Loop) sendFeatures(ctx context.Context, ready bool) {
-	if l.features == nil || !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
+	if !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
 		return
 	}
 	run, cancel := context.WithTimeout(ctx, featureTimeout)
 	defer cancel()
-	if err := l.features.PutFeatures(run, l.desired.Spec.Features); err != nil {
+	list := featureList(&l.desired.Spec)
+	if err := l.features.PutFeatures(run, list); err != nil {
 		l.logger.Warn("cannot send the feature list to the TMS; retrying", "error", err)
 		return
 	}
-	l.logger.Debug("feature list sent", "features", len(l.desired.Spec.Features))
+	l.logger.Debug(
+		"feature list sent",
+		"features", len(list.Features),
+		"addonEndings", len(list.AddonEndings),
+		"planUrl", list.PlanURL != "",
+		"planEnding", list.PlanEndsAt != nil,
+	)
+}
+
+func featureList(spec *instanceapi.InstanceSpec) tms.FeatureList {
+	list := tms.FeatureList{Features: spec.Features, AddonEndings: []tms.AddonEnding{}}
+	if spec.Account != nil {
+		list.PlanURL = spec.Account.PlanUrl
+		list.FinalBackupDays = int(spec.Account.FinalBackupDays)
+		if spec.Account.EndsAt != nil {
+			ends := *spec.Account.EndsAt
+			list.PlanEndsAt = &ends
+		}
+	}
+	if spec.AddonEndings != nil {
+		for _, e := range *spec.AddonEndings {
+			list.AddonEndings = append(list.AddonEndings, tms.AddonEnding{Addon: e.Addon, EndsAt: e.EndsAt})
+		}
+	}
+	return list
 }
 
 func (l *Loop) heldFeatures(ctx context.Context, ready bool) *[]string {
-	if l.features == nil || !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
+	if !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
 		return nil
 	}
 	run, cancel := context.WithTimeout(ctx, featureTimeout)
@@ -382,7 +518,7 @@ func (l *Loop) heldFeatures(ctx context.Context, ready bool) *[]string {
 }
 
 func (l *Loop) sendSystemEmail(ctx context.Context, ready bool) {
-	if l.email == nil || !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
+	if !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
 		return
 	}
 	run, cancel := context.WithTimeout(ctx, emailTimeout)
@@ -398,8 +534,84 @@ func (l *Loop) sendSystemEmail(ctx context.Context, ready bool) {
 	l.logger.Warn("cannot bring the TMS's system email sender up to date; retrying", "error", err)
 }
 
+func (l *Loop) sendSupportKeys(ctx context.Context, report *instanceapi.StatusReport) {
+	desired := l.desired.Spec.Support
+	if !report.Ready || l.desired.Spec.Lifecycle != instanceapi.Active || desired == nil {
+		return
+	}
+	run, cancel := context.WithTimeout(ctx, supportTimeout)
+	defer cancel()
+	err := l.keys.Sync(run, desired)
+	if err == nil {
+		return
+	}
+	l.logger.Warn("cannot bring the TMS's support access keys up to date; retrying", "error", err)
+	if report.Message == nil {
+		msg := trim("support access keys not delivered: " + err.Error())
+		report.Message = &msg
+	}
+}
+
+func (l *Loop) supportGrants(ctx context.Context, ready bool) *[]instanceapi.SupportGrant {
+	if !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
+		return nil
+	}
+	run, cancel := context.WithTimeout(ctx, supportTimeout)
+	defer cancel()
+	held, err := l.grants.SupportGrants(run)
+	if err != nil {
+		l.logger.Warn(
+			"cannot read the TMS's live support grants; the report leaves them out",
+			"error",
+			err,
+		)
+		return nil
+	}
+	out := make([]instanceapi.SupportGrant, 0, min(len(held), maxGrants))
+	seen := make(map[string]bool, len(held))
+	for _, g := range held {
+		if len(out) == maxGrants {
+			break
+		}
+		grant, ok := reportedGrant(g)
+		if !ok || seen[grant.Id] {
+			l.logger.Warn("the TMS listed a support grant the contract cannot carry; it is left out",
+				"grant", g.ID)
+			continue
+		}
+		seen[grant.Id] = true
+		out = append(out, grant)
+	}
+	return &out
+}
+
+func reportedGrant(g tms.SupportGrant) (instanceapi.SupportGrant, bool) {
+	grant := instanceapi.SupportGrant{
+		Id:               g.ID,
+		OrganizationId:   g.OrganizationID,
+		OrganizationName: clip(strings.TrimSpace(g.OrganizationName), maxOrgName),
+		StaffEmail:       strings.ToLower(g.StaffEmail),
+		Scope:            instanceapi.SupportGrantScope(g.Scope),
+		ExpiresAt:        g.ExpiresAt.UTC(),
+	}
+	ok := grant.Id != "" && len(grant.Id) <= maxGrantID &&
+		organizationID.MatchString(grant.OrganizationId) &&
+		grant.OrganizationName != "" &&
+		len(grant.StaffEmail) <= maxStaffEmail &&
+		grant.Scope.Valid() && !grant.ExpiresAt.IsZero()
+	return grant, ok
+}
+
+func clip(s string, n int) string {
+	runes := []rune(s)
+	if len(runes) <= n {
+		return s
+	}
+	return string(runes[:n])
+}
+
 func (l *Loop) relayUsage(ctx context.Context, ready bool) {
-	if l.usage == nil || !ready || l.desired.Spec.Lifecycle != instanceapi.Active ||
+	if !ready || l.desired.Spec.Lifecycle != instanceapi.Active ||
 		l.now().Before(l.usageNext) {
 		return
 	}
@@ -441,6 +653,11 @@ func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 			l.desired.Spec.InstanceId,
 			own,
 		)), true
+	}
+	op := l.operator.Converge(ctx, l.desired.Spec.Release.Version)
+	report.Operator = operatorReport(op)
+	if op.Holds() {
+		return l.hold(ctx, report, op), true
 	}
 	located, err := l.objectStorage(ctx)
 	if err != nil {
@@ -497,13 +714,47 @@ func (l *Loop) apply(
 		}
 	}
 	l.applied = l.desired.Revision
-	applied := l.applied
-	report.AppliedRevision = &applied
+	return l.observe(ctx, report, deployed, rendered.Values)
+}
+
+func (l *Loop) hold(
+	ctx context.Context,
+	report instanceapi.StatusReport,
+	op selfupgrade.Status,
+) instanceapi.StatusReport {
+	deployed, err := l.releases.Deployed()
+	if err != nil {
+		return l.notReady(report, err.Error())
+	}
+	if !deployed.Exists {
+		return l.notReady(report, fmt.Sprintf(
+			"Trenova is installed once the operator runs %s: %s", op.Target, op.Message,
+		))
+	}
+	report = l.observe(ctx, report, deployed, deployed.Config)
+	held := trim(fmt.Sprintf(
+		"Trenova stays on %s until the operator runs %s: %s",
+		deployed.ChartVersion, op.Target, op.Message,
+	))
+	report.Message = &held
+	return report
+}
+
+func (l *Loop) observe(
+	ctx context.Context,
+	report instanceapi.StatusReport,
+	deployed release.Deployed,
+	vals map[string]any,
+) instanceapi.StatusReport {
+	if l.applied > 0 {
+		applied := l.applied
+		report.AppliedRevision = &applied
+	}
 	if deployed.Exists {
 		v := deployed.AppVersion
 		report.Version = &v
 	}
-	comps, err := l.health.Check(ctx, healthParams(deployed.Revision, rendered.Values))
+	comps, err := l.health.Check(ctx, healthParams(deployed.Revision, vals))
 	if err != nil {
 		return l.notReady(report, err.Error())
 	}
@@ -549,16 +800,10 @@ func healthParams(revision int, vals map[string]any) health.CheckParams {
 }
 
 func (l *Loop) objectStorage(ctx context.Context) (values.Storage, error) {
-	if l.storage == nil {
-		return values.Storage{}, nil
-	}
-	return l.storage.Ensure(ctx, l.desired.Spec.Hostname)
+	return l.storage.Ensure(ctx, l.desired.Spec.Hostname, l.desired.Revision)
 }
 
 func (l *Loop) backupReport(ctx context.Context, report *instanceapi.StatusReport) {
-	if l.backups == nil {
-		return
-	}
 	applied := report.AppliedRevision != nil && *report.AppliedRevision == l.desired.Revision
 	res := l.backups.Run(ctx, backup.Input{
 		Spec:     &l.desired.Spec,
@@ -619,7 +864,52 @@ func (l *Loop) shouldReport(r instanceapi.StatusReport) bool {
 		str(r.Message) != str(l.last.Message) ||
 		!sameAdministrator(r.Administrator, l.last.Administrator) ||
 		!sameFeatures(r.Features, l.last.Features) ||
-		backupSummary(r) != backupSummary(l.last)
+		!sameGrants(r.SupportGrants, l.last.SupportGrants) ||
+		backupSummary(r) != backupSummary(l.last) ||
+		operatorSummary(r.Operator) != operatorSummary(l.last.Operator)
+}
+
+func operatorReport(st selfupgrade.Status) *instanceapi.OperatorStatus {
+	out := &instanceapi.OperatorStatus{Version: health.Clean(st.Version, maxVersion)}
+	if st.Holds() {
+		out.Upgrade = &instanceapi.OperatorUpgrade{
+			Version: health.Clean(st.Target, maxVersion),
+			Phase:   instanceapi.OperatorUpgradePhase(st.Phase),
+		}
+	}
+	if st.Message != "" {
+		msg := trim(st.Message)
+		out.Message = &msg
+	}
+	return out
+}
+
+func operatorSummary(o *instanceapi.OperatorStatus) string {
+	if o == nil {
+		return ""
+	}
+	out := o.Version + "|" + str(o.Message)
+	if u := o.Upgrade; u != nil {
+		out += "|" + u.Version + "/" + string(u.Phase)
+	}
+	return out
+}
+
+func sameGrants(held, last *[]instanceapi.SupportGrant) bool {
+	if held == nil {
+		return true
+	}
+	if last == nil || len(*held) != len(*last) {
+		return false
+	}
+	for i := range *held {
+		a, b := (*held)[i], (*last)[i]
+		if a.Id != b.Id || a.Scope != b.Scope || !a.ExpiresAt.Equal(b.ExpiresAt) ||
+			a.OrganizationName != b.OrganizationName || a.StaffEmail != b.StaffEmail {
+			return false
+		}
+	}
+	return true
 }
 
 func sameFeatures(held, last *[]string) bool {

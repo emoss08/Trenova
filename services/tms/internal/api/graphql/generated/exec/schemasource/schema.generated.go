@@ -25836,6 +25836,44 @@ type ManagedPlanAddOn {
   key: String!
   name: String!
   features: [ManagedPlanFeature!]!
+  "When an add-on on the plan leaves it, set only while its removal is scheduled."
+  endsAt: Timestamp
+}
+
+"An add-on a change set to end, and when it ends."
+type ManagedPlanAddOnEnding {
+  addOn: ManagedPlanAddOn!
+  endsAt: Timestamp!
+}
+
+"How a usage meter is counted: a count of things or a number of bytes."
+enum ManagedPlanMeterUnit {
+  COUNT
+  BYTES
+}
+
+"One meter of the plan for the current billing period. The key is for the client's own bookkeeping and is never shown."
+type ManagedPlanMeter {
+  key: String!
+  "The meter's name, in the reader's language."
+  name: String!
+  unit: ManagedPlanMeterUnit!
+  "How much is used: this period's count, or the level right now for a meter that measures a level (document storage, organizations)."
+  used: Int!
+  "How much the plan includes this period."
+  included: Int!
+  "True when the plan never goes past what it includes: work that needs more is refused rather than billed as overage."
+  hardCap: Boolean!
+  "True when the control plane has stopped the work this meter counts."
+  stopped: Boolean!
+}
+
+"Usage of the plan for the current billing period."
+type ManagedPlanUsage {
+  periodStart: Timestamp!
+  periodEnd: Timestamp!
+  "The meters the plan has allowances for, in catalogue order."
+  meters: [ManagedPlanMeter!]!
 }
 
 "One change Trenova made to the plan. The first entry an instance ever received is its starting plan: starting is true and joined lists what it included."
@@ -25846,12 +25884,24 @@ type ManagedPlanChange {
   left: [ManagedPlanAddOn!]!
   "Add-ons that joined the plan."
   joined: [ManagedPlanAddOn!]!
+  "Add-ons the change set to end, with the day each ends. They stay on the plan until then."
+  ending: [ManagedPlanAddOnEnding!]!
+  "Add-ons whose scheduled end the change called off. They stay on the plan."
+  kept: [ManagedPlanAddOn!]!
 }
 
 "What a Managed Trenova instance's plan includes and what it does not."
 type ManagedPlan {
   "False on a self-hosted install, where every feature is on and every list here is empty."
   managed: Boolean!
+  "The plan's page in the customer's Trenova account, where add-ons are bought. Null on a self-hosted install and until the control plane has sent one."
+  manageUrl: String
+  "When the plan ends: the close of the period already paid for. Set only while an owner has set the plan to end; null once it is kept, and on a self-hosted install. After it, the workspace is taken down and a final backup is kept for finalBackupDays days."
+  endsAt: Timestamp
+  "How many days the final backup is kept after the workspace is taken down, as the control plane says; 30 on a self-hosted install and until the control plane has said."
+  finalBackupDays: Int!
+  "Usage for the current billing period against the plan's allowances. Null on a self-hosted install, before the control plane has sent a usage state, or while that state has no billing period."
+  usage: ManagedPlanUsage
   "What the base plan includes."
   base: [ManagedPlanFeature!]!
   "The add-ons on the plan."
@@ -32741,7 +32791,61 @@ input RevokeSupportAccessInput {
   reason: String!
 }
 
+"How far back the logs sent to Trenova support reach."
+enum SupportLogPeriod {
+  "The last hour."
+  Hour
+  "The last 24 hours."
+  Day
+  "The last 7 days."
+  Week
+}
+
+"Where a request to send the instance's logs to Trenova support stands."
+enum SupportLogRequestStatus {
+  "Waiting for the instance to start collecting the logs."
+  Requested
+  "The instance is collecting the logs."
+  Collecting
+  "Trenova support has the logs; they are kept for 30 days."
+  Sent
+  "The logs could not be sent; failureMessage says why."
+  Failed
+}
+
+"A request from this organization to send the instance's logs to Trenova support."
+type SupportLogRequest {
+  id: ID!
+  period: SupportLogPeriod!
+  status: SupportLogRequestStatus!
+  "The name of the person who asked, as it was when they asked."
+  requestedByName: String!
+  requestedAt: Timestamp!
+  "When the logs were sent or the request failed."
+  finishedAt: Timestamp
+  "One sentence saying why the request failed. Null unless it failed."
+  failureMessage: String
+}
+
+"Sending the instance's logs to Trenova support, as this organization sees it."
+type SupportLogRequests {
+  "False on a self-hosted install, where logs are never sent to Trenova and every list here is empty."
+  managed: Boolean!
+  "True while a request from any organization on this instance waits or is being collected. A new request is refused until it finishes."
+  inFlight: Boolean!
+  "How many more requests the instance may make before the 24-hour limit."
+  remainingToday: Int!
+  "This organization's most recent requests, newest first, at most 10."
+  requests: [SupportLogRequest!]!
+}
+
+input RequestSupportLogsInput {
+  period: SupportLogPeriod!
+}
+
 extend type Query {
+  "Requests to send the instance's logs to Trenova support. Needs the organization update permission."
+  supportLogRequests: SupportLogRequests!
   supportAccessSettings: SupportAccessSettings!
   "Support access grants, live and past, newest first. List what was done under one with auditEntries filtered by principalId equal to the grant's id."
   supportAccessGrants(input: DataTableConnectionInput!): SupportAccessGrantConnection!
@@ -32754,6 +32858,8 @@ extend type Mutation {
   grantSupportAccess(input: GrantSupportAccessInput!): SupportAccessGrant!
   "End a support grant and every session under it at once."
   revokeSupportAccess(input: RevokeSupportAccessInput!): SupportAccessGrant!
+  "Send the instance's logs for a period to Trenova support, which keeps them for 30 days. Managed instances only; one request at a time for the whole instance."
+  requestSupportLogs(input: RequestSupportLogsInput!): SupportLogRequest!
 }
 `, BuiltIn: false},
 	{Name: "../schema/table_change_alert.graphqls", Input: `type TCASubscription @kind(resource: "table_change_alert") {

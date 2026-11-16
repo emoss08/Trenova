@@ -3,7 +3,9 @@ package supportaccessresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/modules/identity/app/supportlogservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportlog"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -12,13 +14,81 @@ import (
 // requirePerson refuses an API key, an agent and a Trenova support session: support access is
 // granted and revoked by a person of the organization, whatever their roles say.
 func requirePerson(authCtx *authctx.AuthContext) error {
+	return requirePersonTo(authCtx, "Only a person in this organization may change Trenova support access")
+}
+
+func requirePersonTo(authCtx *authctx.AuthContext, refusal string) error {
 	if authCtx == nil || authCtx.PrincipalType != authctx.PrincipalTypeUser ||
 		authCtx.IsSupport() || supportaccess.IsPrincipalID(authCtx.UserID) || authCtx.UserID.IsNil() {
-		return errortypes.NewAuthorizationError(
-			"Only a person in this organization may change Trenova support access",
-		)
+		return errortypes.NewAuthorizationError(refusal)
 	}
 	return nil
+}
+
+func logOverviewToModel(o *supportlogservice.Overview) *gqlmodel.SupportLogRequests {
+	out := &gqlmodel.SupportLogRequests{
+		Managed:        o.Managed,
+		InFlight:       o.InFlight,
+		RemainingToday: o.Remaining,
+		Requests:       make([]*gqlmodel.SupportLogRequest, 0, len(o.Requests)),
+	}
+	for _, req := range o.Requests {
+		out.Requests = append(out.Requests, logRequestToModel(req))
+	}
+	return out
+}
+
+func logRequestToModel(req *supportlog.LogRequest) *gqlmodel.SupportLogRequest {
+	return &gqlmodel.SupportLogRequest{
+		ID:              req.ID.String(),
+		Period:          periodToModel(req.Period),
+		Status:          logStatusToModel(req.Status),
+		RequestedByName: req.RequesterName,
+		RequestedAt:     int(req.CreatedAt),
+		FinishedAt:      intPtr(req.FinishedAt),
+		FailureMessage:  stringPtr(req.FailureMessage),
+	}
+}
+
+func periodFromModel(p gqlmodel.SupportLogPeriod) supportlog.Period {
+	switch p {
+	case gqlmodel.SupportLogPeriodHour:
+		return supportlog.PeriodHour
+	case gqlmodel.SupportLogPeriodDay:
+		return supportlog.PeriodDay
+	case gqlmodel.SupportLogPeriodWeek:
+		return supportlog.PeriodWeek
+	default:
+		return supportlog.Period(p)
+	}
+}
+
+func periodToModel(p supportlog.Period) gqlmodel.SupportLogPeriod {
+	switch p {
+	case supportlog.PeriodHour:
+		return gqlmodel.SupportLogPeriodHour
+	case supportlog.PeriodWeek:
+		return gqlmodel.SupportLogPeriodWeek
+	case supportlog.PeriodDay:
+		return gqlmodel.SupportLogPeriodDay
+	default:
+		return gqlmodel.SupportLogPeriodDay
+	}
+}
+
+func logStatusToModel(s supportlog.Status) gqlmodel.SupportLogRequestStatus {
+	switch s {
+	case supportlog.StatusCollecting:
+		return gqlmodel.SupportLogRequestStatusCollecting
+	case supportlog.StatusSent:
+		return gqlmodel.SupportLogRequestStatusSent
+	case supportlog.StatusFailed:
+		return gqlmodel.SupportLogRequestStatusFailed
+	case supportlog.StatusRequested:
+		return gqlmodel.SupportLogRequestStatusRequested
+	default:
+		return gqlmodel.SupportLogRequestStatusRequested
+	}
 }
 
 func grantToModel(g *supportaccess.Grant, now int64) *gqlmodel.SupportAccessGrant {

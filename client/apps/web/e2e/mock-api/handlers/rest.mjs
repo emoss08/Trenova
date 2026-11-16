@@ -22,6 +22,7 @@ import { CUSTOMER_TRACKING_ROUTES } from "./customertracking.mjs";
 import { LADING_ROUTES } from "./lading.mjs";
 import { INTEGRATION_ROUTES } from "./accounting.mjs";
 import { currentOrganization, ORGANIZATION_ROUTES } from "./organization.mjs";
+import { isManaged } from "./managedplan.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
@@ -60,7 +61,11 @@ const ROUTES = [
     /^\/api\/v1\/system\/version\/?$/,
     () => ({ version: "mock", commit: "mock", buildDate: "" }),
   ],
-  ["GET", /^\/api\/v1\/system\/public-config\/?$/, () => ({})],
+  [
+    "GET",
+    /^\/api\/v1\/system\/public-config\/?$/,
+    (state) => (isManaged(state) ? { managed: true } : {}),
+  ],
   [
     "GET",
     /^\/api\/v1\/auth\/csrf\/?$/,

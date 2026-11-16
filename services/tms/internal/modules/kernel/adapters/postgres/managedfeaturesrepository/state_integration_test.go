@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
@@ -35,7 +36,7 @@ func replace(
 ) *managedfeatures.Replacement {
 	t.Helper()
 	replacement, err := repo.Replace(ctx, &managedfeaturesports.ReplaceRequest{
-		Features: features,
+		Received: &managedfeatures.Received{Features: features},
 		Now:      now,
 	})
 	require.NoError(t, err)
@@ -75,11 +76,13 @@ func TestTheChangeRowIsWrittenInTheSameTransactionAsTheList(t *testing.T) {
 	ctx, db, repo := newRepo(t)
 	rollback := errors.New("roll back")
 
-	err := keel.Write(dbscope.WithSystem(ctx, "test the managed feature list write"), db,
+	err := dbtx.WriteErr(dbscope.WithSystem(ctx, "test the managed feature list write"), postgres.WrapDB(db),
 		func(ctx context.Context) error {
 			if _, replaceErr := repo.Replace(ctx, &managedfeaturesports.ReplaceRequest{
-				Features: []platformcatalog.FeatureKey{"ai.desk"},
-				Now:      100,
+				Received: &managedfeatures.Received{
+					Features: []platformcatalog.FeatureKey{"ai.desk"},
+				},
+				Now: 100,
 			}); replaceErr != nil {
 				return replaceErr
 			}
@@ -112,4 +115,114 @@ func TestTheChangeHistoryIsPrunedToTheNewest200(t *testing.T) {
 		changes[len(changes)-1].ChangedAt,
 		"the oldest kept is the 200th newest",
 	)
+}
+
+func TestThePlanURLAndEndingsAreStoredWithTheListAndAnEndingIsAChange(t *testing.T) {
+	t.Parallel()
+
+	ctx, _, repo := newRepo(t)
+	replace(t, ctx, repo, 100, "tms.accounting")
+
+	planURL := "https://console.trenova.cloud/instances/1/plan"
+	endings := []managedfeatures.AddOnEnding{
+		{AddOn: platformcatalog.AddOnAccounting, EndsAt: 1_797_206_400},
+	}
+	set, err := repo.Replace(ctx, &managedfeaturesports.ReplaceRequest{
+		Received: &managedfeatures.Received{
+			Features:     []platformcatalog.FeatureKey{"tms.accounting"},
+			PlanURL:      &planURL,
+			AddOnEndings: &endings,
+		},
+		Now: 200,
+	})
+	require.NoError(t, err)
+	require.True(t, set.Changed())
+
+	same := replace(t, ctx, repo, 300, "tms.accounting")
+	assert.False(t, same.Updated(), "a request without them keeps them")
+
+	held, changes, err := repo.History(ctx, 20)
+	require.NoError(t, err)
+	assert.Equal(t, planURL, held.PlanURL)
+	assert.Equal(t, endings, held.AddOnEndings)
+	require.Len(t, changes, 2)
+	assert.Equal(t, endings, changes[0].Ending)
+	assert.Empty(t, changes[0].Added)
+
+	called := []managedfeatures.AddOnEnding{}
+	kept, err := repo.Replace(ctx, &managedfeaturesports.ReplaceRequest{
+		Received: &managedfeatures.Received{
+			Features:     []platformcatalog.FeatureKey{"tms.accounting"},
+			AddOnEndings: &called,
+		},
+		Now: 400,
+	})
+	require.NoError(t, err)
+	require.True(t, kept.Changed())
+
+	held, changes, err = repo.History(ctx, 20)
+	require.NoError(t, err)
+	assert.Empty(t, held.AddOnEndings)
+	assert.Equal(t, planURL, held.PlanURL)
+	require.Len(t, changes, 3)
+	assert.Equal(t, []platformcatalog.AddOnKey{platformcatalog.AddOnAccounting}, changes[0].Kept)
+}
+
+func TestThePlansEndIsStoredRemindedOnceAndClearedWhenThePlanIsKept(t *testing.T) {
+	t.Parallel()
+
+	ctx, _, repo := newRepo(t)
+	const (
+		day = int64(86_400)
+		now = int64(1_794_650_400)
+		end = now + 30*day
+	)
+	ending := func(endsAt, at int64) *managedfeatures.Replacement {
+		t.Helper()
+		replacement, err := repo.Replace(ctx, &managedfeaturesports.ReplaceRequest{
+			Received: &managedfeatures.Received{
+				Features:   []platformcatalog.FeatureKey{"tms.accounting"},
+				PlanEndsAt: endsAt,
+			},
+			Now: at,
+		})
+		require.NoError(t, err)
+		return replacement
+	}
+	remind := func(at int64) *managedfeatures.Replacement {
+		t.Helper()
+		replacement, err := repo.RemindPlanEnd(ctx, at)
+		require.NoError(t, err)
+		return replacement
+	}
+
+	none := remind(now)
+	assert.Nil(t, none.PlanEnd, "nothing to remind of before any list arrived")
+
+	set := ending(end, now)
+	require.NotNil(t, set.PlanEnd)
+	assert.Equal(t, managedfeatures.PlanEndSet, set.PlanEnd.Kind)
+	assert.Nil(t, ending(end, now+60).PlanEnd, "the same end again announces nothing")
+
+	assert.Nil(t, remind(now+day).PlanEnd, "too early to remind")
+	due := remind(end - 2*day)
+	require.NotNil(t, due.PlanEnd)
+	assert.Equal(t, managedfeatures.PlanEndReminder, due.PlanEnd.Kind)
+	assert.Nil(t, remind(end-day).PlanEnd, "reminded once")
+
+	held, err := repo.Get(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, end, held.PlanEndsAt)
+	assert.Equal(t, end, held.PlanEndAnnounced)
+	assert.Equal(t, end, held.PlanEndReminded)
+
+	kept := ending(0, end-day+60)
+	require.NotNil(t, kept.PlanEnd)
+	assert.Equal(t, managedfeatures.PlanEndKept, kept.PlanEnd.Kind)
+
+	held, err = repo.Get(ctx)
+	require.NoError(t, err)
+	assert.Zero(t, held.PlanEndsAt)
+	assert.Zero(t, held.PlanEndAnnounced)
+	assert.Zero(t, held.PlanEndReminded)
 }

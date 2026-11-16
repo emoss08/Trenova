@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -26,6 +27,8 @@ const (
 	entryLookupReason  = "find the live support grant a verified support assertion names"
 	expirySweepReason  = "record the support grants that ended on their own, across organizations"
 	entryOrgReason     = "find the business unit of the organization a verified support assertion names"
+	logPullReason      = "find every organization whose live support grant lets a staff address pull the instance's logs"
+	liveListReason     = "list every live support grant on the instance for its operator to report to the control plane"
 	grantLockKeyPrefix = "support-access-grants:"
 )
 
@@ -204,6 +207,72 @@ func (r *grantRepository) FindLiveForEntry(
 			return nil, fmt.Errorf("find a live support grant: %w", err)
 		}
 		return grant, nil
+	})
+}
+
+func (r *grantRepository) ListLiveForStaff(
+	ctx context.Context,
+	req *supportaccessports.ListLiveForStaffRequest,
+) ([]*supportaccess.Grant, error) {
+	ctx = dbscope.WithSystem(ctx, logPullReason)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*supportaccess.Grant, error) {
+		g := supportaccessdb.Grants
+		rows, err := g.Where(g.StaffEmail.Eq(req.StaffEmail), live(req.Now)).
+			AllTenants().
+			Order(g.ExpiresAt.Desc(), g.ID.Asc()).
+			Limit(req.Limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("list the live support grants of a staff address: %w", err)
+		}
+		return rows, nil
+	})
+}
+
+func (r *grantRepository) ListLive(
+	ctx context.Context,
+	req *supportaccessports.ListLiveRequest,
+) ([]*supportaccessports.LiveGrant, error) {
+	ctx = dbscope.WithSystem(ctx, liveListReason)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*supportaccessports.LiveGrant, error) {
+		db := r.db.Keel(ctx)
+		g := supportaccessdb.Grants
+		grants, err := g.Where(live(req.Now), g.ExpiryRecordedAt.IsNull()).
+			AllTenants().
+			Order(g.ExpiresAt.Asc(), g.ID.Asc()).
+			Limit(req.Limit).
+			List(ctx, db)
+		if err != nil {
+			return nil, fmt.Errorf("list the live support grants: %w", err)
+		}
+		if len(grants) == 0 {
+			return []*supportaccessports.LiveGrant{}, nil
+		}
+
+		orgIDs := make([]pulid.ID, 0, len(grants))
+		for _, grant := range grants {
+			if !slices.Contains(orgIDs, grant.OrganizationID) {
+				orgIDs = append(orgIDs, grant.OrganizationID)
+			}
+		}
+		o := tenantdb.Organizations
+		orgs, err := o.Where(o.ID.In(orgIDs...)).AllTenants().Limit(len(orgIDs)).List(ctx, db)
+		if err != nil {
+			return nil, fmt.Errorf("read the organizations of the live support grants: %w", err)
+		}
+		names := make(map[pulid.ID]string, len(orgs))
+		for _, org := range orgs {
+			names[org.ID] = org.Name
+		}
+
+		out := make([]*supportaccessports.LiveGrant, 0, len(grants))
+		for _, grant := range grants {
+			out = append(out, &supportaccessports.LiveGrant{
+				Grant:            grant,
+				OrganizationName: names[grant.OrganizationID],
+			})
+		}
+		return out, nil
 	})
 }
 

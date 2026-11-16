@@ -3,8 +3,10 @@ package tmstest
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -23,18 +25,20 @@ type Server struct {
 	readings []tms.Reading
 	since    []time.Time
 	states   []tms.State
-	features [][]string
+	lists    []tms.FeatureList
 	refused  int
 	fail     int
 	invites  []tms.Invite
 	spoiled  map[string]bool
 	setUp    bool
 	email    *tms.SystemEmail
+	logs     logState
+	support  supportState
 }
 
 func New(t testing.TB, token string) *Server {
 	t.Helper()
-	s := &Server{token: token, spoiled: map[string]bool{}}
+	s := &Server{token: token, spoiled: map[string]bool{}, logs: newLogState()}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /managed/v1/readings", s.getReadings)
 	mux.HandleFunc("PUT /managed/v1/state", s.putState)
@@ -44,6 +48,10 @@ func New(t testing.TB, token string) *Server {
 	mux.HandleFunc("GET /managed/v1/system-email", s.getSystemEmail)
 	mux.HandleFunc("PUT /managed/v1/system-email", s.putSystemEmail)
 	mux.HandleFunc("DELETE /managed/v1/system-email", s.deleteSystemEmail)
+	mux.HandleFunc("GET /managed/v1/log-requests", s.getLogRequests)
+	mux.HandleFunc("PUT /managed/v1/log-requests/{id}", s.putLogRequest)
+	mux.HandleFunc("POST /managed/v1/support/log-pulls", s.postLogPull)
+	s.routeSupport(mux)
 	srv := httptest.NewServer(s.authenticate(mux))
 	t.Cleanup(srv.Close)
 	s.URL = srv.URL
@@ -83,16 +91,32 @@ func (s *Server) States() []tms.State {
 func (s *Server) Features() [][]string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return append([][]string(nil), s.features...)
+	out := make([][]string, 0, len(s.lists))
+	for _, list := range s.lists {
+		out = append(out, append([]string{}, list.Features...))
+	}
+	return out
 }
 
 func (s *Server) LastFeatures() ([]string, bool) {
+	list, ok := s.LastFeatureList()
+	return list.Features, ok
+}
+
+func (s *Server) LastFeatureList() (tms.FeatureList, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if len(s.features) == 0 {
-		return nil, false
+	if len(s.lists) == 0 {
+		return tms.FeatureList{}, false
 	}
-	return append([]string{}, s.features[len(s.features)-1]...), true
+	last := s.lists[len(s.lists)-1]
+	return tms.FeatureList{
+		Features:        append([]string{}, last.Features...),
+		PlanURL:         last.PlanURL,
+		AddonEndings:    slices.Clone(last.AddonEndings),
+		PlanEndsAt:      last.PlanEndsAt,
+		FinalBackupDays: last.FinalBackupDays,
+	}, true
 }
 
 func (s *Server) SetAdministratorSetUp(setUp bool) {
@@ -176,15 +200,49 @@ func (s *Server) putState(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) putFeatures(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Features []string `json:"features"`
+		Features        []string           `json:"features"`
+		PlanURL         *string            `json:"planUrl"`
+		AddonEndings    *[]tms.AddonEnding `json:"addonEndings"`
+		PlanEndsAt      *time.Time         `json:"planEndsAt"`
+		FinalBackupDays int                `json:"finalBackupDays"`
 	}
-	if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&body); err != nil ||
-		body.Features == nil {
+	raw, err := io.ReadAll(r.Body)
+	if err != nil {
 		problem(w, http.StatusBadRequest, "Invalid feature list")
 		return
 	}
+	var keys map[string]any
+	if err = sonic.Unmarshal(raw, &keys); err != nil {
+		problem(w, http.StatusBadRequest, "Invalid feature list")
+		return
+	}
+	if _, stated := keys["planEndsAt"]; !stated {
+		problem(w, http.StatusBadRequest, "The feature list must state planEndsAt, null when the plan is not ending")
+		return
+	}
+	if err = sonic.Unmarshal(raw, &body); err != nil ||
+		body.Features == nil || (body.PlanURL != nil && *body.PlanURL == "") ||
+		(body.AddonEndings != nil && len(*body.AddonEndings) > 50) {
+		problem(w, http.StatusBadRequest, "Invalid feature list")
+		return
+	}
+	if body.FinalBackupDays < 0 || body.FinalBackupDays > 3650 {
+		problem(w, http.StatusBadRequest, "Invalid finalBackupDays")
+		return
+	}
+	list := tms.FeatureList{
+		Features:        body.Features,
+		PlanEndsAt:      body.PlanEndsAt,
+		FinalBackupDays: body.FinalBackupDays,
+	}
+	if body.PlanURL != nil {
+		list.PlanURL = *body.PlanURL
+	}
+	if body.AddonEndings != nil {
+		list.AddonEndings = *body.AddonEndings
+	}
 	s.mu.Lock()
-	s.features = append(s.features, body.Features)
+	s.lists = append(s.lists, list)
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
 }

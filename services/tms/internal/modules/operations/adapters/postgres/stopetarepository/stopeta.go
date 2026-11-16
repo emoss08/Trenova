@@ -57,7 +57,7 @@ func (r *repository) ReplaceForShipments(
 	}
 	if len(req.ShipmentIDs) > MaxShipmentsPerRequest {
 		return errortypes.NewBusinessError(
-			"At most %d shipments can be refreshed at once",
+			"At most {0} shipments can be refreshed at once",
 			MaxShipmentsPerRequest,
 		)
 	}

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -67,6 +68,19 @@ type State struct {
 	Window  *Window `json:"window,omitempty"`
 	Overage bool    `json:"overage"`
 	Meters  []Meter `json:"meters"`
+}
+
+type AddonEnding struct {
+	Addon  string    `json:"addon"`
+	EndsAt time.Time `json:"endsAt"`
+}
+
+type FeatureList struct {
+	Features        []string      `json:"features"`
+	PlanURL         string        `json:"planUrl,omitempty"`
+	AddonEndings    []AddonEnding `json:"addonEndings"`
+	PlanEndsAt      *time.Time    `json:"planEndsAt"`
+	FinalBackupDays int           `json:"finalBackupDays,omitempty"`
 }
 
 type Invite struct {
@@ -165,13 +179,20 @@ func (c *Client) PutState(ctx context.Context, state State) error {
 	return nil
 }
 
-func (c *Client) PutFeatures(ctx context.Context, features []string) error {
-	if features == nil {
-		features = []string{}
+func (c *Client) PutFeatures(ctx context.Context, list FeatureList) error {
+	if list.Features == nil {
+		list.Features = []string{}
 	}
-	body, err := sonic.Marshal(struct {
-		Features []string `json:"features"`
-	}{Features: features})
+	endings := make([]AddonEnding, 0, len(list.AddonEndings))
+	for _, e := range list.AddonEndings {
+		endings = append(endings, AddonEnding{Addon: e.Addon, EndsAt: e.EndsAt.UTC()})
+	}
+	list.AddonEndings = endings
+	if list.PlanEndsAt != nil {
+		ends := list.PlanEndsAt.UTC()
+		list.PlanEndsAt = &ends
+	}
+	body, err := sonic.Marshal(list)
 	if err != nil {
 		return fmt.Errorf("send the feature list to the TMS: %w", err)
 	}
@@ -256,7 +277,7 @@ func (c *Client) do(
 	method string,
 	u *url.URL,
 	body []byte,
-	want int,
+	want ...int,
 ) ([]byte, error) {
 	token, err := c.tokens.Token(ctx)
 	if err != nil {
@@ -275,10 +296,10 @@ func (c *Client) do(
 			return nil, err
 		}
 	}
-	switch status {
-	case want:
+	switch {
+	case slices.Contains(want, status):
 		return out, nil
-	case http.StatusUnauthorized:
+	case status == http.StatusUnauthorized:
 		return nil, ErrUnauthorized
 	default:
 		return nil, problem(status, out)

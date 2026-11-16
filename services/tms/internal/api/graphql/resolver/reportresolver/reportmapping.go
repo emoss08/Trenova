@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -410,6 +411,7 @@ func saveReportDashboardRequest(
 }
 
 func cannedReportToModel(
+	locale i18n.Locale,
 	library *reportingservice.CannedReport,
 ) (*gqlmodel.CannedReport, error) {
 	entry := library.Entry
@@ -428,23 +430,28 @@ func cannedReportToModel(
 		DefaultFormat: string(entry.DefaultFormat),
 		Definition:    definitionJSON,
 		Available:     library.Available,
-		PlanDenial:    reportPlanDenialToModel(library.Plan),
+		PlanDenial:    reportPlanDenialToModel(locale, library.Plan),
 	}, nil
 }
 
-func reportPlanDenialToModel(denial *permissionports.PlanDenial) *gqlmodel.ReportPlanDenial {
+func reportPlanDenialToModel(
+	locale i18n.Locale,
+	denial *permissionports.PlanDenial,
+) *gqlmodel.ReportPlanDenial {
 	if denial == nil {
 		return nil
 	}
+	named := denial.In(locale)
 	return &gqlmodel.ReportPlanDenial{
-		Feature:     string(denial.Feature),
-		FeatureName: denial.FeatureName,
-		AddOn:       string(denial.AddOn),
-		AddOnName:   denial.AddOnName,
+		Feature:     string(named.Feature),
+		FeatureName: named.FeatureName,
+		AddOn:       string(named.AddOn),
+		AddOnName:   named.AddOnName,
 	}
 }
 
 func reportPlanWithheldToModel(
+	locale i18n.Locale,
 	withheld []reportingservice.PlanWithheld,
 ) []*gqlmodel.ReportPlanWithheld {
 	out := make([]*gqlmodel.ReportPlanWithheld, 0, len(withheld))
@@ -456,7 +463,7 @@ func reportPlanWithheldToModel(
 			Name:        nilIfEmpty(item.Name),
 			Label:       item.Label,
 			Edge:        item.Edge,
-			Denial:      reportPlanDenialToModel(&item.Denial),
+			Denial:      reportPlanDenialToModel(locale, &item.Denial),
 		})
 	}
 	return out
@@ -531,7 +538,7 @@ func reportCatalogToModel(
 		Version:        catalog.Version,
 		Rules:          rules,
 		Entities:       entities,
-		WithheldByPlan: reportPlanWithheldToModel(catalog.WithheldByPlan),
+		WithheldByPlan: reportPlanWithheldToModel(i18n.FromContext(ctx), catalog.WithheldByPlan),
 	}, nil
 }
 

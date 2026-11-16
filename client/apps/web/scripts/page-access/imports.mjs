@@ -15,7 +15,8 @@ import { dirname, join, resolve } from "node:path";
 
 import { parseFile, walk } from "../product-guide/ast.mjs";
 
-const GRAPHQL_DOCUMENTS = "@trenova/graphql/generated/graphql";
+const GRAPHQL_BARREL = "@trenova/graphql/generated/graphql";
+const GRAPHQL_DOCUMENT_MODULES = "@trenova/graphql/generated/documents/";
 const REST_METHODS = new Set(["get", "post", "put", "patch", "delete"]);
 const EXTENSIONS = [".tsx", ".ts", "/index.tsx", "/index.ts"];
 
@@ -28,6 +29,15 @@ export function graphPaths(webRoot) {
     shared,
     main: join(src, "main.tsx"),
   };
+}
+
+/**
+ * Whether a specifier names generated GraphQL documents: a document's own
+ * module (`generated/documents/<area>/<file>`, where code imports them) or the
+ * barrel that re-exports every one.
+ */
+function holdsDocuments(specifier) {
+  return specifier === GRAPHQL_BARREL || specifier.startsWith(GRAPHQL_DOCUMENT_MODULES);
 }
 
 function withExtension(base) {
@@ -325,7 +335,7 @@ export class ModuleGraph {
         }
         const source = statement.source.value;
         const values = statement.specifiers.filter((spec) => spec.importKind !== "type");
-        if (source === GRAPHQL_DOCUMENTS) {
+        if (holdsDocuments(source)) {
           for (const spec of values) {
             const name = spec.imported?.name ?? spec.local.name;
             if (name.endsWith("Document")) {
@@ -362,7 +372,7 @@ export class ModuleGraph {
         statement.source &&
         statement.exportKind !== "type"
       ) {
-        if (statement.source.value === GRAPHQL_DOCUMENTS) {
+        if (holdsDocuments(statement.source.value)) {
           for (const spec of statement.specifiers ?? []) {
             const name = spec.local?.name ?? spec.exported?.name;
             if (name?.endsWith("Document")) info.documents.add(name);

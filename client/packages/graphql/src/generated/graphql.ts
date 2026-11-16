@@ -6380,6 +6380,11 @@ export type LogInboundExceptionInput = {
   unit: string;
 };
 
+/** How a usage meter is counted: a count of things or a number of bytes. */
+export type ManagedPlanMeterUnit =
+  | 'BYTES'
+  | 'COUNT';
+
 export type ManualJournalStatus =
   | 'Approved'
   | 'Cancelled'
@@ -7554,6 +7559,10 @@ export type RequestMyPtoInput = {
   reason: string;
   startDate: number;
   type: PortalPtoType;
+};
+
+export type RequestSupportLogsInput = {
+  period: SupportLogPeriod;
 };
 
 export type RescindDisciplinaryActionInput = {
@@ -8790,6 +8799,26 @@ export type SupportAccessStatus =
   | 'Expired'
   | 'Live'
   | 'Revoked';
+
+/** How far back the logs sent to Trenova support reach. */
+export type SupportLogPeriod =
+  /** The last 24 hours. */
+  | 'Day'
+  /** The last hour. */
+  | 'Hour'
+  /** The last 7 days. */
+  | 'Week';
+
+/** Where a request to send the instance's logs to Trenova support stands. */
+export type SupportLogRequestStatus =
+  /** The instance is collecting the logs. */
+  | 'Collecting'
+  /** The logs could not be sent; failureMessage says why. */
+  | 'Failed'
+  /** Waiting for the instance to start collecting the logs. */
+  | 'Requested'
+  /** Trenova support has the logs; they are kept for 30 days. */
+  | 'Sent';
 
 export type TableConfigurationInput = {
   description?: string | null | undefined;
@@ -17769,7 +17798,7 @@ export type LocationTableQuery = { locations: { totalCount?: number | null, tota
 export type ManagedPlanQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ManagedPlanQuery = { managedPlan: { managed: boolean, base: Array<{ key: string, name: string }>, included: Array<{ key: string, name: string, features: Array<{ key: string, name: string }> }>, available: Array<{ key: string, name: string, features: Array<{ key: string, name: string }> }>, changes: Array<{ changedAt: number, starting: boolean, left: Array<{ key: string, name: string }>, joined: Array<{ key: string, name: string }> }> } };
+export type ManagedPlanQuery = { managedPlan: { managed: boolean, manageUrl: string | null, endsAt: number | null, finalBackupDays: number, usage: { periodStart: number, periodEnd: number, meters: Array<{ key: string, name: string, unit: ManagedPlanMeterUnit, used: number, included: number, hardCap: boolean, stopped: boolean }> } | null, base: Array<{ key: string, name: string }>, included: Array<{ key: string, name: string, endsAt: number | null, features: Array<{ key: string, name: string }> }>, available: Array<{ key: string, name: string, endsAt: number | null, features: Array<{ key: string, name: string }> }>, changes: Array<{ changedAt: number, starting: boolean, left: Array<{ key: string, name: string }>, joined: Array<{ key: string, name: string }>, ending: Array<{ endsAt: number, addOn: { key: string, name: string } }>, kept: Array<{ key: string, name: string }> }> } };
 
 export type DeskManualJournalCardQueryVariables = Exact<{
   id: string | number;
@@ -19969,6 +19998,18 @@ export type SupportAccessActionsQueryVariables = Exact<{
 
 export type SupportAccessActionsQuery = { auditEntries: { edges: Array<{ node: { ' $fragmentRefs'?: { 'SupportAccessActionFieldsFragment': SupportAccessActionFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type SupportLogRequestsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SupportLogRequestsQuery = { supportLogRequests: { managed: boolean, inFlight: boolean, remainingToday: number, requests: Array<{ id: string, period: SupportLogPeriod, status: SupportLogRequestStatus, requestedByName: string, requestedAt: number, finishedAt: number | null, failureMessage: string | null }> } };
+
+export type RequestSupportLogsMutationVariables = Exact<{
+  input: RequestSupportLogsInput;
+}>;
+
+
+export type RequestSupportLogsMutation = { requestSupportLogs: { id: string, status: SupportLogRequestStatus } };
+
 export type DeskTableChangeAlertsQueryVariables = Exact<{
   input: DataTableConnectionInput;
   includeTotalCount?: boolean | null | undefined;
@@ -21774,6 +21815,7 @@ export { UpdateSidebarPreferencesDocument } from "./documents/sidebar-preference
 export { SidebarPreferencesDocument, SidebarCustomizationOptionsDocument } from "./documents/sidebar-preferences/preferences";
 export { StoredMileageStopKeyFieldsFragmentDoc, StoredMileageTableRowFieldsFragmentDoc, StoredMileageTableDocument } from "./documents/stored-mileage/table";
 export { SupportAccessGrantFieldsFragmentDoc, SupportAccessActionFieldsFragmentDoc, SupportAccessSettingsDocument, SupportAccessGrantsDocument, GrantSupportAccessDocument, RevokeSupportAccessDocument, CurrentSupportSessionDocument, SupportAccessActionsDocument } from "./documents/support-access/support-access";
+export { SupportLogRequestsDocument, RequestSupportLogsDocument } from "./documents/support-logs/support-logs";
 export { DeskTableChangeAlertsDocument } from "./documents/table-change-alert/desk";
 export { TcaSubscriptionTableRowFieldsFragmentDoc, TcaSubscriptionTableDocument } from "./documents/table-change-alert/table";
 export { TableConfigurationFieldsFragmentDoc, TableConfigurationTableDocument, DefaultTableConfigurationDocument, TableConfigurationDetailDocument, CreateTableConfigurationDocument, UpdateTableConfigurationDocument, DeleteTableConfigurationDocument, SetDefaultTableConfigurationDocument, SetOrgDefaultTableConfigurationDocument } from "./documents/table-configuration/operations";

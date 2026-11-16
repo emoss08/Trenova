@@ -20,7 +20,9 @@ import (
 	"helm.sh/helm/v3/pkg/registry"
 	helmrelease "helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -120,6 +122,7 @@ type Deployed struct {
 
 type Releaser struct {
 	cfg       *action.Configuration
+	kube      kubernetes.Interface
 	name      string
 	namespace string
 	logger    *slog.Logger
@@ -127,13 +130,20 @@ type Releaser struct {
 
 type ReleaserParams struct {
 	Config    *action.Configuration
+	Kube      kubernetes.Interface
 	Name      string
 	Namespace string
 	Logger    *slog.Logger
 }
 
 func NewReleaser(p ReleaserParams) *Releaser {
-	return &Releaser{cfg: p.Config, name: p.Name, namespace: p.Namespace, logger: p.Logger}
+	return &Releaser{
+		cfg:       p.Config,
+		kube:      p.Kube,
+		name:      p.Name,
+		namespace: p.Namespace,
+		logger:    p.Logger,
+	}
 }
 
 type ConfigurationParams struct {
@@ -200,8 +210,8 @@ func (r *Releaser) Apply(ctx context.Context, ch *chart.Chart, vals map[string]a
 	if err != nil {
 		return err
 	}
-	if d.Exists && (d.Status.IsPending() || d.Status == helmrelease.StatusFailed) {
-		if d, err = r.recover(d); err != nil {
+	if d.Exists && (d.Status.IsPending() || d.Status == helmrelease.StatusFailed || removing(d.Status)) {
+		if d, err = r.recover(ctx, d); err != nil {
 			return err
 		}
 	}
@@ -227,7 +237,7 @@ func (r *Releaser) Apply(ctx context.Context, ch *chart.Chart, vals map[string]a
 	return nil
 }
 
-func (r *Releaser) recover(d Deployed) (Deployed, error) {
+func (r *Releaser) recover(ctx context.Context, d Deployed) (Deployed, error) {
 	history, err := action.NewHistory(r.cfg).Run(r.name)
 	if err != nil {
 		return d, fmt.Errorf("read the history of %s: %w", r.name, err)
@@ -240,21 +250,9 @@ func (r *Releaser) recover(d Deployed) (Deployed, error) {
 		}
 	}
 	if !deployedBefore {
-		r.logger.Warn(
-			"removing a release that never deployed",
-			"release",
-			r.name,
-			"status",
-			d.Status,
-		)
-		un := action.NewUninstall(r.cfg)
-		un.Timeout = actionTimeout
-		if _, err = un.Run(r.name); err != nil {
-			return d, fmt.Errorf("remove the undeployed release %s: %w", r.name, err)
-		}
-		return Deployed{}, nil
+		return r.removeUndeployed(ctx, d)
 	}
-	if d.Status == helmrelease.StatusFailed {
+	if d.Status == helmrelease.StatusFailed || removing(d.Status) {
 		return d, nil
 	}
 	r.logger.Warn("rolling back an interrupted change", "release", r.name, "status", d.Status)
@@ -265,6 +263,33 @@ func (r *Releaser) recover(d Deployed) (Deployed, error) {
 		return d, fmt.Errorf("roll back the interrupted change to %s: %w", r.name, err)
 	}
 	return r.Deployed()
+}
+
+func removing(s helmrelease.Status) bool {
+	return s == helmrelease.StatusUninstalling || s == helmrelease.StatusUninstalled
+}
+
+func (r *Releaser) removeUndeployed(ctx context.Context, d Deployed) (Deployed, error) {
+	r.logger.Warn("removing a release that never deployed", "release", r.name, "status", d.Status)
+	if d.Status != helmrelease.StatusUninstalled {
+		un := action.NewUninstall(r.cfg)
+		un.Timeout = actionTimeout
+		un.Wait = true
+		un.KeepHistory = true
+		un.DeletionPropagation = string(metav1.DeletePropagationForeground)
+		if _, err := un.Run(r.name); err != nil {
+			return d, fmt.Errorf("remove the undeployed release %s: %w", r.name, err)
+		}
+	}
+	if err := r.dropVolumes(ctx); err != nil {
+		return d, err
+	}
+	forget := action.NewUninstall(r.cfg)
+	forget.Timeout = actionTimeout
+	if _, err := forget.Run(r.name); err != nil {
+		return d, fmt.Errorf("forget the undeployed release %s: %w", r.name, err)
+	}
+	return Deployed{}, nil
 }
 
 func equal(a, b map[string]any) (bool, error) {

@@ -296,6 +296,13 @@ func TestEveryComponentHasAShareAndTheReleaseJobIsSized(t *testing.T) {
 		c, _ := out[component].(map[string]any)
 		require.Contains(t, c, "resources", "%s has no share; turning it on would divide the machine again", component)
 	}
+	logs, _ := out[keyLogs].(map[string]any)
+	for _, component := range []string{"loki", "alloy"} {
+		c, _ := logs[component].(map[string]any)
+		require.Contains(t, c, "resources", "log keeping's %s has no share", component)
+	}
+	loki, _ := logs["loki"].(map[string]any)
+	require.Equal(t, map[string]any{"size": "4Gi"}, loki["storage"], "Loki's volume follows the plan's disk")
 }
 
 func TestAPlanTooSmallForEveryComponentIsRefused(t *testing.T) {

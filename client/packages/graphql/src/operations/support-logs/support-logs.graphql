@@ -1,0 +1,23 @@
+query SupportLogRequests {
+  supportLogRequests {
+    managed
+    inFlight
+    remainingToday
+    requests {
+      id
+      period
+      status
+      requestedByName
+      requestedAt
+      finishedAt
+      failureMessage
+    }
+  }
+}
+
+mutation RequestSupportLogs($input: RequestSupportLogsInput!) {
+  requestSupportLogs(input: $input) {
+    id
+    status
+  }
+}

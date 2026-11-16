@@ -48,6 +48,11 @@ func AddOns() []AddOn {
 	return out
 }
 
+func LookupAddOn(key AddOnKey) (AddOn, bool) {
+	addOn, ok := addOnIndex[key]
+	return addOn, ok
+}
+
 func AddOnFor(key FeatureKey) (AddOn, bool) {
 	feature, ok := featureIndex[key]
 	if !ok || feature.IsBase() {

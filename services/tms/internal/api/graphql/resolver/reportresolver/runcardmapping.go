@@ -4,9 +4,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/shared/i18n"
 )
 
-func reportRunDeskCardToModel(card *reportingservice.RunCard) *gqlmodel.ReportRunDeskCard {
+func reportRunDeskCardToModel(
+	locale i18n.Locale,
+	card *reportingservice.RunCard,
+) *gqlmodel.ReportRunDeskCard {
 	model := &gqlmodel.ReportRunDeskCard{
 		Run: reportRunToModel(card.Run),
 		Report: &gqlmodel.ReportRunDeskReport{
@@ -18,7 +22,7 @@ func reportRunDeskCardToModel(card *reportingservice.RunCard) *gqlmodel.ReportRu
 		Parameters:     make([]*gqlmodel.ReportRunDeskParameter, 0, len(card.Parameters)),
 		Timezone:       card.Timezone,
 		Withheld:       nilIfEmpty(string(card.Withheld)),
-		WithheldByPlan: reportPlanDenialToModel(card.WithheldPlan),
+		WithheldByPlan: reportPlanDenialToModel(locale, card.WithheldPlan),
 		Sort:           make([]*gqlmodel.ReportRunDeskSort, 0, len(card.Sort)),
 	}
 	if !card.Report.DefinitionID.IsNil() {

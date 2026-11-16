@@ -284,3 +284,38 @@ func TestSupportKeySet_IsOneInstanceWideRow(t *testing.T) {
 	assert.Equal(t, "staff.trenova.app", held.StaffDomain)
 	assert.Equal(t, "cp-1", held.Keys[0].KeyID)
 }
+
+func TestSupportGrants_TheInstanceWideListHoldsOnlyLiveGrantsOfEveryOrganization(t *testing.T) {
+	f := newFixture(t)
+	repo := f.grants()
+	inA, err := f.create(t, f.a, "jane.doe@trenova.app")
+	require.NoError(t, err)
+	inB, err := f.create(t, f.b, "sam.lee@trenova.app")
+	require.NoError(t, err)
+	ended, err := f.create(t, f.a, "alex.kim@trenova.app")
+	require.NoError(t, err)
+	revoked := *ended
+	revoked.RevokedByID = f.a.User.ID
+	revoked.RevokeReason = "Done"
+	_, err = repo.Revoke(f.a.Ctx(t.Context()), &revoked, f.now)
+	require.NoError(t, err)
+
+	live, err := repo.ListLive(t.Context(), &supportaccessports.ListLiveRequest{Now: f.now, Limit: 100})
+	require.NoError(t, err)
+	names := make(map[pulid.ID]string, len(live))
+	for _, grant := range live {
+		names[grant.Grant.ID] = grant.OrganizationName
+	}
+	require.Len(t, live, 2, "one in each organization; the revoked one is not live")
+	assert.Equal(t, f.a.Organization.Name, names[inA.ID])
+	assert.Equal(t, f.b.Organization.Name, names[inB.ID])
+	assert.NotContains(t, names, ended.ID)
+
+	one, err := repo.ListLive(t.Context(), &supportaccessports.ListLiveRequest{Now: f.now, Limit: 1})
+	require.NoError(t, err)
+	assert.Len(t, one, 1, "the list is bounded by what the caller asks for")
+
+	later, err := repo.ListLive(t.Context(), &supportaccessports.ListLiveRequest{Now: f.now + 4*3600 + 1, Limit: 100})
+	require.NoError(t, err)
+	assert.Empty(t, later, "a grant past its expiry is not live, whether or not the sweep has recorded it")
+}

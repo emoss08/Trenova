@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,6 +21,31 @@ func TestNewPlanDenialNamesTheFeatureAndTheAddOnThatSellsIt(t *testing.T) {
 		AddOn:       platformcatalog.AddOnAI,
 		AddOnName:   "Trenova AI",
 	}, permissionports.NewPlanDenial(platformcatalog.FeatureAIDesk))
+}
+
+func TestAPlanDenialReadsInTheReadersLanguage(t *testing.T) {
+	t.Parallel()
+
+	denial := permissionports.NewPlanDenial(platformcatalog.FeatureAccounting)
+
+	assert.Equal(t, permissionports.PlanDenial{
+		Feature:     platformcatalog.FeatureAccounting,
+		FeatureName: "Contabilidad",
+		AddOn:       platformcatalog.AddOnAccounting,
+		AddOnName:   "Contabilidad y efectivo",
+	}, denial.In(i18n.ES))
+	assert.Equal(t, denial, denial.In(i18n.EN))
+	assert.Equal(t, "Accounting & Cash", denial.AddOnName, "In returns a copy")
+
+	unknown := permissionports.PlanDenial{Feature: "tms.teleport", FeatureName: "Teleport"}
+	assert.Equal(t, unknown, unknown.In(i18n.ES), "a name the catalog does not hold stays as written")
+
+	assert.Nil(t, permissionports.DenialsIn(i18n.ES, nil))
+	assert.Equal(
+		t,
+		[]permissionports.PlanDenial{denial.In(i18n.ES)},
+		permissionports.DenialsIn(i18n.ES, []permissionports.PlanDenial{denial}),
+	)
 }
 
 func TestNewPlanDenialOfABaseFeatureHasNoAddOn(t *testing.T) {

@@ -44,7 +44,7 @@ func (o *PlanObserver) PlanChanged(
 	ctx context.Context,
 	replacement *managedfeatures.Replacement,
 ) error {
-	if !replacement.Changed() {
+	if !replacement.FeaturesChanged() {
 		return nil
 	}
 

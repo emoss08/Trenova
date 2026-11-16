@@ -105,13 +105,14 @@ func TestMultiError(t *testing.T) {
 		assert.Len(t, rErrors, 1)
 	})
 
-	t.Run("ToJSON", func(t *testing.T) {
+	t.Run("MarshalJSON", func(t *testing.T) {
 		me := errortypes.NewMultiError()
 		me.Add("email", errortypes.ErrInvalidFormat, "invalid email")
 
-		jsonStr := me.ToJSON()
-		assert.Contains(t, jsonStr, "errors")
-		assert.Contains(t, jsonStr, "email")
+		encoded, err := me.MarshalJSON()
+		require.NoError(t, err)
+		assert.Contains(t, string(encoded), "errors")
+		assert.Contains(t, string(encoded), "email")
 	})
 }
 

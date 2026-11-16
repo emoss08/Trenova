@@ -11,6 +11,7 @@ const PlanHistoryLimit = 20
 type AddOnFeatures struct {
 	AddOn    platformcatalog.AddOn
 	Features []platformcatalog.Feature
+	EndsAt   int64
 }
 
 type PlanView struct {
@@ -28,14 +29,21 @@ func (s AddOnShift) Empty() bool {
 	return len(s.Left) == 0 && len(s.Joined) == 0
 }
 
+type AddOnEndingEntry struct {
+	AddOn  platformcatalog.AddOn
+	EndsAt int64
+}
+
 type HistoryEntry struct {
 	ChangedAt int64
 	Starting  bool
 	Left      []platformcatalog.AddOn
 	Joined    []platformcatalog.AddOn
+	Ending    []AddOnEndingEntry
+	Kept      []platformcatalog.AddOn
 }
 
-func View(held []platformcatalog.FeatureKey) *PlanView {
+func View(held []platformcatalog.FeatureKey, endings []AddOnEnding) *PlanView {
 	byAddOn := featuresByAddOn()
 	on := addOnsOn(held)
 	view := &PlanView{
@@ -46,6 +54,7 @@ func View(held []platformcatalog.FeatureKey) *PlanView {
 	for _, addOn := range platformcatalog.AddOns() {
 		entry := AddOnFeatures{AddOn: addOn, Features: byAddOn[addOn.Key]}
 		if on[addOn.Key] {
+			entry.EndsAt = endsAt(endings, addOn.Key)
 			view.Included = append(view.Included, entry)
 			continue
 		}
@@ -80,15 +89,38 @@ func History(current []platformcatalog.FeatureKey, changes []*Change) []HistoryE
 			before = nil
 		}
 		shift := Shift(before, after)
-		if change.Starting || !shift.Empty() {
+		ending, kept := endingEntries(change.Ending), addOnsByKey(change.Kept)
+		if change.Starting || !shift.Empty() || len(ending) > 0 || len(kept) > 0 {
 			out = append(out, HistoryEntry{
 				ChangedAt: change.ChangedAt,
 				Starting:  change.Starting,
 				Left:      shift.Left,
 				Joined:    shift.Joined,
+				Ending:    ending,
+				Kept:      kept,
 			})
 		}
 		after = before
+	}
+	return out
+}
+
+func endingEntries(endings []AddOnEnding) []AddOnEndingEntry {
+	out := make([]AddOnEndingEntry, 0, len(endings))
+	for _, ending := range endings {
+		if addOn, ok := platformcatalog.LookupAddOn(ending.AddOn); ok {
+			out = append(out, AddOnEndingEntry{AddOn: addOn, EndsAt: ending.EndsAt})
+		}
+	}
+	return out
+}
+
+func addOnsByKey(keys []platformcatalog.AddOnKey) []platformcatalog.AddOn {
+	out := make([]platformcatalog.AddOn, 0, len(keys))
+	for _, key := range keys {
+		if addOn, ok := platformcatalog.LookupAddOn(key); ok {
+			out = append(out, addOn)
+		}
 	}
 	return out
 }

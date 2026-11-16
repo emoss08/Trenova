@@ -108,6 +108,7 @@ func TestRequestsFitThePlan(t *testing.T) {
 		for _, path := range [][]string{
 			{"postgres"}, {"tms", "api"}, {"tms", "worker"}, {"imaging"}, {"redis"}, {"meilisearch"},
 			{"temporal"}, {"gotenberg"}, {"minio"}, {"gtc"}, {"client"}, {"clamav"}, {"docling"},
+			{"logs", "loki"}, {"logs", "alloy"},
 		} {
 			req := lookup(t, r.Values, append(path, "resources", "requests"))
 			m := resource.MustParse(req["memory"].(string))

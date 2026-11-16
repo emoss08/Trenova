@@ -64,6 +64,45 @@ func permissionsOf(
 	return out
 }
 
+func TestSupportAccess_LiveGrantsListsOnlyLiveGrantsAcrossOrganizationsSoonestFirst(t *testing.T) {
+	t.Parallel()
+
+	r := newRig(t, true)
+	r.deliverKeys(t)
+	acme := r.organization(newOrgID(), pulid.MustNew("bu_"))
+	globex := r.organization(newOrgID(), pulid.MustNew("bu_"))
+	initech := r.organization(newOrgID(), pulid.MustNew("bu_"))
+	umbrella := r.organization(newOrgID(), pulid.MustNew("bu_"))
+	long := grantFor(t, r, acme, supportaccess.ScopeFull, 72)
+	short := grantFor(t, r, globex, supportaccess.ScopeReadOnly, 4)
+	revoked := grantFor(t, r, initech, supportaccess.ScopeReadOnly, 24)
+	_, err := r.svc.Revoke(t.Context(), &RevokeRequest{
+		TenantInfo: initech,
+		GrantID:    revoked.ID,
+		Reason:     "Ticket closed",
+	})
+	require.NoError(t, err)
+	grantFor(t, r, umbrella, supportaccess.ScopeReadOnly, 1)
+	r.clock.Advance(2 * time.Hour)
+
+	live, err := r.svc.LiveGrants(t.Context())
+	require.NoError(t, err)
+	require.Len(t, live, 2)
+	assert.Equal(t, short.ID, live[0].Grant.ID, "the grant ending soonest comes first")
+	assert.Equal(t, long.ID, live[1].Grant.ID)
+	assert.Equal(t, globex.OrgID, live[0].Grant.OrganizationID)
+	assert.Equal(t, acme.OrgID, live[1].Grant.OrganizationID)
+}
+
+func TestSupportAccess_LiveGrantsReadsNothingWhenSupportAccessIsOff(t *testing.T) {
+	t.Parallel()
+
+	r := newRig(t, false)
+	_, err := r.svc.LiveGrants(t.Context())
+	require.Error(t, err)
+	assert.Zero(t, r.grants.calls)
+}
+
 func TestSupportAccess_StaffEnterUnderALiveGrantAsItsSupportPrincipal(t *testing.T) {
 	t.Parallel()
 

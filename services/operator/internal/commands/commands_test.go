@@ -3,10 +3,12 @@ package commands
 import (
 	"context"
 	"log/slog"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
@@ -49,7 +51,11 @@ func (f *fakeControlPlane) Commands(context.Context) ([]instanceapi.Command, err
 	return f.commands, nil
 }
 
-func (f *fakeControlPlane) CompleteCommand(_ context.Context, id uuid.UUID, r instanceapi.CommandResult) error {
+func (f *fakeControlPlane) CompleteCommand(
+	_ context.Context,
+	id uuid.UUID,
+	r instanceapi.CommandResult,
+) error {
 	if f.failOnce {
 		f.failOnce = false
 		return assert.AnError
@@ -61,7 +67,18 @@ func (f *fakeControlPlane) CompleteCommand(_ context.Context, id uuid.UUID, r in
 	return nil
 }
 
-func runner(t *testing.T, objects ...any) (*Runner, *fake.Clientset) {
+func runner(t *testing.T, cp ControlPlane, objects ...any) (*Runner, *fake.Clientset) {
+	t.Helper()
+	return runnerWith(t, cp, &fakeGrants{}, &fakeLogs{}, objects...)
+}
+
+func runnerWith(
+	t *testing.T,
+	cp ControlPlane,
+	grants Grants,
+	kept Logs,
+	objects ...any,
+) (*Runner, *fake.Clientset) {
 	t.Helper()
 	kube := fake.NewClientset()
 	for _, o := range objects {
@@ -79,10 +96,12 @@ func runner(t *testing.T, objects ...any) (*Runner, *fake.Clientset) {
 		require.NoError(t, err)
 	}
 	now := time.Date(2026, 11, 12, 9, 0, 0, 0, time.UTC)
-	return New(&Params{
-		Kube: kube, Namespace: ns, Release: release, Chart: chart,
-		Logger: slog.New(slog.DiscardHandler), Now: func() time.Time { return now },
-	}), kube
+	r, err := New(&Params{
+		ControlPlane: cp, Kube: kube, Grants: grants, Logs: kept, Namespace: ns, Release: release,
+		Chart: chart, Logger: slog.New(slog.DiscardHandler), Now: func() time.Time { return now },
+	})
+	require.NoError(t, err)
+	return r, kube
 }
 
 func restartedAtOf(t *testing.T, kube *fake.Clientset, name string) string {
@@ -100,13 +119,39 @@ func restart(component string) instanceapi.Command {
 	return cmd
 }
 
+func collect(component string) instanceapi.Command {
+	lines := 200
+	return instanceapi.Command{
+		Id: uuid.New(), Kind: instanceapi.CollectLogs, Component: &component, Lines: &lines,
+		IssuedAt: time.Now(), RequestedBy: customer(),
+	}
+}
+
+func customer() *instanceapi.RequestedBy {
+	return &instanceapi.RequestedBy{Kind: instanceapi.RequestedByCustomer, Email: "dana@acme.example"}
+}
+
+func staff(email string) *instanceapi.RequestedBy {
+	return &instanceapi.RequestedBy{Kind: instanceapi.RequestedByStaff, Email: openapi_types.Email(email)}
+}
+
+func TestARunnerWithoutItsControlPlaneIsRefused(t *testing.T) {
+	t.Parallel()
+	_, err := New(&Params{
+		Kube: fake.NewClientset(), Namespace: ns, Release: release, Chart: chart,
+		Logger: slog.New(slog.DiscardHandler),
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "the control plane")
+}
+
 func TestRestartsOneComponentAndLeavesTheRest(t *testing.T) {
 	t.Parallel()
-	r, kube := runner(t, deployment("api"), deployment("worker"))
 	cmd := restart("api")
 	cp := &fakeControlPlane{commands: []instanceapi.Command{cmd}}
+	r, kube := runner(t, cp, deployment("api"), deployment("worker"))
 
-	require.NoError(t, r.Run(t.Context(), cp))
+	require.NoError(t, r.Run(t.Context()))
 
 	assert.Equal(t, "2026-11-12T09:00:00Z", restartedAtOf(t, kube, "trenova-api"))
 	assert.Empty(t, restartedAtOf(t, kube, "trenova-worker"))
@@ -116,11 +161,11 @@ func TestRestartsOneComponentAndLeavesTheRest(t *testing.T) {
 
 func TestRestartsEveryWorkloadWhenNoComponentIsNamed(t *testing.T) {
 	t.Parallel()
-	r, kube := runner(t, deployment("api"), deployment("worker"), statefulSet("redis"))
 	cmd := restart("")
 	cp := &fakeControlPlane{commands: []instanceapi.Command{cmd}}
+	r, kube := runner(t, cp, deployment("api"), deployment("worker"), statefulSet("redis"))
 
-	require.NoError(t, r.Run(t.Context(), cp))
+	require.NoError(t, r.Run(t.Context()))
 
 	assert.NotEmpty(t, restartedAtOf(t, kube, "trenova-api"))
 	assert.NotEmpty(t, restartedAtOf(t, kube, "trenova-worker"))
@@ -130,35 +175,48 @@ func TestRestartsEveryWorkloadWhenNoComponentIsNamed(t *testing.T) {
 	assert.Equal(t, "restarted 3 workload(s)", *cp.answers[cmd.Id][0].Message)
 }
 
+func TestRestartsAStatefulComponentByName(t *testing.T) {
+	t.Parallel()
+	cmd := restart("redis")
+	cp := &fakeControlPlane{commands: []instanceapi.Command{cmd}}
+	r, kube := runner(t, cp, deployment("api"), statefulSet("redis"))
+
+	require.NoError(t, r.Run(t.Context()))
+
+	set, err := kube.AppsV1().StatefulSets(ns).Get(t.Context(), "trenova-redis", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.NotEmpty(t, set.Spec.Template.Annotations[restartedAt])
+	assert.Empty(t, restartedAtOf(t, kube, "trenova-api"))
+	assert.Equal(t, "restarted 1 workload(s)", *cp.answers[cmd.Id][0].Message)
+}
+
 func TestRefusesToRestartTheDatabaseOrAnUnknownComponent(t *testing.T) {
 	t.Parallel()
-	r, _ := runner(t, deployment("api"))
 	database, unknown := restart("postgres"), restart("nothing")
 	cp := &fakeControlPlane{commands: []instanceapi.Command{database, unknown}}
+	r, _ := runner(t, cp, deployment("api"))
 
-	require.NoError(t, r.Run(t.Context(), cp))
+	require.NoError(t, r.Run(t.Context()))
 
 	assert.Equal(t, instanceapi.CommandResultStatusFailed, cp.answers[database.Id][0].Status)
 	assert.Contains(t, *cp.answers[database.Id][0].Message, "database")
 	assert.Equal(t, instanceapi.CommandResultStatusFailed, cp.answers[unknown.Id][0].Status)
+	assert.Contains(t, *cp.answers[unknown.Id][0].Message, "nothing")
 }
 
-// A command listed again was not answered yet, not issued again: it is
-// answered with the result it already has, and its work is not repeated.
 func TestCarriesACommandOutOnceEvenWhenItsAnswerIsLost(t *testing.T) {
 	t.Parallel()
-	r, kube := runner(t, deployment("api"))
 	cmd := restart("api")
 	cp := &fakeControlPlane{commands: []instanceapi.Command{cmd}, failOnce: true}
+	r, kube := runner(t, cp, deployment("api"))
 
-	require.Error(t, r.Run(t.Context(), cp))
+	require.Error(t, r.Run(t.Context()))
 	first := restartedAtOf(t, kube, "trenova-api")
 	require.NotEmpty(t, first)
 
-	// The clock moves on; a second restart would write a later time.
 	later := time.Date(2026, 11, 12, 9, 5, 0, 0, time.UTC)
 	r.now = func() time.Time { return later }
-	require.NoError(t, r.Run(t.Context(), cp))
+	require.NoError(t, r.Run(t.Context()))
 
 	assert.Equal(t, first, restartedAtOf(t, kube, "trenova-api"))
 	require.Len(t, cp.answers[cmd.Id], 1)
@@ -171,25 +229,130 @@ func TestCollectedLogsNameTheirPodAndNeedAComponent(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "trenova-api-1", Namespace: ns, Labels: labelsFor("api")},
 		Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "api"}}},
 	}
-	r, _ := runner(t, pod)
-	component := "api"
-	withComponent := instanceapi.Command{Id: uuid.New(), Kind: instanceapi.CollectLogs, Component: &component}
+	withComponent := collect("api")
 	without := instanceapi.Command{Id: uuid.New(), Kind: instanceapi.CollectLogs}
 	cp := &fakeControlPlane{commands: []instanceapi.Command{withComponent, without}}
+	r, _ := runner(t, cp, pod)
 
-	require.NoError(t, r.Run(t.Context(), cp))
+	require.NoError(t, r.Run(t.Context()))
 
 	got := cp.answers[withComponent.Id][0]
 	require.Equal(t, instanceapi.CommandResultStatusSucceeded, got.Status)
 	require.NotNil(t, got.Output)
-	// The fake clientset's log is one line, "fake logs".
 	assert.Equal(t, "trenova-api-1/api: fake logs\n", *got.Output)
 	assert.Equal(t, instanceapi.CommandResultStatusFailed, cp.answers[without.Id][0].Status)
 }
 
+func TestCollectsEveryComponentTheReportNames(t *testing.T) {
+	t.Parallel()
+	releasePod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "trenova-release-4-x7k2p", Namespace: ns, Labels: labelsFor("release"),
+		},
+		Spec: corev1.PodSpec{
+			InitContainers: []corev1.Container{{Name: "prepare"}, {Name: "migrate"}},
+			Containers:     []corev1.Container{{Name: "done"}},
+		},
+	}
+	postgres := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "trenova-postgres-1", Namespace: ns, Labels: labelsFor("postgres")},
+		Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "postgres"}}},
+	}
+	redis := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "trenova-redis-0", Namespace: ns, Labels: labelsFor("redis")},
+		Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "redis"}}},
+	}
+	cmds := []instanceapi.Command{collect("release"), collect("postgres"), collect("redis")}
+	cp := &fakeControlPlane{commands: cmds}
+	r, _ := runner(t, cp, releasePod, postgres, redis)
+
+	require.NoError(t, r.Run(t.Context()))
+
+	want := []string{
+		"trenova-release-4-x7k2p/prepare: fake logs\n" +
+			"trenova-release-4-x7k2p/migrate: fake logs\n" +
+			"trenova-release-4-x7k2p/done: fake logs\n",
+		"trenova-postgres-1/postgres: fake logs\n",
+		"trenova-redis-0/redis: fake logs\n",
+	}
+	for i, cmd := range cmds {
+		got := cp.answers[cmd.Id][0]
+		require.Equal(t, instanceapi.CommandResultStatusSucceeded, got.Status, *cmd.Component)
+		assert.Equal(t, want[i], *got.Output, *cmd.Component)
+	}
+}
+
+func TestACrashingContainersPreviousLogComesFirst(t *testing.T) {
+	t.Parallel()
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "trenova-api-1", Namespace: ns, Labels: labelsFor("api")},
+		Spec:       corev1.PodSpec{Containers: []corev1.Container{{Name: "api"}}},
+		Status: corev1.PodStatus{ContainerStatuses: []corev1.ContainerStatus{{
+			Name:         "api",
+			RestartCount: 4,
+			State: corev1.ContainerState{
+				Waiting: &corev1.ContainerStateWaiting{Reason: "CrashLoopBackOff"},
+			},
+			LastTerminationState: corev1.ContainerState{
+				Terminated: &corev1.ContainerStateTerminated{ExitCode: 1},
+			},
+		}}},
+	}
+	cmd := collect("api")
+	cp := &fakeControlPlane{commands: []instanceapi.Command{cmd}}
+	r, _ := runner(t, cp, pod)
+
+	require.NoError(t, r.Run(t.Context()))
+
+	assert.Equal(t,
+		"trenova-api-1/api (previous): fake logs\ntrenova-api-1/api: fake logs\n",
+		*cp.answers[cmd.Id][0].Output,
+	)
+}
+
+func TestKeepsTheNewestPodsWhenAComponentHasMany(t *testing.T) {
+	t.Parallel()
+	base := time.Date(2026, 11, 12, 8, 0, 0, 0, time.UTC)
+	var objects []any
+	for i := range maxPods + 2 {
+		objects = append(objects, &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "trenova-worker-" + string(rune('a'+i)),
+				Namespace:         ns,
+				Labels:            labelsFor("worker"),
+				CreationTimestamp: metav1.NewTime(base.Add(time.Duration(i) * time.Minute)),
+			},
+			Spec: corev1.PodSpec{Containers: []corev1.Container{{Name: "worker"}}},
+		})
+	}
+	cmd := collect("worker")
+	cp := &fakeControlPlane{commands: []instanceapi.Command{cmd}}
+	r, _ := runner(t, cp, objects...)
+
+	require.NoError(t, r.Run(t.Context()))
+
+	out := *cp.answers[cmd.Id][0].Output
+	assert.True(t, strings.HasPrefix(out, "trenova-worker-g/worker:"), out)
+	assert.NotContains(t, out, "trenova-worker-a/")
+	assert.NotContains(t, out, "trenova-worker-b/")
+}
+
+func TestAFailureMessageIsOneLineTheControlPlaneAccepts(t *testing.T) {
+	t.Parallel()
+	got := failed(assert.AnError)
+	require.NotNil(t, got.Message)
+	assert.NotContains(t, *got.Message, "\n")
+	long := failed(&longError{})
+	assert.LessOrEqual(t, len([]rune(*long.Message)), maxMessage)
+}
+
+type longError struct{}
+
+func (*longError) Error() string { return strings.Repeat("é\n", 600) }
+
 func TestNoLineLeavesWithASecretInIt(t *testing.T) {
 	t.Parallel()
-	r, _ := runner(t, &corev1.Secret{
+	r, _ := runner(t, &fakeControlPlane{}, &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: "trenova-app", Namespace: ns},
 		Data: map[string][]byte{
 			"DATABASE_PASSWORD": []byte("s3cr3t-db-pass"),
@@ -210,8 +373,6 @@ func TestNoLineLeavesWithASecretInIt(t *testing.T) {
 			"dial postgres://app:hunter2hunter2@db:5432/tms failed",
 			"dial postgres://[redacted]@db:5432/tms failed",
 		},
-		// The token and the header value both go: removing too much of a
-		// credential line is the safe way to be wrong.
 		{"a bearer token", "Authorization: Bearer abcdefghijklmnop", "Authorization: [redacted] [redacted]"},
 		{"an assigned secret", `{"apiKey":"sk_live_12345","user":"dana"}`, `{"apiKey":[redacted],"user":"dana"}`},
 		{"an ordinary line", "listening on :8080", "listening on :8080"},

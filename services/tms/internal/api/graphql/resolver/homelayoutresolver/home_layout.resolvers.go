@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -30,7 +31,7 @@ func (r *MutationResolver) UpdateHomeLayout(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
-	return homeLayoutToModel(effective), nil
+	return homeLayoutToModel(i18n.FromContext(ctx), effective), nil
 }
 
 func (r *MutationResolver) ResetHomeLayout(ctx context.Context) (*gqlmodel.HomeLayout, error) {
@@ -45,7 +46,7 @@ func (r *MutationResolver) ResetHomeLayout(ctx context.Context) (*gqlmodel.HomeL
 		return nil, err
 	}
 
-	return homeLayoutToModel(effective), nil
+	return homeLayoutToModel(i18n.FromContext(ctx), effective), nil
 }
 
 func (r *MutationResolver) CreateHomeLayoutPreset(ctx context.Context, input gqlmodel.SaveHomeLayoutPresetInput) (*gqlmodel.HomeLayoutPreset, error) {
@@ -73,7 +74,7 @@ func (r *MutationResolver) CreateHomeLayoutPreset(ctx context.Context, input gql
 		return nil, err
 	}
 
-	return homePresetToModel(view), nil
+	return homePresetToModel(i18n.FromContext(ctx), view), nil
 }
 
 func (r *MutationResolver) UpdateHomeLayoutPreset(ctx context.Context, input gqlmodel.UpdateHomeLayoutPresetInput) (*gqlmodel.HomeLayoutPreset, error) {
@@ -108,7 +109,7 @@ func (r *MutationResolver) UpdateHomeLayoutPreset(ctx context.Context, input gql
 		return nil, err
 	}
 
-	return homePresetToModel(view), nil
+	return homePresetToModel(i18n.FromContext(ctx), view), nil
 }
 
 func (r *MutationResolver) DeleteHomeLayoutPreset(ctx context.Context, id string) (bool, error) {
@@ -149,7 +150,7 @@ func (r *QueryResolver) HomeLayout(ctx context.Context) (*gqlmodel.HomeLayout, e
 		return nil, err
 	}
 
-	return homeLayoutToModel(effective), nil
+	return homeLayoutToModel(i18n.FromContext(ctx), effective), nil
 }
 
 func (r *QueryResolver) HomeWidgetCatalog(ctx context.Context) (*gqlmodel.HomeWidgetCatalog, error) {
@@ -164,7 +165,7 @@ func (r *QueryResolver) HomeWidgetCatalog(ctx context.Context) (*gqlmodel.HomeWi
 		return nil, err
 	}
 
-	return homeWidgetCatalogToModel(catalog), nil
+	return homeWidgetCatalogToModel(i18n.FromContext(ctx), catalog), nil
 }
 
 func (r *QueryResolver) HomeLayoutPresets(ctx context.Context) ([]*gqlmodel.HomeLayoutPreset, error) {
@@ -185,7 +186,7 @@ func (r *QueryResolver) HomeLayoutPresets(ctx context.Context) ([]*gqlmodel.Home
 
 	presets := make([]*gqlmodel.HomeLayoutPreset, 0, len(views))
 	for _, view := range views {
-		presets = append(presets, homePresetToModel(view))
+		presets = append(presets, homePresetToModel(i18n.FromContext(ctx), view))
 	}
 
 	return presets, nil
@@ -214,7 +215,7 @@ func (r *QueryResolver) HomeLayoutPreset(ctx context.Context, id string) (*gqlmo
 		return nil, err
 	}
 
-	return homePresetToModel(view), nil
+	return homePresetToModel(i18n.FromContext(ctx), view), nil
 }
 
 func (r *QueryResolver) HomeLayoutPreview(ctx context.Context, presetID *string, roleID *string) (*gqlmodel.HomeLayout, error) {
@@ -236,5 +237,5 @@ func (r *QueryResolver) HomeLayoutPreview(ctx context.Context, presetID *string,
 		return nil, err
 	}
 
-	return homeLayoutToModel(effective), nil
+	return homeLayoutToModel(i18n.FromContext(ctx), effective), nil
 }

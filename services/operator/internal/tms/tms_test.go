@@ -72,16 +72,84 @@ func TestSendsTheFeatureList(t *testing.T) {
 	srv := tmstest.New(t, "token")
 	c := client(t, fake.NewClientset(secretWith("token")), srv.URL)
 
-	require.NoError(t, c.PutFeatures(t.Context(), []string{"tms.accounting", "ai.desk"}))
+	require.NoError(t, c.PutFeatures(t.Context(), tms.FeatureList{Features: []string{"tms.accounting", "ai.desk"}}))
 	got, ok := srv.LastFeatures()
 	require.True(t, ok)
 	require.Equal(t, []string{"tms.accounting", "ai.desk"}, got)
 
-	require.NoError(t, c.PutFeatures(t.Context(), nil))
+	require.NoError(t, c.PutFeatures(t.Context(), tms.FeatureList{}))
 	got, ok = srv.LastFeatures()
 	require.True(t, ok)
 	require.Equal(t, []string{}, got, "a nil list is sent as an empty list, never null")
 	require.Equal(t, [][]string{{"tms.accounting", "ai.desk"}, {}}, srv.Features())
+	require.Zero(t, srv.Refused())
+}
+
+func TestSendsThePlanURLAndAddOnEndingsWithTheFeatures(t *testing.T) {
+	t.Parallel()
+	srv := tmstest.New(t, "token")
+	c := client(t, fake.NewClientset(secretWith("token")), srv.URL)
+	ends := time.Date(2026, 12, 14, 0, 0, 0, 0, time.FixedZone("EST", -5*3600))
+
+	require.NoError(t, c.PutFeatures(t.Context(), tms.FeatureList{
+		Features:     []string{"tms.accounting"},
+		PlanURL:      "https://console.trenova.cloud/instances/1/plan",
+		AddonEndings: []tms.AddonEnding{{Addon: "ACC", EndsAt: ends}},
+	}))
+	got, ok := srv.LastFeatureList()
+	require.True(t, ok)
+	require.Equal(t, "https://console.trenova.cloud/instances/1/plan", got.PlanURL)
+	require.Len(t, got.AddonEndings, 1)
+	require.Equal(t, "ACC", got.AddonEndings[0].Addon)
+	require.True(t, got.AddonEndings[0].EndsAt.Equal(ends))
+
+	require.NoError(t, c.PutFeatures(t.Context(), tms.FeatureList{Features: []string{"tms.accounting"}}))
+	got, ok = srv.LastFeatureList()
+	require.True(t, ok)
+	require.Empty(t, got.PlanURL, "no plan URL is sent when there is none")
+	require.NotNil(t, got.AddonEndings, "an empty list is sent, so the TMS replaces what it holds")
+	require.Empty(t, got.AddonEndings)
+}
+
+func TestSendsHowLongTheFinalBackupIsKept(t *testing.T) {
+	t.Parallel()
+	srv := tmstest.New(t, "token")
+	c := client(t, fake.NewClientset(secretWith("token")), srv.URL)
+
+	require.NoError(t, c.PutFeatures(t.Context(), tms.FeatureList{
+		Features:        []string{"tms.accounting"},
+		FinalBackupDays: 7,
+	}))
+	got, ok := srv.LastFeatureList()
+	require.True(t, ok)
+	require.Equal(t, 7, got.FinalBackupDays)
+
+	require.NoError(t, c.PutFeatures(t.Context(), tms.FeatureList{Features: []string{"tms.accounting"}}))
+	got, ok = srv.LastFeatureList()
+	require.True(t, ok)
+	require.Zero(t, got.FinalBackupDays, "a number the operator was not told is not sent")
+}
+
+func TestStatesThePlansEndOnEverySendAndNullWhenItIsNotEnding(t *testing.T) {
+	t.Parallel()
+	srv := tmstest.New(t, "token")
+	c := client(t, fake.NewClientset(secretWith("token")), srv.URL)
+	ends := time.Date(2026, 12, 14, 5, 0, 0, 0, time.FixedZone("EST", -5*3600))
+
+	require.NoError(t, c.PutFeatures(t.Context(), tms.FeatureList{
+		Features:   []string{"tms.accounting"},
+		PlanEndsAt: &ends,
+	}))
+	got, ok := srv.LastFeatureList()
+	require.True(t, ok)
+	require.NotNil(t, got.PlanEndsAt)
+	require.True(t, got.PlanEndsAt.Equal(ends))
+	require.Equal(t, time.UTC, got.PlanEndsAt.Location(), "sent in UTC")
+
+	require.NoError(t, c.PutFeatures(t.Context(), tms.FeatureList{Features: []string{"tms.accounting"}}))
+	got, ok = srv.LastFeatureList()
+	require.True(t, ok)
+	require.Nil(t, got.PlanEndsAt, "a kept plan is stated as null, which clears the end the TMS holds")
 	require.Zero(t, srv.Refused())
 }
 
@@ -94,7 +162,7 @@ func TestReadsTheFeaturesTheTMSHolds(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{}, held, "a TMS that was sent nothing holds an empty list")
 
-	require.NoError(t, c.PutFeatures(t.Context(), []string{"tms.accounting", "ai.desk"}))
+	require.NoError(t, c.PutFeatures(t.Context(), tms.FeatureList{Features: []string{"tms.accounting", "ai.desk"}}))
 	held, err = c.HeldFeatures(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, []string{"tms.accounting", "ai.desk"}, held)
@@ -112,7 +180,7 @@ func TestAFeatureListTheTMSRefusesIsAnError(t *testing.T) {
 	c := client(t, fake.NewClientset(secretWith("token")), srv.URL)
 
 	srv.FailNext(1)
-	err := c.PutFeatures(t.Context(), []string{"ai.desk"})
+	err := c.PutFeatures(t.Context(), tms.FeatureList{Features: []string{"ai.desk"}})
 	var se *tms.StatusError
 	require.ErrorAs(t, err, &se)
 	require.Equal(t, 503, se.Status)
@@ -120,7 +188,7 @@ func TestAFeatureListTheTMSRefusesIsAnError(t *testing.T) {
 	require.Empty(t, srv.Features())
 
 	srv.SetToken("rotated-elsewhere")
-	err = c.PutFeatures(t.Context(), []string{"ai.desk"})
+	err = c.PutFeatures(t.Context(), tms.FeatureList{Features: []string{"ai.desk"}})
 	require.ErrorIs(t, err, tms.ErrUnauthorized)
 	require.Equal(t, 2, srv.Refused(), "refused, then refused again with the token read again")
 	require.Empty(t, srv.Features())

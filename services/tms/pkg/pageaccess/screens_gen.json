@@ -3561,7 +3561,10 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "RequestSupportLogs",
+        "SupportLogRequests"
+      ],
       "rest": []
     },
     {

@@ -1,0 +1,314 @@
+{{- if .Values.logs.enabled }}
+{{- /* Log keeping: Alloy tails every pod of the release through the Kubernetes
+API (no hostPath, nothing on the node, nothing cluster-wide) and pushes the
+lines to Loki, which keeps them for logs.retentionHours on its own volume.
+Trenova Cloud's operator reads Loki to send an administrator's logs. */ -}}
+{{- $loki := dict "root" . "component" "loki" -}}
+{{- $alloy := dict "root" . "component" "alloy" -}}
+{{- $lokiName := include "trenova.name" $loki -}}
+{{- $alloyName := include "trenova.name" $alloy -}}
+{{- $lokiPort := include "trenova.lokiPort" . -}}
+{{- /* A volume claim's size can only grow, and only on a storage class that
+allows it (k3s's local-path does not), so a plan change would fail the
+upgrade. The claim keeps the size it was made with. */ -}}
+{{- $lokiSize := .Values.logs.loki.storage.size -}}
+{{- with lookup "v1" "PersistentVolumeClaim" .Release.Namespace $lokiName }}
+{{- $lokiSize = .spec.resources.requests.storage -}}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $lokiName }}
+  labels:
+    {{- include "trenova.labels" $loki | nindent 4 }}
+data:
+  config.yaml: |
+    {{- include "trenova.lokiConfig" . | nindent 4 }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $lokiName }}
+  labels:
+    {{- include "trenova.labels" $loki | nindent 4 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  {{- include "trenova.storageClass" .Values.logs.loki.storage | nindent 2 }}
+  resources:
+    requests:
+      storage: {{ $lokiSize }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $lokiName }}
+  labels:
+    {{- include "trenova.labels" $loki | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "trenova.selectorLabels" $loki | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $lokiPort }}
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $lokiName }}
+  labels:
+    {{- include "trenova.labels" $loki | nindent 4 }}
+spec:
+  replicas: {{ include "trenova.replicas" (dict "root" . "replicas" 1) }}
+  {{- /* One writer of one ReadWriteOnce volume: the old pod stops first. */}}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $loki | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $loki | nindent 8 }}
+      annotations:
+        checksum/config: {{ include "trenova.lokiConfig" . | sha256sum }}
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 10001) | nindent 6 }}
+      containers:
+        - name: loki
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.logs.loki.image) }}
+          args:
+            - -config.file=/etc/loki/config.yaml
+            - -target=all
+          ports:
+            - name: http
+              containerPort: {{ $lokiPort }}
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.logs.loki.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki
+              readOnly: true
+            - name: data
+              mountPath: /var/loki
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $lokiName }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $lokiName }}
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $alloyName }}
+  labels:
+    {{- include "trenova.labels" $alloy | nindent 4 }}
+automountServiceAccountToken: false
+---
+{{- /* What Alloy may read: the pods of this namespace and their logs. Nothing
+else, and nothing in any other namespace. */}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $alloyName }}
+  labels:
+    {{- include "trenova.labels" $alloy | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $alloyName }}
+  labels:
+    {{- include "trenova.labels" $alloy | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $alloyName }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $alloyName }}
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $alloyName }}
+  labels:
+    {{- include "trenova.labels" $alloy | nindent 4 }}
+data:
+  config.alloy: |
+    {{- include "trenova.alloyConfig" . | nindent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $alloyName }}
+  labels:
+    {{- include "trenova.labels" $alloy | nindent 4 }}
+spec:
+  replicas: {{ include "trenova.replicas" (dict "root" . "replicas" 1) }}
+  {{- /* Two copies would tail and push every line twice. */}}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $alloy | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $alloy | nindent 8 }}
+      annotations:
+        checksum/config: {{ include "trenova.alloyConfig" . | sha256sum }}
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      serviceAccountName: {{ $alloyName }}
+      {{- /* The one pod in the release that calls the Kubernetes API. */}}
+      automountServiceAccountToken: true
+      {{- include "trenova.podPlacement" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 473) | nindent 6 }}
+      containers:
+        - name: alloy
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.logs.alloy.image) }}
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --storage.path=/var/lib/alloy/data
+            - --server.http.listen-addr=0.0.0.0:12345
+            - --disable-reporting
+          ports:
+            - name: http
+              containerPort: 12345
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.logs.alloy.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/alloy/data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $alloyName }}
+        - name: data
+          emptyDir:
+            sizeLimit: 256Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+{{- if .Values.networkPolicy.enabled }}
+---
+{{- /* Loki has no authentication: only Alloy writes to it, and only the
+operator (managed.from, as for the managed API) and logs.queryFrom read it.
+It opens no connections. */}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $lokiName }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $loki | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" $alloy | nindent 14 }}
+        {{- if .Values.managed.enabled }}
+        {{- toYaml .Values.managed.from | nindent 8 }}
+        {{- end }}
+        {{- with .Values.logs.queryFrom }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      ports:
+        - port: {{ $lokiPort }}
+          protocol: TCP
+  egress: []
+---
+{{- /* Alloy reaches the Kubernetes API (logs.alloy.kubernetesAPI) and Loki,
+nothing else, and accepts no connections. */}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $alloyName }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $alloy | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress: []
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" $loki | nindent 14 }}
+      ports:
+        - port: {{ $lokiPort }}
+          protocol: TCP
+    - ports:
+        {{- range .Values.logs.alloy.kubernetesAPI.ports }}
+        - port: {{ . }}
+          protocol: TCP
+        {{- end }}
+      {{- with .Values.logs.alloy.kubernetesAPI.to }}
+      to:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- include "trenova.dnsEgress" . | nindent 4 }}
+{{- end }}
+{{- end }}

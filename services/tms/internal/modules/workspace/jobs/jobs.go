@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/emailjobs"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/fuelcardjobs"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/notificationjobs"
+	"github.com/emoss08/trenova/internal/modules/workspace/jobs/planendjobs"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs"
 	"go.uber.org/fx"
 )
@@ -21,6 +22,7 @@ func WorkerOptions() fx.Option {
 		emailjobs.Module,
 		fuelcardjobs.Module,
 		notificationjobs.Module,
+		planendjobs.Module,
 		reportjobs.Module,
 	)
 }

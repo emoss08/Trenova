@@ -1,6 +1,22 @@
 query ManagedPlan {
   managedPlan {
     managed
+    manageUrl
+    endsAt
+    finalBackupDays
+    usage {
+      periodStart
+      periodEnd
+      meters {
+        key
+        name
+        unit
+        used
+        included
+        hardCap
+        stopped
+      }
+    }
     base {
       key
       name
@@ -8,6 +24,7 @@ query ManagedPlan {
     included {
       key
       name
+      endsAt
       features {
         key
         name
@@ -16,6 +33,7 @@ query ManagedPlan {
     available {
       key
       name
+      endsAt
       features {
         key
         name
@@ -29,6 +47,17 @@ query ManagedPlan {
         name
       }
       joined {
+        key
+        name
+      }
+      ending {
+        endsAt
+        addOn {
+          key
+          name
+        }
+      }
+      kept {
         key
         name
       }

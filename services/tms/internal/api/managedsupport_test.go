@@ -9,16 +9,25 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api"
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 type fakeSupportAccess struct {
-	set  *supportaccess.KeySet
-	held *supportaccess.KeySet
+	set    *supportaccess.KeySet
+	held   *supportaccess.KeySet
+	grants []*supportaccessports.LiveGrant
+}
+
+func (f *fakeSupportAccess) LiveGrants(context.Context) ([]*supportaccessports.LiveGrant, error) {
+	return f.grants, nil
 }
 
 func (f *fakeSupportAccess) SetKeys(_ context.Context, keys *supportaccess.KeySet) error {
@@ -97,6 +106,112 @@ func TestManagedSupportAccessRefusesAMissingToken(t *testing.T) {
 	rec := serveSupport(t, support, http.MethodPut, `{}`, "")
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 	assert.Nil(t, support.set)
+}
+
+func serveSupportGrants(t *testing.T, support *fakeSupportAccess, token string) *httptest.ResponseRecorder {
+	t.Helper()
+	handler := api.NewManagedHandler(&api.ManagedHandlerParams{
+		Token:         managedToken,
+		Logger:        zap.NewNop(),
+		SupportAccess: support,
+	})
+	req := httptest.NewRequest(http.MethodGet, "/managed/v1/support-access/grants", nil)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	return rec
+}
+
+func TestManagedSupportGrantsListsTheLiveGrantsInTheContractsShape(t *testing.T) {
+	t.Parallel()
+
+	acme, globex := pulid.MustNew("org_"), pulid.MustNew("org_")
+	readOnly, full := pulid.MustNew("sag_"), pulid.MustNew("sag_")
+	support := &fakeSupportAccess{grants: []*supportaccessports.LiveGrant{
+		{
+			Grant: &supportaccess.Grant{
+				ID:             readOnly,
+				OrganizationID: acme,
+				StaffEmail:     "dana@trenova.app",
+				Scope:          supportaccess.ScopeReadOnly,
+				ExpiresAt:      1_800_000_000,
+				Reason:         "Looking into a stuck invoice",
+			},
+			OrganizationName: "Acme Freight",
+		},
+		{
+			Grant: &supportaccess.Grant{
+				ID:             full,
+				OrganizationID: globex,
+				StaffEmail:     "lee@trenova.app",
+				Scope:          supportaccess.ScopeFull,
+				ExpiresAt:      1_800_003_600,
+			},
+			OrganizationName: "Globex Logistics",
+		},
+	}}
+
+	rec := serveSupportGrants(t, support, managedToken)
+
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	assert.Equal(t, "application/json", rec.Header().Get("Content-Type"))
+	assert.JSONEq(t, `{"grants": [
+		{"id": "`+readOnly.String()+`", "organizationId": "`+acme.String()+`",
+		 "organizationName": "Acme Freight", "staffEmail": "dana@trenova.app",
+		 "scope": "read_only", "expiresAt": "2027-01-15T08:00:00Z"},
+		{"id": "`+full.String()+`", "organizationId": "`+globex.String()+`",
+		 "organizationName": "Globex Logistics", "staffEmail": "lee@trenova.app",
+		 "scope": "full", "expiresAt": "2027-01-15T09:00:00Z"}
+	]}`, rec.Body.String())
+	assert.NotContains(t, rec.Body.String(), "stuck invoice", "the reason stays on the instance")
+}
+
+func TestManagedSupportGrantsAnswersAnEmptyListWhenNoneIsLive(t *testing.T) {
+	t.Parallel()
+
+	rec := serveSupportGrants(t, &fakeSupportAccess{}, managedToken)
+
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	assert.JSONEq(t, `{"grants": []}`, rec.Body.String())
+}
+
+func TestManagedSupportGrantsRefusesAWrongToken(t *testing.T) {
+	t.Parallel()
+
+	rec := serveSupportGrants(t, &fakeSupportAccess{}, "not-the-token")
+
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	assert.NotContains(t, rec.Body.String(), "grants")
+}
+
+type recordedLifecycle struct {
+	hooks []fx.Hook
+}
+
+func (l *recordedLifecycle) Append(hook fx.Hook) {
+	l.hooks = append(l.hooks, hook)
+}
+
+func TestManagedSupportGrantsAreNotServedWhenManagedModeIsOff(t *testing.T) {
+	t.Parallel()
+
+	off := &recordedLifecycle{}
+	api.StartManagedServer(api.ManagedServerParams{
+		Config: &managedconfig.Config{Enabled: false},
+		Logger: zap.NewNop(),
+		LC:     off,
+	})
+	assert.Empty(t, off.hooks, "a self-hosted instance opens no operator listener, so no grants route")
+
+	on := &recordedLifecycle{}
+	api.StartManagedServer(api.ManagedServerParams{
+		Config: &managedconfig.Config{Enabled: true, Token: managedToken},
+		Logger: zap.NewNop(),
+		LC:     on,
+	})
+	assert.Len(t, on.hooks, 1, "a managed instance opens the listener the grants route lives on")
 }
 
 func TestManagedSupportAccessAnswersTheKeyIDsItHolds(t *testing.T) {

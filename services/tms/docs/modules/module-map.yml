@@ -75,6 +75,7 @@ modules:
       - sso
       - subscription
       - supportaccess
+      - supportlog
       - tenant
       - workerperms
       - workforcebundles
@@ -114,6 +115,7 @@ modules:
       - settlementcontrolservice
       - shipmentcontrolservice
       - supportaccessservice
+      - supportlogservice
       - tableinsightservice
       - tenanttimezone
       - userservice
@@ -146,6 +148,7 @@ modules:
       - ssoconfigrepository
       - ssoidentitylinkrepository
       - supportaccessrepository
+      - supportlogrepository
       - tenantbootstraprepository
       - tenantsyncrepository
       - userrepository
@@ -188,6 +191,7 @@ modules:
       - reportviewservice
       - sidebarpreferenceservice
       - supportaccessnotice
+      - supportlognotice
       - systememailservice
       - tablechangealertservice
       - tableconfigurationservice

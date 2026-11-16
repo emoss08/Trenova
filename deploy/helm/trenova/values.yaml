@@ -599,6 +599,50 @@ gtc:
     requests: { cpu: 100m, memory: 128Mi }
     limits: { memory: 512Mi }
 
+# Log keeping. Grafana Alloy (one replica) discovers this release's pods in
+# its own namespace and tails them through the Kubernetes API: a namespaced
+# Role that reads pods and their logs, no hostPath, no DaemonSet, nothing
+# cluster-wide. Every line is labelled component (the pod's
+# app.kubernetes.io/component), pod and container, and Grafana Loki (single
+# binary, one replica, on its own volume) keeps it for retentionHours; its
+# compactor deletes anything older. Loki has no authentication: its
+# NetworkPolicy admits Alloy, managed.from while managed mode is on (Trenova
+# Cloud's operator reads it to send an administrator's logs to support) and
+# queryFrom. Trenova Cloud's operator turns this on; a self-hosted install
+# gets it only by asking.
+logs:
+  enabled: false
+  retentionHours: 168
+  # Who else may query Loki on port 3100, as NetworkPolicy peers (a Grafana
+  # of your own). Empty admits nobody else.
+  queryFrom: []
+  loki:
+    image:
+      repository: grafana/loki
+      tag: 3.7.10
+    # Set when the volume is made and kept after: a claim can only grow, and
+    # only on a storage class that allows it.
+    storage:
+      size: 10Gi
+      storageClass: ""
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { memory: 1Gi }
+  alloy:
+    image:
+      repository: grafana/alloy
+      tag: v1.21.3
+    # Where the Kubernetes API is, for Alloy's NetworkPolicy: the ports (443
+    # for the kubernetes Service, 6443 for k3s's API server, which policies
+    # see after the Service is translated) and, optionally, NetworkPolicy
+    # peers (an ipBlock of the API server's address) to narrow it further.
+    kubernetesAPI:
+      ports: [443, 6443]
+      to: []
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { memory: 512Mi }
+
 # Serves the web app at /, Dash at /dash/, and passes the API and storage
 # hostnames on (deploy/Caddyfile), as plain HTTP behind the Ingress. Turn it
 # off when something else serves the client (Trenova Cloud's edge).

@@ -6,6 +6,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -117,7 +118,7 @@ func TestFeatureRestrictionErrorNamesTheAddOnThatSellsIt(t *testing.T) {
 
 	message, args := err.LocalizedMessage()
 	assert.Equal(t, "This feature is part of the {0} add-on, which is not on your plan", message)
-	assert.Equal(t, []any{"Trenova AI"}, args)
+	assert.Equal(t, []any{i18n.Term("Trenova AI")}, args)
 
 	assert.Equal(t, map[string]string{
 		"feature": "ai.desk",
@@ -141,6 +142,21 @@ func TestFeatureRestrictionErrorNamesTheAddOnThatSellsIt(t *testing.T) {
 	assert.Equal(t, "ai.desk", fields["plan_feature"])
 	assert.Equal(t, "Trenova AI", fields["plan_add_on"])
 	assert.Equal(t, errortypes.PlanRestrictionReasonPlan, fields["plan_reason"])
+}
+
+func TestFeatureRestrictionErrorNamesTheAddOnInTheReadersLanguage(t *testing.T) {
+	t.Parallel()
+
+	err := errortypes.NewFeatureRestrictionError("tms.accounting", "Accounting & Cash")
+
+	assert.Equal(t, "Contabilidad y efectivo", err.LocalizedParams(i18n.ES)["addOn"])
+	assert.Equal(t, "Accounting & Cash", err.LocalizedParams(i18n.EN)["addOn"])
+	assert.Equal(t, "Accounting & Cash", err.Params()["addOn"], "the raw params stay the catalog's English")
+	message, args := err.LocalizedMessage()
+	assert.Equal(t, "Contabilidad y efectivo", i18n.Translate(i18n.ES, "{0}", args...))
+	assert.Contains(t, err.Error(), "Accounting & Cash")
+	assert.Equal(t, "This feature is part of the {0} add-on, which is not on your plan", message)
+	assert.Empty(t, errortypes.NewFeatureRestrictionError("platform.api_keys", "").LocalizedParams(i18n.ES)["addOn"])
 }
 
 func TestFeatureRestrictionErrorForABaseFeatureNamesNoAddOn(t *testing.T) {

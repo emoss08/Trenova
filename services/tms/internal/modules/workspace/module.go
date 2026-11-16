@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportlogports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditalertpolicyrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditexportrepository"
@@ -57,6 +58,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/supportaccessnotice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/supportlognotice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/systememailservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
@@ -150,6 +152,8 @@ func SharedOptions() fx.Option {
 			supportaccessnotice.New,
 			plannotice.New,
 			func(n *supportaccessnotice.Notifier) supportaccessports.Notifier { return n },
+			supportlognotice.New,
+			func(n *supportlognotice.Notifier) supportlogports.Notifier { return n },
 			notificationpreferenceservice.New,
 			tablechangealertservice.New,
 			tablechangealertservice.NewConsumer,

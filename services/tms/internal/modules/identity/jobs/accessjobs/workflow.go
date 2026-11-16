@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/supportlogservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -32,7 +33,25 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 		Fn:          RecordSupportAccessExpiriesWorkflow,
 		TaskQueue:   temporaltype.TaskQueueSystem.String(),
 		Description: "Record the Trenova support access grants that ended on their own",
+	}, {
+		Name:      SupportLogTimeoutWorkflowName,
+		Fn:        FailOverdueSupportLogRequestsWorkflow,
+		TaskQueue: temporaltype.TaskQueueSystem.String(),
+		Description: "Fail the requests to send logs to Trenova support that the operator " +
+			"never picked up or never finished",
 	}}
+}
+
+func FailOverdueSupportLogRequestsWorkflow(
+	ctx workflow.Context,
+) (*supportlogservice.SweepResult, error) {
+	var a *Activities
+	ctx = workflow.WithActivityOptions(ctx, sweepOptions)
+
+	result := new(supportlogservice.SweepResult)
+	err := workflow.ExecuteActivity(ctx, a.FailOverdueSupportLogRequestsActivity).Get(ctx, result)
+
+	return result, err
 }
 
 func SweepOrphanedOrganizationAccessWorkflow(

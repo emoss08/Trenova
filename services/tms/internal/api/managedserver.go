@@ -16,6 +16,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/supportlogservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedfeaturesservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
@@ -46,7 +47,7 @@ type ManagedUsage interface {
 
 type ManagedFeatures interface {
 	State(ctx context.Context) (*managedfeatures.State, error)
-	SetFeatures(ctx context.Context, features []platformcatalog.FeatureKey) error
+	SetFeatures(ctx context.Context, received *managedfeatures.Received) error
 }
 
 type ManagedServerParams struct {
@@ -62,6 +63,7 @@ type ManagedServerParams struct {
 	SystemEmail *systememailservice.Service
 
 	SupportAccess *supportaccessservice.Service
+	SupportLogs   *supportlogservice.Service
 }
 
 type ManagedHandlerParams struct {
@@ -74,6 +76,8 @@ type ManagedHandlerParams struct {
 	SystemEmail ManagedSystemEmail
 
 	SupportAccess ManagedSupportAccess
+	SupportLogs   ManagedSupportLogs
+	LogPulls      ManagedLogPulls
 }
 
 type managedHandler struct {
@@ -85,7 +89,9 @@ type managedHandler struct {
 
 	systemEmail ManagedSystemEmail
 
-	support ManagedSupportAccess
+	support     ManagedSupportAccess
+	supportLogs ManagedSupportLogs
+	logPulls    ManagedLogPulls
 }
 
 type managedInvite struct {
@@ -121,8 +127,40 @@ type managedState struct {
 	Meters  []managedusage.Meter `json:"meters"`
 }
 
+type managedAddOnEnding struct {
+	AddOn  platformcatalog.AddOnKey `json:"addon"`
+	EndsAt time.Time                `json:"endsAt"`
+}
+
 type managedFeatureList struct {
-	Features *[]platformcatalog.FeatureKey `json:"features"`
+	Features        *[]platformcatalog.FeatureKey `json:"features"`
+	PlanURL         *string                       `json:"planUrl"`
+	AddOnEndings    *[]managedAddOnEnding         `json:"addonEndings"`
+	PlanEndsAt      *time.Time                    `json:"planEndsAt"`
+	FinalBackupDays int                           `json:"finalBackupDays"`
+}
+
+func (l *managedFeatureList) received() *managedfeatures.Received {
+	out := &managedfeatures.Received{
+		Features:        *l.Features,
+		PlanURL:         l.PlanURL,
+		FinalBackupDays: l.FinalBackupDays,
+	}
+	if l.PlanEndsAt != nil && !l.PlanEndsAt.IsZero() {
+		out.PlanEndsAt = l.PlanEndsAt.Unix()
+	}
+	if l.AddOnEndings != nil {
+		endings := make([]managedfeatures.AddOnEnding, 0, len(*l.AddOnEndings))
+		for _, e := range *l.AddOnEndings {
+			ending := managedfeatures.AddOnEnding{AddOn: e.AddOn}
+			if !e.EndsAt.IsZero() {
+				ending.EndsAt = e.EndsAt.Unix()
+			}
+			endings = append(endings, ending)
+		}
+		out.AddOnEndings = &endings
+	}
+	return out
 }
 
 type managedHeldFeatures struct {
@@ -147,7 +185,9 @@ func NewManagedHandler(p *ManagedHandlerParams) http.Handler {
 
 		systemEmail: p.SystemEmail,
 
-		support: p.SupportAccess,
+		support:     p.SupportAccess,
+		supportLogs: p.SupportLogs,
+		logPulls:    p.LogPulls,
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET "+managedReadingsPath, h.readings)
@@ -157,6 +197,7 @@ func NewManagedHandler(p *ManagedHandlerParams) http.Handler {
 	mux.HandleFunc("PUT "+managedInvitePath, h.installInvite)
 	h.routeSystemEmail(mux)
 	h.routeSupportAccess(mux)
+	h.routeSupportLogs(mux)
 	return h.authenticate(mux)
 }
 
@@ -178,6 +219,8 @@ func StartManagedServer(p ManagedServerParams) {
 				SystemEmail: p.SystemEmail,
 
 				SupportAccess: p.SupportAccess,
+				SupportLogs:   p.SupportLogs,
+				LogPulls:      p.SupportAccess,
 			}),
 			managedTimeout,
 			"",
@@ -291,11 +334,17 @@ func (h *managedHandler) setFeatures(w http.ResponseWriter, r *http.Request) {
 		h.problem(
 			w,
 			http.StatusBadRequest,
-			"the body must be {features} with features an array of feature keys",
+			"the body must be {features, planUrl?, addonEndings?} with features an array of feature keys",
 		)
 		return
 	}
-	if err = h.features.SetFeatures(r.Context(), *in.Features); err != nil {
+	err = h.features.SetFeatures(r.Context(), in.received())
+	invalid, isInvalid := errortypes.RefusalOf(err)
+	switch {
+	case isInvalid:
+		h.problem(w, http.StatusBadRequest, invalid.Error())
+		return
+	case err != nil:
 		h.l.Error("cannot record the feature list from the operator", zap.Error(err))
 		h.problem(w, http.StatusInternalServerError, "")
 		return

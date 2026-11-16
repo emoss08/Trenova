@@ -10,3 +10,6 @@ managed:
           kubernetes.io/metadata.name: trenova-system
 secrets:
   escrowSecret: trenova-escrow
+# Log keeping, which the operator turns on for every managed instance.
+logs:
+  enabled: true

@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/emoss08/trenova/operator/internal/backup"
+	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/controlplanetest"
 	"github.com/emoss08/trenova/operator/internal/credential"
@@ -30,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
 	"github.com/emoss08/trenova/operator/internal/release"
+	"github.com/emoss08/trenova/operator/internal/selfupgrade"
 	"github.com/emoss08/trenova/operator/internal/values"
 )
 
@@ -41,13 +43,19 @@ var bucketStorage = values.Storage{
 type fakeStorage struct {
 	mu        sync.Mutex
 	hostnames []string
+	revisions []int64
 	err       error
 }
 
-func (f *fakeStorage) Ensure(_ context.Context, hostname string) (values.Storage, error) {
+func (f *fakeStorage) Ensure(
+	_ context.Context,
+	hostname string,
+	revision int64,
+) (values.Storage, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.hostnames = append(f.hostnames, hostname)
+	f.revisions = append(f.revisions, revision)
 	if f.err != nil {
 		return values.Storage{}, f.err
 	}
@@ -120,10 +128,16 @@ func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
 				Capabilities: caps,
 				Log:          func(string, ...any) {},
 			},
-			Name: "trenova", Namespace: "trenova", Logger: logger,
+			Kube: kube, Name: "trenova", Namespace: "trenova", Logger: logger,
 		})},
 	}
-	w.loop = reconcile.New(&reconcile.Params{
+	kept := &fakeLogKeeping{}
+	runner, err := commands.New(&commands.Params{
+		ControlPlane: client, Kube: kube, Grants: noGrants{}, Logs: kept,
+		Namespace: "trenova", Release: "trenova", Chart: "trenova", Logger: logger,
+	})
+	require.NoError(t, err)
+	w.loop, err = reconcile.New(&reconcile.Params{
 		ControlPlane: client,
 		Credentials:  creds,
 		Charts:       release.NewSource(release.SourceParams{Path: chartDir}),
@@ -134,15 +148,41 @@ func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
 		}),
 		Usage:          &fakeUsage{now: time.Now},
 		Administrators: &fakeAdmins{},
+		Features:       &fakeFeatures{},
+		SystemEmail:    &fakeSystemEmail{},
+		SupportKeys:    &fakeSupportKeys{},
+		SupportGrants:  &fakeSupportGrants{},
 		Storage:        w.storage,
 		Backups:        w.backups,
-		Base:           map[string]any{"clamav": map[string]any{"enabled": true}},
-		Namespace:      "trenova-system",
-		Logger:         logger,
-		Poll:           15 * time.Second,
-		Report:         time.Minute,
+		Commands:       runner,
+		Logs:           kept,
+		Operator: &fakeOperator{status: selfupgrade.Status{
+			Version: "0.11.0", Phase: selfupgrade.PhaseCurrent,
+		}},
+		Base:      map[string]any{"clamav": map[string]any{"enabled": true}},
+		Namespace: "trenova-system",
+		Logger:    logger,
+		Poll:      15 * time.Second,
+		Report:    time.Minute,
 	})
+	require.NoError(t, err)
 	return w
+}
+
+func TestEachRevisionAsksForTheInstancesStorage(t *testing.T) {
+	t.Parallel()
+	spec := controlplanetest.Spec(uuid.New())
+	w := newBackupWorld(t, spec)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	spec.Plan.Vcpu, spec.Plan.MemoryGiB = 16, 64
+	w.cp.SetSpec(spec)
+	w.loop.Tick(t.Context())
+
+	w.storage.mu.Lock()
+	defer w.storage.mu.Unlock()
+	require.Equal(t, []int64{1, 2}, w.storage.revisions)
 }
 
 func TestTheReportCarriesBackupHealthAndTheRestore(t *testing.T) {

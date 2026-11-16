@@ -1,11 +1,3 @@
-// Package commands carries out what the control plane asks of the instance
-// besides converging to its spec: restarting Trenova or one of its
-// components, and collecting a component's recent log lines for staff.
-//
-// The instance takes no inbound connections, so the operator asks for its
-// commands, carries each out once, and answers. Log lines leave the
-// instance only after every secret the namespace holds has been removed
-// from them.
 package commands
 
 import (
@@ -17,6 +9,7 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,7 +19,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
+	"github.com/emoss08/trenova/operator/internal/logs"
+	"github.com/emoss08/trenova/operator/internal/tms"
 )
 
 const (
@@ -34,8 +30,6 @@ const (
 	labelInstance  = "app.kubernetes.io/instance"
 	labelComponent = "app.kubernetes.io/component"
 
-	// restartedAt is the annotation `kubectl rollout restart` sets: a new
-	// value on the pod template makes the workload roll its pods.
 	restartedAt = "kubectl.kubernetes.io/restartedAt"
 
 	componentPostgres = "postgres"
@@ -44,32 +38,42 @@ const (
 	maxOutput    = 262144
 	defaultLines = 200
 	maxLines     = 500
-	// maxPods bounds the pods one collection reads, so a component scaled
-	// wide cannot make it unbounded.
-	maxPods = 5
-	// remembered is how long an answered command's ID is kept, to carry
-	// each out once even if the answer was lost and it is listed again.
-	remembered = time.Hour
+	maxKeptLines = 5000
+	maxPods      = 5
+	remembered   = time.Hour
 )
 
-// ControlPlane is the part of the instance API commands use.
 type ControlPlane interface {
 	Commands(ctx context.Context) ([]instanceapi.Command, error)
 	CompleteCommand(ctx context.Context, id uuid.UUID, result instanceapi.CommandResult) error
 }
 
-// Runner carries out the instance's commands.
+type Grants interface {
+	AuthorizeLogPull(ctx context.Context, email string, kind tms.LogPullKind) error
+}
+
+type Logs interface {
+	Kept() bool
+	Longest() time.Duration
+	Last(ctx context.Context, component string, lines int, redact func(string) string) (string, error)
+	Submit(job *logs.Job) logs.Submitted
+	Finish(ctx context.Context, bundle uuid.UUID, outcome logs.Outcome)
+}
+
 type Runner struct {
+	cp        ControlPlane
 	kube      kubernetes.Interface
+	grants    Grants
+	kept      Logs
 	namespace string
 	release   string
 	chart     string
 	logger    *slog.Logger
 	now       func() time.Time
 
-	// done holds the result of each command already carried out, by ID,
-	// until it is answered and for a while after.
-	done map[uuid.UUID]finished
+	mu      sync.Mutex
+	done    map[uuid.UUID]finished
+	pending map[uuid.UUID]struct{}
 }
 
 type finished struct {
@@ -77,34 +81,62 @@ type finished struct {
 	at     time.Time
 }
 
-// Params configures a Runner for one Helm release in one namespace.
 type Params struct {
-	Kube      kubernetes.Interface
-	Namespace string
-	Release   string
-	Chart     string
-	Logger    *slog.Logger
-	Now       func() time.Time
+	ControlPlane ControlPlane
+	Kube         kubernetes.Interface
+	Grants       Grants
+	Logs         Logs
+	Namespace    string
+	Release      string
+	Chart        string
+	Logger       *slog.Logger
+	Now          func() time.Time
 }
 
-// New makes a Runner.
-func New(p *Params) *Runner {
+func New(p *Params) (*Runner, error) {
+	var missing []string
+	if p.ControlPlane == nil {
+		missing = append(missing, "the control plane")
+	}
+	if p.Kube == nil {
+		missing = append(missing, "a Kubernetes client")
+	}
+	if p.Grants == nil {
+		missing = append(missing, "the TMS's support access grants")
+	}
+	if p.Logs == nil {
+		missing = append(missing, "the kept logs")
+	}
+	if p.Logger == nil {
+		missing = append(missing, "a logger")
+	}
+	if p.Namespace == "" || p.Release == "" || p.Chart == "" {
+		missing = append(missing, "the release's namespace, name and chart")
+	}
+	if len(missing) > 0 {
+		return nil, fmt.Errorf("commands: the runner needs %s", strings.Join(missing, ", "))
+	}
 	now := p.Now
 	if now == nil {
 		now = time.Now
 	}
 	return &Runner{
-		kube: p.Kube, namespace: p.Namespace, release: p.Release, chart: p.Chart,
-		logger: p.Logger, now: now, done: map[uuid.UUID]finished{},
-	}
+		cp: p.ControlPlane, kube: p.Kube, grants: p.Grants, kept: p.Logs, namespace: p.Namespace,
+		release: p.Release, chart: p.Chart, logger: p.Logger, now: now,
+		done: map[uuid.UUID]finished{}, pending: map[uuid.UUID]struct{}{},
+	}, nil
 }
 
-// Run asks for the instance's commands, carries out those not yet carried
-// out, and answers each. A command is carried out once: if its answer does
-// not reach the control plane it is listed again, and answered again with
-// the result it already has.
-func (r *Runner) Run(ctx context.Context, cp ControlPlane) error {
-	list, err := cp.Commands(ctx)
+type state int
+
+const (
+	answered state = iota
+	later
+	retry
+)
+
+func (r *Runner) Run(ctx context.Context) error {
+	list, err := r.cp.Commands(ctx)
 	if err != nil {
 		return err
 	}
@@ -112,22 +144,44 @@ func (r *Runner) Run(ctx context.Context, cp ControlPlane) error {
 	var errs []error
 	for i := range list {
 		cmd := &list[i]
+		r.mu.Lock()
 		f, seen := r.done[cmd.Id]
+		_, waiting := r.pending[cmd.Id]
+		r.mu.Unlock()
+		if waiting {
+			continue
+		}
 		if !seen {
-			f = finished{result: r.execute(ctx, cmd), at: r.now()}
-			r.done[cmd.Id] = f
+			r.logger.InfoContext(ctx, "carrying out a command",
+				"command", cmd.Id, "kind", string(cmd.Kind), "component", deref(cmd.Component))
+			result, st := r.execute(ctx, cmd)
+			if st != answered {
+				continue
+			}
+			f = r.settle(cmd.Id, result)
 			r.logger.InfoContext(ctx, "carried out a command",
 				"command", cmd.Id, "kind", string(cmd.Kind), "component", deref(cmd.Component),
-				"status", string(f.result.Status))
+				"status", string(f.result.Status), "message", deref(f.result.Message))
 		}
-		if err := cp.CompleteCommand(ctx, cmd.Id, f.result); err != nil {
+		if err := r.cp.CompleteCommand(ctx, cmd.Id, f.result); err != nil {
 			errs = append(errs, fmt.Errorf("answer command %s: %w", cmd.Id, err))
 		}
 	}
 	return errors.Join(errs...)
 }
 
+func (r *Runner) settle(id uuid.UUID, result instanceapi.CommandResult) finished {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	f := finished{result: result, at: r.now()}
+	delete(r.pending, id)
+	r.done[id] = f
+	return f
+}
+
 func (r *Runner) forget() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	cutoff := r.now().Add(-remembered)
 	for id, f := range r.done {
 		if f.at.Before(cutoff) {
@@ -136,22 +190,20 @@ func (r *Runner) forget() {
 	}
 }
 
-func (r *Runner) execute(ctx context.Context, cmd *instanceapi.Command) instanceapi.CommandResult {
+func (r *Runner) execute(ctx context.Context, cmd *instanceapi.Command) (instanceapi.CommandResult, state) {
 	switch cmd.Kind {
 	case instanceapi.Restart:
 		n, err := r.restart(ctx, deref(cmd.Component))
 		if err != nil {
-			return failed(err)
+			return failed(err), answered
 		}
-		return succeeded(fmt.Sprintf("restarted %d workload(s)", n), nil)
+		return succeeded(fmt.Sprintf("restarted %d workload(s)", n), nil), answered
 	case instanceapi.CollectLogs:
-		out, err := r.logs(ctx, deref(cmd.Component), cmd.Lines)
-		if err != nil {
-			return failed(err)
-		}
-		return succeeded("", &out)
+		return r.collectLines(ctx, cmd), answered
+	case instanceapi.CollectLogBundle:
+		return r.collectBundle(ctx, cmd)
 	default:
-		return failed(fmt.Errorf("this operator does not know the command %q", cmd.Kind))
+		return failed(fmt.Errorf("this operator does not know the command %q", cmd.Kind)), answered
 	}
 }
 
@@ -163,18 +215,15 @@ func (r *Runner) selector(component string) string {
 	return labels.SelectorFromSet(set).String()
 }
 
-// restart rolls the pods of a component's workloads, or of every Trenova
-// workload when no component is named, the way `kubectl rollout restart`
-// does. The database is CloudNativePG's to restart and is left alone.
 func (r *Runner) restart(ctx context.Context, component string) (int, error) {
 	if component == componentPostgres {
 		return 0, errors.New("the database is not restarted this way")
 	}
 	list := metav1.ListOptions{LabelSelector: r.selector(component)}
-	patch := []byte(fmt.Sprintf(
+	patch := fmt.Appendf(nil,
 		`{"spec":{"template":{"metadata":{"annotations":{%q:%q}}}}}`,
 		restartedAt, r.now().UTC().Format(time.RFC3339),
-	))
+	)
 	restarted := 0
 	deployments, err := r.kube.AppsV1().Deployments(r.namespace).List(ctx, list)
 	if err != nil {
@@ -209,56 +258,48 @@ func (r *Runner) restart(ctx context.Context, component string) (int, error) {
 	return restarted, nil
 }
 
-// logs returns the most recent lines of a component's pods, each line
-// prefixed with its pod and container, with every secret in the namespace
-// removed.
-func (r *Runner) logs(ctx context.Context, component string, lines *int) (string, error) {
-	if component == "" {
-		return "", errors.New("name the component whose logs to collect")
-	}
-	want := int64(defaultLines)
-	if lines != nil {
-		want = int64(min(max(*lines, 1), maxLines))
-	}
-	pods, err := r.kube.CoreV1().Pods(r.namespace).List(ctx, metav1.ListOptions{LabelSelector: r.selector(component)})
+type logRequest struct {
+	pod       *corev1.Pod
+	container string
+	tail      int64
+	previous  bool
+	redact    func(string) string
+}
+
+func (r *Runner) kubeletLines(
+	ctx context.Context,
+	component string,
+	lines int,
+	redact func(string) string,
+) (string, error) {
+	want := int64(min(lines, maxLines))
+	pods, err := r.kube.CoreV1().Pods(r.namespace).
+		List(ctx, metav1.ListOptions{LabelSelector: r.selector(component)})
 	if err != nil {
 		return "", fmt.Errorf("list the component's pods: %w", err)
 	}
 	if len(pods.Items) == 0 {
 		return "", fmt.Errorf("the component %q has no pods", component)
 	}
-	slices.SortFunc(pods.Items, func(a, b corev1.Pod) int { return strings.Compare(a.Name, b.Name) })
+	slices.SortFunc(pods.Items, newestFirst)
 	if len(pods.Items) > maxPods {
 		pods.Items = pods.Items[:maxPods]
-	}
-	redact, err := r.redactor(ctx)
-	if err != nil {
-		return "", err
 	}
 	var out strings.Builder
 	for i := range pods.Items {
 		pod := &pods.Items[i]
-		for c := range pod.Spec.Containers {
-			container := pod.Spec.Containers[c].Name
-			tail := want
-			stream, err := r.kube.CoreV1().Pods(r.namespace).GetLogs(pod.Name, &corev1.PodLogOptions{
-				Container: container, TailLines: &tail, Timestamps: true,
-			}).Stream(ctx)
-			if err != nil {
-				fmt.Fprintf(&out, "%s/%s: could not read its log: %s\n", pod.Name, container, oneLine(err.Error()))
-				continue
+		for _, container := range containers(pod) {
+			req := logRequest{pod: pod, container: container, tail: want, redact: redact}
+			if crashed(pod, container) {
+				previous := req
+				previous.previous = true
+				r.readLog(ctx, &out, previous)
 			}
-			scan := bufio.NewScanner(io.LimitReader(stream, maxOutput))
-			scan.Buffer(make([]byte, 0, 64*1024), 256*1024)
-			for scan.Scan() {
-				fmt.Fprintf(&out, "%s/%s: %s\n", pod.Name, container, redact(scan.Text()))
-			}
-			_ = stream.Close()
+			r.readLog(ctx, &out, req)
 		}
 	}
 	text := out.String()
 	if len(text) > maxOutput {
-		// Keep the newest lines, cut at a line's start.
 		text = text[len(text)-maxOutput:]
 		if nl := strings.IndexByte(text, '\n'); nl >= 0 {
 			text = text[nl+1:]
@@ -267,8 +308,61 @@ func (r *Runner) logs(ctx context.Context, component string, lines *int) (string
 	return text, nil
 }
 
+func (r *Runner) readLog(ctx context.Context, out *strings.Builder, req logRequest) {
+	label := req.pod.Name + "/" + req.container
+	if req.previous {
+		label += " (previous)"
+	}
+	tail := req.tail
+	stream, err := r.kube.CoreV1().Pods(r.namespace).GetLogs(req.pod.Name, &corev1.PodLogOptions{
+		Container: req.container, TailLines: &tail, Timestamps: true, Previous: req.previous,
+	}).Stream(ctx)
+	if err != nil {
+		fmt.Fprintf(out, "%s: could not read its log: %s\n", label, req.redact(oneLine(err.Error())))
+		return
+	}
+	defer func() { _ = stream.Close() }()
+	scan := bufio.NewScanner(io.LimitReader(stream, maxOutput))
+	scan.Buffer(make([]byte, 0, 64*1024), 256*1024)
+	for scan.Scan() {
+		fmt.Fprintf(out, "%s: %s\n", label, req.redact(scan.Text()))
+	}
+}
+
+func newestFirst(a, b corev1.Pod) int {
+	if c := b.CreationTimestamp.Time.Compare(a.CreationTimestamp.Time); c != 0 {
+		return c
+	}
+	return strings.Compare(a.Name, b.Name)
+}
+
+func containers(pod *corev1.Pod) []string {
+	out := make([]string, 0, len(pod.Spec.InitContainers)+len(pod.Spec.Containers))
+	for i := range pod.Spec.InitContainers {
+		out = append(out, pod.Spec.InitContainers[i].Name)
+	}
+	for i := range pod.Spec.Containers {
+		out = append(out, pod.Spec.Containers[i].Name)
+	}
+	return out
+}
+
+func crashed(pod *corev1.Pod, container string) bool {
+	statuses := slices.Concat(pod.Status.InitContainerStatuses, pod.Status.ContainerStatuses)
+	for i := range statuses {
+		s := &statuses[i]
+		if s.Name == container {
+			return s.RestartCount > 0 && s.State.Running == nil && s.LastTerminationState.Terminated != nil
+		}
+	}
+	return false
+}
+
 func succeeded(message string, output *string) instanceapi.CommandResult {
-	res := instanceapi.CommandResult{Status: instanceapi.CommandResultStatusSucceeded, Output: output}
+	res := instanceapi.CommandResult{
+		Status: instanceapi.CommandResultStatusSucceeded,
+		Output: output,
+	}
 	if message != "" {
 		res.Message = &message
 	}
@@ -276,10 +370,7 @@ func succeeded(message string, output *string) instanceapi.CommandResult {
 }
 
 func failed(err error) instanceapi.CommandResult {
-	msg := oneLine(err.Error())
-	if len(msg) > maxMessage {
-		msg = msg[:maxMessage]
-	}
+	msg := health.Clean(err.Error(), maxMessage)
 	return instanceapi.CommandResult{Status: instanceapi.CommandResultStatusFailed, Message: &msg}
 }
 

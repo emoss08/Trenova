@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/i18n"
 )
 
 const ReasonNotOnPlan = "not_on_plan"
@@ -27,6 +28,23 @@ func NewPlanDenial(feature platformcatalog.FeatureKey) PlanDenial {
 	}
 
 	return denial
+}
+
+func (d PlanDenial) In(locale i18n.Locale) PlanDenial {
+	d.FeatureName = i18n.Translate(locale, d.FeatureName)
+	d.AddOnName = i18n.Translate(locale, d.AddOnName)
+	return d
+}
+
+func DenialsIn(locale i18n.Locale, denials []PlanDenial) []PlanDenial {
+	if denials == nil {
+		return nil
+	}
+	out := make([]PlanDenial, len(denials))
+	for i := range denials {
+		out[i] = denials[i].In(locale)
+	}
+	return out
 }
 
 func (d *PlanDenial) Restriction() *errortypes.PlanRestrictionError {

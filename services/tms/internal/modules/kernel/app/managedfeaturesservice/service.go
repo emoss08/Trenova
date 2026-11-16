@@ -13,11 +13,13 @@ import (
 	"github.com/maypok86/otter/v2"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"golang.org/x/time/rate"
 )
 
 const (
-	stateTTL = 30 * time.Second
-	stateKey = managedfeatures.CurrentStateID
+	stateTTL        = 30 * time.Second
+	stateKey        = managedfeatures.CurrentStateID
+	unknownLogEvery = time.Hour
 )
 
 type Params struct {
@@ -29,10 +31,11 @@ type Params struct {
 }
 
 type Service struct {
-	repo  managedfeaturesports.StateRepository
-	clock timeutils.Clock
-	l     *zap.Logger
-	cache *otter.Cache[string, cached]
+	repo    managedfeaturesports.StateRepository
+	clock   timeutils.Clock
+	l       *zap.Logger
+	cache   *otter.Cache[string, cached]
+	unknown *rate.Sometimes
 }
 
 type cached struct {
@@ -50,6 +53,7 @@ func New(p Params) *Service {
 			MaximumSize:      1,
 			ExpiryCalculator: otter.ExpiryWriting[string, cached](stateTTL),
 		}),
+		unknown: &rate.Sometimes{First: 1, Interval: unknownLogEvery},
 	}
 }
 
@@ -89,16 +93,21 @@ func (s *Service) Enabled(ctx context.Context, feature platformcatalog.FeatureKe
 
 func (s *Service) SetFeatures(
 	ctx context.Context,
-	features []platformcatalog.FeatureKey,
+	received *managedfeatures.Received,
 ) (*managedfeatures.Replacement, error) {
+	now := s.clock()
+	if err := received.Validate(now); err != nil {
+		return nil, err
+	}
 	replacement, err := s.repo.Replace(ctx, &managedfeaturesports.ReplaceRequest{
-		Features: features,
-		Now:      s.clock(),
+		Received: received,
+		Now:      now,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if !replacement.Changed() {
+	if !replacement.Updated() {
+		s.logUnknown(replacement)
 		return replacement, nil
 	}
 	s.cache.Invalidate(stateKey)
@@ -106,26 +115,84 @@ func (s *Service) SetFeatures(
 	return replacement, nil
 }
 
+func (s *Service) RemindPlanEnd(ctx context.Context) (*managedfeatures.Replacement, error) {
+	replacement, err := s.repo.RemindPlanEnd(ctx, s.clock())
+	if err != nil {
+		return nil, err
+	}
+	if !replacement.Updated() {
+		return replacement, nil
+	}
+	s.cache.Invalidate(stateKey)
+	s.l.Info("reminding the administrators that the plan ends in three days",
+		zap.Int64("planEndsAt", replacement.Current.PlanEndsAt),
+	)
+	return replacement, nil
+}
+
 func (s *Service) logChange(replacement *managedfeatures.Replacement) {
 	fields := []zap.Field{
 		zap.Int("features", len(replacement.Current.Features)),
-		zap.Strings("added", keyStrings(replacement.Change.Added)),
-		zap.Strings("removed", keyStrings(replacement.Change.Removed)),
+		zap.Int("addOnEndings", len(replacement.Current.AddOnEndings)),
+		zap.Bool("planUrl", replacement.Current.PlanURL != ""),
+		zap.Int64("planEndsAt", replacement.Current.PlanEndsAt),
 	}
-	if len(replacement.Unknown) == 0 {
+	if replacement.PlanEnd != nil {
+		fields = append(fields, zap.String("planEndNotice", string(replacement.PlanEnd.Kind)))
+	}
+	if replacement.Changed() {
+		fields = append(fields,
+			zap.Strings("added", keyStrings(replacement.Change.Added)),
+			zap.Strings("removed", keyStrings(replacement.Change.Removed)),
+			zap.Strings("ending", endingStrings(replacement.Change.Ending)),
+			zap.Strings("kept", keyStrings(replacement.Change.Kept)),
+		)
+	}
+	if !hasUnknown(replacement) {
 		s.l.Info("the control plane set the feature list", fields...)
 		return
 	}
 	s.l.Warn(
-		"the control plane set the feature list and named features this instance does not know",
-		append(fields, zap.Strings("ignored", keyStrings(replacement.Unknown)))...,
+		"the control plane set the feature list and named features or add-ons this instance does not know",
+		append(fields, unknownFields(replacement)...)...,
 	)
 }
 
-func keyStrings(keys []platformcatalog.FeatureKey) []string {
+func (s *Service) logUnknown(replacement *managedfeatures.Replacement) {
+	if !hasUnknown(replacement) {
+		return
+	}
+	s.unknown.Do(func() {
+		s.l.Warn(
+			"the control plane names features or add-ons this instance does not know; they are ignored",
+			unknownFields(replacement)...,
+		)
+	})
+}
+
+func hasUnknown(replacement *managedfeatures.Replacement) bool {
+	return len(replacement.Unknown) > 0 || len(replacement.UnknownAddOns) > 0
+}
+
+func unknownFields(replacement *managedfeatures.Replacement) []zap.Field {
+	return []zap.Field{
+		zap.Strings("ignored", keyStrings(replacement.Unknown)),
+		zap.Strings("ignoredAddOns", keyStrings(replacement.UnknownAddOns)),
+	}
+}
+
+func keyStrings[K ~string](keys []K) []string {
 	out := make([]string, len(keys))
 	for i, key := range keys {
 		out[i] = string(key)
+	}
+	return out
+}
+
+func endingStrings(endings []managedfeatures.AddOnEnding) []string {
+	out := make([]string, len(endings))
+	for i, ending := range endings {
+		out[i] = string(ending.AddOn) + "@" + time.Unix(ending.EndsAt, 0).UTC().Format(time.RFC3339)
 	}
 	return out
 }

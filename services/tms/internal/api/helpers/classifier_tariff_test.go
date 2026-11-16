@@ -71,7 +71,7 @@ func TestSanitizer_CarriesTheSourceRangeOfACheckError(t *testing.T) {
 
 	extracted := NewSanitizer(false).ExtractErrors(err)
 	require.Len(t, extracted, 1)
-	assert.Equal(t, "source", extracted[0].Field)
+	assert.Equal(t, "source", extracted[0].Path.String())
 	require.NotNil(t, extracted[0].Range)
 	assert.Equal(t, 12, extracted[0].Range.From)
 	assert.Equal(t, 19, extracted[0].Range.To)

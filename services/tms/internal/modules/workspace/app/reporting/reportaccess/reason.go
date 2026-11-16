@@ -148,7 +148,7 @@ func (a *Access) Refusal(ctx context.Context, err error) error {
 func planReason(locale i18n.Locale, d *Denial, entity, plural string) string {
 	addOn := ""
 	if d.Use.Plan != nil {
-		addOn = d.Use.Plan.AddOnName
+		addOn = i18n.Translate(locale, d.Use.Plan.AddOnName)
 	}
 	switch {
 	case addOn == "" && d.Label == "":

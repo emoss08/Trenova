@@ -19,6 +19,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "SupportAccessGrantConnection", Implementors: []string{"SupportAccessGrantConnection"}},
 		{Name: "SupportAccessGrantEdge", Implementors: []string{"SupportAccessGrantEdge"}},
 		{Name: "SupportAccessSettings", Implementors: []string{"SupportAccessSettings"}},
+		{Name: "SupportLogRequest", Implementors: []string{"SupportLogRequest"}},
+		{Name: "SupportLogRequests", Implementors: []string{"SupportLogRequests"}},
 		{Name: "SupportSession", Implementors: []string{"SupportSession"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -49,8 +51,33 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNSupportAccessGrant2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportAccessGrant),
 			},
+			{
+				Name:       "requestSupportLogs",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "SupportLogRequest",
+				Args:       field_Mutation_requestSupportLogs_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@supportaccess").RequestSupportLogs(ctx, fc.Args["input"].(gqlmodel.RequestSupportLogsInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNSupportLogRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogRequest),
+			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
+			{
+				Name:       "supportLogRequests",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "SupportLogRequests",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[QueryResolver](ec, "Query@supportaccess").SupportLogRequests(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNSupportLogRequests2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogRequests),
+			},
 			{
 				Name:       "supportAccessSettings",
 				NonNull:    true,
@@ -345,6 +372,119 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 		}},
+		{Object: "SupportLogRequest", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportLogRequest)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "period",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportLogRequest)
+					return obj.Period, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNSupportLogPeriod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogPeriod),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportLogRequest)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNSupportLogRequestStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogRequestStatus),
+			},
+			{
+				Name:     "requestedByName",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportLogRequest)
+					return obj.RequestedByName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "requestedAt",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportLogRequest)
+					return obj.RequestedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "finishedAt",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportLogRequest)
+					return obj.FinishedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "failureMessage",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportLogRequest)
+					return obj.FailureMessage, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+		}},
+		{Object: "SupportLogRequests", Fields: []*gqlexec.Field{
+			{
+				Name:     "managed",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportLogRequests)
+					return obj.Managed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "inFlight",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportLogRequests)
+					return obj.InFlight, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "remainingToday",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportLogRequests)
+					return obj.RemainingToday, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "requests",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "SupportLogRequest",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.SupportLogRequests)
+					return obj.Requests, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNSupportLogRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogRequestᚄ),
+			},
+		}},
 		{Object: "SupportSession", Fields: []*gqlexec.Field{
 			{
 				Name:     "staffName",
@@ -390,6 +530,7 @@ var Shard = &gqlexec.Shard{
 	},
 	Inputs: []gqlexec.Input{
 		{Name: "GrantSupportAccessInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputGrantSupportAccessInput)},
+		{Name: "RequestSupportLogsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRequestSupportLogsInput)},
 		{Name: "RevokeSupportAccessInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRevokeSupportAccessInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
@@ -401,9 +542,11 @@ var Shard = &gqlexec.Shard{
 type MutationResolver interface {
 	GrantSupportAccess(ctx context.Context, input gqlmodel.GrantSupportAccessInput) (*gqlmodel.SupportAccessGrant, error)
 	RevokeSupportAccess(ctx context.Context, input gqlmodel.RevokeSupportAccessInput) (*gqlmodel.SupportAccessGrant, error)
+	RequestSupportLogs(ctx context.Context, input gqlmodel.RequestSupportLogsInput) (*gqlmodel.SupportLogRequest, error)
 }
 
 type QueryResolver interface {
+	SupportLogRequests(ctx context.Context) (*gqlmodel.SupportLogRequests, error)
 	SupportAccessSettings(ctx context.Context) (*gqlmodel.SupportAccessSettings, error)
 	SupportAccessGrants(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SupportAccessGrantConnection, error)
 	SupportAccessGrant(ctx context.Context, id string) (*gqlmodel.SupportAccessGrant, error)
@@ -418,6 +561,8 @@ var (
 	errNoChild4 = errors.New("field of type SupportAccessStatus does not have child fields")
 	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
 	errNoChild6 = errors.New("field of type Boolean does not have child fields")
+	errNoChild7 = errors.New("field of type SupportLogPeriod does not have child fields")
+	errNoChild8 = errors.New("field of type SupportLogRequestStatus does not have child fields")
 )
 
 func field_Mutation_grantSupportAccess_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -438,6 +583,19 @@ func field_Mutation_revokeSupportAccess_args(ctx context.Context, ec *gqlexec.Ex
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.RevokeSupportAccessInput, error) {
 			return unmarshalNRevokeSupportAccessInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRevokeSupportAccessInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_requestSupportLogs_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RequestSupportLogsInput, error) {
+			return unmarshalNRequestSupportLogsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRequestSupportLogsInput(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -523,6 +681,36 @@ func unmarshalInputGrantSupportAccessInput(ctx context.Context, ec *gqlexec.Exec
 	return it, nil
 }
 
+func unmarshalInputRequestSupportLogsInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RequestSupportLogsInput, error) {
+	var it gqlmodel.RequestSupportLogsInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"period"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "period":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("period"))
+			data, err := unmarshalNSupportLogPeriod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogPeriod(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Period = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalInputRevokeSupportAccessInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RevokeSupportAccessInput, error) {
 	var it gqlmodel.RevokeSupportAccessInput
 	if obj == nil {
@@ -584,6 +772,11 @@ func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNRequestSupportLogsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRequestSupportLogsInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RequestSupportLogsInput, error) {
+	res, err := unmarshalInputRequestSupportLogsInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNRevokeSupportAccessInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRevokeSupportAccessInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RevokeSupportAccessInput, error) {
 	res, err := unmarshalInputRevokeSupportAccessInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -596,6 +789,12 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 
 func unmarshalNSupportAccessScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportAccessScope(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.SupportAccessScope, error) {
 	var res gqlmodel.SupportAccessScope
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNSupportLogPeriod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogPeriod(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.SupportLogPeriod, error) {
+	var res gqlmodel.SupportLogPeriod
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -695,6 +894,38 @@ func marshalNSupportAccessSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 
 func marshalNSupportAccessStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportAccessStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.SupportAccessStatus) graphql.Marshaler {
 	return v
+}
+
+func marshalNSupportLogPeriod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogPeriod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.SupportLogPeriod) graphql.Marshaler {
+	return v
+}
+
+func marshalNSupportLogRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogRequestᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.SupportLogRequest) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.SupportLogRequest]{
+		Elem:        marshalNSupportLogRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogRequest,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNSupportLogRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.SupportLogRequest) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "SupportLogRequest", v)
+}
+
+func marshalNSupportLogRequestStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogRequestStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.SupportLogRequestStatus) graphql.Marshaler {
+	return v
+}
+
+func marshalNSupportLogRequests2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSupportLogRequests(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.SupportLogRequests) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "SupportLogRequests", v)
 }
 
 func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {

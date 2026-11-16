@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/versionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/rateimport"
@@ -41,12 +42,14 @@ func SharedOptions() fx.Option {
 			managedfeaturesrepository.New,
 			managedfeaturesservice.New,
 			managedfeaturesservice.NewReceiver,
+			func(r *managedfeaturesservice.Receiver) managedfeaturesports.PlanEndReminder { return r },
 			managedplanservice.New,
 			featureGate,
 			managedusagerepository.New,
 			managedusageservice.New,
 			managedusageservice.NewReceiver,
 			func(s *managedusageservice.Service) managedusageports.Gate { return s },
+			func(s *managedusageservice.Service) managedusageports.UsageReader { return s },
 			usageProvider,
 			usstateservice.New,
 			spreadsheetLimits,

@@ -62,13 +62,16 @@ func (e BackupRequestStatusPhase) Valid() bool {
 
 // Defines values for CommandKind.
 const (
-	CollectLogs CommandKind = "collect_logs"
-	Restart     CommandKind = "restart"
+	CollectLogBundle CommandKind = "collect_log_bundle"
+	CollectLogs      CommandKind = "collect_logs"
+	Restart          CommandKind = "restart"
 )
 
 // Valid indicates whether the value is a known member of the CommandKind enum.
 func (e CommandKind) Valid() bool {
 	switch e {
+	case CollectLogBundle:
+		return true
 	case CollectLogs:
 		return true
 	case Restart:
@@ -81,6 +84,7 @@ func (e CommandKind) Valid() bool {
 // Defines values for CommandResultStatus.
 const (
 	CommandResultStatusFailed    CommandResultStatus = "failed"
+	CommandResultStatusRefused   CommandResultStatus = "refused"
 	CommandResultStatusSucceeded CommandResultStatus = "succeeded"
 )
 
@@ -88,6 +92,8 @@ const (
 func (e CommandResultStatus) Valid() bool {
 	switch e {
 	case CommandResultStatusFailed:
+		return true
+	case CommandResultStatusRefused:
 		return true
 	case CommandResultStatusSucceeded:
 		return true
@@ -150,10 +156,33 @@ func (e InstanceSpecSchemaVersion) Valid() bool {
 	}
 }
 
+// Defines values for LogBundleUpdateStatus.
+const (
+	LogBundleCollecting LogBundleUpdateStatus = "collecting"
+	LogBundleFailed     LogBundleUpdateStatus = "failed"
+	LogBundleRefused    LogBundleUpdateStatus = "refused"
+	LogBundleStored     LogBundleUpdateStatus = "stored"
+)
+
+// Valid indicates whether the value is a known member of the LogBundleUpdateStatus enum.
+func (e LogBundleUpdateStatus) Valid() bool {
+	switch e {
+	case LogBundleCollecting:
+		return true
+	case LogBundleFailed:
+		return true
+	case LogBundleRefused:
+		return true
+	case LogBundleStored:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MeterUsageUnit.
 const (
 	MeterUsageUnitBytes MeterUsageUnit = "bytes"
-	MeterUsageUnitCents MeterUsageUnit = "cents"
 	MeterUsageUnitCount MeterUsageUnit = "count"
 )
 
@@ -162,9 +191,25 @@ func (e MeterUsageUnit) Valid() bool {
 	switch e {
 	case MeterUsageUnitBytes:
 		return true
-	case MeterUsageUnitCents:
-		return true
 	case MeterUsageUnitCount:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OperatorUpgradePhase.
+const (
+	OperatorUpgradePhaseFailed    OperatorUpgradePhase = "failed"
+	OperatorUpgradePhaseUpgrading OperatorUpgradePhase = "upgrading"
+)
+
+// Valid indicates whether the value is a known member of the OperatorUpgradePhase enum.
+func (e OperatorUpgradePhase) Valid() bool {
+	switch e {
+	case OperatorUpgradePhaseFailed:
+		return true
+	case OperatorUpgradePhaseUpgrading:
 		return true
 	default:
 		return false
@@ -173,6 +218,7 @@ func (e MeterUsageUnit) Valid() bool {
 
 // Defines values for ProblemCode.
 const (
+	ProblemCodeConflict         ProblemCode = "conflict"
 	ProblemCodeInternal         ProblemCode = "internal"
 	ProblemCodeInvalidRequest   ProblemCode = "invalid_request"
 	ProblemCodeNotFound         ProblemCode = "not_found"
@@ -185,6 +231,8 @@ const (
 // Valid indicates whether the value is a known member of the ProblemCode enum.
 func (e ProblemCode) Valid() bool {
 	switch e {
+	case ProblemCodeConflict:
+		return true
 	case ProblemCodeInternal:
 		return true
 	case ProblemCodeInvalidRequest:
@@ -198,6 +246,24 @@ func (e ProblemCode) Valid() bool {
 	case ProblemCodeUnavailable:
 		return true
 	case ProblemCodeValidationFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RequestedByKind.
+const (
+	RequestedByCustomer RequestedByKind = "customer"
+	RequestedByStaff    RequestedByKind = "staff"
+)
+
+// Valid indicates whether the value is a known member of the RequestedByKind enum.
+func (e RequestedByKind) Valid() bool {
+	switch e {
+	case RequestedByCustomer:
+		return true
+	case RequestedByStaff:
 		return true
 	default:
 		return false
@@ -231,7 +297,6 @@ func (e RestoreProgressPhase) Valid() bool {
 // Defines values for SpecAllowanceUnit.
 const (
 	SpecAllowanceUnitBytes SpecAllowanceUnit = "bytes"
-	SpecAllowanceUnitCents SpecAllowanceUnit = "cents"
 	SpecAllowanceUnitCount SpecAllowanceUnit = "count"
 )
 
@@ -239,8 +304,6 @@ const (
 func (e SpecAllowanceUnit) Valid() bool {
 	switch e {
 	case SpecAllowanceUnitBytes:
-		return true
-	case SpecAllowanceUnitCents:
 		return true
 	case SpecAllowanceUnitCount:
 		return true
@@ -285,6 +348,7 @@ func (e SpecPlanBackup) Valid() bool {
 // Defines values for SpecPlanSupport.
 const (
 	BusinessHours SpecPlanSupport = "business_hours"
+	Contracted    SpecPlanSupport = "contracted"
 	Email         SpecPlanSupport = "email"
 	Priority      SpecPlanSupport = "priority"
 )
@@ -293,6 +357,8 @@ const (
 func (e SpecPlanSupport) Valid() bool {
 	switch e {
 	case BusinessHours:
+		return true
+	case Contracted:
 		return true
 	case Email:
 		return true
@@ -312,6 +378,24 @@ const (
 func (e SpecReleaseChannel) Valid() bool {
 	switch e {
 	case Stable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SupportGrantScope.
+const (
+	Full     SupportGrantScope = "full"
+	ReadOnly SupportGrantScope = "read_only"
+)
+
+// Valid indicates whether the value is a known member of the SupportGrantScope enum.
+func (e SupportGrantScope) Valid() bool {
+	switch e {
+	case Full:
+		return true
+	case ReadOnly:
 		return true
 	default:
 		return false
@@ -387,6 +471,9 @@ type BackupRequestStatusPhase string
 
 // Command defines model for Command.
 type Command struct {
+	// BundleId For `collect_log_bundle`, the bundle the control plane made for it.
+	BundleId *openapi_types.UUID `json:"bundleId,omitempty"`
+
 	// Component A component as the status report names it, such as `api`. Required for `collect_logs`.
 	Component *string            `json:"component,omitempty"`
 	Id        openapi_types.UUID `json:"id"`
@@ -395,17 +482,40 @@ type Command struct {
 	// Kind `restart` restarts the named component's workload, or every Trenova workload when no
 	// component is named. The database is never restarted this way: a restart of everything
 	// leaves it running, and naming it fails. `collect_logs` returns the named component's
-	// most recent log lines.
+	// most recent log lines. `collect_log_bundle` collects every component's kept lines
+	// between `since` and `until` into a zip in the instance's own object storage, reports
+	// the bundle's progress with `updateLogBundle`, and answers the command once the bundle
+	// is stored, has failed or was refused.
 	Kind CommandKind `json:"kind"`
 
-	// Lines For `collect_logs`, how many of the most recent lines to return.
+	// Lines For `collect_logs`, how many of the most recent lines to return. With log keeping on,
+	// the instance reads them from what it keeps (7 days) across every pod the component
+	// had; with it off, from the running pods only, at most 500 per container. Either way
+	// the output stops at 262,144 bytes, keeping the newest lines.
 	Lines *int `json:"lines,omitempty"`
+
+	// RequestedBy Who asked for a `collect_logs` or `collect_log_bundle` command; required on both. A
+	// customer's own request (an owner or admin in the console) is carried out as asked. A staff
+	// request is carried out only while that staff address holds a live support access grant on
+	// the instance, which the instance checks itself and audits; without one the command is
+	// answered `refused` and nothing is collected.
+	RequestedBy *RequestedBy `json:"requestedBy,omitempty"`
+
+	// Since For `collect_log_bundle`, the start of the period, inclusive.
+	Since *time.Time `json:"since,omitempty"`
+
+	// Until For `collect_log_bundle`, the end of the period, exclusive; at most 7 days after
+	// `since`.
+	Until *time.Time `json:"until,omitempty"`
 }
 
 // CommandKind `restart` restarts the named component's workload, or every Trenova workload when no
 // component is named. The database is never restarted this way: a restart of everything
 // leaves it running, and naming it fails. `collect_logs` returns the named component's
-// most recent log lines.
+// most recent log lines. `collect_log_bundle` collects every component's kept lines
+// between `since` and `until` into a zip in the instance's own object storage, reports
+// the bundle's progress with `updateLogBundle`, and answers the command once the bundle
+// is stored, has failed or was refused.
 type CommandKind string
 
 // CommandList defines model for CommandList.
@@ -415,15 +525,19 @@ type CommandList struct {
 
 // CommandResult defines model for CommandResult.
 type CommandResult struct {
-	// Message A short explanation, required when failed. One line, no control characters.
+	// Message A short explanation, required when failed or refused. One line, no control characters.
 	Message *string `json:"message,omitempty"`
 
 	// Output For `collect_logs`, the lines, newest last, with secrets removed.
-	Output *string             `json:"output,omitempty"`
+	Output *string `json:"output,omitempty"`
+
+	// Status `refused` when a staff request found no live support access grant on the instance;
+	// nothing was collected.
 	Status CommandResultStatus `json:"status"`
 }
 
-// CommandResultStatus defines model for CommandResult.Status.
+// CommandResultStatus `refused` when a staff request found no live support access grant on the instance;
+// nothing was collected.
 type CommandResultStatus string
 
 // ComponentStatus defines model for ComponentStatus.
@@ -449,13 +563,18 @@ type FieldError struct {
 }
 
 // FinalBackup The backup taken after the instance applied a `decommissioned` spec, reported with that
-// revision as `appliedRevision`. It is kept for 7 days after the instance is torn down.
+// revision as `appliedRevision`. It is kept for the control plane's final backup retention
+// (`account.finalBackupDays`) after the instance is torn down.
 type FinalBackup struct {
 	CompletedAt time.Time `json:"completedAt"`
 
 	// Id The backup's identifier in the instance's backup store.
-	Id        string `json:"id"`
-	SizeBytes int64  `json:"sizeBytes"`
+	Id string `json:"id"`
+
+	// SizeBytes The backup's size, only when the operator knows it. The backup tool the operator
+	// uses does not report one, so it is left out rather than sent as zero; staff are then
+	// told nothing about its size.
+	SizeBytes *int64 `json:"sizeBytes,omitempty"`
 }
 
 // InstanceSecrets defines model for InstanceSecrets.
@@ -482,6 +601,19 @@ type InstanceSecrets struct {
 // InstanceSpec What the instance should be. `schemaVersion` changes when a field's meaning changes; an
 // operator refuses a version it does not know.
 type InstanceSpec struct {
+	// Account Where the customer manages the instance in the Trenova console. The control plane adds it
+	// to every spec when it serves one, from where its console is served; it is not part of a
+	// stored revision. The spec's `ETag` changes with it as well as with the revision, so a
+	// console that moves reaches every operator. An operator that receives a spec without it
+	// sends the TMS no plan URL, and the TMS keeps the one it holds.
+	Account *SpecAccount `json:"account,omitempty"`
+
+	// AddonEndings The add-ons whose removal is scheduled, each with when it ends. They stay in `addons`
+	// and their features stay on until then. Absent when none is ending. The operator sends
+	// the list to the TMS with the features on every tick, an empty list when this is
+	// absent, so the instance's list is replaced each time.
+	AddonEndings *[]SpecAddonEnding `json:"addonEndings,omitempty"`
+
 	// Addons The add-ons the instance has, by key.
 	Addons []string `json:"addons"`
 
@@ -494,7 +626,8 @@ type InstanceSpec struct {
 	// same request until another replaces it.
 	Backup *SpecBackupRequest `json:"backup,omitempty"`
 
-	// Components Extra workloads to run, such as `docling` for Document Intelligence.
+	// Components Extra workloads to run: `docling` with Document Intelligence, `embedding` (the embedding
+	// service) with Trenova AI.
 	Components []string `json:"components"`
 
 	// Database The database the instance runs on, once a restore has replaced its first one: `generation`
@@ -536,6 +669,28 @@ type InstanceSpec struct {
 	// `restore` or a matching `database` means remove the new database.
 	Restore       *SpecRestore              `json:"restore,omitempty"`
 	SchemaVersion InstanceSpecSchemaVersion `json:"schemaVersion"`
+
+	// Support Trenova support access: the keys that sign the assertions Trenova staff enter the instance
+	// with, which instance this is, and the one email domain a grant may name. The control plane
+	// adds it to every spec when it serves one; it is not part of a stored revision, and the
+	// spec's `ETag` changes with it, so a rotated key set reaches every operator on its next
+	// poll. Absent when the control plane has no staff domain configured: support access is off,
+	// and the operator then sends the instance nothing.
+	//
+	// The operator delivers it to the TMS as it is (`PUT /managed/v1/support-access` with
+	// `instanceId`, `staffDomain` and `keys`), whenever what the TMS holds differs. Keys rotate
+	// by overlap: a new key is served beside the old one before it signs, and the old one is
+	// served for 7 days after it stops, so delivering every set as served never refuses an
+	// assertion in flight.
+	//
+	// The assertion (a compact JWS, EdDSA, protected header `{alg: EdDSA, kid, typ:
+	// support-assertion+jwt}` and nothing else) carries exactly `iss` (`trenova-control-plane`),
+	// `aud` (`instanceId`), `sub` (the staff member's address at `staffDomain`), `name` (at most
+	// 100 characters), `org` (the organization's ID on the instance), `jti` (fresh, 16 to 64 of
+	// `[A-Za-z0-9_-]`), `iat` and `exp` (at most 60 seconds after `iat`). The staff member's
+	// browser posts it as the form field `assertion` to `https://<hostname>/api/v1/support/enter`;
+	// it is never put in a URL.
+	Support *SpecSupport `json:"support,omitempty"`
 
 	// SystemEmail The sender Trenova supplies for the instance's system email (invitations, password resets,
 	// notifications). Absent when Trenova supplies none: the operator then removes any the
@@ -581,6 +736,63 @@ type IssuedCertificate struct {
 	NotAfter    time.Time `json:"notAfter"`
 }
 
+// LogBundleComponent One source in the bundle, as its `<component>.log` file.
+type LogBundleComponent struct {
+	Component string `json:"component"`
+	Lines     int64  `json:"lines"`
+
+	// Truncated Whether the source was cut at a size cap (its own, or the bundle's). A cut keeps the
+	// newest lines; the manifest says where the kept lines start.
+	Truncated bool `json:"truncated"`
+}
+
+// LogBundleRegistered defines model for LogBundleRegistered.
+type LogBundleRegistered struct {
+	BundleId openapi_types.UUID `json:"bundleId"`
+}
+
+// LogBundleRegistration A log bundle an administrator asked for inside Trenova, registered by the operator before
+// it collects anything.
+type LogBundleRegistration struct {
+	// RequestId The request's ID in the TMS. Registering the same ID again answers the same bundle.
+	RequestId string `json:"requestId"`
+
+	// RequestedBy The Trenova administrator who asked.
+	RequestedBy LogRequester `json:"requestedBy"`
+
+	// Since The start of the period, inclusive.
+	Since time.Time `json:"since"`
+
+	// Until The end of the period, exclusive; at most 7 days after `since`.
+	Until time.Time `json:"until"`
+}
+
+// LogBundleUpdate How a log bundle goes. `collecting` once the operator starts; then one outcome: `stored`
+// with `objectKey`, `sizeBytes` and `components`; `failed` or `refused` with `message`.
+type LogBundleUpdate struct {
+	Components *[]LogBundleComponent `json:"components,omitempty"`
+
+	// Message Why it failed or was refused, a sentence a person can read. One line, no control
+	// characters.
+	Message *string `json:"message,omitempty"`
+
+	// ObjectKey Where the zip is, in the instance's documents bucket: `support/logs/<bundleId>.zip`.
+	ObjectKey *string `json:"objectKey,omitempty"`
+
+	// SizeBytes The zip's size.
+	SizeBytes *int64                `json:"sizeBytes,omitempty"`
+	Status    LogBundleUpdateStatus `json:"status"`
+}
+
+// LogBundleUpdateStatus defines model for LogBundleUpdate.Status.
+type LogBundleUpdateStatus string
+
+// LogRequester The Trenova administrator who asked.
+type LogRequester struct {
+	Email openapi_types.Email `json:"email"`
+	Name  *string             `json:"name,omitempty"`
+}
+
 // MeterUsage defines model for MeterUsage.
 type MeterUsage struct {
 	// Allowance The window's allowance; 0 when the plan and add-ons include none.
@@ -598,6 +810,40 @@ type MeterUsage struct {
 
 // MeterUsageUnit defines model for MeterUsage.Unit.
 type MeterUsageUnit string
+
+// OperatorStatus The operator itself: the release it runs and its move to the release the spec names. The
+// operator follows the instance's release and moves first: it brings Trenova to a new release
+// only once it runs that release itself, so `upgrade` says why `version` lags the spec.
+type OperatorStatus struct {
+	// Message A short explanation, one line: why an upgrade failed, or a node manifest that pins the
+	// operator's version.
+	Message *string `json:"message,omitempty"`
+
+	// Upgrade The operator's move to the spec's release, present while it is under way or after it failed.
+	// `upgrading` while the new operator is installed and takes over. `failed` once it could not
+	// be (a version the registry does not have, or one that never became ready): the operator
+	// stays on its version, Trenova stays on its own, and neither is tried again until the spec
+	// names another release.
+	Upgrade *OperatorUpgrade `json:"upgrade,omitempty"`
+
+	// Version The release the operator runs, such as `0.12.2`.
+	Version string `json:"version"`
+}
+
+// OperatorUpgrade The operator's move to the spec's release, present while it is under way or after it failed.
+// `upgrading` while the new operator is installed and takes over. `failed` once it could not
+// be (a version the registry does not have, or one that never became ready): the operator
+// stays on its version, Trenova stays on its own, and neither is tried again until the spec
+// names another release.
+type OperatorUpgrade struct {
+	Phase OperatorUpgradePhase `json:"phase"`
+
+	// Version The release the operator is moving to.
+	Version string `json:"version"`
+}
+
+// OperatorUpgradePhase defines model for OperatorUpgrade.Phase.
+type OperatorUpgradePhase string
 
 // Problem defines model for Problem.
 type Problem struct {
@@ -619,6 +865,20 @@ type RenewCertificateRequest struct {
 	Csr string `json:"csr"`
 }
 
+// RequestedBy Who asked for a `collect_logs` or `collect_log_bundle` command; required on both. A
+// customer's own request (an owner or admin in the console) is carried out as asked. A staff
+// request is carried out only while that staff address holds a live support access grant on
+// the instance, which the instance checks itself and audits; without one the command is
+// answered `refused` and nothing is collected.
+type RequestedBy struct {
+	Email openapi_types.Email `json:"email"`
+	Kind  RequestedByKind     `json:"kind"`
+	Name  *string             `json:"name,omitempty"`
+}
+
+// RequestedByKind defines model for RequestedBy.Kind.
+type RequestedByKind string
+
 // RestoreProgress How the restore the spec's `restore` asks for goes: `preparing` while the new database is
 // restored, `ready` once it accepts connections at `recoveredTo`, `failed` if it cannot be, and
 // `switched` once the instance runs on it after a revision names it as `database`.
@@ -631,6 +891,39 @@ type RestoreProgress struct {
 
 // RestoreProgressPhase defines model for RestoreProgress.Phase.
 type RestoreProgressPhase string
+
+// SpecAccount Where the customer manages the instance in the Trenova console. The control plane adds it
+// to every spec when it serves one, from where its console is served; it is not part of a
+// stored revision. The spec's `ETag` changes with it as well as with the revision, so a
+// console that moves reaches every operator. An operator that receives a spec without it
+// sends the TMS no plan URL, and the TMS keeps the one it holds.
+type SpecAccount struct {
+	// EndsAt When the instance's plan ends, present exactly while its owner has set it to end: the
+	// end of the period already paid for. The instance runs as it is until then; at that
+	// time it is decommissioned (final backup, then teardown). Trenova warns its
+	// administrators. Absent once the plan is kept; the `ETag` changes either way.
+	EndsAt *time.Time `json:"endsAt,omitempty"`
+
+	// FinalBackupDays How many days the instance's final backup is kept after the instance is taken down.
+	// The operator passes it to the TMS, which says it wherever it tells people what happens
+	// when a plan ends.
+	FinalBackupDays int32 `json:"finalBackupDays"`
+
+	// PlanUrl The absolute http or https address of the instance's plan page in the console, where
+	// add-ons are bought. The operator passes it to the TMS with the feature list; the TMS
+	// links to it from its own plan page and refuses anything but an absolute http or https
+	// address with a host and no user information.
+	PlanUrl string `json:"planUrl"`
+}
+
+// SpecAddonEnding An add-on whose removal is scheduled, and when it ends.
+type SpecAddonEnding struct {
+	// Addon The add-on's code, as the TMS catalog names it (`ACC`, `AI`).
+	Addon string `json:"addon"`
+
+	// EndsAt When the add-on leaves the plan.
+	EndsAt time.Time `json:"endsAt"`
+}
 
 // SpecAdministratorInvite A one-time link for the first administrator to choose their password. The control plane
 // holds the token and emails the link, `https://<hostname>/auth/reset?token=<token>&purpose=invite`;
@@ -757,6 +1050,39 @@ type SpecRestore struct {
 	TargetTime       time.Time          `json:"targetTime"`
 }
 
+// SpecSupport Trenova support access: the keys that sign the assertions Trenova staff enter the instance
+// with, which instance this is, and the one email domain a grant may name. The control plane
+// adds it to every spec when it serves one; it is not part of a stored revision, and the
+// spec's `ETag` changes with it, so a rotated key set reaches every operator on its next
+// poll. Absent when the control plane has no staff domain configured: support access is off,
+// and the operator then sends the instance nothing.
+//
+// The operator delivers it to the TMS as it is (`PUT /managed/v1/support-access` with
+// `instanceId`, `staffDomain` and `keys`), whenever what the TMS holds differs. Keys rotate
+// by overlap: a new key is served beside the old one before it signs, and the old one is
+// served for 7 days after it stops, so delivering every set as served never refuses an
+// assertion in flight.
+//
+// The assertion (a compact JWS, EdDSA, protected header `{alg: EdDSA, kid, typ:
+// support-assertion+jwt}` and nothing else) carries exactly `iss` (`trenova-control-plane`),
+// `aud` (`instanceId`), `sub` (the staff member's address at `staffDomain`), `name` (at most
+// 100 characters), `org` (the organization's ID on the instance), `jti` (fresh, 16 to 64 of
+// `[A-Za-z0-9_-]`), `iat` and `exp` (at most 60 seconds after `iat`). The staff member's
+// browser posts it as the form field `assertion` to `https://<hostname>/api/v1/support/enter`;
+// it is never put in a URL.
+type SpecSupport struct {
+	// InstanceId The instance's ID in the control plane, the audience of every assertion.
+	InstanceId string `json:"instanceId"`
+
+	// Keys The keys whose assertions the instance accepts, newest first, each with its own
+	// `kid`. The newest signs; the others stopped signing within the last 7 days.
+	Keys []SupportKey `json:"keys"`
+
+	// StaffDomain The lower-case email domain of Trenova staff, the only one a grant may name: exactly
+	// this domain, never a subdomain of it.
+	StaffDomain string `json:"staffDomain"`
+}
+
 // SpecSystemEmail The sender Trenova supplies for the instance's system email (invitations, password resets,
 // notifications). Absent when Trenova supplies none: the operator then removes any the
 // instance holds. The credential itself is never in the spec; the operator fetches it from
@@ -792,11 +1118,17 @@ type StatusReport struct {
 	Features *[]string `json:"features,omitempty"`
 
 	// FinalBackup The backup taken after the instance applied a `decommissioned` spec, reported with that
-	// revision as `appliedRevision`. It is kept for 7 days after the instance is torn down.
+	// revision as `appliedRevision`. It is kept for the control plane's final backup retention
+	// (`account.finalBackupDays`) after the instance is torn down.
 	FinalBackup *FinalBackup `json:"finalBackup,omitempty"`
 
 	// Message A short explanation when not ready.
 	Message *string `json:"message,omitempty"`
+
+	// Operator The operator itself: the release it runs and its move to the release the spec names. The
+	// operator follows the instance's release and moves first: it brings Trenova to a new release
+	// only once it runs that release itself, so `upgrade` says why `version` lags the spec.
+	Operator *OperatorStatus `json:"operator,omitempty"`
 
 	// Ready Whether every component is ready and the post-deploy checks pass.
 	Ready bool `json:"ready"`
@@ -805,6 +1137,16 @@ type StatusReport struct {
 	// restored, `ready` once it accepts connections at `recoveredTo`, `failed` if it cannot be, and
 	// `switched` once the instance runs on it after a revision names it as `database`.
 	Restore *RestoreProgress `json:"restore,omitempty"`
+
+	// SupportGrants Every live Trenova support access grant on the instance, across its organizations, as
+	// the TMS lists them now: the complete list, at most 100. The control plane replaces what
+	// it holds for the instance with exactly this list, in the transaction that records the
+	// report, so an empty list says no grant is live. Left out (an operator that does not
+	// read them, or could not this time), the last list reported stands. Staff see the list,
+	// and the control plane signs an assertion to enter only for a grant on it that names
+	// the staff member and has not ended; the instance checks the grant again on entry, so a
+	// grant revoked since the last report is refused there.
+	SupportGrants *[]SupportGrant `json:"supportGrants,omitempty"`
 
 	// Version The Trenova release running.
 	Version *string `json:"version,omitempty"`
@@ -815,6 +1157,51 @@ type StorageBucket struct {
 	AccessKeyId     string `json:"accessKeyId"`
 	Bucket          string `json:"bucket"`
 	SecretAccessKey string `json:"secretAccessKey"`
+}
+
+// SupportGrant One live support access grant, as the TMS holds it.
+type SupportGrant struct {
+	// ExpiresAt When the grant ends.
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// Id The grant's ID on the instance. Each grant is listed once.
+	Id string `json:"id"`
+
+	// OrganizationId The organization's ID on the instance, which an assertion under this grant names as `org`.
+	OrganizationId string `json:"organizationId"`
+
+	// OrganizationName The organization's name, which staff are shown.
+	OrganizationName string `json:"organizationName"`
+
+	// Scope `read_only` lets support read only; `full` acts as an administrator, less what the TMS keeps from support.
+	Scope SupportGrantScope `json:"scope"`
+
+	// StaffEmail The staff member's address the grant names, lower-case ASCII, as the TMS stores it.
+	StaffEmail string `json:"staffEmail"`
+}
+
+// SupportGrantScope `read_only` lets support read only; `full` acts as an administrator, less what the TMS keeps from support.
+type SupportGrantScope string
+
+// SupportKey An Ed25519 public JSON Web Key (RFC 8037).
+type SupportKey struct {
+	// Alg Always `EdDSA`.
+	Alg string `json:"alg"`
+
+	// Crv Always `Ed25519`.
+	Crv string `json:"crv"`
+
+	// Kid The key's ID, which an assertion's header names, such as `cp-20261116-a1b2c3`.
+	Kid string `json:"kid"`
+
+	// Kty Always `OKP`.
+	Kty string `json:"kty"`
+
+	// Use Always `sig`.
+	Use string `json:"use"`
+
+	// X The 32-byte public key, unpadded base64url.
+	X string `json:"x"`
 }
 
 // SystemEmailCredential The credential of the sender Trenova supplies for the instance's system email, present
@@ -860,7 +1247,7 @@ type UsageReading struct {
 	// Meter A catalog meter's key, such as `shipments`.
 	Meter string `json:"meter"`
 
-	// Quantity In the meter's unit (a count, credit cents or bytes), at most 10^15.
+	// Quantity In the meter's unit (a count or bytes), at most 10^15.
 	Quantity int64 `json:"quantity"`
 }
 
@@ -874,6 +1261,9 @@ type UsageWindow struct {
 	End   time.Time `json:"end"`
 	Start time.Time `json:"start"`
 }
+
+// Conflict defines model for Conflict.
+type Conflict = Problem
 
 // Invalid defines model for Invalid.
 type Invalid = Problem
@@ -898,6 +1288,12 @@ type RenewCertificateJSONRequestBody = RenewCertificateRequest
 
 // CompleteCommandJSONRequestBody defines body for CompleteCommand for application/json ContentType.
 type CompleteCommandJSONRequestBody = CommandResult
+
+// RegisterLogBundleJSONRequestBody defines body for RegisterLogBundle for application/json ContentType.
+type RegisterLogBundleJSONRequestBody = LogBundleRegistration
+
+// UpdateLogBundleJSONRequestBody defines body for UpdateLogBundle for application/json ContentType.
+type UpdateLogBundleJSONRequestBody = LogBundleUpdate
 
 // ReportStatusJSONRequestBody defines body for ReportStatus for application/json ContentType.
 type ReportStatusJSONRequestBody = StatusReport
@@ -1006,11 +1402,13 @@ type ClientInterface interface {
 	// ListCommands The commands waiting for the instance
 	//
 	// What the control plane asks the instance to do besides converging to its spec: restart
-	// Trenova or one part of it, or collect a part's recent log lines for staff. The instance
-	// takes no inbound connections, so it asks: with each status report, or sooner. A command is
-	// listed until the instance answers it with `completeCommand` or it expires (15 minutes
-	// after it was issued); at most 20, oldest first. Carry each out once, by ID: a command
-	// listed again was not answered yet, not issued again.
+	// Trenova or one part of it, collect a part's recent log lines, or collect a log bundle. The
+	// instance takes no inbound connections, so it asks: with each status report, or sooner. A
+	// command is listed until the instance answers it with `completeCommand` or it expires (15
+	// minutes after it was issued); at most 20, oldest first. Carry each out once, by ID: a
+	// command listed again was not answered yet, not issued again. A `collect_log_bundle` may
+	// take longer than that: its outcome is the bundle's, reported with `updateLogBundle`, and
+	// an answer to an expired command is not found.
 	//
 	// Corresponds with GET /v1/commands (the `ListCommands` operationId).
 	ListCommands(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1036,6 +1434,62 @@ type ClientInterface interface {
 	//
 	// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
 	CompleteCommand(ctx context.Context, commandId openapi_types.UUID, body CompleteCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RegisterLogBundleWithBody Register a log bundle asked for inside Trenova
+	//
+	// An administrator asked for the instance's logs inside Trenova. The operator registers the
+	// request here before it collects anything, and reports how it goes with `updateLogBundle`.
+	// Registering the same `requestId` again answers the same `bundleId` with `201`, so an
+	// operator that restarted mid-way never makes a second bundle. A period longer than 7 days,
+	// or one whose `until` is not after `since`, is invalid.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/log-bundles (the `RegisterLogBundle` operationId).
+	RegisterLogBundleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RegisterLogBundle Register a log bundle asked for inside Trenova
+	//
+	// An administrator asked for the instance's logs inside Trenova. The operator registers the
+	// request here before it collects anything, and reports how it goes with `updateLogBundle`.
+	// Registering the same `requestId` again answers the same `bundleId` with `201`, so an
+	// operator that restarted mid-way never makes a second bundle. A period longer than 7 days,
+	// or one whose `until` is not after `since`, is invalid.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/log-bundles (the `RegisterLogBundle` operationId).
+	RegisterLogBundle(ctx context.Context, body RegisterLogBundleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateLogBundleWithBody Report how a log bundle goes
+	//
+	// A bundle goes `requested` → `collecting` → `stored`, `failed` or `refused`, and the control
+	// plane marks it `expired` when it deletes the zip 30 days after it was stored. The zip is
+	// at `support/logs/<bundleId>.zip` in the instance's documents bucket, a zip of one
+	// `<component>.log` per source (lines `timestamp pod container message`, oldest first, with
+	// every secret the instance holds removed) and a `manifest.json`. Reporting the same status
+	// again changes nothing; once a bundle has an outcome, a later report is ignored and answered
+	// `204`. A bundle that is not this instance's is not found.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /v1/log-bundles/{bundleId} (the `UpdateLogBundle` operationId).
+	UpdateLogBundleWithBody(ctx context.Context, bundleId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateLogBundle Report how a log bundle goes
+	//
+	// A bundle goes `requested` → `collecting` → `stored`, `failed` or `refused`, and the control
+	// plane marks it `expired` when it deletes the zip 30 days after it was stored. The zip is
+	// at `support/logs/<bundleId>.zip` in the instance's documents bucket, a zip of one
+	// `<component>.log` per source (lines `timestamp pod container message`, oldest first, with
+	// every secret the instance holds removed) and a `manifest.json`. Reporting the same status
+	// again changes nothing; once a bundle has an outcome, a later report is ignored and answered
+	// `204`. A bundle that is not this instance's is not found.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /v1/log-bundles/{bundleId} (the `UpdateLogBundle` operationId).
+	UpdateLogBundle(ctx context.Context, bundleId openapi_types.UUID, body UpdateLogBundleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSecrets The instance's escrowed secrets
 	//
@@ -1172,11 +1626,13 @@ func (c *Client) RenewCertificate(ctx context.Context, body RenewCertificateJSON
 // ListCommands The commands waiting for the instance
 //
 // What the control plane asks the instance to do besides converging to its spec: restart
-// Trenova or one part of it, or collect a part's recent log lines for staff. The instance
-// takes no inbound connections, so it asks: with each status report, or sooner. A command is
-// listed until the instance answers it with `completeCommand` or it expires (15 minutes
-// after it was issued); at most 20, oldest first. Carry each out once, by ID: a command
-// listed again was not answered yet, not issued again.
+// Trenova or one part of it, collect a part's recent log lines, or collect a log bundle. The
+// instance takes no inbound connections, so it asks: with each status report, or sooner. A
+// command is listed until the instance answers it with `completeCommand` or it expires (15
+// minutes after it was issued); at most 20, oldest first. Carry each out once, by ID: a
+// command listed again was not answered yet, not issued again. A `collect_log_bundle` may
+// take longer than that: its outcome is the bundle's, reported with `updateLogBundle`, and
+// an answer to an expired command is not found.
 //
 // Corresponds with GET /v1/commands (the `ListCommands` operationId).
 func (c *Client) ListCommands(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -1223,6 +1679,102 @@ func (c *Client) CompleteCommandWithBody(ctx context.Context, commandId openapi_
 // Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
 func (c *Client) CompleteCommand(ctx context.Context, commandId openapi_types.UUID, body CompleteCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCompleteCommandRequest(c.Server, commandId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RegisterLogBundleWithBody Register a log bundle asked for inside Trenova
+//
+// An administrator asked for the instance's logs inside Trenova. The operator registers the
+// request here before it collects anything, and reports how it goes with `updateLogBundle`.
+// Registering the same `requestId` again answers the same `bundleId` with `201`, so an
+// operator that restarted mid-way never makes a second bundle. A period longer than 7 days,
+// or one whose `until` is not after `since`, is invalid.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/log-bundles (the `RegisterLogBundle` operationId).
+func (c *Client) RegisterLogBundleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRegisterLogBundleRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RegisterLogBundle Register a log bundle asked for inside Trenova
+//
+// An administrator asked for the instance's logs inside Trenova. The operator registers the
+// request here before it collects anything, and reports how it goes with `updateLogBundle`.
+// Registering the same `requestId` again answers the same `bundleId` with `201`, so an
+// operator that restarted mid-way never makes a second bundle. A period longer than 7 days,
+// or one whose `until` is not after `since`, is invalid.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/log-bundles (the `RegisterLogBundle` operationId).
+func (c *Client) RegisterLogBundle(ctx context.Context, body RegisterLogBundleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRegisterLogBundleRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateLogBundleWithBody Report how a log bundle goes
+//
+// A bundle goes `requested` → `collecting` → `stored`, `failed` or `refused`, and the control
+// plane marks it `expired` when it deletes the zip 30 days after it was stored. The zip is
+// at `support/logs/<bundleId>.zip` in the instance's documents bucket, a zip of one
+// `<component>.log` per source (lines `timestamp pod container message`, oldest first, with
+// every secret the instance holds removed) and a `manifest.json`. Reporting the same status
+// again changes nothing; once a bundle has an outcome, a later report is ignored and answered
+// `204`. A bundle that is not this instance's is not found.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /v1/log-bundles/{bundleId} (the `UpdateLogBundle` operationId).
+func (c *Client) UpdateLogBundleWithBody(ctx context.Context, bundleId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateLogBundleRequestWithBody(c.Server, bundleId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateLogBundle Report how a log bundle goes
+//
+// A bundle goes `requested` → `collecting` → `stored`, `failed` or `refused`, and the control
+// plane marks it `expired` when it deletes the zip 30 days after it was stored. The zip is
+// at `support/logs/<bundleId>.zip` in the instance's documents bucket, a zip of one
+// `<component>.log` per source (lines `timestamp pod container message`, oldest first, with
+// every secret the instance holds removed) and a `manifest.json`. Reporting the same status
+// again changes nothing; once a bundle has an outcome, a later report is ignored and answered
+// `204`. A bundle that is not this instance's is not found.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /v1/log-bundles/{bundleId} (the `UpdateLogBundle` operationId).
+func (c *Client) UpdateLogBundle(ctx context.Context, bundleId openapi_types.UUID, body UpdateLogBundleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateLogBundleRequest(c.Server, bundleId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1504,6 +2056,93 @@ func NewCompleteCommandRequestWithBody(server string, commandId openapi_types.UU
 	return req, nil
 }
 
+// NewRegisterLogBundleRequest calls the generic RegisterLogBundle builder with application/json body
+func NewRegisterLogBundleRequest(server string, body RegisterLogBundleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRegisterLogBundleRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewRegisterLogBundleRequestWithBody constructs an http.Request for the RegisterLogBundle method, with any body, and a specified content type
+func NewRegisterLogBundleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/log-bundles")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewUpdateLogBundleRequest calls the generic UpdateLogBundle builder with application/json body
+func NewUpdateLogBundleRequest(server string, bundleId openapi_types.UUID, body UpdateLogBundleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateLogBundleRequestWithBody(server, bundleId, "application/json", bodyReader)
+}
+
+// NewUpdateLogBundleRequestWithBody constructs an http.Request for the UpdateLogBundle method, with any body, and a specified content type
+func NewUpdateLogBundleRequestWithBody(server string, bundleId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "bundleId", bundleId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/log-bundles/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetSecretsRequest constructs an http.Request for the GetSecrets method
 func NewGetSecretsRequest(server string) (*http.Request, error) {
 	var err error
@@ -1751,11 +2390,13 @@ type ClientWithResponsesInterface interface {
 	// ListCommandsWithResponse The commands waiting for the instance
 	//
 	// What the control plane asks the instance to do besides converging to its spec: restart
-	// Trenova or one part of it, or collect a part's recent log lines for staff. The instance
-	// takes no inbound connections, so it asks: with each status report, or sooner. A command is
-	// listed until the instance answers it with `completeCommand` or it expires (15 minutes
-	// after it was issued); at most 20, oldest first. Carry each out once, by ID: a command
-	// listed again was not answered yet, not issued again.
+	// Trenova or one part of it, collect a part's recent log lines, or collect a log bundle. The
+	// instance takes no inbound connections, so it asks: with each status report, or sooner. A
+	// command is listed until the instance answers it with `completeCommand` or it expires (15
+	// minutes after it was issued); at most 20, oldest first. Carry each out once, by ID: a
+	// command listed again was not answered yet, not issued again. A `collect_log_bundle` may
+	// take longer than that: its outcome is the bundle's, reported with `updateLogBundle`, and
+	// an answer to an expired command is not found.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -1783,6 +2424,62 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
 	CompleteCommandWithResponse(ctx context.Context, commandId openapi_types.UUID, body CompleteCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*CompleteCommandResponse, error)
+
+	// RegisterLogBundleWithBodyWithResponse Register a log bundle asked for inside Trenova
+	//
+	// An administrator asked for the instance's logs inside Trenova. The operator registers the
+	// request here before it collects anything, and reports how it goes with `updateLogBundle`.
+	// Registering the same `requestId` again answers the same `bundleId` with `201`, so an
+	// operator that restarted mid-way never makes a second bundle. A period longer than 7 days,
+	// or one whose `until` is not after `since`, is invalid.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/log-bundles (the `RegisterLogBundle` operationId).
+	RegisterLogBundleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RegisterLogBundleResponse, error)
+
+	// RegisterLogBundleWithResponse Register a log bundle asked for inside Trenova
+	//
+	// An administrator asked for the instance's logs inside Trenova. The operator registers the
+	// request here before it collects anything, and reports how it goes with `updateLogBundle`.
+	// Registering the same `requestId` again answers the same `bundleId` with `201`, so an
+	// operator that restarted mid-way never makes a second bundle. A period longer than 7 days,
+	// or one whose `until` is not after `since`, is invalid.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/log-bundles (the `RegisterLogBundle` operationId).
+	RegisterLogBundleWithResponse(ctx context.Context, body RegisterLogBundleJSONRequestBody, reqEditors ...RequestEditorFn) (*RegisterLogBundleResponse, error)
+
+	// UpdateLogBundleWithBodyWithResponse Report how a log bundle goes
+	//
+	// A bundle goes `requested` → `collecting` → `stored`, `failed` or `refused`, and the control
+	// plane marks it `expired` when it deletes the zip 30 days after it was stored. The zip is
+	// at `support/logs/<bundleId>.zip` in the instance's documents bucket, a zip of one
+	// `<component>.log` per source (lines `timestamp pod container message`, oldest first, with
+	// every secret the instance holds removed) and a `manifest.json`. Reporting the same status
+	// again changes nothing; once a bundle has an outcome, a later report is ignored and answered
+	// `204`. A bundle that is not this instance's is not found.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/log-bundles/{bundleId} (the `UpdateLogBundle` operationId).
+	UpdateLogBundleWithBodyWithResponse(ctx context.Context, bundleId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateLogBundleResponse, error)
+
+	// UpdateLogBundleWithResponse Report how a log bundle goes
+	//
+	// A bundle goes `requested` → `collecting` → `stored`, `failed` or `refused`, and the control
+	// plane marks it `expired` when it deletes the zip 30 days after it was stored. The zip is
+	// at `support/logs/<bundleId>.zip` in the instance's documents bucket, a zip of one
+	// `<component>.log` per source (lines `timestamp pod container message`, oldest first, with
+	// every secret the instance holds removed) and a `manifest.json`. Reporting the same status
+	// again changes nothing; once a bundle has an outcome, a later report is ignored and answered
+	// `204`. A bundle that is not this instance's is not found.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/log-bundles/{bundleId} (the `UpdateLogBundle` operationId).
+	UpdateLogBundleWithResponse(ctx context.Context, bundleId openapi_types.UUID, body UpdateLogBundleJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateLogBundleResponse, error)
 
 	// GetSecretsWithResponse The instance's escrowed secrets
 	//
@@ -2072,6 +2769,151 @@ func (r CompleteCommandResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r CompleteCommandResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RegisterLogBundleResponse429Headers the declared response headers of an HTTP 429 response for RegisterLogBundle
+type RegisterLogBundleResponse429Headers struct {
+	RetryAfter *int
+}
+
+type RegisterLogBundleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *LogBundleRegistered
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *Invalid
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *Conflict
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *RegisterLogBundleResponse429Headers
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r RegisterLogBundleResponse) GetJSON201() *LogBundleRegistered {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RegisterLogBundleResponse) GetApplicationproblemJSON400() *Invalid {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RegisterLogBundleResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r RegisterLogBundleResponse) GetApplicationproblemJSON409() *Conflict {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r RegisterLogBundleResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r RegisterLogBundleResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RegisterLogBundleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RegisterLogBundleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RegisterLogBundleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateLogBundleResponse429Headers the declared response headers of an HTTP 429 response for UpdateLogBundle
+type UpdateLogBundleResponse429Headers struct {
+	RetryAfter *int
+}
+
+type UpdateLogBundleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *Invalid
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *UpdateLogBundleResponse429Headers
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateLogBundleResponse) GetApplicationproblemJSON400() *Invalid {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r UpdateLogBundleResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateLogBundleResponse) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r UpdateLogBundleResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateLogBundleResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateLogBundleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateLogBundleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateLogBundleResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -2476,11 +3318,13 @@ func (c *ClientWithResponses) RenewCertificateWithResponse(ctx context.Context, 
 // ListCommandsWithResponse The commands waiting for the instance
 //
 // What the control plane asks the instance to do besides converging to its spec: restart
-// Trenova or one part of it, or collect a part's recent log lines for staff. The instance
-// takes no inbound connections, so it asks: with each status report, or sooner. A command is
-// listed until the instance answers it with `completeCommand` or it expires (15 minutes
-// after it was issued); at most 20, oldest first. Carry each out once, by ID: a command
-// listed again was not answered yet, not issued again.
+// Trenova or one part of it, collect a part's recent log lines, or collect a log bundle. The
+// instance takes no inbound connections, so it asks: with each status report, or sooner. A
+// command is listed until the instance answers it with `completeCommand` or it expires (15
+// minutes after it was issued); at most 20, oldest first. Carry each out once, by ID: a
+// command listed again was not answered yet, not issued again. A `collect_log_bundle` may
+// take longer than that: its outcome is the bundle's, reported with `updateLogBundle`, and
+// an answer to an expired command is not found.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -2525,6 +3369,86 @@ func (c *ClientWithResponses) CompleteCommandWithResponse(ctx context.Context, c
 		return nil, err
 	}
 	return ParseCompleteCommandResponse(rsp)
+}
+
+// RegisterLogBundleWithBodyWithResponse Register a log bundle asked for inside Trenova
+//
+// An administrator asked for the instance's logs inside Trenova. The operator registers the
+// request here before it collects anything, and reports how it goes with `updateLogBundle`.
+// Registering the same `requestId` again answers the same `bundleId` with `201`, so an
+// operator that restarted mid-way never makes a second bundle. A period longer than 7 days,
+// or one whose `until` is not after `since`, is invalid.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/log-bundles (the `RegisterLogBundle` operationId).
+func (c *ClientWithResponses) RegisterLogBundleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RegisterLogBundleResponse, error) {
+	rsp, err := c.RegisterLogBundleWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRegisterLogBundleResponse(rsp)
+}
+
+// RegisterLogBundleWithResponse Register a log bundle asked for inside Trenova
+//
+// An administrator asked for the instance's logs inside Trenova. The operator registers the
+// request here before it collects anything, and reports how it goes with `updateLogBundle`.
+// Registering the same `requestId` again answers the same `bundleId` with `201`, so an
+// operator that restarted mid-way never makes a second bundle. A period longer than 7 days,
+// or one whose `until` is not after `since`, is invalid.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/log-bundles (the `RegisterLogBundle` operationId).
+func (c *ClientWithResponses) RegisterLogBundleWithResponse(ctx context.Context, body RegisterLogBundleJSONRequestBody, reqEditors ...RequestEditorFn) (*RegisterLogBundleResponse, error) {
+	rsp, err := c.RegisterLogBundle(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRegisterLogBundleResponse(rsp)
+}
+
+// UpdateLogBundleWithBodyWithResponse Report how a log bundle goes
+//
+// A bundle goes `requested` → `collecting` → `stored`, `failed` or `refused`, and the control
+// plane marks it `expired` when it deletes the zip 30 days after it was stored. The zip is
+// at `support/logs/<bundleId>.zip` in the instance's documents bucket, a zip of one
+// `<component>.log` per source (lines `timestamp pod container message`, oldest first, with
+// every secret the instance holds removed) and a `manifest.json`. Reporting the same status
+// again changes nothing; once a bundle has an outcome, a later report is ignored and answered
+// `204`. A bundle that is not this instance's is not found.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/log-bundles/{bundleId} (the `UpdateLogBundle` operationId).
+func (c *ClientWithResponses) UpdateLogBundleWithBodyWithResponse(ctx context.Context, bundleId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateLogBundleResponse, error) {
+	rsp, err := c.UpdateLogBundleWithBody(ctx, bundleId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateLogBundleResponse(rsp)
+}
+
+// UpdateLogBundleWithResponse Report how a log bundle goes
+//
+// A bundle goes `requested` → `collecting` → `stored`, `failed` or `refused`, and the control
+// plane marks it `expired` when it deletes the zip 30 days after it was stored. The zip is
+// at `support/logs/<bundleId>.zip` in the instance's documents bucket, a zip of one
+// `<component>.log` per source (lines `timestamp pod container message`, oldest first, with
+// every secret the instance holds removed) and a `manifest.json`. Reporting the same status
+// again changes nothing; once a bundle has an outcome, a later report is ignored and answered
+// `204`. A bundle that is not this instance's is not found.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/log-bundles/{bundleId} (the `UpdateLogBundle` operationId).
+func (c *ClientWithResponses) UpdateLogBundleWithResponse(ctx context.Context, bundleId openapi_types.UUID, body UpdateLogBundleJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateLogBundleResponse, error) {
+	rsp, err := c.UpdateLogBundle(ctx, bundleId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateLogBundleResponse(rsp)
 }
 
 // GetSecretsWithResponse The instance's escrowed secrets
@@ -2825,6 +3749,136 @@ func ParseCompleteCommandResponse(rsp *http.Response) (*CompleteCommandResponse,
 	switch {
 	case rsp.StatusCode == 429:
 		var headers CompleteCommandResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRegisterLogBundleResponse parses an HTTP response from a RegisterLogBundleWithResponse call
+func ParseRegisterLogBundleResponse(rsp *http.Response) (*RegisterLogBundleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RegisterLogBundleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest LogBundleRegistered
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Invalid
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 429:
+		var headers RegisterLogBundleResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateLogBundleResponse parses an HTTP response from a UpdateLogBundleWithResponse call
+func ParseUpdateLogBundleResponse(rsp *http.Response) (*UpdateLogBundleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateLogBundleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Invalid
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 429:
+		var headers UpdateLogBundleResponse429Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

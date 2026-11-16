@@ -59,7 +59,10 @@ type cached struct {
 	state *managedusage.State
 }
 
-var _ managedusageports.Gate = (*Service)(nil)
+var (
+	_ managedusageports.Gate        = (*Service)(nil)
+	_ managedusageports.UsageReader = (*Service)(nil)
+)
 
 func New(p Params) *Service {
 	counters := slices.Clone(p.Counters)
@@ -120,6 +123,29 @@ func (s *Service) Decide(
 		return managedusage.Decision{}, fmt.Errorf("read the level of %s: %w", meter, err)
 	}
 	return managedusage.DecideAt(state, meter, level, requested), nil
+}
+
+func (s *Service) Usage(ctx context.Context) (*managedusage.Usage, error) {
+	state, err := s.State(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if state == nil || !state.HasWindow() {
+		return managedusage.UsageOf(state, nil), nil
+	}
+	levels := make(map[platformcatalog.MeterKey]int64, len(s.levels))
+	for _, m := range state.Meters {
+		reader, isLevel := s.levelReader(m.Meter)
+		if !isLevel {
+			continue
+		}
+		level, lerr := reader.Level(ctx)
+		if lerr != nil {
+			return nil, fmt.Errorf("read the level of %s: %w", m.Meter, lerr)
+		}
+		levels[m.Meter] = level
+	}
+	return managedusage.UsageOf(state, levels), nil
 }
 
 func (s *Service) levelReader(meter platformcatalog.MeterKey) (managedusageports.LevelReader, bool) {

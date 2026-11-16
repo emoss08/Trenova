@@ -21,7 +21,7 @@ func (s *State) Validate() error {
 		me.Add("window", errortypes.ErrInvalid, "The window must end after it starts")
 	}
 	if len(s.Meters) > MaxMeters {
-		me.Add("meters", errortypes.ErrInvalid, "At most %d meters", MaxMeters)
+		me.Add("meters", errortypes.ErrInvalid, "At most {0} meters", MaxMeters)
 	}
 	seen := make(map[platformcatalog.MeterKey]struct{}, len(s.Meters))
 	for i := range s.Meters {
