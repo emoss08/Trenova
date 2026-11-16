@@ -24,8 +24,10 @@ func TestTheChartLetsTheOperatorMoveOnlyItsOwnHelmChart(t *testing.T) {
 	t.Parallel()
 	docs := renderOperatorChart(t, nil)
 	for _, d := range docs {
-		require.NotContains(t, []any{"ClusterRole", "ClusterRoleBinding"}, d["kind"],
-			"the operator is given nothing cluster-wide")
+		if d["kind"] == "ClusterRole" || d["kind"] == "ClusterRoleBinding" {
+			require.Equal(t, releaseName+"-telemetry", nested(d, "metadata", "name"),
+				"the operator is given nothing cluster-wide but reading the node for telemetry")
+		}
 	}
 
 	role := one(t, docs, "Role", releaseName+"-self")
@@ -56,6 +58,77 @@ func TestTheChartLetsTheOperatorMoveOnlyItsOwnHelmChart(t *testing.T) {
 
 	require.Equal(t, releaseName, operatorEnv(t, docs)[envHelmChart],
 		"helm-controller names the release after its HelmChart")
+}
+
+func TestTheChartLetsTheOperatorReadOnlyWhatTelemetrySamples(t *testing.T) {
+	t.Parallel()
+	docs := renderOperatorChart(t, nil)
+
+	cluster := one(t, docs, "ClusterRole", releaseName+"-telemetry")
+	require.Equal(t, []string{
+		"/nodes:get",
+		"/nodes/stats:get",
+		"metrics.k8s.io/nodes:get",
+	}, grants(t, cluster))
+	for _, d := range docs {
+		if d["kind"] != "ClusterRole" && d["kind"] != "Role" {
+			continue
+		}
+		rules, _ := d["rules"].([]any)
+		for _, r := range rules {
+			resources, _ := nested(r, "resources").([]any)
+			require.NotContains(t, resources, "nodes/proxy",
+				"the node proxy reaches the whole kubelet API, exec included")
+		}
+	}
+
+	binding := one(t, docs, "ClusterRoleBinding", releaseName+"-telemetry")
+	require.Equal(t, releaseName+"-telemetry", nested(binding, "roleRef", "name"))
+	subjects, _ := binding["subjects"].([]any)
+	require.Len(t, subjects, 1)
+	subject, _ := subjects[0].(map[string]any)
+	require.Equal(t, "ServiceAccount", subject["kind"])
+	require.Equal(t, releaseName, subject["name"])
+	require.Equal(t, releaseNamespace, subject["namespace"])
+
+	release := one(t, docs, "Role", releaseName+"-release")
+	require.Contains(t, grants(t, release), "metrics.k8s.io/pods:list")
+	require.Equal(t, "trenova", nested(release, "metadata", "namespace"))
+
+	deployment := one(t, docs, "Deployment", releaseName)
+	containers, _ := nested(deployment, "spec", "template", "spec", "containers").([]any)
+	require.Len(t, containers, 1)
+	container, _ := containers[0].(map[string]any)
+	vars, _ := container["env"].([]any)
+	node := ""
+	for _, v := range vars {
+		e, _ := v.(map[string]any)
+		if e["name"] == "TRENOVA_OPERATOR_NODE_NAME" {
+			node, _ = nested(e, "valueFrom", "fieldRef", "fieldPath").(string)
+		}
+	}
+	require.Equal(t, "spec.nodeName", node, "a suspended instance runs no pod to find its node by")
+}
+
+func grants(t *testing.T, role map[string]any) []string {
+	t.Helper()
+	rules, _ := role["rules"].([]any)
+	var out []string
+	for _, r := range rules {
+		rule, _ := r.(map[string]any)
+		require.Nil(t, rule["resourceNames"])
+		groups, _ := rule["apiGroups"].([]any)
+		resources, _ := rule["resources"].([]any)
+		verbs, _ := rule["verbs"].([]any)
+		for _, g := range groups {
+			for _, res := range resources {
+				for _, v := range verbs {
+					out = append(out, g.(string)+"/"+res.(string)+":"+v.(string))
+				}
+			}
+		}
+	}
+	return out
 }
 
 func TestTheChartRollsTheOperatorOnePodAtATime(t *testing.T) {

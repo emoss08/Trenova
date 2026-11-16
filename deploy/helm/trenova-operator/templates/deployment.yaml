@@ -48,6 +48,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: TRENOVA_OPERATOR_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
             # The operator follows the instance's release: this is the version
             # it compares with the spec's, and the one its HelmChart names.
             - name: TRENOVA_OPERATOR_VERSION

@@ -72,6 +72,7 @@ type Server struct {
 	statusFail  int
 	bundles     bundleState
 	emailEvents emailEventState
+	telemetry   telemetryState
 }
 
 type Params struct {
@@ -168,6 +169,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PUT /v1/status", s.putStatus)
 	mux.HandleFunc("POST /v1/certificate", s.renew)
 	mux.HandleFunc("POST /v1/usage", s.reportUsage)
+	mux.HandleFunc("POST /v1/telemetry", s.reportTelemetry)
 	mux.HandleFunc("GET /v1/secrets", s.getSecrets)
 	mux.HandleFunc("GET /v1/commands", s.listCommands)
 	mux.HandleFunc("PUT /v1/commands/{commandId}", s.completeCommand)

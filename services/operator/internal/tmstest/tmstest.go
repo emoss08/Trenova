@@ -36,6 +36,7 @@ type Server struct {
 	support  supportState
 
 	emailEvents emailEventState
+	dataUsage   dataUsageState
 }
 
 func New(t testing.TB, token string) *Server {
@@ -60,6 +61,7 @@ func New(t testing.TB, token string) *Server {
 	mux.HandleFunc("PUT /managed/v1/log-requests/{id}", s.putLogRequest)
 	mux.HandleFunc("POST /managed/v1/support/log-pulls", s.postLogPull)
 	s.routeSupport(mux)
+	mux.HandleFunc("GET /managed/v1/data-usage", s.getDataUsage)
 	srv := httptest.NewServer(s.authenticate(mux))
 	t.Cleanup(srv.Close)
 	s.URL = srv.URL

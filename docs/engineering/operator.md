@@ -11,6 +11,7 @@ record `0008-instances` and the contract `api/instance.yaml`; this doc is the in
 control plane (instance API, mutual TLS)
    ▲ GET /v1/spec (ETag)    │ PUT /v1/status every minute   │ POST /v1/certificate   │ POST /v1/usage
    │ GET /v1/commands       │ GET /v1/email-events, POST /v1/email-events/ack (while emailEvents)
+   │ POST /v1/telemetry every minute, beside the loop
    │                        ▼                               ▼                        ▼ every 15 minutes
 operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --install trenova@<version>
    │                                                    │
@@ -22,7 +23,9 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
    │                                           GET|PUT|DELETE /managed/v1/system-email,
    │                                           POST /managed/v1/system-email/events,
    │                                           GET|PUT /managed/v1/log-requests,
-   │                                           POST /managed/v1/support/log-pulls
+   │                                           POST /managed/v1/support/log-pulls,
+   │                                           GET /managed/v1/data-usage (telemetry, every 5 minutes)
+   ├── the kubelet (:10250, ServiceAccount token, cluster CA): GET /stats/summary (telemetry)
    ├── Loki (:3100, no auth, the release's): label values and query_range, read only
    └── the documents bucket: PUT and HEAD support/logs/<bundleId>.zip
 ```
@@ -41,6 +44,7 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
 | `internal/health` | each component's readiness, read from the cluster |
 | `internal/tms` | the client of the TMS's managed API, and the token read from the release's app Secret |
 | `internal/usage` | the usage relay: readings from the TMS to the control plane, its answer back |
+| `internal/telemetry` | what the instance uses, sampled every minute (the sampler) and sent beside the loop (the relay) |
 | `internal/storage` | the instance's buckets: the documents and backups Secrets, fetched from `GET /v1/storage` when missing or incomplete, and the documents bucket's CORS rules for the instance's origin |
 | `internal/backup` | backups read from and asked of CloudNativePG: health for the status report, the base backup before an update, the final backup, and a restore's progress |
 | `internal/systememail` | the system email sender: the TMS brought to the spec's fingerprint, the credential fetched from `GET /v1/secrets` and kept only in memory |
@@ -495,6 +499,72 @@ recovery as the rest of the loop. A missing token (the release not deployed with
 yet), a TMS that refuses the token after it was read again, or an unreachable TMS are logged
 and retried the same way. The TMS keeps the last state it was sent until the next.
 
+## Telemetry
+
+Once a minute the operator samples what the instance is using and sends it to the control plane
+(`POST /v1/telemetry`, the contract's `TelemetrySample`), which the console and the staff admin
+draw and attention rules read. Nothing in it bills or entitles. It is always on, with no setting.
+
+**Where it runs.** `internal/telemetry.Relay.Run` runs beside the loop, started by `Loop.Run`
+once the credentials are up (a `sync.WaitGroup` that `Loop.Run` waits on as it returns, so a lost
+lease or a stop ends both). It never runs on the loop's tick, so a slow or failing control plane,
+metrics API or kubelet never holds back the spec apply, the status report or a command. The loop's
+only touch is `Observe`: each status report's health parameters (Helm revision, stopped,
+hibernated, database generation), stored atomically, which the next sample reads. Before the loop
+has observed a release, a sample carries an empty `parts` list.
+
+**When.** It sleeps until the next minute starts (UTC), samples, stamps the sample with that
+minute (zero seconds), then sends. The wait is computed from the clock each time, so samples never
+share a minute; a minute the operator was busy for is skipped, not stamped twice.
+
+**What is read, and from where.** Every read has 5 seconds (the stats summary 10); a read that
+fails leaves its fields out (never zero) and logs one warning for that sample, so at most once a
+minute per kind.
+
+| Figure | Source | When the source is down |
+|---|---|---|
+| `parts[]`: name, `ready`, `replicas`, `readyReplicas` | `health.Checker.Parts`, the same reading the status report's `components` come from (Deployments, StatefulSets, the CloudNativePG `Cluster`, the revision's release Job), so the names are exactly the report's | `parts` is empty |
+| `parts[].restarts` | the restart counts of every container (init containers included) of the part's pods, summed over its copies | left out (the pod list failed) |
+| `parts[].cpuLimitMillicores`, `memoryLimitBytes` | the limits of the containers of the part's running pods, summed; left out when any container has none, or no pod runs | left out |
+| `parts[].cpuMillicores`, `memoryBytes` | `metrics.k8s.io` `PodMetrics` in the target namespace, summed over the part's running pods; 0 when none runs | left out, also when one running pod has no metrics yet |
+| `parts[].version` | the tag of the workload's first container image (the Cluster's `status.image`), without registry, name or digest | left out when the image has no tag |
+| `machine.cpuCapacityMillicores`, `memoryCapacityBytes` | the Node's `status.capacity` | left out |
+| `machine.cpuMillicores`, `memoryBytes` | `metrics.k8s.io` `NodeMetrics` (memory is the working set) | left out |
+| `machine.diskBytes`, `diskCapacityBytes` | the kubelet's stats summary, `node.fs` (the kubelet's filesystem, which on a single-node k3s machine also holds `local-path` volumes), read from the kubelet itself (below) | left out: the node has no InternalIP, the certificate does not verify, the kubelet refuses or the answer is over 8 MiB |
+| `data.databaseBytes`, `documentsBytes`, `searchBytes` | Trenova itself: `GET /managed/v1/data-usage` on the TMS's managed API (`tms.Client.DataUsage`, the managed token as for every TMS call), at most every 5 minutes with 10 seconds, never on the loop's tick; each figure is absent when Trenova could not measure it | the last good answer is used for up to 30 minutes, then the figures are left out; a release without the endpoint (404) leaves them out and says so at most once an hour |
+| `data.logsBytes` | the stats summary's volume statistics: used bytes of the volume claims mounted by the pod labelled `loki` | left out when the summary fails or the volume reports no usage (k3s's `local-path` volumes report none) |
+
+The node is the one most of the release's running pods are on, or the operator's own
+(`TRENOVA_OPERATOR_NODE_NAME`, from the downward API) when the instance runs none (suspended).
+The data sizes come from Trenova and not from volumes because the kubelet reports no usage for
+k3s's `local-path` volumes, and the operator holds no database connection of its own.
+
+**The kubelet.** The stats summary is read from the kubelet directly, never through the API
+server's node proxy (`nodes/proxy` would reach the whole kubelet API, exec included):
+`GET https://<node InternalIP>:<status.daemonEndpoints.kubeletEndpoint.Port, 10250 when unset>/stats/summary`
+with the operator's ServiceAccount token (the projected file, read again on every call since it
+rotates), the certificate verified against the cluster's CA bundle the pod mounts (k3s signs the
+kubelet's serving certificate with it, the node's IP in its names). Verification is never
+skipped: a certificate that does not verify sends nothing, the token included, and leaves disk
+out. The kubelet authorizes the call as `nodes/stats: get`. The answer is read up to 8 MiB
+within 10 seconds. The operator chart has no NetworkPolicy, so nothing limits the operator's way
+to the kubelet's port; a cluster that adds one must allow it.
+
+**Sending.** Unsent samples wait in memory in a ring of at most 120 (two hours); past that the
+oldest is dropped. After each sample the relay sends up to 30, oldest first, within 15 seconds; a
+204 drops them, a network failure or 5xx keeps them for the next minute, so an outage is caught up 30 a minute
+and a long one loses its oldest minutes. A 400 can never succeed: that batch is dropped and logged
+once at error level with the control plane's problem detail, and the next batch goes on. A sample for a minute already kept replaces it, one older
+than the newest kept is dropped, and samples older than the control plane accepts (2 hours, less
+a minute) are dropped before sending, so a batch never carries a minute twice and is never refused
+for one stale sample. A 429 waits out `Retry-After`; a 401 is left to the loop's credential
+recovery. A restart loses what was unsent.
+
+**Permissions.** In the target namespace, `metrics.k8s.io` `pods: list` (the release Role).
+Cluster-wide, the ClusterRole `<release>-telemetry`: `nodes: get`, `nodes/stats: get` and
+`metrics.k8s.io` `nodes: get`, bound to the operator's ServiceAccount; the only cluster-wide grant
+the operator holds. Never `nodes/proxy`: the chart test fails if any role grants it.
+
 ## Storage and backups
 
 **The buckets.** A managed instance keeps documents and backups in two buckets of its own, made by
@@ -797,8 +867,10 @@ storage Secrets), CloudNativePG Backups, which it creates itself, and read Pods,
 Events. It can create Alloy's Role (pods and their logs, read) without the `escalate` or `bind`
 verbs because it holds those permissions itself. In its own namespace it also holds its Lease and reads its own Deployment. With
 `selfUpgrade.enabled` (the default), a third Role in `kube-system` lets it read and patch its own
-HelmChart and read its install Job, both by name. It has no cluster-wide permission: the
-namespace, which it keeps on uninstall, is created by its chart.
+HelmChart and read its install Job, both by name. Its one cluster-wide permission is the ClusterRole
+`<release>-telemetry`: read nodes, their kubelet stats (`nodes/stats`, from the kubelet
+directly), and the nodes' metrics ([Telemetry](#telemetry)); the release Role also lists the pods' metrics. The namespace,
+which it keeps on uninstall, is created by its chart.
 
 ## Tests
 
@@ -812,7 +884,15 @@ namespace, which it keeps on uninstall, is created by its chart.
   no-op detection, recovery, readiness, the escrowed secrets (fetched once, kept when present,
   restored when incomplete, refused when malformed, the install held until they are in place),
   the usage relay (mapping, chunking, scheduling, the token read again on a 401) against an
-  in-process TMS, the first administrator (bootstrap values, invalid names and emails, the invite
+  in-process TMS, telemetry (the sampler against fake clusters: a part's copies summed, a part
+  without a limit, the metrics API or the stats summary down, the same names as the status
+  report, a suspended instance on the operator's node; Trenova's data figures carried, asked at
+  most every 5 minutes, kept 30 minutes then left out, a 404 logged at most once an hour; the
+  kubelet read over TLS verified by a test CA, the token sent and read again after rotation,
+  another CA, a 403 and an oversized answer leaving disk out; the relay against the fake control
+  plane: 30 oldest first, kept on failure, a refused batch dropped, the ring of 120, no minute
+  twice, a 429 waited out, run on the minute and stopped cleanly; a failing relay leaving the status report as it was; the operator
+  chart's telemetry ClusterRole exactly), the first administrator (bootstrap values, invalid names and emails, the invite
   installed, rechecked, replaced and reported, a failure omitted), the system email sender (sent
   when the fingerprint differs and not when equal, resent from memory, rotated, removed, retried,
   a mismatch and a 429 waited out, the credential in no log line or error), the system email

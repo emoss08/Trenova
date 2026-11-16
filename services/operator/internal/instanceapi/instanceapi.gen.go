@@ -570,6 +570,21 @@ type ComponentStatus struct {
 	Ready   bool    `json:"ready"`
 }
 
+// DataUsage How much the instance's data takes, each where it could be read.
+type DataUsage struct {
+	// DatabaseBytes The size of the instance's database.
+	DatabaseBytes *int64 `json:"databaseBytes,omitempty"`
+
+	// DocumentsBytes Documents and files stored.
+	DocumentsBytes *int64 `json:"documentsBytes,omitempty"`
+
+	// LogsBytes Logs kept on the instance.
+	LogsBytes *int64 `json:"logsBytes,omitempty"`
+
+	// SearchBytes The search index.
+	SearchBytes *int64 `json:"searchBytes,omitempty"`
+}
+
 // DesiredSpec defines model for DesiredSpec.
 type DesiredSpec struct {
 	Revision int64 `json:"revision"`
@@ -849,6 +864,23 @@ type LogRequester struct {
 	Name  *string             `json:"name,omitempty"`
 }
 
+// MachineUsage The machine the instance runs on, as a whole.
+type MachineUsage struct {
+	// CpuCapacityMillicores Processor the machine has to give.
+	CpuCapacityMillicores *int64 `json:"cpuCapacityMillicores,omitempty"`
+
+	// CpuMillicores Processor in use, in thousandths of a core.
+	CpuMillicores *int64 `json:"cpuMillicores,omitempty"`
+
+	// DiskBytes Disk in use on the volume that holds the instance's data.
+	DiskBytes         *int64 `json:"diskBytes,omitempty"`
+	DiskCapacityBytes *int64 `json:"diskCapacityBytes,omitempty"`
+
+	// MemoryBytes Memory in use (working set).
+	MemoryBytes         *int64 `json:"memoryBytes,omitempty"`
+	MemoryCapacityBytes *int64 `json:"memoryCapacityBytes,omitempty"`
+}
+
 // MeterUsage defines model for MeterUsage.
 type MeterUsage struct {
 	// Allowance The window's allowance; 0 when the plan and add-ons include none.
@@ -900,6 +932,33 @@ type OperatorUpgrade struct {
 
 // OperatorUpgradePhase defines model for OperatorUpgrade.Phase.
 type OperatorUpgradePhase string
+
+// PartUsage defines model for PartUsage.
+type PartUsage struct {
+	// CpuLimitMillicores The most the part may use; absent when it has no limit.
+	CpuLimitMillicores *int64 `json:"cpuLimitMillicores,omitempty"`
+	CpuMillicores      *int64 `json:"cpuMillicores,omitempty"`
+	MemoryBytes        *int64 `json:"memoryBytes,omitempty"`
+	MemoryLimitBytes   *int64 `json:"memoryLimitBytes,omitempty"`
+
+	// Name The part's name, as in the status report's `components`.
+	Name string `json:"name"`
+
+	// Ready Whether every copy of the part that should run is ready.
+	Ready         bool   `json:"ready"`
+	ReadyReplicas *int32 `json:"readyReplicas,omitempty"`
+
+	// Replicas Copies that should run.
+	Replicas *int32 `json:"replicas,omitempty"`
+
+	// Restarts Restarts of the part's containers since they were created, summed over its copies:
+	// a counter, so the difference between two samples is the restarts in between, and a
+	// lower value than the last means the part was replaced.
+	Restarts *int64 `json:"restarts,omitempty"`
+
+	// Version The image tag the part runs, without its registry or name.
+	Version *string `json:"version,omitempty"`
+}
 
 // Problem defines model for Problem.
 type Problem struct {
@@ -1287,6 +1346,30 @@ type SystemEmailCredential struct {
 // SystemEmailCredentialProvider The email provider the credential is for.
 type SystemEmailCredentialProvider string
 
+// TelemetryReport defines model for TelemetryReport.
+type TelemetryReport struct {
+	// Samples Oldest first, one per minute, no minute twice.
+	Samples []TelemetrySample `json:"samples"`
+}
+
+// TelemetrySample One minute of the instance. Every figure is what was read at `at`, not an average, except
+// `cpuMillicores`, which is the rate over the reading's own window as the cluster's metrics
+// report it. A figure the operator could not read is left out, never sent as zero.
+type TelemetrySample struct {
+	// At The minute the sample is for, in UTC, with zero seconds.
+	At time.Time `json:"at"`
+
+	// Data How much the instance's data takes, each where it could be read.
+	Data *DataUsage `json:"data,omitempty"`
+
+	// Machine The machine the instance runs on, as a whole.
+	Machine *MachineUsage `json:"machine,omitempty"`
+
+	// Parts One entry per part of Trenova the instance runs (the same names as the status
+	// report's `components`), each once.
+	Parts []PartUsage `json:"parts"`
+}
+
 // UsageAck defines model for UsageAck.
 type UsageAck struct {
 	Meters []MeterUsage `json:"meters"`
@@ -1357,6 +1440,9 @@ type UpdateLogBundleJSONRequestBody = LogBundleUpdate
 
 // ReportStatusJSONRequestBody defines body for ReportStatus for application/json ContentType.
 type ReportStatusJSONRequestBody = StatusReport
+
+// ReportTelemetryJSONRequestBody defines body for ReportTelemetry for application/json ContentType.
+type ReportTelemetryJSONRequestBody = TelemetryReport
 
 // ReportUsageJSONRequestBody defines body for ReportUsage for application/json ContentType.
 type ReportUsageJSONRequestBody = UsageReport
@@ -1635,6 +1721,36 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /v1/storage (the `GetStorage` operationId).
 	GetStorage(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReportTelemetryWithBody Report what the instance is using
+	//
+	// What the instance's machine, its parts and its data used, one sample a minute. The
+	// operator sends the samples it has not yet had accepted, oldest first, at most 30 at a
+	// time, so a short outage is caught up and a long one loses its oldest minutes. The control
+	// plane keeps one sample per instance per minute: a repeat for a minute it holds replaces
+	// it, so sending again after a lost answer is safe. A sample older than 2 hours or more
+	// than 5 minutes ahead of the control plane's clock is refused. Nothing here bills or
+	// entitles; it is what the console and the staff admin draw, and what attention rules read.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/telemetry (the `ReportTelemetry` operationId).
+	ReportTelemetryWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReportTelemetry Report what the instance is using
+	//
+	// What the instance's machine, its parts and its data used, one sample a minute. The
+	// operator sends the samples it has not yet had accepted, oldest first, at most 30 at a
+	// time, so a short outage is caught up and a long one loses its oldest minutes. The control
+	// plane keeps one sample per instance per minute: a repeat for a minute it holds replaces
+	// it, so sending again after a lost answer is safe. A sample older than 2 hours or more
+	// than 5 minutes ahead of the control plane's clock is refused. Nothing here bills or
+	// entitles; it is what the console and the staff admin draw, and what attention rules read.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/telemetry (the `ReportTelemetry` operationId).
+	ReportTelemetry(ctx context.Context, body ReportTelemetryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ReportUsageWithBody Report usage, and learn what may continue
 	//
@@ -2034,6 +2150,56 @@ func (c *Client) ReportStatus(ctx context.Context, body ReportStatusJSONRequestB
 // Corresponds with GET /v1/storage (the `GetStorage` operationId).
 func (c *Client) GetStorage(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetStorageRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ReportTelemetryWithBody Report what the instance is using
+//
+// What the instance's machine, its parts and its data used, one sample a minute. The
+// operator sends the samples it has not yet had accepted, oldest first, at most 30 at a
+// time, so a short outage is caught up and a long one loses its oldest minutes. The control
+// plane keeps one sample per instance per minute: a repeat for a minute it holds replaces
+// it, so sending again after a lost answer is safe. A sample older than 2 hours or more
+// than 5 minutes ahead of the control plane's clock is refused. Nothing here bills or
+// entitles; it is what the console and the staff admin draw, and what attention rules read.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/telemetry (the `ReportTelemetry` operationId).
+func (c *Client) ReportTelemetryWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReportTelemetryRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ReportTelemetry Report what the instance is using
+//
+// What the instance's machine, its parts and its data used, one sample a minute. The
+// operator sends the samples it has not yet had accepted, oldest first, at most 30 at a
+// time, so a short outage is caught up and a long one loses its oldest minutes. The control
+// plane keeps one sample per instance per minute: a repeat for a minute it holds replaces
+// it, so sending again after a lost answer is safe. A sample older than 2 hours or more
+// than 5 minutes ahead of the control plane's clock is refused. Nothing here bills or
+// entitles; it is what the console and the staff admin draw, and what attention rules read.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/telemetry (the `ReportTelemetry` operationId).
+func (c *Client) ReportTelemetry(ctx context.Context, body ReportTelemetryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReportTelemetryRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2504,6 +2670,46 @@ func NewGetStorageRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewReportTelemetryRequest calls the generic ReportTelemetry builder with application/json body
+func NewReportTelemetryRequest(server string, body ReportTelemetryJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewReportTelemetryRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewReportTelemetryRequestWithBody constructs an http.Request for the ReportTelemetry method, with any body, and a specified content type
+func NewReportTelemetryRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/telemetry")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewReportUsageRequest calls the generic ReportUsage builder with application/json body
 func NewReportUsageRequest(server string, body ReportUsageJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -2798,6 +3004,36 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /v1/storage (the `GetStorage` operationId).
 	GetStorageWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStorageResponse, error)
+
+	// ReportTelemetryWithBodyWithResponse Report what the instance is using
+	//
+	// What the instance's machine, its parts and its data used, one sample a minute. The
+	// operator sends the samples it has not yet had accepted, oldest first, at most 30 at a
+	// time, so a short outage is caught up and a long one loses its oldest minutes. The control
+	// plane keeps one sample per instance per minute: a repeat for a minute it holds replaces
+	// it, so sending again after a lost answer is safe. A sample older than 2 hours or more
+	// than 5 minutes ahead of the control plane's clock is refused. Nothing here bills or
+	// entitles; it is what the console and the staff admin draw, and what attention rules read.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/telemetry (the `ReportTelemetry` operationId).
+	ReportTelemetryWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReportTelemetryResponse, error)
+
+	// ReportTelemetryWithResponse Report what the instance is using
+	//
+	// What the instance's machine, its parts and its data used, one sample a minute. The
+	// operator sends the samples it has not yet had accepted, oldest first, at most 30 at a
+	// time, so a short outage is caught up and a long one loses its oldest minutes. The control
+	// plane keeps one sample per instance per minute: a repeat for a minute it holds replaces
+	// it, so sending again after a lost answer is safe. A sample older than 2 hours or more
+	// than 5 minutes ahead of the control plane's clock is refused. Nothing here bills or
+	// entitles; it is what the console and the staff admin draw, and what attention rules read.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/telemetry (the `ReportTelemetry` operationId).
+	ReportTelemetryWithResponse(ctx context.Context, body ReportTelemetryJSONRequestBody, reqEditors ...RequestEditorFn) (*ReportTelemetryResponse, error)
 
 	// ReportUsageWithBodyWithResponse Report usage, and learn what may continue
 	//
@@ -3602,6 +3838,68 @@ func (r GetStorageResponse) ContentType() string {
 	return ""
 }
 
+// ReportTelemetryResponse429Headers the declared response headers of an HTTP 429 response for ReportTelemetry
+type ReportTelemetryResponse429Headers struct {
+	RetryAfter *int
+}
+
+type ReportTelemetryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *Invalid
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ReportTelemetryResponse429Headers
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ReportTelemetryResponse) GetApplicationproblemJSON400() *Invalid {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ReportTelemetryResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ReportTelemetryResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r ReportTelemetryResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ReportTelemetryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ReportTelemetryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ReportTelemetryResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ReportUsageResponse429Headers the declared response headers of an HTTP 429 response for ReportUsage
 type ReportUsageResponse429Headers struct {
 	RetryAfter *int
@@ -3982,6 +4280,48 @@ func (c *ClientWithResponses) GetStorageWithResponse(ctx context.Context, reqEdi
 		return nil, err
 	}
 	return ParseGetStorageResponse(rsp)
+}
+
+// ReportTelemetryWithBodyWithResponse Report what the instance is using
+//
+// What the instance's machine, its parts and its data used, one sample a minute. The
+// operator sends the samples it has not yet had accepted, oldest first, at most 30 at a
+// time, so a short outage is caught up and a long one loses its oldest minutes. The control
+// plane keeps one sample per instance per minute: a repeat for a minute it holds replaces
+// it, so sending again after a lost answer is safe. A sample older than 2 hours or more
+// than 5 minutes ahead of the control plane's clock is refused. Nothing here bills or
+// entitles; it is what the console and the staff admin draw, and what attention rules read.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/telemetry (the `ReportTelemetry` operationId).
+func (c *ClientWithResponses) ReportTelemetryWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReportTelemetryResponse, error) {
+	rsp, err := c.ReportTelemetryWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReportTelemetryResponse(rsp)
+}
+
+// ReportTelemetryWithResponse Report what the instance is using
+//
+// What the instance's machine, its parts and its data used, one sample a minute. The
+// operator sends the samples it has not yet had accepted, oldest first, at most 30 at a
+// time, so a short outage is caught up and a long one loses its oldest minutes. The control
+// plane keeps one sample per instance per minute: a repeat for a minute it holds replaces
+// it, so sending again after a lost answer is safe. A sample older than 2 hours or more
+// than 5 minutes ahead of the control plane's clock is refused. Nothing here bills or
+// entitles; it is what the console and the staff admin draw, and what attention rules read.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/telemetry (the `ReportTelemetry` operationId).
+func (c *ClientWithResponses) ReportTelemetryWithResponse(ctx context.Context, body ReportTelemetryJSONRequestBody, reqEditors ...RequestEditorFn) (*ReportTelemetryResponse, error) {
+	rsp, err := c.ReportTelemetry(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReportTelemetryResponse(rsp)
 }
 
 // ReportUsageWithBodyWithResponse Report usage, and learn what may continue
@@ -4716,6 +5056,62 @@ func ParseGetStorageResponse(rsp *http.Response) (*GetStorageResponse, error) {
 		response.Headers200 = &headers
 	case rsp.StatusCode == 429:
 		var headers GetStorageResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseReportTelemetryResponse parses an HTTP response from a ReportTelemetryWithResponse call
+func ParseReportTelemetryResponse(rsp *http.Response) (*ReportTelemetryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ReportTelemetryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Invalid
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 429:
+		var headers ReportTelemetryResponse429Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

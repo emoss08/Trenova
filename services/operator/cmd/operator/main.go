@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	metrics "k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/yaml"
 
 	"github.com/emoss08/trenova/operator/internal/backup"
@@ -41,6 +42,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/storage"
 	"github.com/emoss08/trenova/operator/internal/supportkeys"
 	"github.com/emoss08/trenova/operator/internal/systememail"
+	"github.com/emoss08/trenova/operator/internal/telemetry"
 	"github.com/emoss08/trenova/operator/internal/tms"
 	"github.com/emoss08/trenova/operator/internal/usage"
 	"github.com/emoss08/trenova/operator/internal/values"
@@ -85,6 +87,7 @@ type config struct {
 	lease           string
 	lokiURL         string
 	scratchDir      string
+	nodeName        string
 }
 
 func main() {
@@ -96,8 +99,10 @@ func main() {
 }
 
 type clients struct {
-	kube kubernetes.Interface
-	dyn  dynamic.Interface
+	kube    kubernetes.Interface
+	dyn     dynamic.Interface
+	metrics metrics.Interface
+	kubelet telemetry.Summaries
 }
 
 func run(logger *slog.Logger) error {
@@ -122,13 +127,28 @@ func run(logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("kubernetes: %w", err)
 	}
+	used, err := metrics.NewForConfig(rc)
+	if err != nil {
+		return fmt.Errorf("kubernetes metrics: %w", err)
+	}
+	ca, err := os.ReadFile(rc.CAFile)
+	if err != nil {
+		return fmt.Errorf("the cluster's CA bundle: %w", err)
+	}
+	kubelet, err := telemetry.NewKubeletSummaries(telemetry.KubeletParams{
+		CA:        ca,
+		TokenFile: rc.BearerTokenFile,
+	})
+	if err != nil {
+		return err
+	}
 	store := credential.NewStore(credential.StoreParams{
 		Client:    kube,
 		Namespace: cfg.namespace,
 		Enrolment: cfg.enrolmentSecret,
 		Identity:  cfg.identitySecret,
 	})
-	loop, err := newLoop(&cfg, clients{kube: kube, dyn: dyn}, store, base, logger)
+	loop, err := newLoop(&cfg, clients{kube: kube, dyn: dyn, metrics: used, kubelet: kubelet}, store, base, logger)
 	if err != nil {
 		return err
 	}
@@ -239,6 +259,30 @@ func newLoop(
 	if err != nil {
 		return nil, err
 	}
+	checker := health.NewChecker(&health.CheckerParams{
+		Kube:      c.kube,
+		Dynamic:   c.dyn,
+		Namespace: cfg.targetNamespace,
+		Release:   cfg.release,
+		Chart:     chartName,
+	})
+	telem, err := telemetry.New(&telemetry.Params{
+		ControlPlane: cp,
+		Source: telemetry.NewSampler(&telemetry.SamplerParams{
+			Kube:      c.kube,
+			Metrics:   c.metrics,
+			Parts:     checker,
+			Summaries: c.kubelet,
+			Data:      tmsClient,
+			Namespace: cfg.targetNamespace,
+			OwnNode:   cfg.nodeName,
+			Logger:    logger,
+		}),
+		Logger: logger,
+	})
+	if err != nil {
+		return nil, err
+	}
 	upgrader, err := selfupgrade.New(&selfupgrade.Params{
 		Dynamic:            c.dyn,
 		Kube:               c.kube,
@@ -268,13 +312,7 @@ func newLoop(
 			Namespace: cfg.targetNamespace,
 			Logger:    logger,
 		}),
-		Health: health.NewChecker(&health.CheckerParams{
-			Kube:      c.kube,
-			Dynamic:   c.dyn,
-			Namespace: cfg.targetNamespace,
-			Release:   cfg.release,
-			Chart:     chartName,
-		}),
+		Health: checker,
 		Escrow: escrow.New(&escrow.Params{
 			Client:       c.kube,
 			ControlPlane: cp,
@@ -309,6 +347,7 @@ func newLoop(
 		Commands:    runner,
 		EmailEvents: events,
 		Logs:        kept,
+		Telemetry:   telem,
 		Operator:    upgrader,
 		Capacity:    cfg.capacity,
 		Base:        base,
@@ -501,6 +540,8 @@ var _ logs.ControlPlane = (*lazyClient)(nil)
 
 var _ emailevents.ControlPlane = (*lazyClient)(nil)
 
+var _ telemetry.ControlPlane = (*lazyClient)(nil)
+
 type lazyClient struct {
 	creds *credential.Manager
 	doer  *http.Client
@@ -553,6 +594,14 @@ func (c *lazyClient) ReportUsage(
 		return instanceapi.UsageAck{}, err
 	}
 	return api.ReportUsage(ctx, r)
+}
+
+func (c *lazyClient) ReportTelemetry(ctx context.Context, r instanceapi.TelemetryReport) error {
+	api, err := c.client()
+	if err != nil {
+		return err
+	}
+	return api.ReportTelemetry(ctx, r)
 }
 
 func (c *lazyClient) Secrets(ctx context.Context) (instanceapi.InstanceSecrets, error) {
@@ -656,6 +705,7 @@ func load() (config, error) {
 		lease:           env("TRENOVA_OPERATOR_LEASE", "trenova-operator"),
 		lokiURL:         env("TRENOVA_OPERATOR_LOKI_URL", ""),
 		scratchDir:      env("TRENOVA_OPERATOR_SCRATCH_DIR", "/scratch"),
+		nodeName:        env("TRENOVA_OPERATOR_NODE_NAME", ""),
 	}
 	if cfg.namespace == "" {
 		return config{}, errors.New(

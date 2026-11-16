@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -102,6 +103,11 @@ type LogRequests interface {
 	Relay(ctx context.Context) error
 }
 
+type Telemetry interface {
+	Run(ctx context.Context) error
+	Observe(p health.CheckParams)
+}
+
 type Administrators interface {
 	InstallInvite(ctx context.Context, invite tms.Invite) (tms.Administrator, error)
 }
@@ -160,6 +166,7 @@ type Loop struct {
 	commands Commands
 	events   EmailEvents
 	logs     LogRequests
+	telem    Telemetry
 	operator Operator
 	located  values.Storage
 	capacity values.Capacity
@@ -203,6 +210,7 @@ type Params struct {
 	Commands       Commands
 	EmailEvents    EmailEvents
 	Logs           LogRequests
+	Telemetry      Telemetry
 	Operator       Operator
 	Capacity       values.Capacity
 	Base           map[string]any
@@ -244,6 +252,7 @@ func New(p *Params) (*Loop, error) {
 		commands: p.Commands,
 		events:   p.EmailEvents,
 		logs:     p.Logs,
+		telem:    p.Telemetry,
 		operator: p.Operator,
 		capacity: p.Capacity,
 		base:     p.Base,
@@ -278,6 +287,7 @@ func (p *Params) validate() error {
 		{"Commands", p.Commands == nil},
 		{"EmailEvents", p.EmailEvents == nil},
 		{"Logs", p.Logs == nil},
+		{"Telemetry", p.Telemetry == nil},
 		{"Operator", p.Operator == nil},
 		{"Base", p.Base == nil},
 		{"Namespace", p.Namespace == ""},
@@ -325,6 +335,13 @@ func (l *Loop) Run(ctx context.Context) error {
 			l.logger.Error("the log bundle worker stopped", "error", err)
 		}
 	}()
+	var beside sync.WaitGroup
+	defer beside.Wait()
+	beside.Go(func() {
+		if err := l.telem.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			l.logger.Error("the telemetry relay stopped", "error", err)
+		}
+	})
 	ticker := time.NewTicker(l.poll)
 	defer ticker.Stop()
 	for {
@@ -814,7 +831,9 @@ func (l *Loop) observe(
 		v := deployed.AppVersion
 		report.Version = &v
 	}
-	comps, err := l.health.Check(ctx, healthParams(deployed.Revision, vals))
+	params := healthParams(deployed.Revision, vals)
+	l.telem.Observe(params)
+	comps, err := l.health.Check(ctx, params)
 	if err != nil {
 		return l.notReady(report, err.Error())
 	}

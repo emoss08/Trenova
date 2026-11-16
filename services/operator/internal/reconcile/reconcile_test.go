@@ -219,6 +219,8 @@ type world struct {
 	operator *fakeOperator
 	logs     *fakeLogKeeping
 	events   *fakeEmailEvents
+	telem    *fakeTelemetry
+	client   *controlplane.Client
 	now      time.Time
 }
 
@@ -270,6 +272,8 @@ func newWorldWith(
 		}},
 		logs:   &fakeLogKeeping{},
 		events: &fakeEmailEvents{},
+		telem:  &fakeTelemetry{},
+		client: client,
 		now:    time.Now(),
 	}
 	w.usage = &fakeUsage{now: func() time.Time { return w.now }}
@@ -331,6 +335,7 @@ func newWorldWith(
 		Commands:       runner,
 		EmailEvents:    w.events,
 		Logs:           w.logs,
+		Telemetry:      w.telem,
 		Operator:       w.operator,
 		Base:           map[string]any{"clamav": map[string]any{"enabled": true}},
 		Namespace:      "trenova-system",

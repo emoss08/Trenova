@@ -126,6 +126,34 @@ paths:
         "429":
           $ref: "#/components/responses/RateLimited"
 
+  /v1/telemetry:
+    post:
+      operationId: reportTelemetry
+      summary: Report what the instance is using
+      description: |
+        What the instance's machine, its parts and its data used, one sample a minute. The
+        operator sends the samples it has not yet had accepted, oldest first, at most 30 at a
+        time, so a short outage is caught up and a long one loses its oldest minutes. The control
+        plane keeps one sample per instance per minute: a repeat for a minute it holds replaces
+        it, so sending again after a lost answer is safe. A sample older than 2 hours or more
+        than 5 minutes ahead of the control plane's clock is refused. Nothing here bills or
+        entitles; it is what the console and the staff admin draw, and what attention rules read.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelemetryReport"
+      responses:
+        "204":
+          description: Recorded.
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
   /v1/certificate:
     post:
       operationId: renewCertificate
@@ -1375,6 +1403,155 @@ components:
         stopped:
           type: boolean
           description: Whether the metered action must stop.
+
+    TelemetryReport:
+      type: object
+      required: [samples]
+      properties:
+        samples:
+          type: array
+          minItems: 1
+          maxItems: 30
+          description: Oldest first, one per minute, no minute twice.
+          items:
+            $ref: "#/components/schemas/TelemetrySample"
+
+    TelemetrySample:
+      type: object
+      description: |
+        One minute of the instance. Every figure is what was read at `at`, not an average, except
+        `cpuMillicores`, which is the rate over the reading's own window as the cluster's metrics
+        report it. A figure the operator could not read is left out, never sent as zero.
+      required: [at, parts]
+      properties:
+        at:
+          type: string
+          format: date-time
+          description: The minute the sample is for, in UTC, with zero seconds.
+        machine:
+          $ref: "#/components/schemas/MachineUsage"
+        parts:
+          type: array
+          maxItems: 50
+          description: |
+            One entry per part of Trenova the instance runs (the same names as the status
+            report's `components`), each once.
+          items:
+            $ref: "#/components/schemas/PartUsage"
+        data:
+          $ref: "#/components/schemas/DataUsage"
+
+    MachineUsage:
+      type: object
+      description: The machine the instance runs on, as a whole.
+      properties:
+        cpuMillicores:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Processor in use, in thousandths of a core.
+        cpuCapacityMillicores:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Processor the machine has to give.
+        memoryBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Memory in use (working set).
+        memoryCapacityBytes:
+          type: integer
+          format: int64
+          minimum: 1
+        diskBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Disk in use on the volume that holds the instance's data.
+        diskCapacityBytes:
+          type: integer
+          format: int64
+          minimum: 1
+
+    PartUsage:
+      type: object
+      required: [name, ready]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: "^[a-z][a-z0-9-]*$"
+          description: The part's name, as in the status report's `components`.
+        ready:
+          type: boolean
+          description: Whether every copy of the part that should run is ready.
+        replicas:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1000
+          description: Copies that should run.
+        readyReplicas:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1000
+        restarts:
+          type: integer
+          format: int64
+          minimum: 0
+          description: |
+            Restarts of the part's containers since they were created, summed over its copies:
+            a counter, so the difference between two samples is the restarts in between, and a
+            lower value than the last means the part was replaced.
+        cpuMillicores:
+          type: integer
+          format: int64
+          minimum: 0
+        cpuLimitMillicores:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The most the part may use; absent when it has no limit.
+        memoryBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        memoryLimitBytes:
+          type: integer
+          format: int64
+          minimum: 1
+        version:
+          type: string
+          maxLength: 128
+          description: The image tag the part runs, without its registry or name.
+
+    DataUsage:
+      type: object
+      description: How much the instance's data takes, each where it could be read.
+      properties:
+        databaseBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: The size of the instance's database.
+        documentsBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Documents and files stored.
+        searchBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: The search index.
+        logsBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Logs kept on the instance.
 
     AdministratorStatus:
       type: object
