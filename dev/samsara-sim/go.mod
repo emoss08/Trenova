@@ -1,6 +1,6 @@
 module github.com/emoss08/trenova/samsara-sim
 
-go 1.27.1
+go 1.27.4
 
 require (
 	github.com/bytedance/sonic v1.15.5

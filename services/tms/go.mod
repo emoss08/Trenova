@@ -1,6 +1,6 @@
 module github.com/emoss08/trenova
 
-go 1.27.1
+go 1.27.4
 
 require (
 	cloud.google.com/go/kms v1.36.1

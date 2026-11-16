@@ -257,15 +257,18 @@ default 10% verify sample takes an exported function added to `domain/shipment` 
 unexported function in `shipment.go` from 80 s to 29 s. It reused all 1,041 recompiled packages,
 and every shadow comparison and verified reuse was byte-identical to the compiler's output.
 
-gocut reads Go 1.27.1's export data and nothing else, so the Go version in `go.work` and the
-modules decides whether it does anything. On Go 1.26.10 it reuses no package: every changed
+gocut reads Go 1.27's export data (versions 4 and 5) and nothing else, so the Go version in
+`go.work` and the modules decides whether it does anything. On Go 1.26.10 it reuses no package: every changed
 dependency is refused as a dot import (1,361) or a failed patch (1,256), and the same S4 edit takes
 64 s with gocut and without it. On Go 1.27.1 the same tree and edit take 18 s warm (57 s without
 gocut), with 2,365 packages reused and all 254 verified reuses byte-identical (4 cores, the watch
-flags, measured 2026-11-06). So `go.work` and the modules declare `go 1.27.1`, and the Taskfile
-sets `GOTOOLCHAIN=go1.27.1`, since the go directive is only a minimum and a newer local Go would
-otherwise build the watch tasks. Moving the Go version means moving gocut with it: on 1.27.2 every
-changed dependency is blocked as a dot import, and 1.27.3 writes export data version 5.
+flags, measured 2026-11-06). So `go.work` and the modules declare `go 1.27.4`, and the Taskfile
+sets `GOTOOLCHAIN=go1.27.4`, since the go directive is only a minimum and a newer local Go would
+otherwise build the watch tasks. Moving the Go version means moving gocut with it: gocut refuses
+an export data version it does not know, and every dependency it cannot read counts as a dot
+import, so it reuses nothing. Go 1.27.4 writes version 5, which adds each method's declaration
+index; gocut learned it before the move (toy matrix on 1.27.4: 161 reuse decisions, all
+byte-identical, in shadow and active mode).
 
 ### Why `WorkerOptions` live in the jobs package
 

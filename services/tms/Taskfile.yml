@@ -135,7 +135,7 @@ vars:
 # Go it reuses nothing and the watch builds lose their early cutoff (S4: 18 s on
 # go1.27.1, 64 s on go1.26.10). Move it with go.work, and gocut with both.
 env:
-  GOTOOLCHAIN: go1.27.1
+  GOTOOLCHAIN: go1.27.4
   GOFLAGS: '-trimpath {{if .GO_TAGS}}-tags={{.GO_TAGS}}{{end}}{{if .GO_JOBS}} -p={{.GO_JOBS}}{{end}}'
   GOMAXPROCS: '{{.GO_JOBS}}'
   GOGC: '{{if .GO_JOBS}}50{{end}}'

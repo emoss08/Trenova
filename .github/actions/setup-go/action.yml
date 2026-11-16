@@ -9,7 +9,7 @@ inputs:
   go-version:
     description: Go version to install
     required: false
-    default: "1.27.1"
+    default: "1.27.4"
   r2-endpoint:
     description: The R2 account's S3 API endpoint (secrets.R2_BUILD_CACHE_ENDPOINT).
     required: false
