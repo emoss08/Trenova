@@ -10,6 +10,7 @@ import {
   UNAVAILABLE_NOTICE,
   availabilityNotice,
   budgetReached,
+  embeddingNote,
   estimateExceedsBudget,
   failedEntryStatus,
   modelChangeShare,
@@ -86,6 +87,9 @@ function status(overrides: Partial<AIRetrievalStatus> = {}): AIRetrievalStatus {
     modelChange: null,
     configuredModelKey: "api.voyageai.com/voyage-3.5@1024",
     configuredModelDiffers: false,
+    embeddingSource: "Organization",
+    tunedModel: "nomic-embed-text",
+    configuredModelTuned: false,
     ...overrides,
   } as AIRetrievalStatus;
 }
@@ -449,6 +453,34 @@ describe("estimateExceedsBudget", () => {
         remainingBudgetUsd: "0.00",
       }),
     ).toBe(false);
+  });
+});
+
+describe("embeddingNote", () => {
+  it("says the built-in service runs search, whatever the model", () => {
+    expect(
+      embeddingNote(status({ embeddingSource: "BuiltIn", configuredModelTuned: true })),
+    ).toEqual({ kind: "builtIn" });
+  });
+
+  it("names the tuned model when the organization routes another", () => {
+    expect(
+      embeddingNote(status({ embeddingSource: "Organization", configuredModelTuned: false })),
+    ).toEqual({ kind: "untuned", tunedModel: "nomic-embed-text" });
+  });
+
+  it("says nothing when the organization routes the tuned model", () => {
+    expect(
+      embeddingNote(status({ embeddingSource: "Organization", configuredModelTuned: true })),
+    ).toBeNull();
+  });
+
+  it("says nothing when no model is routed", () => {
+    expect(
+      embeddingNote(
+        status({ embeddingSource: null, configuredModelKey: null, configuredModelTuned: false }),
+      ),
+    ).toBeNull();
   });
 });
 

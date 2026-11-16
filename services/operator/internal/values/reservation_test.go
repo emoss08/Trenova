@@ -41,58 +41,98 @@ func machines() []machine {
 
 func TestTurningAComponentOnLeavesEveryOtherWorkloadAsItWas(t *testing.T) {
 	t.Parallel()
-	for _, m := range machines() {
-		t.Run(m.name, func(t *testing.T) {
-			t.Parallel()
-			without := spec(m.plan, instanceapi.Active)
-			with := spec(m.plan, instanceapi.Active, "docling")
-			with.InstanceId = without.InstanceId
-			off, err := values.Render(&without, m.base(), operatorNS, m.storage)
-			require.NoError(t, err)
-			on, err := values.Render(&with, m.base(), operatorNS, m.storage)
-			require.NoError(t, err)
-
-			require.Equal(t, false, lookup(t, off.Values, []string{"docling"})["enabled"])
-			require.Equal(t, true, lookup(t, on.Values, []string{"docling"})["enabled"])
-			require.Equal(t,
-				lookup(t, on.Values, []string{"docling", "resources"}),
-				lookup(t, off.Values, []string{"docling", "resources"}),
-				"docling's share is kept for it while it is off",
-			)
-			require.Equal(t,
-				lookup(t, off.Values, []string{"postgres", "parameters"}),
-				lookup(t, on.Values, []string{"postgres", "parameters"}),
-				"PostgreSQL's settings",
-			)
-			require.Equal(t,
-				lookup(t, off.Values, []string{"postgres", "resources"}),
-				lookup(t, on.Values, []string{"postgres", "resources"}),
-				"PostgreSQL's resources",
-			)
-
-			delete(lookup(t, off.Values, []string{"docling"}), "enabled")
-			delete(lookup(t, on.Values, []string{"docling"}), "enabled")
-			require.Equal(t, off.Values, on.Values, "only docling.enabled differs")
-
-			off.Values["docling"].(map[string]any)["enabled"] = false
-			on.Values["docling"].(map[string]any)["enabled"] = true
-			before := renderStorageChart(t, off)
-			after := renderStorageChart(t, on)
-			for _, file := range []string{"postgres.yaml", "datastores.yaml", "networkpolicy.yaml", "backup.yaml"} {
-				require.Equal(t, before["trenova/templates/"+file], after["trenova/templates/"+file], file)
-			}
-			require.Equal(t,
-				withoutComponent(before["trenova/templates/services.yaml"], "docling"),
-				withoutComponent(after["trenova/templates/services.yaml"], "docling"),
-				"every workload in services.yaml but docling",
-			)
-			require.NotEqual(t,
-				before["trenova/templates/services.yaml"],
-				after["trenova/templates/services.yaml"],
-				"docling itself is added",
-			)
-		})
+	for _, component := range []string{"docling", "embedding"} {
+		for _, m := range machines() {
+			t.Run(component+"/"+m.name, func(t *testing.T) {
+				t.Parallel()
+				turningOnLeavesTheRestAsItWas(t, m, component)
+			})
+		}
 	}
+}
+
+func turningOnLeavesTheRestAsItWas(t *testing.T, m machine, component string) {
+	t.Helper()
+	without := spec(m.plan, instanceapi.Active)
+	with := spec(m.plan, instanceapi.Active, component)
+	with.InstanceId = without.InstanceId
+	off, err := values.Render(&without, m.base(), operatorNS, m.storage)
+	require.NoError(t, err)
+	on, err := values.Render(&with, m.base(), operatorNS, m.storage)
+	require.NoError(t, err)
+
+	require.Equal(t, false, lookup(t, off.Values, []string{component})["enabled"])
+	require.Equal(t, true, lookup(t, on.Values, []string{component})["enabled"])
+	require.Equal(t,
+		lookup(t, on.Values, []string{component, "resources"}),
+		lookup(t, off.Values, []string{component, "resources"}),
+		"%s's share is kept for it while it is off", component,
+	)
+	require.Equal(t,
+		lookup(t, off.Values, []string{"postgres", "parameters"}),
+		lookup(t, on.Values, []string{"postgres", "parameters"}),
+		"PostgreSQL's settings",
+	)
+	require.Equal(t,
+		lookup(t, off.Values, []string{"postgres", "resources"}),
+		lookup(t, on.Values, []string{"postgres", "resources"}),
+		"PostgreSQL's resources",
+	)
+
+	delete(lookup(t, off.Values, []string{component}), "enabled")
+	delete(lookup(t, on.Values, []string{component}), "enabled")
+	require.Equal(t, off.Values, on.Values, "only %s.enabled differs", component)
+
+	off.Values[component].(map[string]any)["enabled"] = false
+	on.Values[component].(map[string]any)["enabled"] = true
+	before := renderStorageChart(t, off)
+	after := renderStorageChart(t, on)
+	for _, file := range []string{"postgres.yaml", "datastores.yaml", "networkpolicy.yaml", "backup.yaml"} {
+		require.Equal(t, before["trenova/templates/"+file], after["trenova/templates/"+file], file)
+	}
+	require.Equal(t,
+		withoutComponent(before["trenova/templates/services.yaml"], component),
+		withoutComponent(after["trenova/templates/services.yaml"], component),
+		"every workload in services.yaml but %s", component,
+	)
+	require.NotEqual(t,
+		before["trenova/templates/services.yaml"],
+		after["trenova/templates/services.yaml"],
+		"%s itself is added", component,
+	)
+}
+
+func TestTheEmbeddingServiceReachesTheTMSOnlyThroughManagedConfig(t *testing.T) {
+	t.Parallel()
+	r, err := values.Render(ptr(spec(plans[0], instanceapi.Active, "embedding")), base(), operatorNS, values.Storage{})
+	require.NoError(t, err)
+	rendered := renderStorageChart(t, r)
+
+	config := rendered["trenova/templates/configmap.yaml"]
+	require.Contains(t, config, "embedding:", "the API and worker are told where the service is")
+	require.Contains(t, config, "model: nomic-embed-text:v1.5")
+	require.Regexp(t, `url: http://[a-z0-9-]+-embedding:11434`, config)
+
+	policies := rendered["trenova/templates/networkpolicy.yaml"]
+	var ingress, egress string
+	for _, doc := range strings.Split(policies, "\n---\n") {
+		if !strings.Contains(doc, "app.kubernetes.io/component: embedding\n") {
+			continue
+		}
+		if strings.Contains(doc, "policyTypes: [Egress]") || strings.Contains(doc, "- Egress") {
+			egress = doc
+		} else {
+			ingress = doc
+		}
+	}
+	require.NotEmpty(t, ingress, "the service admits only named peers")
+	require.Contains(t, ingress, "app.kubernetes.io/component: api")
+	require.Contains(t, ingress, "app.kubernetes.io/component: worker")
+	require.NotContains(t, ingress, "app.kubernetes.io/component: client")
+	require.NotContains(t, ingress, "app.kubernetes.io/component: release")
+	require.Contains(t, ingress, "port: 11434")
+	require.NotEmpty(t, egress, "the service opens no connections")
+	require.Contains(t, egress, "egress: []")
 }
 
 func TestAPlanChangeStillDividesTheMachineAgain(t *testing.T) {

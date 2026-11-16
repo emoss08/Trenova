@@ -1416,6 +1416,16 @@ type AIRetrievalAvailability {
   reason: AIRetrievalUnavailableReason
 }
 
+"""Where the model the Embedding task routes to comes from."""
+enum AIRetrievalEmbeddingSource {
+  """
+  The search service that runs on the instance with Trenova AI, for an organization that routes no embedding model of its own.
+  """
+  BuiltIn
+  """A provider the organization routed the Embedding task to."""
+  Organization
+}
+
 """
 A source whose last attempt to index failed, with the error kept for it.
 """
@@ -1581,6 +1591,12 @@ type AIRetrievalStatus {
   """
   configuredModelKey: String
   """
+  Whether the routed model is the one Trenova tunes for; false when none is routed.
+  """
+  configuredModelTuned: Boolean!
+  """Where the routed model comes from; absent when no provider embeds."""
+  embeddingSource: AIRetrievalEmbeddingSource
+  """
   What indexing has cost since the first of the month (UTC), priced calls only.
   """
   indexingCostMonthUsd: Decimal!
@@ -1596,6 +1612,10 @@ type AIRetrievalStatus {
   retrievalUnpricedCalls: Int!
   settings: AIRetrievalSettings!
   sources: [AIRetrievalSourceStatus!]!
+  """
+  The embedding model Trenova tunes search for: the similarity floor, the eval gate and the ranking fixtures are measured against it.
+  """
+  tunedModel: String!
 }
 
 """Why search by meaning is not answering, so every search is by keyword."""

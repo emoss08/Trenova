@@ -147,7 +147,7 @@ func TestDerivedValuesOverrideTheBase(t *testing.T) {
 	require.Equal(t, s.Hostname, r.Values["domain"])
 	require.Equal(t, "k7q2m9x4p1r8t3v6-files.trenova.cloud", r.Values["storageDomain"])
 	tms := lookup(t, r.Values, []string{"tms"})
-	require.Equal(t, s.InstanceId.String(), tms["instanceId"])
+	require.NotContains(t, tms, "instanceId")
 	require.Equal(t, "ci", lookup(t, tms, []string{"image"})["tag"])
 	require.Equal(t, true, lookup(t, r.Values, []string{"docling"})["enabled"])
 	require.Equal(t, "wrong.example.com", b["domain"], "the base is not modified")
@@ -196,6 +196,7 @@ func TestManagedModeAdmitsOnlyTheOperatorsNamespace(t *testing.T) {
 	require.NoError(t, err)
 	managed := lookup(t, r.Values, []string{"managed"})
 	require.Equal(t, true, managed["enabled"])
+	require.Equal(t, s.InstanceId.String(), managed["instanceId"])
 	require.Equal(t, []any{map[string]any{
 		"namespaceSelector": map[string]any{
 			"matchLabels": map[string]any{"kubernetes.io/metadata.name": operatorNS},
@@ -216,6 +217,7 @@ func TestManagedModeAdmitsOnlyTheOperatorsNamespace(t *testing.T) {
 	require.Contains(t, out["trenova/templates/tms.yaml"], "name: managed")
 	require.Contains(t, out["trenova/templates/secrets.yaml"], "managedToken:")
 	require.Contains(t, out["trenova/templates/configmap.yaml"], "port: 8090")
+	require.Contains(t, out["trenova/templates/configmap.yaml"], s.InstanceId.String())
 
 	_, err = values.Render(&s, base(), "", values.Storage{})
 	require.Error(t, err)

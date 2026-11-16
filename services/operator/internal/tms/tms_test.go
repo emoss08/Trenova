@@ -336,11 +336,10 @@ func TestSendsReadsAndRemovesTheSystemEmailSender(t *testing.T) {
 	require.False(t, held.Configured)
 
 	sender := tms.SystemEmail{
-		Provider:      "Postmark",
-		APIKey:        "pm-client-0123456789abcdef0123",
-		FromAddress:   "no-reply@mail.trenova.app",
-		FromName:      "Trenova",
-		WebhookSecret: "user:password",
+		Provider:    "Postmark",
+		APIKey:      "pm-client-0123456789abcdef0123",
+		FromAddress: "no-reply@mail.trenova.app",
+		FromName:    "Trenova",
 	}
 	require.NoError(t, c.PutSystemEmail(t.Context(), sender))
 	require.Equal(t, &sender, srv.SystemEmail())

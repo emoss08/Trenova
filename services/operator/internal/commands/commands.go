@@ -44,7 +44,7 @@ const (
 )
 
 type ControlPlane interface {
-	Commands(ctx context.Context) ([]instanceapi.Command, error)
+	Commands(ctx context.Context) (instanceapi.CommandList, error)
 	CompleteCommand(ctx context.Context, id uuid.UUID, result instanceapi.CommandResult) error
 }
 
@@ -71,9 +71,10 @@ type Runner struct {
 	logger    *slog.Logger
 	now       func() time.Time
 
-	mu      sync.Mutex
-	done    map[uuid.UUID]finished
-	pending map[uuid.UUID]struct{}
+	mu          sync.Mutex
+	done        map[uuid.UUID]finished
+	pending     map[uuid.UUID]struct{}
+	emailEvents bool
 }
 
 type finished struct {
@@ -135,12 +136,22 @@ const (
 	retry
 )
 
+func (r *Runner) EmailEventsWaiting() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.emailEvents
+}
+
 func (r *Runner) Run(ctx context.Context) error {
-	list, err := r.cp.Commands(ctx)
+	listed, err := r.cp.Commands(ctx)
+	r.mu.Lock()
+	r.emailEvents = err == nil && listed.EmailEvents
+	r.mu.Unlock()
 	if err != nil {
 		return err
 	}
 	r.forget()
+	list := listed.Commands
 	var errs []error
 	for i := range list {
 		cmd := &list[i]

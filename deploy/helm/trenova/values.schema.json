@@ -133,9 +133,6 @@
             "enterprise"
           ]
         },
-        "instanceId": {
-          "type": "string"
-        },
         "config": {
           "type": "object",
           "description": "Merged over the rendered configuration; decoded strictly by the TMS."
@@ -1259,6 +1256,104 @@
       },
       "required": []
     },
+    "embedding": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The search service Trenova AI brings: Ollama with the embedding model in its image.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "repository",
+            "tag"
+          ],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tag": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pullPolicy": {
+              "enum": [
+                "Always",
+                "IfNotPresent",
+                "Never"
+              ]
+            }
+          }
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "^\\S+$",
+          "description": "The model name the image serves; the TMS asks for it by this name."
+        },
+        "parallel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "requests": {
+              "type": "object",
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9]+(\\.[0-9]+)?(m|Ki|Mi|Gi|Ti|k|M|G|T)?$"
+                  },
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                ]
+              },
+              "propertyNames": {
+                "enum": [
+                  "cpu",
+                  "memory",
+                  "ephemeral-storage"
+                ]
+              }
+            },
+            "limits": {
+              "type": "object",
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9]+(\\.[0-9]+)?(m|Ki|Mi|Gi|Ti|k|M|G|T)?$"
+                  },
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                ]
+              },
+              "propertyNames": {
+                "enum": [
+                  "cpu",
+                  "memory",
+                  "ephemeral-storage"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "required": []
+    },
     "clamav": {
       "type": "object",
       "additionalProperties": false,
@@ -1899,6 +1994,11 @@
       "properties": {
         "enabled": {
           "type": "boolean"
+        },
+        "instanceId": {
+          "type": "string",
+          "pattern": "^$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "description": "The instance's ID in Trenova Cloud, a lowercase UUID; required while enabled."
         },
         "from": {
           "type": "array",

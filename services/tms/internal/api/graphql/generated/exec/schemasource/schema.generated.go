@@ -6930,6 +6930,14 @@ enum AIRetrievalUnavailableReason {
   ProviderFailed
 }
 
+"Where the model the Embedding task routes to comes from."
+enum AIRetrievalEmbeddingSource {
+  "The search service that runs on the instance with Trenova AI, for an organization that routes no embedding model of its own."
+  BuiltIn
+  "A provider the organization routed the Embedding task to."
+  Organization
+}
+
 enum AIRetrievalPauseReason {
   "A person paused indexing."
   Manual
@@ -7009,6 +7017,12 @@ type AIRetrievalStatus {
   configuredModelKey: String
   "The routed model differs from the one searches use, so a model change will start or is under way."
   configuredModelDiffers: Boolean!
+  "Where the routed model comes from; absent when no provider embeds."
+  embeddingSource: AIRetrievalEmbeddingSource
+  "The embedding model Trenova tunes search for: the similarity floor, the eval gate and the ranking fixtures are measured against it."
+  tunedModel: String!
+  "Whether the routed model is the one Trenova tunes for; false when none is routed."
+  configuredModelTuned: Boolean!
 }
 
 """

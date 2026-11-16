@@ -81,6 +81,8 @@ func AsIndexer(s *Service) retrievalports.RetrievalIndexer { return s }
 
 func AsPipeline(s *Service) retrievalports.RetrievalIndexPipeline { return s }
 
+func AsWaker(s *Service) retrievalports.RetrievalWaker { return s }
+
 func validateSourceType(sourceType airetrieval.SourceType) error {
 	if sourceType.IsValid() {
 		return nil

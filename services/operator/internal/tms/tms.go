@@ -94,11 +94,10 @@ type Administrator struct {
 }
 
 type SystemEmail struct {
-	Provider      string `json:"provider"`
-	APIKey        string `json:"apiKey"`
-	FromAddress   string `json:"fromAddress"`
-	FromName      string `json:"fromName"`
-	WebhookSecret string `json:"webhookSecret"`
+	Provider    string `json:"provider"`
+	APIKey      string `json:"apiKey"`
+	FromAddress string `json:"fromAddress"`
+	FromName    string `json:"fromName"`
 }
 
 func (e SystemEmail) String() string {

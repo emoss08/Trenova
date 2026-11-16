@@ -66,6 +66,15 @@ nothing below changes anything.
   `ProviderAvailability.NovaReady(ctx, tenant, task)` before anything is dispatched, and
   `TaskRunner.Available` takes the task, so a feature that asks whether Nova can do its work
   is told no off the plan.
+- **Embeddings.** `UsableFor(TaskEmbedding)` returns the organization's own Embedding providers
+  and then, on a managed instance with Trenova AI, the instance's built-in search service
+  (`aiproviderports.BuiltInEmbedding`, [managed-mode.md](managed-mode.md#search-by-meaning)).
+  The first candidate is the configured model, which `retrievalservice.Plan` records as the
+  active or pending model; every model switch, to or from the service, goes through the existing
+  model change. A provider write that touches Embedding wakes the organization's indexer, and
+  the hourly sweep visits every organization and wakes one whose routed model the index has not
+  adopted. Trenova tunes for `airetrieval.TunedEmbeddingModel` (`nomic-embed-text`); its eval
+  fixtures are recorded from the shipped image (`agentevalgate.RecordEmbeddingsCommand`).
 - **Entries.** Each piece of work also checks its own feature where it starts: every Desk
   turn needs `ai.desk` (`assistantturnservice.Start`; a scheduled one also
   `platform.agent_automation`), agent runs `platform.agent_automation`

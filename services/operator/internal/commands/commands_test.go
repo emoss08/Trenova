@@ -42,13 +42,18 @@ func statefulSet(component string) *appsv1.StatefulSet {
 }
 
 type fakeControlPlane struct {
-	commands []instanceapi.Command
-	answers  map[uuid.UUID][]instanceapi.CommandResult
-	failOnce bool
+	commands    []instanceapi.Command
+	emailEvents bool
+	listErr     error
+	answers     map[uuid.UUID][]instanceapi.CommandResult
+	failOnce    bool
 }
 
-func (f *fakeControlPlane) Commands(context.Context) ([]instanceapi.Command, error) {
-	return f.commands, nil
+func (f *fakeControlPlane) Commands(context.Context) (instanceapi.CommandList, error) {
+	if f.listErr != nil {
+		return instanceapi.CommandList{}, f.listErr
+	}
+	return instanceapi.CommandList{Commands: f.commands, EmailEvents: f.emailEvents}, nil
 }
 
 func (f *fakeControlPlane) CompleteCommand(
@@ -143,6 +148,25 @@ func TestARunnerWithoutItsControlPlaneIsRefused(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "the control plane")
+}
+
+func TestTheRunnerSaysWhetherSystemEmailEventsWait(t *testing.T) {
+	t.Parallel()
+	cp := &fakeControlPlane{}
+	r, _ := runner(t, cp)
+	assert.False(t, r.EmailEventsWaiting(), "nothing is known before the first listing")
+
+	cp.emailEvents = true
+	require.NoError(t, r.Run(t.Context()))
+	assert.True(t, r.EmailEventsWaiting())
+
+	cp.listErr = assert.AnError
+	require.Error(t, r.Run(t.Context()))
+	assert.False(t, r.EmailEventsWaiting(), "a failed listing says nothing waits")
+
+	cp.listErr, cp.emailEvents = nil, false
+	require.NoError(t, r.Run(t.Context()))
+	assert.False(t, r.EmailEventsWaiting())
 }
 
 func TestRestartsOneComponentAndLeavesTheRest(t *testing.T) {

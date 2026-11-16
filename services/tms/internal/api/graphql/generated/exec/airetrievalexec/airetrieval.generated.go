@@ -733,6 +733,35 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
+			{
+				Name:     "embeddingSource",
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*retrievalports.AIRetrievalStatus)
+					return obj.EmbeddingSource, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAIRetrievalEmbeddingSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋairetrievalᚐEmbeddingSource),
+			},
+			{
+				Name:     "tunedModel",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*retrievalports.AIRetrievalStatus)
+					return obj.TunedModel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "configuredModelTuned",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*retrievalports.AIRetrievalStatus)
+					return obj.ConfiguredModelTuned, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
@@ -837,6 +866,7 @@ var (
 	errNoChild8  = errors.New("field of type Float does not have child fields")
 	errNoChild9  = errors.New("field of type Decimal does not have child fields")
 	errNoChild10 = errors.New("field of type AIRetrievalPauseReason does not have child fields")
+	errNoChild11 = errors.New("field of type AIRetrievalEmbeddingSource does not have child fields")
 )
 
 func field_Mutation_updateAIRetrievalSettings_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -1175,6 +1205,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
+	return res
+}
+
+func marshalOAIRetrievalEmbeddingSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋairetrievalᚐEmbeddingSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *airetrieval.EmbeddingSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
 	return res
 }
 

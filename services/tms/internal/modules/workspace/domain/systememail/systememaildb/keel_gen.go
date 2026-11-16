@@ -27,15 +27,14 @@ var sendersTable = schema.Table{
 		{Name: "from_address", Quoted: `"from_address"`, Field: "FromAddress", Kind: schema.KindString, Flags: 0, Label: `From Address`, JSON: `fromAddress`},
 		{Name: "from_name", Quoted: `"from_name"`, Field: "FromName", Kind: schema.KindString, Flags: 0, Label: `From Name`, JSON: `fromName`},
 		{Name: "api_key_sealed", Quoted: `"api_key_sealed"`, Field: "APIKeySealed", Kind: schema.KindString, Flags: 0, Label: `API Key Sealed`},
-		{Name: "webhook_secret_sealed", Quoted: `"webhook_secret_sealed"`, Field: "WebhookSecretSealed", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Webhook Secret Sealed`},
 		{Name: "fingerprint", Quoted: `"fingerprint"`, Field: "Fingerprint", Kind: schema.KindString, Flags: 0, Label: `Fingerprint`, JSON: `fingerprint`},
 		{Name: "received_at", Quoted: `"received_at"`, Field: "ReceivedAt", Kind: schema.KindInt64, Flags: 0, Label: `Received At`, JSON: `receivedAt`},
 	},
 	PK:         []int32{0},
 	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
+	Update:     []int32{1, 2, 3, 4, 5, 6},
 	Returning:  nil,
 	Version:    -1,
 	AutoID:     -1,
@@ -54,41 +53,38 @@ var sendersRef = keel.Ref{Table: &sendersTable}
 // SendersTable is the table of systememail.Sender.
 type SendersTable struct {
 	keel.TableBase
-	ID                  keel.StringCol
-	Provider            emaildb.ProviderCol
-	FromAddress         keel.StringCol
-	FromName            keel.StringCol
-	APIKeySealed        keel.StringCol
-	WebhookSecretSealed keel.StringCol
-	Fingerprint         keel.StringCol
-	ReceivedAt          keel.Int64Col
+	ID           keel.StringCol
+	Provider     emaildb.ProviderCol
+	FromAddress  keel.StringCol
+	FromName     keel.StringCol
+	APIKeySealed keel.StringCol
+	Fingerprint  keel.StringCol
+	ReceivedAt   keel.Int64Col
 }
 
 // Senders references the system_email_senders table.
 var Senders = &SendersTable{
-	TableBase:           keel.TableBase{Ref: &sendersRef},
-	ID:                  keel.StringCol{Col: keel.Col{Ref: &sendersRef, Index: 0}},
-	Provider:            emaildb.ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sendersRef, Index: 1}}},
-	FromAddress:         keel.StringCol{Col: keel.Col{Ref: &sendersRef, Index: 2}},
-	FromName:            keel.StringCol{Col: keel.Col{Ref: &sendersRef, Index: 3}},
-	APIKeySealed:        keel.StringCol{Col: keel.Col{Ref: &sendersRef, Index: 4}},
-	WebhookSecretSealed: keel.StringCol{Col: keel.Col{Ref: &sendersRef, Index: 5}},
-	Fingerprint:         keel.StringCol{Col: keel.Col{Ref: &sendersRef, Index: 6}},
-	ReceivedAt:          keel.Int64Col{Col: keel.Col{Ref: &sendersRef, Index: 7}},
+	TableBase:    keel.TableBase{Ref: &sendersRef},
+	ID:           keel.StringCol{Col: keel.Col{Ref: &sendersRef, Index: 0}},
+	Provider:     emaildb.ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sendersRef, Index: 1}}},
+	FromAddress:  keel.StringCol{Col: keel.Col{Ref: &sendersRef, Index: 2}},
+	FromName:     keel.StringCol{Col: keel.Col{Ref: &sendersRef, Index: 3}},
+	APIKeySealed: keel.StringCol{Col: keel.Col{Ref: &sendersRef, Index: 4}},
+	Fingerprint:  keel.StringCol{Col: keel.Col{Ref: &sendersRef, Index: 5}},
+	ReceivedAt:   keel.Int64Col{Col: keel.Col{Ref: &sendersRef, Index: 6}},
 }
 
 // BuildSenders builds the table of system_email_senders for ref. Generated relation and alias methods call it.
 func BuildSenders(r *keel.Ref) *SendersTable {
 	return &SendersTable{
-		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
-		Provider:            emaildb.ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		FromAddress:         keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
-		FromName:            keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		APIKeySealed:        keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		WebhookSecretSealed: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Fingerprint:         keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		ReceivedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		TableBase:    keel.TableBase{Ref: r},
+		ID:           keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
+		Provider:     emaildb.ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		FromAddress:  keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
+		FromName:     keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
+		APIKeySealed: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
+		Fingerprint:  keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		ReceivedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 	}
 }
 
@@ -488,10 +484,8 @@ func ptrSender(p unsafe.Pointer, c int32) any {
 	case 4:
 		return &r.APIKeySealed
 	case 5:
-		return &r.WebhookSecretSealed
-	case 6:
 		return &r.Fingerprint
-	case 7:
+	case 6:
 		return &r.ReceivedAt
 	}
 	return nil
@@ -511,13 +505,8 @@ func valueSender(p unsafe.Pointer, c int32) any {
 	case 4:
 		return r.APIKeySealed
 	case 5:
-		if r.WebhookSecretSealed == "" {
-			return nil
-		}
-		return r.WebhookSecretSealed
-	case 6:
 		return r.Fingerprint
-	case 7:
+	case 6:
 		return r.ReceivedAt
 	}
 	return nil

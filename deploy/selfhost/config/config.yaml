@@ -24,7 +24,6 @@ platform:
   # signup, no billing, no control plane.
   mode: self_hosted
   referenceDataStewards: []
-  instanceId: ""
 
 server:
   host: 0.0.0.0

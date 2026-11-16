@@ -409,6 +409,22 @@ export function retrievalSentence(status: AIRetrievalStatus): RetrievalSentence 
   return { kind: "done", model, failed: totals.failed };
 }
 
+/** What the tab says about the embedding model: the instance's own service, or a model Trenova does not tune for. */
+export type EmbeddingNote = { kind: "builtIn" } | { kind: "untuned"; tunedModel: string };
+
+export function embeddingNote(
+  status: Pick<AIRetrievalStatus, "embeddingSource" | "configuredModelTuned" | "tunedModel">,
+): EmbeddingNote | null {
+  if (status.embeddingSource === "BuiltIn") {
+    return { kind: "builtIn" };
+  }
+  if (status.embeddingSource === "Organization" && !status.configuredModelTuned) {
+    return { kind: "untuned", tunedModel: status.tunedModel };
+  }
+
+  return null;
+}
+
 /** A source's state as the tag beside its name is coloured. */
 export const SOURCE_STATE_TONE: Record<SourceState, string> = {
   off: "",

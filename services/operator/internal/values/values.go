@@ -56,15 +56,16 @@ const (
 )
 
 const (
-	keyPostgres = "postgres"
-	keyTMS      = "tms"
-	keyRedis    = "redis"
-	keyMinio    = "minio"
-	keyDocling  = "docling"
-	keyClamAV   = "clamav"
-	keyLogs     = "logs"
-	keyMemory   = "memory"
-	keyCPU      = "cpu"
+	keyPostgres  = "postgres"
+	keyTMS       = "tms"
+	keyRedis     = "redis"
+	keyMinio     = "minio"
+	keyDocling   = "docling"
+	keyEmbedding = "embedding"
+	keyClamAV    = "clamav"
+	keyLogs      = "logs"
+	keyMemory    = "memory"
+	keyCPU       = "cpu"
 )
 
 var (
@@ -125,14 +126,16 @@ func Render(
 	}
 	out := deepCopy(base)
 	docling := slices.Contains(spec.Components, keyDocling)
+	embedding := slices.Contains(spec.Components, keyEmbedding)
 	merge(out, map[string]any{
 		"domain":        spec.Hostname,
 		"storageDomain": StorageHost(spec.Hostname),
 		"stopped":       stopped,
-		keyTMS:          tmsValues(spec.InstanceId.String()),
+		keyTMS:          tmsValues(),
 		keyDocling:      map[string]any{"enabled": docling},
+		keyEmbedding:    map[string]any{"enabled": embedding},
 		keyPostgres:     pg,
-		"managed":       managed(operatorNamespace),
+		"managed":       managed(operatorNamespace, spec.InstanceId.String()),
 		keyLogs:         map[string]any{"enabled": true},
 		"secrets":       map[string]any{"escrowSecret": EscrowSecret},
 		"bootstrap":     admin,
@@ -248,9 +251,10 @@ func text(s string, maxRunes int) bool {
 	return !strings.ContainsFunc(s, unicode.IsControl)
 }
 
-func managed(operatorNamespace string) map[string]any {
+func managed(operatorNamespace, instanceID string) map[string]any {
 	return map[string]any{
-		"enabled": true,
+		"enabled":    true,
+		"instanceId": instanceID,
 		"from": []any{
 			map[string]any{
 				"namespaceSelector": map[string]any{
@@ -263,9 +267,8 @@ func managed(operatorNamespace string) map[string]any {
 	}
 }
 
-func tmsValues(instanceID string) map[string]any {
+func tmsValues() map[string]any {
 	return map[string]any{
-		"instanceId": instanceID,
 		"config": map[string]any{"ai": map[string]any{
 			"privateNetworkProviders": false,
 			"serverCloudCredentials":  false,

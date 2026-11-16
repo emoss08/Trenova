@@ -48,6 +48,9 @@ fragment AIRetrievalStatusFields on AIRetrievalStatus {
   }
   configuredModelKey
   configuredModelDiffers
+  embeddingSource
+  tunedModel
+  configuredModelTuned
 }
 
 fragment AIRetrievalFailedEntryFields on AIRetrievalFailedEntry {

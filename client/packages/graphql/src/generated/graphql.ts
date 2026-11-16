@@ -328,6 +328,13 @@ export type AiReasoningEffort =
   | 'None'
   | 'Off';
 
+/** Where the model the Embedding task routes to comes from. */
+export type AiRetrievalEmbeddingSource =
+  /** The search service that runs on the instance with Trenova AI, for an organization that routes no embedding model of its own. */
+  | 'BuiltIn'
+  /** A provider the organization routed the Embedding task to. */
+  | 'Organization';
+
 /** Where one source stands in the index under one embedding model. */
 export type AiRetrievalIndexStatus =
   /** Every retry was spent, or the provider refused the text. */
@@ -12131,7 +12138,7 @@ export type RunAgentSuiteMutationVariables = Exact<{
 
 export type RunAgentSuiteMutation = { runAgentSuite: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } };
 
-export type AiRetrievalStatusFieldsFragment = { monthStartedAt: number, indexingCostMonthUsd: string, indexingUnpricedCalls: number, retrievalCostMonthUsd: string, retrievalUnpricedCalls: number, lastIndexedAt: number | null, configuredModelKey: string | null, configuredModelDiffers: boolean, availability: { available: boolean, reason: AiRetrievalUnavailableReason | null, extensionInstalled: boolean, extensionVersion: string | null }, settings: { memoryEnabled: boolean, documentsEnabled: boolean, inboundMessagesEnabled: boolean, monthlyIndexingBudgetUsd: string, paused: boolean, pausedReason: AiRetrievalPauseReason | null, pausedAt: number | null, activeModelKey: string | null, dimensions: number | null, pendingModelKey: string | null, pendingDimensions: number | null, version: number, updatedAt: number | null }, sources: Array<{ sourceType: AiRetrievalSourceType, enabled: boolean, total: number, indexed: number, pending: number, failed: number, skipped: number, lastIndexedAt: number | null, lastAttemptAt: number | null }>, modelChange: { fromModelKey: string, toModelKey: string, dimensions: number, total: number, indexed: number, pending: number, failed: number } | null } & { ' $fragmentName'?: 'AiRetrievalStatusFieldsFragment' };
+export type AiRetrievalStatusFieldsFragment = { monthStartedAt: number, indexingCostMonthUsd: string, indexingUnpricedCalls: number, retrievalCostMonthUsd: string, retrievalUnpricedCalls: number, lastIndexedAt: number | null, configuredModelKey: string | null, configuredModelDiffers: boolean, embeddingSource: AiRetrievalEmbeddingSource | null, tunedModel: string, configuredModelTuned: boolean, availability: { available: boolean, reason: AiRetrievalUnavailableReason | null, extensionInstalled: boolean, extensionVersion: string | null }, settings: { memoryEnabled: boolean, documentsEnabled: boolean, inboundMessagesEnabled: boolean, monthlyIndexingBudgetUsd: string, paused: boolean, pausedReason: AiRetrievalPauseReason | null, pausedAt: number | null, activeModelKey: string | null, dimensions: number | null, pendingModelKey: string | null, pendingDimensions: number | null, version: number, updatedAt: number | null }, sources: Array<{ sourceType: AiRetrievalSourceType, enabled: boolean, total: number, indexed: number, pending: number, failed: number, skipped: number, lastIndexedAt: number | null, lastAttemptAt: number | null }>, modelChange: { fromModelKey: string, toModelKey: string, dimensions: number, total: number, indexed: number, pending: number, failed: number } | null } & { ' $fragmentName'?: 'AiRetrievalStatusFieldsFragment' };
 
 export type AiRetrievalFailedEntryFieldsFragment = { id: string, sourceType: AiRetrievalSourceType, sourceId: string, modelKey: string, status: AiRetrievalIndexStatus, attempts: number, error: string, lastAttemptAt: number | null, nextAttemptAt: number | null } & { ' $fragmentName'?: 'AiRetrievalFailedEntryFieldsFragment' };
 

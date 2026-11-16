@@ -26,7 +26,7 @@ const (
 	InboxFloors    = "internal/modules/agent/app/agentevalgate/evals/inboxretrieval.floors.json"
 	MemoryFloors   = "internal/modules/agent/app/agentevalgate/evals/memoryretrieval.floors.json"
 
-	RecordCommand = "cd services/tms && ollama pull nomic-embed-text && " +
+	RecordCommand = agentevalgate.RunShippedEmbeddingCommand + " && cd services/tms && " +
 		agentevalgate.OllamaURLEnv + "=" + agentevalgate.DefaultOllamaURL +
 		" go test -count=1 -run 'TestRecordRetrievalEmbeddingFixture' " +
 		"./internal/modules/agent/app/retrievalservice/ -record"

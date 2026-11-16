@@ -1,6 +1,8 @@
 package systememail_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"testing"
@@ -22,23 +24,32 @@ func credential() *systememail.Credential {
 	}
 }
 
-func TestTheFingerprintMatchesTheContractVectors(t *testing.T) {
+func contractFingerprint(fields ...string) string {
+	sum := sha256.Sum256([]byte("trenova.system-email.v1\n" + strings.Join(fields, "\n")))
+	return hex.EncodeToString(sum[:])
+}
+
+func TestTheFingerprintMatchesTheContractFormula(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(
 		t,
-		"97bc40decf9416a4926287451b37e8a9c5e5d55b2b142126e28a0993d604d01f",
+		contractFingerprint("Postmark", "no-reply@mail.trenova.app", "Trenova", testAPIKey),
 		systememail.Fingerprint(credential()),
 	)
 	assert.Equal(
 		t,
-		"1ca13b2b81836149a7d6d52423e8725b17510d2e80953be5e82ef90a0c9736fc",
+		contractFingerprint(
+			"Resend",
+			"no-reply@mail.trenova.app",
+			"Trenova",
+			"re_0123456789abcdef0123456789",
+		),
 		systememail.Fingerprint(&systememail.Credential{
-			Provider:      email.ProviderResend,
-			APIKey:        "re_0123456789abcdef0123456789",
-			FromAddress:   "no-reply@mail.trenova.app",
-			FromName:      "Trenova",
-			WebhookSecret: "whsec_abcdef",
+			Provider:    email.ProviderResend,
+			APIKey:      "re_0123456789abcdef0123456789",
+			FromAddress: "no-reply@mail.trenova.app",
+			FromName:    "Trenova",
 		}),
 	)
 }
@@ -50,11 +61,10 @@ func TestTheFingerprintChangesWhenAnyFieldChanges(t *testing.T) {
 	assert.Equal(t, base, systememail.Fingerprint(credential()))
 
 	changes := map[string]func(c *systememail.Credential){
-		"provider":      func(c *systememail.Credential) { c.Provider = email.ProviderResend },
-		"apiKey":        func(c *systememail.Credential) { c.APIKey += "x" },
-		"fromAddress":   func(c *systememail.Credential) { c.FromAddress = "mail@mail.trenova.app" },
-		"fromName":      func(c *systememail.Credential) { c.FromName = "Trenova Cloud" },
-		"webhookSecret": func(c *systememail.Credential) { c.WebhookSecret = "whsec_1" },
+		"provider":    func(c *systememail.Credential) { c.Provider = email.ProviderResend },
+		"apiKey":      func(c *systememail.Credential) { c.APIKey += "x" },
+		"fromAddress": func(c *systememail.Credential) { c.FromAddress = "mail@mail.trenova.app" },
+		"fromName":    func(c *systememail.Credential) { c.FromName = "Trenova Cloud" },
 	}
 	for field, change := range changes {
 		c := credential()
@@ -67,7 +77,6 @@ func TestACredentialNeverPrintsItsSecrets(t *testing.T) {
 	t.Parallel()
 
 	c := credential()
-	c.WebhookSecret = "whsec_do-not-print"
 	for _, printed := range []string{
 		fmt.Sprintf("%v", c),
 		fmt.Sprintf("%+v", c),
@@ -75,7 +84,6 @@ func TestACredentialNeverPrintsItsSecrets(t *testing.T) {
 		fmt.Sprintf("%s", c),
 	} {
 		assert.NotContains(t, printed, testAPIKey)
-		assert.NotContains(t, printed, "whsec_do-not-print")
 	}
 }
 
@@ -89,20 +97,18 @@ func TestAMalformedCredentialIsRefusedWithoutEchoingTheSecret(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]func(c *systememail.Credential){
-		"unknown provider":    func(c *systememail.Credential) { c.Provider = "SES" },
-		"short key":           func(c *systememail.Credential) { c.APIKey = "short" },
-		"key with a space":    func(c *systememail.Credential) { c.APIKey = testAPIKey + " x" },
-		"key with a newline":  func(c *systememail.Credential) { c.APIKey = testAPIKey + "\nx" },
-		"oversized key":       func(c *systememail.Credential) { c.APIKey = strings.Repeat("k", 513) },
-		"missing key":         func(c *systememail.Credential) { c.APIKey = "" },
-		"bad from address":    func(c *systememail.Credential) { c.FromAddress = "not an address" },
-		"named from address":  func(c *systememail.Credential) { c.FromAddress = "Trenova <a@b.co>" },
-		"empty from name":     func(c *systememail.Credential) { c.FromName = "" },
-		"long from name":      func(c *systememail.Credential) { c.FromName = strings.Repeat("n", 41) },
-		"padded from name":    func(c *systememail.Credential) { c.FromName = " Trenova" },
-		"control in name":     func(c *systememail.Credential) { c.FromName = "Tre\nnova" },
-		"bad webhook secret":  func(c *systememail.Credential) { c.WebhookSecret = "a b" },
-		"long webhook secret": func(c *systememail.Credential) { c.WebhookSecret = strings.Repeat("w", 513) },
+		"unknown provider":   func(c *systememail.Credential) { c.Provider = "SES" },
+		"short key":          func(c *systememail.Credential) { c.APIKey = "short" },
+		"key with a space":   func(c *systememail.Credential) { c.APIKey = testAPIKey + " x" },
+		"key with a newline": func(c *systememail.Credential) { c.APIKey = testAPIKey + "\nx" },
+		"oversized key":      func(c *systememail.Credential) { c.APIKey = strings.Repeat("k", 513) },
+		"missing key":        func(c *systememail.Credential) { c.APIKey = "" },
+		"bad from address":   func(c *systememail.Credential) { c.FromAddress = "not an address" },
+		"named from address": func(c *systememail.Credential) { c.FromAddress = "Trenova <a@b.co>" },
+		"empty from name":    func(c *systememail.Credential) { c.FromName = "" },
+		"long from name":     func(c *systememail.Credential) { c.FromName = strings.Repeat("n", 41) },
+		"padded from name":   func(c *systememail.Credential) { c.FromName = " Trenova" },
+		"control in name":    func(c *systememail.Credential) { c.FromName = "Tre\nnova" },
 	}
 	for name, change := range cases {
 		c := credential()

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -597,6 +598,119 @@ func TestSweepMarksStaleSourcesAndCountsWaitingOnes(t *testing.T) {
 	assert.Equal(t, 4, result.Waiting)
 	assert.True(t, result.HasWork())
 	assert.Empty(t, svc.signals.signals, "the sweep leaves waking to its caller")
+}
+
+func TestSweepNoticesAnEmbeddingRouteTheIndexHasNotAdopted(t *testing.T) {
+	t.Parallel()
+
+	blank := func() *airetrieval.Settings {
+		return airetrieval.DefaultSettings(testTenant.OrgID, testTenant.BuID)
+	}
+	withPending := func() *airetrieval.Settings {
+		settings := activeSettings()
+		settings.PendingModelKey = pendingKey
+		settings.PendingDimensions = airetrieval.Dimensions1024
+		return settings
+	}
+	paused := func() *airetrieval.Settings {
+		settings := blank()
+		settings.Paused = true
+		settings.PausedReason = airetrieval.PauseReasonManual
+		return settings
+	}
+	budgetPaused := func() *airetrieval.Settings {
+		settings := blank()
+		settings.Paused = true
+		settings.PausedReason = airetrieval.PauseReasonBudget
+		return settings
+	}
+
+	tests := []struct {
+		name       string
+		settings   *airetrieval.Settings
+		configured string
+		err        error
+		offPlan    bool
+		changed    bool
+	}{
+		{
+			name:       "an organization that never indexed gets a route, the built-in service included",
+			settings:   blank(),
+			configured: activeKey,
+			changed:    true,
+		},
+		{
+			name:       "the route moved to another model",
+			settings:   activeSettings(),
+			configured: pendingKey,
+			changed:    true,
+		},
+		{
+			name:       "the route is the model searches use",
+			settings:   activeSettings(),
+			configured: activeKey,
+		},
+		{
+			name:       "the route is the model already being indexed",
+			settings:   withPending(),
+			configured: pendingKey,
+		},
+		{
+			name:     "nothing is routed",
+			settings: blank(),
+			err:      llmports.ErrNoProviderConfigured,
+		},
+		{
+			name:       "the route names no dimension the index holds",
+			settings:   blank(),
+			configured: "api.example.com/embed@512",
+		},
+		{
+			name:       "a person paused indexing",
+			settings:   paused(),
+			configured: activeKey,
+		},
+		{
+			name:       "the budget paused indexing, which lifts on its own",
+			settings:   budgetPaused(),
+			configured: activeKey,
+			changed:    true,
+		},
+		{
+			name:       "the plan does not include Trenova AI",
+			settings:   blank(),
+			configured: activeKey,
+			offPlan:    true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			svc := newTestService(tt.settings)
+			svc.embeddings.configured = tt.configured
+			svc.embeddings.err = tt.err
+			if tt.offPlan {
+				svc.features = plantest.Without(platformcatalog.FeatureAIDesk)
+			}
+
+			result, err := svc.Sweep(t.Context(), testTenant)
+			require.NoError(t, err)
+			assert.Equal(t, tt.changed, result.RoutingChanged)
+			assert.Equal(t, tt.changed, result.HasWork(), "a changed route wakes the indexer")
+			assert.Empty(t, svc.signals.signals, "the sweep leaves waking to its caller")
+		})
+	}
+}
+
+func TestSweepReturnsAFailureToResolveTheRoute(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(activeSettings())
+	svc.embeddings.err = errors.New("the provider list could not be read")
+
+	_, err := svc.Sweep(t.Context(), testTenant)
+	require.Error(t, err)
 }
 
 func TestReindexPageMarksAPageAndSaysWhereToGoOn(t *testing.T) {

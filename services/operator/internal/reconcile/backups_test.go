@@ -155,6 +155,7 @@ func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
 		Storage:        w.storage,
 		Backups:        w.backups,
 		Commands:       runner,
+		EmailEvents:    &fakeEmailEvents{},
 		Logs:           kept,
 		Operator: &fakeOperator{status: selfupgrade.Status{
 			Version: "0.11.0", Phase: selfupgrade.PhaseCurrent,

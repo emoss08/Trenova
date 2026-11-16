@@ -57,7 +57,6 @@ func (r *repository) Save(ctx context.Context, sender *systememail.Sender) error
 				s.FromAddress,
 				s.FromName,
 				s.APIKeySealed,
-				s.WebhookSecretSealed,
 				s.Fingerprint,
 				s.ReceivedAt,
 			),

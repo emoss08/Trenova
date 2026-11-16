@@ -34,11 +34,18 @@ type Server struct {
 	email    *tms.SystemEmail
 	logs     logState
 	support  supportState
+
+	emailEvents emailEventState
 }
 
 func New(t testing.TB, token string) *Server {
 	t.Helper()
-	s := &Server{token: token, spoiled: map[string]bool{}, logs: newLogState()}
+	s := &Server{
+		token:       token,
+		spoiled:     map[string]bool{},
+		logs:        newLogState(),
+		emailEvents: newEmailEventState(),
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /managed/v1/readings", s.getReadings)
 	mux.HandleFunc("PUT /managed/v1/state", s.putState)
@@ -48,6 +55,7 @@ func New(t testing.TB, token string) *Server {
 	mux.HandleFunc("GET /managed/v1/system-email", s.getSystemEmail)
 	mux.HandleFunc("PUT /managed/v1/system-email", s.putSystemEmail)
 	mux.HandleFunc("DELETE /managed/v1/system-email", s.deleteSystemEmail)
+	mux.HandleFunc("POST /managed/v1/system-email/events", s.postEmailEvents)
 	mux.HandleFunc("GET /managed/v1/log-requests", s.getLogRequests)
 	mux.HandleFunc("PUT /managed/v1/log-requests/{id}", s.putLogRequest)
 	mux.HandleFunc("POST /managed/v1/support/log-pulls", s.postLogPull)
@@ -343,7 +351,6 @@ func fingerprint(sender *tms.SystemEmail) string {
 		sender.FromAddress,
 		sender.FromName,
 		sender.APIKey,
-		sender.WebhookSecret,
 	}, "\n")))
 	return hex.EncodeToString(sum[:])
 }

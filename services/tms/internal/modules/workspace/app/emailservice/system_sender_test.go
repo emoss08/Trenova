@@ -32,10 +32,11 @@ import (
 )
 
 const (
-	trenovaTestKey  = "pm-trenova-0123456789abcdef0123"
-	trenovaTestFrom = "no-reply@mail.trenova.app"
-	memberAddress   = "dispatcher@acme.example"
-	outsideAddress  = "buyer@customer.example"
+	trenovaTestKey      = "pm-trenova-0123456789abcdef0123"
+	trenovaTestFrom     = "no-reply@mail.trenova.app"
+	trenovaTestInstance = "0192f3a4-5b6c-7d8e-9f01-23456789abcd"
+	memberAddress       = "dispatcher@acme.example"
+	outsideAddress      = "buyer@customer.example"
 )
 
 type fakeTrenovaSender struct {
@@ -111,11 +112,12 @@ func (fakeOrganizations) GetByID(
 }
 
 type fakeProvider struct {
-	mu     sync.Mutex
-	config map[string]string
-	from   string
-	err    error
-	calls  int
+	mu       sync.Mutex
+	config   map[string]string
+	metadata map[string]string
+	from     string
+	err      error
+	calls    int
 }
 
 func (f *fakeProvider) Provider() email.Provider          { return email.ProviderPostmark }
@@ -129,6 +131,7 @@ func (f *fakeProvider) Send(
 	defer f.mu.Unlock()
 	f.calls++
 	f.config = req.Config
+	f.metadata = req.Message.Metadata
 	f.from = req.Message.From
 	if f.err != nil {
 		return nil, f.err
@@ -210,6 +213,7 @@ func newTrenovaRig(t *testing.T, opts rigOptions) *trenovaRig {
 	r.logs = logs
 	r.svc = &Service{
 		l:               zap.New(core),
+		instanceID:      trenovaTestInstance,
 		repo:            r.repo,
 		invoiceRepo:     noInvoiceAttempts{},
 		validator:       NewValidator(),
@@ -482,9 +486,28 @@ func TestSendPersistedSendsATrenovaMessageWithTheTrenovaCredential(t *testing.T)
 
 	require.NoError(t, err)
 	assert.Equal(t, email.MessageStatusSent, sent.Status)
-	assert.Equal(t, map[string]string{"apiKey": trenovaTestKey}, r.provider.config)
+	assert.Equal(t, map[string]string{"serverToken": trenovaTestKey}, r.provider.config)
 	assert.Equal(t, mailtext.FormatEmailAddress("Acme Freight via Trenova", trenovaTestFrom), r.provider.from)
+	assert.Equal(
+		t,
+		map[string]string{systememail.InstanceTag: trenovaTestInstance},
+		r.provider.metadata,
+	)
 	r.assertNoSecretLogged(t)
+}
+
+func TestSendPersistedRefusesATrenovaMessageWhenTheInstanceHasNoID(t *testing.T) {
+	t.Parallel()
+
+	r := newTrenovaRig(t, rigOptions{withTrenova: true})
+	r.svc.instanceID = ""
+	msg := r.persisted(t, email.KindSystem, email.TypePasswordReset)
+
+	sent, err := r.sendPersisted(t, msg)
+
+	require.ErrorIs(t, err, ErrNonRetryableSend)
+	assert.Equal(t, email.MessageStatusFailed, sent.Status)
+	assert.Zero(t, r.provider.calls, "Trenova's sender never carries an untagged message")
 }
 
 func TestSendPersistedNeverSendsACustomerFacingMessageThroughTrenova(t *testing.T) {

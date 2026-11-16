@@ -25,12 +25,18 @@ func (s *Service) RecordLogPull(ctx context.Context, req *LogPullRequest) error 
 		return &supportaccess.RefusalError{Reason: supportaccess.RefusalNotConfigured}
 	}
 	if !req.Kind.IsValid() {
-		return &supportaccess.RefusalError{Reason: supportaccess.RefusalMalformed, Detail: "unknown pull kind"}
+		return &supportaccess.RefusalError{
+			Reason: supportaccess.RefusalMalformed,
+			Detail: "unknown pull kind",
+		}
 	}
 
 	keys, err := s.keySet(ctx)
 	if errors.Is(err, supportaccess.ErrNoKeySet) {
-		return s.refusePull(&supportaccess.RefusalError{Reason: supportaccess.RefusalNotConfigured}, req)
+		return s.refusePull(
+			&supportaccess.RefusalError{Reason: supportaccess.RefusalNotConfigured},
+			req,
+		)
 	}
 	if err != nil {
 		return err
@@ -39,7 +45,10 @@ func (s *Service) RecordLogPull(ctx context.Context, req *LogPullRequest) error 
 	email, err := supportaccess.NormalizeStaffEmail(req.StaffEmail, keys.StaffDomain)
 	if err != nil {
 		return s.refusePull(
-			&supportaccess.RefusalError{Reason: supportaccess.RefusalStaffEmail, Detail: err.Error()},
+			&supportaccess.RefusalError{
+				Reason: supportaccess.RefusalStaffEmail,
+				Detail: err.Error(),
+			},
 			req,
 		)
 	}

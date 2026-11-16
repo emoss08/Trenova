@@ -13,6 +13,7 @@ import {
   SOURCE_LABEL,
   SOURCE_STATE,
   SOURCE_STATE_TONE,
+  embeddingNote,
   modelChangeShare,
   sourceShares,
   sourceState,
@@ -64,6 +65,7 @@ export function RetrievalSources({
           )}
         </p>
       )}
+      <EmbeddingModelNote status={status} />
       <div className="srcs">
         {status.sources.map((source) => (
           <SourceRow
@@ -79,6 +81,27 @@ export function RetrievalSources({
         ))}
       </div>
     </section>
+  );
+}
+
+/** Whether search runs on the instance's own service, or on a model Trenova does not tune for. */
+function EmbeddingModelNote({ status }: { status: AIRetrievalStatus }) {
+  const t = useT();
+  const note = embeddingNote(status);
+
+  if (!note) {
+    return null;
+  }
+
+  return (
+    <p className="lead" data-testid="retrieval-embedding-note">
+      {note.kind === "builtIn"
+        ? t("Search by meaning runs on your instance. There is nothing to set up.")
+        : t(
+            "Trenova tunes search for {0}. With another model, search may find less.",
+            note.tunedModel,
+          )}
+    </p>
   );
 }
 

@@ -246562,6 +246562,15 @@
       "routes/agent-control"
     ]
   },
+  "Search by meaning runs on your instance. There is nothing to set up.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Search by name": {
     "sites": 1,
     "scope": [
@@ -313970,6 +313979,15 @@
       "routes/admin"
     ]
   },
+  "Trenova search service": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Trenova sends invoices, credit and debit memos, customer payments, credit applications, carrier settlements and their payments to {0} as they are posted. Documents dated before the start date are never sent, so anything you already entered in {0} by hand is not duplicated.": {
     "sites": 1,
     "scope": [
@@ -314122,6 +314140,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Trenova tunes search for {0}. With another model, search may find less.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Trenova writes the envelope (ISA, GS, ST, SE, GE, IEA) itself": {
@@ -328000,15 +328027,6 @@
     ]
   },
   "Webhook secret": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Webhook secret must be at most 512 printable characters with no spaces": {
     "sites": 1,
     "scope": [
       "go"

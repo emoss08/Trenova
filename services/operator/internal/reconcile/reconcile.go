@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/backup"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/emailevents"
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/release"
@@ -46,9 +47,13 @@ const (
 	commandsTimeout = 2 * time.Minute
 
 	logRequestsTimeout = 30 * time.Second
+	emailEventsTimeout = 30 * time.Second
 )
 
-var organizationID = regexp.MustCompile(`^org_[0-9A-HJKMNP-TV-Z]{26}$`)
+var (
+	organizationID       = regexp.MustCompile(`^org_[0-9A-HJKMNP-TV-Z]{26}$`)
+	systemEmailHeldShape = regexp.MustCompile(`^[0-9a-f]{64}$`)
+)
 
 type ControlPlane interface {
 	Spec(ctx context.Context, etag string) (controlplane.Desired, bool, error)
@@ -85,6 +90,11 @@ type Usage interface {
 
 type Commands interface {
 	Run(ctx context.Context) error
+	EmailEventsWaiting() bool
+}
+
+type EmailEvents interface {
+	Run(ctx context.Context) (emailevents.Result, error)
 }
 
 type LogRequests interface {
@@ -103,6 +113,7 @@ type Features interface {
 
 type SystemEmail interface {
 	Sync(ctx context.Context, desired *instanceapi.SpecSystemEmail) error
+	Held(ctx context.Context) (string, error)
 }
 
 type SupportKeys interface {
@@ -147,6 +158,7 @@ type Loop struct {
 	storage  Storage
 	backups  Backups
 	commands Commands
+	events   EmailEvents
 	logs     LogRequests
 	operator Operator
 	located  values.Storage
@@ -189,6 +201,7 @@ type Params struct {
 	Storage        Storage
 	Backups        Backups
 	Commands       Commands
+	EmailEvents    EmailEvents
 	Logs           LogRequests
 	Operator       Operator
 	Capacity       values.Capacity
@@ -229,6 +242,7 @@ func New(p *Params) (*Loop, error) {
 		storage:  p.Storage,
 		backups:  p.Backups,
 		commands: p.Commands,
+		events:   p.EmailEvents,
 		logs:     p.Logs,
 		operator: p.Operator,
 		capacity: p.Capacity,
@@ -262,6 +276,7 @@ func (p *Params) validate() error {
 		{"Storage", p.Storage == nil},
 		{"Backups", p.Backups == nil},
 		{"Commands", p.Commands == nil},
+		{"EmailEvents", p.EmailEvents == nil},
 		{"Logs", p.Logs == nil},
 		{"Operator", p.Operator == nil},
 		{"Base", p.Base == nil},
@@ -341,7 +356,8 @@ func (l *Loop) Tick(ctx context.Context) {
 		return
 	}
 	l.enrolled.Store(true)
-	defer l.runCommands(ctx)
+	ready := false
+	defer func() { l.runCommands(ctx, ready) }()
 	if changed {
 		l.desired, l.etag = &desired, desired.ETag
 		l.logger.Info(
@@ -361,12 +377,14 @@ func (l *Loop) Tick(ctx context.Context) {
 	if !ok {
 		return
 	}
+	ready = report.Ready
 	l.heartbeat.Store(l.now().UnixNano())
 	report.Administrator = l.administrator(ctx, report.Ready)
 	l.backupReport(ctx, &report)
 	l.sendFeatures(ctx, report.Ready)
 	report.Features = l.heldFeatures(ctx, report.Ready)
 	l.sendSystemEmail(ctx, report.Ready)
+	report.SystemEmailFingerprint = l.heldSystemEmail(ctx, report.Ready)
 	l.sendSupportKeys(ctx, &report)
 	report.SupportGrants = l.supportGrants(ctx, report.Ready)
 	if l.shouldReport(report) {
@@ -393,7 +411,7 @@ func (l *Loop) relayLogRequests(ctx context.Context, ready bool) {
 	}
 }
 
-func (l *Loop) runCommands(ctx context.Context) {
+func (l *Loop) runCommands(ctx context.Context, ready bool) {
 	if l.now().Before(l.retryAfter) {
 		l.waitCommands("the control plane asked the operator to wait")
 		return
@@ -406,6 +424,27 @@ func (l *Loop) runCommands(ctx context.Context) {
 	defer cancel()
 	if err := l.commands.Run(run); err != nil && !l.handle(ctx, err) {
 		l.logger.Warn("cannot carry out the control plane's commands; retrying", "error", err)
+	}
+	l.relayEmailEvents(ctx, ready)
+}
+
+func (l *Loop) relayEmailEvents(ctx context.Context, ready bool) {
+	if !ready || l.desired == nil || l.desired.Spec.Lifecycle != instanceapi.Active ||
+		l.now().Before(l.retryAfter) || !l.commands.EmailEventsWaiting() {
+		return
+	}
+	run, cancel := context.WithTimeout(ctx, emailEventsTimeout)
+	defer cancel()
+	res, err := l.events.Run(run)
+	if err != nil {
+		if !l.handle(ctx, err) {
+			l.logger.Warn("cannot relay the system email events; retrying",
+				"listed", res.Listed, "error", err)
+		}
+		return
+	}
+	if res.Listed > 0 {
+		l.logger.Info("system email events relayed", "listed", res.Listed, "handled", res.Handled)
 	}
 }
 
@@ -532,6 +571,27 @@ func (l *Loop) sendSystemEmail(ctx context.Context, ready bool) {
 		return
 	}
 	l.logger.Warn("cannot bring the TMS's system email sender up to date; retrying", "error", err)
+}
+
+func (l *Loop) heldSystemEmail(ctx context.Context, ready bool) *string {
+	if !ready || l.desired.Spec.Lifecycle != instanceapi.Active {
+		return nil
+	}
+	run, cancel := context.WithTimeout(ctx, emailTimeout)
+	defer cancel()
+	held, err := l.email.Held(run)
+	if err != nil {
+		l.logger.Warn(
+			"cannot read the system email sender the TMS holds; the report leaves it out",
+			"error",
+			err,
+		)
+		return nil
+	}
+	if !systemEmailHeldShape.MatchString(held) {
+		return nil
+	}
+	return &held
 }
 
 func (l *Loop) sendSupportKeys(ctx context.Context, report *instanceapi.StatusReport) {
@@ -865,6 +925,7 @@ func (l *Loop) shouldReport(r instanceapi.StatusReport) bool {
 		!sameAdministrator(r.Administrator, l.last.Administrator) ||
 		!sameFeatures(r.Features, l.last.Features) ||
 		!sameGrants(r.SupportGrants, l.last.SupportGrants) ||
+		str(r.SystemEmailFingerprint) != str(l.last.SystemEmailFingerprint) ||
 		backupSummary(r) != backupSummary(l.last) ||
 		operatorSummary(r.Operator) != operatorSummary(l.last.Operator)
 }

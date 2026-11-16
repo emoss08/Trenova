@@ -139,6 +139,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/boardcardservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice/briefingwriter"
+	"github.com/emoss08/trenova/internal/modules/agent/app/builtinembeddingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/casechecklistservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/caseownerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/codedrequest"
@@ -171,6 +172,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/requestemail"
 	"github.com/emoss08/trenova/internal/modules/agent/app/requestwording"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retender"
+	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalplanobserver"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalquery"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/scriptrunner"
@@ -360,6 +362,10 @@ func SharedOptions() fx.Option {
 			retrievalservice.New,
 			retrievalservice.AsIndexer,
 			retrievalservice.AsPipeline,
+			retrievalservice.AsWaker,
+			retrievalplanobserver.New,
+			builtinembeddingservice.New,
+			builtinembeddingservice.AsPort,
 			retrievalservice.NewSearcher,
 			retrievalservice.AsSearcher,
 			retrievalservice.AsMemoryVectorSearcher,

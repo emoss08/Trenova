@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/emailevents"
 	"github.com/emoss08/trenova/operator/internal/escrow"
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
@@ -230,6 +231,14 @@ func newLoop(
 	if err != nil {
 		return nil, err
 	}
+	events, err := emailevents.New(&emailevents.Params{
+		ControlPlane: cp,
+		TMS:          tmsClient,
+		Logger:       logger,
+	})
+	if err != nil {
+		return nil, err
+	}
 	upgrader, err := selfupgrade.New(&selfupgrade.Params{
 		Dynamic:            c.dyn,
 		Kube:               c.kube,
@@ -297,16 +306,17 @@ func newLoop(
 			Release:   cfg.release,
 			Logger:    logger,
 		}),
-		Commands:   runner,
-		Logs:       kept,
-		Operator:   upgrader,
-		Capacity:   cfg.capacity,
-		Base:       base,
-		Namespace:  cfg.namespace,
-		Logger:     logger,
-		Poll:       cfg.poll,
-		Report:     cfg.report,
-		UsageEvery: cfg.usage,
+		Commands:    runner,
+		EmailEvents: events,
+		Logs:        kept,
+		Operator:    upgrader,
+		Capacity:    cfg.capacity,
+		Base:        base,
+		Namespace:   cfg.namespace,
+		Logger:      logger,
+		Poll:        cfg.poll,
+		Report:      cfg.report,
+		UsageEvery:  cfg.usage,
 	})
 }
 
@@ -489,6 +499,8 @@ var _ commands.ControlPlane = (*lazyClient)(nil)
 
 var _ logs.ControlPlane = (*lazyClient)(nil)
 
+var _ emailevents.ControlPlane = (*lazyClient)(nil)
+
 type lazyClient struct {
 	creds *credential.Manager
 	doer  *http.Client
@@ -559,12 +571,28 @@ func (c *lazyClient) Storage(ctx context.Context) (instanceapi.InstanceStorage, 
 	return api.Storage(ctx)
 }
 
-func (c *lazyClient) Commands(ctx context.Context) ([]instanceapi.Command, error) {
+func (c *lazyClient) Commands(ctx context.Context) (instanceapi.CommandList, error) {
+	api, err := c.client()
+	if err != nil {
+		return instanceapi.CommandList{}, err
+	}
+	return api.Commands(ctx)
+}
+
+func (c *lazyClient) EmailEvents(ctx context.Context) ([]instanceapi.EmailEvent, error) {
 	api, err := c.client()
 	if err != nil {
 		return nil, err
 	}
-	return api.Commands(ctx)
+	return api.EmailEvents(ctx)
+}
+
+func (c *lazyClient) AckEmailEvents(ctx context.Context, ids []uuid.UUID) error {
+	api, err := c.client()
+	if err != nil {
+		return err
+	}
+	return api.AckEmailEvents(ctx, ids)
 }
 
 func (c *lazyClient) CompleteCommand(

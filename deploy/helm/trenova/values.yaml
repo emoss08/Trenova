@@ -23,6 +23,10 @@ stopped: false
 # it on; leave it off on a self-hosted install.
 managed:
   enabled: false
+  # The instance's ID in Trenova Cloud (a lowercase UUID), which the operator
+  # sets; required while enabled. The TMS tags the email Trenova's sender
+  # carries with it, so the control plane can relay its bounces back here.
+  instanceId: ""
   # Who may reach port 8090, as NetworkPolicy peers: the operator's namespace.
   # Required while enabled; the chart refuses to open the port to everyone.
   from: []
@@ -81,8 +85,6 @@ tms:
   # self_hosted (every organization belongs to the operator), community,
   # development or enterprise.
   platformMode: self_hosted
-  # Identifies this installation (platform.instanceId).
-  instanceId: ""
 
   # Merged over the configuration the chart renders (templates/_config.tpl),
   # key by key; services/tms/config/config.example.yaml documents every key.
@@ -546,6 +548,25 @@ docling:
   resources:
     requests: { cpu: 500m, memory: 2Gi }
     limits: { memory: 4Gi }
+
+# Search by meaning for Trenova AI: Ollama with nomic-embed-text v1.5 inside the
+# image (deploy/Dockerfile.embedding), on two CPU threads, downloading nothing.
+# The TMS uses it only in managed mode, for an organization that routes no
+# embedding model of its own while the plan includes Trenova AI; Trenova
+# Cloud's operator turns it on with Trenova AI. It holds about 320 MiB with the
+# model loaded; the limit leaves three times that. Only the API and the worker
+# reach it, and it reaches nothing. The tag names the model and the Ollama
+# release it was built with; model must be the name the image serves.
+embedding:
+  enabled: false
+  image:
+    repository: ghcr.io/emoss08/trenova/embedding
+    tag: nomic-embed-text-v1.5-ollama-0.40.5
+  model: nomic-embed-text:v1.5
+  parallel: 2
+  resources:
+    requests: { cpu: 250m, memory: 320Mi }
+    limits: { cpu: "2", memory: 1Gi }
 
 # Malware scanning: clamd checks every uploaded file, inbound email
 # attachment, capture page and inbound EDI file before anything opens it.

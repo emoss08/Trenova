@@ -1466,12 +1466,6 @@ writes:
   "POST /api/v1/webhooks/email/resend/:webhookToken/":
     exempt: infrastructure
     reason: "An inbound webhook a provider calls with a signed token, not a person."
-  "POST /api/v1/webhooks/email/system/postmark/":
-    exempt: infrastructure
-    reason: "An inbound webhook Trenova's email provider calls with the system sender's webhook credential, not a person."
-  "POST /api/v1/webhooks/email/system/resend/":
-    exempt: infrastructure
-    reason: "An inbound webhook Trenova's email provider calls, signed with the system sender's webhook secret, not a person."
   "PUT /api/v1/email-profiles/:profileID/":
     exempt: configuration
     reason: "Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them."

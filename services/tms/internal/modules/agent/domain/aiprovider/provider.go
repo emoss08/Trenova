@@ -207,6 +207,8 @@ type Provider struct {
 	// stored without the secret making the trip.
 	HasAPIKey bool `json:"hasApiKey"`
 
+	BuiltIn bool `json:"-" keel:"-"`
+
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
 	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`

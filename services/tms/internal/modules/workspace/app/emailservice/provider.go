@@ -37,6 +37,7 @@ type SendProviderMessage struct {
 	Attachments    []ProviderAttachment
 	Headers        map[string]string
 	OpenTracking   bool
+	Metadata       map[string]string
 }
 
 type ProviderAttachment struct {

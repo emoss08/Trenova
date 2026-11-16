@@ -61,6 +61,17 @@ func (l providerLookup) ref(id string) aianalyticsports.ProviderRef {
 		name := i18n.Translate(l.locale, "No provider")
 		return aianalyticsports.ProviderRef{Name: name, ShortName: name, Removed: true}
 	}
+	if pulid.ID(id) == aiprovider.BuiltInEmbeddingID {
+		name := i18n.Translate(l.locale, "Trenova search service")
+		return aianalyticsports.ProviderRef{
+			ID:        aiprovider.BuiltInEmbeddingID,
+			Name:      name,
+			ShortName: name,
+			Kind:      aiprovider.KindOpenAIChat,
+			Enabled:   true,
+			Removed:   true,
+		}
+	}
 	provider, ok := l.byID[pulid.ID(id)]
 	if !ok {
 		name := i18n.Translate(l.locale, "Removed provider")

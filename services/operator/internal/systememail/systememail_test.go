@@ -3,9 +3,12 @@ package systememail_test
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -19,10 +22,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/tms"
 )
 
-const (
-	apiKey        = "pm-operator-0123456789abcdef01"
-	webhookSecret = "user:operator-webhook-password"
-)
+const apiKey = "pm-operator-0123456789abcdef01"
 
 type fakeTMS struct {
 	mu      sync.Mutex
@@ -90,23 +90,20 @@ func (f *fakeControlPlane) Secrets(context.Context) (instanceapi.InstanceSecrets
 }
 
 func credential(key string) *instanceapi.SystemEmailCredential {
-	secret := webhookSecret
 	return &instanceapi.SystemEmailCredential{
-		Provider:      "Postmark",
-		ApiKey:        key,
-		FromAddress:   "no-reply@mail.trenova.app",
-		FromName:      "Trenova",
-		WebhookSecret: &secret,
+		Provider:    "Postmark",
+		ApiKey:      key,
+		FromAddress: "no-reply@mail.trenova.app",
+		FromName:    "Trenova",
 	}
 }
 
 func sender(key string) tms.SystemEmail {
 	return tms.SystemEmail{
-		Provider:      "Postmark",
-		APIKey:        key,
-		FromAddress:   "no-reply@mail.trenova.app",
-		FromName:      "Trenova",
-		WebhookSecret: webhookSecret,
+		Provider:    "Postmark",
+		APIKey:      key,
+		FromAddress: "no-reply@mail.trenova.app",
+		FromName:    "Trenova",
 	}
 }
 
@@ -143,21 +140,29 @@ func newRig() *rig {
 func (r *rig) assertNoSecret(t *testing.T, errs ...error) {
 	t.Helper()
 	assert.NotContains(t, r.logs.String(), apiKey)
-	assert.NotContains(t, r.logs.String(), webhookSecret)
 	for _, err := range errs {
 		if err != nil {
 			assert.NotContains(t, err.Error(), apiKey)
-			assert.NotContains(t, err.Error(), webhookSecret)
 		}
 	}
 }
 
-func TestTheFingerprintMatchesTheTMSContractVectors(t *testing.T) {
+func contractFingerprint(fields ...string) string {
+	sum := sha256.Sum256([]byte("trenova.system-email.v1\n" + strings.Join(fields, "\n")))
+	return hex.EncodeToString(sum[:])
+}
+
+func TestTheFingerprintMatchesTheContractFormula(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(
 		t,
-		"97bc40decf9416a4926287451b37e8a9c5e5d55b2b142126e28a0993d604d01f",
+		contractFingerprint(
+			"Postmark",
+			"no-reply@mail.trenova.app",
+			"Trenova",
+			"pm-0123456789abcdef0123456789",
+		),
 		systememail.Fingerprint(&tms.SystemEmail{
 			Provider:    "Postmark",
 			APIKey:      "pm-0123456789abcdef0123456789",
@@ -167,13 +172,17 @@ func TestTheFingerprintMatchesTheTMSContractVectors(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		"1ca13b2b81836149a7d6d52423e8725b17510d2e80953be5e82ef90a0c9736fc",
+		contractFingerprint(
+			"Resend",
+			"no-reply@mail.trenova.app",
+			"Trenova",
+			"re_0123456789abcdef0123456789",
+		),
 		systememail.Fingerprint(&tms.SystemEmail{
-			Provider:      "Resend",
-			APIKey:        "re_0123456789abcdef0123456789",
-			FromAddress:   "no-reply@mail.trenova.app",
-			FromName:      "Trenova",
-			WebhookSecret: "whsec_abcdef",
+			Provider:    "Resend",
+			APIKey:      "re_0123456789abcdef0123456789",
+			FromAddress: "no-reply@mail.trenova.app",
+			FromName:    "Trenova",
 		}),
 	)
 }
@@ -321,6 +330,5 @@ func TestTheSenderNeverPrintsItsSecrets(t *testing.T) {
 		fmt.Sprintf("%#v", s),
 	} {
 		assert.NotContains(t, printed, apiKey)
-		assert.NotContains(t, printed, webhookSecret)
 	}
 }

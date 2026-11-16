@@ -22,12 +22,18 @@ import (
 
 const (
 	EmbeddingFixturePath  = "evals/embeddings/nomic-embed-text.json"
-	EmbeddingFixtureModel = "nomic-embed-text"
+	EmbeddingFixtureModel = airetrieval.TunedEmbeddingModel
+	ShippedEmbeddingModel = "nomic-embed-text:v1.5"
+	ShippedEmbeddingImage = "ghcr.io/emoss08/trenova/embedding"
 	OllamaURLEnv          = "TRENOVA_EVAL_OLLAMA_URL"
 	DefaultOllamaURL      = "http://localhost:11434"
 	RequireHybridEnv      = "TRENOVA_EVAL_REQUIRE_HYBRID"
 
-	RecordEmbeddingsCommand = "cd services/tms && ollama pull nomic-embed-text && " +
+	RunShippedEmbeddingCommand = "docker run -d --rm --name trenova-embedding-record " +
+		"-p 127.0.0.1:11434:11434 " + ShippedEmbeddingImage +
+		":<embedding.image.tag in deploy/helm/trenova/values.yaml>"
+
+	RecordEmbeddingsCommand = RunShippedEmbeddingCommand + " && cd services/tms && " +
 		OllamaURLEnv + "=" + DefaultOllamaURL + " go test -count=1 " +
 		"-run 'TestRecordEmbeddingFixture' ./internal/modules/agent/app/agentevalgate/ -record && " +
 		"go test -count=1 -run 'AgainstFloors' " +

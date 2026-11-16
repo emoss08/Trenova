@@ -71,6 +71,7 @@ type Server struct {
 	listings    int
 	statusFail  int
 	bundles     bundleState
+	emailEvents emailEventState
 }
 
 type Params struct {
@@ -172,6 +173,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PUT /v1/commands/{commandId}", s.completeCommand)
 	mux.HandleFunc("POST /v1/log-bundles", s.registerLogBundle)
 	mux.HandleFunc("PUT /v1/log-bundles/{bundleId}", s.updateLogBundle)
+	mux.HandleFunc("GET /v1/email-events", s.listEmailEvents)
+	mux.HandleFunc("POST /v1/email-events/ack", s.ackEmailEvents)
 	return s.authenticate(mux)
 }
 
@@ -204,8 +207,9 @@ func (s *Server) listCommands(w http.ResponseWriter, _ *http.Request) {
 			waiting = append(waiting, c)
 		}
 	}
+	events := s.emailEventsWaiting()
 	s.mu.Unlock()
-	write(w, instanceapi.CommandList{Commands: waiting})
+	write(w, instanceapi.CommandList{Commands: waiting, EmailEvents: events})
 }
 
 func (s *Server) completeCommand(w http.ResponseWriter, r *http.Request) {

@@ -89,11 +89,18 @@ type RetrievalPurgeResult struct {
 }
 
 type RetrievalSweepResult struct {
-	Marked  int `json:"marked"`
-	Waiting int `json:"waiting"`
+	Marked         int  `json:"marked"`
+	Waiting        int  `json:"waiting"`
+	RoutingChanged bool `json:"routingChanged,omitempty"`
 }
 
-func (r RetrievalSweepResult) HasWork() bool { return r.Marked > 0 || r.Waiting > 0 }
+func (r RetrievalSweepResult) HasWork() bool {
+	return r.Marked > 0 || r.Waiting > 0 || r.RoutingChanged
+}
+
+type RetrievalWaker interface {
+	Wake(ctx context.Context, tenant pagination.TenantInfo)
+}
 
 type RetrievalReindexPageRequest struct {
 	TenantInfo pagination.TenantInfo  `json:"tenantInfo"`
@@ -125,11 +132,6 @@ type RetrievalIndexPipeline interface {
 		modelKey string,
 	) (RetrievalPurgeResult, error)
 	Sweep(ctx context.Context, tenant pagination.TenantInfo) (RetrievalSweepResult, error)
-	ListIndexedTenants(
-		ctx context.Context,
-		after *pagination.TenantInfo,
-		limit int,
-	) ([]pagination.TenantInfo, error)
 	Wake(ctx context.Context, tenant pagination.TenantInfo)
 	ReindexPage(ctx context.Context, req *RetrievalReindexPageRequest) (RetrievalReindexPage, error)
 }

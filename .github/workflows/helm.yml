@@ -113,8 +113,15 @@ jobs:
           done
           ls "$RUNNER_TEMP"/configs/*/config.yaml | paste -sd: > "$RUNNER_TEMP/deploy-configs"
           # Managed mode never opens port 8090 to every namespace.
-          if helm template trenova "$CHART" -n trenova "${base[@]}" --set managed.enabled=true > /dev/null 2>&1; then
+          if helm template trenova "$CHART" -n trenova "${base[@]}" --set managed.enabled=true \
+            --set managed.instanceId=0192f3a4-5b6c-7d8e-9f01-23456789abcd > /dev/null 2>&1; then
             echo "::error::managed.enabled rendered without managed.from"
+            exit 1
+          fi
+          # Managed mode never sends Trenova's system email untagged.
+          if helm template trenova "$CHART" -n trenova "${base[@]}" -f "$CHART/ci/managed-values.yaml" \
+            --set managed.instanceId= > /dev/null 2>&1; then
+            echo "::error::managed.enabled rendered without managed.instanceId"
             exit 1
           fi
           # With an escrow Secret, the four escrowed keys are read from it alone

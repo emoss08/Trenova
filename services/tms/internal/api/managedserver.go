@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/systememailservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
@@ -61,6 +62,7 @@ type ManagedServerParams struct {
 	LC       fx.Lifecycle
 
 	SystemEmail *systememailservice.Service
+	Email       *emailservice.Service
 
 	SupportAccess *supportaccessservice.Service
 	SupportLogs   *supportlogservice.Service
@@ -73,7 +75,8 @@ type ManagedHandlerParams struct {
 	Token    string
 	Logger   *zap.Logger
 
-	SystemEmail ManagedSystemEmail
+	SystemEmail       ManagedSystemEmail
+	SystemEmailEvents ManagedSystemEmailEvents
 
 	SupportAccess ManagedSupportAccess
 	SupportLogs   ManagedSupportLogs
@@ -88,6 +91,7 @@ type managedHandler struct {
 	l        *zap.Logger
 
 	systemEmail ManagedSystemEmail
+	emailEvents ManagedSystemEmailEvents
 
 	support     ManagedSupportAccess
 	supportLogs ManagedSupportLogs
@@ -184,6 +188,7 @@ func NewManagedHandler(p *ManagedHandlerParams) http.Handler {
 		l:        p.Logger,
 
 		systemEmail: p.SystemEmail,
+		emailEvents: p.SystemEmailEvents,
 
 		support:     p.SupportAccess,
 		supportLogs: p.SupportLogs,
@@ -216,7 +221,8 @@ func StartManagedServer(p ManagedServerParams) {
 				Token:    p.Config.Token,
 				Logger:   logger,
 
-				SystemEmail: p.SystemEmail,
+				SystemEmail:       p.SystemEmail,
+				SystemEmailEvents: p.Email,
 
 				SupportAccess: p.SupportAccess,
 				SupportLogs:   p.SupportLogs,

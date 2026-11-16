@@ -22,19 +22,22 @@ const (
 	releaseMillicore = 100
 	// The CloudNativePG controller and Traefik, which set no request, and
 	// room for a future companion.
-	headroomMillicore = 240
-	reservedMillicore = systemMillicore + companionMillicore + releaseMillicore + headroomMillicore
-	minMemoryGiB      = 10
-	minMemoryGiBScan  = 13
-	clamavRequestMiB  = 3072
-	clamavLimitMiB    = 4096
-	releaseMiB        = 256
-	releaseLimitMiB   = 1024
-	minVCPU           = 2
-	minDiskGiB        = 40
-	postgresDiskShare = 0.35
-	lokiDiskShare     = 0.1
-	minLokiDiskGiB    = 4
+	headroomMillicore   = 240
+	reservedMillicore   = systemMillicore + companionMillicore + releaseMillicore + headroomMillicore
+	minMemoryGiB        = 10
+	minMemoryGiBScan    = 13
+	clamavRequestMiB    = 3072
+	clamavLimitMiB      = 4096
+	embeddingRequestMiB = 320
+	embeddingReserveMiB = 1024
+	embeddingCPULimit   = "2"
+	releaseMiB          = 256
+	releaseLimitMiB     = 1024
+	minVCPU             = 2
+	minDiskGiB          = 40
+	postgresDiskShare   = 0.35
+	lokiDiskShare       = 0.1
+	minLokiDiskGiB      = 4
 )
 
 type sizeInput struct {
@@ -45,13 +48,18 @@ type sizeInput struct {
 }
 
 type share struct {
-	path     []string
-	memory   float64
-	cpu      float64
-	floorMiB float64
-	fixedMiB float64
-	limitMiB float64
-	surge    bool
+	path       []string
+	memory     float64
+	cpu        float64
+	floorMiB   float64
+	fixedMiB   float64
+	reserveMiB float64
+	limitMiB   float64
+	surge      bool
+}
+
+func (s share) heldMiB() float64 {
+	return math.Max(s.fixedMiB, s.reserveMiB)
 }
 
 func shares(clamav bool) []share {
@@ -68,6 +76,13 @@ func shares(clamav bool) []share {
 		{path: []string{"gtc"}, memory: 2, cpu: 2, floorMiB: 128},
 		{path: []string{"client"}, memory: 1, cpu: 1, floorMiB: 64, surge: true},
 		{path: []string{keyDocling}, memory: 15, cpu: 8, floorMiB: 2048},
+		{
+			path:       []string{keyEmbedding},
+			cpu:        2,
+			fixedMiB:   embeddingRequestMiB,
+			reserveMiB: embeddingReserveMiB,
+			limitMiB:   embeddingReserveMiB,
+		},
 		{path: []string{keyLogs, "loki"}, memory: 2, cpu: 2, floorMiB: 256, limitMiB: 1024},
 		{path: []string{keyLogs, "alloy"}, memory: 0.5, cpu: 1, floorMiB: 128, limitMiB: 512},
 	}
@@ -102,7 +117,7 @@ func divide(in sizeInput) map[string]any {
 	for _, s := range all {
 		memTotal += s.memory
 		cpuTotal += s.cpu
-		memFixed += s.fixedMiB
+		memFixed += s.heldMiB()
 		if s.surge {
 			memSurge = math.Max(memSurge, s.memory)
 			cpuSurge = math.Max(cpuSurge, s.cpu)
@@ -132,6 +147,11 @@ func divide(in sizeInput) map[string]any {
 			limit = math.Max(limit, cores*1024)
 			limits = map[string]any{
 				keyCPU:    strconv.FormatInt(int64(cores), 10),
+				keyMemory: mib(limit),
+			}
+		case keyEmbedding:
+			limits = map[string]any{
+				keyCPU:    embeddingCPULimit,
 				keyMemory: mib(limit),
 			}
 		case keyRedis:

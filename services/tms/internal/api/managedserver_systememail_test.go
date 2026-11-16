@@ -24,11 +24,9 @@ import (
 )
 
 const (
-	systemAPIKey        = "pm-system-0123456789abcdef0123"
-	systemWebhookSecret = "user:webhook-password-0123"
-	systemEmailBody     = `{"provider":"Postmark","apiKey":"` + systemAPIKey +
-		`","fromAddress":"no-reply@mail.trenova.app","fromName":"Trenova","webhookSecret":"` +
-		systemWebhookSecret + `"}`
+	systemAPIKey    = "pm-system-0123456789abcdef0123"
+	systemEmailBody = `{"provider":"Postmark","apiKey":"` + systemAPIKey +
+		`","fromAddress":"no-reply@mail.trenova.app","fromName":"Trenova"}`
 )
 
 type fakeSystemSenderRepo struct {
@@ -125,12 +123,10 @@ func (r *systemEmailRig) assertNoSecretLeaked(t *testing.T, recs ...*httptest.Re
 	t.Helper()
 	for _, rec := range recs {
 		assert.NotContains(t, rec.Body.String(), systemAPIKey)
-		assert.NotContains(t, rec.Body.String(), systemWebhookSecret)
 	}
 	for _, entry := range r.logs.All() {
 		line := entry.Message + " " + fmt.Sprint(entry.ContextMap())
 		assert.NotContains(t, line, systemAPIKey)
-		assert.NotContains(t, line, systemWebhookSecret)
 	}
 }
 
@@ -144,7 +140,6 @@ func TestManagedSystemEmailIsStoredEncryptedAndNeverReturned(t *testing.T) {
 	stored := r.repo.sender
 	require.NotNil(t, stored)
 	assert.NotContains(t, stored.APIKeySealed, systemAPIKey)
-	assert.NotContains(t, stored.WebhookSecretSealed, systemWebhookSecret)
 	assert.True(t, encryptionservice.IsEnvelope(stored.APIKeySealed))
 
 	get := r.serve(t, http.MethodGet, managedToken, "")
@@ -156,11 +151,10 @@ func TestManagedSystemEmailIsStoredEncryptedAndNeverReturned(t *testing.T) {
 		"provider":    "Postmark",
 		"fromAddress": "no-reply@mail.trenova.app",
 		"fingerprint": systememail.Fingerprint(&systememail.Credential{
-			Provider:      email.ProviderPostmark,
-			APIKey:        systemAPIKey,
-			FromAddress:   "no-reply@mail.trenova.app",
-			FromName:      "Trenova",
-			WebhookSecret: systemWebhookSecret,
+			Provider:    email.ProviderPostmark,
+			APIKey:      systemAPIKey,
+			FromAddress: "no-reply@mail.trenova.app",
+			FromName:    "Trenova",
 		}),
 	}, held)
 	r.assertNoSecretLeaked(t, put, get)
@@ -206,12 +200,13 @@ func TestManagedSystemEmailRefusesAMalformedBody(t *testing.T) {
 	t.Parallel()
 
 	bodies := map[string]string{
-		"not json":      `{"provider":`,
-		"unknown field": strings.Replace(systemEmailBody, `"provider"`, `"host":"smtp.example.com","provider"`, 1),
-		"bad provider":  strings.Replace(systemEmailBody, "Postmark", "SES", 1),
-		"bad address":   strings.Replace(systemEmailBody, "no-reply@mail.trenova.app", "nobody", 1),
-		"short key":     strings.Replace(systemEmailBody, systemAPIKey, "short", 1),
-		"missing name":  strings.Replace(systemEmailBody, `"fromName":"Trenova"`, `"fromName":""`, 1),
+		"not json":       `{"provider":`,
+		"unknown field":  strings.Replace(systemEmailBody, `"provider"`, `"host":"smtp.example.com","provider"`, 1),
+		"webhook secret": strings.Replace(systemEmailBody, `"provider"`, `"webhookSecret":"whsec_1","provider"`, 1),
+		"bad provider":   strings.Replace(systemEmailBody, "Postmark", "SES", 1),
+		"bad address":    strings.Replace(systemEmailBody, "no-reply@mail.trenova.app", "nobody", 1),
+		"short key":      strings.Replace(systemEmailBody, systemAPIKey, "short", 1),
+		"missing name":   strings.Replace(systemEmailBody, `"fromName":"Trenova"`, `"fromName":""`, 1),
 	}
 	for name, body := range bodies {
 		r := newSystemEmailRig(t, &fakeSystemSenderRepo{})

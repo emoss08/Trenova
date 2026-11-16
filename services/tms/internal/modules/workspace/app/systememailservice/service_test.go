@@ -21,9 +21,8 @@ import (
 )
 
 const (
-	apiKey        = "pm-secret-0123456789abcdef0123"
-	webhookSecret = "whsec_secret_abcdef"
-	receivedAt    = int64(1_794_650_400)
+	apiKey     = "pm-secret-0123456789abcdef0123"
+	receivedAt = int64(1_794_650_400)
 )
 
 type fakeRepo struct {
@@ -99,11 +98,10 @@ func newRig(t *testing.T, managed bool, repo *fakeRepo, key string) *rig {
 
 func credential() *systememail.Credential {
 	return &systememail.Credential{
-		Provider:      email.ProviderPostmark,
-		APIKey:        apiKey,
-		FromAddress:   "no-reply@mail.trenova.app",
-		FromName:      "Trenova",
-		WebhookSecret: webhookSecret,
+		Provider:    email.ProviderPostmark,
+		APIKey:      apiKey,
+		FromAddress: "no-reply@mail.trenova.app",
+		FromName:    "Trenova",
 	}
 }
 
@@ -112,7 +110,6 @@ func assertNoSecretLogged(t *testing.T, logs *observer.ObservedLogs) {
 	for _, entry := range logs.All() {
 		line := entry.Message + " " + fmt.Sprint(entry.ContextMap())
 		assert.NotContains(t, line, apiKey)
-		assert.NotContains(t, line, webhookSecret)
 	}
 }
 
@@ -127,9 +124,7 @@ func TestTheSystemSenderIsStoredEncrypted(t *testing.T) {
 	stored := r.repo.sender
 	require.NotNil(t, stored)
 	assert.NotContains(t, stored.APIKeySealed, apiKey)
-	assert.NotContains(t, stored.WebhookSecretSealed, webhookSecret)
 	assert.True(t, encryptionservice.IsEnvelope(stored.APIKeySealed))
-	assert.True(t, encryptionservice.IsEnvelope(stored.WebhookSecretSealed))
 	assert.Equal(t, systememail.Fingerprint(credential()), stored.Fingerprint)
 	assert.Equal(t, receivedAt, stored.ReceivedAt)
 
@@ -137,7 +132,6 @@ func TestTheSystemSenderIsStoredEncrypted(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, current)
 	assert.Equal(t, apiKey, current.APIKey)
-	assert.Equal(t, webhookSecret, current.WebhookSecret)
 	assertNoSecretLogged(t, r.logs)
 }
 
@@ -255,22 +249,5 @@ func TestAStoreFailureNamesNoSecret(t *testing.T) {
 	err := r.svc.Set(t.Context(), credential())
 	require.Error(t, err)
 	assert.False(t, strings.Contains(err.Error(), apiKey))
-	assert.False(t, strings.Contains(err.Error(), webhookSecret))
 	assertNoSecretLogged(t, r.logs)
-}
-
-func TestTheWebhookSecretIsOnlyForTheSendersProvider(t *testing.T) {
-	t.Parallel()
-
-	r := newRig(t, true, &fakeRepo{}, testKey)
-	require.NoError(t, r.svc.Set(t.Context(), credential()))
-
-	secret, ok, err := r.svc.WebhookSecret(t.Context(), email.ProviderPostmark)
-	require.NoError(t, err)
-	assert.True(t, ok)
-	assert.Equal(t, webhookSecret, secret)
-
-	_, ok, err = r.svc.WebhookSecret(t.Context(), email.ProviderResend)
-	require.NoError(t, err)
-	assert.False(t, ok)
 }

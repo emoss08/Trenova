@@ -218,6 +218,7 @@ type world struct {
 	grants   *fakeSupportGrants
 	operator *fakeOperator
 	logs     *fakeLogKeeping
+	events   *fakeEmailEvents
 	now      time.Time
 }
 
@@ -267,8 +268,9 @@ func newWorldWith(
 		operator: &fakeOperator{status: selfupgrade.Status{
 			Version: "0.11.0", Phase: selfupgrade.PhaseCurrent,
 		}},
-		logs: &fakeLogKeeping{},
-		now:  time.Now(),
+		logs:   &fakeLogKeeping{},
+		events: &fakeEmailEvents{},
+		now:    time.Now(),
 	}
 	w.usage = &fakeUsage{now: func() time.Time { return w.now }}
 	var relayer reconcile.Usage = w.usage
@@ -327,6 +329,7 @@ func newWorldWith(
 		Storage:        noStorage{},
 		Backups:        &fakeBackups{},
 		Commands:       runner,
+		EmailEvents:    w.events,
 		Logs:           w.logs,
 		Operator:       w.operator,
 		Base:           map[string]any{"clamav": map[string]any{"enabled": true}},
@@ -1161,13 +1164,34 @@ type fakeSystemEmail struct {
 	mu      sync.Mutex
 	desired []*instanceapi.SpecSystemEmail
 	err     error
+	held    string
+	heldErr error
 }
 
 func (f *fakeSystemEmail) Sync(_ context.Context, desired *instanceapi.SpecSystemEmail) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.desired = append(f.desired, desired)
-	return f.err
+	if f.err != nil {
+		return f.err
+	}
+	f.held = ""
+	if desired != nil {
+		f.held = desired.Fingerprint
+	}
+	return nil
+}
+
+func (f *fakeSystemEmail) Held(context.Context) (string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.held, f.heldErr
+}
+
+func (f *fakeSystemEmail) holds(fingerprint string, err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.held, f.heldErr = fingerprint, err
 }
 
 func (f *fakeSystemEmail) calls() []*instanceapi.SpecSystemEmail {
@@ -1205,6 +1229,47 @@ func TestBringsTheTMSsSystemEmailSenderToTheSpecOnceReady(t *testing.T) {
 	require.Len(t, calls, 1)
 	require.NotNil(t, calls[0])
 	require.Equal(t, fingerprint, calls[0].Fingerprint)
+}
+
+func TestTheReportNamesTheSystemEmailSenderTheTMSHolds(t *testing.T) {
+	t.Parallel()
+	fingerprint := strings.Repeat("a", 64)
+	w := newWorldWith(t, specWithSystemEmail(uuid.New(), fingerprint), nil)
+	w.health.set(true)
+
+	w.loop.Tick(t.Context())
+	r := w.lastReport(t)
+	require.NotNil(t, r.SystemEmailFingerprint)
+	require.Equal(t, fingerprint, *r.SystemEmailFingerprint)
+
+	w.email.fail(errors.New("the TMS answered 503"))
+	w.email.holds(strings.Repeat("b", 64), nil)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	r = w.lastReport(t)
+	require.NotNil(t, r.SystemEmailFingerprint, "a change in what is held is reported at once")
+	require.Equal(t, strings.Repeat("b", 64), *r.SystemEmailFingerprint, "what the TMS holds, not what the spec asks for")
+}
+
+func TestTheReportLeavesOutASenderItCouldNotReadOrThatIsNotHeld(t *testing.T) {
+	t.Parallel()
+	w := newWorldWith(t, specWithSystemEmail(uuid.New(), ""), nil)
+	w.health.set(true)
+
+	w.loop.Tick(t.Context())
+	require.Nil(t, w.lastReport(t).SystemEmailFingerprint, "no sender is held")
+
+	w.email.holds("", errors.New("the TMS answered 503"))
+	w.now = w.now.Add(2 * time.Minute)
+	w.loop.Tick(t.Context())
+	r := w.lastReport(t)
+	require.True(t, r.Ready, "a failed read never holds the report back")
+	require.Nil(t, r.SystemEmailFingerprint)
+
+	w.email.holds("not-a-fingerprint", nil)
+	w.now = w.now.Add(2 * time.Minute)
+	w.loop.Tick(t.Context())
+	require.Nil(t, w.lastReport(t).SystemEmailFingerprint, "a value the control plane would refuse is never sent")
 }
 
 func TestAnInstanceWithoutATrenovaSenderAsksForItsRemoval(t *testing.T) {
@@ -1256,6 +1321,7 @@ func TestALoopWithoutItsCommandsIsRefused(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "Commands")
+	require.Contains(t, err.Error(), "EmailEvents")
 	require.Contains(t, err.Error(), "Operator")
 }
 

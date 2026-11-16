@@ -98,11 +98,7 @@ func (r *fakeRepo) UpdateSettings(
 
 	if r.mismatchFirst > 0 {
 		r.mismatchFirst--
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
-			"Version mismatch",
-		)
+		return nil, errortypes.NewVersionMismatchError("Version mismatch")
 	}
 
 	saved := *entity
@@ -280,7 +276,20 @@ type fixture struct {
 	pipeline   *fakePipeline
 	audit      *fakeAudit
 	embeddings *fakeEmbeddings
+	builtIn    *fakeBuiltIn
 	svc        *Service
+}
+
+type fakeBuiltIn struct {
+	provider *aiprovider.Provider
+	err      error
+}
+
+func (f *fakeBuiltIn) Provider(
+	context.Context,
+	pagination.TenantInfo,
+) (*aiprovider.Provider, bool, error) {
+	return f.provider, f.provider != nil, f.err
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -299,6 +308,7 @@ func newFixture(t *testing.T) *fixture {
 		pipeline:   &fakePipeline{},
 		audit:      &fakeAudit{},
 		embeddings: &fakeEmbeddings{key: activeKey},
+		builtIn:    &fakeBuiltIn{},
 	}
 	f.svc = New(Params{
 		Logger:     zap.NewNop(),
@@ -311,6 +321,7 @@ func newFixture(t *testing.T) *fixture {
 		Pipeline:   f.pipeline,
 		Audit:      f.audit,
 		Embeddings: f.embeddings,
+		BuiltIn:    f.builtIn,
 	})
 	f.svc.now = func() int64 { return testNow }
 
@@ -625,6 +636,116 @@ func TestStatus_ConfiguredModelErrors(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, status.ConfiguredModelDiffers)
 	})
+}
+
+func builtInFor(f *fixture) *aiprovider.Provider {
+	return aiprovider.BuiltInEmbedding(f.tenant.OrgID, f.tenant.BuID, aiprovider.BuiltInEmbeddingService{
+		URL:   "http://trenova-embedding:11434",
+		Model: "nomic-embed-text:v1.5",
+	})
+}
+
+func TestStatus_SaysWhereTheRoutedModelComesFrom(t *testing.T) {
+	t.Parallel()
+
+	t.Run("the built-in service, which Trenova tunes for", func(t *testing.T) {
+		t.Parallel()
+
+		f := newFixture(t)
+		f.withSettings(nil)
+		f.builtIn.provider = builtInFor(f)
+		f.embeddings.key = f.builtIn.provider.EmbeddingModelKey()
+
+		status, err := f.svc.Status(t.Context(), f.tenant)
+		require.NoError(t, err)
+		require.NotNil(t, status.EmbeddingSource)
+		assert.Equal(t, airetrieval.EmbeddingSourceBuiltIn, *status.EmbeddingSource)
+		assert.True(t, status.ConfiguredModelTuned)
+		assert.Equal(t, "nomic-embed-text", status.TunedModel)
+	})
+
+	t.Run("the organization's own model while the service is available", func(t *testing.T) {
+		t.Parallel()
+
+		f := newFixture(t)
+		f.withSettings(nil)
+		f.builtIn.provider = builtInFor(f)
+
+		status, err := f.svc.Status(t.Context(), f.tenant)
+		require.NoError(t, err)
+		require.NotNil(t, status.EmbeddingSource)
+		assert.Equal(t, airetrieval.EmbeddingSourceOrganization, *status.EmbeddingSource)
+		assert.False(t, status.ConfiguredModelTuned, "Trenova does not tune for voyage-3.5")
+		assert.Equal(t, "nomic-embed-text", status.TunedModel)
+	})
+
+	t.Run("the organization's own nomic-embed-text", func(t *testing.T) {
+		t.Parallel()
+
+		f := newFixture(t)
+		f.withSettings(nil)
+		f.embeddings.key = "ollama.example.com/nomic-embed-text:latest@768"
+
+		status, err := f.svc.Status(t.Context(), f.tenant)
+		require.NoError(t, err)
+		require.NotNil(t, status.EmbeddingSource)
+		assert.Equal(t, airetrieval.EmbeddingSourceOrganization, *status.EmbeddingSource)
+		assert.True(t, status.ConfiguredModelTuned)
+	})
+
+	t.Run("nothing routed", func(t *testing.T) {
+		t.Parallel()
+
+		f := newFixture(t)
+		f.withSettings(nil)
+		f.embeddings.key = ""
+		f.embeddings.err = llmports.ErrNoProviderConfigured
+
+		status, err := f.svc.Status(t.Context(), f.tenant)
+		require.NoError(t, err)
+		assert.Nil(t, status.EmbeddingSource)
+		assert.False(t, status.ConfiguredModelTuned)
+		assert.Equal(t, "nomic-embed-text", status.TunedModel)
+	})
+
+	t.Run("a failure to resolve the service is returned", func(t *testing.T) {
+		t.Parallel()
+
+		f := newFixture(t)
+		f.withSettings(nil)
+		f.builtIn.err = errors.New("the plan could not be read")
+
+		_, err := f.svc.Status(t.Context(), f.tenant)
+		require.Error(t, err)
+	})
+}
+
+func TestEmbeddingSourceOf(t *testing.T) {
+	t.Parallel()
+
+	builtIn := "trenova-embedding:11434/nomic-embed-text:v1.5@768"
+	assert.Nil(t, EmbeddingSourceOf("", builtIn))
+	assert.Nil(t, EmbeddingSourceOf("", ""))
+	assert.Equal(t, airetrieval.EmbeddingSourceBuiltIn, *EmbeddingSourceOf(builtIn, builtIn))
+	assert.Equal(t, airetrieval.EmbeddingSourceOrganization, *EmbeddingSourceOf(activeKey, builtIn))
+	assert.Equal(t, airetrieval.EmbeddingSourceOrganization, *EmbeddingSourceOf(activeKey, ""),
+		"a self-hosted install never has the built-in service")
+}
+
+func TestReindexEstimate_TheBuiltInServiceCostsNothing(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	f.withSettings(nil)
+	f.builtIn.provider = builtInFor(f)
+	f.embeddings.key = f.builtIn.provider.EmbeddingModelKey()
+	f.sources.totals[airetrieval.SourceTypeMemory] = 10
+
+	estimate, err := f.svc.ReindexEstimate(t.Context(), f.tenant, airetrieval.SourceTypeMemory)
+	require.NoError(t, err)
+	require.NotNil(t, estimate.InputCostPerMillionUSD, "the service is priced, at nothing")
+	require.NotNil(t, estimate.EstimatedCostUSD)
+	assert.True(t, decimal.RequireFromString(*estimate.EstimatedCostUSD).IsZero())
 }
 
 func TestStatus_RequiresATenant(t *testing.T) {

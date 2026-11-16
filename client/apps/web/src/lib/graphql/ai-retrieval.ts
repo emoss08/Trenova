@@ -1,5 +1,6 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import type {
+  AiRetrievalEmbeddingSource,
   AiRetrievalIndexStatus,
   AiRetrievalPauseReason,
   AiRetrievalReindexEstimateQuery,
@@ -28,6 +29,7 @@ export type AIRetrievalModelChange = NonNullable<AIRetrievalStatus["modelChange"
 export type AIRetrievalReindexEstimate =
   AiRetrievalReindexEstimateQuery["aiRetrievalReindexEstimate"];
 export type {
+  AiRetrievalEmbeddingSource as AIRetrievalEmbeddingSource,
   AiRetrievalIndexStatus as AIRetrievalIndexStatus,
   AiRetrievalPauseReason as AIRetrievalPauseReason,
   AiRetrievalSettingsPatchInput as AIRetrievalSettingsPatch,

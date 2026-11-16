@@ -82,6 +82,7 @@ func newTestService(repo *fakeProviderRepo, prober *fakeProber) *Service {
 		prober:    prober,
 		keys:      &recordingKeys{},
 		analytics: quietAnalytics{},
+		indexer:   &recordingWaker{},
 	}
 }
 

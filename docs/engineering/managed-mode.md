@@ -19,6 +19,7 @@ this doc is the TMS's side. Self-hosted installs never turn it on, and nothing h
 | The first administrator | `trenova db bootstrap --admin-setup`, `identity/app/firstadmininviteservice` | `password` | `link`, then an invite from the operator |
 | Trenova support access | `identity/app/supportaccessservice`, `POST /api/v1/support/enter` | not routed, nothing read | grants, keys from the operator, staff entry ([Support access](#support-access)) |
 | The system email sender | `workspace/app/systememailservice` (reads only with `managed.enabled`), chosen per message in `emailservice` | none: every email needs the organization's profile | the sender Trenova supplies, for system email with no profile |
+| The built-in search service | `agent/app/builtinembeddingservice` (only with `managed.enabled` and `managed.embedding`), chosen in `completionengine.UsableFor` | none: search by meaning needs the organization's Embedding provider | the instance's `embedding` component, behind the organization's own route ([Search by meaning](#search-by-meaning)) |
 
 Both providers ask one gate, `managedusageports.Gate` (`kernel/app/managedusageservice`), so every
 existing hook enforces the control plane's answer with no new call site: shipments
@@ -452,20 +453,41 @@ too: `ck_email_messages_sender` allows `sender = 'Trenova'` only with no profile
 - at most 3,000 recipients an hour across the instance (burst 300), and 30 invitations an hour
   per organization, in the shared rate-limit store (`kernelports.RateLimitStore`, Redis), so
   every API and worker process counts against one budget;
-- the suppression list and bounce handling as for any message: bounces and complaints arrive at
-  `POST /api/v1/webhooks/email/system/{resend|postmark}/`, verified with the sender's
-  `webhookSecret`, and the message (found by provider and provider message ID among the ones
-  Trenova sent, across tenants) names the organization whose suppression list it updates. A
-  webhook for a message this instance did not send is answered 204 and ignored.
+- the suppression list and bounce handling as for any message, through the relay below.
 
 It sends as `<organization name> via <fromName>` from Trenova's `fromAddress`, with no reply-to
-(an organization has no reply address of its own outside a profile). A provider failure is kept
-in the email log as "Trenova's system sender could not deliver this email", with its retry class;
-the provider's own words are logged on the instance only, with the API key removed.
+(an organization has no reply address of its own outside a profile), and tags every message with
+the instance's ID (`trenova_instance=<managed.instanceId>`: a Resend tag, Postmark `Metadata`;
+`SendProviderMessage.Metadata`, set only in `trenovaProvider`, never on an organization's own
+profile). The API key goes to the provider under its own config key (Resend `apiKey`, Postmark
+`serverToken`). A provider failure is kept in the email log as "Trenova's system sender could not
+deliver this email", with its retry class; the provider's own words are logged on the instance
+only, with the API key removed.
+
+**The instance's ID.** `managed.instanceId` (a lowercase UUID, the chart's `managed.instanceId`,
+which the operator sets from the spec) is required while `managed.enabled`: the configuration is
+refused at start without it, and the chart refuses to render without it, so a managed instance
+never sends through Trenova's sender untagged. `trenovaProvider` also refuses, without retrying,
+a message it would have to send untagged.
+
+**Bounces and complaints** come back through the control plane. The provider account is
+Trenova's, so its webhook is account-wide: it posts every instance's events to the control plane,
+which verifies each delivery and keeps the bounces and spam complaints for the instance the
+`trenova_instance` tag names. The operator fetches them and relays them to
+`POST /managed/v1/system-email/events` ([the contract](#the-contract)). The TMS feeds each
+payload to the same parsing as an organization's own webhooks (`emailservice.ParseProviderEvent`)
+and handles it like one (`HandleRelayedSystemEvent`, then `HandleProviderEvent`), minus the
+signature check: the message, found by provider and provider message ID among the ones Trenova
+sent across tenants (`TenantOfSystemMessage`, `dbscope.WithSystem`), names the organization whose
+suppression list it updates. The instance holds no webhook secret and has no public endpoint for
+Trenova's sender. `HandleProviderEvent` records the event, the message's status and the
+suppression in one transaction, and the event is unique per provider and provider event ID (a
+relayed Resend event is keyed by the relayed event's ID, which the control plane keeps once per
+Svix delivery; a Postmark one by its record ID), so a relayed event delivered twice changes
+nothing the second time, and one that failed halfway is applied whole when it comes again.
 
 **The sender on the instance.** `system_email_senders` holds one row (`id = 'current'`, a global
-table): provider, from address and name, the API key and webhook secret sealed by the TMS's own
-encryption (`kernelports.SecretCipher`, purpose `system_email_credential`), the fingerprint and
+table): provider, from address and name, the API key sealed by the TMS's own encryption (`kernelports.SecretCipher`, purpose `system_email_credential`), the fingerprint and
 when it arrived. `systememailservice` reads it through a 30-second one-entry otter cache; the
 process that takes a write drops its entry at once, the others within the TTL. A row that does
 not open (the encryption key that sealed it is gone) or does not match its fingerprint counts as
@@ -476,45 +498,111 @@ in which it is used). Self-hosted installs never read the table.
 
 ### The contract
 
-The operator delivers the sender on the managed listener:
+The operator delivers the sender and relays its bounces on the managed listener:
 
 | Call | Body | Answer |
 |---|---|---|
-| `PUT /managed/v1/system-email` | `{"provider": "Resend" \| "Postmark", "apiKey", "fromAddress", "fromName", "webhookSecret"}`, at most 8 KiB, no other field | 204; 400 for a malformed body or a value of the wrong shape, naming the field and never the value; 413 past 8 KiB |
+| `PUT /managed/v1/system-email` | `{"provider": "Resend" \| "Postmark", "apiKey", "fromAddress", "fromName"}`, at most 8 KiB, no other field | 204; 400 for a malformed body or a value of the wrong shape, naming the field and never the value; 413 past 8 KiB |
 | `GET /managed/v1/system-email` | | `{"configured": true, "provider", "fromAddress", "fingerprint"}`, or `{"configured": false}` |
 | `DELETE /managed/v1/system-email` | | 204, also when there was none |
+| `POST /managed/v1/system-email/events` | `{"events": [{"id": "<uuid>", "provider": "Resend" \| "Postmark", "payload": "<the provider's webhook body, verbatim>"}]}`: 1 to 50 events, each `id` a distinct lowercase UUID, no other field, at most 8 MiB (50 payloads of 65,536 bytes is 3.2 MB; the cap leaves room for JSON escaping) | 200 `{"handled": ["<id>", …]}`; 400 for a malformed batch; 413 past 8 MiB |
 
-Shapes: `apiKey` 20 to 512 printable ASCII characters with no space; `webhookSecret` empty or up
-to 512 of the same (Resend: the Svix signing secret `whsec_…`; Postmark: `user:password` of the
-webhook's basic authentication); `fromAddress` a bare address of at most 254 characters on a
-domain Trenova verified with the provider; `fromName` 1 to 40 printable characters with no
-leading or trailing space.
+Shapes: `apiKey` 20 to 512 printable ASCII characters with no space; `fromAddress` a bare
+address of at most 254 characters on a domain Trenova verified with the provider; `fromName` 1
+to 40 printable characters with no leading or trailing space.
+
+An event is **handled** when it was applied, when it is for a message this instance did not
+send, or when it cannot be read, is not a bounce or complaint, or carries an empty payload or one
+past 65,536 bytes; each of those is logged with its ID, provider and reason, never its payload,
+so a bad event never blocks the queue. It is left out only when applying it failed in a way worth
+retrying (a database or dependency error), and the operator relays it again on its next tick.
 
 The **fingerprint** is the lowercase hex SHA-256 of the UTF-8 text `trenova.system-email.v1`,
-`provider`, `fromAddress`, `fromName`, `apiKey` and `webhookSecret` (empty when absent), joined by
-a single line feed, in that order. `systememail.Fingerprint` (TMS) and
-`internal/systememail.Fingerprint` (operator) compute it; both test the vectors
-`Postmark / no-reply@mail.trenova.app / Trenova / pm-0123456789abcdef0123456789 / (none)` →
-`97bc40de…d604d01f` and `Resend / no-reply@mail.trenova.app / Trenova /
-re_0123456789abcdef0123456789 / whsec_abcdef` → `1ca13b2b…0c9736fc`. A `PUT` whose fingerprint
-equals the stored one writes nothing.
+`provider`, `fromAddress`, `fromName` and `apiKey`, joined by a single line feed, in that order.
+`systememail.Fingerprint` (TMS) and `internal/systememail.Fingerprint` (operator) compute it; both
+tests compute the expected value from this formula for a Postmark and a Resend credential. A
+`PUT` whose fingerprint equals the stored one writes nothing.
 
 From the control plane (`api/instance.yaml`):
 
 - the spec carries `systemEmail: {"fingerprint": "<hex>"}` while Trenova supplies a sender, and
   nothing when it does not;
-- `GET /v1/secrets` carries `systemEmail: {"provider", "apiKey", "fromAddress", "fromName",
-  "webhookSecret"?}` while the spec names one. It is escrowed like the other secrets (sealed by
-  the keyring for that instance) but, unlike them, it may change.
+- `GET /v1/secrets` carries `systemEmail: {"provider", "apiKey", "fromAddress", "fromName"}`
+  while the spec names one. It is one sender for the whole fleet, set by Trenova staff and sealed
+  by the control plane's keyring; unlike the other secrets, it may change. The webhook's secret
+  stays on the control plane and never reaches an instance;
+- `listCommands` answers `emailEvents: true` while bounces or complaints wait for the instance;
+  the operator then fetches them (`GET /v1/email-events`, at most 50), relays them here and
+  acknowledges exactly the IDs the TMS answered as handled (`POST /v1/email-events/ack`). An
+  unacknowledged event is listed again, and deleted after 7 days;
+- the operator reports the fingerprint the instance holds with each status report
+  (`systemEmailFingerprint`), so staff can see when every running instance holds a new sender
+  before they revoke the old key.
 
-**Rotation**: the control plane stores the new credential, then publishes a spec revision with
-its fingerprint. The operator fetches it, puts it, and the instance replaces the old row in one
+**Rotation**: the control plane stores the new credential and serves its fingerprint with the
+spec from then on (it is added when the spec is served and is part of its ETag; no spec revision
+is written). The operator fetches it, puts it, and the instance replaces the old row in one
 write; until then it keeps sending with the old credential, and a message queued before the swap
 is sent with whichever credential is stored when its workflow runs. The old credential must stay
 valid at the provider until the instance reports the new fingerprint (the operator's `GET` shows
 it within a tick). **Removal**: the control plane drops `systemEmail` from the spec; the operator
 calls `DELETE`, and system email with no profile is refused as on a self-hosted install. A queued
 message whose sender was removed fails without retrying.
+
+## Search by meaning
+
+Every managed instance with Trenova AI searches by meaning with no setup, through a search
+service on the instance: the chart's `embedding` component (Ollama serving `nomic-embed-text`
+v1.5 from its own image, `deploy/Dockerfile.embedding`). An organization may still route the
+Embedding task to a model of its own. Trenova tunes for `nomic-embed-text` only (the similarity
+floor, the eval gate and the ranking fixtures are recorded against it), and AI control says so.
+
+**Who embeds** (`completionengine.Engine.UsableFor` for `aitask.TaskEmbedding`, the one place an
+embedding provider is chosen, for indexing, searches, the catalog and the configured model alike):
+
+1. the organization's own enabled providers that serve Embedding, in their routing order, exactly
+   as before;
+2. after them, the built-in service, when `builtinembeddingservice` offers it: only with
+   `managed.enabled`, `managed.embedding.url` and `managed.embedding.model` set, and `ai.desk` on
+   in the feature gate. A self-hosted install never reaches it, whatever its config says.
+
+No row is written for an organization. The built-in provider is built per call
+(`aiprovider.BuiltInEmbedding`): one fixed ID (`aiprv_trenova_search`) for every organization,
+so its health, its two concurrent calls and its usage rows are the instance's, OpenAI-compatible
+at `<url>/v1`, nomic task prefixes, 768 dimensions, priced at zero (so its calls are neither
+charged to the indexing budget nor counted as unpriced), batches of 8 and a 120-second timeout
+for two CPU threads. The configured model is the first candidate's, so an organization's own
+route wins; the service stays behind it, so searches pinned to the old model keep working
+through a model change either way. Its address is instance configuration, not an
+organization's provider: the engine gives it the client that may reach a private address
+(`reachesPrivateNetwork`), while an organization's provider still needs
+`ai.privateNetworkProviders`, which the operator forces off.
+
+**Recording the model.** Vectors are stored under the provider's model key
+(`<host>/<model>@<dimensions>`), as for any provider, so the existing model change carries every
+switch: an organization that routes its own model gets it as the pending model, indexes beside
+the service's vectors and swaps; one that removes its route falls back to the service and does
+the same in reverse.
+
+**Indexing starts when routing changes** (each is a `SignalWithStart` on the organization's index
+workflow, so repeats join the run in flight):
+
+- a provider write that touches the Embedding task (create, update, patch, delete, assign,
+  route, reorder; `aiproviderservice.providersChanged`) wakes that organization's indexer;
+- Trenova AI turning on (`retrievalplanobserver`, a `managed_plan_observers` member) starts one
+  retrieval sweep, `retrieval-index-sweep-plan`, 45 seconds later (past the feature cache's 30)
+  and joined by a second change while it waits;
+- the hourly sweep visits every organization and wakes one whose routed model is neither the
+  active nor the pending one (`RetrievalSweepResult.RoutingChanged`), which also covers a new
+  organization and an instance that gained the service with a release.
+
+The config (`managed.embedding`) is written by the chart from `embedding.enabled` (the service
+URL `http://<release>-trenova-embedding:11434` and `embedding.model`); `managedconfig.Validate`
+refuses a URL with a path, credentials or another scheme, and a model without a URL. The
+retrieval status (`aiRetrievalStatus`) answers `embeddingSource` (`BuiltIn`, `Organization`, or
+absent), `tunedModel` and `configuredModelTuned`, and the AI control Retrieval tab says "Search by
+meaning runs on your instance. There is nothing to set up." or "Trenova tunes search for
+nomic-embed-text. With another model, search may find less."
 
 ## Support access
 
@@ -761,10 +849,17 @@ the listener. A customer's own request needs no grant.
 - The routes are not on the API router, so `authzlint` and `writecoverage` do not see them: the
   bearer token is their authorization. They write only what the control plane decides: the usage
   state, the feature list, the first administrator's invite, which grants nothing until someone holding the
-  emailed token redeems it, and the system email sender, which only ever carries system email.
+  emailed token redeems it, the system email sender, which only ever carries system email, and the
+  bounces and complaints for that email, which only ever add a suppression to the organization
+  whose Trenova-sent message they name.
 - The system email credential is a secret: it is sealed before it is stored, never returned,
   never logged (a failure logs the field and the rule, never the value), and the `PUT` body is
   never echoed in a problem or a log line.
+- A relayed system email event names the customer's recipients: it is logged by ID, provider and
+  reason only, never its payload, and a bad one is answered as handled so it never blocks the
+  operator's queue. Only a failure worth retrying leaves it out of `handled`.
+- A managed instance never sends through Trenova's sender untagged: `managed.instanceId` is
+  required at start, and without it the sender refuses the message.
 - The invite endpoint never sends email and never returns a token; it takes a hash and answers
   with the same hash or nothing.
 - The support key route stores public keys only and answers key ids, never a key. It cannot grant

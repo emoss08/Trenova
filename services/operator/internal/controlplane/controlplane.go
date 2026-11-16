@@ -169,15 +169,19 @@ func (c *Client) Storage(ctx context.Context) (instanceapi.InstanceStorage, erro
 	)
 }
 
-func (c *Client) Commands(ctx context.Context) ([]instanceapi.Command, error) {
+func (c *Client) Commands(ctx context.Context) (instanceapi.CommandList, error) {
 	res, err := c.api.ListCommandsWithResponse(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list commands: %w", err)
+		return instanceapi.CommandList{}, fmt.Errorf("list commands: %w", err)
 	}
 	if res.StatusCode() == http.StatusOK && res.JSON200 != nil {
-		return res.JSON200.Commands, nil
+		return *res.JSON200, nil
 	}
-	return nil, failure(res.HTTPResponse, res.ApplicationproblemJSON401, res.ApplicationproblemJSON429)
+	return instanceapi.CommandList{}, failure(
+		res.HTTPResponse,
+		res.ApplicationproblemJSON401,
+		res.ApplicationproblemJSON429,
+	)
 }
 
 func (c *Client) CompleteCommand(ctx context.Context, id uuid.UUID, result instanceapi.CommandResult) error {

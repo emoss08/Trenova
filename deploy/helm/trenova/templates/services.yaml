@@ -325,6 +325,106 @@ spec:
             medium: Memory
             sizeLimit: 1Gi
 {{- end }}
+{{- if .Values.embedding.enabled }}
+{{- /* The search service Trenova AI brings: Ollama serving the one embedding
+model baked into its image, read-only. It downloads nothing and opens no
+connections; only the API and the worker reach it. Searches fall back to
+keywords while it restarts, so it stops before its replacement starts rather
+than holding room for a second copy of the model. */ -}}
+{{- $c = dict "root" . "component" "embedding" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: http
+      port: 11434
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: {{ include "trenova.replicas" (dict "root" . "replicas" 1) }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 65532) | nindent 6 }}
+      containers:
+        - name: embedding
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.embedding.image) }}
+          imagePullPolicy: {{ include "trenova.pullPolicy" .Values.embedding.image }}
+          env:
+            - name: OLLAMA_HOST
+              value: 0.0.0.0:11434
+            - name: OLLAMA_MODELS
+              value: /models
+            - name: OLLAMA_NOPRUNE
+              value: "true"
+            - name: OLLAMA_KEEP_ALIVE
+              value: "-1"
+            - name: OLLAMA_MAX_LOADED_MODELS
+              value: "1"
+            - name: OLLAMA_NUM_PARALLEL
+              value: {{ .Values.embedding.parallel | int64 | quote }}
+            - name: HOME
+              value: /home/ollama
+          ports:
+            - name: http
+              containerPort: 11434
+          startupProbe:
+            httpGet:
+              path: /api/version
+              port: http
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              path: /api/version
+              port: http
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.embedding.resources | nindent 12 }}
+          volumeMounts:
+            - name: home
+              mountPath: /home/ollama
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: home
+          emptyDir:
+            sizeLimit: 16Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+{{- end }}
 {{- if .Values.clamav.enabled }}
 {{- /* clamd checks every file before anything opens it. freshclam inside the
 container fetches signatures, so it is the one service here with egress. The

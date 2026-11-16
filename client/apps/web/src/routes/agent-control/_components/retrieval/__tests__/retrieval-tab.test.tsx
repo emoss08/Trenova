@@ -87,6 +87,9 @@ function status(overrides: Partial<AIRetrievalStatus> = {}): AIRetrievalStatus {
     modelChange: null,
     configuredModelKey: "nomic-embed-text@768",
     configuredModelDiffers: false,
+    embeddingSource: "Organization",
+    tunedModel: "nomic-embed-text",
+    configuredModelTuned: true,
     ...overrides,
   } as AIRetrievalStatus;
 }
@@ -170,6 +173,51 @@ describe("RetrievalTab", () => {
     expect(screen.getByText("100 items are")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Route Embedding" }));
     expect(onOpenProviders).toHaveBeenCalled();
+  });
+
+  it("says search runs on the instance when the built-in service is in use", async () => {
+    api.fetchAIRetrievalStatus.mockResolvedValue(
+      status({
+        embeddingSource: "BuiltIn",
+        configuredModelKey: "trenova-embedding:11434/nomic-embed-text:v1.5@768",
+        configuredModelTuned: true,
+      }),
+    );
+    api.fetchAIProviders.mockResolvedValue([]);
+    renderTab();
+
+    expect(
+      await screen.findByText(
+        "Search by meaning runs on your instance. There is nothing to set up.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Trenova tunes search for/)).toBeNull();
+  });
+
+  it("names the model Trenova tunes for when the organization routes another", async () => {
+    api.fetchAIRetrievalStatus.mockResolvedValue(
+      status({
+        embeddingSource: "Organization",
+        configuredModelKey: "api.openai.com/text-embedding-3-large@1536",
+        configuredModelTuned: false,
+      }),
+    );
+    renderTab();
+
+    expect(
+      await screen.findByText(
+        "Trenova tunes search for nomic-embed-text. With another model, search may find less.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing about the model when the organization routes the tuned one", async () => {
+    renderTab();
+
+    expect(
+      await screen.findByText(/Everything is searchable by meaning under/),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("retrieval-embedding-note")).toBeNull();
   });
 
   it("pauses indexing from Nova's control, sending only the pause", async () => {

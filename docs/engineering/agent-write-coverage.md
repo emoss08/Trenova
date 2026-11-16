@@ -88,7 +88,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 103 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 246 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 43 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 51 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 109 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 49 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1152 writes: 691 GraphQL mutations and 461 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1150 writes: 691 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 447 |
-| Exempt | 701 |
+| Exempt | 699 |
 | — Security | 103 |
 | — Configuration | 246 |
 | — User preference | 43 |
-| — Infrastructure | 51 |
+| — Infrastructure | 49 |
 | — Agent administration | 109 |
 | — Counterparty | 35 |
 | — Read-only | 49 |
 | — Attestation | 55 |
 | — Duplicate | 10 |
 | **Pending** | **4** |
-| Total | 1152 |
+| Total | 1150 |
 
 Of the 451 writes an agent should be able to make, 447 have a tool (99%).
 
@@ -203,7 +203,7 @@ The writes no tool performs yet, and what the tool would do.
 | edilading | 13 | 1 | 11 | 1 |
 | edisetup | 18 | 5 | 13 | 0 |
 | editransfer | 9 | 7 | 2 | 0 |
-| email | 11 | 0 | 11 | 0 |
+| email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
 | exchangerate | 2 | 0 | 2 | 0 |
@@ -1199,8 +1199,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/email-suppressions/`<br>emailhandler.createSuppression | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
 | `POST /api/v1/webhooks/email/postmark/:webhookToken/`<br>emailhandler.handlePostmarkWebhook | Exempt, infrastructure: An inbound webhook a provider calls with a signed token, not a person. |
 | `POST /api/v1/webhooks/email/resend/:webhookToken/`<br>emailhandler.handleResendWebhook | Exempt, infrastructure: An inbound webhook a provider calls with a signed token, not a person. |
-| `POST /api/v1/webhooks/email/system/postmark/`<br>emailhandler.handleSystemPostmarkWebhook | Exempt, infrastructure: An inbound webhook Trenova's email provider calls with the system sender's webhook credential, not a person. |
-| `POST /api/v1/webhooks/email/system/resend/`<br>emailhandler.handleSystemResendWebhook | Exempt, infrastructure: An inbound webhook Trenova's email provider calls, signed with the system sender's webhook secret, not a person. |
 | `PUT /api/v1/email-profiles/:profileID/`<br>emailhandler.updateProfile | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
 | `PUT /api/v1/email-profiles/assignments/`<br>emailhandler.updateAssignments | Exempt, configuration: Sending profiles, suppressions and assignments decide how the organization sends mail; an administrator owns them. |
 

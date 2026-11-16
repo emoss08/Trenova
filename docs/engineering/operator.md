@@ -10,6 +10,7 @@ record `0008-instances` and the contract `api/instance.yaml`; this doc is the in
 ```
 control plane (instance API, mutual TLS)
    ▲ GET /v1/spec (ETag)    │ PUT /v1/status every minute   │ POST /v1/certificate   │ POST /v1/usage
+   │ GET /v1/commands       │ GET /v1/email-events, POST /v1/email-events/ack (while emailEvents)
    │                        ▼                               ▼                        ▼ every 15 minutes
 operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --install trenova@<version>
    │                                                    │
@@ -19,6 +20,7 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
    │                                           PUT /managed/v1/first-administrator/invite,
    │                                           PUT /managed/v1/features,
    │                                           GET|PUT|DELETE /managed/v1/system-email,
+   │                                           POST /managed/v1/system-email/events,
    │                                           GET|PUT /managed/v1/log-requests,
    │                                           POST /managed/v1/support/log-pulls
    ├── Loki (:3100, no auth, the release's): label values and query_range, read only
@@ -42,6 +44,7 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
 | `internal/storage` | the instance's buckets: the documents and backups Secrets, fetched from `GET /v1/storage` when missing or incomplete, and the documents bucket's CORS rules for the instance's origin |
 | `internal/backup` | backups read from and asked of CloudNativePG: health for the status report, the base backup before an update, the final backup, and a restore's progress |
 | `internal/systememail` | the system email sender: the TMS brought to the spec's fingerprint, the credential fetched from `GET /v1/secrets` and kept only in memory |
+| `internal/emailevents` | the system email events: bounces and complaints the control plane keeps for the instance, relayed to the TMS and acknowledged once it handled them |
 | `internal/supportkeys` | the support access key set: the TMS brought to the spec's `support` when its instance id, staff domain or key ids differ |
 | `internal/commands` | what the control plane asks besides the spec: restarting a component, collecting its log lines, collecting a log bundle; the support access grant checked first for staff |
 | `internal/redact` | every value of every Secret in the release namespace, and anything shaped like a credential, removed from a log line |
@@ -128,7 +131,9 @@ Every 15 seconds (`TRENOVA_OPERATOR_POLL_INTERVAL`):
 9. carry out the control plane's commands ([Commands](#commands)). This runs on every tick whose
    spec read succeeded, whatever happened in between: a failed apply or report is exactly when
    staff need a component's logs or a restart. It waits only while the control plane asked the
-   operator to wait (a 429 or 503), and says so once.
+   operator to wait (a 429 or 503), and says so once;
+10. when the commands answer said `emailEvents` and the instance is active and ready, relay the
+    system email events ([System email](#system-email)).
 
 The loop's dependencies are all required: `reconcile.New` refuses a missing one by name, and the
 commands runner refuses one without its control plane. Nothing is checked by type assertion at
@@ -166,8 +171,9 @@ first, and what the spec decides is merged over them:
 | Spec | Values |
 |---|---|
 | `hostname` | `domain`; `storageDomain` is `<first label>-files.<rest>` |
-| `instanceId` | `tms.instanceId` |
+| `instanceId` | `managed.instanceId`, which the chart passes to the TMS as `managed.instanceId`: the tag on the email Trenova's sender carries ([System email](#system-email)) |
 | `components` contains `docling` | `docling.enabled`; its resources are rendered either way (see Sizing) |
+| `components` contains `embedding` | `embedding.enabled` (Trenova AI's search service); its resources are rendered either way, and the chart passes its URL and model to the TMS as `managed.embedding` ([managed-mode.md](managed-mode.md#search-by-meaning)) |
 | (always) | `managed.enabled: true`, `managed.from`: the operator's own namespace |
 | (always) | `secrets.escrowSecret: trenova-escrow` |
 | (always) | `logs.enabled: true`, whatever the base values say: log keeping ([Logs](#logs)) |
@@ -185,7 +191,11 @@ first, and what the spec decides is merged over them:
 **Sizing** (`internal/values/size.go`). 2 GiB and 0.6 vCPU are left to k3s, CloudNativePG, the
 operator and the release Job. ClamAV's memory does not grow with the plan (it is the signature database: about
 1.2 GiB, twice that while clamd reloads it each day), so it takes a fixed 3 GiB request and
-4 GiB limit, ClamAV's documented minimum and preferred container size, off the top. The rest
+4 GiB limit, ClamAV's documented minimum and preferred container size, off the top. The
+embedding service is fixed too: it requests 320 MiB (what it holds with its model loaded) and
+1 GiB is taken off the top for it (`reserveMiB`, its memory limit), so the room between its
+request and its limit is never shared out to another workload; its CPU limit is 2, the threads
+its model is built for, and it shares the CPU by a weight of 2. The rest
 is shared by weight among every component the chart can run (PostgreSQL 28, API 12, worker 12,
 imaging 10, docling 15, Loki 2, Alloy 0.5 of the memory and 1 of the CPU, the rest 1 to 5;
 ClamAV 4 of the CPU), each with a floor (docling 2 GiB, PostgreSQL 1 GiB, Loki 256 MiB, Alloy
@@ -206,7 +216,7 @@ that rolls starts its new pod before the old one stops: the API and the worker s
 worker and Gotenberg keep Kubernetes's default (a 25% surge, one pod at one replica): the client
 serves every page, and the API calls the other two on its request paths. Kubernetes creates a
 second pod of all five at the same time, while the old ones still hold their requests. Nothing
-else needs a second pod: Temporal, gtc, docling, Loki and Alloy are `Recreate` (Loki owns one
+else needs a second pod: Temporal, gtc, docling, the embedding service, Loki and Alloy are `Recreate` (searches fall back to keywords while the embedding service restarts; Loki owns one
 `ReadWriteOnce` volume, and two Alloys would push every line twice; docling's only caller is the
 worker's extraction activities, which retry and resubmit a lost task, so it stops before its
 replacement loads its models), a StatefulSet replaces a pod after the old one is gone,
@@ -233,8 +243,9 @@ change.
 **A component's share never depends on which other components are enabled.** It depends only on
 the machine (the plan, or the node when that is smaller) and on the installation's own
 configuration (ClamAV, which the operator chart's `trenovaValues` turns on for every instance on
-that cluster). Docling (the spec's `components: [docling]`, which Document Intelligence brings)
-and MinIO (on only when the instance has no storage of ours) are counted whether they run or not,
+that cluster). Docling (the spec's `components: [docling]`, which Document Intelligence brings),
+the embedding service (`components: [embedding]`, which Trenova AI brings) and MinIO (on only
+when the instance has no storage of ours) are counted whether they run or not,
 and their resources are rendered either way. Turning one on or off therefore changes
 `docling.enabled` (or `minio.enabled`) and nothing else in the sizing: PostgreSQL's resources and
 parameters, and every running workload's resources, stay as they are, and CloudNativePG has
@@ -245,8 +256,11 @@ holds the rule for every plan, with and without storage, and under the local nod
 when a component is added: an optional component gets a share in `shares`, always counted.
 
 The cost is the share an instance does not use. A plan without Document Intelligence leaves
-docling's share idle, an instance with storage of ours leaves MinIO's, and the room for a rollout
-is idle between upgrades (ClamAV on at the plan sizes):
+docling's share idle, a plan without Trenova AI leaves the embedding service's 1 GiB idle, an
+instance with storage of ours leaves MinIO's, and the room for a rollout is idle between upgrades
+(ClamAV on at the plan sizes). The table below predates the embedding service's 1 GiB and its CPU
+weight of 2; every figure in it is now somewhat lower and is to be read again from
+`TestEveryMachineFitsItsWorkloadsAndARollout`'s rendering:
 
 | Machine | PostgreSQL (request, limit, `shared_buffers`) | API and worker (each) | Docling's share (idle on the base plan) | MinIO's share (idle with storage of ours) | Held for a rollout |
 |---|---|---|---|---|---|
@@ -387,6 +401,25 @@ is a new fingerprint in the spec, so the next tick fetches and puts the new cred
 is logged and retried on the next tick and never holds converging or the report back. Secrets
 whose fingerprint does not match the spec (a rotation half published), or a 429, wait a minute
 (or `Retry-After`) before the control plane is asked again; a 401 goes to credential recovery.
+
+**Bounces and complaints.** Trenova's provider account has one webhook for every instance, so it
+posts to the control plane, which keeps each bounce or spam complaint for the instance the
+message's `trenova_instance` tag names (the TMS tags every message it sends through Trenova's
+sender with its `managed.instanceId`). The commands answer carries `emailEvents`; when it is true
+and the instance is active and ready, after the commands (`internal/emailevents.Relay.Run`, within
+30 seconds):
+
+1. `GET /v1/email-events`: at most 50, oldest first; the operator relays one batch per tick;
+2. `POST /managed/v1/system-email/events` with each event's `id`, `provider` and `payload`;
+3. `POST /v1/email-events/ack` with exactly the IDs the TMS answered as `handled`, and nothing
+   when it handled none.
+
+A TMS that fails acknowledges nothing, and an event the TMS left out stays queued; both are
+relayed again on the next tick, which the TMS takes without applying anything twice. A failure is
+logged with counts and event IDs, never a payload (it names the customer's recipients), and never
+holds back the rest of the tick or the status report; a 429 waits out `Retry-After` and a 401
+goes to credential recovery. A suspended, decommissioned or unready instance relays nothing; the
+control plane deletes an event left unacknowledged for 7 days.
 
 ## Support access
 
@@ -767,7 +800,7 @@ namespace, which it keeps on uninstall, is created by its chart.
   Kubernetes, and Helm's memory storage with the real chart: enrolment, renewal, re-enrolment,
   revocation, rate limits, every plan and lifecycle through the chart's schema, the sizing
   (every component together and a rollout's largest surge pod fit each plan, the minimums and the local
-  cap, read from the rendered chart; one GiB below a minimum does not; turning docling on changes no other
+  cap, read from the rendered chart; one GiB below a minimum does not; turning docling or the embedding service on changes no other
   workload's values or manifest, at every plan, with and without storage and under the local
   cap; a plan change divides again), PostgreSQL's shutdown settings, install and
   no-op detection, recovery, readiness, the escrowed secrets (fetched once, kept when present,
@@ -776,7 +809,11 @@ namespace, which it keeps on uninstall, is created by its chart.
   in-process TMS, the first administrator (bootstrap values, invalid names and emails, the invite
   installed, rechecked, replaced and reported, a failure omitted), the system email sender (sent
   when the fingerprint differs and not when equal, resent from memory, rotated, removed, retried,
-  a mismatch and a 429 waited out, the credential in no log line or error), the support access
+  a mismatch and a 429 waited out, the credential in no log line or error), the system email
+  events (nothing fetched while the commands answer says none wait, delivered then acknowledged,
+  only the handled ones acknowledged, a TMS failure acknowledging nothing and retried on the next
+  tick, one batch of at most 50 a tick, none while suspended or not ready, no payload in a log
+  line or error) against the fake control plane and an in-process TMS, the support access
   keys (delivered when the key ids, domain or instance differ, not when they match in any order,
   not without `support`, a rotated set replacing the old, the key in no log line or error, a
   failure in the message and retried) and live grants (reported, an empty list reported, left out

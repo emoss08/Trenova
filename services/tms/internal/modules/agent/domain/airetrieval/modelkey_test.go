@@ -61,3 +61,27 @@ func TestSimilarityFloorFollowsTheEmbeddingModel(t *testing.T) {
 		SimilarityFloor("api.openai.com/text-embedding-3-small@1536"), 1e-9)
 	assert.InDelta(t, DefaultSimilarityFloor, SimilarityFloor(""), 1e-9)
 }
+
+func TestIsTunedModel(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]bool{
+		"trenova-embedding:11434/nomic-embed-text:v1.5@768": true,
+		"localhost:11434/nomic-embed-text@768":              true,
+		"api.openai.com/text-embedding-3-large@1536":        false,
+		"api.voyageai.com/voyage-3.5@1024":                  false,
+		"":                                                  false,
+	}
+	for key, want := range tests {
+		assert.Equal(t, want, IsTunedModel(key), key)
+	}
+}
+
+func TestEmbeddingSources(t *testing.T) {
+	t.Parallel()
+
+	for _, source := range AllEmbeddingSources() {
+		assert.True(t, source.IsValid(), source.String())
+	}
+	assert.False(t, EmbeddingSource("Instance").IsValid())
+}

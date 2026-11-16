@@ -42,7 +42,8 @@ paths:
             ETag:
               description: |
                 Opaque, quoted: it changes when the revision or what the control plane adds when
-                serving (`account`, `support`) changes. Send it back as `If-None-Match`.
+                serving (`account`, `support`, `systemEmail`) changes. Send it back as
+                `If-None-Match`.
               schema:
                 type: string
           content:
@@ -228,7 +229,8 @@ paths:
         minutes after it was issued); at most 20, oldest first. Carry each out once, by ID: a
         command listed again was not answered yet, not issued again. A `collect_log_bundle` may
         take longer than that: its outcome is the bundle's, reported with `updateLogBundle`, and
-        an answer to an expired command is not found.
+        an answer to an expired command is not found. `emailEvents` says whether system email
+        events wait for `listEmailEvents`.
       responses:
         "200":
           description: The commands, oldest first; empty when there are none.
@@ -343,6 +345,58 @@ paths:
         "429":
           $ref: "#/components/responses/RateLimited"
 
+  /v1/email-events:
+    get:
+      operationId: listEmailEvents
+      summary: The system email events waiting for the instance
+      description: |
+        Bounces and spam complaints for email the instance sent through Trenova's sender. The
+        provider's webhook is Trenova's, one for every instance, so it posts to the control plane,
+        which verifies each delivery and keeps it for the instance the message's
+        `trenova_instance` tag names. Fetch them when `listCommands` says `emailEvents`, deliver
+        each payload to the TMS, and acknowledge the ones delivered with `ackEmailEvents`; until
+        then they are listed again. At most 50, oldest first. Unacknowledged events are deleted 7
+        days after they arrived.
+      responses:
+        "200":
+          description: The events, oldest first; empty when none wait.
+          headers:
+            Cache-Control:
+              description: Always `no-store`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailEventList"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/email-events/ack:
+    post:
+      operationId: ackEmailEvents
+      summary: Acknowledge system email events
+      description: |
+        The events the TMS took, by ID: 1 to 50, each once. They are deleted. An ID that is not
+        this instance's, or was acknowledged already, is ignored, so acknowledging again is safe.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailEventAck"
+      responses:
+        "204":
+          description: Acknowledged.
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
 components:
   responses:
     Invalid:
@@ -387,13 +441,72 @@ components:
   schemas:
     CommandList:
       type: object
-      required: [commands]
+      required: [commands, emailEvents]
       properties:
         commands:
           type: array
           maxItems: 20
           items:
             $ref: "#/components/schemas/Command"
+        emailEvents:
+          type: boolean
+          description: |
+            Whether system email events (bounces and spam complaints for email the instance sent
+            through Trenova's sender) wait for the instance. Fetch them with `listEmailEvents` only
+            when this is true.
+
+    EmailEventList:
+      type: object
+      required: [events]
+      properties:
+        events:
+          type: array
+          maxItems: 50
+          description: At most 50, oldest first; empty when none wait.
+          items:
+            $ref: "#/components/schemas/EmailEvent"
+
+    EmailEvent:
+      type: object
+      description: |
+        A bounce or spam complaint for a message the instance sent through Trenova's sender, as
+        the provider's webhook delivered it to the control plane.
+      required: [id, provider, payload, receivedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The event's ID, to acknowledge it with.
+        provider:
+          type: string
+          enum: [Resend, Postmark]
+          x-enum-varnames: [EmailEventResend, EmailEventPostmark]
+          description: The provider whose webhook delivered it.
+        payload:
+          type: string
+          maxLength: 65536
+          description: |
+            The provider's webhook body, verbatim (at most 65536 bytes): a Resend `email.bounced`
+            or `email.complained` event, or a Postmark `Bounce` or `SpamComplaint` record. The
+            control plane verified its signature; the instance parses it as it parses its own
+            webhooks. It names the instance's recipients: never log it.
+        receivedAt:
+          type: string
+          format: date-time
+          description: When the control plane received it.
+
+    EmailEventAck:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
 
     Command:
       type: object
@@ -851,10 +964,9 @@ components:
           pattern: "^[0-9a-f]{64}$"
           description: |
             The lowercase hex SHA-256 of the credential, the same value the instance reports:
-            SHA-256 over `trenova.system-email.v1`, `provider`, `fromAddress`, `fromName`,
-            `apiKey` and `webhookSecret` (empty when absent), joined by a line feed (`\n`), in
-            that order. A new credential has a new fingerprint, which is how a rotation reaches
-            the instance.
+            SHA-256 over `trenova.system-email.v1`, `provider`, `fromAddress`, `fromName` and
+            `apiKey`, joined by a single line feed (`\n`), in that order. A new credential has a
+            new fingerprint, which is how a rotation reaches the instance.
 
     SpecBackupRequest:
       type: object
@@ -1106,6 +1218,15 @@ components:
             grant revoked since the last report is refused there.
           items:
             $ref: "#/components/schemas/SupportGrant"
+        systemEmailFingerprint:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: |
+            The fingerprint of the system email sender the instance holds now, as the TMS reports it
+            (`GET /managed/v1/system-email`), the same value as the spec's `systemEmail.fingerprint`
+            once the instance has taken it up. Left out when the instance holds none or the operator
+            could not read it this time; either way the instance is not counted as holding the
+            current sender. Each report replaces the last: nothing reported is stored as nothing.
 
     SupportGrant:
       type: object
@@ -1481,15 +1602,6 @@ components:
           maxLength: 40
           description: |
             The brand in the display name. The instance sends as `<organization name> via <fromName>`.
-        webhookSecret:
-          type: string
-          minLength: 1
-          maxLength: 512
-          pattern: "^[\\x21-\\x7E]+$"
-          description: |
-            What the provider's delivery webhooks prove themselves with: the Svix signing secret
-            (`whsec_…`) for Resend, `user:password` of the webhook's basic authentication for
-            Postmark. Absent when bounces are not reported to the instance.
 
     IssuedCertificate:
       type: object

@@ -102,6 +102,24 @@ func (e CommandResultStatus) Valid() bool {
 	}
 }
 
+// Defines values for EmailEventProvider.
+const (
+	EmailEventPostmark EmailEventProvider = "Postmark"
+	EmailEventResend   EmailEventProvider = "Resend"
+)
+
+// Valid indicates whether the value is a known member of the EmailEventProvider enum.
+func (e EmailEventProvider) Valid() bool {
+	switch e {
+	case EmailEventPostmark:
+		return true
+	case EmailEventResend:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for InstanceSpecAiProvider.
 const (
 	Customer InstanceSpecAiProvider = "customer"
@@ -521,6 +539,11 @@ type CommandKind string
 // CommandList defines model for CommandList.
 type CommandList struct {
 	Commands []Command `json:"commands"`
+
+	// EmailEvents Whether system email events (bounces and spam complaints for email the instance sent
+	// through Trenova's sender) wait for the instance. Fetch them with `listEmailEvents` only
+	// when this is true.
+	EmailEvents bool `json:"emailEvents"`
 }
 
 // CommandResult defines model for CommandResult.
@@ -554,6 +577,39 @@ type DesiredSpec struct {
 	// Spec What the instance should be. `schemaVersion` changes when a field's meaning changes; an
 	// operator refuses a version it does not know.
 	Spec InstanceSpec `json:"spec"`
+}
+
+// EmailEvent A bounce or spam complaint for a message the instance sent through Trenova's sender, as
+// the provider's webhook delivered it to the control plane.
+type EmailEvent struct {
+	// Id The event's ID, to acknowledge it with.
+	Id openapi_types.UUID `json:"id"`
+
+	// Payload The provider's webhook body, verbatim (at most 65536 bytes): a Resend `email.bounced`
+	// or `email.complained` event, or a Postmark `Bounce` or `SpamComplaint` record. The
+	// control plane verified its signature; the instance parses it as it parses its own
+	// webhooks. It names the instance's recipients: never log it.
+	Payload string `json:"payload"`
+
+	// Provider The provider whose webhook delivered it.
+	Provider EmailEventProvider `json:"provider"`
+
+	// ReceivedAt When the control plane received it.
+	ReceivedAt time.Time `json:"receivedAt"`
+}
+
+// EmailEventProvider The provider whose webhook delivered it.
+type EmailEventProvider string
+
+// EmailEventAck defines model for EmailEventAck.
+type EmailEventAck struct {
+	Ids []openapi_types.UUID `json:"ids"`
+}
+
+// EmailEventList defines model for EmailEventList.
+type EmailEventList struct {
+	// Events At most 50, oldest first; empty when none wait.
+	Events []EmailEvent `json:"events"`
 }
 
 // FieldError defines model for FieldError.
@@ -1089,10 +1145,9 @@ type SpecSupport struct {
 // `getSecrets` when the instance does not already hold one with this fingerprint.
 type SpecSystemEmail struct {
 	// Fingerprint The lowercase hex SHA-256 of the credential, the same value the instance reports:
-	// SHA-256 over `trenova.system-email.v1`, `provider`, `fromAddress`, `fromName`,
-	// `apiKey` and `webhookSecret` (empty when absent), joined by a line feed (`\n`), in
-	// that order. A new credential has a new fingerprint, which is how a rotation reaches
-	// the instance.
+	// SHA-256 over `trenova.system-email.v1`, `provider`, `fromAddress`, `fromName` and
+	// `apiKey`, joined by a single line feed (`\n`), in that order. A new credential has a
+	// new fingerprint, which is how a rotation reaches the instance.
 	Fingerprint string `json:"fingerprint"`
 }
 
@@ -1147,6 +1202,13 @@ type StatusReport struct {
 	// the staff member and has not ended; the instance checks the grant again on entry, so a
 	// grant revoked since the last report is refused there.
 	SupportGrants *[]SupportGrant `json:"supportGrants,omitempty"`
+
+	// SystemEmailFingerprint The fingerprint of the system email sender the instance holds now, as the TMS reports it
+	// (`GET /managed/v1/system-email`), the same value as the spec's `systemEmail.fingerprint`
+	// once the instance has taken it up. Left out when the instance holds none or the operator
+	// could not read it this time; either way the instance is not counted as holding the
+	// current sender. Each report replaces the last: nothing reported is stored as nothing.
+	SystemEmailFingerprint *string `json:"systemEmailFingerprint,omitempty"`
 
 	// Version The Trenova release running.
 	Version *string `json:"version,omitempty"`
@@ -1220,11 +1282,6 @@ type SystemEmailCredential struct {
 
 	// Provider The email provider the credential is for.
 	Provider SystemEmailCredentialProvider `json:"provider"`
-
-	// WebhookSecret What the provider's delivery webhooks prove themselves with: the Svix signing secret
-	// (`whsec_…`) for Resend, `user:password` of the webhook's basic authentication for
-	// Postmark. Absent when bounces are not reported to the instance.
-	WebhookSecret *string `json:"webhookSecret,omitempty"`
 }
 
 // SystemEmailCredentialProvider The email provider the credential is for.
@@ -1288,6 +1345,9 @@ type RenewCertificateJSONRequestBody = RenewCertificateRequest
 
 // CompleteCommandJSONRequestBody defines body for CompleteCommand for application/json ContentType.
 type CompleteCommandJSONRequestBody = CommandResult
+
+// AckEmailEventsJSONRequestBody defines body for AckEmailEvents for application/json ContentType.
+type AckEmailEventsJSONRequestBody = EmailEventAck
 
 // RegisterLogBundleJSONRequestBody defines body for RegisterLogBundle for application/json ContentType.
 type RegisterLogBundleJSONRequestBody = LogBundleRegistration
@@ -1408,7 +1468,8 @@ type ClientInterface interface {
 	// minutes after it was issued); at most 20, oldest first. Carry each out once, by ID: a
 	// command listed again was not answered yet, not issued again. A `collect_log_bundle` may
 	// take longer than that: its outcome is the bundle's, reported with `updateLogBundle`, and
-	// an answer to an expired command is not found.
+	// an answer to an expired command is not found. `emailEvents` says whether system email
+	// events wait for `listEmailEvents`.
 	//
 	// Corresponds with GET /v1/commands (the `ListCommands` operationId).
 	ListCommands(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1434,6 +1495,39 @@ type ClientInterface interface {
 	//
 	// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
 	CompleteCommand(ctx context.Context, commandId openapi_types.UUID, body CompleteCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListEmailEvents The system email events waiting for the instance
+	//
+	// Bounces and spam complaints for email the instance sent through Trenova's sender. The
+	// provider's webhook is Trenova's, one for every instance, so it posts to the control plane,
+	// which verifies each delivery and keeps it for the instance the message's
+	// `trenova_instance` tag names. Fetch them when `listCommands` says `emailEvents`, deliver
+	// each payload to the TMS, and acknowledge the ones delivered with `ackEmailEvents`; until
+	// then they are listed again. At most 50, oldest first. Unacknowledged events are deleted 7
+	// days after they arrived.
+	//
+	// Corresponds with GET /v1/email-events (the `ListEmailEvents` operationId).
+	ListEmailEvents(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AckEmailEventsWithBody Acknowledge system email events
+	//
+	// The events the TMS took, by ID: 1 to 50, each once. They are deleted. An ID that is not
+	// this instance's, or was acknowledged already, is ignored, so acknowledging again is safe.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/email-events/ack (the `AckEmailEvents` operationId).
+	AckEmailEventsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AckEmailEvents Acknowledge system email events
+	//
+	// The events the TMS took, by ID: 1 to 50, each once. They are deleted. An ID that is not
+	// this instance's, or was acknowledged already, is ignored, so acknowledging again is safe.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/email-events/ack (the `AckEmailEvents` operationId).
+	AckEmailEvents(ctx context.Context, body AckEmailEventsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// RegisterLogBundleWithBody Register a log bundle asked for inside Trenova
 	//
@@ -1632,7 +1726,8 @@ func (c *Client) RenewCertificate(ctx context.Context, body RenewCertificateJSON
 // minutes after it was issued); at most 20, oldest first. Carry each out once, by ID: a
 // command listed again was not answered yet, not issued again. A `collect_log_bundle` may
 // take longer than that: its outcome is the bundle's, reported with `updateLogBundle`, and
-// an answer to an expired command is not found.
+// an answer to an expired command is not found. `emailEvents` says whether system email
+// events wait for `listEmailEvents`.
 //
 // Corresponds with GET /v1/commands (the `ListCommands` operationId).
 func (c *Client) ListCommands(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -1679,6 +1774,69 @@ func (c *Client) CompleteCommandWithBody(ctx context.Context, commandId openapi_
 // Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
 func (c *Client) CompleteCommand(ctx context.Context, commandId openapi_types.UUID, body CompleteCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCompleteCommandRequest(c.Server, commandId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListEmailEvents The system email events waiting for the instance
+//
+// Bounces and spam complaints for email the instance sent through Trenova's sender. The
+// provider's webhook is Trenova's, one for every instance, so it posts to the control plane,
+// which verifies each delivery and keeps it for the instance the message's
+// `trenova_instance` tag names. Fetch them when `listCommands` says `emailEvents`, deliver
+// each payload to the TMS, and acknowledge the ones delivered with `ackEmailEvents`; until
+// then they are listed again. At most 50, oldest first. Unacknowledged events are deleted 7
+// days after they arrived.
+//
+// Corresponds with GET /v1/email-events (the `ListEmailEvents` operationId).
+func (c *Client) ListEmailEvents(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListEmailEventsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// AckEmailEventsWithBody Acknowledge system email events
+//
+// The events the TMS took, by ID: 1 to 50, each once. They are deleted. An ID that is not
+// this instance's, or was acknowledged already, is ignored, so acknowledging again is safe.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/email-events/ack (the `AckEmailEvents` operationId).
+func (c *Client) AckEmailEventsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAckEmailEventsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// AckEmailEvents Acknowledge system email events
+//
+// The events the TMS took, by ID: 1 to 50, each once. They are deleted. An ID that is not
+// this instance's, or was acknowledged already, is ignored, so acknowledging again is safe.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/email-events/ack (the `AckEmailEvents` operationId).
+func (c *Client) AckEmailEvents(ctx context.Context, body AckEmailEventsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAckEmailEventsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2056,6 +2214,73 @@ func NewCompleteCommandRequestWithBody(server string, commandId openapi_types.UU
 	return req, nil
 }
 
+// NewListEmailEventsRequest constructs an http.Request for the ListEmailEvents method
+func NewListEmailEventsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/email-events")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewAckEmailEventsRequest calls the generic AckEmailEvents builder with application/json body
+func NewAckEmailEventsRequest(server string, body AckEmailEventsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewAckEmailEventsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewAckEmailEventsRequestWithBody constructs an http.Request for the AckEmailEvents method, with any body, and a specified content type
+func NewAckEmailEventsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/email-events/ack")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewRegisterLogBundleRequest calls the generic RegisterLogBundle builder with application/json body
 func NewRegisterLogBundleRequest(server string, body RegisterLogBundleJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -2396,7 +2621,8 @@ type ClientWithResponsesInterface interface {
 	// minutes after it was issued); at most 20, oldest first. Carry each out once, by ID: a
 	// command listed again was not answered yet, not issued again. A `collect_log_bundle` may
 	// take longer than that: its outcome is the bundle's, reported with `updateLogBundle`, and
-	// an answer to an expired command is not found.
+	// an answer to an expired command is not found. `emailEvents` says whether system email
+	// events wait for `listEmailEvents`.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -2424,6 +2650,41 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
 	CompleteCommandWithResponse(ctx context.Context, commandId openapi_types.UUID, body CompleteCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*CompleteCommandResponse, error)
+
+	// ListEmailEventsWithResponse The system email events waiting for the instance
+	//
+	// Bounces and spam complaints for email the instance sent through Trenova's sender. The
+	// provider's webhook is Trenova's, one for every instance, so it posts to the control plane,
+	// which verifies each delivery and keeps it for the instance the message's
+	// `trenova_instance` tag names. Fetch them when `listCommands` says `emailEvents`, deliver
+	// each payload to the TMS, and acknowledge the ones delivered with `ackEmailEvents`; until
+	// then they are listed again. At most 50, oldest first. Unacknowledged events are deleted 7
+	// days after they arrived.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/email-events (the `ListEmailEvents` operationId).
+	ListEmailEventsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListEmailEventsResponse, error)
+
+	// AckEmailEventsWithBodyWithResponse Acknowledge system email events
+	//
+	// The events the TMS took, by ID: 1 to 50, each once. They are deleted. An ID that is not
+	// this instance's, or was acknowledged already, is ignored, so acknowledging again is safe.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/email-events/ack (the `AckEmailEvents` operationId).
+	AckEmailEventsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AckEmailEventsResponse, error)
+
+	// AckEmailEventsWithResponse Acknowledge system email events
+	//
+	// The events the TMS took, by ID: 1 to 50, each once. They are deleted. An ID that is not
+	// this instance's, or was acknowledged already, is ignored, so acknowledging again is safe.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/email-events/ack (the `AckEmailEvents` operationId).
+	AckEmailEventsWithResponse(ctx context.Context, body AckEmailEventsJSONRequestBody, reqEditors ...RequestEditorFn) (*AckEmailEventsResponse, error)
 
 	// RegisterLogBundleWithBodyWithResponse Register a log bundle asked for inside Trenova
 	//
@@ -2769,6 +3030,137 @@ func (r CompleteCommandResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r CompleteCommandResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListEmailEventsResponse200Headers the declared response headers of an HTTP 200 response for ListEmailEvents
+type ListEmailEventsResponse200Headers struct {
+	CacheControl *string
+}
+
+// ListEmailEventsResponse429Headers the declared response headers of an HTTP 429 response for ListEmailEvents
+type ListEmailEventsResponse429Headers struct {
+	RetryAfter *int
+}
+
+type ListEmailEventsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EmailEventList
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListEmailEventsResponse200Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListEmailEventsResponse429Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListEmailEventsResponse) GetJSON200() *EmailEventList {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListEmailEventsResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListEmailEventsResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r ListEmailEventsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListEmailEventsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListEmailEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListEmailEventsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// AckEmailEventsResponse429Headers the declared response headers of an HTTP 429 response for AckEmailEvents
+type AckEmailEventsResponse429Headers struct {
+	RetryAfter *int
+}
+
+type AckEmailEventsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *Invalid
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *AckEmailEventsResponse429Headers
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r AckEmailEventsResponse) GetApplicationproblemJSON400() *Invalid {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r AckEmailEventsResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r AckEmailEventsResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r AckEmailEventsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r AckEmailEventsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AckEmailEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r AckEmailEventsResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -3324,7 +3716,8 @@ func (c *ClientWithResponses) RenewCertificateWithResponse(ctx context.Context, 
 // minutes after it was issued); at most 20, oldest first. Carry each out once, by ID: a
 // command listed again was not answered yet, not issued again. A `collect_log_bundle` may
 // take longer than that: its outcome is the bundle's, reported with `updateLogBundle`, and
-// an answer to an expired command is not found.
+// an answer to an expired command is not found. `emailEvents` says whether system email
+// events wait for `listEmailEvents`.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -3369,6 +3762,59 @@ func (c *ClientWithResponses) CompleteCommandWithResponse(ctx context.Context, c
 		return nil, err
 	}
 	return ParseCompleteCommandResponse(rsp)
+}
+
+// ListEmailEventsWithResponse The system email events waiting for the instance
+//
+// Bounces and spam complaints for email the instance sent through Trenova's sender. The
+// provider's webhook is Trenova's, one for every instance, so it posts to the control plane,
+// which verifies each delivery and keeps it for the instance the message's
+// `trenova_instance` tag names. Fetch them when `listCommands` says `emailEvents`, deliver
+// each payload to the TMS, and acknowledge the ones delivered with `ackEmailEvents`; until
+// then they are listed again. At most 50, oldest first. Unacknowledged events are deleted 7
+// days after they arrived.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/email-events (the `ListEmailEvents` operationId).
+func (c *ClientWithResponses) ListEmailEventsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListEmailEventsResponse, error) {
+	rsp, err := c.ListEmailEvents(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListEmailEventsResponse(rsp)
+}
+
+// AckEmailEventsWithBodyWithResponse Acknowledge system email events
+//
+// The events the TMS took, by ID: 1 to 50, each once. They are deleted. An ID that is not
+// this instance's, or was acknowledged already, is ignored, so acknowledging again is safe.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/email-events/ack (the `AckEmailEvents` operationId).
+func (c *ClientWithResponses) AckEmailEventsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AckEmailEventsResponse, error) {
+	rsp, err := c.AckEmailEventsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAckEmailEventsResponse(rsp)
+}
+
+// AckEmailEventsWithResponse Acknowledge system email events
+//
+// The events the TMS took, by ID: 1 to 50, each once. They are deleted. An ID that is not
+// this instance's, or was acknowledged already, is ignored, so acknowledging again is safe.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/email-events/ack (the `AckEmailEvents` operationId).
+func (c *ClientWithResponses) AckEmailEventsWithResponse(ctx context.Context, body AckEmailEventsJSONRequestBody, reqEditors ...RequestEditorFn) (*AckEmailEventsResponse, error) {
+	rsp, err := c.AckEmailEvents(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAckEmailEventsResponse(rsp)
 }
 
 // RegisterLogBundleWithBodyWithResponse Register a log bundle asked for inside Trenova
@@ -3749,6 +4195,125 @@ func ParseCompleteCommandResponse(rsp *http.Response) (*CompleteCommandResponse,
 	switch {
 	case rsp.StatusCode == 429:
 		var headers CompleteCommandResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListEmailEventsResponse parses an HTTP response from a ListEmailEventsWithResponse call
+func ParseListEmailEventsResponse(rsp *http.Response) (*ListEmailEventsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListEmailEventsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EmailEventList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListEmailEventsResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListEmailEventsResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseAckEmailEventsResponse parses an HTTP response from a AckEmailEventsWithResponse call
+func ParseAckEmailEventsResponse(rsp *http.Response) (*AckEmailEventsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AckEmailEventsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Invalid
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 429:
+		var headers AckEmailEventsResponse429Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

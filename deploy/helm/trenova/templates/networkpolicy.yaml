@@ -16,8 +16,9 @@ connections at all.
   "docling" (dict "ports" (list 5001) "from" $tms)
   "clamav" (dict "ports" (list 3310) "from" $tms)
   "imaging" (dict "ports" (list 50051) "from" $tms)
+  "embedding" (dict "ports" (list 11434) "from" (list "api" "worker"))
 -}}
-{{- $isolated := list "redis" "meilisearch" "minio" "gotenberg" "docling" "imaging" -}}
+{{- $isolated := list "redis" "meilisearch" "minio" "gotenberg" "docling" "imaging" "embedding" -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
