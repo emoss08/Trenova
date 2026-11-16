@@ -244,8 +244,6 @@ tms:
         localBytes: 134217728
         shared:
           enabled: false
-    twilio:
-      enabled: false
     update:
       enabled: true
       checkInterval: 6h

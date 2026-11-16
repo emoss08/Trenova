@@ -10,9 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -103,17 +101,6 @@ func validPTO() *worker.WorkerPTO {
 	}
 }
 
-func unknownUsers(t *testing.T) *tenantportsmock.MockUserRepository {
-	t.Helper()
-
-	users := tenantportsmock.NewMockUserRepository(t)
-	users.EXPECT().GetByID(mock.Anything, mock.Anything).
-		Return(nil, errortypes.NewNotFoundError("User not found")).
-		Maybe()
-
-	return users
-}
-
 func unknownWorkers(t *testing.T) *workerportsmock.MockWorkerRepository {
 	t.Helper()
 
@@ -130,10 +117,8 @@ func TestCreateRejectsInvalidPTO(t *testing.T) {
 
 	repoCalled := false
 	svc := &Service{
-		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		userRepo:     unknownUsers(t),
 		realtime:     &mocks.NoopRealtimeService{},
 		ledger:       untrackedLedger(),
 		l:            zap.NewNop(),
@@ -168,10 +153,8 @@ func TestCreatePersistsValidPTO(t *testing.T) {
 
 	audit := &fakeAuditService{}
 	svc := &Service{
-		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		userRepo:     unknownUsers(t),
 		realtime:     &mocks.NoopRealtimeService{},
 		ledger:       untrackedLedger(),
 		l:            zap.NewNop(),
@@ -287,10 +270,8 @@ func TestCreateRejectsOverlappingPTO(t *testing.T) {
 
 	repoCalled := false
 	svc := &Service{
-		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		userRepo:     unknownUsers(t),
 		realtime:     &mocks.NoopRealtimeService{},
 		ledger:       untrackedLedger(),
 		l:            zap.NewNop(),
@@ -320,17 +301,15 @@ func TestCreateRejectsOverlappingPTO(t *testing.T) {
 
 	var validationErr *errortypes.Error
 	require.ErrorAs(t, err, &validationErr)
-	assert.Equal(t, "startDate", validationErr.Field)
+	assert.Equal(t, "startDate", validationErr.Field())
 }
 
 func TestRejectRequiresReason(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{
-		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		userRepo:     unknownUsers(t),
 		realtime:     &mocks.NoopRealtimeService{},
 		ledger:       untrackedLedger(),
 		l:            zap.NewNop(),
@@ -356,7 +335,7 @@ func TestRejectRequiresReason(t *testing.T) {
 
 	var validationErr *errortypes.Error
 	require.ErrorAs(t, err, &validationErr)
-	assert.Equal(t, "reason", validationErr.Field)
+	assert.Equal(t, "reason", validationErr.Field())
 }
 
 func TestTransitionRefusesInvalidSourceStatus(t *testing.T) {
@@ -382,10 +361,8 @@ func TestTransitionRefusesInvalidSourceStatus(t *testing.T) {
 			current := storedPTO(tc.from)
 			updateCalled := false
 			svc := &Service{
-				features:     plantest.AllFeatures(),
 				db:           dbtest.NopConnection{},
 				driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-				userRepo:     unknownUsers(t),
 				realtime:     &mocks.NoopRealtimeService{},
 				ledger:       untrackedLedger(),
 				l:            zap.NewNop(),
@@ -417,7 +394,7 @@ func TestTransitionRefusesInvalidSourceStatus(t *testing.T) {
 
 			var validationErr *errortypes.Error
 			require.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "status", validationErr.Field)
+			assert.Equal(t, "status", validationErr.Field())
 			assert.Equal(t, errortypes.ErrInvalidOperation, validationErr.Code)
 		})
 	}
@@ -430,10 +407,8 @@ func TestTransitionCarriesReasonVersionAndAudit(t *testing.T) {
 	audit := &fakeAuditService{}
 	var captured *workerptoports.UpdatePTOStatusRequest
 	svc := &Service{
-		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		userRepo:     unknownUsers(t),
 		realtime:     &mocks.NoopRealtimeService{},
 		ledger:       untrackedLedger(),
 		l:            zap.NewNop(),
@@ -483,10 +458,8 @@ func TestCancelApprovedPTO(t *testing.T) {
 	current := storedPTO(worker.PTOStatusApproved)
 	audit := &fakeAuditService{}
 	svc := &Service{
-		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		userRepo:     unknownUsers(t),
 		realtime:     &mocks.NoopRealtimeService{},
 		ledger:       untrackedLedger(),
 		l:            zap.NewNop(),
@@ -547,7 +520,7 @@ func TestBulkActionValidation(t *testing.T) {
 
 	var validationErr *errortypes.Error
 	require.ErrorAs(t, err, &validationErr)
-	assert.Equal(t, "reason", validationErr.Field)
+	assert.Equal(t, "reason", validationErr.Field())
 }
 
 func TestBulkActionReportsPerItemOutcomes(t *testing.T) {
@@ -563,10 +536,8 @@ func TestBulkActionReportsPerItemOutcomes(t *testing.T) {
 	audit := &fakeAuditService{}
 	var updates []*workerptoports.UpdatePTOStatusRequest
 	svc := &Service{
-		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		userRepo:     unknownUsers(t),
 		realtime:     &mocks.NoopRealtimeService{},
 		ledger:       untrackedLedger(),
 		l:            zap.NewNop(),
@@ -623,37 +594,14 @@ func TestBulkActionReportsPerItemOutcomes(t *testing.T) {
 	assert.Equal(t, permission.OpApprove, audit.logged[0].Operation)
 }
 
-func TestTransitionSMSMessage(t *testing.T) {
-	t.Parallel()
-
-	pto := storedPTO(worker.PTOStatusRequested)
-
-	approved, ok := transitionSMSMessage("Dana", pto, worker.PTOStatusApproved, "")
-	require.True(t, ok)
-	assert.Contains(t, approved, "Dana has approved")
-
-	rejected, ok := transitionSMSMessage("Dana", pto, worker.PTOStatusRejected, "Coverage")
-	require.True(t, ok)
-	assert.Contains(t, rejected, "Reason: Coverage")
-
-	cancelled, ok := transitionSMSMessage("Dana", pto, worker.PTOStatusCancelled, "")
-	require.True(t, ok)
-	assert.NotContains(t, cancelled, "Reason:")
-
-	_, ok = transitionSMSMessage("Dana", pto, worker.PTOStatusRequested, "")
-	assert.False(t, ok)
-}
-
 func TestUpdateRefusesNonRequestedPTO(t *testing.T) {
 	t.Parallel()
 
 	current := storedPTO(worker.PTOStatusApproved)
 	updateCalled := false
 	svc := &Service{
-		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		userRepo:     unknownUsers(t),
 		realtime:     &mocks.NoopRealtimeService{},
 		ledger:       untrackedLedger(),
 		l:            zap.NewNop(),
@@ -682,7 +630,7 @@ func TestUpdateRefusesNonRequestedPTO(t *testing.T) {
 
 	var validationErr *errortypes.Error
 	require.ErrorAs(t, err, &validationErr)
-	assert.Equal(t, "status", validationErr.Field)
+	assert.Equal(t, "status", validationErr.Field())
 }
 
 func TestUpdateExcludesItselfFromOverlapAndAudits(t *testing.T) {
@@ -693,10 +641,8 @@ func TestUpdateExcludesItselfFromOverlapAndAudits(t *testing.T) {
 	var overlapReq *workerptoports.PTOOverlapRequest
 	var persisted *worker.WorkerPTO
 	svc := &Service{
-		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		userRepo:     unknownUsers(t),
 		realtime:     &mocks.NoopRealtimeService{},
 		ledger:       untrackedLedger(),
 		l:            zap.NewNop(),
@@ -758,10 +704,8 @@ func TestUpdateRejectsOverlap(t *testing.T) {
 
 	current := storedPTO(worker.PTOStatusRequested)
 	svc := &Service{
-		features:     plantest.AllFeatures(),
 		db:           dbtest.NopConnection{},
 		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		userRepo:     unknownUsers(t),
 		realtime:     &mocks.NoopRealtimeService{},
 		ledger:       untrackedLedger(),
 		l:            zap.NewNop(),
@@ -794,5 +738,5 @@ func TestUpdateRejectsOverlap(t *testing.T) {
 
 	var validationErr *errortypes.Error
 	require.ErrorAs(t, err, &validationErr)
-	assert.Equal(t, "startDate", validationErr.Field)
+	assert.Equal(t, "startDate", validationErr.Field())
 }

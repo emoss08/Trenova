@@ -122,7 +122,6 @@ modules:
       - workerptoservice
     job:
       - billingjobs
-      - smsjobs
     repository:
       - accountingcontrolrepository
       - agentcontrolrepository

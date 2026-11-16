@@ -81,7 +81,7 @@ func (t *CancelWorkerPTOTool) Preview(
 }
 
 // ptoDecisionPreview is a time-off decision: the request's new status and
-// reason, and what the driver is told in Dash and by text.
+// reason, and what the driver is told in Dash.
 func PtoDecisionOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.WithRefs(map[string]permission.Resource{
@@ -114,20 +114,6 @@ func ptoDecisionPreview(
 	changes := []*agentpreview.RecordChange{status}
 	if decision.Driver != nil {
 		changes = append(changes, outboundpreview.DriverMessageSend(decision.Driver))
-	}
-	if decision.SMS != nil {
-		changes = append(changes, toolpreview.Send(
-			toolpreview.Record{
-				Resource: permission.ResourceWorker,
-				ID:       decision.Before.WorkerID,
-				Label:    outboundpreview.DriverName(decision.Driver),
-			},
-			&agentpreview.MessagePreview{
-				Channel: agentpreview.MessageChannelSMS,
-				To:      []string{decision.SMS.PhoneNumber},
-				Body:    decision.SMS.Message,
-			},
-		))
 	}
 
 	preview := toolpreview.Build(summary, changes...)

@@ -1360,8 +1360,7 @@ export type AgentPreviewMessageChannel =
   | 'Dash'
   | 'EDI'
   | 'Email'
-  | 'Portal'
-  | 'SMS';
+  | 'Portal';
 
 /** What a write would do to one record. */
 export type AgentPreviewOperation =
@@ -9876,9 +9875,7 @@ export type WatchtowerPlayChannel =
   /** An email in the organization's letterhead. */
   | 'Email'
   /** An offer to carriers, which carries no message. */
-  | 'Tender'
-  /** A text to the driver's phone. */
-  | 'Text';
+  | 'Tender';
 
 /** The first move a kind of item has, which the person working it sends themselves. */
 export type WatchtowerPlayKind =

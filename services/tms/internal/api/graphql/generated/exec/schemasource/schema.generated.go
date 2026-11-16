@@ -3919,7 +3919,6 @@ enum AgentPreviewOperation {
 "How a message a write would send reaches its recipients."
 enum AgentPreviewMessageChannel {
   Email
-  SMS
   Dash
   EDI
   Comment
@@ -35148,8 +35147,6 @@ enum WatchtowerPlayKind {
 enum WatchtowerPlayChannel {
   "A message in the driver's portal."
   Dash
-  "A text to the driver's phone."
-  Text
   "An email in the organization's letterhead."
   Email
   "An offer to carriers, which carries no message."

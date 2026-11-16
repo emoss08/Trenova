@@ -12,7 +12,6 @@ const (
 	TaskQueueSystem               TaskQueue = "system-queue"
 	TaskQueueThumbnail            TaskQueue = "thumbnail-queue"
 	TaskQueueUpload               TaskQueue = "upload-queue"
-	TaskQueueSMS                  TaskQueue = "sms-queue"
 	TaskQueueEmail                TaskQueue = "email-queue"
 	TaskQueueEDI                  TaskQueue = "edi-queue"
 	TaskQueueReport               TaskQueue = "report-queue"
@@ -45,7 +44,6 @@ const DocumentIntelligenceTaskQueue = string(TaskQueueDocumentIntelligence)
 const DocumentExtractionTaskQueue = string(TaskQueueDocumentExtraction)
 const ThumbnailTaskQueue = string(TaskQueueThumbnail)
 const UploadTaskQueue = string(TaskQueueUpload)
-const SMSTaskQueue = string(TaskQueueSMS)
 const EmailTaskQueue = string(TaskQueueEmail)
 const IntegrationTaskQueue = string(TaskQueueIntegration)
 const EDITaskQueue = string(TaskQueueEDI)

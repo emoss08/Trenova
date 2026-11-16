@@ -104,7 +104,7 @@ const MODE_COPY: Record<PTOReasonDialogMode, ModeCopy> = {
     },
     presets: REJECTION_PRESETS,
     get reasonDescription() {
-      return translate("The worker sees this reason in Dash and by SMS.");
+      return translate("The worker sees this reason in Dash.");
     },
   },
   cancel: {
@@ -128,7 +128,7 @@ const MODE_COPY: Record<PTOReasonDialogMode, ModeCopy> = {
     },
     presets: CANCELLATION_PRESETS,
     get reasonDescription() {
-      return translate("Optional. The worker sees this reason in Dash and by SMS.");
+      return translate("Optional. The worker sees this reason in Dash.");
     },
   },
 };

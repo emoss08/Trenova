@@ -587,8 +587,8 @@ nothing.
 
   | Kind | Play | Playbook | Who and how, in order |
   |---|---|---|---|
-  | Missing proof of delivery | `AskForPod` | `podchase.Playbook` | The driver in Dash; the driver by email; the carrier by email; the driver by text |
-  | Missed pickup, missed delivery, ETA at risk, no check call | `AskForStatus` | `statusask.Playbook` | The driver in Dash; the driver by text; the driver by email; the carrier by email |
+  | Missing proof of delivery | `AskForPod` | `podchase.Playbook` | The driver in Dash; the driver by email; the carrier by email |
+  | Missed pickup, missed delivery, ETA at risk, no check call | `AskForStatus` | `statusask.Playbook` | The driver in Dash; the driver by email; the carrier by email |
   | Tender exhausted | `TenderAgain` | `retender.Playbook` | The move is offered down its routing guide again, to the carriers the guide names, in its order |
 
   The rules that keep it simple and safe:
@@ -601,7 +601,7 @@ nothing.
     (`PlannedPlay.Needs`, `assertMaySend`), on top of the Watchtower's update and the case
     being theirs to work. A refusal says which access is missing.
   - **One sender per channel.** A driver is reached through `drivermessage.Sender` (Dash with
-    a login, else a text to the number on file when the plan includes text messages) and an
+    a login) and an
     outside party through `requestemail.Sender` (the organization's template for the kind, from
     its billing email profile or else its general one). The agent tools `worker_send_message`
     and `shipment_request_documents` send through the same two, so a person's message and an

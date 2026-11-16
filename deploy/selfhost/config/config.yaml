@@ -307,9 +307,6 @@ reporting:
 system:
   systemUserPassword: change-me # from .env
 
-twilio:
-  enabled: false
-
 update:
   # Shows administrators when a newer Trenova release is published on GitHub.
   enabled: true

@@ -31,7 +31,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/twilioconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/updateconfig"
 	"go.uber.org/fx"
 )
@@ -53,7 +52,6 @@ var SectionProviders = fx.Provide(
 	func(c *Config) *auditconfig.Config { return &c.Audit },
 	func(c *Config) *aiauditconfig.Config { return &c.AIAudit },
 	func(c *Config) *updateconfig.Config { return &c.Update },
-	func(c *Config) *twilioconfig.Config { return &c.Twilio },
 	func(c *Config) *platformconfig.Config { return &c.Platform },
 	func(c *Config) *reportingconfig.Config { return &c.Reporting },
 	func(c *Config) *rendererconfig.Config { return &c.Renderer },

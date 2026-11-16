@@ -19,8 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +39,6 @@ type Params struct {
 	Shadow        *agentshadow.Resolver
 	Users         tenantports.UserRepository
 	Organizations tenantports.OrganizationRepository
-	Features      platformcatalogports.FeatureGate
 	Logger        *zap.Logger
 }
 
@@ -62,7 +59,6 @@ type Filer struct {
 	shadow        *agentshadow.Resolver
 	users         tenantports.UserRepository
 	organizations tenantports.OrganizationRepository
-	features      platformcatalogports.FeatureGate
 	l             *zap.Logger
 }
 
@@ -76,7 +72,6 @@ func New(p Params) *Filer { //nolint:gocritic // fx requires an fx.In parameter 
 		shadow:        p.Shadow,
 		users:         p.Users,
 		organizations: p.Organizations,
-		features:      p.Features,
 		l:             p.Logger.Named("coded-request"),
 	}
 }
@@ -88,11 +83,8 @@ type Filing struct {
 	Tenant     pagination.TenantInfo
 	Definition *agentdefinition.Definition
 	Timezone   string
-	// Texts says the organization's plan includes text messages, so a
-	// driver with a phone number and no login can still be reached.
-	Texts  bool
-	actor  *permissionports.RequestActor
-	shadow bool
+	actor      *permissionports.RequestActor
+	shadow     bool
 }
 
 // For loads the agent and what its requests need. Nil when the agent is
@@ -144,16 +136,10 @@ func (f *Filer) with(
 		return nil, fmt.Errorf("read whether the agent is in shadow: %w", err)
 	}
 
-	texts, err := f.features.Enabled(ctx, platformcatalog.FeatureAdministration)
-	if err != nil {
-		return nil, fmt.Errorf("read whether text messages are on: %w", err)
-	}
-
 	return &Filing{
 		Tenant:     tenant,
 		Definition: definition,
 		Timezone:   org.Timezone,
-		Texts:      texts,
 		actor: &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeAgent,
 			PrincipalID:    definition.ID,

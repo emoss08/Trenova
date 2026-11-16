@@ -335,7 +335,7 @@ func convertedListCases(
 			PlanFields:                plantest.Keeper(nil),
 		}),
 		WorkerPTOService: workerptoservice.New(workerptoservice.Params{
-			Logger: logger, Repo: timeOff, WorkerRepo: workers,
+			Logger: logger, Repo: timeOff,
 		}),
 		TrailerService: trailerservice.New(trailerservice.Params{
 			Logger: logger, Repo: trailers, CustomFieldsValuesService: customFields,

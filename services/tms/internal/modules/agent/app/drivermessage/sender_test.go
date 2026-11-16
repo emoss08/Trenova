@@ -8,9 +8,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/drivermessage"
 	"github.com/emoss08/trenova/internal/modules/agent/app/playsend/playsendtest"
-	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -32,16 +29,14 @@ func TestSenderReachesADriverWithALoginInDash(t *testing.T) {
 
 	workerID := pulid.MustNew("wrk_")
 	drivers := &playsendtest.Drivers{Known: map[pulid.ID]playsendtest.Driver{
-		workerID: {Name: "Laura Wright", OnDash: true, Phone: "+15555550100"},
+		workerID: {Name: "Laura Wright", OnDash: true},
 	}}
-	texts := &playsendtest.Texts{}
-	sender := playsendtest.Messages(drivers, plantest.AllFeatures(), texts)
+	sender := playsendtest.Messages(drivers)
 	sent := message(workerID)
 
 	reach, err := sender.Reach(t.Context(), sent)
 	require.NoError(t, err)
 	assert.Equal(t, drivermessage.ChannelDash, reach.Channel)
-	assert.Empty(t, reach.Text())
 	assert.Empty(t, drivers.Notified, "asking how it would reach them sends nothing")
 
 	channel, err := sender.Send(t.Context(), sent)
@@ -50,62 +45,25 @@ func TestSenderReachesADriverWithALoginInDash(t *testing.T) {
 	require.Len(t, drivers.Notified, 1)
 	assert.Equal(t, drivermessage.DispatchEvent, drivers.Notified[0].EventType)
 	assert.Equal(t, "/loads/"+sent.ShipmentID.String(), drivers.Notified[0].Link)
-	assert.Empty(t, texts.Sent, "a driver on Dash is not also texted")
 }
 
-// A driver with no login and a number on file is texted, when the plan
-// includes text messages; the number goes to the text and nowhere else.
-func TestSenderTextsADriverWithNoLoginWhenThePlanIncludesTexts(t *testing.T) {
+// A driver with no login is reached by nothing, and Send says so instead of
+// pretending.
+func TestSenderReachesNobodyWithoutALogin(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
 	drivers := &playsendtest.Drivers{Known: map[pulid.ID]playsendtest.Driver{
-		workerID: {Name: "Theresa Aguilar", Phone: "+15555550123"},
+		workerID: {Name: "Theresa Aguilar"},
 	}}
-	texts := &playsendtest.Texts{}
-	sender := playsendtest.Messages(drivers, plantest.AllFeatures(), texts)
+	sender := playsendtest.Messages(drivers)
 
 	reach, err := sender.Reach(t.Context(), message(workerID))
 	require.NoError(t, err)
-	assert.Equal(t, drivermessage.ChannelText, reach.Channel)
-	assert.Equal(t, "Call dispatch: Call when you are parked.", reach.Text())
+	assert.Equal(t, drivermessage.ChannelNone, reach.Channel)
 
 	channel, err := sender.Send(t.Context(), message(workerID))
 	require.NoError(t, err)
-	assert.Equal(t, drivermessage.ChannelText, channel)
-	require.Len(t, texts.Sent, 1)
-	payload, ok := texts.Sent[0].(*smscontract.SendSMSPayload)
-	require.True(t, ok)
-	assert.Equal(t, "+15555550123", payload.PhoneNumber)
-	assert.Equal(t, "Call dispatch: Call when you are parked.", payload.Message)
-	assert.Empty(t, drivers.Notified)
-}
-
-// Without text messages in the plan, or with no number, nothing reaches a
-// driver with no login, and Send says so instead of pretending.
-func TestSenderReachesNobodyWithoutALoginOrATextableNumber(t *testing.T) {
-	t.Parallel()
-
-	withNumber, bare := pulid.MustNew("wrk_"), pulid.MustNew("wrk_")
-	drivers := &playsendtest.Drivers{Known: map[pulid.ID]playsendtest.Driver{
-		withNumber: {Name: "Theresa Aguilar", Phone: "+15555550123"},
-		bare:       {Name: "A Driver"},
-	}}
-	texts := &playsendtest.Texts{}
-
-	noTexts := playsendtest.Messages(drivers, plantest.Without(platformcatalog.FeatureAdministration), texts)
-	reach, err := noTexts.Reach(t.Context(), message(withNumber))
-	require.NoError(t, err)
-	assert.Equal(t, drivermessage.ChannelNone, reach.Channel)
-	channel, err := noTexts.Send(t.Context(), message(withNumber))
-	require.NoError(t, err)
 	assert.Equal(t, drivermessage.ChannelNone, channel)
-
-	withTexts := playsendtest.Messages(drivers, plantest.AllFeatures(), texts)
-	channel, err = withTexts.Send(t.Context(), message(bare))
-	require.NoError(t, err)
-	assert.Equal(t, drivermessage.ChannelNone, channel)
-
-	assert.Empty(t, texts.Sent)
 	assert.Empty(t, drivers.Notified)
 }

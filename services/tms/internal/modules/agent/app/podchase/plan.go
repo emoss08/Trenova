@@ -39,17 +39,14 @@ type ask struct {
 }
 
 // reach is what the organization can send with, beyond what is on the
-// record: an email profile to send from, and a plan with text messages.
+// record: an email profile to send from.
 type reach struct {
 	email bool
-	texts bool
 }
 
 // planAsk picks who is asked: the driver who delivered it, in Dash when they
 // have a login and by email when they only have an address; otherwise the
-// carrier that hauled it, by email; and last the driver by text, when a
-// number is all there is and the plan includes text messages, since a text
-// cannot carry the paperwork back. Nil when nobody can be asked: unreachable
+// carrier that hauled it, by email. Nil when nobody can be asked: unreachable
 // says why.
 func planAsk(fact *podchaseports.Facts, can reach, timezone string) *ask {
 	delivered := deliveredOn(fact.DeliveredAt, timezone)
@@ -101,22 +98,6 @@ func planAsk(fact *podchaseports.Facts, can reach, timezone string) *ask {
 		}
 	}
 
-	if driver != nil && driver.HasPhone && can.texts {
-		return &ask{
-			channel:  watchtowerplay.ChannelText,
-			name:     driver.Name,
-			did:      "drove",
-			workerID: driver.WorkerID,
-			title:    "Signed POD needed: " + proLabel(fact),
-			message: clipBytes(fmt.Sprintf(
-				"Hi %s, we still need the signed proof of delivery for %s, delivered %s%s. "+
-					"Please get a copy to the office today: hand it in, or send dispatch a clear "+
-					"photo of the signed paperwork.",
-				firstName(driver.Name), shipment, delivered, customer,
-			), drivermessage.MaxChars),
-		}
-	}
-
 	return nil
 }
 
@@ -129,8 +110,6 @@ func by(channel watchtowerplay.Channel) string {
 	switch channel { //nolint:exhaustive // only the ways a question is sent
 	case watchtowerplay.ChannelDash:
 		return "in Dash"
-	case watchtowerplay.ChannelText:
-		return "by text"
 	default:
 		return "by email"
 	}
@@ -164,13 +143,6 @@ func (a *ask) call(fact *podchaseports.Facts, timezone string) *chaseCall {
 				"requestedDocuments": []any{requestedDocument},
 			},
 			rationale: why + ", so the request goes to them by email.",
-		}
-	case watchtowerplay.ChannelText:
-		return &chaseCall{
-			tool:      toolDriverMessage,
-			arguments: a.driverArguments(fact),
-			rationale: why + " and has only a phone number on file, so the request goes " +
-				"to them by text.",
 		}
 	default:
 		return &chaseCall{
@@ -206,12 +178,10 @@ func unreachable(fact *podchaseports.Facts, can reach) *errortypes.BusinessError
 		return errortypes.NewBusinessError("Nobody is assigned to the delivering move, so there is nobody to ask for the proof of delivery. Upload it here.")
 	case !can.email && (driverEmail || carrierEmail):
 		return errortypes.NewBusinessError("No email profile is set up to send from, so the proof of delivery cannot be asked for by email. Upload it here, or ask an administrator to add one in the email settings.")
-	case driver != nil && driver.HasPhone && !can.texts:
-		return errortypes.NewBusinessError("{0} can only be reached by text, and the organization's plan does not include text messages. Upload the proof of delivery here, or add their email.", driver.Name)
 	case driver != nil && carrier != nil:
-		return errortypes.NewBusinessError("{0} has no Dash login, email or phone number on file and {1} has no email on file, so neither can be asked for the proof of delivery. Upload it here, or add a way to reach them.", driver.Name, carrier.Name)
+		return errortypes.NewBusinessError("{0} has no Dash login or email on file and {1} has no email on file, so neither can be asked for the proof of delivery. Upload it here, or add a way to reach them.", driver.Name, carrier.Name)
 	case driver != nil:
-		return errortypes.NewBusinessError("{0} has no Dash login, email or phone number on file, so they cannot be asked for the proof of delivery. Upload it here, or add a way to reach them.", driver.Name)
+		return errortypes.NewBusinessError("{0} has no Dash login or email on file, so they cannot be asked for the proof of delivery. Upload it here, or add a way to reach them.", driver.Name)
 	default:
 		return errortypes.NewBusinessError("{0} has no email on file, so they cannot be asked for the proof of delivery. Upload it here, or add their email.", carrier.Name)
 	}

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:8f8d7993227cea237bc830f5f280009c1b3b771832286af7e3349810d82ddbf1",
+  "version": "sha256:f93347dec1932ef30320a9267c746d903b53487e69e48c472796ef9db00af32f",
   "modules": [
     {
       "id": "home",
@@ -9865,7 +9865,7 @@
           ],
           "steps": [
             "Open the case from [Needs you](/desk/needs). When no agent has worked it, the plan area offers the first step for what the Watchtower raised: **Ask for the POD** for a delivered load with no proof of delivery, **Ask where it is** for a missed pickup or delivery, a late arrival or a missed check call, and **Tender it again** when every carrier in the routing guide passed.",
-            "Select it. Trenova reads the load and shows who it goes to and how: a **Dash message** to a driver with a Dash login, a **Text message** to a driver with only a phone number (when your plan includes text messages), or an **Email** to the driver or to the carrier that has the load. A tender shows the routing guide and the carriers in the order they will be asked.",
+            "Select it. Trenova reads the load and shows who it goes to and how: a **Dash message** to a driver with a Dash login, or an **Email** to the driver or to the carrier that has the load. A tender shows the routing guide and the carriers in the order they will be asked.",
             "Read the message and change the words if you like. To have Nova rewrite it, say how in the line under the message (firmer, shorter, mention it is the third ask) and select **Reword**; read the result before you send it.",
             "Select **Send**, or **Offer it** for a tender. It goes out under your name. No agent has to be set up or turned on for this.",
             "The case now says who was asked what, by whom and how long ago, and the button reads **Ask again**.",
@@ -17011,7 +17011,7 @@
       "module": "admin",
       "breadcrumb": [
         "Organization settings",
-        "Email & SMS",
+        "Email",
         "Email logs"
       ],
       "description": "Transactional email send and delivery history.",
@@ -17073,7 +17073,7 @@
       "module": "admin",
       "breadcrumb": [
         "Organization settings",
-        "Email & SMS",
+        "Email",
         "Email Profile(s)"
       ],
       "description": "Manage verified sender identities and route email purposes to the right provider profile.",

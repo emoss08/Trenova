@@ -64,7 +64,6 @@ github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs.RunSimulationP
 github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs.RunReportPayload	github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract.RunReportPayload
 github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs.BulkDuplicateShipmentsPayload	github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract.BulkDuplicateShipmentsPayload
 github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs.BulkDuplicateShipmentsWorkflowName	github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract.BulkDuplicateShipmentsWorkflowName
-github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs.SendSMSPayload	github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract.SendSMSPayload
 github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs.CarrierTenderWorkflowName	github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract.CarrierTenderWorkflowName
 github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs.Signal	github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract.Signal
 github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs.SignalKind	github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract.SignalKind
@@ -3479,7 +3478,6 @@ github.com/emoss08/trenova/internal/core/ports/services.PartUploadTarget	github.
 github.com/emoss08/trenova/internal/core/ports/services.SessionState	github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports.SessionState
 github.com/emoss08/trenova/internal/core/ports/services.DocumentUploadService	github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports.DocumentUploadService
 github.com/emoss08/trenova/internal/core/ports/services.DriverNotificationPreview	github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports.DriverNotificationPreview
-github.com/emoss08/trenova/internal/core/ports/services.DriverSMSPreview	github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports.DriverSMSPreview
 github.com/emoss08/trenova/internal/core/ports/services.ServiceFailureEDITrigger	github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports.ServiceFailureEDITrigger
 github.com/emoss08/trenova/internal/core/ports/services.ServiceFailureEDITriggerReviewed	github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports.ServiceFailureEDITriggerReviewed
 github.com/emoss08/trenova/internal/core/ports/services.ServiceFailureEDITriggerResolved	github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports.ServiceFailureEDITriggerResolved
@@ -16129,7 +16127,6 @@ github.com/emoss08/trenova/internal/modules/agent/domain/agent.MessageChannelDas
 github.com/emoss08/trenova/internal/modules/agent/domain/agent.MessageChannelEDI	github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MessageChannelEDI
 github.com/emoss08/trenova/internal/modules/agent/domain/agent.MessageChannelEmail	github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MessageChannelEmail
 github.com/emoss08/trenova/internal/modules/agent/domain/agent.MessageChannelPortal	github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MessageChannelPortal
-github.com/emoss08/trenova/internal/modules/agent/domain/agent.MessageChannelSMS	github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MessageChannelSMS
 github.com/emoss08/trenova/internal/modules/agent/domain/agent.MessagePreview	github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MessagePreview
 github.com/emoss08/trenova/internal/modules/agent/domain/agent.MoneyLine	github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MoneyLine
 github.com/emoss08/trenova/internal/modules/agent/domain/agent.MoneyPreview	github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MoneyPreview
@@ -18509,7 +18506,6 @@ github.com/emoss08/trenova/internal/infrastructure/config.TemporalSecurityConfig
 github.com/emoss08/trenova/internal/infrastructure/config.TemporalTLSConfig	github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig.TLSConfig
 github.com/emoss08/trenova/internal/infrastructure/config.TemporalWorkerConfig	github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig.WorkerConfig
 github.com/emoss08/trenova/internal/infrastructure/config.TenderingConfig	github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig.Config
-github.com/emoss08/trenova/internal/infrastructure/config.TwilioConfig	github.com/emoss08/trenova/internal/infrastructure/config/twilioconfig.Config
 github.com/emoss08/trenova/internal/infrastructure/config.UpdateConfig	github.com/emoss08/trenova/internal/infrastructure/config/updateconfig.Config
 github.com/emoss08/trenova/shared/quickbooks.AllReferenceKinds	github.com/emoss08/trenova/shared/quickbooksref.AllReferenceKinds
 github.com/emoss08/trenova/shared/quickbooks.Client.CreateCustomer	github.com/emoss08/trenova/shared/quickbooksref.CreateCustomer

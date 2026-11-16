@@ -96294,7 +96294,7 @@
     ]
   },
   "Email": {
-    "sites": 38,
+    "sites": 41,
     "scope": [
       "go",
       "ts"
@@ -96302,6 +96302,7 @@
     "areas": [
       "apps/dash/routes",
       "apps/web/components",
+      "apps/web/config",
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
@@ -96315,15 +96316,6 @@
       "routes/inbox",
       "routes/settings",
       "routes/worker"
-    ]
-  },
-  "Email & SMS": {
-    "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/config"
     ]
   },
   "Email (if none is on file)": {
@@ -195535,7 +195527,7 @@
       "routes/ifta-return"
     ]
   },
-  "Optional. The worker sees this reason in Dash and by SMS.": {
+  "Optional. The worker sees this reason in Dash.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -251450,15 +251442,6 @@
       "go/other"
     ]
   },
-  "Send SMS message via Twilio": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Send Status": {
     "sites": 1,
     "scope": [
@@ -274897,16 +274880,6 @@
       "rules/tariff"
     ]
   },
-  "Text message": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components",
-      "routes/desk"
-    ]
-  },
   "Text node must contain text": {
     "sites": 1,
     "scope": [
@@ -287525,7 +287498,7 @@
       "apps/web/components"
     ]
   },
-  "The message did not reach {0}: they no longer have a Dash login or a number that can be texted.": {
+  "The message did not reach {0}: they no longer have a Dash login.": {
     "sites": 1,
     "scope": [
       "go"
@@ -298117,7 +298090,7 @@
       "routes/worker"
     ]
   },
-  "The worker sees this reason in Dash and by SMS.": {
+  "The worker sees this reason in Dash.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -338581,7 +338554,7 @@
       "go/other"
     ]
   },
-  "Workers are notified in Dash and by SMS once their time off is approved. {0}": {
+  "Workers are notified in Dash once their time off is approved. {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -366826,15 +366799,6 @@
       "routes/desk"
     ]
   },
-  "{0} can only be reached by text, and the organization's plan does not include text messages. Upload the proof of delivery here, or add their email.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "{0} can only be used inside a `for` loop": {
     "sites": 2,
     "scope": [
@@ -367133,7 +367097,7 @@
       "go/other"
     ]
   },
-  "{0} cannot be reached in Dash or by text right now. Upload the proof of delivery here, or add a way to reach them.": {
+  "{0} cannot be reached in Dash right now. Upload the proof of delivery here, or add a way to reach them.": {
     "sites": 1,
     "scope": [
       "go"
@@ -369252,7 +369216,7 @@
       "routes/agent-control"
     ]
   },
-  "{0} has no Dash login, email or phone number on file and {1} has no email on file, so neither can be asked for the proof of delivery. Upload it here, or add a way to reach them.": {
+  "{0} has no Dash login or email on file and {1} has no email on file, so neither can be asked for the proof of delivery. Upload it here, or add a way to reach them.": {
     "sites": 1,
     "scope": [
       "go"
@@ -369261,7 +369225,7 @@
       "go/other"
     ]
   },
-  "{0} has no Dash login, email or phone number on file, so they cannot be asked for the proof of delivery. Upload it here, or add a way to reach them.": {
+  "{0} has no Dash login or email on file, and {1} has no email on file, so neither can be asked from here. Call them, or add a way to reach them.": {
     "sites": 1,
     "scope": [
       "go"
@@ -369270,7 +369234,7 @@
       "go/other"
     ]
   },
-  "{0} has no Dash login, phone number that can be texted or email on file, and {1} has no email on file, so neither can be asked from here. Call them, or add a way to reach them.": {
+  "{0} has no Dash login or email on file, so they cannot be asked for the proof of delivery. Upload it here, or add a way to reach them.": {
     "sites": 1,
     "scope": [
       "go"
@@ -369279,7 +369243,7 @@
       "go/other"
     ]
   },
-  "{0} has no Dash login, phone number that can be texted or email on file, so they cannot be asked from here. Call them, or add a way to reach them.": {
+  "{0} has no Dash login or email on file, so they cannot be asked from here. Call them, or add a way to reach them.": {
     "sites": 1,
     "scope": [
       "go"
@@ -379261,7 +379225,7 @@
       "routes/fuel-feed-run"
     ]
   },
-  "{0} {1} will be notified in Dash and by SMS that their time off ({2}) is approved.": {
+  "{0} {1} will be notified in Dash that their time off ({2}) is approved.": {
     "sites": 1,
     "scope": [
       "ts"

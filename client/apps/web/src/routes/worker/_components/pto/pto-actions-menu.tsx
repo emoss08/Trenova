@@ -135,7 +135,7 @@ export function PTOActionsMenu({ pto, className }: PTOActionsMenuProps) {
             <AlertDialogTitle>{t("Approve PTO request")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t(
-                "{0} {1} will be notified in Dash and by SMS that their time off ({2}) is approved.",
+                "{0} {1} will be notified in Dash that their time off ({2}) is approved.",
                 pto.worker?.firstName,
                 pto.worker?.lastName,
                 formatRange(pto.startDate, pto.endDate),

@@ -22,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -107,10 +106,6 @@ func decidedPTO(
 			Title:      "Your time off was declined",
 			Message:    req.Reason,
 		},
-		SMS: &notificationports.DriverSMSPreview{
-			PhoneNumber: "+15555550100",
-			Message:     "Dana Ortiz has rejected your PTO request. Reason: " + req.Reason,
-		},
 	}
 }
 
@@ -118,7 +113,7 @@ func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 	t.Parallel()
 
 	drivers := &fakeDriverNotifier{}
-	tool := operationstools.NewNotifyDriverTool(drivermessage.New(drivers, plantest.AllFeatures(), nil))
+	tool := operationstools.NewNotifyDriverTool(drivermessage.New(drivers))
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"workerId": pulid.MustNew("wrk_").String(),
 		"title":    "Delivery moved to 3 PM",
@@ -146,7 +141,7 @@ func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 func TestNotifyDriverPreview_WarnsADriverWithoutDash(t *testing.T) {
 	t.Parallel()
 
-	tool := operationstools.NewNotifyDriverTool(drivermessage.New(&unreachableDriverNotifier{}, plantest.AllFeatures(), nil))
+	tool := operationstools.NewNotifyDriverTool(drivermessage.New(&unreachableDriverNotifier{}))
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
@@ -194,7 +189,6 @@ func TestRejectWorkerPTOPreview_ShowsTheDecisionAndWhatTheDriverIsSent(t *testin
 		t,
 		[]agentpreview.MessageChannel{
 			agentpreview.MessageChannelDash,
-			agentpreview.MessageChannelSMS,
 		},
 		channels,
 	)

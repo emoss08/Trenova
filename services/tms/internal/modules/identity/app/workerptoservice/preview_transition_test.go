@@ -6,9 +6,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -16,40 +13,14 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
-
-type recordingStarter struct {
-	kernelports.WorkflowStarter
-
-	texts []*smscontract.SendSMSPayload
-}
-
-func (r *recordingStarter) Enabled() bool { return true }
-
-func (r *recordingStarter) StartWorkflow(
-	_ context.Context,
-	_ client.StartWorkflowOptions,
-	_ any,
-	args ...any,
-) (client.WorkflowRun, error) {
-	payload, ok := args[0].(*smscontract.SendSMSPayload)
-	if !ok {
-		return nil, errors.New("not an SMS")
-	}
-	r.texts = append(r.texts, payload)
-
-	return nil, nil
-}
 
 func quietDriverNotify(
 	t *testing.T,
@@ -71,21 +42,17 @@ func quietDriverNotify(
 	})
 }
 
-// UpdateStatus fails until the preview has run, and nothing is texted while
+// UpdateStatus fails until the preview has run, and nothing is sent while
 // it runs, which is what holds the preview to reading.
-func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
+func TestPreviewReject_IsWhatRejectSaves(t *testing.T) {
 	t.Parallel()
 
 	current := storedPTO(worker.PTOStatusRequested)
 	var saved *worker.WorkerPTO
 	writable := false
-	starter := &recordingStarter{}
-	users := tenantportsmock.NewMockUserRepository(t)
-	users.EXPECT().GetByID(mock.Anything, mock.Anything).
-		Return(&tenant.User{Name: "Dana Ortiz"}, nil)
 	workers := workerportsmock.NewMockWorkerRepository(t)
 	workers.EXPECT().GetByID(mock.Anything, mock.Anything).
-		Return(&worker.Worker{ID: current.WorkerID, PhoneNumber: "+15555550100"}, nil)
+		Return(&worker.Worker{ID: current.WorkerID}, nil)
 
 	svc := &Service{
 		db:       dbtest.NopConnection{},
@@ -108,12 +75,8 @@ func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
 				return saved, nil
 			},
 		},
-		userRepo:        users,
-		workerRepo:      workers,
-		workflowStarter: starter,
-		auditService:    &fakeAuditService{},
-		driverNotify:    quietDriverNotify(t, workers),
-		features:        plantest.AllFeatures(),
+		auditService: &fakeAuditService{},
+		driverNotify: quietDriverNotify(t, workers),
 	}
 	request := func() *workerptoports.UpdatePTOStatusRequest {
 		return &workerptoports.UpdatePTOStatusRequest{
@@ -127,7 +90,6 @@ func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
 
 	preview, err := svc.PreviewReject(t.Context(), req)
 	require.NoError(t, err)
-	require.Empty(t, starter.texts, "a preview must not text the driver")
 	assert.Equal(t, "  Coverage gap on that route  ", req.Reason,
 		"a preview must not rewrite the caller's request")
 
@@ -137,30 +99,22 @@ func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
 	_, err = svc.Reject(t.Context(), final)
 	require.NoError(t, err)
 	require.NotNil(t, saved)
-	require.Len(t, starter.texts, 1)
 
 	assert.Equal(t, worker.PTOStatusRequested, preview.Before.Status)
 	assert.Equal(t, saved.Status, preview.After.Status)
 	assert.Equal(t, saved.RejectorID, preview.After.RejectorID)
 	assert.Equal(t, saved.RejectionReason, preview.After.RejectionReason)
 	assert.False(t, preview.ReturnsLedger)
-	require.NotNil(t, preview.SMS)
-	assert.Equal(t, starter.texts[0].PhoneNumber, preview.SMS.PhoneNumber)
-	assert.Equal(t, starter.texts[0].Message, preview.SMS.Message)
 }
 
 func TestPreviewCancel_SaysApprovedDaysGoBack(t *testing.T) {
 	t.Parallel()
 
 	current := storedPTO(worker.PTOStatusApproved)
-	users := tenantportsmock.NewMockUserRepository(t)
-	users.EXPECT().GetByID(mock.Anything, mock.Anything).
-		Return(&tenant.User{Name: "Dana Ortiz"}, nil)
 	workers := workerportsmock.NewMockWorkerRepository(t)
 	workers.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&worker.Worker{ID: current.WorkerID}, nil)
 	svc := &Service{
-		features: plantest.AllFeatures(),
 		db:       dbtest.NopConnection{},
 		realtime: &mocks.NoopRealtimeService{},
 		ledger:   untrackedLedger(),
@@ -170,8 +124,6 @@ func TestPreviewCancel_SaysApprovedDaysGoBack(t *testing.T) {
 				return current, nil
 			},
 		},
-		userRepo:     users,
-		workerRepo:   workers,
 		driverNotify: quietDriverNotify(t, workers),
 	}
 
@@ -185,5 +137,4 @@ func TestPreviewCancel_SaysApprovedDaysGoBack(t *testing.T) {
 	assert.True(t, preview.ReturnsLedger)
 	assert.Equal(t, worker.PTOStatusCancelled, preview.After.Status)
 	assert.Equal(t, "Route covered", preview.After.CancellationReason)
-	assert.Nil(t, preview.SMS)
 }

@@ -76,7 +76,7 @@ var CatalogDefinitions = []CatalogItem{
 		Type:         integration.TypeSendGrid,
 		Name:         "SendGrid",
 		Description:  "Planned support for SendGrid transactional email delivery.",
-		DocsURL:      "https://www.twilio.com/docs/sendgrid",
+		DocsURL:      "https://docs.sendgrid.com/",
 		WebsiteURL:   "https://sendgrid.com/",
 		Color:        "#1a82e2",
 		LogoLightURL: "/integrations/logos/sendgrid_light.svg",

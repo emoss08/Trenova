@@ -10,16 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -27,12 +22,9 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
-	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -40,31 +32,23 @@ import (
 type Params struct {
 	fx.In
 
-	Logger          *zap.Logger
-	DB              kernelports.Transactor
-	Repo            workerptoports.WorkerPTORepository
-	UserRepo        tenantports.UserRepository
-	WorkerRepo      workerports.WorkerRepository
-	Ledger          *ptoledgerservice.Service
-	WorkflowStarter kernelports.WorkflowStarter
-	AuditService    auditports.AuditService
-	DriverNotify    *drivernotificationservice.Service
-	Realtime        realtimeports.RealtimeService
-	Features        platformcatalogports.FeatureGate
+	Logger       *zap.Logger
+	DB           kernelports.Transactor
+	Repo         workerptoports.WorkerPTORepository
+	Ledger       *ptoledgerservice.Service
+	AuditService auditports.AuditService
+	DriverNotify *drivernotificationservice.Service
+	Realtime     realtimeports.RealtimeService
 }
 
 type Service struct {
-	l               *zap.Logger
-	db              kernelports.Transactor
-	repo            workerptoports.WorkerPTORepository
-	userRepo        tenantports.UserRepository
-	workerRepo      workerports.WorkerRepository
-	ledger          *ptoledgerservice.Service
-	workflowStarter kernelports.WorkflowStarter
-	auditService    auditports.AuditService
-	driverNotify    *drivernotificationservice.Service
-	realtime        realtimeports.RealtimeService
-	features        platformcatalogports.FeatureGate
+	l            *zap.Logger
+	db           kernelports.Transactor
+	repo         workerptoports.WorkerPTORepository
+	ledger       *ptoledgerservice.Service
+	auditService auditports.AuditService
+	driverNotify *drivernotificationservice.Service
+	realtime     realtimeports.RealtimeService
 }
 
 const maxPTOChartRangeSeconds int64 = 366 * 24 * 60 * 60
@@ -73,17 +57,13 @@ var _ workerptoports.WorkerPTOService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
-		l:               p.Logger.Named("service.workerpto"),
-		db:              p.DB,
-		repo:            p.Repo,
-		userRepo:        p.UserRepo,
-		workerRepo:      p.WorkerRepo,
-		ledger:          p.Ledger,
-		workflowStarter: p.WorkflowStarter,
-		auditService:    p.AuditService,
-		driverNotify:    p.DriverNotify,
-		realtime:        p.Realtime,
-		features:        p.Features,
+		l:            p.Logger.Named("service.workerpto"),
+		db:           p.DB,
+		repo:         p.Repo,
+		ledger:       p.Ledger,
+		auditService: p.AuditService,
+		driverNotify: p.DriverNotify,
+		realtime:     p.Realtime,
 	}
 }
 
@@ -376,7 +356,9 @@ func (s *Service) transition(
 	s.publishPTOInvalidation(ctx, updated, operation, req.UserID)
 
 	if params.notifyWorker {
-		s.notifyTransition(ctx, req, updated, params.target, log)
+		if notice, ok := transitionNotice(params.target, req.Reason); ok {
+			s.notifyDriverPTO(ctx, req.TenantInfo, updated, notice)
+		}
 	}
 
 	return updated, nil
@@ -424,112 +406,6 @@ func (s *Service) logTransitionAudit(
 		BusinessUnitID: updated.GetBusinessUnitID(),
 	}, auditservice.WithComment(comment), auditservice.WithDiff(previous, updated)); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
-	}
-}
-
-func (s *Service) notifyTransition(
-	ctx context.Context,
-	req *workerptoports.UpdatePTOStatusRequest,
-	updated *worker.WorkerPTO,
-	target worker.PTOStatus,
-	log *zap.Logger,
-) {
-	if notice, ok := transitionNotice(target, req.Reason); ok {
-		s.notifyDriverPTO(ctx, req.TenantInfo, updated, notice)
-	}
-
-	s.sendTransitionSMS(ctx, req, updated, target, log)
-}
-
-func (s *Service) sendTransitionSMS(
-	ctx context.Context,
-	req *workerptoports.UpdatePTOStatusRequest,
-	updated *worker.WorkerPTO,
-	target worker.PTOStatus,
-	log *zap.Logger,
-) {
-	allowed, err := s.features.Enabled(ctx, platformcatalog.FeatureAdministration)
-	if err != nil {
-		log.Error("failed to resolve the organization's plan for PTO SMS", zap.Error(err))
-		return
-	}
-	if !allowed {
-		log.Debug("the organization's plan does not include SMS; skipping PTO SMS")
-		return
-	}
-
-	sms, err := s.transitionSMS(ctx, req, updated, target)
-	if err != nil {
-		log.Error("failed to prepare PTO SMS", zap.Error(err))
-		return
-	}
-	if sms == nil {
-		return
-	}
-
-	payload := &smscontract.SendSMSPayload{
-		PhoneNumber:    sms.PhoneNumber,
-		Message:        sms.Message,
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-	}
-
-	if _, err = s.workflowStarter.StartWorkflow(ctx, client.StartWorkflowOptions{
-		ID: fmt.Sprintf(
-			"pto-%s-%s-%d",
-			strings.ToLower(string(target)),
-			updated.ID.String(),
-			timeutils.NowUnix(),
-		),
-		TaskQueue: temporaltype.SMSTaskQueue,
-		StaticSummary: fmt.Sprintf(
-			"Sending SMS to worker %s for %s PTO",
-			updated.WorkerID.String(),
-			strings.ToLower(string(target)),
-		),
-	}, "SendSMSWorkflow", payload); err != nil {
-		log.Error("failed to start PTO SMS workflow", zap.Error(err))
-	}
-}
-
-func transitionSMSMessage(
-	actorName string,
-	pto *worker.WorkerPTO,
-	target worker.PTOStatus,
-	reason string,
-) (string, bool) {
-	dates := fmt.Sprintf(
-		"%s to %s",
-		timeutils.UnixToHumanReadable(pto.StartDate),
-		timeutils.UnixToHumanReadable(pto.EndDate),
-	)
-
-	switch target { //nolint:exhaustive // Requested is never a transition target
-	case worker.PTOStatusApproved:
-		return fmt.Sprintf("%s has approved your PTO request for dates %s.", actorName, dates), true
-	case worker.PTOStatusRejected:
-		return fmt.Sprintf(
-			"%s has rejected your PTO request for dates %s. Reason: %s",
-			actorName,
-			dates,
-			reason,
-		), true
-	case worker.PTOStatusCancelled:
-		if reason == "" {
-			return fmt.Sprintf(
-				"%s has cancelled your PTO request for dates %s.",
-				actorName,
-				dates,
-			), true
-		}
-		return fmt.Sprintf(
-			"%s has cancelled your PTO request for dates %s. Reason: %s",
-			actorName,
-			dates,
-			reason,
-		), true
-	default:
-		return "", false
 	}
 }
 

@@ -22,7 +22,6 @@ enum AgentPreviewOperation {
 "How a message a write would send reaches its recipients."
 enum AgentPreviewMessageChannel {
   Email
-  SMS
   Dash
   EDI
   Comment

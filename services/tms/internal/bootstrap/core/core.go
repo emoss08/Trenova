@@ -58,7 +58,6 @@ func Options() fx.Option {
 		reportengine.Module,
 		ServiceModule,
 		modulesinfra.StorageModule,
-		modulesinfra.SMSModule,
 		modulesinfra.PDFRenderModule,
 		modulesinfra.TemplatingModule,
 		modulesinfra.RealtimePublisherModule,

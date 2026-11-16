@@ -50,12 +50,6 @@ func (s *Service) Preview(
 	}
 	if !preview.Reachable {
 		preview.InvitedAt, preview.InvitedEmail = s.openInvitation(ctx, req)
-		if phone := strings.TrimSpace(wrk.PhoneNumber); phone != "" {
-			preview.Text = &notificationports.DriverSMSPreview{
-				PhoneNumber: phone,
-				Message:     textOf(title, message),
-			}
-		}
 	}
 
 	return preview, nil
@@ -124,18 +118,4 @@ func (s *Service) renderNotification(
 	}
 
 	return rendered.Subject, rendered.Text, nil
-}
-
-// textOf is a notification as one text message: its title, then what it
-// says.
-func textOf(title, message string) string {
-	title, message = strings.TrimSpace(title), strings.TrimSpace(message)
-	switch {
-	case title == "":
-		return message
-	case message == "":
-		return title
-	default:
-		return title + ": " + message
-	}
 }

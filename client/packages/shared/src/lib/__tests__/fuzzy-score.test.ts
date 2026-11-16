@@ -120,7 +120,7 @@ describe("matchFields", () => {
   it("does not let 'ai' match inside Service failures, Trailers or Email logs", () => {
     expect(matchFields("ai", page("Service failures", "Shipment management"))).toBeNull();
     expect(matchFields("ai", page("Trailers", "Equipment management"))).toBeNull();
-    expect(matchFields("ai", page("Email logs", "Administration › Email & SMS"))).toBeNull();
+    expect(matchFields("ai", page("Email logs", "Administration › Email"))).toBeNull();
   });
 
   it("lets 'ai' match AI control and Aisha Grant on their titles", () => {

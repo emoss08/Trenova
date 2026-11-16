@@ -19,9 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -52,15 +49,13 @@ func (organizations) GetByID(
 type rig struct {
 	playbook *Playbook
 	drivers  *playsendtest.Drivers
-	texts    *playsendtest.Texts
 	mail     *playsendtest.Mail
 	tenant   pagination.TenantInfo
 }
 
-func newRig(fact *podchaseports.Facts, features platformcatalogports.FeatureGate) *rig {
+func newRig(fact *podchaseports.Facts) *rig {
 	r := &rig{
 		drivers: &playsendtest.Drivers{Known: map[pulid.ID]playsendtest.Driver{}},
-		texts:   &playsendtest.Texts{},
 		mail:    playsendtest.NewMail(),
 		tenant:  pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 	}
@@ -70,7 +65,7 @@ func newRig(fact *podchaseports.Facts, features platformcatalogports.FeatureGate
 	}
 	r.playbook = NewPlaybook(PlaybookParams{
 		Facts:         &facts{rows: rows},
-		Messages:      playsendtest.Messages(r.drivers, features, r.texts),
+		Messages:      playsendtest.Messages(r.drivers),
 		Requests:      r.mail.Requests(),
 		Organizations: organizations{},
 	})
@@ -109,7 +104,7 @@ func TestPlaybookSendsADashMessageWithThePersonsWords(t *testing.T) {
 	fact := deliveredFact()
 	workerID := pulid.MustNew("wrk_")
 	fact.Driver = &podchaseports.Driver{WorkerID: workerID, Name: "Laura Wright", OnDash: true}
-	r := newRig(fact, plantest.AllFeatures())
+	r := newRig(fact)
 	r.drivers.Known[workerID] = playsendtest.Driver{Name: "Laura Wright", OnDash: true}
 
 	planned, err := r.plan(t, fact.ShipmentID)
@@ -134,32 +129,6 @@ func TestPlaybookSendsADashMessageWithThePersonsWords(t *testing.T) {
 		fmtContext(r.drivers.Notified[0].Context), "third ask: we need the signed POD today")
 }
 
-// A driver reached only by text is texted when the plan includes texts, and
-// the number never appears in what the person is shown.
-func TestPlaybookTextsADriverWithOnlyANumber(t *testing.T) {
-	t.Parallel()
-
-	fact := deliveredFact()
-	workerID := pulid.MustNew("wrk_")
-	fact.Driver = &podchaseports.Driver{WorkerID: workerID, Name: "Theresa Aguilar", HasPhone: true}
-	r := newRig(fact, plantest.AllFeatures())
-	r.mail.NoProfile = true
-	r.playbook.requests = r.mail.Requests()
-	r.drivers.Known[workerID] = playsendtest.Driver{Name: "Theresa Aguilar", Phone: "+15555550123"}
-
-	planned, err := r.plan(t, fact.ShipmentID)
-	require.NoError(t, err)
-
-	assert.Equal(t, watchtowerplay.ChannelText, planned.Channel)
-	assert.NotContains(t, planned.Message, "5555550123")
-	assert.NotContains(t, planned.Recipient, "5555550123")
-	assert.NotContains(t, planned.Asked, "5555550123")
-
-	require.NoError(t, planned.Send(t.Context(), &watchtowerports.PlaySending{Message: "Please call in."}))
-	assert.Len(t, r.texts.Sent, 1)
-	assert.Empty(t, r.drivers.Notified)
-}
-
 // A carrier is asked by email in the missing documents template, from the
 // organization's own profile, and the person's words are the body.
 func TestPlaybookEmailsTheCarrierInTheOrganizationsTemplate(t *testing.T) {
@@ -167,7 +136,7 @@ func TestPlaybookEmailsTheCarrierInTheOrganizationsTemplate(t *testing.T) {
 
 	fact := deliveredFact()
 	fact.Carrier = &podchaseports.Carrier{Name: "Acme Freight", Email: "ops@acme.test"}
-	r := newRig(fact, plantest.Without(platformcatalog.FeatureAdministration))
+	r := newRig(fact)
 
 	planned, err := r.plan(t, fact.ShipmentID)
 	require.NoError(t, err)
@@ -198,7 +167,7 @@ func TestPlaybookEmailsTheCarrierInTheOrganizationsTemplate(t *testing.T) {
 func TestPlaybookSaysWhyItCannotBeSent(t *testing.T) {
 	t.Parallel()
 
-	onFile := newRig(nil, plantest.Without(platformcatalog.FeatureAdministration))
+	onFile := newRig(nil)
 	_, err := onFile.plan(t, pulid.MustNew("shp_"))
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
@@ -206,14 +175,14 @@ func TestPlaybookSaysWhyItCannotBeSent(t *testing.T) {
 
 	fact := deliveredFact()
 	fact.Driver = &podchaseports.Driver{WorkerID: pulid.MustNew("wrk_"), Name: "A Driver"}
-	unreachable := newRig(fact, plantest.AllFeatures())
+	unreachable := newRig(fact)
 	_, err = unreachable.plan(t, fact.ShipmentID)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 
 	suppressed := deliveredFact()
 	suppressed.Carrier = &podchaseports.Carrier{Name: "Acme Freight", Email: "ops@acme.test"}
-	refused := newRig(suppressed, plantest.Without(platformcatalog.FeatureAdministration))
+	refused := newRig(suppressed)
 	refused.mail.Refused = true
 	refused.playbook.requests = refused.mail.Requests()
 	_, err = refused.plan(t, suppressed.ShipmentID)

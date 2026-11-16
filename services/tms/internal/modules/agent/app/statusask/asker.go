@@ -29,7 +29,7 @@ type Params struct {
 // Playbook is a person asking whoever has a load where it is: the first
 // thing a dispatcher does about a missed pickup or delivery, a late
 // projection or a check call that never came. Who is asked follows from the
-// record: the driver on the load, in Dash, by text or by email, or the
+// record: the driver on the load, in Dash or by email, or the
 // carrier that has it, by email. What is asked follows from the kind and
 // the stop. The person reads the words, changes them if they like and
 // sends them under their own name; no agent takes part. Re-covering the
@@ -78,7 +78,7 @@ func (p *Playbook) Plan(
 	return p.byEmail(ctx, req, hauler)
 }
 
-// toDriver asks the driver in Dash or by text. Nil when neither reaches
+// toDriver asks the driver in Dash. Nil when that does not reach
 // them, so the plan falls to email.
 func (p *Playbook) toDriver(
 	ctx context.Context,
@@ -207,9 +207,9 @@ func unreachable(hauler *haulerports.Hauler) *errortypes.BusinessError {
 	driver, carrier := hauler.Driver, hauler.Carrier
 	switch {
 	case driver != nil && carrier != nil:
-		return errortypes.NewBusinessError("{0} has no Dash login, phone number that can be texted or email on file, and {1} has no email on file, so neither can be asked from here. Call them, or add a way to reach them.", driver.Name, carrier.Name)
+		return errortypes.NewBusinessError("{0} has no Dash login or email on file, and {1} has no email on file, so neither can be asked from here. Call them, or add a way to reach them.", driver.Name, carrier.Name)
 	case driver != nil:
-		return errortypes.NewBusinessError("{0} has no Dash login, phone number that can be texted or email on file, so they cannot be asked from here. Call them, or add a way to reach them.", driver.Name)
+		return errortypes.NewBusinessError("{0} has no Dash login or email on file, so they cannot be asked from here. Call them, or add a way to reach them.", driver.Name)
 	default:
 		return errortypes.NewBusinessError("{0} has no email on file, so they cannot be asked from here. Call them, or add their email.", carrier.Name)
 	}

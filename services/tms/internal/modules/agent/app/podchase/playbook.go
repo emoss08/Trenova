@@ -88,7 +88,6 @@ func (p *Playbook) Plan(
 	}
 	can := reach{
 		email: p.requests.CanSend(ctx, req.TenantInfo),
-		texts: p.messages.Texts(ctx),
 	}
 	planned := planAsk(fact, can, org.Timezone)
 	if planned == nil {
@@ -120,7 +119,7 @@ func (p *Playbook) toDriver(
 	}
 	if !driver.Reached {
 		return nil, errortypes.NewBusinessError(
-			"{0} cannot be reached in Dash or by text right now. Upload the proof of delivery here, or add a way to reach them.",
+			"{0} cannot be reached in Dash right now. Upload the proof of delivery here, or add a way to reach them.",
 			planned.name,
 		)
 	}

@@ -214,7 +214,7 @@ export default function PTODataTable() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t(
-                "Workers are notified in Dash and by SMS once their time off is approved. {0}",
+                "Workers are notified in Dash once their time off is approved. {0}",
                 pendingApproval && pendingApproval.skipped > 0
                   ? ` ${t("{0} selected request{1} not eligible and will be skipped.", pendingApproval.skipped, pendingApproval.skipped === 1 ? " is" : t("s are"))}`
                   : "",

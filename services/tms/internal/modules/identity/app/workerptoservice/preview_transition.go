@@ -5,17 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 // PreviewReject is Reject without the write: the request as rejecting it
-// would leave it, and what the driver would be told and texted.
+// would leave it, and what the driver would be told.
 func (s *Service) PreviewReject(
 	ctx context.Context,
 	req *workerptoports.UpdatePTOStatusRequest,
@@ -92,11 +88,6 @@ func (s *Service) previewTransition(
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	preview.SMS, err = s.transitionSMS(ctx, params.req, after, params.target)
-	if err != nil {
-		return nil, err
 	}
 
 	return preview, nil
@@ -187,43 +178,4 @@ func transitionNotice(target worker.PTOStatus, reason string) (driverPTONotice, 
 	default:
 		return driverPTONotice{}, false
 	}
-}
-
-// transitionSMS is the text a decision sends the driver's phone, signed with
-// the name of the person who made it. A driver with no phone on file is
-// sent none, and neither is a decision with no wording.
-func (s *Service) transitionSMS(
-	ctx context.Context,
-	req *workerptoports.UpdatePTOStatusRequest,
-	updated *worker.WorkerPTO,
-	target worker.PTOStatus,
-) (*notificationports.DriverSMSPreview, error) {
-	user, err := s.userRepo.GetByID(ctx, tenantports.GetUserByIDRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  req.TenantInfo.OrgID,
-			BuID:   req.TenantInfo.BuID,
-			UserID: req.UserID,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
-		ID:         updated.WorkerID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if wrk.PhoneNumber == "" {
-		return nil, nil //nolint:nilnil // a nil SMS means the driver is not texted
-	}
-
-	message, ok := transitionSMSMessage(user.Name, updated, target, req.Reason)
-	if !ok {
-		return nil, nil //nolint:nilnil // a nil SMS means the driver is not texted
-	}
-
-	return &notificationports.DriverSMSPreview{PhoneNumber: wrk.PhoneNumber, Message: message}, nil
 }

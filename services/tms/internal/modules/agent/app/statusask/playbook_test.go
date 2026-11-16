@@ -18,9 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,20 +45,18 @@ type rig struct {
 	playbook *Playbook
 	haulers  *haulers
 	drivers  *playsendtest.Drivers
-	texts    *playsendtest.Texts
 	mail     *playsendtest.Mail
 }
 
-func newRig(hauler *haulerports.Hauler, features platformcatalogports.FeatureGate, mail *playsendtest.Mail) *rig {
+func newRig(hauler *haulerports.Hauler, mail *playsendtest.Mail) *rig {
 	r := &rig{
 		haulers: &haulers{hauler: hauler},
 		drivers: &playsendtest.Drivers{Known: map[pulid.ID]playsendtest.Driver{}},
-		texts:   &playsendtest.Texts{},
 		mail:    mail,
 	}
 	r.playbook = New(Params{
 		Haulers:  r.haulers,
-		Messages: playsendtest.Messages(r.drivers, features, r.texts),
+		Messages: playsendtest.Messages(r.drivers),
 		Requests: mail.Requests(),
 	})
 
@@ -100,7 +95,7 @@ func TestPlaybookAsksTheDriverOnDashAboutTheMissedStop(t *testing.T) {
 		ShipmentID: shipmentID,
 		ProNumber:  "S100",
 		Driver:     &podchaseports.Driver{WorkerID: workerID, Name: "Laura Wright", OnDash: true},
-	}, plantest.AllFeatures(), playsendtest.NewMail())
+	}, playsendtest.NewMail())
 	r.drivers.Known[workerID] = playsendtest.Driver{Name: "Laura Wright", OnDash: true}
 
 	planned, err := r.plan(t, missedDelivery(shipmentID, stopID))
@@ -136,7 +131,7 @@ func TestPlaybookEmailsTheCarrierThatHasTheLoad(t *testing.T) {
 		ShipmentID: pulid.MustNew("shp_"),
 		ProNumber:  "S200",
 		Carrier:    &podchaseports.Carrier{Name: "Northline Carriers", Email: "dispatch@northline.test"},
-	}, plantest.Without(platformcatalog.FeatureAdministration), mail)
+	}, mail)
 
 	planned, err := r.plan(t, &watchtower.Item{
 		SourceKind:  watchtower.SourceNoCheckCall,
@@ -167,10 +162,9 @@ func TestPlaybookEmailsTheCarrierThatHasTheLoad(t *testing.T) {
 	assert.Equal(t, documenttemplate.KindAgentStatusRequestEmail, mail.Renderer.Req.Kind)
 }
 
-// A driver with no login is texted when the plan includes texts, emailed
-// when it does not and an address is on file, and otherwise the person is
-// told who is missing what.
-func TestPlaybookFallsFromDashToTextToEmail(t *testing.T) {
+// A driver with no login is emailed when an address is on file, and otherwise
+// the person is told who is missing what.
+func TestPlaybookFallsFromDashToEmail(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
@@ -179,7 +173,7 @@ func TestPlaybookFallsFromDashToTextToEmail(t *testing.T) {
 			ShipmentID: pulid.MustNew("shp_"),
 			ProNumber:  "S300",
 			Driver: &podchaseports.Driver{
-				WorkerID: workerID, Name: "Theresa Aguilar", HasPhone: true, Email: "theresa@drivers.test",
+				WorkerID: workerID, Name: "Theresa Aguilar", Email: "theresa@drivers.test",
 			},
 		}
 	}
@@ -188,26 +182,18 @@ func TestPlaybookFallsFromDashToTextToEmail(t *testing.T) {
 			SourceKind: watchtower.SourceEtaAtRisk, SubjectType: agent.SubjectShipment, SubjectID: h.ShipmentID,
 		}
 	}
-	known := playsendtest.Driver{Name: "Theresa Aguilar", Phone: "+15555550123"}
+	known := playsendtest.Driver{Name: "Theresa Aguilar"}
 
-	withTexts := newRig(hauler(), plantest.AllFeatures(), playsendtest.NewMail())
-	withTexts.drivers.Known[workerID] = known
-	planned, err := withTexts.plan(t, item(withTexts.haulers.hauler))
-	require.NoError(t, err)
-	assert.Equal(t, watchtowerplay.ChannelText, planned.Channel)
-	assert.Equal(t, "Asked Theresa Aguilar where PRO S300 is by text", planned.Asked)
-	assert.NotContains(t, planned.Message, "5555550123")
-
-	withoutTexts := newRig(hauler(), plantest.Without(platformcatalog.FeatureAdministration), playsendtest.NewMail())
-	withoutTexts.drivers.Known[workerID] = known
-	planned, err = withoutTexts.plan(t, item(withoutTexts.haulers.hauler))
+	withEmail := newRig(hauler(), playsendtest.NewMail())
+	withEmail.drivers.Known[workerID] = known
+	planned, err := withEmail.plan(t, item(withEmail.haulers.hauler))
 	require.NoError(t, err)
 	assert.Equal(t, watchtowerplay.ChannelEmail, planned.Channel)
 	assert.Equal(t, "Theresa Aguilar", planned.Recipient)
 
 	bare := hauler()
-	bare.Driver.Email, bare.Driver.HasPhone = "", false
-	nothing := newRig(bare, plantest.AllFeatures(), playsendtest.NewMail())
+	bare.Driver.Email = ""
+	nothing := newRig(bare, playsendtest.NewMail())
 	nothing.drivers.Known[workerID] = playsendtest.Driver{Name: "Theresa Aguilar"}
 	_, err = nothing.plan(t, item(bare))
 	require.Error(t, err)
@@ -224,7 +210,7 @@ func TestPlaybookSaysWhyNobodyCanBeAsked(t *testing.T) {
 		SourceKind: watchtower.SourceEtaAtRisk, SubjectType: agent.SubjectShipment, SubjectID: shipmentID,
 	}
 
-	unassigned := newRig(&haulerports.Hauler{ShipmentID: shipmentID}, plantest.Without(platformcatalog.FeatureAdministration), playsendtest.NewMail())
+	unassigned := newRig(&haulerports.Hauler{ShipmentID: shipmentID}, playsendtest.NewMail())
 	_, err := unassigned.plan(t, item)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Nobody is assigned to this load yet")
@@ -234,7 +220,7 @@ func TestPlaybookSaysWhyNobodyCanBeAsked(t *testing.T) {
 	noProfile := newRig(&haulerports.Hauler{
 		ShipmentID: shipmentID,
 		Carrier:    &podchaseports.Carrier{Name: "Northline Carriers", Email: "dispatch@northline.test"},
-	}, plantest.Without(platformcatalog.FeatureAdministration), mail)
+	}, mail)
 	_, err = noProfile.plan(t, item)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "No email profile is set up to send from")

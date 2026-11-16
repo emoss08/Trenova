@@ -5343,7 +5343,6 @@ enum AgentPreviewMessageChannel {
   EDI
   Email
   Portal
-  SMS
 }
 
 """The amounts a write would move, with totals before and after."""
@@ -37970,8 +37969,6 @@ enum WatchtowerPlayChannel {
   Email
   """An offer to carriers, which carries no message."""
   Tender
-  """A text to the driver's phone."""
-  Text
 }
 
 """

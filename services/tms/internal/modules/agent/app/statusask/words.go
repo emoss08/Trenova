@@ -102,11 +102,8 @@ func emailWords(item *watchtower.Item, hauler *haulerports.Hauler) (subject, bod
 // asked is the request in a sentence, as the item keeps it once it is sent.
 func asked(name string, hauler *haulerports.Hauler, channel watchtowerplay.Channel) string {
 	how := "by email"
-	switch channel { //nolint:exhaustive // only the ways a question is sent
-	case watchtowerplay.ChannelDash:
+	if channel == watchtowerplay.ChannelDash {
 		how = "in Dash"
-	case watchtowerplay.ChannelText:
-		how = "by text"
 	}
 
 	return "Asked " + name + " where " + loadName(hauler, "the load") + " is " + how
