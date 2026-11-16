@@ -3,12 +3,14 @@ package kernel
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/importsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/databasesize"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/managedfeaturesrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/managedusagerepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/recordvisibilityrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/settingversionrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/usstaterepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/workqueuerepository"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/datausageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/editioninfo"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/entitlementservice"
@@ -59,7 +61,12 @@ func SharedOptions() fx.Option {
 }
 
 func APIOptions() fx.Option {
-	return fx.Options()
+	return fx.Options(
+		fx.Provide(
+			databasesize.New,
+			datausageservice.New,
+		),
+	)
 }
 
 func usageProvider(

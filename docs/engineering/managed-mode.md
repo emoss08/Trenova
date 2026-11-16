@@ -303,6 +303,40 @@ Storage is billed at its highest point in the cycle. An hourly level is enough f
 moves with uploads and deletions over hours, not seconds, and the control plane takes the maximum
 of the hourly levels it received in the window. A resent hour replaces that hour's level.
 
+## What the instance's data takes
+
+`GET /managed/v1/data-usage` (bearer `managed.token`, the managed listener only, so it does not
+exist with `managed.enabled` off) answers what the whole instance's data takes, for the operator
+to report beside its own disk readings:
+
+```json
+{"measuredAt": "2026-11-16T12:00:00Z", "databaseBytes": 123, "documentsBytes": 456, "searchBytes": 789}
+```
+
+| Field | What it is | Source |
+|---|---|---|
+| `databaseBytes` | the instance's database | `pg_database_size(current_database())` (`kernel/adapters/postgres/databasesize`, system scope, listed in `rlslint`) |
+| `documentsBytes` | the bytes of every document stored, across all organizations | the `documents.storage_bytes` meter's own reader (`documentmeter`, `document_storage_totals`): one value serves both, so the figure and the billed level never disagree |
+| `searchBytes` | the search index | Meilisearch's `GET /stats` `databaseSize`, through the TMS's search client (`meilisearch.NewIndexSize`) |
+
+Every figure is optional: one Trenova could not measure is left out, never sent as zero, and a
+measured empty index is `0`. `searchBytes` is absent when search is not configured. Only these
+three instance totals are ever answered, never a figure per organization. `measuredAt` is when the
+oldest figure in the answer was measured, or the time of the answer when it carries none. `200`
+always, `401` for a wrong token; the operator reads a `404` as a release that does not measure.
+
+**Never measured on the request.** `kernel/app/datausageservice` answers from an in-process otter
+cache, one entry per figure, each kept 30 minutes after it was last measured (otter's write
+expiry, on the service's clock). A request starts a measuring round in the background when the
+last one began 5 minutes ago or more, and never waits for it, except the first request after the
+process starts, which waits at most 2 seconds and then answers what is known (possibly only
+`measuredAt`). A round measures every source at once, each under its own timeout (database and
+documents 10 seconds, search 5), so a slow or failing source never blanks the others: its last
+good value is kept until it expires 30 minutes after it was measured, and then the figure is
+absent. A round runs only when the operator asks (about once a minute), so a self-hosted install,
+whose handler is never mounted, measures nothing. A new figure is a `datausageports.Source` in the
+`managed_data_sources` fx group, a field in the answer and the operator's `DataUsage`.
+
 ## What the control plane must send
 
 The state (`PUT /managed/v1/state`) names each app meter the subscription sells, with:

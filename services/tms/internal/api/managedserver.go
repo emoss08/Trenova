@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/supportlogservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/datausageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedfeaturesservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
@@ -66,6 +67,8 @@ type ManagedServerParams struct {
 
 	SupportAccess *supportaccessservice.Service
 	SupportLogs   *supportlogservice.Service
+
+	DataUsage *datausageservice.Service
 }
 
 type ManagedHandlerParams struct {
@@ -81,6 +84,8 @@ type ManagedHandlerParams struct {
 	SupportAccess ManagedSupportAccess
 	SupportLogs   ManagedSupportLogs
 	LogPulls      ManagedLogPulls
+
+	DataUsage ManagedDataUsage
 }
 
 type managedHandler struct {
@@ -96,6 +101,8 @@ type managedHandler struct {
 	support     ManagedSupportAccess
 	supportLogs ManagedSupportLogs
 	logPulls    ManagedLogPulls
+
+	dataUsage ManagedDataUsage
 }
 
 type managedInvite struct {
@@ -193,6 +200,8 @@ func NewManagedHandler(p *ManagedHandlerParams) http.Handler {
 		support:     p.SupportAccess,
 		supportLogs: p.SupportLogs,
 		logPulls:    p.LogPulls,
+
+		dataUsage: p.DataUsage,
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET "+managedReadingsPath, h.readings)
@@ -203,6 +212,7 @@ func NewManagedHandler(p *ManagedHandlerParams) http.Handler {
 	h.routeSystemEmail(mux)
 	h.routeSupportAccess(mux)
 	h.routeSupportLogs(mux)
+	h.routeDataUsage(mux)
 	return h.authenticate(mux)
 }
 
@@ -227,6 +237,8 @@ func StartManagedServer(p ManagedServerParams) {
 				SupportAccess: p.SupportAccess,
 				SupportLogs:   p.SupportLogs,
 				LogPulls:      p.SupportAccess,
+
+				DataUsage: p.DataUsage,
 			}),
 			managedTimeout,
 			"",
