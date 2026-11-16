@@ -2,11 +2,14 @@ package reconcile
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log/slog"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -184,6 +187,7 @@ type Loop struct {
 	desired      *controlplane.Desired
 	applied      int64
 	last         instanceapi.StatusReport
+	lastBackups  string
 	lastSent     time.Time
 	reported     bool
 	heartbeat    atomic.Int64
@@ -412,6 +416,9 @@ func (l *Loop) Tick(ctx context.Context) {
 			return
 		}
 		l.last, l.lastSent, l.reported = report, l.now(), true
+		if b := report.Backup; b != nil && b.Backups != nil {
+			l.lastBackups = backupsDigest(*b.Backups)
+		}
 	}
 	l.relayUsage(ctx, report.Ready)
 	l.relayLogRequests(ctx, report.Ready)
@@ -896,6 +903,39 @@ func (l *Loop) backupReport(ctx context.Context, report *instanceapi.StatusRepor
 	if res.Final != nil && applied {
 		report.FinalBackup = res.Final
 	}
+	if res.Health != nil && res.Backups != nil && backupsDigest(*res.Backups) != l.lastBackups {
+		h := *res.Health
+		list := slices.Clone(*res.Backups)
+		h.Backups = &list
+		report.Backup = &h
+	}
+}
+
+func backupsDigest(list []instanceapi.BackupEntry) string {
+	sum := sha256.New()
+	for _, e := range list {
+		origin := ""
+		if e.Origin != nil {
+			origin = string(*e.Origin)
+		}
+		size := ""
+		if e.SizeBytes != nil {
+			size = strconv.FormatInt(*e.SizeBytes, 10)
+		}
+		fields := []string{
+			e.Id, string(e.Phase), e.StartedAt.UTC().Format(time.RFC3339Nano), stampNano(e.CompletedAt),
+			origin, str(e.RequestId), size, str(e.Message),
+		}
+		sum.Write([]byte(strings.Join(fields, "\x00") + "\n"))
+	}
+	return hex.EncodeToString(sum.Sum(nil))
+}
+
+func stampNano(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.UTC().Format(time.RFC3339Nano)
 }
 
 func backupSummary(r instanceapi.StatusReport) string {
@@ -934,7 +974,8 @@ func (l *Loop) notReady(report instanceapi.StatusReport, msg string) instanceapi
 }
 
 func (l *Loop) shouldReport(r instanceapi.StatusReport) bool {
-	if !l.reported || l.now().Sub(l.lastSent) >= l.report {
+	if !l.reported || l.now().Sub(l.lastSent) >= l.report ||
+		(r.Backup != nil && r.Backup.Backups != nil) {
 		return true
 	}
 	return r.Ready != l.last.Ready ||

@@ -610,12 +610,15 @@ its own name. The plugin and cert-manager are installed once per VM by cloud-ini
 creates two kinds of base backup itself, as CloudNativePG `Backup`s with `method: plugin`:
 
 - **before an update:** the spec's `backup.id`, as `trenova-backup-<last 16 hex digits>`, once the
-  revision carrying it is applied and the instance is active. It is reported on `backup.request`
-  (`running`, `completed` with its ID and time, or `failed` with the reason); the control plane
-  writes the new version only after `completed`.
-- **the final backup:** once a `decommissioned` revision is applied, `trenova-final-r<revision>`.
-  Completed, it is reported as `finalBackup` with that revision as `appliedRevision`; failed, it
-  is deleted ten minutes after it stopped and taken again, and the health message says so.
+  revision carrying it is applied and the instance is active, annotated
+  `trenova.app/backup-origin: requested` and `trenova.app/backup-request-id: <id>` (and labelled
+  `trenova.app/backup-request`). It is reported on `backup.request` (`running`, `completed` with
+  its ID and time, or `failed` with the reason); the control plane writes the new version only
+  after `completed`.
+- **the final backup:** once a `decommissioned` revision is applied, `trenova-final-r<revision>`,
+  annotated `trenova.app/backup-origin: final`. Completed, it is reported as `finalBackup` with
+  that revision as `appliedRevision`; failed, it is deleted ten minutes after it stopped and taken
+  again, and the health message says so.
 
 **Health**, on every report while the instance has storage (`backup`): `walArchiving` from the
 cluster's `ContinuousArchiving` condition (`healthy`, `failing`, `unknown`), `lastArchivedWalAt`
@@ -623,6 +626,36 @@ from the cluster's status, `lastBaseBackupAt` and `firstRecoverabilityPoint` fro
 store's recovery window for the cluster, `lastBaseBackupId` from the newest completed `Backup`,
 and a `message` when archiving or the last backup failed. A change in any of them sends a report at
 once.
+
+**The backup list** (`backup.backups`, `internal/backup/list.go`) is every base backup of the
+cluster the instance runs on, from the same single `Backup` list call that `lastBaseBackupId`
+comes from (no call per backup):
+
+| Field | From |
+|---|---|
+| `id` | `status.backupId`, or the object's name before the plugin has one |
+| `phase` | `completed` and `failed` as CloudNativePG says; anything else (`pending`, `started`, `running`, `finalizing`, `walArchivingFailing`, none yet) is `running` |
+| `startedAt` | `status.startedAt`, or the object's creation time before it has one |
+| `completedAt` | `status.stoppedAt` of a completed or failed backup |
+| `origin` | `requested` or `final` from the operator's `trenova.app/backup-origin` annotation (with `requestId` from `trenova.app/backup-request-id`); `scheduled` when a `ScheduledBackup` owns it (the chart's schedule sets `backupOwnerReference: self`); left out for one made by hand |
+| `message` | `status.error` of a failed backup, on one line |
+| `sizeBytes` | never: the plugin's `Backup` status carries no size |
+
+It keeps completed backups, running ones, and failed ones that stopped in the last 7 days, newest
+first by `startedAt`, at most 100. CloudNativePG does not delete a `Backup` object when the
+plugin's retention (`retentionPolicy: 30d`) removes its files from the bucket, so the object alone
+does not say whether it can still be restored from: a completed backup that stopped more than a
+minute before the object store's `firstRecoverabilityPoint` is left out, since retention has
+removed it (the minute absorbs the object's and the catalog's clocks rounding differently). With
+no recovery window yet, every completed backup is kept.
+
+The list is not on every report. The loop keeps the SHA-256 of the last list a report carried
+that the control plane answered 2xx to (`Loop.lastBackups`, beside `last`, the report it
+accepted), over each entry's fields in order; a list whose digest differs, which includes the
+first report after the operator starts, is put on the report and sends it at once. A refused or
+failed report records nothing, so the list goes again on the next tick. A failed list read leaves
+`backups` out, changes nothing else in the report (the health fields are read as before), and is
+logged at most once a minute; the control plane keeps the list it has.
 
 **Restores.** A spec with `restore` renders a second cluster, `<release>-postgres-<generation>`,
 bootstrapped by recovery from the source generation's backups to the target time, with small
@@ -921,7 +954,12 @@ which it keeps on uninstall, is created by its chart.
   or one that never becomes ready rolled back and not tried again, a pinned HelmChart reported),
   backups (health from the cluster and object store, the
   pre-update and final backups taken once and reported, a restore reported and only its switch
-  stopping the old database), the chart with storage (MinIO gone, the object store and schedule
+  stopping the old database; the backup list's phases and origins, the operator's own backups
+  listed with theirs, the 100 newest, a backup past the first recoverability point and a failure
+  older than 7 days left out, a failed list read leaving the health as it was; against the fake
+  control plane, the list sent on the first report, not again while unchanged, at once when a
+  backup completes or is removed, again after a refused report, and left out when the read
+  fails), the chart with storage (MinIO gone, the object store and schedule
   rendered, the backups Secret named by nothing else, a restore beside the live database and after
   its switch), log keeping (`logs_chart_test.go`: no ClusterRole, ClusterRoleBinding, DaemonSet
   or hostPath anywhere, Alloy's Role exactly pods and their logs, Loki's 168-hour retention, both
@@ -941,8 +979,8 @@ which it keeps on uninstall, is created by its chart.
 
 ## Not in the operator yet
 
-- **Final backup size.** The plugin's `Backup` status carries no size, so `finalBackup.sizeBytes`
-  is 0.
+- **Backup sizes.** The plugin's `Backup` status carries no size, so `finalBackup.sizeBytes` and
+  each listed backup's `sizeBytes` are left out.
 - **Removing a database a restore replaced.** It stays hibernated, with its volume, until the
   instance is torn down.
 - **CI.** `.github/workflows/helm.yml` renders no shape with `backup.enabled` and has no schema for

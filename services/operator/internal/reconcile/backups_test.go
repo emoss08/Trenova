@@ -88,6 +88,13 @@ type backupWorld struct {
 	releases *countingReleases
 	storage  *fakeStorage
 	backups  *fakeBackups
+	now      time.Time
+}
+
+func (w *backupWorld) set(result backup.Result) {
+	w.backups.mu.Lock()
+	defer w.backups.mu.Unlock()
+	w.backups.result = result
 }
 
 func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
@@ -121,6 +128,7 @@ func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
 		health:  &fakeHealth{},
 		storage: &fakeStorage{},
 		backups: &fakeBackups{},
+		now:     time.Now(),
 		releases: &countingReleases{Releaser: release.NewReleaser(release.ReleaserParams{
 			Config: &action.Configuration{
 				Releases:     storage.Init(driver.NewMemory()),
@@ -164,6 +172,7 @@ func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
 		Base:      map[string]any{"clamav": map[string]any{"enabled": true}},
 		Namespace: "trenova-system",
 		Logger:    logger,
+		Now:       func() time.Time { return w.now },
 		Poll:      15 * time.Second,
 		Report:    time.Minute,
 	})
@@ -242,4 +251,112 @@ func TestNothingIsAppliedWithoutTheInstancesStorage(t *testing.T) {
 	r := w.cp.Reports()[len(w.cp.Reports())-1]
 	require.False(t, r.Ready)
 	require.Contains(t, *r.Message, "nothing is applied without the instance's storage")
+}
+
+func listResult(list ...instanceapi.BackupEntry) backup.Result {
+	if list == nil {
+		list = []instanceapi.BackupEntry{}
+	}
+	return backup.Result{
+		Health:  &instanceapi.BackupHealth{WalArchiving: instanceapi.BackupHealthWalArchiving("healthy")},
+		Backups: &list,
+	}
+}
+
+func dailyBackup(phase instanceapi.BackupEntryPhase, started time.Time) instanceapi.BackupEntry {
+	e := instanceapi.BackupEntry{
+		Id: "20261114T030000", Phase: phase, StartedAt: started.UTC().Truncate(time.Second),
+		Origin: new(instanceapi.Scheduled),
+	}
+	if phase == instanceapi.BackupEntryPhaseCompleted {
+		done := e.StartedAt.Add(4 * time.Minute)
+		e.CompletedAt = &done
+	}
+	return e
+}
+
+func TestTheBackupListIsSentFirstAndThenOnlyWhenItChanges(t *testing.T) {
+	t.Parallel()
+	w := newBackupWorld(t, controlplanetest.Spec(uuid.New()))
+	started := w.now.Add(-time.Hour)
+	w.set(listResult(dailyBackup(instanceapi.BackupEntryPhaseRunning, started)))
+	w.health.set(true)
+
+	w.loop.Tick(t.Context())
+	held, lists := w.cp.Backups()
+	require.Equal(t, 1, lists)
+	require.Equal(t, []instanceapi.BackupEntry{dailyBackup(instanceapi.BackupEntryPhaseRunning, started)}, held)
+
+	// Unchanged: the minute's report goes out without the list.
+	w.now = w.now.Add(2 * time.Minute)
+	reports := len(w.cp.Reports())
+	w.loop.Tick(t.Context())
+	require.Len(t, w.cp.Reports(), reports+1)
+	r := w.cp.Reports()[len(w.cp.Reports())-1]
+	require.NotNil(t, r.Backup)
+	require.Nil(t, r.Backup.Backups)
+	_, lists = w.cp.Backups()
+	require.Equal(t, 1, lists)
+
+	// It completes: sent at once, with no minute passing.
+	w.set(listResult(dailyBackup(instanceapi.BackupEntryPhaseCompleted, started)))
+	w.loop.Tick(t.Context())
+	held, lists = w.cp.Backups()
+	require.Equal(t, 2, lists)
+	require.Equal(t, instanceapi.BackupEntryPhaseCompleted, held[0].Phase)
+
+	// Retention removes it: the empty list is sent.
+	w.set(listResult())
+	w.loop.Tick(t.Context())
+	held, lists = w.cp.Backups()
+	require.Equal(t, 3, lists)
+	require.Empty(t, held)
+}
+
+func TestABackupListOnARefusedReportIsSentAgain(t *testing.T) {
+	t.Parallel()
+	w := newBackupWorld(t, controlplanetest.Spec(uuid.New()))
+	w.set(listResult(dailyBackup(instanceapi.BackupEntryPhaseCompleted, w.now.Add(-time.Hour))))
+	w.health.set(true)
+	w.cp.FailStatusNext(1)
+
+	w.loop.Tick(t.Context())
+	_, lists := w.cp.Backups()
+	require.Equal(t, 0, lists)
+
+	w.loop.Tick(t.Context())
+	held, lists := w.cp.Backups()
+	require.Equal(t, 1, lists)
+	require.Len(t, held, 1)
+}
+
+func TestAFailedBackupListReadLeavesTheRestOfTheReport(t *testing.T) {
+	t.Parallel()
+	w := newBackupWorld(t, controlplanetest.Spec(uuid.New()))
+	list := listResult(dailyBackup(instanceapi.BackupEntryPhaseCompleted, w.now.Add(-time.Hour)))
+	w.set(list)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	last := w.now.Add(-time.Hour).UTC().Truncate(time.Second)
+	w.set(backup.Result{Health: &instanceapi.BackupHealth{
+		WalArchiving: instanceapi.BackupHealthWalArchiving("healthy"), LastBaseBackupAt: &last,
+	}})
+	w.now = w.now.Add(2 * time.Minute)
+	w.loop.Tick(t.Context())
+	r := w.cp.Reports()[len(w.cp.Reports())-1]
+	require.True(t, r.Ready)
+	require.NotNil(t, r.Backup)
+	require.Equal(t, instanceapi.BackupHealthWalArchiving("healthy"), r.Backup.WalArchiving)
+	require.Equal(t, last, *r.Backup.LastBaseBackupAt)
+	require.Nil(t, r.Backup.Backups)
+	_, lists := w.cp.Backups()
+	require.Equal(t, 1, lists)
+
+	// Read again and unchanged: the control plane already has it.
+	w.set(list)
+	w.now = w.now.Add(2 * time.Minute)
+	w.loop.Tick(t.Context())
+	_, lists = w.cp.Backups()
+	require.Equal(t, 1, lists)
 }

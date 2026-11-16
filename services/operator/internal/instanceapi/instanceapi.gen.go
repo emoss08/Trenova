@@ -18,6 +18,48 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for BackupEntryOrigin.
+const (
+	Final     BackupEntryOrigin = "final"
+	Requested BackupEntryOrigin = "requested"
+	Scheduled BackupEntryOrigin = "scheduled"
+)
+
+// Valid indicates whether the value is a known member of the BackupEntryOrigin enum.
+func (e BackupEntryOrigin) Valid() bool {
+	switch e {
+	case Final:
+		return true
+	case Requested:
+		return true
+	case Scheduled:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BackupEntryPhase.
+const (
+	BackupEntryPhaseCompleted BackupEntryPhase = "completed"
+	BackupEntryPhaseFailed    BackupEntryPhase = "failed"
+	BackupEntryPhaseRunning   BackupEntryPhase = "running"
+)
+
+// Valid indicates whether the value is a known member of the BackupEntryPhase enum.
+func (e BackupEntryPhase) Valid() bool {
+	switch e {
+	case BackupEntryPhaseCompleted:
+		return true
+	case BackupEntryPhaseFailed:
+		return true
+	case BackupEntryPhaseRunning:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for BackupHealthWalArchiving.
 const (
 	Failing BackupHealthWalArchiving = "failing"
@@ -448,10 +490,48 @@ type AdministratorStatus struct {
 	SetUp bool `json:"setUp"`
 }
 
+// BackupEntry One base backup of the instance's database.
+type BackupEntry struct {
+	// CompletedAt When it finished; absent while it runs.
+	CompletedAt *time.Time `json:"completedAt,omitempty"`
+
+	// Id The backup's identifier in the instance's backup store.
+	Id string `json:"id"`
+
+	// Message Why it failed, in one line.
+	Message *string `json:"message,omitempty"`
+
+	// Origin Why it was taken: on the daily schedule, because a spec's `backup` asked for it, or as
+	// the final backup of a decommissioned instance.
+	Origin *BackupEntryOrigin `json:"origin,omitempty"`
+	Phase  BackupEntryPhase   `json:"phase"`
+
+	// RequestId The `id` of the spec's `backup` that asked for it, for a requested backup.
+	RequestId *string `json:"requestId,omitempty"`
+
+	// SizeBytes The backup's size, only when the operator knows it; never sent as zero.
+	SizeBytes *int64    `json:"sizeBytes,omitempty"`
+	StartedAt time.Time `json:"startedAt"`
+}
+
+// BackupEntryOrigin Why it was taken: on the daily schedule, because a spec's `backup` asked for it, or as
+// the final backup of a decommissioned instance.
+type BackupEntryOrigin string
+
+// BackupEntryPhase defines model for BackupEntry.Phase.
+type BackupEntryPhase string
+
 // BackupHealth The instance's backups as the operator reads them from the cluster: the last base backup,
 // how far back the backups reach, and whether WAL archiving works. Report it with every status
 // report once the instance has backup storage; left out, staff see the last one reported.
 type BackupHealth struct {
+	// Backups The base backups the cluster knows of, newest first: the ones its retention still keeps,
+	// and any that is running or failed in the last 7 days. The operator sends the list with
+	// the first status report after it starts and whenever the list differs from the last one
+	// the control plane accepted; left out, the control plane keeps the list it has. A backup
+	// that is no longer in a newer list has been removed by retention.
+	Backups *[]BackupEntry `json:"backups,omitempty"`
+
 	// FirstRecoverabilityPoint The earliest time the database can be restored to.
 	FirstRecoverabilityPoint *time.Time `json:"firstRecoverabilityPoint,omitempty"`
 

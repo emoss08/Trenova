@@ -53,6 +53,8 @@ type Server struct {
 	support     *instanceapi.SpecSupport
 	grants      []instanceapi.SupportGrant
 	grantsHeld  bool
+	backups     []instanceapi.BackupEntry
+	backupLists int
 	reports     []instanceapi.StatusReport
 	usage       []instanceapi.UsageReport
 	readings    map[usageKey]int64
@@ -321,6 +323,12 @@ func (s *Server) SupportGrants() ([]instanceapi.SupportGrant, bool) {
 	return append([]instanceapi.SupportGrant(nil), s.grants...), s.grantsHeld
 }
 
+func (s *Server) Backups() ([]instanceapi.BackupEntry, int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]instanceapi.BackupEntry(nil), s.backups...), s.backupLists
+}
+
 func supportDigest(support *instanceapi.SpecSupport) string {
 	if support == nil {
 		return "0"
@@ -535,6 +543,10 @@ func (s *Server) putStatus(w http.ResponseWriter, r *http.Request) {
 	if report.SupportGrants != nil {
 		s.grants = append([]instanceapi.SupportGrant{}, *report.SupportGrants...)
 		s.grantsHeld = true
+	}
+	if report.Backup != nil && report.Backup.Backups != nil {
+		s.backups = append([]instanceapi.BackupEntry{}, *report.Backup.Backups...)
+		s.backupLists++
 	}
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
