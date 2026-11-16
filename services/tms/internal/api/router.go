@@ -545,7 +545,7 @@ func (r *Router) setupCors() {
 		corsConfig.AllowCredentials = false
 	}
 
-	r.s.router.Use(cors.New(corsConfig))
+	r.s.router.Use(middleware.ExceptSupportEntry(cors.New(corsConfig)))
 	r.s.router.Use(middleware.NewVaryOriginMiddleware())
 }
 

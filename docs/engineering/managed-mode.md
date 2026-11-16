@@ -736,9 +736,13 @@ put in a URL: a query string reaches logs and history, and the route refuses one
 `POST /api/v1/support/enter` (the edge passes only `/api` and `/graphql` to the API, so the route
 lives there): `application/x-www-form-urlencoded`, exactly one field `assertion`, body at most
 8 KiB, no query string. It is limited to 10 attempts a minute per address and 60 a minute for the
-instance, and a limiter that cannot answer refuses. The browser provenance guard lets this one
-path through (`middleware.SupportEntryPath`): the post is cross-site by design and carries no
-cookie the guard protects.
+instance, and a limiter that cannot answer refuses. The browser provenance guard and the
+cross-origin check both let this one post through (`middleware.SupportEntryPath`,
+`middleware.ExceptSupportEntry`): it is cross-site by design, the browser sends it with the
+admin's origin or `null`, and it carries no cookie either check protects. Any other method on
+that path, and every other path, is still checked. A new early middleware that judges a
+request by its origin must make the same exception, or every entry is refused with a bare 403
+before the handler reads the assertion (found live on 2026-11-16).
 
 - Accepted: `200`, the session cookie set as for any sign-in, and a page that moves the browser to
   `/` itself, so the strict same-site cookie rides on a same-site navigation.
