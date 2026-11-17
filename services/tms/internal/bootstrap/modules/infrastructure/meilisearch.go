@@ -19,4 +19,5 @@ var MeilisearchClientModule = fx.Module("meilisearch-client",
 			fx.ResultTags(datausageports.SourceGroup),
 		),
 	),
+	fx.Invoke(meilisearch.AwaitReady),
 )

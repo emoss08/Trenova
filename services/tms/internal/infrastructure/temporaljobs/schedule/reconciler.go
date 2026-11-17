@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
-	"github.com/emoss08/trenova/shared/intutils"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/converter"
@@ -291,51 +289,6 @@ func (r *Reconciler) deleteSchedule(ctx context.Context, id string) error {
 		return err
 	}
 	return nil
-}
-
-func (r *Reconciler) ReconcileWithRetry(
-	ctx context.Context,
-	maxRetries int,
-) (*ReconcileResult, error) {
-	var result *ReconcileResult
-	var lastErr error
-
-	for i := 0; i <= maxRetries; i++ {
-		result, lastErr = r.Reconcile(ctx)
-		if lastErr == nil && !result.HasErrors() {
-			return result, nil
-		}
-
-		if i < maxRetries {
-			backoff := min(
-				time.Second*time.Duration(1<<intutils.SafeShiftAmount(i, 5)),
-				30*time.Second,
-			)
-
-			r.logger.Warn("reconciliation had errors, retrying",
-				zap.Int("attempt", i+1),
-				zap.Int("maxRetries", maxRetries),
-				zap.Duration("backoff", backoff),
-				zap.Error(lastErr),
-			)
-
-			select {
-			case <-ctx.Done():
-				return result, ctx.Err()
-			case <-time.After(backoff):
-			}
-		}
-	}
-
-	if lastErr != nil {
-		return result, lastErr
-	}
-
-	if result.HasErrors() {
-		return result, errors.Join(result.Errors...)
-	}
-
-	return result, nil
 }
 
 // ownedByRegistry reports whether the registry created a schedule and may

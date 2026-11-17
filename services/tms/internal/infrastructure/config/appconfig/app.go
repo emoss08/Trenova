@@ -1,6 +1,9 @@
 package appconfig
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 const (
 	EnvDevelopment = "development"
@@ -12,19 +15,21 @@ const (
 var ValidEnvs = []string{EnvDevelopment, EnvStaging, EnvProduction, EnvTest}
 
 type Config struct {
-	Name               string `mapstructure:"name"               validate:"required,min=1,max=100"`
-	Env                string `mapstructure:"env"                validate:"required,oneof=development staging production test"`
-	Debug              bool   `mapstructure:"debug"`
-	Version            string `mapstructure:"version"            validate:"required"`
-	ProblemTypeBaseURI string `mapstructure:"problemTypeBaseUri"`
-	WebBaseURL         string `mapstructure:"webBaseUrl"         validate:"omitempty,url"`
+	Name               string        `mapstructure:"name"               validate:"required,min=1,max=100"`
+	Env                string        `mapstructure:"env"                validate:"required,oneof=development staging production test"`
+	Debug              bool          `mapstructure:"debug"`
+	Version            string        `mapstructure:"version"            validate:"required"`
+	ProblemTypeBaseURI string        `mapstructure:"problemTypeBaseUri"`
+	WebBaseURL         string        `mapstructure:"webBaseUrl"         validate:"omitempty,url"`
+	StartupWait        time.Duration `mapstructure:"startupWait"        validate:"min=0"`
 }
 
 func Defaults(env string) map[string]any {
 	return map[string]any{
-		"env":     env,
-		"debug":   false,
-		"version": "0.0.0",
+		"env":         env,
+		"debug":       false,
+		"version":     "0.0.0",
+		"startupWait": "5m",
 	}
 }
 

@@ -47,6 +47,7 @@ var RedisRepositoriesModule = fx.Module("redis-repositories",
 
 var RedisModule = fx.Module("redis",
 	fx.Provide(redis.NewConnection),
+	fx.Invoke(redis.AwaitReady),
 )
 
 var RateLimitModule = fx.Module("ratelimit",

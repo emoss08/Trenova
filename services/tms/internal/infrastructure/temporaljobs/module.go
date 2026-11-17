@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/health"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/interceptors"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/pollwatch"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"go.temporal.io/sdk/client"
@@ -26,6 +27,7 @@ type WorkerManagerParams struct {
 	Metrics        *metrics.Registry
 	Registries     []registry.WorkerRegistry `group:"worker_registries"`
 	QueueFilter    *registry.QueueFilter
+	Polls          *pollwatch.Watch
 }
 
 func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
@@ -40,6 +42,7 @@ func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
 	}))
 
 	queueFilter := p.QueueFilter
+	queues := make([]string, 0, len(p.Registries))
 
 	for _, reg := range p.Registries {
 		if !queueFilter.Allows(reg.GetTaskQueue()) {
@@ -52,7 +55,10 @@ func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
 		if err := manager.Register(reg); err != nil {
 			return nil, fmt.Errorf("register worker %s: %w", reg.GetName(), err)
 		}
+		queues = append(queues, reg.GetTaskQueue())
 	}
+
+	bindPollProbe(p.Polls, p.Client, queues)
 
 	p.LC.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
@@ -71,6 +77,7 @@ func NewHealthChecker(manager *registry.WorkerManager, logger *zap.Logger) *heal
 }
 
 var Module = fx.Module("temporaljobs",
+	fx.Provide(pollwatch.New),
 	fx.Provide(NewSDKLogger),
 	fx.Provide(NewQueueFilter),
 	fx.Provide(NewTemporalClient),
@@ -79,10 +86,12 @@ var Module = fx.Module("temporaljobs",
 )
 
 var WorkerModule = fx.Module("temporal-workers",
+	fx.Invoke(AwaitEngine),
 	fx.Invoke(func(_ *registry.WorkerManager, _ *schedule.Scheduler) {}),
 )
 
 var UnscheduledWorkerModule = fx.Module("temporal-workers-unscheduled",
+	fx.Invoke(AwaitEngine),
 	fx.Invoke(func(_ *registry.WorkerManager) {}),
 )
 

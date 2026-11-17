@@ -3,9 +3,11 @@ package schedule
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"time"
 
+	"github.com/cenkalti/backoff/v5"
 	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
@@ -13,9 +15,15 @@ import (
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"golang.org/x/time/rate"
 )
 
-const featureCheckInterval = time.Minute
+const (
+	featureCheckInterval = time.Minute
+	retryInitialInterval = time.Second
+	retryMaxInterval     = time.Minute
+	retryReportEvery     = time.Minute
+)
 
 type SchedulerParams struct {
 	fx.In
@@ -67,30 +75,102 @@ func NewScheduler(p SchedulerParams) *Scheduler {
 	return s
 }
 
-func (s *Scheduler) Start(ctx context.Context) error {
+func (s *Scheduler) Start(_ context.Context) error {
 	if s.registry.ProviderCount() == 0 {
 		s.logger.Info("no schedule providers registered, skipping reconciliation")
 		return nil
 	}
 
+	if err := s.registry.CollectSchedules(); err != nil {
+		return fmt.Errorf("collect the declared schedules: %w", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cancel = cancel
+	s.done = make(chan struct{})
+
+	go s.run(ctx)
+
+	return nil
+}
+
+func (s *Scheduler) run(ctx context.Context) {
+	defer close(s.done)
+
+	applied, ok := s.reconcileUntilDone(ctx)
+	if !ok {
+		return
+	}
+
+	s.runFeatureChecks(ctx, applied)
+}
+
+func (s *Scheduler) reconcileUntilDone(ctx context.Context) ([]platformcatalog.FeatureKey, bool) {
 	s.logger.Info("starting schedule reconciliation",
 		zap.Int("providers", s.registry.ProviderCount()),
 	)
 
-	result, err := s.reconciler.ReconcileWithRetry(ctx, 3)
+	started := time.Now()
+	attempts := 0
+	failing := rate.Sometimes{Interval: retryReportEvery}
+
+	result, err := backoff.Retry(
+		ctx,
+		func() (*ReconcileResult, error) {
+			attempts++
+			return s.reconcileOnce(ctx)
+		},
+		backoff.WithBackOff(s.retryBackOff()),
+		backoff.WithMaxElapsedTime(0),
+		backoff.WithNotify(func(err error, next time.Duration) {
+			failing.Do(func() {
+				s.logger.Warn("schedules are not reconciled yet; retrying until Temporal answers",
+					zap.Int("attempts", attempts),
+					zap.Duration("retryIn", next.Round(time.Second)),
+					zap.Error(err),
+				)
+			})
+		}),
+	)
 	if err != nil {
-		s.logger.Error("schedule reconciliation failed", zap.Error(err))
-		return err
+		return nil, false
 	}
 
 	s.logger.Info("schedule reconciliation complete",
 		zap.String("summary", result.Summary()),
 		zap.Strings("withheldFeatures", featureStrings(result.Withheld)),
+		zap.Int("attempts", attempts),
+		zap.Duration("took", time.Since(started).Round(100*time.Millisecond)),
 	)
 
-	s.watchFeatures(result.Withheld)
+	return result.Withheld, true
+}
 
-	return nil
+func (s *Scheduler) reconcileOnce(ctx context.Context) (*ReconcileResult, error) {
+	var (
+		result *ReconcileResult
+		err    error
+	)
+	recovered := panics.Try(func() { result, err = s.reconciler.Reconcile(ctx) })
+	if recovered != nil {
+		return nil, fmt.Errorf("schedule reconciliation panicked: %w", recovered.AsError())
+	}
+	if err != nil {
+		return nil, err
+	}
+	if result.HasErrors() {
+		return nil, errors.Join(result.Errors...)
+	}
+	return result, nil
+}
+
+func (s *Scheduler) retryBackOff() backoff.BackOff {
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = retryInitialInterval
+	b.MaxInterval = retryMaxInterval
+	b.Multiplier = 2
+	b.RandomizationFactor = 0.2
+	return b
 }
 
 func (s *Scheduler) Stop(ctx context.Context) error {
@@ -124,17 +204,7 @@ func (s *Scheduler) ForceReconcile(ctx context.Context) (*ReconcileResult, error
 	return s.reconciler.Reconcile(ctx)
 }
 
-func (s *Scheduler) watchFeatures(applied []platformcatalog.FeatureKey) {
-	ctx, cancel := context.WithCancel(context.Background())
-	s.cancel = cancel
-	s.done = make(chan struct{})
-
-	go s.runFeatureChecks(ctx, applied)
-}
-
 func (s *Scheduler) runFeatureChecks(ctx context.Context, applied []platformcatalog.FeatureKey) {
-	defer close(s.done)
-
 	ticker := time.NewTicker(s.interval)
 	defer ticker.Stop()
 
