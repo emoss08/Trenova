@@ -415,6 +415,9 @@ func (s *Sampler) logs(summary *Summary, pods []corev1.Pod) *int64 {
 			if v.PVCRef == nil || v.UsedBytes == nil || seen[v.PVCRef.Name] {
 				continue
 			}
+			if sharesNodeFilesystem(summary.Node.FS, v) {
+				continue
+			}
 			seen[v.PVCRef.Name] = true
 			sum += clampBytes(*v.UsedBytes)
 			found = true
@@ -424,6 +427,11 @@ func (s *Sampler) logs(summary *Summary, pods []corev1.Pod) *int64 {
 		return nil
 	}
 	return &sum
+}
+
+func sharesNodeFilesystem(node *FSStats, v SummaryVolume) bool {
+	return node != nil && node.CapacityBytes != nil && v.CapacityBytes != nil &&
+		*v.CapacityBytes == *node.CapacityBytes
 }
 
 func byteCount(n *uint64, least int64) *int64 {

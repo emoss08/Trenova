@@ -41,9 +41,10 @@ type PodRef struct {
 }
 
 type SummaryVolume struct {
-	Name      string  `json:"name"`
-	PVCRef    *PodRef `json:"pvcRef,omitempty"`
-	UsedBytes *uint64 `json:"usedBytes,omitempty"`
+	Name          string  `json:"name"`
+	PVCRef        *PodRef `json:"pvcRef,omitempty"`
+	CapacityBytes *uint64 `json:"capacityBytes,omitempty"`
+	UsedBytes     *uint64 `json:"usedBytes,omitempty"`
 }
 
 type Summaries interface {

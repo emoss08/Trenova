@@ -178,9 +178,10 @@ func machineNode() *corev1.Node {
 }
 
 type fakeSummaries struct {
-	mu    sync.Mutex
-	err   error
-	asked []string
+	mu         sync.Mutex
+	err        error
+	asked      []string
+	sharedDisk bool
 }
 
 func (f *fakeSummaries) Summary(_ context.Context, kubelet string) (telemetry.Summary, error) {
@@ -191,6 +192,13 @@ func (f *fakeSummaries) Summary(_ context.Context, kubelet string) (telemetry.Su
 		return telemetry.Summary{}, f.err
 	}
 	used := func(n int64) *uint64 { v := uint64(n); return &v }
+	logsVolume := telemetry.SummaryVolume{
+		Name: "storage", PVCRef: &telemetry.PodRef{Name: "trenova-loki", Namespace: ns},
+		CapacityBytes: used(20 * gib), UsedBytes: used(2 * gib),
+	}
+	if f.sharedDisk {
+		logsVolume.CapacityBytes, logsVolume.UsedBytes = used(100*gib), used(10*gib)
+	}
 	return telemetry.Summary{
 		Node: telemetry.SummaryNode{FS: &telemetry.FSStats{
 			CapacityBytes: used(100 * gib), UsedBytes: used(10 * gib),
@@ -210,10 +218,8 @@ func (f *fakeSummaries) Summary(_ context.Context, kubelet string) (telemetry.Su
 				},
 			},
 			{
-				PodRef: telemetry.PodRef{Name: "trenova-loki-0", Namespace: ns},
-				Volumes: []telemetry.SummaryVolume{
-					{Name: "storage", PVCRef: &telemetry.PodRef{Name: "trenova-loki", Namespace: ns}, UsedBytes: used(2 * gib)},
-				},
+				PodRef:  telemetry.PodRef{Name: "trenova-loki-0", Namespace: ns},
+				Volumes: []telemetry.SummaryVolume{logsVolume},
 			},
 			{
 				PodRef: telemetry.PodRef{Name: "trenova-loki-0", Namespace: "elsewhere"},
@@ -430,6 +436,19 @@ func TestTheMachineAndTheDataAreRead(t *testing.T) {
 		LogsBytes:      ptr(2 * gib),
 	}, *sample.Data, "Trenova's figures, and Loki's volume for the logs")
 	require.Equal(t, []string{kubeletAt}, w.summaries.asked)
+}
+
+func TestAVolumeOnTheNodesOwnDiskIsNotMeasuredAsLogs(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t, "", standardObjects()...)
+	w.summaries.sharedDisk = true
+
+	sample := w.sampler.Sample(t.Context(), minute, params())
+
+	require.Nil(t, sample.Data.LogsBytes,
+		"a volume that is a directory on the node's disk reports the whole disk, which is not what the logs take")
+	require.Equal(t, 10*gib, *sample.Machine.DiskBytes)
+	require.Equal(t, 5*gib, *sample.Data.DatabaseBytes)
 }
 
 func TestThePartsAreNamedAsTheStatusReportNamesThem(t *testing.T) {
