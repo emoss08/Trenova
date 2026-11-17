@@ -118,7 +118,7 @@ func (c *Checker) Parts(ctx context.Context, p CheckParams) ([]Part, error) {
 	for i := range deployments.Items {
 		d := &deployments.Items[i]
 		found = append(found, Part{
-			Component:     deployment(d),
+			Component:     Deployment(d),
 			Replicas:      wanted(d.Spec.Replicas),
 			ReadyReplicas: &d.Status.ReadyReplicas,
 			Image:         firstImage(&d.Spec.Template.Spec),
@@ -132,7 +132,7 @@ func (c *Checker) Parts(ctx context.Context, p CheckParams) ([]Part, error) {
 	for i := range sets.Items {
 		s := &sets.Items[i]
 		found = append(found, Part{
-			Component:     statefulSet(s),
+			Component:     StatefulSet(s),
 			Replicas:      wanted(s.Spec.Replicas),
 			ReadyReplicas: &s.Status.ReadyReplicas,
 			Image:         firstImage(&s.Spec.Template.Spec),
@@ -181,7 +181,7 @@ func component(m *metav1.ObjectMeta) string {
 	return m.Name
 }
 
-func deployment(d *appsv1.Deployment) Component {
+func Deployment(d *appsv1.Deployment) Component {
 	want := int32(1)
 	if d.Spec.Replicas != nil {
 		want = *d.Spec.Replicas
@@ -204,7 +204,7 @@ func deployment(d *appsv1.Deployment) Component {
 	return c
 }
 
-func statefulSet(s *appsv1.StatefulSet) Component {
+func StatefulSet(s *appsv1.StatefulSet) Component {
 	want := int32(1)
 	if s.Spec.Replicas != nil {
 		want = *s.Spec.Replicas

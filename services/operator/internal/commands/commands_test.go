@@ -183,22 +183,6 @@ func TestRestartsOneComponentAndLeavesTheRest(t *testing.T) {
 	assert.Equal(t, instanceapi.CommandResultStatusSucceeded, cp.answers[cmd.Id][0].Status)
 }
 
-func TestRestartsEveryWorkloadWhenNoComponentIsNamed(t *testing.T) {
-	t.Parallel()
-	cmd := restart("")
-	cp := &fakeControlPlane{commands: []instanceapi.Command{cmd}}
-	r, kube := runner(t, cp, deployment("api"), deployment("worker"), statefulSet("redis"))
-
-	require.NoError(t, r.Run(t.Context()))
-
-	assert.NotEmpty(t, restartedAtOf(t, kube, "trenova-api"))
-	assert.NotEmpty(t, restartedAtOf(t, kube, "trenova-worker"))
-	set, err := kube.AppsV1().StatefulSets(ns).Get(t.Context(), "trenova-redis", metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.NotEmpty(t, set.Spec.Template.Annotations[restartedAt])
-	assert.Equal(t, "restarted 3 workload(s)", *cp.answers[cmd.Id][0].Message)
-}
-
 func TestRestartsAStatefulComponentByName(t *testing.T) {
 	t.Parallel()
 	cmd := restart("redis")

@@ -56,13 +56,6 @@ spec:
         - port: {{ . }}
           protocol: TCP
         {{- end }}
-    {{- if eq $component "temporal" }}
-    # Temporal's services reach each other on the pod's own address.
-    - from:
-        - podSelector:
-            matchLabels:
-              {{- include "trenova.selectorLabels" (dict "root" $ "component" "temporal") | nindent 14 }}
-    {{- end }}
 {{- end }}
 ---
 apiVersion: networking.k8s.io/v1
@@ -267,10 +260,6 @@ spec:
       ports:
         - port: 5432
           protocol: TCP
-    - to:
-        - podSelector:
-            matchLabels:
-              {{- include "trenova.selectorLabels" (dict "root" . "component" "temporal") | nindent 14 }}
     {{- include "trenova.dnsEgress" . | nindent 4 }}
 ---
 apiVersion: networking.k8s.io/v1

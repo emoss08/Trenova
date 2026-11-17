@@ -155,6 +155,11 @@ jobs:
           for shape in default managed restore; do
             python3 -I tools/helm/check-postgres-network.py "$RUNNER_TEMP/$shape.yaml"
           done
+          # Restarting one part leaves the rest serving: the client pauses before
+          # it stops, gtc is ready only with its sinks, Temporal restarts once.
+          for shape in default everything managed cloud-edge; do
+            python3 -I tools/helm/check-restarts.py "$RUNNER_TEMP/$shape.yaml"
+          done
           # An instance is served on its domain and every alias, and links use
           # the primary hostname; without aliases, everything stays on domain.
           python3 -I tools/helm/check-aliases.py "$RUNNER_TEMP/aliases.yaml" trenova.example.com tms.example.org tms.example.org

@@ -82,10 +82,12 @@ spec:
               value: /etc/temporal/dynamicconfig/dynamic_config.yaml
             - name: BIND_ON_IP
               value: 0.0.0.0
+            # One process runs every Temporal service, so they reach each other
+            # on loopback. The address is the same in every pod, so the
+            # membership rows a restarted pod finds name the pod itself, not a
+            # gone pod's address it would wait 30 seconds to join and crash on.
             - name: TEMPORAL_BROADCAST_ADDRESS
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
+              value: 127.0.0.1
             - name: TEMPORAL_ADDRESS
               value: 127.0.0.1:7233
             {{- include "trenova.temporalServerTlsEnv" (dict "dir" "/certs/temporal" "ca" "ca.crt" "cert" "tls.crt" "key" "tls.key" "serverName" $temporal) | nindent 12 }}
@@ -97,9 +99,12 @@ spec:
               port: grpc
             periodSeconds: 5
             failureThreshold: 120
+          # Ready once the frontend serves and matching has joined the ring:
+          # describing a task queue goes through matching, which answers
+          # "Not enough hosts" until then.
           readinessProbe:
             exec:
-              command: [sh, -c, "temporal operator cluster health --address 127.0.0.1:7233 | grep -q SERVING"]
+              command: [sh, -c, "temporal operator cluster health --address 127.0.0.1:7233 | grep -q SERVING && temporal task-queue describe --address 127.0.0.1:7233 --namespace temporal-system --task-queue trenova-readiness >/dev/null"]
             periodSeconds: 10
             timeoutSeconds: 8
           livenessProbe:
@@ -668,9 +673,13 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+          # /readiness answers 503 while the replication stream is down or a
+          # sink does not answer, so a stalled pipeline shows as not ready;
+          # /health only says the process is up, so liveness never restarts
+          # gtc for a sink it cannot reach.
           readinessProbe:
             httpGet:
-              path: /health
+              path: /readiness
               port: http
             periodSeconds: 10
             timeoutSeconds: 6

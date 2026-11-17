@@ -16,7 +16,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/emoss08/trenova/operator/internal/health"
@@ -70,11 +69,14 @@ type Runner struct {
 	chart     string
 	logger    *slog.Logger
 	now       func() time.Time
+	tierWait  time.Duration
+	tierPoll  time.Duration
 
 	mu          sync.Mutex
 	done        map[uuid.UUID]finished
 	pending     map[uuid.UUID]struct{}
 	emailEvents bool
+	rolling     bool
 }
 
 type finished struct {
@@ -123,7 +125,7 @@ func New(p *Params) (*Runner, error) {
 	}
 	return &Runner{
 		cp: p.ControlPlane, kube: p.Kube, grants: p.Grants, kept: p.Logs, namespace: p.Namespace,
-		release: p.Release, chart: p.Chart, logger: p.Logger, now: now,
+		release: p.Release, chart: p.Chart, logger: p.Logger, now: now, tierWait: tierWait, tierPoll: tierPoll,
 		done: map[uuid.UUID]finished{}, pending: map[uuid.UUID]struct{}{},
 	}, nil
 }
@@ -204,7 +206,11 @@ func (r *Runner) forget() {
 func (r *Runner) execute(ctx context.Context, cmd *instanceapi.Command) (instanceapi.CommandResult, state) {
 	switch cmd.Kind {
 	case instanceapi.Restart:
-		n, err := r.restart(ctx, deref(cmd.Component))
+		component := deref(cmd.Component)
+		if component == "" {
+			return r.restartAll(ctx, cmd.Id)
+		}
+		n, err := r.restart(ctx, component)
 		if err != nil {
 			return failed(err), answered
 		}
@@ -224,49 +230,6 @@ func (r *Runner) selector(component string) string {
 		set[labelComponent] = component
 	}
 	return labels.SelectorFromSet(set).String()
-}
-
-func (r *Runner) restart(ctx context.Context, component string) (int, error) {
-	if component == componentPostgres {
-		return 0, errors.New("the database is not restarted this way")
-	}
-	list := metav1.ListOptions{LabelSelector: r.selector(component)}
-	patch := fmt.Appendf(nil,
-		`{"spec":{"template":{"metadata":{"annotations":{%q:%q}}}}}`,
-		restartedAt, r.now().UTC().Format(time.RFC3339),
-	)
-	restarted := 0
-	deployments, err := r.kube.AppsV1().Deployments(r.namespace).List(ctx, list)
-	if err != nil {
-		return 0, fmt.Errorf("list deployments: %w", err)
-	}
-	for i := range deployments.Items {
-		name := deployments.Items[i].Name
-		if _, err := r.kube.AppsV1().Deployments(r.namespace).
-			Patch(ctx, name, types.StrategicMergePatchType, patch, metav1.PatchOptions{}); err != nil {
-			return restarted, fmt.Errorf("restart deployment %s: %w", name, err)
-		}
-		restarted++
-	}
-	sets, err := r.kube.AppsV1().StatefulSets(r.namespace).List(ctx, list)
-	if err != nil {
-		return restarted, fmt.Errorf("list statefulsets: %w", err)
-	}
-	for i := range sets.Items {
-		name := sets.Items[i].Name
-		if _, err := r.kube.AppsV1().StatefulSets(r.namespace).
-			Patch(ctx, name, types.StrategicMergePatchType, patch, metav1.PatchOptions{}); err != nil {
-			return restarted, fmt.Errorf("restart statefulset %s: %w", name, err)
-		}
-		restarted++
-	}
-	if restarted == 0 {
-		if component == "" {
-			return 0, errors.New("found no Trenova workload to restart")
-		}
-		return 0, fmt.Errorf("found no workload for the component %q", component)
-	}
-	return restarted, nil
 }
 
 type logRequest struct {

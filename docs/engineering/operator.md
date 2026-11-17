@@ -261,9 +261,12 @@ catalog plan and lifecycle through the real chart and its schema, and checks the
 
 **Room for a rollout.** A Helm upgrade applies every changed Deployment at once, and a Deployment
 that rolls starts its new pod before the old one stops: the API and the worker set
-`maxUnavailable: 0, maxSurge: 1` because they must keep serving, and the client, the imaging
-worker and Gotenberg keep Kubernetes's default (a 25% surge, one pod at one replica): the client
-serves every page, and the API calls the other two on its request paths. Kubernetes creates a
+`maxUnavailable: 0, maxSurge: 1` because they must keep serving, and so does the client, whose
+Caddy proxies `/api` and `/graphql`: its old pod also sleeps ten seconds (`preStop`) after it
+leaves the endpoints and before Caddy stops, so the ingress controller has dropped it first (without
+the pause a client restart failed API calls for about two seconds). The imaging worker and
+Gotenberg keep Kubernetes's default (a 25% surge, one pod at one replica): the API calls both on
+its request paths. Kubernetes creates a
 second pod of all five at the same time, while the old ones still hold their requests. Nothing
 else needs a second pod: Temporal, gtc, docling, the embedding service, Loki and Alloy are `Recreate` (searches fall back to keywords while the embedding service restarts; Loki owns one
 `ReadWriteOnce` volume, and two Alloys would push every line twice; docling's only caller is the
@@ -288,6 +291,18 @@ Deployment's strategy from the manifests, and checks that every request plus the
 pod fits the node's allocatable memory and CPU; it fails too when the chart's rolling Deployments and the
 `surge` flags disagree, so a workload that changes its strategy changes its flag in the same
 change.
+
+**One start per restart.** Temporal runs every service in one process and advertises `127.0.0.1`
+for its cluster membership (`TEMPORAL_BROADCAST_ADDRESS`). With the pod's address, a restarted pod
+read the gone pod's rows from the membership table, waited 30 seconds to join them, crashed and
+started again: about a minute before matching answered, while the probe said ready. Loopback is
+the same address in every pod, so a restart is one start (measured: ready in 13 to 15 seconds,
+matching answering in 8 to 11, no crash, against 17 to 21 and 49 to 64 with a crash before), and
+it holds only because Temporal runs one replica. Its readiness probe describes a task queue
+in `temporal-system`, which goes through matching, so ready means matching answers. gtc's readiness
+probe is `/readiness` (503 while the replication stream or a sink is down), its liveness `/health`,
+so a stalled pipeline shows as a part not ready and a sink that is away never gets gtc restarted.
+`tools/helm/check-restarts.py` holds the client's pause, gtc's probes and Temporal's address.
 
 **A component's share never depends on which other components are enabled.** It depends only on
 the machine (the plan, or the node when that is smaller) and on the installation's own
@@ -876,7 +891,7 @@ work again) and answers (`PUT /v1/commands/{id}`). Kinds:
 | Kind | What the operator does | Permissions |
 |---|---|---|
 | `restart`, a component | patches `kubectl.kubernetes.io/restartedAt` on the pod template of the Deployments and StatefulSets with that `app.kubernetes.io/component` (the names the status report uses); `postgres` is refused (CloudNativePG restarts it), `release` is a Job and has nothing to restart | `deployments`, `statefulsets`: `patch` |
-| `restart`, no component | the same for every Trenova workload | as above |
+| `restart`, no component | every Trenova workload but the database, in tiers (`restartOrder` in `internal/commands/restart.go`): the systems the application starts against (cache, search, Temporal, file storage, virus scanning, document reading, search by meaning, Loki), then search indexing and Alloy, then the API, the worker, imaging and Gotenberg, then the client, and a component the list does not name last. Each tier is patched together and the next waits until every workload in it is ready by the rule the status report uses (`health.Deployment`, `health.StatefulSet`). A tier not ready within ten minutes does not hold the rest: the restart goes on and the command is answered `failed`, naming the parts that did not come back. It runs beside the tick and is answered at the tick after it ends; a second one waits until the first is done. A test renders the chart with every part on and fails for a workload the list does not place | as above, and `get` |
 | `collect_logs`, a component | with log keeping on, the last `lines` (default 200, at most 5,000) Loki keeps for the component over the last 7 days, across every pod it had, newest last. With it off, the last `lines` (at most 500) of every container of the component's newest five pods, init containers included (the release Job's steps are init containers; CloudNativePG's pods run the Barman Cloud plugin as one), and a crashing container's previous run first. Either way each line is prefixed with its pod and container, every value of every Secret in the namespace is removed, and the output stops at 256 KiB keeping the newest lines. Works for every component the report names, `postgres` and `release` included, because the chart labels their pods with it | `pods`: `list`; `pods/log`: `get`; `secrets`: `list` |
 | `collect_log_bundle`, a bundle and a period | the bundle ([Logs](#logs)); the command is answered when the bundle is stored, failed or refused | `secrets`: `list`, `get` (`trenova-storage`) |
 
