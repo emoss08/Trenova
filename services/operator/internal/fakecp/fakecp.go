@@ -57,6 +57,7 @@ type Server struct {
 	backupLists int
 	databases   []instanceapi.DatabaseState
 	dbLists     int
+	refused     *instanceapi.RefusedRevision
 	reports     []instanceapi.StatusReport
 	usage       []instanceapi.UsageReport
 	readings    map[usageKey]int64
@@ -331,6 +332,18 @@ func (s *Server) Backups() ([]instanceapi.BackupEntry, int) {
 	return append([]instanceapi.BackupEntry(nil), s.backups...), s.backupLists
 }
 
+// Refused is the refusal the last accepted report carried, nil when it
+// carried none: what the control plane holds as the instance's refusal.
+func (s *Server) Refused() *instanceapi.RefusedRevision {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.refused == nil {
+		return nil
+	}
+	refused := *s.refused
+	return &refused
+}
+
 // Databases is the database list the control plane keeps, as the last
 // report that carried one left it, and how many reports carried one.
 func (s *Server) Databases() ([]instanceapi.DatabaseState, int) {
@@ -561,6 +574,11 @@ func (s *Server) putStatus(w http.ResponseWriter, r *http.Request) {
 	if report.Databases != nil {
 		s.databases = append([]instanceapi.DatabaseState{}, *report.Databases...)
 		s.dbLists++
+	}
+	s.refused = nil
+	if report.Refused != nil {
+		refused := *report.Refused
+		s.refused = &refused
 	}
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)

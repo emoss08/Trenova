@@ -339,6 +339,27 @@ func (e ProblemCode) Valid() bool {
 	}
 }
 
+// Defines values for RefusedRevisionCode.
+const (
+	RefusedRevisionCodeDatabaseNotHeld      RefusedRevisionCode = "database_not_held"
+	RefusedRevisionCodeFirstDatabaseRemoved RefusedRevisionCode = "first_database_removed"
+	RefusedRevisionCodeInvalid              RefusedRevisionCode = "invalid"
+)
+
+// Valid indicates whether the value is a known member of the RefusedRevisionCode enum.
+func (e RefusedRevisionCode) Valid() bool {
+	switch e {
+	case RefusedRevisionCodeDatabaseNotHeld:
+		return true
+	case RefusedRevisionCodeFirstDatabaseRemoved:
+		return true
+	case RefusedRevisionCodeInvalid:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RequestedByKind.
 const (
 	RequestedByCustomer RequestedByKind = "customer"
@@ -1121,6 +1142,30 @@ type Problem struct {
 // ProblemCode defines model for ProblemCode.
 type ProblemCode string
 
+// RefusedRevision The newest revision the operator has read and will not apply as it is written, and why.
+// The instance stays as it was. Sent with every status report while it stands, and left
+// out once a later revision has been applied or the cause is gone. It is how the control
+// plane learns that something it asked for will never happen, instead of waiting for it.
+type RefusedRevision struct {
+	// Code `database_not_held`: `database` names a generation the cluster does not hold and
+	// `restore` does not name. `first_database_removed`: the revision has no `database`
+	// and the instance's first database has been removed. `invalid`: the revision cannot
+	// be turned into what to run, for any other reason.
+	Code RefusedRevisionCode `json:"code"`
+
+	// Reason One line a staff member can read.
+	Reason string `json:"reason"`
+
+	// Revision The revision that was refused.
+	Revision int64 `json:"revision"`
+}
+
+// RefusedRevisionCode `database_not_held`: `database` names a generation the cluster does not hold and
+// `restore` does not name. `first_database_removed`: the revision has no `database`
+// and the instance's first database has been removed. `invalid`: the revision cannot
+// be turned into what to run, for any other reason.
+type RefusedRevisionCode string
+
 // RenewCertificateRequest defines model for RenewCertificateRequest.
 type RenewCertificateRequest struct {
 	// Csr A PEM certificate request, signed by the new key.
@@ -1406,6 +1451,12 @@ type StatusReport struct {
 
 	// Ready Whether every component is ready and the post-deploy checks pass.
 	Ready bool `json:"ready"`
+
+	// Refused The newest revision the operator has read and will not apply as it is written, and why.
+	// The instance stays as it was. Sent with every status report while it stands, and left
+	// out once a later revision has been applied or the cause is gone. It is how the control
+	// plane learns that something it asked for will never happen, instead of waiting for it.
+	Refused *RefusedRevision `json:"refused,omitempty"`
 
 	// Restore How the restore the spec's `restore` asks for goes: `preparing` while the new database is
 	// restored, `ready` once it accepts connections at `recoveredTo`, `failed` if it cannot be, and

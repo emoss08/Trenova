@@ -254,8 +254,92 @@ func TestADatabaseTheClusterDoesNotHoldIsRefusedAndNothingChanges(t *testing.T) 
 	r := w.report(t)
 	require.Contains(t, *r.Message, "the spec names database r0000000f, which this instance does not hold")
 	require.Equal(t, int64(1), *r.AppliedRevision)
+	require.True(t, r.Ready, "the instance's real state is reported beside the refusal")
 	require.Equal(t, 1, w.releases.applies)
 	require.Equal(t, []string{"apply " + firstDB}, w.events())
+	want := &instanceapi.RefusedRevision{
+		Revision: 2, Code: instanceapi.RefusedRevisionCodeDatabaseNotHeld, Reason: *r.Message,
+	}
+	require.Equal(t, want, r.Refused)
+	require.Equal(t, want, w.cp.Refused(), "the control plane holds it")
+
+	// Still standing: the next report carries it too.
+	w.now = w.now.Add(time.Minute)
+	reports := len(w.cp.Reports())
+	w.tick(t)
+	require.Len(t, w.cp.Reports(), reports+1)
+	require.Equal(t, want, w.report(t).Refused)
+
+	// The same revision becomes applicable: applied, and the refusal is gone.
+	_, err := w.dyn.Resource(pgClusters).Namespace("trenova").
+		Create(t.Context(), pgCluster("r0000000f", false), metav1.CreateOptions{})
+	require.NoError(t, err)
+	w.tick(t)
+	r = w.report(t)
+	require.Equal(t, int64(2), *r.AppliedRevision)
+	require.Nil(t, r.Refused)
+	require.Nil(t, w.cp.Refused())
+}
+
+func TestARefusalIsClearedByALaterAppliedRevision(t *testing.T) {
+	t.Parallel()
+	spec := controlplanetest.Spec(uuid.New())
+	onDatabase(&spec, genOld)
+	w := newDatabaseWorld(t, spec, pgCluster(genOld, false))
+	w.health.set(true)
+	w.tick(t)
+
+	// The first database was removed: a revision without `database` is
+	// refused, not answered with a new, empty first database.
+	onDatabase(&spec, "")
+	w.cp.SetSpec(spec)
+	w.tick(t)
+	r := w.report(t)
+	require.NotNil(t, r.Refused)
+	require.Equal(t, instanceapi.RefusedRevisionCodeFirstDatabaseRemoved, r.Refused.Code)
+	require.Equal(t, int64(2), r.Refused.Revision)
+	require.Equal(t, int64(1), *r.AppliedRevision)
+	require.Equal(t, 1, w.releases.applies)
+
+	onDatabase(&spec, genOld)
+	spec.Plan.Vcpu, spec.Plan.MemoryGiB = 16, 64
+	w.cp.SetSpec(spec)
+	w.tick(t)
+	r = w.report(t)
+	require.Equal(t, int64(3), *r.AppliedRevision)
+	require.Nil(t, r.Refused)
+	require.Nil(t, w.cp.Refused())
+}
+
+func TestAnInvalidRevisionIsRefusedAndNothingOfItRuns(t *testing.T) {
+	t.Parallel()
+	spec := controlplanetest.Spec(uuid.New())
+	w := newDatabaseWorld(t, spec, pgCluster("", false), pgCluster(genOld, true))
+	w.health.set(true)
+	w.tick(t)
+
+	// A plan below the minimum, and a retirement in the same revision: the
+	// revision is refused as a whole, so the retirement does not run either.
+	spec.Plan.Vcpu = 1
+	spec.RetiredDatabases = &[]string{genOld}
+	w.cp.SetSpec(spec)
+	w.tick(t)
+	w.tick(t)
+	r := w.report(t)
+	require.NotNil(t, r.Refused)
+	require.Equal(t, instanceapi.RefusedRevisionCodeInvalid, r.Refused.Code)
+	require.Equal(t, int64(2), r.Refused.Revision)
+	require.Contains(t, r.Refused.Reason, "a plan needs at least")
+	require.Equal(t, *r.Message, r.Refused.Reason)
+	require.True(t, r.Ready)
+	require.Equal(t, int64(1), *r.AppliedRevision)
+	require.Equal(t, []string{"apply " + firstDB}, w.events())
+
+	spec.Plan.Vcpu = 4
+	w.cp.SetSpec(spec)
+	w.tick(t)
+	require.Nil(t, w.report(t).Refused)
+	require.Contains(t, w.events(), "remove "+clusterName(genOld))
 }
 
 func TestOthersAreStoppedWithNoRestoreAndTheListIsSentOnChange(t *testing.T) {
@@ -303,6 +387,11 @@ func TestRetiringTheLiveDatabaseIsRefusedInTheReport(t *testing.T) {
 	r := w.report(t)
 	require.True(t, r.Ready)
 	require.Equal(t, "not removed, though the spec retires them: the first database (the instance runs on it)", *r.Message)
+	require.Nil(t, r.Refused, "a declined retirement does not refuse the revision")
+	require.Nil(t, w.cp.Refused())
+	require.Equal(t, int64(1), *r.AppliedRevision)
+	held, _ := w.cp.Databases()
+	require.Len(t, held, 1, "the protected database stays listed")
 	for _, e := range w.events() {
 		require.False(t, strings.HasPrefix(e, "remove"), e)
 	}

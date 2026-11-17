@@ -97,10 +97,12 @@ type GateInput struct {
 }
 
 // Gate says whether the chart may now be given the spec's database. Hold
-// keeps the release as it is deployed, and Message says why.
+// keeps the release as it is deployed, and Message says why. Refused is set
+// when the revision will never be applied as written, as opposed to waiting.
 type Gate struct {
 	Hold    bool
 	Message string
+	Refused instanceapi.RefusedRevisionCode
 }
 
 // Gate runs before every apply. A spec that moves the application to a
@@ -127,7 +129,11 @@ func (m *Manager) Gate(ctx context.Context, in GateInput) Gate {
 		if len(held) == 0 {
 			return Gate{}
 		}
-		return Gate{Hold: true, Message: clean(fmt.Sprintf(
+		code := instanceapi.RefusedRevisionCodeDatabaseNotHeld
+		if in.Spec.Database == nil {
+			code = instanceapi.RefusedRevisionCodeFirstDatabaseRemoved
+		}
+		return Gate{Hold: true, Refused: code, Message: clean(fmt.Sprintf(
 			"the spec names %s, which this instance does not hold and no restore makes: nothing is changed",
 			Name(target),
 		))}

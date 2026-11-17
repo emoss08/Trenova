@@ -743,7 +743,7 @@ func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 	report := instanceapi.StatusReport{Components: []instanceapi.ComponentStatus{}}
 	l.connects = databases.Connected{}
 	if own := l.creds.InstanceID(); l.desired.Spec.InstanceId != own {
-		return l.notReady(report, fmt.Sprintf(
+		return l.refuse(ctx, report, instanceapi.RefusedRevisionCodeInvalid, fmt.Sprintf(
 			"the spec is for instance %s and this operator is instance %s",
 			l.desired.Spec.InstanceId,
 			own,
@@ -766,6 +766,9 @@ func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 	spec := l.desired.Spec
 	spec.Plan = l.capacity.Fit(spec.Plan)
 	rendered, err := values.Render(&spec, l.base, l.ownNS, located)
+	if errors.Is(err, values.ErrInvalidSpec) || errors.Is(err, values.ErrSchemaVersion) {
+		return l.refuse(ctx, report, instanceapi.RefusedRevisionCodeInvalid, err.Error()), true
+	}
 	if err != nil {
 		return l.notReady(report, err.Error()), true
 	}
@@ -797,6 +800,12 @@ func (l *Loop) apply(
 	}
 	l.connects = connectedTo(deployed)
 	gate := l.dbs.Gate(ctx, databases.GateInput{Spec: &l.desired.Spec, Connected: l.connects})
+	if gate.Refused != "" {
+		l.connects = databases.Connected{}
+		report = l.stay(ctx, report, deployed, gate.Message)
+		report.Refused = l.refusal(gate.Refused, gate.Message)
+		return report
+	}
 	if gate.Hold {
 		return l.stay(ctx, report, deployed, gate.Message)
 	}
@@ -835,6 +844,33 @@ func (l *Loop) stay(
 	msg := trim(why)
 	report.Message = &msg
 	return report
+}
+
+// refuse declines the desired revision as written: nothing of it is applied
+// (its retirements included, so the databases are left as they are), the
+// release that runs is reported as it is, the message says why for people and
+// refused says it for the control plane. It is worked out again on every
+// tick, so it stands while the cause does and is gone once a later revision
+// is applied or this one becomes applicable.
+func (l *Loop) refuse(
+	ctx context.Context,
+	report instanceapi.StatusReport,
+	code instanceapi.RefusedRevisionCode,
+	why string,
+) instanceapi.StatusReport {
+	l.logger.Warn("the revision is refused", "revision", l.desired.Revision, "code", code, "reason", why)
+	deployed, err := l.releases.Deployed()
+	if err != nil {
+		report = l.notReady(report, why)
+	} else {
+		report = l.stay(ctx, report, deployed, why)
+	}
+	report.Refused = l.refusal(code, why)
+	return report
+}
+
+func (l *Loop) refusal(code instanceapi.RefusedRevisionCode, why string) *instanceapi.RefusedRevision {
+	return &instanceapi.RefusedRevision{Revision: l.desired.Revision, Code: code, Reason: trim(why)}
 }
 
 func connectedTo(d release.Deployed) databases.Connected {
@@ -1122,7 +1158,15 @@ func (l *Loop) shouldReport(r instanceapi.StatusReport) bool {
 		!sameGrants(r.SupportGrants, l.last.SupportGrants) ||
 		str(r.SystemEmailFingerprint) != str(l.last.SystemEmailFingerprint) ||
 		backupSummary(r) != backupSummary(l.last) ||
+		refusedSummary(r.Refused) != refusedSummary(l.last.Refused) ||
 		operatorSummary(r.Operator) != operatorSummary(l.last.Operator)
+}
+
+func refusedSummary(r *instanceapi.RefusedRevision) string {
+	if r == nil {
+		return ""
+	}
+	return strconv.FormatInt(r.Revision, 10) + "|" + string(r.Code) + "|" + r.Reason
 }
 
 func operatorReport(st selfupgrade.Status) *instanceapi.OperatorStatus {

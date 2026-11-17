@@ -475,9 +475,13 @@ func TestAnUnknownSchemaIsReportedNotApplied(t *testing.T) {
 
 	require.Equal(t, 1, w.releases.applies)
 	r := w.lastReport(t)
-	require.False(t, r.Ready)
+	require.True(t, r.Ready, "the instance's real state: revision 1 runs and is ready")
 	require.Equal(t, int64(1), *r.AppliedRevision, "it still runs revision 1")
 	require.Contains(t, *r.Message, "schema version")
+	require.NotNil(t, r.Refused)
+	require.Equal(t, int64(2), r.Refused.Revision)
+	require.Equal(t, instanceapi.RefusedRevisionCodeInvalid, r.Refused.Code)
+	require.Contains(t, r.Refused.Reason, "schema version")
 }
 
 func TestAFailedApplyIsReportedAndRetried(t *testing.T) {
@@ -564,6 +568,10 @@ func TestRefusesASpecForAnotherInstance(t *testing.T) {
 	assert.False(t, last.Ready)
 	require.NotNil(t, last.Message)
 	assert.Contains(t, *last.Message, "is for instance")
+	require.NotNil(t, last.Refused)
+	assert.Equal(t, instanceapi.RefusedRevisionCodeInvalid, last.Refused.Code)
+	assert.Equal(t, w.cp.Revision(), last.Refused.Revision)
+	assert.Nil(t, last.AppliedRevision, "nothing was ever applied")
 }
 
 func TestRelaysUsageOnlyWhenActiveAndReady(t *testing.T) {

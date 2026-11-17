@@ -168,6 +168,7 @@ func TestGoingBackToTheFirstDatabaseStartsItAndHoldsUntilItAcceptsConnections(t 
 
 	g := m.Gate(ctx, in)
 	require.True(t, g.Hold)
+	require.Empty(t, g.Refused, "going back waits; it is not a refusal")
 	require.Contains(t, g.Message, "going back to the first database: starting it")
 	require.Contains(t, g.Message, "stays on database "+genA)
 	require.Equal(t, "off", hibernation(t, dyn, ""))
@@ -229,6 +230,7 @@ func TestANamedGenerationTheClusterDoesNotHoldIsRefused(t *testing.T) {
 
 	g := m.Gate(ctx, databases.GateInput{Spec: spec(genC), Connected: on("")})
 	require.True(t, g.Hold)
+	require.Equal(t, instanceapi.RefusedRevisionCodeDatabaseNotHeld, g.Refused)
 	require.Contains(t, g.Message, "the spec names database "+genC+", which this instance does not hold")
 	require.Empty(t, verbs(dyn, "patch"))
 	require.Empty(t, verbs(dyn, "delete"))
@@ -242,6 +244,7 @@ func TestANamedGenerationTheClusterDoesNotHoldIsRefused(t *testing.T) {
 	m, _ = manager(t, running(clusterOf(genA), release, now))
 	g = m.Gate(ctx, databases.GateInput{Spec: spec(""), Connected: on(genA)})
 	require.True(t, g.Hold)
+	require.Equal(t, instanceapi.RefusedRevisionCodeFirstDatabaseRemoved, g.Refused)
 	require.Contains(t, g.Message, "the first database, which this instance does not hold")
 }
 
@@ -267,6 +270,7 @@ func TestAFailedReadHoldsAMoveAndLeavesTheListOut(t *testing.T) {
 	})
 	g := m.Gate(ctx, databases.GateInput{Spec: spec(genA), Connected: on("")})
 	require.True(t, g.Hold)
+	require.Empty(t, g.Refused, "a failed read waits; it is not a refusal")
 	require.Contains(t, g.Message, "once its databases can be read")
 	require.Equal(t, databases.Result{}, m.Settle(ctx, databases.SettleInput{
 		Spec: spec(""), Connected: on(""), Applied: true, Ready: true,

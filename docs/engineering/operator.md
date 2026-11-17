@@ -154,6 +154,33 @@ already matches. A failed render or apply keeps reporting the revision it last a
 reason as the message. A 429, or a 503 while the control plane has no version for the spec yet,
 pauses the loop until `Retry-After`. An unknown `schemaVersion` is reported and never applied.
 
+**Refused revisions.** A revision the operator will not apply as it is written is refused as a
+whole, and the status report says so in two ways: `message`, a sentence for people, and
+`refused` (`revision`, `code`, `reason`), for the control plane, which otherwise could not tell
+"refused" from "not yet" and would wait on a going back or an update for ever. Nothing of a
+refused revision runs, its `retiredDatabases` included; the report carries the instance's real
+state beside it (the deployed release's health and readiness, `appliedRevision` on the revision
+it runs). The operator works it out again on every tick, so it is on every report while the
+cause stands (and a new or changed refusal sends a report at once), and it is gone once a later
+revision is applied or the same revision becomes applicable (the database it names appears, for
+one). The paths (`reconcile.refuse`, and the database gate):
+
+| Code | When |
+|---|---|
+| `invalid` | the spec names another instance than the operator's certificate |
+| `invalid` | `values.Render` returns `ErrSchemaVersion` (an unknown `schemaVersion`) |
+| `invalid` | `values.Render` returns `ErrInvalidSpec`: a release version that is not semantic, a malformed hostname, an unknown lifecycle, a first administrator's name, organization or email out of shape, a `database` or `restore` generation out of shape, a `restore` on an instance without backup storage, or a plan (after the node's capacity) below the minimum |
+| `database_not_held` | `database` names a generation the cluster does not hold and `restore` does not name, while it holds others of the instance |
+| `first_database_removed` | no `database`, and the first database is gone while the cluster holds others |
+
+Not refusals, because the revision is right and something else is in the way, each with its own
+signal: the storage or escrowed secrets the control plane serves missing or malformed (fetched
+again), the chart not loading (the registry, or a signature that does not verify), a failed Helm
+apply, the operator's own move to the release (`operator.upgrade.phase`), a going back waiting
+for its database, and a cluster list that fails. A database in `retiredDatabases` that is
+protected (live, connected, restoring or a restore's source) does not refuse the revision either:
+the rest is applied, the database stays listed, and `message` names it.
+
 **Recovery.** A release left `pending-*` by a crash mid-upgrade is rolled back to its last
 deployed revision before the next apply; one that never deployed is uninstalled and installed
 again. A failed release with a deployed one before it is upgraded over.
@@ -714,7 +741,8 @@ or the first one without it):
    names the restore's own generation (the switch; the chart makes or keeps it). Otherwise the
    release's clusters are listed:
    - the live database is not held (or is being deleted) while the cluster holds others of the
-     instance: **refused**. Nothing is applied, the instance stays on the database it runs on,
+     instance: **refused** ([Refused revisions](#the-loop): `database_not_held`, or
+     `first_database_removed` without `database`). Nothing is applied, the instance stays on the database it runs on,
      and the message says which was named. A `database` absent while the first database has been
      removed is refused the same way, so an empty first database is never made under a running
      instance. When the cluster holds none of the instance's databases, the chart installs
@@ -1081,7 +1109,11 @@ which it keeps on uninstall, is created by its chart.
   generation's cluster and volumes beside a decoy of another release, a volume claim of another
   release labelled with the same cluster and another generation of the same release, with the
   UID precondition and foreground deletion, then done when asked again; the live, connected,
-  candidate and source refused in the message; each state in the list, live first, sizes from
+  candidate and source refused in the message, with no `refused` on the report; refused
+  revisions (`database_not_held`, `first_database_removed`, `invalid` for a plan below the
+  minimum, an unknown schema and another instance's spec) reported beside the real state and
+  applied revision, on the next report too, recorded by the fake control plane, nothing of them
+  run, and cleared by a later applied revision or once the same revision becomes applicable; each state in the list, live first, sizes from
   capacity, `starting` only for the live or connected one and `stopped` for one kept by intent;
   backup health read from the database the application runs on while going back waits; the list sent first, not while unchanged, again after a refused report; suspended
   going back applied straight with nothing started; decommissioned stopping and removing

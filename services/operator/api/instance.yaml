@@ -1287,6 +1287,8 @@ components:
             list it has.
           items:
             $ref: "#/components/schemas/DatabaseState"
+        refused:
+          $ref: "#/components/schemas/RefusedRevision"
 
     SupportGrant:
       type: object
@@ -1780,6 +1782,33 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    RefusedRevision:
+      type: object
+      description: |
+        The newest revision the operator has read and will not apply as it is written, and why.
+        The instance stays as it was. Sent with every status report while it stands, and left
+        out once a later revision has been applied or the cause is gone. It is how the control
+        plane learns that something it asked for will never happen, instead of waiting for it.
+      required: [revision, code, reason]
+      properties:
+        revision:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The revision that was refused.
+        code:
+          type: string
+          enum: [database_not_held, first_database_removed, invalid]
+          description: |
+            `database_not_held`: `database` names a generation the cluster does not hold and
+            `restore` does not name. `first_database_removed`: the revision has no `database`
+            and the instance's first database has been removed. `invalid`: the revision cannot
+            be turned into what to run, for any other reason.
+        reason:
+          type: string
+          maxLength: 500
+          description: One line a staff member can read.
 
     InstanceStorage:
       type: object
