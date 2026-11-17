@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/apiapp"
 	"github.com/emoss08/trenova/internal/bootstrap/core"
 	"github.com/emoss08/trenova/internal/bootstrap/workerapp"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"go.uber.org/fx"
 )
 
@@ -20,7 +21,7 @@ func Options() fx.Option {
 
 func NewApp(opts ...fx.Option) *App {
 	return &App{
-		App: fx.New(append([]fx.Option{Options()}, opts...)...),
+		App: fx.New(append([]fx.Option{config.FxLogger(), Options()}, opts...)...),
 	}
 }
 

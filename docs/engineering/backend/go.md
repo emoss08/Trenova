@@ -123,6 +123,9 @@ that the file does. Name a file after its primary type or concern (`timesheet.go
   error.
 - **A params struct past three or four parameters** (`type CreateShipmentParams struct { … }`).
   An fx constructor always takes an `fx.In` params struct.
+- **Every `fx.New` takes `config.FxLogger()`** (`internal/infrastructure/config`), which routes fx's
+  own start-up events through the application's zap logger as `fx` at debug (failures at error);
+  without it fx prints about 900 plain stderr lines per start.
 - **Value receivers** unless the method mutates or the struct is large.
 - **Concrete or generic types over `any`.** `any` is for genuinely heterogeneous data at a
   boundary (a JSON column, a template context).
