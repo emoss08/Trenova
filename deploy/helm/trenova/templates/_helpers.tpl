@@ -208,8 +208,44 @@ storageClassName: {{ .storageClass | quote }}
 
 {{/* URLs and origins */}}
 
+{{/* The first address's origin: what the release itself reaches and probes. */}}
 {{- define "trenova.origin" -}}
 {{- printf "https://%s" .Values.domain -}}
+{{- end -}}
+
+{{/* Every host the instance is served on, comma-separated: domain first, then
+each alias once. */}}
+{{- define "trenova.hosts" -}}
+{{- $hosts := list .Values.domain -}}
+{{- range .Values.aliases -}}
+{{- if not (has . $hosts) -}}
+{{- $hosts = append $hosts . -}}
+{{- end -}}
+{{- end -}}
+{{- join "," $hosts -}}
+{{- end -}}
+
+{{/* Every served origin, comma-separated, in the order of trenova.hosts. */}}
+{{- define "trenova.origins" -}}
+{{- $origins := list -}}
+{{- range splitList "," (include "trenova.hosts" .) -}}
+{{- $origins = append $origins (printf "https://%s" .) -}}
+{{- end -}}
+{{- join "," $origins -}}
+{{- end -}}
+
+{{/* The address links are built with: primaryDomain, which must be domain or
+one of aliases, or domain when it is empty. */}}
+{{- define "trenova.primaryDomain" -}}
+{{- $primary := .Values.primaryDomain | default .Values.domain -}}
+{{- if not (has $primary (splitList "," (include "trenova.hosts" .))) -}}
+{{- fail (printf "primaryDomain %q must be domain or one of aliases" $primary) -}}
+{{- end -}}
+{{- $primary -}}
+{{- end -}}
+
+{{- define "trenova.primaryOrigin" -}}
+{{- printf "https://%s" (include "trenova.primaryDomain" .) -}}
 {{- end -}}
 
 {{- define "trenova.storagePublicEndpoint" -}}

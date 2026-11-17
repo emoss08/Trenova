@@ -8,7 +8,8 @@ TRENOVA_<SECTION>_<KEY> variables, which override these keys.
 {{- /* The loader applies a TRENOVA_* variable only to a key it knows, so every
 key a Secret supplies is written here empty: the variable fills it, and an
 empty one fails validation instead of running with a default. */ -}}
-{{- $origin := include "trenova.origin" . -}}
+{{- $origin := include "trenova.primaryOrigin" . -}}
+{{- $origins := splitList "," (include "trenova.origins" .) -}}
 {{- $database := dict
   "host" (include "trenova.postgresHost" .)
   "port" 5432
@@ -59,7 +60,7 @@ empty one fails validation instead of running with a default. */ -}}
     "webBaseUrl" $origin
     "problemTypeBaseUri" (printf "%s/problems/" $origin))
   "platform" (dict "mode" .Values.tms.platformMode)
-  "server" (dict "cors" (dict "allowedOrigins" (list $origin)))
+  "server" (dict "cors" (dict "allowedOrigins" $origins))
   "database" $database
   "cache" (dict "host" (include "trenova.name" (dict "root" . "component" "redis")) "port" 6379 "password" "")
   "search" (dict "meilisearch" (dict "url" (printf "http://%s:7700" (include "trenova.name" (dict "root" . "component" "meilisearch"))) "apiKey" ""))
@@ -69,7 +70,7 @@ empty one fails validation instead of running with a default. */ -}}
     "encryption" (dict "key" "")
     "mfa" (dict "recoveryCodePepper" "")
     "passwordReset" (dict "baseUrl" $origin)
-    "csrf" (dict "trustedOrigins" (list $origin)))
+    "csrf" (dict "trustedOrigins" $origins))
   "monitoring" (dict "metrics" (dict "enabled" true "host" "0.0.0.0" "port" 9090))
   "temporal" (dict
     "hostPort" (printf "%s:7233" $temporal)

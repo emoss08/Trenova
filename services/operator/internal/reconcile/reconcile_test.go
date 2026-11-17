@@ -365,7 +365,7 @@ func newWorldWith(
 
 type noStorage struct{}
 
-func (noStorage) Ensure(context.Context, string, int64) (values.Storage, error) {
+func (noStorage) Ensure(context.Context, []string, int64) (values.Storage, error) {
 	return values.Storage{}, nil
 }
 

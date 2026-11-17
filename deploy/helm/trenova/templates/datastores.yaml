@@ -220,7 +220,7 @@ spec:
             {{- include "trenova.secretEnv" (dict "name" "MINIO_ROOT_USER" "secret" $app "key" "storageAccessKey") | nindent 12 }}
             {{- include "trenova.secretEnv" (dict "name" "MINIO_ROOT_PASSWORD" "secret" $app "key" "storageSecretKey") | nindent 12 }}
             - name: MINIO_API_CORS_ALLOW_ORIGIN
-              value: {{ include "trenova.origin" . | quote }}
+              value: {{ include "trenova.origins" . | quote }}
             - name: MINIO_BROWSER
               value: "off"
           ports:

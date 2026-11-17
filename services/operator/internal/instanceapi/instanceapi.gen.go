@@ -853,6 +853,9 @@ type InstanceSpec struct {
 	// service) with Trenova AI.
 	Components []string `json:"components"`
 
+	// CustomHostname The customer's own address for the instance, served beside `hostname`, and the address links are built with while it is set. Absent when the instance has none, or while its own address has fallen back. `hostname` is always served and never changes.
+	CustomHostname *string `json:"customHostname,omitempty"`
+
 	// Database The database the instance runs on, once a restore has replaced its first one: `generation`
 	// names it, and it was restored from `sourceGeneration`'s backups (empty for the first
 	// database) to `targetTime`. Absent while the instance runs on its first database.

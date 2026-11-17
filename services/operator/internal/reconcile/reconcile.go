@@ -135,7 +135,7 @@ type SupportGrants interface {
 }
 
 type Storage interface {
-	Ensure(ctx context.Context, hostname string, revision int64) (values.Storage, error)
+	Ensure(ctx context.Context, hostnames []string, revision int64) (values.Storage, error)
 }
 
 type Backups interface {
@@ -967,7 +967,11 @@ func healthParams(revision int, vals map[string]any) health.CheckParams {
 }
 
 func (l *Loop) objectStorage(ctx context.Context) (values.Storage, error) {
-	return l.storage.Ensure(ctx, l.desired.Spec.Hostname, l.desired.Revision)
+	hostnames := []string{l.desired.Spec.Hostname}
+	if custom, err := values.CustomHostname(&l.desired.Spec); err == nil && custom != "" {
+		hostnames = append(hostnames, custom)
+	}
+	return l.storage.Ensure(ctx, hostnames, l.desired.Revision)
 }
 
 func (l *Loop) backupReport(ctx context.Context, report *instanceapi.StatusReport) {

@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"maps"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -70,7 +71,7 @@ type Bucket struct {
 }
 
 type CORS interface {
-	Allow(ctx context.Context, b Bucket, origin string) error
+	Allow(ctx context.Context, b Bucket, origins []string) error
 }
 
 type Store struct {
@@ -112,7 +113,7 @@ func New(p *Params) *Store {
 	}
 }
 
-func (s *Store) Ensure(ctx context.Context, hostname string, revision int64) (values.Storage, error) {
+func (s *Store) Ensure(ctx context.Context, hostnames []string, revision int64) (values.Storage, error) {
 	if revision == s.noneRevision && s.now().Before(s.noneUntil) {
 		return values.Storage{}, nil
 	}
@@ -126,7 +127,7 @@ func (s *Store) Ensure(ctx context.Context, hostname string, revision int64) (va
 	}
 	if docsErr == nil && backupsErr == nil {
 		if loc, ok := held(docs.Data, backups.Data); ok {
-			s.allowOrigin(ctx, docs, hostname)
+			s.allowOrigins(ctx, docs, hostnames)
 			loc.PrivateEndpoint = s.private
 			return loc, nil
 		}
@@ -155,7 +156,7 @@ func (s *Store) Ensure(ctx context.Context, hostname string, revision int64) (va
 	if _, err = s.write(ctx, values.BackupsSecret, backups, backupsErr, backupsData(fetched), "backup-storage"); err != nil {
 		return values.Storage{}, err
 	}
-	s.allowOrigin(ctx, docs, hostname)
+	s.allowOrigins(ctx, docs, hostnames)
 	loc := location(fetched)
 	loc.PrivateEndpoint = s.private
 	return loc, nil
@@ -206,9 +207,15 @@ func (s *Store) write(
 	return updated, nil
 }
 
-func (s *Store) allowOrigin(ctx context.Context, docs *corev1.Secret, hostname string) {
-	origin := "https://" + hostname
-	if s.cors == nil || hostname == "" || docs.Annotations[annotationCORS] == origin ||
+func (s *Store) allowOrigins(ctx context.Context, docs *corev1.Secret, hostnames []string) {
+	origins := make([]string, 0, len(hostnames))
+	for _, h := range hostnames {
+		if h != "" && !slices.Contains(origins, "https://"+h) {
+			origins = append(origins, "https://"+h)
+		}
+	}
+	recorded := strings.Join(origins, ",")
+	if s.cors == nil || len(origins) == 0 || docs.Annotations[annotationCORS] == recorded ||
 		s.now().Before(s.corsAfter) {
 		return
 	}
@@ -224,7 +231,7 @@ func (s *Store) allowOrigin(ctx context.Context, docs *corev1.Secret, hostname s
 		Name:            string(docs.Data[KeyBucket]),
 		AccessKeyID:     string(docs.Data[KeyAccessKey]),
 		SecretAccessKey: string(docs.Data[KeySecretKey]),
-	}, origin)
+	}, origins)
 	if err != nil {
 		s.corsAfter = s.now().Add(corsRetry)
 		s.logger.Warn("cannot let the browser read the documents bucket; retrying", "error", err)
@@ -234,12 +241,12 @@ func (s *Store) allowOrigin(ctx context.Context, docs *corev1.Secret, hostname s
 	if next.Annotations == nil {
 		next.Annotations = map[string]string{}
 	}
-	next.Annotations[annotationCORS] = origin
+	next.Annotations[annotationCORS] = recorded
 	if _, err = s.client.CoreV1().Secrets(s.namespace).Update(ctx, next, metav1.UpdateOptions{}); err != nil {
 		s.logger.Warn("cannot record the documents bucket's CORS rules", "error", err)
 		return
 	}
-	s.logger.Info("the documents bucket admits the instance's origin", "origin", origin)
+	s.logger.Info("the documents bucket admits the instance's origins", "origins", recorded)
 }
 
 func Validate(v instanceapi.InstanceStorage) error {

@@ -112,6 +112,10 @@ func Render(
 	if !hostnamePattern.MatchString(spec.Hostname) {
 		return Rendered{}, fmt.Errorf("%w: hostname %q", ErrInvalidSpec, spec.Hostname)
 	}
+	custom, err := CustomHostname(spec)
+	if err != nil {
+		return Rendered{}, err
+	}
 	stopped, hibernate, err := lifecycle(spec.Lifecycle)
 	if err != nil {
 		return Rendered{}, err
@@ -140,6 +144,11 @@ func Render(
 		"secrets":       map[string]any{"escrowSecret": EscrowSecret},
 		"bootstrap":     admin,
 	})
+	delete(out, "aliases")
+	delete(out, "primaryDomain")
+	if custom != "" {
+		merge(out, map[string]any{"aliases": []any{custom}, "primaryDomain": custom})
+	}
 	if storage.Configured() {
 		merge(out, objectStorage(storage))
 	}
@@ -154,6 +163,18 @@ func Render(
 	}
 	merge(out, sized)
 	return Rendered{Version: spec.Release.Version, Values: out}, nil
+}
+
+func CustomHostname(spec *instanceapi.InstanceSpec) (string, error) {
+	if spec.CustomHostname == nil || *spec.CustomHostname == "" {
+		return "", nil
+	}
+	custom := *spec.CustomHostname
+	if !hostnamePattern.MatchString(custom) || custom == spec.Hostname ||
+		custom == StorageHost(spec.Hostname) {
+		return "", fmt.Errorf("%w: custom hostname %q", ErrInvalidSpec, custom)
+	}
+	return custom, nil
 }
 
 func objectStorage(s Storage) map[string]any {

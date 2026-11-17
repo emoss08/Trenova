@@ -110,6 +110,7 @@ The ones you are most likely to change:
 | Value | What it does |
 |---|---|
 | `domain`, `storageDomain` | The hostnames. `storageDomain` serves presigned uploads and downloads from the bundled MinIO |
+| `aliases`, `primaryDomain` | More hostnames for the same install, beside `domain` (each gets an Ingress rule, is answered by the client and admitted by the API and the bundled MinIO), and which one links are built with (`domain` or an alias; empty means `domain`). Point each alias's DNS at the Ingress as for `domain`. People sign in separately on each hostname |
 | `ingress.*` | The Ingress for both hostnames, to the client |
 | `bootstrap.*` | The first organization and administrator; skipped while `adminEmail` is empty |
 | `bootstrap.adminSetup` | `password` (the default: a generated password in the app Secret) or `link` (no usable password; they choose one from a one-time account setup link, as Trenova Cloud does) |

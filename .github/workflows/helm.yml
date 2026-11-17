@@ -93,6 +93,7 @@ jobs:
             [managed]="-f $CHART/ci/managed-values.yaml"
             [escrow]="--set secrets.escrowSecret=trenova-escrow"
             [setup-link]="--set bootstrap.adminEmail=admin@example.com --set bootstrap.orgName=Acme --set bootstrap.adminName=Dana --set bootstrap.adminSetup=link"
+            [aliases]="--set ingress.enabled=true --set ingress.tls.enabled=true --set aliases[0]=tms.example.org --set primaryDomain=tms.example.org"
           )
           for shape in "${!shapes[@]}"; do
             echo "::group::$shape"
@@ -154,6 +155,14 @@ jobs:
           for shape in default managed restore; do
             python3 -I tools/helm/check-postgres-network.py "$RUNNER_TEMP/$shape.yaml"
           done
+          # An instance is served on its domain and every alias, and links use
+          # the primary hostname; without aliases, everything stays on domain.
+          python3 -I tools/helm/check-aliases.py "$RUNNER_TEMP/aliases.yaml" trenova.example.com tms.example.org tms.example.org
+          python3 -I tools/helm/check-aliases.py "$RUNNER_TEMP/everything.yaml" trenova.example.com trenova.example.com
+          if helm template trenova "$CHART" -n trenova "${base[@]}" --set primaryDomain=elsewhere.example.org > /dev/null 2>&1; then
+            echo "::error::primaryDomain rendered as a hostname the release does not serve"
+            exit 1
+          fi
 
       - name: The symlinked files resolve
         run: |

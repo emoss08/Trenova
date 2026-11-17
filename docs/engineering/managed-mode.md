@@ -303,6 +303,38 @@ Storage is billed at its highest point in the cycle. An hourly level is enough f
 moves with uploads and deletions over hours, not seconds, and the control plane takes the maximum
 of the hourly levels it received in the window. A resent hour replaces that hour's level.
 
+## Its own address
+
+A customer may give an instance one address of their own (`tms.acme.com`). The spec then carries
+`customHostname`, which the operator renders as the chart's `aliases: [customHostname]` and
+`primaryDomain: customHostname` ([operator.md](operator.md#from-spec-to-values)). What that means
+for the instance:
+
+- **Two addresses are served.** The first address (`hostname`) keeps working for ever and is never
+  redirected; the custom one is served beside it by the same Ingress, the same client and the same
+  API. The files host stays under the first address.
+- **Origins are lists.** `server.cors.allowedOrigins` and `security.csrf.trustedOrigins` name both
+  origins, and so do the bundled MinIO's CORS and the documents bucket's rules. The client's
+  Content-Security-Policy names the page's own origin as `'self'`, so it holds on either address.
+- **Links are built on the primary.** `app.webBaseUrl`, `app.problemTypeBaseUri`,
+  `security.passwordReset.baseUrl`, `portal.baseUrl` and `reporting.deliveryLinkBaseUrl` use the
+  custom address while the spec carries it, and the first address when it does not (the control
+  plane leaves it out while the customer's address has fallen back). Everything that derives an
+  absolute URL from `webBaseUrl` follows: notification and record links, invoices, the driver
+  portal, Trenova Capture's pairing page and discovery answer, SCIM resource locations, and the
+  default accounting callbacks.
+- **Sessions are per address.** The session cookie is host-only (`__Host-`), so a session started
+  on one address is not carried to the other: people sign in again on the custom address. A
+  sign-in that leaves Trenova and comes back (SSO, an accounting connection) finishes on the
+  address its callback names: an SSO configuration's redirect URL is the organization's own
+  setting and does not move, and an accounting callback follows the primary unless the
+  configuration names one.
+- **Trenova is Trenova on either address.** An agent's portal site may cover neither address: the
+  extension portal service refuses a site that covers the address links use or any origin the API
+  admits.
+- **Staff and the control plane stay on the first address**: the support entry, the first
+  administrator's invite and the readiness probes.
+
 ## What the instance's data takes
 
 `GET /managed/v1/data-usage` (bearer `managed.token`, the managed listener only, so it does not

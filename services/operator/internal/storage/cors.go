@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,8 +26,8 @@ type S3CORS struct {
 	Now    func() time.Time
 }
 
-func (c S3CORS) Allow(ctx context.Context, b Bucket, origin string) error {
-	body, err := corsDocument(origin)
+func (c S3CORS) Allow(ctx context.Context, b Bucket, origins []string) error {
+	body, err := corsDocument(origins)
 	if err != nil {
 		return err
 	}
@@ -72,14 +73,21 @@ func (c S3CORS) now() time.Time {
 	return time.Now().UTC()
 }
 
-func corsDocument(origin string) ([]byte, error) {
+func corsDocument(origins []string) ([]byte, error) {
+	if len(origins) == 0 {
+		return nil, errors.New("the CORS rules need at least one origin")
+	}
 	var escaped bytes.Buffer
-	if err := xml.EscapeText(&escaped, []byte(origin)); err != nil {
-		return nil, fmt.Errorf("the CORS origin: %w", err)
+	for _, origin := range origins {
+		escaped.WriteString("<AllowedOrigin>")
+		if err := xml.EscapeText(&escaped, []byte(origin)); err != nil {
+			return nil, fmt.Errorf("the CORS origin: %w", err)
+		}
+		escaped.WriteString("</AllowedOrigin>")
 	}
 	return []byte(`<?xml version="1.0" encoding="UTF-8"?>` +
 		`<CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><CORSRule>` +
-		`<AllowedOrigin>` + escaped.String() + `</AllowedOrigin>` +
+		escaped.String() +
 		`<AllowedMethod>GET</AllowedMethod><AllowedMethod>HEAD</AllowedMethod><AllowedMethod>PUT</AllowedMethod>` +
 		`<AllowedHeader>*</AllowedHeader><ExposeHeader>ETag</ExposeHeader><MaxAgeSeconds>3600</MaxAgeSeconds>` +
 		`</CORSRule></CORSConfiguration>`), nil

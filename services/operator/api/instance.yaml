@@ -803,6 +803,12 @@ components:
         hostname:
           type: string
           description: Where the instance is served, at the root path.
+        customHostname:
+          type: string
+          description: >
+            The customer's own address for the instance, served beside `hostname`, and the address
+            links are built with while it is set. Absent when the instance has none, or while its
+            own address has fallen back. `hostname` is always served and never changes.
         release:
           $ref: "#/components/schemas/SpecRelease"
         plan:

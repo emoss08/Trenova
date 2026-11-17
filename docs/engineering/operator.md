@@ -211,6 +211,7 @@ first, and what the spec decides is merged over them:
 | Spec | Values |
 |---|---|
 | `hostname` | `domain`; `storageDomain` is `<first label>-files.<rest>` |
+| `customHostname` | `aliases: [customHostname]` and `primaryDomain: customHostname`: the instance is served on both addresses and links use the customer's. Absent, neither is set (and any the base values carry are dropped). Checked like `hostname`, and refused when it equals `hostname` or the files host: an invalid one refuses the revision like any other invalid spec |
 | `instanceId` | `managed.instanceId`, which the chart passes to the TMS as `managed.instanceId`: the tag on the email Trenova's sender carries ([System email](#system-email)) |
 | `components` contains `docling` | `docling.enabled`; its resources are rendered either way (see Sizing) |
 | `components` contains `embedding` | `embedding.enabled` (Trenova AI's search service); its resources are rendered either way, and the chart passes its URL and model to the TMS as `managed.embedding` ([managed-mode.md](managed-mode.md#search-by-meaning)) |
@@ -634,10 +635,15 @@ MinIO on the Docker network (`http://minio.trenova.internal:9000`), while browse
 through the local edge at `https://files.instances.localhost`.
 
 **CORS.** The TMS hands the browser presigned links to the documents bucket, so the bucket must
-admit the instance's origin. Once per origin, the operator puts the bucket's CORS rules (GET, HEAD
-and PUT from `https://<hostname>`) with the documents credential, signed with AWS Signature V4,
-and records the origin on the `trenova-storage` Secret (`trenova.app/cors-origin`). A failure is
-logged and retried five minutes later; it never holds converging.
+admit every origin the instance is served on: `https://<hostname>` and, while the spec carries
+one, `https://<customHostname>`. A `PUT ?cors` replaces the bucket's whole configuration, so the
+operator puts one document whose single rule lists every origin (GET, HEAD and PUT), with the
+documents credential, signed with AWS Signature V4, and records the set on the `trenova-storage`
+Secret (`trenova.app/cors-origin`, the origins comma-separated, the first address first). A set
+that differs from the recorded one in either direction (an address added, removed or changed) is
+put once; an unchanged set costs no call. A custom hostname the spec carries but the operator
+refuses is never put. A failure is logged and retried five minutes later; it never holds
+converging.
 
 **Backups** are CloudNativePG's Barman Cloud plugin: the chart renders the `ObjectStore` (the
 backups bucket, `retentionPolicy: 30d`, server-side encryption) and a daily `ScheduledBackup`

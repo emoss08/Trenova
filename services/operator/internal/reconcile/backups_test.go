@@ -42,19 +42,19 @@ var bucketStorage = values.Storage{
 
 type fakeStorage struct {
 	mu        sync.Mutex
-	hostnames []string
+	hostnames [][]string
 	revisions []int64
 	err       error
 }
 
 func (f *fakeStorage) Ensure(
 	_ context.Context,
-	hostname string,
+	hostnames []string,
 	revision int64,
 ) (values.Storage, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.hostnames = append(f.hostnames, hostname)
+	f.hostnames = append(f.hostnames, append([]string(nil), hostnames...))
 	f.revisions = append(f.revisions, revision)
 	if f.err != nil {
 		return values.Storage{}, f.err
@@ -202,6 +202,33 @@ func TestEachRevisionAsksForTheInstancesStorage(t *testing.T) {
 	require.Equal(t, []int64{1, 2}, w.storage.revisions)
 }
 
+func TestTheBucketAdmitsTheCustomHostnameOnlyWhenTheSpecCarriesAValidOne(t *testing.T) {
+	t.Parallel()
+	spec := controlplanetest.Spec(uuid.New())
+	custom := "tms.acme-freight.com"
+	spec.CustomHostname = &custom
+	w := newBackupWorld(t, spec)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	invalid := "Not A Host"
+	spec.CustomHostname = &invalid
+	w.cp.SetSpec(spec)
+	w.loop.Tick(t.Context())
+
+	spec.CustomHostname = nil
+	w.cp.SetSpec(spec)
+	w.loop.Tick(t.Context())
+
+	w.storage.mu.Lock()
+	defer w.storage.mu.Unlock()
+	require.Equal(t, [][]string{
+		{spec.Hostname, custom},
+		{spec.Hostname},
+		{spec.Hostname},
+	}, w.storage.hostnames)
+}
+
 func TestTheReportCarriesBackupHealthAndTheRestore(t *testing.T) {
 	t.Parallel()
 	spec := controlplanetest.Spec(uuid.New())
@@ -219,7 +246,7 @@ func TestTheReportCarriesBackupHealthAndTheRestore(t *testing.T) {
 	w.loop.Tick(t.Context())
 
 	require.Equal(t, 1, w.releases.applies)
-	require.Equal(t, []string{spec.Hostname}, w.storage.hostnames)
+	require.Equal(t, [][]string{{spec.Hostname}}, w.storage.hostnames)
 	in := w.backups.last()
 	require.Equal(t, bucketStorage, in.Storage)
 	require.True(t, in.Applied)

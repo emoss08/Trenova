@@ -7,6 +7,17 @@
 # The hostname people open Trenova at, e.g. trenova.example.com. Required.
 domain: ""
 
+# More hostnames the same instance is served on, beside domain, e.g.
+# [tms.example.com]: each gets an Ingress rule and TLS host, Caddy answers it,
+# and the API and the bundled MinIO admit its origin. domain is always served
+# too. Point each one's DNS at the Ingress, as for domain. Sign-ins are per
+# hostname: a session started on one is not carried to another.
+aliases: []
+
+# The hostname links are built with (emails, password resets, the driver
+# portal, delivery links): domain or one of aliases. Empty means domain.
+primaryDomain: ""
+
 # The hostname the bundled MinIO is reached at for presigned uploads and
 # downloads, e.g. storage.example.com. Required while minio.enabled is true;
 # with external storage, storage.external.publicEndpoint is used instead.

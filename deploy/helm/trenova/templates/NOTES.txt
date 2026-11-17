@@ -7,8 +7,8 @@ provisions the database roles; the API and worker start once it has. Follow it:
 
 {{- if .Values.ingress.enabled }}
 
-Trenova will answer at https://{{ .Values.domain }} once the Ingress has an address
-and DNS for {{ .Values.domain }}{{ if .Values.minio.enabled }} and {{ .Values.storageDomain }}{{ end }} points at it.
+Trenova will answer at {{ include "trenova.primaryOrigin" . }} once the Ingress has an address
+and DNS for {{ splitList "," (include "trenova.hosts" .) | join ", " }}{{ if .Values.minio.enabled }} and {{ .Values.storageDomain }}{{ end }} points at it.
 {{- else if .Values.client.enabled }}
 
 No Ingress was created. To try it from this machine:

@@ -12,6 +12,27 @@
       "pattern": "^([a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\\.)+[a-z][-a-z0-9]{0,61}[a-z0-9]$",
       "description": "The hostname people open Trenova at."
     },
+    "aliases": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^([a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\\.)+[a-z][-a-z0-9]{0,61}[a-z0-9]$"
+      },
+      "description": "More hostnames the instance is served on, beside domain."
+    },
+    "primaryDomain": {
+      "anyOf": [
+        {
+          "const": ""
+        },
+        {
+          "type": "string",
+          "pattern": "^([a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\\.)+[a-z][-a-z0-9]{0,61}[a-z0-9]$"
+        }
+      ],
+      "description": "The hostname links are built with: domain or one of aliases; empty means domain."
+    },
     "storageDomain": {
       "anyOf": [
         {

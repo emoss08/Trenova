@@ -144,10 +144,16 @@ spec:
           image: {{ include "trenova.image" (dict "root" . "image" .Values.client.image) }}
           imagePullPolicy: {{ include "trenova.pullPolicy" .Values.client.image }}
           # TLS ends at the Ingress, so Caddy serves each hostname over plain
-          # HTTP on an unprivileged port (deploy/Caddyfile).
+          # HTTP on an unprivileged port (deploy/Caddyfile). DOMAIN lists domain
+          # and every alias: Caddy reads a comma-separated list there as the
+          # addresses of one site.
+          {{- $sites := list }}
+          {{- range splitList "," (include "trenova.hosts" .) }}
+          {{- $sites = append $sites (printf "http://%s:8080" .) }}
+          {{- end }}
           env:
             - name: DOMAIN
-              value: {{ printf "http://%s:8080" .Values.domain | quote }}
+              value: {{ join ", " $sites | quote }}
             - name: STORAGE_DOMAIN
               value: {{ printf "http://%s:8080" (.Values.storageDomain | default (printf "storage.%s" .Values.domain)) | quote }}
             - name: STORAGE_ORIGIN

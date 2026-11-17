@@ -1,6 +1,6 @@
 {{- if .Values.ingress.enabled }}
 {{- $c := dict "root" . "component" "client" }}
-{{- $hosts := list .Values.domain }}
+{{- $hosts := splitList "," (include "trenova.hosts" .) }}
 {{- if .Values.minio.enabled }}
 {{- $hosts = append $hosts .Values.storageDomain }}
 {{- end }}
