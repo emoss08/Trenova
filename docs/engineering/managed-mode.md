@@ -324,11 +324,16 @@ for the instance:
   portal, Trenova Capture's pairing page and discovery answer, SCIM resource locations, and the
   default accounting callbacks.
 - **Sessions are per address.** The session cookie is host-only (`__Host-`), so a session started
-  on one address is not carried to the other: people sign in again on the custom address. A
-  sign-in that leaves Trenova and comes back (SSO, an accounting connection) finishes on the
-  address its callback names: an SSO configuration's redirect URL is the organization's own
-  setting and does not move, and an accounting callback follows the primary unless the
-  configuration names one.
+  on one address is not carried to the other: people sign in again on the custom address.
+- **Single sign-on works from either address.** An SSO configuration's redirect URL is the
+  organization's own setting and does not move. When a person starts SSO on the other address
+  and the redirect URL's origin is one the API admits (`server.cors.allowedOrigins`), the start
+  endpoint first sends the browser to the same start endpoint on the redirect URL's address,
+  carrying only the checked `returnTo`, moved to that address (or to its home when it is not a
+  plain path). The whole flow then runs on one address and the person ends signed in there, which
+  may be the other address from the one they started on. A redirect URL on any other origin is
+  left as it was (`authservice.ssoStartHandoff`). An accounting connection's callback follows the
+  primary unless the configuration names one, and finishes on that address.
 - **Trenova is Trenova on either address.** An agent's portal site may cover neither address: the
   extension portal service refuses a site that covers the address links use or any origin the API
   admits.

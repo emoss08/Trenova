@@ -317,6 +317,7 @@ func (h *Handler) startSSOLogin(provider sso.SSOProvider) gin.HandlerFunc {
 				Provider:         provider,
 				OrganizationSlug: c.Param("slug"),
 				ReturnTo:         c.Query("returnTo"),
+				StartPath:        c.Request.URL.Path,
 				BrowserBinding:   sessioncookie.SetSSOBinding(c, &h.securityConfig.Session),
 			},
 		)
@@ -344,6 +345,7 @@ func (h *Handler) startSSOLoginGeneric(c *gin.Context) {
 				ProviderID:       providerID,
 				OrganizationSlug: orgSlug,
 				ReturnTo:         c.Query("returnTo"),
+				StartPath:        c.Request.URL.Path,
 				BrowserBinding:   sessioncookie.SetSSOBinding(c, &h.securityConfig.Session),
 			},
 		)
@@ -368,6 +370,7 @@ func (h *Handler) startSSOLoginGeneric(c *gin.Context) {
 			Provider:         provider,
 			OrganizationSlug: orgSlug,
 			ReturnTo:         c.Query("returnTo"),
+			StartPath:        c.Request.URL.Path,
 			BrowserBinding:   sessioncookie.SetSSOBinding(c, &h.securityConfig.Session),
 		},
 	)
