@@ -47,6 +47,7 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
 | `internal/telemetry` | what the instance uses, sampled every minute (the sampler) and sent beside the loop (the relay) |
 | `internal/storage` | the instance's buckets: the documents and backups Secrets, fetched from `GET /v1/storage` when missing or incomplete, and the documents bucket's CORS rules for the instance's origin |
 | `internal/backup` | backups read from and asked of CloudNativePG: health for the status report, the base backup before an update, the final backup, and a restore's progress |
+| `internal/databases` | the instance's databases ([Database generations](#database-generations)): the gate before an apply that goes back to a kept database, stopping the others, retiring, and the `databases` list |
 | `internal/systememail` | the system email sender: the TMS brought to the spec's fingerprint, the credential fetched from `GET /v1/secrets` and kept only in memory |
 | `internal/emailevents` | the system email events: bounces and complaints the control plane keeps for the instance, relayed to the TMS and acknowledged once it handled them |
 | `internal/supportkeys` | the support access key set: the TMS brought to the spec's `support` when its instance id, staff domain or key ids differ |
@@ -123,7 +124,9 @@ Every 15 seconds (`TRENOVA_OPERATOR_POLL_INTERVAL`):
    is not there, apply nothing and report why;
 4. render the chart values; make sure the escrow Secret is there (below), and apply nothing until
    it is; pull the chart at `release.version` (cached, two versions);
-5. compare with the deployed release: apply only when the chart version or the values differ;
+5. compare with the deployed release: apply only when the chart version or the values differ,
+   and the database gate lets it ([Database generations](#database-generations)); after the
+   report's health, stop the databases the instance does not run on and remove retired ones;
 6. read readiness; while the instance is active and ready and the spec has an invite, install it
    in the TMS (below), put the spec's features to the TMS (below), bring the TMS's system
    email sender and support access keys to the spec, and read the features and live support
@@ -620,6 +623,14 @@ creates two kinds of base backup itself, as CloudNativePG `Backup`s with `method
   that revision as `appliedRevision`; failed, it is deleted ten minutes after it stopped and taken
   again, and the health message says so.
 
+**Which database.** Health, the backup list, the backups the operator takes and a restore's
+`switched` all describe the database the application runs on, the one the deployed release points
+it at, never the spec's `database` while a move to it waits ([Database
+generations](#database-generations)): the control plane must never read another database's
+backups as the instance's. Without a release, it is the spec's (the one the chart makes). A tick
+that could not read the release leaves `backup` and `restore` off the report, and the control
+plane keeps what it has.
+
 **Health**, on every report while the instance has storage (`backup`): `walArchiving` from the
 cluster's `ContinuousArchiving` condition (`healthy`, `failing`, `unknown`), `lastArchivedWalAt`
 from the cluster's status, `lastBaseBackupAt` and `firstRecoverabilityPoint` from the object
@@ -663,8 +674,110 @@ requests and its own NetworkPolicy; the live cluster is unchanged. The operator 
 `preparing`, `ready` once the new cluster is healthy (with `recoveredTo`), or `failed` if it is
 not after six hours. A spec whose `database` names that generation switches to it: every
 connection follows the cluster's name, and once the instance is ready on that revision the
-operator hibernates every other cluster of the release (kept, never deleted) and reports
-`switched`. Readiness checks the cluster `database` names.
+operator reports `switched`; the database it ran on is stopped by the rules below. Readiness
+checks the cluster `database` names.
+
+## Database generations
+
+Each database of an instance is a CloudNativePG `Cluster` of its own: the first one,
+`<fullname>-postgres`, and one per restore, `<fullname>-postgres-<generation>` (`r` and eight hex
+digits). `internal/databases` keeps them; the contract's `SpecDatabase`, `retiredDatabases` and
+`DatabaseState` say what the control plane asks and reads.
+
+**How the application follows a database.** The chart renders two kinds of `Cluster` and no
+more: the live one (`postgres.generation`, with `helm.sh/resource-policy: keep`) and a restore
+candidate (`postgres.restore`, without `keep`). Everything the application connects with is named
+after the live cluster: the host `<cluster>-rw`, the CA `<cluster>-ca` that every client verifies
+against, the release Job's superuser Secret `<cluster>-superuser`, the `cnpg.io/cluster` selectors
+of the NetworkPolicies and the `ScheduledBackup` `<cluster>-daily`. Moving the application is
+therefore one Helm upgrade with a new `postgres.generation`: the API and the worker roll
+(`maxSurge: 1`, their new pods wait in `Init` for the database), the release Job runs against the
+new cluster, and the old `Cluster`, no longer rendered, stays where it is because of `keep`. Going
+back renders a cluster the release left behind: Helm adopts it (its `meta.helm.sh/release-name`
+annotation is still the release's), using the live object as the baseline for its patch.
+
+**What is per generation.** The chart renders only the `Cluster` (and, for a candidate, its
+NetworkPolicy `<fullname>-postgres-<generation>`; for the live one the `ScheduledBackup`); Helm
+removes those two with the values that rendered them. CloudNativePG makes everything else and owns
+it through the `Cluster`: its pods, its volume claims (`<cluster>-1`, labelled `cnpg.io/cluster`
+and, through the chart's `inheritedMetadata`, with the release and `component: postgres`), its
+Services (`-rw`, `-ro`, `-r`), its Secrets (`-ca`, `-server`, `-replication`, `-superuser`) and its
+disruption budget. Shared by every generation, never per generation: the `ObjectStore`
+`<fullname>-backups`, the `ImageCatalog`, the database credentials Secret `<fullname>-db`, and the
+backups bucket, where each generation archives under its own cluster name.
+
+**On every reconcile**, in this order (the live database is the generation `database` names,
+or the first one without it):
+
+1. **The gate**, before anything is applied (`Manager.Gate`). Nothing to decide when the
+   deployed release already points the application at the live database, or when `database`
+   names the restore's own generation (the switch; the chart makes or keeps it). Otherwise the
+   release's clusters are listed:
+   - the live database is not held (or is being deleted) while the cluster holds others of the
+     instance: **refused**. Nothing is applied, the instance stays on the database it runs on,
+     and the message says which was named. A `database` absent while the first database has been
+     removed is refused the same way, so an empty first database is never made under a running
+     instance. When the cluster holds none of the instance's databases, the chart installs
+     (the first install, or a new machine recovering `database` from the bucket);
+   - held and stopped (`cnpg.io/hibernation: on`), the instance active and a release deployed:
+     **going back**. The operator sets the annotation to `off`, applies nothing, and comes back
+     on the next tick; it applies once CloudNativePG reports the cluster healthy with every
+     instance ready and the hibernation condition gone. Meanwhile the deployed release is
+     reported as it runs, `appliedRevision` stays on the revision it runs, and the message says
+     `going back to <database>: starting it` or `…: waiting for it to accept connections
+     (<phase>)`. Every change in the revision waits with it. The gate never blocks the loop and
+     has no deadline: a database that never starts keeps the instance where it was, saying why;
+   - suspended or decommissioned, nothing is started: the chart's lifecycle values decide
+     whether the database runs (suspended hibernates it, decommissioned keeps it up for the
+     final backup), as they do for any live database.
+
+   A list that fails holds the apply (a move needs it), with the reason in the message.
+2. **The chart** is applied as before; the application follows `postgres.generation`.
+3. **Stopping the others** (`Manager.Settle`), only once the desired revision is applied and
+   the instance is ready on it, so the database the application ran on stays up until every new
+   pod runs and the release Job finished: every cluster of the release that is not the live
+   one, not the one the deployed release points at, not the restore's `generation` and not
+   already being deleted gets `cnpg.io/hibernation: on`. Its volumes are kept. This runs every
+   reconcile, so a database left running by hand, or by a going back that was called off, is
+   stopped too. This replaces stopping the others only at the moment a restore reported
+   `switched`, which left a database a going back abandoned running.
+4. **Retiring.** Each generation in `retiredDatabases` is removed unless it is the live one, the
+   one the deployed release points at, the restore's `generation` or its `sourceGeneration`;
+   those are left alone and named in the message (`not removed, though the spec retires them:
+   …`). A held `Cluster` is deleted in the foreground with its UID as a precondition, so exactly
+   the object listed is deleted and it stays visible, `removing`, until Kubernetes has removed
+   what it owns. Once the `Cluster` is gone, any volume claim still labelled with its name, the
+   release and `component: postgres` is deleted the same way. Removing one that is already gone
+   does nothing. The backups bucket, the `ObjectStore`, the `Backup` objects (the operator's own
+   and the schedule's) and every other generation are never touched.
+
+**The owner check.** A cluster is the instance's only when the label selector
+(`app.kubernetes.io/instance=<release>,app.kubernetes.io/component=postgres`) and its name both
+match: the first one's name, or that name, a dash and a generation. A cluster of another release
+in the same namespace, a cluster whose name is not a generation, and a volume claim labelled with
+the cluster's name but another release, are never listed, stopped or removed.
+
+**A decommissioned instance** is left to decommissioning: the gate refuses a database that is not
+held, as always, but starts nothing, and nothing is stopped or removed. Suspended, the others are
+stopped and retired databases are removed as when active; nothing is started.
+
+**The list** (`databases` on the status report) is every cluster of the instance, the one the
+deployed release points the application at first (`live`), then newest first, at most 20:
+
+| `state` | When |
+|---|---|
+| `removing` | being deleted, retired on this tick, or gone with volume claims left |
+| `stopped` | kept with no server by intent: `cnpg.io/hibernation: on` (also the live one of a suspended instance); and a database that is not meant to run and does not accept connections, which the next ready reconcile stops |
+| `running` | healthy, every instance ready, not hibernated |
+| `starting` | should run and does not accept connections yet: the live one (the spec's `database`, which is the one a going back is waking) or the one the application is connected to, while it starts, restarts or fails |
+| `restoring` | the restore's `generation`, not live, not accepting connections yet |
+
+`sizeBytes` is the sum of `status.capacity.storage` of its volume claims, left out when any of
+them has none (k3s's `local-path` reports capacity, not usage); `createdAt` is the `Cluster`'s
+creation time. It goes on the report under the backup list's rule, through the same mechanism
+(`acceptedLists` in the loop): the first report after a start, then only when its digest differs
+from the last list the control plane answered 2xx to; a refused report records nothing. A failed
+cluster list leaves `databases` out and is logged at most once a minute.
 
 ## Logs
 
@@ -953,13 +1066,26 @@ which it keeps on uninstall, is created by its chart.
   signed `PUT` and `HEAD`), the operator's own version (moved first, Trenova held meanwhile, a version the registry lacks
   or one that never becomes ready rolled back and not tried again, a pinned HelmChart reported),
   backups (health from the cluster and object store, the
-  pre-update and final backups taken once and reported, a restore reported and only its switch
-  stopping the old database; the backup list's phases and origins, the operator's own backups
+  pre-update and final backups taken once and reported, a restore reported and its switch
+  stopping nothing itself; the backup list's phases and origins, the operator's own backups
   listed with theirs, the 100 newest, a backup past the first recoverability point and a failure
   older than 7 days left out, a failed list read leaving the health as it was; against the fake
   control plane, the list sent on the first report, not again while unchanged, at once when a
   backup completes or is removed, again after a refused report, and left out when the read
-  fails), the chart with storage (MinIO gone, the object store and schedule
+  fails), database generations (`internal/databases` against a fake cluster, and the loop end to
+  end with a log of every start, stop, removal and chart apply in order: going back to the first
+  database and to an older restored one started, waited for, moved to, then the old one stopped,
+  the chart never applied while the database it names does not accept connections; a database
+  not held refused with nothing changed; the others stopped with no restore, never the restore
+  candidate and not before the instance is ready on the revision; retiring exactly the named
+  generation's cluster and volumes beside a decoy of another release, a volume claim of another
+  release labelled with the same cluster and another generation of the same release, with the
+  UID precondition and foreground deletion, then done when asked again; the live, connected,
+  candidate and source refused in the message; each state in the list, live first, sizes from
+  capacity, `starting` only for the live or connected one and `stopped` for one kept by intent;
+  backup health read from the database the application runs on while going back waits; the list sent first, not while unchanged, again after a refused report; suspended
+  going back applied straight with nothing started; decommissioned stopping and removing
+  nothing), the chart with storage (MinIO gone, the object store and schedule
   rendered, the backups Secret named by nothing else, a restore beside the live database and after
   its switch), log keeping (`logs_chart_test.go`: no ClusterRole, ClusterRoleBinding, DaemonSet
   or hostPath anywhere, Alloy's Role exactly pods and their logs, Loki's 168-hour retention, both
@@ -981,7 +1107,5 @@ which it keeps on uninstall, is created by its chart.
 
 - **Backup sizes.** The plugin's `Backup` status carries no size, so `finalBackup.sizeBytes` and
   each listed backup's `sizeBytes` are left out.
-- **Removing a database a restore replaced.** It stays hibernated, with its volume, until the
-  instance is torn down.
 - **CI.** `.github/workflows/helm.yml` renders no shape with `backup.enabled` and has no schema for
   the Barman Cloud `ObjectStore`; the values tests render it through the chart instead.

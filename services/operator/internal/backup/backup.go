@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/emoss08/trenova/operator/internal/health"
@@ -26,11 +25,9 @@ const (
 
 	labelCluster     = "cnpg.io/cluster"
 	labelInstance    = "app.kubernetes.io/instance"
-	labelComponent   = "app.kubernetes.io/component"
 	labelRequest     = "trenova.app/backup-request"
 	annotationOrigin = "trenova.app/backup-origin"
 	annotationReqID  = "trenova.app/backup-request-id"
-	annotationHibern = "cnpg.io/hibernation"
 	healthyPhase     = "Cluster in healthy state"
 
 	phaseCompleted = "completed"
@@ -85,12 +82,17 @@ func New(p *Params) *Manager {
 	}
 }
 
+// Input is one tick's backup work. Generation is the database the
+// application runs on, as the deployed release points it: the one whose
+// health and backups are the instance's, which is not the spec's `database`
+// while a move to another one waits.
 type Input struct {
-	Spec     *instanceapi.InstanceSpec
-	Revision int64
-	Applied  bool
-	Ready    bool
-	Storage  values.Storage
+	Spec       *instanceapi.InstanceSpec
+	Generation string
+	Revision   int64
+	Applied    bool
+	Ready      bool
+	Storage    values.Storage
 }
 
 type Result struct {
@@ -104,7 +106,7 @@ func (m *Manager) Run(ctx context.Context, in Input) Result {
 	if !in.Storage.Configured() {
 		return Result{}
 	}
-	active := values.PostgresCluster(m.release, generation(in.Spec))
+	active := values.PostgresCluster(m.release, in.Generation)
 	h, list := m.health(ctx, active)
 	out := Result{Health: &h, Backups: list}
 	if req := in.Spec.Backup; req != nil {
@@ -117,13 +119,6 @@ func (m *Manager) Run(ctx context.Context, in Input) Result {
 		out.Restore = m.restore(ctx, in, active, r)
 	}
 	return out
-}
-
-func generation(spec *instanceapi.InstanceSpec) string {
-	if spec.Database == nil {
-		return ""
-	}
-	return spec.Database.Generation
 }
 
 func (m *Manager) health(
@@ -298,7 +293,6 @@ func (m *Manager) restore(
 		if !in.Applied || !in.Ready {
 			return out
 		}
-		m.hibernateOthers(ctx, active)
 		out.Phase = instanceapi.RestoreProgressPhase("switched")
 		out.RecoveredTo = &r.TargetTime
 		return out
@@ -323,28 +317,6 @@ func (m *Manager) restore(
 		out.Message = message(phase)
 	}
 	return out
-}
-
-func (m *Manager) hibernateOthers(ctx context.Context, active string) {
-	clusters := m.dynamic.Resource(clusterResource).Namespace(m.namespace)
-	list, err := clusters.List(ctx, metav1.ListOptions{
-		LabelSelector: labelInstance + "=" + m.release + "," + labelComponent + "=postgres",
-	})
-	if err != nil {
-		m.logger.Warn("cannot list the databases a restore replaced", "error", err)
-		return
-	}
-	patch := []byte(`{"metadata":{"annotations":{"` + annotationHibern + `":"on"}}}`)
-	for _, c := range list.Items {
-		if c.GetName() == active || c.GetAnnotations()[annotationHibern] == "on" {
-			continue
-		}
-		if _, err := clusters.Patch(ctx, c.GetName(), types.MergePatchType, patch, metav1.PatchOptions{}); err != nil {
-			m.logger.Warn("cannot stop a database a restore replaced", "cluster", c.GetName(), "error", err)
-			continue
-		}
-		m.logger.Info("a database a restore replaced is stopped and kept", "cluster", c.GetName())
-	}
 }
 
 func (m *Manager) backup(ctx context.Context, name string) (*unstructured.Unstructured, error) {

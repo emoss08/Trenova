@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/backup"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/databases"
 	"github.com/emoss08/trenova/operator/internal/emailevents"
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
@@ -145,6 +146,11 @@ type Operator interface {
 	Converge(ctx context.Context, want string) selfupgrade.Status
 }
 
+type Databases interface {
+	Gate(ctx context.Context, in databases.GateInput) databases.Gate
+	Settle(ctx context.Context, in databases.SettleInput) databases.Result
+}
+
 type inviteAsked struct {
 	tokenSHA256 string
 	at          time.Time
@@ -166,12 +172,14 @@ type Loop struct {
 	grants   SupportGrants
 	storage  Storage
 	backups  Backups
+	dbs      Databases
 	commands Commands
 	events   EmailEvents
 	logs     LogRequests
 	telem    Telemetry
 	operator Operator
 	located  values.Storage
+	connects databases.Connected
 	capacity values.Capacity
 	base     map[string]any
 	ownNS    string
@@ -187,7 +195,7 @@ type Loop struct {
 	desired      *controlplane.Desired
 	applied      int64
 	last         instanceapi.StatusReport
-	lastBackups  string
+	accepted     acceptedLists
 	lastSent     time.Time
 	reported     bool
 	heartbeat    atomic.Int64
@@ -211,6 +219,7 @@ type Params struct {
 	SupportGrants  SupportGrants
 	Storage        Storage
 	Backups        Backups
+	Databases      Databases
 	Commands       Commands
 	EmailEvents    EmailEvents
 	Logs           LogRequests
@@ -253,6 +262,7 @@ func New(p *Params) (*Loop, error) {
 		grants:   p.SupportGrants,
 		storage:  p.Storage,
 		backups:  p.Backups,
+		dbs:      p.Databases,
 		commands: p.Commands,
 		events:   p.EmailEvents,
 		logs:     p.Logs,
@@ -288,6 +298,7 @@ func (p *Params) validate() error {
 		{"SupportGrants", p.SupportGrants == nil},
 		{"Storage", p.Storage == nil},
 		{"Backups", p.Backups == nil},
+		{"Databases", p.Databases == nil},
 		{"Commands", p.Commands == nil},
 		{"EmailEvents", p.EmailEvents == nil},
 		{"Logs", p.Logs == nil},
@@ -402,6 +413,7 @@ func (l *Loop) Tick(ctx context.Context) {
 	l.heartbeat.Store(l.now().UnixNano())
 	report.Administrator = l.administrator(ctx, report.Ready)
 	l.backupReport(ctx, &report)
+	l.databaseReport(ctx, &report)
 	l.sendFeatures(ctx, report.Ready)
 	report.Features = l.heldFeatures(ctx, report.Ready)
 	l.sendSystemEmail(ctx, report.Ready)
@@ -416,9 +428,7 @@ func (l *Loop) Tick(ctx context.Context) {
 			return
 		}
 		l.last, l.lastSent, l.reported = report, l.now(), true
-		if b := report.Backup; b != nil && b.Backups != nil {
-			l.lastBackups = backupsDigest(*b.Backups)
-		}
+		l.accepted.record(report)
 	}
 	l.relayUsage(ctx, report.Ready)
 	l.relayLogRequests(ctx, report.Ready)
@@ -731,6 +741,7 @@ func (l *Loop) relayUsage(ctx context.Context, ready bool) {
 
 func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 	report := instanceapi.StatusReport{Components: []instanceapi.ComponentStatus{}}
+	l.connects = databases.Connected{}
 	if own := l.creds.InstanceID(); l.desired.Spec.InstanceId != own {
 		return l.notReady(report, fmt.Sprintf(
 			"the spec is for instance %s and this operator is instance %s",
@@ -784,21 +795,54 @@ func (l *Loop) apply(
 	if err != nil {
 		return l.notReady(report, err.Error())
 	}
+	l.connects = connectedTo(deployed)
+	gate := l.dbs.Gate(ctx, databases.GateInput{Spec: &l.desired.Spec, Connected: l.connects})
+	if gate.Hold {
+		return l.stay(ctx, report, deployed, gate.Message)
+	}
 	need, err := release.NeedsApply(deployed, ch, rendered.Values)
 	if err != nil {
 		return l.notReady(report, err.Error())
 	}
 	if need {
 		if err = l.releases.Apply(ctx, ch, rendered.Values); err != nil {
+			l.connects = databases.Connected{}
 			l.logger.Error("cannot apply the spec", "revision", l.desired.Revision, "error", err)
 			return l.notReady(report, err.Error())
 		}
 		if deployed, err = l.releases.Deployed(); err != nil {
+			l.connects = databases.Connected{}
 			return l.notReady(report, err.Error())
 		}
+		l.connects = connectedTo(deployed)
 	}
 	l.applied = l.desired.Revision
 	return l.observe(ctx, report, deployed, rendered.Values)
+}
+
+// stay keeps the deployed release, reports it as it runs and says why the
+// desired revision waits.
+func (l *Loop) stay(
+	ctx context.Context,
+	report instanceapi.StatusReport,
+	deployed release.Deployed,
+	why string,
+) instanceapi.StatusReport {
+	if !deployed.Exists {
+		return l.notReady(report, why)
+	}
+	report = l.observe(ctx, report, deployed, deployed.Config)
+	msg := trim(why)
+	report.Message = &msg
+	return report
+}
+
+func connectedTo(d release.Deployed) databases.Connected {
+	out := databases.Connected{Known: true, Exists: d.Exists}
+	if pg, ok := d.Config["postgres"].(map[string]any); ok && d.Exists {
+		out.Generation, _ = pg["generation"].(string)
+	}
+	return out
 }
 
 func (l *Loop) hold(
@@ -810,6 +854,7 @@ func (l *Loop) hold(
 	if err != nil {
 		return l.notReady(report, err.Error())
 	}
+	l.connects = connectedTo(deployed)
 	if !deployed.Exists {
 		return l.notReady(report, fmt.Sprintf(
 			"Trenova is installed once the operator runs %s: %s", op.Target, op.Message,
@@ -890,20 +935,25 @@ func (l *Loop) objectStorage(ctx context.Context) (values.Storage, error) {
 }
 
 func (l *Loop) backupReport(ctx context.Context, report *instanceapi.StatusReport) {
+	running, ok := l.runningOn()
+	if !ok {
+		return
+	}
 	applied := report.AppliedRevision != nil && *report.AppliedRevision == l.desired.Revision
 	res := l.backups.Run(ctx, backup.Input{
-		Spec:     &l.desired.Spec,
-		Revision: l.desired.Revision,
-		Applied:  applied,
-		Ready:    report.Ready,
-		Storage:  l.located,
+		Spec:       &l.desired.Spec,
+		Generation: running,
+		Revision:   l.desired.Revision,
+		Applied:    applied,
+		Ready:      report.Ready,
+		Storage:    l.located,
 	})
 	report.Backup = res.Health
 	report.Restore = res.Restore
 	if res.Final != nil && applied {
 		report.FinalBackup = res.Final
 	}
-	if res.Health != nil && res.Backups != nil && backupsDigest(*res.Backups) != l.lastBackups {
+	if res.Health != nil && res.Backups != nil && backupsDigest(*res.Backups) != l.accepted.backups {
 		h := *res.Health
 		list := slices.Clone(*res.Backups)
 		h.Backups = &list
@@ -911,24 +961,110 @@ func (l *Loop) backupReport(ctx context.Context, report *instanceapi.StatusRepor
 	}
 }
 
-func backupsDigest(list []instanceapi.BackupEntry) string {
+// runningOn is the database the application runs on: the one the deployed
+// release points it at, read again when this tick's converge stopped before
+// reading the release. Without a release nothing runs yet, and the spec's
+// database is the one the chart makes. When the release cannot be read the
+// backup report is left out, since any other database's health would be read
+// as the instance's; the control plane keeps the last one it has.
+func (l *Loop) runningOn() (string, bool) {
+	c := l.connects
+	if !c.Known {
+		deployed, err := l.releases.Deployed()
+		if err != nil {
+			l.logger.Warn("cannot read the release; the report leaves backups out", "error", err)
+			return "", false
+		}
+		c = connectedTo(deployed)
+	}
+	if !c.Exists {
+		return databases.Live(&l.desired.Spec), true
+	}
+	return c.Generation, true
+}
+
+func (l *Loop) databaseReport(ctx context.Context, report *instanceapi.StatusReport) {
+	applied := report.AppliedRevision != nil && *report.AppliedRevision == l.desired.Revision
+	res := l.dbs.Settle(ctx, databases.SettleInput{
+		Spec:      &l.desired.Spec,
+		Connected: l.connects,
+		Applied:   applied,
+		Ready:     report.Ready,
+	})
+	if res.Message != "" {
+		msg := res.Message
+		if report.Message != nil {
+			msg = *report.Message + "; " + msg
+		}
+		msg = trim(msg)
+		report.Message = &msg
+	}
+	if res.Databases != nil && databasesDigest(*res.Databases) != l.accepted.databases {
+		list := slices.Clone(*res.Databases)
+		report.Databases = &list
+	}
+}
+
+// acceptedLists holds the digest of each list the control plane last
+// answered 2xx to. A list goes on a report when its digest differs, which
+// includes the first report after a start; a refused or failed report records
+// nothing, so the list goes again on the next tick.
+type acceptedLists struct {
+	backups   string
+	databases string
+}
+
+func (a *acceptedLists) record(report instanceapi.StatusReport) {
+	if b := report.Backup; b != nil && b.Backups != nil {
+		a.backups = backupsDigest(*b.Backups)
+	}
+	if report.Databases != nil {
+		a.databases = databasesDigest(*report.Databases)
+	}
+}
+
+func (a *acceptedLists) carried(report instanceapi.StatusReport) bool {
+	return (report.Backup != nil && report.Backup.Backups != nil) || report.Databases != nil
+}
+
+func listDigest(rows [][]string) string {
 	sum := sha256.New()
+	for _, fields := range rows {
+		sum.Write([]byte(strings.Join(fields, "\x00") + "\n"))
+	}
+	return hex.EncodeToString(sum.Sum(nil))
+}
+
+func backupsDigest(list []instanceapi.BackupEntry) string {
+	rows := make([][]string, 0, len(list))
 	for _, e := range list {
 		origin := ""
 		if e.Origin != nil {
 			origin = string(*e.Origin)
 		}
-		size := ""
-		if e.SizeBytes != nil {
-			size = strconv.FormatInt(*e.SizeBytes, 10)
-		}
-		fields := []string{
+		rows = append(rows, []string{
 			e.Id, string(e.Phase), e.StartedAt.UTC().Format(time.RFC3339Nano), stampNano(e.CompletedAt),
-			origin, str(e.RequestId), size, str(e.Message),
-		}
-		sum.Write([]byte(strings.Join(fields, "\x00") + "\n"))
+			origin, str(e.RequestId), sizeText(e.SizeBytes), str(e.Message),
+		})
 	}
-	return hex.EncodeToString(sum.Sum(nil))
+	return listDigest(rows)
+}
+
+func databasesDigest(list []instanceapi.DatabaseState) string {
+	rows := make([][]string, 0, len(list))
+	for _, d := range list {
+		rows = append(rows, []string{
+			d.Generation, string(d.State), strconv.FormatBool(d.Live), sizeText(d.SizeBytes), stampNano(d.CreatedAt),
+		})
+	}
+	return listDigest(rows)
+}
+
+func sizeText(n *int64) string {
+	if n == nil {
+		return ""
+	}
+	return strconv.FormatInt(*n, 10)
 }
 
 func stampNano(t *time.Time) string {
@@ -974,8 +1110,7 @@ func (l *Loop) notReady(report instanceapi.StatusReport, msg string) instanceapi
 }
 
 func (l *Loop) shouldReport(r instanceapi.StatusReport) bool {
-	if !l.reported || l.now().Sub(l.lastSent) >= l.report ||
-		(r.Backup != nil && r.Backup.Backups != nil) {
+	if !l.reported || l.now().Sub(l.lastSent) >= l.report || l.accepted.carried(r) {
 		return true
 	}
 	return r.Ready != l.last.Ready ||

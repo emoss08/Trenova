@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/controlplanetest"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/databases"
 	"github.com/emoss08/trenova/operator/internal/escrow"
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
@@ -80,14 +81,26 @@ type countingReleases struct {
 	*release.Releaser
 	applies int
 	fail    error
+	before  func(vals map[string]any)
 }
 
 func (c *countingReleases) Apply(ctx context.Context, ch *chart.Chart, vals map[string]any) error {
 	c.applies++
+	if c.before != nil {
+		c.before(vals)
+	}
 	if c.fail != nil {
 		return c.fail
 	}
 	return c.Releaser.Apply(ctx, ch, vals)
+}
+
+type noDatabases struct{}
+
+func (noDatabases) Gate(context.Context, databases.GateInput) databases.Gate { return databases.Gate{} }
+
+func (noDatabases) Settle(context.Context, databases.SettleInput) databases.Result {
+	return databases.Result{}
 }
 
 type fakeUsage struct {
@@ -332,6 +345,7 @@ func newWorldWith(
 		SupportGrants:  w.grants,
 		Storage:        noStorage{},
 		Backups:        &fakeBackups{},
+		Databases:      noDatabases{},
 		Commands:       runner,
 		EmailEvents:    w.events,
 		Logs:           w.logs,
@@ -1328,6 +1342,7 @@ func TestALoopWithoutItsCommandsIsRefused(t *testing.T) {
 	require.Contains(t, err.Error(), "Commands")
 	require.Contains(t, err.Error(), "EmailEvents")
 	require.Contains(t, err.Error(), "Operator")
+	require.Contains(t, err.Error(), "Databases")
 }
 
 func apiDeployment() *appsv1.Deployment {

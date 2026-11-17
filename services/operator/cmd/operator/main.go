@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/databases"
 	"github.com/emoss08/trenova/operator/internal/emailevents"
 	"github.com/emoss08/trenova/operator/internal/escrow"
 	"github.com/emoss08/trenova/operator/internal/health"
@@ -339,6 +340,12 @@ func newLoop(
 			Logger:          logger,
 		}),
 		Backups: backup.New(&backup.Params{
+			Dynamic:   c.dyn,
+			Namespace: cfg.targetNamespace,
+			Release:   cfg.release,
+			Logger:    logger,
+		}),
+		Databases: databases.New(&databases.Params{
 			Dynamic:   c.dyn,
 			Namespace: cfg.targetNamespace,
 			Release:   cfg.release,

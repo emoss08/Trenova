@@ -99,6 +99,11 @@ func (w *backupWorld) set(result backup.Result) {
 
 func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
 	t.Helper()
+	return newBackupWorldWith(t, spec, noDatabases{})
+}
+
+func newBackupWorldWith(t *testing.T, spec instanceapi.InstanceSpec, dbs reconcile.Databases) *backupWorld {
+	t.Helper()
 	cp := controlplanetest.New(t, spec)
 	kube := fake.NewClientset()
 	body, err := sonic.Marshal(cp.Bundle(7 * 24 * time.Hour))
@@ -162,6 +167,7 @@ func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
 		SupportGrants:  &fakeSupportGrants{},
 		Storage:        w.storage,
 		Backups:        w.backups,
+		Databases:      dbs,
 		Commands:       runner,
 		EmailEvents:    &fakeEmailEvents{},
 		Logs:           kept,

@@ -185,7 +185,7 @@ func TestTheFinalBackupIsTakenWhenDecommissioned(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestARestoreIsReportedAndOnlyItsSwitchStopsTheOldDatabase(t *testing.T) {
+func TestARestoreIsReportedAndItsSwitchLeavesStoppingToTheDatabases(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	target := now.Add(-3 * time.Hour)
@@ -209,16 +209,33 @@ func TestARestoreIsReportedAndOnlyItsSwitchStopsTheOldDatabase(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, "on", got.GetAnnotations()["cnpg.io/hibernation"])
 
-	// Switched: the old database is stopped and kept.
+	// Switched: reported. Stopping the old database is internal/databases'
+	// rule on every reconcile, so the backup manager patches no cluster.
 	s.Database = &instanceapi.SpecDatabase{Generation: "r1a2b3c4d", TargetTime: target}
-	res = m.Run(ctx, backup.Input{Spec: s, Applied: true, Ready: true, Storage: storage})
+	res = m.Run(ctx, backup.Input{Spec: s, Generation: "r1a2b3c4d", Applied: true, Ready: true, Storage: storage})
 	require.Equal(t, instanceapi.RestoreProgressPhase("switched"), res.Restore.Phase)
-	got, err = dyn.Resource(clusters).Namespace(namespace).Get(ctx, "trenova-postgres", metav1.GetOptions{})
-	require.NoError(t, err)
-	require.Equal(t, "on", got.GetAnnotations()["cnpg.io/hibernation"])
-	kept, err := dyn.Resource(clusters).Namespace(namespace).Get(ctx, "trenova-postgres-r1a2b3c4d", metav1.GetOptions{})
-	require.NoError(t, err)
-	require.NotEqual(t, "on", kept.GetAnnotations()["cnpg.io/hibernation"])
+	require.Equal(t, target, *res.Restore.RecoveredTo)
+	for _, a := range dyn.Actions() {
+		require.NotEqual(t, "patch", a.GetVerb(), "the backup manager stops no database")
+	}
+}
+
+func TestHealthDescribesTheDatabaseTheApplicationRunsOn(t *testing.T) {
+	t.Parallel()
+	running := cluster("trenova-postgres-r1a2b3c4d", "Cluster in healthy state", "True", now.Add(-24*time.Hour))
+	waking := cluster("trenova-postgres", "Setting up primary", "False", now.Add(-60*24*time.Hour))
+	m, _ := manager(t, running, waking, store(),
+		done("daily-old", "trenova-postgres", "completed", now.Add(-30*time.Hour)),
+		done("daily-live", "trenova-postgres-r1a2b3c4d", "completed", now.Add(-2*time.Hour)),
+	)
+	// Going back to the first database is held: the spec names it, the
+	// application still runs on r1a2b3c4d.
+	s := spec(instanceapi.Active)
+	res := m.Run(context.Background(), backup.Input{Spec: s, Generation: "r1a2b3c4d", Storage: storage})
+	require.Equal(t, instanceapi.BackupHealthWalArchiving("healthy"), res.Health.WalArchiving)
+	require.Nil(t, res.Health.Message)
+	require.Len(t, *res.Backups, 1)
+	require.Equal(t, now.Add(-2*time.Hour), *(*res.Backups)[0].CompletedAt)
 }
 
 func TestARestoreThatNeverBecomesReadyFails(t *testing.T) {

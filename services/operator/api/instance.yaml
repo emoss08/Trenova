@@ -844,6 +844,21 @@ components:
           $ref: "#/components/schemas/SpecDatabase"
         restore:
           $ref: "#/components/schemas/SpecRestore"
+        retiredDatabases:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          description: |
+            Databases of this instance that are no longer needed: remove each one's cluster and its
+            volumes. An item is a generation, or the empty string for the instance's first database.
+            Never the database the instance runs on (`database`), the one being restored
+            (`restore.generation`) or the one a restore reads from (`restore.sourceGeneration`):
+            the operator removes none of those, says so in the status report's `message`, and
+            leaves them be. Removing one that is already gone is done. Backups in the backups
+            bucket are not touched.
+          items:
+            type: string
+            pattern: '^(r[0-9a-f]{8})?$'
         addonEndings:
           type: array
           maxItems: 50
@@ -1019,6 +1034,13 @@ components:
         The database the instance runs on, once a restore has replaced its first one: `generation`
         names it, and it was restored from `sourceGeneration`'s backups (empty for the first
         database) to `targetTime`. Absent while the instance runs on its first database.
+        Naming a database the cluster already holds, stopped, means go back to it: start it, wait
+        until it accepts connections, move the instance to it, then stop the one it ran on. A
+        revision without `database` on an instance that has other databases means go back to the
+        first one, the same way. Whichever is named, every other database of the instance except
+        the one being restored is stopped, on every reconcile, not only after a switch. A
+        `generation` the cluster does not hold, and that `restore` does not name, is refused: the
+        instance stays as it is and the status report's `message` says why.
       required: [generation, sourceGeneration, targetTime]
       properties:
         generation:
@@ -1255,6 +1277,16 @@ components:
             once the instance has taken it up. Left out when the instance holds none or the operator
             could not read it this time; either way the instance is not counted as holding the
             current sender. Each report replaces the last: nothing reported is stored as nothing.
+        databases:
+          type: array
+          maxItems: 20
+          description: |
+            The databases the cluster holds for this instance, the live one first. The operator
+            sends the list with the first status report after it starts and whenever it differs
+            from the last one the control plane accepted; left out, the control plane keeps the
+            list it has.
+          items:
+            $ref: "#/components/schemas/DatabaseState"
 
     SupportGrant:
       type: object
@@ -1720,6 +1752,34 @@ components:
         message:
           type: string
           maxLength: 500
+
+    DatabaseState:
+      type: object
+      description: One database of the instance, as the cluster holds it.
+      required: [generation, state, live]
+      properties:
+        generation:
+          type: string
+          pattern: '^(r[0-9a-f]{8})?$'
+          description: Its generation; the empty string is the instance's first database.
+        state:
+          type: string
+          enum: [running, starting, stopped, restoring, removing]
+          description: |
+            `running` accepts connections, `starting` should run and is not accepting connections
+            yet, `stopped` is kept with its volumes and no server, `restoring` is a restore's copy
+            still being prepared, `removing` is being deleted.
+        live:
+          type: boolean
+          description: Whether the instance's application is connected to this one.
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The size of its volumes, only when the operator can read it.
+        createdAt:
+          type: string
+          format: date-time
 
     InstanceStorage:
       type: object

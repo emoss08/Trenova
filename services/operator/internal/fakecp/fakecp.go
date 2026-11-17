@@ -55,6 +55,8 @@ type Server struct {
 	grantsHeld  bool
 	backups     []instanceapi.BackupEntry
 	backupLists int
+	databases   []instanceapi.DatabaseState
+	dbLists     int
 	reports     []instanceapi.StatusReport
 	usage       []instanceapi.UsageReport
 	readings    map[usageKey]int64
@@ -329,6 +331,14 @@ func (s *Server) Backups() ([]instanceapi.BackupEntry, int) {
 	return append([]instanceapi.BackupEntry(nil), s.backups...), s.backupLists
 }
 
+// Databases is the database list the control plane keeps, as the last
+// report that carried one left it, and how many reports carried one.
+func (s *Server) Databases() ([]instanceapi.DatabaseState, int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]instanceapi.DatabaseState(nil), s.databases...), s.dbLists
+}
+
 func supportDigest(support *instanceapi.SpecSupport) string {
 	if support == nil {
 		return "0"
@@ -547,6 +557,10 @@ func (s *Server) putStatus(w http.ResponseWriter, r *http.Request) {
 	if report.Backup != nil && report.Backup.Backups != nil {
 		s.backups = append([]instanceapi.BackupEntry{}, *report.Backup.Backups...)
 		s.backupLists++
+	}
+	if report.Databases != nil {
+		s.databases = append([]instanceapi.DatabaseState{}, *report.Databases...)
+		s.dbLists++
 	}
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
