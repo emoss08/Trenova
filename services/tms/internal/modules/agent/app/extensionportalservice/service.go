@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
@@ -49,6 +50,7 @@ type Params struct {
 	Runs         agentextensionports.PortalRunRepository
 	Workflows    kernelports.WorkflowStarter
 	AppConfig    *appconfig.Config
+	ServerConfig *serverconfig.Config
 }
 
 type Service struct {
@@ -60,7 +62,7 @@ type Service struct {
 	sites     agentextensionports.PortalSiteRepository
 	runs      agentextensionports.PortalRunRepository
 	workflows kernelports.WorkflowStarter
-	appHost   string
+	appHosts  []string
 	now       func() int64
 }
 
@@ -85,7 +87,7 @@ func New(p Params) *Service {
 		sites:     p.Sites,
 		runs:      p.Runs,
 		workflows: p.Workflows,
-		appHost:   appHostOf(p.AppConfig),
+		appHosts:  appHostsOf(p.AppConfig, p.ServerConfig),
 		now:       timeutils.NowUnix,
 	}
 }

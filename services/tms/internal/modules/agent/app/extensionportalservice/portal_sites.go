@@ -231,7 +231,7 @@ func (s *Service) checkNotTrenova(
 	site *extensionportal.PortalSite,
 	multiErr *errortypes.MultiError,
 ) {
-	if s.appHost != "" && extensionportal.HostAllowed(s.appHost, site.Domains) {
+	if s.coversTrenova(site.Domains) {
 		multiErr.Add(
 			"domains",
 			errortypes.ErrInvalid,

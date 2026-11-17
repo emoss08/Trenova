@@ -272,7 +272,7 @@ func TestACodeThatIsNotLettersAndDigitsIsRefused(t *testing.T) {
 		_, err := f.enterCode(t, outcome.RunID, code)
 		var fieldErr *errortypes.Error
 		require.ErrorAs(t, err, &fieldErr, code)
-		assert.Equal(t, "code", fieldErr.Field, code)
+		assert.Equal(t, "code", fieldErr.Field(), code)
 	}
 	assert.Len(t, f.browser.started, 1)
 	assert.Equal(t, extensionportal.PortalRunStatusAwaitingCode, f.runs.only(t).Status)
@@ -355,7 +355,7 @@ func TestACodeAndASignInOfTheirOwnTogetherAreRefused(t *testing.T) {
 	})
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "code", fieldErr.Field)
+	assert.Equal(t, "code", fieldErr.Field())
 	assert.Len(t, f.browser.started, 1)
 }
 
