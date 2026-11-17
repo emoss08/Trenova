@@ -133,6 +133,22 @@ jobs:
           # A first administrator who sets up from a link is never handed a password.
           python3 -I tools/helm/check-bootstrap.py "$RUNNER_TEMP/setup-link.yaml" link
           python3 -I tools/helm/check-bootstrap.py "$RUNNER_TEMP/ci.yaml" password
+          # CloudNativePG refuses a database that asks for less memory than its
+          # shared_buffers: the live one in every shape, and a candidate restored
+          # beside it, which asks for little, with the chart's own settings and
+          # with a larger shared_buffers than the candidate's floor.
+          for shape in default ci managed; do
+            python3 -I tools/helm/check-postgres-memory.py "$RUNNER_TEMP/$shape.yaml" 1
+          done
+          restore=(--set backup.enabled=true --set backup.destinationPath=s3://backups/trenova --set backup.existingSecret=backups
+            --set postgres.restore.generation=r1a2b3c4d --set postgres.restore.sourceGeneration=
+            --set-string postgres.restore.targetTime=2026-11-14T09:30:00Z)
+          helm template trenova "$CHART" -n trenova "${base[@]}" "${restore[@]}" > "$RUNNER_TEMP/restore.yaml"
+          python3 -I tools/helm/check-postgres-memory.py "$RUNNER_TEMP/restore.yaml" 2
+          helm template trenova "$CHART" -n trenova "${base[@]}" "${restore[@]}" \
+            --set postgres.parameters.shared_buffers=3GB --set postgres.resources.requests.memory=4Gi \
+            --set postgres.resources.limits.memory=8Gi > "$RUNNER_TEMP/restore-large.yaml"
+          python3 -I tools/helm/check-postgres-memory.py "$RUNNER_TEMP/restore-large.yaml" 2
 
       - name: The symlinked files resolve
         run: |
