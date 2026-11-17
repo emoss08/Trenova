@@ -1139,8 +1139,16 @@ type PartUsage struct {
 
 	// Restarts Restarts of the part's containers since they were created, summed over its copies:
 	// a counter, so the difference between two samples is the restarts in between, and a
-	// lower value than the last means the part was replaced.
+	// lower value than the last means the part was replaced. It counts a container
+	// starting again in place (a crash); a copy that is replaced starts from zero, so see
+	// `startedAt` for every time the part started again.
 	Restarts *int64 `json:"restarts,omitempty"`
+
+	// StartedAt When the newest of the part's running containers started. It moves forward whenever
+	// the part starts again, however that came about: a container restarting in place, a
+	// restart that was asked for, an update, a copy moved to another machine. Absent while
+	// none of its containers runs, and from an operator that cannot read the part's copies.
+	StartedAt *time.Time `json:"startedAt,omitempty"`
 
 	// Version The image tag the part runs, without its registry or name.
 	Version *string `json:"version,omitempty"`

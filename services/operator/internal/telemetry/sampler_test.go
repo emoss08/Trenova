@@ -365,6 +365,36 @@ func TestAPartWithTwoCopiesSumsRestartsAndUsage(t *testing.T) {
 	require.Equal(t, "1.4.2", *api.Version, "the tag, without the registry, the name or the digest")
 }
 
+func startedAt(objs []runtime.Object, at map[string]time.Time) []runtime.Object {
+	for _, o := range objs {
+		pod, ok := o.(*corev1.Pod)
+		if !ok {
+			continue
+		}
+		if when, named := at[pod.Name]; named {
+			pod.Status.ContainerStatuses[0].State.Running = &corev1.ContainerStateRunning{
+				StartedAt: metav1.NewTime(when),
+			}
+		}
+	}
+	return objs
+}
+
+func TestAPartSaysWhenItsNewestContainerStarted(t *testing.T) {
+	t.Parallel()
+	older, newer := minute.Add(-3*time.Hour), minute.Add(-10*time.Minute)
+	w := newWorld(t, "", startedAt(standardObjects(), map[string]time.Time{
+		"trenova-api-a": older,
+		"trenova-api-b": newer,
+	})...)
+
+	parts := partsByName(w.sampler.Sample(t.Context(), minute, params()))
+
+	require.NotNil(t, parts["api"].StartedAt)
+	require.True(t, newer.Equal(*parts["api"].StartedAt), "the newest of its copies, so any copy starting again moves it")
+	require.Nil(t, parts["client"].StartedAt, "none of its containers is known to be running")
+}
+
 func TestAPartWithNoLimitOmitsTheLimit(t *testing.T) {
 	t.Parallel()
 	w := newWorld(t, "", standardObjects()...)

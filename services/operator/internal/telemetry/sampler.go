@@ -214,6 +214,7 @@ func partUsage(p *health.Part, r *reading) instanceapi.PartUsage {
 			restarts += podRestarts(pod)
 		}
 		out.Restarts = &restarts
+		out.StartedAt = newestStart(pods)
 		out.CpuLimitMillicores, out.MemoryLimitBytes = limits(pods)
 		if image == "" && len(pods) > 0 && len(pods[0].Spec.Containers) > 0 {
 			image = pods[0].Spec.Containers[0].Image
@@ -245,6 +246,25 @@ func podRestarts(p *corev1.Pod) int64 {
 		n += int64(c.RestartCount)
 	}
 	return n
+}
+
+func newestStart(pods []*corev1.Pod) *time.Time {
+	var newest *time.Time
+	for _, p := range pods {
+		if !running(p) {
+			continue
+		}
+		for i := range p.Status.ContainerStatuses {
+			r := p.Status.ContainerStatuses[i].State.Running
+			if r == nil || r.StartedAt.IsZero() {
+				continue
+			}
+			if at := r.StartedAt.UTC(); newest == nil || at.After(*newest) {
+				newest = &at
+			}
+		}
+	}
+	return newest
 }
 
 func running(p *corev1.Pod) bool {

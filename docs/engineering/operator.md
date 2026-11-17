@@ -570,6 +570,7 @@ minute per kind.
 |---|---|---|
 | `parts[]`: name, `ready`, `replicas`, `readyReplicas` | `health.Checker.Parts`, the same reading the status report's `components` come from (Deployments, StatefulSets, the CloudNativePG `Cluster`, the revision's release Job), so the names are exactly the report's | `parts` is empty |
 | `parts[].restarts` | the restart counts of every container (init containers included) of the part's pods, summed over its copies | left out (the pod list failed) |
+| `parts[].startedAt` | when the newest running container (init containers left out) of the part's pods started; it moves forward whenever the part starts again, by a crash, a `restart` command, an update or a moved copy, which the counter above cannot show because a replaced pod counts from zero | left out (the pod list failed, or none of its containers runs) |
 | `parts[].cpuLimitMillicores`, `memoryLimitBytes` | the limits of the containers of the part's running pods, summed; left out when any container has none, or no pod runs | left out |
 | `parts[].cpuMillicores`, `memoryBytes` | `metrics.k8s.io` `PodMetrics` in the target namespace, summed over the part's running pods; 0 when none runs | left out, also when one running pod has no metrics yet |
 | `parts[].version` | the tag of the workload's first container image (the Cluster's `status.image`), without registry, name or digest | left out when the image has no tag |
