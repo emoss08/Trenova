@@ -169,7 +169,7 @@ one). The paths (`reconcile.refuse`, and the database gate):
 |---|---|
 | `invalid` | the spec names another instance than the operator's certificate |
 | `invalid` | `values.Render` returns `ErrSchemaVersion` (an unknown `schemaVersion`) |
-| `invalid` | `values.Render` returns `ErrInvalidSpec`: a release version that is not semantic, a malformed hostname, an unknown lifecycle, a first administrator's name, organization or email out of shape, a `database` or `restore` generation out of shape, a `restore` on an instance without backup storage, or a plan (after the node's capacity) below the minimum |
+| `invalid` | `values.Render` returns `ErrInvalidSpec`: a release version that is not semantic, a malformed hostname, an unknown lifecycle, a first administrator's name, organization or email out of shape, a `database` or `restore` generation out of shape, a `customHostname` out of shape or equal to the hostname or the files host, a `restore` on an instance without backup storage, or a plan (after the node's capacity) below the minimum |
 | `database_not_held` | `database` names a generation the cluster does not hold and `restore` does not name, while it holds others of the instance |
 | `first_database_removed` | no `database`, and the first database is gone while the cluster holds others |
 
@@ -180,6 +180,14 @@ apply, the operator's own move to the release (`operator.upgrade.phase`), a goin
 for its database, and a cluster list that fails. A database in `retiredDatabases` that is
 protected (live, connected, restoring or a restore's source) does not refuse the revision either:
 the rest is applied, the database stays listed, and `message` names it.
+
+**Capabilities.** Every status report carries `capabilities`: what this operator can do that an
+older one could not (today `custom_hostname`), so the control plane offers a feature only to an
+instance that can carry it out. An operator from before a field decodes the spec, ignores it and
+still reports the revision applied; without this list the control plane would mark a custom
+address live that nothing serves. The list is `values.Capabilities`, beside the code that turns
+`customHostname` into values (a test fails if one is there without the other); the loop puts it
+on every report it sends, the first after a start and a refused revision's included.
 
 **Recovery.** A release left `pending-*` by a crash mid-upgrade is rolled back to its last
 deployed revision before the next apply; one that never deployed is uninstalled and installed

@@ -492,6 +492,21 @@ func (e SpecReleaseChannel) Valid() bool {
 	}
 }
 
+// Defines values for StatusReportCapabilities.
+const (
+	CapabilityCustomHostname StatusReportCapabilities = "custom_hostname"
+)
+
+// Valid indicates whether the value is a known member of the StatusReportCapabilities enum.
+func (e StatusReportCapabilities) Valid() bool {
+	switch e {
+	case CapabilityCustomHostname:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SupportGrantScope.
 const (
 	Full     SupportGrantScope = "full"
@@ -1424,8 +1439,11 @@ type StatusReport struct {
 	// Backup The instance's backups as the operator reads them from the cluster: the last base backup,
 	// how far back the backups reach, and whether WAL archiving works. Report it with every status
 	// report once the instance has backup storage; left out, staff see the last one reported.
-	Backup     *BackupHealth     `json:"backup,omitempty"`
-	Components []ComponentStatus `json:"components"`
+	Backup *BackupHealth `json:"backup,omitempty"`
+
+	// Capabilities What this operator can do that an older one could not, so the control plane offers a feature only to an instance that can carry it out. An operator sends every capability it has on every report; one that predates this field sends none.
+	Capabilities *[]StatusReportCapabilities `json:"capabilities,omitempty"`
+	Components   []ComponentStatus           `json:"components"`
 
 	// Databases The databases the cluster holds for this instance, the live one first. The operator
 	// sends the list with the first status report after it starts and whenever it differs
@@ -1486,6 +1504,9 @@ type StatusReport struct {
 	// Version The Trenova release running.
 	Version *string `json:"version,omitempty"`
 }
+
+// StatusReportCapabilities defines model for StatusReport.Capabilities.
+type StatusReportCapabilities string
 
 // StorageBucket defines model for StorageBucket.
 type StorageBucket struct {

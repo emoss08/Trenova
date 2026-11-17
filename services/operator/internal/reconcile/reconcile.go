@@ -420,6 +420,8 @@ func (l *Loop) Tick(ctx context.Context) {
 	report.SystemEmailFingerprint = l.heldSystemEmail(ctx, report.Ready)
 	l.sendSupportKeys(ctx, &report)
 	report.SupportGrants = l.supportGrants(ctx, report.Ready)
+	capabilities := values.Capabilities()
+	report.Capabilities = &capabilities
 	if l.shouldReport(report) {
 		if err = l.cp.ReportStatus(ctx, report); err != nil {
 			if !l.handle(ctx, err) {

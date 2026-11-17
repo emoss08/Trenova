@@ -1295,6 +1295,16 @@ components:
             $ref: "#/components/schemas/DatabaseState"
         refused:
           $ref: "#/components/schemas/RefusedRevision"
+        capabilities:
+          type: array
+          description: >
+            What this operator can do that an older one could not, so the control plane offers a
+            feature only to an instance that can carry it out. An operator sends every capability
+            it has on every report; one that predates this field sends none.
+          items:
+            type: string
+            enum: [custom_hostname]
+            x-enum-varnames: [CapabilityCustomHostname]
 
     SupportGrant:
       type: object

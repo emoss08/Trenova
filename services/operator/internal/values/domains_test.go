@@ -35,6 +35,25 @@ func TestACustomHostnameIsServedBesideTheFirstAddressAndLinksUseIt(t *testing.T)
 	require.Contains(t, config, "https://"+s.Hostname)
 }
 
+func TestAnOperatorThatServesACustomHostnameSaysItCan(t *testing.T) {
+	t.Parallel()
+	s := spec(plans[0], instanceapi.Active)
+	s.CustomHostname = ptr(customHost)
+	r, err := values.Render(&s, base(), operatorNS, values.Storage{})
+	require.NoError(t, err)
+	require.Contains(t, r.Values, "aliases", "this build serves a custom hostname")
+
+	require.Contains(t, values.Capabilities(), instanceapi.CapabilityCustomHostname,
+		"a capability the code carries out is declared, or the control plane never offers it")
+	for _, c := range values.Capabilities() {
+		require.True(t, c.Valid(), "%q is not in the contract", c)
+	}
+	first := values.Capabilities()
+	first[0] = "changed"
+	require.Equal(t, instanceapi.CapabilityCustomHostname, values.Capabilities()[0],
+		"each caller gets its own list")
+}
+
 func TestWithoutACustomHostnameNeitherValueIsSet(t *testing.T) {
 	t.Parallel()
 	b := base()

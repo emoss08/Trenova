@@ -165,6 +165,10 @@ func Render(
 	return Rendered{Version: spec.Release.Version, Values: out}, nil
 }
 
+func Capabilities() []instanceapi.StatusReportCapabilities {
+	return []instanceapi.StatusReportCapabilities{instanceapi.CapabilityCustomHostname}
+}
+
 func CustomHostname(spec *instanceapi.InstanceSpec) (string, error) {
 	if spec.CustomHostname == nil || *spec.CustomHostname == "" {
 		return "", nil
