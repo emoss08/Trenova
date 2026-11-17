@@ -230,6 +230,7 @@ func (r *Releaser) Apply(ctx context.Context, ch *chart.Chart, vals map[string]a
 	up.Namespace = r.namespace
 	up.MaxHistory = maxHistory
 	up.Timeout = actionTimeout
+	up.CleanupOnFail = true
 	if _, err = up.RunWithContext(ctx, r.name, ch, vals); err != nil {
 		return fmt.Errorf("upgrade %s to %s: %w", r.name, ch.Metadata.Version, err)
 	}

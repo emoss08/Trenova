@@ -183,7 +183,13 @@ the rest is applied, the database stays listed, and `message` names it.
 
 **Recovery.** A release left `pending-*` by a crash mid-upgrade is rolled back to its last
 deployed revision before the next apply; one that never deployed is uninstalled and installed
-again. A failed release with a deployed one before it is upgraded over.
+again. A failed release with a deployed one before it is upgraded over. An upgrade that fails
+deletes what it had created before it failed (`CleanupOnFail`): Helm compares the next upgrade
+with the last deployed release, so a resource a failed upgrade made is in no release's manifest
+and would stay for ever (a restore's network policy did, when its database was refused). Only
+resources made by that upgrade go: a database the release already held, kept or live, existed
+before it and is never among them. A restore's candidate made by the failed upgrade is deleted
+and made again by the next one; it holds nothing the backups do not.
 
 A first install can fail partway (the database operator's webhook is not up yet) after some of
 its pods have started, so removing it has to leave nothing for the next one to trip over. The
