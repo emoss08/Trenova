@@ -103,6 +103,33 @@ spec:
         - port: 5432
           protocol: TCP
 ---
+# Every database the release holds, whichever it runs on: the live one, a
+# restore beside it, and one it has left and keeps. CloudNativePG reaches
+# each to read its status, stop it and start it again. The rules above name
+# one generation; without this one a database the release has left falls
+# under the default deny, cannot be stopped and cannot be gone back to.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" . "component" "postgres-cnpg") }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" (dict "root" . "component" "postgres") | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.cnpgNamespace }}
+      ports:
+        - port: 8000
+          protocol: TCP
+        - port: 5432
+          protocol: TCP
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

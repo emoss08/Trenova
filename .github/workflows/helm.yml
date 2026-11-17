@@ -149,6 +149,11 @@ jobs:
             --set postgres.parameters.shared_buffers=3GB --set postgres.resources.requests.memory=4Gi \
             --set postgres.resources.limits.memory=8Gi > "$RUNNER_TEMP/restore-large.yaml"
           python3 -I tools/helm/check-postgres-memory.py "$RUNNER_TEMP/restore-large.yaml" 2
+          # CloudNativePG reaches every database the release may hold, also one
+          # it has left and keeps, which no template renders.
+          for shape in default managed restore; do
+            python3 -I tools/helm/check-postgres-network.py "$RUNNER_TEMP/$shape.yaml"
+          done
 
       - name: The symlinked files resolve
         run: |
