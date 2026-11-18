@@ -32,7 +32,7 @@ FROM source AS build-db
 ARG GO_BUILD_JOBS=
 RUN go build ${GO_BUILD_JOBS:+-p ${GO_BUILD_JOBS}} -tags nomsgpack -ldflags="-s -w" -o /build/trenova-db ./cmd/db
 
-FROM alpine:3.21@sha256:ee16d92f96db08d9d2d07da48555a27f3a69d8f0759021dbc601195ed0d2b5bd AS runtime
+FROM alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf AS runtime
 
 # The same uid as the imaging worker, which issues the client certificate in
 # deploy/selfhost/compose.yml: its key is readable by its owner only.
