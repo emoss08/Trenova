@@ -1,0 +1,109 @@
+name: Embedding image
+
+# The search service Trenova AI brings (deploy/Dockerfile.embedding): Ollama
+# with nomic-embed-text inside the image. Its tag names the model and the
+# Ollama release, not a Trenova version, so it is built when its Dockerfile or
+# the tag the chart pins changes, not at every release. The release workflow
+# pins every image the chart names by digest, so this image has to be on the
+# registry before a release can publish its charts.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - deploy/Dockerfile.embedding
+      - .github/workflows/embedding-image.yml
+  workflow_dispatch:
+    inputs:
+      rebuild:
+        description: Build and push even when the tag is already on the registry
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: embedding-image
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-push:
+    name: Build and Push Embedding Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Read the image the chart pins
+        id: image
+        run: |
+          set -euo pipefail
+          repository="$(yq -r '.embedding.image.repository' deploy/helm/trenova/values.yaml)"
+          tag="$(yq -r '.embedding.image.tag' deploy/helm/trenova/values.yaml)"
+          ollama="$(sed -nE 's/^ARG OLLAMA_VERSION=(.+)$/\1/p' deploy/Dockerfile.embedding)"
+          case "$repository" in
+            "$REGISTRY"/*) ;;
+            *) echo "::error::the chart's embedding image ($repository) is not on $REGISTRY"; exit 1 ;;
+          esac
+          if [ -z "$ollama" ] || [ "${tag##*-ollama-}" != "$ollama" ]; then
+            echo "::error::the chart pins $tag, and deploy/Dockerfile.embedding builds Ollama ${ollama:-?}: the tag must end -ollama-${ollama:-?}"
+            exit 1
+          fi
+          echo "ref=${repository}:${tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: See whether the tag is already on the registry
+        id: existing
+        env:
+          REF: ${{ steps.image.outputs.ref }}
+          REBUILD: ${{ inputs.rebuild }}
+        run: |
+          set -euo pipefail
+          if [ "$REBUILD" != "true" ] && docker buildx imagetools inspect "$REF" >/dev/null 2>&1; then
+            echo "$REF is already on the registry; nothing to build."
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # linux/amd64 only: the model stage runs Ollama to pull and recreate the
+      # model, which an emulated arm64 build cannot do in reasonable time, and
+      # managed instances run on amd64.
+      - name: Build and push the embedding image
+        if: steps.existing.outputs.present != 'true'
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: deploy
+          file: ./deploy/Dockerfile.embedding
+          push: true
+          tags: ${{ steps.image.outputs.ref }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.description=Ollama with nomic-embed-text for Trenova AI search
+            org.opencontainers.image.licenses=MIT AND Apache-2.0
+          platforms: linux/amd64
+          sbom: true
+          provenance: mode=max
+
+      - name: Check the pushed image answers
+        env:
+          REF: ${{ steps.image.outputs.ref }}
+        run: docker buildx imagetools inspect "$REF" --format '{{.Manifest.Digest}}'

@@ -3,8 +3,15 @@
 # The search service Trenova AI brings (the chart's `embedding` component): Ollama serving
 # nomic-embed-text v1.5 on the CPU. The model is pulled while the image is built and checked
 # against its manifest digest, so the service downloads nothing when it starts and its model
-# directory is read-only. No GPU is needed to build or to run it. It copies nothing from a
-# build context, so the Dockerfile is passed on standard input:
+# directory is read-only. No GPU is needed to build or to run it.
+#
+# The registry's copy is built and pushed by .github/workflows/embedding-image.yml, under the
+# tag the chart pins (embedding.image.tag in deploy/helm/trenova/values.yaml), whenever this file
+# changes. A release cannot publish its charts until that tag is there, so change OLLAMA_VERSION
+# here and the chart's tag in the same commit.
+#
+# To build it by hand: it copies nothing from a build context, so the Dockerfile is passed on
+# standard input:
 #
 #   docker build \
 #     --build-arg OLLAMA_VERSION=<x.y.z> \
