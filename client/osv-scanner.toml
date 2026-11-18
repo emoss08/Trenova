@@ -13,6 +13,6 @@ ignoreUntil = 2027-02-05
 reason = "minimatch 10 is reached only through ESLint, which matches the repository's own paths at lint time; the fix is minimatch 11, which ESLint's config array does not accept yet"
 
 [[IgnoredVulns]]
-id = "GHSA-gcqx-w48m-w2h4"
+id = "GHSA-fc5q-39xc-vjpf"
 ignoreUntil = 2027-02-05
-reason = "deepmerge has no fixed release; it is reached only through the Rollup node-resolve plugin and the shadcn CLI, build-time tools that merge the repository's own configuration"
+reason = "picomatch has no fixed release (4.0.7 is the latest and last affected); 2.3.2 and 4.0.7 are reached only through build, lint and test tooling (Vite, Vitest, Storybook, ESLint, GraphQL Codegen, the shadcn CLI, lint-staged) that matches globs written in this repository against its own paths; the client ships as static files served by Caddy, so no glob a person controls ever reaches picomatch; the fix is a picomatch release that analyzes single-branch repeated extglobs"

@@ -57,12 +57,18 @@ jobs:
           echo '160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b  /tmp/osv-scanner' | sha256sum -c -
           sudo install -m 0755 /tmp/osv-scanner /usr/local/bin/osv-scanner
 
+      # The operator is its own Go module outside go.work, so its call analysis
+      # (govulncheck) runs with the workspace off; inside the workspace it
+      # cannot load the module and reports every advisory as reachable.
       - name: Scan every lockfile
         run: |
+          status=0
           osv-scanner scan source \
             --lockfile services/tms/go.mod \
-            --lockfile services/operator/go.mod \
             --lockfile shared/go.mod \
             --lockfile client/pnpm-lock.yaml \
             --lockfile services/Cargo.lock \
-            --lockfile desktop/capture/Cargo.lock
+            --lockfile desktop/capture/Cargo.lock || status=$?
+          GOWORK=off osv-scanner scan source \
+            --lockfile services/operator/go.mod || status=$?
+          exit "$status"
