@@ -16,7 +16,12 @@ no-default-features = false
 [advisories]
 version = 2
 yanked = "deny"
-ignore = []
+# An advisory left open is a decision, recorded here with the reason. The same
+# advisory is filtered, with the same reason and a date to look again, in
+# services/osv-scanner.toml.
+ignore = [
+    { id = "RUSTSEC-2026-0543", reason = "an unmaintained notice with no affected function, not a vulnerability: chrono comes in through pdfium-render and rxing in the imaging worker and through monty and monty-types in the scripts crate, and the latest release of each (pdfium-render 0.9.5, rxing 0.9.4, monty 1.6.0) still requires chrono 0.4; the fix is those crates moving to jiff or time" },
+]
 
 [licenses]
 version = 2
