@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/url"
 	"regexp"
 	"slices"
 	"strings"
@@ -50,9 +51,10 @@ func (s *Storage) Configured() bool {
 const AdminSetupLink = "link"
 
 const (
-	maxAdminName = 100
-	maxOrgName   = 100
-	maxEmail     = 254
+	maxAdminName   = 100
+	maxOrgName     = 100
+	maxEmail       = 254
+	maxConsoleLink = 2048
 )
 
 const (
@@ -141,7 +143,7 @@ func Render(
 		keyDocling:      map[string]any{keyEnabled: docling},
 		keyEmbedding:    map[string]any{keyEnabled: embedding},
 		keyPostgres:     pg,
-		"managed":       managed(operatorNamespace, spec.InstanceId.String()),
+		"managed":       managed(operatorNamespace, spec),
 		keyLogs:         map[string]any{keyEnabled: true},
 		"secrets":       map[string]any{"escrowSecret": EscrowSecret},
 		"bootstrap":     admin,
@@ -284,10 +286,10 @@ func text(s string, maxRunes int) bool {
 	return !strings.ContainsFunc(s, unicode.IsControl)
 }
 
-func managed(operatorNamespace, instanceID string) map[string]any {
-	return map[string]any{
+func managed(operatorNamespace string, spec *instanceapi.InstanceSpec) map[string]any {
+	out := map[string]any{
 		keyEnabled:   true,
-		"instanceId": instanceID,
+		"instanceId": spec.InstanceId.String(),
 		"from": []any{
 			map[string]any{
 				"namespaceSelector": map[string]any{
@@ -298,6 +300,31 @@ func managed(operatorNamespace, instanceID string) map[string]any {
 			},
 		},
 	}
+	if a := spec.Account; a != nil {
+		if link, ok := consoleLink(a.SupportUrl); ok {
+			out["supportUrl"] = link
+		}
+		if link, ok := consoleLink(a.NewSupportRequestUrl); ok {
+			out["newSupportRequestUrl"] = link
+		}
+	}
+	return out
+}
+
+func consoleLink(raw *string) (string, bool) {
+	if raw == nil || *raw == "" || len(*raw) > maxConsoleLink {
+		return "", false
+	}
+	u, err := url.Parse(*raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" ||
+		u.User != nil || u.Fragment != "" || strings.ContainsFunc(*raw, spaceOrControl) {
+		return "", false
+	}
+	return *raw, true
+}
+
+func spaceOrControl(r rune) bool {
+	return unicode.IsSpace(r) || unicode.IsControl(r)
 }
 
 func tmsValues() map[string]any {

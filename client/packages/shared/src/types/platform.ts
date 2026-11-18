@@ -65,10 +65,24 @@ export const sessionIdlePolicySchema = z
 
 export type SessionIdlePolicy = z.infer<typeof sessionIdlePolicySchema>;
 
+export const TRENOVA_SUPPORT_NONE = { requestsUrl: "", newRequestUrl: "" } as const;
+
+/**
+ * Where a person on a Managed Trenova instance reaches Trenova's support: the console's list of
+ * their organization's requests, and its new request form with this instance chosen. Either is
+ * empty when the server sends none, and its menu item is then left out.
+ */
+const trenovaSupportSchema = z
+  .object({ requestsUrl: urlOrEmptySchema, newRequestUrl: urlOrEmptySchema })
+  .nullish()
+  .catch(null)
+  .transform((value) => value ?? { ...TRENOVA_SUPPORT_NONE });
+
 export const publicConfigSchema = z.object({
   platformMode: platformModeSchema.default("self_hosted"),
   /** Whether Trenova Cloud runs this instance and sells its plan (Managed Trenova). */
   managed: z.boolean().catch(false).default(false),
+  trenovaSupport: trenovaSupportSchema,
   signupEnabled: z.boolean().catch(false).default(false),
   turnstileSiteKey: z
     .string()
@@ -89,6 +103,7 @@ export type PublicConfig = z.infer<typeof publicConfigSchema>;
 export const SELF_HOSTED_PUBLIC_CONFIG: Readonly<PublicConfig> = {
   platformMode: "self_hosted",
   managed: false,
+  trenovaSupport: { ...TRENOVA_SUPPORT_NONE },
   signupEnabled: false,
   turnstileSiteKey: "",
   termsUrl: "",

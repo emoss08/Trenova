@@ -5,6 +5,8 @@
 managed:
   enabled: true
   instanceId: "0192f3a4-5b6c-7d8e-9f01-23456789abcd"
+  supportUrl: "https://console.example.com/support"
+  newSupportRequestUrl: "https://console.example.com/support/new?from=trenova&instance=0192f3a4-5b6c-7d8e-9f01-23456789abcd"
   from:
     - namespaceSelector:
         matchLabels:

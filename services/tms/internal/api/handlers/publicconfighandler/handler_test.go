@@ -103,3 +103,38 @@ func TestAManagedInstanceSaysSo(t *testing.T) {
 	require.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `"managed":true`)
 }
+
+func TestAManagedInstanceTellsItsPeopleWhereTrenovaSupportIs(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{}
+	cfg.Managed.Enabled = true
+	cfg.Managed.SupportURL = "https://console.example.com/support"
+	cfg.Managed.NewSupportRequestURL = "https://console.example.com/support/new?instance=1"
+	w := serve(t, cfg)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(
+		t,
+		w.Body.String(),
+		`"trenovaSupport":{"requestsUrl":"https://console.example.com/support",`+
+			`"newRequestUrl":"https://console.example.com/support/new?instance=1"}`,
+	)
+}
+
+func TestTrenovaSupportIsLeftOutWithoutItsLinksOrOffAManagedInstance(t *testing.T) {
+	t.Parallel()
+
+	managed := &config.Config{}
+	managed.Managed.Enabled = true
+	selfHosted := &config.Config{}
+	selfHosted.Managed.SupportURL = "https://console.example.com/support"
+	selfHosted.Managed.NewSupportRequestURL = "https://console.example.com/support/new"
+
+	for _, cfg := range []*config.Config{managed, selfHosted} {
+		w := serve(t, cfg)
+
+		require.Equal(t, http.StatusOK, w.Code)
+		assert.NotContains(t, w.Body.String(), "trenovaSupport")
+	}
+}

@@ -66812,6 +66812,15 @@
       "routes/worker"
     ]
   },
+  "Contact Trenova support": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Contact details": {
     "sites": 1,
     "scope": [
@@ -344432,6 +344441,15 @@
     ],
     "areas": [
       "template/customer.statement.email"
+    ]
+  },
+  "Your support requests": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Your sync settings apply these changes on every vetting without asking.": {

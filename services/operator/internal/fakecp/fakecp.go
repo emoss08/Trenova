@@ -794,7 +794,11 @@ func Spec(instanceID uuid.UUID) instanceapi.InstanceSpec {
 			OrganizationName: "Acme Freight",
 		},
 		Account: &instanceapi.SpecAccount{
-			PlanUrl:         "https://console.trenova.cloud/instances/" + instanceID.String() + "/plan",
+			PlanUrl:    "https://console.trenova.cloud/instances/" + instanceID.String() + "/plan",
+			SupportUrl: new("https://console.trenova.cloud/support"),
+			NewSupportRequestUrl: new(
+				"https://console.trenova.cloud/support/new?from=trenova&instance=" + instanceID.String(),
+			),
 			FinalBackupDays: 30,
 		},
 	}

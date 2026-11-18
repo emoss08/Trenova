@@ -567,6 +567,12 @@ managed:
   embedding:
     url: "" # http://<release>-trenova-embedding:11434, no path
     model: "" # the model the image carries, nomic-embed-text:v1.5
+  # Where this instance's people reach Trenova's support, set by the operator from the control
+  # plane: the console's support page ("Your support requests" in the account menu) and its new
+  # request form for this instance ("Contact Trenova support", which adds the page's path as
+  # `page`). Absolute http or https URLs; empty leaves the item out.
+  supportUrl: ""
+  newSupportRequestUrl: ""
 
 # Limits on one uploaded rate sheet, fuel card statement or factoring remittance (CSV or
 # XLSX). A file past any of them is refused with the limit it went past; 0 or unset takes

@@ -982,6 +982,24 @@ components:
             add-ons are bought. The operator passes it to the TMS with the feature list; the TMS
             links to it from its own plan page and refuses anything but an absolute http or https
             address with a host and no user information.
+        supportUrl:
+          type: string
+          maxLength: 2048
+          description: |
+            The absolute http or https address of the console's support page, where the
+            organization's support requests are listed. The operator renders it into the chart's
+            `managed.supportUrl`, which the TMS serves its people as "Your support requests". An
+            operator that does not know it, or a spec without it, leaves the link out.
+        newSupportRequestUrl:
+          type: string
+          maxLength: 2048
+          description: |
+            The absolute http or https address of the console's new support request form, with
+            this instance chosen and the request marked as opened from Trenova
+            (`{console}/support/new?from=trenova&instance={instanceId}`). The operator renders it
+            into the chart's `managed.newSupportRequestUrl`; the TMS adds `page` (the path of the
+            page the person was on, never a record's ID) when it opens it as "Contact Trenova
+            support". An operator that does not know it, or a spec without it, leaves the link out.
         finalBackupDays:
           type: integer
           format: int32

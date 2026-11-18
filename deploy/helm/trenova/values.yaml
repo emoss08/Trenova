@@ -38,6 +38,12 @@ managed:
   # sets; required while enabled. The TMS tags the email Trenova's sender
   # carries with it, so the control plane can relay its bounces back here.
   instanceId: ""
+  # Where the instance's people reach Trenova's support, which the operator sets from the control
+  # plane's spec: the console's support page ("Your support requests") and its new request form
+  # for this instance ("Contact Trenova support"), absolute http or https addresses. Either may be
+  # empty, and its menu item is then left out.
+  supportUrl: ""
+  newSupportRequestUrl: ""
   # Who may reach port 8090, as NetworkPolicy peers: the operator's namespace.
   # Required while enabled; the chart refuses to open the port to everyone.
   from: []

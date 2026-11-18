@@ -60,10 +60,21 @@ func (h *Handler) publicConfig(c *gin.Context) {
 
 func (h *Handler) Build(context.Context) (*kernelports.PublicConfig, error) {
 	return &kernelports.PublicConfig{
-		PlatformMode: string(h.platformConfig.GetMode()),
-		Managed:      h.managedConfig.Enabled,
-		Session:      publicSessionPolicy(&h.securityConfig.Session),
+		PlatformMode:   string(h.platformConfig.GetMode()),
+		Managed:        h.managedConfig.Enabled,
+		TrenovaSupport: publicTrenovaSupport(h.managedConfig.Support()),
+		Session:        publicSessionPolicy(&h.securityConfig.Session),
 	}, nil
+}
+
+func publicTrenovaSupport(s managedconfig.Support) *kernelports.PublicTrenovaSupport {
+	if s.RequestsURL == "" && s.NewRequestURL == "" {
+		return nil
+	}
+	return &kernelports.PublicTrenovaSupport{
+		RequestsURL:   s.RequestsURL,
+		NewRequestURL: s.NewRequestURL,
+	}
 }
 
 func publicSessionPolicy(cfg *securityconfig.SessionConfig) kernelports.PublicSessionPolicy {

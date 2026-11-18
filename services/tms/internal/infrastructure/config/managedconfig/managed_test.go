@@ -104,6 +104,56 @@ func TestValidate(t *testing.T) {
 			}},
 			err: managedconfig.ErrEmbeddingModelWithoutURL,
 		},
+		{
+			name: "with the console's support links",
+			cfg: managedconfig.Config{
+				Enabled:              true,
+				Token:                token,
+				SupportURL:           "https://console.example.com/support",
+				NewSupportRequestURL: "https://console.example.com/support/new?from=trenova&instance=1",
+			},
+		},
+		{
+			name: "a relative support link",
+			cfg:  managedconfig.Config{Enabled: true, Token: token, SupportURL: "/support"},
+			err:  managedconfig.ErrSupportURLInvalid,
+		},
+		{
+			name: "a support link that is not http",
+			cfg: managedconfig.Config{
+				Enabled:              true,
+				Token:                token,
+				NewSupportRequestURL: "javascript:alert(1)",
+			},
+			err: managedconfig.ErrSupportURLInvalid,
+		},
+		{
+			name: "a support link with credentials",
+			cfg: managedconfig.Config{
+				Enabled:    true,
+				Token:      token,
+				SupportURL: "https://a:b@console.example.com/support",
+			},
+			err: managedconfig.ErrSupportURLInvalid,
+		},
+		{
+			name: "a support link with a space",
+			cfg: managedconfig.Config{
+				Enabled:    true,
+				Token:      token,
+				SupportURL: "https://console.example.com/sup port",
+			},
+			err: managedconfig.ErrSupportURLInvalid,
+		},
+		{
+			name: "a support link too long",
+			cfg: managedconfig.Config{
+				Enabled:    true,
+				Token:      token,
+				SupportURL: "https://console.example.com/" + strings.Repeat("a", 2048),
+			},
+			err: managedconfig.ErrSupportURLInvalid,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -128,6 +178,26 @@ func TestDefaults(t *testing.T) {
 	require.Contains(t, managedconfig.Defaults(), "embedding.model")
 	require.Contains(t, managedconfig.Defaults(), "instanceId",
 		"the loader applies TRENOVA_MANAGED_INSTANCEID only to a key it knows")
+	require.Contains(t, managedconfig.Defaults(), "supportUrl")
+	require.Contains(t, managedconfig.Defaults(), "newSupportRequestUrl")
+}
+
+func TestSupportIsOnlyAManagedInstances(t *testing.T) {
+	t.Parallel()
+
+	links := managedconfig.Config{
+		SupportURL:           " https://console.example.com/support ",
+		NewSupportRequestURL: "https://console.example.com/support/new",
+	}
+	require.Equal(t, managedconfig.Support{}, links.Support(), "self-hosted")
+	var none *managedconfig.Config
+	require.Equal(t, managedconfig.Support{}, none.Support())
+
+	links.Enabled = true
+	require.Equal(t, managedconfig.Support{
+		RequestsURL:   "https://console.example.com/support",
+		NewRequestURL: "https://console.example.com/support/new",
+	}, links.Support())
 }
 
 func TestBuiltInEmbedding(t *testing.T) {

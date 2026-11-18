@@ -21,6 +21,8 @@ const cloudConfig = {
   session: { idleTimeoutSeconds: 1800, idleWarningSeconds: 120, keepAliveSeconds: 60 },
 };
 
+const NO_SUPPORT = { requestsUrl: "", newRequestUrl: "" };
+
 const IDLE_OFF = { idleTimeoutSeconds: 0, idleWarningSeconds: 0, keepAliveSeconds: 0 };
 
 describe("platformService.getPublicConfig", () => {
@@ -37,8 +39,59 @@ describe("platformService.getPublicConfig", () => {
 
     const config = await platformService.getPublicConfig();
 
-    expect(config).toEqual(cloudConfig);
+    // The server leaves trenovaSupport out off a Managed Trenova instance.
+    expect(config).toEqual({ ...cloudConfig, trenovaSupport: NO_SUPPORT });
     expect(isSignupAvailable(config)).toBe(true);
+  });
+
+  it("reads where a managed instance's people reach Trenova support", async () => {
+    const trenovaSupport = {
+      requestsUrl: "https://console.example.com/support",
+      newRequestUrl: "https://console.example.com/support/new?from=trenova&instance=i-1",
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({ ...cloudConfig, managed: true, trenovaSupport })),
+    );
+
+    const config = await platformService.getPublicConfig();
+
+    expect(config.managed).toBe(true);
+    expect(config.trenovaSupport).toEqual(trenovaSupport);
+  });
+
+  it("drops a Trenova support link that is not an http(s) URL, and keeps the other", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({
+          ...cloudConfig,
+          managed: true,
+          trenovaSupport: {
+            requestsUrl: "javascript:alert(1)",
+            newRequestUrl: "https://console.example.com/support/new",
+          },
+        }),
+      ),
+    );
+
+    const config = await platformService.getPublicConfig();
+
+    expect(config.trenovaSupport).toEqual({
+      requestsUrl: "",
+      newRequestUrl: "https://console.example.com/support/new",
+    });
+  });
+
+  it("reads a malformed trenovaSupport as none", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => jsonResponse({ ...cloudConfig, managed: true, trenovaSupport: "x" })),
+    );
+
+    const config = await platformService.getPublicConfig();
+
+    expect(config.trenovaSupport).toEqual(NO_SUPPORT);
   });
 
   it("falls back to self-hosted with signup off when the request fails", async () => {

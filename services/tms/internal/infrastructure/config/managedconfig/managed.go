@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"unicode"
 
 	"github.com/google/uuid"
 )
 
 const (
-	defaultHost    = "127.0.0.1"
-	defaultPort    = 8090
-	minTokenLength = 32
-	maxModelLength = 200
+	defaultHost      = "127.0.0.1"
+	defaultPort      = 8090
+	minTokenLength   = 32
+	maxModelLength   = 200
+	maxSupportURLLen = 2048
 )
 
 var (
@@ -35,15 +37,26 @@ var (
 	ErrEmbeddingModelWithoutURL = errors.New(
 		"managed.embedding.model is set without managed.embedding.url",
 	)
+	ErrSupportURLInvalid = fmt.Errorf(
+		"managed.supportUrl and managed.newSupportRequestUrl must each be empty or an http or https URL with a host, no user information, fragment or space, at most %d characters",
+		maxSupportURLLen,
+	)
 )
 
 type Config struct {
-	Enabled    bool      `mapstructure:"enabled"`
-	InstanceID string    `mapstructure:"instanceId"`
-	Host       string    `mapstructure:"host"       validate:"omitempty,hostname|ip"`
-	Port       int       `mapstructure:"port"`
-	Token      string    `mapstructure:"token"`
-	Embedding  Embedding `mapstructure:"embedding"`
+	Enabled              bool      `mapstructure:"enabled"`
+	InstanceID           string    `mapstructure:"instanceId"`
+	Host                 string    `mapstructure:"host"                 validate:"omitempty,hostname|ip"`
+	Port                 int       `mapstructure:"port"`
+	Token                string    `mapstructure:"token"`
+	Embedding            Embedding `mapstructure:"embedding"`
+	SupportURL           string    `mapstructure:"supportUrl"`
+	NewSupportRequestURL string    `mapstructure:"newSupportRequestUrl"`
+}
+
+type Support struct {
+	RequestsURL   string
+	NewRequestURL string
 }
 
 type Embedding struct {
@@ -53,13 +66,15 @@ type Embedding struct {
 
 func Defaults() map[string]any {
 	return map[string]any{
-		"enabled":         false,
-		"instanceId":      "",
-		"host":            defaultHost,
-		"port":            defaultPort,
-		"token":           "",
-		"embedding.url":   "",
-		"embedding.model": "",
+		"enabled":              false,
+		"instanceId":           "",
+		"host":                 defaultHost,
+		"port":                 defaultPort,
+		"token":                "",
+		"embedding.url":        "",
+		"embedding.model":      "",
+		"supportUrl":           "",
+		"newSupportRequestUrl": "",
 	}
 }
 
@@ -87,6 +102,16 @@ func (c *Config) BuiltInEmbedding() (Embedding, bool) {
 	}, true
 }
 
+func (c *Config) Support() Support {
+	if c == nil || !c.Enabled {
+		return Support{}
+	}
+	return Support{
+		RequestsURL:   strings.TrimSpace(c.SupportURL),
+		NewRequestURL: strings.TrimSpace(c.NewSupportRequestURL),
+	}
+}
+
 func (e Embedding) Configured() bool {
 	return strings.TrimSpace(e.URL) != "" && strings.TrimSpace(e.Model) != ""
 }
@@ -104,7 +129,25 @@ func (c *Config) Validate() error {
 	if p := c.GetPort(); p < 1 || p > 65535 {
 		return ErrPortInvalid
 	}
+	if !validSupportURL(c.SupportURL) || !validSupportURL(c.NewSupportRequestURL) {
+		return ErrSupportURLInvalid
+	}
 	return c.Embedding.validate()
+}
+
+func validSupportURL(raw string) bool {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return true
+	}
+	if len(raw) > maxSupportURLLen || strings.ContainsFunc(raw, func(r rune) bool {
+		return unicode.IsSpace(r) || unicode.IsControl(r)
+	}) {
+		return false
+	}
+	parsed, err := url.Parse(raw)
+	return err == nil && (parsed.Scheme == "http" || parsed.Scheme == "https") &&
+		parsed.Hostname() != "" && parsed.User == nil && parsed.Fragment == ""
 }
 
 func (e Embedding) validate() error {

@@ -2021,6 +2021,18 @@
           "pattern": "^$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
           "description": "The instance's ID in Trenova Cloud, a lowercase UUID; required while enabled."
         },
+        "supportUrl": {
+          "type": "string",
+          "maxLength": 2048,
+          "pattern": "^$|^https?://[^/\\s@?#]+(/[^\\s#]*)?$",
+          "description": "The console's support page, an absolute http or https address; empty leaves \"Your support requests\" out."
+        },
+        "newSupportRequestUrl": {
+          "type": "string",
+          "maxLength": 2048,
+          "pattern": "^$|^https?://[^/\\s@?#]+(/[^\\s#]*)?$",
+          "description": "The console's new support request form for this instance, an absolute http or https address; empty leaves \"Contact Trenova support\" out."
+        },
         "from": {
           "type": "array",
           "items": {

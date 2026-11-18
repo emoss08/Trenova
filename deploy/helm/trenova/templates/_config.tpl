@@ -103,6 +103,12 @@ empty one fails validation instead of running with a default. */ -}}
 {{- fail "managed.enabled needs managed.instanceId: the instance's ID, which tags the email Trenova's sender carries" }}
 {{- end }}
 {{- $managed := dict "enabled" true "instanceId" .Values.managed.instanceId "host" "0.0.0.0" "port" 8090 "token" "" -}}
+{{- with .Values.managed.supportUrl }}
+{{- $_ := set $managed "supportUrl" . -}}
+{{- end }}
+{{- with .Values.managed.newSupportRequestUrl }}
+{{- $_ := set $managed "newSupportRequestUrl" . -}}
+{{- end }}
 {{- if .Values.embedding.enabled }}
 {{- $_ := set $managed "embedding" (dict
   "url" (printf "http://%s:11434" (include "trenova.name" (dict "root" . "component" "embedding")))

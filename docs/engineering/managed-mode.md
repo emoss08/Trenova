@@ -399,8 +399,9 @@ for every hour from `since` to the current hour, the two levels for the current 
 
 The spec carries, beside the plan, what the operator passes to the TMS on every tick:
 
-- `account` (`planUrl`, `finalBackupDays`, `endsAt`), composed at serve time ([The feature
-  list](#the-feature-list)).
+- `account` (`planUrl`, `finalBackupDays`, `endsAt`, `supportUrl`, `newSupportRequestUrl`),
+  composed at serve time ([The feature list](#the-feature-list), [Trenova support from the account
+  menu](#trenova-support-from-the-account-menu)).
 - `support` (`instanceId`, `staffDomain`, one to four Ed25519 `keys`), composed at serve time; the
   `ETag` changes with it ([Support access](#support-access)). Without it the instance can never
   admit staff, so the control plane sends it for every managed instance.
@@ -674,6 +675,31 @@ retrieval status (`aiRetrievalStatus`) answers `embeddingSource` (`BuiltIn`, `Or
 absent), `tunedModel` and `configuredModelTuned`, and the AI control Retrieval tab says "Search by
 meaning runs on your instance. There is nothing to set up." or "Trenova tunes search for
 nomic-embed-text. With another model, search may find less."
+
+## Trenova support from the account menu
+
+Support requests live in the Trenova console, so the instance has to know where it is. The
+control plane adds two addresses to every spec's `account`: `supportUrl` (the console's support
+page, the organization's requests) and `newSupportRequestUrl` (its new request form with this
+instance chosen and marked as opened from Trenova, `{console}/support/new?from=trenova&instance=<id>`).
+The operator renders each into the chart's `managed.supportUrl` and `managed.newSupportRequestUrl`
+when it is an absolute `http`/`https` address (otherwise it leaves it out), the chart passes them
+to the TMS as `managed.supportUrl` and `managed.newSupportRequestUrl`, and `managedconfig.Validate`
+refuses at start anything but an absolute `http`/`https` URL with a host, no user information,
+fragment or space, at most 2,048 characters. A changed address is a values change, so it reaches
+the instance with a restart, like the rest of its configuration.
+
+`GET /system/public-config` serves them, only with `managed.enabled`, as
+`trenovaSupport: {requestsUrl, newRequestUrl}` (left out when both are empty). The addresses name
+the console and the instance's ID in Trenova Cloud, nothing about the instance's data, so they sit
+with the rest of the public config. The client (`publicConfigSchema.trenovaSupport`) drops a link
+that is not an `http`/`https` URL, and the account menu (`TrenovaSupportItems`) shows, on a
+managed instance only, "Contact Trenova support" (the form, in a new tab) and "Your support
+requests" (the list, in a new tab), each only when its address arrived. The form's link adds
+`page`: the matched route's pattern (`/shipments/$shipmentId`, `supportRequestPage`), never the
+address itself, so no record's ID, name or email leaves the instance. The console writes it into
+the request as a line staff read ("Opened from Trenova, on /shipments/$shipmentId"); see the
+control plane's decision 0028.
 
 ## Support access
 

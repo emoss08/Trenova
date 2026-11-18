@@ -1,4 +1,4 @@
-import { TestRouter } from "@trenova/shared/testing/test-router";
+import { renderAtRoutes, TestRouter } from "@trenova/shared/testing/test-router";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -10,6 +10,14 @@ const state = vi.hoisted(() => ({
   offered: true,
   theme: "dark" as string,
   setTheme: vi.fn(),
+  managed: false,
+  trenovaSupport: { requestsUrl: "", newRequestUrl: "" },
+}));
+
+vi.mock("@trenova/shared/hooks/use-public-config", () => ({
+  usePublicConfig: () => ({
+    config: { managed: state.managed, trenovaSupport: state.trenovaSupport },
+  }),
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -32,6 +40,8 @@ vi.mock("@/components/resolved-user-avatar", () => ({ ResolvedUserAvatar: () => 
 beforeEach(() => {
   state.offered = true;
   state.theme = "dark";
+  state.managed = false;
+  state.trenovaSupport = { requestsUrl: "", newRequestUrl: "" };
   state.setTheme.mockClear();
   useAppDialogsStore.setState({ active: null, prepared: [] });
   useAuthStore.setState({ user: { name: "Dana Reyes" } } as never);
@@ -98,6 +108,57 @@ describe("UserMenu learn more", () => {
         "noopener noreferrer",
       ],
     ]);
+  });
+});
+
+describe("UserMenu Trenova support", () => {
+  const FORM =
+    "https://console.example.com/support/new?from=trenova&instance=0192f3a4-5b6c-7d8e-9f01-23456789abcd";
+
+  it("opens the console's request form for this instance and its requests, each in a new tab", async () => {
+    state.managed = true;
+    state.trenovaSupport = {
+      requestsUrl: "https://console.example.com/support",
+      newRequestUrl: FORM,
+    };
+    await renderAtRoutes([{ path: "/shipments/$shipmentId", component: UserMenu }], {
+      initialEntries: ["/shipments/shp_01JTESTRECORD"],
+    });
+    await userEvent.click(screen.getByRole("button", { name: /Dana Reyes/ }));
+
+    // The page is the route's pattern: no record's id leaves the instance.
+    const contact = await screen.findByRole("menuitem", { name: "Contact Trenova support" });
+    expect(contact.getAttribute("href")).toBe(`${FORM}&page=%2Fshipments%2F%24shipmentId`);
+    expect(contact.getAttribute("target")).toBe("_blank");
+    expect(contact.getAttribute("rel")).toBe("noopener noreferrer");
+
+    const requests = screen.getByRole("menuitem", { name: "Your support requests" });
+    expect(requests.getAttribute("href")).toBe("https://console.example.com/support");
+    expect(requests.getAttribute("target")).toBe("_blank");
+  });
+
+  it("offers only the link the control plane sent", async () => {
+    state.managed = true;
+    state.trenovaSupport = {
+      requestsUrl: "https://console.example.com/support",
+      newRequestUrl: "",
+    };
+    await openMenu();
+
+    expect(await screen.findByRole("menuitem", { name: "Your support requests" })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Contact Trenova support" })).toBeNull();
+  });
+
+  it("offers nothing on a self-hosted instance, whatever its config holds", async () => {
+    state.trenovaSupport = {
+      requestsUrl: "https://console.example.com/support",
+      newRequestUrl: FORM,
+    };
+    await openMenu();
+
+    expect(await screen.findByRole("menuitem", { name: "Log out" })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Contact Trenova support" })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: "Your support requests" })).toBeNull();
   });
 });
 

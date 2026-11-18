@@ -3,6 +3,7 @@ import { useState } from "react";
 import { LanguageDialog } from "@/components/navigation/language-dialog";
 import { LearnMoreSubmenu } from "@/components/navigation/learn-more-submenu";
 import { ThemeSubmenu } from "@/components/navigation/theme-submenu";
+import { TrenovaSupportItems } from "@/components/navigation/trenova-support-items";
 import { hotkeyLabel } from "@/config/keybinds.config";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
@@ -142,6 +143,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
               onClick={() => openDialog("shortcuts")}
             />
             <LearnMoreSubmenu />
+            <TrenovaSupportItems />
             <DropdownMenuSeparator />
             <DropdownMenuItem
               title={t("Log out")}

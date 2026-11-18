@@ -55,7 +55,7 @@ func turningOnLeavesTheRestAsItWas(t *testing.T, m machine, component string) {
 	t.Helper()
 	without := spec(m.plan, instanceapi.Active)
 	with := spec(m.plan, instanceapi.Active, component)
-	with.InstanceId = without.InstanceId
+	with.InstanceId, with.Account = without.InstanceId, without.Account
 	off, err := values.Render(&without, m.base(), operatorNS, &m.storage)
 	require.NoError(t, err)
 	on, err := values.Render(&with, m.base(), operatorNS, &m.storage)

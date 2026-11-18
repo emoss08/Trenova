@@ -223,6 +223,55 @@ func TestManagedModeAdmitsOnlyTheOperatorsNamespace(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestTheConsolesSupportLinksReachTheTMS(t *testing.T) {
+	t.Parallel()
+	const (
+		support    = "https://console.trenova.cloud/support"
+		newRequest = "https://console.trenova.cloud/support/new?from=trenova&instance="
+	)
+	s := spec(plans[0], instanceapi.Active)
+	form := newRequest + s.InstanceId.String()
+	s.Account = &instanceapi.SpecAccount{
+		PlanUrl: "https://console.trenova.cloud/plan", FinalBackupDays: 30,
+		SupportUrl: new(support), NewSupportRequestUrl: new(form),
+	}
+	r, err := values.Render(&s, base(), operatorNS, &values.Storage{})
+	require.NoError(t, err)
+	managed := lookup(t, r.Values, []string{"managed"})
+	require.Equal(t, support, managed["supportUrl"])
+	require.Equal(t, form, managed["newSupportRequestUrl"])
+
+	ch, err := loader.Load(chartDir)
+	require.NoError(t, err)
+	vals, err := chartutil.ToRenderValues(ch, r.Values, chartutil.ReleaseOptions{
+		Name: "trenova", Namespace: "trenova", Revision: 1, IsInstall: true,
+	}, chartutil.DefaultCapabilities)
+	require.NoError(t, err)
+	out, err := engine.Render(ch, vals)
+	require.NoError(t, err)
+	config := out["trenova/templates/configmap.yaml"]
+	require.Contains(t, config, "supportUrl: "+support)
+	require.Contains(t, config, "newSupportRequestUrl: "+form)
+
+	for name, account := range map[string]*instanceapi.SpecAccount{
+		"no account":  nil,
+		"no links":    {PlanUrl: "https://console.trenova.cloud/plan", FinalBackupDays: 30},
+		"bad scheme":  {SupportUrl: new("javascript:alert(1)"), NewSupportRequestUrl: new("ftp://console/x")},
+		"relative":    {SupportUrl: new("/support"), NewSupportRequestUrl: new("support/new")},
+		"user info":   {SupportUrl: new("https://a:b@console.trenova.cloud/support")},
+		"a space":     {SupportUrl: new("https://console.trenova.cloud/sup port")},
+		"too long":    {SupportUrl: new("https://console.trenova.cloud/" + strings.Repeat("a", 2048))},
+		"empty links": {SupportUrl: new(""), NewSupportRequestUrl: new("")},
+	} {
+		s.Account = account
+		r, err := values.Render(&s, base(), operatorNS, &values.Storage{})
+		require.NoError(t, err, name)
+		managed := lookup(t, r.Values, []string{"managed"})
+		require.NotContains(t, managed, "supportUrl", name)
+		require.NotContains(t, managed, "newSupportRequestUrl", name)
+	}
+}
+
 func TestAnAIProviderStaysOutsideThePlatform(t *testing.T) {
 	t.Parallel()
 	b := base()
