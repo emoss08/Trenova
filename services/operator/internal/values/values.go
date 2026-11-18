@@ -56,14 +56,16 @@ const (
 )
 
 const (
-	keyPostgres = "postgres"
-	keyTMS      = "tms"
-	keyRedis    = "redis"
-	keyMinio    = "minio"
-	keyDocling  = "docling"
-	keyClamAV   = "clamav"
-	keyMemory   = "memory"
-	keyCPU      = "cpu"
+	keyPostgres  = "postgres"
+	keyTMS       = "tms"
+	keyRedis     = "redis"
+	keyMinio     = "minio"
+	keyDocling   = "docling"
+	keyEmbedding = "embedding"
+	keyClamAV    = "clamav"
+	keyLogs      = "logs"
+	keyMemory    = "memory"
+	keyCPU       = "cpu"
 )
 
 var (
@@ -110,6 +112,10 @@ func Render(
 	if !hostnamePattern.MatchString(spec.Hostname) {
 		return Rendered{}, fmt.Errorf("%w: hostname %q", ErrInvalidSpec, spec.Hostname)
 	}
+	custom, err := CustomHostname(spec)
+	if err != nil {
+		return Rendered{}, err
+	}
 	stopped, hibernate, err := lifecycle(spec.Lifecycle)
 	if err != nil {
 		return Rendered{}, err
@@ -124,17 +130,25 @@ func Render(
 	}
 	out := deepCopy(base)
 	docling := slices.Contains(spec.Components, keyDocling)
+	embedding := slices.Contains(spec.Components, keyEmbedding)
 	merge(out, map[string]any{
 		"domain":        spec.Hostname,
 		"storageDomain": StorageHost(spec.Hostname),
 		"stopped":       stopped,
-		keyTMS:          tmsValues(spec.InstanceId.String()),
+		keyTMS:          tmsValues(),
 		keyDocling:      map[string]any{"enabled": docling},
+		keyEmbedding:    map[string]any{"enabled": embedding},
 		keyPostgres:     pg,
-		"managed":       managed(operatorNamespace),
+		"managed":       managed(operatorNamespace, spec.InstanceId.String()),
+		keyLogs:         map[string]any{"enabled": true},
 		"secrets":       map[string]any{"escrowSecret": EscrowSecret},
 		"bootstrap":     admin,
 	})
+	delete(out, "aliases")
+	delete(out, "primaryDomain")
+	if custom != "" {
+		merge(out, map[string]any{"aliases": []any{custom}, "primaryDomain": custom})
+	}
 	if storage.Configured() {
 		merge(out, objectStorage(storage))
 	}
@@ -149,6 +163,22 @@ func Render(
 	}
 	merge(out, sized)
 	return Rendered{Version: spec.Release.Version, Values: out}, nil
+}
+
+func Capabilities() []instanceapi.StatusReportCapabilities {
+	return []instanceapi.StatusReportCapabilities{instanceapi.CapabilityCustomHostname}
+}
+
+func CustomHostname(spec *instanceapi.InstanceSpec) (string, error) {
+	if spec.CustomHostname == nil || *spec.CustomHostname == "" {
+		return "", nil
+	}
+	custom := *spec.CustomHostname
+	if !hostnamePattern.MatchString(custom) || custom == spec.Hostname ||
+		custom == StorageHost(spec.Hostname) {
+		return "", fmt.Errorf("%w: custom hostname %q", ErrInvalidSpec, custom)
+	}
+	return custom, nil
 }
 
 func objectStorage(s Storage) map[string]any {
@@ -246,9 +276,10 @@ func text(s string, maxRunes int) bool {
 	return !strings.ContainsFunc(s, unicode.IsControl)
 }
 
-func managed(operatorNamespace string) map[string]any {
+func managed(operatorNamespace, instanceID string) map[string]any {
 	return map[string]any{
-		"enabled": true,
+		"enabled":    true,
+		"instanceId": instanceID,
 		"from": []any{
 			map[string]any{
 				"namespaceSelector": map[string]any{
@@ -261,9 +292,8 @@ func managed(operatorNamespace string) map[string]any {
 	}
 }
 
-func tmsValues(instanceID string) map[string]any {
+func tmsValues() map[string]any {
 	return map[string]any{
-		"instanceId": instanceID,
 		"config": map[string]any{"ai": map[string]any{
 			"privateNetworkProviders": false,
 			"serverCloudCredentials":  false,
@@ -293,6 +323,10 @@ func AppSecret(release string, base map[string]any) string {
 
 func APIService(release string) string {
 	return Fullname(release) + "-api"
+}
+
+func LokiService(release string) string {
+	return Fullname(release) + "-loki"
 }
 
 func lifecycle(l instanceapi.InstanceSpecLifecycle) (stopped, hibernate bool, err error) {

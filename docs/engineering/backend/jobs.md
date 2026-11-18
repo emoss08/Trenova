@@ -17,6 +17,28 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
 - Services start work through `kernelports.WorkflowStarter` / `WorkflowSignalStarter`, after
   commit (`kernelports.AfterCommit`).
 
+## Starting and outages
+
+- **A process waits for what is under it, within a budget.** The API and worker do not exit
+  because Redis, Meilisearch or Temporal is not answering yet: each check goes through
+  `startwait.Wait` (`internal/infrastructure/startwait`), run from an `fx.Invoke` so fx's
+  15-second start timeout does not cut it short. It retries with backoff until the dependency
+  answers or `app.startupWait` (default 5m, measured from process start, so the waits share it)
+  is spent, then fails with the last error. It writes one line when the wait begins, one a minute
+  while it lasts and one when it ends. Readiness still checks only the database: a cache restart
+  must not take a working API out of rotation.
+- The worker waits for Temporal (`temporaljobs.AwaitEngine`) because `worker.Start` refuses to
+  start without it and cannot be retried. Schedule reconciliation does not gate start: the
+  scheduler validates the declarations at start (a bad one fails loudly) and reconciles in the
+  background with backoff until Temporal answers; nothing depends on schedules existing when the
+  worker reports ready.
+- **One line per outage.** The SDK writes "Failed to poll for task." once a minute per poller,
+  about seventy lines a round. `pollwatch.Watch` turns them into one warning when the outage
+  starts, one a minute while it lasts (`rate.Sometimes`) and one info line when it ends, with how
+  long the engine was away and how many failed polls were reported. The end is observed by a
+  `DescribeTaskQueue` probe every five seconds during the outage only: it goes to the matching
+  service, as polls do, so a frontend that answers while matching does not is still an outage.
+
 ## Workflows
 
 - Workflow code is deterministic: no I/O, clock, randomness, map iteration order or goroutines

@@ -127,6 +127,15 @@ metadata:
     {{- include "trenova.labels" $c | nindent 4 }}
 spec:
   replicas: {{ include "trenova.replicas" (dict "root" . "replicas" .Values.client.replicas) }}
+  # Caddy proxies the API, so a restart of the client must never leave the
+  # ingress without a ready Caddy: the new pod is ready before the old one
+  # stops, and the old one keeps serving for ten seconds after it is taken
+  # out of the endpoints, while the ingress controller catches up.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       {{- include "trenova.selectorLabels" $c | nindent 6 }}
@@ -139,15 +148,26 @@ spec:
     spec:
       {{- include "trenova.podCommon" . | nindent 6 }}
       {{- include "trenova.podSecurity" (dict "uid" 1000) | nindent 6 }}
+      terminationGracePeriodSeconds: 30
       containers:
         - name: caddy
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 10
           image: {{ include "trenova.image" (dict "root" . "image" .Values.client.image) }}
           imagePullPolicy: {{ include "trenova.pullPolicy" .Values.client.image }}
           # TLS ends at the Ingress, so Caddy serves each hostname over plain
-          # HTTP on an unprivileged port (deploy/Caddyfile).
+          # HTTP on an unprivileged port (deploy/Caddyfile). DOMAIN lists domain
+          # and every alias: Caddy reads a comma-separated list there as the
+          # addresses of one site.
+          {{- $sites := list }}
+          {{- range splitList "," (include "trenova.hosts" .) }}
+          {{- $sites = append $sites (printf "http://%s:8080" .) }}
+          {{- end }}
           env:
             - name: DOMAIN
-              value: {{ printf "http://%s:8080" .Values.domain | quote }}
+              value: {{ join ", " $sites | quote }}
             - name: STORAGE_DOMAIN
               value: {{ printf "http://%s:8080" (.Values.storageDomain | default (printf "storage.%s" .Values.domain)) | quote }}
             - name: STORAGE_ORIGIN
@@ -173,10 +193,12 @@ spec:
                 - name: Host
                   value: {{ .Values.domain | quote }}
             periodSeconds: 10
+            timeoutSeconds: 3
           livenessProbe:
             tcpSocket:
               port: http
             periodSeconds: 15
+            timeoutSeconds: 3
             failureThreshold: 4
           {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
           resources:

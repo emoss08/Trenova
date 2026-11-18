@@ -29,9 +29,6 @@ type Driver struct {
 	// Email reaches a driver with no login. It goes into a request in code
 	// and is never shown to a model.
 	Email string
-	// HasPhone says a number is on file, so a text reaches a driver with no
-	// login. The number itself stays with the message tool.
-	HasPhone bool
 }
 
 type Carrier struct {

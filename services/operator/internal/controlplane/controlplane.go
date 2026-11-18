@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/emoss08/trenova/operator/internal/credential"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
@@ -168,20 +169,21 @@ func (c *Client) Storage(ctx context.Context) (instanceapi.InstanceStorage, erro
 	)
 }
 
-// Commands lists what the control plane asks the instance to do.
-func (c *Client) Commands(ctx context.Context) ([]instanceapi.Command, error) {
+func (c *Client) Commands(ctx context.Context) (instanceapi.CommandList, error) {
 	res, err := c.api.ListCommandsWithResponse(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list commands: %w", err)
+		return instanceapi.CommandList{}, fmt.Errorf("list commands: %w", err)
 	}
 	if res.StatusCode() == http.StatusOK && res.JSON200 != nil {
-		return res.JSON200.Commands, nil
+		return *res.JSON200, nil
 	}
-	return nil, failure(res.HTTPResponse, res.ApplicationproblemJSON401, res.ApplicationproblemJSON429)
+	return instanceapi.CommandList{}, failure(
+		res.HTTPResponse,
+		res.ApplicationproblemJSON401,
+		res.ApplicationproblemJSON429,
+	)
 }
 
-// CompleteCommand says how a command ended. A command the control plane no
-// longer has (it expired) is answered: there is nothing left to say.
 func (c *Client) CompleteCommand(ctx context.Context, id uuid.UUID, result instanceapi.CommandResult) error {
 	res, err := c.api.CompleteCommandWithResponse(ctx, id, result)
 	if err != nil {

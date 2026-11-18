@@ -25,10 +25,16 @@ import (
 const (
 	trenovaInstanceKey      = "email:trenova-sender:instance"
 	trenovaInvitationPrefix = "email:trenova-sender:invitations:"
-	trenovaAPIKeyConfig     = "apiKey"
 )
 
 var (
+	trenovaCredentialKeys = map[email.Provider]string{
+		email.ProviderResend:   "apiKey",
+		email.ProviderPostmark: "serverToken",
+	}
+	errNoInstanceID = errors.New(
+		"the Trenova system sender cannot be used until this instance knows its own ID",
+	)
 	trenovaInstancePolicy = kernelports.RateLimitPolicy{
 		Rate:   3000,
 		Period: time.Hour,
@@ -196,24 +202,28 @@ func notIn(addresses, members []string) []string {
 func (s *Service) trenovaProvider(
 	ctx context.Context,
 	msg *email.Message,
-) (ProviderSender, map[string]string, error) {
+) (*providerCall, error) {
 	if msg.Kind != email.KindSystem || !msg.Type.IsSystem() {
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: %s email may not be sent by Trenova",
 			ErrNonRetryableSend,
 			msg.Type,
 		)
 	}
+	if s.instanceID == "" {
+		return nil, fmt.Errorf("%w: %w", ErrNonRetryableSend, errNoInstanceID)
+	}
 	trenova, err := s.systemSenders.Current(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("%w: read the Trenova sender: %w", ErrRetryableSend, err)
+		return nil, fmt.Errorf("%w: read the Trenova sender: %w", ErrRetryableSend, err)
 	}
 	if trenova == nil {
-		return nil, nil, fmt.Errorf("%w: %w", ErrNonRetryableSend, errTrenovaSenderGone)
+		return nil, fmt.Errorf("%w: %w", ErrNonRetryableSend, errTrenovaSenderGone)
 	}
 	sender, ok := s.providerSenders[trenova.Provider]
-	if !ok {
-		return nil, nil, fmt.Errorf(
+	credentialKey, known := trenovaCredentialKeys[trenova.Provider]
+	if !ok || !known {
+		return nil, fmt.Errorf(
 			"%w: no sender registered for email provider %s",
 			ErrNonRetryableSend,
 			trenova.Provider,
@@ -221,7 +231,11 @@ func (s *Service) trenovaProvider(
 	}
 	msg.Provider = trenova.Provider
 	msg.FromEmail = trenova.FromAddress
-	return sender, map[string]string{trenovaAPIKeyConfig: trenova.APIKey}, nil
+	return &providerCall{
+		sender:   sender,
+		config:   map[string]string{credentialKey: trenova.APIKey},
+		metadata: map[string]string{systememail.InstanceTag: s.instanceID},
+	}, nil
 }
 
 func (s *Service) trenovaSendFailure(
@@ -230,8 +244,10 @@ func (s *Service) trenovaSendFailure(
 	err error,
 ) error {
 	reason := err.Error()
-	if key := config[trenovaAPIKeyConfig]; key != "" {
-		reason = strings.ReplaceAll(reason, key, "[redacted]")
+	for _, secret := range config {
+		if secret != "" {
+			reason = strings.ReplaceAll(reason, secret, "[redacted]")
+		}
 	}
 	s.l.Warn(
 		"the Trenova sender could not deliver an email",
@@ -282,20 +298,6 @@ func (s *Service) SystemEmailInUse(
 	default:
 		return false, "", err
 	}
-}
-
-func (s *Service) SystemWebhookSecret(
-	ctx context.Context,
-	provider email.Provider,
-) (string, bool, error) {
-	trenova, err := s.systemSenders.Current(ctx)
-	if err != nil {
-		return "", false, err
-	}
-	if trenova == nil || trenova.Provider != provider || trenova.WebhookSecret == "" {
-		return "", false, nil
-	}
-	return trenova.WebhookSecret, true, nil
 }
 
 func (s *Service) TenantOfSystemMessage(

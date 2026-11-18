@@ -15,6 +15,9 @@ build/
 coverage/
 coverage.out
 logs/
+# The rule above is for folders of log files. The operator's package that
+# reads and bundles an instance's logs is source, and is named for them.
+!services/operator/internal/logs/
 *.log
 *.pid
 *.local

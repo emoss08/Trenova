@@ -6284,6 +6284,12 @@ type ExportTableViewInput struct {
 	Format string `json:"format"`
 }
 
+type ExtendSupportAccessInput struct {
+	ID string `json:"id"`
+	// The new length, in hours, counted from now.
+	DurationHours int `json:"durationHours"`
+}
+
 type ExternalIdentityConnection struct {
 	Edges      []*ExternalIdentityEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
@@ -7297,10 +7303,11 @@ type GrantCarrierIntelOverrideInput struct {
 }
 
 type GrantSupportAccessInput struct {
-	StaffEmail    string             `json:"staffEmail"`
-	Reason        string             `json:"reason"`
-	DurationHours int                `json:"durationHours"`
-	Scope         SupportAccessScope `json:"scope"`
+	StaffEmail      string             `json:"staffEmail"`
+	Reason          string             `json:"reason"`
+	DurationHours   int                `json:"durationHours"`
+	Scope           SupportAccessScope `json:"scope"`
+	AllowsAssistant bool               `json:"allowsAssistant"`
 }
 
 type HandOffWatchtowerItemInput struct {
@@ -8111,6 +8118,14 @@ type MFAAuthenticatorEdge struct {
 type ManagedPlan struct {
 	// False on a self-hosted install, where every feature is on and every list here is empty.
 	Managed bool `json:"managed"`
+	// The plan's page in the customer's Trenova account, where add-ons are bought. Null on a self-hosted install and until the control plane has sent one.
+	ManageURL *string `json:"manageUrl,omitempty"`
+	// When the plan ends: the close of the period already paid for. Set only while an owner has set the plan to end; null once it is kept, and on a self-hosted install. After it, the workspace is taken down and a final backup is kept for finalBackupDays days.
+	EndsAt *int `json:"endsAt,omitempty"`
+	// How many days the final backup is kept after the workspace is taken down, as the control plane says; 30 on a self-hosted install and until the control plane has said.
+	FinalBackupDays int `json:"finalBackupDays"`
+	// Usage for the current billing period against the plan's allowances. Null on a self-hosted install, before the control plane has sent a usage state, or while that state has no billing period.
+	Usage *ManagedPlanUsage `json:"usage,omitempty"`
 	// What the base plan includes.
 	Base []*ManagedPlanFeature `json:"base"`
 	// The add-ons on the plan.
@@ -8126,6 +8141,14 @@ type ManagedPlanAddOn struct {
 	Key      string                `json:"key"`
 	Name     string                `json:"name"`
 	Features []*ManagedPlanFeature `json:"features"`
+	// When an add-on on the plan leaves it, set only while its removal is scheduled.
+	EndsAt *int `json:"endsAt,omitempty"`
+}
+
+// An add-on a change set to end, and when it ends.
+type ManagedPlanAddOnEnding struct {
+	AddOn  *ManagedPlanAddOn `json:"addOn"`
+	EndsAt int               `json:"endsAt"`
 }
 
 // One change Trenova made to the plan. The first entry an instance ever received is its starting plan: starting is true and joined lists what it included.
@@ -8136,12 +8159,40 @@ type ManagedPlanChange struct {
 	Left []*ManagedPlanAddOn `json:"left"`
 	// Add-ons that joined the plan.
 	Joined []*ManagedPlanAddOn `json:"joined"`
+	// Add-ons the change set to end, with the day each ends. They stay on the plan until then.
+	Ending []*ManagedPlanAddOnEnding `json:"ending"`
+	// Add-ons whose scheduled end the change called off. They stay on the plan.
+	Kept []*ManagedPlanAddOn `json:"kept"`
 }
 
 // A feature of the plan, by the name a person reads. The key is for the client's own bookkeeping and is never shown.
 type ManagedPlanFeature struct {
 	Key  string `json:"key"`
 	Name string `json:"name"`
+}
+
+// One meter of the plan for the current billing period. The key is for the client's own bookkeeping and is never shown.
+type ManagedPlanMeter struct {
+	Key string `json:"key"`
+	// The meter's name, in the reader's language.
+	Name string               `json:"name"`
+	Unit ManagedPlanMeterUnit `json:"unit"`
+	// How much is used: this period's count, or the level right now for a meter that measures a level (document storage, organizations).
+	Used int `json:"used"`
+	// How much the plan includes this period.
+	Included int `json:"included"`
+	// True when the plan never goes past what it includes: work that needs more is refused rather than billed as overage.
+	HardCap bool `json:"hardCap"`
+	// True when the control plane has stopped the work this meter counts.
+	Stopped bool `json:"stopped"`
+}
+
+// Usage of the plan for the current billing period.
+type ManagedPlanUsage struct {
+	PeriodStart int `json:"periodStart"`
+	PeriodEnd   int `json:"periodEnd"`
+	// The meters the plan has allowances for, in catalogue order.
+	Meters []*ManagedPlanMeter `json:"meters"`
 }
 
 type ManualJournalConnection struct {
@@ -9980,6 +10031,10 @@ type RequestMyPTOInput struct {
 	StartDate int            `json:"startDate"`
 	EndDate   int            `json:"endDate"`
 	Reason    string         `json:"reason"`
+}
+
+type RequestSupportLogsInput struct {
+	Period SupportLogPeriod `json:"period"`
 }
 
 type RescindDisciplinaryActionInput struct {
@@ -12661,10 +12716,13 @@ type SubmitMyExpenseInput struct {
 
 // Time-limited access an administrator gave one named Trenova staff member to this organization.
 type SupportAccessGrant struct {
-	ID            string              `json:"id"`
-	StaffEmail    string              `json:"staffEmail"`
-	Reason        string              `json:"reason"`
-	Scope         SupportAccessScope  `json:"scope"`
+	ID         string             `json:"id"`
+	StaffEmail string             `json:"staffEmail"`
+	Reason     string             `json:"reason"`
+	Scope      SupportAccessScope `json:"scope"`
+	// Whether staff may use the assistant under this grant. Its answers are paid for by the organization's AI providers.
+	AllowsAssistant bool `json:"allowsAssistant"`
+	// The length, in hours, chosen when the grant was made or last extended.
 	DurationHours int                 `json:"durationHours"`
 	Status        SupportAccessStatus `json:"status"`
 	GrantedByName *string             `json:"grantedByName,omitempty"`
@@ -12673,6 +12731,11 @@ type SupportAccessGrant struct {
 	RevokedAt     *int                `json:"revokedAt,omitempty"`
 	RevokedByName *string             `json:"revokedByName,omitempty"`
 	RevokeReason  *string             `json:"revokeReason,omitempty"`
+	// When an administrator last extended the grant.
+	ExtendedAt     *int    `json:"extendedAt,omitempty"`
+	ExtendedByName *string `json:"extendedByName,omitempty"`
+	// When staff last did something in a session open now; null when nobody is in the organization under this grant.
+	ActiveAt *int `json:"activeAt,omitempty"`
 	// When staff last entered under this grant.
 	LastEnteredAt *int `json:"lastEnteredAt,omitempty"`
 	// The staff member's name as the control plane last asserted it.
@@ -12700,6 +12763,34 @@ type SupportAccessSettings struct {
 	// The lengths, in hours, a grant may have.
 	Durations     []int `json:"durations"`
 	MaxLiveGrants int   `json:"maxLiveGrants"`
+	// What Trenova support can never do under any grant, one sentence each, in the reader's language. Built from the support policy itself.
+	Limits []string `json:"limits"`
+}
+
+// A request from this organization to send the instance's logs to Trenova support.
+type SupportLogRequest struct {
+	ID     string                  `json:"id"`
+	Period SupportLogPeriod        `json:"period"`
+	Status SupportLogRequestStatus `json:"status"`
+	// The name of the person who asked, as it was when they asked.
+	RequestedByName string `json:"requestedByName"`
+	RequestedAt     int    `json:"requestedAt"`
+	// When the logs were sent or the request failed.
+	FinishedAt *int `json:"finishedAt,omitempty"`
+	// One sentence saying why the request failed. Null unless it failed.
+	FailureMessage *string `json:"failureMessage,omitempty"`
+}
+
+// Sending the instance's logs to Trenova support, as this organization sees it.
+type SupportLogRequests struct {
+	// False on a self-hosted install, where logs are never sent to Trenova and every list here is empty.
+	Managed bool `json:"managed"`
+	// True while a request from any organization on this instance waits or is being collected. A new request is refused until it finishes.
+	InFlight bool `json:"inFlight"`
+	// How many more requests the instance may make before the 24-hour limit.
+	RemainingToday int `json:"remainingToday"`
+	// This organization's most recent requests, newest first, at most 10.
+	Requests []*SupportLogRequest `json:"requests"`
 }
 
 // The caller's own session, when Trenova support opened it.
@@ -16229,6 +16320,62 @@ func (e InboundLinkedRecord) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// How a usage meter is counted: a count of things or a number of bytes.
+type ManagedPlanMeterUnit string
+
+const (
+	ManagedPlanMeterUnitCount ManagedPlanMeterUnit = "COUNT"
+	ManagedPlanMeterUnitBytes ManagedPlanMeterUnit = "BYTES"
+)
+
+var AllManagedPlanMeterUnit = []ManagedPlanMeterUnit{
+	ManagedPlanMeterUnitCount,
+	ManagedPlanMeterUnitBytes,
+}
+
+func (e ManagedPlanMeterUnit) IsValid() bool {
+	switch e {
+	case ManagedPlanMeterUnitCount, ManagedPlanMeterUnitBytes:
+		return true
+	}
+	return false
+}
+
+func (e ManagedPlanMeterUnit) String() string {
+	return string(e)
+}
+
+func (e *ManagedPlanMeterUnit) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ManagedPlanMeterUnit(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ManagedPlanMeterUnit", str)
+	}
+	return nil
+}
+
+func (e ManagedPlanMeterUnit) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ManagedPlanMeterUnit) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ManagedPlanMeterUnit) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type MoveStatus string
 
 const (
@@ -18512,6 +18659,131 @@ func (e *SupportAccessStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e SupportAccessStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// How far back the logs sent to Trenova support reach.
+type SupportLogPeriod string
+
+const (
+	// The last hour.
+	SupportLogPeriodHour SupportLogPeriod = "Hour"
+	// The last 24 hours.
+	SupportLogPeriodDay SupportLogPeriod = "Day"
+	// The last 7 days.
+	SupportLogPeriodWeek SupportLogPeriod = "Week"
+)
+
+var AllSupportLogPeriod = []SupportLogPeriod{
+	SupportLogPeriodHour,
+	SupportLogPeriodDay,
+	SupportLogPeriodWeek,
+}
+
+func (e SupportLogPeriod) IsValid() bool {
+	switch e {
+	case SupportLogPeriodHour, SupportLogPeriodDay, SupportLogPeriodWeek:
+		return true
+	}
+	return false
+}
+
+func (e SupportLogPeriod) String() string {
+	return string(e)
+}
+
+func (e *SupportLogPeriod) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SupportLogPeriod(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SupportLogPeriod", str)
+	}
+	return nil
+}
+
+func (e SupportLogPeriod) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SupportLogPeriod) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SupportLogPeriod) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Where a request to send the instance's logs to Trenova support stands.
+type SupportLogRequestStatus string
+
+const (
+	// Waiting for the instance to start collecting the logs.
+	SupportLogRequestStatusRequested SupportLogRequestStatus = "Requested"
+	// The instance is collecting the logs.
+	SupportLogRequestStatusCollecting SupportLogRequestStatus = "Collecting"
+	// Trenova support has the logs; they are kept for 30 days.
+	SupportLogRequestStatusSent SupportLogRequestStatus = "Sent"
+	// The logs could not be sent; failureMessage says why.
+	SupportLogRequestStatusFailed SupportLogRequestStatus = "Failed"
+)
+
+var AllSupportLogRequestStatus = []SupportLogRequestStatus{
+	SupportLogRequestStatusRequested,
+	SupportLogRequestStatusCollecting,
+	SupportLogRequestStatusSent,
+	SupportLogRequestStatusFailed,
+}
+
+func (e SupportLogRequestStatus) IsValid() bool {
+	switch e {
+	case SupportLogRequestStatusRequested, SupportLogRequestStatusCollecting, SupportLogRequestStatusSent, SupportLogRequestStatusFailed:
+		return true
+	}
+	return false
+}
+
+func (e SupportLogRequestStatus) String() string {
+	return string(e)
+}
+
+func (e *SupportLogRequestStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SupportLogRequestStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SupportLogRequestStatus", str)
+	}
+	return nil
+}
+
+func (e SupportLogRequestStatus) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SupportLogRequestStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SupportLogRequestStatus) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

@@ -517,6 +517,7 @@ localizes and logs it; resolvers return it to gqlgen, whose presenter does the s
 | `ErrQuotaExceeded` | Plan limit reached | Cloud free tier meter at its limit |
 | `ErrPlanRestricted` | Not on this plan | Feature not bought, read-only or expired trial, sign-ups paused |
 | `ErrSessionContextStale` | Session no longer the tab's | A tab another tab's sign-in or organization switch left behind |
+| `ErrCSRFTokenInvalid` | Anti-forgery token missing or not this session's | A write the CSRF check refused; the client fetches a fresh token and resends once (`NewCSRFTokenInvalidError`, 403) |
 | `ErrBusinessLogic` | Business rule violation | Domain-specific rules |
 | `ErrComplianceViolation` | Compliance rule broken | Regulatory requirements |
 | `ErrVersionMismatch` | Optimistic lock failed | Concurrent modification |

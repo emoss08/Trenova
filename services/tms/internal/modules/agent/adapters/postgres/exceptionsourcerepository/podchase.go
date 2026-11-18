@@ -44,7 +44,6 @@ type chaseWorker struct {
 	LastName  string
 	UserID    pulid.ID
 	Email     string
-	Phone     string
 }
 
 type chaseCarrier struct {
@@ -209,7 +208,7 @@ func (r *repository) haulers(
 		items = append(items, keel.IntoSlice(
 			wk.Pick(
 				wk.ID, wk.FirstName, wk.LastName,
-				wk.UserID.Coalesce(""), wk.Email.Coalesce(""), wk.PhoneNumber.Coalesce(""),
+				wk.UserID.Coalesce(""), wk.Email.Coalesce(""),
 			).
 				Where(wk.ID.In(workerIDs...)).
 				Limit(len(workerIDs)), &workers))
@@ -241,7 +240,6 @@ func (r *repository) haulers(
 				Name:     strings.TrimSpace(w.FirstName + " " + w.LastName),
 				OnDash:   w.UserID.IsNotNil(),
 				Email:    strings.TrimSpace(w.Email),
-				HasPhone: strings.TrimSpace(w.Phone) != "",
 			}
 		}
 	}

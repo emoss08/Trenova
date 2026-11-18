@@ -22,5 +22,5 @@ func (r *QueryResolver) ManagedPlan(ctx context.Context) (*gqlmodel.ManagedPlan,
 		return nil, err
 	}
 
-	return planToModel(plan), nil
+	return planToModel(ctx, plan), nil
 }

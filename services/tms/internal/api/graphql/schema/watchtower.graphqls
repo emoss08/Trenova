@@ -636,8 +636,6 @@ enum WatchtowerPlayKind {
 enum WatchtowerPlayChannel {
   "A message in the driver's portal."
   Dash
-  "A text to the driver's phone."
-  Text
   "An email in the organization's letterhead."
   Email
   "An offer to carriers, which carries no message."

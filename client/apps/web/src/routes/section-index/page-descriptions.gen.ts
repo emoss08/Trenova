@@ -70,7 +70,7 @@ export const PAGE_DESCRIPTIONS = defineLabels({
     "Oversize and overweight limits per state. These limits are shared across every organization; record a carrier override to hold your own fleet to something stricter.",
   "/admin/organization-settings":
     "Manage your organization profile, compliance, and security settings",
-  "/admin/plan": "What your plan includes, the add-ons it does not, and recent changes",
+  "/admin/plan": "What your plan includes, how much of it you have used and what you can add",
   "/admin/sequence-configs":
     "Configure sequence generation formats for shipments and billing workflows",
   "/admin/service-failure-reason-codes":

@@ -3,12 +3,14 @@ package documentmeter
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentstorage/documentstoragedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/datausageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.uber.org/fx"
@@ -24,18 +26,34 @@ type Result struct {
 	fx.Out
 
 	Reader managedusageports.LevelReader `group:"managed_level_readers"`
+	Source datausageports.Source         `group:"managed_data_sources"`
 }
+
+const measureTimeout = 10 * time.Second
 
 type storage struct {
 	db *postgres.Connection
 }
 
 func New(p Params) Result {
-	return Result{Reader: &storage{db: p.DB}}
+	s := &storage{db: p.DB}
+	return Result{Reader: s, Source: s}
 }
 
 func (s *storage) Meter() platformcatalog.MeterKey {
 	return platformcatalog.MeterDocumentStorageBytes
+}
+
+func (s *storage) Figure() datausageports.Figure {
+	return datausageports.FigureDocuments
+}
+
+func (s *storage) Timeout() time.Duration {
+	return measureTimeout
+}
+
+func (s *storage) Measure(ctx context.Context) (int64, error) {
+	return s.Level(ctx)
 }
 
 func (s *storage) Level(ctx context.Context) (int64, error) {

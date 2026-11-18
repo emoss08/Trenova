@@ -413,7 +413,9 @@ func TestScheduler_ThePlanIsWatchedFromStartUntilStop(t *testing.T) {
 	s.interval = time.Millisecond
 
 	require.NoError(t, s.Start(t.Context()))
-	assert.Equal(t, int32(1), sc.listCalls.Load())
+	require.Eventually(t, func() bool {
+		return sc.listCalls.Load() == 1
+	}, 5*time.Second, time.Millisecond)
 
 	gate.turnOff(addOnFeature)
 	require.Eventually(t, func() bool {

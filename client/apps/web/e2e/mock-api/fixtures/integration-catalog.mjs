@@ -76,13 +76,13 @@ export const CATALOG_DEFINITIONS = [
     color: "#1a82e2",
     glowFrom: "#1a82e2",
     glowTo: "#64748b",
-    docsUrl: "https://www.twilio.com/docs/sendgrid",
+    docsUrl: "https://docs.sendgrid.com/",
     websiteUrl: "https://sendgrid.com/",
     links: [
       {
         kind: "docs",
         label: "Docs",
-        url: "https://www.twilio.com/docs/sendgrid",
+        url: "https://docs.sendgrid.com/",
       },
       {
         kind: "website",

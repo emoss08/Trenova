@@ -2,23 +2,14 @@ package drivermessage
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
-	"go.temporal.io/sdk/client"
-
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
-	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const (
@@ -35,9 +26,6 @@ type Channel string
 const (
 	// ChannelDash is the driver's portal, for a driver with a login.
 	ChannelDash = Channel("Dash")
-	// ChannelText is a text to the number on file, for a driver with no
-	// login, when the organization's plan includes text messages.
-	ChannelText = Channel("Text")
 	// ChannelNone is a driver nothing reaches.
 	ChannelNone = Channel("")
 )
@@ -53,32 +41,20 @@ type Notifier interface {
 	) (*notificationports.DriverNotificationPreview, error)
 }
 
-// Sender sends a driver a message from the office where they can be
-// reached: in Dash when they have a login, by text to the number on file
-// when they do not and the plan includes text messages. It is the one owner
-// of that choice, for an agent's tool and for a person's own request, and
-// the number is read here and handed to nobody.
+// Sender sends a driver a message from the office in Dash, where they have a
+// login. It is the one owner of that choice, for an agent's tool and for a
+// person's own request.
 type Sender struct {
-	drivers   Notifier
-	features  platformcatalogports.FeatureGate
-	workflows kernelports.WorkflowStarter
+	drivers Notifier
 }
 
-func New(
-	drivers Notifier,
-	features platformcatalogports.FeatureGate,
-	workflows kernelports.WorkflowStarter,
-) *Sender {
-	return &Sender{drivers: drivers, features: features, workflows: workflows}
+func New(drivers Notifier) *Sender {
+	return &Sender{drivers: drivers}
 }
 
 // Provide builds the Sender over the driver notification service.
-func Provide(
-	drivers *drivernotificationservice.Service,
-	features platformcatalogports.FeatureGate,
-	workflows kernelports.WorkflowStarter,
-) *Sender {
-	return New(drivers, features, workflows)
+func Provide(drivers *drivernotificationservice.Service) *Sender {
+	return New(drivers)
 }
 
 // Message is a message from the office to one driver.
@@ -122,17 +98,6 @@ func (m *Message) Notification() *drivernotificationservice.DriverNotification {
 type Reach struct {
 	Channel Channel
 	Notice  *notificationports.DriverNotificationPreview
-	text    *notificationports.DriverSMSPreview
-}
-
-// Text is the message as the text it would go out as; empty unless the
-// channel is text.
-func (r *Reach) Text() string {
-	if r == nil || r.text == nil {
-		return ""
-	}
-
-	return r.text.Message
 }
 
 // Reach renders the message and says how it would get to the driver. It
@@ -144,38 +109,20 @@ func (s *Sender) Reach(ctx context.Context, message *Message) (*Reach, error) {
 	}
 
 	reach := &Reach{Notice: notice, Channel: ChannelNone}
-	switch {
-	case notice.Reachable:
+	if notice.Reachable {
 		reach.Channel = ChannelDash
-	case notice.Text != nil && s.texts(ctx):
-		reach.Channel = ChannelText
-		reach.text = notice.Text
 	}
 
 	return reach, nil
 }
 
-// Texts reports whether text messages are on.
-func (s *Sender) Texts(ctx context.Context) bool {
-	return s.texts(ctx)
-}
-
-func (s *Sender) texts(ctx context.Context) bool {
-	allowed, err := s.features.Enabled(ctx, platformcatalog.FeatureAdministration)
-
-	return err == nil && allowed
-}
-
-// Send sends the message the way Reach says it goes and answers which way
-// that was. A driver nothing reaches is sent nothing and the answer is
-// ChannelNone: the notification path has always passed over a driver with
-// no login, and a caller that must not lose the message asks Reach first.
+// Send sends the message in Dash and answers which way that was. A driver
+// with no login is sent nothing and the answer is ChannelNone: the
+// notification path has always passed over a driver with no login, and a
+// caller that must not lose the message asks Reach first.
 func (s *Sender) Send(ctx context.Context, message *Message) (Channel, error) {
 	request := message.Notification()
 	notice, err := s.drivers.Preview(ctx, request)
-	if err == nil && !notice.Reachable && notice.Text != nil && s.texts(ctx) {
-		return ChannelText, s.sendText(ctx, message, notice.Text)
-	}
 
 	s.drivers.Notify(ctx, request)
 	if err == nil && notice.Reachable {
@@ -183,30 +130,4 @@ func (s *Sender) Send(ctx context.Context, message *Message) (Channel, error) {
 	}
 
 	return ChannelNone, nil
-}
-
-func (s *Sender) sendText(
-	ctx context.Context,
-	message *Message,
-	text *notificationports.DriverSMSPreview,
-) error {
-	_, err := s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
-		ID: fmt.Sprintf(
-			"driver-message-%s-%d",
-			message.WorkerID.String(),
-			timeutils.NowUnixMilli(),
-		),
-		TaskQueue:     temporaltype.SMSTaskQueue,
-		StaticSummary: "Sending a driver a dispatch message by text",
-	}, "SendSMSWorkflow", &smscontract.SendSMSPayload{
-		PhoneNumber:    text.PhoneNumber,
-		Message:        text.Message,
-		OrganizationID: message.TenantInfo.OrgID,
-		BusinessUnitID: message.TenantInfo.BuID,
-	})
-	if err != nil {
-		return fmt.Errorf("send the driver the message by text: %w", err)
-	}
-
-	return nil
 }

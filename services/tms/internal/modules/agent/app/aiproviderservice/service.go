@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -44,6 +45,7 @@ type Params struct {
 	Tester    aiproviderports.AIProviderTester
 	AIConfig  *aiconfig.Config
 	Analytics aianalyticsports.AnalyticsCache
+	Indexer   retrievalports.RetrievalWaker
 }
 
 // EndpointProber issues a live call against a configured endpoint.
@@ -72,6 +74,7 @@ type Service struct {
 	tester     aiproviderports.AIProviderTester
 	ai         *aiconfig.Config
 	analytics  aianalyticsports.AnalyticsCache
+	indexer    retrievalports.RetrievalWaker
 }
 
 var (
@@ -92,6 +95,7 @@ func New(p Params) *Service {
 		tester:     p.Tester,
 		ai:         p.AIConfig,
 		analytics:  p.Analytics,
+		indexer:    p.Indexer,
 	}
 }
 
@@ -215,7 +219,7 @@ func (s *Service) Create(
 		actor:     actor,
 		comment:   "AI provider created",
 	})
-	s.analyticsChanged(ctx, req.TenantInfo)
+	s.providersChanged(ctx, req.TenantInfo, created)
 
 	return created.Redacted(), nil
 }
@@ -283,7 +287,7 @@ func (s *Service) Update(
 		actor:     actor,
 		comment:   "AI provider updated",
 	})
-	s.analyticsChanged(ctx, req.TenantInfo)
+	s.providersChanged(ctx, req.TenantInfo, existing, saved)
 
 	return saved.Redacted(), nil
 }
@@ -309,7 +313,7 @@ func (s *Service) Delete(
 		actor:     actor,
 		comment:   "AI provider deleted",
 	})
-	s.analyticsChanged(ctx, req.TenantInfo)
+	s.providersChanged(ctx, req.TenantInfo, existing)
 
 	return nil
 }

@@ -38,7 +38,7 @@ func fieldErrors(t *testing.T, p *aiprovider.Provider) map[string]bool {
 
 	fields := make(map[string]bool)
 	for _, e := range multiErr.Errors {
-		fields[e.Field] = true
+		fields[e.Field()] = true
 	}
 
 	return fields

@@ -2,16 +2,11 @@ package playsendtest
 
 import (
 	"context"
-	"strings"
-
-	"go.temporal.io/sdk/client"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/drivermessage"
 	"github.com/emoss08/trenova/internal/modules/agent/app/requestemail"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,9 +15,8 @@ import (
 // Driver is one driver as the notification path sees them.
 type Driver struct {
 	Name string
-	// OnDash is a portal login; Phone a number on file for a text.
+	// OnDash is a portal login.
 	OnDash bool
-	Phone  string
 }
 
 // Drivers is the driver notification path for a test: who can be reached
@@ -56,41 +50,13 @@ func (d *Drivers) Preview(
 		Priority:   req.Priority,
 		Link:       req.Link,
 	}
-	if !driver.OnDash && strings.TrimSpace(driver.Phone) != "" {
-		preview.Text = &notificationports.DriverSMSPreview{
-			PhoneNumber: driver.Phone,
-			Message:     words.AlertTitle + ": " + words.AlertMessage,
-		}
-	}
 
 	return preview, nil
 }
 
-// Texts records the text messages a test sent.
-type Texts struct {
-	kernelports.WorkflowStarter
-
-	Sent []any
-}
-
-func (t *Texts) StartWorkflow(
-	_ context.Context,
-	_ client.StartWorkflowOptions,
-	_ any,
-	args ...any,
-) (client.WorkflowRun, error) {
-	t.Sent = append(t.Sent, args...)
-
-	return nil, nil //nolint:nilnil // the caller only needs to know it started
-}
-
 // Messages builds the driver message sender over the test's drivers.
-func Messages(
-	drivers *Drivers,
-	features platformcatalogports.FeatureGate,
-	texts *Texts,
-) *drivermessage.Sender {
-	return drivermessage.New(drivers, features, texts)
+func Messages(drivers *Drivers) *drivermessage.Sender {
+	return drivermessage.New(drivers)
 }
 
 // Mail is the request mailer for a test: what was rendered and sent.

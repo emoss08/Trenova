@@ -115,6 +115,22 @@ func (s *grantStore) Revoke(_ context.Context, grant *supportaccess.Grant, now i
 	return &out, nil
 }
 
+func (s *grantStore) Extend(_ context.Context, grant *supportaccess.Grant, now int64) (*supportaccess.Grant, error) {
+	s.touch()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	g, ok := s.grants[grant.ID]
+	if !ok || !g.LiveAt(now) {
+		return nil, supportaccess.ErrGrantNotFound
+	}
+	g.ExpiresAt = grant.ExpiresAt
+	g.DurationHours = grant.DurationHours
+	g.ExtendedAt = &now
+	g.ExtendedByID = grant.ExtendedByID
+	out := *g
+	return &out, nil
+}
+
 func (s *grantStore) ByPrincipal(_ context.Context, tenantInfo pagination.TenantInfo, userID pulid.ID) (*supportaccess.Grant, error) {
 	s.touch()
 	s.mu.Lock()
@@ -139,6 +155,46 @@ func (s *grantStore) FindLiveForEntry(_ context.Context, req *supportaccessports
 		}
 	}
 	return nil, supportaccess.ErrGrantNotFound
+}
+
+func (s *grantStore) ListLiveForStaff(
+	_ context.Context,
+	req *supportaccessports.ListLiveForStaffRequest,
+) ([]*supportaccess.Grant, error) {
+	s.touch()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var out []*supportaccess.Grant
+	for _, g := range s.grants {
+		if g.StaffEmail == req.StaffEmail && g.LiveAt(req.Now) && len(out) < req.Limit {
+			copied := *g
+			out = append(out, &copied)
+		}
+	}
+	return out, nil
+}
+
+func (s *grantStore) ListLive(
+	_ context.Context,
+	req *supportaccessports.ListLiveRequest,
+) ([]*supportaccessports.LiveGrant, error) {
+	s.touch()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := []*supportaccessports.LiveGrant{}
+	for _, g := range s.grants {
+		if g.LiveAt(req.Now) {
+			copied := *g
+			out = append(out, &supportaccessports.LiveGrant{Grant: &copied})
+		}
+	}
+	slices.SortFunc(out, func(a, b *supportaccessports.LiveGrant) int {
+		return int(a.Grant.ExpiresAt - b.Grant.ExpiresAt)
+	})
+	if len(out) > req.Limit {
+		out = out[:req.Limit]
+	}
+	return out, nil
 }
 
 func (s *grantStore) OrganizationBusinessUnit(_ context.Context, orgID pulid.ID) (pulid.ID, error) {
@@ -315,14 +371,24 @@ func (a *authEvents) Record(_ context.Context, rec *iamports.AuthEventRecord) {
 
 type notices struct {
 	mu   sync.Mutex
-	sent []supportaccessports.SessionStartedNotice
+	sent []supportaccessports.Notice
 }
 
-func (n *notices) SupportSessionStarted(_ context.Context, notice *supportaccessports.SessionStartedNotice) error {
+func (n *notices) SupportAccessChanged(_ context.Context, notice *supportaccessports.Notice) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.sent = append(n.sent, *notice)
 	return nil
+}
+
+func (n *notices) kinds() []supportaccessports.NoticeKind {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	out := make([]supportaccessports.NoticeKind, 0, len(n.sent))
+	for _, notice := range n.sent {
+		out = append(out, notice.Kind)
+	}
+	return out
 }
 
 type clock struct {

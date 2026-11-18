@@ -25,7 +25,7 @@ func TestProblemBuilder_SessionContextStale_CarriesTheCurrentSession(t *testing.
 		WithLocale(i18n.EN).
 		WithType(problemType).
 		WithDetail(sanitizer.SanitizeMessage(err, problemType)).
-		WithParams(sanitizer.ExtractParams(err)).
+		WithParams(sanitizer.ExtractParams(err, i18n.EN)).
 		Build()
 
 	assert.Equal(t, "https://api.test/problems/session-context-stale", problem.Type)

@@ -2,11 +2,12 @@ package redis
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/cacheconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/startwait"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/redis/go-redis/extra/redisotel/v9"
@@ -79,19 +80,6 @@ func NewConnection(p ConnectionParams) (*redis.Client, error) {
 	}
 
 	p.LC.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			if err := client.Ping(ctx).Err(); err != nil {
-				return fmt.Errorf("failed to ping Redis: %w", err)
-			}
-			logger.Info(
-				"Redis connection established",
-				zap.String("host", cacheConfig.Host),
-				zap.Int("port", cacheConfig.Port),
-				zap.Int("db", cacheConfig.DB),
-				zap.Int("poolSize", poolSize),
-			)
-			return nil
-		},
 		OnStop: func(context.Context) error {
 			logger.Info("Closing Redis connection")
 			if err := client.Close(); err != nil {
@@ -105,4 +93,38 @@ func NewConnection(p ConnectionParams) (*redis.Client, error) {
 	})
 
 	return client, nil
+}
+
+type AwaitParams struct {
+	fx.In
+
+	Client      *redis.Client
+	CacheConfig *cacheconfig.Config
+	AppConfig   *appconfig.Config
+	Logger      *zap.Logger
+}
+
+func AwaitReady(p AwaitParams) error {
+	logger := p.Logger.With(zap.String("component", "redis"))
+
+	err := startwait.Wait(context.Background(), startwait.Params{
+		Logger:     logger,
+		Dependency: "Redis",
+		Deadline:   startwait.Deadline(p.AppConfig.StartupWait),
+		Check: func(ctx context.Context) error {
+			return p.Client.Ping(ctx).Err()
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	logger.Info(
+		"Redis connection established",
+		zap.String("host", p.CacheConfig.Host),
+		zap.Int("port", p.CacheConfig.Port),
+		zap.Int("db", p.CacheConfig.DB),
+		zap.Int("poolSize", p.Client.Options().PoolSize),
+	)
+	return nil
 }

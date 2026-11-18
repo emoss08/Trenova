@@ -41,7 +41,7 @@ func fieldsOf(t *testing.T, err error) []string {
 	require.ErrorAs(t, err, &multiErr)
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, fieldErr := range multiErr.Errors {
-		fields = append(fields, fieldErr.Field)
+		fields = append(fields, fieldErr.Field())
 	}
 
 	return fields
@@ -176,7 +176,7 @@ func TestTrenovaItselfCannotBeAPortalSite(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	f.svc.appHost = "cloud.trenova.app"
+	f.svc.appHosts = []string{"cloud.trenova.app", "tms.acme.com"}
 
 	_, err := f.svc.CreateSite(t.Context(), f.siteRequest(
 		func(req *agentextensionports.SavePortalSiteRequest) {

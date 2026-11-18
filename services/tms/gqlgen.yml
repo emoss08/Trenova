@@ -2708,6 +2708,9 @@ models:
   AIRetrievalPauseReason:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval.PauseReason
+  AIRetrievalEmbeddingSource:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval.EmbeddingSource
   AIRetrievalAvailability:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalAvailability

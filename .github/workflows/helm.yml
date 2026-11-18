@@ -93,6 +93,7 @@ jobs:
             [managed]="-f $CHART/ci/managed-values.yaml"
             [escrow]="--set secrets.escrowSecret=trenova-escrow"
             [setup-link]="--set bootstrap.adminEmail=admin@example.com --set bootstrap.orgName=Acme --set bootstrap.adminName=Dana --set bootstrap.adminSetup=link"
+            [aliases]="--set ingress.enabled=true --set ingress.tls.enabled=true --set aliases[0]=tms.example.org --set primaryDomain=tms.example.org"
           )
           for shape in "${!shapes[@]}"; do
             echo "::group::$shape"
@@ -113,8 +114,15 @@ jobs:
           done
           ls "$RUNNER_TEMP"/configs/*/config.yaml | paste -sd: > "$RUNNER_TEMP/deploy-configs"
           # Managed mode never opens port 8090 to every namespace.
-          if helm template trenova "$CHART" -n trenova "${base[@]}" --set managed.enabled=true > /dev/null 2>&1; then
+          if helm template trenova "$CHART" -n trenova "${base[@]}" --set managed.enabled=true \
+            --set managed.instanceId=0192f3a4-5b6c-7d8e-9f01-23456789abcd > /dev/null 2>&1; then
             echo "::error::managed.enabled rendered without managed.from"
+            exit 1
+          fi
+          # Managed mode never sends Trenova's system email untagged.
+          if helm template trenova "$CHART" -n trenova "${base[@]}" -f "$CHART/ci/managed-values.yaml" \
+            --set managed.instanceId= > /dev/null 2>&1; then
+            echo "::error::managed.enabled rendered without managed.instanceId"
             exit 1
           fi
           # With an escrow Secret, the four escrowed keys are read from it alone
@@ -126,6 +134,40 @@ jobs:
           # A first administrator who sets up from a link is never handed a password.
           python3 -I tools/helm/check-bootstrap.py "$RUNNER_TEMP/setup-link.yaml" link
           python3 -I tools/helm/check-bootstrap.py "$RUNNER_TEMP/ci.yaml" password
+          # CloudNativePG refuses a database that asks for less memory than its
+          # shared_buffers: the live one in every shape, and a candidate restored
+          # beside it, which asks for little, with the chart's own settings and
+          # with a larger shared_buffers than the candidate's floor.
+          for shape in default ci managed; do
+            python3 -I tools/helm/check-postgres-memory.py "$RUNNER_TEMP/$shape.yaml" 1
+          done
+          restore=(--set backup.enabled=true --set backup.destinationPath=s3://backups/trenova --set backup.existingSecret=backups
+            --set postgres.restore.generation=r1a2b3c4d --set postgres.restore.sourceGeneration=
+            --set-string postgres.restore.targetTime=2026-11-14T09:30:00Z)
+          helm template trenova "$CHART" -n trenova "${base[@]}" "${restore[@]}" > "$RUNNER_TEMP/restore.yaml"
+          python3 -I tools/helm/check-postgres-memory.py "$RUNNER_TEMP/restore.yaml" 2
+          helm template trenova "$CHART" -n trenova "${base[@]}" "${restore[@]}" \
+            --set postgres.parameters.shared_buffers=3GB --set postgres.resources.requests.memory=4Gi \
+            --set postgres.resources.limits.memory=8Gi > "$RUNNER_TEMP/restore-large.yaml"
+          python3 -I tools/helm/check-postgres-memory.py "$RUNNER_TEMP/restore-large.yaml" 2
+          # CloudNativePG reaches every database the release may hold, also one
+          # it has left and keeps, which no template renders.
+          for shape in default managed restore; do
+            python3 -I tools/helm/check-postgres-network.py "$RUNNER_TEMP/$shape.yaml"
+          done
+          # Restarting one part leaves the rest serving: the client pauses before
+          # it stops, gtc is ready only with its sinks, Temporal restarts once.
+          for shape in default everything managed cloud-edge; do
+            python3 -I tools/helm/check-restarts.py "$RUNNER_TEMP/$shape.yaml"
+          done
+          # An instance is served on its domain and every alias, and links use
+          # the primary hostname; without aliases, everything stays on domain.
+          python3 -I tools/helm/check-aliases.py "$RUNNER_TEMP/aliases.yaml" trenova.example.com tms.example.org tms.example.org
+          python3 -I tools/helm/check-aliases.py "$RUNNER_TEMP/everything.yaml" trenova.example.com trenova.example.com
+          if helm template trenova "$CHART" -n trenova "${base[@]}" --set primaryDomain=elsewhere.example.org > /dev/null 2>&1; then
+            echo "::error::primaryDomain rendered as a hostname the release does not serve"
+            exit 1
+          fi
 
       - name: The symlinked files resolve
         run: |

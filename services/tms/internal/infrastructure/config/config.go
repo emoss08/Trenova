@@ -31,7 +31,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/twilioconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/updateconfig"
 )
 
@@ -52,7 +51,6 @@ type Config struct {
 	Audit               auditconfig.Config               `mapstructure:"audit"`
 	AIAudit             aiauditconfig.Config             `mapstructure:"aiAudit"`
 	Update              updateconfig.Config              `mapstructure:"update"`
-	Twilio              twilioconfig.Config              `mapstructure:"twilio"`
 	Platform            platformconfig.Config            `mapstructure:"platform"`
 	Reporting           reportingconfig.Config           `mapstructure:"reporting"`
 	Renderer            rendererconfig.Config            `mapstructure:"renderer"`

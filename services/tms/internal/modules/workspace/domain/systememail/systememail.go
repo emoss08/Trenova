@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	CurrentID = "current"
+	CurrentID   = "current"
+	InstanceTag = "trenova_instance"
 
 	fingerprintVersion = "trenova.system-email.v1"
 	minAPIKeyLength    = 20
@@ -31,22 +32,20 @@ var ErrNoSender = errors.New("no system email sender is set on this instance")
 type Sender struct {
 	keel.Table `keel:"system_email_senders"`
 
-	ID                  string         `json:"-"           keel:"id,pk"`
-	Provider            email.Provider `json:"provider"    keel:"provider"`
-	FromAddress         string         `json:"fromAddress" keel:"from_address"`
-	FromName            string         `json:"fromName"    keel:"from_name"`
-	APIKeySealed        string         `json:"-"           keel:"api_key_sealed"`
-	WebhookSecretSealed string         `json:"-"           keel:"webhook_secret_sealed,nullzero"`
-	Fingerprint         string         `json:"fingerprint" keel:"fingerprint"`
-	ReceivedAt          int64          `json:"receivedAt"  keel:"received_at"`
+	ID           string         `json:"-"           keel:"id,pk"`
+	Provider     email.Provider `json:"provider"    keel:"provider"`
+	FromAddress  string         `json:"fromAddress" keel:"from_address"`
+	FromName     string         `json:"fromName"    keel:"from_name"`
+	APIKeySealed string         `json:"-"           keel:"api_key_sealed"`
+	Fingerprint  string         `json:"fingerprint" keel:"fingerprint"`
+	ReceivedAt   int64          `json:"receivedAt"  keel:"received_at"`
 }
 
 type Credential struct {
-	Provider      email.Provider
-	APIKey        string
-	FromAddress   string
-	FromName      string
-	WebhookSecret string
+	Provider    email.Provider
+	APIKey      string
+	FromAddress string
+	FromName    string
 }
 
 func (c *Credential) String() string {
@@ -79,13 +78,6 @@ func (c *Credential) Validate() error {
 			"API key must be 20 to 512 printable characters with no spaces",
 		)
 	}
-	if c.WebhookSecret != "" && !opaque(c.WebhookSecret, 1, maxSecretLength) {
-		multiErr.Add(
-			"webhookSecret",
-			errortypes.ErrInvalid,
-			"Webhook secret must be at most 512 printable characters with no spaces",
-		)
-	}
 	if !validAddress(c.FromAddress) {
 		multiErr.Add(
 			"fromAddress",
@@ -110,7 +102,6 @@ func Fingerprint(c *Credential) string {
 		c.FromAddress,
 		c.FromName,
 		c.APIKey,
-		c.WebhookSecret,
 	}, "\n")))
 	return hex.EncodeToString(sum[:])
 }

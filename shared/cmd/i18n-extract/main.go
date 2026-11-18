@@ -66,6 +66,11 @@ var nonMessageTypes = map[string]struct{}{
 	"carrierintelservice.NotificationRequest": {},
 }
 
+var typedMessageFields = map[string]map[string]struct{}{
+	"platformcatalog.Feature": {"Name": {}},
+	"platformcatalog.AddOn":   {"Name": {}},
+}
+
 var labelMethods = map[string]struct{}{
 	"Label":       {},
 	"DisplayName": {},
@@ -105,6 +110,7 @@ var noMessage = map[string]struct{}{
 	"NewDuplicateUsernameError":         {},
 	"NewNoOrganizationMembershipsError": {},
 	"NewSessionContextStaleError":       {},
+	"NewCSRFTokenInvalidError":          {},
 	"NewCanceledError":                  {},
 	"NewQuotaExceededError":             {},
 	"NewPlanRestrictionError":           {},
@@ -167,10 +173,11 @@ type extractor struct {
 }
 
 type fileScope struct {
-	pkg       string
-	elided    map[*ast.CompositeLit]string
-	nonFields map[*ast.KeyValueExpr]struct{}
-	labelMaps map[string]*ast.CompositeLit
+	pkg         string
+	elided      map[*ast.CompositeLit]string
+	nonFields   map[*ast.KeyValueExpr]struct{}
+	typedFields map[*ast.KeyValueExpr]struct{}
+	labelMaps   map[string]*ast.CompositeLit
 }
 
 func (e *extractor) walkDir(root string) error {
@@ -248,10 +255,11 @@ func (e *extractor) parseFile(path string) error {
 	discarded := discardedCalls(file)
 	inI18n := file.Name.Name == "i18n"
 	scope := &fileScope{
-		pkg:       file.Name.Name,
-		elided:    map[*ast.CompositeLit]string{},
-		nonFields: map[*ast.KeyValueExpr]struct{}{},
-		labelMaps: stringMaps(file),
+		pkg:         file.Name.Name,
+		elided:      map[*ast.CompositeLit]string{},
+		nonFields:   map[*ast.KeyValueExpr]struct{}{},
+		typedFields: map[*ast.KeyValueExpr]struct{}{},
+		labelMaps:   stringMaps(file),
 	}
 
 	rel, err := filepath.Rel(e.repoRoot, path)
@@ -266,7 +274,12 @@ func (e *extractor) parseFile(path string) error {
 		}
 
 		if kv, isKV := n.(*ast.KeyValueExpr); isKV {
-			if _, skip := scope.nonFields[kv]; !skip {
+			_, skip := scope.nonFields[kv]
+			_, typed := scope.typedFields[kv]
+			switch {
+			case typed:
+				e.recordTypedField(kv, rel)
+			case !skip:
 				e.recordStructField(kv, rel)
 			}
 			return true
@@ -380,6 +393,19 @@ func (s *fileScope) markNonMessageFields(lit *ast.CompositeLit) {
 		for _, elt := range lit.Elts {
 			if kv, isKV := elt.(*ast.KeyValueExpr); isKV {
 				s.nonFields[kv] = struct{}{}
+			}
+		}
+	}
+	if fields, typed := typedMessageFields[litType]; typed {
+		for _, elt := range lit.Elts {
+			kv, isKV := elt.(*ast.KeyValueExpr)
+			if !isKV {
+				continue
+			}
+			if key, isIdent := kv.Key.(*ast.Ident); isIdent {
+				if _, wanted := fields[key.Name]; wanted {
+					s.typedFields[kv] = struct{}{}
+				}
 			}
 		}
 	}
@@ -526,6 +552,14 @@ func (e *extractor) recordStructField(kv *ast.KeyValueExpr, rel string) {
 		Line:    e.fset.Position(kv.Pos()).Line,
 		Callee:  "field:" + key.Name,
 	})
+}
+
+func (e *extractor) recordTypedField(kv *ast.KeyValueExpr, rel string) {
+	key, ok := kv.Key.(*ast.Ident)
+	if !ok {
+		return
+	}
+	e.recordLiteral(kv.Value, kv.Pos(), rel, "field:"+key.Name)
 }
 
 func (e *extractor) recordRulesMessage(lit *ast.CompositeLit, rel string) {

@@ -50,6 +50,36 @@ var catalog = []*Spec{{Label: "Partner ISA ID"}}
 	assert.Equal(t, []string{"Shown to a person"}, messages)
 }
 
+func TestTheCatalogueNamesItsFeaturesAndAddOnsAsMessages(t *testing.T) {
+	t.Parallel()
+
+	messages := extractFrom(t, map[string]string{
+		"platformcatalog/registry.go": `package platformcatalog
+
+var features = []Feature{
+	{Key: FeatureRating, Name: "Rating", AddOn: AddOnRating},
+	{
+		Key:  FeatureDispatchIntelligence,
+		Name: "Dispatch intelligence",
+	},
+}
+
+var addOns = []AddOn{{Key: AddOnRating, Name: "Rating & Revenue Recovery"}}
+`,
+		"customers/customer.go": `package customers
+
+var sample = Customer{Name: "Acme Freight"}
+`,
+	})
+
+	assert.ElementsMatch(
+		t,
+		[]string{"Rating", "Dispatch intelligence", "Rating & Revenue Recovery"},
+		messages,
+		"a Name elsewhere is a record's value, not interface text",
+	)
+}
+
 func TestTestSupportPackagesAreSkipped(t *testing.T) {
 	t.Parallel()
 

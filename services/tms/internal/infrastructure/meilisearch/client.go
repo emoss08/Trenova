@@ -6,7 +6,9 @@ import (
 	"net/http"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/startwait"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	meili "github.com/meilisearch/meilisearch-go"
 	"go.uber.org/fx"
@@ -52,17 +54,6 @@ func New(p Params) (*Client, error) {
 	client.client = meiliClient
 
 	p.LC.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			_, err := meiliClient.Health()
-			if err != nil {
-				return fmt.Errorf("ping meilisearch: %w", err)
-			}
-			logger.Info(
-				"Meilisearch connection established",
-				zap.String("url", searchConfig.Meilisearch.URL),
-			)
-			return nil
-		},
 		OnStop: func(context.Context) error {
 			meiliClient.Close()
 			return nil
@@ -70,6 +61,39 @@ func New(p Params) (*Client, error) {
 	})
 
 	return client, nil
+}
+
+type AwaitParams struct {
+	fx.In
+
+	Client       *Client
+	SearchConfig *searchconfig.Config
+	AppConfig    *appconfig.Config
+}
+
+func AwaitReady(p AwaitParams) error {
+	if !p.Client.Enabled() {
+		return nil
+	}
+
+	err := startwait.Wait(context.Background(), startwait.Params{
+		Logger:     p.Client.logger,
+		Dependency: "Meilisearch",
+		Deadline:   startwait.Deadline(p.AppConfig.StartupWait),
+		Check: func(ctx context.Context) error {
+			_, err := p.Client.client.HealthWithContext(ctx)
+			return err
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	p.Client.logger.Info(
+		"Meilisearch connection established",
+		zap.String("url", p.SearchConfig.Meilisearch.URL),
+	)
+	return nil
 }
 
 func (c *Client) Enabled() bool {

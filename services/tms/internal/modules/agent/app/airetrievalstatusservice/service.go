@@ -41,6 +41,7 @@ type Params struct {
 	Pipeline   retrievalports.RetrievalIndexPipeline
 	Audit      auditports.AuditService
 	Embeddings aiusageports.EmbeddingService
+	BuiltIn    aiproviderports.BuiltInEmbedding
 }
 
 type Service struct {
@@ -54,6 +55,7 @@ type Service struct {
 	pipeline   retrievalports.RetrievalIndexPipeline
 	audit      auditports.AuditService
 	embeddings aiusageports.EmbeddingService
+	builtIn    aiproviderports.BuiltInEmbedding
 	now        func() int64
 }
 
@@ -69,6 +71,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		pipeline:   p.Pipeline,
 		audit:      p.Audit,
 		embeddings: p.Embeddings,
+		builtIn:    p.BuiltIn,
 		now:        timeutils.NowUnix,
 	}
 }
@@ -104,6 +107,7 @@ type statusInputs struct {
 	active       []retrievalports.IndexEntryCount
 	pending      []retrievalports.IndexEntryCount
 	configured   string
+	builtInKey   string
 }
 
 func (s *Service) Status(
@@ -190,6 +194,11 @@ func (s *Service) gather(
 		in.configured = configured
 		return err
 	})
+	group.Go(func() error {
+		key, err := s.builtInModelKey(gctx, tenant)
+		in.builtInKey = key
+		return err
+	})
 
 	if err := group.Wait(); err != nil {
 		return nil, err
@@ -237,6 +246,21 @@ func (s *Service) countEntries(
 	}
 
 	return counts, nil
+}
+
+func (s *Service) builtInModelKey(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (string, error) {
+	provider, ok, err := s.builtIn.Provider(ctx, tenant)
+	if err != nil {
+		return "", fmt.Errorf("resolve the built-in search service: %w", err)
+	}
+	if !ok {
+		return "", nil
+	}
+
+	return provider.EmbeddingModelKey(), nil
 }
 
 func (s *Service) configuredModelKey(

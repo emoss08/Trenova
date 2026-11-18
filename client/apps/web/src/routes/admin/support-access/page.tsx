@@ -10,8 +10,11 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useCallback, useState } from "react";
+import { ExtendSupportDialog } from "./_components/extend-support-dialog";
 import { GrantSupportDialog } from "./_components/grant-support-dialog";
 import { RevokeSupportDialog } from "./_components/revoke-support-dialog";
+import { SendLogsSection } from "./_components/send-logs-section";
+import { SupportAccessLimits } from "./_components/support-access-limits";
 import { SupportGrantList } from "./_components/support-grant-list";
 import { SupportGrantsSkeleton } from "./_components/support-grant-skeleton";
 
@@ -27,8 +30,10 @@ export function SupportAccessPage() {
   const queryClient = useQueryClient();
   const { allowed: canGrant } = usePermission(Resource.SupportAccess, Operation.Create);
   const { allowed: canRevoke } = usePermission(Resource.SupportAccess, Operation.Delete);
+  const { allowed: canSendLogs } = usePermission(Resource.Organization, Operation.Update);
   const [granting, setGranting] = useState(false);
   const [revoking, setRevoking] = useState<SupportAccessGrant | null>(null);
+  const [extending, setExtending] = useState<SupportAccessGrant | null>(null);
 
   const settingsQuery = useQuery(supportAccess.settings());
   const settings = settingsQuery.data;
@@ -53,19 +58,30 @@ export function SupportAccessPage() {
           ) : undefined,
       }}
     >
-      {settingsQuery.isLoading || settings === undefined ? (
-        <SupportGrantsSkeleton />
-      ) : !settings.available ? (
-        <Alert variant="info" size="sm">
-          <AlertDescription>
-            {t(
-              "Trenova support access is not available on this installation, so nobody at Trenova can enter it.",
-            )}
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <SupportGrantList canRevoke={canRevoke} onRevoke={setRevoking} />
-      )}
+      <div className="flex flex-col gap-4">
+        {canSendLogs ? <SendLogsSection /> : null}
+        {settingsQuery.isLoading || settings === undefined ? (
+          <SupportGrantsSkeleton />
+        ) : !settings.available ? (
+          <Alert variant="info" size="sm">
+            <AlertDescription>
+              {t(
+                "Trenova support access is not available on this installation, so nobody at Trenova can enter it.",
+              )}
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <>
+            <SupportAccessLimits settings={settings} />
+            <SupportGrantList
+              canRevoke={canRevoke}
+              canExtend={canGrant}
+              onRevoke={setRevoking}
+              onExtend={setExtending}
+            />
+          </>
+        )}
+      </div>
 
       {settings?.available ? (
         <GrantSupportDialog
@@ -76,6 +92,14 @@ export function SupportAccessPage() {
         />
       ) : null}
       <RevokeSupportDialog grant={revoking} onClose={() => setRevoking(null)} onRevoked={refresh} />
+      {settings?.available ? (
+        <ExtendSupportDialog
+          grant={extending}
+          durations={settings.durations}
+          onClose={() => setExtending(null)}
+          onExtended={refresh}
+        />
+      ) : null}
     </PageLayout>
   );
 }

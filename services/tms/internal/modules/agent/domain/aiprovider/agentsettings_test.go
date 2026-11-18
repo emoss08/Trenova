@@ -25,9 +25,9 @@ func agentSettingErrors(p *aiprovider.Provider) map[string]string {
 	p.Validate(multiErr)
 	found := map[string]string{}
 	for _, err := range multiErr.Errors {
-		switch err.Field {
+		switch err.Field() {
 		case "advisorEnabled", "advisorModel", "scripts", "scriptWrites":
-			found[err.Field] = err.Message
+			found[err.Field()] = err.Message
 		}
 	}
 

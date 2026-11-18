@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -27,8 +26,6 @@ const (
 
 	defaultPurgeBatch = 1000
 	maxPurgeBatch     = 10000
-
-	maxIndexedTenantPage = 1000
 )
 
 func findSettings(
@@ -441,47 +438,4 @@ func purgeEmbeddings(
 	}
 
 	return int(removed), nil
-}
-
-type indexedTenantRow struct {
-	OrganizationID pulid.ID
-	BusinessUnitID pulid.ID
-}
-
-func (r *repository) ListIndexedTenants(
-	ctx context.Context,
-	req retrievalports.ListIndexedRetrievalTenantsRequest,
-) ([]pagination.TenantInfo, error) {
-	ctx = dbscope.WithSystem(ctx, "list organizations that index sources for retrieval")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		s := airetrievaldb.Settingses
-		limit := intutils.Clamp(req.Limit, 1, maxIndexedTenantPage)
-
-		q := s.AllTenants().
-			Where(s.ActiveModelKey.Ne("")).
-			Pick(s.OrganizationID, s.BusinessUnitID).
-			Order(s.OrganizationID.Asc(), s.BusinessUnitID.Asc()).
-			Limit(limit)
-		if req.After != nil {
-			q.Where(
-				keel.Tuple(s.OrganizationID, s.BusinessUnitID).
-					Gt(keel.Tuple(req.After.OrgID, req.After.BuID)),
-			)
-		}
-
-		rows, err := keel.Into[indexedTenantRow](ctx, r.db.Keel(ctx), q)
-		if err != nil {
-			return nil, fmt.Errorf("list organizations that index sources for retrieval: %w", err)
-		}
-
-		tenants := make([]pagination.TenantInfo, 0, len(rows))
-		for _, row := range rows {
-			tenants = append(tenants, pagination.TenantInfo{
-				OrgID: row.OrganizationID,
-				BuID:  row.BusinessUnitID,
-			})
-		}
-
-		return tenants, nil
-	})
 }

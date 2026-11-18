@@ -36,7 +36,7 @@ func TestSpecUsesTheETag(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, changed)
 	require.Equal(t, int64(1), d.Revision)
-	require.Equal(t, `"1"`, d.ETag)
+	require.Regexp(t, `^"1-.+"$`, d.ETag, "the revision, then what the control plane adds when serving")
 	require.Equal(t, "0.11.0", d.Spec.Release.Version)
 
 	_, changed, err = c.Spec(t.Context(), d.ETag)
@@ -51,6 +51,40 @@ func TestSpecUsesTheETag(t *testing.T) {
 	require.True(t, changed)
 	require.Equal(t, int64(2), d.Revision)
 	require.Equal(t, instanceapi.Suspended, d.Spec.Lifecycle)
+}
+
+func TestTheSpecSaysHowLongTheFinalBackupIsKept(t *testing.T) {
+	t.Parallel()
+	_, c := client(t)
+
+	d, _, err := c.Spec(t.Context(), "")
+	require.NoError(t, err)
+	require.NotNil(t, d.Spec.Account)
+	require.Equal(t, int32(30), d.Spec.Account.FinalBackupDays)
+}
+
+func TestAPlanSetToEndIsServedOnTheSameRevision(t *testing.T) {
+	t.Parallel()
+	cp, c := client(t)
+
+	d, _, err := c.Spec(t.Context(), "")
+	require.NoError(t, err)
+	require.Nil(t, d.Spec.Account.EndsAt, "a plan nobody set to end has no end")
+
+	ends := time.Date(2026, 12, 14, 0, 0, 0, 0, time.UTC)
+	cp.SetPlanEnd(&ends)
+	ending, changed, err := c.Spec(t.Context(), d.ETag)
+	require.NoError(t, err)
+	require.True(t, changed, "the end changes the ETag")
+	require.Equal(t, d.Revision, ending.Revision, "and is not a new revision")
+	require.NotNil(t, ending.Spec.Account.EndsAt)
+	require.True(t, ending.Spec.Account.EndsAt.Equal(ends))
+
+	cp.SetPlanEnd(nil)
+	kept, changed, err := c.Spec(t.Context(), ending.ETag)
+	require.NoError(t, err)
+	require.True(t, changed, "keeping the plan changes the ETag again")
+	require.Nil(t, kept.Spec.Account.EndsAt)
 }
 
 func TestRateLimitsCarryRetryAfter(t *testing.T) {

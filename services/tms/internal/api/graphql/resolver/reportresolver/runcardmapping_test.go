@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -99,7 +100,7 @@ func TestReportRunDeskCardCarriesTheSampleAndComparesTotalsByColumn(t *testing.T
 		Sort:  []ir.Sort{{Column: "revenue", Desc: true}},
 	}
 
-	model := reportRunDeskCardToModel(card)
+	model := reportRunDeskCardToModel(i18n.EN, card)
 
 	assert.Equal(t, "Revenue by customer", model.Report.Name)
 	require.NotNil(t, model.Report.DefinitionID)
@@ -138,7 +139,7 @@ func TestReportRunDeskCardCarriesTheSampleAndComparesTotalsByColumn(t *testing.T
 func TestReportRunDeskCardWithoutASampleSaysWhyItIsWithheld(t *testing.T) {
 	t.Parallel()
 
-	model := reportRunDeskCardToModel(&reportingservice.RunCard{
+	model := reportRunDeskCardToModel(i18n.EN, &reportingservice.RunCard{
 		Run:        &report.ReportRun{ID: pulid.MustNew("rrun_")},
 		Report:     reportingservice.RunCardReport{CannedKey: "revenue-by-customer"},
 		Parameters: []reportingservice.RunCardParameter{},

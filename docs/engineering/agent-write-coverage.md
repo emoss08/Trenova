@@ -85,8 +85,8 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 99 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 104 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 246 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 43 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 109 |
@@ -97,14 +97,14 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1147 writes: 688 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1151 writes: 692 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 447 |
-| Exempt | 696 |
-| — Security | 99 |
-| — Configuration | 247 |
+| Exempt | 700 |
+| — Security | 104 |
+| — Configuration | 246 |
 | — User preference | 43 |
 | — Infrastructure | 49 |
 | — Agent administration | 109 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 55 |
 | — Duplicate | 10 |
 | **Pending** | **4** |
-| Total | 1147 |
+| Total | 1151 |
 
 Of the 451 writes an agent should be able to make, 447 have a tool (99%).
 
@@ -214,7 +214,7 @@ The writes no tool performs yet, and what the tool would do.
 | fleetcode | 4 | 0 | 4 | 0 |
 | fleetsafety | 3 | 3 | 0 | 0 |
 | formulalibrary | 10 | 0 | 10 | 0 |
-| formulatemplate | 26 | 0 | 26 | 0 |
+| formulatemplate | 25 | 0 | 25 | 0 |
 | fuelpurchase | 13 | 7 | 6 | 0 |
 | fuelsurcharge | 9 | 2 | 7 | 0 |
 | googlemaps | 1 | 0 | 1 | 0 |
@@ -285,6 +285,8 @@ The writes no tool performs yet, and what the tool would do.
 | shipmenttype | 4 | 0 | 4 | 0 |
 | sidebarpreference | 1 | 0 | 1 | 0 |
 | storedmileage | 1 | 0 | 1 | 0 |
+| supportaccess | 4 | 0 | 4 | 0 |
+| supportentry | 1 | 0 | 1 | 0 |
 | tablechangealert | 5 | 5 | 0 | 0 |
 | tableconfiguration | 6 | 1 | 5 | 0 |
 | tablelayout | 2 | 0 | 2 | 0 |
@@ -1340,7 +1342,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/formula-templates/context/cells`<br>formulatemplatehandler.getContextCells | Exempt, read-only: Reads the rate table cells a formula's tests need in the browser; nothing is saved. |
 | `POST /api/v1/formula-templates/duplicate`<br>formulatemplatehandler.duplicate | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `POST /api/v1/formula-templates/import`<br>formulatemplatehandler.importTemplates | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/install-standards`<br>formulatemplatehandler.installStandards | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `POST /api/v1/formula-templates/scaffold-test`<br>formulatemplatehandler.scaffoldTest | Exempt, read-only: Writes a test block from a shipment's facts and returns it for the person to place in the source; nothing is saved. |
 | `POST /api/v1/formula-templates/test`<br>formulatemplatehandler.preview | Exempt, read-only: Evaluates a pricing formula against samples or past shipments and saves nothing. |
 | `PUT /api/v1/formula-templates/:templateID/`<br>formulatemplatehandler.update | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
@@ -2073,6 +2074,21 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `DELETE /api/v1/stored-mileages/:storedMileageID/`<br>storedmileagehandler.delete | Exempt, infrastructure: A stored mileage is a cached routing answer; clearing one only makes the next rating ask the routing provider again. |
+
+### supportaccess
+
+| Write | Decision |
+| --- | --- |
+| `mutation extendSupportAccess` | Exempt, security: Keeping Trenova staff in the organization longer is a person's decision; no agent, API key or support session may extend it. |
+| `mutation grantSupportAccess` | Exempt, security: Letting Trenova staff into the organization is a person's decision; no agent, API key or support session may grant it. |
+| `mutation requestSupportLogs` | Exempt, security: Sends the whole instance's logs, which hold every organization's activity, to Trenova support; an administrator decides that disclosure, never an agent. |
+| `mutation revokeSupportAccess` | Exempt, security: Ending Trenova support access is a person's decision about who may enter the organization. |
+
+### supportentry
+
+| Write | Decision |
+| --- | --- |
+| `POST /api/v1/support/enter`<br>supportentryhandler.enter | Exempt, security: A Trenova staff member entering with a signed, single-use assertion; an agent holds no such credential. |
 
 ### tablechangealert
 

@@ -34,7 +34,7 @@ func errorFields(t *testing.T, err error) []string {
 	require.ErrorAs(t, err, &multiErr)
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, fieldErr := range multiErr.Errors {
-		fields = append(fields, fieldErr.Field)
+		fields = append(fields, fieldErr.Field())
 	}
 
 	return fields
@@ -155,7 +155,7 @@ func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T)
 	_, err := tool.Draft(t.Context(), params)
 	var refusal *errortypes.Error
 	require.ErrorAs(t, err, &refusal)
-	assert.Equal(t, "formulaTemplateId", refusal.Field)
+	assert.Equal(t, "formulaTemplateId", refusal.Field())
 	assert.Contains(t, err.Error(), "formula_list_templates")
 }
 

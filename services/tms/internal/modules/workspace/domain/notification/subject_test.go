@@ -96,6 +96,26 @@ func TestAbsorbTakesTheLatestContentCountsItAndComesBackUnread(t *testing.T) {
 	assert.NotContains(t, row.Data, notification.DataKeyOccurrence)
 }
 
+func TestAbsorbGivesARepeatThatSetsNeitherPriorityNorDeliveryWhatANewRowGets(t *testing.T) {
+	t.Parallel()
+
+	row := openRow(pulid.MustNew("usr_"))
+	row.DeliveryStatus = notification.DeliveryStatusDelivered
+	row.DeliveredAt = new(subjectNow - 100)
+
+	row.Absorb(&notification.Notification{
+		EventType: "managed_plan_changed",
+		Title:     "Your plan continues",
+		Message:   "It will no longer end on Dec 16, 2026.",
+	}, subjectNow)
+
+	assert.Equal(t, "Your plan continues", row.Title)
+	assert.Equal(t, notification.PriorityMedium, row.Priority)
+	assert.Equal(t, notification.DeliveryStatusPending, row.DeliveryStatus, "the repeat is still to be delivered")
+	assert.Nil(t, row.DeliveredAt)
+	assert.Equal(t, 2, row.OccurrenceCount)
+}
+
 func TestAbsorbKeepsTheNewestThreeOccurrencesNewestFirst(t *testing.T) {
 	t.Parallel()
 

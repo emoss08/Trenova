@@ -105,6 +105,10 @@ export const RECORD_CHANGE_PREFIX = "audited:";
 export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   // A bulk edit's progress, sent only to the person who started it.
   bulk_edit: ["bulkEdit"],
+  // A request to send logs to Trenova support was made, picked up, sent or failed.
+  support_log_request: ["supportLogs"],
+  // The control plane changed the plan: its add-ons, their endings, its account link or its end.
+  managed_plan: ["managedPlan"],
   ...Object.fromEntries(
     Object.entries(RECORD_CHANGE_KEYS).map(([resource, roots]) => [
       RECORD_CHANGE_PREFIX + resource,

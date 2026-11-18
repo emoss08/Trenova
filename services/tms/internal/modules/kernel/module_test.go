@@ -28,6 +28,10 @@ func (noFeatureList) Replace(
 	return &managedfeatures.Replacement{}, nil
 }
 
+func (noFeatureList) RemindPlanEnd(context.Context, int64) (*managedfeatures.Replacement, error) {
+	return &managedfeatures.Replacement{}, nil
+}
+
 func (noFeatureList) History(
 	context.Context,
 	int,

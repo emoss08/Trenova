@@ -51,8 +51,6 @@ type Channel string
 const (
 	// ChannelDash is a message in the driver's portal.
 	ChannelDash = Channel("Dash")
-	// ChannelText is a text to the driver's phone.
-	ChannelText = Channel("Text")
 	// ChannelEmail is an email in the organization's letterhead.
 	ChannelEmail = Channel("Email")
 	// ChannelTender is an offer to carriers, which carries no message.

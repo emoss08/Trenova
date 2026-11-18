@@ -48,16 +48,20 @@ func registerHealthProbe(
 				return nil
 			}
 
-			if err := converter.Healthy(ctx); err != nil {
-				l.Error(
-					"document converter is not reachable; Docling extraction will retry until it is",
-					zap.Error(err),
-				)
-				return nil
-			}
-
-			l.Info("document converter ready")
+			go probe(context.WithoutCancel(ctx), converter, l)
 			return nil
 		},
 	})
+}
+
+func probe(ctx context.Context, converter kernelports.DocumentConverter, l *zap.Logger) {
+	if err := converter.Healthy(ctx); err != nil {
+		l.Error(
+			"document converter is not reachable; Docling extraction will retry until it is",
+			zap.Error(err),
+		)
+		return
+	}
+
+	l.Info("document converter ready")
 }

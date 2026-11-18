@@ -54,6 +54,14 @@ export const SCENARIO_DEFAULTS = {
   accountingApp: process.env.MOCK_ACCOUNTING_APP ?? "instance",
   // NetSuite only: signIn | certificate
   accountingAuth: process.env.MOCK_ACCOUNTING_AUTH ?? "signIn",
+  // the "Your plan" page: selfHosted (not managed) | managed (usage, an ending add-on and the
+  // account link) | bare (managed, before the control plane sends usage or the link) | ending (the
+  // plan set to end, with Keep plan) | endingBare (set to end, without the account link)
+  managedPlan: process.env.MOCK_MANAGED_PLAN ?? "selfHosted",
+  // "Send logs to Trenova support" on the support access page, shown only when managedPlan is
+  // managed or bare: history (one sent, one failed) | empty (none yet) | inFlight (one being
+  // collected) | limit (five sent in the last 24 hours)
+  supportLogs: process.env.MOCK_SUPPORT_LOGS ?? "history",
 };
 
 const TRIAGE_SCENARIOS = new Set(["live", "firstDay", "noMailbox", "deskOff"]);

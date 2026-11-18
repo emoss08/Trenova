@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pageaccess"
+	"github.com/emoss08/trenova/shared/i18n"
 )
 
 func draftFromInput(
@@ -41,7 +42,7 @@ func draftFromInput(
 	return draft, nil
 }
 
-func pageAccessToModel(access *pageaccessservice.Access) *gqlmodel.PageAccess {
+func pageAccessToModel(locale i18n.Locale, access *pageaccessservice.Access) *gqlmodel.PageAccess {
 	if access == nil {
 		return nil
 	}
@@ -70,7 +71,7 @@ func pageAccessToModel(access *pageaccessservice.Access) *gqlmodel.PageAccess {
 			CanRead:      kind.CanRead,
 			Fields:       make([]*gqlmodel.PageAccessField, 0, len(kind.Fields)),
 			Withheld:     kind.Withheld,
-			PlanDenial:   planDenialToModel(kind.PlanDenial),
+			PlanDenial:   planDenialToModel(locale, kind.PlanDenial),
 		}
 		for _, field := range kind.Fields {
 			model.Fields = append(model.Fields, &gqlmodel.PageAccessField{
@@ -131,15 +132,19 @@ func decisionToModel(decision pageaccessservice.Decision) gqlmodel.PageAccessDec
 	}
 }
 
-func planDenialToModel(denial *permissionports.PlanDenial) *gqlmodel.PageAccessPlanDenial {
+func planDenialToModel(
+	locale i18n.Locale,
+	denial *permissionports.PlanDenial,
+) *gqlmodel.PageAccessPlanDenial {
 	if denial == nil {
 		return nil
 	}
+	named := denial.In(locale)
 	return &gqlmodel.PageAccessPlanDenial{
-		Feature:     string(denial.Feature),
-		FeatureName: denial.FeatureName,
-		AddOn:       string(denial.AddOn),
-		AddOnName:   denial.AddOnName,
+		Feature:     string(named.Feature),
+		FeatureName: named.FeatureName,
+		AddOn:       string(named.AddOn),
+		AddOnName:   named.AddOnName,
 	}
 }
 

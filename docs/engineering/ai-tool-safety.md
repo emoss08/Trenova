@@ -623,9 +623,9 @@ Changes something a driver can see.
 | Approve shift swap (`worker_approve_shift_swap`) | Seen by a driver | Propose | — | — | Changes who works a day; approving is the office's decision, so only a person makes it. |
 | Assign worker required training (`worker_assign_required_training`) | Seen by a driver | Ask first | — | — | Assigns the courses the worker's driver type requires; the driver sees them in Dash, and cancel_worker_training withdraws one. |
 | Assign worker training (`worker_assign_training`) | Seen by a driver | Ask first | — | — | Assigns courses the driver sees in Dash; cancel_worker_training withdraws one. |
-| Cancel worker PTO (`worker_cancel_pto`) | Seen by a driver | Ask first | — | — | The worker is sent the cancellation reason by push notice and text message. |
+| Cancel worker PTO (`worker_cancel_pto`) | Seen by a driver | Ask first | — | — | The worker is sent the cancellation reason by push notice. |
 | Record worker recognition (`worker_record_recognition`) | Seen by a driver | Ask first | — | — | The driver is shown the recognition and told of it in Dash when it is visible to them. |
-| Reject worker PTO (`worker_reject_pto`) | Seen by a driver | Ask first | — | — | The worker is sent the rejection reason by push notice and text message. |
+| Reject worker PTO (`worker_reject_pto`) | Seen by a driver | Ask first | — | — | The worker is sent the rejection reason by push notice. |
 | Reject shift swap (`worker_reject_shift_swap`) | Seen by a driver | Ask first | — | — | Refuses a request the workers read in their portal; a person approves each refusal. |
 | Request worker credential renewal (`worker_request_credential_renewal`) | Seen by a driver | Ask first | — | — | Sends a driver a renewal request the model wrote. |
 | Request worker PTO (`worker_request_pto`) | Seen by a driver | Ask first | — | — | Files time off the driver sees in Dash; under a policy with no approval step it is booked and the driver told at once, and worker_cancel_pto withdraws it. |

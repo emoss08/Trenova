@@ -291,12 +291,13 @@ func (s *Service) memoLines(
 		}
 		amount := invoicelines.SignedAmount(req.BillType, input.Amount.RoundBank(2))
 		line := &invoice.InvoiceLine{
-			LineNumber:  idx + 1,
-			Type:        invoice.InvoiceLineTypeMemo,
-			Description: strings.TrimSpace(input.Description),
-			Quantity:    quantity,
-			UnitPrice:   amount.Div(quantity),
-			Amount:      amount,
+			LineNumber:       idx + 1,
+			Type:             invoice.InvoiceLineTypeMemo,
+			Description:      strings.TrimSpace(input.Description),
+			TypedDescription: true,
+			Quantity:         quantity,
+			UnitPrice:        amount.Div(quantity),
+			Amount:           amount,
 		}
 		if input.AccessorialChargeID.IsNotNil() {
 			definition, err := s.accessorialRepo.GetByID(

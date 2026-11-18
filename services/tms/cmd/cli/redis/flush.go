@@ -43,6 +43,7 @@ func flushRedis(params RedisFlushParams) error {
 
 func runRedisFlush(cmd *cobra.Command, args []string) error {
 	app := fx.New(
+		infraConfig.FxLogger(),
 		fx.Provide(func() *infraConfig.Config {
 			return cfg
 		}),

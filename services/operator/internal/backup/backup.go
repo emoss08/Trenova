@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/emoss08/trenova/operator/internal/health"
@@ -26,9 +25,9 @@ const (
 
 	labelCluster     = "cnpg.io/cluster"
 	labelInstance    = "app.kubernetes.io/instance"
-	labelComponent   = "app.kubernetes.io/component"
 	labelRequest     = "trenova.app/backup-request"
-	annotationHibern = "cnpg.io/hibernation"
+	annotationOrigin = "trenova.app/backup-origin"
+	annotationReqID  = "trenova.app/backup-request-id"
 	healthyPhase     = "Cluster in healthy state"
 
 	phaseCompleted = "completed"
@@ -53,11 +52,12 @@ var (
 )
 
 type Manager struct {
-	dynamic   dynamic.Interface
-	namespace string
-	release   string
-	logger    *slog.Logger
-	now       func() time.Time
+	dynamic    dynamic.Interface
+	namespace  string
+	release    string
+	logger     *slog.Logger
+	now        func() time.Time
+	listWarned time.Time
 }
 
 type Params struct {
@@ -82,16 +82,22 @@ func New(p *Params) *Manager {
 	}
 }
 
+// Input is one tick's backup work. Generation is the database the
+// application runs on, as the deployed release points it: the one whose
+// health and backups are the instance's, which is not the spec's `database`
+// while a move to another one waits.
 type Input struct {
-	Spec     *instanceapi.InstanceSpec
-	Revision int64
-	Applied  bool
-	Ready    bool
-	Storage  values.Storage
+	Spec       *instanceapi.InstanceSpec
+	Generation string
+	Revision   int64
+	Applied    bool
+	Ready      bool
+	Storage    values.Storage
 }
 
 type Result struct {
 	Health  *instanceapi.BackupHealth
+	Backups *[]instanceapi.BackupEntry
 	Final   *instanceapi.FinalBackup
 	Restore *instanceapi.RestoreProgress
 }
@@ -100,9 +106,9 @@ func (m *Manager) Run(ctx context.Context, in Input) Result {
 	if !in.Storage.Configured() {
 		return Result{}
 	}
-	active := values.PostgresCluster(m.release, generation(in.Spec))
-	h := m.health(ctx, active)
-	out := Result{Health: &h}
+	active := values.PostgresCluster(m.release, in.Generation)
+	h, list := m.health(ctx, active)
+	out := Result{Health: &h, Backups: list}
 	if req := in.Spec.Backup; req != nil {
 		out.Health.Request = m.requested(ctx, in, active, req)
 	}
@@ -115,19 +121,15 @@ func (m *Manager) Run(ctx context.Context, in Input) Result {
 	return out
 }
 
-func generation(spec *instanceapi.InstanceSpec) string {
-	if spec.Database == nil {
-		return ""
-	}
-	return spec.Database.Generation
-}
-
-func (m *Manager) health(ctx context.Context, active string) instanceapi.BackupHealth {
+func (m *Manager) health(
+	ctx context.Context,
+	active string,
+) (instanceapi.BackupHealth, *[]instanceapi.BackupEntry) {
 	h := instanceapi.BackupHealth{WalArchiving: instanceapi.BackupHealthWalArchiving("unknown")}
 	cluster, err := m.dynamic.Resource(clusterResource).Namespace(m.namespace).Get(ctx, active, metav1.GetOptions{})
 	if err != nil {
 		h.Message = message("cluster " + active + ": " + err.Error())
-		return h
+		return h, nil
 	}
 	if cond, ok := condition(cluster, "ContinuousArchiving"); ok {
 		if cond["status"] == "True" {
@@ -147,7 +149,8 @@ func (m *Manager) health(ctx context.Context, active string) instanceapi.BackupH
 		h.FirstRecoverabilityPoint = timestamp(store, "status", "serverRecoveryWindow", active, "firstRecoverabilityPoint")
 		h.LastBaseBackupAt = timestamp(store, "status", "serverRecoveryWindow", active, "lastSuccessfulBackupTime")
 	}
-	latest, failed := m.latestBackups(ctx, active)
+	items, listErr := m.clusterBackups(ctx, active)
+	latest, failed := latestBackups(items)
 	if latest != nil {
 		if id, _, _ := unstructured.NestedString(latest.Object, "status", "backupId"); id != "" {
 			h.LastBaseBackupId = ptr(clip(id, maxBackupID))
@@ -160,22 +163,33 @@ func (m *Manager) health(ctx context.Context, active string) instanceapi.BackupH
 		reason, _, _ := unstructured.NestedString(failed.Object, "status", "error")
 		h.Message = message("the last base backup failed: " + reason)
 	}
-	return h
+	if listErr != nil {
+		m.warnList(listErr)
+		return h, nil
+	}
+	list := m.entries(items, h.FirstRecoverabilityPoint)
+	return h, &list
 }
 
-func (m *Manager) latestBackups(ctx context.Context, cluster string) (completed, failed *unstructured.Unstructured) {
+func (m *Manager) clusterBackups(ctx context.Context, cluster string) ([]unstructured.Unstructured, error) {
 	list, err := m.dynamic.Resource(backupResource).Namespace(m.namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
-	items := list.Items
+	items := make([]unstructured.Unstructured, 0, len(list.Items))
+	for i := range list.Items {
+		name, _, _ := unstructured.NestedString(list.Items[i].Object, "spec", "cluster", "name")
+		if name == cluster {
+			items = append(items, list.Items[i])
+		}
+	}
 	sort.Slice(items, func(i, j int) bool { return newer(&items[i], &items[j]) })
+	return items, nil
+}
+
+func latestBackups(items []unstructured.Unstructured) (completed, failed *unstructured.Unstructured) {
 	for i := range items {
 		b := &items[i]
-		name, _, _ := unstructured.NestedString(b.Object, "spec", "cluster", "name")
-		if name != cluster {
-			continue
-		}
 		phase, _, _ := unstructured.NestedString(b.Object, "status", "phase")
 		switch {
 		case phase == phaseCompleted && completed == nil:
@@ -206,7 +220,11 @@ func (m *Manager) requested(
 			out.Message = ptr("waiting for the instance to run before the backup is taken")
 			return out
 		}
-		if err = m.take(ctx, name, active, map[string]string{labelRequest: clip(req.Id, 63)}); err != nil {
+		marks := marks{
+			labels:      map[string]any{labelRequest: clip(req.Id, 63)},
+			annotations: map[string]any{annotationOrigin: originRequested, annotationReqID: req.Id},
+		}
+		if err = m.take(ctx, name, active, marks); err != nil {
 			out.Message = message("cannot start the backup: " + err.Error())
 		}
 		return out
@@ -230,7 +248,7 @@ func (m *Manager) final(
 		if !in.Applied {
 			return nil
 		}
-		if err = m.take(ctx, name, active, nil); err != nil {
+		if err = m.take(ctx, name, active, marks{annotations: map[string]any{annotationOrigin: originFinal}}); err != nil {
 			h.Message = message("cannot start the final backup: " + err.Error())
 		}
 		return nil
@@ -249,7 +267,7 @@ func (m *Manager) final(
 		if id == "" {
 			id = name
 		}
-		return &instanceapi.FinalBackup{Id: clip(id, maxBackupID), CompletedAt: *done, SizeBytes: 0}
+		return &instanceapi.FinalBackup{Id: clip(id, maxBackupID), CompletedAt: *done}
 	case phaseFailed:
 		reason, _, _ := unstructured.NestedString(b.Object, "status", "error")
 		h.Message = message("the final backup failed, and is taken again: " + reason)
@@ -275,7 +293,6 @@ func (m *Manager) restore(
 		if !in.Applied || !in.Ready {
 			return out
 		}
-		m.hibernateOthers(ctx, active)
 		out.Phase = instanceapi.RestoreProgressPhase("switched")
 		out.RecoveredTo = &r.TargetTime
 		return out
@@ -302,45 +319,32 @@ func (m *Manager) restore(
 	return out
 }
 
-func (m *Manager) hibernateOthers(ctx context.Context, active string) {
-	clusters := m.dynamic.Resource(clusterResource).Namespace(m.namespace)
-	list, err := clusters.List(ctx, metav1.ListOptions{
-		LabelSelector: labelInstance + "=" + m.release + "," + labelComponent + "=postgres",
-	})
-	if err != nil {
-		m.logger.Warn("cannot list the databases a restore replaced", "error", err)
-		return
-	}
-	patch := []byte(`{"metadata":{"annotations":{"` + annotationHibern + `":"on"}}}`)
-	for _, c := range list.Items {
-		if c.GetName() == active || c.GetAnnotations()[annotationHibern] == "on" {
-			continue
-		}
-		if _, err := clusters.Patch(ctx, c.GetName(), types.MergePatchType, patch, metav1.PatchOptions{}); err != nil {
-			m.logger.Warn("cannot stop a database a restore replaced", "cluster", c.GetName(), "error", err)
-			continue
-		}
-		m.logger.Info("a database a restore replaced is stopped and kept", "cluster", c.GetName())
-	}
-}
-
 func (m *Manager) backup(ctx context.Context, name string) (*unstructured.Unstructured, error) {
 	return m.dynamic.Resource(backupResource).Namespace(m.namespace).Get(ctx, name, metav1.GetOptions{})
 }
 
-func (m *Manager) take(ctx context.Context, name, cluster string, extra map[string]string) error {
+type marks struct {
+	labels      map[string]any
+	annotations map[string]any
+}
+
+func (m *Manager) take(ctx context.Context, name, cluster string, extra marks) error {
 	labels := map[string]any{labelCluster: cluster, labelInstance: m.release}
-	for k, v := range extra {
+	for k, v := range extra.labels {
 		labels[k] = v
+	}
+	meta := map[string]any{
+		"name":      name,
+		"namespace": m.namespace,
+		"labels":    labels,
+	}
+	if len(extra.annotations) > 0 {
+		meta["annotations"] = extra.annotations
 	}
 	b := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "postgresql.cnpg.io/v1",
 		"kind":       "Backup",
-		"metadata": map[string]any{
-			"name":      name,
-			"namespace": m.namespace,
-			"labels":    labels,
-		},
+		"metadata":   meta,
 		"spec": map[string]any{
 			"cluster":             map[string]any{"name": cluster},
 			"method":              "plugin",

@@ -19,7 +19,7 @@ func fieldsWithErrors(settings *Settings) []string {
 
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, err := range multiErr.Errors {
-		fields = append(fields, err.Field)
+		fields = append(fields, err.Field())
 	}
 
 	return fields

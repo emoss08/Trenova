@@ -14,10 +14,12 @@ import (
 	"sync/atomic"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -51,6 +53,8 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
+	DB                 kernelports.Transactor
+	Managed            *managedconfig.Config
 	Repo               emailports.EmailRepository
 	InvoiceRepo        invoiceports.InvoiceRepository
 	Validator          *Validator
@@ -83,6 +87,8 @@ type ObserverParams struct {
 
 type Service struct {
 	l                  *zap.Logger
+	db                 kernelports.Transactor
+	instanceID         string
 	repo               emailports.EmailRepository
 	invoiceRepo        invoiceports.InvoiceRepository
 	validator          *Validator
@@ -113,6 +119,8 @@ type HandleProviderEventParams struct {
 func New(p Params) *Service {
 	return &Service{
 		l:                  p.Logger.Named("service.email"),
+		db:                 p.DB,
+		instanceID:         p.Managed.InstanceID,
 		repo:               p.Repo,
 		invoiceRepo:        p.InvoiceRepo,
 		validator:          p.Validator,
@@ -348,6 +356,9 @@ func (s *Service) Send(
 	ctx context.Context,
 	req *emailports.SendEmailRequest,
 ) (*email.Message, error) {
+	if supportaccess.InitiatedBySupport(ctx, req.TenantInfo.UserID) {
+		return nil, supportaccess.ErrOutboundRefused()
+	}
 	if err := s.requireOutbound(ctx, req.Purpose); err != nil {
 		return nil, err
 	}
@@ -546,7 +557,7 @@ func (s *Service) SendPersisted(
 		return nil, err
 	}
 
-	sender, config, err := s.providerFor(ctx, msg)
+	call, err := s.providerFor(ctx, msg)
 	if err != nil {
 		return s.markFailed(ctx, msg, err)
 	}
@@ -558,8 +569,8 @@ func (s *Service) SendPersisted(
 		return s.markFailed(ctx, msg, fmt.Errorf("%w: %w", ErrRetryableSend, err))
 	}
 
-	result, err := sender.Send(ctx, SendProviderRequest{
-		Config: config,
+	result, err := call.sender.Send(ctx, SendProviderRequest{
+		Config: call.config,
 		Message: SendProviderMessage{
 			IdempotencyKey: msg.IdempotencyKey,
 			From:           mailtext.FormatEmailAddress(msg.FromName, msg.FromEmail),
@@ -573,10 +584,11 @@ func (s *Service) SendPersisted(
 			Attachments:    attachments,
 			Headers:        req.Headers,
 			OpenTracking:   req.OpenTracking,
+			Metadata:       call.metadata,
 		},
 	})
 	if err != nil && msg.Sender == email.SenderTrenova {
-		return s.markFailed(ctx, msg, s.trenovaSendFailure(msg, config, err))
+		return s.markFailed(ctx, msg, s.trenovaSendFailure(msg, call.config, err))
 	}
 	if err != nil {
 		return s.markFailed(ctx, msg, s.describeSenderRejection(ctx, msg, err))
@@ -594,16 +606,22 @@ func (s *Service) SendPersisted(
 	return msg, nil
 }
 
+type providerCall struct {
+	sender   ProviderSender
+	config   map[string]string
+	metadata map[string]string
+}
+
 func (s *Service) providerFor(
 	ctx context.Context,
 	msg *email.Message,
-) (ProviderSender, map[string]string, error) {
+) (*providerCall, error) {
 	if msg.Sender == email.SenderTrenova {
 		return s.trenovaProvider(ctx, msg)
 	}
 	sender, ok := s.providerSenders[msg.Provider]
 	if !ok {
-		return nil, nil, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"%w: no sender registered for email provider %s",
 			ErrNonRetryableSend,
 			msg.Provider,
@@ -614,9 +632,9 @@ func (s *Service) providerFor(
 		BuID:  msg.BusinessUnitID,
 	}, sender.IntegrationType())
 	if err != nil {
-		return nil, nil, providerConfigurationError(msg.Provider, err)
+		return nil, providerConfigurationError(msg.Provider, err)
 	}
-	return sender, cfg.Config, nil
+	return &providerCall{sender: sender, config: cfg.Config}, nil
 }
 
 func (s *Service) persistAttachments(
@@ -852,63 +870,80 @@ func (s *Service) HandleProviderEvent(
 	ctx context.Context,
 	params HandleProviderEventParams,
 ) error {
+	ctx = dbscope.WithTenant(ctx, params.TenantInfo.DBTenant())
+	var changed *email.Message
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
+		msg, err := s.recordProviderEvent(ctx, &params)
+		changed = msg
+		return err
+	})
+	if err != nil {
+		return err
+	}
+	if changed != nil {
+		s.messageChanged(ctx, changed, params.Event)
+	}
+	return nil
+}
+
+func (s *Service) recordProviderEvent(
+	ctx context.Context,
+	params *HandleProviderEventParams,
+) (*email.Message, error) {
 	tenantInfo := params.TenantInfo
-	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 	event := params.Event
-	if event.MessageID.IsNil() {
-		if params.ProviderMessageID != "" {
-			msg, lookupErr := s.repo.GetMessageByProviderID(
-				ctx,
-				emailports.GetEmailMessageByProviderIDRequest{
-					Provider:          event.Provider,
-					ProviderMessageID: params.ProviderMessageID,
-					TenantInfo:        tenantInfo,
-				},
-			)
-			if lookupErr != nil && !errortypes.IsNotFoundError(lookupErr) {
-				return lookupErr
-			}
-			if lookupErr == nil {
-				event.MessageID = msg.ID
-			}
+	if event.MessageID.IsNil() && params.ProviderMessageID != "" {
+		msg, lookupErr := s.repo.GetMessageByProviderID(
+			ctx,
+			emailports.GetEmailMessageByProviderIDRequest{
+				Provider:          event.Provider,
+				ProviderMessageID: params.ProviderMessageID,
+				TenantInfo:        tenantInfo,
+			},
+		)
+		if lookupErr != nil && !errortypes.IsNotFoundError(lookupErr) {
+			return nil, lookupErr
+		}
+		if lookupErr == nil {
+			event.MessageID = msg.ID
 		}
 	}
 	inserted, err := s.repo.CreateEvent(ctx, event)
-	if err != nil || !inserted {
-		return err
-	}
-	if event.MessageID.IsNil() {
-		return nil
+	if err != nil || !inserted || event.MessageID.IsNil() {
+		return nil, err
 	}
 	msg, err := s.repo.GetMessage(ctx, emailports.GetEmailEntityRequest{
 		ID:         event.MessageID,
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	changed, err := s.applyProviderEvent(ctx, msg, event, tenantInfo)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	var updated *email.Message
 	if changed {
 		if _, err = s.repo.UpdateMessage(ctx, msg); err != nil {
-			return err
+			return nil, err
 		}
-		s.messageChanged(ctx, msg, event)
+		updated = msg
 	}
 	if params.SuppressionReason == "" || strings.TrimSpace(event.Recipient) == "" {
-		return nil
+		return updated, nil
 	}
-	_, err = s.repo.CreateSuppression(ctx, &email.Suppression{
+	if _, err = s.repo.CreateSuppression(ctx, &email.Suppression{
 		BusinessUnitID: tenantInfo.BuID,
 		OrganizationID: tenantInfo.OrgID,
 		EmailAddress:   event.Recipient,
 		Reason:         params.SuppressionReason,
 		Provider:       event.Provider,
 		SourceEventID:  event.ProviderEventID,
-	})
-	return err
+	}); err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (s *Service) applyProviderEvent(

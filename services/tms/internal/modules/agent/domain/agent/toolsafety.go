@@ -57,6 +57,10 @@ func (c EgressClass) Leaves() bool {
 	}
 }
 
+func (c EgressClass) ReachesOutsiders() bool {
+	return c == EgressCustomerVisible || c == EgressExternalRecipient
+}
+
 func (c EgressClass) ApprovalNeedsReview() bool {
 	switch c {
 	case EgressNone, EgressPersonal, EgressInternal:

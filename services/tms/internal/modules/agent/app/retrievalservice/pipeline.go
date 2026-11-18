@@ -497,25 +497,6 @@ func (s *Service) PurgeRetiredModel(
 	return result, nil
 }
 
-func (s *Service) ListIndexedTenants(
-	ctx context.Context,
-	after *pagination.TenantInfo,
-	limit int,
-) ([]pagination.TenantInfo, error) {
-	tenants, err := s.repo.ListIndexedTenants(
-		ctx,
-		retrievalports.ListIndexedRetrievalTenantsRequest{
-			After: after,
-			Limit: limit,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("list organizations that index sources for retrieval: %w", err)
-	}
-
-	return tenants, nil
-}
-
 func (s *Service) Sweep(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
@@ -525,6 +506,9 @@ func (s *Service) Sweep(
 	settings, err := s.repo.GetSettings(ctx, tenant)
 	if err != nil {
 		return result, fmt.Errorf("read retrieval settings: %w", err)
+	}
+	if result.RoutingChanged, err = s.routingChanged(ctx, tenant, settings); err != nil {
+		return result, err
 	}
 	if !settings.HasActiveModel() {
 		return result, nil
@@ -557,6 +541,35 @@ func (s *Service) Sweep(
 	}
 
 	return result, nil
+}
+
+func (s *Service) routingChanged(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	settings *airetrieval.Settings,
+) (bool, error) {
+	if len(settings.EnabledSourceTypes()) == 0 || (settings.Paused && !settings.PausedByBudget()) {
+		return false, nil
+	}
+
+	included, err := s.onPlan(ctx)
+	if err != nil || !included {
+		return false, err
+	}
+
+	configured, err := s.embeddings.ConfiguredModelKey(ctx, tenant)
+	if err != nil {
+		if isNoProvider(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("resolve the embedding model: %w", err)
+	}
+
+	if _, ok := airetrieval.ModelKeyDimensions(configured); !ok {
+		return false, nil
+	}
+
+	return configured != settings.ActiveModelKey && configured != settings.PendingModelKey, nil
 }
 
 func (s *Service) sweepSource(

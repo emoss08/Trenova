@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"go.uber.org/zap"
 )
 
@@ -77,7 +78,7 @@ func (s *Service) RequireCannedOnPlan(
 	restriction := denial.Restriction()
 	if denial.AddOnName != "" {
 		restriction.Message = cannedPlanMessage.Message
-		restriction.Args = []any{entry.Name, denial.AddOnName}
+		restriction.Args = []any{entry.Name, i18n.Term(denial.AddOnName)}
 	}
 	return restriction
 }

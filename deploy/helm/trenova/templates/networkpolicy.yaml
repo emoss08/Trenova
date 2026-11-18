@@ -16,8 +16,9 @@ connections at all.
   "docling" (dict "ports" (list 5001) "from" $tms)
   "clamav" (dict "ports" (list 3310) "from" $tms)
   "imaging" (dict "ports" (list 50051) "from" $tms)
+  "embedding" (dict "ports" (list 11434) "from" (list "api" "worker"))
 -}}
-{{- $isolated := list "redis" "meilisearch" "minio" "gotenberg" "docling" "imaging" -}}
+{{- $isolated := list "redis" "meilisearch" "minio" "gotenberg" "docling" "imaging" "embedding" -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -55,13 +56,6 @@ spec:
         - port: {{ . }}
           protocol: TCP
         {{- end }}
-    {{- if eq $component "temporal" }}
-    # Temporal's services reach each other on the pod's own address.
-    - from:
-        - podSelector:
-            matchLabels:
-              {{- include "trenova.selectorLabels" (dict "root" $ "component" "temporal") | nindent 14 }}
-    {{- end }}
 {{- end }}
 ---
 apiVersion: networking.k8s.io/v1
@@ -96,6 +90,33 @@ spec:
         - podSelector:
             matchLabels:
               cnpg.io/cluster: {{ include "trenova.postgresCluster" . }}
+      ports:
+        - port: 8000
+          protocol: TCP
+        - port: 5432
+          protocol: TCP
+---
+# Every database the release holds, whichever it runs on: the live one, a
+# restore beside it, and one it has left and keeps. CloudNativePG reaches
+# each to read its status, stop it and start it again. The rules above name
+# one generation; without this one a database the release has left falls
+# under the default deny, cannot be stopped and cannot be gone back to.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" . "component" "postgres-cnpg") }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" (dict "root" . "component" "postgres") | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.cnpgNamespace }}
       ports:
         - port: 8000
           protocol: TCP
@@ -239,10 +260,6 @@ spec:
       ports:
         - port: 5432
           protocol: TCP
-    - to:
-        - podSelector:
-            matchLabels:
-              {{- include "trenova.selectorLabels" (dict "root" . "component" "temporal") | nindent 14 }}
     {{- include "trenova.dnsEgress" . | nindent 4 }}
 ---
 apiVersion: networking.k8s.io/v1

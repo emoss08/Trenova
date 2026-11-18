@@ -5,8 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"go.uber.org/fx"
 )
 
@@ -15,26 +17,33 @@ type Params struct {
 
 	Config *managedconfig.Config
 	Repo   managedfeaturesports.StateRepository
+	Usage  managedusageports.UsageReader
 }
 
 type Plan struct {
-	Managed bool
-	View    *managedfeatures.PlanView
-	Changes []managedfeatures.HistoryEntry
+	Managed    bool
+	ManageURL  string
+	EndsAt     int64
+	BackupDays int
+	Usage      *managedusage.Usage
+	View       *managedfeatures.PlanView
+	Changes    []managedfeatures.HistoryEntry
 }
 
 type Service struct {
 	managed bool
 	repo    managedfeaturesports.StateRepository
+	usage   managedusageports.UsageReader
 }
 
 func New(p Params) *Service {
-	return &Service{managed: p.Config.Enabled, repo: p.Repo}
+	return &Service{managed: p.Config.Enabled, repo: p.Repo, usage: p.Usage}
 }
 
 func (s *Service) Plan(ctx context.Context) (*Plan, error) {
 	if !s.managed {
 		return &Plan{
+			BackupDays: managedfeatures.DefaultFinalBackupDays,
 			View: &managedfeatures.PlanView{
 				Base:      []platformcatalog.Feature{},
 				Included:  []managedfeatures.AddOnFeatures{},
@@ -48,14 +57,28 @@ func (s *Service) Plan(ctx context.Context) (*Plan, error) {
 	if err != nil {
 		return nil, err
 	}
-	var features []platformcatalog.FeatureKey
-	if held != nil {
-		features = held.Features
+	usage, err := s.usage.Usage(ctx)
+	if err != nil {
+		return nil, err
 	}
 
+	var features []platformcatalog.FeatureKey
+	var endings []managedfeatures.AddOnEnding
+	var manageURL string
+	var endsAt int64
+	if held != nil {
+		features, endings, manageURL = held.Features, held.AddOnEndings, held.PlanURL
+		endsAt = held.PlanEndsAt
+	}
+	backupDays := held.BackupDays()
+
 	return &Plan{
-		Managed: true,
-		View:    managedfeatures.View(features),
-		Changes: managedfeatures.History(features, changes),
+		Managed:    true,
+		ManageURL:  manageURL,
+		EndsAt:     endsAt,
+		BackupDays: backupDays,
+		Usage:      usage,
+		View:       managedfeatures.View(features, endings),
+		Changes:    managedfeatures.History(features, changes),
 	}, nil
 }

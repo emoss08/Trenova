@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -822,7 +823,8 @@ func (s *Service) assertActorMayRun(
 	// proposed for, which the tool checks against the owner the runtime
 	// recorded, and only a person has records of that kind.
 	if agenttoolports.IsSelfScoped(tool) {
-		if actor == nil || actor.PrincipalType != permissionports.PrincipalTypeUser {
+		if actor == nil || actor.PrincipalType != permissionports.PrincipalTypeUser ||
+			actor.IsSupport() {
 			return errortypes.NewValidationError("actor", errortypes.ErrForbidden,
 				"Only the person this change is for can approve it")
 		}
@@ -830,6 +832,9 @@ func (s *Service) assertActorMayRun(
 	}
 
 	policy := tool.Policy()
+	if actor.IsSupport() && policy.ReachesOutsiders() {
+		return supportaccess.ErrOutboundRefused()
+	}
 	if err := s.assertActorHolds(ctx, actor, policy.Resource, policy.Operation); err != nil {
 		return err
 	}
@@ -1115,7 +1120,7 @@ func assertTaintDecidedByPerson(
 		return nil
 	}
 	if actor != nil && actor.PrincipalType == permissionports.PrincipalTypeUser &&
-		actor.UserID.IsNotNil() {
+		actor.UserID.IsNotNil() && !actor.IsSupport() {
 		return nil
 	}
 

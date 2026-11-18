@@ -23,6 +23,9 @@ func buildStatus(in *statusInputs, monthStart int64) *retrievalports.AIRetrieval
 		RetrievalUnpricedCalls: unpricedOf(in.retrieval),
 		ModelChange:            ModelChangeProgress(in.settings, in.totals, in.pending),
 		ConfiguredModelDiffers: in.configured != "" && in.configured != in.settings.ActiveModelKey,
+		EmbeddingSource:        EmbeddingSourceOf(in.configured, in.builtInKey),
+		TunedModel:             airetrieval.TunedEmbeddingModel,
+		ConfiguredModelTuned:   airetrieval.IsTunedModel(in.configured),
 	}
 	status.ConfiguredModelKey = stringutils.Ptr(in.configured)
 	for _, source := range status.Sources {
@@ -30,6 +33,19 @@ func buildStatus(in *statusInputs, monthStart int64) *retrievalports.AIRetrieval
 	}
 
 	return status
+}
+
+func EmbeddingSourceOf(configured, builtInKey string) *airetrieval.EmbeddingSource {
+	switch configured {
+	case "":
+		return nil
+	case builtInKey:
+		source := airetrieval.EmbeddingSourceBuiltIn
+		return &source
+	default:
+		source := airetrieval.EmbeddingSourceOrganization
+		return &source
+	}
 }
 
 func costOf(cost *aiusageports.AIUsageCost) decimal.Decimal {

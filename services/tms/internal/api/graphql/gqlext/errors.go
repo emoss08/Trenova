@@ -49,7 +49,7 @@ func newErrorPresenter(cfg *appconfig.Config) graphql.ErrorPresenterFunc {
 			"traceId": gqlctx.RequestID(ctx),
 		}
 
-		if params := sanitizer.ExtractParams(err); len(params) > 0 {
+		if params := sanitizer.ExtractParams(err, locale); len(params) > 0 {
 			gqlErr.Extensions["params"] = params
 		}
 		if conflict := sanitizer.ExtractConflict(err); conflict != nil {

@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -433,7 +434,7 @@ func (r *QueryResolver) CannedReports(ctx context.Context) ([]*gqlmodel.CannedRe
 	}
 	models := make([]*gqlmodel.CannedReport, 0, len(library))
 	for i := range library {
-		model, mapErr := cannedReportToModel(&library[i])
+		model, mapErr := cannedReportToModel(i18n.FromContext(ctx), &library[i])
 		if mapErr != nil {
 			return nil, mapErr
 		}
@@ -568,7 +569,7 @@ func (r *QueryResolver) ReportRunDeskCard(ctx context.Context, id string) (*gqlm
 		return nil, err
 	}
 
-	return reportRunDeskCardToModel(card), nil
+	return reportRunDeskCardToModel(i18n.FromContext(ctx), card), nil
 }
 
 func (r *QueryResolver) ReportRuns(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.ReportRunsFilterInput) (*gqlmodel.ReportRunConnection, error) {

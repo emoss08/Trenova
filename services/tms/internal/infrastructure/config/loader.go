@@ -311,7 +311,6 @@ func (l *Loader) setDefaults() {
 
 func (l *Loader) bindPlatformEnvAliases() {
 	_ = l.viper.BindEnv("platform.mode", "TRENOVA_DEPLOYMENT_MODE")
-	_ = l.viper.BindEnv("platform.instanceId", "TRENOVA_INSTANCE_ID")
 }
 
 // loadConfigFiles loads base and environment-specific config files

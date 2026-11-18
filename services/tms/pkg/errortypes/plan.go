@@ -3,6 +3,8 @@ package errortypes
 import (
 	"errors"
 	"strconv"
+
+	"github.com/emoss08/trenova/shared/i18n"
 )
 
 const (
@@ -92,7 +94,7 @@ func NewFeatureRestrictionError(feature, addOn string) *PlanRestrictionError {
 	}
 	if addOn != "" {
 		base.Message = planRestrictionMessages.AddOn.Message
-		base.Args = []any{addOn}
+		base.Args = []any{i18n.Term(addOn)}
 	}
 
 	return &PlanRestrictionError{
@@ -152,6 +154,12 @@ func (e *PlanRestrictionError) Params() map[string]string {
 		"reason":  e.Reason,
 		"plan":    e.Plan,
 	}
+}
+
+func (e *PlanRestrictionError) LocalizedParams(locale i18n.Locale) map[string]string {
+	params := e.Params()
+	params["addOn"] = i18n.Translate(locale, e.AddOn)
+	return params
 }
 
 func (e *PlanRestrictionError) WithInternal(err error) *PlanRestrictionError {

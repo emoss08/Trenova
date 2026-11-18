@@ -77,7 +77,12 @@ func (h *Handler) getManifest(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, manifest)
+	localized := *manifest
+	localized.UnavailableFeatures = permissionports.DenialsIn(
+		i18n.FromContext(c.Request.Context()),
+		manifest.UnavailableFeatures,
+	)
+	helpers.JSON(c, http.StatusOK, &localized)
 }
 
 // @Summary Get permission manifest version

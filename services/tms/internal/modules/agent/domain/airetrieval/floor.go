@@ -1,9 +1,12 @@
 package airetrieval
 
-const DefaultSimilarityFloor = 0.5
+const (
+	DefaultSimilarityFloor = 0.5
+	TunedEmbeddingModel    = "nomic-embed-text"
+)
 
 var modelSimilarityFloors = map[string]float64{
-	"nomic-embed-text": 0.58,
+	TunedEmbeddingModel: 0.58,
 }
 
 func SimilarityFloor(modelKey string) float64 {
@@ -12,4 +15,8 @@ func SimilarityFloor(modelKey string) float64 {
 	}
 
 	return DefaultSimilarityFloor
+}
+
+func IsTunedModel(modelKey string) bool {
+	return modelKey != "" && ModelKeyModel(modelKey) == TunedEmbeddingModel
 }

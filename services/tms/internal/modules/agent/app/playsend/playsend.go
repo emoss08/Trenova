@@ -44,8 +44,6 @@ func Driver(
 	switch reached.Channel {
 	case drivermessage.ChannelDash:
 		out.Channel, out.Reached = watchtowerplay.ChannelDash, true
-	case drivermessage.ChannelText:
-		out.Channel, out.Reached = watchtowerplay.ChannelText, true
 	case drivermessage.ChannelNone:
 		return out, nil
 	}
@@ -59,7 +57,7 @@ func Driver(
 		}
 		if channel == drivermessage.ChannelNone {
 			return errortypes.NewBusinessError(
-				"The message did not reach {0}: they no longer have a Dash login or a number that can be texted.",
+				"The message did not reach {0}: they no longer have a Dash login.",
 				name,
 			)
 		}

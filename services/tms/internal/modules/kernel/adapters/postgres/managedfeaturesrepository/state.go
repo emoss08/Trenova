@@ -72,30 +72,75 @@ func (r *repository) Replace(
 			return nil, err
 		}
 
-		replacement := managedfeatures.Replace(held, req.Features, req.Now)
+		replacement := managedfeatures.Replace(held, req.Received, req.Now)
+		if !replacement.Updated() {
+			return replacement, nil
+		}
+		if err = r.store(ctx, db, replacement.Current); err != nil {
+			return nil, err
+		}
+
 		if !replacement.Changed() {
 			return replacement, nil
 		}
-
-		s := managedfeaturesdb.States
-		if _, err = s.Upsert(
-			ctx,
-			db,
-			[]*managedfeatures.State{replacement.Current},
-			keel.OnConflict(s.ID).Update(
-				s.Features,
-				s.ReceivedAt,
-			),
-		); err != nil {
-			r.l.Error("failed to record the managed feature list", zap.Error(err))
-			return nil, fmt.Errorf("record the managed feature list: %w", err)
-		}
-
 		if err = r.recordChange(ctx, db, replacement.Change); err != nil {
 			return nil, err
 		}
 		return replacement, nil
 	})
+}
+
+func (r *repository) RemindPlanEnd(
+	ctx context.Context,
+	now int64,
+) (*managedfeatures.Replacement, error) {
+	ctx = dbscope.WithSystem(ctx, "record the reminder that this instance's plan is ending")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*managedfeatures.Replacement, error) {
+		db := r.db.Keel(ctx)
+		if err := keel.LockKey(ctx, db, replaceLockKey); err != nil {
+			return nil, fmt.Errorf("lock the managed feature list: %w", err)
+		}
+
+		held, err := r.held(ctx)
+		if errors.Is(err, managedfeatures.ErrNoState) {
+			return managedfeatures.RemindPlanEnd(nil, now), nil
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		replacement := managedfeatures.RemindPlanEnd(held, now)
+		if !replacement.Updated() {
+			return replacement, nil
+		}
+		if err = r.store(ctx, db, replacement.Current); err != nil {
+			return nil, err
+		}
+		return replacement, nil
+	})
+}
+
+func (r *repository) store(ctx context.Context, db *keel.DB, state *managedfeatures.State) error {
+	s := managedfeaturesdb.States
+	if _, err := s.Upsert(
+		ctx,
+		db,
+		[]*managedfeatures.State{state},
+		keel.OnConflict(s.ID).Update(
+			s.Features,
+			s.AddOnEndings,
+			s.PlanURL,
+			s.PlanEndsAt,
+			s.PlanEndAnnounced,
+			s.PlanEndReminded,
+			s.FinalBackupDays,
+			s.ReceivedAt,
+		),
+	); err != nil {
+		r.l.Error("failed to record the managed feature list", zap.Error(err))
+		return fmt.Errorf("record the managed feature list: %w", err)
+	}
+	return nil
 }
 
 func (r *repository) recordChange(

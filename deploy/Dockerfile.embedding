@@ -1,0 +1,94 @@
+# syntax=docker/dockerfile:1.7
+#
+# The search service Trenova AI brings (the chart's `embedding` component): Ollama serving
+# nomic-embed-text v1.5 on the CPU. The model is pulled while the image is built and checked
+# against its manifest digest, so the service downloads nothing when it starts and its model
+# directory is read-only. No GPU is needed to build or to run it. It copies nothing from a
+# build context, so the Dockerfile is passed on standard input:
+#
+#   docker build \
+#     --build-arg OLLAMA_VERSION=<x.y.z> \
+#     --build-arg OLLAMA_DIGEST=sha256:<the ollama/ollama:<x.y.z> index digest> \
+#     --build-arg MODEL_MANIFEST_SHA256=<sha256 of the model's manifest> \
+#     -t ghcr.io/emoss08/trenova/embedding:nomic-embed-text-v1.5-ollama-<x.y.z> \
+#     - < deploy/Dockerfile.embedding
+#
+# Pinned and verified:
+#
+#   Ollama            ollama/ollama:${OLLAMA_VERSION}, by index digest (MIT). Only the binary and
+#                     its CPU libraries are kept: the CUDA, ROCm and Vulkan libraries are removed
+#                     and the image flattened, so the GPU runtimes never ship.
+#   nomic-embed-text  v1.5 from the Ollama library (Apache-2.0, as its model card states), 768
+#                     dimensions. The manifest Ollama pulls is checked against
+#                     MODEL_MANIFEST_SHA256; every layer it names is content-addressed, so
+#                     the check pins the weights too.
+#
+# The model is recreated under the same name with `num_thread 2`, the two CPU threads the
+# service is sized for (design-plans/managed-trenova/ai.md): the runner would otherwise start a
+# thread per host core and be throttled by the pod's CPU limit. The parameter changes speed,
+# not the vectors.
+#
+# Run it locally (the TMS's eval recorders talk to it on 11434):
+#
+#   docker run -d --rm --name trenova-embedding-record -p 127.0.0.1:11434:11434 \
+#     ghcr.io/emoss08/trenova/embedding:nomic-embed-text-v1.5-ollama-<x.y.z>
+
+ARG OLLAMA_VERSION=0.40.5
+ARG OLLAMA_DIGEST=sha256:5d3a2f25f9825628daba94dc0b1d421c7d57d6c03ae5faa9ba050e058bab8241
+
+FROM ollama/ollama:${OLLAMA_VERSION}@${OLLAMA_DIGEST} AS ollama
+
+FROM ollama AS model
+ARG MODEL=nomic-embed-text:v1.5
+ARG MODEL_MANIFEST_SHA256=8688dbc0926c1dfdc1b8b7489034e1fedb06f6ac66472dd2d7f0ed6d7d23ba29
+ENV OLLAMA_HOST=127.0.0.1:11434 \
+    OLLAMA_MODELS=/models \
+    HOME=/tmp/ollama-build
+RUN set -eux; \
+    mkdir -p /models "$HOME"; \
+    ollama serve >/tmp/serve.log 2>&1 & \
+    serve=$!; \
+    for attempt in $(seq 1 60); do \
+      if ollama list >/dev/null 2>&1; then break; fi; \
+      if [ "$attempt" = 60 ]; then cat /tmp/serve.log; exit 1; fi; \
+      sleep 1; \
+    done; \
+    ollama pull "$MODEL"; \
+    manifest="/models/manifests/registry.ollama.ai/library/${MODEL%%:*}/${MODEL##*:}"; \
+    echo "the model manifest is sha256:$(sha256sum "$manifest" | cut -d' ' -f1)"; \
+    echo "${MODEL_MANIFEST_SHA256}  ${manifest}" | sha256sum -c -; \
+    printf 'FROM %s\nPARAMETER num_thread 2\n' "$MODEL" > /tmp/Modelfile; \
+    ollama create "$MODEL" -f /tmp/Modelfile; \
+    ollama show "$MODEL" --parameters | grep -Eq 'num_thread[[:space:]]+2([[:space:]]|$)'; \
+    kill "$serve"; \
+    wait "$serve" || true; \
+    find /models -name '*-partial*' -delete; \
+    chmod -R a+rX,go-w /models
+
+FROM ollama AS cpu
+RUN set -eux; \
+    find /usr/lib/ollama -mindepth 1 -maxdepth 1 -type d \
+      \( -name 'cuda*' -o -name 'rocm*' -o -name 'vulkan*' -o -name 'mlx*' \) -exec rm -rf {} +; \
+    rm -rf /root/.ollama /var/lib/apt/lists/* /var/cache/apt/*; \
+    groupadd --system --gid 65532 ollama; \
+    useradd --system --uid 65532 --gid 65532 --home-dir /home/ollama --shell /usr/sbin/nologin ollama; \
+    mkdir -p /home/ollama; \
+    chown 65532:65532 /home/ollama
+
+FROM scratch AS runtime
+COPY --from=cpu / /
+COPY --from=model --chown=0:0 /models /models
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    OLLAMA_HOST=0.0.0.0:11434 \
+    OLLAMA_MODELS=/models \
+    OLLAMA_NOPRUNE=true \
+    OLLAMA_KEEP_ALIVE=-1 \
+    OLLAMA_MAX_LOADED_MODELS=1 \
+    OLLAMA_NUM_PARALLEL=2 \
+    HOME=/home/ollama
+USER 65532:65532
+EXPOSE 11434
+HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=6 \
+    CMD ["/usr/bin/ollama", "list"]
+ENTRYPOINT ["/usr/bin/ollama"]
+CMD ["serve"]

@@ -62,7 +62,9 @@ func TestAPlanChangeHasEveryOrganizationReadItsPermissionsAgain(t *testing.T) {
 
 	err := observer.PlanChanged(t.Context(), managedfeatures.Replace(
 		&managedfeatures.State{ID: managedfeatures.CurrentStateID},
-		[]platformcatalog.FeatureKey{platformcatalog.FeatureAIDesk},
+		&managedfeatures.Received{
+			Features: []platformcatalog.FeatureKey{platformcatalog.FeatureAIDesk},
+		},
 		1,
 	))
 	require.NoError(t, err)
@@ -86,7 +88,32 @@ func TestAnUnchangedPlanDisturbsNobody(t *testing.T) {
 	}
 	err := observer.PlanChanged(t.Context(), managedfeatures.Replace(
 		held,
-		[]platformcatalog.FeatureKey{platformcatalog.FeatureAIDesk},
+		&managedfeatures.Received{
+			Features: []platformcatalog.FeatureKey{platformcatalog.FeatureAIDesk},
+		},
+		2,
+	))
+	require.NoError(t, err)
+	assert.Empty(t, changes.organizations)
+}
+
+func TestAPlanChangeThatOnlySchedulesAnEndDisturbsNobody(t *testing.T) {
+	t.Parallel()
+
+	changes := &recordedChanges{}
+	observer := &PlanObserver{notifier: changes, tenants: pagedTenants{tenants: tenants(3)}, l: zap.NewNop()}
+
+	held := &managedfeatures.State{
+		ID:       managedfeatures.CurrentStateID,
+		Features: []platformcatalog.FeatureKey{platformcatalog.FeatureAccounting},
+	}
+	endings := []managedfeatures.AddOnEnding{{AddOn: platformcatalog.AddOnAccounting, EndsAt: 99}}
+	err := observer.PlanChanged(t.Context(), managedfeatures.Replace(
+		held,
+		&managedfeatures.Received{
+			Features:     []platformcatalog.FeatureKey{platformcatalog.FeatureAccounting},
+			AddOnEndings: &endings,
+		},
 		2,
 	))
 	require.NoError(t, err)

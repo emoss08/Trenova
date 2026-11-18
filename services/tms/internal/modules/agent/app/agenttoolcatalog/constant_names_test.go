@@ -38,7 +38,7 @@ var initialisms = map[string]string{
 	"eta": "ETA", "cdl": "CDL", "mvr": "MVR", "twic": "TWIC", "pto": "PTO", "api": "API",
 	"json": "JSON", "html": "HTML", "sql": "SQL", "uuid": "UUID", "ip": "IP", "mc": "MC",
 	"ein": "EIN", "ach": "ACH", "gl": "GL", "sla": "SLA", "csv": "CSV", "pdf": "PDF",
-	"x12": "X12", "as2": "AS2", "sftp": "SFTP", "vin": "VIN", "sms": "SMS", "eld": "ELD",
+	"x12": "X12", "as2": "AS2", "sftp": "SFTP", "vin": "VIN", "eld": "ELD",
 	"usdot": "USDOT", "un": "UN",
 }
 

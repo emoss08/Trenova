@@ -417,6 +417,10 @@ func TestCreateMemoBuildsASignedCreditMemoOnItsOwnQueueItem(t *testing.T) {
 	)
 	require.Len(t, created.Lines, 2)
 	assert.Equal(t, invoice.InvoiceLineTypeMemo, created.Lines[0].Type)
+	for _, line := range created.Lines {
+		assert.True(t, line.TypedDescription,
+			"a memo line's words were typed by whoever raised it, which Trenova support may not do")
+	}
 	assert.True(
 		t,
 		created.Lines[0].Amount.Equal(decimal.NewFromInt(-50)),

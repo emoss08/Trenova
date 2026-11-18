@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/fieldpath"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -75,7 +76,10 @@ func (s *Sanitizer) ExtractErrors(err error) []ValidationError {
 	return nil
 }
 
-func (s *Sanitizer) ExtractParams(err error) map[string]string {
+func (s *Sanitizer) ExtractParams(err error, locale i18n.Locale) map[string]string {
+	if localized, ok := errors.AsType[errortypes.LocalizedParameterized](err); ok {
+		return localized.LocalizedParams(locale)
+	}
 	if parameterized, ok := errors.AsType[errortypes.Parameterized](err); ok {
 		return parameterized.Params()
 	}

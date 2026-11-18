@@ -3,6 +3,7 @@ package helpers
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/fieldpath"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
 )
@@ -41,14 +42,14 @@ func TestProblemBuilder_TranslatesValidationMessages(t *testing.T) {
 		WithLocale(i18n.ES).
 		WithType(ProblemTypeValidation).
 		WithErrors([]ValidationError{
-			{Field: "name", Message: "Name is required", Code: "required"},
-			{Field: "status", Message: "Status is invalid", Code: "invalid"},
+			{Path: fieldpath.Parse("name"), Message: "Name is required", Code: "required"},
+			{Path: fieldpath.Parse("status"), Message: "Status is invalid", Code: "invalid"},
 		}).
 		Build()
 
 	assert.Equal(t, "El nombre es obligatorio", problem.Errors[0].Message)
 	assert.Equal(t, "El estado no es válido", problem.Errors[1].Message)
-	assert.Equal(t, "name", problem.Errors[0].Field,
+	assert.Equal(t, "name", problem.Errors[0].Path.String(),
 		"translating the message must not disturb the field path the form binds to")
 	assert.Equal(t, "required", problem.Errors[0].Code)
 }
@@ -60,7 +61,7 @@ func TestProblemBuilder_UntranslatedMessageStaysEnglish(t *testing.T) {
 		WithLocale(i18n.ZhCN).
 		WithType(ProblemTypeValidation).
 		WithErrors([]ValidationError{
-			{Field: "vin", Message: "A message nobody has translated yet"},
+			{Path: fieldpath.Parse("vin"), Message: "A message nobody has translated yet"},
 		}).
 		Build()
 
@@ -82,7 +83,7 @@ func TestProblemBuilder_ZeroLocaleBehavesAsEnglish(t *testing.T) {
 func TestProblemBuilder_DoesNotMutateCallerErrors(t *testing.T) {
 	t.Parallel()
 
-	errs := []ValidationError{{Field: "name", Message: "Name is required"}}
+	errs := []ValidationError{{Path: fieldpath.Parse("name"), Message: "Name is required"}}
 
 	NewProblemBuilder("https://example.test/problems/").
 		WithLocale(i18n.ES).

@@ -79,6 +79,9 @@ func (s *PostmarkSender) Send(
 	if msg.Text != "" {
 		payload["TextBody"] = msg.Text
 	}
+	if len(msg.Metadata) > 0 {
+		payload["Metadata"] = msg.Metadata
+	}
 	if len(msg.Attachments) > 0 {
 		attachments := make([]map[string]string, 0, len(msg.Attachments))
 		for _, attachment := range msg.Attachments {

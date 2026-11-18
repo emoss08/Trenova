@@ -376,8 +376,12 @@ func (s *Service) StartSSOLogin(
 	}
 	req.Provider = ssoConfig.Provider
 
-	if err = validateReturnToURL(req.ReturnTo, s.serverConfig.CORS.AllowedOrigins); err != nil {
+	handoff, ok, err := ssoStartHandoff(ssoConfig.OIDCRedirectURL, &req, s.serverConfig.CORS.AllowedOrigins)
+	if err != nil {
 		return "", err
+	}
+	if ok {
+		return handoff, nil
 	}
 
 	provider, err := s.oidc.get(ctx, ssoConfig)

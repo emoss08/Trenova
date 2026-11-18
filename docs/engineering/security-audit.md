@@ -247,7 +247,9 @@ metadata (`audit.Entry.CreditSupport`, applied from the request context in `audi
 entry about another actor written in the same request keeps its actor and still carries the grant
 in its metadata. The grants page lists one grant's actions by filtering the audit log by its
 principal id, so a reader sees only the kinds of record they could read on the audit log itself.
-The organization's administrators holding `support_access` read are notified when a session starts.
+`support_access.extended` records an administrator extending a live grant. The organization's
+administrators holding `support_access` read are notified when a grant is made, extended, first
+entered and ended.
 
 ## Document access
 

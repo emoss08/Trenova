@@ -7,6 +7,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -69,6 +70,13 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 	authCtx, ok := gqlctx.AuthContext(ctx)
 	if !ok || authCtx == nil || authCtx.OrganizationID.IsNil() || authCtx.BusinessUnitID.IsNil() {
 		return nil
+	}
+	if authCtx.IsSupport() &&
+		supportaccess.Scope(authCtx.Support.Scope) == supportaccess.ScopeReadOnly {
+		if status, found := gqlctx.ResponseStatusFrom(ctx); found {
+			status.Override(http.StatusForbidden, 0)
+		}
+		return gqlerror.WrapIfUnwrapped(supportaccess.ErrReadOnlySession())
 	}
 
 	err := planservice.Admit(ctx, e.plans, e.features, &planservice.AdmissionRequest{

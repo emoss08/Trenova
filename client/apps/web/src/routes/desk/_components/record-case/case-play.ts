@@ -33,8 +33,6 @@ export function casePlayChannelLabel(channel: WatchtowerPlayChannel, t: Translat
   switch (channel) {
     case "Dash":
       return t("Dash message");
-    case "Text":
-      return t("Text message");
     case "Email":
       return t("Email");
     case "Tender":

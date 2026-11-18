@@ -140,3 +140,20 @@ func (c CatalogCorpus) IsValid() bool {
 }
 
 func (c CatalogCorpus) String() string { return string(c) }
+
+type EmbeddingSource string
+
+func AllEmbeddingSources() []EmbeddingSource {
+	return []EmbeddingSource{EmbeddingSourceBuiltIn, EmbeddingSourceOrganization}
+}
+
+const (
+	EmbeddingSourceBuiltIn      = EmbeddingSource("BuiltIn")
+	EmbeddingSourceOrganization = EmbeddingSource("Organization")
+)
+
+func (s EmbeddingSource) IsValid() bool {
+	return s == EmbeddingSourceBuiltIn || s == EmbeddingSourceOrganization
+}
+
+func (s EmbeddingSource) String() string { return string(s) }

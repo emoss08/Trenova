@@ -91,7 +91,33 @@ func newTestService(t *testing.T, providers ...*aiprovider.Provider) *Service {
 		Clients:    make(map[bool]*http.Client, 2),
 		Usage:      &fakeUsage{},
 		Features:   plantest.AllFeatures(),
+		BuiltIn:    &fakeBuiltIn{},
+		Support:    &fakeSupport{},
 	})
+}
+
+type fakeSupport struct {
+	refusal error
+}
+
+func (f *fakeSupport) AdmitModelCall(context.Context, pagination.TenantInfo) error {
+	return f.refusal
+}
+
+type fakeBuiltIn struct {
+	service *aiprovider.BuiltInEmbeddingService
+	err     error
+}
+
+func (f *fakeBuiltIn) Provider(
+	_ context.Context,
+	tenant pagination.TenantInfo,
+) (*aiprovider.Provider, bool, error) {
+	if f.err != nil || f.service == nil {
+		return nil, false, f.err
+	}
+
+	return aiprovider.BuiltInEmbedding(tenant.OrgID, tenant.BuID, *f.service), true, nil
 }
 
 // chatServer stands in for any OpenAI-compatible endpoint. It records how many

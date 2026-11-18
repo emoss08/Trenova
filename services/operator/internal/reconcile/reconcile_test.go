@@ -22,18 +22,22 @@ import (
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 
+	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/controlplanetest"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/databases"
 	"github.com/emoss08/trenova/operator/internal/escrow"
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
 	"github.com/emoss08/trenova/operator/internal/release"
+	"github.com/emoss08/trenova/operator/internal/selfupgrade"
 	"github.com/emoss08/trenova/operator/internal/tms"
 	"github.com/emoss08/trenova/operator/internal/tmstest"
 	"github.com/emoss08/trenova/operator/internal/usage"
@@ -77,14 +81,26 @@ type countingReleases struct {
 	*release.Releaser
 	applies int
 	fail    error
+	before  func(vals map[string]any)
 }
 
 func (c *countingReleases) Apply(ctx context.Context, ch *chart.Chart, vals map[string]any) error {
 	c.applies++
+	if c.before != nil {
+		c.before(vals)
+	}
 	if c.fail != nil {
 		return c.fail
 	}
 	return c.Releaser.Apply(ctx, ch, vals)
+}
+
+type noDatabases struct{}
+
+func (noDatabases) Gate(context.Context, databases.GateInput) databases.Gate { return databases.Gate{} }
+
+func (noDatabases) Settle(context.Context, databases.SettleInput) databases.Result {
+	return databases.Result{}
 }
 
 type fakeUsage struct {
@@ -151,6 +167,7 @@ func (f *fakeAdmins) set(answer tms.Administrator, err error) {
 type fakeFeatures struct {
 	mu      sync.Mutex
 	lists   [][]string
+	sent    []tms.FeatureList
 	err     error
 	held    []string
 	heldErr error
@@ -171,11 +188,21 @@ func (f *fakeFeatures) hold(features []string, err error) {
 	f.held, f.heldErr = features, err
 }
 
-func (f *fakeFeatures) PutFeatures(_ context.Context, features []string) error {
+func (f *fakeFeatures) PutFeatures(_ context.Context, list tms.FeatureList) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.lists = append(f.lists, append([]string{}, features...))
+	f.lists = append(f.lists, append([]string{}, list.Features...))
+	f.sent = append(f.sent, list)
 	return f.err
+}
+
+func (f *fakeFeatures) lastSent() (tms.FeatureList, bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if len(f.sent) == 0 {
+		return tms.FeatureList{}, false
+	}
+	return f.sent[len(f.sent)-1], true
 }
 
 func (f *fakeFeatures) calls() [][]string {
@@ -200,6 +227,13 @@ type world struct {
 	admins   *fakeAdmins
 	features *fakeFeatures
 	email    *fakeSystemEmail
+	keys     *fakeSupportKeys
+	grants   *fakeSupportGrants
+	operator *fakeOperator
+	logs     *fakeLogKeeping
+	events   *fakeEmailEvents
+	telem    *fakeTelemetry
+	client   *controlplane.Client
 	now      time.Time
 }
 
@@ -244,7 +278,16 @@ func newWorldWith(
 		admins:   &fakeAdmins{},
 		features: &fakeFeatures{},
 		email:    &fakeSystemEmail{},
-		now:      time.Now(),
+		keys:     &fakeSupportKeys{},
+		grants:   &fakeSupportGrants{},
+		operator: &fakeOperator{status: selfupgrade.Status{
+			Version: "0.11.0", Phase: selfupgrade.PhaseCurrent,
+		}},
+		logs:   &fakeLogKeeping{},
+		events: &fakeEmailEvents{},
+		telem:  &fakeTelemetry{},
+		client: client,
+		now:    time.Now(),
 	}
 	w.usage = &fakeUsage{now: func() time.Time { return w.now }}
 	var relayer reconcile.Usage = w.usage
@@ -273,9 +316,15 @@ func newWorldWith(
 		Log:          func(string, ...any) {},
 	}
 	w.releases = &countingReleases{Releaser: release.NewReleaser(release.ReleaserParams{
-		Config: cfg, Name: "trenova", Namespace: "trenova", Logger: logger,
+		Config: cfg, Kube: kube, Name: "trenova", Namespace: "trenova", Logger: logger,
 	})}
-	w.loop = reconcile.New(&reconcile.Params{
+	runner, err := commands.New(&commands.Params{
+		ControlPlane: client, Kube: kube, Grants: noGrants{}, Logs: w.logs,
+		Namespace: "trenova", Release: "trenova", Chart: "trenova",
+		Logger: logger, Now: func() time.Time { return w.now },
+	})
+	require.NoError(t, err)
+	w.loop, err = reconcile.New(&reconcile.Params{
 		ControlPlane: client,
 		Credentials:  creds,
 		Charts:       release.NewSource(release.SourceParams{Path: chartDir}),
@@ -292,6 +341,16 @@ func newWorldWith(
 		Administrators: w.admins,
 		Features:       w.features,
 		SystemEmail:    w.email,
+		SupportKeys:    w.keys,
+		SupportGrants:  w.grants,
+		Storage:        noStorage{},
+		Backups:        &fakeBackups{},
+		Databases:      noDatabases{},
+		Commands:       runner,
+		EmailEvents:    w.events,
+		Logs:           w.logs,
+		Telemetry:      w.telem,
+		Operator:       w.operator,
 		Base:           map[string]any{"clamav": map[string]any{"enabled": true}},
 		Namespace:      "trenova-system",
 		Logger:         logger,
@@ -300,7 +359,35 @@ func newWorldWith(
 		Report:         time.Minute,
 		UsageEvery:     15 * time.Minute,
 	})
+	require.NoError(t, err)
 	return w
+}
+
+type noStorage struct{}
+
+func (noStorage) Ensure(context.Context, []string, int64) (values.Storage, error) {
+	return values.Storage{}, nil
+}
+
+type fakeOperator struct {
+	mu     sync.Mutex
+	status selfupgrade.Status
+	wants  []string
+}
+
+func (f *fakeOperator) Converge(_ context.Context, want string) selfupgrade.Status {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.wants = append(f.wants, want)
+	st := f.status
+	st.Target = want
+	return st
+}
+
+func (f *fakeOperator) set(phase selfupgrade.Phase, message string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.status.Phase, f.status.Message = phase, message
 }
 
 func (w *world) lastReport(t *testing.T) instanceapi.StatusReport {
@@ -388,9 +475,13 @@ func TestAnUnknownSchemaIsReportedNotApplied(t *testing.T) {
 
 	require.Equal(t, 1, w.releases.applies)
 	r := w.lastReport(t)
-	require.False(t, r.Ready)
+	require.True(t, r.Ready, "the instance's real state: revision 1 runs and is ready")
 	require.Equal(t, int64(1), *r.AppliedRevision, "it still runs revision 1")
 	require.Contains(t, *r.Message, "schema version")
+	require.NotNil(t, r.Refused)
+	require.Equal(t, int64(2), r.Refused.Revision)
+	require.Equal(t, instanceapi.RefusedRevisionCodeInvalid, r.Refused.Code)
+	require.Contains(t, r.Refused.Reason, "schema version")
 }
 
 func TestAFailedApplyIsReportedAndRetried(t *testing.T) {
@@ -477,6 +568,10 @@ func TestRefusesASpecForAnotherInstance(t *testing.T) {
 	assert.False(t, last.Ready)
 	require.NotNil(t, last.Message)
 	assert.Contains(t, *last.Message, "is for instance")
+	require.NotNil(t, last.Refused)
+	assert.Equal(t, instanceapi.RefusedRevisionCodeInvalid, last.Refused.Code)
+	assert.Equal(t, w.cp.Revision(), last.Refused.Revision)
+	assert.Nil(t, last.AppliedRevision, "nothing was ever applied")
 }
 
 func TestRelaysUsageOnlyWhenActiveAndReady(t *testing.T) {
@@ -916,6 +1011,76 @@ func TestSendsTheSpecsFeaturesToTheTMSOnEveryTick(t *testing.T) {
 	)
 }
 
+func TestThePlanURLAndAddOnEndingsAreSentWithTheFeatures(t *testing.T) {
+	t.Parallel()
+	id := uuid.New()
+	spec := specWithFeatures(id, "tms.accounting")
+	ends := time.Date(2026, 12, 14, 0, 0, 0, 0, time.UTC)
+	spec.AddonEndings = &[]instanceapi.SpecAddonEnding{{Addon: "ACC", EndsAt: ends}}
+	w := newWorldWith(t, spec, nil)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	sent, ok := w.features.lastSent()
+	require.True(t, ok)
+	require.Equal(t, spec.Account.PlanUrl, sent.PlanURL)
+	require.Equal(t, []tms.AddonEnding{{Addon: "ACC", EndsAt: ends}}, sent.AddonEndings)
+
+	next := specWithFeatures(id, "tms.accounting")
+	next.Account = nil
+	w.cp.SetSpec(next)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+
+	sent, ok = w.features.lastSent()
+	require.True(t, ok)
+	require.Empty(t, sent.PlanURL, "a spec without an account sends no plan URL")
+	require.NotNil(t, sent.AddonEndings)
+	require.Empty(t, sent.AddonEndings, "a spec without endings sends an empty list, which clears the TMS's")
+}
+
+func TestTheFinalBackupDaysReachTheTMSWithTheFeatures(t *testing.T) {
+	t.Parallel()
+	spec := specWithFeatures(uuid.New(), "tms.accounting")
+	spec.Account.FinalBackupDays = 7
+	w := newWorldWith(t, spec, nil)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	sent, ok := w.features.lastSent()
+	require.True(t, ok)
+	require.Equal(t, 7, sent.FinalBackupDays)
+}
+
+func TestThePlansEndReachesTheTMSAndAKeptPlanClearsIt(t *testing.T) {
+	t.Parallel()
+	w := newWorldWith(t, specWithFeatures(uuid.New(), "tms.accounting"), nil)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	sent, ok := w.features.lastSent()
+	require.True(t, ok)
+	require.Nil(t, sent.PlanEndsAt, "a plan nobody set to end is stated as not ending")
+
+	ends := time.Date(2026, 12, 14, 0, 0, 0, 0, time.UTC)
+	w.cp.SetPlanEnd(&ends)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+
+	sent, ok = w.features.lastSent()
+	require.True(t, ok)
+	require.NotNil(t, sent.PlanEndsAt, "the end reaches the TMS on the next tick, with no new revision")
+	require.True(t, sent.PlanEndsAt.Equal(ends))
+
+	w.cp.SetPlanEnd(nil)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+
+	sent, ok = w.features.lastSent()
+	require.True(t, ok)
+	require.Nil(t, sent.PlanEndsAt, "a kept plan clears the end")
+}
+
 func TestAChangedFeatureListIsSentOnTheNextTick(t *testing.T) {
 	t.Parallel()
 	id := uuid.New()
@@ -1026,13 +1191,34 @@ type fakeSystemEmail struct {
 	mu      sync.Mutex
 	desired []*instanceapi.SpecSystemEmail
 	err     error
+	held    string
+	heldErr error
 }
 
 func (f *fakeSystemEmail) Sync(_ context.Context, desired *instanceapi.SpecSystemEmail) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.desired = append(f.desired, desired)
-	return f.err
+	if f.err != nil {
+		return f.err
+	}
+	f.held = ""
+	if desired != nil {
+		f.held = desired.Fingerprint
+	}
+	return nil
+}
+
+func (f *fakeSystemEmail) Held(context.Context) (string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.held, f.heldErr
+}
+
+func (f *fakeSystemEmail) holds(fingerprint string, err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.held, f.heldErr = fingerprint, err
 }
 
 func (f *fakeSystemEmail) calls() []*instanceapi.SpecSystemEmail {
@@ -1070,6 +1256,47 @@ func TestBringsTheTMSsSystemEmailSenderToTheSpecOnceReady(t *testing.T) {
 	require.Len(t, calls, 1)
 	require.NotNil(t, calls[0])
 	require.Equal(t, fingerprint, calls[0].Fingerprint)
+}
+
+func TestTheReportNamesTheSystemEmailSenderTheTMSHolds(t *testing.T) {
+	t.Parallel()
+	fingerprint := strings.Repeat("a", 64)
+	w := newWorldWith(t, specWithSystemEmail(uuid.New(), fingerprint), nil)
+	w.health.set(true)
+
+	w.loop.Tick(t.Context())
+	r := w.lastReport(t)
+	require.NotNil(t, r.SystemEmailFingerprint)
+	require.Equal(t, fingerprint, *r.SystemEmailFingerprint)
+
+	w.email.fail(errors.New("the TMS answered 503"))
+	w.email.holds(strings.Repeat("b", 64), nil)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	r = w.lastReport(t)
+	require.NotNil(t, r.SystemEmailFingerprint, "a change in what is held is reported at once")
+	require.Equal(t, strings.Repeat("b", 64), *r.SystemEmailFingerprint, "what the TMS holds, not what the spec asks for")
+}
+
+func TestTheReportLeavesOutASenderItCouldNotReadOrThatIsNotHeld(t *testing.T) {
+	t.Parallel()
+	w := newWorldWith(t, specWithSystemEmail(uuid.New(), ""), nil)
+	w.health.set(true)
+
+	w.loop.Tick(t.Context())
+	require.Nil(t, w.lastReport(t).SystemEmailFingerprint, "no sender is held")
+
+	w.email.holds("", errors.New("the TMS answered 503"))
+	w.now = w.now.Add(2 * time.Minute)
+	w.loop.Tick(t.Context())
+	r := w.lastReport(t)
+	require.True(t, r.Ready, "a failed read never holds the report back")
+	require.Nil(t, r.SystemEmailFingerprint)
+
+	w.email.holds("not-a-fingerprint", nil)
+	w.now = w.now.Add(2 * time.Minute)
+	w.loop.Tick(t.Context())
+	require.Nil(t, w.lastReport(t).SystemEmailFingerprint, "a value the control plane would refuse is never sent")
 }
 
 func TestAnInstanceWithoutATrenovaSenderAsksForItsRemoval(t *testing.T) {
@@ -1111,4 +1338,141 @@ func TestASystemEmailFailureIsLoggedAndRetried(t *testing.T) {
 	w.now = w.now.Add(15 * time.Second)
 	w.loop.Tick(t.Context())
 	require.Len(t, w.email.calls(), 2, "retried on the next tick")
+}
+
+func TestALoopWithoutItsCommandsIsRefused(t *testing.T) {
+	t.Parallel()
+	_, err := reconcile.New(&reconcile.Params{
+		Logger: slog.New(slog.DiscardHandler), Namespace: "trenova-system",
+		Poll: 15 * time.Second, Report: time.Minute,
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "Commands")
+	require.Contains(t, err.Error(), "EmailEvents")
+	require.Contains(t, err.Error(), "Operator")
+	require.Contains(t, err.Error(), "Databases")
+}
+
+func apiDeployment() *appsv1.Deployment {
+	return &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{
+		Name: "trenova-api", Namespace: "trenova",
+		Labels: map[string]string{
+			"app.kubernetes.io/name":      "trenova",
+			"app.kubernetes.io/instance":  "trenova",
+			"app.kubernetes.io/component": "api",
+		},
+	}}
+}
+
+func restartAPI(w *world, t *testing.T) instanceapi.Command {
+	t.Helper()
+	_, err := w.kube.AppsV1().Deployments("trenova").
+		Create(t.Context(), apiDeployment(), metav1.CreateOptions{})
+	require.NoError(t, err)
+	component := "api"
+	cmd := instanceapi.Command{
+		Id: uuid.New(), Kind: instanceapi.Restart, Component: &component, IssuedAt: time.Now(),
+	}
+	w.cp.AddCommand(cmd)
+	return cmd
+}
+
+func TestCarriesOutTheControlPlanesCommandsOnEveryTick(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	cmd := restartAPI(w, t)
+	w.health.set(true)
+
+	w.loop.Tick(t.Context())
+
+	require.Equal(t, 1, w.cp.CommandListings())
+	answer, ok := w.cp.CommandAnswers()[cmd.Id]
+	require.True(t, ok, "the command is answered on the tick that listed it")
+	require.Equal(t, instanceapi.CommandResultStatusSucceeded, answer.Status)
+
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 2, w.cp.CommandListings(), "an unchanged report does not stop the asking")
+}
+
+func TestCommandsAreCarriedOutWhenTheReportCannotBeSent(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	cmd := restartAPI(w, t)
+	w.cp.FailStatusNext(1)
+	w.releases.fail = errors.New("the API server is unreachable")
+
+	w.loop.Tick(t.Context())
+
+	require.Empty(t, w.cp.Reports())
+	_, ok := w.cp.CommandAnswers()[cmd.Id]
+	require.True(t, ok, "a broken instance is exactly when staff need its commands")
+}
+
+func TestCommandsWaitOutTheControlPlane(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	w.cp.UnavailableNext(1)
+	w.loop.Tick(t.Context())
+	require.Zero(t, w.cp.CommandListings())
+
+	w.now = w.now.Add(2 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 1, w.cp.CommandListings())
+}
+
+func TestTheReportNamesTheOperatorsVersion(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	r := w.lastReport(t)
+	require.NotNil(t, r.Operator)
+	require.Equal(t, "0.11.0", r.Operator.Version)
+	require.Nil(t, r.Operator.Upgrade)
+	require.Equal(t, []string{"0.11.0"}, w.operator.wants)
+}
+
+func TestTrenovaWaitsForTheOperatorOfItsRelease(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 1, w.releases.applies)
+
+	spec := controlplanetest.Spec(w.cp.InstanceID)
+	spec.Release.Version = "0.12.0"
+	spec.Plan.Vcpu, spec.Plan.MemoryGiB = 16, 64
+	w.cp.SetSpec(spec)
+	w.operator.set(selfupgrade.PhaseUpgrading, "the operator is being upgraded from 0.11.0 to 0.12.0")
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+
+	require.Equal(t, 1, w.releases.applies, "nothing is applied before the operator runs 0.12.0")
+	r := w.lastReport(t)
+	require.Equal(t, int64(1), *r.AppliedRevision, "revision 2 is not applied yet")
+	require.True(t, r.Ready, "Trenova keeps running as it was")
+	require.Contains(t, *r.Message, "until the operator runs 0.12.0")
+	require.NotNil(t, r.Operator.Upgrade)
+	require.Equal(t, "0.12.0", r.Operator.Upgrade.Version)
+	require.Equal(t, instanceapi.OperatorUpgradePhase("upgrading"), r.Operator.Upgrade.Phase)
+
+	w.operator.set(selfupgrade.PhaseFailed, "the registry may not have that version")
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	r = w.lastReport(t)
+	require.Equal(t, instanceapi.OperatorUpgradePhase("failed"), r.Operator.Upgrade.Phase)
+	require.Contains(t, *r.Operator.Message, "registry")
+	require.Equal(t, 1, w.releases.applies)
+
+	w.operator.mu.Lock()
+	w.operator.status = selfupgrade.Status{Version: "0.12.0", Phase: selfupgrade.PhaseCurrent}
+	w.operator.mu.Unlock()
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 2, w.releases.applies, "the operator of 0.12.0 brings Trenova to it")
+	r = w.lastReport(t)
+	require.Equal(t, int64(2), *r.AppliedRevision)
+	require.Nil(t, r.Operator.Upgrade)
 }

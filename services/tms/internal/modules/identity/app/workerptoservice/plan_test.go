@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,9 +16,8 @@ func TestPlanCreate_CountsTheDaysWithoutFiling(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{
-		features: plantest.AllFeatures(),
-		ledger:   untrackedLedger(),
-		l:        zap.NewNop(),
+		ledger: untrackedLedger(),
+		l:      zap.NewNop(),
 		repo: &fakePTORepo{
 			create: func(context.Context, *worker.WorkerPTO) (*worker.WorkerPTO, error) {
 				t.Fatal("a plan must not file the request")
@@ -36,9 +34,8 @@ func TestPlanCreate_CountsTheDaysWithoutFiling(t *testing.T) {
 	assert.True(t, entity.Days.IsZero(), "the caller's request is left as it was")
 
 	overlapping := &Service{
-		features: plantest.AllFeatures(),
-		ledger:   untrackedLedger(),
-		l:        zap.NewNop(),
+		ledger: untrackedLedger(),
+		l:      zap.NewNop(),
 		repo: &fakePTORepo{
 			hasOverlap: func(context.Context, *workerptoports.PTOOverlapRequest) (bool, error) {
 				return true, nil
@@ -55,9 +52,8 @@ func TestPlanUpdate_OnlyWhileAwaitingADecision(t *testing.T) {
 	current := validPTO()
 	current.ID = pulid.MustNew("wrkpto_")
 	svc := &Service{
-		features: plantest.AllFeatures(),
-		ledger:   untrackedLedger(),
-		l:        zap.NewNop(),
+		ledger: untrackedLedger(),
+		l:      zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(context.Context, *workerptoports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				copied := *current

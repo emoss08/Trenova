@@ -8,33 +8,58 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/leaderelection"
+	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	metrics "k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/yaml"
 
 	"github.com/emoss08/trenova/operator/internal/backup"
 	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/databases"
+	"github.com/emoss08/trenova/operator/internal/emailevents"
 	"github.com/emoss08/trenova/operator/internal/escrow"
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
+	"github.com/emoss08/trenova/operator/internal/logs"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
+	"github.com/emoss08/trenova/operator/internal/redact"
 	"github.com/emoss08/trenova/operator/internal/release"
+	"github.com/emoss08/trenova/operator/internal/selfupgrade"
 	"github.com/emoss08/trenova/operator/internal/storage"
+	"github.com/emoss08/trenova/operator/internal/supportkeys"
 	"github.com/emoss08/trenova/operator/internal/systememail"
+	"github.com/emoss08/trenova/operator/internal/telemetry"
 	"github.com/emoss08/trenova/operator/internal/tms"
 	"github.com/emoss08/trenova/operator/internal/usage"
 	"github.com/emoss08/trenova/operator/internal/values"
 )
 
-const chartName = "trenova"
+const (
+	chartName      = "trenova"
+	leaseDuration  = 30 * time.Second
+	renewDeadline  = 20 * time.Second
+	retryPeriod    = 5 * time.Second
+	standbyRecheck = 15 * time.Second
+)
+
+var versionPattern = regexp.MustCompile(
+	`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$`,
+)
 
 type config struct {
 	namespace       string
@@ -54,7 +79,16 @@ type config struct {
 	healthAddr      string
 	logLevel        slog.Level
 	storagePrivate  string
+	bucketCORS      bool
 	capacity        values.Capacity
+	version         string
+	helmChart       string
+	helmChartSpace  string
+	deployment      string
+	lease           string
+	lokiURL         string
+	scratchDir      string
+	nodeName        string
 }
 
 func main() {
@@ -63,6 +97,13 @@ func main() {
 		logger.Error("the operator stopped", "error", err)
 		os.Exit(1)
 	}
+}
+
+type clients struct {
+	kube    kubernetes.Interface
+	dyn     dynamic.Interface
+	metrics metrics.Interface
+	kubelet telemetry.Summaries
 }
 
 func run(logger *slog.Logger) error {
@@ -87,21 +128,91 @@ func run(logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("kubernetes: %w", err)
 	}
-	helmCfg, err := release.NewConfiguration(release.ConfigurationParams{
-		Namespace: cfg.targetNamespace,
-		PlainHTTP: cfg.plainHTTP,
-		Logger:    logger,
+	used, err := metrics.NewForConfig(rc)
+	if err != nil {
+		return fmt.Errorf("kubernetes metrics: %w", err)
+	}
+	ca, err := os.ReadFile(rc.CAFile)
+	if err != nil {
+		return fmt.Errorf("the cluster's CA bundle: %w", err)
+	}
+	kubelet, err := telemetry.NewKubeletSummaries(telemetry.KubeletParams{
+		CA:        ca,
+		TokenFile: rc.BearerTokenFile,
 	})
 	if err != nil {
 		return err
 	}
-
 	store := credential.NewStore(credential.StoreParams{
 		Client:    kube,
 		Namespace: cfg.namespace,
 		Enrolment: cfg.enrolmentSecret,
 		Identity:  cfg.identitySecret,
 	})
+	loop, err := newLoop(&cfg, clients{kube: kube, dyn: dyn, metrics: used, kubelet: kubelet}, store, base, logger)
+	if err != nil {
+		return err
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	var leading, able atomic.Bool
+	go becomeAble(ctx, store, &able, logger)
+	srv := healthServer(cfg.healthAddr, func() error {
+		if leading.Load() {
+			return loop.Healthy()
+		}
+		if !able.Load() {
+			return errors.New("standing by: not yet able to reach the control plane")
+		}
+		return nil
+	})
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("health endpoint", "error", err)
+		}
+	}()
+	defer func() {
+		shutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.Shutdown(shutdown)
+	}()
+	logger.Info("operator started",
+		"version", cfg.version,
+		"targetNamespace", cfg.targetNamespace,
+		"release", cfg.release,
+		"chart", firstNonEmpty(cfg.chartPath, cfg.chartRef),
+		"tms", cfg.tmsURL,
+		"storagePrivateEndpoint", cfg.storagePrivate,
+		"storageBucketCORS", cfg.bucketCORS,
+		"capacityCapped", cfg.capacity.Set(),
+		"helmChart", cfg.helmChart,
+		"logKeeping", cfg.lokiURL != "",
+	)
+	return lead(ctx, &leadParams{
+		cfg:     &cfg,
+		kube:    kube,
+		loop:    loop,
+		leading: &leading,
+		logger:  logger,
+	})
+}
+
+func newLoop(
+	cfg *config,
+	c clients,
+	store credential.Store,
+	base map[string]any,
+	logger *slog.Logger,
+) (*reconcile.Loop, error) {
+	helmCfg, err := release.NewConfiguration(release.ConfigurationParams{
+		Namespace: cfg.targetNamespace,
+		PlainHTTP: cfg.plainHTTP,
+		Logger:    logger,
+	})
+	if err != nil {
+		return nil, err
+	}
 	transport := &credential.Transport{}
 	httpClient := &http.Client{Transport: transport, Timeout: 30 * time.Second}
 	cp := &lazyClient{doer: httpClient}
@@ -116,16 +227,77 @@ func run(logger *slog.Logger) error {
 	tmsClient, err := tms.New(tms.Params{
 		URL: cfg.tmsURL,
 		Tokens: tms.NewSecretTokens(tms.SecretTokensParams{
-			Client:    kube,
+			Client:    c.kube,
 			Namespace: cfg.targetNamespace,
 			Name:      values.AppSecret(cfg.release, base),
 		}),
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	loop := reconcile.New(&reconcile.Params{
+	kept, err := newLogs(cfg, c, cp, tmsClient, creds, logger)
+	if err != nil {
+		return nil, err
+	}
+	runner, err := commands.New(&commands.Params{
+		ControlPlane: cp,
+		Kube:         c.kube,
+		Grants:       tmsClient,
+		Logs:         kept,
+		Namespace:    cfg.targetNamespace,
+		Release:      cfg.release,
+		Chart:        chartName,
+		Logger:       logger,
+	})
+	if err != nil {
+		return nil, err
+	}
+	events, err := emailevents.New(&emailevents.Params{
+		ControlPlane: cp,
+		TMS:          tmsClient,
+		Logger:       logger,
+	})
+	if err != nil {
+		return nil, err
+	}
+	checker := health.NewChecker(&health.CheckerParams{
+		Kube:      c.kube,
+		Dynamic:   c.dyn,
+		Namespace: cfg.targetNamespace,
+		Release:   cfg.release,
+		Chart:     chartName,
+	})
+	telem, err := telemetry.New(&telemetry.Params{
+		ControlPlane: cp,
+		Source: telemetry.NewSampler(&telemetry.SamplerParams{
+			Kube:      c.kube,
+			Metrics:   c.metrics,
+			Parts:     checker,
+			Summaries: c.kubelet,
+			Data:      tmsClient,
+			Namespace: cfg.targetNamespace,
+			OwnNode:   cfg.nodeName,
+			Logger:    logger,
+		}),
+		Logger: logger,
+	})
+	if err != nil {
+		return nil, err
+	}
+	upgrader, err := selfupgrade.New(&selfupgrade.Params{
+		Dynamic:            c.dyn,
+		Kube:               c.kube,
+		Version:            cfg.version,
+		HelmChartNamespace: cfg.helmChartSpace,
+		HelmChart:          cfg.helmChart,
+		Namespace:          cfg.namespace,
+		Deployment:         cfg.deployment,
+		Logger:             logger,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return reconcile.New(&reconcile.Params{
 		ControlPlane: cp,
 		Credentials:  creds,
 		Charts: release.NewSource(release.SourceParams{
@@ -136,19 +308,14 @@ func run(logger *slog.Logger) error {
 		}),
 		Releases: release.NewReleaser(release.ReleaserParams{
 			Config:    helmCfg,
+			Kube:      c.kube,
 			Name:      cfg.release,
 			Namespace: cfg.targetNamespace,
 			Logger:    logger,
 		}),
-		Health: health.NewChecker(&health.CheckerParams{
-			Kube:      kube,
-			Dynamic:   dyn,
-			Namespace: cfg.targetNamespace,
-			Release:   cfg.release,
-			Chart:     chartName,
-		}),
+		Health: checker,
 		Escrow: escrow.New(&escrow.Params{
-			Client:       kube,
+			Client:       c.kube,
 			ControlPlane: cp,
 			Namespace:    cfg.targetNamespace,
 			Name:         values.EscrowSecret,
@@ -162,58 +329,193 @@ func run(logger *slog.Logger) error {
 			ControlPlane: cp,
 			Logger:       logger,
 		}),
+		SupportKeys:   supportkeys.New(tmsClient, logger),
+		SupportGrants: tmsClient,
 		Storage: storage.New(&storage.Params{
 			PrivateEndpoint: cfg.storagePrivate,
-			Client:          kube,
+			Client:          c.kube,
 			ControlPlane:    cp,
-			CORS:            storage.S3CORS{},
+			CORS:            bucketCORS(cfg.bucketCORS),
 			Namespace:       cfg.targetNamespace,
 			Logger:          logger,
 		}),
 		Backups: backup.New(&backup.Params{
-			Dynamic:   dyn,
+			Dynamic:   c.dyn,
 			Namespace: cfg.targetNamespace,
 			Release:   cfg.release,
 			Logger:    logger,
 		}),
-		Commands: commands.New(&commands.Params{
-			Kube:      kube,
+		Databases: databases.New(&databases.Params{
+			Dynamic:   c.dyn,
 			Namespace: cfg.targetNamespace,
 			Release:   cfg.release,
-			Chart:     chartName,
 			Logger:    logger,
 		}),
-		Capacity:   cfg.capacity,
-		Base:       base,
-		Namespace:  cfg.namespace,
-		Logger:     logger,
-		Poll:       cfg.poll,
-		Report:     cfg.report,
-		UsageEvery: cfg.usage,
+		Commands:    runner,
+		EmailEvents: events,
+		Logs:        kept,
+		Telemetry:   telem,
+		Operator:    upgrader,
+		Capacity:    cfg.capacity,
+		Base:        base,
+		Namespace:   cfg.namespace,
+		Logger:      logger,
+		Poll:        cfg.poll,
+		Report:      cfg.report,
+		UsageEvery:  cfg.usage,
 	})
+}
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-	srv := healthServer(cfg.healthAddr, loop)
-	go func() {
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("health endpoint", "error", err)
+func newLogs(
+	cfg *config,
+	c clients,
+	cp *lazyClient,
+	tmsClient *tms.Client,
+	creds *credential.Manager,
+	logger *slog.Logger,
+) (*logs.Service, error) {
+	var src logs.Source
+	if cfg.lokiURL != "" {
+		loki, err := logs.NewLoki(cfg.lokiURL, nil)
+		if err != nil {
+			return nil, err
 		}
+		src = loki
+	}
+	return logs.New(&logs.Params{
+		Source: src,
+		Objects: storage.NewDocuments(&storage.DocumentsParams{
+			Kube:            c.kube,
+			Namespace:       cfg.targetNamespace,
+			PrivateEndpoint: cfg.storagePrivate,
+		}),
+		ControlPlane: cp,
+		TMS:          tmsClient,
+		Redactors:    redact.Secrets{Kube: c.kube, Namespace: cfg.targetNamespace},
+		InstanceID:   creds.InstanceID,
+		Dir:          cfg.scratchDir,
+		Logger:       logger,
+	})
+}
+
+type leadParams struct {
+	cfg     *config
+	kube    kubernetes.Interface
+	loop    *reconcile.Loop
+	leading *atomic.Bool
+	logger  *slog.Logger
+}
+
+func lead(ctx context.Context, p *leadParams) error {
+	identity, err := os.Hostname()
+	if err != nil || identity == "" {
+		identity = "trenova-operator-" + uuid.NewString()
+	}
+	electing, stopElecting := context.WithCancel(context.WithoutCancel(ctx))
+	defer stopElecting()
+	var mu sync.Mutex
+	var running chan struct{}
+	elector, err := leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
+		Lock: &resourcelock.LeaseLock{
+			LeaseMeta:  metav1.ObjectMeta{Name: p.cfg.lease, Namespace: p.cfg.namespace},
+			Client:     p.kube.CoordinationV1(),
+			LockConfig: resourcelock.ResourceLockConfig{Identity: identity},
+		},
+		LeaseDuration:   leaseDuration,
+		RenewDeadline:   renewDeadline,
+		RetryPeriod:     retryPeriod,
+		ReleaseOnCancel: true,
+		Name:            p.cfg.lease,
+		Callbacks: leaderelection.LeaderCallbacks{
+			OnStartedLeading: func(leaderCtx context.Context) {
+				done := make(chan struct{})
+				mu.Lock()
+				running = done
+				mu.Unlock()
+				defer close(done)
+				runCtx, cancel := context.WithCancel(leaderCtx)
+				defer cancel()
+				defer context.AfterFunc(ctx, cancel)()
+				p.leading.Store(true)
+				p.logger.Info("this operator leads: it runs the instance", "identity", identity)
+				if err := p.loop.Run(runCtx); err != nil && !errors.Is(err, context.Canceled) {
+					p.logger.Error("the loop stopped", "error", err)
+				}
+			},
+			OnStoppedLeading: func() {
+				p.leading.Store(false)
+				p.logger.Info("this operator no longer leads", "identity", identity)
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("leader election: %w", err)
+	}
+	go func() {
+		<-ctx.Done()
+		mu.Lock()
+		done := running
+		mu.Unlock()
+		if done != nil {
+			<-done
+		}
+		stopElecting()
 	}()
-	defer func() {
-		shutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		_ = srv.Shutdown(shutdown)
-	}()
-	logger.Info("operator started",
-		"targetNamespace", cfg.targetNamespace,
-		"release", cfg.release,
-		"chart", firstNonEmpty(cfg.chartPath, cfg.chartRef),
-		"tms", cfg.tmsURL,
-		"storagePrivateEndpoint", cfg.storagePrivate,
-		"capacityCapped", cfg.capacity.Set(),
+	elector.Run(electing)
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	return errors.New("this operator lost its lease; it restarts to stand by")
+}
+
+func becomeAble(ctx context.Context, store credential.Store, able *atomic.Bool, logger *slog.Logger) {
+	for {
+		err := standbyCheck(ctx, store)
+		if err == nil {
+			able.Store(true)
+			logger.Info("able to run the instance")
+			return
+		}
+		logger.Warn("not yet able to run the instance", "error", err)
+		if !sleepFor(ctx, standbyRecheck) {
+			return
+		}
+	}
+}
+
+func standbyCheck(ctx context.Context, store credential.Store) error {
+	ident, ok, err := store.Load(ctx)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		_, _, err = store.Bundle(ctx)
+		return err
+	}
+	transport := &credential.Transport{}
+	if err = transport.Use(&ident); err != nil {
+		return err
+	}
+	api, err := controlplane.New(
+		ident.APIURL,
+		&http.Client{Transport: transport, Timeout: 30 * time.Second},
 	)
-	return loop.Run(ctx)
+	if err != nil {
+		return err
+	}
+	_, _, err = api.Spec(ctx, "")
+	return err
+}
+
+func sleepFor(ctx context.Context, d time.Duration) bool {
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-t.C:
+		return true
+	}
 }
 
 func chartProvenance(verify bool, logger *slog.Logger) release.Provenance {
@@ -224,10 +526,10 @@ func chartProvenance(verify bool, logger *slog.Logger) release.Provenance {
 	return release.Unverified{}
 }
 
-func healthServer(addr string, loop *reconcile.Loop) *http.Server {
+func healthServer(addr string, ready func() error) *http.Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
-		if err := loop.Healthy(); err != nil {
+		if err := ready(); err != nil {
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
@@ -239,11 +541,21 @@ func healthServer(addr string, loop *reconcile.Loop) *http.Server {
 	return &http.Server{Addr: addr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 }
 
+var _ commands.ControlPlane = (*lazyClient)(nil)
+
+var _ logs.ControlPlane = (*lazyClient)(nil)
+
+var _ emailevents.ControlPlane = (*lazyClient)(nil)
+
+var _ telemetry.ControlPlane = (*lazyClient)(nil)
+
 type lazyClient struct {
 	creds *credential.Manager
 	doer  *http.Client
-	api   *controlplane.Client
-	url   string
+
+	mu  sync.Mutex
+	api *controlplane.Client
+	url string
 }
 
 func (c *lazyClient) client() (*controlplane.Client, error) {
@@ -251,6 +563,8 @@ func (c *lazyClient) client() (*controlplane.Client, error) {
 	if url == "" {
 		return nil, credential.ErrNotEnrolled
 	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if c.api != nil && c.url == url {
 		return c.api, nil
 	}
@@ -289,6 +603,14 @@ func (c *lazyClient) ReportUsage(
 	return api.ReportUsage(ctx, r)
 }
 
+func (c *lazyClient) ReportTelemetry(ctx context.Context, r instanceapi.TelemetryReport) error {
+	api, err := c.client()
+	if err != nil {
+		return err
+	}
+	return api.ReportTelemetry(ctx, r)
+}
+
 func (c *lazyClient) Secrets(ctx context.Context) (instanceapi.InstanceSecrets, error) {
 	api, err := c.client()
 	if err != nil {
@@ -303,6 +625,65 @@ func (c *lazyClient) Storage(ctx context.Context) (instanceapi.InstanceStorage, 
 		return instanceapi.InstanceStorage{}, err
 	}
 	return api.Storage(ctx)
+}
+
+func (c *lazyClient) Commands(ctx context.Context) (instanceapi.CommandList, error) {
+	api, err := c.client()
+	if err != nil {
+		return instanceapi.CommandList{}, err
+	}
+	return api.Commands(ctx)
+}
+
+func (c *lazyClient) EmailEvents(ctx context.Context) ([]instanceapi.EmailEvent, error) {
+	api, err := c.client()
+	if err != nil {
+		return nil, err
+	}
+	return api.EmailEvents(ctx)
+}
+
+func (c *lazyClient) AckEmailEvents(ctx context.Context, ids []uuid.UUID) error {
+	api, err := c.client()
+	if err != nil {
+		return err
+	}
+	return api.AckEmailEvents(ctx, ids)
+}
+
+func (c *lazyClient) CompleteCommand(
+	ctx context.Context,
+	id uuid.UUID,
+	result instanceapi.CommandResult,
+) error {
+	api, err := c.client()
+	if err != nil {
+		return err
+	}
+	return api.CompleteCommand(ctx, id, result)
+}
+
+func (c *lazyClient) RegisterLogBundle(
+	ctx context.Context,
+	reg instanceapi.LogBundleRegistration,
+) (uuid.UUID, error) {
+	api, err := c.client()
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return api.RegisterLogBundle(ctx, reg)
+}
+
+func (c *lazyClient) UpdateLogBundle(
+	ctx context.Context,
+	id uuid.UUID,
+	update instanceapi.LogBundleUpdate,
+) error {
+	api, err := c.client()
+	if err != nil {
+		return err
+	}
+	return api.UpdateLogBundle(ctx, id, update)
 }
 
 func (c *lazyClient) Renew(ctx context.Context, csrPEM []byte) (credential.Issued, error) {
@@ -324,10 +705,24 @@ func load() (config, error) {
 		chartPath:       env("TRENOVA_OPERATOR_CHART_PATH", ""),
 		valuesFile:      env("TRENOVA_OPERATOR_VALUES_FILE", ""),
 		healthAddr:      env("TRENOVA_OPERATOR_HEALTH_ADDR", ":8081"),
+		version:         env("TRENOVA_OPERATOR_VERSION", ""),
+		helmChart:       env("TRENOVA_OPERATOR_HELMCHART", ""),
+		helmChartSpace:  env("TRENOVA_OPERATOR_HELMCHART_NAMESPACE", "kube-system"),
+		deployment:      env("TRENOVA_OPERATOR_DEPLOYMENT", "trenova-operator"),
+		lease:           env("TRENOVA_OPERATOR_LEASE", "trenova-operator"),
+		lokiURL:         env("TRENOVA_OPERATOR_LOKI_URL", ""),
+		scratchDir:      env("TRENOVA_OPERATOR_SCRATCH_DIR", "/scratch"),
+		nodeName:        env("TRENOVA_OPERATOR_NODE_NAME", ""),
 	}
 	if cfg.namespace == "" {
 		return config{}, errors.New(
 			"TRENOVA_OPERATOR_NAMESPACE is required (the operator's own namespace)",
+		)
+	}
+	if !versionPattern.MatchString(cfg.version) {
+		return config{}, fmt.Errorf(
+			"TRENOVA_OPERATOR_VERSION %q must be the operator's own release, such as 0.12.2",
+			cfg.version,
 		)
 	}
 	if !strings.HasPrefix(cfg.chartRef, "oci://") && cfg.chartPath == "" {
@@ -361,6 +756,9 @@ func load() (config, error) {
 		return config{}, errors.New(
 			"TRENOVA_OPERATOR_USAGE_INTERVAL must be at most 15m: windows are billed 30m after they end",
 		)
+	}
+	if cfg.bucketCORS, err = booleanOr("TRENOVA_OPERATOR_STORAGE_BUCKET_CORS", true); err != nil {
+		return config{}, err
 	}
 	cfg.storagePrivate = env("TRENOVA_OPERATOR_STORAGE_PRIVATE_ENDPOINT", "")
 	if !storage.ValidPrivateEndpoint(cfg.storagePrivate) {
@@ -405,6 +803,13 @@ func baseValues(path string) (map[string]any, error) {
 		return nil, fmt.Errorf("parse the base values %s: %w", path, err)
 	}
 	return out, nil
+}
+
+func bucketCORS(perBucket bool) storage.CORS {
+	if !perBucket {
+		return nil
+	}
+	return storage.S3CORS{}
 }
 
 func env(key, def string) string {

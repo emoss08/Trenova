@@ -20,6 +20,7 @@ const (
 	ProblemTypeQuotaExceeded       = ProblemType("quota-exceeded")
 	ProblemTypePlanRestricted      = ProblemType("plan-restricted")
 	ProblemTypeSessionContextStale = ProblemType("session-context-stale")
+	ProblemTypeCSRFTokenInvalid    = ProblemType("csrf-token-invalid")
 )
 
 type ProblemTypeInfo struct {
@@ -106,6 +107,12 @@ var problemTypeRegistry = map[ProblemType]ProblemTypeInfo{ //nolint:exhaustive /
 		Type:       ProblemTypeSessionContextStale,
 		Title:      "Session Changed",
 		StatusCode: http.StatusConflict,
+		ShouldLog:  false,
+	},
+	ProblemTypeCSRFTokenInvalid: {
+		Type:       ProblemTypeCSRFTokenInvalid,
+		Title:      "Security Token Invalid",
+		StatusCode: http.StatusForbidden,
 		ShouldLog:  false,
 	},
 	ProblemTypeInternal: {

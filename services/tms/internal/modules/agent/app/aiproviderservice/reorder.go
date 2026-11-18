@@ -81,7 +81,7 @@ func (s *Service) Reorder(
 		})
 	}
 	if len(changes) > 0 {
-		s.analyticsChanged(ctx, req.TenantInfo)
+		s.changesChanged(ctx, req.TenantInfo, changes)
 	}
 
 	return s.ordered(ctx, req.TenantInfo)
@@ -117,7 +117,7 @@ func (s *Service) AssignTask(
 		actor:     actor,
 		comment:   "Task assigned to AI provider",
 	})
-	s.analyticsChanged(ctx, req.TenantInfo)
+	s.providersChanged(ctx, req.TenantInfo, previous, saved)
 
 	return saved.Redacted(), nil
 }
@@ -278,7 +278,7 @@ func (s *Service) RouteTask(
 		})
 	}
 	if len(changes) > 0 {
-		s.analyticsChanged(ctx, req.TenantInfo)
+		s.changesChanged(ctx, req.TenantInfo, changes)
 	}
 
 	return s.ordered(ctx, req.TenantInfo)

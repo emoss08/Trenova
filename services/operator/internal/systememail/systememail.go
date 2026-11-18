@@ -72,7 +72,6 @@ func Fingerprint(sender *tms.SystemEmail) string {
 		sender.FromAddress,
 		sender.FromName,
 		sender.APIKey,
-		sender.WebhookSecret,
 	}, "\n")))
 	return hex.EncodeToString(sum[:])
 }
@@ -113,6 +112,17 @@ func (r *Relay) Sync(ctx context.Context, desired *instanceapi.SpecSystemEmail) 
 	return nil
 }
 
+func (r *Relay) Held(ctx context.Context) (string, error) {
+	held, err := r.tms.SystemEmail(ctx)
+	if err != nil {
+		return "", err
+	}
+	if !held.Configured {
+		return "", nil
+	}
+	return held.Fingerprint, nil
+}
+
 func (r *Relay) credential(ctx context.Context, want string) (tms.SystemEmail, error) {
 	if r.cached != nil && Fingerprint(r.cached) == want {
 		return *r.cached, nil
@@ -142,14 +152,10 @@ func (r *Relay) credential(ctx context.Context, want string) (tms.SystemEmail, e
 }
 
 func fromSecrets(c *instanceapi.SystemEmailCredential) tms.SystemEmail {
-	sender := tms.SystemEmail{
+	return tms.SystemEmail{
 		Provider:    string(c.Provider),
 		APIKey:      c.ApiKey,
 		FromAddress: string(c.FromAddress),
 		FromName:    c.FromName,
 	}
-	if c.WebhookSecret != nil {
-		sender.WebhookSecret = *c.WebhookSecret
-	}
-	return sender
 }

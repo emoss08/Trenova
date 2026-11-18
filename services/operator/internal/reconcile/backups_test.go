@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/emoss08/trenova/operator/internal/backup"
+	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/controlplanetest"
 	"github.com/emoss08/trenova/operator/internal/credential"
@@ -30,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
 	"github.com/emoss08/trenova/operator/internal/release"
+	"github.com/emoss08/trenova/operator/internal/selfupgrade"
 	"github.com/emoss08/trenova/operator/internal/values"
 )
 
@@ -40,14 +42,20 @@ var bucketStorage = values.Storage{
 
 type fakeStorage struct {
 	mu        sync.Mutex
-	hostnames []string
+	hostnames [][]string
+	revisions []int64
 	err       error
 }
 
-func (f *fakeStorage) Ensure(_ context.Context, hostname string) (values.Storage, error) {
+func (f *fakeStorage) Ensure(
+	_ context.Context,
+	hostnames []string,
+	revision int64,
+) (values.Storage, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.hostnames = append(f.hostnames, hostname)
+	f.hostnames = append(f.hostnames, append([]string(nil), hostnames...))
+	f.revisions = append(f.revisions, revision)
 	if f.err != nil {
 		return values.Storage{}, f.err
 	}
@@ -80,9 +88,21 @@ type backupWorld struct {
 	releases *countingReleases
 	storage  *fakeStorage
 	backups  *fakeBackups
+	now      time.Time
+}
+
+func (w *backupWorld) set(result backup.Result) {
+	w.backups.mu.Lock()
+	defer w.backups.mu.Unlock()
+	w.backups.result = result
 }
 
 func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
+	t.Helper()
+	return newBackupWorldWith(t, spec, noDatabases{})
+}
+
+func newBackupWorldWith(t *testing.T, spec instanceapi.InstanceSpec, dbs reconcile.Databases) *backupWorld {
 	t.Helper()
 	cp := controlplanetest.New(t, spec)
 	kube := fake.NewClientset()
@@ -113,6 +133,7 @@ func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
 		health:  &fakeHealth{},
 		storage: &fakeStorage{},
 		backups: &fakeBackups{},
+		now:     time.Now(),
 		releases: &countingReleases{Releaser: release.NewReleaser(release.ReleaserParams{
 			Config: &action.Configuration{
 				Releases:     storage.Init(driver.NewMemory()),
@@ -120,10 +141,16 @@ func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
 				Capabilities: caps,
 				Log:          func(string, ...any) {},
 			},
-			Name: "trenova", Namespace: "trenova", Logger: logger,
+			Kube: kube, Name: "trenova", Namespace: "trenova", Logger: logger,
 		})},
 	}
-	w.loop = reconcile.New(&reconcile.Params{
+	kept := &fakeLogKeeping{}
+	runner, err := commands.New(&commands.Params{
+		ControlPlane: client, Kube: kube, Grants: noGrants{}, Logs: kept,
+		Namespace: "trenova", Release: "trenova", Chart: "trenova", Logger: logger,
+	})
+	require.NoError(t, err)
+	w.loop, err = reconcile.New(&reconcile.Params{
 		ControlPlane: client,
 		Credentials:  creds,
 		Charts:       release.NewSource(release.SourceParams{Path: chartDir}),
@@ -134,15 +161,72 @@ func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
 		}),
 		Usage:          &fakeUsage{now: time.Now},
 		Administrators: &fakeAdmins{},
+		Features:       &fakeFeatures{},
+		SystemEmail:    &fakeSystemEmail{},
+		SupportKeys:    &fakeSupportKeys{},
+		SupportGrants:  &fakeSupportGrants{},
 		Storage:        w.storage,
 		Backups:        w.backups,
-		Base:           map[string]any{"clamav": map[string]any{"enabled": true}},
-		Namespace:      "trenova-system",
-		Logger:         logger,
-		Poll:           15 * time.Second,
-		Report:         time.Minute,
+		Databases:      dbs,
+		Commands:       runner,
+		EmailEvents:    &fakeEmailEvents{},
+		Logs:           kept,
+		Telemetry:      &fakeTelemetry{},
+		Operator: &fakeOperator{status: selfupgrade.Status{
+			Version: "0.11.0", Phase: selfupgrade.PhaseCurrent,
+		}},
+		Base:      map[string]any{"clamav": map[string]any{"enabled": true}},
+		Namespace: "trenova-system",
+		Logger:    logger,
+		Now:       func() time.Time { return w.now },
+		Poll:      15 * time.Second,
+		Report:    time.Minute,
 	})
+	require.NoError(t, err)
 	return w
+}
+
+func TestEachRevisionAsksForTheInstancesStorage(t *testing.T) {
+	t.Parallel()
+	spec := controlplanetest.Spec(uuid.New())
+	w := newBackupWorld(t, spec)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	spec.Plan.Vcpu, spec.Plan.MemoryGiB = 16, 64
+	w.cp.SetSpec(spec)
+	w.loop.Tick(t.Context())
+
+	w.storage.mu.Lock()
+	defer w.storage.mu.Unlock()
+	require.Equal(t, []int64{1, 2}, w.storage.revisions)
+}
+
+func TestTheBucketAdmitsTheCustomHostnameOnlyWhenTheSpecCarriesAValidOne(t *testing.T) {
+	t.Parallel()
+	spec := controlplanetest.Spec(uuid.New())
+	custom := "tms.acme-freight.com"
+	spec.CustomHostname = &custom
+	w := newBackupWorld(t, spec)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	invalid := "Not A Host"
+	spec.CustomHostname = &invalid
+	w.cp.SetSpec(spec)
+	w.loop.Tick(t.Context())
+
+	spec.CustomHostname = nil
+	w.cp.SetSpec(spec)
+	w.loop.Tick(t.Context())
+
+	w.storage.mu.Lock()
+	defer w.storage.mu.Unlock()
+	require.Equal(t, [][]string{
+		{spec.Hostname, custom},
+		{spec.Hostname},
+		{spec.Hostname},
+	}, w.storage.hostnames)
 }
 
 func TestTheReportCarriesBackupHealthAndTheRestore(t *testing.T) {
@@ -162,7 +246,7 @@ func TestTheReportCarriesBackupHealthAndTheRestore(t *testing.T) {
 	w.loop.Tick(t.Context())
 
 	require.Equal(t, 1, w.releases.applies)
-	require.Equal(t, []string{spec.Hostname}, w.storage.hostnames)
+	require.Equal(t, [][]string{{spec.Hostname}}, w.storage.hostnames)
 	in := w.backups.last()
 	require.Equal(t, bucketStorage, in.Storage)
 	require.True(t, in.Applied)
@@ -200,4 +284,112 @@ func TestNothingIsAppliedWithoutTheInstancesStorage(t *testing.T) {
 	r := w.cp.Reports()[len(w.cp.Reports())-1]
 	require.False(t, r.Ready)
 	require.Contains(t, *r.Message, "nothing is applied without the instance's storage")
+}
+
+func listResult(list ...instanceapi.BackupEntry) backup.Result {
+	if list == nil {
+		list = []instanceapi.BackupEntry{}
+	}
+	return backup.Result{
+		Health:  &instanceapi.BackupHealth{WalArchiving: instanceapi.BackupHealthWalArchiving("healthy")},
+		Backups: &list,
+	}
+}
+
+func dailyBackup(phase instanceapi.BackupEntryPhase, started time.Time) instanceapi.BackupEntry {
+	e := instanceapi.BackupEntry{
+		Id: "20261114T030000", Phase: phase, StartedAt: started.UTC().Truncate(time.Second),
+		Origin: new(instanceapi.Scheduled),
+	}
+	if phase == instanceapi.BackupEntryPhaseCompleted {
+		done := e.StartedAt.Add(4 * time.Minute)
+		e.CompletedAt = &done
+	}
+	return e
+}
+
+func TestTheBackupListIsSentFirstAndThenOnlyWhenItChanges(t *testing.T) {
+	t.Parallel()
+	w := newBackupWorld(t, controlplanetest.Spec(uuid.New()))
+	started := w.now.Add(-time.Hour)
+	w.set(listResult(dailyBackup(instanceapi.BackupEntryPhaseRunning, started)))
+	w.health.set(true)
+
+	w.loop.Tick(t.Context())
+	held, lists := w.cp.Backups()
+	require.Equal(t, 1, lists)
+	require.Equal(t, []instanceapi.BackupEntry{dailyBackup(instanceapi.BackupEntryPhaseRunning, started)}, held)
+
+	// Unchanged: the minute's report goes out without the list.
+	w.now = w.now.Add(2 * time.Minute)
+	reports := len(w.cp.Reports())
+	w.loop.Tick(t.Context())
+	require.Len(t, w.cp.Reports(), reports+1)
+	r := w.cp.Reports()[len(w.cp.Reports())-1]
+	require.NotNil(t, r.Backup)
+	require.Nil(t, r.Backup.Backups)
+	_, lists = w.cp.Backups()
+	require.Equal(t, 1, lists)
+
+	// It completes: sent at once, with no minute passing.
+	w.set(listResult(dailyBackup(instanceapi.BackupEntryPhaseCompleted, started)))
+	w.loop.Tick(t.Context())
+	held, lists = w.cp.Backups()
+	require.Equal(t, 2, lists)
+	require.Equal(t, instanceapi.BackupEntryPhaseCompleted, held[0].Phase)
+
+	// Retention removes it: the empty list is sent.
+	w.set(listResult())
+	w.loop.Tick(t.Context())
+	held, lists = w.cp.Backups()
+	require.Equal(t, 3, lists)
+	require.Empty(t, held)
+}
+
+func TestABackupListOnARefusedReportIsSentAgain(t *testing.T) {
+	t.Parallel()
+	w := newBackupWorld(t, controlplanetest.Spec(uuid.New()))
+	w.set(listResult(dailyBackup(instanceapi.BackupEntryPhaseCompleted, w.now.Add(-time.Hour))))
+	w.health.set(true)
+	w.cp.FailStatusNext(1)
+
+	w.loop.Tick(t.Context())
+	_, lists := w.cp.Backups()
+	require.Equal(t, 0, lists)
+
+	w.loop.Tick(t.Context())
+	held, lists := w.cp.Backups()
+	require.Equal(t, 1, lists)
+	require.Len(t, held, 1)
+}
+
+func TestAFailedBackupListReadLeavesTheRestOfTheReport(t *testing.T) {
+	t.Parallel()
+	w := newBackupWorld(t, controlplanetest.Spec(uuid.New()))
+	list := listResult(dailyBackup(instanceapi.BackupEntryPhaseCompleted, w.now.Add(-time.Hour)))
+	w.set(list)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	last := w.now.Add(-time.Hour).UTC().Truncate(time.Second)
+	w.set(backup.Result{Health: &instanceapi.BackupHealth{
+		WalArchiving: instanceapi.BackupHealthWalArchiving("healthy"), LastBaseBackupAt: &last,
+	}})
+	w.now = w.now.Add(2 * time.Minute)
+	w.loop.Tick(t.Context())
+	r := w.cp.Reports()[len(w.cp.Reports())-1]
+	require.True(t, r.Ready)
+	require.NotNil(t, r.Backup)
+	require.Equal(t, instanceapi.BackupHealthWalArchiving("healthy"), r.Backup.WalArchiving)
+	require.Equal(t, last, *r.Backup.LastBaseBackupAt)
+	require.Nil(t, r.Backup.Backups)
+	_, lists := w.cp.Backups()
+	require.Equal(t, 1, lists)
+
+	// Read again and unchanged: the control plane already has it.
+	w.set(list)
+	w.now = w.now.Add(2 * time.Minute)
+	w.loop.Tick(t.Context())
+	_, lists = w.cp.Backups()
+	require.Equal(t, 1, lists)
 }

@@ -38,7 +38,7 @@ func credentialErrors(p *aiprovider.Provider, secret string) map[string]bool {
 
 	fields := make(map[string]bool)
 	for _, e := range multiErr.Errors {
-		fields[e.Field] = true
+		fields[e.Field()] = true
 	}
 
 	return fields

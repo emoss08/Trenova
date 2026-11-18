@@ -47,6 +47,10 @@ type Gate interface {
 	State(ctx context.Context) (*managedusage.State, error)
 }
 
+type UsageReader interface {
+	Usage(ctx context.Context) (*managedusage.Usage, error)
+}
+
 type StateChange struct {
 	Previous *managedusage.State
 	Current  *managedusage.State

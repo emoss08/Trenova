@@ -33,11 +33,17 @@ export function SupportSessionBanner() {
       className="fixed inset-x-0 bottom-0 z-40 rounded-none border-x-0 border-b-0"
     >
       <AlertDescription>
-        {t(
-          "Trenova support session: {0}, ends {1}",
-          support.staffName,
-          formatUnixDateTime(support.endsAt),
-        )}
+        {support.scope === "Full"
+          ? t(
+              "Trenova support session: {0}, full access, ends {1}",
+              support.staffName,
+              formatUnixDateTime(support.endsAt),
+            )
+          : t(
+              "Trenova support session: {0}, read-only, ends {1}",
+              support.staffName,
+              formatUnixDateTime(support.endsAt),
+            )}
       </AlertDescription>
       <AlertAction>
         <Button

@@ -3,12 +3,14 @@ package kernel
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/importsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/databasesize"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/managedfeaturesrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/managedusagerepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/recordvisibilityrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/settingversionrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/usstaterepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/workqueuerepository"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/datausageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/editioninfo"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/entitlementservice"
@@ -19,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/versionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/rateimport"
@@ -41,12 +44,14 @@ func SharedOptions() fx.Option {
 			managedfeaturesrepository.New,
 			managedfeaturesservice.New,
 			managedfeaturesservice.NewReceiver,
+			func(r *managedfeaturesservice.Receiver) managedfeaturesports.PlanEndReminder { return r },
 			managedplanservice.New,
 			featureGate,
 			managedusagerepository.New,
 			managedusageservice.New,
 			managedusageservice.NewReceiver,
 			func(s *managedusageservice.Service) managedusageports.Gate { return s },
+			func(s *managedusageservice.Service) managedusageports.UsageReader { return s },
 			usageProvider,
 			usstateservice.New,
 			spreadsheetLimits,
@@ -56,7 +61,12 @@ func SharedOptions() fx.Option {
 }
 
 func APIOptions() fx.Option {
-	return fx.Options()
+	return fx.Options(
+		fx.Provide(
+			databasesize.New,
+			datausageservice.New,
+		),
+	)
 }
 
 func usageProvider(

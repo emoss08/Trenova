@@ -1,5 +1,5 @@
 {
-  "version": "sha256:dac3d0bdf91c16a8833384fc269120a73965d03ce4f30c1d14399e1f211a492f",
+  "version": "sha256:2b6ef0ca3af88b037a2b7db13a973f88ec3474dd19c1f2a66f3d54c5d904936d",
   "screens": [
     {
       "path": "/",
@@ -416,7 +416,7 @@
       ]
     },
     {
-      "path": "/accounting/ar/customer-statement/:customerId",
+      "path": "/accounting/ar/customer-statement/$customerId",
       "name": "Customer statement",
       "requires": [
         {
@@ -790,7 +790,7 @@
       ]
     },
     {
-      "path": "/accounting/journal-entries/:id",
+      "path": "/accounting/journal-entries/$id",
       "name": "Journal entry",
       "requires": [
         {
@@ -819,7 +819,7 @@
       ]
     },
     {
-      "path": "/accounting/journal-entries/source/:type/:sourceId",
+      "path": "/accounting/journal-entries/source/$type/$sourceId",
       "name": "GL Postings — {0}",
       "requires": [
         {
@@ -1247,7 +1247,7 @@
       "declared": []
     },
     {
-      "path": "/accounting/reconciliation/import-batches/:batchId",
+      "path": "/accounting/reconciliation/import-batches/$batchId",
       "name": "Import batch",
       "requires": [
         {
@@ -4012,7 +4012,7 @@
       "declared": []
     },
     {
-      "path": "/admin/home-layouts/:id",
+      "path": "/admin/home-layouts/$id",
       "name": "Home screens",
       "requires": [
         {
@@ -5322,7 +5322,7 @@
       "declared": []
     },
     {
-      "path": "/admin/roles/:id/edit",
+      "path": "/admin/roles/$id/edit",
       "name": "",
       "requires": [
         {
@@ -5924,11 +5924,21 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "AuditExportTable",
+        "AuditLegalHoldTable",
+        "RequestAuditExport",
+        "RequestSupportLogs",
+        "SupportLogRequests"
+      ],
       "endpoints": [],
-      "reads": [],
+      "reads": [
+        "audit_legal_hold"
+      ],
       "references": [],
-      "declared": []
+      "declared": [
+        "user"
+      ]
     },
     {
       "path": "/admin/table-change-alerts",
@@ -6740,7 +6750,7 @@
       "declared": []
     },
     {
-      "path": "/billing/configuration-files/factoring-companies/:id",
+      "path": "/billing/configuration-files/factoring-companies/$id",
       "name": "Factoring company",
       "requires": [
         {
@@ -6920,7 +6930,7 @@
       ]
     },
     {
-      "path": "/billing/configuration-files/factoring-companies/agreements/:id",
+      "path": "/billing/configuration-files/factoring-companies/agreements/$id",
       "name": "",
       "requires": [
         {
@@ -6995,7 +7005,7 @@
       "declared": []
     },
     {
-      "path": "/billing/configuration-files/factoring-companies/notices/:id",
+      "path": "/billing/configuration-files/factoring-companies/notices/$id",
       "name": "",
       "requires": [
         {
@@ -7105,7 +7115,7 @@
       "declared": []
     },
     {
-      "path": "/billing/configuration-files/formula-libraries/:id/edit",
+      "path": "/billing/configuration-files/formula-libraries/$id/edit",
       "name": "",
       "requires": [
         {
@@ -8679,7 +8689,7 @@
       "declared": []
     },
     {
-      "path": "/billing/configuration-files/formula-templates/:id/edit",
+      "path": "/billing/configuration-files/formula-templates/$id/edit",
       "name": "",
       "requires": [
         {
@@ -10584,7 +10594,7 @@
       ]
     },
     {
-      "path": "/billing/factoring/remittances/:id",
+      "path": "/billing/factoring/remittances/$id",
       "name": "Factor remittance",
       "requires": [
         {
@@ -10719,7 +10729,7 @@
       ]
     },
     {
-      "path": "/billing/factoring/submissions/:id",
+      "path": "/billing/factoring/submissions/$id",
       "name": "Factoring schedule",
       "requires": [
         {
@@ -15601,7 +15611,7 @@
       ]
     },
     {
-      "path": "/desk/agents/:agentId",
+      "path": "/desk/agents/$agentId",
       "name": "",
       "requires": [
         {
@@ -15616,7 +15626,7 @@
       "declared": []
     },
     {
-      "path": "/desk/c/:threadId/a/:slug",
+      "path": "/desk/c/$threadId/a/$slug",
       "name": "",
       "requires": [
         {
@@ -15631,7 +15641,7 @@
       "declared": []
     },
     {
-      "path": "/desk/handled/:id",
+      "path": "/desk/handled/$id",
       "name": "",
       "requires": [
         {
@@ -15784,7 +15794,7 @@
       "declared": []
     },
     {
-      "path": "/desk/r/:kind/:id",
+      "path": "/desk/r/$kind/$id",
       "name": "",
       "requires": [
         {
@@ -17593,7 +17603,7 @@
       "declared": []
     },
     {
-      "path": "/desk/t/:threadId",
+      "path": "/desk/t/$threadId",
       "name": "",
       "requires": [
         {
@@ -20262,7 +20272,7 @@
       ]
     },
     {
-      "path": "/desk/v/:viewThreadId/:slug",
+      "path": "/desk/v/$viewThreadId/$slug",
       "name": "",
       "requires": [
         {
@@ -24599,7 +24609,7 @@
       "declared": []
     },
     {
-      "path": "/edi/lading/:partnerId",
+      "path": "/edi/lading/$partnerId",
       "name": "",
       "requires": [
         {
@@ -33321,7 +33331,7 @@
       "declared": []
     },
     {
-      "path": "/reports/builder/:definitionId",
+      "path": "/reports/builder/$definitionId",
       "name": "",
       "requires": [
         {
@@ -33402,7 +33412,7 @@
       "declared": []
     },
     {
-      "path": "/reports/dashboards/:dashboardId",
+      "path": "/reports/dashboards/$dashboardId",
       "name": "",
       "requires": [
         {
@@ -33564,7 +33574,7 @@
       "declared": []
     },
     {
-      "path": "/reports/explore/:definitionId",
+      "path": "/reports/explore/$definitionId",
       "name": "",
       "requires": [
         {
@@ -44351,6 +44361,13 @@
       "declared": []
     },
     {
+      "name": "RequestSupportLogs",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "RescindDisciplinaryAction",
       "type": "mutation",
       "reads": [],
@@ -45751,6 +45768,13 @@
       "reads": [
         "carrier"
       ],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "SupportLogRequests",
+      "type": "query",
+      "reads": [],
       "linked": [],
       "declared": []
     },

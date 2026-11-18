@@ -4,9 +4,17 @@
 # operator's Secret. Rendered and validated by .github/workflows/helm.yml.
 managed:
   enabled: true
+  instanceId: "0192f3a4-5b6c-7d8e-9f01-23456789abcd"
   from:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: trenova-system
 secrets:
   escrowSecret: trenova-escrow
+# Log keeping, which the operator turns on for every managed instance.
+logs:
+  enabled: true
+# The search service, which the operator turns on with Trenova AI: its URL and
+# model reach the TMS under managed.embedding.
+embedding:
+  enabled: true

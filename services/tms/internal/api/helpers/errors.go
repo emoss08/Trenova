@@ -76,7 +76,7 @@ func (h *ErrorHandler) HandleError(c *gin.Context, err error) {
 	validationErrors := h.sanitizer.ExtractErrors(err)
 	advisories := h.sanitizer.ExtractAdvisories(err)
 	usageStats := h.sanitizer.ExtractUsageStats(err)
-	params := h.sanitizer.ExtractParams(err)
+	params := h.sanitizer.ExtractParams(err, i18n.FromContext(c.Request.Context()))
 	detail := h.sanitizer.SanitizeMessage(err, problemType)
 	requestID := extractRequestID(c)
 

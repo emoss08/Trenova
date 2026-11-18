@@ -82,10 +82,12 @@ spec:
               value: /etc/temporal/dynamicconfig/dynamic_config.yaml
             - name: BIND_ON_IP
               value: 0.0.0.0
+            # One process runs every Temporal service, so they reach each other
+            # on loopback. The address is the same in every pod, so the
+            # membership rows a restarted pod finds name the pod itself, not a
+            # gone pod's address it would wait 30 seconds to join and crash on.
             - name: TEMPORAL_BROADCAST_ADDRESS
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
+              value: 127.0.0.1
             - name: TEMPORAL_ADDRESS
               value: 127.0.0.1:7233
             {{- include "trenova.temporalServerTlsEnv" (dict "dir" "/certs/temporal" "ca" "ca.crt" "cert" "tls.crt" "key" "tls.key" "serverName" $temporal) | nindent 12 }}
@@ -97,15 +99,19 @@ spec:
               port: grpc
             periodSeconds: 5
             failureThreshold: 120
+          # Ready once the frontend serves and matching has joined the ring:
+          # describing a task queue goes through matching, which answers
+          # "Not enough hosts" until then.
           readinessProbe:
             exec:
-              command: [sh, -c, "temporal operator cluster health --address 127.0.0.1:7233 | grep -q SERVING"]
+              command: [sh, -c, "temporal operator cluster health --address 127.0.0.1:7233 | grep -q SERVING && temporal task-queue describe --address 127.0.0.1:7233 --namespace temporal-system --task-queue trenova-readiness >/dev/null"]
             periodSeconds: 10
             timeoutSeconds: 8
           livenessProbe:
             tcpSocket:
               port: grpc
             periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 6
           {{- include "trenova.containerSecurity" (dict) | nindent 10 }}
           resources:
@@ -195,6 +201,7 @@ spec:
               path: /health
               port: http
             periodSeconds: 15
+            timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /health
@@ -306,6 +313,7 @@ spec:
               path: /health
               port: http
             periodSeconds: 15
+            timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /health
@@ -324,6 +332,107 @@ spec:
           emptyDir:
             medium: Memory
             sizeLimit: 1Gi
+{{- end }}
+{{- if .Values.embedding.enabled }}
+{{- /* The search service Trenova AI brings: Ollama serving the one embedding
+model baked into its image, read-only. It downloads nothing and opens no
+connections; only the API and the worker reach it. Searches fall back to
+keywords while it restarts, so it stops before its replacement starts rather
+than holding room for a second copy of the model. */ -}}
+{{- $c = dict "root" . "component" "embedding" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: http
+      port: 11434
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: {{ include "trenova.replicas" (dict "root" . "replicas" 1) }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 65532) | nindent 6 }}
+      containers:
+        - name: embedding
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.embedding.image) }}
+          imagePullPolicy: {{ include "trenova.pullPolicy" .Values.embedding.image }}
+          env:
+            - name: OLLAMA_HOST
+              value: 0.0.0.0:11434
+            - name: OLLAMA_MODELS
+              value: /models
+            - name: OLLAMA_NOPRUNE
+              value: "true"
+            - name: OLLAMA_KEEP_ALIVE
+              value: "-1"
+            - name: OLLAMA_MAX_LOADED_MODELS
+              value: "1"
+            - name: OLLAMA_NUM_PARALLEL
+              value: {{ .Values.embedding.parallel | int64 | quote }}
+            - name: HOME
+              value: /home/ollama
+          ports:
+            - name: http
+              containerPort: 11434
+          startupProbe:
+            httpGet:
+              path: /api/version
+              port: http
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              path: /api/version
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.embedding.resources | nindent 12 }}
+          volumeMounts:
+            - name: home
+              mountPath: /home/ollama
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: home
+          emptyDir:
+            sizeLimit: 16Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
 {{- end }}
 {{- if .Values.clamav.enabled }}
 {{- /* clamd checks every file before anything opens it. freshclam inside the
@@ -477,11 +586,13 @@ spec:
               path: /readyz
               port: metrics
             periodSeconds: 10
+            timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /livez
               port: metrics
             periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 6
           {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
           resources:
@@ -562,9 +673,13 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+          # /readiness answers 503 while the replication stream is down or a
+          # sink does not answer, so a stalled pipeline shows as not ready;
+          # /health only says the process is up, so liveness never restarts
+          # gtc for a sink it cannot reach.
           readinessProbe:
             httpGet:
-              path: /health
+              path: /readiness
               port: http
             periodSeconds: 10
             timeoutSeconds: 6

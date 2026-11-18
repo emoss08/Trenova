@@ -89,6 +89,48 @@ func TestPermissionHandler_GetManifest_Success(t *testing.T) {
 	assert.Equal(t, "abc123", resp["checksum"])
 }
 
+func TestPermissionHandler_GetManifest_NamesWhatThePlanLeavesOutInTheReadersLanguage(t *testing.T) {
+	t.Parallel()
+
+	cached := &permissionports.LightPermissionManifest{
+		Checksum: "abc123",
+		UnavailableFeatures: []permissionports.PlanDenial{
+			permissionports.NewPlanDenial(platformcatalog.FeatureAccounting),
+		},
+	}
+	engine := permissionportsmock.NewMockPermissionEngine(t)
+	engine.On("GetLightManifest", mock.Anything, mock.Anything, mock.Anything).Return(cached, nil)
+
+	handler := setupPermissionHandler(t, engine)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/me/permissions").
+		WithDefaultAuthContext()
+	ginCtx.Context.Request = ginCtx.Context.Request.WithContext(
+		i18n.WithLocale(ginCtx.Context.Request.Context(), i18n.ES),
+	)
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	var resp struct {
+		UnavailableFeatures []permissionports.PlanDenial `json:"unavailableFeatures"`
+	}
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	require.Len(t, resp.UnavailableFeatures, 1)
+	assert.Equal(t, "Contabilidad", resp.UnavailableFeatures[0].FeatureName)
+	assert.Equal(t, "Contabilidad y efectivo", resp.UnavailableFeatures[0].AddOnName)
+	assert.Equal(t, platformcatalog.AddOnAccounting, resp.UnavailableFeatures[0].AddOn)
+	assert.Equal(
+		t,
+		"Accounting & Cash",
+		cached.UnavailableFeatures[0].AddOnName,
+		"the cached manifest is never rewritten",
+	)
+}
+
 func TestPermissionHandler_GetManifest_Error(t *testing.T) {
 	t.Parallel()
 

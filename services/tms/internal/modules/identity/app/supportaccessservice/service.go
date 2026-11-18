@@ -31,7 +31,9 @@ const (
 	keySetKey = supportaccess.CurrentKeySetID
 )
 
-var errNotAvailable = errortypes.NewNotFoundError("Trenova support access is not available on this instance")
+var errNotAvailable = errortypes.NewNotFoundError(
+	"Trenova support access is not available on this instance",
+)
 
 type Params struct {
 	fx.In
@@ -108,6 +110,7 @@ type Settings struct {
 	StaffDomain   string
 	Durations     []int
 	MaxLiveGrants int
+	Limits        []supportaccess.Limit
 }
 
 // Settings says whether grants can be made here and what an administrator may choose. It reads
@@ -116,6 +119,7 @@ func (s *Service) Settings(ctx context.Context) (*Settings, error) {
 	settings := &Settings{
 		Durations:     supportaccess.Durations,
 		MaxLiveGrants: supportaccess.MaxLiveGrants,
+		Limits:        supportaccess.Limits(),
 	}
 	if !s.enabled {
 		return settings, nil
@@ -133,11 +137,12 @@ func (s *Service) Settings(ctx context.Context) (*Settings, error) {
 }
 
 type GrantRequest struct {
-	TenantInfo    pagination.TenantInfo
-	StaffEmail    string
-	Reason        string
-	DurationHours int
-	Scope         supportaccess.Scope
+	TenantInfo      pagination.TenantInfo
+	StaffEmail      string
+	Reason          string
+	DurationHours   int
+	Scope           supportaccess.Scope
+	AllowsAssistant bool
 }
 
 func (s *Service) Grant(ctx context.Context, req *GrantRequest) (*supportaccess.Grant, error) {
@@ -145,7 +150,9 @@ func (s *Service) Grant(ctx context.Context, req *GrantRequest) (*supportaccess.
 		return nil, errNotAvailable
 	}
 	if supportaccess.IsPrincipalID(req.TenantInfo.UserID) || req.TenantInfo.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError("Only a person in this organization may grant support access")
+		return nil, errortypes.NewAuthorizationError(
+			"Only a person in this organization may grant support access",
+		)
 	}
 
 	keys, err := s.keySet(ctx)
@@ -173,6 +180,7 @@ func (s *Service) Grant(ctx context.Context, req *GrantRequest) (*supportaccess.
 		BusinessUnitID: req.TenantInfo.BuID,
 		StaffEmail:     email,
 		Password:       unusable,
+		Assistant:      req.AllowsAssistant,
 	})
 	grant := &supportaccess.Grant{
 		OrganizationID:  req.TenantInfo.OrgID,
@@ -180,6 +188,7 @@ func (s *Service) Grant(ctx context.Context, req *GrantRequest) (*supportaccess.
 		StaffEmail:      email,
 		Reason:          reason,
 		Scope:           req.Scope,
+		AllowsAssistant: req.AllowsAssistant,
 		DurationHours:   req.DurationHours,
 		PrincipalUserID: principal.ID,
 		GrantedByID:     req.TenantInfo.UserID,
@@ -206,8 +215,73 @@ func (s *Service) Grant(ctx context.Context, req *GrantRequest) (*supportaccess.
 		after:      grantView(created, now),
 		comment:    "Granted Trenova support access to " + created.StaffEmail + ": " + created.Reason,
 	})
+	s.notify(ctx, &supportaccessports.Notice{
+		Kind:       supportaccessports.NoticeGranted,
+		TenantInfo: req.TenantInfo,
+		ActorID:    req.TenantInfo.UserID,
+		Grant:      created,
+	})
 
 	return s.grants.Get(ctx, req.TenantInfo, created.ID)
+}
+
+type ExtendRequest struct {
+	TenantInfo    pagination.TenantInfo
+	GrantID       pulid.ID
+	DurationHours int
+}
+
+func (s *Service) Extend(ctx context.Context, req *ExtendRequest) (*supportaccess.Grant, error) {
+	if !s.enabled {
+		return nil, errNotAvailable
+	}
+	if supportaccess.IsPrincipalID(req.TenantInfo.UserID) || req.TenantInfo.UserID.IsNil() {
+		return nil, errortypes.NewAuthorizationError(
+			"Only a person in this organization may extend support access",
+		)
+	}
+
+	before, err := s.grants.Get(ctx, req.TenantInfo, req.GrantID)
+	if err != nil {
+		return nil, err
+	}
+	now := s.clock()
+	next := *before
+	if err = next.Extend(req.TenantInfo.UserID, req.DurationHours, now); err != nil {
+		return nil, err
+	}
+
+	extended, err := s.grants.Extend(ctx, &next, now)
+	if errors.Is(err, supportaccess.ErrGrantNotFound) {
+		return nil, errortypes.NewValidationError(
+			"id",
+			errortypes.ErrInvalid,
+			"This support access has already ended. Grant access again instead",
+		)
+	}
+	if err != nil {
+		return nil, err
+	}
+	s.principals.Forget(extended.PrincipalUserID)
+
+	s.record(ctx, &change{
+		tenantInfo: req.TenantInfo,
+		actor:      permissionports.UserActor(req.TenantInfo).AuditActor(),
+		grant:      extended,
+		operation:  permission.OpCreate,
+		action:     ActionExtended,
+		before:     grantView(before, now),
+		after:      grantView(extended, now),
+		comment:    "Extended Trenova support access for " + extended.StaffEmail,
+	})
+	s.notify(ctx, &supportaccessports.Notice{
+		Kind:       supportaccessports.NoticeExtended,
+		TenantInfo: req.TenantInfo,
+		ActorID:    req.TenantInfo.UserID,
+		Grant:      extended,
+	})
+
+	return s.grants.Get(ctx, req.TenantInfo, extended.ID)
 }
 
 func validateGrant(req *GrantRequest, staffDomain string) (email, reason string, err error) {
@@ -222,12 +296,20 @@ func validateGrant(req *GrantRequest, staffDomain string) (email, reason string,
 			staffDomain,
 		)
 	case emailErr != nil:
-		multiErr.Add("staffEmail", errortypes.ErrInvalid, "Enter a plain email address with no special characters")
+		multiErr.Add(
+			"staffEmail",
+			errortypes.ErrInvalid,
+			"Enter a plain email address with no special characters",
+		)
 	}
 
 	reason = strings.TrimSpace(req.Reason)
 	if reason == "" || utf8.RuneCountInString(reason) > supportaccess.MaxReasonLength {
-		multiErr.Add("reason", errortypes.ErrRequired, "Say why Trenova support needs access, in at most 500 characters")
+		multiErr.Add(
+			"reason",
+			errortypes.ErrRequired,
+			"Say why Trenova support needs access, in at most 500 characters",
+		)
 	}
 	if !supportaccess.ValidDuration(req.DurationHours) {
 		multiErr.Add("durationHours", errortypes.ErrInvalid, "Choose 1, 4, 24 or 72 hours")
@@ -255,7 +337,9 @@ func (s *Service) Revoke(ctx context.Context, req *RevokeRequest) (*supportacces
 		return nil, errNotAvailable
 	}
 	if supportaccess.IsPrincipalID(req.TenantInfo.UserID) || req.TenantInfo.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError("Only a person in this organization may revoke support access")
+		return nil, errortypes.NewAuthorizationError(
+			"Only a person in this organization may revoke support access",
+		)
 	}
 
 	before, err := s.grants.Get(ctx, req.TenantInfo, req.GrantID)
@@ -270,7 +354,11 @@ func (s *Service) Revoke(ctx context.Context, req *RevokeRequest) (*supportacces
 
 	revoked, err := s.grants.Revoke(ctx, &next, now)
 	if errors.Is(err, supportaccess.ErrGrantNotFound) {
-		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "This support access has already ended")
+		return nil, errortypes.NewValidationError(
+			"id",
+			errortypes.ErrInvalid,
+			"This support access has already ended",
+		)
 	}
 	if err != nil {
 		return nil, err
@@ -288,6 +376,12 @@ func (s *Service) Revoke(ctx context.Context, req *RevokeRequest) (*supportacces
 		after:      grantView(revoked, now),
 		comment:    "Revoked Trenova support access for " + revoked.StaffEmail + ": " + revoked.RevokeReason,
 	})
+	s.notify(ctx, &supportaccessports.Notice{
+		Kind:       supportaccessports.NoticeRevoked,
+		TenantInfo: req.TenantInfo,
+		ActorID:    req.TenantInfo.UserID,
+		Grant:      revoked,
+	})
 
 	return s.grants.Get(ctx, req.TenantInfo, revoked.ID)
 }
@@ -301,6 +395,34 @@ func (s *Service) endSessions(ctx context.Context, principalUserID pulid.ID) {
 			zap.Error(err),
 		)
 	}
+}
+
+const activeWindow = 5 * 60
+
+func (s *Service) ActiveNow(ctx context.Context, grants []*supportaccess.Grant) map[pulid.ID]int64 {
+	out := make(map[pulid.ID]int64, len(grants))
+	if !s.enabled {
+		return out
+	}
+	now := s.clock()
+	for _, grant := range grants {
+		if !grant.LiveAt(now) {
+			continue
+		}
+		sessions, err := s.sessions.ListForUser(ctx, grant.PrincipalUserID)
+		if err != nil {
+			s.l.Warn("could not read whether support is in the instance now", zap.Error(err))
+			continue
+		}
+		for _, sess := range sessions {
+			if sess.Support == nil || sess.ExpiresAt <= now ||
+				now-sess.LastAccessedAt > activeWindow {
+				continue
+			}
+			out[grant.ID] = max(out[grant.ID], sess.LastAccessedAt)
+		}
+	}
+	return out
 }
 
 func (s *Service) List(
@@ -360,6 +482,16 @@ func (s *Service) SetKeys(ctx context.Context, keys *supportaccess.KeySet) error
 		zap.Strings("keyIDs", keyIDs),
 	)
 	return nil
+}
+
+func (s *Service) LiveGrants(ctx context.Context) ([]*supportaccessports.LiveGrant, error) {
+	if !s.enabled {
+		return nil, errNotAvailable
+	}
+	return s.grants.ListLive(ctx, &supportaccessports.ListLiveRequest{
+		Now:   s.clock(),
+		Limit: supportaccessports.MaxReportedGrants,
+	})
 }
 
 // KeySet answers what the instance holds, for the operator to compare with what it sends.

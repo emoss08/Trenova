@@ -59,9 +59,8 @@ const (
 )
 
 // NotifyDriverTool sends a driver a message through drivermessage.Sender,
-// which reaches them in Dash when they have a login and by text to the
-// number on file when they do not and the plan includes text messages. The
-// number never passes through a model.
+// which reaches them in Dash when they have a login. A driver without one is
+// sent nothing, and the preview says so.
 type NotifyDriverTool struct {
 	messages *drivermessage.Sender
 }
@@ -73,7 +72,7 @@ func NewNotifyDriverTool(messages *drivermessage.Sender) agenttoolports.AgentToo
 func (t *NotifyDriverTool) Name() string { return "worker_send_message" }
 
 func (t *NotifyDriverTool) SearchTerms() []string {
-	return []string{"text the driver", "message the driver", "sms", "driver app"}
+	return []string{"text the driver", "message the driver", "driver app"}
 }
 
 func (t *NotifyDriverTool) Description() string {
@@ -82,9 +81,7 @@ func (t *NotifyDriverTool) Description() string {
 		"dispatch. Passing on what the person told you needs no record checked or changed " +
 		"first: send it as they said it, naming the load when you know it. Keep it " +
 		"to what the driver needs to do; it goes to their phone. A driver without " +
-		"portal access gets it as a text when a number is on file and the plan " +
-		"includes text messages; otherwise it is not delivered, and the preview " +
-		"says so. It is a message, not a record: put " +
+		"portal access is not sent it, and the preview says so. It is a message, not a record: put " +
 		"anything the office needs later on the shipment with shipment_add_comment."
 }
 

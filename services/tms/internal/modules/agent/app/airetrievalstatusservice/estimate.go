@@ -234,6 +234,14 @@ func (s *Service) inputPrice(
 	tenant pagination.TenantInfo,
 	modelKey string,
 ) (decimal.Decimal, bool, error) {
+	builtInKey, err := s.builtInModelKey(ctx, tenant)
+	if err != nil {
+		return decimal.Zero, false, err
+	}
+	if builtInKey != "" && builtInKey == modelKey {
+		return decimal.Zero, true, nil
+	}
+
 	providers, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		Task:       aitask.TaskEmbedding,
 		TenantInfo: tenant,

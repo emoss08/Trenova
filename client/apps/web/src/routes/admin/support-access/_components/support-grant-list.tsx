@@ -9,10 +9,14 @@ import { SupportGrantsSkeleton } from "./support-grant-skeleton";
 
 export function SupportGrantList({
   canRevoke,
+  canExtend,
   onRevoke,
+  onExtend,
 }: {
   canRevoke: boolean;
+  canExtend: boolean;
   onRevoke: (grant: SupportAccessGrant) => void;
+  onExtend: (grant: SupportAccessGrant) => void;
 }) {
   const t = useT();
   const query = useInfiniteQuery({
@@ -52,7 +56,9 @@ export function SupportGrantList({
           key={grant.id}
           grant={grant}
           canRevoke={canRevoke}
+          canExtend={canExtend}
           onRevoke={() => onRevoke(grant)}
+          onExtend={() => onExtend(grant)}
         />
       ))}
       {query.hasNextPage ? (

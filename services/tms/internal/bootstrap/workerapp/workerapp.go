@@ -6,6 +6,7 @@ import (
 	apimodule "github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/rollups"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/schemaversion"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
@@ -89,7 +90,7 @@ type RunParams struct {
 }
 
 func Run(base fx.Option, queues []string) {
-	opts := []fx.Option{schemaversion.Module, base, Options(), fx.Invoke(logLifecycle)}
+	opts := []fx.Option{config.FxLogger(), schemaversion.Module, base, Options(), fx.Invoke(logLifecycle)}
 	if len(queues) > 0 {
 		opts = append(opts, fx.Decorate(func(*registry.QueueFilter) *registry.QueueFilter {
 			return &registry.QueueFilter{Queues: queues}

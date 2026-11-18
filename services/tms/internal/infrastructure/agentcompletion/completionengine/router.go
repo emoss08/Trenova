@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -68,6 +69,8 @@ type Params struct {
 	// Features is the organization's plan: a task is served only when a
 	// feature that pays for it is on.
 	Features platformcatalogports.FeatureGate
+	BuiltIn  aiproviderports.BuiltInEmbedding
+	Support  supportaccessports.ModelCalls
 }
 
 type Engine struct {
@@ -92,6 +95,8 @@ type Engine struct {
 	Advisors aiproviderports.AIProviderAdvisorRecorder
 	// Features is the plan every provider is resolved under (OnPlan).
 	Features platformcatalogports.FeatureGate
+	BuiltIn  aiproviderports.BuiltInEmbedding
+	Support  supportaccessports.ModelCalls
 	// pause waits out a backoff. It is a field so tests can count the waits
 	// instead of sitting through them.
 	Pause func(ctx context.Context, wait time.Duration) error
@@ -123,6 +128,8 @@ func NewEngine(p *Params) *Engine {
 		Files:         p.Files,
 		Advisors:      p.Advisors,
 		Features:      p.Features,
+		BuiltIn:       p.BuiltIn,
+		Support:       p.Support,
 		Pause:         pauseFor,
 		Clients:       make(map[bool]*http.Client, 2),
 		StreamClients: make(map[bool]*http.Client, 2),
@@ -258,7 +265,7 @@ func (s *Engine) NovaProvider(
 	tenant pagination.TenantInfo,
 	task aitask.Task,
 ) (*aiprovider.Provider, error) {
-	if err := s.OnPlan(ctx, task); err != nil {
+	if err := s.admit(ctx, tenant, task); err != nil {
 		return nil, err
 	}
 
@@ -279,6 +286,20 @@ func (s *Engine) NovaProvider(
 	default:
 		return novamodel.Provider(provider), nil
 	}
+}
+
+func (s *Engine) admit(ctx context.Context, tenant pagination.TenantInfo, task aitask.Task) error {
+	if err := s.OnPlan(ctx, task); err != nil {
+		return err
+	}
+	if task == aitask.TaskEmbedding {
+		return nil
+	}
+	err := s.Support.AdmitModelCall(ctx, tenant)
+	if refusal, ok := errors.AsType[*errortypes.BusinessError](err); ok {
+		return refusal.WithInternal(llmports.ErrNoProviderConfigured)
+	}
+	return err
 }
 
 func requiredProvider(
@@ -302,7 +323,7 @@ func (s *Engine) UsableFor(
 	task aitask.Task,
 	tenant pagination.TenantInfo,
 ) ([]*aiprovider.Provider, error) {
-	if err := s.OnPlan(ctx, task); err != nil {
+	if err := s.admit(ctx, tenant, task); err != nil {
 		return nil, err
 	}
 
@@ -315,6 +336,11 @@ func (s *Engine) UsableFor(
 			return nil, err
 		}
 	}
+	if task == aitask.TaskEmbedding {
+		if usable, err = s.withBuiltInEmbedding(ctx, tenant, usable); err != nil {
+			return nil, err
+		}
+	}
 
 	if len(usable) == 0 {
 		return nil, errortypes.NewBusinessError(
@@ -323,6 +349,19 @@ func (s *Engine) UsableFor(
 	}
 
 	return usable, nil
+}
+
+func (s *Engine) withBuiltInEmbedding(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	usable []*aiprovider.Provider,
+) ([]*aiprovider.Provider, error) {
+	builtIn, ok, err := s.BuiltIn.Provider(ctx, tenant)
+	if err != nil || !ok {
+		return usable, err
+	}
+
+	return append(usable, builtIn), nil
 }
 
 // servingTask appends to usable the providers that may serve task and are not
@@ -801,7 +840,7 @@ func (s *Engine) ClientFor(provider *aiprovider.Provider) *http.Client {
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()
 
-	allowPrivate := provider.AllowPrivateNetwork && s.AI.PrivateNetworkProvidersAllowed()
+	allowPrivate := s.reachesPrivateNetwork(provider)
 	if client, ok := s.Clients[allowPrivate]; ok {
 		return client
 	}
@@ -837,7 +876,7 @@ func (s *Engine) StreamClientFor(provider *aiprovider.Provider) *http.Client {
 	s.clientsMu.Lock()
 	defer s.clientsMu.Unlock()
 
-	allowPrivate := provider.AllowPrivateNetwork && s.AI.PrivateNetworkProvidersAllowed()
+	allowPrivate := s.reachesPrivateNetwork(provider)
 	if client, ok := s.StreamClients[allowPrivate]; ok {
 		return client
 	}
@@ -854,6 +893,11 @@ func (s *Engine) StreamClientFor(provider *aiprovider.Provider) *http.Client {
 	s.StreamClients[allowPrivate] = client
 
 	return client
+}
+
+func (s *Engine) reachesPrivateNetwork(provider *aiprovider.Provider) bool {
+	return provider.BuiltIn ||
+		(provider.AllowPrivateNetwork && s.AI.PrivateNetworkProvidersAllowed())
 }
 
 // egressPolicy is the network guard both clients share. Each caller sets

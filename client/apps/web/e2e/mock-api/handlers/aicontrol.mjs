@@ -711,6 +711,9 @@ export const AI_HANDLERS = {
       modelChange: null,
       configuredModelKey: "openai:text-embedding-3-small:1536",
       configuredModelDiffers: false,
+      embeddingSource: "Organization",
+      tunedModel: "nomic-embed-text",
+      configuredModelTuned: false,
     },
   }),
   AIAuditChainStatus: (state) => ({

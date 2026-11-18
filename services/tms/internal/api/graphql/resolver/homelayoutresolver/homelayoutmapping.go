@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -32,7 +33,10 @@ var homeLayoutSources = map[homelayoutservice.Source]gqlmodel.HomeLayoutSource{
 	homelayoutservice.SourceBuiltIn:    gqlmodel.HomeLayoutSourceBuiltIn,
 }
 
-func homeLayoutToModel(effective *homelayoutservice.EffectiveLayout) *gqlmodel.HomeLayout {
+func homeLayoutToModel(
+	locale i18n.Locale,
+	effective *homelayoutservice.EffectiveLayout,
+) *gqlmodel.HomeLayout {
 	source, ok := homeLayoutSources[effective.Source]
 	if !ok {
 		source = gqlmodel.HomeLayoutSourceBuiltIn
@@ -47,24 +51,31 @@ func homeLayoutToModel(effective *homelayoutservice.EffectiveLayout) *gqlmodel.H
 		Locked:        effective.Locked,
 		CanCustomize:  effective.CanCustomize,
 		Density:       effective.Density,
-		Widgets:       homeWidgetsToModel(effective.Layout, effective.Locks),
+		Widgets:       homeWidgetsToModel(locale, effective.Layout, effective.Locks),
 	}
 }
 
-func homePlanLockToModel(denial *permissionports.PlanDenial) *gqlmodel.HomePlanLock {
+func homePlanLockToModel(
+	locale i18n.Locale,
+	denial *permissionports.PlanDenial,
+) *gqlmodel.HomePlanLock {
 	if denial == nil {
 		return nil
 	}
 
+	named := denial.In(locale)
 	return &gqlmodel.HomePlanLock{
-		Feature:     string(denial.Feature),
-		FeatureName: denial.FeatureName,
-		AddOn:       string(denial.AddOn),
-		AddOnName:   denial.AddOnName,
+		Feature:     string(named.Feature),
+		FeatureName: named.FeatureName,
+		AddOn:       string(named.AddOn),
+		AddOnName:   named.AddOnName,
 	}
 }
 
-func homeLockedMetricsToModel(locks []homelayoutservice.MetricLock) []*gqlmodel.HomeLockedMetric {
+func homeLockedMetricsToModel(
+	locale i18n.Locale,
+	locks []homelayoutservice.MetricLock,
+) []*gqlmodel.HomeLockedMetric {
 	metrics := make([]*gqlmodel.HomeLockedMetric, 0, len(locks))
 	for i := range locks {
 		label := locks[i].Metric
@@ -74,7 +85,7 @@ func homeLockedMetricsToModel(locks []homelayoutservice.MetricLock) []*gqlmodel.
 		metrics = append(metrics, &gqlmodel.HomeLockedMetric{
 			Metric: locks[i].Metric,
 			Label:  label,
-			Lock:   homePlanLockToModel(&locks[i].Denial),
+			Lock:   homePlanLockToModel(locale, &locks[i].Denial),
 		})
 	}
 
@@ -82,6 +93,7 @@ func homeLockedMetricsToModel(locks []homelayoutservice.MetricLock) []*gqlmodel.
 }
 
 func homeWidgetsToModel(
+	locale i18n.Locale,
 	layout *homelayout.Layout,
 	locks map[string]homelayoutservice.WidgetLock,
 ) []*gqlmodel.HomeWidget {
@@ -105,8 +117,8 @@ func homeWidgetsToModel(
 			W:             widget.W,
 			H:             widget.H,
 			Config:        homeWidgetConfigToModel(widget.Config),
-			PlanLock:      homePlanLockToModel(lock.Widget),
-			LockedMetrics: homeLockedMetricsToModel(lock.Metrics),
+			PlanLock:      homePlanLockToModel(locale, lock.Widget),
+			LockedMetrics: homeLockedMetricsToModel(locale, lock.Metrics),
 		})
 	}
 
@@ -129,15 +141,19 @@ func homeWidgetConfigToModel(config homelayout.WidgetConfig) *gqlmodel.HomeWidge
 }
 
 func homeWidgetCatalogToModel(
+	locale i18n.Locale,
 	catalog *homelayoutservice.WidgetCatalog,
 ) *gqlmodel.HomeWidgetCatalog {
 	widgets := make([]*gqlmodel.HomeWidgetOption, 0, len(catalog.Widgets)+len(catalog.LockedWidgets))
 	for _, widget := range catalog.Widgets {
-		widgets = append(widgets, homeWidgetOptionToModel(widget, nil))
+		widgets = append(widgets, homeWidgetOptionToModel(locale, widget, nil))
 	}
 	for i := range catalog.LockedWidgets {
 		locked := &catalog.LockedWidgets[i]
-		widgets = append(widgets, homeWidgetOptionToModel(locked.Definition, &locked.Denial))
+		widgets = append(
+			widgets,
+			homeWidgetOptionToModel(locale, locked.Definition, &locked.Denial),
+		)
 	}
 
 	metrics := make([]*gqlmodel.HomeMetricOption, 0, len(catalog.Metrics)+len(catalog.LockedMetrics))
@@ -152,7 +168,7 @@ func homeWidgetCatalogToModel(
 		metrics = append(metrics, &gqlmodel.HomeMetricOption{
 			Key:      locked.Definition.Key,
 			Label:    locked.Definition.Label,
-			PlanLock: homePlanLockToModel(&locked.Denial),
+			PlanLock: homePlanLockToModel(locale, &locked.Denial),
 		})
 	}
 
@@ -176,6 +192,7 @@ func homeWidgetCatalogToModel(
 }
 
 func homeWidgetOptionToModel(
+	locale i18n.Locale,
 	widget homelayout.WidgetDefinition,
 	denial *permissionports.PlanDenial,
 ) *gqlmodel.HomeWidgetOption {
@@ -192,11 +209,14 @@ func homeWidgetOptionToModel(
 		MinH:             widget.MinH,
 		MaxW:             widget.MaxW,
 		MaxH:             widget.MaxH,
-		PlanLock:         homePlanLockToModel(denial),
+		PlanLock:         homePlanLockToModel(locale, denial),
 	}
 }
 
-func homePresetToModel(view *homelayoutservice.PresetView) *gqlmodel.HomeLayoutPreset {
+func homePresetToModel(
+	locale i18n.Locale,
+	view *homelayoutservice.PresetView,
+) *gqlmodel.HomeLayoutPreset {
 	preset := view.Preset
 
 	roleIDs := make([]string, 0, len(preset.RoleIDs))
@@ -208,7 +228,7 @@ func homePresetToModel(view *homelayoutservice.PresetView) *gqlmodel.HomeLayoutP
 		ID:                 preset.ID.String(),
 		Name:               preset.Name,
 		Description:        homeOptionalString(preset.Description),
-		Widgets:            homeWidgetsToModel(preset.Layout, nil),
+		Widgets:            homeWidgetsToModel(locale, preset.Layout, nil),
 		RoleIds:            roleIDs,
 		CoreResponsibility: homeOptionalString(string(preset.CoreResponsibility)),
 		IsOrgDefault:       preset.IsOrgDefault,

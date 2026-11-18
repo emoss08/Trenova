@@ -66,6 +66,7 @@ spec:
             tcpSocket:
               port: redis
             periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 6
           {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
           resources:
@@ -143,11 +144,13 @@ spec:
               path: /health
               port: http
             periodSeconds: 10
+            timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /health
               port: http
             periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 6
           {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
           resources:
@@ -217,7 +220,7 @@ spec:
             {{- include "trenova.secretEnv" (dict "name" "MINIO_ROOT_USER" "secret" $app "key" "storageAccessKey") | nindent 12 }}
             {{- include "trenova.secretEnv" (dict "name" "MINIO_ROOT_PASSWORD" "secret" $app "key" "storageSecretKey") | nindent 12 }}
             - name: MINIO_API_CORS_ALLOW_ORIGIN
-              value: {{ include "trenova.origin" . | quote }}
+              value: {{ include "trenova.origins" . | quote }}
             - name: MINIO_BROWSER
               value: "off"
           ports:
@@ -228,11 +231,13 @@ spec:
               path: /minio/health/ready
               port: s3
             periodSeconds: 10
+            timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /minio/health/live
               port: s3
             periodSeconds: 10
+            timeoutSeconds: 3
             failureThreshold: 6
           {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
           resources:

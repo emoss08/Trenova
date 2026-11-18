@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -210,6 +211,10 @@ func (a *RequestActor) DBTenant() dbscope.Tenant {
 	}
 
 	return tenant
+}
+
+func (a *RequestActor) IsSupport() bool {
+	return a != nil && supportaccess.IsPrincipalID(a.UserID)
 }
 
 func (a *RequestActor) IsAPIKey() bool {

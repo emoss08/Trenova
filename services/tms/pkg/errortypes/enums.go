@@ -26,4 +26,5 @@ const (
 	ErrQuotaExceeded       = ErrorCode("QUOTA_EXCEEDED")
 	ErrPlanRestricted      = ErrorCode("PLAN_RESTRICTED")
 	ErrSessionContextStale = ErrorCode("SESSION_CONTEXT_STALE")
+	ErrCSRFTokenInvalid    = ErrorCode("CSRF_TOKEN_INVALID")
 )

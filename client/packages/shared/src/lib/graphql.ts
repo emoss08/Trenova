@@ -1,5 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import { retryAfterOf, withSessionHeaders } from "@trenova/shared/lib/api";
+import { retryAfterOf, sendWithSessionHeaders } from "@trenova/shared/lib/api";
 import { ResponseContractError, withRequestDeadline } from "@trenova/shared/lib/request-errors";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { withIdempotencyKeyHeader } from "@trenova/shared/lib/idempotency";
@@ -601,19 +601,24 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
     variables,
   );
 
-  const headers = await withSessionHeaders(
-    "POST",
-    withIdempotencyKeyHeader({ "Content-Type": "application/json" }, idempotencyKey),
-    "/graphql",
+  const requestHeaders = withIdempotencyKeyHeader(
+    { "Content-Type": "application/json" },
+    idempotencyKey,
   );
 
   const { payload, response } = await withRequestDeadline(signal, async (deadline) => {
-    const response = await fetch(resolveGraphQLURL(API_BASE_URL, operationLabel), {
-      body: JSON.stringify(body),
-      credentials: "include",
-      headers,
+    const response = await sendWithSessionHeaders({
       method: "POST",
-      signal: deadline,
+      endpoint: "/graphql",
+      headers: requestHeaders,
+      send: (headers) =>
+        fetch(resolveGraphQLURL(API_BASE_URL, operationLabel), {
+          body: JSON.stringify(body),
+          credentials: "include",
+          headers,
+          method: "POST",
+          signal: deadline,
+        }),
     });
 
     return { payload: await readPayload<TData>(response), response };

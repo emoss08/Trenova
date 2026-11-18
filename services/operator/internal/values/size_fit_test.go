@@ -122,7 +122,7 @@ func rendered(t *testing.T, n node) []pod {
 	t.Helper()
 	spec := controlplanetest.Spec(uuid.New())
 	spec.Plan.Vcpu, spec.Plan.MemoryGiB, spec.Plan.DiskGiB = n.vcpu, n.memoryGiB, n.diskGiB
-	spec.Components = []string{keyDocling}
+	spec.Components = []string{keyDocling, keyEmbedding}
 	var storage Storage
 	if n.storage {
 		storage = Storage{
@@ -292,10 +292,49 @@ func TestEveryComponentHasAShareAndTheReleaseJobIsSized(t *testing.T) {
 	require.NoError(t, err)
 	_, ok := out[keyTMS].(map[string]any)["release"]
 	require.True(t, ok, "an unsized release Job would request the chart's default, which nothing counts")
-	for _, component := range []string{keyDocling, keyMinio} {
+	for _, component := range []string{keyDocling, keyEmbedding, keyMinio} {
 		c, _ := out[component].(map[string]any)
 		require.Contains(t, c, "resources", "%s has no share; turning it on would divide the machine again", component)
 	}
+	logs, _ := out[keyLogs].(map[string]any)
+	for _, component := range []string{"loki", "alloy"} {
+		c, _ := logs[component].(map[string]any)
+		require.Contains(t, c, "resources", "log keeping's %s has no share", component)
+	}
+	loki, _ := logs["loki"].(map[string]any)
+	require.Equal(t, map[string]any{"size": "4Gi"}, loki["storage"], "Loki's volume follows the plan's disk")
+}
+
+func TestTheEmbeddingServiceIsSizedForItsModelAtEveryPlan(t *testing.T) {
+	t.Parallel()
+	for _, n := range nodes() {
+		t.Run(n.String(), func(t *testing.T) {
+			t.Parallel()
+			out, err := size(sizeInput{vcpu: n.vcpu, memoryGiB: n.memoryGiB, diskGiB: n.diskGiB, clamav: n.clamav})
+			require.NoError(t, err)
+			embedding, _ := out[keyEmbedding].(map[string]any)
+			resources, _ := embedding["resources"].(map[string]any)
+			requests, _ := resources["requests"].(map[string]any)
+			limits, _ := resources["limits"].(map[string]any)
+			require.Equal(t, "320Mi", requests[keyMemory], "what the service holds with its model loaded")
+			require.Equal(t, "1024Mi", limits[keyMemory], "three times that, kept off the top")
+			require.Equal(t, "2", limits[keyCPU], "the two threads its model is built for")
+		})
+	}
+}
+
+func TestTheEmbeddingServiceHoldsItsWholeLimitOffTheTop(t *testing.T) {
+	t.Parallel()
+	var held float64
+	for _, s := range shares(false) {
+		held += s.heldMiB()
+	}
+	var fixed float64
+	for _, s := range shares(false) {
+		fixed += s.fixedMiB
+	}
+	require.InDelta(t, embeddingReserveMiB-embeddingRequestMiB, held-fixed, 0.001,
+		"the room between its request and its limit is not shared out to another workload")
 }
 
 func TestAPlanTooSmallForEveryComponentIsRefused(t *testing.T) {
@@ -316,8 +355,9 @@ func TestAPlanTooSmallForEveryComponentIsRefused(t *testing.T) {
 	} {
 		out := divide(p)
 		_, mem := requests(t, out)
-		var surgeMem int64
+		var surgeMem, heldBeyondRequests int64
 		for _, s := range shares(p.clamav) {
+			heldBeyondRequests += int64(s.heldMiB() - s.fixedMiB)
 			if !s.surge {
 				continue
 			}
@@ -328,7 +368,7 @@ func TestAPlanTooSmallForEveryComponentIsRefused(t *testing.T) {
 			_, m := requests(t, c)
 			surgeMem = max(surgeMem, m)
 		}
-		if mem+surgeMem+outsideMiB <= p.memoryGiB*1024-evictionMiB {
+		if mem+heldBeyondRequests+surgeMem+outsideMiB <= p.memoryGiB*1024-evictionMiB {
 			t.Errorf("%+v: everything and a rollout fit one GiB below the minimum; the minimum is too high", p)
 		}
 	}

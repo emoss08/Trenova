@@ -38,8 +38,22 @@ describe("SupportSessionBanner", () => {
     renderBanner();
 
     const banner = await screen.findByRole("status");
-    expect(banner.textContent).toMatch(/^Trenova support session: Jane Doe, ends /);
+    expect(banner.textContent).toMatch(/^Trenova support session: Jane Doe, read-only, ends /);
     expect(screen.getByRole("button", { name: "End session" })).toBeTruthy();
+  });
+
+  it("says when the session has full access", async () => {
+    mocks.fetchCurrentSupportSession.mockResolvedValue({
+      staffName: "Jane Doe",
+      staffEmail: "jane.doe@trenova.app",
+      scope: "Full",
+      endsAt: 1_800_003_600,
+    });
+
+    renderBanner();
+
+    const banner = await screen.findByRole("status");
+    expect(banner.textContent).toMatch(/^Trenova support session: Jane Doe, full access, ends /);
   });
 
   it("draws nothing in a session that is not Trenova support's", async () => {

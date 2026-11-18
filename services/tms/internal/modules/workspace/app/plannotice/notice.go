@@ -3,7 +3,9 @@ package plannotice
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
@@ -22,8 +24,10 @@ import (
 const (
 	EventPlanChanged    = "managed_plan_changed"
 	PlanPath            = "/admin/plan"
+	PlanResource        = "managed_plan"
 	noticeSource        = "plannotice"
 	subjectKind         = "managed-plan"
+	planEndSubject      = "plan-end"
 	maxNoticeRecipients = 25
 	changeLeft          = "left"
 	changeJoined        = "joined"
@@ -45,6 +49,7 @@ type Params struct {
 
 	Notifications *notificationservice.Service
 	Tenants       tenantports.TenantSyncRepository
+	Realtime      realtimeports.RealtimeService
 	Clock         timeutils.Clock
 	Logger        *zap.Logger
 }
@@ -58,6 +63,7 @@ type Result struct {
 type Notices struct {
 	notifier Notifier
 	tenants  TenantPager
+	realtime realtimeports.RealtimeService
 	clock    timeutils.Clock
 	l        *zap.Logger
 }
@@ -67,6 +73,7 @@ func New(p Params) Result {
 	return Result{Observer: &Notices{
 		notifier: p.Notifications,
 		tenants:  p.Tenants,
+		realtime: p.Realtime,
 		clock:    p.Clock,
 		l:        p.Logger.Named("service.plan-notices"),
 	}}
@@ -76,19 +83,18 @@ func (n *Notices) PlanChanged(
 	ctx context.Context,
 	replacement *managedfeatures.Replacement,
 ) error {
-	if !replacement.Changed() || replacement.Change.Starting || replacement.Previous == nil {
+	if !replacement.Updated() {
 		return nil
 	}
 
-	shift := managedfeatures.Shift(replacement.Previous.Features, replacement.Current.Features)
-	if shift.Empty() {
-		return nil
+	notices := n.addOnNotices(ctx, replacement)
+	if end := n.planEndNotice(ctx, replacement.PlanEnd); end != nil {
+		notices = append(notices, *end)
+		n.l.Info("the plan's end changed; telling each organization's administrators",
+			zap.String("notice", string(replacement.PlanEnd.Kind)),
+			zap.Int64("endsAt", replacement.PlanEnd.EndsAt),
+		)
 	}
-	notices := n.notices(ctx, shift)
-	n.l.Info("the plan's add-ons changed; telling each organization's administrators",
-		zap.Int("left", len(shift.Left)),
-		zap.Int("joined", len(shift.Joined)),
-	)
 
 	return n.eachTenant(ctx, func(ctx context.Context, tenant pagination.TenantInfo) error {
 		var errs []error
@@ -104,32 +110,103 @@ func (n *Notices) PlanChanged(
 				errs = append(errs, err)
 			}
 		}
+		if err := n.realtime.PublishResourceInvalidation(
+			ctx,
+			&realtimeports.PublishResourceInvalidationRequest{
+				OrganizationID: tenant.OrgID,
+				BusinessUnitID: tenant.BuID,
+				Resource:       PlanResource,
+				Action:         "updated",
+			},
+		); err != nil {
+			n.l.Warn("cannot tell open pages that the plan changed", zap.Error(err))
+		}
 		return errors.Join(errs...)
 	})
 }
 
-func (n *Notices) notices(
+func (n *Notices) addOnNotices(
 	ctx context.Context,
-	shift managedfeatures.AddOnShift,
+	replacement *managedfeatures.Replacement,
 ) []notification.Notification {
-	out := make([]notification.Notification, 0, len(shift.Left)+len(shift.Joined))
+	if !replacement.FeaturesChanged() || replacement.Previous == nil {
+		return []notification.Notification{}
+	}
+	shift := managedfeatures.Shift(replacement.Previous.Features, replacement.Current.Features)
+	if shift.Empty() {
+		return []notification.Notification{}
+	}
+	n.l.Info("the plan's add-ons changed; telling each organization's administrators",
+		zap.Int("left", len(shift.Left)),
+		zap.Int("joined", len(shift.Joined)),
+	)
+
+	out := make([]notification.Notification, 0, len(shift.Left)+len(shift.Joined)+1)
 	for _, addOn := range shift.Left {
 		out = append(out, notice(addOn, changeLeft, notification.PriorityHigh,
-			i18n.T(ctx, "{0} is no longer on your plan", addOn.Name),
+			i18n.T(ctx, "{0} is no longer on your plan", i18n.Term(addOn.Name)),
 			i18n.T(
 				ctx,
 				"Everything you entered is kept. It comes back if you add {0} again from your Trenova account.",
-				addOn.Name,
+				i18n.Term(addOn.Name),
 			),
 		))
 	}
 	for _, addOn := range shift.Joined {
 		out = append(out, notice(addOn, changeJoined, notification.PriorityMedium,
-			i18n.T(ctx, "{0} is now on your plan", addOn.Name),
+			i18n.T(ctx, "{0} is now on your plan", i18n.Term(addOn.Name)),
 			i18n.T(ctx, "Open Your plan to see what it adds."),
 		))
 	}
 	return out
+}
+
+func (n *Notices) planEndNotice(
+	ctx context.Context,
+	end *managedfeatures.PlanEndNotice,
+) *notification.Notification {
+	if end == nil {
+		return nil
+	}
+	day := i18n.LongDate(i18n.FromContext(ctx), time.Unix(end.EndsAt, 0).UTC())
+	var title, message string
+	priority := notification.PriorityHigh
+	switch end.Kind {
+	case managedfeatures.PlanEndSet:
+		title = i18n.T(ctx, "Your plan ends on {0}", day)
+		message = i18n.T(
+			ctx,
+			"Trenova stays available until then. After that, this workspace is taken down and a final backup is kept for {0, plural, one {# day} other {# days}}. An owner or admin of your Trenova account can keep the plan before then.",
+			end.FinalBackupDays,
+		)
+	case managedfeatures.PlanEndKept:
+		priority = notification.PriorityMedium
+		title = i18n.T(ctx, "Your plan continues")
+		message = i18n.T(ctx, "It will no longer end on {0}.", day)
+	case managedfeatures.PlanEndReminder:
+		title = i18n.T(ctx, "Your plan ends in 3 days")
+		message = i18n.T(
+			ctx,
+			"After {0}, this workspace is taken down and a final backup is kept for {1, plural, one {# day} other {# days}}. An owner or admin of your Trenova account can keep the plan before then.",
+			day,
+			end.FinalBackupDays,
+		)
+	default:
+		return nil
+	}
+	return &notification.Notification{
+		EventType:  EventPlanChanged,
+		Priority:   priority,
+		Title:      title,
+		Message:    message,
+		Source:     noticeSource,
+		SubjectKey: notification.SubjectKey(subjectKind, planEndSubject),
+		Data: map[string]any{
+			"link":   PlanPath,
+			"change": string(end.Kind),
+			"endsAt": end.EndsAt,
+		},
+	}
 }
 
 func notice(

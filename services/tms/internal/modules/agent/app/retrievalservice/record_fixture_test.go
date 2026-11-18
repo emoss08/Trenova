@@ -6,15 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
-	"github.com/emoss08/trenova/internal/testutil/retrievaltest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/testutil/ollamaembed"
+	"github.com/emoss08/trenova/internal/testutil/retrievaltest"
 	"github.com/stretchr/testify/require"
 )
 
 var record = flag.Bool("record", false,
-	"re-record the retrieval embedding fixture from an Ollama nomic-embed-text endpoint")
+	"re-record the retrieval embedding fixture from the shipped embedding image")
 
 const (
 	serviceRoot   = "../../../../.."
@@ -48,7 +48,7 @@ func TestRecordRetrievalEmbeddingFixture(t *testing.T) {
 	dimensions := airetrieval.Dimensions768
 	embed := ollamaembed.New(ollamaembed.Params{
 		BaseURL:    baseURL,
-		Model:      agentevalgate.EmbeddingFixtureModel,
+		Model:      agentevalgate.ShippedEmbeddingModel,
 		Dimensions: dimensions,
 		Timeout:    recordTimeout,
 	}).Embed
@@ -60,9 +60,10 @@ func TestRecordRetrievalEmbeddingFixture(t *testing.T) {
 	require.NoError(
 		t,
 		err,
-		"is Ollama serving %s at %s?",
-		agentevalgate.EmbeddingFixtureModel,
+		"is the shipped embedding image serving %s at %s? (%s)",
+		agentevalgate.ShippedEmbeddingModel,
 		baseURL,
+		agentevalgate.RunShippedEmbeddingCommand,
 	)
 
 	encoded, err := agentevalgate.MarshalJSON(fixture)

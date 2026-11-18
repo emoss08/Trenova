@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -69,13 +71,18 @@ func NewRLSConnection(t *testing.T, admin *keel.DB, dsn string) *postgres.Connec
 	_, err = postgres.ProvisionRLS(ctx, admin, database)
 	require.NoError(t, err)
 
+	logger := zaptest.NewLogger(t)
+	registry, err := metrics.NewRegistry(&monitoringconfig.Config{}, logger)
+	require.NoError(t, err)
+
 	lifecycle := fxtest.NewLifecycle(t)
 	conn, err := postgres.NewConnection(postgres.ConnectionParams{
 		Lifecycle:       lifecycle,
 		AppConfig:       &appconfig.Config{Name: "trenova-rls-test"},
 		DatabaseConfig:  database,
 		ReportingConfig: &reportingconfig.Config{},
-		Logger:          zaptest.NewLogger(t),
+		Logger:          logger,
+		Metrics:         registry,
 		Observers:       shapetest.Observers(t),
 	})
 	require.NoError(t, err)

@@ -40,7 +40,10 @@ paths:
           description: The desired spec and its revision.
           headers:
             ETag:
-              description: The revision, quoted; send it back as `If-None-Match`.
+              description: |
+                Opaque, quoted: it changes when the revision or what the control plane adds when
+                serving (`account`, `support`, `systemEmail`) changes. Send it back as
+                `If-None-Match`.
               schema:
                 type: string
           content:
@@ -116,6 +119,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UsageAck"
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/telemetry:
+    post:
+      operationId: reportTelemetry
+      summary: Report what the instance is using
+      description: |
+        What the instance's machine, its parts and its data used, one sample a minute. The
+        operator sends the samples it has not yet had accepted, oldest first, at most 30 at a
+        time, so a short outage is caught up and a long one loses its oldest minutes. The control
+        plane keeps one sample per instance per minute: a repeat for a minute it holds replaces
+        it, so sending again after a lost answer is safe. A sample older than 2 hours or more
+        than 5 minutes ahead of the control plane's clock is refused. Nothing here bills or
+        entitles; it is what the console and the staff admin draw, and what attention rules read.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelemetryReport"
+      responses:
+        "204":
+          description: Recorded.
         "400":
           $ref: "#/components/responses/Invalid"
         "401":
@@ -220,11 +251,14 @@ paths:
       summary: The commands waiting for the instance
       description: |
         What the control plane asks the instance to do besides converging to its spec: restart
-        Trenova or one part of it, or collect a part's recent log lines for staff. The instance
-        takes no inbound connections, so it asks: with each status report, or sooner. A command is
-        listed until the instance answers it with `completeCommand` or it expires (15 minutes
-        after it was issued); at most 20, oldest first. Carry each out once, by ID: a command
-        listed again was not answered yet, not issued again.
+        Trenova or one part of it, collect a part's recent log lines, or collect a log bundle. The
+        instance takes no inbound connections, so it asks: with each status report, or sooner. A
+        command is listed until the instance answers it with `completeCommand` or it expires (15
+        minutes after it was issued); at most 20, oldest first. Carry each out once, by ID: a
+        command listed again was not answered yet, not issued again. A `collect_log_bundle` may
+        take longer than that: its outcome is the bundle's, reported with `updateLogBundle`, and
+        an answer to an expired command is not found. `emailEvents` says whether system email
+        events wait for `listEmailEvents`.
       responses:
         "200":
           description: The commands, oldest first; empty when there are none.
@@ -270,6 +304,127 @@ paths:
         "429":
           $ref: "#/components/responses/RateLimited"
 
+  /v1/log-bundles:
+    post:
+      operationId: registerLogBundle
+      summary: Register a log bundle asked for inside Trenova
+      description: |
+        An administrator asked for the instance's logs inside Trenova. The operator registers the
+        request here before it collects anything, and reports how it goes with `updateLogBundle`.
+        Registering the same `requestId` again answers the same `bundleId` with `201`, so an
+        operator that restarted mid-way never makes a second bundle. A period longer than 7 days,
+        or one whose `until` is not after `since`, is invalid.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogBundleRegistration"
+      responses:
+        "201":
+          description: Registered, or registered before; the bundle's ID either way.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogBundleRegistered"
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/log-bundles/{bundleId}:
+    put:
+      operationId: updateLogBundle
+      summary: Report how a log bundle goes
+      description: |
+        A bundle goes `requested` → `collecting` → `stored`, `failed` or `refused`, and the control
+        plane marks it `expired` when it deletes the zip 30 days after it was stored. The zip is
+        at `support/logs/<bundleId>.zip` in the instance's documents bucket, a zip of one
+        `<component>.log` per source (lines `timestamp pod container message`, oldest first, with
+        every secret the instance holds removed) and a `manifest.json`. Reporting the same status
+        again changes nothing; once a bundle has an outcome, a later report is ignored and answered
+        `204`. A bundle that is not this instance's is not found.
+      parameters:
+        - name: bundleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogBundleUpdate"
+      responses:
+        "204":
+          description: Recorded.
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/email-events:
+    get:
+      operationId: listEmailEvents
+      summary: The system email events waiting for the instance
+      description: |
+        Bounces and spam complaints for email the instance sent through Trenova's sender. The
+        provider's webhook is Trenova's, one for every instance, so it posts to the control plane,
+        which verifies each delivery and keeps it for the instance the message's
+        `trenova_instance` tag names. Fetch them when `listCommands` says `emailEvents`, deliver
+        each payload to the TMS, and acknowledge the ones delivered with `ackEmailEvents`; until
+        then they are listed again. At most 50, oldest first. Unacknowledged events are deleted 7
+        days after they arrived.
+      responses:
+        "200":
+          description: The events, oldest first; empty when none wait.
+          headers:
+            Cache-Control:
+              description: Always `no-store`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailEventList"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/email-events/ack:
+    post:
+      operationId: ackEmailEvents
+      summary: Acknowledge system email events
+      description: |
+        The events the TMS took, by ID: 1 to 50, each once. They are deleted. An ID that is not
+        this instance's, or was acknowledged already, is ignored, so acknowledging again is safe.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailEventAck"
+      responses:
+        "204":
+          description: Acknowledged.
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
 components:
   responses:
     Invalid:
@@ -280,6 +435,15 @@ components:
             $ref: "#/components/schemas/Problem"
     NotFound:
       description: Nothing by that ID is this instance's.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Conflict:
+      description: |
+        `conflict`: the request does not fit what the control plane holds, such as a log bundle
+        already in flight for the instance or the day's 10 bundles used. `detail` is a sentence a
+        person can read; pass it on, and do not retry the same request.
       content:
         application/problem+json:
           schema:
@@ -305,13 +469,72 @@ components:
   schemas:
     CommandList:
       type: object
-      required: [commands]
+      required: [commands, emailEvents]
       properties:
         commands:
           type: array
           maxItems: 20
           items:
             $ref: "#/components/schemas/Command"
+        emailEvents:
+          type: boolean
+          description: |
+            Whether system email events (bounces and spam complaints for email the instance sent
+            through Trenova's sender) wait for the instance. Fetch them with `listEmailEvents` only
+            when this is true.
+
+    EmailEventList:
+      type: object
+      required: [events]
+      properties:
+        events:
+          type: array
+          maxItems: 50
+          description: At most 50, oldest first; empty when none wait.
+          items:
+            $ref: "#/components/schemas/EmailEvent"
+
+    EmailEvent:
+      type: object
+      description: |
+        A bounce or spam complaint for a message the instance sent through Trenova's sender, as
+        the provider's webhook delivered it to the control plane.
+      required: [id, provider, payload, receivedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The event's ID, to acknowledge it with.
+        provider:
+          type: string
+          enum: [Resend, Postmark]
+          x-enum-varnames: [EmailEventResend, EmailEventPostmark]
+          description: The provider whose webhook delivered it.
+        payload:
+          type: string
+          maxLength: 65536
+          description: |
+            The provider's webhook body, verbatim (at most 65536 bytes): a Resend `email.bounced`
+            or `email.complained` event, or a Postmark `Bounce` or `SpamComplaint` record. The
+            control plane verified its signature; the instance parses it as it parses its own
+            webhooks. It names the instance's recipients: never log it.
+        receivedAt:
+          type: string
+          format: date-time
+          description: When the control plane received it.
+
+    EmailEventAck:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
 
     Command:
       type: object
@@ -322,12 +545,16 @@ components:
           format: uuid
         kind:
           type: string
-          enum: [restart, collect_logs]
+          enum: [restart, collect_logs, collect_log_bundle]
+          x-enum-varnames: [Restart, CollectLogs, CollectLogBundle]
           description: |
             `restart` restarts the named component's workload, or every Trenova workload when no
             component is named. The database is never restarted this way: a restart of everything
             leaves it running, and naming it fails. `collect_logs` returns the named component's
-            most recent log lines.
+            most recent log lines. `collect_log_bundle` collects every component's kept lines
+            between `since` and `until` into a zip in the instance's own object storage, reports
+            the bundle's progress with `updateLogBundle`, and answers the command once the bundle
+            is stored, has failed or was refused.
         component:
           type: string
           maxLength: 64
@@ -335,11 +562,53 @@ components:
         lines:
           type: integer
           minimum: 1
-          maximum: 500
-          description: For `collect_logs`, how many of the most recent lines to return.
+          maximum: 5000
+          description: |
+            For `collect_logs`, how many of the most recent lines to return. With log keeping on,
+            the instance reads them from what it keeps (7 days) across every pod the component
+            had; with it off, from the running pods only, at most 500 per container. Either way
+            the output stops at 262,144 bytes, keeping the newest lines.
+        bundleId:
+          type: string
+          format: uuid
+          description: For `collect_log_bundle`, the bundle the control plane made for it.
+        since:
+          type: string
+          format: date-time
+          description: For `collect_log_bundle`, the start of the period, inclusive.
+        until:
+          type: string
+          format: date-time
+          description: |
+            For `collect_log_bundle`, the end of the period, exclusive; at most 7 days after
+            `since`.
+        requestedBy:
+          $ref: "#/components/schemas/RequestedBy"
         issuedAt:
           type: string
           format: date-time
+
+    RequestedBy:
+      type: object
+      description: |
+        Who asked for a `collect_logs` or `collect_log_bundle` command; required on both. A
+        customer's own request (an owner or admin in the console) is carried out as asked. A staff
+        request is carried out only while that staff address holds a live support access grant on
+        the instance, which the instance checks itself and audits; without one the command is
+        answered `refused` and nothing is collected.
+      required: [kind, email]
+      properties:
+        kind:
+          type: string
+          enum: [customer, staff]
+          x-enum-varnames: [RequestedByCustomer, RequestedByStaff]
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        name:
+          type: string
+          maxLength: 200
 
     CommandResult:
       type: object
@@ -347,15 +616,117 @@ components:
       properties:
         status:
           type: string
-          enum: [succeeded, failed]
+          enum: [succeeded, failed, refused]
+          x-enum-varnames: [CommandResultStatusSucceeded, CommandResultStatusFailed, CommandResultStatusRefused]
+          description: |
+            `refused` when a staff request found no live support access grant on the instance;
+            nothing was collected.
         message:
           type: string
           maxLength: 500
-          description: A short explanation, required when failed. One line, no control characters.
+          description: |
+            A short explanation, required when failed or refused. One line, no control characters.
         output:
           type: string
           maxLength: 262144
           description: For `collect_logs`, the lines, newest last, with secrets removed.
+
+    LogBundleRegistration:
+      type: object
+      description: |
+        A log bundle an administrator asked for inside Trenova, registered by the operator before
+        it collects anything.
+      required: [requestId, since, until, requestedBy]
+      properties:
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[A-Za-z0-9_-]{1,100}$'
+          description: The request's ID in the TMS. Registering the same ID again answers the same bundle.
+        since:
+          type: string
+          format: date-time
+          description: The start of the period, inclusive.
+        until:
+          type: string
+          format: date-time
+          description: The end of the period, exclusive; at most 7 days after `since`.
+        requestedBy:
+          $ref: "#/components/schemas/LogRequester"
+
+    LogRequester:
+      type: object
+      description: The Trenova administrator who asked.
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        name:
+          type: string
+          maxLength: 200
+
+    LogBundleRegistered:
+      type: object
+      required: [bundleId]
+      properties:
+        bundleId:
+          type: string
+          format: uuid
+
+    LogBundleUpdate:
+      type: object
+      description: |
+        How a log bundle goes. `collecting` once the operator starts; then one outcome: `stored`
+        with `objectKey`, `sizeBytes` and `components`; `failed` or `refused` with `message`.
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [collecting, stored, failed, refused]
+          x-enum-varnames: [LogBundleCollecting, LogBundleStored, LogBundleFailed, LogBundleRefused]
+        objectKey:
+          type: string
+          maxLength: 200
+          pattern: '^support/logs/[0-9a-f-]{36}\.zip$'
+          description: |
+            Where the zip is, in the instance's documents bucket: `support/logs/<bundleId>.zip`.
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: The zip's size.
+        components:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/LogBundleComponent"
+        message:
+          type: string
+          maxLength: 500
+          description: |
+            Why it failed or was refused, a sentence a person can read. One line, no control
+            characters.
+
+    LogBundleComponent:
+      type: object
+      description: One source in the bundle, as its `<component>.log` file.
+      required: [component, lines, truncated]
+      properties:
+        component:
+          type: string
+          maxLength: 64
+        lines:
+          type: integer
+          format: int64
+          minimum: 0
+        truncated:
+          type: boolean
+          description: |
+            Whether the source was cut at a size cap (its own, or the bundle's). A cut keeps the
+            newest lines; the manifest says where the kept lines start.
 
     Problem:
       type: object
@@ -380,7 +751,7 @@ components:
 
     ProblemCode:
       type: string
-      enum: [validation_failed, invalid_request, unauthenticated, rate_limited, not_found, internal, unavailable]
+      enum: [validation_failed, invalid_request, unauthenticated, rate_limited, not_found, conflict, internal, unavailable]
 
     FieldError:
       type: object
@@ -432,6 +803,12 @@ components:
         hostname:
           type: string
           description: Where the instance is served, at the root path.
+        customHostname:
+          type: string
+          description: >
+            The customer's own address for the instance, served beside `hostname`, and the address
+            links are built with while it is set. Absent when the instance has none, or while its
+            own address has fallen back. `hostname` is always served and never changes.
         release:
           $ref: "#/components/schemas/SpecRelease"
         plan:
@@ -450,7 +827,9 @@ components:
             type: string
         components:
           type: array
-          description: Extra workloads to run, such as `docling` for Document Intelligence.
+          description: |
+            Extra workloads to run: `docling` with Document Intelligence, `embedding` (the embedding
+            service) with Trenova AI.
           items:
             type: string
         aiProvider:
@@ -471,6 +850,154 @@ components:
           $ref: "#/components/schemas/SpecDatabase"
         restore:
           $ref: "#/components/schemas/SpecRestore"
+        retiredDatabases:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          description: |
+            Databases of this instance that are no longer needed: remove each one's cluster and its
+            volumes. An item is a generation, or the empty string for the instance's first database.
+            Never the database the instance runs on (`database`), the one being restored
+            (`restore.generation`) or the one a restore reads from (`restore.sourceGeneration`):
+            the operator removes none of those, says so in the status report's `message`, and
+            leaves them be. Removing one that is already gone is done. Backups in the backups
+            bucket are not touched.
+          items:
+            type: string
+            pattern: '^(r[0-9a-f]{8})?$'
+        addonEndings:
+          type: array
+          maxItems: 50
+          description: |
+            The add-ons whose removal is scheduled, each with when it ends. They stay in `addons`
+            and their features stay on until then. Absent when none is ending. The operator sends
+            the list to the TMS with the features on every tick, an empty list when this is
+            absent, so the instance's list is replaced each time.
+          items:
+            $ref: "#/components/schemas/SpecAddonEnding"
+        account:
+          $ref: "#/components/schemas/SpecAccount"
+        support:
+          $ref: "#/components/schemas/SpecSupport"
+
+    SpecSupport:
+      type: object
+      description: |
+        Trenova support access: the keys that sign the assertions Trenova staff enter the instance
+        with, which instance this is, and the one email domain a grant may name. The control plane
+        adds it to every spec when it serves one; it is not part of a stored revision, and the
+        spec's `ETag` changes with it, so a rotated key set reaches every operator on its next
+        poll. Absent when the control plane has no staff domain configured: support access is off,
+        and the operator then sends the instance nothing.
+
+        The operator delivers it to the TMS as it is (`PUT /managed/v1/support-access` with
+        `instanceId`, `staffDomain` and `keys`), whenever what the TMS holds differs. Keys rotate
+        by overlap: a new key is served beside the old one before it signs, and the old one is
+        served for 7 days after it stops, so delivering every set as served never refuses an
+        assertion in flight.
+
+        The assertion (a compact JWS, EdDSA, protected header `{alg: EdDSA, kid, typ:
+        support-assertion+jwt}` and nothing else) carries exactly `iss` (`trenova-control-plane`),
+        `aud` (`instanceId`), `sub` (the staff member's address at `staffDomain`), `name` (at most
+        100 characters), `org` (the organization's ID on the instance), `jti` (fresh, 16 to 64 of
+        `[A-Za-z0-9_-]`), `iat` and `exp` (at most 60 seconds after `iat`). The staff member's
+        browser posts it as the form field `assertion` to `https://<hostname>/api/v1/support/enter`;
+        it is never put in a URL.
+      required: [instanceId, staffDomain, keys]
+      properties:
+        instanceId:
+          type: string
+          description: The instance's ID in the control plane, the audience of every assertion.
+        staffDomain:
+          type: string
+          maxLength: 253
+          description: |
+            The lower-case email domain of Trenova staff, the only one a grant may name: exactly
+            this domain, never a subdomain of it.
+        keys:
+          type: array
+          minItems: 1
+          maxItems: 4
+          description: |
+            The keys whose assertions the instance accepts, newest first, each with its own
+            `kid`. The newest signs; the others stopped signing within the last 7 days.
+          items:
+            $ref: "#/components/schemas/SupportKey"
+
+    SupportKey:
+      type: object
+      description: An Ed25519 public JSON Web Key (RFC 8037).
+      required: [kid, kty, crv, alg, use, x]
+      properties:
+        kid:
+          type: string
+          maxLength: 64
+          description: The key's ID, which an assertion's header names, such as `cp-20261116-a1b2c3`.
+        kty:
+          type: string
+          description: Always `OKP`.
+        crv:
+          type: string
+          description: Always `Ed25519`.
+        alg:
+          type: string
+          description: Always `EdDSA`.
+        use:
+          type: string
+          description: Always `sig`.
+        x:
+          type: string
+          description: The 32-byte public key, unpadded base64url.
+
+    SpecAddonEnding:
+      type: object
+      description: An add-on whose removal is scheduled, and when it ends.
+      required: [addon, endsAt]
+      properties:
+        addon:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: The add-on's code, as the TMS catalog names it (`ACC`, `AI`).
+        endsAt:
+          type: string
+          format: date-time
+          description: When the add-on leaves the plan.
+
+    SpecAccount:
+      type: object
+      description: |
+        Where the customer manages the instance in the Trenova console. The control plane adds it
+        to every spec when it serves one, from where its console is served; it is not part of a
+        stored revision. The spec's `ETag` changes with it as well as with the revision, so a
+        console that moves reaches every operator. An operator that receives a spec without it
+        sends the TMS no plan URL, and the TMS keeps the one it holds.
+      required: [planUrl, finalBackupDays]
+      properties:
+        planUrl:
+          type: string
+          maxLength: 2048
+          description: |
+            The absolute http or https address of the instance's plan page in the console, where
+            add-ons are bought. The operator passes it to the TMS with the feature list; the TMS
+            links to it from its own plan page and refuses anything but an absolute http or https
+            address with a host and no user information.
+        finalBackupDays:
+          type: integer
+          format: int32
+          minimum: 1
+          description: |
+            How many days the instance's final backup is kept after the instance is taken down.
+            The operator passes it to the TMS, which says it wherever it tells people what happens
+            when a plan ends.
+        endsAt:
+          type: string
+          format: date-time
+          description: |
+            When the instance's plan ends, present exactly while its owner has set it to end: the
+            end of the period already paid for. The instance runs as it is until then; at that
+            time it is decommissioned (final backup, then teardown). Trenova warns its
+            administrators. Absent once the plan is kept; the `ETag` changes either way.
 
     SpecSystemEmail:
       type: object
@@ -486,10 +1013,9 @@ components:
           pattern: "^[0-9a-f]{64}$"
           description: |
             The lowercase hex SHA-256 of the credential, the same value the instance reports:
-            SHA-256 over `trenova.system-email.v1`, `provider`, `fromAddress`, `fromName`,
-            `apiKey` and `webhookSecret` (empty when absent), joined by a line feed (`\n`), in
-            that order. A new credential has a new fingerprint, which is how a rotation reaches
-            the instance.
+            SHA-256 over `trenova.system-email.v1`, `provider`, `fromAddress`, `fromName` and
+            `apiKey`, joined by a single line feed (`\n`), in that order. A new credential has a
+            new fingerprint, which is how a rotation reaches the instance.
 
     SpecBackupRequest:
       type: object
@@ -514,6 +1040,13 @@ components:
         The database the instance runs on, once a restore has replaced its first one: `generation`
         names it, and it was restored from `sourceGeneration`'s backups (empty for the first
         database) to `targetTime`. Absent while the instance runs on its first database.
+        Naming a database the cluster already holds, stopped, means go back to it: start it, wait
+        until it accepts connections, move the instance to it, then stop the one it ran on. A
+        revision without `database` on an instance that has other databases means go back to the
+        first one, the same way. Whichever is named, every other database of the instance except
+        the one being restored is stopped, on every reconcile, not only after a switch. A
+        `generation` the cluster does not hold, and that `restore` does not name, is refused: the
+        instance stays as it is and the status report's `message` says why.
       required: [generation, sourceGeneration, targetTime]
       properties:
         generation:
@@ -639,7 +1172,7 @@ components:
           description: Uptime promised, in basis points (9950 is 99.5%). Absent when there is no SLA.
         support:
           type: string
-          enum: [email, business_hours, priority]
+          enum: [email, business_hours, priority, contracted]
 
     SpecPlacement:
       type: object
@@ -672,7 +1205,7 @@ components:
           description: The TMS meter this allowance limits; absent for an instance counter.
         unit:
           type: string
-          enum: [count, cents, bytes]
+          enum: [count, bytes]
         quantity:
           type: integer
           format: int64
@@ -725,6 +1258,124 @@ components:
           $ref: "#/components/schemas/BackupHealth"
         restore:
           $ref: "#/components/schemas/RestoreProgress"
+        operator:
+          $ref: "#/components/schemas/OperatorStatus"
+        supportGrants:
+          type: array
+          maxItems: 100
+          description: |
+            Every live Trenova support access grant on the instance, across its organizations, as
+            the TMS lists them now: the complete list, at most 100. The control plane replaces what
+            it holds for the instance with exactly this list, in the transaction that records the
+            report, so an empty list says no grant is live. Left out (an operator that does not
+            read them, or could not this time), the last list reported stands. Staff see the list,
+            and the control plane signs an assertion to enter only for a grant on it that names
+            the staff member and has not ended; the instance checks the grant again on entry, so a
+            grant revoked since the last report is refused there.
+          items:
+            $ref: "#/components/schemas/SupportGrant"
+        systemEmailFingerprint:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: |
+            The fingerprint of the system email sender the instance holds now, as the TMS reports it
+            (`GET /managed/v1/system-email`), the same value as the spec's `systemEmail.fingerprint`
+            once the instance has taken it up. Left out when the instance holds none or the operator
+            could not read it this time; either way the instance is not counted as holding the
+            current sender. Each report replaces the last: nothing reported is stored as nothing.
+        databases:
+          type: array
+          maxItems: 20
+          description: |
+            The databases the cluster holds for this instance, the live one first. The operator
+            sends the list with the first status report after it starts and whenever it differs
+            from the last one the control plane accepted; left out, the control plane keeps the
+            list it has.
+          items:
+            $ref: "#/components/schemas/DatabaseState"
+        refused:
+          $ref: "#/components/schemas/RefusedRevision"
+        capabilities:
+          type: array
+          description: >
+            What this operator can do that an older one could not, so the control plane offers a
+            feature only to an instance that can carry it out. An operator sends every capability
+            it has on every report; one that predates this field sends none.
+          items:
+            type: string
+            enum: [custom_hostname]
+            x-enum-varnames: [CapabilityCustomHostname]
+
+    SupportGrant:
+      type: object
+      description: One live support access grant, as the TMS holds it.
+      required: [id, organizationId, organizationName, staffEmail, scope, expiresAt]
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: The grant's ID on the instance. Each grant is listed once.
+        organizationId:
+          type: string
+          pattern: '^org_[0-9A-HJKMNP-TV-Z]{26}$'
+          description: The organization's ID on the instance, which an assertion under this grant names as `org`.
+        organizationName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: The organization's name, which staff are shown.
+        staffEmail:
+          type: string
+          maxLength: 254
+          description: The staff member's address the grant names, lower-case ASCII, as the TMS stores it.
+        scope:
+          type: string
+          enum: [read_only, full]
+          description: "`read_only` lets support read only; `full` acts as an administrator, less what the TMS keeps from support."
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the grant ends.
+
+    OperatorStatus:
+      type: object
+      description: |
+        The operator itself: the release it runs and its move to the release the spec names. The
+        operator follows the instance's release and moves first: it brings Trenova to a new release
+        only once it runs that release itself, so `upgrade` says why `version` lags the spec.
+      required: [version]
+      properties:
+        version:
+          type: string
+          maxLength: 64
+          description: The release the operator runs, such as `0.12.2`.
+        upgrade:
+          $ref: "#/components/schemas/OperatorUpgrade"
+        message:
+          type: string
+          maxLength: 500
+          description: |
+            A short explanation, one line: why an upgrade failed, or a node manifest that pins the
+            operator's version.
+
+    OperatorUpgrade:
+      type: object
+      description: |
+        The operator's move to the spec's release, present while it is under way or after it failed.
+        `upgrading` while the new operator is installed and takes over. `failed` once it could not
+        be (a version the registry does not have, or one that never became ready): the operator
+        stays on its version, Trenova stays on its own, and neither is tried again until the spec
+        names another release.
+      required: [version, phase]
+      properties:
+        version:
+          type: string
+          maxLength: 64
+          description: The release the operator is moving to.
+        phase:
+          type: string
+          enum: [upgrading, failed]
 
     UsageReport:
       type: object
@@ -753,7 +1404,7 @@ components:
           format: int64
           minimum: 0
           maximum: 1000000000000000
-          description: In the meter's unit (a count, credit cents or bytes), at most 10^15.
+          description: In the meter's unit (a count or bytes), at most 10^15.
 
     UsageAck:
       type: object
@@ -788,7 +1439,7 @@ components:
           type: string
         unit:
           type: string
-          enum: [count, cents, bytes]
+          enum: [count, bytes]
         quantity:
           type: integer
           format: int64
@@ -802,6 +1453,165 @@ components:
         stopped:
           type: boolean
           description: Whether the metered action must stop.
+
+    TelemetryReport:
+      type: object
+      required: [samples]
+      properties:
+        samples:
+          type: array
+          minItems: 1
+          maxItems: 30
+          description: Oldest first, one per minute, no minute twice.
+          items:
+            $ref: "#/components/schemas/TelemetrySample"
+
+    TelemetrySample:
+      type: object
+      description: |
+        One minute of the instance. Every figure is what was read at `at`, not an average, except
+        `cpuMillicores`, which is the rate over the reading's own window as the cluster's metrics
+        report it. A figure the operator could not read is left out, never sent as zero.
+      required: [at, parts]
+      properties:
+        at:
+          type: string
+          format: date-time
+          description: The minute the sample is for, in UTC, with zero seconds.
+        machine:
+          $ref: "#/components/schemas/MachineUsage"
+        parts:
+          type: array
+          maxItems: 50
+          description: |
+            One entry per part of Trenova the instance runs (the same names as the status
+            report's `components`), each once.
+          items:
+            $ref: "#/components/schemas/PartUsage"
+        data:
+          $ref: "#/components/schemas/DataUsage"
+
+    MachineUsage:
+      type: object
+      description: The machine the instance runs on, as a whole.
+      properties:
+        cpuMillicores:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Processor in use, in thousandths of a core.
+        cpuCapacityMillicores:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Processor the machine has to give.
+        memoryBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Memory in use (working set).
+        memoryCapacityBytes:
+          type: integer
+          format: int64
+          minimum: 1
+        diskBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Disk in use on the volume that holds the instance's data.
+        diskCapacityBytes:
+          type: integer
+          format: int64
+          minimum: 1
+
+    PartUsage:
+      type: object
+      required: [name, ready]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: "^[a-z][a-z0-9-]*$"
+          description: The part's name, as in the status report's `components`.
+        ready:
+          type: boolean
+          description: Whether every copy of the part that should run is ready.
+        replicas:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1000
+          description: Copies that should run.
+        readyReplicas:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1000
+        restarts:
+          type: integer
+          format: int64
+          minimum: 0
+          description: |
+            Restarts of the part's containers since they were created, summed over its copies:
+            a counter, so the difference between two samples is the restarts in between, and a
+            lower value than the last means the part was replaced. It counts a container
+            starting again in place (a crash); a copy that is replaced starts from zero, so see
+            `startedAt` for every time the part started again.
+        startedAt:
+          type: string
+          format: date-time
+          description: |
+            When the newest of the part's running containers started. It moves forward whenever
+            the part starts again, however that came about: a container restarting in place, a
+            restart that was asked for, an update, a copy moved to another machine. Absent while
+            none of its containers runs, and from an operator that cannot read the part's copies.
+        cpuMillicores:
+          type: integer
+          format: int64
+          minimum: 0
+        cpuLimitMillicores:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The most the part may use; absent when it has no limit.
+        memoryBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        memoryLimitBytes:
+          type: integer
+          format: int64
+          minimum: 1
+        version:
+          type: string
+          maxLength: 128
+          description: The image tag the part runs, without its registry or name.
+
+    DataUsage:
+      type: object
+      description: How much the instance's data takes, each where it could be read.
+      properties:
+        databaseBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: The size of the instance's database.
+        documentsBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Documents and files stored.
+        searchBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: The search index.
+        logsBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Logs kept on the instance.
 
     AdministratorStatus:
       type: object
@@ -822,8 +1632,9 @@ components:
       type: object
       description: |
         The backup taken after the instance applied a `decommissioned` spec, reported with that
-        revision as `appliedRevision`. It is kept for 7 days after the instance is torn down.
-      required: [id, completedAt, sizeBytes]
+        revision as `appliedRevision`. It is kept for the control plane's final backup retention
+        (`account.finalBackupDays`) after the instance is torn down.
+      required: [id, completedAt]
       properties:
         id:
           type: string
@@ -836,7 +1647,11 @@ components:
         sizeBytes:
           type: integer
           format: int64
-          minimum: 0
+          minimum: 1
+          description: |
+            The backup's size, only when the operator knows it. The backup tool the operator
+            uses does not report one, so it is left out rather than sent as zero; staff are then
+            told nothing about its size.
 
     BackupHealth:
       type: object
@@ -871,6 +1686,17 @@ components:
           description: Why archiving or the last backup failed, in one line.
         request:
           $ref: "#/components/schemas/BackupRequestStatus"
+        backups:
+          type: array
+          maxItems: 100
+          description: |
+            The base backups the cluster knows of, newest first: the ones its retention still keeps,
+            and any that is running or failed in the last 7 days. The operator sends the list with
+            the first status report after it starts and whenever the list differs from the last one
+            the control plane accepted; left out, the control plane keeps the list it has. A backup
+            that is no longer in a newer list has been removed by retention.
+          items:
+            $ref: "#/components/schemas/BackupEntry"
 
     BackupRequestStatus:
       type: object
@@ -894,6 +1720,46 @@ components:
           type: string
           maxLength: 500
 
+    BackupEntry:
+      type: object
+      description: One base backup of the instance's database.
+      required: [id, phase, startedAt]
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: The backup's identifier in the instance's backup store.
+        phase:
+          type: string
+          enum: [running, completed, failed]
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          description: When it finished; absent while it runs.
+        origin:
+          type: string
+          enum: [scheduled, requested, final]
+          description: |
+            Why it was taken: on the daily schedule, because a spec's `backup` asked for it, or as
+            the final backup of a decommissioned instance.
+        requestId:
+          type: string
+          maxLength: 64
+          description: The `id` of the spec's `backup` that asked for it, for a requested backup.
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The backup's size, only when the operator knows it; never sent as zero.
+        message:
+          type: string
+          maxLength: 500
+          description: Why it failed, in one line.
+
     RestoreProgress:
       type: object
       description: |
@@ -914,6 +1780,61 @@ components:
         message:
           type: string
           maxLength: 500
+
+    DatabaseState:
+      type: object
+      description: One database of the instance, as the cluster holds it.
+      required: [generation, state, live]
+      properties:
+        generation:
+          type: string
+          pattern: '^(r[0-9a-f]{8})?$'
+          description: Its generation; the empty string is the instance's first database.
+        state:
+          type: string
+          enum: [running, starting, stopped, restoring, removing]
+          description: |
+            `running` accepts connections, `starting` should run and is not accepting connections
+            yet, `stopped` is kept with its volumes and no server, `restoring` is a restore's copy
+            still being prepared, `removing` is being deleted.
+        live:
+          type: boolean
+          description: Whether the instance's application is connected to this one.
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The size of its volumes, only when the operator can read it.
+        createdAt:
+          type: string
+          format: date-time
+
+    RefusedRevision:
+      type: object
+      description: |
+        The newest revision the operator has read and will not apply as it is written, and why.
+        The instance stays as it was. Sent with every status report while it stands, and left
+        out once a later revision has been applied or the cause is gone. It is how the control
+        plane learns that something it asked for will never happen, instead of waiting for it.
+      required: [revision, code, reason]
+      properties:
+        revision:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The revision that was refused.
+        code:
+          type: string
+          enum: [database_not_held, first_database_removed, invalid]
+          description: |
+            `database_not_held`: `database` names a generation the cluster does not hold and
+            `restore` does not name. `first_database_removed`: the revision has no `database`
+            and the instance's first database has been removed. `invalid`: the revision cannot
+            be turned into what to run, for any other reason.
+        reason:
+          type: string
+          maxLength: 500
+          description: One line a staff member can read.
 
     InstanceStorage:
       type: object
@@ -1024,15 +1945,6 @@ components:
           maxLength: 40
           description: |
             The brand in the display name. The instance sends as `<organization name> via <fromName>`.
-        webhookSecret:
-          type: string
-          minLength: 1
-          maxLength: 512
-          pattern: "^[\\x21-\\x7E]+$"
-          description: |
-            What the provider's delivery webhooks prove themselves with: the Svix signing secret
-            (`whsec_…`) for Resend, `user:password` of the webhook's basic authentication for
-            Postmark. Absent when bounces are not reported to the instance.
 
     IssuedCertificate:
       type: object

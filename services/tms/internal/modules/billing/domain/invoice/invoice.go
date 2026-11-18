@@ -151,6 +151,7 @@ type InvoiceLine struct {
 	LineNumber        int             `json:"lineNumber"        keel:"line_number,dimension"`
 	Type              InvoiceLineType `json:"type"              keel:"type"`
 	Description       string          `json:"description"       keel:"description"`
+	TypedDescription  bool            `json:"-"                 keel:"typed_description,noreport"`
 	Quantity          decimal.Decimal `json:"quantity"          keel:"quantity"`
 	UnitPrice         decimal.Decimal `json:"unitPrice"         keel:"unit_price,format=money"`
 	Amount            decimal.Decimal `json:"amount"            keel:"amount,format=money"`

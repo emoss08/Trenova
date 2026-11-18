@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
@@ -36,7 +37,11 @@ func (s *Service) RecordExpiries(ctx context.Context, now int64) (*ExpirySweepRe
 
 		marked, markErr := s.grants.MarkExpiryRecorded(scoped, grant, now)
 		if markErr != nil {
-			return result, fmt.Errorf("record the expiry of support grant %s: %w", grant.ID, markErr)
+			return result, fmt.Errorf(
+				"record the expiry of support grant %s: %w",
+				grant.ID,
+				markErr,
+			)
 		}
 		if !marked {
 			continue
@@ -51,11 +56,19 @@ func (s *Service) RecordExpiries(ctx context.Context, now int64) (*ExpirySweepRe
 			after:      grantView(grant, now),
 			comment:    "Trenova support access for " + grant.StaffEmail + " ended on its own",
 		})
+		s.notify(scoped, &supportaccessports.Notice{
+			Kind:       supportaccessports.NoticeExpired,
+			TenantInfo: tenantInfo,
+			Grant:      grant,
+		})
 		result.Recorded++
 	}
 
 	if result.Recorded > 0 {
-		s.l.Info("recorded support grants that ended on their own", zap.Int("grants", result.Recorded))
+		s.l.Info(
+			"recorded support grants that ended on their own",
+			zap.Int("grants", result.Recorded),
+		)
 	}
 	return result, nil
 }

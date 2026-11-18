@@ -86,6 +86,7 @@ func (n *Notification) FoldOccurrence(previous map[string]any) {
 }
 
 func (n *Notification) Absorb(next *Notification, now int64) {
+	next.fillUnset()
 	next.FoldOccurrence(n.Data)
 
 	n.EventType = next.EventType

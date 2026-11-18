@@ -3882,6 +3882,7 @@ var invoiceLinesTable = schema.Table{
 		{Name: "line_number", Quoted: `"line_number"`, Field: "LineNumber", Kind: schema.KindInt64, Flags: 0, Label: `Line Number`, JSON: `lineNumber`, Report: &reportDimInteger},
 		{Name: "type", Quoted: `"type"`, Field: "Type", Kind: schema.KindString, Flags: 0, Label: `Type`, JSON: `type`, Enum: enumInvoiceLineType[:], Report: &reportDimEnum},
 		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: 0, Label: `Description`, JSON: `description`, Report: &reportDimString},
+		{Name: "typed_description", Quoted: `"typed_description"`, Field: "TypedDescription", Kind: schema.KindBool, Flags: 0, Label: `Typed Description`, Report: &reportDimBoolHidden},
 		{Name: "quantity", Quoted: `"quantity"`, Field: "Quantity", Kind: schema.KindOther, Flags: 0, Label: `Quantity`, JSON: `quantity`, Report: &reportMeasureDecimal},
 		{Name: "unit_price", Quoted: `"unit_price"`, Field: "UnitPrice", Kind: schema.KindOther, Flags: 0, Label: `Unit Price`, JSON: `unitPrice`, Report: &reportMeasureDecimalMoney},
 		{Name: "amount", Quoted: `"amount"`, Field: "Amount", Kind: schema.KindOther, Flags: 0, Label: `Amount`, JSON: `amount`, Report: &reportMeasureDecimalMoney},
@@ -3906,14 +3907,14 @@ var invoiceLinesTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
 	Returning:  nil,
-	Version:    25,
+	Version:    26,
 	AutoID:     0,
-	AutoCreate: 26,
-	AutoUpdate: 27,
+	AutoCreate: 27,
+	AutoUpdate: 28,
 	IDPrefix:   "invl_",
 	New:        newInvoiceLine,
 	NewN:       newNInvoiceLine,
@@ -3938,6 +3939,7 @@ type InvoiceLinesTable struct {
 	LineNumber          keel.Int64Col
 	Type                InvoiceLineTypeCol
 	Description         keel.StringCol
+	TypedDescription    keel.BoolCol
 	Quantity            keelkinds.DecimalDecimalCol
 	UnitPrice           keelkinds.DecimalDecimalCol
 	Amount              keelkinds.DecimalDecimalCol
@@ -3971,24 +3973,25 @@ var InvoiceLines = &InvoiceLinesTable{
 	LineNumber:          keel.Int64Col{Col: keel.Col{Ref: &invoiceLinesRef, Index: 7}},
 	Type:                InvoiceLineTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 8}}},
 	Description:         keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 9}},
-	Quantity:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 10}}},
-	UnitPrice:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 11}}},
-	Amount:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 12}}},
-	AmountMinor:         keel.Int64Col{Col: keel.Col{Ref: &invoiceLinesRef, Index: 13}},
-	AccessorialChargeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 14}}},
-	ChargeCode:          keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 15}},
-	ChargeMethod:        accessorialchargedb.MethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 16}}},
-	RateUnit:            keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 17}},
-	Rate:                keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 18}}},
-	RateBasisAmount:     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 19}}},
-	FormulaTemplateID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 20}}},
-	FormulaTemplateName: keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 21}},
-	AllocationPercent:   keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 22}}},
-	ChargeAllocationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 23}}},
-	AdditionalChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 24}}},
-	Version:             keel.Int64Col{Col: keel.Col{Ref: &invoiceLinesRef, Index: 25}},
-	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &invoiceLinesRef, Index: 26}},
-	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &invoiceLinesRef, Index: 27}},
+	TypedDescription:    keel.BoolCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 10}},
+	Quantity:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 11}}},
+	UnitPrice:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 12}}},
+	Amount:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 13}}},
+	AmountMinor:         keel.Int64Col{Col: keel.Col{Ref: &invoiceLinesRef, Index: 14}},
+	AccessorialChargeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 15}}},
+	ChargeCode:          keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 16}},
+	ChargeMethod:        accessorialchargedb.MethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 17}}},
+	RateUnit:            keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 18}},
+	Rate:                keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 19}}},
+	RateBasisAmount:     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 20}}},
+	FormulaTemplateID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 21}}},
+	FormulaTemplateName: keel.StringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 22}},
+	AllocationPercent:   keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 23}}},
+	ChargeAllocationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 24}}},
+	AdditionalChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceLinesRef, Index: 25}}},
+	Version:             keel.Int64Col{Col: keel.Col{Ref: &invoiceLinesRef, Index: 26}},
+	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &invoiceLinesRef, Index: 27}},
+	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &invoiceLinesRef, Index: 28}},
 }
 
 // BuildInvoiceLines builds the table of invoice_lines for ref. Generated relation and alias methods call it.
@@ -4005,24 +4008,25 @@ func BuildInvoiceLines(r *keel.Ref) *InvoiceLinesTable {
 		LineNumber:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Type:                InvoiceLineTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Description:         keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		Quantity:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 10}}},
-		UnitPrice:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 11}}},
-		Amount:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 12}}},
-		AmountMinor:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		AccessorialChargeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		ChargeCode:          keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		ChargeMethod:        accessorialchargedb.MethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		RateUnit:            keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		Rate:                keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 18}}},
-		RateBasisAmount:     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 19}}},
-		FormulaTemplateID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
-		FormulaTemplateName: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
-		AllocationPercent:   keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 22}}},
-		ChargeAllocationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
-		AdditionalChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
-		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
-		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
-		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
+		TypedDescription:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
+		Quantity:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 11}}},
+		UnitPrice:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Amount:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 13}}},
+		AmountMinor:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		AccessorialChargeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		ChargeCode:          keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
+		ChargeMethod:        accessorialchargedb.MethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		RateUnit:            keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
+		Rate:                keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 19}}},
+		RateBasisAmount:     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 20}}},
+		FormulaTemplateID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		FormulaTemplateName: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
+		AllocationPercent:   keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 23}}},
+		ChargeAllocationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		AdditionalChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
+		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 	}
 }
 
@@ -4437,40 +4441,42 @@ func ptrInvoiceLine(p unsafe.Pointer, c int32) any {
 	case 9:
 		return &r.Description
 	case 10:
-		return &r.Quantity
+		return &r.TypedDescription
 	case 11:
-		return &r.UnitPrice
+		return &r.Quantity
 	case 12:
-		return &r.Amount
+		return &r.UnitPrice
 	case 13:
-		return &r.AmountMinor
+		return &r.Amount
 	case 14:
-		return (*string)(unsafe.Pointer(&r.AccessorialChargeID))
+		return &r.AmountMinor
 	case 15:
-		return &r.ChargeCode
+		return (*string)(unsafe.Pointer(&r.AccessorialChargeID))
 	case 16:
-		return (*string)(unsafe.Pointer(&r.ChargeMethod))
+		return &r.ChargeCode
 	case 17:
-		return &r.RateUnit
+		return (*string)(unsafe.Pointer(&r.ChargeMethod))
 	case 18:
-		return &r.Rate
+		return &r.RateUnit
 	case 19:
-		return &r.RateBasisAmount
+		return &r.Rate
 	case 20:
-		return (*string)(unsafe.Pointer(&r.FormulaTemplateID))
+		return &r.RateBasisAmount
 	case 21:
-		return &r.FormulaTemplateName
+		return (*string)(unsafe.Pointer(&r.FormulaTemplateID))
 	case 22:
-		return &r.AllocationPercent
+		return &r.FormulaTemplateName
 	case 23:
-		return (*string)(unsafe.Pointer(&r.ChargeAllocationID))
+		return &r.AllocationPercent
 	case 24:
-		return (*string)(unsafe.Pointer(&r.AdditionalChargeID))
+		return (*string)(unsafe.Pointer(&r.ChargeAllocationID))
 	case 25:
-		return &r.Version
+		return (*string)(unsafe.Pointer(&r.AdditionalChargeID))
 	case 26:
-		return &r.CreatedAt
+		return &r.Version
 	case 27:
+		return &r.CreatedAt
+	case 28:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -4509,64 +4515,66 @@ func valueInvoiceLine(p unsafe.Pointer, c int32) any {
 	case 9:
 		return r.Description
 	case 10:
-		return r.Quantity
+		return r.TypedDescription
 	case 11:
-		return r.UnitPrice
+		return r.Quantity
 	case 12:
-		return r.Amount
+		return r.UnitPrice
 	case 13:
-		return r.AmountMinor
+		return r.Amount
 	case 14:
+		return r.AmountMinor
+	case 15:
 		if r.AccessorialChargeID == "" {
 			return nil
 		}
 		return string(r.AccessorialChargeID)
-	case 15:
+	case 16:
 		if r.ChargeCode == "" {
 			return nil
 		}
 		return r.ChargeCode
-	case 16:
+	case 17:
 		if r.ChargeMethod == "" {
 			return nil
 		}
 		return string(r.ChargeMethod)
-	case 17:
+	case 18:
 		if r.RateUnit == "" {
 			return nil
 		}
 		return r.RateUnit
-	case 18:
-		return r.Rate
 	case 19:
-		return r.RateBasisAmount
+		return r.Rate
 	case 20:
+		return r.RateBasisAmount
+	case 21:
 		if r.FormulaTemplateID == "" {
 			return nil
 		}
 		return string(r.FormulaTemplateID)
-	case 21:
+	case 22:
 		if r.FormulaTemplateName == "" {
 			return nil
 		}
 		return r.FormulaTemplateName
-	case 22:
-		return r.AllocationPercent
 	case 23:
+		return r.AllocationPercent
+	case 24:
 		if r.ChargeAllocationID == "" {
 			return nil
 		}
 		return string(r.ChargeAllocationID)
-	case 24:
+	case 25:
 		if r.AdditionalChargeID == "" {
 			return nil
 		}
 		return string(r.AdditionalChargeID)
-	case 25:
-		return r.Version
 	case 26:
-		return r.CreatedAt
+		return r.Version
 	case 27:
+		return r.CreatedAt
+	case 28:
 		return r.UpdatedAt
 	}
 	return nil
@@ -4721,6 +4729,8 @@ var enumVoidDisposition = [...]schema.EnumValue{
 var reportDimArray = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueArray, Aggs: schema.AggsCount}
 
 var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimBoolHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
 
 var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
 

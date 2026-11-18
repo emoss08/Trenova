@@ -57,18 +57,21 @@ type AIRetrievalModelChange struct {
 }
 
 type AIRetrievalStatus struct {
-	Availability           *AIRetrievalAvailability   `json:"availability"`
-	Settings               *AIRetrievalSettings       `json:"settings"`
-	Sources                []*AIRetrievalSourceStatus `json:"sources"`
-	MonthStartedAt         int64                      `json:"monthStartedAt"`
-	IndexingCostMonthUSD   string                     `json:"indexingCostMonthUsd"`
-	IndexingUnpricedCalls  int                        `json:"indexingUnpricedCalls"`
-	RetrievalCostMonthUSD  string                     `json:"retrievalCostMonthUsd"`
-	RetrievalUnpricedCalls int                        `json:"retrievalUnpricedCalls"`
-	LastIndexedAt          *int64                     `json:"lastIndexedAt"`
-	ModelChange            *AIRetrievalModelChange    `json:"modelChange"`
-	ConfiguredModelKey     *string                    `json:"configuredModelKey"`
-	ConfiguredModelDiffers bool                       `json:"configuredModelDiffers"`
+	Availability           *AIRetrievalAvailability     `json:"availability"`
+	Settings               *AIRetrievalSettings         `json:"settings"`
+	Sources                []*AIRetrievalSourceStatus   `json:"sources"`
+	MonthStartedAt         int64                        `json:"monthStartedAt"`
+	IndexingCostMonthUSD   string                       `json:"indexingCostMonthUsd"`
+	IndexingUnpricedCalls  int                          `json:"indexingUnpricedCalls"`
+	RetrievalCostMonthUSD  string                       `json:"retrievalCostMonthUsd"`
+	RetrievalUnpricedCalls int                          `json:"retrievalUnpricedCalls"`
+	LastIndexedAt          *int64                       `json:"lastIndexedAt"`
+	ModelChange            *AIRetrievalModelChange      `json:"modelChange"`
+	ConfiguredModelKey     *string                      `json:"configuredModelKey"`
+	ConfiguredModelDiffers bool                         `json:"configuredModelDiffers"`
+	EmbeddingSource        *airetrieval.EmbeddingSource `json:"embeddingSource"`
+	TunedModel             string                       `json:"tunedModel"`
+	ConfiguredModelTuned   bool                         `json:"configuredModelTuned"`
 }
 
 type AIRetrievalReindexEstimate struct {

@@ -139,6 +139,28 @@ func TestCreate_ASecondNoticeAboutAnOpenSubjectJoinsItsRowUnreadAndCounted(t *te
 	assert.Equal(t, "Reno", recent[1].(map[string]any)["label"])
 }
 
+func TestCreate_ARepeatFromACallerThatSetsNeitherPriorityNorDeliveryJoinsItsRow(t *testing.T) {
+	rig := newSubjectRig(t)
+	subject := notification.SubjectKey("managed-plan", "plan-end")
+	bare := func(title string) *notification.Notification {
+		n := rig.notice(subject, title, notification.ReasonDirect)
+		n.Priority, n.DeliveryStatus = "", ""
+
+		return n
+	}
+
+	first := rig.create(bare("Your plan ends on Dec 16, 2026"))
+	second := rig.create(bare("Your plan continues"))
+
+	assert.Equal(t, first.ID, second.ID, "the subject keeps its one open row")
+	rows := rig.list(notification.LensForYou)
+	require.Len(t, rows, 1)
+	assert.Equal(t, "Your plan continues", rows[0].Title)
+	assert.Equal(t, 2, rows[0].OccurrenceCount)
+	assert.Equal(t, notification.PriorityMedium, rows[0].Priority)
+	assert.Equal(t, notification.DeliveryStatusPending, rows[0].DeliveryStatus)
+}
+
 func TestCreate_ANoticeAboutAFinishedSubjectStartsANewRow(t *testing.T) {
 	rig := newSubjectRig(t)
 	subject := notification.SubjectKey("watchtower", "item", "wti_1")

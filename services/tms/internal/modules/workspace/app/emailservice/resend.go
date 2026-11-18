@@ -6,7 +6,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -66,6 +68,9 @@ func (s *ResendSender) Send(
 	}
 	if msg.Text != "" {
 		payload["text"] = msg.Text
+	}
+	if len(msg.Metadata) > 0 {
+		payload["tags"] = resendTags(msg.Metadata)
 	}
 	if len(msg.Attachments) > 0 {
 		attachments := make([]map[string]string, 0, len(msg.Attachments))
@@ -128,4 +133,13 @@ func (s *ResendSender) Send(
 		return nil, rejected
 	}
 	return nil, providerStatusError(ErrNonRetryableSend, "resend", resp.StatusCode, respBody)
+}
+
+func resendTags(metadata map[string]string) []map[string]string {
+	names := slices.Sorted(maps.Keys(metadata))
+	tags := make([]map[string]string, 0, len(names))
+	for _, name := range names {
+		tags = append(tags, map[string]string{"name": name, "value": metadata[name]})
+	}
+	return tags
 }

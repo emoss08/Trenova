@@ -66,7 +66,7 @@ func (a *Asker) For(
 
 	return &Chasing{
 		Filing: filing,
-		can:    reach{email: a.requests.CanSend(ctx, tenant), texts: filing.Texts},
+		can:    reach{email: a.requests.CanSend(ctx, tenant)},
 	}, nil
 }
 

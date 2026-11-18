@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/pageaccess"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +17,7 @@ func TestPageAccessToModel_NamesTheAddOnAKindIsWithheldBy(t *testing.T) {
 	t.Parallel()
 
 	denial := permissionports.NewPlanDenial(platformcatalog.FeatureFactoring)
-	model := pageAccessToModel(&pageaccessservice.Access{
+	model := pageAccessToModel(i18n.EN, &pageaccessservice.Access{
 		Path: "/billing/invoices/$id",
 		Kinds: []pageaccessservice.Kind{
 			{
@@ -56,4 +57,17 @@ func TestPageAccessToModel_NamesTheAddOnAKindIsWithheldBy(t *testing.T) {
 	assert.Nil(t, customer.PlanDenial)
 	assert.Equal(t, gqlmodel.PageAccessDecisionVisible, customer.Fields[0].Decision)
 	assert.Equal(t, gqlmodel.PageAccessDecisionWithheldKind, customer.Fields[1].Decision)
+}
+
+func TestPlanDenialToModel_NamesTheFeatureAndAddOnInTheReadersLanguage(t *testing.T) {
+	t.Parallel()
+
+	denial := permissionports.NewPlanDenial(platformcatalog.FeatureAccounting)
+
+	model := planDenialToModel(i18n.ES, &denial)
+
+	assert.Equal(t, "Contabilidad", model.FeatureName)
+	assert.Equal(t, "Contabilidad y efectivo", model.AddOnName)
+	assert.Equal(t, string(platformcatalog.FeatureAccounting), model.Feature)
+	assert.Equal(t, "Accounting & Cash", denial.AddOnName, "the service's denial is not rewritten")
 }

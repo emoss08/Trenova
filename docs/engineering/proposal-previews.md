@@ -18,7 +18,7 @@ activity and must keep to its determinism rules.
 | `ProposalPreview` | What the service serves and records: the tool's preview for one reader, with `Coverage`, `Staleness`, `TargetVersion`, `WithheldCount`, `Recorded`, `ComputedAt` and `Digest`. |
 | `RecordChange` | One record: resource, id, label, record link, `Operation` (`Create`, `Update`, `Delete`, `Archive`, `Send`, `Run`), version, `Withheld`, `DependsOnStep`, fields, and an optional `MessagePreview` and `MoneyPreview`. |
 | `PreviewFieldChange` | One value: path, label, display type, `Before`/`After` (and refs to the records they name), sensitivity, `Withheld`, `Volatile`, `Truncated`, `ChangedSinceProposed` with `ProposedBefore`, `ProjectedFromStep`. |
-| `MessagePreview` | What would be sent, rendered by the code that sends it, with the recipients it would reach: channel (`Email`, `SMS`, `Dash`, `EDI`, `Comment`), from, to, cc, bcc, attachments, subject, body, visibility, cadence, template version. |
+| `MessagePreview` | What would be sent, rendered by the code that sends it, with the recipients it would reach: channel (`Email`, `Dash`, `EDI`, `Comment`), from, to, cc, bcc, attachments, subject, body, visibility, cadence, template version. |
 | `MoneyPreview` | Amounts before and after, line by line, with totals and delta, and the sensitivity of the least visible figure. |
 | `PlanPreview` | A plan's steps in order, each a `ProposalPreview`, with one digest over the step digests. |
 

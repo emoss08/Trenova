@@ -328,6 +328,13 @@ export type AiReasoningEffort =
   | 'None'
   | 'Off';
 
+/** Where the model the Embedding task routes to comes from. */
+export type AiRetrievalEmbeddingSource =
+  /** The search service that runs on the instance with Trenova AI, for an organization that routes no embedding model of its own. */
+  | 'BuiltIn'
+  /** A provider the organization routed the Embedding task to. */
+  | 'Organization';
+
 /** Where one source stands in the index under one embedding model. */
 export type AiRetrievalIndexStatus =
   /** Every retry was spent, or the provider refused the text. */
@@ -1353,8 +1360,7 @@ export type AgentPreviewMessageChannel =
   | 'Dash'
   | 'EDI'
   | 'Email'
-  | 'Portal'
-  | 'SMS';
+  | 'Portal';
 
 /** What a write would do to one record. */
 export type AgentPreviewOperation =
@@ -4669,6 +4675,12 @@ export type ExportTableViewInput = {
   view: TableExportViewInput;
 };
 
+export type ExtendSupportAccessInput = {
+  /** The new length, in hours, counted from now. */
+  durationHours: number;
+  id: string | number;
+};
+
 export type FacilityType =
   | 'ColdStorage'
   | 'CrossDock'
@@ -5467,6 +5479,7 @@ export type GrantCarrierIntelOverrideInput = {
 };
 
 export type GrantSupportAccessInput = {
+  allowsAssistant: boolean;
   durationHours: number;
   reason: string;
   scope: SupportAccessScope;
@@ -6379,6 +6392,11 @@ export type LogInboundExceptionInput = {
   /** What was short, over or damaged: pallets, cases, pieces. */
   unit: string;
 };
+
+/** How a usage meter is counted: a count of things or a number of bytes. */
+export type ManagedPlanMeterUnit =
+  | 'BYTES'
+  | 'COUNT';
 
 export type ManualJournalStatus =
   | 'Approved'
@@ -7554,6 +7572,10 @@ export type RequestMyPtoInput = {
   reason: string;
   startDate: number;
   type: PortalPtoType;
+};
+
+export type RequestSupportLogsInput = {
+  period: SupportLogPeriod;
 };
 
 export type RescindDisciplinaryActionInput = {
@@ -8791,6 +8813,26 @@ export type SupportAccessStatus =
   | 'Live'
   | 'Revoked';
 
+/** How far back the logs sent to Trenova support reach. */
+export type SupportLogPeriod =
+  /** The last 24 hours. */
+  | 'Day'
+  /** The last hour. */
+  | 'Hour'
+  /** The last 7 days. */
+  | 'Week';
+
+/** Where a request to send the instance's logs to Trenova support stands. */
+export type SupportLogRequestStatus =
+  /** The instance is collecting the logs. */
+  | 'Collecting'
+  /** The logs could not be sent; failureMessage says why. */
+  | 'Failed'
+  /** Waiting for the instance to start collecting the logs. */
+  | 'Requested'
+  /** Trenova support has the logs; they are kept for 30 days. */
+  | 'Sent';
+
 export type TableConfigurationInput = {
   description?: string | null | undefined;
   isDefault?: boolean | null | undefined;
@@ -9840,9 +9882,7 @@ export type WatchtowerPlayChannel =
   /** An email in the organization's letterhead. */
   | 'Email'
   /** An offer to carriers, which carries no message. */
-  | 'Tender'
-  /** A text to the driver's phone. */
-  | 'Text';
+  | 'Tender';
 
 /** The first move a kind of item has, which the person working it sends themselves. */
 export type WatchtowerPlayKind =
@@ -12102,7 +12142,7 @@ export type RunAgentSuiteMutationVariables = Exact<{
 
 export type RunAgentSuiteMutation = { runAgentSuite: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } };
 
-export type AiRetrievalStatusFieldsFragment = { monthStartedAt: number, indexingCostMonthUsd: string, indexingUnpricedCalls: number, retrievalCostMonthUsd: string, retrievalUnpricedCalls: number, lastIndexedAt: number | null, configuredModelKey: string | null, configuredModelDiffers: boolean, availability: { available: boolean, reason: AiRetrievalUnavailableReason | null, extensionInstalled: boolean, extensionVersion: string | null }, settings: { memoryEnabled: boolean, documentsEnabled: boolean, inboundMessagesEnabled: boolean, monthlyIndexingBudgetUsd: string, paused: boolean, pausedReason: AiRetrievalPauseReason | null, pausedAt: number | null, activeModelKey: string | null, dimensions: number | null, pendingModelKey: string | null, pendingDimensions: number | null, version: number, updatedAt: number | null }, sources: Array<{ sourceType: AiRetrievalSourceType, enabled: boolean, total: number, indexed: number, pending: number, failed: number, skipped: number, lastIndexedAt: number | null, lastAttemptAt: number | null }>, modelChange: { fromModelKey: string, toModelKey: string, dimensions: number, total: number, indexed: number, pending: number, failed: number } | null } & { ' $fragmentName'?: 'AiRetrievalStatusFieldsFragment' };
+export type AiRetrievalStatusFieldsFragment = { monthStartedAt: number, indexingCostMonthUsd: string, indexingUnpricedCalls: number, retrievalCostMonthUsd: string, retrievalUnpricedCalls: number, lastIndexedAt: number | null, configuredModelKey: string | null, configuredModelDiffers: boolean, embeddingSource: AiRetrievalEmbeddingSource | null, tunedModel: string, configuredModelTuned: boolean, availability: { available: boolean, reason: AiRetrievalUnavailableReason | null, extensionInstalled: boolean, extensionVersion: string | null }, settings: { memoryEnabled: boolean, documentsEnabled: boolean, inboundMessagesEnabled: boolean, monthlyIndexingBudgetUsd: string, paused: boolean, pausedReason: AiRetrievalPauseReason | null, pausedAt: number | null, activeModelKey: string | null, dimensions: number | null, pendingModelKey: string | null, pendingDimensions: number | null, version: number, updatedAt: number | null }, sources: Array<{ sourceType: AiRetrievalSourceType, enabled: boolean, total: number, indexed: number, pending: number, failed: number, skipped: number, lastIndexedAt: number | null, lastAttemptAt: number | null }>, modelChange: { fromModelKey: string, toModelKey: string, dimensions: number, total: number, indexed: number, pending: number, failed: number } | null } & { ' $fragmentName'?: 'AiRetrievalStatusFieldsFragment' };
 
 export type AiRetrievalFailedEntryFieldsFragment = { id: string, sourceType: AiRetrievalSourceType, sourceId: string, modelKey: string, status: AiRetrievalIndexStatus, attempts: number, error: string, lastAttemptAt: number | null, nextAttemptAt: number | null } & { ' $fragmentName'?: 'AiRetrievalFailedEntryFieldsFragment' };
 
@@ -17769,7 +17809,7 @@ export type LocationTableQuery = { locations: { totalCount?: number | null, tota
 export type ManagedPlanQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ManagedPlanQuery = { managedPlan: { managed: boolean, base: Array<{ key: string, name: string }>, included: Array<{ key: string, name: string, features: Array<{ key: string, name: string }> }>, available: Array<{ key: string, name: string, features: Array<{ key: string, name: string }> }>, changes: Array<{ changedAt: number, starting: boolean, left: Array<{ key: string, name: string }>, joined: Array<{ key: string, name: string }> }> } };
+export type ManagedPlanQuery = { managedPlan: { managed: boolean, manageUrl: string | null, endsAt: number | null, finalBackupDays: number, usage: { periodStart: number, periodEnd: number, meters: Array<{ key: string, name: string, unit: ManagedPlanMeterUnit, used: number, included: number, hardCap: boolean, stopped: boolean }> } | null, base: Array<{ key: string, name: string }>, included: Array<{ key: string, name: string, endsAt: number | null, features: Array<{ key: string, name: string }> }>, available: Array<{ key: string, name: string, endsAt: number | null, features: Array<{ key: string, name: string }> }>, changes: Array<{ changedAt: number, starting: boolean, left: Array<{ key: string, name: string }>, joined: Array<{ key: string, name: string }>, ending: Array<{ endsAt: number, addOn: { key: string, name: string } }>, kept: Array<{ key: string, name: string }> }> } };
 
 export type DeskManualJournalCardQueryVariables = Exact<{
   id: string | number;
@@ -19927,12 +19967,12 @@ export type StoredMileageTableQueryVariables = Exact<{
 
 export type StoredMileageTableQuery = { storedMileages: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'StoredMileageTableRowFieldsFragment': StoredMileageTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type SupportAccessGrantFieldsFragment = { id: string, staffEmail: string, reason: string, scope: SupportAccessScope, durationHours: number, status: SupportAccessStatus, grantedByName: string | null, grantedAt: number, expiresAt: number, revokedAt: number | null, revokedByName: string | null, revokeReason: string | null, lastEnteredAt: number | null, lastStaffName: string | null } & { ' $fragmentName'?: 'SupportAccessGrantFieldsFragment' };
+export type SupportAccessGrantFieldsFragment = { id: string, staffEmail: string, reason: string, scope: SupportAccessScope, allowsAssistant: boolean, durationHours: number, status: SupportAccessStatus, grantedByName: string | null, grantedAt: number, expiresAt: number, revokedAt: number | null, revokedByName: string | null, revokeReason: string | null, extendedAt: number | null, extendedByName: string | null, activeAt: number | null, lastEnteredAt: number | null, lastStaffName: string | null } & { ' $fragmentName'?: 'SupportAccessGrantFieldsFragment' };
 
 export type SupportAccessSettingsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SupportAccessSettingsQuery = { supportAccessSettings: { available: boolean, staffDomain: string | null, durations: Array<number>, maxLiveGrants: number } };
+export type SupportAccessSettingsQuery = { supportAccessSettings: { available: boolean, staffDomain: string | null, durations: Array<number>, maxLiveGrants: number, limits: Array<string> } };
 
 export type SupportAccessGrantsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -19947,6 +19987,13 @@ export type GrantSupportAccessMutationVariables = Exact<{
 
 
 export type GrantSupportAccessMutation = { grantSupportAccess: { ' $fragmentRefs'?: { 'SupportAccessGrantFieldsFragment': SupportAccessGrantFieldsFragment } } };
+
+export type ExtendSupportAccessMutationVariables = Exact<{
+  input: ExtendSupportAccessInput;
+}>;
+
+
+export type ExtendSupportAccessMutation = { extendSupportAccess: { ' $fragmentRefs'?: { 'SupportAccessGrantFieldsFragment': SupportAccessGrantFieldsFragment } } };
 
 export type RevokeSupportAccessMutationVariables = Exact<{
   input: RevokeSupportAccessInput;
@@ -19968,6 +20015,18 @@ export type SupportAccessActionsQueryVariables = Exact<{
 
 
 export type SupportAccessActionsQuery = { auditEntries: { edges: Array<{ node: { ' $fragmentRefs'?: { 'SupportAccessActionFieldsFragment': SupportAccessActionFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type SupportLogRequestsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SupportLogRequestsQuery = { supportLogRequests: { managed: boolean, inFlight: boolean, remainingToday: number, requests: Array<{ id: string, period: SupportLogPeriod, status: SupportLogRequestStatus, requestedByName: string, requestedAt: number, finishedAt: number | null, failureMessage: string | null }> } };
+
+export type RequestSupportLogsMutationVariables = Exact<{
+  input: RequestSupportLogsInput;
+}>;
+
+
+export type RequestSupportLogsMutation = { requestSupportLogs: { id: string, status: SupportLogRequestStatus } };
 
 export type DeskTableChangeAlertsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -21773,7 +21832,8 @@ export { ShipmentRatingDetailFieldsFragmentDoc, ShipmentLocationFieldsFragmentDo
 export { UpdateSidebarPreferencesDocument } from "./documents/sidebar-preferences/mutations";
 export { SidebarPreferencesDocument, SidebarCustomizationOptionsDocument } from "./documents/sidebar-preferences/preferences";
 export { StoredMileageStopKeyFieldsFragmentDoc, StoredMileageTableRowFieldsFragmentDoc, StoredMileageTableDocument } from "./documents/stored-mileage/table";
-export { SupportAccessGrantFieldsFragmentDoc, SupportAccessActionFieldsFragmentDoc, SupportAccessSettingsDocument, SupportAccessGrantsDocument, GrantSupportAccessDocument, RevokeSupportAccessDocument, CurrentSupportSessionDocument, SupportAccessActionsDocument } from "./documents/support-access/support-access";
+export { SupportAccessGrantFieldsFragmentDoc, SupportAccessActionFieldsFragmentDoc, SupportAccessSettingsDocument, SupportAccessGrantsDocument, GrantSupportAccessDocument, ExtendSupportAccessDocument, RevokeSupportAccessDocument, CurrentSupportSessionDocument, SupportAccessActionsDocument } from "./documents/support-access/support-access";
+export { SupportLogRequestsDocument, RequestSupportLogsDocument } from "./documents/support-logs/support-logs";
 export { DeskTableChangeAlertsDocument } from "./documents/table-change-alert/desk";
 export { TcaSubscriptionTableRowFieldsFragmentDoc, TcaSubscriptionTableDocument } from "./documents/table-change-alert/table";
 export { TableConfigurationFieldsFragmentDoc, TableConfigurationTableDocument, DefaultTableConfigurationDocument, TableConfigurationDetailDocument, CreateTableConfigurationDocument, UpdateTableConfigurationDocument, DeleteTableConfigurationDocument, SetDefaultTableConfigurationDocument, SetOrgDefaultTableConfigurationDocument } from "./documents/table-configuration/operations";

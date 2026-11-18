@@ -31,7 +31,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -180,7 +179,7 @@ func TestNotifyDriver_SendsThroughTheDispatchMessageTemplate(t *testing.T) {
 		"shipmentId": shipmentID.String(),
 	})
 
-	require.NoError(t, operationstools.NewNotifyDriverTool(drivermessage.New(drivers, plantest.AllFeatures(), nil)).Execute(t.Context(), params))
+	require.NoError(t, operationstools.NewNotifyDriverTool(drivermessage.New(drivers)).Execute(t.Context(), params))
 
 	require.NotNil(t, drivers.sent)
 	assert.Equal(t, workerID, drivers.sent.WorkerID)
@@ -203,7 +202,7 @@ func TestNotifyDriver_DefaultsThePriorityAndBoundsTheMessage(t *testing.T) {
 	t.Parallel()
 
 	drivers := &fakeDriverNotifier{}
-	tool := operationstools.NewNotifyDriverTool(drivermessage.New(drivers, plantest.AllFeatures(), nil))
+	tool := operationstools.NewNotifyDriverTool(drivermessage.New(drivers))
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"workerId": pulid.MustNew("wrk_").String(),
@@ -418,7 +417,7 @@ func TestMonitoringActionTools_RejectAMismatchedActor(t *testing.T) {
 	for _, candidate := range []agenttoolports.AgentTool{
 		servicefailuretools.NewEvaluateServiceFailuresTool(&agenttoolstest.FakeFailureDecider{}),
 		servicefailuretools.NewResolveServiceFailureTool(&agenttoolstest.FakeFailureDecider{}),
-		operationstools.NewNotifyDriverTool(drivermessage.New(&fakeDriverNotifier{}, plantest.AllFeatures(), nil)),
+		operationstools.NewNotifyDriverTool(drivermessage.New(&fakeDriverNotifier{})),
 		tool,
 		operationstools.NewSendDetentionNoticeTool(&agenttoolstest.FakeDetention{}),
 		operationstools.NewWaiveDetentionTool(&agenttoolstest.FakeDetention{}),
@@ -448,7 +447,7 @@ func TestOutboundTools_AreGatedOnTheCommunicationTheySend(t *testing.T) {
 		resource permission.Resource
 	}{
 		{
-			operationstools.NewNotifyDriverTool(drivermessage.New(&fakeDriverNotifier{}, plantest.AllFeatures(), nil)),
+			operationstools.NewNotifyDriverTool(drivermessage.New(&fakeDriverNotifier{})),
 			permission.ResourceDriverMessage,
 		},
 		{customerTool, permission.ResourceCustomerCommunication},

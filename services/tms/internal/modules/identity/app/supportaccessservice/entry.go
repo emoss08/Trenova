@@ -88,7 +88,8 @@ func (s *Service) Enter(ctx context.Context, req *EnterRequest) (*EnterResult, e
 	if err != nil {
 		return nil, err
 	}
-	if grant.OrganizationID != assertion.OrganizationID || grant.StaffEmail != assertion.StaffEmail ||
+	if grant.OrganizationID != assertion.OrganizationID ||
+		grant.StaffEmail != assertion.StaffEmail ||
 		!grant.LiveAt(now) {
 		return nil, s.refuseVerified(ctx, assertion, supportaccess.RefusalNoGrant)
 	}
@@ -125,7 +126,14 @@ func (s *Service) Enter(ctx context.Context, req *EnterRequest) (*EnterResult, e
 	}
 
 	s.recordEntry(scoped, grant, assertion, sess, tenantInfo, now)
-	s.notifyStarted(scoped, grant, assertion, tenantInfo)
+	if grant.IsFirstEntry() {
+		s.notify(scoped, &supportaccessports.Notice{
+			Kind:       supportaccessports.NoticeFirstEntry,
+			TenantInfo: tenantInfo,
+			Grant:      grant,
+			StaffName:  assertion.StaffName,
+		})
+	}
 
 	return &EnterResult{
 		Token:     token,
@@ -216,30 +224,6 @@ func principalActor(grant *supportaccess.Grant) kernelports.AuditActor {
 		PrincipalType: permissionports.PrincipalTypeUser,
 		PrincipalID:   grant.PrincipalUserID,
 		UserID:        grant.PrincipalUserID,
-	}
-}
-
-func (s *Service) notifyStarted(
-	ctx context.Context,
-	grant *supportaccess.Grant,
-	assertion *supportaccess.Assertion,
-	tenantInfo pagination.TenantInfo,
-) {
-	noticeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), noticeTimeout)
-	defer cancel()
-	if err := s.notifier.SupportSessionStarted(noticeCtx, &supportaccessports.SessionStartedNotice{
-		TenantInfo: tenantInfo,
-		GrantID:    grant.ID,
-		StaffEmail: grant.StaffEmail,
-		StaffName:  assertion.StaffName,
-		Scope:      grant.Scope,
-		EndsAt:     grant.ExpiresAt,
-	}); err != nil {
-		s.l.Error(
-			"could not tell the organization's administrators a support session started",
-			zap.String("grantID", grant.ID.String()),
-			zap.Error(err),
-		)
 	}
 }
 

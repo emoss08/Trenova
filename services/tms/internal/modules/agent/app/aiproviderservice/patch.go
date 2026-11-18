@@ -63,7 +63,7 @@ func (s *Service) Patch(
 		actor:     actor,
 		comment:   "AI provider updated",
 	})
-	s.analyticsChanged(ctx, req.TenantInfo)
+	s.providersChanged(ctx, req.TenantInfo, previous, saved)
 
 	return saved.Redacted(), nil
 }

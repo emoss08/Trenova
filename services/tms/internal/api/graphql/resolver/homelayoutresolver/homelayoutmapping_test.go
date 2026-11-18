@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +28,7 @@ func TestHomeWidgetsToModel_ALockedWidgetCarriesTheAddOnAndItsLabel(t *testing.T
 		}},
 	}
 
-	widgets := homeWidgetsToModel(layout, locks)
+	widgets := homeWidgetsToModel(i18n.EN, layout, locks)
 
 	require.Len(t, widgets, 3)
 	require.NotNil(t, widgets[0].PlanLock)
@@ -43,6 +44,20 @@ func TestHomeWidgetsToModel_ALockedWidgetCarriesTheAddOnAndItsLabel(t *testing.T
 	assert.Equal(t, "arTotalOpen", widgets[2].LockedMetrics[0].Metric)
 	assert.Equal(t, "Open receivables", widgets[2].LockedMetrics[0].Label)
 	assert.Equal(t, "Accounting & Cash", widgets[2].LockedMetrics[0].Lock.AddOnName)
+}
+
+func TestHomePlanLockToModel_NamesTheFeatureAndAddOnInTheReadersLanguage(t *testing.T) {
+	t.Parallel()
+
+	denial := permissionports.NewPlanDenial(platformcatalog.FeatureAccounting)
+
+	lock := homePlanLockToModel(i18n.ES, &denial)
+
+	require.NotNil(t, lock)
+	assert.Equal(t, "Contabilidad", lock.FeatureName)
+	assert.Equal(t, "Contabilidad y efectivo", lock.AddOnName)
+	assert.Equal(t, string(platformcatalog.AddOnAccounting), lock.AddOn)
+	assert.Nil(t, homePlanLockToModel(i18n.ES, nil))
 }
 
 func TestHomeWidgetCatalogToModel_ListsLockedWidgetsAfterTheSelectableOnes(t *testing.T) {
@@ -66,7 +81,7 @@ func TestHomeWidgetCatalogToModel_ListsLockedWidgetsAfterTheSelectableOnes(t *te
 		}},
 	}
 
-	model := homeWidgetCatalogToModel(catalog)
+	model := homeWidgetCatalogToModel(i18n.EN, catalog)
 
 	require.Len(t, model.Widgets, 2)
 	assert.Nil(t, model.Widgets[0].PlanLock)

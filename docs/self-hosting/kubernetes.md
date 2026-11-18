@@ -38,6 +38,7 @@ you already run Kubernetes, or want the database run by an operator.
 | `gtc` | Deployment | Change data capture into Meilisearch and Redis |
 | `client` | Deployment | Caddy serving the web app and Dash, behind your Ingress |
 | `docling`, `clamav` | Deployment, StatefulSet | Off by default; see [Values](#values) |
+| `loki`, `alloy` | Deployment, Deployment | Log keeping, off by default (`logs.enabled`): Alloy tails the release's pods through the Kubernetes API, Loki keeps the lines for a week on its own volume |
 
 Every container runs as a non-root user with no capabilities, under the runtime's default
 seccomp profile, and with a read-only root filesystem, except ClamAV, Temporal and GTC,
@@ -109,12 +110,14 @@ The ones you are most likely to change:
 | Value | What it does |
 |---|---|
 | `domain`, `storageDomain` | The hostnames. `storageDomain` serves presigned uploads and downloads from the bundled MinIO |
+| `aliases`, `primaryDomain` | More hostnames for the same install, beside `domain` (each gets an Ingress rule, is answered by the client and admitted by the API and the bundled MinIO), and which one links are built with (`domain` or an alias; empty means `domain`). Point each alias's DNS at the Ingress as for `domain`. People sign in separately on each hostname |
 | `ingress.*` | The Ingress for both hostnames, to the client |
 | `bootstrap.*` | The first organization and administrator; skipped while `adminEmail` is empty |
 | `bootstrap.adminSetup` | `password` (the default: a generated password in the app Secret) or `link` (no usable password; they choose one from a one-time account setup link, as Trenova Cloud does) |
 | `minio.enabled`, `storage.external.*` | Bundled MinIO, or an S3-compatible service and a Secret with `accessKey` and `secretKey` |
 | `docling.enabled` | Document extraction (docling-serve, 2 to 4 GiB of memory) |
 | `clamav.enabled` | Malware scanning (requests 3 GiB of memory, limit 4 GiB: clamd holds two copies of its signatures while it reloads them); files are refused while clamd is down |
+| `logs.enabled` | Log keeping: Grafana Alloy (a namespaced Role that reads this namespace's pods and their logs; no hostPath, nothing cluster-wide) and Grafana Loki (single binary, `logs.loki.storage.size` volume, `logs.retentionHours`, 168 by default). Every line is labelled `component`, `pod` and `container`. Loki has no authentication: admit your own Grafana with `logs.queryFrom`. About 0.4 GiB of memory requested, up to 1.5 GiB |
 | `tms.config` | Merged over the TMS configuration the chart renders; see `services/tms/config/config.example.yaml` |
 | `tms.extraEnv` | Integration credentials and other `TRENOVA_*` settings, as env entries (`valueFrom` works) |
 | `*.resources`, `postgres.parameters` | Sizing; raise `shared_buffers` with the PostgreSQL memory limit |
@@ -210,6 +213,11 @@ and ClamAV keep outbound access for AI providers, email, integrations and signat
 
 `networkPolicy.apiFrom` narrows who may reach the API (by default, any pod in the cluster),
 and `networkPolicy.metricsFrom` admits a Prometheus to port 9090 on the API and worker.
+
+With `logs.enabled`, Loki admits only Alloy, `managed.from` while managed mode is on, and
+`logs.queryFrom`, and opens no connections; Alloy reaches Loki, DNS and the Kubernetes API on
+`logs.alloy.kubernetesAPI.ports` (443 and 6443), which `kubernetesAPI.to` can narrow to the API
+server's address.
 
 `managed.enabled` is for Trenova Cloud's operator, which turns it on: the API then serves a
 usage API on port 8090 behind a generated token, reachable only from the peers in

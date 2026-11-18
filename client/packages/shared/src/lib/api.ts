@@ -270,6 +270,73 @@ export async function withSessionHeaders(
   return nextHeaders;
 }
 
+function isCsrfRefusal(problem: unknown): boolean {
+  if (typeof problem !== "object" || problem === null || !("type" in problem)) {
+    return false;
+  }
+  return (
+    typeof problem.type === "string" && parseProblemType(problem.type) === "csrf-token-invalid"
+  );
+}
+
+function discardCsrfToken(sent: string | null): void {
+  if (sent === null || csrfToken === sent) {
+    csrfToken = null;
+  }
+}
+
+export type SendWithSessionHeadersParams = {
+  method: string | undefined;
+  endpoint: string;
+  headers?: HeadersInit;
+  send: (headers: Headers) => Promise<Response>;
+};
+
+/**
+ * Sends a first-party request with its session headers and, on a write, the CSRF token. When
+ * the server answers a write with `csrf-token-invalid` (the token was never fetched, or the
+ * session it belonged to has since been replaced), the held token is dropped, a fresh one is
+ * fetched and the same request is sent once more with the same headers otherwise, so an
+ * idempotency key is reused. The server refuses before any handler runs, which is what makes
+ * the resend safe for a mutation. A second refusal, a token that cannot be fetched, a
+ * caller-supplied token and every other 403 are returned as they came.
+ */
+export async function sendWithSessionHeaders({
+  method,
+  endpoint,
+  headers,
+  send,
+}: SendWithSessionHeadersParams): Promise<Response> {
+  const sessionHeaders = await withSessionHeaders(method, headers, endpoint);
+  const response = await send(sessionHeaders);
+
+  if (
+    response.status !== 403 ||
+    !isUnsafeMethod(method) ||
+    !shouldBootstrapCsrf(endpoint) ||
+    new Headers(headers).has(csrfHeaderName)
+  ) {
+    return response;
+  }
+
+  const problem: unknown = await response
+    .clone()
+    .json()
+    .catch(() => null);
+  if (!isCsrfRefusal(problem)) {
+    return response;
+  }
+
+  discardCsrfToken(sessionHeaders.get(csrfHeaderName));
+  const retryHeaders = await withSessionHeaders(method, headers, endpoint);
+  const fresh = retryHeaders.get(csrfHeaderName);
+  if (fresh === null || fresh === sessionHeaders.get(csrfHeaderName)) {
+    return response;
+  }
+
+  return send(retryHeaders);
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   const method = options.method ?? "GET";
@@ -279,14 +346,18 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers.set("Content-Type", "application/json");
   }
 
-  const sessionHeaders = await withSessionHeaders(method, headers, endpoint);
-
   return withRequestDeadline(options.signal, async (signal) => {
-    const response = await fetch(url, {
-      ...options,
-      credentials: "include",
-      headers: sessionHeaders,
-      signal,
+    const response = await sendWithSessionHeaders({
+      method,
+      endpoint,
+      headers,
+      send: (sessionHeaders) =>
+        fetch(url, {
+          ...options,
+          credentials: "include",
+          headers: sessionHeaders,
+          signal,
+        }),
     });
 
     if (!response.ok) {
@@ -355,11 +426,17 @@ async function fileRequest(
   options: RequestInit = {},
 ): Promise<DownloadedFile> {
   const method = options.method ?? "GET";
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
+  const response = await sendWithSessionHeaders({
     method,
-    credentials: "include",
-    headers: await withSessionHeaders(method, options.headers, endpoint),
+    endpoint,
+    headers: options.headers,
+    send: (headers) =>
+      fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        method,
+        credentials: "include",
+        headers,
+      }),
   });
 
   if (!response.ok) {
@@ -380,12 +457,18 @@ async function uploadRequest<T>(
   const url = `${API_BASE_URL}${endpoint}`;
   const method = "POST";
 
-  const response = await fetch(url, {
-    ...options,
+  const response = await sendWithSessionHeaders({
     method,
-    credentials: "include",
-    body: formData,
-    headers: await withSessionHeaders(method, options.headers, endpoint),
+    endpoint,
+    headers: options.headers,
+    send: (headers) =>
+      fetch(url, {
+        ...options,
+        method,
+        credentials: "include",
+        body: formData,
+        headers,
+      }),
   });
 
   if (!response.ok) {

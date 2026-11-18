@@ -63,14 +63,13 @@ type PTOBulkActionPayload struct {
 
 // WorkerPTOTransitionPreview is a time-off request before and after a
 // decision, whether the decision returns booked days to the balance, and
-// what the driver would be told in Dash and by text. Driver is nil when no
-// Dash notifier is configured, SMS when no text would be sent.
+// what the driver would be told in Dash. Driver is nil when no
+// Dash notifier is configured.
 type WorkerPTOTransitionPreview struct {
 	Before        *worker.WorkerPTO
 	After         *worker.WorkerPTO
 	ReturnsLedger bool
 	Driver        *notificationports.DriverNotificationPreview
-	SMS           *notificationports.DriverSMSPreview
 	// Location is the organization's, the zone a request's days are booked
 	// in, so the days a preview names are the days the ledger counts.
 	Location *time.Location

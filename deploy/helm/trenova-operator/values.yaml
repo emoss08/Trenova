@@ -21,7 +21,9 @@ imagePullSecrets: []
 enrolmentSecret: trenova-operator-enrolment
 identitySecret: trenova-operator-identity
 
-# Where the Trenova release runs, and its name.
+# Where the Trenova release runs, and its name. The operator reads the
+# release's logs from its Loki, http://<fullname>-loki.<namespace>.svc:3100,
+# derived from these (TRENOVA_OPERATOR_LOKI_URL).
 target:
   namespace: trenova
   release: trenova
@@ -46,6 +48,12 @@ chart:
 # plane's address for both.
 storage:
   privateEndpoint: ""
+  # Whether the operator sets the documents bucket's CORS rules so browsers
+  # can read it from the instance's own address. True for a store that keeps
+  # CORS on each bucket (OVH). False for one that keeps it for the whole
+  # server and gives buckets no say, such as a local instance's MinIO: asking
+  # there is refused, and the operator would warn about it for good.
+  bucketCORS: true
 
 # The machine the cluster really runs on, when it is smaller than the plan
 # the spec names: a local development instance, where every plan runs on the
@@ -68,6 +76,15 @@ trenovaValues:
   ingress:
     enabled: true
     className: traefik
+
+# The operator follows the release its instance runs: when the spec names a
+# new one, it asks k3s's helm-controller to install its own chart at that
+# version (patching its HelmChart in helmChartNamespace, named after this
+# release) before it brings Trenova there. An operator installed some other
+# way (helm install) finds no HelmChart and leaves its version alone.
+selfUpgrade:
+  enabled: true
+  helmChartNamespace: kube-system
 
 pollInterval: 15s
 # At most 1m: the control plane expects a report every minute.

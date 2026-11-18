@@ -37,6 +37,7 @@ type PrincipalUserParams struct {
 	BusinessUnitID pulid.ID
 	StaffEmail     string
 	Password       string
+	Assistant      bool
 }
 
 // NewPrincipalUser builds the inactive, system-owned users row a grant is attributed to. It
@@ -57,6 +58,6 @@ func NewPrincipalUser(p PrincipalUserParams) *tenant.User {
 		EmailAddress:          principalUserPrefix + suffix + "@" + principalEmailDomain,
 		Password:              p.Password,
 		Timezone:              principalTimezone,
-		AssistantHidden:       true,
+		AssistantHidden:       !p.Assistant,
 	}
 }

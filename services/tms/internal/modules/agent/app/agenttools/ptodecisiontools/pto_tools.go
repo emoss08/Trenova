@@ -151,7 +151,7 @@ func (t *RejectWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
 		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
 		Effect:        agenttooltrust.ToolEffectChange,
 		ReadsExternal: agenttooltrust.ExternalReadNever,
-		Rationale:     "The worker is sent the rejection reason by push notice and text message.",
+		Rationale:     "The worker is sent the rejection reason by push notice.",
 	}
 }
 
@@ -225,8 +225,7 @@ func (t *CancelWorkerPTOTool) Policy() agenttoolports.ToolPolicy {
 		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
 		Effect:        agenttooltrust.ToolEffectChange,
 		ReadsExternal: agenttooltrust.ExternalReadNever,
-		Rationale: "The worker is sent the cancellation reason by push notice and text " +
-			"message.",
+		Rationale:     "The worker is sent the cancellation reason by push notice.",
 	}
 }
 

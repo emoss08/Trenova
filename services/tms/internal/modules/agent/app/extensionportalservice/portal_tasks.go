@@ -152,7 +152,7 @@ func (s *Service) site(
 				s.knownSites(ctx, tenantInfo),
 		}
 	}
-	if s.appHost != "" && extensionportal.HostAllowed(s.appHost, site.Domains) {
+	if s.coversTrenova(site.Domains) {
 		return nil, &agentextensionservice.ToolError{
 			Message: portalOnTrenovaMessage + " Use the tools for it instead, " +
 				"or tell the person what to do there.",

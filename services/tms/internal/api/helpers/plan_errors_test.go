@@ -51,7 +51,10 @@ func TestSanitizer_ExtractParams_PlanErrors(t *testing.T) {
 		"limit": "25",
 		"used":  "25",
 		"plan":  "free_demo",
-	}, sanitizer.ExtractParams(errortypes.NewQuotaExceededError("documents.uploads", 25, 25, "free_demo")))
+	}, sanitizer.ExtractParams(
+		errortypes.NewQuotaExceededError("documents.uploads", 25, 25, "free_demo"),
+		i18n.EN,
+	))
 
 	assert.Equal(t, map[string]string{
 		"feature": "",
@@ -61,14 +64,41 @@ func TestSanitizer_ExtractParams_PlanErrors(t *testing.T) {
 	}, sanitizer.ExtractParams(errortypes.NewPlanRestrictionError(
 		errortypes.PlanRestrictionReasonReadOnly,
 		"free_demo",
-	)))
+	), i18n.EN))
 
 	assert.Equal(t, map[string]string{
 		"feature": "ai.desk",
 		"addOn":   "Trenova AI",
 		"reason":  "plan_restricted",
 		"plan":    "",
-	}, sanitizer.ExtractParams(errortypes.NewFeatureRestrictionError("ai.desk", "Trenova AI")))
+	}, sanitizer.ExtractParams(errortypes.NewFeatureRestrictionError("ai.desk", "Trenova AI"), i18n.EN))
+}
+
+func TestProblemBuilder_FeatureRestrictionNamesTheAddOnInTheReadersLanguage(t *testing.T) {
+	t.Parallel()
+
+	err := errortypes.NewFeatureRestrictionError("tms.accounting", "Accounting & Cash")
+	sanitizer := helpers.NewSanitizer(false)
+
+	problem := helpers.NewProblemBuilder("https://api.test/problems/").
+		WithLocale(i18n.ES).
+		WithType(helpers.ProblemTypePlanRestricted).
+		WithDetail(sanitizer.SanitizeMessage(err, helpers.ProblemTypePlanRestricted)).
+		WithParams(sanitizer.ExtractParams(err, i18n.ES)).
+		Build()
+
+	assert.Contains(t, problem.Detail, "Contabilidad y efectivo")
+	assert.NotContains(t, problem.Detail, "Accounting & Cash")
+	assert.Equal(t, "Contabilidad y efectivo", problem.Params["addOn"])
+	assert.Equal(t, "tms.accounting", problem.Params["feature"], "the key is never translated")
+
+	unknown := errortypes.NewFeatureRestrictionError("tms.teleport", "Teleport Suite")
+	assert.Equal(
+		t,
+		"Teleport Suite",
+		sanitizer.ExtractParams(unknown, i18n.ES)["addOn"],
+		"a name the catalog does not hold stays as written",
+	)
 }
 
 func TestProblemBuilder_FeatureRestrictionNamesTheAddOn(t *testing.T) {
@@ -81,7 +111,7 @@ func TestProblemBuilder_FeatureRestrictionNamesTheAddOn(t *testing.T) {
 		WithLocale(i18n.EN).
 		WithType(helpers.ProblemTypePlanRestricted).
 		WithDetail(sanitizer.SanitizeMessage(err, helpers.ProblemTypePlanRestricted)).
-		WithParams(sanitizer.ExtractParams(err)).
+		WithParams(sanitizer.ExtractParams(err, i18n.EN)).
 		Build()
 
 	assert.Equal(t, "https://api.test/problems/plan-restricted", problem.Type)
@@ -105,7 +135,7 @@ func TestProblemBuilder_QuotaExceeded(t *testing.T) {
 		WithLocale(i18n.EN).
 		WithType(helpers.ProblemTypeQuotaExceeded).
 		WithDetail(sanitizer.SanitizeMessage(err, helpers.ProblemTypeQuotaExceeded)).
-		WithParams(sanitizer.ExtractParams(err)).
+		WithParams(sanitizer.ExtractParams(err, i18n.EN)).
 		Build()
 
 	assert.Equal(t, "https://api.test/problems/quota-exceeded", problem.Type)

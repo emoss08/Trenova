@@ -116,6 +116,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/supportlogservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -517,6 +518,7 @@ type Params struct {
 	UserService                       *userservice.Service
 	APIKeyService                     *apikeyservice.Service
 	SupportAccessService              *supportaccessservice.Service
+	SupportLogService                 *supportlogservice.Service
 	ManagedPlanService                *managedplanservice.Service
 	TableChangeAlertService           *tablechangealertservice.Service
 	TableConfigurationService         *tableconfigurationservice.Service
@@ -824,6 +826,7 @@ type Services struct {
 	UserService                       *userservice.Service
 	APIKeyService                     *apikeyservice.Service
 	SupportAccessService              *supportaccessservice.Service
+	SupportLogService                 *supportlogservice.Service
 	ManagedPlanService                *managedplanservice.Service
 	TableChangeAlertService           *tablechangealertservice.Service
 	TableConfigurationService         *tableconfigurationservice.Service
@@ -1137,6 +1140,7 @@ func newServices(p *Params) *Services {
 		UserService:                       p.UserService,
 		APIKeyService:                     p.APIKeyService,
 		SupportAccessService:              p.SupportAccessService,
+		SupportLogService:                 p.SupportLogService,
 		ManagedPlanService:                p.ManagedPlanService,
 		TableChangeAlertService:           p.TableChangeAlertService,
 		TableConfigurationService:         p.TableConfigurationService,

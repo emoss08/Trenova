@@ -11,7 +11,6 @@ const (
 
 type Config struct {
 	Mode                  Mode     `mapstructure:"mode"                  validate:"omitempty,oneof=community self_hosted development enterprise"`
-	InstanceID            string   `mapstructure:"instanceId"`
 	ReferenceDataStewards []string `mapstructure:"referenceDataStewards"`
 }
 

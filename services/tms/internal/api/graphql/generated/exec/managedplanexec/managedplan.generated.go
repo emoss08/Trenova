@@ -17,8 +17,11 @@ var Shard = &gqlexec.Shard{
 	Objects: []*gqlexec.Object{
 		{Name: "ManagedPlan", Implementors: []string{"ManagedPlan"}},
 		{Name: "ManagedPlanAddOn", Implementors: []string{"ManagedPlanAddOn"}},
+		{Name: "ManagedPlanAddOnEnding", Implementors: []string{"ManagedPlanAddOnEnding"}},
 		{Name: "ManagedPlanChange", Implementors: []string{"ManagedPlanChange"}},
 		{Name: "ManagedPlanFeature", Implementors: []string{"ManagedPlanFeature"}},
+		{Name: "ManagedPlanMeter", Implementors: []string{"ManagedPlanMeter"}},
+		{Name: "ManagedPlanUsage", Implementors: []string{"ManagedPlanUsage"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "ManagedPlan", Fields: []*gqlexec.Field{
@@ -31,6 +34,44 @@ var Shard = &gqlexec.Shard{
 					return obj.Managed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "manageUrl",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlan)
+					return obj.ManageURL, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "endsAt",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlan)
+					return obj.EndsAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "finalBackupDays",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlan)
+					return obj.FinalBackupDays, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "usage",
+				HasChild:  true,
+				ChildType: "ManagedPlanUsage",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlan)
+					return obj.Usage, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOManagedPlanUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanUsage),
 			},
 			{
 				Name:      "base",
@@ -109,6 +150,38 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNManagedPlanFeature2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanFeatureᚄ),
 			},
+			{
+				Name:     "endsAt",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanAddOn)
+					return obj.EndsAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+		}},
+		{Object: "ManagedPlanAddOnEnding", Fields: []*gqlexec.Field{
+			{
+				Name:      "addOn",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ManagedPlanAddOn",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanAddOnEnding)
+					return obj.AddOn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNManagedPlanAddOn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanAddOn),
+			},
+			{
+				Name:     "endsAt",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanAddOnEnding)
+					return obj.EndsAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
 		}},
 		{Object: "ManagedPlanChange", Fields: []*gqlexec.Field{
 			{
@@ -153,6 +226,28 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNManagedPlanAddOn2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanAddOnᚄ),
 			},
+			{
+				Name:      "ending",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ManagedPlanAddOnEnding",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanChange)
+					return obj.Ending, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNManagedPlanAddOnEnding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanAddOnEndingᚄ),
+			},
+			{
+				Name:      "kept",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ManagedPlanAddOn",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanChange)
+					return obj.Kept, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNManagedPlanAddOn2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanAddOnᚄ),
+			},
 		}},
 		{Object: "ManagedPlanFeature", Fields: []*gqlexec.Field{
 			{
@@ -174,6 +269,111 @@ var Shard = &gqlexec.Shard{
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "ManagedPlanMeter", Fields: []*gqlexec.Field{
+			{
+				Name:     "key",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanMeter)
+					return obj.Key, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanMeter)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "unit",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanMeter)
+					return obj.Unit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNManagedPlanMeterUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanMeterUnit),
+			},
+			{
+				Name:     "used",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanMeter)
+					return obj.Used, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "included",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanMeter)
+					return obj.Included, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "hardCap",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanMeter)
+					return obj.HardCap, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "stopped",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanMeter)
+					return obj.Stopped, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "ManagedPlanUsage", Fields: []*gqlexec.Field{
+			{
+				Name:     "periodStart",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanUsage)
+					return obj.PeriodStart, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "periodEnd",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanUsage)
+					return obj.PeriodEnd, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:      "meters",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ManagedPlanMeter",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ManagedPlanUsage)
+					return obj.Meters, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNManagedPlanMeter2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanMeterᚄ),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -204,10 +404,20 @@ var (
 	errNoChild0 = errors.New("field of type Boolean does not have child fields")
 	errNoChild1 = errors.New("field of type String does not have child fields")
 	errNoChild2 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild3 = errors.New("field of type Int does not have child fields")
+	errNoChild4 = errors.New("field of type ManagedPlanMeterUnit does not have child fields")
 )
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -236,6 +446,22 @@ func marshalNManagedPlanAddOn2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ManagedPlanAddOn", v)
+}
+
+func marshalNManagedPlanAddOnEnding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanAddOnEndingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ManagedPlanAddOnEnding) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ManagedPlanAddOnEnding]{
+		Elem:        marshalNManagedPlanAddOnEnding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanAddOnEnding,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNManagedPlanAddOnEnding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanAddOnEnding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ManagedPlanAddOnEnding) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ManagedPlanAddOnEnding", v)
 }
 
 func marshalNManagedPlanChange2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanChangeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ManagedPlanChange) graphql.Marshaler {
@@ -270,6 +496,26 @@ func marshalNManagedPlanFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ManagedPlanFeature", v)
 }
 
+func marshalNManagedPlanMeter2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanMeterᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ManagedPlanMeter) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ManagedPlanMeter]{
+		Elem:        marshalNManagedPlanMeter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanMeter,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNManagedPlanMeter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanMeter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ManagedPlanMeter) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ManagedPlanMeter", v)
+}
+
+func marshalNManagedPlanMeterUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanMeterUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.ManagedPlanMeterUnit) graphql.Marshaler {
+	return v
+}
+
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
@@ -283,5 +529,28 @@ func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
+	return res
+}
+
+func marshalOManagedPlanUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐManagedPlanUsage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ManagedPlanUsage) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ManagedPlanUsage", v)
+}
+
+func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
+	return res
+}
+
+func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
 	return res
 }

@@ -24,7 +24,7 @@ func podFact() *podchaseports.Facts {
 	}
 }
 
-var everything = reach{email: true, texts: true}
+var everything = reach{email: true}
 
 // A driver on Dash is asked there, in a message that names the load and fits
 // the message's bound, whatever else could reach them.
@@ -34,7 +34,7 @@ func TestPlanAskAsksADriverOnDash(t *testing.T) {
 	fact := podFact()
 	fact.Driver = &podchaseports.Driver{
 		WorkerID: pulid.MustNew("wrk_"), Name: "Laura Wright", OnDash: true,
-		Email: "laura@drivers.test", HasPhone: true,
+		Email: "laura@drivers.test",
 	}
 	fact.Carrier = &podchaseports.Carrier{Name: "Acme", Email: "ops@acme.test"}
 
@@ -96,25 +96,6 @@ func TestPlanAskEmailsTheCarrierWhenNoDriverCanBeAsked(t *testing.T) {
 	assert.Equal(t, "ops@acme.test", planned.email)
 }
 
-// A text is the last resort: it cannot carry the paperwork back, so it is
-// used only when a number is all there is and the plan includes texts.
-func TestPlanAskTextsADriverOnlyWhenNothingElseReaches(t *testing.T) {
-	t.Parallel()
-
-	fact := podFact()
-	fact.Driver = &podchaseports.Driver{
-		WorkerID: pulid.MustNew("wrk_"), Name: "Theresa Aguilar", HasPhone: true,
-	}
-
-	planned := planAsk(fact, everything, "UTC")
-	require.NotNil(t, planned)
-	assert.Equal(t, watchtowerplay.ChannelText, planned.channel)
-	assert.LessOrEqual(t, len(planned.message), drivermessage.MaxChars)
-	assert.Equal(t, "Asked Theresa Aguilar for the signed proof of delivery by text", planned.asked())
-
-	assert.Nil(t, planAsk(fact, reach{email: true}, "UTC"), "a plan without text messages")
-}
-
 // A load with no PRO is named as a person names it; its record id is never
 // put in a message.
 func TestPlanAskNeverNamesALoadByItsRecordID(t *testing.T) {
@@ -144,7 +125,7 @@ func TestPlanAskAsksNobodyWhenNobodyCanBeReached(t *testing.T) {
 	assert.Nil(t, planAsk(offDash, everything, "UTC"))
 	refusal := unreachable(offDash, everything)
 	assert.Equal(t,
-		"{0} has no Dash login, email or phone number on file, so they cannot be asked for "+
+		"{0} has no Dash login or email on file, so they cannot be asked for "+
 			"the proof of delivery. Upload it here, or add a way to reach them.", refusal.Message)
 	assert.Equal(t, []any{"A Driver"}, refusal.Args)
 
@@ -159,17 +140,10 @@ func TestPlanAskAsksNobodyWhenNobodyCanBeReached(t *testing.T) {
 
 	noProfile := podFact()
 	noProfile.Carrier = &podchaseports.Carrier{Name: "Acme", Email: "ops@acme.test"}
-	assert.Nil(t, planAsk(noProfile, reach{texts: true}, "UTC"), "no profile to email from")
-	refusal = unreachable(noProfile, reach{texts: true})
+	assert.Nil(t, planAsk(noProfile, reach{}, "UTC"), "no profile to email from")
+	refusal = unreachable(noProfile, reach{})
 	assert.Contains(t, refusal.Message, "No email profile is set up to send from")
 	assert.NotContains(t, refusal.Message, "ops@acme.test")
-
-	textOnly := podFact()
-	textOnly.Driver = &podchaseports.Driver{
-		WorkerID: pulid.MustNew("wrk_"), Name: "A Driver", HasPhone: true,
-	}
-	refusal = unreachable(textOnly, reach{email: true})
-	assert.Contains(t, refusal.Message, "can only be reached by text")
 
 	nobody := podFact()
 	assert.Nil(t, planAsk(nobody, everything, "UTC"))

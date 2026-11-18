@@ -32,8 +32,6 @@ export function channelLabel(channel: AgentPreviewMessageChannel, t: TranslateFn
   switch (channel) {
     case "Email":
       return t("Email");
-    case "SMS":
-      return t("Text message");
     case "Dash":
       return t("Driver portal");
     case "EDI":

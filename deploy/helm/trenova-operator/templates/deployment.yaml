@@ -5,10 +5,18 @@ metadata:
   labels:
     {{- include "operator.labels" . | nindent 4 }}
 spec:
-  # One operator per instance: two would apply the same release at once.
+  # One operator runs the instance at a time: the pods take a Lease, and only
+  # its holder reconciles. A new version starts beside the old one, which keeps
+  # the instance until the new pod is ready (it can read its identity and reach
+  # the control plane); one that never gets there is rolled back by the old one
+  # after progressDeadlineSeconds (services/operator/internal/selfupgrade).
   replicas: 1
+  progressDeadlineSeconds: 600
   strategy:
-    type: Recreate
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       {{- include "operator.selector" . | nindent 6 }}
@@ -40,10 +48,32 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: TRENOVA_OPERATOR_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            # The operator follows the instance's release: this is the version
+            # it compares with the spec's, and the one its HelmChart names.
+            - name: TRENOVA_OPERATOR_VERSION
+              value: {{ .Chart.Version | quote }}
+            - name: TRENOVA_OPERATOR_DEPLOYMENT
+              value: {{ include "operator.name" . | quote }}
+            - name: TRENOVA_OPERATOR_LEASE
+              value: {{ include "operator.name" . | quote }}
+            {{- if .Values.selfUpgrade.enabled }}
+            # k3s's helm-controller names the release after its HelmChart.
+            - name: TRENOVA_OPERATOR_HELMCHART
+              value: {{ .Release.Name | quote }}
+            - name: TRENOVA_OPERATOR_HELMCHART_NAMESPACE
+              value: {{ .Values.selfUpgrade.helmChartNamespace | quote }}
+            {{- end }}
             - name: TRENOVA_OPERATOR_TARGET_NAMESPACE
               value: {{ .Values.target.namespace | quote }}
             - name: TRENOVA_OPERATOR_RELEASE
               value: {{ .Values.target.release | quote }}
+            # The release's Loki (the Trenova chart's logs.enabled).
+            - name: TRENOVA_OPERATOR_LOKI_URL
+              value: {{ include "operator.lokiURL" . | quote }}
             - name: TRENOVA_OPERATOR_ENROLMENT_SECRET
               value: {{ .Values.enrolmentSecret | quote }}
             - name: TRENOVA_OPERATOR_IDENTITY_SECRET
@@ -66,6 +96,8 @@ spec:
               value: {{ .Values.logLevel | quote }}
             - name: TRENOVA_OPERATOR_STORAGE_PRIVATE_ENDPOINT
               value: {{ .Values.storage.privateEndpoint | quote }}
+            - name: TRENOVA_OPERATOR_STORAGE_BUCKET_CORS
+              value: {{ .Values.storage.bucketCORS | quote }}
             - name: TRENOVA_OPERATOR_NODE_VCPU
               value: {{ .Values.node.vcpu | int64 | quote }}
             - name: TRENOVA_OPERATOR_NODE_MEMORY_GIB
@@ -107,6 +139,10 @@ spec:
               readOnly: true
             - name: tmp
               mountPath: /tmp
+            # Log bundles are written here, then uploaded and removed
+            # (TRENOVA_OPERATOR_SCRATCH_DIR, default /scratch).
+            - name: scratch
+              mountPath: /scratch
       volumes:
         - name: values
           configMap:
@@ -114,6 +150,11 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 256Mi
+        # At most 256 MiB of lines held while a bundle is shared out, plus the
+        # zip of them (services/operator/internal/logs, DefaultCaps).
+        - name: scratch
+          emptyDir:
+            sizeLimit: 1Gi
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

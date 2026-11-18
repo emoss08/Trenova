@@ -131,6 +131,10 @@ func (p ToolPolicy) HighestEgress() agent.EgressClass {
 	return highest
 }
 
+func (p ToolPolicy) ReachesOutsiders() bool {
+	return slices.ContainsFunc(p.Egress, agent.EgressClass.ReachesOutsiders)
+}
+
 func (p ToolPolicy) HasEgress(class agent.EgressClass) bool {
 	return slices.Contains(p.Egress, class)
 }

@@ -217,8 +217,6 @@ github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract	
 github.com/emoss08/trenova/internal/core/temporaljobs/retrievaljobs	github.com/emoss08/trenova/internal/modules/agent/jobs/retrievaljobs
 github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs	github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs
 github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract	github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract
-github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs	github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs
-github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract	github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract
 github.com/emoss08/trenova/internal/core/temporaljobs/telematicsjobs	github.com/emoss08/trenova/internal/modules/workforce/jobs/telematicsjobs
 github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs	github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs
 github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract	github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs/tendercontract

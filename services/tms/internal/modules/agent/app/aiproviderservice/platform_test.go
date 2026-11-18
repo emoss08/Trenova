@@ -132,7 +132,7 @@ func TestApply_RefusesServerCredentialsTheServerDisallows(t *testing.T) {
 	err := svc.apply(provider, req, nil)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "platformSettings.auth", validation.Field)
+	assert.Equal(t, "platformSettings.auth", validation.Field())
 
 	svc.ai = &aiconfig.Config{ServerCloudCredentials: true}
 	require.NoError(t, svc.apply(provider, req, nil))

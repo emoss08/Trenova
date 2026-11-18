@@ -8,20 +8,26 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/supportaccessports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/zap"
 )
 
 const (
-	managedSupportPath = "/managed/v1/support-access"
-	managedMaxSupport  = 16 << 10
+	managedSupportPath       = "/managed/v1/support-access"
+	managedSupportGrantsPath = "/managed/v1/support-access/grants"
+	managedMaxSupport        = 16 << 10
+	managedScopeReadOnly     = "read_only"
+	managedScopeFull         = "full"
 )
 
 // ManagedSupportAccess takes the control plane's support assertion keys, this instance's id and
-// the staff email domain ("Support access" in managed-mode.md).
+// the staff email domain ("Support access" in managed-mode.md), and lists the live grants the
+// operator reports back.
 type ManagedSupportAccess interface {
 	SetKeys(ctx context.Context, keys *supportaccess.KeySet) error
 	KeySet(ctx context.Context) (*supportaccess.KeySet, error)
+	LiveGrants(ctx context.Context) ([]*supportaccessports.LiveGrant, error)
 }
 
 type managedSupportKeys struct {
@@ -37,9 +43,23 @@ type managedHeldSupportKeys struct {
 	ReceivedAt  string   `json:"receivedAt,omitempty"`
 }
 
+type managedSupportGrant struct {
+	ID               string `json:"id"`
+	OrganizationID   string `json:"organizationId"`
+	OrganizationName string `json:"organizationName"`
+	StaffEmail       string `json:"staffEmail"`
+	Scope            string `json:"scope"`
+	ExpiresAt        string `json:"expiresAt"`
+}
+
+type managedSupportGrants struct {
+	Grants []managedSupportGrant `json:"grants"`
+}
+
 func (h *managedHandler) routeSupportAccess(mux *http.ServeMux) {
 	mux.HandleFunc("GET "+managedSupportPath, h.heldSupportKeys)
 	mux.HandleFunc("PUT "+managedSupportPath, h.setSupportKeys)
+	mux.HandleFunc("GET "+managedSupportGrantsPath, h.liveSupportGrants)
 }
 
 func (h *managedHandler) setSupportKeys(w http.ResponseWriter, r *http.Request) {
@@ -92,4 +112,33 @@ func (h *managedHandler) heldSupportKeys(w http.ResponseWriter, r *http.Request)
 		out.ReceivedAt = time.Unix(keys.ReceivedAt, 0).UTC().Format(time.RFC3339)
 	}
 	h.json(w, http.StatusOK, out)
+}
+
+func (h *managedHandler) liveSupportGrants(w http.ResponseWriter, r *http.Request) {
+	grants, err := h.support.LiveGrants(r.Context())
+	if err != nil {
+		h.l.Error("cannot list the live support grants for the operator", zap.Error(err))
+		h.problem(w, http.StatusInternalServerError, "")
+		return
+	}
+	out := managedSupportGrants{Grants: make([]managedSupportGrant, 0, len(grants))}
+	for _, live := range grants {
+		grant := live.Grant
+		out.Grants = append(out.Grants, managedSupportGrant{
+			ID:               grant.ID.String(),
+			OrganizationID:   grant.OrganizationID.String(),
+			OrganizationName: live.OrganizationName,
+			StaffEmail:       grant.StaffEmail,
+			Scope:            managedScope(grant.Scope),
+			ExpiresAt:        time.Unix(grant.ExpiresAt, 0).UTC().Format(time.RFC3339),
+		})
+	}
+	h.json(w, http.StatusOK, out)
+}
+
+func managedScope(scope supportaccess.Scope) string {
+	if scope == supportaccess.ScopeFull {
+		return managedScopeFull
+	}
+	return managedScopeReadOnly
 }

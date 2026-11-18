@@ -12,11 +12,13 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"maps"
 	"math/big"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -47,6 +49,15 @@ type Server struct {
 	used        map[string]bool
 	revision    int64
 	spec        instanceapi.InstanceSpec
+	planEnd     *time.Time
+	support     *instanceapi.SpecSupport
+	grants      []instanceapi.SupportGrant
+	grantsHeld  bool
+	backups     []instanceapi.BackupEntry
+	backupLists int
+	databases   []instanceapi.DatabaseState
+	dbLists     int
+	refused     *instanceapi.RefusedRevision
 	reports     []instanceapi.StatusReport
 	usage       []instanceapi.UsageReport
 	readings    map[usageKey]int64
@@ -60,6 +71,13 @@ type Server struct {
 	limited     int
 	unavailable int
 	lifetime    time.Duration
+	commands    []instanceapi.Command
+	answers     map[uuid.UUID]instanceapi.CommandResult
+	listings    int
+	statusFail  int
+	bundles     bundleState
+	emailEvents emailEventState
+	telemetry   telemetryState
 }
 
 type Params struct {
@@ -103,6 +121,8 @@ func New(p *Params) (*Server, error) {
 		spec:       p.Spec,
 		escrowed:   Secrets(),
 		lifetime:   30 * 24 * time.Hour,
+		answers:    map[uuid.UUID]instanceapi.CommandResult{},
+		bundles:    newBundleState(),
 	}
 	if s.server, err = s.serverCertificate(p.Hosts); err != nil {
 		return nil, err
@@ -154,8 +174,74 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PUT /v1/status", s.putStatus)
 	mux.HandleFunc("POST /v1/certificate", s.renew)
 	mux.HandleFunc("POST /v1/usage", s.reportUsage)
+	mux.HandleFunc("POST /v1/telemetry", s.reportTelemetry)
 	mux.HandleFunc("GET /v1/secrets", s.getSecrets)
+	mux.HandleFunc("GET /v1/commands", s.listCommands)
+	mux.HandleFunc("PUT /v1/commands/{commandId}", s.completeCommand)
+	mux.HandleFunc("POST /v1/log-bundles", s.registerLogBundle)
+	mux.HandleFunc("PUT /v1/log-bundles/{bundleId}", s.updateLogBundle)
+	mux.HandleFunc("GET /v1/email-events", s.listEmailEvents)
+	mux.HandleFunc("POST /v1/email-events/ack", s.ackEmailEvents)
 	return s.authenticate(mux)
+}
+
+func (s *Server) AddCommand(cmd instanceapi.Command) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.commands = append(s.commands, cmd)
+}
+
+func (s *Server) CommandAnswers() map[uuid.UUID]instanceapi.CommandResult {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make(map[uuid.UUID]instanceapi.CommandResult, len(s.answers))
+	maps.Copy(out, s.answers)
+	return out
+}
+
+func (s *Server) CommandListings() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.listings
+}
+
+func (s *Server) listCommands(w http.ResponseWriter, _ *http.Request) {
+	s.mu.Lock()
+	s.listings++
+	waiting := []instanceapi.Command{}
+	for _, c := range s.commands {
+		if _, done := s.answers[c.Id]; !done {
+			waiting = append(waiting, c)
+		}
+	}
+	events := s.emailEventsWaiting()
+	s.mu.Unlock()
+	write(w, instanceapi.CommandList{Commands: waiting, EmailEvents: events})
+}
+
+func (s *Server) completeCommand(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("commandId"))
+	if err != nil {
+		problem(w, http.StatusNotFound, "not_found")
+		return
+	}
+	var result instanceapi.CommandResult
+	if err = sonic.ConfigDefault.NewDecoder(r.Body).Decode(&result); err != nil {
+		problem(w, http.StatusBadRequest, "invalid_request")
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	known := false
+	for _, c := range s.commands {
+		known = known || c.Id == id
+	}
+	if !known {
+		problem(w, http.StatusNotFound, "not_found")
+		return
+	}
+	s.answers[id] = result
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) SetURL(u string) {
@@ -209,6 +295,72 @@ func (s *Server) SetSpec(spec *instanceapi.InstanceSpec) {
 	defer s.mu.Unlock()
 	s.revision++
 	s.spec = *spec
+}
+
+func (s *Server) SetPlanEnd(endsAt *time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if endsAt == nil {
+		s.planEnd = nil
+		return
+	}
+	ends := endsAt.UTC()
+	s.planEnd = &ends
+}
+
+func (s *Server) SetSupport(support *instanceapi.SpecSupport) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if support == nil {
+		s.support = nil
+		return
+	}
+	held := *support
+	held.Keys = append([]instanceapi.SupportKey(nil), support.Keys...)
+	s.support = &held
+}
+
+func (s *Server) SupportGrants() ([]instanceapi.SupportGrant, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]instanceapi.SupportGrant(nil), s.grants...), s.grantsHeld
+}
+
+func (s *Server) Backups() ([]instanceapi.BackupEntry, int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]instanceapi.BackupEntry(nil), s.backups...), s.backupLists
+}
+
+// Refused is the refusal the last accepted report carried, nil when it
+// carried none: what the control plane holds as the instance's refusal.
+func (s *Server) Refused() *instanceapi.RefusedRevision {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.refused == nil {
+		return nil
+	}
+	refused := *s.refused
+	return &refused
+}
+
+// Databases is the database list the control plane keeps, as the last
+// report that carried one left it, and how many reports carried one.
+func (s *Server) Databases() ([]instanceapi.DatabaseState, int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]instanceapi.DatabaseState(nil), s.databases...), s.dbLists
+}
+
+func supportDigest(support *instanceapi.SpecSupport) string {
+	if support == nil {
+		return "0"
+	}
+	parts := []string{support.InstanceId, support.StaffDomain}
+	for _, k := range support.Keys {
+		parts = append(parts, k.Kid, k.X)
+	}
+	return fingerprint([]byte(strings.Join(parts, "\n")))[:12]
 }
 
 func (s *Server) RateLimitNext(n int) {
@@ -328,7 +480,7 @@ func (s *Server) authenticate(next http.Handler) http.Handler {
 
 func (s *Server) getSpec(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
-	rev, spec := s.revision, s.spec
+	rev, spec, planEnd, support := s.revision, s.spec, s.planEnd, s.support
 	unavailable := s.unavailable > 0
 	if unavailable {
 		s.unavailable--
@@ -339,7 +491,21 @@ func (s *Server) getSpec(w http.ResponseWriter, r *http.Request) {
 		problem(w, http.StatusServiceUnavailable, "unavailable")
 		return
 	}
-	etag := strconv.Quote(strconv.FormatInt(rev, 10))
+	ending := int64(0)
+	if spec.Account != nil {
+		account := *spec.Account
+		account.EndsAt = planEnd
+		spec.Account = &account
+		if planEnd != nil {
+			ending = planEnd.Unix()
+		}
+	}
+	if support != nil {
+		spec.Support = support
+	}
+	etag := strconv.Quote(
+		strconv.FormatInt(rev, 10) + "-" + strconv.FormatInt(ending, 10) + "-" + supportDigest(support),
+	)
 	if r.Header.Get("If-None-Match") == etag {
 		w.WriteHeader(http.StatusNotModified)
 		return
@@ -377,6 +543,12 @@ func failSecrets(w http.ResponseWriter, status int) {
 	}
 }
 
+func (s *Server) FailStatusNext(n int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.statusFail = n
+}
+
 func (s *Server) putStatus(w http.ResponseWriter, r *http.Request) {
 	var report instanceapi.StatusReport
 	if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&report); err != nil {
@@ -384,7 +556,30 @@ func (s *Server) putStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.mu.Lock()
+	if s.statusFail > 0 {
+		s.statusFail--
+		s.mu.Unlock()
+		problem(w, http.StatusInternalServerError, "internal")
+		return
+	}
 	s.reports = append(s.reports, report)
+	if report.SupportGrants != nil {
+		s.grants = append([]instanceapi.SupportGrant{}, *report.SupportGrants...)
+		s.grantsHeld = true
+	}
+	if report.Backup != nil && report.Backup.Backups != nil {
+		s.backups = append([]instanceapi.BackupEntry{}, *report.Backup.Backups...)
+		s.backupLists++
+	}
+	if report.Databases != nil {
+		s.databases = append([]instanceapi.DatabaseState{}, *report.Databases...)
+		s.dbLists++
+	}
+	s.refused = nil
+	if report.Refused != nil {
+		refused := *report.Refused
+		s.refused = &refused
+	}
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -589,6 +784,10 @@ func Spec(instanceID uuid.UUID) instanceapi.InstanceSpec {
 			Name:             "Dana Whitfield",
 			Email:            "dana@acme.example",
 			OrganizationName: "Acme Freight",
+		},
+		Account: &instanceapi.SpecAccount{
+			PlanUrl:         "https://console.trenova.cloud/instances/" + instanceID.String() + "/plan",
+			FinalBackupDays: 30,
 		},
 	}
 }

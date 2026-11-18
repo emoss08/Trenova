@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -53,15 +54,36 @@ func (f *fakeRepo) Replace(
 	if f.err != nil {
 		return nil, f.err
 	}
-	replacement := managedfeatures.Replace(f.state, req.Features, req.Now)
-	if !replacement.Changed() {
+	replacement := managedfeatures.Replace(f.state, req.Received, req.Now)
+	if !replacement.Updated() {
 		return replacement, nil
 	}
 	f.saves++
 	c := *replacement.Current
 	c.Features = slices.Clone(replacement.Current.Features)
 	f.state = &c
-	f.changes = append(f.changes, replacement.Change)
+	if replacement.Changed() {
+		f.changes = append(f.changes, replacement.Change)
+	}
+	return replacement, nil
+}
+
+func (f *fakeRepo) RemindPlanEnd(
+	_ context.Context,
+	at int64,
+) (*managedfeatures.Replacement, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.err != nil {
+		return nil, f.err
+	}
+	replacement := managedfeatures.RemindPlanEnd(f.state, at)
+	if !replacement.Updated() {
+		return replacement, nil
+	}
+	f.saves++
+	c := *replacement.Current
+	f.state = &c
 	return replacement, nil
 }
 
@@ -78,7 +100,7 @@ func setFeatures(
 	features []platformcatalog.FeatureKey,
 ) *managedfeatures.Replacement {
 	t.Helper()
-	replacement, err := svc.SetFeatures(t.Context(), features)
+	replacement, err := svc.SetFeatures(t.Context(), &managedfeatures.Received{Features: features})
 	require.NoError(t, err)
 	return replacement
 }
@@ -225,7 +247,7 @@ func TestSetFeaturesSurfacesARepositoryError(t *testing.T) {
 	down := errors.New("database down")
 	repo := &fakeRepo{err: down}
 	svc, _ := newService(repo)
-	_, err := svc.SetFeatures(t.Context(), nil)
+	_, err := svc.SetFeatures(t.Context(), &managedfeatures.Received{})
 	require.ErrorIs(t, err, down)
 	assert.Equal(t, 0, repo.saves)
 }
@@ -237,4 +259,68 @@ func TestStateIsNilBeforeAList(t *testing.T) {
 	state, err := svc.State(t.Context())
 	require.NoError(t, err)
 	assert.Nil(t, state)
+}
+
+func TestSetFeaturesRefusesABadPlanURLBeforeWritingAnything(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	svc, _ := newService(repo)
+	bad := "javascript:alert(1)"
+	_, err := svc.SetFeatures(t.Context(), &managedfeatures.Received{PlanURL: &bad})
+
+	_, refused := errortypes.RefusalOf(err)
+	require.True(t, refused)
+	assert.Equal(t, 0, repo.saves)
+	assert.Nil(t, repo.state)
+}
+
+func TestSetFeaturesStoresThePlanURLAndEndingsAndKeepsThemWhenLeftOut(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	svc, _ := newService(repo)
+	planURL := "https://console.trenova.cloud/instances/1/plan"
+	endings := []managedfeatures.AddOnEnding{
+		{AddOn: platformcatalog.AddOnAccounting, EndsAt: now + 86_400},
+	}
+	_, err := svc.SetFeatures(t.Context(), &managedfeatures.Received{
+		Features:     []platformcatalog.FeatureKey{"tms.accounting"},
+		PlanURL:      &planURL,
+		AddOnEndings: &endings,
+	})
+	require.NoError(t, err)
+
+	setFeatures(t, svc, []platformcatalog.FeatureKey{"tms.accounting"})
+
+	assert.Equal(t, 1, repo.saves, "a request without them changes nothing")
+	state, err := svc.State(t.Context())
+	require.NoError(t, err)
+	assert.Equal(t, planURL, state.PlanURL)
+	assert.Equal(t, endings, state.AddOnEndings)
+	assert.Equal(t, int64(now+86_400), state.EndsAt(platformcatalog.AddOnAccounting))
+}
+
+func TestAnUnknownAddOnIsIgnoredAndLoggedAtMostOnceAnHour(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	svc, logs := newService(repo)
+	endings := []managedfeatures.AddOnEnding{{AddOn: "ZZZ", EndsAt: now + 86_400}}
+	received := &managedfeatures.Received{
+		Features:     []platformcatalog.FeatureKey{"tms.accounting"},
+		AddOnEndings: &endings,
+	}
+	for range 3 {
+		_, err := svc.SetFeatures(t.Context(), received)
+		require.NoError(t, err)
+	}
+
+	assert.Empty(t, repo.state.AddOnEndings)
+	entries := logs.All()
+	require.Len(t, entries, 2, "the first write, then one reminder for the repeats")
+	for _, entry := range entries {
+		assert.Equal(t, zapcore.WarnLevel, entry.Level)
+		assert.Equal(t, []any{"ZZZ"}, entry.ContextMap()["ignoredAddOns"])
+	}
 }

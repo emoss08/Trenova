@@ -23,10 +23,11 @@ import (
 )
 
 const (
-	EmbeddingBatchMaxInputs       = 96
-	EmbeddingBatchMaxTokens       = 60_000
-	GeminiEmbeddingBatchMaxInputs = 100
-	MaxEmbeddingInputs            = 10_000
+	EmbeddingBatchMaxInputs        = 96
+	EmbeddingBatchMaxTokens        = 60_000
+	GeminiEmbeddingBatchMaxInputs  = 100
+	BuiltInEmbeddingBatchMaxInputs = 8
+	MaxEmbeddingInputs             = 10_000
 
 	geminiEmbeddingHost = "generativelanguage.googleapis.com"
 )
@@ -41,7 +42,10 @@ func embeddingLimitsFor(provider *aiprovider.Provider) embeddingBatchLimits {
 		inputs: EmbeddingBatchMaxInputs,
 		tokens: EmbeddingBatchMaxTokens,
 	}
-	if provider.EmbeddingHost() == geminiEmbeddingHost {
+	switch {
+	case provider.BuiltIn:
+		limits.inputs = BuiltInEmbeddingBatchMaxInputs
+	case provider.EmbeddingHost() == geminiEmbeddingHost:
 		limits.inputs = GeminiEmbeddingBatchMaxInputs
 	}
 

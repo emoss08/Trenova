@@ -113,7 +113,9 @@ spec:
     {{- if .candidate }}
     # A candidate only replays WAL until it is switched to: it asks for
     # little of the node beside the live database, with the same ceiling.
-    requests: { cpu: 250m, memory: 512Mi }
+    # Its memory request is its shared_buffers and no less: CloudNativePG
+    # refuses a cluster that asks for less memory than its shared_buffers.
+    requests: { cpu: 250m, memory: {{ include "trenova.postgresLeastMemory" $root }} }
     {{- with $v.postgres.resources.limits }}
     limits:
       {{- toYaml . | nindent 6 }}
@@ -128,4 +130,30 @@ spec:
   affinity:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+{{- end -}}
+
+
+{{/*
+The least memory a database may ask for: its shared_buffers as a Kubernetes
+quantity, or 512Mi when that is larger or shared_buffers is not set. PostgreSQL
+sizes are binary (1GB is 1024MB), as Gi and Mi are; a bare number is 8kB
+blocks.
+*/}}
+{{- define "trenova.postgresLeastMemory" -}}
+{{- $sb := index .Values.postgres.parameters "shared_buffers" | default "" | toString | nospace -}}
+{{- $n := regexFind "^[0-9]+" $sb -}}
+{{- $unit := lower (trimPrefix $n $sb) -}}
+{{- $mebibytes := 0 -}}
+{{- if not $sb -}}
+{{- else if not $n -}}
+{{- fail (printf "postgres.parameters.shared_buffers %q is not a size: use a number with kB, MB, GB or TB" $sb) -}}
+{{- else if eq $unit "tb" -}}{{- $mebibytes = mul (int64 $n) 1048576 -}}
+{{- else if eq $unit "gb" -}}{{- $mebibytes = mul (int64 $n) 1024 -}}
+{{- else if eq $unit "mb" -}}{{- $mebibytes = int64 $n -}}
+{{- else if eq $unit "kb" -}}{{- $mebibytes = div (add (int64 $n) 1023) 1024 -}}
+{{- else if eq $unit "" -}}{{- $mebibytes = div (add (mul (int64 $n) 8) 1023) 1024 -}}
+{{- else -}}
+{{- fail (printf "postgres.parameters.shared_buffers %q is not a size: use a number with kB, MB, GB or TB" $sb) -}}
+{{- end -}}
+{{- max $mebibytes 512 }}Mi
 {{- end -}}

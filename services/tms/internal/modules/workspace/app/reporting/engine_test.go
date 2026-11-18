@@ -131,7 +131,7 @@ func TestEngineError_MapsEveryEngineCode(t *testing.T) {
 				var multi *errortypes.MultiError
 				require.ErrorAs(t, mapped, &multi)
 				require.Len(t, multi.Errors, 1)
-				assert.Equal(t, "definition.columns[2].dimension.field", multi.Errors[0].Field)
+				assert.Equal(t, "definition.columns[2].dimension.field", multi.Errors[0].Field())
 				assert.Contains(t, multi.Error(), "status")
 			},
 		},

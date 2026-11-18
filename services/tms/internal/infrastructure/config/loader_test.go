@@ -1399,7 +1399,6 @@ func TestLoad_PlatformEnvAliases(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Setenv("TRENOVA_DEPLOYMENT_MODE", "development")
-	t.Setenv("TRENOVA_INSTANCE_ID", "inst_01")
 
 	l := NewLoader(WithConfigPath(tmpDir), WithEnvironment("test"))
 
@@ -1407,7 +1406,6 @@ func TestLoad_PlatformEnvAliases(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 	assert.Equal(t, platformconfig.ModeDevelopment, cfg.Platform.GetMode())
-	assert.Equal(t, "inst_01", cfg.Platform.InstanceID)
 }
 
 func validConfigYAML() string {

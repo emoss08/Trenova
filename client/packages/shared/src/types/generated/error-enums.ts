@@ -32,6 +32,7 @@ export const ErrorCode = z.enum([
   "QUOTA_EXCEEDED",
   "PLAN_RESTRICTED",
   "SESSION_CONTEXT_STALE",
+  "CSRF_TOKEN_INVALID",
 ]);
 
 export type ErrorCode = z.infer<typeof ErrorCode>;
@@ -52,6 +53,7 @@ export const ProblemType = z.enum([
   "quota-exceeded",
   "plan-restricted",
   "session-context-stale",
+  "csrf-token-invalid",
 ]);
 
 export type ProblemType = z.infer<typeof ProblemType>;

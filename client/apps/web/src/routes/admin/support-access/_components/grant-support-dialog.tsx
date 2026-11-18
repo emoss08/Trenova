@@ -1,5 +1,6 @@
 import { InputField } from "@/components/fields/input-field";
 import { SegmentedField } from "@/components/fields/segmented-field";
+import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -20,15 +21,16 @@ import {
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { durationLabel, scopeLabel } from "./support-access-labels";
+import { durationLabel, scopeDescription, scopeLabel } from "./support-access-labels";
 
 const grantSchema = z.object({
   staffEmail: z.string().trim().min(1).max(254),
   reason: z.string().trim().min(1).max(500),
   durationHours: z.number().int(),
   scope: z.enum(["ReadOnly", "Full"]),
+  allowsAssistant: z.boolean(),
 });
 
 type GrantValues = z.infer<typeof grantSchema>;
@@ -38,6 +40,7 @@ const defaults = (): GrantValues => ({
   reason: "",
   durationHours: 4,
   scope: "ReadOnly",
+  allowsAssistant: false,
 });
 
 const SCOPES: readonly SupportAccessScope[] = ["ReadOnly", "Full"];
@@ -82,6 +85,7 @@ export function GrantSupportDialog({
 
   const submit = form.handleSubmit((values) => mutation.mutateAsync(values));
   const domain = settings.staffDomain ?? "";
+  const scope = useWatch({ control: form.control, name: "scope" });
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
@@ -135,9 +139,17 @@ export function GrantSupportDialog({
                 control={form.control}
                 name="scope"
                 label={t("Access")}
-                options={SCOPES.map((scope) => ({ value: scope, label: scopeLabel(t, scope) }))}
+                options={SCOPES.map((option) => ({ value: option, label: scopeLabel(t, option) }))}
+                description={scopeDescription(t, scope)}
+              />
+            </FormControl>
+            <FormControl>
+              <SwitchField
+                control={form.control}
+                name="allowsAssistant"
+                label={t("Let them use the assistant")}
                 description={t(
-                  "Full access never includes managing users, roles or sign-in, API keys, stored credentials, bank or remittance details, or exporting data.",
+                  "The assistant answers only from what this access lets them read, and each answer is paid for by your organization's AI providers.",
                 )}
               />
             </FormControl>

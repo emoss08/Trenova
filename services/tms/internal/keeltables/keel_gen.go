@@ -146,6 +146,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso/ssodb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription/subscriptiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess/supportaccessdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportlog/supportlogdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures/managedfeaturesdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage/managedusagedb"
@@ -733,6 +734,7 @@ func All() []*schema.Table {
 		storedmileagedb.StoredMileagesSchema(),
 		supportaccessdb.GrantsSchema(),
 		supportaccessdb.AssertionUsesSchema(),
+		supportlogdb.LogRequestsSchema(),
 		systememaildb.SendersSchema(),
 		tableconfigurationdb.TableConfigurationsSchema(),
 		tablelayoutdb.TableLayoutsSchema(),

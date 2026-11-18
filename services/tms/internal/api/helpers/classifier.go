@@ -48,6 +48,7 @@ func NewDefaultClassifier() *ChainClassifier {
 		ClassifierFunc(classifyTimeout),
 		ClassifierFunc(classifyRequestTooLarge),
 		ClassifierFunc(classifySessionContextStale),
+		ClassifierFunc(classifyCSRFTokenInvalid),
 		ClassifierFunc(classifyVersionMismatch),
 		ClassifierFunc(classifyValidation),
 		ClassifierFunc(classifyTariff),
@@ -187,6 +188,13 @@ func classifyRateLimit(err error) (ProblemType, bool) {
 func classifySessionContextStale(err error) (ProblemType, bool) {
 	if errortypes.IsSessionContextStaleError(err) {
 		return ProblemTypeSessionContextStale, true
+	}
+	return "", false
+}
+
+func classifyCSRFTokenInvalid(err error) (ProblemType, bool) {
+	if errortypes.IsCSRFTokenInvalidError(err) {
+		return ProblemTypeCSRFTokenInvalid, true
 	}
 	return "", false
 }

@@ -75,6 +75,13 @@ func TestProblemType_Info(t *testing.T) {
 			expectedLog:    false,
 		},
 		{
+			name:           "csrf token invalid",
+			problemType:    helpers.ProblemTypeCSRFTokenInvalid,
+			expectedTitle:  "Security Token Invalid",
+			expectedStatus: http.StatusForbidden,
+			expectedLog:    false,
+		},
+		{
 			name:           "internal error",
 			problemType:    helpers.ProblemTypeInternal,
 			expectedTitle:  "Internal Server Error",
@@ -153,6 +160,7 @@ func TestProblemTypeConstants(t *testing.T) {
 			helpers.ProblemTypeRateLimit,
 			helpers.ProblemTypeInternal,
 			helpers.ProblemTypeSessionContextStale,
+			helpers.ProblemTypeCSRFTokenInvalid,
 		}
 
 		seen := make(map[helpers.ProblemType]bool)

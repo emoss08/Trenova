@@ -427,6 +427,13 @@ it. See [product-guide.md](product-guide.md).
   getters that call `translate()`. A caption computed at runtime from a key or an enum value
   (`humanizeKey`) goes through `translateLabel()`, which reads the catalog and leaves an
   unknown caption in English.
+- **Catalogue names are interface text.** The extractor also collects the `Name` of each
+  `platformcatalog.Feature` and `platformcatalog.AddOn` literal (`typedMessageFields` in
+  `shared/cmd/i18n-extract`) and every meter's `Label`. They stay English in the catalogue and
+  are translated where a person reads them: `i18n.T(ctx, name)` in a mapping, `PlanDenial.In(locale)`
+  for a plan denial, and `i18n.Term(name)` as a message argument, which the formatter translates
+  in the message's own locale (`errortypes.NewFeatureRestrictionError`, plan notices). A
+  restriction's `addOn` param reaches the client translated through `LocalizedParams`.
 - **The Go extractor reads only a literal passed straight to `i18n.Translate`, `i18n.T`,
   `i18n.TranslateRich` or an `errortypes` constructor.** A helper that takes the message as a
   parameter (`n.rich(msg, parts, args...)`) hides every message routed through it: they never

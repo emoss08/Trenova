@@ -55394,7 +55394,7 @@
         "idempotent": false,
         "readsExternal": "never",
         "carriesTaint": false,
-        "rationale": "The worker is sent the cancellation reason by push notice and text message."
+        "rationale": "The worker is sent the cancellation reason by push notice."
       }
     },
     {
@@ -58990,7 +58990,7 @@
         "idempotent": false,
         "readsExternal": "never",
         "carriesTaint": false,
-        "rationale": "The worker is sent the rejection reason by push notice and text message."
+        "rationale": "The worker is sent the rejection reason by push notice."
       }
     },
     {
@@ -59522,7 +59522,6 @@
       "searchTerms": [
         "text the driver",
         "message the driver",
-        "sms",
         "driver app"
       ],
       "policy": {

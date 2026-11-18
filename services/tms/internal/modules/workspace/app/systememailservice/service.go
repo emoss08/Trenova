@@ -8,7 +8,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/systememail"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -18,11 +17,10 @@ import (
 )
 
 const (
-	cacheTTL           = 30 * time.Second
-	cacheKey           = systememail.CurrentID
-	fieldAPIKey        = "apiKey"
-	fieldWebhookSecret = "webhookSecret"
-	fingerprintShown   = 12
+	cacheTTL         = 30 * time.Second
+	cacheKey         = systememail.CurrentID
+	fieldAPIKey      = "apiKey"
+	fingerprintShown = 12
 )
 
 type Params struct {
@@ -86,20 +84,6 @@ func (s *Service) Status(ctx context.Context) (systememail.Status, error) {
 	}, nil
 }
 
-func (s *Service) WebhookSecret(
-	ctx context.Context,
-	provider email.Provider,
-) (string, bool, error) {
-	credential, err := s.Current(ctx)
-	if err != nil {
-		return "", false, err
-	}
-	if credential == nil || credential.Provider != provider || credential.WebhookSecret == "" {
-		return "", false, nil
-	}
-	return credential.WebhookSecret, true, nil
-}
-
 func (s *Service) Set(ctx context.Context, credential *systememail.Credential) error {
 	if err := credential.Validate(); err != nil {
 		return err
@@ -126,7 +110,6 @@ func (s *Service) Set(ctx context.Context, credential *systememail.Credential) e
 		zap.String("fromAddress", credential.FromAddress),
 		zap.String("fingerprint", fingerprint[:fingerprintShown]),
 		zap.Bool("replaced", before.credential != nil),
-		zap.Bool("webhookSecret", credential.WebhookSecret != ""),
 	)
 	return nil
 }
@@ -189,25 +172,14 @@ func (s *Service) seal(
 	if err != nil {
 		return nil, fmt.Errorf("seal the system email API key: %w", err)
 	}
-	var webhookSecret string
-	if credential.WebhookSecret != "" {
-		if webhookSecret, err = s.cipher.Seal(
-			ctx,
-			credential.WebhookSecret,
-			scope(fieldWebhookSecret),
-		); err != nil {
-			return nil, fmt.Errorf("seal the system email webhook secret: %w", err)
-		}
-	}
 	return &systememail.Sender{
-		ID:                  systememail.CurrentID,
-		Provider:            credential.Provider,
-		FromAddress:         credential.FromAddress,
-		FromName:            credential.FromName,
-		APIKeySealed:        apiKey,
-		WebhookSecretSealed: webhookSecret,
-		Fingerprint:         fingerprint,
-		ReceivedAt:          s.clock(),
+		ID:           systememail.CurrentID,
+		Provider:     credential.Provider,
+		FromAddress:  credential.FromAddress,
+		FromName:     credential.FromName,
+		APIKeySealed: apiKey,
+		Fingerprint:  fingerprint,
+		ReceivedAt:   s.clock(),
 	}, nil
 }
 
@@ -219,22 +191,11 @@ func (s *Service) open(
 	if err != nil {
 		return nil, fmt.Errorf("open the system email API key: %w", err)
 	}
-	var webhookSecret string
-	if sender.WebhookSecretSealed != "" {
-		if webhookSecret, err = s.cipher.Open(
-			ctx,
-			sender.WebhookSecretSealed,
-			scope(fieldWebhookSecret),
-		); err != nil {
-			return nil, fmt.Errorf("open the system email webhook secret: %w", err)
-		}
-	}
 	return &systememail.Credential{
-		Provider:      sender.Provider,
-		APIKey:        apiKey,
-		FromAddress:   sender.FromAddress,
-		FromName:      sender.FromName,
-		WebhookSecret: webhookSecret,
+		Provider:    sender.Provider,
+		APIKey:      apiKey,
+		FromAddress: sender.FromAddress,
+		FromName:    sender.FromName,
 	}, nil
 }
 

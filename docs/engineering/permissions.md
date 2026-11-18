@@ -747,8 +747,17 @@ one rule on the principal type, `supportaccess.Effective` over the registry
 
 - read-only allows `read` and nothing else;
 - full allows every declared operation except the deny list (users, roles and sign-in settings,
-  API keys, support access itself, stored credentials, bank and factoring remittance details,
-  and `export` on every resource);
+  API keys, support access itself, stored credentials, factoring, document templates, EDI,
+  agents and their limits, customer communication, and `export` on every resource);
+- what leaves the organization (sends, share and tracking links, scheduled reports, outbound
+  text and recipients) is guarded in the database (`supportaccess.OutboundGuards`), and the agent
+  runtime withholds every tool whose egress reaches outsiders from a support principal;
+- `assistant` is in neither scope: a grant that allows the assistant adds `assistant` read and
+  create (`supportaccess.AssistantOperations`), because its model calls are paid for by the
+  organization;
+- where money is sent is not a resource, so it is guarded per column in the database
+  (`supportaccess.PaymentDestinations`, [managed-mode.md](managed-mode.md#what-a-session-may-do)),
+  which refuses a support principal whatever the operation the engine allowed;
 - an operation refused on a child resource is taken off its parent too, since a parent's grant
   satisfies a check on its child.
 

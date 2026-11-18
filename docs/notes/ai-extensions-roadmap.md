@@ -14,7 +14,7 @@ line decides several of the obvious candidates:
   SONAR TRAC)** are integrations. Their data belongs on carrier and rate records that people,
   rating and compliance read too, not in an agent's turn only. They are the highest-value
   freight data sources researched, so they go on the integrations roadmap.
-- **Weather, fuel, FMCSA, routing, SMS** are already integrations, and agents already reach them
+- **Weather, fuel, FMCSA, routing** are already integrations, and agents already reach them
   through tools (`vet_carrier`, the monitoring tools). A missing agent tool over an existing
   integration is a tool, not an extension.
 - **Document parsing (Reducto, LlamaParse, Mistral OCR)** overlaps the in-house document AI.

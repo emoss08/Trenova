@@ -75,9 +75,41 @@ type CheckParams struct {
 }
 
 func (c *Checker) Check(ctx context.Context, p CheckParams) ([]Component, error) {
+	parts, err := c.Parts(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Component, 0, len(parts))
+	var seen *observed
+	for i := range parts {
+		f := &parts[i]
+		if !f.Ready && f.Pods != nil {
+			if seen == nil {
+				o := c.observe(ctx)
+				seen = &o
+			}
+			f.Component = explain(f.Component, seen.cause(f.Pods))
+		}
+		out = append(out, f.Component)
+	}
+	return out, nil
+}
+
+// Part is a component, the copies it should run, the image it runs and the
+// selector of the pods that make it up: what a status report and a telemetry
+// sample both read, so the two name the same components.
+type Part struct {
+	Component
+	Replicas      *int32
+	ReadyReplicas *int32
+	Image         string
+	Pods          labels.Selector
+}
+
+func (c *Checker) Parts(ctx context.Context, p CheckParams) ([]Part, error) {
 	selector := fmt.Sprintf("%s=%s,%s=%s", labelName, c.chart, labelInstance, c.release)
 	list := metav1.ListOptions{LabelSelector: selector}
-	found := []checked{}
+	found := []Part{}
 
 	deployments, err := c.kube.AppsV1().Deployments(c.namespace).List(ctx, list)
 	if err != nil {
@@ -85,7 +117,13 @@ func (c *Checker) Check(ctx context.Context, p CheckParams) ([]Component, error)
 	}
 	for i := range deployments.Items {
 		d := &deployments.Items[i]
-		found = append(found, checked{deployment(d), podSelector(d.Spec.Selector)})
+		found = append(found, Part{
+			Component:     Deployment(d),
+			Replicas:      wanted(d.Spec.Replicas),
+			ReadyReplicas: &d.Status.ReadyReplicas,
+			Image:         firstImage(&d.Spec.Template.Spec),
+			Pods:          podSelector(d.Spec.Selector),
+		})
 	}
 	sets, err := c.kube.AppsV1().StatefulSets(c.namespace).List(ctx, list)
 	if err != nil {
@@ -93,45 +131,39 @@ func (c *Checker) Check(ctx context.Context, p CheckParams) ([]Component, error)
 	}
 	for i := range sets.Items {
 		s := &sets.Items[i]
-		found = append(found, checked{statefulSet(s), podSelector(s.Spec.Selector)})
+		found = append(found, Part{
+			Component:     StatefulSet(s),
+			Replicas:      wanted(s.Spec.Replicas),
+			ReadyReplicas: &s.Status.ReadyReplicas,
+			Image:         firstImage(&s.Spec.Template.Spec),
+			Pods:          podSelector(s.Spec.Selector),
+		})
 	}
-	pg, cluster := c.postgres(ctx, p.Hibernated, p.Generation)
-	found = append(found, checked{
-		comp: pg,
-		pods: labels.SelectorFromSet(labels.Set{labelCNPGCluster: cluster}),
-	})
+	found = append(found, c.postgres(ctx, p.Hibernated, p.Generation))
 	if !p.Stopped {
-		job, jobName, jerr := c.releaseJob(ctx, &list, p.HelmRevision)
+		job, jerr := c.releaseJob(ctx, &list, p.HelmRevision)
 		if jerr != nil {
 			return nil, jerr
 		}
-		var sel labels.Selector
-		if jobName != "" {
-			sel = labels.SelectorFromSet(labels.Set{labelJobName: jobName})
-		}
-		found = append(found, checked{job, sel})
+		found = append(found, job)
 	}
-
-	out := make([]Component, 0, len(found))
-	var seen *observed
-	for _, f := range found {
-		if !f.comp.Ready && f.pods != nil {
-			if seen == nil {
-				o := c.observe(ctx)
-				seen = &o
-			}
-			f.comp = explain(f.comp, seen.cause(f.pods))
-		}
-		out = append(out, f.comp)
-	}
-	slices.SortFunc(out, func(a, b Component) int { return strings.Compare(a.Name, b.Name) })
-	return out, nil
+	slices.SortFunc(found, func(a, b Part) int { return strings.Compare(a.Name, b.Name) })
+	return found, nil
 }
 
-// checked is a component and the selector of the pods that make it up.
-type checked struct {
-	comp Component
-	pods labels.Selector
+func wanted(replicas *int32) *int32 {
+	want := int32(1)
+	if replicas != nil {
+		want = *replicas
+	}
+	return &want
+}
+
+func firstImage(spec *corev1.PodSpec) string {
+	if len(spec.Containers) == 0 {
+		return ""
+	}
+	return spec.Containers[0].Image
 }
 
 func podSelector(s *metav1.LabelSelector) labels.Selector {
@@ -149,7 +181,7 @@ func component(m *metav1.ObjectMeta) string {
 	return m.Name
 }
 
-func deployment(d *appsv1.Deployment) Component {
+func Deployment(d *appsv1.Deployment) Component {
 	want := int32(1)
 	if d.Spec.Replicas != nil {
 		want = *d.Spec.Replicas
@@ -172,7 +204,7 @@ func deployment(d *appsv1.Deployment) Component {
 	return c
 }
 
-func statefulSet(s *appsv1.StatefulSet) Component {
+func StatefulSet(s *appsv1.StatefulSet) Component {
 	want := int32(1)
 	if s.Spec.Replicas != nil {
 		want = *s.Spec.Replicas
@@ -193,11 +225,7 @@ func statefulSet(s *appsv1.StatefulSet) Component {
 	return c
 }
 
-func (c *Checker) postgres(
-	ctx context.Context,
-	hibernated bool,
-	generation string,
-) (comp Component, clusterName string) {
+func (c *Checker) postgres(ctx context.Context, hibernated bool, generation string) Part {
 	name := c.release + "-postgres"
 	if c.release != c.chart && !strings.Contains(c.release, c.chart) {
 		name = c.release + "-" + c.chart + "-postgres"
@@ -205,16 +233,33 @@ func (c *Checker) postgres(
 	if generation != "" {
 		name += "-" + generation
 	}
+	part := Part{Pods: labels.SelectorFromSet(labels.Set{labelCNPGCluster: name})}
 	obj, err := c.dynamic.Resource(clusterResource).
 		Namespace(c.namespace).
 		Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		return Component{
+		part.Component = Component{
 			Name:    componentPostgres,
 			Message: trim("cluster " + name + ": " + err.Error()),
-		}, name
+		}
+		return part
 	}
-	return cluster(obj, hibernated), name
+	part.Component = cluster(obj, hibernated)
+	if want, ok, _ := unstructured.NestedInt64(obj.Object, "spec", "instances"); ok {
+		w := int32(want)
+		if hibernated {
+			w = 0
+		}
+		part.Replicas = &w
+	}
+	ready, _, _ := unstructured.NestedInt64(obj.Object, "status", "readyInstances")
+	r := int32(ready)
+	part.ReadyReplicas = &r
+	part.Image, _, _ = unstructured.NestedString(obj.Object, "status", "image")
+	if part.Image == "" {
+		part.Image, _, _ = unstructured.NestedString(obj.Object, "spec", "imageName")
+	}
+	return part
 }
 
 func cluster(obj *unstructured.Unstructured, hibernated bool) Component {
@@ -259,11 +304,11 @@ func (c *Checker) releaseJob(
 	ctx context.Context,
 	list *metav1.ListOptions,
 	revision int,
-) (Component, string, error) {
+) (Part, error) {
 	comp := Component{Name: componentRelease}
 	jobs, err := c.kube.BatchV1().Jobs(c.namespace).List(ctx, *list)
 	if err != nil {
-		return comp, "", fmt.Errorf("list jobs: %w", err)
+		return Part{Component: comp}, fmt.Errorf("list jobs: %w", err)
 	}
 	suffix := "-" + strconv.Itoa(revision)
 	for i := range jobs.Items {
@@ -271,10 +316,14 @@ func (c *Checker) releaseJob(
 		if j.Labels[labelComponent] != componentRelease || !strings.HasSuffix(j.Name, suffix) {
 			continue
 		}
-		return job(j), j.Name, nil
+		return Part{
+			Component: job(j),
+			Image:     firstImage(&j.Spec.Template.Spec),
+			Pods:      labels.SelectorFromSet(labels.Set{labelJobName: j.Name}),
+		}, nil
 	}
 	comp.Message = "waiting for the release Job of revision " + strconv.Itoa(revision)
-	return comp, "", nil
+	return Part{Component: comp}, nil
 }
 
 func job(j *batchv1.Job) Component {

@@ -15,12 +15,16 @@ import (
 	"go.uber.org/zap"
 )
 
-const graphQLPath = "/graphql"
+const (
+	graphQLPath            = "/graphql"
+	changePasswordPath     = "/api/v1/users/me/change-password" //nolint:gosec // a route, not a password
+	switchOrganizationPath = "/api/v1/users/me/switch-organization"
+)
 
 var readOnlyWriteAllowedPaths = map[string]struct{}{
 	graphQLPath:                                                        {},
-	"/api/v1/users/me/change-password":                                 {},
-	"/api/v1/users/me/switch-organization":                             {},
+	changePasswordPath:                                                 {},
+	switchOrganizationPath:                                             {},
 	"/api/v1/users/me/settings":                                        {},
 	"/api/v1/assistant/turns/:turnID/stop":                             {},
 	"/api/v1/realtime/presence/:resource":                              {},
@@ -47,10 +51,10 @@ var readOnlyWriteAllowedPaths = map[string]struct{}{
 }
 
 var expiredAllowedPaths = map[string]struct{}{
-	"/api/v1/users/me":                     {},
-	"/api/v1/users/me/organizations":       {},
-	"/api/v1/users/me/switch-organization": {},
-	"/api/v1/me/billing":                   {},
+	"/api/v1/users/me":               {},
+	"/api/v1/users/me/organizations": {},
+	switchOrganizationPath:           {},
+	"/api/v1/me/billing":             {},
 }
 
 type ReadOnlyGuardParams struct {
@@ -87,6 +91,12 @@ func (g *ReadOnlyGuard) Guard() gin.HandlerFunc {
 		}
 
 		route := routeOf(c)
+		refusal := SupportWriteRefusal(authCtx.Support, c.Request.Method, route)
+		if refusal != nil {
+			g.errorHandler.HandleError(c, refusal)
+			c.Abort()
+			return
+		}
 		err := planservice.Admit(
 			c.Request.Context(),
 			g.plans,

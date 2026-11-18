@@ -3,6 +3,7 @@ package apiapp
 import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/schemaversion"
 	"github.com/emoss08/trenova/internal/modules/accounting"
 	"github.com/emoss08/trenova/internal/modules/agent"
@@ -55,5 +56,5 @@ func Options() fx.Option {
 }
 
 func Run(base fx.Option) {
-	fx.New(schemaversion.Module, base, Options()).Run()
+	fx.New(config.FxLogger(), schemaversion.Module, base, Options()).Run()
 }

@@ -108,6 +108,7 @@ type StartSSOLoginRequest struct {
 	ProviderID       pulid.ID
 	OrganizationSlug string
 	ReturnTo         string
+	StartPath        string
 	BrowserBinding   string
 }
 

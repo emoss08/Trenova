@@ -14,6 +14,7 @@ const (
 	GrantIDPrefix   = "sag_"
 	MaxLiveGrants   = 5
 	MaxReasonLength = 500
+	hourSeconds     = int64(3600)
 )
 
 var (
@@ -30,6 +31,7 @@ type Grant struct {
 	StaffEmail       string   `json:"staffEmail"       keel:"staff_email"`
 	Reason           string   `json:"reason"           keel:"reason"`
 	Scope            Scope    `json:"scope"            keel:"scope"`
+	AllowsAssistant  bool     `json:"allowsAssistant"  keel:"allows_assistant"`
 	DurationHours    int      `json:"durationHours"    keel:"duration_hours"`
 	PrincipalUserID  pulid.ID `json:"principalUserId"  keel:"principal_user_id"`
 	GrantedByID      pulid.ID `json:"grantedById"      keel:"granted_by_id"`
@@ -38,22 +40,41 @@ type Grant struct {
 	RevokedByID      pulid.ID `json:"revokedById"      keel:"revoked_by_id,nullzero"`
 	RevokeReason     string   `json:"revokeReason"     keel:"revoke_reason,nullzero"`
 	ExpiryRecordedAt *int64   `json:"expiryRecordedAt" keel:"expiry_recorded_at"`
+	ExtendedAt       *int64   `json:"extendedAt"       keel:"extended_at"`
+	ExtendedByID     pulid.ID `json:"extendedById"     keel:"extended_by_id,nullzero"`
 	LastEnteredAt    *int64   `json:"lastEnteredAt"    keel:"last_entered_at"`
 	LastStaffName    string   `json:"lastStaffName"    keel:"last_staff_name,nullzero"`
 	Version          int64    `json:"version"          keel:"version,version"`
 	CreatedAt        int64    `json:"createdAt"        keel:"created_at,autocreate"`
 	UpdatedAt        int64    `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
-	GrantedBy *tenant.User `json:"grantedBy,omitempty" keel:"belongs:granted_by_id"`
-	RevokedBy *tenant.User `json:"revokedBy,omitempty" keel:"belongs:revoked_by_id"`
+	GrantedBy  *tenant.User `json:"grantedBy,omitempty"  keel:"belongs:granted_by_id"`
+	RevokedBy  *tenant.User `json:"revokedBy,omitempty"  keel:"belongs:revoked_by_id"`
+	ExtendedBy *tenant.User `json:"extendedBy,omitempty" keel:"belongs:extended_by_id"`
 }
 
 func (Grant) Constraints() []keel.Constraint {
 	return []keel.Constraint{
-		{Name: "ck_support_access_grants_staff_email", Field: "staffEmail", Message: "Enter a Trenova staff email address"},
-		{Name: "ck_support_access_grants_reason", Field: "reason", Message: "Say why Trenova support needs access, in at most 500 characters"},
-		{Name: "ck_support_access_grants_duration", Field: "durationHours", Message: "Choose 1, 4, 24 or 72 hours"},
-		{Name: "ck_support_access_grants_scope", Field: "scope", Message: "Choose read-only or full access"},
+		{
+			Name:    "ck_support_access_grants_staff_email",
+			Field:   "staffEmail",
+			Message: "Enter a Trenova staff email address",
+		},
+		{
+			Name:    "ck_support_access_grants_reason",
+			Field:   "reason",
+			Message: "Say why Trenova support needs access, in at most 500 characters",
+		},
+		{
+			Name:    "ck_support_access_grants_duration",
+			Field:   "durationHours",
+			Message: "Choose 1, 4, 24 or 72 hours",
+		},
+		{
+			Name:    "ck_support_access_grants_scope",
+			Field:   "scope",
+			Message: "Choose read-only or full access",
+		},
 	}
 }
 
@@ -94,6 +115,40 @@ func (g *Grant) Revoke(by pulid.ID, reason string, now int64) error {
 	g.RevokedByID = by
 	g.RevokeReason = reason
 	return nil
+}
+
+func (g *Grant) Extend(by pulid.ID, hours int, now int64) error {
+	if !ValidDuration(hours) {
+		return errortypes.NewValidationError(
+			"durationHours",
+			errortypes.ErrInvalid,
+			"Choose 1, 4, 24 or 72 hours",
+		)
+	}
+	if !g.LiveAt(now) {
+		return errortypes.NewValidationError(
+			"id",
+			errortypes.ErrInvalid,
+			"This support access has already ended. Grant access again instead",
+		)
+	}
+	next := now + int64(hours)*hourSeconds
+	if next <= g.ExpiresAt {
+		return errortypes.NewValidationError(
+			"durationHours",
+			errortypes.ErrInvalid,
+			"This access already lasts longer than that",
+		)
+	}
+	g.ExpiresAt = next
+	g.DurationHours = hours
+	g.ExtendedAt = &now
+	g.ExtendedByID = by
+	return nil
+}
+
+func (g *Grant) IsFirstEntry() bool {
+	return g.LastEnteredAt == nil
 }
 
 func (g *Grant) GetID() pulid.ID {

@@ -66,6 +66,15 @@ nothing below changes anything.
   `ProviderAvailability.NovaReady(ctx, tenant, task)` before anything is dispatched, and
   `TaskRunner.Available` takes the task, so a feature that asks whether Nova can do its work
   is told no off the plan.
+- **Embeddings.** `UsableFor(TaskEmbedding)` returns the organization's own Embedding providers
+  and then, on a managed instance with Trenova AI, the instance's built-in search service
+  (`aiproviderports.BuiltInEmbedding`, [managed-mode.md](managed-mode.md#search-by-meaning)).
+  The first candidate is the configured model, which `retrievalservice.Plan` records as the
+  active or pending model; every model switch, to or from the service, goes through the existing
+  model change. A provider write that touches Embedding wakes the organization's indexer, and
+  the hourly sweep visits every organization and wakes one whose routed model the index has not
+  adopted. Trenova tunes for `airetrieval.TunedEmbeddingModel` (`nomic-embed-text`); its eval
+  fixtures are recorded from the shipped image (`agentevalgate.RecordEmbeddingsCommand`).
 - **Entries.** Each piece of work also checks its own feature where it starts: every Desk
   turn needs `ai.desk` (`assistantturnservice.Start`; a scheduled one also
   `platform.agent_automation`), agent runs `platform.agent_automation`
@@ -2941,8 +2950,7 @@ trips (still delivered with no POD on file, who hauled the last move, the
 billing sender), skips a shipment with an open run of the agent, and asks
 once through `podchase.Asker`: a Dash message to a driver with portal
 access, otherwise an email to the driver when one is on file, otherwise an
-email to the carrier, otherwise a text to the driver when a number is all
-there is and the plan includes text messages. The address or number is put
+email to the carrier. The address is put
 into the request in code and no model sees it. A shipment nobody can be
 asked about is asked about by nobody: a model could not reach them either,
 so no run is started and the Watchtower item waits for a person. An agent
@@ -2965,9 +2973,7 @@ the person's name with their permissions, so a play works with every agent
 off, in shadow or paused.
 
 Both paths send through one owner per channel. `drivermessage.Sender`
-reaches a driver where they can be reached: in Dash with a portal login, or
-by text to the number on file when they have none and the plan includes
-text messages (`SendSMSWorkflow`). `requestemail.Sender` renders a request
+reaches a driver in Dash, where they have a portal login. `requestemail.Sender` renders a request
 in the organization's template for its kind (`agent.request_missing_docs.email`
 for paperwork, `agent.status_request.email` for where a load is) and sends
 it from the billing email profile or else the general one. The agent tools

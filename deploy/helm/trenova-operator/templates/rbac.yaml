@@ -27,7 +27,59 @@ rules:
   - apiGroups: [""]
     resources: [secrets]
     verbs: [create]
+  # The Lease that lets one operator pod run the instance at a time. Creating
+  # one cannot be limited by name either.
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    resourceNames: [{{ include "operator.name" . | quote }}]
+    verbs: [get, update]
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [create]
+  # Its own Deployment, read while it upgrades itself: a new version that
+  # never becomes ready is rolled back.
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [{{ include "operator.name" . | quote }}]
+    verbs: [get]
 ---
+{{- if .Values.selfUpgrade.enabled }}
+# helm-controller's namespace: the operator's own HelmChart, whose version it
+# moves to the instance's release, and the Job that installs it.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "operator.name" . }}-self
+  namespace: {{ .Values.selfUpgrade.helmChartNamespace }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [helm.cattle.io]
+    resources: [helmcharts]
+    resourceNames: [{{ .Release.Name | quote }}]
+    verbs: [get, patch]
+  - apiGroups: [batch]
+    resources: [jobs]
+    resourceNames: [{{ printf "helm-install-%s" .Release.Name | quote }}]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "operator.name" . }}-self
+  namespace: {{ .Values.selfUpgrade.helmChartNamespace }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "operator.name" . }}-self
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "operator.name" . }}
+    namespace: {{ .Release.Namespace }}
+---
+{{- end }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -57,8 +109,18 @@ rules:
   - apiGroups: [""]
     resources: [secrets, configmaps, services]
     verbs: [get, list, watch, create, update, patch, delete]
+  # Log keeping (the chart's logs.enabled): Loki's volume, and Alloy's
+  # ServiceAccount and the namespaced Role that lets it read pods and their
+  # logs. The operator holds those two permissions itself (below), so it can
+  # grant them without the escalate or bind verbs.
   - apiGroups: [""]
-    resources: [pods, persistentvolumeclaims, events]
+    resources: [persistentvolumeclaims, serviceaccounts]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [roles, rolebindings]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [pods, events]
     verbs: [get, list, watch]
   # A component's recent log lines, for a collect_logs command from the
   # control plane (services/operator/internal/commands).
@@ -86,6 +148,38 @@ rules:
   - apiGroups: [barmancloud.cnpg.io]
     resources: [objectstores]
     verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [metrics.k8s.io]
+    resources: [pods]
+    verbs: [list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "operator.name" . }}-telemetry
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: [nodes, nodes/stats]
+    verbs: [get]
+  - apiGroups: [metrics.k8s.io]
+    resources: [nodes]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "operator.name" . }}-telemetry
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "operator.name" . }}-telemetry
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "operator.name" . }}
+    namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

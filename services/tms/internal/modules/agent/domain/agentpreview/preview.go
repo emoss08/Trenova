@@ -79,7 +79,6 @@ type MessageChannel string
 
 const (
 	MessageChannelEmail   = MessageChannel("Email")
-	MessageChannelSMS     = MessageChannel("SMS")
 	MessageChannelDash    = MessageChannel("Dash")
 	MessageChannelEDI     = MessageChannel("EDI")
 	MessageChannelComment = MessageChannel("Comment")
@@ -88,7 +87,7 @@ const (
 
 func (c MessageChannel) IsValid() bool {
 	switch c {
-	case MessageChannelEmail, MessageChannelSMS, MessageChannelDash, MessageChannelEDI,
+	case MessageChannelEmail, MessageChannelDash, MessageChannelEDI,
 		MessageChannelComment, MessageChannelPortal:
 		return true
 	default:

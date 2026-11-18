@@ -46,11 +46,11 @@ type stubCORS struct {
 	err     error
 }
 
-func (s *stubCORS) Allow(_ context.Context, b storage.Bucket, origin string) error {
+func (s *stubCORS) Allow(_ context.Context, b storage.Bucket, origins []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.buckets = append(s.buckets, b)
-	s.origins = append(s.origins, origin)
+	s.origins = append(s.origins, strings.Join(origins, ","))
 	return s.err
 }
 
@@ -78,7 +78,7 @@ func TestTheBucketsAreFetchedOnceIntoTwoSecrets(t *testing.T) {
 	cors := &stubCORS{}
 	s := storage.New(&storage.Params{Client: client, ControlPlane: cp, CORS: cors, Namespace: namespace, Logger: quiet()})
 
-	loc, err := s.Ensure(ctx, "abc.trenova.app")
+	loc, err := s.Ensure(ctx, []string{"abc.trenova.app"}, 1)
 	require.NoError(t, err)
 	require.Equal(t, values.Storage{
 		Endpoint: "https://s3.bhs.io.cloud.ovh.net", Region: "bhs", DocumentsBucket: "trenova-abc-docs",
@@ -108,7 +108,7 @@ func TestTheBucketsAreFetchedOnceIntoTwoSecrets(t *testing.T) {
 	require.Equal(t, "DOCSKEY0123456789", cors.buckets[0].AccessKeyID)
 
 	// Held: neither the control plane nor the bucket is asked again.
-	again, err := s.Ensure(ctx, "abc.trenova.app")
+	again, err := s.Ensure(ctx, []string{"abc.trenova.app"}, 1)
 	require.NoError(t, err)
 	require.Equal(t, loc, again)
 	require.Equal(t, 1, cp.calls)
@@ -118,7 +118,7 @@ func TestTheBucketsAreFetchedOnceIntoTwoSecrets(t *testing.T) {
 	delete(backups.Data, storage.KeyBackupSecretKey)
 	_, err = client.CoreV1().Secrets(namespace).Update(ctx, backups, metav1.UpdateOptions{})
 	require.NoError(t, err)
-	_, err = s.Ensure(ctx, "abc.trenova.app")
+	_, err = s.Ensure(ctx, []string{"abc.trenova.app"}, 1)
 	require.NoError(t, err)
 	require.Equal(t, 2, cp.calls)
 	backups, err = client.CoreV1().Secrets(namespace).Get(ctx, values.BackupsSecret, metav1.GetOptions{})
@@ -135,18 +135,51 @@ func TestAnInstanceWithoutStorageKeepsTheChartsStore(t *testing.T) {
 		Client: fake.NewSimpleClientset(), ControlPlane: cp, Namespace: namespace, Logger: quiet(),
 		Now: func() time.Time { return now },
 	})
-	loc, err := s.Ensure(ctx, "abc.trenova.app")
+	loc, err := s.Ensure(ctx, []string{"abc.trenova.app"}, 1)
 	require.NoError(t, err)
 	require.False(t, loc.Configured())
-	// It asks again only after a while, so polling stays under the
-	// control plane's limit.
-	_, err = s.Ensure(ctx, "abc.trenova.app")
+	_, err = s.Ensure(ctx, []string{"abc.trenova.app"}, 1)
 	require.NoError(t, err)
 	require.Equal(t, 1, cp.calls)
 	now = now.Add(11 * time.Minute)
-	_, err = s.Ensure(ctx, "abc.trenova.app")
+	_, err = s.Ensure(ctx, []string{"abc.trenova.app"}, 1)
 	require.NoError(t, err)
 	require.Equal(t, 2, cp.calls)
+}
+
+func TestANewRevisionLooksForStorageAgainAtOnce(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	now := time.Date(2026, 11, 14, 9, 0, 0, 0, time.UTC)
+	client := fake.NewSimpleClientset()
+	cp := &stubCP{err: controlplane.ErrNoStorage}
+	s := storage.New(&storage.Params{
+		Client: client, ControlPlane: cp, Namespace: namespace, Logger: quiet(),
+		Now: func() time.Time { return now },
+	})
+	loc, err := s.Ensure(ctx, []string{"abc.trenova.app"}, 1)
+	require.NoError(t, err)
+	require.False(t, loc.Configured())
+
+	cp.mu.Lock()
+	cp.err, cp.value = nil, fetched()
+	cp.mu.Unlock()
+	now = now.Add(2 * time.Minute)
+	loc, err = s.Ensure(ctx, []string{"abc.trenova.app"}, 1)
+	require.NoError(t, err)
+	require.False(t, loc.Configured(), "the same revision waits out the recheck")
+	require.Equal(t, 1, cp.calls)
+
+	loc, err = s.Ensure(ctx, []string{"abc.trenova.app"}, 2)
+	require.NoError(t, err)
+	require.True(t, loc.Configured(), "the next revision asks again")
+	require.Equal(t, 2, cp.calls)
+	_, err = client.CoreV1().Secrets(namespace).Get(ctx, values.BackupsSecret, metav1.GetOptions{})
+	require.NoError(t, err)
+
+	_, err = s.Ensure(ctx, []string{"abc.trenova.app"}, 2)
+	require.NoError(t, err)
+	require.Equal(t, 2, cp.calls, "the Secrets are held from then on")
 }
 
 func TestMalformedStorageIsNeverWritten(t *testing.T) {
@@ -164,7 +197,7 @@ func TestMalformedStorageIsNeverWritten(t *testing.T) {
 		change(&v)
 		client := fake.NewSimpleClientset()
 		s := storage.New(&storage.Params{Client: client, ControlPlane: &stubCP{value: v}, Namespace: namespace, Logger: quiet()})
-		_, err := s.Ensure(ctx, "abc.trenova.app")
+		_, err := s.Ensure(ctx, []string{"abc.trenova.app"}, 1)
 		require.ErrorIs(t, err, storage.ErrInvalid, name)
 		list, err := client.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
@@ -187,7 +220,7 @@ func TestCORSRulesAreSignedForTheBucket(t *testing.T) {
 	err := c.Allow(context.Background(), storage.Bucket{
 		Endpoint: srv.URL, Region: "bhs", Name: "trenova-abc-docs",
 		AccessKeyID: "DOCSKEY0123456789", SecretAccessKey: "documents-secret-0123456789",
-	}, "https://abc.trenova.app")
+	}, []string{"https://abc.trenova.app"})
 	require.NoError(t, err)
 	require.Equal(t, http.MethodPut, got.Method)
 	require.Equal(t, "/trenova-abc-docs", got.URL.Path)
@@ -208,7 +241,7 @@ func TestCORSRulesAreSignedForTheBucket(t *testing.T) {
 	c = storage.S3CORS{Client: refused.Client()}
 	require.Error(t, c.Allow(context.Background(), storage.Bucket{
 		Endpoint: refused.URL, Region: "bhs", Name: "b", AccessKeyID: "k", SecretAccessKey: "s",
-	}, "https://abc.trenova.app"))
+	}, []string{"https://abc.trenova.app"}))
 }
 
 func TestAPrivateEndpointIsWhereTheOperatorReachesTheBucket(t *testing.T) {
@@ -220,14 +253,14 @@ func TestAPrivateEndpointIsWhereTheOperatorReachesTheBucket(t *testing.T) {
 		PrivateEndpoint: "http://minio.trenova.internal:9000", Client: client, ControlPlane: &stubCP{value: fetched()},
 		CORS: cors, Namespace: namespace, Logger: quiet(),
 	})
-	loc, err := s.Ensure(ctx, "abc.instances.localhost")
+	loc, err := s.Ensure(ctx, []string{"abc.instances.localhost"}, 1)
 	require.NoError(t, err)
 	require.Equal(t, "https://s3.bhs.io.cloud.ovh.net", loc.Endpoint)
 	require.Equal(t, "http://minio.trenova.internal:9000", loc.PrivateEndpoint)
 	require.Equal(t, "http://minio.trenova.internal:9000", cors.buckets[0].Endpoint)
 	require.Equal(t, []string{"https://abc.instances.localhost"}, cors.origins)
 
-	again, err := s.Ensure(ctx, "abc.instances.localhost")
+	again, err := s.Ensure(ctx, []string{"abc.instances.localhost"}, 1)
 	require.NoError(t, err)
 	require.Equal(t, loc, again)
 

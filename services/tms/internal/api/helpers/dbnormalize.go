@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/tenantboundary"
@@ -19,6 +20,14 @@ func NormalizeDatabaseError(ctx context.Context, classifier *ChainClassifier, er
 			tenantboundary.Violation{Source: tenantboundary.SourceDatabasePolicy},
 		)
 		return errortypes.NewAuthorizationError("insufficient permissions").WithInternal(err)
+	}
+
+	if dberror.IsSupportPaymentDestinationRefusal(err) {
+		return supportaccess.ErrPaymentDestinationRefused().WithInternal(err)
+	}
+
+	if dberror.IsSupportOutboundRefusal(err) {
+		return supportaccess.ErrOutboundRefused().WithInternal(err)
 	}
 
 	if dberror.IsUniqueConstraintViolation(err) && unclassifiedDatabaseFailure(classifier, err) {

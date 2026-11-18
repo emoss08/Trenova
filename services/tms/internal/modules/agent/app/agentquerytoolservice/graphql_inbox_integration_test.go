@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
@@ -148,8 +149,10 @@ func newInboxEnv(t *testing.T) *inboxEnv {
 			Support:    captureSupport,
 		}),
 		EmailService: emailservice.New(emailservice.Params{
-			Logger: logger,
-			Repo:   emailrepository.New(emailrepository.Params{DB: conn, Logger: logger}),
+			Logger:  logger,
+			DB:      conn,
+			Managed: &managedconfig.Config{},
+			Repo:    emailrepository.New(emailrepository.Params{DB: conn, Logger: logger}),
 		}),
 	}
 

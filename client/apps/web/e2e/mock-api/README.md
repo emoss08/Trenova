@@ -62,6 +62,8 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `accountingSystem`   | `QuickBooksOnline` \| `Xero` \| `BusinessCentral` \| `NetSuite` | `QuickBooksOnline` | Which system holds the connection |
 | `accountingApp`      | `instance` \| `tenant` \| `none`                 | `instance`      | The provider app it connects through: the server's, the organization's own, or none (connecting needs the organization's keys) |
 | `accountingAuth`     | `signIn` \| `certificate`                        | `signIn`        | NetSuite only: connected with a sign-in or a certificate |
+| `managedPlan`        | `selfHosted` \| `managed` \| `bare` \| `ending` \| `endingBare` | `selfHosted`    | "Your plan" (`/admin/plan`, `handlers/managedplan.mjs`): a self-hosted install (the page is not routed), a managed instance with this period's usage, an add-on set to end and the link to the Trenova account, a managed instance before the control plane has sent usage or the link, the managed plan set to end at the close of its period (the notice with Keep plan, and a final backup kept 7 days rather than the default 30, so a screenshot shows the number is not fixed text), or that end without the account link (the notice alone). Any value but `selfHosted` makes the public config say `managed` |
+| `supportLogs`        | `history` \| `empty` \| `inFlight` \| `limit`    | `history`       | "Send logs to Trenova support" on `/admin/support-access` (`handlers/supportlogs.mjs`), shown when `managedPlan` is not `selfHosted`: one request sent and one failed, none yet, one being collected (the button held), or five sent in the last 24 hours (the daily limit). A request the page makes moves to Collecting after 4s and Sent after 12s, each announced on the realtime stream |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \
@@ -75,7 +77,7 @@ so an open page refetches. Environment equivalents: `MOCK_BOARD`, `MOCK_AI=0`,
 `MOCK_OPERATION_TYPE`, `MOCK_HOS=0`, `MOCK_MAPS=1`, `MOCK_LIST_ROWS`, `MOCK_AI_PROVIDERS`,
 `MOCK_AI_PAUSED=1`, `MOCK_DESK`, `MOCK_DESK_SLUG`, `MOCK_TRIAGE`, `MOCK_TRIAGE_TIME`,
 `MOCK_TRIAGE_REPLY_MS`, `MOCK_PALETTE=1`, `MOCK_LADING`, `MOCK_ACCOUNTING`, `MOCK_ACCOUNTING_SYSTEM`,
-`MOCK_ACCOUNTING_APP`, `MOCK_ACCOUNTING_AUTH`, `MOCK_WEB_ORIGIN` (the web app origin an accounting
+`MOCK_ACCOUNTING_APP`, `MOCK_ACCOUNTING_AUTH`, `MOCK_MANAGED_PLAN`, `MOCK_SUPPORT_LOGS`, `MOCK_WEB_ORIGIN` (the web app origin an accounting
 sign-in returns to, default `http://localhost:5173`), plus `MOCK_TRIAGE_LIVE_MS` (the live arrival interval, default 26000),
 `MOCK_API_PORT` (default 8080) and `MOCK_API_PUBLIC_URL` (the origin avatar URLs are built on).
 
@@ -718,6 +720,7 @@ fixtures/lading.mjs   Acme Retail Group's Lading project, its versions and sampl
 fixtures/accounting.mjs  Accounting providers' profiles, companies, mappings and reference records
 fixtures/integration-catalog.mjs  The integration catalog, ported from integrationports.CatalogDefinitions
 handlers/accounting.mjs  Accounting setup's GraphQL operations and the integrations catalog routes
+handlers/supportlogs.mjs  Sending logs to Trenova support: the requests, the daily limit and a request moving on
 fixtures/ai/          Catalogs dumped from the Go service
 handlers/rest.mjs     REST routes the shell and board call
 handlers/graphql.mjs  GraphQL operations, keyed by operation name
