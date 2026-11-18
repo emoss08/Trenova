@@ -565,3 +565,22 @@ jobs:
               --certificate-identity-regexp "${CHART_SIGNER}" "${archive}"
             helm push "${archive}" "oci://${REGISTRY}/emoss08/charts"
           done
+
+  # The data export runner Managed Trenova runs for an instance on this
+  # release (deploy/export-runner), built on the release's PostgreSQL image
+  # once that is published.
+  export-runner:
+    name: Export Runner
+    needs:
+      - detect-postgres-changes
+      - build-and-push-postgres
+    if: >-
+      ${{ !cancelled()
+      && needs.detect-postgres-changes.result == 'success'
+      && (needs.build-and-push-postgres.result == 'success' || needs.build-and-push-postgres.result == 'skipped') }}
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/export-runner-image.yml
+    with:
+      version: ${{ github.ref_name }}
