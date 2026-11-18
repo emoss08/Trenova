@@ -584,7 +584,7 @@ func (c *lazyClient) Spec(ctx context.Context, etag string) (controlplane.Desire
 	return api.Spec(ctx, etag)
 }
 
-func (c *lazyClient) ReportStatus(ctx context.Context, r instanceapi.StatusReport) error {
+func (c *lazyClient) ReportStatus(ctx context.Context, r *instanceapi.StatusReport) error {
 	api, err := c.client()
 	if err != nil {
 		return err
@@ -665,7 +665,7 @@ func (c *lazyClient) CompleteCommand(
 
 func (c *lazyClient) RegisterLogBundle(
 	ctx context.Context,
-	reg instanceapi.LogBundleRegistration,
+	reg *instanceapi.LogBundleRegistration,
 ) (uuid.UUID, error) {
 	api, err := c.client()
 	if err != nil {

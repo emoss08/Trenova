@@ -13,9 +13,9 @@ import (
 
 func (c *Client) RegisterLogBundle(
 	ctx context.Context,
-	reg instanceapi.LogBundleRegistration,
+	reg *instanceapi.LogBundleRegistration,
 ) (uuid.UUID, error) {
-	res, err := c.api.RegisterLogBundleWithResponse(ctx, reg)
+	res, err := c.api.RegisterLogBundleWithResponse(ctx, *reg)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("register a log bundle: %w", err)
 	}

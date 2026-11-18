@@ -58,7 +58,7 @@ type share struct {
 	surge      bool
 }
 
-func (s share) heldMiB() float64 {
+func (s *share) heldMiB() float64 {
 	return math.Max(s.fixedMiB, s.reserveMiB)
 }
 
@@ -175,9 +175,9 @@ func divide(in sizeInput) map[string]any {
 	})
 
 	pgDiskGiB := math.Max(10, math.Floor(float64(in.diskGiB)*postgresDiskShare))
-	set(out, []string{keyPostgres, "storage", "size"}, fmt.Sprintf("%dGi", int64(pgDiskGiB)))
+	set(out, []string{keyPostgres, keyStorage, "size"}, fmt.Sprintf("%dGi", int64(pgDiskGiB)))
 	lokiDiskGiB := math.Max(minLokiDiskGiB, math.Floor(float64(in.diskGiB)*lokiDiskShare))
-	set(out, []string{keyLogs, "loki", "storage", "size"}, fmt.Sprintf("%dGi", int64(lokiDiskGiB)))
+	set(out, []string{keyLogs, "loki", keyStorage, "size"}, fmt.Sprintf("%dGi", int64(lokiDiskGiB)))
 	set(out, []string{keyPostgres, "parameters"}, map[string]any{
 		"shared_buffers":         mibBytes(pgLimit / 4),
 		"effective_cache_size":   mibBytes(pgLimit * 3 / 4),

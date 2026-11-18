@@ -52,7 +52,13 @@ func (s *SecretTokens) Refresh(ctx context.Context) (string, error) {
 	}
 	token := strings.TrimSpace(string(sec.Data[TokenKey]))
 	if token == "" {
-		return "", fmt.Errorf("%w: Secret %s/%s has no %s", ErrNoToken, s.namespace, s.name, TokenKey)
+		return "", fmt.Errorf(
+			"%w: Secret %s/%s has no %s",
+			ErrNoToken,
+			s.namespace,
+			s.name,
+			TokenKey,
+		)
 	}
 	s.mu.Lock()
 	s.token = token

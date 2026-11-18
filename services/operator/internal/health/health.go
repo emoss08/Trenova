@@ -3,6 +3,7 @@ package health
 import (
 	"context"
 	"fmt"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -246,20 +247,24 @@ func (c *Checker) postgres(ctx context.Context, hibernated bool, generation stri
 	}
 	part.Component = cluster(obj, hibernated)
 	if want, ok, _ := unstructured.NestedInt64(obj.Object, "spec", "instances"); ok {
-		w := int32(want)
+		w := replicaCount(want)
 		if hibernated {
 			w = 0
 		}
 		part.Replicas = &w
 	}
 	ready, _, _ := unstructured.NestedInt64(obj.Object, "status", "readyInstances")
-	r := int32(ready)
+	r := replicaCount(ready)
 	part.ReadyReplicas = &r
 	part.Image, _, _ = unstructured.NestedString(obj.Object, "status", "image")
 	if part.Image == "" {
 		part.Image, _, _ = unstructured.NestedString(obj.Object, "spec", "imageName")
 	}
 	return part
+}
+
+func replicaCount(n int64) int32 {
+	return int32(min(max(n, 0), math.MaxInt32))
 }
 
 func cluster(obj *unstructured.Unstructured, hibernated bool) Component {

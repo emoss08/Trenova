@@ -23,7 +23,7 @@ func TestPostgreSQLStopsAfterAShortWaitForClients(t *testing.T) {
 		Generation: "r1a2b3c4d",
 		TargetTime: time.Date(2026, 11, 14, 9, 30, 0, 0, time.UTC),
 	}
-	r, err := values.Render(&s, base(), operatorNS, testStorage)
+	r, err := values.Render(&s, base(), operatorNS, &testStorage)
 	require.NoError(t, err)
 	cluster := renderStorageChart(t, r)["trenova/templates/postgres.yaml"]
 	require.Equal(t, 2, countLines(cluster, "  smartShutdownTimeout: 15"), "the live cluster and the restore beside it")
@@ -33,7 +33,7 @@ func TestPostgreSQLStopsAfterAShortWaitForClients(t *testing.T) {
 	require.NoError(t, err)
 	b := base()
 	b["postgres"] = map[string]any{"smartShutdownTimeout": 300, "stopDelay": 300}
-	r, err = values.Render(ptr(spec(plans[0], instanceapi.Active)), b, operatorNS, values.Storage{})
+	r, err = values.Render(ptr(spec(plans[0], instanceapi.Active)), b, operatorNS, &values.Storage{})
 	require.NoError(t, err)
 	require.NoError(t, chartutil.ValidateAgainstSchema(ch, r.Values))
 	vals, err := chartutil.ToRenderValues(ch, r.Values, chartutil.ReleaseOptions{
@@ -44,7 +44,7 @@ func TestPostgreSQLStopsAfterAShortWaitForClients(t *testing.T) {
 	require.ErrorContains(t, err, "postgres.stopDelay must exceed postgres.smartShutdownTimeout")
 
 	b["postgres"] = map[string]any{"stopDelay": 10}
-	r, err = values.Render(ptr(spec(plans[0], instanceapi.Active)), b, operatorNS, values.Storage{})
+	r, err = values.Render(ptr(spec(plans[0], instanceapi.Active)), b, operatorNS, &values.Storage{})
 	require.NoError(t, err)
 	require.Error(t, chartutil.ValidateAgainstSchema(ch, r.Values), "a stop too short for the shutdown checkpoint")
 }

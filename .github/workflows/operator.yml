@@ -14,6 +14,8 @@ on:
       - "deploy/selfhost/temporal/dynamicconfig.yaml"
       - "deploy/Dockerfile.*"
       - ".golangci.yml"
+      - ".github/actions/golangci-lint/**"
+      - ".github/actions/setup-go/**"
       - ".github/workflows/operator.yml"
   pull_request:
     branches:
@@ -28,6 +30,8 @@ on:
       - "deploy/selfhost/temporal/dynamicconfig.yaml"
       - "deploy/Dockerfile.*"
       - ".golangci.yml"
+      - ".github/actions/golangci-lint/**"
+      - ".github/actions/setup-go/**"
       - ".github/workflows/operator.yml"
   workflow_dispatch:
 
@@ -62,12 +66,11 @@ jobs:
           r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
       - name: Vet
         run: go vet ./...
+      # The linter version lives in the shared action, which the TMS lint
+      # (test-tms.yml) runs too.
       - name: Lint
-        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9
+        uses: ./.github/actions/golangci-lint
         with:
-          # The version and settings the TMS lint uses with the same config.
-          version: v2.12.2
-          verify: false
           working-directory: services/operator
           args: --config ../../.golangci.yml
       - name: Test

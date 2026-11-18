@@ -36,7 +36,7 @@ func (*fakeLogKeeping) Last(context.Context, string, int, func(string) string) (
 
 func (*fakeLogKeeping) Submit(*logs.Job) logs.Submitted { return logs.QueueFull }
 
-func (*fakeLogKeeping) Finish(context.Context, uuid.UUID, logs.Outcome) {}
+func (*fakeLogKeeping) Finish(context.Context, uuid.UUID, *logs.Outcome) {}
 
 func (*fakeLogKeeping) Run(ctx context.Context) error {
 	<-ctx.Done()

@@ -132,7 +132,9 @@ func parseStreams(body []byte) ([]Entry, error) {
 	}
 	if ans.Status != "success" || ans.Data.ResultType != "streams" {
 		return nil, fmt.Errorf(
-			"the log store answered %q with %q rather than log streams", ans.Status, ans.Data.ResultType,
+			"the log store answered %q with %q rather than log streams",
+			ans.Status,
+			ans.Data.ResultType,
 		)
 	}
 	var out []Entry
@@ -140,11 +142,16 @@ func parseStreams(body []byte) ([]Entry, error) {
 		key := streamKey(s.Stream)
 		for _, v := range s.Values {
 			if len(v) < 2 {
-				return nil, errors.New("the log store's answer has an entry without a timestamp and a line")
+				return nil, errors.New(
+					"the log store's answer has an entry without a timestamp and a line",
+				)
 			}
 			ns, err := strconv.ParseInt(v[0], 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("the log store's answer has a timestamp that is not nanoseconds: %q", v[0])
+				return nil, fmt.Errorf(
+					"the log store's answer has a timestamp that is not nanoseconds: %q",
+					v[0],
+				)
 			}
 			out = append(out, Entry{
 				Time:      time.Unix(0, ns).UTC(),
@@ -159,7 +166,7 @@ func parseStreams(body []byte) ([]Entry, error) {
 	return out, nil
 }
 
-func newestFirst(a, b Entry) int {
+func newestFirst(a, b Entry) int { //nolint:gocritic // hugeParam: fixed by slices.SortStableFunc
 	if c := b.Time.Compare(a.Time); c != 0 {
 		return c
 	}
@@ -211,7 +218,7 @@ func (l *Loki) get(ctx context.Context, u *url.URL) ([]byte, error) {
 func (l *Loki) once(ctx context.Context, u *url.URL) ([]byte, error) {
 	run, cancel := context.WithTimeout(ctx, lokiAttemptTimeout)
 	defer cancel()
-	req, err := http.NewRequestWithContext(run, http.MethodGet, u.String(), nil)
+	req, err := http.NewRequestWithContext(run, http.MethodGet, u.String(), http.NoBody)
 	if err != nil {
 		return nil, backoff.Permanent(err)
 	}
@@ -223,7 +230,10 @@ func (l *Loki) once(ctx context.Context, u *url.URL) ([]byte, error) {
 	defer func() { _ = res.Body.Close() }()
 	if res.StatusCode != http.StatusOK {
 		msg, _ := io.ReadAll(io.LimitReader(res.Body, lokiMaxError))
-		return nil, &lokiError{status: res.StatusCode, body: strings.Join(strings.Fields(string(msg)), " ")}
+		return nil, &lokiError{
+			status: res.StatusCode,
+			body:   strings.Join(strings.Fields(string(msg)), " "),
+		}
 	}
 	body, err := io.ReadAll(io.LimitReader(res.Body, lokiMaxBody+1))
 	if err != nil {

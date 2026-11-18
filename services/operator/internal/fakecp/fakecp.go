@@ -185,10 +185,10 @@ func (s *Server) Handler() http.Handler {
 	return s.authenticate(mux)
 }
 
-func (s *Server) AddCommand(cmd instanceapi.Command) {
+func (s *Server) AddCommand(cmd *instanceapi.Command) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.commands = append(s.commands, cmd)
+	s.commands = append(s.commands, *cmd)
 }
 
 func (s *Server) CommandAnswers() map[uuid.UUID]instanceapi.CommandResult {
@@ -326,7 +326,7 @@ func (s *Server) SupportGrants() ([]instanceapi.SupportGrant, bool) {
 	return append([]instanceapi.SupportGrant(nil), s.grants...), s.grantsHeld
 }
 
-func (s *Server) Backups() ([]instanceapi.BackupEntry, int) {
+func (s *Server) Backups() (entries []instanceapi.BackupEntry, lists int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return append([]instanceapi.BackupEntry(nil), s.backups...), s.backupLists
@@ -346,7 +346,7 @@ func (s *Server) Refused() *instanceapi.RefusedRevision {
 
 // Databases is the database list the control plane keeps, as the last
 // report that carried one left it, and how many reports carried one.
-func (s *Server) Databases() ([]instanceapi.DatabaseState, int) {
+func (s *Server) Databases() (databases []instanceapi.DatabaseState, lists int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return append([]instanceapi.DatabaseState(nil), s.databases...), s.dbLists
@@ -504,7 +504,15 @@ func (s *Server) getSpec(w http.ResponseWriter, r *http.Request) {
 		spec.Support = support
 	}
 	etag := strconv.Quote(
-		strconv.FormatInt(rev, 10) + "-" + strconv.FormatInt(ending, 10) + "-" + supportDigest(support),
+		strconv.FormatInt(
+			rev,
+			10,
+		) + "-" + strconv.FormatInt(
+			ending,
+			10,
+		) + "-" + supportDigest(
+			support,
+		),
 	)
 	if r.Header.Get("If-None-Match") == etag {
 		w.WriteHeader(http.StatusNotModified)

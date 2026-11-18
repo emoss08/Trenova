@@ -82,7 +82,7 @@ func (s *Service) relayOne(ctx context.Context, req *tms.LogRequest) error {
 	if !s.Kept() {
 		return s.tell(ctx, req.ID, failedUpdate(NotKeptMessage))
 	}
-	reg := instanceapi.LogBundleRegistration{
+	reg := &instanceapi.LogBundleRegistration{
 		RequestId: req.ID,
 		Since:     req.Since.UTC(),
 		Until:     req.Until.UTC(),
@@ -119,27 +119,37 @@ func (s *Service) relayOne(ctx context.Context, req *tms.LogRequest) error {
 	if err = s.tell(ctx, req.ID, tms.LogRequestUpdate{
 		Status: tms.LogRequestCollecting, BundleID: id.String(),
 	}); err != nil {
-		s.logger.WarnContext(ctx, "cannot tell the TMS a log request is being collected; collecting anyway",
-			"request", req.ID, "error", err)
+		s.logger.WarnContext(
+			ctx,
+			"cannot tell the TMS a log request is being collected; collecting anyway",
+			"request",
+			req.ID,
+			"error",
+			err,
+		)
 	}
 	requestID := req.ID
 	submitted := s.Submit(&Job{
 		BundleID: id,
 		Since:    req.Since.UTC(),
 		Until:    req.Until.UTC(),
-		Done:     func(o Outcome) { s.finishRequest(requestID, id, o) },
+		Done:     func(o Outcome) { s.finishRequest(requestID, id, &o) },
 	})
 	if submitted == QueueFull {
 		s.mu.Lock()
 		delete(s.requests, req.ID)
 		s.mu.Unlock()
-		s.logger.InfoContext(ctx, "the log bundle queue is full; the request waits for the next tick",
-			"request", req.ID)
+		s.logger.InfoContext(
+			ctx,
+			"the log bundle queue is full; the request waits for the next tick",
+			"request",
+			req.ID,
+		)
 	}
 	return nil
 }
 
-func (s *Service) finishRequest(requestID string, bundle uuid.UUID, o Outcome) {
+func (s *Service) finishRequest(requestID string, bundle uuid.UUID, o *Outcome) {
 	update := failedUpdate(o.Message)
 	if o.Status == instanceapi.LogBundleStored {
 		update = tms.LogRequestUpdate{Status: tms.LogRequestSent, BundleID: bundle.String()}
@@ -150,8 +160,13 @@ func (s *Service) finishRequest(requestID string, bundle uuid.UUID, o Outcome) {
 	ctx, cancel := context.WithTimeout(context.Background(), tmsTimeout)
 	defer cancel()
 	if err := s.tell(ctx, requestID, update); err != nil {
-		s.logger.Warn("cannot tell the TMS how a log request ended; telling it again on the next tick",
-			"request", requestID, "error", err)
+		s.logger.Warn(
+			"cannot tell the TMS how a log request ended; telling it again on the next tick",
+			"request",
+			requestID,
+			"error",
+			err,
+		)
 	}
 }
 
@@ -172,7 +187,10 @@ func failedUpdate(message string) tms.LogRequestUpdate {
 	if message == "" {
 		message = "Trenova could not collect the logs."
 	}
-	return tms.LogRequestUpdate{Status: tms.LogRequestFailed, Message: health.Clean(message, maxMessage)}
+	return tms.LogRequestUpdate{
+		Status:  tms.LogRequestFailed,
+		Message: health.Clean(message, maxMessage),
+	}
 }
 
 func PeriodProblem(since, until time.Time, longest time.Duration) string {

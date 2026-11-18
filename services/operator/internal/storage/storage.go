@@ -52,8 +52,8 @@ var (
 
 	bucketPattern   = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$`)
 	regionPattern   = regexp.MustCompile(`^[a-z0-9-]{1,40}$`)
-	endpointPattern = regexp.MustCompile(`^https://[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[0-9]{1,5})?$`)
-	privatePattern  = regexp.MustCompile(`^https?://[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:[0-9]{1,5})?$`)
+	endpointPattern = regexp.MustCompile(`^https://[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:\d{1,5})?$`)
+	privatePattern  = regexp.MustCompile(`^https?://[a-z0-9]([a-z0-9.-]*[a-z0-9])?(:\d{1,5})?$`)
 	prefixPattern   = regexp.MustCompile(`^([A-Za-z0-9._-]+/)*$`)
 	keyPattern      = regexp.MustCompile(`^[\x21-\x7E]{16,256}$`)
 )
@@ -71,7 +71,7 @@ type Bucket struct {
 }
 
 type CORS interface {
-	Allow(ctx context.Context, b Bucket, origins []string) error
+	Allow(ctx context.Context, b *Bucket, origins []string) error
 }
 
 type Store struct {
@@ -113,7 +113,11 @@ func New(p *Params) *Store {
 	}
 }
 
-func (s *Store) Ensure(ctx context.Context, hostnames []string, revision int64) (values.Storage, error) {
+func (s *Store) Ensure(
+	ctx context.Context,
+	hostnames []string,
+	revision int64,
+) (values.Storage, error) {
 	if revision == s.noneRevision && s.now().Before(s.noneUntil) {
 		return values.Storage{}, nil
 	}
@@ -122,7 +126,11 @@ func (s *Store) Ensure(ctx context.Context, hostnames []string, revision int64) 
 	backups, backupsErr := secrets.Get(ctx, values.BackupsSecret, metav1.GetOptions{})
 	for _, err := range []error{docsErr, backupsErr} {
 		if err != nil && !apierrors.IsNotFound(err) {
-			return values.Storage{}, fmt.Errorf("read the storage Secrets in %s: %w", s.namespace, err)
+			return values.Storage{}, fmt.Errorf(
+				"read the storage Secrets in %s: %w",
+				s.namespace,
+				err,
+			)
 		}
 	}
 	if docsErr == nil && backupsErr == nil {
@@ -131,15 +139,19 @@ func (s *Store) Ensure(ctx context.Context, hostnames []string, revision int64) 
 			loc.PrivateEndpoint = s.private
 			return loc, nil
 		}
-		s.logger.Warn("the storage Secrets are incomplete or invalid; restoring them from the control plane")
+		s.logger.Warn(
+			"the storage Secrets are incomplete or invalid; restoring them from the control plane",
+		)
 	}
 	fetched, err := s.cp.Storage(ctx)
 	if errors.Is(err, controlplane.ErrNoStorage) {
 		s.noneUntil, s.noneRevision = s.now().Add(noneRecheck), revision
 		s.logger.Info(
 			"the instance has no object storage of its own; documents stay in the chart's store, without backups",
-			"revision", revision,
-			"recheck", s.noneUntil,
+			"revision",
+			revision,
+			"recheck",
+			s.noneUntil,
 		)
 		return values.Storage{}, nil
 	}
@@ -147,17 +159,31 @@ func (s *Store) Ensure(ctx context.Context, hostnames []string, revision int64) 
 	if err != nil {
 		return values.Storage{}, fmt.Errorf("fetch the instance's storage: %w", err)
 	}
-	if err = Validate(fetched); err != nil {
+	if err = Validate(&fetched); err != nil {
 		return values.Storage{}, fmt.Errorf("the control plane's storage: %w", err)
 	}
-	if docs, err = s.write(ctx, values.DocumentsSecret, docs, docsErr, documentsData(fetched), "storage"); err != nil {
+	if docs, err = s.write(
+		ctx,
+		values.DocumentsSecret,
+		docs,
+		docsErr,
+		documentsData(&fetched),
+		"storage",
+	); err != nil {
 		return values.Storage{}, err
 	}
-	if _, err = s.write(ctx, values.BackupsSecret, backups, backupsErr, backupsData(fetched), "backup-storage"); err != nil {
+	if _, err = s.write(
+		ctx,
+		values.BackupsSecret,
+		backups,
+		backupsErr,
+		backupsData(&fetched),
+		"backup-storage",
+	); err != nil {
 		return values.Storage{}, err
 	}
 	s.allowOrigins(ctx, docs, hostnames)
-	loc := location(fetched)
+	loc := location(&fetched)
 	loc.PrivateEndpoint = s.private
 	return loc, nil
 }
@@ -225,7 +251,7 @@ func (s *Store) allowOrigins(ctx context.Context, docs *corev1.Secret, hostnames
 	if s.private != "" {
 		endpoint = s.private
 	}
-	err := s.cors.Allow(run, Bucket{
+	err := s.cors.Allow(run, &Bucket{
 		Endpoint:        endpoint,
 		Region:          string(docs.Data[KeyRegion]),
 		Name:            string(docs.Data[KeyBucket]),
@@ -242,23 +268,31 @@ func (s *Store) allowOrigins(ctx context.Context, docs *corev1.Secret, hostnames
 		next.Annotations = map[string]string{}
 	}
 	next.Annotations[annotationCORS] = recorded
-	if _, err = s.client.CoreV1().Secrets(s.namespace).Update(ctx, next, metav1.UpdateOptions{}); err != nil {
+	if _, err = s.client.CoreV1().
+		Secrets(s.namespace).
+		Update(ctx, next, metav1.UpdateOptions{}); err != nil {
 		s.logger.Warn("cannot record the documents bucket's CORS rules", "error", err)
 		return
 	}
 	s.logger.Info("the documents bucket admits the instance's origins", "origins", recorded)
 }
 
-func Validate(v instanceapi.InstanceStorage) error {
+func Validate(v *instanceapi.InstanceStorage) error {
 	var errs []error
 	if !endpointPattern.MatchString(v.Endpoint) {
-		errs = append(errs, fmt.Errorf("%w: endpoint must be an https URL without a path", ErrInvalid))
+		errs = append(
+			errs,
+			fmt.Errorf("%w: endpoint must be an https URL without a path", ErrInvalid),
+		)
 	}
 	if !regionPattern.MatchString(v.Region) {
 		errs = append(errs, fmt.Errorf("%w: region must be 1 to 40 of a-z, 0-9 and -", ErrInvalid))
 	}
 	if !prefixPattern.MatchString(v.BackupsPrefix) {
-		errs = append(errs, fmt.Errorf("%w: backupsPrefix must be path segments ending in /", ErrInvalid))
+		errs = append(
+			errs,
+			fmt.Errorf("%w: backupsPrefix must be path segments ending in /", ErrInvalid),
+		)
 	}
 	for what, b := range map[string]instanceapi.StorageBucket{"documents": v.Documents, "backups": v.Backups} {
 		if !bucketPattern.MatchString(b.Bucket) {
@@ -269,12 +303,18 @@ func Validate(v instanceapi.InstanceStorage) error {
 		}
 	}
 	if v.Documents.Bucket == v.Backups.Bucket || v.Documents.AccessKeyId == v.Backups.AccessKeyId {
-		errs = append(errs, fmt.Errorf("%w: documents and backups must not share a bucket or a credential", ErrInvalid))
+		errs = append(
+			errs,
+			fmt.Errorf(
+				"%w: documents and backups must not share a bucket or a credential",
+				ErrInvalid,
+			),
+		)
 	}
 	return errors.Join(errs...)
 }
 
-func documentsData(v instanceapi.InstanceStorage) map[string][]byte {
+func documentsData(v *instanceapi.InstanceStorage) map[string][]byte {
 	return map[string][]byte{
 		KeyAccessKey: []byte(v.Documents.AccessKeyId),
 		KeySecretKey: []byte(v.Documents.SecretAccessKey),
@@ -284,7 +324,7 @@ func documentsData(v instanceapi.InstanceStorage) map[string][]byte {
 	}
 }
 
-func backupsData(v instanceapi.InstanceStorage) map[string][]byte {
+func backupsData(v *instanceapi.InstanceStorage) map[string][]byte {
 	return map[string][]byte{
 		KeyBackupAccessKeyID: []byte(v.Backups.AccessKeyId),
 		KeyBackupSecretKey:   []byte(v.Backups.SecretAccessKey),
@@ -294,11 +334,11 @@ func backupsData(v instanceapi.InstanceStorage) map[string][]byte {
 	}
 }
 
-func destination(v instanceapi.InstanceStorage) string {
+func destination(v *instanceapi.InstanceStorage) string {
 	return "s3://" + v.Backups.Bucket + "/" + strings.TrimPrefix(v.BackupsPrefix, "/")
 }
 
-func location(v instanceapi.InstanceStorage) values.Storage {
+func location(v *instanceapi.InstanceStorage) values.Storage {
 	return values.Storage{
 		Endpoint:        v.Endpoint,
 		Region:          v.Region,
@@ -326,10 +366,10 @@ func held(docs, backups map[string][]byte) (values.Storage, bool) {
 		},
 	}
 	if !strings.HasPrefix(path, "s3://") || string(backups[KeyBackupRegion]) != v.Region ||
-		string(backups[KeyEndpoint]) != v.Endpoint || Validate(v) != nil {
+		string(backups[KeyEndpoint]) != v.Endpoint || Validate(&v) != nil {
 		return values.Storage{}, false
 	}
-	return location(v), true
+	return location(&v), true
 }
 
 func labels(existing map[string]string, component string) map[string]string {

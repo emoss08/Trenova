@@ -100,7 +100,7 @@ func newObjects() *fakeObjects {
 	return &fakeObjects{objects: map[string]stored{}}
 }
 
-func (f *fakeObjects) Put(_ context.Context, obj storage.Object) error {
+func (f *fakeObjects) Put(_ context.Context, obj *storage.Object) error {
 	body, err := io.ReadAll(obj.Body)
 	if err != nil {
 		return err
@@ -160,7 +160,7 @@ func newCP() *fakeCP {
 	return &fakeCP{byRequest: map[string]uuid.UUID{}, updates: map[uuid.UUID][]instanceapi.LogBundleUpdate{}}
 }
 
-func (f *fakeCP) RegisterLogBundle(_ context.Context, reg instanceapi.LogBundleRegistration) (uuid.UUID, error) {
+func (f *fakeCP) RegisterLogBundle(_ context.Context, reg *instanceapi.LogBundleRegistration) (uuid.UUID, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.registrations++

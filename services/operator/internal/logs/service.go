@@ -52,12 +52,15 @@ const (
 var ErrNotKept = errors.New("log keeping is off on this instance")
 
 type Objects interface {
-	Put(ctx context.Context, obj storage.Object) error
+	Put(ctx context.Context, obj *storage.Object) error
 	Head(ctx context.Context, key string) (storage.ObjectInfo, bool, error)
 }
 
 type ControlPlane interface {
-	RegisterLogBundle(ctx context.Context, reg instanceapi.LogBundleRegistration) (uuid.UUID, error)
+	RegisterLogBundle(
+		ctx context.Context,
+		reg *instanceapi.LogBundleRegistration,
+	) (uuid.UUID, error)
 	UpdateLogBundle(ctx context.Context, id uuid.UUID, update instanceapi.LogBundleUpdate) error
 }
 
@@ -81,7 +84,7 @@ func Refused(message string) Outcome {
 	return Outcome{Status: instanceapi.LogBundleRefused, Message: health.Clean(message, maxMessage)}
 }
 
-func (o Outcome) Update() instanceapi.LogBundleUpdate {
+func (o *Outcome) Update() instanceapi.LogBundleUpdate {
 	u := instanceapi.LogBundleUpdate{Status: o.Status}
 	if o.Status == instanceapi.LogBundleStored {
 		key, size := o.Key, o.Size
@@ -245,7 +248,7 @@ func (s *Service) forget() {
 	}
 }
 
-func (s *Service) Finish(ctx context.Context, id uuid.UUID, outcome Outcome) {
+func (s *Service) Finish(ctx context.Context, id uuid.UUID, outcome *Outcome) {
 	run, cancel := context.WithTimeout(context.WithoutCancel(ctx), reportTimeout)
 	defer cancel()
 	if err := s.report(run, id, outcome); err != nil {
@@ -268,11 +271,12 @@ func (s *Service) process(ctx context.Context, job *Job) {
 		outcome = Failed(waitedMessage)
 	} else {
 		outcome = s.collect(run, job)
-		if outcome.Status != instanceapi.LogBundleStored && errors.Is(run.Err(), context.DeadlineExceeded) {
+		if outcome.Status != instanceapi.LogBundleStored &&
+			errors.Is(run.Err(), context.DeadlineExceeded) {
 			outcome = Failed(slowMessage)
 		}
 	}
-	s.Finish(ctx, job.BundleID, outcome)
+	s.Finish(ctx, job.BundleID, &outcome)
 	s.logger.InfoContext(ctx, "log bundle done", "bundle", job.BundleID,
 		"status", string(outcome.Status), "size", outcome.Size, "message", outcome.Message)
 	s.mu.Lock()
@@ -288,7 +292,11 @@ func (s *Service) collect(ctx context.Context, job *Job) Outcome {
 	if !s.Kept() {
 		return Failed(NotKeptMessage)
 	}
-	if err := s.report(ctx, job.BundleID, Outcome{Status: instanceapi.LogBundleCollecting}); err != nil {
+	if err := s.report(
+		ctx,
+		job.BundleID,
+		&Outcome{Status: instanceapi.LogBundleCollecting},
+	); err != nil {
 		s.logger.WarnContext(ctx, "cannot report a log bundle as collecting; collecting anyway",
 			"bundle", job.BundleID, "error", err)
 	}
@@ -300,7 +308,10 @@ func (s *Service) collect(ctx context.Context, job *Job) Outcome {
 	case err == nil && exists:
 		if components, ok := parseComponents(info.Metadata[metaComponents]); ok {
 			return Outcome{
-				Status: instanceapi.LogBundleStored, Key: key, Size: info.Size, Components: components,
+				Status:     instanceapi.LogBundleStored,
+				Key:        key,
+				Size:       info.Size,
+				Components: components,
 			}
 		}
 	case err != nil:
@@ -309,8 +320,10 @@ func (s *Service) collect(ctx context.Context, job *Job) Outcome {
 	}
 	red, err := s.redactors.Load(ctx)
 	if err != nil {
-		return Failed("Trenova could not read the instance's secrets to remove them from the logs, " +
-			"so nothing was collected: " + err.Error())
+		return Failed(
+			"Trenova could not read the instance's secrets to remove them from the logs, " +
+				"so nothing was collected: " + err.Error(),
+		)
 	}
 	bundle, err := writeBundle(ctx, s.src, &bundleSpec{
 		bundleID: job.BundleID, instanceID: s.instanceID(), since: job.Since, until: job.Until,
@@ -325,10 +338,17 @@ func (s *Service) collect(ctx context.Context, job *Job) Outcome {
 		if errors.Is(err, storage.ErrNoDocumentsBucket) {
 			return Failed(noStorageMessage)
 		}
-		return Failed("Trenova collected the logs but could not store them in the instance's object storage: " +
-			err.Error())
+		return Failed(
+			"Trenova collected the logs but could not store them in the instance's object storage: " +
+				err.Error(),
+		)
 	}
-	return Outcome{Status: instanceapi.LogBundleStored, Key: key, Size: bundle.Size, Components: components}
+	return Outcome{
+		Status:     instanceapi.LogBundleStored,
+		Key:        key,
+		Size:       bundle.Size,
+		Components: components,
+	}
 }
 
 func (s *Service) upload(
@@ -346,7 +366,7 @@ func (s *Service) upload(
 		if _, serr := f.Seek(0, io.SeekStart); serr != nil {
 			return struct{}{}, backoff.Permanent(serr)
 		}
-		perr := s.objects.Put(ctx, storage.Object{
+		perr := s.objects.Put(ctx, &storage.Object{
 			Key:         key,
 			Body:        f,
 			Size:        bundle.Size,
@@ -355,7 +375,8 @@ func (s *Service) upload(
 			Metadata:    map[string]string{metaComponents: formatComponents(components)},
 		})
 		var oe *storage.ObjectError
-		if errors.Is(perr, storage.ErrNoDocumentsBucket) || (errors.As(perr, &oe) && !oe.Retryable()) {
+		if errors.Is(perr, storage.ErrNoDocumentsBucket) ||
+			(errors.As(perr, &oe) && !oe.Retryable()) {
 			return struct{}{}, backoff.Permanent(perr)
 		}
 		return struct{}{}, perr
@@ -363,7 +384,7 @@ func (s *Service) upload(
 	return err
 }
 
-func (s *Service) report(ctx context.Context, id uuid.UUID, outcome Outcome) error {
+func (s *Service) report(ctx context.Context, id uuid.UUID, outcome *Outcome) error {
 	update := outcome.Update()
 	_, err := backoff.Retry(ctx, func() (struct{}, error) {
 		err := s.cp.UpdateLogBundle(ctx, id, update)
@@ -438,7 +459,7 @@ func (s *Service) Last(
 	ctx context.Context,
 	component string,
 	lines int,
-	redact func(string) string,
+	scrub func(string) string,
 ) (string, error) {
 	if !s.Kept() {
 		return "", ErrNotKept
@@ -458,7 +479,7 @@ func (s *Service) Last(
 		if !ok {
 			break
 		}
-		line := viewLine(&e, redact)
+		line := viewLine(&e, scrub)
 		if size+len(line) > maxViewBytes {
 			break
 		}
@@ -466,7 +487,10 @@ func (s *Service) Last(
 		picked = append(picked, line)
 	}
 	if len(picked) == 0 {
-		return "", fmt.Errorf("the component %q has no kept log lines from the last 7 days", component)
+		return "", fmt.Errorf(
+			"the component %q has no kept log lines from the last 7 days",
+			component,
+		)
 	}
 	slices.Reverse(picked)
 	return strings.Join(picked, ""), nil

@@ -18,7 +18,11 @@ func (c *Client) EmailEvents(ctx context.Context) ([]instanceapi.EmailEvent, err
 	if res.StatusCode() == http.StatusOK && res.JSON200 != nil {
 		return res.JSON200.Events, nil
 	}
-	return nil, failure(res.HTTPResponse, res.ApplicationproblemJSON401, res.ApplicationproblemJSON429)
+	return nil, failure(
+		res.HTTPResponse,
+		res.ApplicationproblemJSON401,
+		res.ApplicationproblemJSON429,
+	)
 }
 
 func (c *Client) AckEmailEvents(ctx context.Context, ids []uuid.UUID) error {

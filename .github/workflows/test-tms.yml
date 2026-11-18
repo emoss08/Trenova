@@ -19,6 +19,7 @@ on:
       - "services/tms/.go-pkgsize.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
+      - ".github/actions/golangci-lint/**"
       - "deploy/Dockerfile.postgres"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
@@ -44,6 +45,7 @@ on:
       - "services/tms/.go-pkgsize.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
+      - ".github/actions/golangci-lint/**"
       - "deploy/Dockerfile.postgres"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
@@ -392,13 +394,13 @@ jobs:
             echo "value=HEAD~1" >> "$GITHUB_OUTPUT"
           fi
 
+      # The linter version lives in the shared action, which the operator
+      # lint (operator.yml) runs too.
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
+        uses: ./.github/actions/golangci-lint
         with:
-          version: v2.15.0
           working-directory: ./services/tms
-          verify: false
-          skip-cache: true
+          skip-cache: "true"
           # Typechecking the whole module is unavoidable even with
           # --new-from-rev. With both caches warm a run takes about 5 minutes
           # (the analyzers about 1.5 of them); cold, compiling the module alone

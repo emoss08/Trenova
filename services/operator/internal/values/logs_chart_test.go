@@ -39,7 +39,7 @@ func renderedDocs(t *testing.T, r values.Rendered) []map[string]any {
 
 func managedLogs(t *testing.T, b map[string]any) values.Rendered {
 	t.Helper()
-	r, err := values.Render(ptr(spec(plans[0], instanceapi.Active, "docling")), b, operatorNS, values.Storage{})
+	r, err := values.Render(ptr(spec(plans[0], instanceapi.Active, "docling")), b, operatorNS, &values.Storage{})
 	require.NoError(t, err)
 	return r
 }
@@ -184,7 +184,7 @@ func TestLogKeepingReadsOnlyItsNamespaceAndKeepsAWeek(t *testing.T) {
 func TestEveryWorkloadIsLabelledWithItsComponent(t *testing.T) {
 	t.Parallel()
 	s := spec(plans[0], instanceapi.Active, "docling")
-	r, err := values.Render(&s, base(), operatorNS, values.Storage{})
+	r, err := values.Render(&s, base(), operatorNS, &values.Storage{})
 	require.NoError(t, err)
 	docs := renderedDocs(t, r)
 
@@ -257,7 +257,7 @@ func TestTheOperatorIsToldWhereLokiIs(t *testing.T) {
 func TestNoReadinessOrLivenessProbeRunsOnTheOneSecondDefault(t *testing.T) {
 	t.Parallel()
 	s := spec(plans[0], instanceapi.Active, "docling")
-	r, err := values.Render(&s, base(), operatorNS, values.Storage{})
+	r, err := values.Render(&s, base(), operatorNS, &values.Storage{})
 	require.NoError(t, err)
 
 	probes := 0

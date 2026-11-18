@@ -188,11 +188,11 @@ func (f *fakeFeatures) hold(features []string, err error) {
 	f.held, f.heldErr = features, err
 }
 
-func (f *fakeFeatures) PutFeatures(_ context.Context, list tms.FeatureList) error {
+func (f *fakeFeatures) PutFeatures(_ context.Context, list *tms.FeatureList) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.lists = append(f.lists, append([]string{}, list.Features...))
-	f.sent = append(f.sent, list)
+	f.sent = append(f.sent, *list)
 	return f.err
 }
 
@@ -1373,7 +1373,7 @@ func restartAPI(w *world, t *testing.T) instanceapi.Command {
 	cmd := instanceapi.Command{
 		Id: uuid.New(), Kind: instanceapi.Restart, Component: &component, IssuedAt: time.Now(),
 	}
-	w.cp.AddCommand(cmd)
+	w.cp.AddCommand(&cmd)
 	return cmd
 }
 

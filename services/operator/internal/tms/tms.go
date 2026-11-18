@@ -178,7 +178,8 @@ func (c *Client) PutState(ctx context.Context, state State) error {
 	return nil
 }
 
-func (c *Client) PutFeatures(ctx context.Context, list FeatureList) error {
+func (c *Client) PutFeatures(ctx context.Context, given *FeatureList) error {
+	list := *given
 	if list.Features == nil {
 		list.Features = []string{}
 	}
@@ -312,7 +313,7 @@ type request struct {
 	token  string
 }
 
-func (c *Client) send(ctx context.Context, r request) (int, []byte, error) {
+func (c *Client) send(ctx context.Context, r request) (status int, payload []byte, err error) {
 	var body io.Reader
 	if r.body != nil {
 		body = bytes.NewReader(r.body)

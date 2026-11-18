@@ -55,10 +55,15 @@ func (d *trenovaData) ask(ctx context.Context, at time.Time) {
 	case errors.Is(err, tms.ErrNoDataUsage):
 		if d.missing.IsZero() || at.Sub(d.missing) >= missingLogEvery {
 			d.missing = at
-			d.logger.Info("telemetry: this Trenova release does not measure its data; the samples leave it out")
+			d.logger.Info(
+				"telemetry: this Trenova release does not measure its data; the samples leave it out",
+			)
 		}
 	default:
-		d.logger.Warn("telemetry: cannot read what the instance's data takes; the last answer is kept for 30 minutes",
-			"error", err)
+		d.logger.Warn(
+			"telemetry: cannot read what the instance's data takes; the last answer is kept for 30 minutes",
+			"error",
+			err,
+		)
 	}
 }

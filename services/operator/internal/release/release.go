@@ -210,7 +210,8 @@ func (r *Releaser) Apply(ctx context.Context, ch *chart.Chart, vals map[string]a
 	if err != nil {
 		return err
 	}
-	if d.Exists && (d.Status.IsPending() || d.Status == helmrelease.StatusFailed || removing(d.Status)) {
+	if d.Exists &&
+		(d.Status.IsPending() || d.Status == helmrelease.StatusFailed || removing(d.Status)) {
 		if d, err = r.recover(ctx, d); err != nil {
 			return err
 		}

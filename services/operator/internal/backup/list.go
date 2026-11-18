@@ -87,7 +87,9 @@ func (m *Manager) entry(
 	return e, true
 }
 
-func origin(b *unstructured.Unstructured) (*instanceapi.BackupEntryOrigin, *string) {
+func origin(
+	b *unstructured.Unstructured,
+) (kind *instanceapi.BackupEntryOrigin, requestID *string) {
 	annotations := b.GetAnnotations()
 	switch annotations[annotationOrigin] {
 	case originRequested:

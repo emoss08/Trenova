@@ -39,7 +39,7 @@ func renderStorageChart(t *testing.T, r values.Rendered) map[string]string {
 func TestTheInstancesBucketsReplaceMinIOAndCarryItsBackups(t *testing.T) {
 	t.Parallel()
 	for _, lc := range []instanceapi.InstanceSpecLifecycle{instanceapi.Active, instanceapi.Suspended, instanceapi.Decommissioned} {
-		r, err := values.Render(ptr(spec(plans[1], lc)), base(), operatorNS, testStorage)
+		r, err := values.Render(ptr(spec(plans[1], lc)), base(), operatorNS, &testStorage)
 		require.NoError(t, err)
 		require.Equal(t, false, lookup(t, r.Values, []string{"minio"})["enabled"])
 		st := lookup(t, r.Values, []string{"storage"})
@@ -82,7 +82,7 @@ func TestTheInstancesBucketsReplaceMinIOAndCarryItsBackups(t *testing.T) {
 
 func TestWithoutStorageTheChartKeepsMinIOAndTakesNoBackups(t *testing.T) {
 	t.Parallel()
-	r, err := values.Render(ptr(spec(plans[1], instanceapi.Active)), base(), operatorNS, values.Storage{})
+	r, err := values.Render(ptr(spec(plans[1], instanceapi.Active)), base(), operatorNS, &values.Storage{})
 	require.NoError(t, err)
 	_, hasBackup := r.Values["backup"]
 	require.False(t, hasBackup)
@@ -96,7 +96,7 @@ func TestARestoreRendersBesideTheLiveDatabase(t *testing.T) {
 	s := spec(plans[1], instanceapi.Active)
 	s.Restore = &instanceapi.SpecRestore{Id: uuid.New(), Generation: "r1a2b3c4d", SourceGeneration: "", TargetTime: target}
 
-	r, err := values.Render(&s, base(), operatorNS, testStorage)
+	r, err := values.Render(&s, base(), operatorNS, &testStorage)
 	require.NoError(t, err)
 	pg := lookup(t, r.Values, []string{"postgres"})
 	_, switched := pg["generation"]
@@ -115,7 +115,7 @@ func TestARestoreRendersBesideTheLiveDatabase(t *testing.T) {
 	// Switched: the instance runs on the new database, which renders the
 	// same, and no second copy.
 	s.Database = &instanceapi.SpecDatabase{Generation: "r1a2b3c4d", SourceGeneration: "", TargetTime: target}
-	r, err = values.Render(&s, base(), operatorNS, testStorage)
+	r, err = values.Render(&s, base(), operatorNS, &testStorage)
 	require.NoError(t, err)
 	out = renderStorageChart(t, r)
 	clusters = out["trenova/templates/postgres.yaml"]
@@ -126,11 +126,11 @@ func TestARestoreRendersBesideTheLiveDatabase(t *testing.T) {
 
 	// A restore needs the backups: without storage it is refused.
 	s.Database = nil
-	_, err = values.Render(&s, base(), operatorNS, values.Storage{})
+	_, err = values.Render(&s, base(), operatorNS, &values.Storage{})
 	require.ErrorIs(t, err, values.ErrInvalidSpec)
 	// And a malformed generation never reaches the chart.
 	s.Restore.Generation = "r1; drop"
-	_, err = values.Render(&s, base(), operatorNS, testStorage)
+	_, err = values.Render(&s, base(), operatorNS, &testStorage)
 	require.ErrorIs(t, err, values.ErrInvalidSpec)
 }
 
@@ -141,7 +141,7 @@ func TestAPrivateEndpointCarriesThePodsTrafficAndBrowsersKeepThePublicOne(t *tes
 	st.PrivateEndpoint = "http://minio.trenova.internal:9000"
 	b := base()
 	b["clamav"] = map[string]any{"enabled": false}
-	r, err := values.Render(ptr(spec(plans[1], instanceapi.Active)), b, operatorNS, st)
+	r, err := values.Render(ptr(spec(plans[1], instanceapi.Active)), b, operatorNS, &st)
 	require.NoError(t, err)
 	ext := lookup(t, r.Values, []string{"storage", "external"})
 	require.Equal(t, "minio.trenova.internal:9000", ext["endpoint"])

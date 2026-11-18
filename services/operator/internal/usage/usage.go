@@ -95,7 +95,9 @@ func newMapping(allowances []instanceapi.SpecAllowance) mapping {
 	return m
 }
 
-func (m mapping) readings(in []tms.Reading) ([]instanceapi.UsageReading, int) {
+func (m mapping) readings(
+	in []tms.Reading,
+) (mapped []instanceapi.UsageReading, rejected int) {
 	out := make([]instanceapi.UsageReading, 0, len(in))
 	dropped := 0
 	for _, rd := range in {

@@ -76,7 +76,7 @@ func healthy() []runtime.Object {
 func listed(t *testing.T, objs ...runtime.Object) []instanceapi.BackupEntry {
 	t.Helper()
 	m, _ := manager(t, append(healthy(), objs...)...)
-	res := m.Run(context.Background(), backup.Input{Spec: spec(instanceapi.Active), Applied: true, Storage: storage})
+	res := m.Run(context.Background(), &backup.Input{Spec: spec(instanceapi.Active), Applied: true, Storage: storage})
 	require.NotNil(t, res.Backups)
 	return *res.Backups
 }
@@ -203,8 +203,8 @@ func TestBackupsTheOperatorTakesAreListedWithTheirOrigin(t *testing.T) {
 	id := uuid.NewString()
 	s := spec(instanceapi.Active)
 	s.Backup = &instanceapi.SpecBackupRequest{Id: id, RequestedAt: now}
-	m.Run(ctx, backup.Input{Spec: s, Applied: true, Storage: storage})
-	m.Run(ctx, backup.Input{Spec: spec(instanceapi.Decommissioned), Revision: 4, Applied: true, Storage: storage})
+	m.Run(ctx, &backup.Input{Spec: s, Applied: true, Storage: storage})
+	m.Run(ctx, &backup.Input{Spec: spec(instanceapi.Decommissioned), Revision: 4, Applied: true, Storage: storage})
 	for _, name := range []string{backup.RequestName(id), backup.FinalName(4)} {
 		b, err := dyn.Resource(backups).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 		require.NoError(t, err)
@@ -213,7 +213,7 @@ func TestBackupsTheOperatorTakesAreListedWithTheirOrigin(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	res := m.Run(ctx, backup.Input{Spec: spec(instanceapi.Active), Applied: true, Storage: storage})
+	res := m.Run(ctx, &backup.Input{Spec: spec(instanceapi.Active), Applied: true, Storage: storage})
 	require.NotNil(t, res.Backups)
 	origins := map[string]instanceapi.BackupEntry{}
 	for _, e := range *res.Backups {
@@ -231,7 +231,7 @@ func TestAFailedListLeavesTheListOutAndTheHealthAsItWas(t *testing.T) {
 	dyn.PrependReactor("list", "backups", func(k8stesting.Action) (bool, runtime.Object, error) {
 		return true, nil, errors.New("the API server is restarting")
 	})
-	res := m.Run(context.Background(), backup.Input{Spec: spec(instanceapi.Active), Applied: true, Storage: storage})
+	res := m.Run(context.Background(), &backup.Input{Spec: spec(instanceapi.Active), Applied: true, Storage: storage})
 	require.Nil(t, res.Backups)
 	require.NotNil(t, res.Health)
 	require.Equal(t, instanceapi.BackupHealthWalArchiving("healthy"), res.Health.WalArchiving)

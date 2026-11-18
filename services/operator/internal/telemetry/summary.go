@@ -67,7 +67,9 @@ func NewKubeletSummaries(p KubeletParams) (*KubeletSummaries, error) {
 		return nil, errors.New("telemetry: the cluster's CA bundle holds no certificate")
 	}
 	if p.TokenFile == "" {
-		return nil, errors.New("telemetry: the kubelet is read with the ServiceAccount token, and its file is not named")
+		return nil, errors.New(
+			"telemetry: the kubelet is read with the ServiceAccount token, and its file is not named",
+		)
 	}
 	return &KubeletSummaries{
 		client: &http.Client{
@@ -87,7 +89,12 @@ func (k *KubeletSummaries) Summary(ctx context.Context, kubelet string) (Summary
 		return Summary{}, fmt.Errorf("the ServiceAccount token: %w", err)
 	}
 	token := strings.TrimSpace(string(raw))
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://"+kubelet+"/stats/summary", nil)
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		"https://"+kubelet+"/stats/summary",
+		http.NoBody,
+	)
 	if err != nil {
 		return Summary{}, fmt.Errorf("the kubelet's stats summary at %s: %w", kubelet, err)
 	}
@@ -106,7 +113,11 @@ func (k *KubeletSummaries) Summary(ctx context.Context, kubelet string) (Summary
 		return Summary{}, fmt.Errorf("the kubelet's stats summary at %s: %w", kubelet, err)
 	}
 	if len(body) > maxSummary {
-		return Summary{}, fmt.Errorf("the kubelet's stats summary at %s is larger than %d bytes", kubelet, maxSummary)
+		return Summary{}, fmt.Errorf(
+			"the kubelet's stats summary at %s is larger than %d bytes",
+			kubelet,
+			maxSummary,
+		)
 	}
 	var out Summary
 	if err = sonic.Unmarshal(body, &out); err != nil {

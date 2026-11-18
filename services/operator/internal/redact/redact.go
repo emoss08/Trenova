@@ -41,7 +41,10 @@ func (s Secrets) Load(ctx context.Context) (*Redactor, error) {
 func Load(ctx context.Context, kube kubernetes.Interface, namespace string) (*Redactor, error) {
 	secrets, err := kube.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("list the namespace's secrets to remove them from the lines: %w", err)
+		return nil, fmt.Errorf(
+			"list the namespace's secrets to remove them from the lines: %w",
+			err,
+		)
 	}
 	var raw [][]byte
 	for i := range secrets.Items {

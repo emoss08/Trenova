@@ -80,13 +80,13 @@ func (f *fakeLogs) Submit(job *logs.Job) logs.Submitted {
 	return logs.Queued
 }
 
-func (f *fakeLogs) Finish(_ context.Context, id uuid.UUID, outcome logs.Outcome) {
+func (f *fakeLogs) Finish(_ context.Context, id uuid.UUID, outcome *logs.Outcome) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.finished == nil {
 		f.finished = map[uuid.UUID]logs.Outcome{}
 	}
-	f.finished[id] = outcome
+	f.finished[id] = *outcome
 }
 
 func apiPod() *corev1.Pod {

@@ -75,7 +75,9 @@ func NewDocuments(p *DocumentsParams) *Documents {
 }
 
 func (d *Documents) bucket(ctx context.Context) (Bucket, error) {
-	secret, err := d.kube.CoreV1().Secrets(d.namespace).Get(ctx, values.DocumentsSecret, metav1.GetOptions{})
+	secret, err := d.kube.CoreV1().
+		Secrets(d.namespace).
+		Get(ctx, values.DocumentsSecret, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return Bucket{}, ErrNoDocumentsBucket
 	}
@@ -98,12 +100,12 @@ func (d *Documents) bucket(ctx context.Context) (Bucket, error) {
 	return b, nil
 }
 
-func (d *Documents) Put(ctx context.Context, obj Object) error {
+func (d *Documents) Put(ctx context.Context, obj *Object) error {
 	b, err := d.bucket(ctx)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, objectURL(b, obj.Key), obj.Body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, objectURL(&b, obj.Key), obj.Body)
 	if err != nil {
 		return fmt.Errorf("the upload request: %w", err)
 	}
@@ -122,7 +124,7 @@ func (d *Documents) Put(ctx context.Context, obj Object) error {
 	if size > maxMetaHeaders {
 		return errors.New("the object's metadata is larger than object storage accepts")
 	}
-	if err = d.sign(ctx, req, b, obj.SHA256); err != nil {
+	if err = d.sign(ctx, req, &b, obj.SHA256); err != nil {
 		return err
 	}
 	res, err := d.client.Do(req)
@@ -142,12 +144,12 @@ func (d *Documents) Head(ctx context.Context, key string) (ObjectInfo, bool, err
 	if err != nil {
 		return ObjectInfo{}, false, err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodHead, objectURL(b, key), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, objectURL(&b, key), http.NoBody)
 	if err != nil {
 		return ObjectInfo{}, false, fmt.Errorf("the lookup request: %w", err)
 	}
 	req.Header.Set("X-Amz-Content-Sha256", emptySHA256)
-	if err = d.sign(ctx, req, b, emptySHA256); err != nil {
+	if err = d.sign(ctx, req, &b, emptySHA256); err != nil {
 		return ObjectInfo{}, false, err
 	}
 	res, err := d.client.Do(req)
@@ -170,9 +172,10 @@ func (d *Documents) Head(ctx context.Context, key string) (ObjectInfo, bool, err
 	return info, true, nil
 }
 
-func (d *Documents) sign(ctx context.Context, req *http.Request, b Bucket, payload string) error {
+func (d *Documents) sign(ctx context.Context, req *http.Request, b *Bucket, payload string) error {
 	creds := aws.Credentials{AccessKeyID: b.AccessKeyID, SecretAccessKey: b.SecretAccessKey}
-	if err := v4.NewSigner().SignHTTP(ctx, creds, req, payload, "s3", b.Region, d.now().UTC()); err != nil {
+	if err := v4.NewSigner().
+		SignHTTP(ctx, creds, req, payload, "s3", b.Region, d.now().UTC()); err != nil {
 		return fmt.Errorf("sign the documents bucket request: %w", err)
 	}
 	return nil
@@ -184,14 +187,19 @@ type ObjectError struct {
 }
 
 func (e *ObjectError) Error() string {
-	return fmt.Sprintf("the documents bucket refused the %s: %d %s", e.Op, e.Status, http.StatusText(e.Status))
+	return fmt.Sprintf(
+		"the documents bucket refused the %s: %d %s",
+		e.Op,
+		e.Status,
+		http.StatusText(e.Status),
+	)
 }
 
 func (e *ObjectError) Retryable() bool {
 	return e.Status == http.StatusTooManyRequests || e.Status >= http.StatusInternalServerError
 }
 
-func objectURL(b Bucket, key string) string {
+func objectURL(b *Bucket, key string) string {
 	segments := strings.Split(key, "/")
 	for i, s := range segments {
 		segments[i] = url.PathEscape(s)

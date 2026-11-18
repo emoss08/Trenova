@@ -88,7 +88,7 @@ func TestAnObjectIsPutSignedIntoTheDocumentsBucketAndFoundAgain(t *testing.T) {
 	body := []byte("zip bytes")
 	sum := sha256.Sum256(body)
 
-	require.NoError(t, docs.Put(t.Context(), Object{
+	require.NoError(t, docs.Put(t.Context(), &Object{
 		Key: "support/logs/b.zip", Body: bytes.NewReader(body), Size: int64(len(body)),
 		SHA256: hex.EncodeToString(sum[:]), ContentType: "application/zip",
 		Metadata: map[string]string{"components": "api:10:0"},
@@ -123,7 +123,7 @@ func TestAServerErrorIsRetryableAndARefusalIsNot(t *testing.T) {
 	stub, docs := documents(t, true)
 	stub.status = http.StatusServiceUnavailable
 	put := func() error {
-		return docs.Put(t.Context(), Object{Key: "k", Body: bytes.NewReader(nil), SHA256: emptySHA256})
+		return docs.Put(t.Context(), &Object{Key: "k", Body: bytes.NewReader(nil), SHA256: emptySHA256})
 	}
 
 	var oe *ObjectError

@@ -32,8 +32,8 @@ func machines() []machine {
 		out = append(out,
 			machine{name: plan.Key, plan: plan, base: base},
 			machine{name: plan.Key + "/storage", plan: plan, base: base, storage: testStorage},
-			machine{name: plan.Key + "/local", plan: local.Fit(plan), base: noScan, storage: localStorage},
-			machine{name: plan.Key + "/local-minio", plan: local.Fit(plan), base: noScan},
+			machine{name: plan.Key + "/local", plan: local.Fit(&plan), base: noScan, storage: localStorage},
+			machine{name: plan.Key + "/local-minio", plan: local.Fit(&plan), base: noScan},
 		)
 	}
 	return out
@@ -56,9 +56,9 @@ func turningOnLeavesTheRestAsItWas(t *testing.T, m machine, component string) {
 	without := spec(m.plan, instanceapi.Active)
 	with := spec(m.plan, instanceapi.Active, component)
 	with.InstanceId = without.InstanceId
-	off, err := values.Render(&without, m.base(), operatorNS, m.storage)
+	off, err := values.Render(&without, m.base(), operatorNS, &m.storage)
 	require.NoError(t, err)
-	on, err := values.Render(&with, m.base(), operatorNS, m.storage)
+	on, err := values.Render(&with, m.base(), operatorNS, &m.storage)
 	require.NoError(t, err)
 
 	require.Equal(t, false, lookup(t, off.Values, []string{component})["enabled"])
@@ -104,7 +104,7 @@ func turningOnLeavesTheRestAsItWas(t *testing.T, m machine, component string) {
 
 func TestTheEmbeddingServiceReachesTheTMSOnlyThroughManagedConfig(t *testing.T) {
 	t.Parallel()
-	r, err := values.Render(ptr(spec(plans[0], instanceapi.Active, "embedding")), base(), operatorNS, values.Storage{})
+	r, err := values.Render(ptr(spec(plans[0], instanceapi.Active, "embedding")), base(), operatorNS, &values.Storage{})
 	require.NoError(t, err)
 	rendered := renderStorageChart(t, r)
 
@@ -138,9 +138,9 @@ func TestTheEmbeddingServiceReachesTheTMSOnlyThroughManagedConfig(t *testing.T) 
 func TestAPlanChangeStillDividesTheMachineAgain(t *testing.T) {
 	t.Parallel()
 	for i := 1; i < len(plans); i++ {
-		smaller, err := values.Render(ptr(spec(plans[i-1], instanceapi.Active)), base(), operatorNS, values.Storage{})
+		smaller, err := values.Render(ptr(spec(plans[i-1], instanceapi.Active)), base(), operatorNS, &values.Storage{})
 		require.NoError(t, err)
-		larger, err := values.Render(ptr(spec(plans[i], instanceapi.Active)), base(), operatorNS, values.Storage{})
+		larger, err := values.Render(ptr(spec(plans[i], instanceapi.Active)), base(), operatorNS, &values.Storage{})
 		require.NoError(t, err)
 		name := fmt.Sprintf("%s to %s", plans[i-1].Key, plans[i].Key)
 		for _, path := range [][]string{

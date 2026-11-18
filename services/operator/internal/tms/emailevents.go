@@ -27,7 +27,10 @@ func (c *Client) RelayEmailEvents(ctx context.Context, events []EmailEvent) ([]s
 		Events []EmailEvent `json:"events"`
 	}{Events: events})
 	if err != nil {
-		return nil, fmt.Errorf("relay system email events to the TMS: cannot encode %d events", len(events))
+		return nil, fmt.Errorf(
+			"relay system email events to the TMS: cannot encode %d events",
+			len(events),
+		)
 	}
 	u := c.base.JoinPath("managed", "v1", "system-email", "events")
 	out, err := c.do(ctx, http.MethodPost, u, body, http.StatusOK)

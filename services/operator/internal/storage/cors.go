@@ -26,7 +26,7 @@ type S3CORS struct {
 	Now    func() time.Time
 }
 
-func (c S3CORS) Allow(ctx context.Context, b Bucket, origins []string) error {
+func (c S3CORS) Allow(ctx context.Context, b *Bucket, origins []string) error {
 	body, err := corsDocument(origins)
 	if err != nil {
 		return err
@@ -44,7 +44,8 @@ func (c S3CORS) Allow(ctx context.Context, b Bucket, origins []string) error {
 	req.Header.Set("Content-MD5", base64.StdEncoding.EncodeToString(digest[:]))
 	req.Header.Set("X-Amz-Content-Sha256", payload)
 	creds := aws.Credentials{AccessKeyID: b.AccessKeyID, SecretAccessKey: b.SecretAccessKey}
-	if err = v4.NewSigner().SignHTTP(ctx, creds, req, payload, "s3", b.Region, c.now()); err != nil {
+	if err = v4.NewSigner().
+		SignHTTP(ctx, creds, req, payload, "s3", b.Region, c.now()); err != nil {
 		return fmt.Errorf("sign the documents bucket's CORS request: %w", err)
 	}
 	res, err := c.client().Do(req)

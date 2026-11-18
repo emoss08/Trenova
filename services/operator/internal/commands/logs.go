@@ -39,7 +39,11 @@ func whoAsked(cmd *instanceapi.Command) (requester, bool) {
 	}
 }
 
-func (r *Runner) grant(ctx context.Context, who requester, kind tms.LogPullKind) (instanceapi.CommandResult, bool) {
+func (r *Runner) grant(
+	ctx context.Context,
+	who requester,
+	kind tms.LogPullKind,
+) (instanceapi.CommandResult, bool) {
 	if !who.staff {
 		return instanceapi.CommandResult{}, true
 	}
@@ -55,7 +59,10 @@ func (r *Runner) grant(ctx context.Context, who requester, kind tms.LogPullKind)
 	}
 }
 
-func (r *Runner) collectLines(ctx context.Context, cmd *instanceapi.Command) instanceapi.CommandResult {
+func (r *Runner) collectLines(
+	ctx context.Context,
+	cmd *instanceapi.Command,
+) instanceapi.CommandResult {
 	component := deref(cmd.Component)
 	if component == "" {
 		return failed(errors.New("name the component whose logs to collect"))
@@ -64,7 +71,7 @@ func (r *Runner) collectLines(ctx context.Context, cmd *instanceapi.Command) ins
 	if !ok {
 		return failedMessage(noRequesterMessage)
 	}
-	if res, ok := r.grant(ctx, who, tms.LogPullLines); !ok {
+	if res, granted := r.grant(ctx, who, tms.LogPullLines); !granted {
 		return res
 	}
 	lines := defaultLines
@@ -87,14 +94,17 @@ func (r *Runner) collectLines(ctx context.Context, cmd *instanceapi.Command) ins
 	return succeeded("", &out)
 }
 
-func (r *Runner) collectBundle(ctx context.Context, cmd *instanceapi.Command) (instanceapi.CommandResult, state) {
+func (r *Runner) collectBundle(
+	ctx context.Context,
+	cmd *instanceapi.Command,
+) (instanceapi.CommandResult, state) {
 	if cmd.BundleId == nil {
 		return failedMessage(noBundleMessage), answered
 	}
 	id := *cmd.BundleId
 	end := func(outcome logs.Outcome) (instanceapi.CommandResult, state) {
-		r.kept.Finish(ctx, id, outcome)
-		return fromOutcome(outcome), answered
+		r.kept.Finish(ctx, id, &outcome)
+		return fromOutcome(&outcome), answered
 	}
 	if cmd.Since == nil || cmd.Until == nil {
 		return end(logs.Failed(noPeriodMessage))
@@ -106,7 +116,7 @@ func (r *Runner) collectBundle(ctx context.Context, cmd *instanceapi.Command) (i
 	if !ok {
 		return end(logs.Failed(noRequesterMessage))
 	}
-	if res, ok := r.grant(ctx, who, tms.LogPullBundle); !ok {
+	if res, granted := r.grant(ctx, who, tms.LogPullBundle); !granted {
 		if res.Status == instanceapi.CommandResultStatusRefused {
 			return end(logs.Refused(deref(res.Message)))
 		}
@@ -124,7 +134,7 @@ func (r *Runner) collectBundle(ctx context.Context, cmd *instanceapi.Command) (i
 		Since:    cmd.Since.UTC(),
 		Until:    cmd.Until.UTC(),
 		Done: func(o logs.Outcome) {
-			r.settle(commandID, fromOutcome(o))
+			r.settle(commandID, fromOutcome(&o))
 			r.logger.Info("a log bundle command is ready to answer",
 				"command", commandID, "bundle", id, "status", string(o.Status))
 		},
@@ -133,22 +143,29 @@ func (r *Runner) collectBundle(ctx context.Context, cmd *instanceapi.Command) (i
 		r.mu.Lock()
 		delete(r.pending, commandID)
 		r.mu.Unlock()
-		r.logger.InfoContext(ctx, "the log bundle queue is full; the command waits for the next tick",
-			"command", commandID, "bundle", id)
+		r.logger.InfoContext(
+			ctx,
+			"the log bundle queue is full; the command waits for the next tick",
+			"command",
+			commandID,
+			"bundle",
+			id,
+		)
 		return instanceapi.CommandResult{}, retry
 	}
 	return instanceapi.CommandResult{}, later
 }
 
-func fromOutcome(o logs.Outcome) instanceapi.CommandResult {
+func fromOutcome(o *logs.Outcome) instanceapi.CommandResult {
 	switch o.Status {
 	case instanceapi.LogBundleStored:
 		return succeeded(fmt.Sprintf("stored the log bundle at %s (%d bytes)", o.Key, o.Size), nil)
 	case instanceapi.LogBundleRefused:
 		return refused(o.Message)
-	default:
+	case instanceapi.LogBundleFailed, instanceapi.LogBundleCollecting:
 		return failedMessage(o.Message)
 	}
+	return failedMessage(o.Message)
 }
 
 func refused(message string) instanceapi.CommandResult {

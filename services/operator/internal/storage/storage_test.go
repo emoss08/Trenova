@@ -46,10 +46,10 @@ type stubCORS struct {
 	err     error
 }
 
-func (s *stubCORS) Allow(_ context.Context, b storage.Bucket, origins []string) error {
+func (s *stubCORS) Allow(_ context.Context, b *storage.Bucket, origins []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.buckets = append(s.buckets, b)
+	s.buckets = append(s.buckets, *b)
 	s.origins = append(s.origins, strings.Join(origins, ","))
 	return s.err
 }
@@ -217,7 +217,7 @@ func TestCORSRulesAreSignedForTheBucket(t *testing.T) {
 	defer srv.Close()
 	at := time.Date(2026, 11, 14, 9, 0, 0, 0, time.UTC)
 	c := storage.S3CORS{Client: srv.Client(), Now: func() time.Time { return at }}
-	err := c.Allow(context.Background(), storage.Bucket{
+	err := c.Allow(context.Background(), &storage.Bucket{
 		Endpoint: srv.URL, Region: "bhs", Name: "trenova-abc-docs",
 		AccessKeyID: "DOCSKEY0123456789", SecretAccessKey: "documents-secret-0123456789",
 	}, []string{"https://abc.trenova.app"})
@@ -239,7 +239,7 @@ func TestCORSRulesAreSignedForTheBucket(t *testing.T) {
 	}))
 	defer refused.Close()
 	c = storage.S3CORS{Client: refused.Client()}
-	require.Error(t, c.Allow(context.Background(), storage.Bucket{
+	require.Error(t, c.Allow(context.Background(), &storage.Bucket{
 		Endpoint: refused.URL, Region: "bhs", Name: "b", AccessKeyID: "k", SecretAccessKey: "s",
 	}, []string{"https://abc.trenova.app"}))
 }

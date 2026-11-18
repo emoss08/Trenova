@@ -1,0 +1,36 @@
+name: golangci-lint
+description: >-
+  Runs golangci-lint at the one version every Go lint in this repository uses,
+  against the shared .golangci.yml. The TMS (test-tms.yml) and the operator
+  (operator.yml) both lint through this action, so moving the version here
+  moves both, and the config's Go version and the linter's never drift apart
+  for one of them.
+
+inputs:
+  working-directory:
+    description: The module to lint, relative to the repository root.
+    required: true
+  args:
+    description: Extra arguments for golangci-lint run.
+    required: false
+    default: ""
+  skip-cache:
+    description: >-
+      "true" when the caller restores and saves the analysis cache itself, as
+      the TMS lint does.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9
+      with:
+        # Built with a Go at least as new as the go directive in .golangci.yml
+        # and in every linted go.mod: an older build refuses to load the config.
+        version: v2.15.0
+        verify: false
+        working-directory: ${{ inputs.working-directory }}
+        skip-cache: ${{ inputs.skip-cache == 'true' }}
+        args: ${{ inputs.args }}

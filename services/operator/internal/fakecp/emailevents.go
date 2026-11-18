@@ -72,9 +72,12 @@ func (s *Server) ackEmailEvents(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.emailEvents.acks = append(s.emailEvents.acks, slices.Clone(ack.Ids))
-	s.emailEvents.queued = slices.DeleteFunc(s.emailEvents.queued, func(e instanceapi.EmailEvent) bool {
-		return slices.Contains(ack.Ids, e.Id)
-	})
+	s.emailEvents.queued = slices.DeleteFunc(
+		s.emailEvents.queued,
+		func(e instanceapi.EmailEvent) bool {
+			return slices.Contains(ack.Ids, e.Id)
+		},
+	)
 	w.WriteHeader(http.StatusNoContent)
 }
 

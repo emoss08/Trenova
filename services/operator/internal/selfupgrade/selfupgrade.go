@@ -139,7 +139,11 @@ func (u *Upgrader) Converge(ctx context.Context, want string) Status {
 	st := Status{Version: u.version, Target: want, Phase: PhaseCurrent}
 	if u.chart == "" {
 		st.Phase = PhaseUnmanaged
-		u.sayOnce(ctx, slog.LevelInfo, "self-upgrade is off: the operator's version is left as it is")
+		u.sayOnce(
+			ctx,
+			slog.LevelInfo,
+			"self-upgrade is off: the operator's version is left as it is",
+		)
 		return st
 	}
 	hc, err := u.dynamic.Resource(HelmCharts).Namespace(u.chartSpace).
@@ -148,7 +152,8 @@ func (u *Upgrader) Converge(ctx context.Context, want string) Status {
 		st.Phase = PhaseUnmanaged
 		u.sayOnce(ctx, slog.LevelInfo, fmt.Sprintf(
 			"no HelmChart %s/%s: k3s's helm-controller did not install this operator, so its version is left as it is",
-			u.chartSpace, u.chart,
+			u.chartSpace,
+			u.chart,
 		))
 		return st
 	}
@@ -186,12 +191,19 @@ func (u *Upgrader) Converge(ctx context.Context, want string) Status {
 			return u.waiting(st, "cannot ask helm-controller to upgrade the operator: "+err.Error())
 		}
 		u.logger.InfoContext(ctx, "upgrading the operator", "from", u.version, "to", want)
-		return u.waiting(st, fmt.Sprintf("the operator is being upgraded from %s to %s", u.version, want))
+		return u.waiting(
+			st,
+			fmt.Sprintf("the operator is being upgraded from %s to %s", u.version, want),
+		)
 	}
 	started, perr := time.Parse(time.RFC3339, notes[AnnotationStarted])
 	if perr != nil {
 		started = u.now()
-		_ = u.patch(ctx, want, map[string]any{AnnotationStarted: started.UTC().Format(time.RFC3339)})
+		_ = u.patch(
+			ctx,
+			want,
+			map[string]any{AnnotationStarted: started.UTC().Format(time.RFC3339)},
+		)
 	}
 	reason := u.failure(ctx, want)
 	if reason == "" && u.now().Sub(started) > u.deadline {
@@ -207,7 +219,10 @@ func (u *Upgrader) Converge(ctx context.Context, want string) Status {
 	if err = u.patch(ctx, u.version, map[string]any{
 		AnnotationFailed: want, AnnotationReason: reason, AnnotationStarted: nil,
 	}); err != nil {
-		return u.waiting(st, "the upgrade to "+want+" failed and cannot be undone yet: "+err.Error())
+		return u.waiting(
+			st,
+			"the upgrade to "+want+" failed and cannot be undone yet: "+err.Error(),
+		)
 	}
 	u.logger.ErrorContext(ctx, "the operator's upgrade failed; it stays on its version",
 		"version", u.version, "target", want, "reason", reason)
@@ -223,7 +238,12 @@ func (u *Upgrader) settle(ctx context.Context, asked string, notes map[string]st
 	if err := u.patch(ctx, u.version, map[string]any{
 		AnnotationStarted: nil, AnnotationFailed: nil, AnnotationReason: nil,
 	}); err != nil {
-		u.logger.WarnContext(ctx, "cannot record the operator's version on its HelmChart", "error", err)
+		u.logger.WarnContext(
+			ctx,
+			"cannot record the operator's version on its HelmChart",
+			"error",
+			err,
+		)
 		return
 	}
 	if asked != u.version {
@@ -240,7 +260,10 @@ func (u *Upgrader) failure(ctx context.Context, want string) string {
 			return fmt.Sprintf(
 				"helm-controller could not install the operator's chart at %s (%d failed attempts of %s/%s); "+
 					"the registry may not have that version",
-				want, job.Status.Failed, u.chartSpace, job.Name,
+				want,
+				job.Status.Failed,
+				u.chartSpace,
+				job.Name,
 			)
 		}
 	}
@@ -303,8 +326,9 @@ func pinnedBy(hc *unstructured.Unstructured) string {
 }
 
 func jobVersion(job *batchv1.Job) string {
-	for _, c := range job.Spec.Template.Spec.Containers {
-		for _, e := range c.Env {
+	containers := job.Spec.Template.Spec.Containers
+	for i := range containers {
+		for _, e := range containers[i].Env {
 			if e.Name == jobVersionEnv {
 				return e.Value
 			}

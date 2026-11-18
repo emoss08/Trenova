@@ -62,7 +62,7 @@ var (
 
 type ControlPlane interface {
 	Spec(ctx context.Context, etag string) (controlplane.Desired, bool, error)
-	ReportStatus(ctx context.Context, report instanceapi.StatusReport) error
+	ReportStatus(ctx context.Context, report *instanceapi.StatusReport) error
 }
 
 type Credentials interface {
@@ -117,7 +117,7 @@ type Administrators interface {
 }
 
 type Features interface {
-	PutFeatures(ctx context.Context, list tms.FeatureList) error
+	PutFeatures(ctx context.Context, list *tms.FeatureList) error
 	HeldFeatures(ctx context.Context) ([]string, error)
 }
 
@@ -139,7 +139,7 @@ type Storage interface {
 }
 
 type Backups interface {
-	Run(ctx context.Context, in backup.Input) backup.Result
+	Run(ctx context.Context, in *backup.Input) backup.Result
 }
 
 type Operator interface {
@@ -422,15 +422,15 @@ func (l *Loop) Tick(ctx context.Context) {
 	report.SupportGrants = l.supportGrants(ctx, report.Ready)
 	capabilities := values.Capabilities()
 	report.Capabilities = &capabilities
-	if l.shouldReport(report) {
-		if err = l.cp.ReportStatus(ctx, report); err != nil {
+	if l.shouldReport(&report) {
+		if err = l.cp.ReportStatus(ctx, &report); err != nil {
 			if !l.handle(ctx, err) {
 				l.logger.Warn("cannot report status", "error", err)
 			}
 			return
 		}
 		l.last, l.lastSent, l.reported = report, l.now(), true
-		l.accepted.record(report)
+		l.accepted.record(&report)
 	}
 	l.relayUsage(ctx, report.Ready)
 	l.relayLogRequests(ctx, report.Ready)
@@ -537,7 +537,7 @@ func (l *Loop) sendFeatures(ctx context.Context, ready bool) {
 	run, cancel := context.WithTimeout(ctx, featureTimeout)
 	defer cancel()
 	list := featureList(&l.desired.Spec)
-	if err := l.features.PutFeatures(run, list); err != nil {
+	if err := l.features.PutFeatures(run, &list); err != nil {
 		l.logger.Warn("cannot send the feature list to the TMS; retrying", "error", err)
 		return
 	}
@@ -562,7 +562,10 @@ func featureList(spec *instanceapi.InstanceSpec) tms.FeatureList {
 	}
 	if spec.AddonEndings != nil {
 		for _, e := range *spec.AddonEndings {
-			list.AddonEndings = append(list.AddonEndings, tms.AddonEnding{Addon: e.Addon, EndsAt: e.EndsAt})
+			list.AddonEndings = append(
+				list.AddonEndings,
+				tms.AddonEnding{Addon: e.Addon, EndsAt: e.EndsAt},
+			)
 		}
 	}
 	return list
@@ -665,14 +668,17 @@ func (l *Loop) supportGrants(ctx context.Context, ready bool) *[]instanceapi.Sup
 	}
 	out := make([]instanceapi.SupportGrant, 0, min(len(held), maxGrants))
 	seen := make(map[string]bool, len(held))
-	for _, g := range held {
+	for i := range held {
 		if len(out) == maxGrants {
 			break
 		}
-		grant, ok := reportedGrant(g)
+		grant, ok := reportedGrant(&held[i])
 		if !ok || seen[grant.Id] {
-			l.logger.Warn("the TMS listed a support grant the contract cannot carry; it is left out",
-				"grant", g.ID)
+			l.logger.Warn(
+				"the TMS listed a support grant the contract cannot carry; it is left out",
+				"grant",
+				held[i].ID,
+			)
 			continue
 		}
 		seen[grant.Id] = true
@@ -681,7 +687,7 @@ func (l *Loop) supportGrants(ctx context.Context, ready bool) *[]instanceapi.Sup
 	return &out
 }
 
-func reportedGrant(g tms.SupportGrant) (instanceapi.SupportGrant, bool) {
+func reportedGrant(g *tms.SupportGrant) (instanceapi.SupportGrant, bool) {
 	grant := instanceapi.SupportGrant{
 		Id:               g.ID,
 		OrganizationId:   g.OrganizationID,
@@ -745,7 +751,7 @@ func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 	report := instanceapi.StatusReport{Components: []instanceapi.ComponentStatus{}}
 	l.connects = databases.Connected{}
 	if own := l.creds.InstanceID(); l.desired.Spec.InstanceId != own {
-		return l.refuse(ctx, report, instanceapi.RefusedRevisionCodeInvalid, fmt.Sprintf(
+		return l.refuse(ctx, &report, instanceapi.RefusedRevisionCodeInvalid, fmt.Sprintf(
 			"the spec is for instance %s and this operator is instance %s",
 			l.desired.Spec.InstanceId,
 			own,
@@ -754,7 +760,7 @@ func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 	op := l.operator.Converge(ctx, l.desired.Spec.Release.Version)
 	report.Operator = operatorReport(op)
 	if op.Holds() {
-		return l.hold(ctx, report, op), true
+		return l.hold(ctx, &report, op), true
 	}
 	located, err := l.objectStorage(ctx)
 	if err != nil {
@@ -762,17 +768,20 @@ func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 			return report, false
 		}
 		l.logger.Error("cannot keep the instance's storage; nothing is applied", "error", err)
-		return l.notReady(report, "nothing is applied without the instance's storage: "+err.Error()), true
+		return l.notReady(
+			&report,
+			"nothing is applied without the instance's storage: "+err.Error(),
+		), true
 	}
 	l.located = located
 	spec := l.desired.Spec
-	spec.Plan = l.capacity.Fit(spec.Plan)
-	rendered, err := values.Render(&spec, l.base, l.ownNS, located)
+	spec.Plan = l.capacity.Fit(&spec.Plan)
+	rendered, err := values.Render(&spec, l.base, l.ownNS, &located)
 	if errors.Is(err, values.ErrInvalidSpec) || errors.Is(err, values.ErrSchemaVersion) {
-		return l.refuse(ctx, report, instanceapi.RefusedRevisionCodeInvalid, err.Error()), true
+		return l.refuse(ctx, &report, instanceapi.RefusedRevisionCodeInvalid, err.Error()), true
 	}
 	if err != nil {
-		return l.notReady(report, err.Error()), true
+		return l.notReady(&report, err.Error()), true
 	}
 	if err = l.escrow.Ensure(ctx); err != nil {
 		if l.handle(ctx, err) {
@@ -780,69 +789,71 @@ func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 		}
 		l.logger.Error("cannot keep the escrowed secrets; nothing is applied", "error", err)
 		return l.notReady(
-			report,
+			&report,
 			"nothing is applied without the escrowed secrets: "+err.Error(),
 		), true
 	}
-	return l.apply(ctx, report, rendered), true
+	return l.apply(ctx, &report, rendered), true
 }
 
 func (l *Loop) apply(
 	ctx context.Context,
-	report instanceapi.StatusReport,
+	base *instanceapi.StatusReport,
 	rendered values.Rendered,
 ) instanceapi.StatusReport {
+	report := *base
 	ch, err := l.charts.Load(rendered.Version)
 	if err != nil {
-		return l.notReady(report, err.Error())
+		return l.notReady(&report, err.Error())
 	}
 	deployed, err := l.releases.Deployed()
 	if err != nil {
-		return l.notReady(report, err.Error())
+		return l.notReady(&report, err.Error())
 	}
 	l.connects = connectedTo(deployed)
 	gate := l.dbs.Gate(ctx, databases.GateInput{Spec: &l.desired.Spec, Connected: l.connects})
 	if gate.Refused != "" {
 		l.connects = databases.Connected{}
-		report = l.stay(ctx, report, deployed, gate.Message)
+		report = l.stay(ctx, &report, deployed, gate.Message)
 		report.Refused = l.refusal(gate.Refused, gate.Message)
 		return report
 	}
 	if gate.Hold {
-		return l.stay(ctx, report, deployed, gate.Message)
+		return l.stay(ctx, &report, deployed, gate.Message)
 	}
 	need, err := release.NeedsApply(deployed, ch, rendered.Values)
 	if err != nil {
-		return l.notReady(report, err.Error())
+		return l.notReady(&report, err.Error())
 	}
 	if need {
 		if err = l.releases.Apply(ctx, ch, rendered.Values); err != nil {
 			l.connects = databases.Connected{}
 			l.logger.Error("cannot apply the spec", "revision", l.desired.Revision, "error", err)
-			return l.notReady(report, err.Error())
+			return l.notReady(&report, err.Error())
 		}
 		if deployed, err = l.releases.Deployed(); err != nil {
 			l.connects = databases.Connected{}
-			return l.notReady(report, err.Error())
+			return l.notReady(&report, err.Error())
 		}
 		l.connects = connectedTo(deployed)
 	}
 	l.applied = l.desired.Revision
-	return l.observe(ctx, report, deployed, rendered.Values)
+	return l.observe(ctx, &report, deployed, rendered.Values)
 }
 
 // stay keeps the deployed release, reports it as it runs and says why the
 // desired revision waits.
 func (l *Loop) stay(
 	ctx context.Context,
-	report instanceapi.StatusReport,
+	base *instanceapi.StatusReport,
 	deployed release.Deployed,
 	why string,
 ) instanceapi.StatusReport {
+	report := *base
 	if !deployed.Exists {
-		return l.notReady(report, why)
+		return l.notReady(&report, why)
 	}
-	report = l.observe(ctx, report, deployed, deployed.Config)
+	report = l.observe(ctx, &report, deployed, deployed.Config)
 	msg := trim(why)
 	report.Message = &msg
 	return report
@@ -856,22 +867,34 @@ func (l *Loop) stay(
 // is applied or this one becomes applicable.
 func (l *Loop) refuse(
 	ctx context.Context,
-	report instanceapi.StatusReport,
+	base *instanceapi.StatusReport,
 	code instanceapi.RefusedRevisionCode,
 	why string,
 ) instanceapi.StatusReport {
-	l.logger.Warn("the revision is refused", "revision", l.desired.Revision, "code", code, "reason", why)
+	report := *base
+	l.logger.Warn(
+		"the revision is refused",
+		"revision",
+		l.desired.Revision,
+		"code",
+		code,
+		"reason",
+		why,
+	)
 	deployed, err := l.releases.Deployed()
 	if err != nil {
-		report = l.notReady(report, why)
+		report = l.notReady(&report, why)
 	} else {
-		report = l.stay(ctx, report, deployed, why)
+		report = l.stay(ctx, &report, deployed, why)
 	}
 	report.Refused = l.refusal(code, why)
 	return report
 }
 
-func (l *Loop) refusal(code instanceapi.RefusedRevisionCode, why string) *instanceapi.RefusedRevision {
+func (l *Loop) refusal(
+	code instanceapi.RefusedRevisionCode,
+	why string,
+) *instanceapi.RefusedRevision {
 	return &instanceapi.RefusedRevision{Revision: l.desired.Revision, Code: code, Reason: trim(why)}
 }
 
@@ -885,20 +908,21 @@ func connectedTo(d release.Deployed) databases.Connected {
 
 func (l *Loop) hold(
 	ctx context.Context,
-	report instanceapi.StatusReport,
+	base *instanceapi.StatusReport,
 	op selfupgrade.Status,
 ) instanceapi.StatusReport {
+	report := *base
 	deployed, err := l.releases.Deployed()
 	if err != nil {
-		return l.notReady(report, err.Error())
+		return l.notReady(&report, err.Error())
 	}
 	l.connects = connectedTo(deployed)
 	if !deployed.Exists {
-		return l.notReady(report, fmt.Sprintf(
+		return l.notReady(&report, fmt.Sprintf(
 			"Trenova is installed once the operator runs %s: %s", op.Target, op.Message,
 		))
 	}
-	report = l.observe(ctx, report, deployed, deployed.Config)
+	report = l.observe(ctx, &report, deployed, deployed.Config)
 	held := trim(fmt.Sprintf(
 		"Trenova stays on %s until the operator runs %s: %s",
 		deployed.ChartVersion, op.Target, op.Message,
@@ -909,10 +933,11 @@ func (l *Loop) hold(
 
 func (l *Loop) observe(
 	ctx context.Context,
-	report instanceapi.StatusReport,
+	base *instanceapi.StatusReport,
 	deployed release.Deployed,
 	vals map[string]any,
 ) instanceapi.StatusReport {
+	report := *base
 	if l.applied > 0 {
 		applied := l.applied
 		report.AppliedRevision = &applied
@@ -925,7 +950,7 @@ func (l *Loop) observe(
 	l.telem.Observe(params)
 	comps, err := l.health.Check(ctx, params)
 	if err != nil {
-		return l.notReady(report, err.Error())
+		return l.notReady(&report, err.Error())
 	}
 	report.Ready = true
 	for i, c := range comps {
@@ -982,7 +1007,7 @@ func (l *Loop) backupReport(ctx context.Context, report *instanceapi.StatusRepor
 		return
 	}
 	applied := report.AppliedRevision != nil && *report.AppliedRevision == l.desired.Revision
-	res := l.backups.Run(ctx, backup.Input{
+	res := l.backups.Run(ctx, &backup.Input{
 		Spec:       &l.desired.Spec,
 		Generation: running,
 		Revision:   l.desired.Revision,
@@ -995,7 +1020,8 @@ func (l *Loop) backupReport(ctx context.Context, report *instanceapi.StatusRepor
 	if res.Final != nil && applied {
 		report.FinalBackup = res.Final
 	}
-	if res.Health != nil && res.Backups != nil && backupsDigest(*res.Backups) != l.accepted.backups {
+	if res.Health != nil && res.Backups != nil &&
+		backupsDigest(*res.Backups) != l.accepted.backups {
 		h := *res.Health
 		list := slices.Clone(*res.Backups)
 		h.Backups = &list
@@ -1056,7 +1082,7 @@ type acceptedLists struct {
 	databases string
 }
 
-func (a *acceptedLists) record(report instanceapi.StatusReport) {
+func (a *acceptedLists) record(report *instanceapi.StatusReport) {
 	if b := report.Backup; b != nil && b.Backups != nil {
 		a.backups = backupsDigest(*b.Backups)
 	}
@@ -1065,7 +1091,7 @@ func (a *acceptedLists) record(report instanceapi.StatusReport) {
 	}
 }
 
-func (a *acceptedLists) carried(report instanceapi.StatusReport) bool {
+func (a *acceptedLists) carried(report *instanceapi.StatusReport) bool {
 	return (report.Backup != nil && report.Backup.Backups != nil) || report.Databases != nil
 }
 
@@ -1085,8 +1111,14 @@ func backupsDigest(list []instanceapi.BackupEntry) string {
 			origin = string(*e.Origin)
 		}
 		rows = append(rows, []string{
-			e.Id, string(e.Phase), e.StartedAt.UTC().Format(time.RFC3339Nano), stampNano(e.CompletedAt),
-			origin, str(e.RequestId), sizeText(e.SizeBytes), str(e.Message),
+			e.Id,
+			string(e.Phase),
+			e.StartedAt.UTC().Format(time.RFC3339Nano),
+			stampNano(e.CompletedAt),
+			origin,
+			str(e.RequestId),
+			sizeText(e.SizeBytes),
+			str(e.Message),
 		})
 	}
 	return listDigest(rows)
@@ -1096,7 +1128,11 @@ func databasesDigest(list []instanceapi.DatabaseState) string {
 	rows := make([][]string, 0, len(list))
 	for _, d := range list {
 		rows = append(rows, []string{
-			d.Generation, string(d.State), strconv.FormatBool(d.Live), sizeText(d.SizeBytes), stampNano(d.CreatedAt),
+			d.Generation,
+			string(d.State),
+			strconv.FormatBool(d.Live),
+			sizeText(d.SizeBytes),
+			stampNano(d.CreatedAt),
 		})
 	}
 	return listDigest(rows)
@@ -1116,7 +1152,7 @@ func stampNano(t *time.Time) string {
 	return t.UTC().Format(time.RFC3339Nano)
 }
 
-func backupSummary(r instanceapi.StatusReport) string {
+func backupSummary(r *instanceapi.StatusReport) string {
 	out := ""
 	if b := r.Backup; b != nil {
 		out += string(b.WalArchiving) + "|" + str(b.Message) + "|" + stamp(b.LastBaseBackupAt)
@@ -1140,7 +1176,8 @@ func stamp(t *time.Time) string {
 	return t.UTC().Format(time.RFC3339)
 }
 
-func (l *Loop) notReady(report instanceapi.StatusReport, msg string) instanceapi.StatusReport {
+func (l *Loop) notReady(base *instanceapi.StatusReport, msg string) instanceapi.StatusReport {
+	report := *base
 	if l.applied > 0 {
 		applied := l.applied
 		report.AppliedRevision = &applied
@@ -1151,7 +1188,7 @@ func (l *Loop) notReady(report instanceapi.StatusReport, msg string) instanceapi
 	return report
 }
 
-func (l *Loop) shouldReport(r instanceapi.StatusReport) bool {
+func (l *Loop) shouldReport(r *instanceapi.StatusReport) bool {
 	if !l.reported || l.now().Sub(l.lastSent) >= l.report || l.accepted.carried(r) {
 		return true
 	}
@@ -1163,7 +1200,7 @@ func (l *Loop) shouldReport(r instanceapi.StatusReport) bool {
 		!sameFeatures(r.Features, l.last.Features) ||
 		!sameGrants(r.SupportGrants, l.last.SupportGrants) ||
 		str(r.SystemEmailFingerprint) != str(l.last.SystemEmailFingerprint) ||
-		backupSummary(r) != backupSummary(l.last) ||
+		backupSummary(r) != backupSummary(&l.last) ||
 		refusedSummary(r.Refused) != refusedSummary(l.last.Refused) ||
 		operatorSummary(r.Operator) != operatorSummary(l.last.Operator)
 }

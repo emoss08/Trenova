@@ -79,11 +79,21 @@ func (s *settling) stopOthers(ctx context.Context) {
 			continue
 		}
 		if err := s.hibernate(ctx, c.GetName(), "on"); err != nil {
-			s.logger.Warn("cannot stop a database the instance does not run on", "cluster", c.GetName(), "error", err)
+			s.logger.Warn(
+				"cannot stop a database the instance does not run on",
+				"cluster",
+				c.GetName(),
+				"error",
+				err,
+			)
 			continue
 		}
 		c.SetAnnotations(merged(c.GetAnnotations(), hibernation, "on"))
-		s.logger.Info("a database the instance does not run on is stopped and kept", "cluster", c.GetName())
+		s.logger.Info(
+			"a database the instance does not run on is stopped and kept",
+			"cluster",
+			c.GetName(),
+		)
 	}
 }
 
@@ -146,7 +156,11 @@ func (s *settling) kept(gen string) string {
 // fails if anything else has taken its name since. A Cluster goes in the
 // foreground, so it stays visible, being removed, until its instances,
 // volumes, Services and Secrets (all owned by it) are gone.
-func (s *settling) remove(ctx context.Context, obj *unstructured.Unstructured, gvr schema.GroupVersionResource) {
+func (s *settling) remove(
+	ctx context.Context,
+	obj *unstructured.Unstructured,
+	gvr schema.GroupVersionResource,
+) {
 	uid := obj.GetUID()
 	foreground := metav1.DeletePropagationForeground
 	opts := metav1.DeleteOptions{PropagationPolicy: &foreground}
@@ -155,10 +169,24 @@ func (s *settling) remove(ctx context.Context, obj *unstructured.Unstructured, g
 	}
 	err := s.dynamic.Resource(gvr).Namespace(s.namespace).Delete(ctx, obj.GetName(), opts)
 	if err != nil && !apierrors.IsNotFound(err) {
-		s.logger.Warn("cannot remove a retired database", "kind", gvr.Resource, "name", obj.GetName(), "error", err)
+		s.logger.Warn(
+			"cannot remove a retired database",
+			"kind",
+			gvr.Resource,
+			"name",
+			obj.GetName(),
+			"error",
+			err,
+		)
 		return
 	}
-	s.logger.Info("a retired database is being removed", "kind", gvr.Resource, "name", obj.GetName())
+	s.logger.Info(
+		"a retired database is being removed",
+		"kind",
+		gvr.Resource,
+		"name",
+		obj.GetName(),
+	)
 }
 
 func (s *settling) restoring(gen string) bool {
@@ -261,9 +289,11 @@ func (s *settling) size(cluster string) *int64 {
 // CloudNativePG labels each with its cluster, and the chart's inherited
 // metadata with the release and the component.
 func (m *Manager) claims(ctx context.Context) (map[string][]unstructured.Unstructured, error) {
-	list, err := m.dynamic.Resource(claimResource).Namespace(m.namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: m.selector(),
-	})
+	list, err := m.dynamic.Resource(claimResource).
+		Namespace(m.namespace).
+		List(ctx, metav1.ListOptions{
+			LabelSelector: m.selector(),
+		})
 	if err != nil {
 		return nil, err
 	}

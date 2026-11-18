@@ -99,8 +99,8 @@ func (c *Client) Spec(ctx context.Context, etag string) (Desired, bool, error) {
 	}
 }
 
-func (c *Client) ReportStatus(ctx context.Context, report instanceapi.StatusReport) error {
-	res, err := c.api.ReportStatusWithResponse(ctx, report)
+func (c *Client) ReportStatus(ctx context.Context, report *instanceapi.StatusReport) error {
+	res, err := c.api.ReportStatusWithResponse(ctx, *report)
 	if err != nil {
 		return fmt.Errorf("report status: %w", err)
 	}
@@ -184,7 +184,11 @@ func (c *Client) Commands(ctx context.Context) (instanceapi.CommandList, error) 
 	)
 }
 
-func (c *Client) CompleteCommand(ctx context.Context, id uuid.UUID, result instanceapi.CommandResult) error {
+func (c *Client) CompleteCommand(
+	ctx context.Context,
+	id uuid.UUID,
+	result instanceapi.CommandResult,
+) error {
 	res, err := c.api.CompleteCommandWithResponse(ctx, id, result)
 	if err != nil {
 		return fmt.Errorf("answer a command: %w", err)

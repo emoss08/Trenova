@@ -94,7 +94,7 @@ func TestTheStatusReportCarriesBackupHealth(t *testing.T) {
 		cluster("trenova-postgres", "Cluster in healthy state", "True", now.Add(-60*24*time.Hour)), store(),
 		done("daily-1", "trenova-postgres", "completed", now.Add(-9*time.Hour)),
 	)
-	res := m.Run(context.Background(), backup.Input{Spec: spec(instanceapi.Active), Revision: 3, Applied: true, Ready: true, Storage: storage})
+	res := m.Run(context.Background(), &backup.Input{Spec: spec(instanceapi.Active), Revision: 3, Applied: true, Ready: true, Storage: storage})
 	h := res.Health
 	require.NotNil(t, h)
 	require.Equal(t, instanceapi.BackupHealthWalArchiving("healthy"), h.WalArchiving)
@@ -107,12 +107,12 @@ func TestTheStatusReportCarriesBackupHealth(t *testing.T) {
 
 	// Failing archiving says why.
 	m, _ = manager(t, cluster("trenova-postgres", "Cluster in healthy state", "False", now), store())
-	h = m.Run(context.Background(), backup.Input{Spec: spec(instanceapi.Active), Applied: true, Storage: storage}).Health
+	h = m.Run(context.Background(), &backup.Input{Spec: spec(instanceapi.Active), Applied: true, Storage: storage}).Health
 	require.Equal(t, instanceapi.BackupHealthWalArchiving("failing"), h.WalArchiving)
 	require.Contains(t, *h.Message, "archive failed")
 
 	// Without storage, nothing is reported or taken.
-	require.Equal(t, backup.Result{}, m.Run(context.Background(), backup.Input{Spec: spec(instanceapi.Active), Applied: true}))
+	require.Equal(t, backup.Result{}, m.Run(context.Background(), &backup.Input{Spec: spec(instanceapi.Active), Applied: true}))
 }
 
 func TestABackupBeforeAnUpdateIsTakenOnceAndReported(t *testing.T) {
@@ -124,12 +124,12 @@ func TestABackupBeforeAnUpdateIsTakenOnceAndReported(t *testing.T) {
 	s.Backup = &instanceapi.SpecBackupRequest{Id: id, RequestedAt: now}
 
 	// Not applied yet: nothing is started.
-	res := m.Run(ctx, backup.Input{Spec: s, Applied: false, Storage: storage})
+	res := m.Run(ctx, &backup.Input{Spec: s, Applied: false, Storage: storage})
 	require.Equal(t, instanceapi.BackupRequestStatusPhase("running"), res.Health.Request.Phase)
 	_, err := dyn.Resource(backups).Namespace(namespace).Get(ctx, backup.RequestName(id), metav1.GetOptions{})
 	require.Error(t, err)
 
-	res = m.Run(ctx, backup.Input{Spec: s, Applied: true, Storage: storage})
+	res = m.Run(ctx, &backup.Input{Spec: s, Applied: true, Storage: storage})
 	require.Equal(t, id, res.Health.Request.Id)
 	require.Equal(t, instanceapi.BackupRequestStatusPhase("running"), res.Health.Request.Phase)
 	b, err := dyn.Resource(backups).Namespace(namespace).Get(ctx, backup.RequestName(id), metav1.GetOptions{})
@@ -142,7 +142,7 @@ func TestABackupBeforeAnUpdateIsTakenOnceAndReported(t *testing.T) {
 	require.Equal(t, "trenova-postgres", target)
 
 	// Asked again: the same backup, not another.
-	m.Run(ctx, backup.Input{Spec: s, Applied: true, Storage: storage})
+	m.Run(ctx, &backup.Input{Spec: s, Applied: true, Storage: storage})
 	list, err := dyn.Resource(backups).Namespace(namespace).List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
@@ -153,7 +153,7 @@ func TestABackupBeforeAnUpdateIsTakenOnceAndReported(t *testing.T) {
 	}, "status"))
 	_, err = dyn.Resource(backups).Namespace(namespace).Update(ctx, b, metav1.UpdateOptions{})
 	require.NoError(t, err)
-	res = m.Run(ctx, backup.Input{Spec: s, Applied: true, Storage: storage})
+	res = m.Run(ctx, &backup.Input{Spec: s, Applied: true, Storage: storage})
 	require.Equal(t, instanceapi.BackupRequestStatusPhase("failed"), res.Health.Request.Phase)
 	require.Contains(t, *res.Health.Request.Message, "bucket unreachable")
 }
@@ -164,7 +164,7 @@ func TestTheFinalBackupIsTakenWhenDecommissioned(t *testing.T) {
 	m, dyn := manager(t, cluster("trenova-postgres", "Cluster in healthy state", "True", now), store())
 	s := spec(instanceapi.Decommissioned)
 
-	require.Nil(t, m.Run(ctx, backup.Input{Spec: s, Revision: 7, Applied: true, Storage: storage}).Final)
+	require.Nil(t, m.Run(ctx, &backup.Input{Spec: s, Revision: 7, Applied: true, Storage: storage}).Final)
 	b, err := dyn.Resource(backups).Namespace(namespace).Get(ctx, backup.FinalName(7), metav1.GetOptions{})
 	require.NoError(t, err)
 
@@ -173,14 +173,14 @@ func TestTheFinalBackupIsTakenWhenDecommissioned(t *testing.T) {
 	}, "status"))
 	_, err = dyn.Resource(backups).Namespace(namespace).Update(ctx, b, metav1.UpdateOptions{})
 	require.NoError(t, err)
-	final := m.Run(ctx, backup.Input{Spec: s, Revision: 7, Applied: true, Storage: storage}).Final
+	final := m.Run(ctx, &backup.Input{Spec: s, Revision: 7, Applied: true, Storage: storage}).Final
 	require.NotNil(t, final)
 	require.Equal(t, "20261114T120500", final.Id)
 	require.Equal(t, now.Add(5*time.Minute), final.CompletedAt)
 
 	// An active instance takes no final backup.
 	m, dyn = manager(t, cluster("trenova-postgres", "Cluster in healthy state", "True", now), store())
-	require.Nil(t, m.Run(ctx, backup.Input{Spec: spec(instanceapi.Active), Revision: 7, Applied: true, Storage: storage}).Final)
+	require.Nil(t, m.Run(ctx, &backup.Input{Spec: spec(instanceapi.Active), Revision: 7, Applied: true, Storage: storage}).Final)
 	_, err = dyn.Resource(backups).Namespace(namespace).Get(ctx, backup.FinalName(7), metav1.GetOptions{})
 	require.Error(t, err)
 }
@@ -195,13 +195,13 @@ func TestARestoreIsReportedAndItsSwitchLeavesStoppingToTheDatabases(t *testing.T
 	s := spec(instanceapi.Active)
 	s.Restore = &instanceapi.SpecRestore{Id: uuid.New(), Generation: "r1a2b3c4d", TargetTime: target}
 
-	res := m.Run(ctx, backup.Input{Spec: s, Applied: true, Ready: true, Storage: storage})
+	res := m.Run(ctx, &backup.Input{Spec: s, Applied: true, Ready: true, Storage: storage})
 	require.Equal(t, instanceapi.RestoreProgressPhase("preparing"), res.Restore.Phase)
 
 	require.NoError(t, unstructured.SetNestedField(restored.Object, "Cluster in healthy state", "status", "phase"))
 	_, err := dyn.Resource(clusters).Namespace(namespace).Update(ctx, restored, metav1.UpdateOptions{})
 	require.NoError(t, err)
-	res = m.Run(ctx, backup.Input{Spec: s, Applied: true, Ready: true, Storage: storage})
+	res = m.Run(ctx, &backup.Input{Spec: s, Applied: true, Ready: true, Storage: storage})
 	require.Equal(t, instanceapi.RestoreProgressPhase("ready"), res.Restore.Phase)
 	require.Equal(t, target, *res.Restore.RecoveredTo)
 	// Ready is not switched: the live database is untouched.
@@ -212,7 +212,7 @@ func TestARestoreIsReportedAndItsSwitchLeavesStoppingToTheDatabases(t *testing.T
 	// Switched: reported. Stopping the old database is internal/databases'
 	// rule on every reconcile, so the backup manager patches no cluster.
 	s.Database = &instanceapi.SpecDatabase{Generation: "r1a2b3c4d", TargetTime: target}
-	res = m.Run(ctx, backup.Input{Spec: s, Generation: "r1a2b3c4d", Applied: true, Ready: true, Storage: storage})
+	res = m.Run(ctx, &backup.Input{Spec: s, Generation: "r1a2b3c4d", Applied: true, Ready: true, Storage: storage})
 	require.Equal(t, instanceapi.RestoreProgressPhase("switched"), res.Restore.Phase)
 	require.Equal(t, target, *res.Restore.RecoveredTo)
 	for _, a := range dyn.Actions() {
@@ -231,7 +231,7 @@ func TestHealthDescribesTheDatabaseTheApplicationRunsOn(t *testing.T) {
 	// Going back to the first database is held: the spec names it, the
 	// application still runs on r1a2b3c4d.
 	s := spec(instanceapi.Active)
-	res := m.Run(context.Background(), backup.Input{Spec: s, Generation: "r1a2b3c4d", Storage: storage})
+	res := m.Run(context.Background(), &backup.Input{Spec: s, Generation: "r1a2b3c4d", Storage: storage})
 	require.Equal(t, instanceapi.BackupHealthWalArchiving("healthy"), res.Health.WalArchiving)
 	require.Nil(t, res.Health.Message)
 	require.Len(t, *res.Backups, 1)
@@ -245,6 +245,6 @@ func TestARestoreThatNeverBecomesReadyFails(t *testing.T) {
 		cluster("trenova-postgres-r1a2b3c4d", "Setting up primary", "True", now.Add(-7*time.Hour)), store())
 	s := spec(instanceapi.Active)
 	s.Restore = &instanceapi.SpecRestore{Id: uuid.New(), Generation: "r1a2b3c4d", TargetTime: now.Add(-8 * time.Hour)}
-	res := m.Run(context.Background(), backup.Input{Spec: s, Applied: true, Ready: true, Storage: storage})
+	res := m.Run(context.Background(), &backup.Input{Spec: s, Applied: true, Ready: true, Storage: storage})
 	require.Equal(t, instanceapi.RestoreProgressPhase("failed"), res.Restore.Phase)
 }

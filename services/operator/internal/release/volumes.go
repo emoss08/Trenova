@@ -29,7 +29,12 @@ func (r *Releaser) dropVolumes(ctx context.Context) error {
 		name := left.Items[i].Name
 		err = claims.Delete(ctx, name, metav1.DeleteOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
-			return fmt.Errorf("remove the volume %s of the undeployed release %s: %w", name, r.name, err)
+			return fmt.Errorf(
+				"remove the volume %s of the undeployed release %s: %w",
+				name,
+				r.name,
+				err,
+			)
 		}
 		r.logger.Warn(
 			"removed a volume of a release that never deployed",
@@ -53,7 +58,11 @@ func (r *Releaser) dropVolumes(ctx context.Context) error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("wait for the volumes of the undeployed release %s to go: %w", r.name, err)
+		return fmt.Errorf(
+			"wait for the volumes of the undeployed release %s to go: %w",
+			r.name,
+			err,
+		)
 	}
 	return nil
 }

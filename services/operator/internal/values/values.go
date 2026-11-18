@@ -25,7 +25,7 @@ const EscrowSecret = "trenova-escrow"
 
 const (
 	DocumentsSecret = "trenova-storage"
-	BackupsSecret   = "trenova-backup-storage"
+	BackupsSecret   = "trenova-backup-storage" //nolint:gosec // G101: the name of a Kubernetes Secret, not a credential
 )
 
 type Storage struct {
@@ -36,14 +36,14 @@ type Storage struct {
 	BackupsPath     string
 }
 
-func (s Storage) Internal() string {
+func (s *Storage) Internal() string {
 	if s.PrivateEndpoint != "" {
 		return s.PrivateEndpoint
 	}
 	return s.Endpoint
 }
 
-func (s Storage) Configured() bool {
+func (s *Storage) Configured() bool {
 	return s.DocumentsBucket != "" && s.BackupsPath != "" && s.Endpoint != ""
 }
 
@@ -66,6 +66,8 @@ const (
 	keyLogs      = "logs"
 	keyMemory    = "memory"
 	keyCPU       = "cpu"
+	keyStorage   = "storage"
+	keyEnabled   = "enabled"
 )
 
 var (
@@ -89,7 +91,7 @@ func Render(
 	spec *instanceapi.InstanceSpec,
 	base map[string]any,
 	operatorNamespace string,
-	storage Storage,
+	storage *Storage,
 ) (Rendered, error) {
 	if operatorNamespace == "" {
 		return Rendered{}, errors.New("the operator's namespace is needed to admit it to the TMS")
@@ -136,11 +138,11 @@ func Render(
 		"storageDomain": StorageHost(spec.Hostname),
 		"stopped":       stopped,
 		keyTMS:          tmsValues(),
-		keyDocling:      map[string]any{"enabled": docling},
-		keyEmbedding:    map[string]any{"enabled": embedding},
+		keyDocling:      map[string]any{keyEnabled: docling},
+		keyEmbedding:    map[string]any{keyEnabled: embedding},
 		keyPostgres:     pg,
 		"managed":       managed(operatorNamespace, spec.InstanceId.String()),
-		keyLogs:         map[string]any{"enabled": true},
+		keyLogs:         map[string]any{keyEnabled: true},
 		"secrets":       map[string]any{"escrowSecret": EscrowSecret},
 		"bootstrap":     admin,
 	})
@@ -181,23 +183,26 @@ func CustomHostname(spec *instanceapi.InstanceSpec) (string, error) {
 	return custom, nil
 }
 
-func objectStorage(s Storage) map[string]any {
+func objectStorage(s *Storage) map[string]any {
 	internal := s.Internal()
 	return map[string]any{
-		keyMinio: map[string]any{"enabled": false},
-		"storage": map[string]any{
+		keyMinio: map[string]any{keyEnabled: false},
+		keyStorage: map[string]any{
 			"bucket":           s.DocumentsBucket,
 			"region":           s.Region,
 			"autoCreateBucket": false,
 			"external": map[string]any{
-				"endpoint":       strings.TrimPrefix(strings.TrimPrefix(internal, "https://"), "http://"),
+				"endpoint": strings.TrimPrefix(
+					strings.TrimPrefix(internal, "https://"),
+					"http://",
+				),
 				"useSSL":         !strings.HasPrefix(internal, "http://"),
 				"publicEndpoint": s.Endpoint,
 				"existingSecret": DocumentsSecret,
 			},
 		},
 		"backup": map[string]any{
-			"enabled":         true,
+			keyEnabled:        true,
 			"destinationPath": s.BackupsPath,
 			"endpointURL":     internal,
 			"existingSecret":  BackupsSecret,
@@ -207,7 +212,7 @@ func objectStorage(s Storage) map[string]any {
 
 func database(
 	spec *instanceapi.InstanceSpec,
-	storage Storage,
+	storage *Storage,
 	hibernate bool,
 ) (map[string]any, error) {
 	pg := map[string]any{"hibernate": hibernate}
@@ -226,7 +231,10 @@ func database(
 		return pg, nil
 	}
 	if !storage.Configured() {
-		return nil, fmt.Errorf("%w: a restore needs the instance's backups, and it has no backup storage", ErrInvalidSpec)
+		return nil, fmt.Errorf(
+			"%w: a restore needs the instance's backups, and it has no backup storage",
+			ErrInvalidSpec,
+		)
 	}
 	if !generationPattern.MatchString(r.Generation) || !source(r.SourceGeneration) {
 		return nil, fmt.Errorf("%w: restore generation %q", ErrInvalidSpec, r.Generation)
@@ -278,7 +286,7 @@ func text(s string, maxRunes int) bool {
 
 func managed(operatorNamespace, instanceID string) map[string]any {
 	return map[string]any{
-		"enabled":    true,
+		keyEnabled:   true,
 		"instanceId": instanceID,
 		"from": []any{
 			map[string]any{
@@ -352,7 +360,7 @@ func enabled(v map[string]any, component string) bool {
 	if !ok {
 		return false
 	}
-	on, _ := m["enabled"].(bool)
+	on, _ := m[keyEnabled].(bool)
 	return on
 }
 

@@ -33,6 +33,8 @@ const (
 	phaseCompleted = "completed"
 	phaseFailed    = "failed"
 
+	fieldName = "name"
+
 	maxMessage   = 500
 	maxBackupID  = 200
 	retryFailed  = 10 * time.Minute
@@ -102,7 +104,7 @@ type Result struct {
 	Restore *instanceapi.RestoreProgress
 }
 
-func (m *Manager) Run(ctx context.Context, in Input) Result {
+func (m *Manager) Run(ctx context.Context, in *Input) Result {
 	if !in.Storage.Configured() {
 		return Result{}
 	}
@@ -126,7 +128,9 @@ func (m *Manager) health(
 	active string,
 ) (instanceapi.BackupHealth, *[]instanceapi.BackupEntry) {
 	h := instanceapi.BackupHealth{WalArchiving: instanceapi.BackupHealthWalArchiving("unknown")}
-	cluster, err := m.dynamic.Resource(clusterResource).Namespace(m.namespace).Get(ctx, active, metav1.GetOptions{})
+	cluster, err := m.dynamic.Resource(clusterResource).
+		Namespace(m.namespace).
+		Get(ctx, active, metav1.GetOptions{})
 	if err != nil {
 		h.Message = message("cluster " + active + ": " + err.Error())
 		return h, nil
@@ -144,10 +148,22 @@ func (m *Manager) health(
 	if at := timestamp(cluster, "status", "lastArchivedWALTime"); at != nil {
 		h.LastArchivedWalAt = at
 	}
-	if store, err := m.dynamic.Resource(objectStoreResource).Namespace(m.namespace).
-		Get(ctx, values.Fullname(m.release)+"-backups", metav1.GetOptions{}); err == nil {
-		h.FirstRecoverabilityPoint = timestamp(store, "status", "serverRecoveryWindow", active, "firstRecoverabilityPoint")
-		h.LastBaseBackupAt = timestamp(store, "status", "serverRecoveryWindow", active, "lastSuccessfulBackupTime")
+	if store, storeErr := m.dynamic.Resource(objectStoreResource).Namespace(m.namespace).
+		Get(ctx, values.Fullname(m.release)+"-backups", metav1.GetOptions{}); storeErr == nil {
+		h.FirstRecoverabilityPoint = timestamp(
+			store,
+			"status",
+			"serverRecoveryWindow",
+			active,
+			"firstRecoverabilityPoint",
+		)
+		h.LastBaseBackupAt = timestamp(
+			store,
+			"status",
+			"serverRecoveryWindow",
+			active,
+			"lastSuccessfulBackupTime",
+		)
 	}
 	items, listErr := m.clusterBackups(ctx, active)
 	latest, failed := latestBackups(items)
@@ -171,14 +187,19 @@ func (m *Manager) health(
 	return h, &list
 }
 
-func (m *Manager) clusterBackups(ctx context.Context, cluster string) ([]unstructured.Unstructured, error) {
-	list, err := m.dynamic.Resource(backupResource).Namespace(m.namespace).List(ctx, metav1.ListOptions{})
+func (m *Manager) clusterBackups(
+	ctx context.Context,
+	cluster string,
+) ([]unstructured.Unstructured, error) {
+	list, err := m.dynamic.Resource(backupResource).
+		Namespace(m.namespace).
+		List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
 	items := make([]unstructured.Unstructured, 0, len(list.Items))
 	for i := range list.Items {
-		name, _, _ := unstructured.NestedString(list.Items[i].Object, "spec", "cluster", "name")
+		name, _, _ := unstructured.NestedString(list.Items[i].Object, "spec", "cluster", fieldName)
 		if name == cluster {
 			items = append(items, list.Items[i])
 		}
@@ -187,7 +208,9 @@ func (m *Manager) clusterBackups(ctx context.Context, cluster string) ([]unstruc
 	return items, nil
 }
 
-func latestBackups(items []unstructured.Unstructured) (completed, failed *unstructured.Unstructured) {
+func latestBackups(
+	items []unstructured.Unstructured,
+) (completed, failed *unstructured.Unstructured) {
 	for i := range items {
 		b := &items[i]
 		phase, _, _ := unstructured.NestedString(b.Object, "status", "phase")
@@ -207,12 +230,15 @@ func newer(a, b *unstructured.Unstructured) bool {
 
 func (m *Manager) requested(
 	ctx context.Context,
-	in Input,
+	in *Input,
 	active string,
 	req *instanceapi.SpecBackupRequest,
 ) *instanceapi.BackupRequestStatus {
 	name := RequestName(req.Id)
-	out := &instanceapi.BackupRequestStatus{Id: req.Id, Phase: instanceapi.BackupRequestStatusPhase("running")}
+	out := &instanceapi.BackupRequestStatus{
+		Id:    req.Id,
+		Phase: instanceapi.BackupRequestStatusPhase("running"),
+	}
 	b, err := m.backup(ctx, name)
 	switch {
 	case apierrors.IsNotFound(err):
@@ -237,7 +263,7 @@ func (m *Manager) requested(
 
 func (m *Manager) final(
 	ctx context.Context,
-	in Input,
+	in *Input,
 	active string,
 	h *instanceapi.BackupHealth,
 ) *instanceapi.FinalBackup {
@@ -248,7 +274,12 @@ func (m *Manager) final(
 		if !in.Applied {
 			return nil
 		}
-		if err = m.take(ctx, name, active, marks{annotations: map[string]any{annotationOrigin: originFinal}}); err != nil {
+		if err = m.take(
+			ctx,
+			name,
+			active,
+			marks{annotations: map[string]any{annotationOrigin: originFinal}},
+		); err != nil {
 			h.Message = message("cannot start the final backup: " + err.Error())
 		}
 		return nil
@@ -271,8 +302,13 @@ func (m *Manager) final(
 	case phaseFailed:
 		reason, _, _ := unstructured.NestedString(b.Object, "status", "error")
 		h.Message = message("the final backup failed, and is taken again: " + reason)
-		if stopped := timestamp(b, "status", "stoppedAt"); stopped == nil || m.now().Sub(*stopped) > retryFailed {
-			if err := m.dynamic.Resource(backupResource).Namespace(m.namespace).
+		if stopped := timestamp(
+			b,
+			"status",
+			"stoppedAt",
+		); stopped == nil ||
+			m.now().Sub(*stopped) > retryFailed {
+			if err = m.dynamic.Resource(backupResource).Namespace(m.namespace).
 				Delete(ctx, name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 				m.logger.Warn("cannot clear a failed final backup", "backup", name, "error", err)
 			}
@@ -283,11 +319,14 @@ func (m *Manager) final(
 
 func (m *Manager) restore(
 	ctx context.Context,
-	in Input,
+	in *Input,
 	active string,
 	r *instanceapi.SpecRestore,
 ) *instanceapi.RestoreProgress {
-	out := &instanceapi.RestoreProgress{Id: r.Id, Phase: instanceapi.RestoreProgressPhase("preparing")}
+	out := &instanceapi.RestoreProgress{
+		Id:    r.Id,
+		Phase: instanceapi.RestoreProgressPhase("preparing"),
+	}
 	candidate := values.PostgresCluster(m.release, r.Generation)
 	if candidate == active {
 		if !in.Applied || !in.Ready {
@@ -297,7 +336,9 @@ func (m *Manager) restore(
 		out.RecoveredTo = &r.TargetTime
 		return out
 	}
-	cluster, err := m.dynamic.Resource(clusterResource).Namespace(m.namespace).Get(ctx, candidate, metav1.GetOptions{})
+	cluster, err := m.dynamic.Resource(clusterResource).
+		Namespace(m.namespace).
+		Get(ctx, candidate, metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			out.Message = message(err.Error())
@@ -312,7 +353,9 @@ func (m *Manager) restore(
 		out.RecoveredTo = &r.TargetTime
 	case m.now().Sub(cluster.GetCreationTimestamp().Time) > restoreLimit:
 		out.Phase = instanceapi.RestoreProgressPhase("failed")
-		out.Message = message(fmt.Sprintf("the restored database was not ready in six hours: %s", phase))
+		out.Message = message(
+			fmt.Sprintf("the restored database was not ready in six hours: %s", phase),
+		)
 	case phase != "":
 		out.Message = message(phase)
 	}
@@ -320,7 +363,9 @@ func (m *Manager) restore(
 }
 
 func (m *Manager) backup(ctx context.Context, name string) (*unstructured.Unstructured, error) {
-	return m.dynamic.Resource(backupResource).Namespace(m.namespace).Get(ctx, name, metav1.GetOptions{})
+	return m.dynamic.Resource(backupResource).
+		Namespace(m.namespace).
+		Get(ctx, name, metav1.GetOptions{})
 }
 
 type marks struct {
@@ -334,7 +379,7 @@ func (m *Manager) take(ctx context.Context, name, cluster string, extra marks) e
 		labels[k] = v
 	}
 	meta := map[string]any{
-		"name":      name,
+		fieldName:   name,
 		"namespace": m.namespace,
 		"labels":    labels,
 	}
@@ -346,12 +391,14 @@ func (m *Manager) take(ctx context.Context, name, cluster string, extra marks) e
 		"kind":       "Backup",
 		"metadata":   meta,
 		"spec": map[string]any{
-			"cluster":             map[string]any{"name": cluster},
+			"cluster":             map[string]any{fieldName: cluster},
 			"method":              "plugin",
-			"pluginConfiguration": map[string]any{"name": PluginName},
+			"pluginConfiguration": map[string]any{fieldName: PluginName},
 		},
 	}}
-	_, err := m.dynamic.Resource(backupResource).Namespace(m.namespace).Create(ctx, b, metav1.CreateOptions{})
+	_, err := m.dynamic.Resource(backupResource).
+		Namespace(m.namespace).
+		Create(ctx, b, metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
 		return nil
 	}
@@ -361,7 +408,10 @@ func (m *Manager) take(ctx context.Context, name, cluster string, extra marks) e
 	return err
 }
 
-func progress(b *unstructured.Unstructured, out *instanceapi.BackupRequestStatus) *instanceapi.BackupRequestStatus {
+func progress(
+	b *unstructured.Unstructured,
+	out *instanceapi.BackupRequestStatus,
+) *instanceapi.BackupRequestStatus {
 	phase, _, _ := unstructured.NestedString(b.Object, "status", "phase")
 	switch phase {
 	case phaseCompleted:

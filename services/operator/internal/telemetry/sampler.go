@@ -99,7 +99,9 @@ func (s *Sampler) Sample(
 	if node := s.node(&r); node != "" {
 		sample.Machine = s.sampleMachine(ctx, node, &r, &data)
 	} else {
-		s.logger.Warn("telemetry: the instance's node is not known; the sample leaves the machine out")
+		s.logger.Warn(
+			"telemetry: the instance's node is not known; the sample leaves the machine out",
+		)
 	}
 	if data != (instanceapi.DataUsage{}) {
 		sample.Data = &data
@@ -135,17 +137,25 @@ func (s *Sampler) read(ctx context.Context) reading {
 	pods, err := s.kube.CoreV1().Pods(s.namespace).List(run, metav1.ListOptions{})
 	cancel()
 	if err != nil {
-		s.logger.Warn("telemetry: cannot list the instance's pods; the sample leaves restarts, limits, usage and data out",
-			"error", err)
+		s.logger.Warn(
+			"telemetry: cannot list the instance's pods; the sample leaves restarts, limits, usage and data out",
+			"error",
+			err,
+		)
 	} else {
 		r.pods, r.podsRead = pods.Items, true
 	}
 	run, cancel = context.WithTimeout(ctx, readTimeout)
-	used, err := s.metrics.MetricsV1beta1().PodMetricses(s.namespace).List(run, metav1.ListOptions{})
+	used, err := s.metrics.MetricsV1beta1().
+		PodMetricses(s.namespace).
+		List(run, metav1.ListOptions{})
 	cancel()
 	if err != nil {
-		s.logger.Warn("telemetry: cannot read the pods' metrics; the sample leaves the parts' usage out",
-			"error", err)
+		s.logger.Warn(
+			"telemetry: cannot read the pods' metrics; the sample leaves the parts' usage out",
+			"error",
+			err,
+		)
 		return r
 	}
 	r.usage, r.usageRead = make(map[string]usage, len(used.Items)), true
@@ -239,11 +249,11 @@ func count(n *int32) *int32 {
 
 func podRestarts(p *corev1.Pod) int64 {
 	var n int64
-	for _, c := range p.Status.InitContainerStatuses {
-		n += int64(c.RestartCount)
+	for i := range p.Status.InitContainerStatuses {
+		n += int64(p.Status.InitContainerStatuses[i].RestartCount)
 	}
-	for _, c := range p.Status.ContainerStatuses {
-		n += int64(c.RestartCount)
+	for i := range p.Status.ContainerStatuses {
+		n += int64(p.Status.ContainerStatuses[i].RestartCount)
 	}
 	return n
 }
@@ -280,7 +290,8 @@ func limits(pods []*corev1.Pod) (cpu, memory *int64) {
 			continue
 		}
 		counted = true
-		for _, c := range p.Spec.Containers {
+		for i := range p.Spec.Containers {
+			c := &p.Spec.Containers[i]
 			if q, ok := c.Resources.Limits[corev1.ResourceCPU]; ok && !q.IsZero() {
 				cpuSum += q.MilliValue()
 			} else {
@@ -356,15 +367,23 @@ func (s *Sampler) node(r *reading) string {
 	return s.ownNode
 }
 
-func (s *Sampler) machine(ctx context.Context, node string) (instanceapi.MachineUsage, string) {
+func (s *Sampler) machine(
+	ctx context.Context,
+	node string,
+) (usage instanceapi.MachineUsage, kubeletAddr string) {
 	m := instanceapi.MachineUsage{}
 	kubelet := ""
 	run, cancel := context.WithTimeout(ctx, readTimeout)
 	got, err := s.kube.CoreV1().Nodes().Get(run, node, metav1.GetOptions{})
 	cancel()
 	if err != nil {
-		s.logger.Warn("telemetry: cannot read the node; the sample leaves the machine's capacity and disk out",
-			"node", node, "error", err)
+		s.logger.Warn(
+			"telemetry: cannot read the node; the sample leaves the machine's capacity and disk out",
+			"node",
+			node,
+			"error",
+			err,
+		)
 	} else {
 		if q, ok := got.Status.Capacity[corev1.ResourceCPU]; ok && q.MilliValue() > 0 {
 			v := q.MilliValue()
@@ -380,8 +399,13 @@ func (s *Sampler) machine(ctx context.Context, node string) (instanceapi.Machine
 	used, err := s.metrics.MetricsV1beta1().NodeMetricses().Get(run, node, metav1.GetOptions{})
 	cancel()
 	if err != nil {
-		s.logger.Warn("telemetry: cannot read the node's metrics; the sample leaves the machine's usage out",
-			"node", node, "error", err)
+		s.logger.Warn(
+			"telemetry: cannot read the node's metrics; the sample leaves the machine's usage out",
+			"node",
+			node,
+			"error",
+			err,
+		)
 	} else {
 		cpu, mem := used.Usage.Cpu().MilliValue(), used.Usage.Memory().Value()
 		m.CpuMillicores, m.MemoryBytes = &cpu, &mem
@@ -404,16 +428,24 @@ func kubeletAddress(n *corev1.Node) string {
 
 func (s *Sampler) summary(ctx context.Context, node, kubelet string) (Summary, bool) {
 	if kubelet == "" {
-		s.logger.Warn("telemetry: the node's kubelet address is not known; the sample leaves disk out",
-			"node", node)
+		s.logger.Warn(
+			"telemetry: the node's kubelet address is not known; the sample leaves disk out",
+			"node",
+			node,
+		)
 		return Summary{}, false
 	}
 	run, cancel := context.WithTimeout(ctx, summaryTimeout)
 	defer cancel()
 	summary, err := s.summaries.Summary(run, kubelet)
 	if err != nil {
-		s.logger.Warn("telemetry: cannot read the kubelet's stats summary; the sample leaves disk out",
-			"node", node, "error", err)
+		s.logger.Warn(
+			"telemetry: cannot read the kubelet's stats summary; the sample leaves disk out",
+			"node",
+			node,
+			"error",
+			err,
+		)
 		return Summary{}, false
 	}
 	return summary, true

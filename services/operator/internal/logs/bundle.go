@@ -180,15 +180,15 @@ func writeBundle(ctx context.Context, src Source, spec *bundleSpec, caps Caps) (
 	return zipBundle(spec, sources, &manifest)
 }
 
-func share(ctx context.Context, sources []*source, caps Caps, redact func(string) string) (bool, error) {
+func share(
+	ctx context.Context,
+	sources []*source,
+	caps Caps,
+	redact func(string) string,
+) (bool, error) {
 	remaining := caps.Total
 	for {
-		var active []*source
-		for _, s := range sources {
-			if !s.finished {
-				active = append(active, s)
-			}
-		}
+		active := unfinished(sources)
 		if len(active) == 0 {
 			return false, nil
 		}
@@ -197,36 +197,53 @@ func share(ctx context.Context, sources []*source, caps Caps, redact func(string
 			cutAll(active)
 			return true, nil
 		}
-		progressed := false
-		for _, s := range active {
-			capLeft := caps.Component - s.res.Bytes
-			budget := min(each, capLeft)
-			used, err := s.fill(ctx, budget, redact)
-			if err != nil {
-				return false, err
-			}
-			remaining -= used
-			progressed = progressed || used > 0
-			switch {
-			case s.exhausted:
-				s.finished = true
-			case budget == capLeft:
-				s.finished, s.res.Truncated, s.res.Cut = true, true, CutComponent
-			}
+		used, err := shareRound(ctx, active, each, caps.Component, redact)
+		if err != nil {
+			return false, err
 		}
-		if !progressed {
-			var stuck []*source
-			for _, s := range active {
-				if !s.finished {
-					stuck = append(stuck, s)
-				}
-			}
-			if len(stuck) > 0 {
+		remaining -= used
+		if used == 0 {
+			if stuck := unfinished(active); len(stuck) > 0 {
 				cutAll(stuck)
 				return true, nil
 			}
 		}
 	}
+}
+
+func shareRound(
+	ctx context.Context,
+	active []*source,
+	each, componentCap int64,
+	redact func(string) string,
+) (int64, error) {
+	var total int64
+	for _, s := range active {
+		capLeft := componentCap - s.res.Bytes
+		budget := min(each, capLeft)
+		used, err := s.fill(ctx, budget, redact)
+		if err != nil {
+			return total, err
+		}
+		total += used
+		switch {
+		case s.exhausted:
+			s.finished = true
+		case budget == capLeft:
+			s.finished, s.res.Truncated, s.res.Cut = true, true, CutComponent
+		}
+	}
+	return total, nil
+}
+
+func unfinished(sources []*source) []*source {
+	var out []*source
+	for _, s := range sources {
+		if !s.finished {
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 func cutAll(sources []*source) {
@@ -235,7 +252,11 @@ func cutAll(sources []*source) {
 	}
 }
 
-func (s *source) fill(ctx context.Context, budget int64, redact func(string) string) (int64, error) {
+func (s *source) fill(
+	ctx context.Context,
+	budget int64,
+	redact func(string) string,
+) (int64, error) {
 	var used int64
 	for {
 		h := s.held
@@ -303,7 +324,9 @@ func zipBundle(spec *bundleSpec, sources []*source, manifest *Manifest) (*Bundle
 	if err != nil {
 		return nil, fmt.Errorf("write the bundle's manifest: %w", err)
 	}
-	w, err := zw.CreateHeader(&zip.FileHeader{Name: manifestName, Method: zip.Deflate, Modified: spec.until})
+	w, err := zw.CreateHeader(
+		&zip.FileHeader{Name: manifestName, Method: zip.Deflate, Modified: spec.until},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("write the bundle's manifest: %w", err)
 	}
@@ -329,7 +352,9 @@ func zipBundle(spec *bundleSpec, sources []*source, manifest *Manifest) (*Bundle
 }
 
 func addSource(zw *zip.Writer, s *source, modified time.Time) error {
-	w, err := zw.CreateHeader(&zip.FileHeader{Name: s.res.File, Method: zip.Deflate, Modified: modified})
+	w, err := zw.CreateHeader(
+		&zip.FileHeader{Name: s.res.File, Method: zip.Deflate, Modified: modified},
+	)
 	if err != nil {
 		return fmt.Errorf("add the %s logs to the bundle: %w", s.res.Component, err)
 	}

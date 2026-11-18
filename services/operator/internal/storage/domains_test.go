@@ -107,7 +107,7 @@ func TestOneCORSDocumentCarriesEveryOrigin(t *testing.T) {
 	defer srv.Close()
 	c := storage.S3CORS{Client: srv.Client()}
 
-	require.NoError(t, c.Allow(context.Background(), storage.Bucket{
+	require.NoError(t, c.Allow(context.Background(), &storage.Bucket{
 		Endpoint: srv.URL, Region: "bhs", Name: "trenova-abc-docs", AccessKeyID: "k", SecretAccessKey: "s",
 	}, []string{"https://" + first, "https://" + custom}))
 
@@ -115,5 +115,5 @@ func TestOneCORSDocumentCarriesEveryOrigin(t *testing.T) {
 	require.Equal(t, 1, strings.Count(doc, "<CORSRule>"), "a PUT ?cors replaces the whole configuration")
 	require.Contains(t, doc, "<CORSRule><AllowedOrigin>https://"+first+"</AllowedOrigin>"+
 		"<AllowedOrigin>https://"+custom+"</AllowedOrigin><AllowedMethod>GET</AllowedMethod>")
-	require.Error(t, c.Allow(context.Background(), storage.Bucket{Endpoint: srv.URL, Name: "b"}, nil))
+	require.Error(t, c.Allow(context.Background(), &storage.Bucket{Endpoint: srv.URL, Name: "b"}, nil))
 }

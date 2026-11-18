@@ -28,7 +28,9 @@ var (
 	ErrMismatch = errors.New(
 		"the control plane's system email credential does not match the spec's fingerprint",
 	)
-	ErrWaiting = errors.New("waiting before asking the control plane for the system email credential again")
+	ErrWaiting = errors.New(
+		"waiting before asking the control plane for the system email credential again",
+	)
 )
 
 type TMS interface {

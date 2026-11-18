@@ -93,8 +93,12 @@ func (r *Relay) Run(ctx context.Context) (Result, error) {
 	for _, id := range handled {
 		known, ok := sent[id]
 		if !ok {
-			r.logger.WarnContext(ctx, "the TMS named a system email event it was not sent; it is not acknowledged",
-				"event", id)
+			r.logger.WarnContext(
+				ctx,
+				"the TMS named a system email event it was not sent; it is not acknowledged",
+				"event",
+				id,
+			)
 			continue
 		}
 		delete(sent, id)

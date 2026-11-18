@@ -17,7 +17,7 @@ func TestACustomHostnameIsServedBesideTheFirstAddressAndLinksUseIt(t *testing.T)
 	s := spec(plans[0], instanceapi.Active)
 	s.CustomHostname = ptr(customHost)
 
-	r, err := values.Render(&s, base(), operatorNS, values.Storage{})
+	r, err := values.Render(&s, base(), operatorNS, &values.Storage{})
 
 	require.NoError(t, err)
 	require.Equal(t, s.Hostname, r.Values["domain"], "the first address is always served")
@@ -39,7 +39,7 @@ func TestAnOperatorThatServesACustomHostnameSaysItCan(t *testing.T) {
 	t.Parallel()
 	s := spec(plans[0], instanceapi.Active)
 	s.CustomHostname = ptr(customHost)
-	r, err := values.Render(&s, base(), operatorNS, values.Storage{})
+	r, err := values.Render(&s, base(), operatorNS, &values.Storage{})
 	require.NoError(t, err)
 	require.Contains(t, r.Values, "aliases", "this build serves a custom hostname")
 
@@ -63,7 +63,7 @@ func TestWithoutACustomHostnameNeitherValueIsSet(t *testing.T) {
 		s := spec(plans[0], instanceapi.Active)
 		s.CustomHostname = custom
 
-		r, err := values.Render(&s, b, operatorNS, values.Storage{})
+		r, err := values.Render(&s, b, operatorNS, &values.Storage{})
 
 		require.NoError(t, err)
 		require.NotContains(t, r.Values, "aliases")
@@ -91,7 +91,7 @@ func TestACustomHostnameIsRefusedLikeTheHostname(t *testing.T) {
 	} {
 		s := spec(plans[0], instanceapi.Active)
 		s.CustomHostname = ptr(custom)
-		_, err := values.Render(&s, base(), operatorNS, values.Storage{})
+		_, err := values.Render(&s, base(), operatorNS, &values.Storage{})
 		require.ErrorIs(t, err, values.ErrInvalidSpec, name)
 	}
 }

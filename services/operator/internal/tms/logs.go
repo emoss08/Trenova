@@ -13,7 +13,9 @@ import (
 const maxLogRequests = 10
 
 var (
-	ErrNoGrant           = errors.New("the staff address holds no live support access grant on this instance")
+	ErrNoGrant = errors.New(
+		"the staff address holds no live support access grant on this instance",
+	)
 	ErrLogRequestSettled = errors.New("the TMS has already moved the log request past that status")
 )
 

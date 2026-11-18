@@ -25,7 +25,12 @@ type pager struct {
 
 func newPager(src Source, component string, since, until time.Time, limit int) *pager {
 	return &pager{
-		src: src, component: component, since: since, end: until, limit: limit, atEdge: map[string]int{},
+		src:       src,
+		component: component,
+		since:     since,
+		end:       until,
+		limit:     limit,
+		atEdge:    map[string]int{},
 	}
 }
 

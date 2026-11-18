@@ -13,9 +13,9 @@ import (
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 )
 
-func registration(requestID string, period time.Duration) instanceapi.LogBundleRegistration {
+func registration(requestID string, period time.Duration) *instanceapi.LogBundleRegistration {
 	since := time.Date(2026, 11, 14, 0, 0, 0, 0, time.UTC)
-	return instanceapi.LogBundleRegistration{
+	return &instanceapi.LogBundleRegistration{
 		RequestId:   requestID,
 		Since:       since,
 		Until:       since.Add(period),

@@ -92,12 +92,12 @@ func TestRateLimitsCarryRetryAfter(t *testing.T) {
 	cp, c := client(t)
 	cp.RateLimitNext(1)
 
-	err := c.ReportStatus(t.Context(), instanceapi.StatusReport{Ready: true, Components: []instanceapi.ComponentStatus{}})
+	err := c.ReportStatus(t.Context(), &instanceapi.StatusReport{Ready: true, Components: []instanceapi.ComponentStatus{}})
 	var rl *controlplane.RetryLaterError
 	require.True(t, errors.As(err, &rl))
 	require.Equal(t, time.Second, rl.RetryAfter)
 
-	require.NoError(t, c.ReportStatus(t.Context(), instanceapi.StatusReport{Ready: true, Components: []instanceapi.ComponentStatus{}}))
+	require.NoError(t, c.ReportStatus(t.Context(), &instanceapi.StatusReport{Ready: true, Components: []instanceapi.ComponentStatus{}}))
 	require.Len(t, cp.Reports(), 1)
 }
 

@@ -54,9 +54,14 @@ type Grants interface {
 type Logs interface {
 	Kept() bool
 	Longest() time.Duration
-	Last(ctx context.Context, component string, lines int, redact func(string) string) (string, error)
+	Last(
+		ctx context.Context,
+		component string,
+		lines int,
+		redact func(string) string,
+	) (string, error)
 	Submit(job *logs.Job) logs.Submitted
-	Finish(ctx context.Context, bundle uuid.UUID, outcome logs.Outcome)
+	Finish(ctx context.Context, bundle uuid.UUID, outcome *logs.Outcome)
 }
 
 type Runner struct {
@@ -124,9 +129,19 @@ func New(p *Params) (*Runner, error) {
 		now = time.Now
 	}
 	return &Runner{
-		cp: p.ControlPlane, kube: p.Kube, grants: p.Grants, kept: p.Logs, namespace: p.Namespace,
-		release: p.Release, chart: p.Chart, logger: p.Logger, now: now, tierWait: tierWait, tierPoll: tierPoll,
-		done: map[uuid.UUID]finished{}, pending: map[uuid.UUID]struct{}{},
+		cp:        p.ControlPlane,
+		kube:      p.Kube,
+		grants:    p.Grants,
+		kept:      p.Logs,
+		namespace: p.Namespace,
+		release:   p.Release,
+		chart:     p.Chart,
+		logger:    p.Logger,
+		now:       now,
+		tierWait:  tierWait,
+		tierPoll:  tierPoll,
+		done:      map[uuid.UUID]finished{},
+		pending:   map[uuid.UUID]struct{}{},
 	}, nil
 }
 
@@ -176,7 +191,7 @@ func (r *Runner) Run(ctx context.Context) error {
 				"command", cmd.Id, "kind", string(cmd.Kind), "component", deref(cmd.Component),
 				"status", string(f.result.Status), "message", deref(f.result.Message))
 		}
-		if err := r.cp.CompleteCommand(ctx, cmd.Id, f.result); err != nil {
+		if err = r.cp.CompleteCommand(ctx, cmd.Id, f.result); err != nil {
 			errs = append(errs, fmt.Errorf("answer command %s: %w", cmd.Id, err))
 		}
 	}
@@ -203,7 +218,10 @@ func (r *Runner) forget() {
 	}
 }
 
-func (r *Runner) execute(ctx context.Context, cmd *instanceapi.Command) (instanceapi.CommandResult, state) {
+func (r *Runner) execute(
+	ctx context.Context,
+	cmd *instanceapi.Command,
+) (instanceapi.CommandResult, state) {
 	switch cmd.Kind {
 	case instanceapi.Restart:
 		component := deref(cmd.Component)
@@ -292,7 +310,12 @@ func (r *Runner) readLog(ctx context.Context, out *strings.Builder, req logReque
 		Container: req.container, TailLines: &tail, Timestamps: true, Previous: req.previous,
 	}).Stream(ctx)
 	if err != nil {
-		fmt.Fprintf(out, "%s: could not read its log: %s\n", label, req.redact(oneLine(err.Error())))
+		fmt.Fprintf(
+			out,
+			"%s: could not read its log: %s\n",
+			label,
+			req.redact(oneLine(err.Error())),
+		)
 		return
 	}
 	defer func() { _ = stream.Close() }()
@@ -303,8 +326,8 @@ func (r *Runner) readLog(ctx context.Context, out *strings.Builder, req logReque
 	}
 }
 
-func newestFirst(a, b corev1.Pod) int {
-	if c := b.CreationTimestamp.Time.Compare(a.CreationTimestamp.Time); c != 0 {
+func newestFirst(a, b corev1.Pod) int { //nolint:gocritic // hugeParam: fixed by slices.SortFunc
+	if c := b.CreationTimestamp.Compare(a.CreationTimestamp.Time); c != 0 {
 		return c
 	}
 	return strings.Compare(a.Name, b.Name)
@@ -326,7 +349,8 @@ func crashed(pod *corev1.Pod, container string) bool {
 	for i := range statuses {
 		s := &statuses[i]
 		if s.Name == container {
-			return s.RestartCount > 0 && s.State.Running == nil && s.LastTerminationState.Terminated != nil
+			return s.RestartCount > 0 && s.State.Running == nil &&
+				s.LastTerminationState.Terminated != nil
 		}
 	}
 	return false

@@ -68,10 +68,10 @@ type fakeBackups struct {
 	result backup.Result
 }
 
-func (f *fakeBackups) Run(_ context.Context, in backup.Input) backup.Result {
+func (f *fakeBackups) Run(_ context.Context, in *backup.Input) backup.Result {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.inputs = append(f.inputs, in)
+	f.inputs = append(f.inputs, *in)
 	return f.result
 }
 

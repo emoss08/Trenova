@@ -26,7 +26,11 @@ type ControlPlane interface {
 }
 
 type Source interface {
-	Sample(ctx context.Context, at time.Time, params *health.CheckParams) instanceapi.TelemetrySample
+	Sample(
+		ctx context.Context,
+		at time.Time,
+		params *health.CheckParams,
+	) instanceapi.TelemetrySample
 }
 
 type Relay struct {
@@ -109,7 +113,11 @@ func (r *Relay) send(ctx context.Context) {
 	}
 	if stale > 0 {
 		r.kept = slices.Delete(r.kept, 0, stale)
-		r.logger.Warn("telemetry: samples too old for the control plane are dropped", "dropped", stale)
+		r.logger.Warn(
+			"telemetry: samples too old for the control plane are dropped",
+			"dropped",
+			stale,
+		)
 	}
 	if len(r.kept) == 0 || now.Before(r.waitFor) {
 		return
@@ -137,8 +145,15 @@ func (r *Relay) send(ctx context.Context) {
 	case errors.As(err, &later):
 		r.waitFor = now.Add(later.RetryAfter)
 	}
-	r.logger.Warn("telemetry: cannot report the samples; they are kept and sent again after the next one",
-		"samples", len(batch), "kept", len(r.kept), "error", err)
+	r.logger.Warn(
+		"telemetry: cannot report the samples; they are kept and sent again after the next one",
+		"samples",
+		len(batch),
+		"kept",
+		len(r.kept),
+		"error",
+		err,
+	)
 }
 
 func sleep(ctx context.Context, d time.Duration) bool {

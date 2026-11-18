@@ -157,8 +157,11 @@ func (m *Manager) Gate(ctx context.Context, in GateInput) Gate {
 	if phase == "" {
 		phase = "starting"
 	}
-	return Gate{Hold: true, Message: clean(going + ": waiting for it to accept connections (" + phase +
-		"); the instance stays on " + Name(in.Connected.Generation))}
+	return Gate{
+		Hold: true,
+		Message: clean(going + ": waiting for it to accept connections (" + phase +
+			"); the instance stays on " + Name(in.Connected.Generation)),
+	}
 }
 
 // Name is how a message names a database.
@@ -173,9 +176,11 @@ func Name(generation string) string {
 // and the name both have to match: a Cluster of another release, or one
 // whose name is not a generation of this release, is never in it.
 func (m *Manager) clusters(ctx context.Context) (map[string]*unstructured.Unstructured, error) {
-	list, err := m.dynamic.Resource(clusterResource).Namespace(m.namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: m.selector(),
-	})
+	list, err := m.dynamic.Resource(clusterResource).
+		Namespace(m.namespace).
+		List(ctx, metav1.ListOptions{
+			LabelSelector: m.selector(),
+		})
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +250,8 @@ func accepting(c *unstructured.Unstructured) bool {
 func hibernationApplied(c *unstructured.Unstructured) bool {
 	conds, _, _ := unstructured.NestedSlice(c.Object, "status", "conditions")
 	for _, raw := range conds {
-		if cond, ok := raw.(map[string]any); ok && cond["type"] == hibernation && cond["status"] == "True" {
+		if cond, ok := raw.(map[string]any); ok && cond["type"] == hibernation &&
+			cond["status"] == "True" {
 			return true
 		}
 	}

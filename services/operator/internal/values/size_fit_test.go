@@ -135,7 +135,7 @@ func rendered(t *testing.T, n node) []pod {
 	r, err := Render(&spec, map[string]any{
 		keyClamAV: map[string]any{"enabled": n.clamav},
 		"ingress": map[string]any{"enabled": true, "className": "traefik"},
-	}, "trenova-system", storage)
+	}, "trenova-system", &storage)
 	require.NoError(t, err)
 	ch, err := loader.Load(sizedChart)
 	require.NoError(t, err)

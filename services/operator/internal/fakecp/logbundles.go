@@ -67,7 +67,12 @@ func (s *Server) RefuseLogBundlesNext(n int, detail string) {
 }
 
 func conflict(w http.ResponseWriter, detail string) {
-	body := map[string]any{"type": "about:blank", "title": "Conflict", "status": http.StatusConflict, "code": "conflict"}
+	body := map[string]any{
+		"type":   "about:blank",
+		"title":  "Conflict",
+		"status": http.StatusConflict,
+		"code":   "conflict",
+	}
 	if detail != "" {
 		body["detail"] = detail
 	}
@@ -118,7 +123,9 @@ func (s *Server) updateLogBundle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var update instanceapi.LogBundleUpdate
-	if err = sonic.ConfigDefault.NewDecoder(r.Body).Decode(&update); err != nil || !validUpdate(id, &update) {
+	if err = sonic.ConfigDefault.NewDecoder(r.Body).
+		Decode(&update); err != nil ||
+		!validUpdate(id, &update) {
 		problem(w, http.StatusBadRequest, "validation_failed")
 		return
 	}
