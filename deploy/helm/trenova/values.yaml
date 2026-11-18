@@ -630,7 +630,7 @@ imaging:
 gtc:
   image:
     repository: ghcr.io/emoss08/gtc
-    tag: 0.9.1
+    tag: 0.10.1
   resources:
     requests: { cpu: 100m, memory: 128Mi }
     limits: { memory: 512Mi }
