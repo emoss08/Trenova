@@ -68,7 +68,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up client toolchain
         id: setup
@@ -121,7 +121,7 @@ jobs:
       - name: Restore TypeScript build info
         id: tsbuildinfo
         if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: |
             client/apps/*/node_modules/.tmp
@@ -138,7 +138,7 @@ jobs:
 
       - name: Save TypeScript build info
         if: ${{ !cancelled() && steps.typecheck.outcome == 'success' && steps.tsbuildinfo.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: |
             client/apps/*/node_modules/.tmp
@@ -158,7 +158,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up client toolchain
         uses: ./.github/actions/setup-client
@@ -177,13 +177,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build client image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./deploy/Dockerfile.client
@@ -199,7 +199,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up client toolchain
         uses: ./.github/actions/setup-client
@@ -207,7 +207,7 @@ jobs:
       # Browsers are pinned by the lockfile, so keying on it avoids a ~100MB
       # download on every run.
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('client/pnpm-lock.yaml') }}
