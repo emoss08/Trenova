@@ -108,6 +108,9 @@ spec:
       - host all all all reject
   storage:
     size: {{ $v.postgres.storage.size }}
+    # Off, CloudNativePG leaves the claims of a running cluster at the size
+    # they were made with; values.yaml has when that is needed.
+    resizeInUseVolumes: {{ $v.postgres.storage.resizeInUseVolumes }}
     {{- include "trenova.storageClass" $v.postgres.storage | nindent 4 }}
   resources:
     {{- if .candidate }}

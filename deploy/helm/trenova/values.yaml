@@ -368,6 +368,13 @@ postgres:
   storage:
     size: 50Gi
     storageClass: ""
+    # Raising size grows the volumes of the running database, which needs a
+    # storage class that allows expansion. Set this to false on a class that
+    # does not (k3s's local-path): CloudNativePG stops at the refused resize
+    # and applies nothing after it, so a larger size would hold back every
+    # other change to the database (its memory, its parameters, a new
+    # image). With false, a new size applies to the volumes made afterwards.
+    resizeInUseVolumes: true
   resources:
     requests: { cpu: "1", memory: 2Gi }
     limits: { memory: 4Gi }

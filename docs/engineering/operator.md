@@ -346,11 +346,18 @@ Log keeping costs, at the same sizes (request, memory limit, CPU request; Loki's
 Idle requests are not wasted memory on the node: nothing else is scheduled there, so the page
 cache and every limit above its request can still use it. They are room the scheduler keeps free.
 
-Only PostgreSQL's volume follows the plan: a StatefulSet's volume claims cannot change after it
-is created, so Redis, Meilisearch, MinIO and ClamAV keep the chart's sizes. Loki's claim is its
-own object and takes the plan's size when it is made, then keeps it (the chart reads the live
-claim back): a claim can only grow, and k3s's `local-path` class cannot grow one, so following a
-plan change would fail the upgrade.
+A volume takes its size when it is made and keeps it: a claim can only grow, and k3s's
+`local-path` class cannot grow one. A StatefulSet's volume claims cannot change after it is
+created, so Redis, Meilisearch, MinIO and ClamAV keep the chart's sizes. Loki's claim is its own
+object and takes the plan's size when it is made, then keeps it (the chart reads the live claim
+back), because following a plan change would fail the upgrade. A PostgreSQL cluster takes the
+plan's size when it is made, so a database made after a plan change (a restore's new generation,
+a downgrade's new server) has the new one, and the operator sets
+`postgres.storage.resizeInUseVolumes: false`: CloudNativePG would otherwise try to grow the
+running cluster's claims, be refused, and apply nothing after that, so the plan's new memory and
+parameters would never reach the database and the cluster would stay in `Applying
+configuration`. None of this limits what the database can hold: a `local-path` claim's size is
+not enforced, and every claim is a directory on the machine's data volume.
 
 **When PostgreSQL restarts** (a plan change, a new PostgreSQL image, a changed parameter,
 hibernation), CloudNativePG first waits for clients to disconnect, then asks for a fast shutdown.
@@ -592,9 +599,9 @@ minute per kind.
 | `parts[].version` | the tag of the workload's first container image (the Cluster's `status.image`), without registry, name or digest | left out when the image has no tag |
 | `machine.cpuCapacityMillicores`, `memoryCapacityBytes` | the Node's `status.capacity` | left out |
 | `machine.cpuMillicores`, `memoryBytes` | `metrics.k8s.io` `NodeMetrics` (memory is the working set) | left out |
-| `machine.diskBytes`, `diskCapacityBytes` | the kubelet's stats summary, `node.fs` (the kubelet's filesystem, which on a single-node k3s machine also holds `local-path` volumes), read from the kubelet itself (below) | left out: the node has no InternalIP, the certificate does not verify, the kubelet refuses or the answer is over 8 MiB |
+| `machine.diskBytes`, `diskCapacityBytes` | the kubelet's stats summary, read from the kubelet itself (below): the image filesystem (`node.runtime.imageFs`), which is where k3s keeps its images and its `local-path` volumes, so on a machine with a data volume mounted for k3s it is that volume and not the disk the machine boots from; `node.fs` when the kubelet reports no image filesystem. What is taken is capacity less what is available, because the image filesystem's own `usedBytes` counts only the images | left out: the node has no InternalIP, the certificate does not verify, the kubelet refuses or the answer is over 8 MiB |
 | `data.databaseBytes`, `documentsBytes`, `searchBytes` | Trenova itself: `GET /managed/v1/data-usage` on the TMS's managed API (`tms.Client.DataUsage`, the managed token as for every TMS call), at most every 5 minutes with 10 seconds, never on the loop's tick; each figure is absent when Trenova could not measure it | the last good answer is used for up to 30 minutes, then the figures are left out; a release without the endpoint (404) leaves them out and says so at most once an hour |
-| `data.logsBytes` | the stats summary's volume statistics: used bytes of the volume claims mounted by the pod labelled `loki` | left out when the summary fails, the volume reports no usage, or the volume shares the node's own filesystem: a volume that is a directory on the node's disk (k3s's `local-path`, a host path) reports the whole disk's capacity and usage, which says nothing about the volume, so a volume whose capacity equals the node filesystem's is not counted |
+| `data.logsBytes` | the stats summary's volume statistics: used bytes of the volume claims mounted by the pod labelled `loki` | left out when the summary fails, the volume reports no usage, or the volume shares one of the node's own filesystems: a volume that is a directory on the node's disk (k3s's `local-path`, a host path) reports the whole disk's capacity and usage, which says nothing about the volume, so a volume whose capacity equals the node filesystem's or the image filesystem's is not counted |
 
 The node is the one most of the release's running pods are on, or the operator's own
 (`TRENOVA_OPERATOR_NODE_NAME`, from the downward API) when the instance runs none (suspended).

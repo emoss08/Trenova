@@ -36,6 +36,29 @@ func renderStorageChart(t *testing.T, r values.Rendered) map[string]string {
 	return out
 }
 
+func TestAPlansSizeNeverResizesTheVolumesOfARunningDatabase(t *testing.T) {
+	t.Parallel()
+	for _, plan := range plans {
+		r, err := values.Render(ptr(spec(plan, instanceapi.Active)), base(), operatorNS, &testStorage)
+		require.NoError(t, err)
+		require.Equal(t, false, lookup(t, r.Values, []string{"postgres", "storage"})["resizeInUseVolumes"])
+		cluster := renderStorageChart(t, r)["trenova/templates/postgres.yaml"]
+		require.Equal(t, 1, countLines(cluster, "    resizeInUseVolumes: false"),
+			"local-path cannot grow a claim, and CloudNativePG applies nothing after a refused resize")
+	}
+
+	ch, err := loader.Load(chartDir)
+	require.NoError(t, err)
+	vals, err := chartutil.ToRenderValues(ch, map[string]any{"domain": "tms.example.com", "storageDomain": "files.example.com"}, chartutil.ReleaseOptions{
+		Name: "trenova", Namespace: "trenova", Revision: 1, IsInstall: true,
+	}, chartutil.DefaultCapabilities)
+	require.NoError(t, err)
+	out, err := engine.Render(ch, vals)
+	require.NoError(t, err)
+	require.Equal(t, 1, countLines(out["trenova/templates/postgres.yaml"], "    resizeInUseVolumes: true"),
+		"the chart's own default grows a claim, for a storage class that can")
+}
+
 func TestTheInstancesBucketsReplaceMinIOAndCarryItsBackups(t *testing.T) {
 	t.Parallel()
 	for _, lc := range []instanceapi.InstanceSpecLifecycle{instanceapi.Active, instanceapi.Suspended, instanceapi.Decommissioned} {

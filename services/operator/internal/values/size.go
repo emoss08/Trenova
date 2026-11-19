@@ -176,6 +176,7 @@ func divide(in sizeInput) map[string]any {
 
 	pgDiskGiB := math.Max(10, math.Floor(float64(in.diskGiB)*postgresDiskShare))
 	set(out, []string{keyPostgres, keyStorage, "size"}, fmt.Sprintf("%dGi", int64(pgDiskGiB)))
+	set(out, []string{keyPostgres, keyStorage, "resizeInUseVolumes"}, false)
 	lokiDiskGiB := math.Max(minLokiDiskGiB, math.Floor(float64(in.diskGiB)*lokiDiskShare))
 	set(out, []string{keyLogs, "loki", keyStorage, "size"}, fmt.Sprintf("%dGi", int64(lokiDiskGiB)))
 	set(out, []string{keyPostgres, "parameters"}, map[string]any{
