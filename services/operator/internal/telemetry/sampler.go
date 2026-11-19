@@ -117,8 +117,8 @@ func (s *Sampler) sampleMachine(
 ) *instanceapi.MachineUsage {
 	machine, kubelet := s.machine(ctx, node)
 	if summary, ok := s.summary(ctx, node, kubelet); ok {
-		if fs := summary.Node.FS; fs != nil {
-			machine.DiskBytes = byteCount(fs.UsedBytes, 0)
+		if fs := summary.Node.DataFS(); fs != nil {
+			machine.DiskBytes = byteCount(fs.Taken(), 0)
 			machine.DiskCapacityBytes = byteCount(fs.CapacityBytes, 1)
 		}
 		if r.podsRead {
@@ -467,7 +467,7 @@ func (s *Sampler) logs(summary *Summary, pods []corev1.Pod) *int64 {
 			if v.PVCRef == nil || v.UsedBytes == nil || seen[v.PVCRef.Name] {
 				continue
 			}
-			if sharesNodeFilesystem(summary.Node.FS, v) {
+			if summary.Node.Holds(v) {
 				continue
 			}
 			seen[v.PVCRef.Name] = true
@@ -479,11 +479,6 @@ func (s *Sampler) logs(summary *Summary, pods []corev1.Pod) *int64 {
 		return nil
 	}
 	return &sum
-}
-
-func sharesNodeFilesystem(node *FSStats, v SummaryVolume) bool {
-	return node != nil && node.CapacityBytes != nil && v.CapacityBytes != nil &&
-		*v.CapacityBytes == *node.CapacityBytes
 }
 
 func byteCount(n *uint64, least int64) *int64 {

@@ -22,12 +22,46 @@ type Summary struct {
 }
 
 type SummaryNode struct {
-	FS *FSStats `json:"fs,omitempty"`
+	FS      *FSStats        `json:"fs,omitempty"`
+	Runtime *SummaryRuntime `json:"runtime,omitempty"`
+}
+
+type SummaryRuntime struct {
+	ImageFS *FSStats `json:"imageFs,omitempty"`
 }
 
 type FSStats struct {
-	CapacityBytes *uint64 `json:"capacityBytes,omitempty"`
-	UsedBytes     *uint64 `json:"usedBytes,omitempty"`
+	CapacityBytes  *uint64 `json:"capacityBytes,omitempty"`
+	AvailableBytes *uint64 `json:"availableBytes,omitempty"`
+	UsedBytes      *uint64 `json:"usedBytes,omitempty"`
+}
+
+func (n *SummaryNode) DataFS() *FSStats {
+	if n.Runtime != nil && n.Runtime.ImageFS != nil && n.Runtime.ImageFS.CapacityBytes != nil {
+		return n.Runtime.ImageFS
+	}
+	return n.FS
+}
+
+func (n *SummaryNode) Holds(v SummaryVolume) bool {
+	if v.CapacityBytes == nil {
+		return false
+	}
+	for _, fs := range []*FSStats{n.FS, n.DataFS()} {
+		if fs != nil && fs.CapacityBytes != nil && *fs.CapacityBytes == *v.CapacityBytes {
+			return true
+		}
+	}
+	return false
+}
+
+func (f *FSStats) Taken() *uint64 {
+	if f.CapacityBytes != nil && f.AvailableBytes != nil &&
+		*f.AvailableBytes <= *f.CapacityBytes {
+		taken := *f.CapacityBytes - *f.AvailableBytes
+		return &taken
+	}
+	return f.UsedBytes
 }
 
 type SummaryPod struct {

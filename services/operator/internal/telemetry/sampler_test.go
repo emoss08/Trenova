@@ -182,6 +182,7 @@ type fakeSummaries struct {
 	err        error
 	asked      []string
 	sharedDisk bool
+	dataDisk   bool
 }
 
 func (f *fakeSummaries) Summary(_ context.Context, kubelet string) (telemetry.Summary, error) {
@@ -199,10 +200,17 @@ func (f *fakeSummaries) Summary(_ context.Context, kubelet string) (telemetry.Su
 	if f.sharedDisk {
 		logsVolume.CapacityBytes, logsVolume.UsedBytes = used(100*gib), used(10*gib)
 	}
+	machine := telemetry.SummaryNode{FS: &telemetry.FSStats{
+		CapacityBytes: used(100 * gib), UsedBytes: used(10 * gib),
+	}}
+	if f.dataDisk {
+		machine.Runtime = &telemetry.SummaryRuntime{ImageFS: &telemetry.FSStats{
+			CapacityBytes: used(500 * gib), AvailableBytes: used(460 * gib), UsedBytes: used(6 * gib),
+		}}
+		logsVolume.CapacityBytes, logsVolume.UsedBytes = used(500*gib), used(40*gib)
+	}
 	return telemetry.Summary{
-		Node: telemetry.SummaryNode{FS: &telemetry.FSStats{
-			CapacityBytes: used(100 * gib), UsedBytes: used(10 * gib),
-		}},
+		Node: machine,
 		Pods: []telemetry.SummaryPod{
 			{
 				PodRef: telemetry.PodRef{Name: "trenova-postgres-1", Namespace: ns},
@@ -479,6 +487,21 @@ func TestAVolumeOnTheNodesOwnDiskIsNotMeasuredAsLogs(t *testing.T) {
 		"a volume that is a directory on the node's disk reports the whole disk, which is not what the logs take")
 	require.Equal(t, 10*gib, *sample.Machine.DiskBytes)
 	require.Equal(t, 5*gib, *sample.Data.DatabaseBytes)
+}
+
+func TestTheDiskReadIsTheOneHoldingTheInstancesData(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t, "", standardObjects()...)
+	w.summaries.dataDisk = true
+
+	sample := w.sampler.Sample(t.Context(), minute, params())
+
+	require.Equal(t, 500*gib, *sample.Machine.DiskCapacityBytes,
+		"the volume the images and the claims are on, not the disk the machine boots from")
+	require.Equal(t, 40*gib, *sample.Machine.DiskBytes,
+		"what is no longer free on it, not only what the images take")
+	require.Nil(t, sample.Data.LogsBytes,
+		"a claim that is a directory on that volume reports the whole volume")
 }
 
 func TestThePartsAreNamedAsTheStatusReportNamesThem(t *testing.T) {

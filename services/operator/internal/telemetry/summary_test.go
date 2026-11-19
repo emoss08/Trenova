@@ -78,7 +78,8 @@ type kubelet struct {
 	body   []byte
 }
 
-const summaryJSON = `{"node":{"nodeName":"node-1","fs":{"capacityBytes":107374182400,"usedBytes":10737418240}},` +
+const summaryJSON = `{"node":{"nodeName":"node-1","fs":{"capacityBytes":107374182400,"usedBytes":10737418240},` +
+	`"runtime":{"imageFs":{"capacityBytes":536870912000,"availableBytes":493921239040,"usedBytes":6442450944}}},` +
 	`"pods":[{"podRef":{"name":"trenova-loki-0","namespace":"trenova"},` +
 	`"volume":[{"name":"storage","pvcRef":{"name":"trenova-loki","namespace":"trenova"},"usedBytes":2147483648}]}]}`
 
@@ -134,6 +135,9 @@ func TestTheKubeletIsReadVerifiedWithTheClustersCA(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, uint64(10<<30), *got.Node.FS.UsedBytes)
 	require.Equal(t, uint64(100<<30), *got.Node.FS.CapacityBytes)
+	require.Equal(t, uint64(500<<30), *got.Node.DataFS().CapacityBytes)
+	require.Equal(t, uint64(40<<30), *got.Node.DataFS().Taken(),
+		"the image filesystem's own usedBytes counts only the images")
 	require.Equal(t, []string{"Bearer sa-token-1"}, k.seen())
 }
 
@@ -226,7 +230,8 @@ func TestTheSamplerLeavesDiskOutWhenTheKubeletCannotBeRead(t *testing.T) {
 
 			require.Equal(t, int64(4000), *sample.Machine.CpuCapacityMillicores)
 			if name == "read" {
-				require.Equal(t, 10*gib, *sample.Machine.DiskBytes)
+				require.Equal(t, 40*gib, *sample.Machine.DiskBytes)
+				require.Equal(t, 500*gib, *sample.Machine.DiskCapacityBytes)
 				require.Equal(t, 2*gib, *sample.Data.LogsBytes)
 				return
 			}
