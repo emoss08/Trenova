@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/controlplanetest"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/credential/secretstore"
 )
 
 const namespace = "trenova-system"
@@ -37,12 +38,22 @@ func newHarness(t *testing.T) *harness {
 	cp := controlplanetest.New(t, controlplanetest.Spec(uuid.New()))
 	kube := fake.NewClientset()
 	transport := &credential.Transport{}
-	client, err := controlplane.New(cp.URL, &http.Client{Transport: transport, Timeout: 10 * time.Second})
+	client, err := controlplane.New(
+		cp.URL,
+		&http.Client{Transport: transport, Timeout: 10 * time.Second},
+	)
 	require.NoError(t, err)
 	return &harness{
-		cp:        cp,
-		kube:      kube,
-		store:     credential.NewStore(credential.StoreParams{Client: kube, Namespace: namespace, Enrolment: "enrolment", Identity: "identity"}),
+		cp:   cp,
+		kube: kube,
+		store: secretstore.New(
+			secretstore.Params{
+				Client:    kube,
+				Namespace: namespace,
+				Enrolment: "enrolment",
+				Identity:  "identity",
+			},
+		),
 		transport: transport,
 		client:    client,
 		now:       time.Now(),

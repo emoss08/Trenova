@@ -12,6 +12,7 @@ const (
 	PlanRestrictionReasonReadOnly      = "subscription_read_only"
 	PlanRestrictionReasonExpired       = "subscription_expired"
 	PlanRestrictionReasonSignupsPaused = "signups_paused"
+	PlanRestrictionReasonSuspended     = "organization_suspended"
 )
 
 type QuotaExceededError struct {
@@ -70,10 +71,11 @@ func (e *QuotaExceededError) LogFields() LogFields {
 
 type PlanRestrictionError struct {
 	BaseError
-	Feature string `json:"feature"`
-	AddOn   string `json:"addOn"`
-	Reason  string `json:"reason"`
-	Plan    string `json:"plan"`
+	Feature   string `json:"feature"`
+	AddOn     string `json:"addOn"`
+	Reason    string `json:"reason"`
+	Plan      string `json:"plan"`
+	ManageURL string `json:"manageUrl,omitempty"`
 }
 
 func NewPlanRestrictionError(reason, plan string) *PlanRestrictionError {
@@ -105,6 +107,22 @@ func NewFeatureRestrictionError(feature, addOn string) *PlanRestrictionError {
 	}
 }
 
+func NewSuspendedError(manageURL string) *PlanRestrictionError {
+	return &PlanRestrictionError{
+		BaseError: BaseError{
+			Code:    ErrPlanRestricted,
+			Message: planRestrictionMessages.Suspended.Message,
+		},
+		Reason:    PlanRestrictionReasonSuspended,
+		ManageURL: manageURL,
+	}
+}
+
+func IsSuspendedError(err error) bool {
+	restriction, ok := errors.AsType[*PlanRestrictionError](err)
+	return ok && restriction.Reason == PlanRestrictionReasonSuspended
+}
+
 func planRestrictionMessage(reason string) string {
 	switch reason {
 	case PlanRestrictionReasonReadOnly:
@@ -113,6 +131,8 @@ func planRestrictionMessage(reason string) string {
 		return planRestrictionMessages.Expired.Message
 	case PlanRestrictionReasonSignupsPaused:
 		return planRestrictionMessages.SignupsPaused.Message
+	case PlanRestrictionReasonSuspended:
+		return planRestrictionMessages.Suspended.Message
 	default:
 		return planRestrictionMessages.Plan.Message
 	}
@@ -124,6 +144,7 @@ var planRestrictionMessages = struct {
 	ReadOnly      BaseError
 	Expired       BaseError
 	SignupsPaused BaseError
+	Suspended     BaseError
 }{
 	Plan: BaseError{
 		Message: "This feature is not available on your organization's plan",
@@ -140,6 +161,9 @@ var planRestrictionMessages = struct {
 	SignupsPaused: BaseError{
 		Message: "Signups are paused right now. You have been added to the wait list.",
 	},
+	Suspended: BaseError{
+		Message: "This organization's Trenova account is suspended. Its owner can resume it from the Trenova console.",
+	},
 }
 
 func IsPlanRestrictionError(err error) bool {
@@ -148,12 +172,16 @@ func IsPlanRestrictionError(err error) bool {
 }
 
 func (e *PlanRestrictionError) Params() map[string]string {
-	return map[string]string{
+	params := map[string]string{
 		"feature": e.Feature,
 		"addOn":   e.AddOn,
 		"reason":  e.Reason,
 		"plan":    e.Plan,
 	}
+	if e.ManageURL != "" {
+		params["manageUrl"] = e.ManageURL
+	}
+	return params
 }
 
 func (e *PlanRestrictionError) LocalizedParams(locale i18n.Locale) map[string]string {

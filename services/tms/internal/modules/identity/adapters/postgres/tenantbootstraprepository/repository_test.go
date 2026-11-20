@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -29,5 +30,5 @@ func TestASelfHostedInstanceDoesNotLimitOrganizations(t *testing.T) {
 
 	repo := &repository{quota: quotaservice.NewUnlimited()}
 
-	require.NoError(t, repo.admitOrganization(t.Context(), nil))
+	require.NoError(t, repo.admitOrganization(t.Context(), nil, pagination.TenantInfo{}))
 }

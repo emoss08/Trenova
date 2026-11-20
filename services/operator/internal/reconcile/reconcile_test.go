@@ -31,14 +31,17 @@ import (
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/controlplanetest"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/credential/secretstore"
 	"github.com/emoss08/trenova/operator/internal/databases"
 	"github.com/emoss08/trenova/operator/internal/escrow"
+	"github.com/emoss08/trenova/operator/internal/escrow/escrowsecret"
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
 	"github.com/emoss08/trenova/operator/internal/release"
 	"github.com/emoss08/trenova/operator/internal/selfupgrade"
 	"github.com/emoss08/trenova/operator/internal/tms"
+	"github.com/emoss08/trenova/operator/internal/tmssecret"
 	"github.com/emoss08/trenova/operator/internal/tmstest"
 	"github.com/emoss08/trenova/operator/internal/usage"
 	"github.com/emoss08/trenova/operator/internal/values"
@@ -97,7 +100,12 @@ func (c *countingReleases) Apply(ctx context.Context, ch *chart.Chart, vals map[
 
 type noDatabases struct{}
 
-func (noDatabases) Gate(context.Context, databases.GateInput) databases.Gate { return databases.Gate{} }
+func (noDatabases) Gate(
+	context.Context,
+	databases.GateInput,
+) databases.Gate {
+	return databases.Gate{}
+}
 
 func (noDatabases) Settle(context.Context, databases.SettleInput) databases.Result {
 	return databases.Result{}
@@ -297,7 +305,7 @@ func newWorldWith(
 		)
 	}
 	creds := credential.NewManager(&credential.ManagerParams{
-		Store: credential.NewStore(credential.StoreParams{
+		Store: secretstore.New(secretstore.Params{
 			Client: kube, Namespace: "trenova-system", Enrolment: "enrolment", Identity: "identity",
 		}),
 		Transport: transport,
@@ -330,7 +338,7 @@ func newWorldWith(
 		Charts:       release.NewSource(release.SourceParams{Path: chartDir}),
 		Releases:     w.releases,
 		Health:       w.health,
-		Escrow: escrow.New(&escrow.Params{
+		Escrow: escrowsecret.New(&escrowsecret.Params{
 			Client:       kube,
 			ControlPlane: client,
 			Namespace:    "trenova",
@@ -699,7 +707,7 @@ func TestRelaysUsageBetweenTheTMSAndTheControlPlane(t *testing.T) {
 		kube = p.kube
 		client, err := tms.New(tms.Params{
 			URL: srv.URL,
-			Tokens: tms.NewSecretTokens(tms.SecretTokensParams{
+			Tokens: tmssecret.NewSecretTokens(tmssecret.SecretTokensParams{
 				Client: p.kube, Namespace: "trenova", Name: "trenova-secrets",
 			}),
 		})
@@ -720,7 +728,7 @@ func TestRelaysUsageBetweenTheTMSAndTheControlPlane(t *testing.T) {
 	srv.SetToken("managed-token")
 	_, err := kube.CoreV1().Secrets("trenova").Create(t.Context(), &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: "trenova-secrets", Namespace: "trenova"},
-		Data:       map[string][]byte{tms.TokenKey: []byte("managed-token")},
+		Data:       map[string][]byte{tmssecret.TokenKey: []byte("managed-token")},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 	w.now = w.now.Add(time.Minute)
@@ -1036,7 +1044,11 @@ func TestThePlanURLAndAddOnEndingsAreSentWithTheFeatures(t *testing.T) {
 	require.True(t, ok)
 	require.Empty(t, sent.PlanURL, "a spec without an account sends no plan URL")
 	require.NotNil(t, sent.AddonEndings)
-	require.Empty(t, sent.AddonEndings, "a spec without endings sends an empty list, which clears the TMS's")
+	require.Empty(
+		t,
+		sent.AddonEndings,
+		"a spec without endings sends an empty list, which clears the TMS's",
+	)
 }
 
 func TestTheFinalBackupDaysReachTheTMSWithTheFeatures(t *testing.T) {
@@ -1069,7 +1081,11 @@ func TestThePlansEndReachesTheTMSAndAKeptPlanClearsIt(t *testing.T) {
 
 	sent, ok = w.features.lastSent()
 	require.True(t, ok)
-	require.NotNil(t, sent.PlanEndsAt, "the end reaches the TMS on the next tick, with no new revision")
+	require.NotNil(
+		t,
+		sent.PlanEndsAt,
+		"the end reaches the TMS on the next tick, with no new revision",
+	)
 	require.True(t, sent.PlanEndsAt.Equal(ends))
 
 	w.cp.SetPlanEnd(nil)
@@ -1275,7 +1291,12 @@ func TestTheReportNamesTheSystemEmailSenderTheTMSHolds(t *testing.T) {
 	w.loop.Tick(t.Context())
 	r = w.lastReport(t)
 	require.NotNil(t, r.SystemEmailFingerprint, "a change in what is held is reported at once")
-	require.Equal(t, strings.Repeat("b", 64), *r.SystemEmailFingerprint, "what the TMS holds, not what the spec asks for")
+	require.Equal(
+		t,
+		strings.Repeat("b", 64),
+		*r.SystemEmailFingerprint,
+		"what the TMS holds, not what the spec asks for",
+	)
 }
 
 func TestTheReportLeavesOutASenderItCouldNotReadOrThatIsNotHeld(t *testing.T) {
@@ -1296,7 +1317,11 @@ func TestTheReportLeavesOutASenderItCouldNotReadOrThatIsNotHeld(t *testing.T) {
 	w.email.holds("not-a-fingerprint", nil)
 	w.now = w.now.Add(2 * time.Minute)
 	w.loop.Tick(t.Context())
-	require.Nil(t, w.lastReport(t).SystemEmailFingerprint, "a value the control plane would refuse is never sent")
+	require.Nil(
+		t,
+		w.lastReport(t).SystemEmailFingerprint,
+		"a value the control plane would refuse is never sent",
+	)
 }
 
 func TestAnInstanceWithoutATrenovaSenderAsksForItsRemoval(t *testing.T) {
@@ -1445,7 +1470,10 @@ func TestTrenovaWaitsForTheOperatorOfItsRelease(t *testing.T) {
 	spec.Release.Version = "0.12.0"
 	spec.Plan.Vcpu, spec.Plan.MemoryGiB = 16, 64
 	w.cp.SetSpec(spec)
-	w.operator.set(selfupgrade.PhaseUpgrading, "the operator is being upgraded from 0.11.0 to 0.12.0")
+	w.operator.set(
+		selfupgrade.PhaseUpgrading,
+		"the operator is being upgraded from 0.11.0 to 0.12.0",
+	)
 	w.now = w.now.Add(15 * time.Second)
 	w.loop.Tick(t.Context())
 

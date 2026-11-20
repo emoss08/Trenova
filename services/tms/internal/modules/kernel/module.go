@@ -48,12 +48,16 @@ func SharedOptions() fx.Option {
 			managedfeaturesservice.New,
 			managedfeaturesservice.NewReceiver,
 			func(r *managedfeaturesservice.Receiver) managedfeaturesports.PlanEndReminder { return r },
+			func(r *managedfeaturesservice.Receiver) managedfeaturesports.Writer { return r },
 			managedplanservice.New,
 			featureGate,
 			entitledrepository.New,
+			standingReader,
 			managedusagerepository.New,
 			managedusageservice.New,
 			managedusageservice.NewReceiver,
+			func(r *managedusageservice.Receiver) managedusageports.Writer { return r },
+			func(r *managedusageservice.Receiver) managedusageports.OrganizationReadings { return r },
 			func(s *managedusageservice.Service) managedusageports.Gate { return s },
 			func(s *managedusageservice.Service) managedusageports.UsageReader { return s },
 			usageProvider,
@@ -92,6 +96,16 @@ func featureGate(
 		return managed
 	}
 	return entitlementservice.NewAllowAll()
+}
+
+func standingReader(
+	cfg *managedconfig.Config,
+	managed *managedfeaturesservice.Service,
+) managedfeaturesports.StandingReader {
+	if cfg.SharedTenancy() {
+		return managed
+	}
+	return managedfeaturesports.AlwaysActive{}
 }
 
 func scopeResolver(cfg *managedconfig.Config) *managedscope.Resolver {

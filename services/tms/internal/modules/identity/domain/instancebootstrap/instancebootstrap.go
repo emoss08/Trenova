@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/emailutils"
@@ -175,6 +176,35 @@ func (i *Inputs) Validate(multiErr *errortypes.MultiError) {
 			errortypes.ErrInvalidFormat,
 			"DOT number must be 1 to 8 digits",
 		)
+	}
+}
+
+const DefaultLocale = "en"
+
+func (i *Inputs) Organization() *tenant.Organization {
+	return &tenant.Organization{
+		Name:                   i.OrganizationName,
+		ScacCode:               i.SCAC,
+		DOTNumber:              i.DOTNumber,
+		AddressLine1:           i.AddressLine1,
+		City:                   i.City,
+		PostalCode:             i.PostalCode,
+		Timezone:               i.Timezone,
+		Locale:                 DefaultLocale,
+		BrokerageEnabled:       true,
+		AssetOperationsEnabled: true,
+	}
+}
+
+func (i *Inputs) Administrator() *tenant.User {
+	return &tenant.User{
+		Name:               i.AdminName,
+		EmailAddress:       i.AdminEmail,
+		Status:             domaintypes.StatusActive,
+		Timezone:           i.Timezone,
+		Locale:             DefaultLocale,
+		TimeFormat:         domaintypes.TimeFormat12Hour,
+		MustChangePassword: false,
 	}
 }
 

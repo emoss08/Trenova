@@ -250,7 +250,18 @@ func (s *Service) trenovaProvider(
 			msg.Type,
 		)
 	}
-	if s.instanceID == "" {
+	instanceID, err := s.instanceTags.InstanceTag(ctx, pagination.TenantInfo{
+		OrgID: msg.OrganizationID,
+		BuID:  msg.BusinessUnitID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf(
+			"%w: name the instance the message is sent for: %w",
+			ErrRetryableSend,
+			err,
+		)
+	}
+	if instanceID == "" {
 		return nil, fmt.Errorf("%w: %w", ErrNonRetryableSend, errNoInstanceID)
 	}
 	trenova, err := s.systemSenders.Current(ctx)
@@ -274,7 +285,7 @@ func (s *Service) trenovaProvider(
 	return &providerCall{
 		sender:   sender,
 		config:   map[string]string{credentialKey: trenova.APIKey},
-		metadata: map[string]string{systememail.InstanceTag: s.instanceID},
+		metadata: map[string]string{systememail.InstanceTag: instanceID},
 	}, nil
 }
 

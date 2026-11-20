@@ -10,6 +10,7 @@ import {
   planRestrictionOf,
   reportPlanLimit,
   setPlanLimitHandler,
+  suspensionOf,
   type PlanLimitHandler,
   type PlanLimitNotice,
 } from "@trenova/shared/lib/plan-limit";
@@ -380,5 +381,38 @@ describe("reportPlanLimit", () => {
     expect(planLimitFromError(new ApiRequestError(402, quotaProblem))?.kind).toBe("quota");
     expect(planLimitFromError(new Error("plain"))).toBeNull();
     expect(planLimitFromError("string")).toBeNull();
+  });
+});
+
+describe("suspensionOf", () => {
+  const suspended = (manageUrl: string) =>
+    new ApiRequestError(403, {
+      type: PROBLEM_BASE + "plan-restricted",
+      code: "PLAN_RESTRICTED",
+      detail: "This organization's Trenova account is suspended.",
+      params: { feature: "", addOn: "", reason: "organization_suspended", plan: "", manageUrl },
+    });
+
+  it("reads the console address of a suspended organization", () => {
+    expect(suspensionOf(suspended("https://console.test/instances/1/plan"))).toEqual({
+      manageUrl: "https://console.test/instances/1/plan",
+    });
+  });
+
+  it("drops an address that is not a plain web address", () => {
+    expect(suspensionOf(suspended("javascript:alert(1)"))).toEqual({ manageUrl: "" });
+    expect(suspensionOf(suspended("https://user:pass@console.test/"))).toEqual({ manageUrl: "" });
+  });
+
+  it("is null for any other refusal", () => {
+    expect(
+      suspensionOf(
+        new ApiRequestError(403, {
+          code: "PLAN_RESTRICTED",
+          params: { reason: "subscription_read_only", manageUrl: "https://console.test/" },
+        }),
+      ),
+    ).toBeNull();
+    expect(suspensionOf(new Error("plain"))).toBeNull();
   });
 });

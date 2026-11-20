@@ -171,3 +171,5 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
 ## License
 
 Trenova is licensed under the [Functional Source License, Version 1.1, Apache 2.0 Future License](./LICENSE) (FSL-1.1-ALv2). You may use, self-host, and modify Trenova, including in commercial environments. You may not offer it as a hosted service or use it to build a competing product. Each release converts to the Apache 2.0 license two years after publication.
+
+The directory `services/tms/internal/cloud`, which runs Trenova's own hosted service, is not under the FSL: it has its own license, the [Trenova Commercial License](./services/tms/internal/cloud/LICENSE), which lets you read and test it but not run it in production or offer it as a service without an agreement.

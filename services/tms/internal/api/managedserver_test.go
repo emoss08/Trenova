@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -223,6 +224,14 @@ func (f *fakeInvites) Install(
 ) (*instancebootstrapports.FirstAdministratorInviteResult, error) {
 	f.got = invite
 	return f.result, f.err
+}
+
+func (f *fakeInvites) InstallFor(
+	ctx context.Context,
+	_ pulid.ID,
+	invite *instancebootstrapports.FirstAdministratorInvite,
+) (*instancebootstrapports.FirstAdministratorInviteResult, error) {
+	return f.Install(ctx, invite)
 }
 
 func serveInvite(

@@ -64,9 +64,9 @@ type managedLogPull struct {
 }
 
 func (h *managedHandler) routeSupportLogs(mux *http.ServeMux) {
-	mux.HandleFunc("GET "+managedLogRequestsPath, h.waitingLogRequests)
-	mux.HandleFunc("PUT "+managedLogRequestPath, h.reportLogRequest)
-	mux.HandleFunc("POST "+managedLogPullsPath, h.checkLogPull)
+	mux.HandleFunc("GET "+managedLogRequestsPath, h.dedicatedOnly(h.waitingLogRequests))
+	mux.HandleFunc("PUT "+managedLogRequestPath, h.dedicatedOnly(h.reportLogRequest))
+	mux.HandleFunc("POST "+managedLogPullsPath, h.dedicatedOnly(h.checkLogPull))
 }
 
 func (h *managedHandler) waitingLogRequests(w http.ResponseWriter, r *http.Request) {

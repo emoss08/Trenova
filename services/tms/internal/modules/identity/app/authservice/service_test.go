@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -70,6 +72,7 @@ func setupTest(t *testing.T) *testDeps {
 	ssoRepo.EXPECT().ListEnabledByOrganizationID(mock.Anything, mock.Anything).
 		Return(nil, nil).Maybe()
 	svc := &Service{
+		standing:   managedfeaturesports.AlwaysActive{},
 		ur:         ur,
 		ssoRepo:    ssoRepo,
 		sr:         sr,
@@ -576,6 +579,7 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 	ssoRepo := tenantportsmock.NewMockSSOConfigRepository(t)
 	stateRepo := tenantportsmock.NewMockSSOLoginStateRepository(t)
 	svc := &Service{
+		standing:       managedfeaturesports.AlwaysActive{},
 		or:             orgRepo,
 		ssoRepo:        ssoRepo,
 		stateRepo:      stateRepo,
@@ -647,7 +651,7 @@ func TestResolveSSOConfigForCallback_UsesProviderID(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	providerID := pulid.MustNew("sso_")
 	ssoRepo := tenantportsmock.NewMockSSOConfigRepository(t)
-	svc := &Service{ssoRepo: ssoRepo}
+	svc := &Service{ssoRepo: ssoRepo, standing: managedfeaturesports.AlwaysActive{}}
 	expectedConfig := &sso.SSOConfig{
 		ID:             providerID,
 		OrganizationID: orgID,
@@ -719,6 +723,7 @@ func TestNew(t *testing.T) {
 	sessionRepo := sessionportsmock.NewMockSessionRepository(t)
 
 	svc := New(Params{
+		Standing:          managedfeaturesports.AlwaysActive{},
 		UserRepository:    userRepo,
 		SessionRepository: sessionRepo,
 		SecurityConfig: &securityconfig.Config{

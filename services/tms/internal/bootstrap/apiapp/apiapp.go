@@ -3,6 +3,7 @@ package apiapp
 import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
+	"github.com/emoss08/trenova/internal/cloud"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/schemaversion"
 	"github.com/emoss08/trenova/internal/modules/accounting"
@@ -52,6 +53,7 @@ func Options() fx.Option {
 		billing.APIOptions(),
 		settlement.APIOptions(),
 		agent.APIOptions(),
+		cloud.APIOptions(),
 	)
 }
 

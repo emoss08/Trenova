@@ -562,9 +562,13 @@ managed:
   # Trenova runs for many companies, one organization each, every plan answered per
   # organization. Shared requires enabled.
   tenancy: dedicated
-  # The instance's ID in Trenova Cloud, a lowercase UUID; required while enabled. Email Trenova's
-  # sender carries is tagged with it (trenova_instance), so its bounces find their way back here.
+  # The instance's ID in Trenova Cloud, a lowercase UUID; required while enabled on a dedicated
+  # instance. Email Trenova's sender carries is tagged with it (trenova_instance), so its bounces
+  # find their way back here. A shared server may leave it empty or name the server's ID: each
+  # tenant's email is tagged with that tenant's own instance, read from cloud_tenants.
   instanceId: ""
+  # The managed listener; on a shared server it also serves the tenant agent's
+  # /managed/v1/tenants routes. Bind it to the Compose network only.
   host: 127.0.0.1 # 0.0.0.0 in a cluster, where a NetworkPolicy admits only the operator
   port: 8090
   token: "" # TRENOVA_MANAGED_TOKEN; at least 32 characters
@@ -625,6 +629,11 @@ tenantLimits:
       perOrganization: 1
       total: 4
       hold: 2m
+      wait: 15s
+    removal: # a removed shared-server tenant's batched deletes, object prefix and search deletes
+      perOrganization: 1
+      total: 1
+      hold: 30m
       wait: 15s
   # Calls at once one organization may hold on the built-in embedding service, inside the
   # service's own limit; its circuit breaker is kept per organization either way.

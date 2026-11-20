@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,13 +28,13 @@ type ReadOnlyParams struct {
 
 	Plans    platformplanports.PlanService
 	Features platformcatalogports.FeatureGate
+	Standing managedfeaturesports.StandingReader
 	Logger   *zap.Logger
 }
 
 type ReadOnlyExtension struct {
-	plans    platformplanports.PlanService
-	features platformcatalogports.FeatureGate
-	l        *zap.Logger
+	admission *planservice.Admission
+	l         *zap.Logger
 }
 
 var _ interface {
@@ -43,9 +44,12 @@ var _ interface {
 
 func NewReadOnlyExtension(p ReadOnlyParams) *ReadOnlyExtension {
 	return &ReadOnlyExtension{
-		plans:    p.Plans,
-		features: p.Features,
-		l:        p.Logger.Named("api.graphql.readonly"),
+		admission: &planservice.Admission{
+			Plans:    p.Plans,
+			Features: p.Features,
+			Standing: p.Standing,
+		},
+		l: p.Logger.Named("api.graphql.readonly"),
 	}
 }
 
@@ -79,7 +83,7 @@ func (e *ReadOnlyExtension) MutateOperationContext(
 		return gqlerror.WrapIfUnwrapped(supportaccess.ErrReadOnlySession())
 	}
 
-	err := planservice.Admit(ctx, e.plans, e.features, &planservice.AdmissionRequest{
+	err := e.admission.Admit(ctx, &planservice.AdmissionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  authCtx.OrganizationID,
 			BuID:   authCtx.BusinessUnitID,

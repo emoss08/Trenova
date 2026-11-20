@@ -10,6 +10,7 @@ const (
 	HeavyJobExport     = HeavyJob("export")
 	HeavyJobImport     = HeavyJob("import")
 	HeavyJobPreview    = HeavyJob("preview")
+	HeavyJobRemoval    = HeavyJob("removal")
 )
 
 type HeavyJobSlots interface {

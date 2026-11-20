@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/maypok86/otter/v2"
 	"go.uber.org/fx"
@@ -54,7 +55,10 @@ type cached struct {
 	state *managedfeatures.State
 }
 
-var _ platformcatalogports.FeatureGate = (*Service)(nil)
+var (
+	_ platformcatalogports.FeatureGate    = (*Service)(nil)
+	_ managedfeaturesports.StandingReader = (*Service)(nil)
+)
 
 func New(p Params) *Service {
 	return &Service{
@@ -119,6 +123,27 @@ func (s *Service) Enabled(ctx context.Context, feature platformcatalog.FeatureKe
 		return state.HasList() && !state.Suspended(), nil
 	}
 	return state.Has(feature), nil
+}
+
+func (s *Service) Standing(
+	ctx context.Context,
+	tenant dbscope.Tenant,
+) (managedfeaturesports.Standing, error) {
+	if !s.scopes.Shared() {
+		return managedfeaturesports.Standing{}, nil
+	}
+	scope, err := s.scopes.ForTenant(tenant)
+	if err != nil {
+		return managedfeaturesports.Standing{}, err
+	}
+	state, err := s.State(ctx, scope)
+	if err != nil {
+		return managedfeaturesports.Standing{}, err
+	}
+	if !state.Suspended() {
+		return managedfeaturesports.Standing{}, nil
+	}
+	return managedfeaturesports.Standing{Suspended: true, ManageURL: state.PlanURL}, nil
 }
 
 func (s *Service) EnabledAnywhere(

@@ -1,0 +1,119 @@
+package cloudtenantports
+
+import (
+	"context"
+	"errors"
+
+	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+var (
+	ErrNotFound = errors.New("no tenant by that instance is on this server")
+	ErrNotHeld  = errors.New("the organization is not a tenant of this shared server")
+)
+
+type ListRequest struct {
+	After string
+	Limit int
+}
+
+type Page struct {
+	Tenants []*cloudtenant.Tenant
+	Next    string
+}
+
+type Repository interface {
+	Lock(ctx context.Context, instanceID string) error
+	Get(ctx context.Context, instanceID string) (*cloudtenant.Tenant, error)
+	Save(ctx context.Context, tenant *cloudtenant.Tenant) error
+	List(ctx context.Context, req *ListRequest) (*Page, error)
+	ByInstances(ctx context.Context, instanceIDs []string) ([]*cloudtenant.Tenant, error)
+	InstanceOf(ctx context.Context, organizationID pulid.ID) (string, error)
+	Record(ctx context.Context, event *cloudtenant.Event) error
+}
+
+type AdministratorFacts struct {
+	UserID      pulid.ID
+	SetUp       bool
+	InviteLive  bool
+	InviteToken string
+}
+
+type AdministratorRequest struct {
+	UserID      pulid.ID
+	InviteToken string
+}
+
+type Administrators interface {
+	Facts(
+		ctx context.Context,
+		requests []AdministratorRequest,
+	) (map[pulid.ID]AdministratorFacts, error)
+	EmailTaken(ctx context.Context, email string) (bool, error)
+}
+
+type Member struct {
+	UserID           pulid.ID
+	OtherMemberships int
+}
+
+type MembersPage struct {
+	Members []Member
+	Next    pulid.ID
+}
+
+type Members interface {
+	Page(
+		ctx context.Context,
+		tenant dbscope.Tenant,
+		after pulid.ID,
+		limit int,
+	) (*MembersPage, error)
+	Reassign(ctx context.Context, tenant dbscope.Tenant, userID pulid.ID) (bool, error)
+}
+
+type PurgeTableOutcome struct {
+	Table   string `json:"table"`
+	Deleted int64  `json:"deleted"`
+}
+
+type PurgeRowsRequest struct {
+	Tenant     dbscope.Tenant
+	BatchSize  int
+	MaxBatches int
+	Beat       func()
+}
+
+type PurgeRowsResult struct {
+	Deleted  int64               `json:"deleted"`
+	Tables   []PurgeTableOutcome `json:"tables"`
+	Left     []string            `json:"left"`
+	Complete bool                `json:"complete"`
+}
+
+type DeleteResult struct {
+	Deleted   bool   `json:"deleted"`
+	BlockedBy string `json:"blockedBy,omitempty"`
+}
+
+type TableCount struct {
+	Table string `json:"table" db:"table_name"`
+	Rows  int64  `json:"rows"  db:"row_count"`
+}
+
+type Purge interface {
+	PurgeRows(ctx context.Context, req *PurgeRowsRequest) (*PurgeRowsResult, error)
+	DeleteOrganization(ctx context.Context, tenant dbscope.Tenant) (*DeleteResult, error)
+	DeleteBusinessUnit(ctx context.Context, tenant dbscope.Tenant) (*DeleteResult, error)
+	Remaining(ctx context.Context, tenant dbscope.Tenant) ([]TableCount, error)
+}
+
+type KeyPurge interface {
+	DeleteMatching(ctx context.Context, fragment string) (int64, error)
+}
+
+type SearchPurge interface {
+	DeleteOrganizationDocuments(ctx context.Context, organizationID pulid.ID) (int, error)
+}

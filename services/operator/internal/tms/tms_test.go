@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/emoss08/trenova/operator/internal/tms"
+	"github.com/emoss08/trenova/operator/internal/tmssecret"
 	"github.com/emoss08/trenova/operator/internal/tmstest"
 )
 
@@ -21,7 +22,7 @@ const (
 func secretWith(token string) *corev1.Secret {
 	data := map[string][]byte{"sessionSecret": []byte("x")}
 	if token != "" {
-		data[tms.TokenKey] = []byte(token)
+		data[tmssecret.TokenKey] = []byte(token)
 	}
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: secret, Namespace: namespace},
@@ -33,7 +34,7 @@ func client(t *testing.T, kube *fake.Clientset, url string) *tms.Client {
 	t.Helper()
 	c, err := tms.New(tms.Params{
 		URL: url,
-		Tokens: tms.NewSecretTokens(tms.SecretTokensParams{
+		Tokens: tmssecret.NewSecretTokens(tmssecret.SecretTokensParams{
 			Client: kube, Namespace: namespace, Name: secret,
 		}),
 	})
@@ -85,7 +86,13 @@ func TestSendsTheFeatureList(t *testing.T) {
 	srv := tmstest.New(t, "token")
 	c := client(t, fake.NewClientset(secretWith("token")), srv.URL)
 
-	require.NoError(t, c.PutFeatures(t.Context(), &tms.FeatureList{Features: []string{"tms.accounting", "ai.desk"}}))
+	require.NoError(
+		t,
+		c.PutFeatures(
+			t.Context(),
+			&tms.FeatureList{Features: []string{"tms.accounting", "ai.desk"}},
+		),
+	)
 	got, ok := srv.LastFeatures()
 	require.True(t, ok)
 	require.Equal(t, []string{"tms.accounting", "ai.desk"}, got)
@@ -116,7 +123,10 @@ func TestSendsThePlanURLAndAddOnEndingsWithTheFeatures(t *testing.T) {
 	require.Equal(t, "ACC", got.AddonEndings[0].Addon)
 	require.True(t, got.AddonEndings[0].EndsAt.Equal(ends))
 
-	require.NoError(t, c.PutFeatures(t.Context(), &tms.FeatureList{Features: []string{"tms.accounting"}}))
+	require.NoError(
+		t,
+		c.PutFeatures(t.Context(), &tms.FeatureList{Features: []string{"tms.accounting"}}),
+	)
 	got, ok = srv.LastFeatureList()
 	require.True(t, ok)
 	require.Empty(t, got.PlanURL, "no plan URL is sent when there is none")
@@ -137,7 +147,10 @@ func TestSendsHowLongTheFinalBackupIsKept(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, 7, got.FinalBackupDays)
 
-	require.NoError(t, c.PutFeatures(t.Context(), &tms.FeatureList{Features: []string{"tms.accounting"}}))
+	require.NoError(
+		t,
+		c.PutFeatures(t.Context(), &tms.FeatureList{Features: []string{"tms.accounting"}}),
+	)
 	got, ok = srv.LastFeatureList()
 	require.True(t, ok)
 	require.Zero(t, got.FinalBackupDays, "a number the operator was not told is not sent")
@@ -159,10 +172,17 @@ func TestStatesThePlansEndOnEverySendAndNullWhenItIsNotEnding(t *testing.T) {
 	require.True(t, got.PlanEndsAt.Equal(ends))
 	require.Equal(t, time.UTC, got.PlanEndsAt.Location(), "sent in UTC")
 
-	require.NoError(t, c.PutFeatures(t.Context(), &tms.FeatureList{Features: []string{"tms.accounting"}}))
+	require.NoError(
+		t,
+		c.PutFeatures(t.Context(), &tms.FeatureList{Features: []string{"tms.accounting"}}),
+	)
 	got, ok = srv.LastFeatureList()
 	require.True(t, ok)
-	require.Nil(t, got.PlanEndsAt, "a kept plan is stated as null, which clears the end the TMS holds")
+	require.Nil(
+		t,
+		got.PlanEndsAt,
+		"a kept plan is stated as null, which clears the end the TMS holds",
+	)
 	require.Zero(t, srv.Refused())
 }
 
@@ -175,7 +195,13 @@ func TestReadsTheFeaturesTheTMSHolds(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{}, held, "a TMS that was sent nothing holds an empty list")
 
-	require.NoError(t, c.PutFeatures(t.Context(), &tms.FeatureList{Features: []string{"tms.accounting", "ai.desk"}}))
+	require.NoError(
+		t,
+		c.PutFeatures(
+			t.Context(),
+			&tms.FeatureList{Features: []string{"tms.accounting", "ai.desk"}},
+		),
+	)
 	held, err = c.HeldFeatures(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, []string{"tms.accounting", "ai.desk"}, held)
@@ -283,7 +309,7 @@ func TestErrors(t *testing.T) {
 
 func TestRefusesABadURL(t *testing.T) {
 	t.Parallel()
-	tokens := tms.NewSecretTokens(tms.SecretTokensParams{Client: fake.NewClientset()})
+	tokens := tmssecret.NewSecretTokens(tmssecret.SecretTokensParams{Client: fake.NewClientset()})
 	for _, u := range []string{"", "trenova-api:8090", "ftp://trenova-api:8090", "http://"} {
 		_, err := tms.New(tms.Params{URL: u, Tokens: tokens})
 		require.Error(t, err, u)

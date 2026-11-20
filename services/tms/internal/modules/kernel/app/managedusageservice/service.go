@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/maypok86/otter/v2"
 	"go.uber.org/fx"
@@ -31,11 +32,7 @@ var (
 	ErrSinceInFuture     = errors.New("since cannot be after the current hour")
 )
 
-type Reading struct {
-	Meter    platformcatalog.MeterKey
-	Hour     int64
-	Quantity int64
-}
+type Reading = managedusageports.MeterReading
 
 type Params struct {
 	fx.In
@@ -224,6 +221,90 @@ func stoppedCount(state *managedusage.State) int {
 	return n
 }
 
+func (s *Service) currentHour(since int64) (int64, error) {
+	now := s.clock()
+	current := now - now%hour
+	switch {
+	case since%hour != 0:
+		return 0, ErrSinceNotOnTheHour
+	case since > current:
+		return 0, ErrSinceInFuture
+	case since < current-int64(MaxLookback/time.Second):
+		return 0, ErrSinceTooOld
+	}
+	return current, nil
+}
+
+func (s *Service) ReadingsForOrganizations(
+	ctx context.Context,
+	organizationIDs []pulid.ID,
+	since int64,
+) (map[pulid.ID][]Reading, error) {
+	if !s.scopes.Shared() {
+		return nil, managedscope.ErrWrongTenancy
+	}
+	current, err := s.currentHour(since)
+	if err != nil {
+		return nil, err
+	}
+	hours := int((current-since)/hour) + 1
+	out := make(map[pulid.ID][]Reading, len(organizationIDs))
+	for _, id := range organizationIDs {
+		out[id] = make([]Reading, 0, len(s.counters)*hours+len(s.levels))
+	}
+	if len(organizationIDs) == 0 {
+		return out, nil
+	}
+	for _, c := range s.counters {
+		counts, cerr := c.CountByHourForOrganizations(
+			ctx,
+			&managedusageports.OrganizationsHourCountRequest{
+				OrganizationIDs: organizationIDs,
+				Since:           since,
+				Until:           current + hour,
+			},
+		)
+		if cerr != nil {
+			return nil, fmt.Errorf("count %s by hour and organization: %w", c.Meter(), cerr)
+		}
+		byOrgHour := make(map[pulid.ID]map[int64]int64, len(organizationIDs))
+		for _, hc := range counts {
+			perHour, ok := byOrgHour[hc.OrganizationID]
+			if !ok {
+				perHour = make(map[int64]int64)
+				byOrgHour[hc.OrganizationID] = perHour
+			}
+			perHour[hc.Hour-hc.Hour%hour] += hc.Quantity
+		}
+		for _, id := range organizationIDs {
+			for h := since; h <= current; h += hour {
+				out[id] = append(out[id], Reading{
+					Meter:    c.Meter(),
+					Hour:     h,
+					Quantity: byOrgHour[id][h],
+				})
+			}
+		}
+	}
+	for _, lr := range s.levels {
+		levels, lerr := lr.LevelsForOrganizations(ctx, organizationIDs)
+		if lerr != nil {
+			return nil, fmt.Errorf("read the level of %s by organization: %w", lr.Meter(), lerr)
+		}
+		byOrg := make(map[pulid.ID]int64, len(levels))
+		for _, l := range levels {
+			byOrg[l.OrganizationID] += l.Quantity
+		}
+		for _, id := range organizationIDs {
+			out[id] = append(
+				out[id],
+				Reading{Meter: lr.Meter(), Hour: current, Quantity: byOrg[id]},
+			)
+		}
+	}
+	return out, nil
+}
+
 func (s *Service) Readings(
 	ctx context.Context,
 	scope managedscope.Scope,
@@ -232,26 +313,20 @@ func (s *Service) Readings(
 	if err := s.scopes.Accepts(scope); err != nil {
 		return nil, err
 	}
-	now := s.clock()
-	current := now - now%hour
-	switch {
-	case since%hour != 0:
-		return nil, ErrSinceNotOnTheHour
-	case since > current:
-		return nil, ErrSinceInFuture
-	case since < current-int64(MaxLookback/time.Second):
-		return nil, ErrSinceTooOld
+	current, err := s.currentHour(since)
+	if err != nil {
+		return nil, err
 	}
 	hours := int((current-since)/hour) + 1
 	readings := make([]Reading, 0, len(s.counters)*hours+len(s.levels))
 	for _, c := range s.counters {
-		counts, err := c.CountByHour(ctx, &managedusageports.HourCountRequest{
+		counts, cerr := c.CountByHour(ctx, &managedusageports.HourCountRequest{
 			Scope: scope,
 			Since: since,
 			Until: current + hour,
 		})
-		if err != nil {
-			return nil, fmt.Errorf("count %s by hour: %w", c.Meter(), err)
+		if cerr != nil {
+			return nil, fmt.Errorf("count %s by hour: %w", c.Meter(), cerr)
 		}
 		byHour := make(map[int64]int64, len(counts))
 		for _, hc := range counts {
@@ -262,9 +337,9 @@ func (s *Service) Readings(
 		}
 	}
 	for _, lr := range s.levels {
-		level, err := lr.Level(ctx, scope)
-		if err != nil {
-			return nil, fmt.Errorf("read the level of %s: %w", lr.Meter(), err)
+		level, lerr := lr.Level(ctx, scope)
+		if lerr != nil {
+			return nil, fmt.Errorf("read the level of %s: %w", lr.Meter(), lerr)
 		}
 		readings = append(readings, Reading{Meter: lr.Meter(), Hour: current, Quantity: level})
 	}

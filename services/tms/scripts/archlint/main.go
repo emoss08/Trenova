@@ -112,6 +112,12 @@ func run(ctx context.Context) error {
 		))
 	}
 
+	cloud, err := cloudImporters(".")
+	if err != nil {
+		return fmt.Errorf("check the importers of %s: %w", cloudDir, err)
+	}
+	problems = append(problems, cloud...)
+
 	if len(problems) == 0 {
 		return nil
 	}

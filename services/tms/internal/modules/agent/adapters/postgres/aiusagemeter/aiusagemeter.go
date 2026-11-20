@@ -16,7 +16,10 @@ import (
 	"go.uber.org/fx"
 )
 
-const hour = 3600
+const (
+	hour                    = 3600
+	organizationsPageReason = "add up the Document Intelligence pages each organization of a shared server extracted in each hour, in one statement, for the control plane's usage report; each organization is counted only for itself"
+)
 
 type Params struct {
 	fx.In
@@ -66,6 +69,46 @@ func (c *pages) CountByHour(
 			req: req,
 		})
 	})
+}
+
+func (c *pages) CountByHourForOrganizations(
+	ctx context.Context,
+	req *managedusageports.OrganizationsHourCountRequest,
+) ([]managedusageports.OrganizationHourCount, error) {
+	if len(req.OrganizationIDs) == 0 {
+		return []managedusageports.OrganizationHourCount{}, nil
+	}
+	ctx = dbscope.WithSystem(ctx, organizationsPageReason)
+	return dbtx.Read(
+		ctx,
+		c.db,
+		func(ctx context.Context) ([]managedusageports.OrganizationHourCount, error) {
+			u := aiusagedb.AIUsageRecords
+			bucket := keel.Int64Of(u.CreatedAt).Div(keel.Int64(hour)).Mul(keel.Int64(hour))
+			counts, err := keel.Into[managedusageports.OrganizationHourCount](
+				ctx,
+				c.db.Keel(ctx),
+				u.Where(
+					u.OrganizationID.In(req.OrganizationIDs...),
+					u.CreatedAt.Gte(req.Since),
+					u.CreatedAt.Lt(req.Until),
+					keel.BoolOf(u.Succeeded),
+					u.Feature.Eq(aiusage.FeatureDocumentIntelligenceExtract),
+				).
+					AllTenants().
+					Group(u.OrganizationID, bucket).
+					Pick(
+						u.OrganizationID,
+						bucket,
+						keel.CastInt64(keel.NumericOf(u.Pages.Sum()).Coalesce(0)),
+					),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("count %s by hour and organization: %w", c.Meter(), err)
+			}
+			return counts, nil
+		},
+	)
 }
 
 type hourly struct {

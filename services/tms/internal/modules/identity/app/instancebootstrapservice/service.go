@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -27,7 +26,6 @@ import (
 const (
 	bootstrapScopeReason = "create the first organization and administrator of an instance before any tenant exists"
 	lockTimeout          = 10 * time.Second
-	defaultLocale        = "en"
 	loginSlugBaseLength  = 60
 	auditSource          = "instance_bootstrap"
 	fieldPassword        = "password"
@@ -194,22 +192,14 @@ func (s *Service) create(
 	req *instancebootstrapports.InstanceBootstrapRequest,
 ) (*created, error) {
 	now := s.now()
-	owner := &tenant.User{
-		Name:               inputs.AdminName,
-		EmailAddress:       inputs.AdminEmail,
-		Status:             domaintypes.StatusActive,
-		Timezone:           inputs.Timezone,
-		Locale:             defaultLocale,
-		TimeFormat:         domaintypes.TimeFormat12Hour,
-		MustChangePassword: false,
-	}
+	owner := inputs.Administrator()
 	if err := setAdminPassword(owner, req, now); err != nil {
 		return nil, err
 	}
 
 	result, err := s.tenants.Bootstrap(ctx, &tenantports.BootstrapTenantRequest{
 		BusinessUnitName:  inputs.OrganizationName,
-		Organization:      organizationFor(inputs),
+		Organization:      inputs.Organization(),
 		LoginSlugBase:     stringutils.SlugifyASCII(inputs.OrganizationName, loginSlugBaseLength),
 		StateAbbreviation: inputs.State,
 		Owner:             owner,
@@ -256,21 +246,6 @@ func setAdminPassword(
 	owner.Password = hashed
 	owner.PasswordChangedAt = &now
 	return nil
-}
-
-func organizationFor(inputs *instancebootstrap.Inputs) *tenant.Organization {
-	return &tenant.Organization{
-		Name:                   inputs.OrganizationName,
-		ScacCode:               inputs.SCAC,
-		DOTNumber:              inputs.DOTNumber,
-		AddressLine1:           inputs.AddressLine1,
-		City:                   inputs.City,
-		PostalCode:             inputs.PostalCode,
-		Timezone:               inputs.Timezone,
-		Locale:                 defaultLocale,
-		BrokerageEnabled:       true,
-		AssetOperationsEnabled: true,
-	}
 }
 
 func (s *Service) audit(ctx context.Context, out *created) {

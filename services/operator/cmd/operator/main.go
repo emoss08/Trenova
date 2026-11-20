@@ -30,11 +30,11 @@ import (
 	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/credential/secretstore"
 	"github.com/emoss08/trenova/operator/internal/databases"
 	"github.com/emoss08/trenova/operator/internal/emailevents"
-	"github.com/emoss08/trenova/operator/internal/escrow"
+	"github.com/emoss08/trenova/operator/internal/escrow/escrowsecret"
 	"github.com/emoss08/trenova/operator/internal/health"
-	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/logs"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
 	"github.com/emoss08/trenova/operator/internal/redact"
@@ -45,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/systememail"
 	"github.com/emoss08/trenova/operator/internal/telemetry"
 	"github.com/emoss08/trenova/operator/internal/tms"
+	"github.com/emoss08/trenova/operator/internal/tmssecret"
 	"github.com/emoss08/trenova/operator/internal/usage"
 	"github.com/emoss08/trenova/operator/internal/values"
 )
@@ -143,13 +144,19 @@ func run(logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	store := credential.NewStore(credential.StoreParams{
+	store := secretstore.New(secretstore.Params{
 		Client:    kube,
 		Namespace: cfg.namespace,
 		Enrolment: cfg.enrolmentSecret,
 		Identity:  cfg.identitySecret,
 	})
-	loop, err := newLoop(&cfg, clients{kube: kube, dyn: dyn, metrics: used, kubelet: kubelet}, store, base, logger)
+	loop, err := newLoop(
+		&cfg,
+		clients{kube: kube, dyn: dyn, metrics: used, kubelet: kubelet},
+		store,
+		base,
+		logger,
+	)
 	if err != nil {
 		return err
 	}
@@ -215,18 +222,18 @@ func newLoop(
 	}
 	transport := &credential.Transport{}
 	httpClient := &http.Client{Transport: transport, Timeout: 30 * time.Second}
-	cp := &lazyClient{doer: httpClient}
+	cp := controlplane.NewLazy(httpClient)
 	creds := credential.NewManager(&credential.ManagerParams{
 		Store:     store,
 		Transport: transport,
 		Renewer:   cp,
 		Logger:    logger,
 	})
-	cp.creds = creds
+	cp.Locate(func() string { return creds.Current().APIURL })
 
 	tmsClient, err := tms.New(tms.Params{
 		URL: cfg.tmsURL,
-		Tokens: tms.NewSecretTokens(tms.SecretTokensParams{
+		Tokens: tmssecret.NewSecretTokens(tmssecret.SecretTokensParams{
 			Client:    c.kube,
 			Namespace: cfg.targetNamespace,
 			Name:      values.AppSecret(cfg.release, base),
@@ -314,7 +321,7 @@ func newLoop(
 			Logger:    logger,
 		}),
 		Health: checker,
-		Escrow: escrow.New(&escrow.Params{
+		Escrow: escrowsecret.New(&escrowsecret.Params{
 			Client:       c.kube,
 			ControlPlane: cp,
 			Namespace:    cfg.targetNamespace,
@@ -369,7 +376,7 @@ func newLoop(
 func newLogs(
 	cfg *config,
 	c clients,
-	cp *lazyClient,
+	cp *controlplane.Lazy,
 	tmsClient *tms.Client,
 	creds *credential.Manager,
 	logger *slog.Logger,
@@ -468,7 +475,12 @@ func lead(ctx context.Context, p *leadParams) error {
 	return errors.New("this operator lost its lease; it restarts to stand by")
 }
 
-func becomeAble(ctx context.Context, store credential.Store, able *atomic.Bool, logger *slog.Logger) {
+func becomeAble(
+	ctx context.Context,
+	store credential.Store,
+	able *atomic.Bool,
+	logger *slog.Logger,
+) {
 	for {
 		err := standbyCheck(ctx, store)
 		if err == nil {
@@ -541,158 +553,12 @@ func healthServer(addr string, ready func() error) *http.Server {
 	return &http.Server{Addr: addr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 }
 
-var _ commands.ControlPlane = (*lazyClient)(nil)
-
-var _ logs.ControlPlane = (*lazyClient)(nil)
-
-var _ emailevents.ControlPlane = (*lazyClient)(nil)
-
-var _ telemetry.ControlPlane = (*lazyClient)(nil)
-
-type lazyClient struct {
-	creds *credential.Manager
-	doer  *http.Client
-
-	mu  sync.Mutex
-	api *controlplane.Client
-	url string
-}
-
-func (c *lazyClient) client() (*controlplane.Client, error) {
-	url := c.creds.Current().APIURL
-	if url == "" {
-		return nil, credential.ErrNotEnrolled
-	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.api != nil && c.url == url {
-		return c.api, nil
-	}
-	api, err := controlplane.New(url, c.doer)
-	if err != nil {
-		return nil, err
-	}
-	c.api, c.url = api, url
-	return api, nil
-}
-
-func (c *lazyClient) Spec(ctx context.Context, etag string) (controlplane.Desired, bool, error) {
-	api, err := c.client()
-	if err != nil {
-		return controlplane.Desired{}, false, err
-	}
-	return api.Spec(ctx, etag)
-}
-
-func (c *lazyClient) ReportStatus(ctx context.Context, r *instanceapi.StatusReport) error {
-	api, err := c.client()
-	if err != nil {
-		return err
-	}
-	return api.ReportStatus(ctx, r)
-}
-
-func (c *lazyClient) ReportUsage(
-	ctx context.Context,
-	r instanceapi.UsageReport,
-) (instanceapi.UsageAck, error) {
-	api, err := c.client()
-	if err != nil {
-		return instanceapi.UsageAck{}, err
-	}
-	return api.ReportUsage(ctx, r)
-}
-
-func (c *lazyClient) ReportTelemetry(ctx context.Context, r instanceapi.TelemetryReport) error {
-	api, err := c.client()
-	if err != nil {
-		return err
-	}
-	return api.ReportTelemetry(ctx, r)
-}
-
-func (c *lazyClient) Secrets(ctx context.Context) (instanceapi.InstanceSecrets, error) {
-	api, err := c.client()
-	if err != nil {
-		return instanceapi.InstanceSecrets{}, err
-	}
-	return api.Secrets(ctx)
-}
-
-func (c *lazyClient) Storage(ctx context.Context) (instanceapi.InstanceStorage, error) {
-	api, err := c.client()
-	if err != nil {
-		return instanceapi.InstanceStorage{}, err
-	}
-	return api.Storage(ctx)
-}
-
-func (c *lazyClient) Commands(ctx context.Context) (instanceapi.CommandList, error) {
-	api, err := c.client()
-	if err != nil {
-		return instanceapi.CommandList{}, err
-	}
-	return api.Commands(ctx)
-}
-
-func (c *lazyClient) EmailEvents(ctx context.Context) ([]instanceapi.EmailEvent, error) {
-	api, err := c.client()
-	if err != nil {
-		return nil, err
-	}
-	return api.EmailEvents(ctx)
-}
-
-func (c *lazyClient) AckEmailEvents(ctx context.Context, ids []uuid.UUID) error {
-	api, err := c.client()
-	if err != nil {
-		return err
-	}
-	return api.AckEmailEvents(ctx, ids)
-}
-
-func (c *lazyClient) CompleteCommand(
-	ctx context.Context,
-	id uuid.UUID,
-	result instanceapi.CommandResult,
-) error {
-	api, err := c.client()
-	if err != nil {
-		return err
-	}
-	return api.CompleteCommand(ctx, id, result)
-}
-
-func (c *lazyClient) RegisterLogBundle(
-	ctx context.Context,
-	reg *instanceapi.LogBundleRegistration,
-) (uuid.UUID, error) {
-	api, err := c.client()
-	if err != nil {
-		return uuid.Nil, err
-	}
-	return api.RegisterLogBundle(ctx, reg)
-}
-
-func (c *lazyClient) UpdateLogBundle(
-	ctx context.Context,
-	id uuid.UUID,
-	update instanceapi.LogBundleUpdate,
-) error {
-	api, err := c.client()
-	if err != nil {
-		return err
-	}
-	return api.UpdateLogBundle(ctx, id, update)
-}
-
-func (c *lazyClient) Renew(ctx context.Context, csrPEM []byte) (credential.Issued, error) {
-	api, err := c.client()
-	if err != nil {
-		return credential.Issued{}, err
-	}
-	return api.Renew(ctx, csrPEM)
-}
+var (
+	_ commands.ControlPlane    = (*controlplane.Lazy)(nil)
+	_ logs.ControlPlane        = (*controlplane.Lazy)(nil)
+	_ emailevents.ControlPlane = (*controlplane.Lazy)(nil)
+	_ telemetry.ControlPlane   = (*controlplane.Lazy)(nil)
+)
 
 func load() (config, error) {
 	cfg := config{

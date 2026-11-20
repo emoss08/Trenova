@@ -15,6 +15,9 @@ vars:
   TEST_DB_CONTAINER: trenova-integration-postgres
   TEST_DB_PORT: "55432"
   KEEL_GEN_ARGS: "-acronyms ID,URL,API,JSON,UUID,GL,IFTA,BOL,EDI,PRO,DOT,MC,PDF,VIN,CDL,TWIC,MVR,PTO,YTD,SCAC,ETA,CSV,UN,FX,ELD,SFTP,NOA,ACH,EIN,FLSA -kinds pkg/keelkinds -tables internal/keeltables ./internal/modules/.../domain/..."
+  # internal/cloud (its own license) generates into its own kinds and tables packages, so no
+  # public package lists a commercial table.
+  CLOUD_KEEL_GEN_ARGS: "-acronyms ID,URL,API,JSON,UUID -kinds internal/cloud/cloudkinds -tables internal/cloud/cloudtables ./internal/cloud/domain/..."
   TEST_POSTGRES_DSN: "postgres://postgres:postgres@localhost:55432/trenova_test?sslmode=disable"
   # Plain PostGIS runs every test on the keyword-only fallback path. Build the
   # pgvector image with `task test-db-image` and export
@@ -558,11 +561,13 @@ tasks:
     desc: Generate the keel table packages from the domain models' keel tags
     cmds:
       - go tool keel gen {{.KEEL_GEN_ARGS}}
+      - go tool keel gen {{.CLOUD_KEEL_GEN_ARGS}}
 
   keel-gen-check:
     desc: Verify the generated keel table packages are up to date
     cmds:
       - go tool keel gen -check {{.KEEL_GEN_ARGS}}
+      - go tool keel gen -check {{.CLOUD_KEEL_GEN_ARGS}}
 
   generate-write-coverage:
     desc: Regenerate docs/engineering/agent-write-coverage.md from writecoverage.yml, the schema, the routes and the agent tools

@@ -1,4 +1,4 @@
-package escrow_test
+package escrowsecret_test
 
 import (
 	"context"
@@ -20,6 +20,7 @@ import (
 
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/escrow"
+	"github.com/emoss08/trenova/operator/internal/escrow/escrowsecret"
 	"github.com/emoss08/trenova/operator/internal/fakecp"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 )
@@ -157,7 +158,7 @@ func TestEnsure(t *testing.T) {
 				values = fakecp.Secrets()
 			}
 			cp := &stubCP{values: values, err: tc.cpErr}
-			store := escrow.New(&escrow.Params{
+			store := escrowsecret.New(&escrowsecret.Params{
 				Client:       kube,
 				ControlPlane: cp,
 				Namespace:    namespace,
@@ -210,7 +211,7 @@ func TestEnsureReportsAKubernetesFailure(t *testing.T) {
 	t.Parallel()
 	kube := fake.NewClientset()
 	cp := &stubCP{values: fakecp.Secrets()}
-	store := escrow.New(&escrow.Params{
+	store := escrowsecret.New(&escrowsecret.Params{
 		Client:       kube,
 		ControlPlane: cp,
 		Namespace:    "missing-namespace",

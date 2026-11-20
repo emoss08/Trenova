@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -62,21 +63,24 @@ type ReadOnlyGuardParams struct {
 
 	Plans        platformplanports.PlanService
 	Features     platformcatalogports.FeatureGate
+	Standing     managedfeaturesports.StandingReader
 	ErrorHandler *helpers.ErrorHandler
 	Logger       *zap.Logger
 }
 
 type ReadOnlyGuard struct {
-	plans        platformplanports.PlanService
-	features     platformcatalogports.FeatureGate
+	admission    *planservice.Admission
 	errorHandler *helpers.ErrorHandler
 	l            *zap.Logger
 }
 
 func NewReadOnlyGuard(p ReadOnlyGuardParams) *ReadOnlyGuard {
 	return &ReadOnlyGuard{
-		plans:        p.Plans,
-		features:     p.Features,
+		admission: &planservice.Admission{
+			Plans:    p.Plans,
+			Features: p.Features,
+			Standing: p.Standing,
+		},
 		errorHandler: p.ErrorHandler,
 		l:            p.Logger.Named("read-only-guard"),
 	}
@@ -97,10 +101,8 @@ func (g *ReadOnlyGuard) Guard() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		err := planservice.Admit(
+		err := g.admission.Admit(
 			c.Request.Context(),
-			g.plans,
-			g.features,
 			&planservice.AdmissionRequest{
 				TenantInfo: pagination.TenantInfo{
 					OrgID:  authCtx.OrganizationID,

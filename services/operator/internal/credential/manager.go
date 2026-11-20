@@ -162,6 +162,7 @@ func (m *Manager) renew(ctx context.Context, cur *Identity) error {
 		return err
 	}
 	next, err := NewIdentity(&IdentityParams{
+		Kind:         cur.Kind,
 		InstanceID:   cur.InstanceID,
 		APIURL:       cur.APIURL,
 		CertPEM:      issued.CertPEM,

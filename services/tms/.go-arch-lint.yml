@@ -435,6 +435,10 @@ components:
   bootstrap:
     in:
       - internal/bootstrap/**
+  cloud:
+    in:
+      - internal/cloud
+      - internal/cloud/**
   cmd:
     in:
       - cmd/**
@@ -3523,6 +3527,61 @@ deps:
       - testutil # TODO(build-arch): import outside the dependency rules (2 imports)
   bootstrap:
     anyProjectDeps: true
+  cloud:
+    mayDependOn:
+      - cloud
+      - kernel-domain
+      - kernel-ports
+      - kernel-contracts
+      - identity-domain
+      - identity-ports
+      - identity-contracts
+      - workspace-domain
+      - workspace-ports
+      - workspace-contracts
+      - reference-domain
+      - reference-ports
+      - reference-contracts
+      - places-domain
+      - places-ports
+      - places-contracts
+      - equipment-domain
+      - equipment-ports
+      - equipment-contracts
+      - parties-domain
+      - parties-ports
+      - parties-contracts
+      - workforce-domain
+      - workforce-ports
+      - workforce-contracts
+      - documents-domain
+      - documents-ports
+      - documents-contracts
+      - rating-domain
+      - rating-ports
+      - rating-contracts
+      - operations-domain
+      - operations-ports
+      - operations-contracts
+      - edi-domain
+      - edi-ports
+      - edi-contracts
+      - accounting-domain
+      - accounting-ports
+      - accounting-contracts
+      - billing-domain
+      - billing-ports
+      - billing-contracts
+      - settlement-domain
+      - settlement-ports
+      - settlement-contracts
+      - agent-domain
+      - agent-ports
+      - agent-contracts
+      - infrastructure
+      - api
+      - pkg
+      - keeltables
   cmd:
     anyProjectDeps: true
   testutil:

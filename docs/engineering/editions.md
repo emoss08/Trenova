@@ -147,7 +147,11 @@ private build.
 ## The server has no edition
 
 The server builds one product. There is no edition registry, no config sections, route groups,
-GraphQL extension group or public-config contributors for an overlay to join. The platform ports
+GraphQL extension group or public-config contributors for an overlay to join. What only Trenova's
+hosted service needs (a shared server's tenant lifecycle) lives in `services/tms/internal/cloud`,
+in the same tree and binary under its own license; it is switched on by `managed.tenancy: shared`,
+only `internal/bootstrap` imports it, and it joins core through ports
+([shared-tenancy.md](shared-tenancy.md#tenant-lifecycle-internalcloud)). The platform ports
 (`PlanService`, `QuotaGuard`, `FeatureGate`, `BillingProvider`, `UsageProvider`,
 `EditionInfo`) keep their self-hosted implementations; decide behaviour from an injected port,
 never from `platform.mode`. A paid add-on is a feature, not a plan capability: ask the

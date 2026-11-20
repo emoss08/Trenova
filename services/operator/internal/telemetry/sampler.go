@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/operator/internal/telemetryrelay"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -43,7 +45,7 @@ type Sampler struct {
 	metrics   metrics.Interface
 	parts     Parts
 	summaries Summaries
-	trenova   *trenovaData
+	trenova   *telemetryrelay.DataReader
 	namespace string
 	ownNode   string
 	logger    *slog.Logger
@@ -66,7 +68,7 @@ func NewSampler(p *SamplerParams) *Sampler {
 		metrics:   p.Metrics,
 		parts:     p.Parts,
 		summaries: p.Summaries,
-		trenova:   &trenovaData{source: p.Data, logger: p.Logger},
+		trenova:   telemetryrelay.NewDataReader(p.Data, p.Logger),
 		namespace: p.Namespace,
 		ownNode:   p.OwnNode,
 		logger:    p.Logger,
@@ -95,7 +97,7 @@ func (s *Sampler) Sample(
 	if params != nil {
 		sample.Parts = s.sampleParts(ctx, *params, &r)
 	}
-	data := s.trenova.read(ctx, at)
+	data := s.trenova.Read(ctx, at)
 	if node := s.node(&r); node != "" {
 		sample.Machine = s.sampleMachine(ctx, node, &r, &data)
 	} else {

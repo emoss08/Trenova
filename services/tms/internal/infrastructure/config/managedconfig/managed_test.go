@@ -58,6 +58,34 @@ func TestValidate(t *testing.T) {
 			err:             managedconfig.ErrInstanceIDInvalid,
 		},
 		{
+			name: "a shared server without an instance ID",
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Tenancy: managedconfig.TenancyShared,
+			},
+			withoutInstance: true,
+		},
+		{
+			name: "a shared server whose ID is not a UUID",
+			cfg: managedconfig.Config{
+				Enabled:    true,
+				Token:      token,
+				Tenancy:    managedconfig.TenancyShared,
+				InstanceID: "server-1",
+			},
+			err: managedconfig.ErrInstanceIDInvalid,
+		},
+		{
+			name: "a shared server without a token",
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Tenancy: managedconfig.TenancyShared,
+			},
+			withoutInstance: true,
+			err:             managedconfig.ErrTokenRequired,
+		},
+		{
 			name: "on with an instance ID that is not a UUID",
 			cfg: managedconfig.Config{
 				Enabled:    true,

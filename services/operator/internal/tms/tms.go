@@ -61,6 +61,7 @@ type Meter struct {
 	Quantity  int64  `json:"quantity"`
 	Allowance int64  `json:"allowance"`
 	HardCap   bool   `json:"hardCap"`
+	Ceiling   int64  `json:"ceiling,omitempty"`
 	Stopped   bool   `json:"stopped"`
 }
 

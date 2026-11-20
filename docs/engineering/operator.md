@@ -35,16 +35,20 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
 | Package | What |
 |---|---|
 | `cmd/operator` | configuration (environment), wiring, `/healthz` and `/livez` on :8081 |
+| `cmd/tenant-agent` | the shared server's agent ([The tenant agent](#the-tenant-agent)); no Kubernetes or Helm import |
 | `internal/instanceapi` | the client generated from `api/instance.yaml`, the operator's copy of the control plane's contract |
 | `internal/controlplane` | that client with problem details turned into errors: `ErrUnauthenticated` (never retry with that certificate), `RateLimitedError` (`Retry-After`), `ProblemError` |
-| `internal/credential` | the enrolment bundle, the operator's own key and identity, the Secret store, the transport that swaps certificates, enrolment and renewal (`Manager`) |
+| `internal/credential` | the enrolment bundle, the operator's own key and identity (an instance's or a shared server's, `Kind`), the `Store` interface, the transport that swaps certificates, enrolment and renewal (`Manager`); `credential/secretstore` keeps the identity in Kubernetes Secrets, `credential/dirstore` in a directory (mode 0700, files 0600, written atomically) |
 | `internal/values` | the spec turned into chart values: hostname, lifecycle, components, sizing, managed mode, the escrow Secret; the chart's names (`Fullname`, `AppSecret`, `APIService`, `EscrowSecret`) |
-| `internal/escrow` | the escrowed secrets: the Secret in the target namespace, fetched from the control plane when it is missing or incomplete, and the shapes the TMS accepts |
+| `internal/escrow` | the escrowed secrets' shapes and validation; `escrow/escrowsecret` keeps them in a Secret in the target namespace, `escrow/escrowfile` in a directory, one file per key; both fetch from the control plane when missing or incomplete |
 | `internal/release` | the chart from OCI at the pinned version, `upgrade --install`, recovery of an interrupted release |
 | `internal/health` | each component's readiness, read from the cluster |
-| `internal/tms` | the client of the TMS's managed API, and the token read from the release's app Secret |
+| `internal/tms` | the client of the TMS's managed API (the tenant routes included) and a token read from a file; `internal/tmssecret` reads it from the release's app Secret |
 | `internal/usage` | the usage relay: readings from the TMS to the control plane, its answer back |
-| `internal/telemetry` | what the instance uses, sampled every minute (the sampler) and sent beside the loop (the relay) |
+| `internal/telemetry` | what the instance uses, sampled every minute from the cluster (the sampler) and sent beside the loop; `internal/telemetryrelay` is the cluster-free queue and sender and the TMS data reader, `internal/hosttelemetry` samples a host (gopsutil) |
+| `internal/tenantagent` | the tenant agent's loop |
+| `internal/runlock` | the tenant agent's lock file |
+| `internal/atomicfile` | write-then-rename with mode 0600 |
 | `internal/storage` | the instance's buckets: the documents and backups Secrets, fetched from `GET /v1/storage` when missing or incomplete, and the documents bucket's CORS rules for the instance's origin |
 | `internal/backup` | backups read from and asked of CloudNativePG: health for the status report, the base backup before an update, the final backup, and a restore's progress |
 | `internal/databases` | the instance's databases ([Database generations](#database-generations)): the gate before an apply that goes back to a kept database, stopping the others, retiring, and the `databases` list |
@@ -1179,7 +1183,73 @@ which it keeps on uninstall, is created by its chart.
 - The contract: the operator's `api/instance.yaml` is a copy of the control plane's, and the
   control plane's CI compares the two, so a contract change lands in both.
 
+## The tenant agent
+
+`cmd/tenant-agent` runs a shared server: one Docker Compose service beside the TMS, many tenants.
+It reuses the operator's packages and links no Kubernetes or Helm
+(`cmd/tenant-agent/imports_test.go` runs `go list -deps` and fails on `k8s.io/`, `sigs.k8s.io/`,
+`helm.sh/`, `reconcile`, `release` and `values`).
+
+**Identity.** Staff issue the server's enrolment bundle (`serverId`, `apiUrl`, certificate, key, CA
+bundle); it is installed at `<state-dir>/identity/enrolment.json` (or `--enrolment`). The certificate
+names `urn:trenova:shared-server:<id>` (`credential.KindSharedServer`). `credential.Manager` enrols
+onto a key the agent generates, keeps the identity in `<state-dir>/identity/identity.json` (0600 in a
+0700 directory; a file others can read is refused) and renews at two thirds of its life, exactly as
+the operator does with its Secret. A 401 makes it read the bundle again (`Recover`).
+
+**The loop** (`tenantagent.Agent`), every `--poll` (15 s) with a fifth of jitter, never overlapping
+(one goroutine), and exponential backoff up to 5 minutes while iterations fail:
+
+1. renew the certificate when due; make sure the escrowed secrets are on disk
+   (`escrowfile`, `--secrets-dir`, one 0600 file per key: `encryptionKey`, `rlsScopeKeyId`,
+   `rlsScopeKey`, `mfaRecoveryCodePepper`, for the TMS's configuration to read);
+2. `GET /v1/shared/tenants` with `If-None-Match` (the last list is kept on 304 and on failure);
+3. bring the TMS to the list's system email sender (`systememail.Relay`);
+4. `GET /managed/v1/tenants` (every page), then `PUT /managed/v1/tenants/{id}` with the entry's
+   exact JSON for each tenant the TMS does not hold at that revision, or whose entry changed since
+   it was last put (the digest of its bytes; the TMS also no-ops an unchanged digest), four at a
+   time (`errgroup`); a tenant the TMS refused at that revision, one being removed, and a removed
+   one are not put again;
+5. `PUT /v1/shared/status`: version (`--server-version`), ready and the `tms` component (whether
+   the managed listener answered), and each listed tenant the TMS holds (applied revision, state,
+   administrator, last archive, refusal). It is sent when it changes and at least every minute; a
+   tenant the answer names `not_placed` is no longer reported until a later list names it; a
+   tenant the control plane no longer lists is not reported;
+6. every `--usage-every` (15 minutes, the most the control plane allows): `usage.SharedRelay` reads
+   `GET /managed/v1/tenants/readings` for the last two hours (`usage.Lookback`, so a missed hour is
+   read again), maps each tenant's app meters to its plan's meters with that tenant's allowances (the
+   dedicated relay's mapping), posts `POST /v1/shared/usage` in chunks of 5,000, and writes each
+   tenant's answer back with `PUT /managed/v1/tenants/usage`. A failed report is retried on the next
+   iteration;
+7. every minute, the email events (`emailevents.Relay`): the TMS finds each event's tenant from its
+   message, and acknowledged events are deleted.
+
+Telemetry runs beside the loop (`telemetryrelay.Relay`, one sample a minute): the host's processor
+(cores and use), memory and the disk holding `--data-path` (`hosttelemetry`, gopsutil), and the
+TMS's `GET /managed/v1/data-usage`; parts are left out (Compose has no replica counts to read).
+
+**When things fail.** The control plane down: the last list is converged and reported again later;
+usage readings stay in the TMS and are re-read. The TMS down: the status says not ready with the
+reason, nothing is put, and the next iteration tries again. The process never exits on these; it
+exits on configuration errors, and on a second agent: `<state-dir>/tenant-agent.lock` is held with
+`flock`, so a second copy started by mistake refuses to start. Should two run anyway (two hosts
+sharing nothing), every TMS route is idempotent by instance id and revision (and digest), usage
+answers are whole states, and the control plane replaces each report.
+
+**Configuration** (flag, or `TRENOVA_TENANT_AGENT_*`): `--state-dir` (`STATE_DIR`,
+`/var/lib/trenova-tenant-agent`), `--enrolment` (`ENROLMENT`), `--secrets-dir` (`SECRETS_DIR`,
+`/run/trenova/escrow`), `--tms-url` (`TMS_URL`, `http://api:8090`), `--tms-token-file`
+(`TMS_TOKEN_FILE`, `/run/secrets/managed_token`), `--data-path` (`DATA_PATH`), `--server-version`
+(`SERVER_VERSION`), `--health-addr` (`HEALTH_ADDR`, `:8081`, `/healthz` and `/livez`), `--poll`,
+`--usage-every`, `--log-level`. `--once` converges and reports once and exits (an init step);
+`--healthcheck` asks a running agent's `/healthz` and exits 0 when healthy (the Compose healthcheck,
+no curl in the image). Logs are JSON and carry no secret: the token, keys and escrowed values are
+never logged.
+
 ## Not in the operator yet
+
+- **Tenant archives.** The tenant agent does not call `GET /v1/shared/storage` or take archives;
+  the TMS reports an `archive` command as refused until the archive step lands.
 
 - **Backup sizes.** The plugin's `Backup` status carries no size, so `finalBackup.sizeBytes` and
   each listed backup's `sizeBytes` are left out.

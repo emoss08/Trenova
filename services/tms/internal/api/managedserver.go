@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/api/managedroutes"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/supportlogservice"
@@ -40,7 +41,6 @@ const (
 	managedMaxBody      = 1 << 20
 	managedMaxInvite    = 4 << 10
 	managedTimeout      = 30 * time.Second
-	problemJSON         = "application/problem+json"
 )
 
 type ManagedUsage interface {
@@ -78,6 +78,8 @@ type ManagedServerParams struct {
 	SupportLogs   *supportlogservice.Service
 
 	DataUsage *datausageservice.Service
+
+	Contributors []managedroutes.Contributor `group:"managed_route_contributors"`
 }
 
 type ManagedHandlerParams struct {
@@ -95,6 +97,9 @@ type ManagedHandlerParams struct {
 	LogPulls      ManagedLogPulls
 
 	DataUsage ManagedDataUsage
+
+	Shared       bool
+	Contributors []managedroutes.Contributor
 }
 
 type managedHandler struct {
@@ -112,6 +117,8 @@ type managedHandler struct {
 	logPulls    ManagedLogPulls
 
 	dataUsage ManagedDataUsage
+
+	shared bool
 }
 
 type managedInvite struct {
@@ -188,13 +195,6 @@ type managedHeldFeatures struct {
 	ReceivedAt string                       `json:"receivedAt,omitempty"`
 }
 
-type managedProblem struct {
-	Type   string `json:"type"`
-	Title  string `json:"title"`
-	Status int    `json:"status"`
-	Detail string `json:"detail,omitempty"`
-}
-
 func NewManagedHandler(p *ManagedHandlerParams) http.Handler {
 	h := &managedHandler{
 		usage:    p.Usage,
@@ -211,22 +211,37 @@ func NewManagedHandler(p *ManagedHandlerParams) http.Handler {
 		logPulls:    p.LogPulls,
 
 		dataUsage: p.DataUsage,
+
+		shared: p.Shared,
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET "+managedReadingsPath, h.readings)
-	mux.HandleFunc("PUT "+managedStatePath, h.setState)
-	mux.HandleFunc("GET "+managedFeaturesPath, h.heldFeatures)
-	mux.HandleFunc("PUT "+managedFeaturesPath, h.setFeatures)
-	mux.HandleFunc("PUT "+managedInvitePath, h.installInvite)
+	mux.HandleFunc("GET "+managedReadingsPath, h.dedicatedOnly(h.readings))
+	mux.HandleFunc("PUT "+managedStatePath, h.dedicatedOnly(h.setState))
+	mux.HandleFunc("GET "+managedFeaturesPath, h.dedicatedOnly(h.heldFeatures))
+	mux.HandleFunc("PUT "+managedFeaturesPath, h.dedicatedOnly(h.setFeatures))
+	mux.HandleFunc("PUT "+managedInvitePath, h.dedicatedOnly(h.installInvite))
 	h.routeSystemEmail(mux)
 	h.routeSupportAccess(mux)
 	h.routeSupportLogs(mux)
 	h.routeDataUsage(mux)
+	for _, c := range p.Contributors {
+		c.RouteManaged(mux)
+	}
 	return h.authenticate(mux)
 }
 
+func (h *managedHandler) dedicatedOnly(next http.HandlerFunc) http.HandlerFunc {
+	if !h.shared {
+		return next
+	}
+	return managedroutes.Refuse(
+		h.l,
+		"this route answers for a dedicated instance; a shared server is managed per tenant under /managed/v1/tenants",
+	)
+}
+
 func StartManagedServer(p ManagedServerParams) {
-	if !p.Config.Enabled || p.Config.SharedTenancy() {
+	if !p.Config.Enabled {
 		return
 	}
 	logger := p.Logger.Named("managed-server")
@@ -248,6 +263,9 @@ func StartManagedServer(p ManagedServerParams) {
 				LogPulls:      p.SupportAccess,
 
 				DataUsage: p.DataUsage,
+
+				Shared:       p.Config.SharedTenancy(),
+				Contributors: p.Contributors,
 			}),
 			managedTimeout,
 			"",
@@ -435,32 +453,9 @@ func (h *managedHandler) installInvite(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *managedHandler) problem(w http.ResponseWriter, status int, detail string) {
-	w.Header().Set("Content-Type", problemJSON)
-	w.WriteHeader(status)
-	body, err := sonic.Marshal(managedProblem{
-		Type:   "about:blank",
-		Title:  http.StatusText(status),
-		Status: status,
-		Detail: detail,
-	})
-	if err == nil {
-		_, err = w.Write(body)
-	}
-	if err != nil {
-		h.l.Warn("cannot write a problem to the operator", zap.Error(err))
-	}
+	managedroutes.WriteProblem(w, h.l, status, detail)
 }
 
 func (h *managedHandler) json(w http.ResponseWriter, status int, v any) {
-	body, err := sonic.Marshal(v)
-	if err != nil {
-		h.l.Error("cannot encode an answer to the operator", zap.Error(err))
-		h.problem(w, http.StatusInternalServerError, "")
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if _, err = w.Write(body); err != nil {
-		h.l.Warn("cannot write an answer to the operator", zap.Error(err))
-	}
+	managedroutes.WriteJSON(w, h.l, status, v)
 }

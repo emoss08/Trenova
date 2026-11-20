@@ -7,6 +7,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
+
 	gqlgen "github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -67,6 +69,7 @@ func TestReadOnlyExtensionRefusesMutationsFromAReadOnlyOrganization(t *testing.T
 			plantest.FreeDemo(t, tenant, subscription.StatusReadOnly),
 		),
 		Features: featureGate{},
+		Standing: managedfeaturesports.AlwaysActive{},
 		Logger:   zap.NewNop(),
 	})
 	status := gqlctx.NewResponseStatus()
@@ -96,6 +99,7 @@ func TestReadOnlyExtensionLetsQueriesAndWritableOrganizationsThrough(t *testing.
 			plantest.FreeDemo(t, tenant, subscription.StatusReadOnly),
 		),
 		Features: featureGate{},
+		Standing: managedfeaturesports.AlwaysActive{},
 		Logger:   zap.NewNop(),
 	})
 	assert.Nil(t, readOnly.MutateOperationContext(
@@ -110,6 +114,7 @@ func TestReadOnlyExtensionLetsQueriesAndWritableOrganizationsThrough(t *testing.
 			plantest.FreeDemo(t, tenant, subscription.StatusTrialing),
 		),
 		Features: featureGate{},
+		Standing: managedfeaturesports.AlwaysActive{},
 		Logger:   zap.NewNop(),
 	})
 	assert.Nil(t, trialing.MutateOperationContext(
@@ -124,6 +129,7 @@ func TestReadOnlyExtensionIsInertOutsideCloudMode(t *testing.T) {
 	ext := NewReadOnlyExtension(ReadOnlyParams{
 		Plans:    planservice.NewUnlimited(),
 		Features: featureGate{},
+		Standing: managedfeaturesports.AlwaysActive{},
 		Logger:   zap.NewNop(),
 	})
 
@@ -139,7 +145,11 @@ func TestReadOnlyExtensionRefusesMutationsFromASupersededSecret(t *testing.T) {
 	t.Parallel()
 
 	tenant := plantest.Tenant()
-	ext := NewReadOnlyExtension(ReadOnlyParams{Features: featureGate{}, Logger: zap.NewNop()})
+	ext := NewReadOnlyExtension(ReadOnlyParams{
+		Features: featureGate{},
+		Standing: managedfeaturesports.AlwaysActive{},
+		Logger:   zap.NewNop(),
+	})
 	status := gqlctx.NewResponseStatus()
 	ctx := authctx.WithSupersededSessionSecret(readOnlyContext(tenant, status))
 
@@ -174,7 +184,8 @@ func TestReadOnlyExtensionRefusesAPIKeyMutationsWhenTheInstanceLacksTheFeature(t
 		Features: featureGate{
 			disabled: []platformcatalog.FeatureKey{platformcatalog.FeatureAPIKeys},
 		},
-		Logger: zap.NewNop(),
+		Standing: managedfeaturesports.AlwaysActive{},
+		Logger:   zap.NewNop(),
 	})
 	status := gqlctx.NewResponseStatus()
 

@@ -11,6 +11,7 @@ const PAYMENT_REQUIRED_STATUS = 402;
 
 export const SUBSCRIPTION_READ_ONLY_REASON = "subscription_read_only";
 export const SIGNUPS_PAUSED_REASON = "signups_paused";
+export const ORGANIZATION_SUSPENDED_REASON = "organization_suspended";
 
 export type QuotaExceededNotice = {
   kind: "quota";
@@ -27,6 +28,8 @@ export type PlanRestrictedNotice = {
   addOn: string;
   reason: string;
   plan: string;
+  /** Where a suspended organization's owner resumes it, from the refusal; absent otherwise. */
+  manageUrl?: string;
   message: string;
 };
 
@@ -97,17 +100,48 @@ export function planLimitFromSource(source: PlanLimitSource): PlanLimitNotice | 
   }
 
   if (code === PLAN_RESTRICTED_CODE || type === PLAN_RESTRICTED_TYPE) {
+    const manageUrl = consoleUrl(params.manageUrl);
     return {
       kind: "restricted",
       feature: stringOf(params.feature),
       addOn: stringOf(params.addOn),
       reason: stringOf(params.reason),
       plan: stringOf(params.plan),
+      ...(manageUrl ? { manageUrl } : {}),
       message,
     };
   }
 
   return null;
+}
+
+/** An absolute http(s) address with a host and no user information, or "". */
+function consoleUrl(value: unknown): string {
+  const raw = stringOf(value);
+  if (raw === "") {
+    return "";
+  }
+  try {
+    const url = new URL(raw);
+    const web = url.protocol === "https:" || url.protocol === "http:";
+    return web && url.hostname !== "" && url.username === "" && url.password === ""
+      ? url.toString()
+      : "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Whether a refused request names its organization as suspended (a shared server's tenant
+ * whose Trenova account is on hold), and the console address its owner resumes it from.
+ */
+export function suspensionOf(error: unknown): { manageUrl: string } | null {
+  const notice = planLimitFromError(error);
+  if (notice?.kind !== "restricted" || notice.reason !== ORGANIZATION_SUSPENDED_REASON) {
+    return null;
+  }
+  return { manageUrl: notice.manageUrl ?? "" };
 }
 
 /** A REST problem response, as `ApiRequestError` carries it. */

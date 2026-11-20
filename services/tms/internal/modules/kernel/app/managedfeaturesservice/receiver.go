@@ -27,7 +27,10 @@ type Receiver struct {
 	l         *zap.Logger
 }
 
-var _ managedfeaturesports.PlanEndReminder = (*Receiver)(nil)
+var (
+	_ managedfeaturesports.PlanEndReminder = (*Receiver)(nil)
+	_ managedfeaturesports.Writer          = (*Receiver)(nil)
+)
 
 func NewReceiver(p ReceiverParams) *Receiver {
 	return &Receiver{

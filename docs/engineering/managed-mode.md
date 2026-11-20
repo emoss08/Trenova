@@ -15,7 +15,7 @@ this doc is the TMS's side. Self-hosted installs never turn it on, and nothing h
 | `QuotaGuard` | `identity/app/quotaservice` (`New` picks by `managed.enabled`) | `UnlimitedQuotaGuard` | `ManagedQuotaGuard` |
 | `UsageProvider` | `kernel/app/usageservice`, chosen in `kernel/module.go` | `NoopUsageProvider` | `ManagedUsageProvider` |
 | `FeatureGate` | chosen in `kernel/module.go` (`featureGate`) | `entitlementservice.AllowAll` | `managedfeaturesservice.Service` |
-| The operator's listener | `internal/api/managedserver.go`, API process only | off | `managed.host:managed.port` (8090), bearer `managed.token` |
+| The operator's listener | `internal/api/managedserver.go`, API process only | off | `managed.host:managed.port` (8090), bearer `managed.token`; on a shared server also the tenant agent's routes, contributed by `internal/cloud` through `managedroutes.Contributor` |
 | The first administrator | `trenova db bootstrap --admin-setup`, `identity/app/firstadmininviteservice` | `password` | `link`, then an invite from the operator |
 | Trenova support access | `identity/app/supportaccessservice`, `POST /api/v1/support/enter` | not routed, nothing read | grants, keys from the operator, staff entry ([Support access](#support-access)) |
 | The system email sender | `workspace/app/systememailservice` (reads only with `managed.enabled`), chosen per message in `emailservice` | none: every email needs the organization's profile | the sender Trenova supplies, for system email with no profile |
@@ -35,8 +35,10 @@ instance (`managed.tenancy: dedicated`, the default) has one scope, the instance
 share its features, its shipments, its pages and its storage, none of them has an allowance of its
 own, and every reader counts across all organizations (`dbscope.WithSystem`). A shared server
 (`managed.tenancy: shared`) has one scope per organization, and the same tables, services and rules
-answer for each organization alone. The operator's listener below writes the instance scope and is
-off on a shared server.
+answer for each organization alone. The listener's routes below write the instance scope and
+answer 409 on a shared server, where the same listener serves the tenant agent's
+`/managed/v1/tenants` routes instead; each existing route's decision is in
+[shared-tenancy.md](shared-tenancy.md#the-listeners-tenant-routes).
 
 ## The state
 
@@ -320,7 +322,10 @@ under its own tenant scope through the tenant-first indexes (`idx_shipments_org_
 `idx_ai_usage_records_tenant_feature_time`, `document_storage_totals`' key, and
 `idx_organizations_business_unit` for the organizations of its business unit). The listener asks for
 the instance, so it keeps answering instance totals. `since` must be on the hour, within 35 days and not after the current
-hour.
+hour. Each reader also answers many organizations of a shared server in one statement
+(`CountByHourForOrganizations`, `LevelsForOrganizations`, grouped by organization under system
+scope and listed in `rlslint`), which `managedusageports.OrganizationReadings` serves to the tenant
+readings route, so a page of tenants costs one statement per meter.
 
 Storage is billed at its highest point in the cycle. An hourly level is enough for that: storage
 moves with uploads and deletions over hours, not seconds, and the control plane takes the maximum

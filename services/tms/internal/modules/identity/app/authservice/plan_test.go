@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -64,6 +66,7 @@ func signInService(
 		Maybe()
 
 	return &Service{
+		standing: managedfeaturesports.AlwaysActive{},
 		or:       orgs,
 		ssoRepo:  configs,
 		features: gate,

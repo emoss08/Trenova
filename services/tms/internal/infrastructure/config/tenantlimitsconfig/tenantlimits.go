@@ -52,6 +52,7 @@ type HeavyJobs struct {
 	Export        Slot   `mapstructure:"export"`
 	Import        Slot   `mapstructure:"import"`
 	Preview       Slot   `mapstructure:"preview"`
+	Removal       Slot   `mapstructure:"removal"`
 }
 
 type AISlots struct {
@@ -85,6 +86,7 @@ const (
 	KindExport     = Kind("export")
 	KindImport     = Kind("import")
 	KindPreview    = Kind("preview")
+	KindRemoval    = Kind("removal")
 )
 
 var defaultSlots = map[Kind]Slot{
@@ -93,6 +95,7 @@ var defaultSlots = map[Kind]Slot{
 	KindExport:     {PerOrganization: 1, Total: 4, Hold: 30 * time.Minute, Wait: 15 * time.Second},
 	KindImport:     {PerOrganization: 1, Total: 4, Hold: 5 * time.Minute, Wait: 15 * time.Second},
 	KindPreview:    {PerOrganization: 1, Total: 4, Hold: 2 * time.Minute, Wait: 15 * time.Second},
+	KindRemoval:    {PerOrganization: 1, Total: 1, Hold: 30 * time.Minute, Wait: 15 * time.Second},
 }
 
 const (
@@ -141,6 +144,8 @@ func (c *Config) slot(kind Kind) Slot {
 		return c.HeavyJobs.Import
 	case KindPreview:
 		return c.HeavyJobs.Preview
+	case KindRemoval:
+		return c.HeavyJobs.Removal
 	default:
 		return Slot{}
 	}

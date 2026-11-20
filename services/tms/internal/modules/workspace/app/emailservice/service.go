@@ -13,12 +13,12 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -61,6 +61,7 @@ type Params struct {
 	Managed            *managedconfig.Config
 	TenantLimits       *tenantlimitsconfig.Config
 	Metrics            *metrics.Registry
+	InstanceTags       emailports.InstanceTags
 	Repo               emailports.EmailRepository
 	InvoiceRepo        invoiceports.InvoiceRepository
 	Validator          *Validator
@@ -94,7 +95,7 @@ type ObserverParams struct {
 type Service struct {
 	l                   *zap.Logger
 	db                  kernelports.Transactor
-	instanceID          string
+	instanceTags        emailports.InstanceTags
 	organizationPerHour int
 	tenancy             *platformmetrics.Tenancy
 	repo                emailports.EmailRepository
@@ -126,9 +127,9 @@ type HandleProviderEventParams struct {
 
 func New(p Params) *Service {
 	return &Service{
-		l:          p.Logger.Named("service.email"),
-		db:         p.DB,
-		instanceID: p.Managed.InstanceID,
+		l:            p.Logger.Named("service.email"),
+		db:           p.DB,
+		instanceTags: p.InstanceTags,
 		organizationPerHour: p.TenantLimits.OrganizationEmailPerHour(
 			p.Managed.SharedTenancy(),
 		),

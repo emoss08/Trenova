@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
@@ -36,6 +38,7 @@ func TestReadOnlyExtension_AReadOnlySupportSessionRunsNoMutation(t *testing.T) {
 	ext := NewReadOnlyExtension(ReadOnlyParams{
 		Plans:    planservice.NewUnlimited(),
 		Features: featureGate{},
+		Standing: managedfeaturesports.AlwaysActive{},
 		Logger:   zap.NewNop(),
 	})
 	status := gqlctx.NewResponseStatus()
@@ -60,6 +63,7 @@ func TestReadOnlyExtension_ASupportSessionStillReadsAndAFullOneStillWrites(t *te
 	ext := NewReadOnlyExtension(ReadOnlyParams{
 		Plans:    planservice.NewUnlimited(),
 		Features: featureGate{},
+		Standing: managedfeaturesports.AlwaysActive{},
 		Logger:   zap.NewNop(),
 	})
 

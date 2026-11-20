@@ -13,6 +13,7 @@ import {
   planLockedSentence,
 } from "@trenova/shared/lib/plan-copy";
 import {
+  ORGANIZATION_SUSPENDED_REASON,
   SUBSCRIPTION_READ_ONLY_REASON,
   type PlanLimitNotice,
 } from "@trenova/shared/lib/plan-limit";
@@ -153,6 +154,17 @@ export function planLimitCopy(
 
   if (notice.reason === SUBSCRIPTION_READ_ONLY_REASON) {
     return { ...wording.readOnly(t), usage: null };
+  }
+
+  if (notice.reason === ORGANIZATION_SUSPENDED_REASON) {
+    return {
+      title: t("Your organization is suspended"),
+      description: t(
+        "This organization's Trenova account is suspended. Its owner can resume it from the Trenova console.",
+      ),
+      guidance: t("Everything you entered is kept while the account is suspended."),
+      usage: null,
+    };
   }
 
   return {

@@ -143,6 +143,7 @@ func SharedOptions() fx.Option {
 			func(s *customfieldservice.ValuesService) customfieldports.NamedValues { return s },
 			systememailservice.New,
 			func(s *systememailservice.Service) emailports.SystemSenders { return s },
+			emailservice.NewConfiguredInstance,
 			emailservice.New,
 			func(s *emailservice.Service) emailports.EmailService { return s },
 			func(s *emailservice.Service) emailports.EmailSenderResolver { return s },

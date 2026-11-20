@@ -106,7 +106,31 @@ func (s *Service) Install(
 		return nil, err
 	}
 
-	admin, err := s.users.FindByIDForLogin(ctx, record.AdminUserID)
+	return s.install(ctx, record.AdminUserID, invite, now)
+}
+
+func (s *Service) InstallFor(
+	ctx context.Context,
+	adminUserID pulid.ID,
+	invite *instancebootstrapports.FirstAdministratorInvite,
+) (*instancebootstrapports.FirstAdministratorInviteResult, error) {
+	now := s.now()
+	if err := validate(invite, now); err != nil {
+		return nil, err
+	}
+	if adminUserID.IsNil() {
+		return nil, instancebootstrapports.ErrNotBootstrapped
+	}
+	return s.install(ctx, adminUserID, invite, now)
+}
+
+func (s *Service) install(
+	ctx context.Context,
+	adminUserID pulid.ID,
+	invite *instancebootstrapports.FirstAdministratorInvite,
+	now int64,
+) (*instancebootstrapports.FirstAdministratorInviteResult, error) {
+	admin, err := s.users.FindByIDForLogin(ctx, adminUserID)
 	if err != nil {
 		return nil, err
 	}

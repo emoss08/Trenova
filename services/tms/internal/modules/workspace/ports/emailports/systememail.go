@@ -20,6 +20,10 @@ type SystemSenderRepository interface {
 	Delete(ctx context.Context) (bool, error)
 }
 
+type InstanceTags interface {
+	InstanceTag(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)
+}
+
 type SystemSenders interface {
 	Current(ctx context.Context) (*systememail.Credential, error)
 }

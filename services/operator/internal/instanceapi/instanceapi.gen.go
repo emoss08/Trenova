@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -207,6 +208,24 @@ func (e InstanceSpecAiProvider) Valid() bool {
 	}
 }
 
+// Defines values for InstanceSpecKind.
+const (
+	InstanceKindDedicated InstanceSpecKind = "dedicated"
+	InstanceKindShared    InstanceSpecKind = "shared"
+)
+
+// Valid indicates whether the value is a known member of the InstanceSpecKind enum.
+func (e InstanceSpecKind) Valid() bool {
+	switch e {
+	case InstanceKindDedicated:
+		return true
+	case InstanceKindShared:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for InstanceSpecLifecycle.
 const (
 	Active         InstanceSpecLifecycle = "active"
@@ -306,6 +325,7 @@ func (e OperatorUpgradePhase) Valid() bool {
 // Defines values for ProblemCode.
 const (
 	ProblemCodeConflict         ProblemCode = "conflict"
+	ProblemCodeForbidden        ProblemCode = "forbidden"
 	ProblemCodeInternal         ProblemCode = "internal"
 	ProblemCodeInvalidRequest   ProblemCode = "invalid_request"
 	ProblemCodeNotFound         ProblemCode = "not_found"
@@ -319,6 +339,8 @@ const (
 func (e ProblemCode) Valid() bool {
 	switch e {
 	case ProblemCodeConflict:
+		return true
+	case ProblemCodeForbidden:
 		return true
 	case ProblemCodeInternal:
 		return true
@@ -396,6 +418,171 @@ func (e RestoreProgressPhase) Valid() bool {
 	case RestoreProgressPhaseReady:
 		return true
 	case RestoreProgressPhaseSwitched:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedArchiveCommandKind.
+const (
+	SharedCommandArchive SharedArchiveCommandKind = "archive"
+)
+
+// Valid indicates whether the value is a known member of the SharedArchiveCommandKind enum.
+func (e SharedArchiveCommandKind) Valid() bool {
+	switch e {
+	case SharedCommandArchive:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedArchiveCommandPurpose.
+const (
+	SharedArchiveFinal SharedArchiveCommandPurpose = "final"
+)
+
+// Valid indicates whether the value is a known member of the SharedArchiveCommandPurpose enum.
+func (e SharedArchiveCommandPurpose) Valid() bool {
+	switch e {
+	case SharedArchiveFinal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedArchiveWaitingReason.
+const (
+	SharedArchiveNoBucket    SharedArchiveWaitingReason = "no_bucket"
+	SharedArchiveUnavailable SharedArchiveWaitingReason = "unavailable"
+)
+
+// Valid indicates whether the value is a known member of the SharedArchiveWaitingReason enum.
+func (e SharedArchiveWaitingReason) Valid() bool {
+	switch e {
+	case SharedArchiveNoBucket:
+		return true
+	case SharedArchiveUnavailable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedEntryRefusedCode.
+const (
+	SharedEntryNotPlaced SharedEntryRefusedCode = "not_placed"
+)
+
+// Valid indicates whether the value is a known member of the SharedEntryRefusedCode enum.
+func (e SharedEntryRefusedCode) Valid() bool {
+	switch e {
+	case SharedEntryNotPlaced:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedTenantAiProvider.
+const (
+	SharedTenantAiCustomer SharedTenantAiProvider = "customer"
+	SharedTenantAiTrenova  SharedTenantAiProvider = "trenova"
+)
+
+// Valid indicates whether the value is a known member of the SharedTenantAiProvider enum.
+func (e SharedTenantAiProvider) Valid() bool {
+	switch e {
+	case SharedTenantAiCustomer:
+		return true
+	case SharedTenantAiTrenova:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedTenantLifecycle.
+const (
+	SharedTenantActive    SharedTenantLifecycle = "active"
+	SharedTenantRemoved   SharedTenantLifecycle = "removed"
+	SharedTenantSuspended SharedTenantLifecycle = "suspended"
+)
+
+// Valid indicates whether the value is a known member of the SharedTenantLifecycle enum.
+func (e SharedTenantLifecycle) Valid() bool {
+	switch e {
+	case SharedTenantActive:
+		return true
+	case SharedTenantRemoved:
+		return true
+	case SharedTenantSuspended:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedTenantPlanSupport.
+const (
+	SharedTenantSupportBusinessHours SharedTenantPlanSupport = "business_hours"
+	SharedTenantSupportContracted    SharedTenantPlanSupport = "contracted"
+	SharedTenantSupportEmail         SharedTenantPlanSupport = "email"
+	SharedTenantSupportPriority      SharedTenantPlanSupport = "priority"
+)
+
+// Valid indicates whether the value is a known member of the SharedTenantPlanSupport enum.
+func (e SharedTenantPlanSupport) Valid() bool {
+	switch e {
+	case SharedTenantSupportBusinessHours:
+		return true
+	case SharedTenantSupportContracted:
+		return true
+	case SharedTenantSupportEmail:
+		return true
+	case SharedTenantSupportPriority:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedTenantRefusalCode.
+const (
+	SharedRefusedInvalid SharedTenantRefusalCode = "invalid"
+)
+
+// Valid indicates whether the value is a known member of the SharedTenantRefusalCode enum.
+func (e SharedTenantRefusalCode) Valid() bool {
+	switch e {
+	case SharedRefusedInvalid:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedTenantStatusState.
+const (
+	TenantActive    SharedTenantStatusState = "active"
+	TenantApplying  SharedTenantStatusState = "applying"
+	TenantRemoved   SharedTenantStatusState = "removed"
+	TenantSuspended SharedTenantStatusState = "suspended"
+)
+
+// Valid indicates whether the value is a known member of the SharedTenantStatusState enum.
+func (e SharedTenantStatusState) Valid() bool {
+	switch e {
+	case TenantActive:
+		return true
+	case TenantApplying:
+		return true
+	case TenantRemoved:
+		return true
+	case TenantSuspended:
 		return true
 	default:
 		return false
@@ -767,6 +954,10 @@ type EmailEvent struct {
 	// Id The event's ID, to acknowledge it with.
 	Id openapi_types.UUID `json:"id"`
 
+	// InstanceId The tenant the message was sent for, as its `trenova_instance` tag named it: present
+	// only when a shared server lists its tenants' events.
+	InstanceId *openapi_types.UUID `json:"instanceId,omitempty"`
+
 	// Payload The provider's webhook body, verbatim (at most 65536 bytes): a Resend `email.bounced`
 	// or `email.complained` event, or a Postmark `Bounce` or `SpamComplaint` record. The
 	// control plane verified its signature; the instance parses it as it parses its own
@@ -896,6 +1087,11 @@ type InstanceSpec struct {
 	Hostname   string             `json:"hostname"`
 	InstanceId openapi_types.UUID `json:"instanceId"`
 
+	// Kind `dedicated`: the instance has a machine of its own. Always `dedicated` here: a shared
+	// tenant has no operator and its spec is never served by `getSpec`; its server reads it as
+	// an entry of `listSharedTenants`.
+	Kind InstanceSpecKind `json:"kind"`
+
 	// Lifecycle `active` runs the instance. `suspended` stops its workloads and keeps every byte of its
 	// data: its subscription lapsed and it resumes when paid again. `decommissioned` means take
 	// the final backup and report it as `finalBackup` on the status report; the instance is
@@ -958,6 +1154,11 @@ type InstanceSpec struct {
 
 // InstanceSpecAiProvider Whose AI keys the instance uses.
 type InstanceSpecAiProvider string
+
+// InstanceSpecKind `dedicated`: the instance has a machine of its own. Always `dedicated` here: a shared
+// tenant has no operator and its spec is never served by `getSpec`; its server reads it as
+// an entry of `listSharedTenants`.
+type InstanceSpecKind string
 
 // InstanceSpecLifecycle `active` runs the instance. `suspended` stops its workloads and keeps every byte of its
 // data: its subscription lapsed and it resumes when paid again. `decommissioned` means take
@@ -1070,9 +1271,12 @@ type MachineUsage struct {
 // MeterUsage defines model for MeterUsage.
 type MeterUsage struct {
 	// Allowance The window's allowance; 0 when the plan and add-ons include none.
-	Allowance int64  `json:"allowance"`
-	HardCap   bool   `json:"hardCap"`
-	Meter     string `json:"meter"`
+	Allowance int64 `json:"allowance"`
+
+	// Ceiling Where the metered action stops whatever the overage setting; absent when there is none.
+	Ceiling *int64 `json:"ceiling,omitempty"`
+	HardCap bool   `json:"hardCap"`
+	Meter   string `json:"meter"`
 
 	// Quantity The window's quantity so far.
 	Quantity int64 `json:"quantity"`
@@ -1225,6 +1429,323 @@ type RestoreProgress struct {
 // RestoreProgressPhase defines model for RestoreProgress.Phase.
 type RestoreProgressPhase string
 
+// SharedArchiveCommand Take an archive of the tenant alone: every table that carries it, in one consistent
+// snapshot, and its documents, in the tenant archive format. Write it where `getSharedStorage`
+// says for this `id`, then report it as the tenant's `lastArchive`. A `final` archive is taken
+// after the tenant is suspended for its removal: nothing changes it after.
+type SharedArchiveCommand struct {
+	// Id The archive's ID; report it as `lastArchive.commandId`.
+	Id   openapi_types.UUID       `json:"id"`
+	Kind SharedArchiveCommandKind `json:"kind"`
+
+	// Purpose `final`: the archive the tenant's removal waits for.
+	Purpose     SharedArchiveCommandPurpose `json:"purpose"`
+	RequestedAt time.Time                   `json:"requestedAt"`
+}
+
+// SharedArchiveCommandKind defines model for SharedArchiveCommand.Kind.
+type SharedArchiveCommandKind string
+
+// SharedArchiveCommandPurpose `final`: the archive the tenant's removal waits for.
+type SharedArchiveCommandPurpose string
+
+// SharedArchiveReport The newest archive of the tenant the server took for an `archive` command, by its ID:
+// reported once it is written whole. Reporting the same archive again changes nothing.
+type SharedArchiveReport struct {
+	// CommandId The `archive` command's `id`.
+	CommandId openapi_types.UUID `json:"commandId"`
+
+	// Location Where it is, `s3://<bucket>/<prefix>`, as `getSharedStorage` named it.
+	Location string `json:"location"`
+
+	// Sha256 The lowercase hex SHA-256 of the archive's manifest.
+	Sha256 string `json:"sha256"`
+
+	// SizeBytes The archive's size, all its objects together.
+	SizeBytes int64 `json:"sizeBytes"`
+
+	// TakenAt When its snapshot was taken.
+	TakenAt time.Time `json:"takenAt"`
+}
+
+// SharedArchiveTarget Where one archive is kept, and the credential to write and read it with: the region's archive
+// bucket's own key, scoped at the provider to that bucket.
+type SharedArchiveTarget struct {
+	AccessKeyId string             `json:"accessKeyId"`
+	Bucket      string             `json:"bucket"`
+	CommandId   openapi_types.UUID `json:"commandId"`
+
+	// Endpoint The S3 API's URL, such as `https://s3.bhs.io.cloud.ovh.net`.
+	Endpoint string `json:"endpoint"`
+
+	// ExpiresAt When a temporary credential stops working; absent for the bucket's own key, which does not
+	// expire.
+	ExpiresAt  *time.Time         `json:"expiresAt,omitempty"`
+	InstanceId openapi_types.UUID `json:"instanceId"`
+
+	// Prefix `tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it.
+	Prefix string `json:"prefix"`
+
+	// Region The region requests are signed for.
+	Region          string `json:"region"`
+	SecretAccessKey string `json:"secretAccessKey"`
+
+	// SessionToken Present only for a temporary credential: send it as `X-Amz-Security-Token` with every
+	// request. Absent for the bucket's own key.
+	SessionToken *string `json:"sessionToken,omitempty"`
+}
+
+// SharedArchiveWaiting defines model for SharedArchiveWaiting.
+type SharedArchiveWaiting struct {
+	CommandId  openapi_types.UUID `json:"commandId"`
+	InstanceId openapi_types.UUID `json:"instanceId"`
+
+	// Reason `no_bucket`: Trenova has not recorded the archive bucket of the tenant's region yet.
+	// `unavailable`: the credential could not be given just now.
+	Reason SharedArchiveWaitingReason `json:"reason"`
+}
+
+// SharedArchiveWaitingReason `no_bucket`: Trenova has not recorded the archive bucket of the tenant's region yet.
+// `unavailable`: the credential could not be given just now.
+type SharedArchiveWaitingReason string
+
+// SharedEntryRefused defines model for SharedEntryRefused.
+type SharedEntryRefused struct {
+	// Code `not_placed`: the instance is not a tenant placed on this server, or it was already
+	// reported `removed`. Stop reporting it.
+	Code       SharedEntryRefusedCode `json:"code"`
+	InstanceId openapi_types.UUID     `json:"instanceId"`
+}
+
+// SharedEntryRefusedCode `not_placed`: the instance is not a tenant placed on this server, or it was already
+// reported `removed`. Stop reporting it.
+type SharedEntryRefusedCode string
+
+// SharedReportAck defines model for SharedReportAck.
+type SharedReportAck struct {
+	// Refused The report's entries that were not recorded, each once; empty when all were.
+	Refused []SharedEntryRefused `json:"refused"`
+}
+
+// SharedStatusReport defines model for SharedStatusReport.
+type SharedStatusReport struct {
+	Components []ComponentStatus `json:"components"`
+
+	// Message A short explanation when not ready.
+	Message *string `json:"message,omitempty"`
+
+	// Ready Whether every component is ready and the post-deploy checks pass.
+	Ready bool `json:"ready"`
+
+	// Tenants The tenants the server holds, each once.
+	Tenants []SharedTenantStatus `json:"tenants"`
+
+	// Version The Trenova release the server runs.
+	Version *string `json:"version,omitempty"`
+}
+
+// SharedStorage defines model for SharedStorage.
+type SharedStorage struct {
+	Archives []SharedArchiveTarget `json:"archives"`
+
+	// Waiting The archive commands no credential could be given for now, with why; ask again in a minute.
+	Waiting []SharedArchiveWaiting `json:"waiting"`
+}
+
+// SharedTenant One tenant as it should be: one organization (and its one business unit) of the server's
+// TMS, made the first time the tenant is listed with what `firstAdministrator` names, and
+// known by `instanceId` from then on. Every field is the tenant's desired state at `revision`;
+// a later revision may change any of them but `instanceId`, `organizationName` and
+// `firstAdministrator`'s person.
+type SharedTenant struct {
+	// Account Where the customer manages the instance in the Trenova console. The control plane adds it
+	// to every spec when it serves one, from where its console is served; it is not part of a
+	// stored revision. The spec's `ETag` changes with it as well as with the revision, so a
+	// console that moves reaches every operator. An operator that receives a spec without it
+	// sends the TMS no plan URL, and the TMS keeps the one it holds.
+	Account SpecAccount `json:"account"`
+
+	// AddonEndings The add-ons whose removal is scheduled, each with when it ends; they stay in `addons` and
+	// their features stay on until then. Absent when none is ending: the tenant's list is then
+	// empty.
+	AddonEndings *[]SpecAddonEnding `json:"addonEndings,omitempty"`
+
+	// Addons The add-ons the tenant has, by code.
+	Addons []string `json:"addons"`
+
+	// AiProvider Whose AI keys the tenant's AI features use.
+	AiProvider SharedTenantAiProvider `json:"aiProvider"`
+
+	// Allowances The tenant's monthly allowances. Which metered actions may continue now is the usage
+	// answer's (`reportSharedUsage`), measured against these.
+	Allowances []SpecAllowance `json:"allowances"`
+
+	// Commands What the server is asked to do for the tenant besides converging to this entry, oldest
+	// first: listed until the server reports it done (an `archive` as the tenant's
+	// `lastArchive`). Carry each out once, by `id`. Empty when there is none.
+	Commands []SharedTenantCommand `json:"commands"`
+
+	// Features The TMS catalog features the tenant's organization has; every other is off for it.
+	Features []string `json:"features"`
+
+	// FirstAdministrator The instance's first organization and its administrator: the person who ordered it, and
+	// their organization's name, as they were when it was ordered. The first install creates
+	// them, with no usable password; the administrator chooses one through `invite`. Later
+	// revisions carry the same values, so they never conflict with what was installed.
+	FirstAdministrator SpecFirstAdministrator `json:"firstAdministrator"`
+
+	// InstanceId The tenant's instance in the control plane. Every report about the tenant names it.
+	InstanceId openapi_types.UUID `json:"instanceId"`
+
+	// Lifecycle `active`: the tenant's people sign in and work, with the features listed. `suspended`:
+	// keep every byte of the tenant's data, sign its people out, refuse its sign-ins with the
+	// suspended page that points at the console, refuse its API calls and run none of its
+	// background work; it is suspended while its subscription lapses, while Trenova staff hold
+	// it, or while its server takes its final archive. `removed`: its final archive is taken;
+	// delete the tenant's data and documents, then report it `removed`.
+	Lifecycle SharedTenantLifecycle `json:"lifecycle"`
+
+	// OrganizationName The tenant's organization as it was named when it was ordered; the first install names it so.
+	OrganizationName string `json:"organizationName"`
+
+	// Plan The plan the tenant is sold. It has no machine: the tenant runs on the server's.
+	Plan SharedTenantPlan `json:"plan"`
+
+	// Revision The tenant's spec revision. Report it as the tenant's `appliedRevision` once the tenant
+	// holds everything this entry says.
+	Revision int64 `json:"revision"`
+}
+
+// SharedTenantAiProvider Whose AI keys the tenant's AI features use.
+type SharedTenantAiProvider string
+
+// SharedTenantLifecycle `active`: the tenant's people sign in and work, with the features listed. `suspended`:
+// keep every byte of the tenant's data, sign its people out, refuse its sign-ins with the
+// suspended page that points at the console, refuse its API calls and run none of its
+// background work; it is suspended while its subscription lapses, while Trenova staff hold
+// it, or while its server takes its final archive. `removed`: its final archive is taken;
+// delete the tenant's data and documents, then report it `removed`.
+type SharedTenantLifecycle string
+
+// SharedTenantCommand One command, told apart by `kind`. `archive` is the only kind now; a server that reads a
+// kind it does not know leaves it be and reports nothing of it.
+type SharedTenantCommand struct {
+	union json.RawMessage
+}
+
+// SharedTenantList Every tenant placed on the server and not yet reported `removed`, ordered by `instanceId`.
+type SharedTenantList struct {
+	// SystemEmail The sender Trenova supplies for the instance's system email (invitations, password resets,
+	// notifications). Absent when Trenova supplies none: the operator then removes any the
+	// instance holds. The credential itself is never in the spec; the operator fetches it from
+	// `getSecrets` when the instance does not already hold one with this fingerprint.
+	SystemEmail *SpecSystemEmail `json:"systemEmail,omitempty"`
+	Tenants     []SharedTenant   `json:"tenants"`
+}
+
+// SharedTenantPlan The plan the tenant is sold. It has no machine: the tenant runs on the server's.
+type SharedTenantPlan struct {
+	// BackupRetentionDays How many days the tenant's nightly archives are kept.
+	BackupRetentionDays int64 `json:"backupRetentionDays"`
+
+	// Key The plan's key in the price book, such as `shared`.
+	Key string `json:"key"`
+
+	// Name The plan's name, such as `Shared`.
+	Name    string                  `json:"name"`
+	Support SharedTenantPlanSupport `json:"support"`
+}
+
+// SharedTenantPlanSupport defines model for SharedTenantPlan.Support.
+type SharedTenantPlanSupport string
+
+// SharedTenantRefusal The newest revision of the tenant the server has read and will not apply as it is written,
+// and why. The tenant stays as it was. Sent with every report while it stands.
+type SharedTenantRefusal struct {
+	// Code `invalid`: the revision cannot be turned into what the tenant should be.
+	Code SharedTenantRefusalCode `json:"code"`
+
+	// Reason One line a staff member can read.
+	Reason   string `json:"reason"`
+	Revision int64  `json:"revision"`
+}
+
+// SharedTenantRefusalCode `invalid`: the revision cannot be turned into what the tenant should be.
+type SharedTenantRefusalCode string
+
+// SharedTenantStatus One tenant as the server holds it now.
+type SharedTenantStatus struct {
+	// Administrator Where the first administrator's handoff stands on the instance, reported once the spec has
+	// an `invite` and the instance answered for it.
+	Administrator *AdministratorStatus `json:"administrator,omitempty"`
+
+	// AppliedRevision The newest revision the tenant holds everything of; absent before its first. The tenant
+	// is running once it is `active` on its desired revision.
+	AppliedRevision *int64             `json:"appliedRevision,omitempty"`
+	InstanceId      openapi_types.UUID `json:"instanceId"`
+
+	// LastArchive The newest archive of the tenant the server took for an `archive` command, by its ID:
+	// reported once it is written whole. Reporting the same archive again changes nothing.
+	LastArchive *SharedArchiveReport `json:"lastArchive,omitempty"`
+
+	// Refused The newest revision of the tenant the server has read and will not apply as it is written,
+	// and why. The tenant stays as it was. Sent with every report while it stands.
+	Refused *SharedTenantRefusal `json:"refused,omitempty"`
+
+	// State `applying` while the server converges the tenant to a revision; `active` or `suspended`
+	// once it holds `appliedRevision`'s lifecycle; `removed` once its data and documents are
+	// deleted after a `removed` revision, reported with that revision or a later one as
+	// `appliedRevision`.
+	State SharedTenantStatusState `json:"state"`
+}
+
+// SharedTenantStatusState `applying` while the server converges the tenant to a revision; `active` or `suspended`
+// once it holds `appliedRevision`'s lifecycle; `removed` once its data and documents are
+// deleted after a `removed` revision, reported with that revision or a later one as
+// `appliedRevision`.
+type SharedTenantStatusState string
+
+// SharedTenantUsage What one tenant may continue, as `UsageAck` says it of an instance.
+type SharedTenantUsage struct {
+	InstanceId openapi_types.UUID `json:"instanceId"`
+	Meters     []MeterUsage       `json:"meters"`
+
+	// Overage Whether usage beyond an allowance without a hard cap continues (up to its ceiling) and is
+	// billed: the customer opted in to overage, or the plan bills usage past its allowances
+	// always.
+	Overage bool         `json:"overage"`
+	Window  *UsageWindow `json:"window,omitempty"`
+}
+
+// SharedUsageAck defines model for SharedUsageAck.
+type SharedUsageAck struct {
+	// Refused The instances whose readings were not recorded, each once; empty when none.
+	Refused []SharedEntryRefused `json:"refused"`
+
+	// Tenants Every tenant placed on the server, ordered by `instanceId`.
+	Tenants []SharedTenantUsage `json:"tenants"`
+}
+
+// SharedUsageReading defines model for SharedUsageReading.
+type SharedUsageReading struct {
+	// Hour The start of the hour, on the hour, from 35 days ago to the current hour.
+	Hour time.Time `json:"hour"`
+
+	// InstanceId The tenant the reading is for.
+	InstanceId openapi_types.UUID `json:"instanceId"`
+
+	// Meter A catalog meter's key, such as `shipments`.
+	Meter string `json:"meter"`
+
+	// Quantity In the meter's unit (a count or bytes), at most 10^15. Each tenant's meter and hour once a report.
+	Quantity int64 `json:"quantity"`
+}
+
+// SharedUsageReport defines model for SharedUsageReport.
+type SharedUsageReport struct {
+	Readings []SharedUsageReading `json:"readings"`
+}
+
 // SpecAccount Where the customer manages the instance in the Trenova console. The control plane adds it
 // to every spec when it serves one, from where its console is served; it is not part of a
 // stored revision. The spec's `ETag` changes with it as well as with the revision, so a
@@ -1287,8 +1808,17 @@ type SpecAdministratorInvite struct {
 
 // SpecAllowance defines model for SpecAllowance.
 type SpecAllowance struct {
+	// AlwaysBilled Usage past the allowance is billed without the customer opting in to overage, so the
+	// action continues past the allowance (up to the ceiling); absent when overage is the
+	// customer's choice.
+	AlwaysBilled *bool `json:"alwaysBilled,omitempty"`
+
 	// AppMeter The TMS meter this allowance limits; absent for an instance counter.
 	AppMeter *string `json:"appMeter,omitempty"`
+
+	// Ceiling Where the metered action stops whatever the overage setting (at or above the
+	// allowance); absent when there is none. Nothing past it is billed.
+	Ceiling *int64 `json:"ceiling,omitempty"`
 
 	// HardCap Whether the metered action stops at the allowance.
 	HardCap  bool              `json:"hardCap"`
@@ -1631,7 +2161,9 @@ type TelemetrySample struct {
 type UsageAck struct {
 	Meters []MeterUsage `json:"meters"`
 
-	// Overage Whether usage beyond an allowance without a hard cap continues and is billed.
+	// Overage Whether usage beyond an allowance without a hard cap continues (up to its ceiling) and is
+	// billed: the customer opted in to overage, or the plan bills usage past its allowances
+	// always.
 	Overage bool         `json:"overage"`
 	Window  *UsageWindow `json:"window,omitempty"`
 }
@@ -1662,6 +2194,9 @@ type UsageWindow struct {
 // Conflict defines model for Conflict.
 type Conflict = Problem
 
+// Forbidden defines model for Forbidden.
+type Forbidden = Problem
+
 // Invalid defines model for Invalid.
 type Invalid = Problem
 
@@ -1673,6 +2208,12 @@ type RateLimited = Problem
 
 // Unauthenticated defines model for Unauthenticated.
 type Unauthenticated = Problem
+
+// ListSharedTenantsParams defines parameters for ListSharedTenants.
+type ListSharedTenantsParams struct {
+	// IfNoneMatch The `ETag` of the document the server holds.
+	IfNoneMatch *string `json:"If-None-Match,omitempty"`
+}
 
 // GetSpecParams defines parameters for GetSpec.
 type GetSpecParams struct {
@@ -1695,6 +2236,12 @@ type RegisterLogBundleJSONRequestBody = LogBundleRegistration
 // UpdateLogBundleJSONRequestBody defines body for UpdateLogBundle for application/json ContentType.
 type UpdateLogBundleJSONRequestBody = LogBundleUpdate
 
+// ReportSharedStatusJSONRequestBody defines body for ReportSharedStatus for application/json ContentType.
+type ReportSharedStatusJSONRequestBody = SharedStatusReport
+
+// ReportSharedUsageJSONRequestBody defines body for ReportSharedUsage for application/json ContentType.
+type ReportSharedUsageJSONRequestBody = SharedUsageReport
+
 // ReportStatusJSONRequestBody defines body for ReportStatus for application/json ContentType.
 type ReportStatusJSONRequestBody = StatusReport
 
@@ -1703,6 +2250,71 @@ type ReportTelemetryJSONRequestBody = TelemetryReport
 
 // ReportUsageJSONRequestBody defines body for ReportUsage for application/json ContentType.
 type ReportUsageJSONRequestBody = UsageReport
+
+// AsSharedArchiveCommand returns the union data inside the SharedTenantCommand as a SharedArchiveCommand
+func (t SharedTenantCommand) AsSharedArchiveCommand() (SharedArchiveCommand, error) {
+	var body SharedArchiveCommand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSharedArchiveCommand overwrites any union data inside the SharedTenantCommand as the provided SharedArchiveCommand
+func (t *SharedTenantCommand) FromSharedArchiveCommand(v SharedArchiveCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"archive"}`))
+	t.union = b
+	return err
+}
+
+// MergeSharedArchiveCommand performs a merge with any union data inside the SharedTenantCommand, using the provided SharedArchiveCommand
+func (t *SharedTenantCommand) MergeSharedArchiveCommand(v SharedArchiveCommand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"archive"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t SharedTenantCommand) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"kind"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t SharedTenantCommand) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "archive":
+		return t.AsSharedArchiveCommand()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t SharedTenantCommand) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *SharedTenantCommand) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -1941,6 +2553,113 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /v1/secrets (the `GetSecrets` operationId).
 	GetSecrets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReportSharedStatusWithBody Report the server's status and each tenant's
+	//
+	// The server's latest view of itself and of each tenant it holds. Send it after converging and
+	// at least every minute; a server silent for 10 minutes is an item on Trenova staff's
+	// attention list. Every report replaces the server's last: its version, readiness, parts and
+	// message. Each tenant entry replaces that tenant's last; a tenant the report leaves out keeps
+	// its last entry. Reporting the same thing again changes nothing. An entry for an instance
+	// that is not a tenant placed on this server (or one already reported `removed`) is refused
+	// on its own, named in the answer's `refused`, and the rest are recorded.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
+	ReportSharedStatusWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReportSharedStatus Report the server's status and each tenant's
+	//
+	// The server's latest view of itself and of each tenant it holds. Send it after converging and
+	// at least every minute; a server silent for 10 minutes is an item on Trenova staff's
+	// attention list. Every report replaces the server's last: its version, readiness, parts and
+	// message. Each tenant entry replaces that tenant's last; a tenant the report leaves out keeps
+	// its last entry. Reporting the same thing again changes nothing. An entry for an instance
+	// that is not a tenant placed on this server (or one already reported `removed`) is refused
+	// on its own, named in the answer's `refused`, and the rest are recorded.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
+	ReportSharedStatus(ctx context.Context, body ReportSharedStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSharedStorage Where to keep each tenant archive asked for, and the credential to keep it with
+	//
+	// For each `archive` command the tenants document lists, where to write the archive and the
+	// credential to write and read it with: the shared archive bucket of the tenant's region, the
+	// archive's own prefix in it (`tenants/<instanceId>/archives/<commandId>/`), and the bucket's
+	// own access key, which Trenova scopes at the provider to that bucket alone (read, write,
+	// list, delete and multipart uploads in it). Write every object of an archive under its
+	// prefix and nowhere else; the same key reads archives back (a restore) and lists and prunes
+	// a tenant's archives. Keep the key only in memory or in the server's own sealed secrets,
+	// never log it. When `sessionToken` and `expiresAt` are absent the key does not expire; fetch
+	// this again when a write is refused, in case Trenova replaced it. Report the archive as the
+	// tenant's `lastArchive` with its `location` (`s3://<bucket>/<prefix>`). A command whose region
+	// has no archive bucket recorded yet is listed in `waiting` with why; fetch again in a minute.
+	//
+	// Corresponds with GET /v1/shared/storage (the `GetSharedStorage` operationId).
+	GetSharedStorage(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListSharedTenants The tenants this shared server should hold
+	//
+	// Every tenant placed on the calling server that the server has not yet reported `removed`,
+	// as it should be: each tenant's spec revision, what to do with it (`lifecycle`), its
+	// organization, plan, features, add-ons, allowances, first administrator and plan page, and
+	// the commands to run for it. One document for the whole server, ordered by `instanceId`;
+	// a server holds at most 1,000 tenants. Poll it every 15 seconds with `If-None-Match`: `304`
+	// while nothing in it changed. Converge every tenant listed and report each with
+	// `reportSharedStatus`; a tenant the server holds that is not listed is not this server's
+	// any more: keep its data and say nothing of it until a later document lists it.
+	//
+	// Corresponds with GET /v1/shared/tenants (the `ListSharedTenants` operationId).
+	ListSharedTenants(ctx context.Context, params *ListSharedTenantsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReportSharedUsageWithBody Report the tenants' usage, and learn what each may continue
+	//
+	// Hourly meter readings, each for one tenant, exactly as `reportUsage` takes an instance's
+	// (counted meters: what was counted in the hour; a level, document storage: the level at the
+	// hour's end; a reading for an hour already reported replaces it). At most 5,000 readings a
+	// report; send more in several. Report at least every 15 minutes: a usage window closes and is
+	// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
+	// reading for an instance that is not a tenant placed on this server is not recorded, and that
+	// instance is named in `refused`; the rest are recorded.
+	//
+	// The answer covers every tenant placed on the server, whether or not the report had readings
+	// for it, so a server learns what each tenant may do with an empty report: each tenant's open
+	// usage window, whether usage past its allowances continues and is billed, and every meter's
+	// quantity so far against its allowance, as `UsageAck` says an instance's. Stop a tenant's
+	// metered action while its meter is `stopped`. A tenant without an open window (not paid yet,
+	// or its subscription has ended) has every metered action stopped. The usage window's state is
+	// given only here, never in the tenants document.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/shared/usage (the `ReportSharedUsage` operationId).
+	ReportSharedUsageWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReportSharedUsage Report the tenants' usage, and learn what each may continue
+	//
+	// Hourly meter readings, each for one tenant, exactly as `reportUsage` takes an instance's
+	// (counted meters: what was counted in the hour; a level, document storage: the level at the
+	// hour's end; a reading for an hour already reported replaces it). At most 5,000 readings a
+	// report; send more in several. Report at least every 15 minutes: a usage window closes and is
+	// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
+	// reading for an instance that is not a tenant placed on this server is not recorded, and that
+	// instance is named in `refused`; the rest are recorded.
+	//
+	// The answer covers every tenant placed on the server, whether or not the report had readings
+	// for it, so a server learns what each tenant may do with an empty report: each tenant's open
+	// usage window, whether usage past its allowances continues and is billed, and every meter's
+	// quantity so far against its allowance, as `UsageAck` says an instance's. Stop a tenant's
+	// metered action while its meter is `stopped`. A tenant without an open window (not paid yet,
+	// or its subscription has ended) has every metered action stopped. The usage window's state is
+	// given only here, never in the tenants document.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/shared/usage (the `ReportSharedUsage` operationId).
+	ReportSharedUsage(ctx context.Context, body ReportSharedUsageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSpec The desired spec
 	//
@@ -2330,6 +3049,173 @@ func (c *Client) UpdateLogBundle(ctx context.Context, bundleId openapi_types.UUI
 // Corresponds with GET /v1/secrets (the `GetSecrets` operationId).
 func (c *Client) GetSecrets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSecretsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ReportSharedStatusWithBody Report the server's status and each tenant's
+//
+// The server's latest view of itself and of each tenant it holds. Send it after converging and
+// at least every minute; a server silent for 10 minutes is an item on Trenova staff's
+// attention list. Every report replaces the server's last: its version, readiness, parts and
+// message. Each tenant entry replaces that tenant's last; a tenant the report leaves out keeps
+// its last entry. Reporting the same thing again changes nothing. An entry for an instance
+// that is not a tenant placed on this server (or one already reported `removed`) is refused
+// on its own, named in the answer's `refused`, and the rest are recorded.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
+func (c *Client) ReportSharedStatusWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReportSharedStatusRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ReportSharedStatus Report the server's status and each tenant's
+//
+// The server's latest view of itself and of each tenant it holds. Send it after converging and
+// at least every minute; a server silent for 10 minutes is an item on Trenova staff's
+// attention list. Every report replaces the server's last: its version, readiness, parts and
+// message. Each tenant entry replaces that tenant's last; a tenant the report leaves out keeps
+// its last entry. Reporting the same thing again changes nothing. An entry for an instance
+// that is not a tenant placed on this server (or one already reported `removed`) is refused
+// on its own, named in the answer's `refused`, and the rest are recorded.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
+func (c *Client) ReportSharedStatus(ctx context.Context, body ReportSharedStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReportSharedStatusRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetSharedStorage Where to keep each tenant archive asked for, and the credential to keep it with
+//
+// For each `archive` command the tenants document lists, where to write the archive and the
+// credential to write and read it with: the shared archive bucket of the tenant's region, the
+// archive's own prefix in it (`tenants/<instanceId>/archives/<commandId>/`), and the bucket's
+// own access key, which Trenova scopes at the provider to that bucket alone (read, write,
+// list, delete and multipart uploads in it). Write every object of an archive under its
+// prefix and nowhere else; the same key reads archives back (a restore) and lists and prunes
+// a tenant's archives. Keep the key only in memory or in the server's own sealed secrets,
+// never log it. When `sessionToken` and `expiresAt` are absent the key does not expire; fetch
+// this again when a write is refused, in case Trenova replaced it. Report the archive as the
+// tenant's `lastArchive` with its `location` (`s3://<bucket>/<prefix>`). A command whose region
+// has no archive bucket recorded yet is listed in `waiting` with why; fetch again in a minute.
+//
+// Corresponds with GET /v1/shared/storage (the `GetSharedStorage` operationId).
+func (c *Client) GetSharedStorage(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSharedStorageRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListSharedTenants The tenants this shared server should hold
+//
+// Every tenant placed on the calling server that the server has not yet reported `removed`,
+// as it should be: each tenant's spec revision, what to do with it (`lifecycle`), its
+// organization, plan, features, add-ons, allowances, first administrator and plan page, and
+// the commands to run for it. One document for the whole server, ordered by `instanceId`;
+// a server holds at most 1,000 tenants. Poll it every 15 seconds with `If-None-Match`: `304`
+// while nothing in it changed. Converge every tenant listed and report each with
+// `reportSharedStatus`; a tenant the server holds that is not listed is not this server's
+// any more: keep its data and say nothing of it until a later document lists it.
+//
+// Corresponds with GET /v1/shared/tenants (the `ListSharedTenants` operationId).
+func (c *Client) ListSharedTenants(ctx context.Context, params *ListSharedTenantsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListSharedTenantsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ReportSharedUsageWithBody Report the tenants' usage, and learn what each may continue
+//
+// Hourly meter readings, each for one tenant, exactly as `reportUsage` takes an instance's
+// (counted meters: what was counted in the hour; a level, document storage: the level at the
+// hour's end; a reading for an hour already reported replaces it). At most 5,000 readings a
+// report; send more in several. Report at least every 15 minutes: a usage window closes and is
+// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
+// reading for an instance that is not a tenant placed on this server is not recorded, and that
+// instance is named in `refused`; the rest are recorded.
+//
+// The answer covers every tenant placed on the server, whether or not the report had readings
+// for it, so a server learns what each tenant may do with an empty report: each tenant's open
+// usage window, whether usage past its allowances continues and is billed, and every meter's
+// quantity so far against its allowance, as `UsageAck` says an instance's. Stop a tenant's
+// metered action while its meter is `stopped`. A tenant without an open window (not paid yet,
+// or its subscription has ended) has every metered action stopped. The usage window's state is
+// given only here, never in the tenants document.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/shared/usage (the `ReportSharedUsage` operationId).
+func (c *Client) ReportSharedUsageWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReportSharedUsageRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ReportSharedUsage Report the tenants' usage, and learn what each may continue
+//
+// Hourly meter readings, each for one tenant, exactly as `reportUsage` takes an instance's
+// (counted meters: what was counted in the hour; a level, document storage: the level at the
+// hour's end; a reading for an hour already reported replaces it). At most 5,000 readings a
+// report; send more in several. Report at least every 15 minutes: a usage window closes and is
+// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
+// reading for an instance that is not a tenant placed on this server is not recorded, and that
+// instance is named in `refused`; the rest are recorded.
+//
+// The answer covers every tenant placed on the server, whether or not the report had readings
+// for it, so a server learns what each tenant may do with an empty report: each tenant's open
+// usage window, whether usage past its allowances continues and is billed, and every meter's
+// quantity so far against its allowance, as `UsageAck` says an instance's. Stop a tenant's
+// metered action while its meter is `stopped`. A tenant without an open window (not paid yet,
+// or its subscription has ended) has every metered action stopped. The usage window's state is
+// given only here, never in the tenants document.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/shared/usage (the `ReportSharedUsage` operationId).
+func (c *Client) ReportSharedUsage(ctx context.Context, body ReportSharedUsageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReportSharedUsageRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2818,6 +3704,155 @@ func NewGetSecretsRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewReportSharedStatusRequest calls the generic ReportSharedStatus builder with application/json body
+func NewReportSharedStatusRequest(server string, body ReportSharedStatusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewReportSharedStatusRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewReportSharedStatusRequestWithBody constructs an http.Request for the ReportSharedStatus method, with any body, and a specified content type
+func NewReportSharedStatusRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/shared/status")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetSharedStorageRequest constructs an http.Request for the GetSharedStorage method
+func NewGetSharedStorageRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/shared/storage")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListSharedTenantsRequest constructs an http.Request for the ListSharedTenants method
+func NewListSharedTenantsRequest(server string, params *ListSharedTenantsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/shared/tenants")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.IfNoneMatch != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "If-None-Match", *params.IfNoneMatch, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("If-None-Match", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewReportSharedUsageRequest calls the generic ReportSharedUsage builder with application/json body
+func NewReportSharedUsageRequest(server string, body ReportSharedUsageJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewReportSharedUsageRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewReportSharedUsageRequestWithBody constructs an http.Request for the ReportSharedUsage method, with any body, and a specified content type
+func NewReportSharedUsageRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/shared/usage")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetSpecRequest constructs an http.Request for the GetSpec method
 func NewGetSpecRequest(server string, params *GetSpecParams) (*http.Request, error) {
 	var err error
@@ -3221,6 +4256,117 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/secrets (the `GetSecrets` operationId).
 	GetSecretsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetSecretsResponse, error)
 
+	// ReportSharedStatusWithBodyWithResponse Report the server's status and each tenant's
+	//
+	// The server's latest view of itself and of each tenant it holds. Send it after converging and
+	// at least every minute; a server silent for 10 minutes is an item on Trenova staff's
+	// attention list. Every report replaces the server's last: its version, readiness, parts and
+	// message. Each tenant entry replaces that tenant's last; a tenant the report leaves out keeps
+	// its last entry. Reporting the same thing again changes nothing. An entry for an instance
+	// that is not a tenant placed on this server (or one already reported `removed`) is refused
+	// on its own, named in the answer's `refused`, and the rest are recorded.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
+	ReportSharedStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReportSharedStatusResponse, error)
+
+	// ReportSharedStatusWithResponse Report the server's status and each tenant's
+	//
+	// The server's latest view of itself and of each tenant it holds. Send it after converging and
+	// at least every minute; a server silent for 10 minutes is an item on Trenova staff's
+	// attention list. Every report replaces the server's last: its version, readiness, parts and
+	// message. Each tenant entry replaces that tenant's last; a tenant the report leaves out keeps
+	// its last entry. Reporting the same thing again changes nothing. An entry for an instance
+	// that is not a tenant placed on this server (or one already reported `removed`) is refused
+	// on its own, named in the answer's `refused`, and the rest are recorded.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
+	ReportSharedStatusWithResponse(ctx context.Context, body ReportSharedStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*ReportSharedStatusResponse, error)
+
+	// GetSharedStorageWithResponse Where to keep each tenant archive asked for, and the credential to keep it with
+	//
+	// For each `archive` command the tenants document lists, where to write the archive and the
+	// credential to write and read it with: the shared archive bucket of the tenant's region, the
+	// archive's own prefix in it (`tenants/<instanceId>/archives/<commandId>/`), and the bucket's
+	// own access key, which Trenova scopes at the provider to that bucket alone (read, write,
+	// list, delete and multipart uploads in it). Write every object of an archive under its
+	// prefix and nowhere else; the same key reads archives back (a restore) and lists and prunes
+	// a tenant's archives. Keep the key only in memory or in the server's own sealed secrets,
+	// never log it. When `sessionToken` and `expiresAt` are absent the key does not expire; fetch
+	// this again when a write is refused, in case Trenova replaced it. Report the archive as the
+	// tenant's `lastArchive` with its `location` (`s3://<bucket>/<prefix>`). A command whose region
+	// has no archive bucket recorded yet is listed in `waiting` with why; fetch again in a minute.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/shared/storage (the `GetSharedStorage` operationId).
+	GetSharedStorageWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetSharedStorageResponse, error)
+
+	// ListSharedTenantsWithResponse The tenants this shared server should hold
+	//
+	// Every tenant placed on the calling server that the server has not yet reported `removed`,
+	// as it should be: each tenant's spec revision, what to do with it (`lifecycle`), its
+	// organization, plan, features, add-ons, allowances, first administrator and plan page, and
+	// the commands to run for it. One document for the whole server, ordered by `instanceId`;
+	// a server holds at most 1,000 tenants. Poll it every 15 seconds with `If-None-Match`: `304`
+	// while nothing in it changed. Converge every tenant listed and report each with
+	// `reportSharedStatus`; a tenant the server holds that is not listed is not this server's
+	// any more: keep its data and say nothing of it until a later document lists it.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/shared/tenants (the `ListSharedTenants` operationId).
+	ListSharedTenantsWithResponse(ctx context.Context, params *ListSharedTenantsParams, reqEditors ...RequestEditorFn) (*ListSharedTenantsResponse, error)
+
+	// ReportSharedUsageWithBodyWithResponse Report the tenants' usage, and learn what each may continue
+	//
+	// Hourly meter readings, each for one tenant, exactly as `reportUsage` takes an instance's
+	// (counted meters: what was counted in the hour; a level, document storage: the level at the
+	// hour's end; a reading for an hour already reported replaces it). At most 5,000 readings a
+	// report; send more in several. Report at least every 15 minutes: a usage window closes and is
+	// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
+	// reading for an instance that is not a tenant placed on this server is not recorded, and that
+	// instance is named in `refused`; the rest are recorded.
+	//
+	// The answer covers every tenant placed on the server, whether or not the report had readings
+	// for it, so a server learns what each tenant may do with an empty report: each tenant's open
+	// usage window, whether usage past its allowances continues and is billed, and every meter's
+	// quantity so far against its allowance, as `UsageAck` says an instance's. Stop a tenant's
+	// metered action while its meter is `stopped`. A tenant without an open window (not paid yet,
+	// or its subscription has ended) has every metered action stopped. The usage window's state is
+	// given only here, never in the tenants document.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/shared/usage (the `ReportSharedUsage` operationId).
+	ReportSharedUsageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReportSharedUsageResponse, error)
+
+	// ReportSharedUsageWithResponse Report the tenants' usage, and learn what each may continue
+	//
+	// Hourly meter readings, each for one tenant, exactly as `reportUsage` takes an instance's
+	// (counted meters: what was counted in the hour; a level, document storage: the level at the
+	// hour's end; a reading for an hour already reported replaces it). At most 5,000 readings a
+	// report; send more in several. Report at least every 15 minutes: a usage window closes and is
+	// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
+	// reading for an instance that is not a tenant placed on this server is not recorded, and that
+	// instance is named in `refused`; the rest are recorded.
+	//
+	// The answer covers every tenant placed on the server, whether or not the report had readings
+	// for it, so a server learns what each tenant may do with an empty report: each tenant's open
+	// usage window, whether usage past its allowances continues and is billed, and every meter's
+	// quantity so far against its allowance, as `UsageAck` says an instance's. Stop a tenant's
+	// metered action while its meter is `stopped`. A tenant without an open window (not paid yet,
+	// or its subscription has ended) has every metered action stopped. The usage window's state is
+	// given only here, never in the tenants document.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/shared/usage (the `ReportSharedUsage` operationId).
+	ReportSharedUsageWithResponse(ctx context.Context, body ReportSharedUsageJSONRequestBody, reqEditors ...RequestEditorFn) (*ReportSharedUsageResponse, error)
+
 	// GetSpecWithResponse The desired spec
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -3343,6 +4489,8 @@ type RenewCertificateResponse struct {
 	ApplicationproblemJSON400 *Invalid
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *RateLimited
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -3362,6 +4510,11 @@ func (r RenewCertificateResponse) GetApplicationproblemJSON400() *Invalid {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r RenewCertificateResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RenewCertificateResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -3410,6 +4563,8 @@ type ListCommandsResponse struct {
 	JSON200 *CommandList
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *RateLimited
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -3424,6 +4579,11 @@ func (r ListCommandsResponse) GetJSON200() *CommandList {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r ListCommandsResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListCommandsResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -3472,6 +4632,8 @@ type CompleteCommandResponse struct {
 	ApplicationproblemJSON400 *Invalid
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *NotFound
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -3488,6 +4650,11 @@ func (r CompleteCommandResponse) GetApplicationproblemJSON400() *Invalid {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r CompleteCommandResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CompleteCommandResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
@@ -3546,6 +4713,8 @@ type ListEmailEventsResponse struct {
 	JSON200 *EmailEventList
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *RateLimited
 	// Headers200 the parsed response headers for an HTTP 200 response
@@ -3562,6 +4731,11 @@ func (r ListEmailEventsResponse) GetJSON200() *EmailEventList {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r ListEmailEventsResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListEmailEventsResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -3610,6 +4784,8 @@ type AckEmailEventsResponse struct {
 	ApplicationproblemJSON400 *Invalid
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *RateLimited
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -3624,6 +4800,11 @@ func (r AckEmailEventsResponse) GetApplicationproblemJSON400() *Invalid {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r AckEmailEventsResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r AckEmailEventsResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -3674,6 +4855,8 @@ type RegisterLogBundleResponse struct {
 	ApplicationproblemJSON400 *Invalid
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
 	ApplicationproblemJSON409 *Conflict
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -3695,6 +4878,11 @@ func (r RegisterLogBundleResponse) GetApplicationproblemJSON400() *Invalid {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r RegisterLogBundleResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RegisterLogBundleResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
@@ -3748,6 +4936,8 @@ type UpdateLogBundleResponse struct {
 	ApplicationproblemJSON400 *Invalid
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *NotFound
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -3764,6 +4954,11 @@ func (r UpdateLogBundleResponse) GetApplicationproblemJSON400() *Invalid {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r UpdateLogBundleResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r UpdateLogBundleResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
@@ -3822,6 +5017,8 @@ type GetSecretsResponse struct {
 	JSON200 *InstanceSecrets
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *RateLimited
 	// Headers200 the parsed response headers for an HTTP 200 response
@@ -3838,6 +5035,11 @@ func (r GetSecretsResponse) GetJSON200() *InstanceSecrets {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r GetSecretsResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetSecretsResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -3874,6 +5076,310 @@ func (r GetSecretsResponse) ContentType() string {
 	return ""
 }
 
+// ReportSharedStatusResponse429Headers the declared response headers of an HTTP 429 response for ReportSharedStatus
+type ReportSharedStatusResponse429Headers struct {
+	RetryAfter *int
+}
+
+type ReportSharedStatusResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SharedReportAck
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *Invalid
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ReportSharedStatusResponse429Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ReportSharedStatusResponse) GetJSON200() *SharedReportAck {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ReportSharedStatusResponse) GetApplicationproblemJSON400() *Invalid {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ReportSharedStatusResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ReportSharedStatusResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ReportSharedStatusResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r ReportSharedStatusResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ReportSharedStatusResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ReportSharedStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ReportSharedStatusResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetSharedStorageResponse200Headers the declared response headers of an HTTP 200 response for GetSharedStorage
+type GetSharedStorageResponse200Headers struct {
+	CacheControl *string
+}
+
+// GetSharedStorageResponse429Headers the declared response headers of an HTTP 429 response for GetSharedStorage
+type GetSharedStorageResponse429Headers struct {
+	RetryAfter *int
+}
+
+type GetSharedStorageResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SharedStorage
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetSharedStorageResponse200Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetSharedStorageResponse429Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetSharedStorageResponse) GetJSON200() *SharedStorage {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetSharedStorageResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetSharedStorageResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetSharedStorageResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r GetSharedStorageResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSharedStorageResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSharedStorageResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetSharedStorageResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListSharedTenantsResponse200Headers the declared response headers of an HTTP 200 response for ListSharedTenants
+type ListSharedTenantsResponse200Headers struct {
+	ETag *string
+}
+
+// ListSharedTenantsResponse429Headers the declared response headers of an HTTP 429 response for ListSharedTenants
+type ListSharedTenantsResponse429Headers struct {
+	RetryAfter *int
+}
+
+type ListSharedTenantsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SharedTenantList
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListSharedTenantsResponse200Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListSharedTenantsResponse429Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListSharedTenantsResponse) GetJSON200() *SharedTenantList {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListSharedTenantsResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListSharedTenantsResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListSharedTenantsResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r ListSharedTenantsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListSharedTenantsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListSharedTenantsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListSharedTenantsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ReportSharedUsageResponse429Headers the declared response headers of an HTTP 429 response for ReportSharedUsage
+type ReportSharedUsageResponse429Headers struct {
+	RetryAfter *int
+}
+
+type ReportSharedUsageResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SharedUsageAck
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *Invalid
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ReportSharedUsageResponse429Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ReportSharedUsageResponse) GetJSON200() *SharedUsageAck {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ReportSharedUsageResponse) GetApplicationproblemJSON400() *Invalid {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ReportSharedUsageResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ReportSharedUsageResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ReportSharedUsageResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r ReportSharedUsageResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ReportSharedUsageResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ReportSharedUsageResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ReportSharedUsageResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // GetSpecResponse200Headers the declared response headers of an HTTP 200 response for GetSpec
 type GetSpecResponse200Headers struct {
 	ETag *string
@@ -3896,6 +5402,8 @@ type GetSpecResponse struct {
 	JSON200 *DesiredSpec
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *RateLimited
 	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
@@ -3916,6 +5424,11 @@ func (r GetSpecResponse) GetJSON200() *DesiredSpec {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r GetSpecResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetSpecResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -3969,6 +5482,8 @@ type ReportStatusResponse struct {
 	ApplicationproblemJSON400 *Invalid
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *RateLimited
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -3983,6 +5498,11 @@ func (r ReportStatusResponse) GetApplicationproblemJSON400() *Invalid {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r ReportStatusResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ReportStatusResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -4036,6 +5556,8 @@ type GetStorageResponse struct {
 	JSON200 *InstanceStorage
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *NotFound
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -4054,6 +5576,11 @@ func (r GetStorageResponse) GetJSON200() *InstanceStorage {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r GetStorageResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetStorageResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
@@ -4107,6 +5634,8 @@ type ReportTelemetryResponse struct {
 	ApplicationproblemJSON400 *Invalid
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *RateLimited
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -4121,6 +5650,11 @@ func (r ReportTelemetryResponse) GetApplicationproblemJSON400() *Invalid {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r ReportTelemetryResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ReportTelemetryResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -4171,6 +5705,8 @@ type ReportUsageResponse struct {
 	ApplicationproblemJSON400 *Invalid
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *Forbidden
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *RateLimited
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -4190,6 +5726,11 @@ func (r ReportUsageResponse) GetApplicationproblemJSON400() *Invalid {
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r ReportUsageResponse) GetApplicationproblemJSON401() *Unauthenticated {
 	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ReportUsageResponse) GetApplicationproblemJSON403() *Forbidden {
+	return r.ApplicationproblemJSON403
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -4474,6 +6015,153 @@ func (c *ClientWithResponses) GetSecretsWithResponse(ctx context.Context, reqEdi
 	return ParseGetSecretsResponse(rsp)
 }
 
+// ReportSharedStatusWithBodyWithResponse Report the server's status and each tenant's
+//
+// The server's latest view of itself and of each tenant it holds. Send it after converging and
+// at least every minute; a server silent for 10 minutes is an item on Trenova staff's
+// attention list. Every report replaces the server's last: its version, readiness, parts and
+// message. Each tenant entry replaces that tenant's last; a tenant the report leaves out keeps
+// its last entry. Reporting the same thing again changes nothing. An entry for an instance
+// that is not a tenant placed on this server (or one already reported `removed`) is refused
+// on its own, named in the answer's `refused`, and the rest are recorded.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
+func (c *ClientWithResponses) ReportSharedStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReportSharedStatusResponse, error) {
+	rsp, err := c.ReportSharedStatusWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReportSharedStatusResponse(rsp)
+}
+
+// ReportSharedStatusWithResponse Report the server's status and each tenant's
+//
+// The server's latest view of itself and of each tenant it holds. Send it after converging and
+// at least every minute; a server silent for 10 minutes is an item on Trenova staff's
+// attention list. Every report replaces the server's last: its version, readiness, parts and
+// message. Each tenant entry replaces that tenant's last; a tenant the report leaves out keeps
+// its last entry. Reporting the same thing again changes nothing. An entry for an instance
+// that is not a tenant placed on this server (or one already reported `removed`) is refused
+// on its own, named in the answer's `refused`, and the rest are recorded.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/shared/status (the `ReportSharedStatus` operationId).
+func (c *ClientWithResponses) ReportSharedStatusWithResponse(ctx context.Context, body ReportSharedStatusJSONRequestBody, reqEditors ...RequestEditorFn) (*ReportSharedStatusResponse, error) {
+	rsp, err := c.ReportSharedStatus(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReportSharedStatusResponse(rsp)
+}
+
+// GetSharedStorageWithResponse Where to keep each tenant archive asked for, and the credential to keep it with
+//
+// For each `archive` command the tenants document lists, where to write the archive and the
+// credential to write and read it with: the shared archive bucket of the tenant's region, the
+// archive's own prefix in it (`tenants/<instanceId>/archives/<commandId>/`), and the bucket's
+// own access key, which Trenova scopes at the provider to that bucket alone (read, write,
+// list, delete and multipart uploads in it). Write every object of an archive under its
+// prefix and nowhere else; the same key reads archives back (a restore) and lists and prunes
+// a tenant's archives. Keep the key only in memory or in the server's own sealed secrets,
+// never log it. When `sessionToken` and `expiresAt` are absent the key does not expire; fetch
+// this again when a write is refused, in case Trenova replaced it. Report the archive as the
+// tenant's `lastArchive` with its `location` (`s3://<bucket>/<prefix>`). A command whose region
+// has no archive bucket recorded yet is listed in `waiting` with why; fetch again in a minute.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/shared/storage (the `GetSharedStorage` operationId).
+func (c *ClientWithResponses) GetSharedStorageWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetSharedStorageResponse, error) {
+	rsp, err := c.GetSharedStorage(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSharedStorageResponse(rsp)
+}
+
+// ListSharedTenantsWithResponse The tenants this shared server should hold
+//
+// Every tenant placed on the calling server that the server has not yet reported `removed`,
+// as it should be: each tenant's spec revision, what to do with it (`lifecycle`), its
+// organization, plan, features, add-ons, allowances, first administrator and plan page, and
+// the commands to run for it. One document for the whole server, ordered by `instanceId`;
+// a server holds at most 1,000 tenants. Poll it every 15 seconds with `If-None-Match`: `304`
+// while nothing in it changed. Converge every tenant listed and report each with
+// `reportSharedStatus`; a tenant the server holds that is not listed is not this server's
+// any more: keep its data and say nothing of it until a later document lists it.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/shared/tenants (the `ListSharedTenants` operationId).
+func (c *ClientWithResponses) ListSharedTenantsWithResponse(ctx context.Context, params *ListSharedTenantsParams, reqEditors ...RequestEditorFn) (*ListSharedTenantsResponse, error) {
+	rsp, err := c.ListSharedTenants(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListSharedTenantsResponse(rsp)
+}
+
+// ReportSharedUsageWithBodyWithResponse Report the tenants' usage, and learn what each may continue
+//
+// Hourly meter readings, each for one tenant, exactly as `reportUsage` takes an instance's
+// (counted meters: what was counted in the hour; a level, document storage: the level at the
+// hour's end; a reading for an hour already reported replaces it). At most 5,000 readings a
+// report; send more in several. Report at least every 15 minutes: a usage window closes and is
+// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
+// reading for an instance that is not a tenant placed on this server is not recorded, and that
+// instance is named in `refused`; the rest are recorded.
+//
+// The answer covers every tenant placed on the server, whether or not the report had readings
+// for it, so a server learns what each tenant may do with an empty report: each tenant's open
+// usage window, whether usage past its allowances continues and is billed, and every meter's
+// quantity so far against its allowance, as `UsageAck` says an instance's. Stop a tenant's
+// metered action while its meter is `stopped`. A tenant without an open window (not paid yet,
+// or its subscription has ended) has every metered action stopped. The usage window's state is
+// given only here, never in the tenants document.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/shared/usage (the `ReportSharedUsage` operationId).
+func (c *ClientWithResponses) ReportSharedUsageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReportSharedUsageResponse, error) {
+	rsp, err := c.ReportSharedUsageWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReportSharedUsageResponse(rsp)
+}
+
+// ReportSharedUsageWithResponse Report the tenants' usage, and learn what each may continue
+//
+// Hourly meter readings, each for one tenant, exactly as `reportUsage` takes an instance's
+// (counted meters: what was counted in the hour; a level, document storage: the level at the
+// hour's end; a reading for an hour already reported replaces it). At most 5,000 readings a
+// report; send more in several. Report at least every 15 minutes: a usage window closes and is
+// billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
+// reading for an instance that is not a tenant placed on this server is not recorded, and that
+// instance is named in `refused`; the rest are recorded.
+//
+// The answer covers every tenant placed on the server, whether or not the report had readings
+// for it, so a server learns what each tenant may do with an empty report: each tenant's open
+// usage window, whether usage past its allowances continues and is billed, and every meter's
+// quantity so far against its allowance, as `UsageAck` says an instance's. Stop a tenant's
+// metered action while its meter is `stopped`. A tenant without an open window (not paid yet,
+// or its subscription has ended) has every metered action stopped. The usage window's state is
+// given only here, never in the tenants document.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/shared/usage (the `ReportSharedUsage` operationId).
+func (c *ClientWithResponses) ReportSharedUsageWithResponse(ctx context.Context, body ReportSharedUsageJSONRequestBody, reqEditors ...RequestEditorFn) (*ReportSharedUsageResponse, error) {
+	rsp, err := c.ReportSharedUsage(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReportSharedUsageResponse(rsp)
+}
+
 // GetSpecWithResponse The desired spec
 //
 // Returns a wrapper object for the known response body format(s).
@@ -4664,6 +6352,13 @@ func ParseRenewCertificateResponse(rsp *http.Response) (*RenewCertificateRespons
 		}
 		response.ApplicationproblemJSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest RateLimited
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -4716,6 +6411,13 @@ func ParseListCommandsResponse(rsp *http.Response) (*ListCommandsResponse, error
 			return nil, err
 		}
 		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest RateLimited
@@ -4772,6 +6474,13 @@ func ParseCompleteCommandResponse(rsp *http.Response) (*CompleteCommandResponse,
 			return nil, err
 		}
 		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest NotFound
@@ -4832,6 +6541,13 @@ func ParseListEmailEventsResponse(rsp *http.Response) (*ListEmailEventsResponse,
 			return nil, err
 		}
 		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest RateLimited
@@ -4899,6 +6615,13 @@ func ParseAckEmailEventsResponse(rsp *http.Response) (*AckEmailEventsResponse, e
 		}
 		response.ApplicationproblemJSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest RateLimited
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -4958,6 +6681,13 @@ func ParseRegisterLogBundleResponse(rsp *http.Response) (*RegisterLogBundleRespo
 			return nil, err
 		}
 		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
 		var dest Conflict
@@ -5022,6 +6752,13 @@ func ParseUpdateLogBundleResponse(rsp *http.Response) (*UpdateLogBundleResponse,
 		}
 		response.ApplicationproblemJSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest NotFound
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -5082,6 +6819,13 @@ func ParseGetSecretsResponse(rsp *http.Response) (*GetSecretsResponse, error) {
 		}
 		response.ApplicationproblemJSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest RateLimited
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -5104,6 +6848,283 @@ func ParseGetSecretsResponse(rsp *http.Response) (*GetSecretsResponse, error) {
 		response.Headers200 = &headers
 	case rsp.StatusCode == 429:
 		var headers GetSecretsResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseReportSharedStatusResponse parses an HTTP response from a ReportSharedStatusWithResponse call
+func ParseReportSharedStatusResponse(rsp *http.Response) (*ReportSharedStatusResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ReportSharedStatusResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SharedReportAck
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Invalid
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 429:
+		var headers ReportSharedStatusResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetSharedStorageResponse parses an HTTP response from a GetSharedStorageWithResponse call
+func ParseGetSharedStorageResponse(rsp *http.Response) (*GetSharedStorageResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSharedStorageResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SharedStorage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetSharedStorageResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetSharedStorageResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListSharedTenantsResponse parses an HTTP response from a ListSharedTenantsWithResponse call
+func ParseListSharedTenantsResponse(rsp *http.Response) (*ListSharedTenantsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListSharedTenantsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SharedTenantList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case rsp.StatusCode == 304:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListSharedTenantsResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListSharedTenantsResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseReportSharedUsageResponse parses an HTTP response from a ReportSharedUsageWithResponse call
+func ParseReportSharedUsageResponse(rsp *http.Response) (*ReportSharedUsageResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ReportSharedUsageResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SharedUsageAck
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Invalid
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 429:
+		var headers ReportSharedUsageResponse429Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
@@ -5147,6 +7168,13 @@ func ParseGetSpecResponse(rsp *http.Response) (*GetSpecResponse, error) {
 			return nil, err
 		}
 		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest RateLimited
@@ -5231,6 +7259,13 @@ func ParseReportStatusResponse(rsp *http.Response) (*ReportStatusResponse, error
 		}
 		response.ApplicationproblemJSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest RateLimited
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -5283,6 +7318,13 @@ func ParseGetStorageResponse(rsp *http.Response) (*GetStorageResponse, error) {
 			return nil, err
 		}
 		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest NotFound
@@ -5357,6 +7399,13 @@ func ParseReportTelemetryResponse(rsp *http.Response) (*ReportTelemetryResponse,
 		}
 		response.ApplicationproblemJSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest RateLimited
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -5416,6 +7465,13 @@ func ParseReportUsageResponse(rsp *http.Response) (*ReportUsageResponse, error) 
 			return nil, err
 		}
 		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest RateLimited

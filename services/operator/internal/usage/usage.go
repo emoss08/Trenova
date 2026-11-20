@@ -131,20 +131,28 @@ func (m mapping) state(ack instanceapi.UsageAck) tms.State {
 			Quantity:  mu.Quantity,
 			Allowance: mu.Allowance,
 			HardCap:   mu.HardCap,
+			Ceiling:   ceilingOf(mu.Ceiling),
 			Stopped:   mu.Stopped,
 		})
 	}
 	return state
 }
 
-func chunks(readings []instanceapi.UsageReading, size int) [][]instanceapi.UsageReading {
+func chunks[T any](items []T, size int) [][]T {
 	size = max(size, 1)
-	if len(readings) == 0 {
-		return [][]instanceapi.UsageReading{{}}
+	if len(items) == 0 {
+		return [][]T{{}}
 	}
-	out := make([][]instanceapi.UsageReading, 0, (len(readings)+size-1)/size)
-	for start := 0; start < len(readings); start += size {
-		out = append(out, readings[start:min(start+size, len(readings))])
+	out := make([][]T, 0, (len(items)+size-1)/size)
+	for start := 0; start < len(items); start += size {
+		out = append(out, items[start:min(start+size, len(items))])
 	}
 	return out
+}
+
+func ceilingOf(ceiling *int64) int64 {
+	if ceiling == nil || *ceiling < 0 {
+		return 0
+	}
+	return *ceiling
 }

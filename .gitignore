@@ -42,12 +42,8 @@ docs/screenshots/dark/
 # Redis snapshots written by a local redis-server
 *.rdb
 
-# Trenova Cloud edition overlay. It lives in the private trenova-cloud-deploy
-# repository and is copied here only for Cloud builds (docs/engineering/editions.md).
-services/tms/internal/cloud/
-services/tms/cmd/cli/edition_cloud.go
-services/tms/cmd/api/edition_cloud.go
-services/tms/cmd/worker/edition_cloud.go
+# The client's edition overlay (docs/engineering/editions.md). The server has none:
+# services/tms/internal/cloud is tracked here under its own license.
 client/packages/cloud/
 
 *:Zone.Identifier

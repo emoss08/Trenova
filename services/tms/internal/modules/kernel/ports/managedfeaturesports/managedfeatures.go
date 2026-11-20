@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/pkg/dbscope"
 )
 
 type ReplaceRequest struct {
@@ -58,4 +59,33 @@ type PlanEndReminderResult struct {
 
 type PlanEndReminder interface {
 	RemindPlanEnd(ctx context.Context) (*PlanEndReminderResult, error)
+}
+
+type Writer interface {
+	State(ctx context.Context, scope managedscope.Scope) (*managedfeatures.State, error)
+	SetFeatures(
+		ctx context.Context,
+		scope managedscope.Scope,
+		received *managedfeatures.Received,
+	) error
+	SetLifecycle(
+		ctx context.Context,
+		scope managedscope.Scope,
+		lifecycle managedfeatures.Lifecycle,
+	) error
+}
+
+type Standing struct {
+	Suspended bool
+	ManageURL string
+}
+
+type StandingReader interface {
+	Standing(ctx context.Context, tenant dbscope.Tenant) (Standing, error)
+}
+
+type AlwaysActive struct{}
+
+func (AlwaysActive) Standing(context.Context, dbscope.Tenant) (Standing, error) {
+	return Standing{}, nil
 }

@@ -45,6 +45,14 @@ func TestConfig_SlotForFillsWhatIsUnsetFromTheDefaults(t *testing.T) {
 	extraction := cfg.SlotFor(tenantlimitsconfig.KindExtraction)
 	assert.Equal(t, 1, extraction.Total)
 	assert.Equal(t, 1, extraction.PerOrganization)
+
+	removal := cfg.SlotFor(tenantlimitsconfig.KindRemoval)
+	assert.Equal(t, 1, removal.Total)
+	assert.Equal(t, 1, removal.PerOrganization)
+	assert.Equal(t, 30*time.Minute, removal.Hold)
+
+	cfg.HeavyJobs.Removal = tenantlimitsconfig.Slot{Total: 2}
+	assert.Equal(t, 2, cfg.SlotFor(tenantlimitsconfig.KindRemoval).Total)
 }
 
 func TestConfig_OrganizationEmailPerHourIsZeroWhenTheBoundIsOff(t *testing.T) {

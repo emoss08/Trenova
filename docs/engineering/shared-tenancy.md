@@ -325,6 +325,7 @@ lapses:
 | `export` | 1 | 4 | report runs, audit exports, AI audit exports |
 | `import` | 1 | 4 | rate sheet upload, fuel card statement staging |
 | `preview` | 1 | 4 | invoice packet page previews; warming ahead takes only a free slot |
+| `removal` | 1 | 1 | a removed shared-server tenant's batched deletes, cascade and store deletes (`tenantjobs`) |
 
 The defaults fit one 24 GB server running the whole stack: the PDF renderer (0.5 GB) renders four
 pages at once, extraction (3 GB) one job, exports and imports in the worker (2.5 GB) four each,
@@ -348,3 +349,167 @@ a provider an organization owns has its own bound only.
 claimed in every bound or none by one script. Provider slots and heavy-job slots both use it; a
 new bounded resource claims from it rather than adding another. When Redis cannot be reached a
 heavy job runs without a slot rather than failing every job.
+
+## Tenant lifecycle (`internal/cloud`)
+
+Everything below lives in `services/tms/internal/cloud`, under its own license
+(`internal/cloud/LICENSE`, the Trenova Commercial License). Public code never imports it:
+`scripts/archlint` fails on any importer outside `internal/cloud` and `internal/bootstrap`, and
+`.go-arch-lint.yml` gives it the component `cloud`, which may use every module's domain, ports and
+contracts, `infrastructure`, `api` (only `managedroutes`) and `pkg`. Core reaches it through ports:
+the managed listener's route group (`managedroutes.Contributor`, fx group
+`managed_route_contributors`) and the email service's `emailports.InstanceTags`, which
+`cloud.SharedOptions` decorates on a shared server. Its keel models generate into
+`internal/cloud/cloudkinds` and `internal/cloud/cloudtables` (`task keel-gen` runs both), so no
+public package lists a commercial table. Its system scopes and repositories are checked by its own
+`internal/cloud/lint_test.go` (the same `rlslint` and `tenantbindlint` rules core runs).
+
+A **tenant** is one company on a shared server: one business unit and one organization, known to
+the control plane by its instance id. `cloud_tenants` holds the server's bookkeeping about each:
+
+| Column | What |
+|---|---|
+| `instance_id` | the control plane instance (primary key) |
+| `tenant_organization_id`, `tenant_business_unit_id`, `admin_user_id` | what the tenant became; null until it is made |
+| `state` | `applying`, `active`, `suspended`, `removing`, `removed` |
+| `applied_revision` | the newest revision the tenant holds everything of; 0 before its first |
+| `desired_revision`, `desired_digest`, `desired` | the entry last read (its SHA-256 and JSON); `desired` is the entry last accepted once the tenant is made |
+| `admin_invite_sha256` | the first administrator's invite last installed |
+| `last_archive_*` | the newest archive taken for an `archive` command (the next step writes it) |
+| `refused_revision`, `refused_code`, `refused_reason` | the newest revision the server will not apply as written, and why, in a line that names nobody |
+| `removal_started_at`, `removed_at`, `created_at`, `updated_at` | Unix seconds |
+
+It is a **global table** (`trenova_rls.global_tables`), read and written only by the lifecycle under
+system scope, for the same reason as the scoped managed state beside it: it is the control plane's
+metadata about tenants, not a tenant's data, and it must outlive a removed tenant so the server can
+keep answering "removed". Its columns are named `tenant_organization_id` so the purge, which deletes
+by `organization_id`, never touches it (and `TestGlobalTablesHoldNoTenantColumns` holds). A unique
+partial index on `tenant_organization_id` serves the email tag lookup.
+`cloud_tenant_events` is the ledger kept after removal: instance id, kind (`created`, `applied`,
+`refused`, `suspended`, `resumed`, `removing`, `removed`), revision, counts and reasons, never a
+name, address or record of the tenant.
+
+### Applying an entry
+
+`tenantlifecycle.Service.Apply(instanceID, entry)` is the one write. It runs in one system-scope
+transaction holding a transaction-scoped advisory lock per instance id (`trenova:cloud-tenant:<id>`),
+so two concurrent applies of the same tenant serialise and the second finds the first's work:
+
+- **Unchanged** (an older revision, or the same revision with the same SHA-256 of the entry) does
+  nothing and answers the held state. The same revision with a different digest is applied: the
+  control plane composes `account` (plan URL, plan end) when it serves, so a plan end can move
+  without a new revision.
+- **Refused** entries are recorded, never a 500: a malformed field (`cloudtenant.Desired.Refusal`,
+  every problem in one line), a plan URL the feature list refuses, a changed organization name or
+  first administrator on a made tenant, or an administrator address already taken anywhere on the
+  server ("the first administrator's email address cannot be used on this server": it names nobody).
+  The refusal carries the revision and code `invalid`; the agent reports it; the next revision that
+  can be applied clears it.
+- **First time**: in the same transaction, `tenantbootstraprepository.Bootstrap` makes the business
+  unit, organization (placeholders the organization setup gate asks the administrator to finish,
+  exactly as the dedicated bootstrap does: `instancebootstrap.Inputs.Organization`), the first
+  administrator with an unusable password (`Inputs.Administrator`), the Organization Administrator
+  role and its grant, and the reference data. The organization quota is admitted under the new
+  organization's own scope (its ids are chosen before the insert), not the server's. The singleton
+  `instance_bootstraps` record is never written on a shared server.
+- **Every applied revision** writes the scope's plan through `managedfeaturesports.Writer`
+  (`SetFeatures`: features, plan URL, add-on endings, plan end, final backup days) and its lifecycle
+  (`SetLifecycle`), installs the first administrator's invite when its hash is new and not expired
+  (`FirstAdministratorInviteService.InstallFor`, the same idempotent install the dedicated
+  `/first-administrator/invite` route uses, for a named administrator), then records the revision
+  as applied. Allowances and the AI provider are held in `desired`; what a tenant may meter comes
+  from the usage answers (`PUT /managed/v1/tenants/usage`).
+- **Suspended**: the scope's lifecycle becomes `suspended`, so the gate answers no feature at all;
+  the tenant's sessions are ended by the workflow `CloudTenantSessionsWorkflow`
+  (`cloud-tenant-sessions/<instance>/<revision>`); and every request of the organization is refused
+  at `planservice.Admission` (the HTTP `ReadOnlyGuard` on every authenticated and device route, and
+  the GraphQL mutation guard) and at sign-in (`authservice.createLoginResponse`, before a session is
+  made) with `PLAN_RESTRICTED`, reason `organization_suspended`, and `manageUrl`, the console plan
+  page from the entry's account. `internal/api/suspension_guard_test.go` fails if a route group
+  authenticates without that guard. Public and webhook routes resolve the tenant and ask its plan,
+  which a suspended organization does not have. Data is untouched. Resuming sets `active` again.
+- **Archive commands** are not carried out by this release: an entry with one is applied, and the
+  revision is reported refused ("this release does not take tenant archives…") so the control
+  plane's wait for the archive is visible to staff.
+- **Removed**: only a tenant with a recorded *final* archive is removed (`HasFinalArchive`); without
+  one the revision is refused ("…holds no final archive of the tenant and does not remove it").
+  With one, the tenant is suspended, marked `removing` (reported as `applying`) and
+  `CloudTenantRemovalWorkflow` (`cloud-tenant-removal/<instance>`, reuse policy "allow duplicate
+  failed only") starts; every later apply of a removing tenant starts it again, which is a no-op
+  while it runs. `Service.Remove` is the same step for the archive work to call.
+
+Every lifecycle change is audited through `permissionports.SecurityAuditor` after the transaction
+commits (`user.created`, `role.created`, `role.assigned` when the tenant is made;
+`organization.suspended`, `organization.resumed`), with the system actor and
+`metadata.actor = trenova_control_plane` and the control plane instance id; these rows are the
+tenant's and go with it. The ledger row survives.
+
+On a shared server the system email sender tags each message with its tenant's instance id
+(`tenantlifecycle.InstanceTags`, an otter cache of `cloud_tenants` by organization), so the control
+plane lists each bounce to the right tenant; `directory.TenantOfSystemMessage` still finds the
+organization from the message itself, never from the event.
+
+### What removal deletes
+
+The workflow's activities are idempotent and resumable; a failed run is started again by the next
+apply. Each activity's payload names the tenant, so it runs in that tenant's scope and fairness key.
+The removal and the session sign-out are started through the client, never by a schedule, so they
+carry no work feature and the entitlement backstop lets them run for a suspended tenant (proven in
+`tenantjobs/backstop_test.go` and the removal integration test, which run behind the real
+interceptors). The batched row deletes, the organization's cascade and the object, search and cache
+deletes each hold a `removal` heavy-job slot (one per organization, one on the instance), so two
+removals never delete at once; the purge heartbeats after every batch.
+
+| Store | How it is found | What happens |
+|---|---|---|
+| Sessions | the organization's memberships, paged by user | a member of no other organization loses every session (`DeleteAllForUser`); a member of another organization loses that organization's sessions and is moved onto the other (`Reassign`) |
+| Rows of every table with `organization_id` | `pg_catalog`: every `public` table, partition parents only, then an `EXISTS` per table for this tenant | deleted children first (foreign-key order from the catalog), 500 rows a statement, each statement its own transaction with `statement_timeout 30s` and `lock_timeout 5s`; restricting references from tables outside the plan are deleted first, in batches |
+| Rows of tables with only `business_unit_id` (`users`, …) | the same, while no other organization shares the business unit (always on a shared server) | the same |
+| Append-only audit rows (`audit_entries`, the AI audit ledger) | their triggers refuse a direct delete (insufficient privilege, raise or integrity error) | left to the organization's `ON DELETE CASCADE`, which `audit_entries`' trigger allows from inside another trigger; a table whose rows survive the cascade fails the verification below rather than being skipped |
+| The scope's managed state | `scope_key` = the organization id | `managed_feature_states`, `managed_feature_changes`, `managed_usage_states` rows deleted with the organization |
+| The organization, then the business unit | by id | deleted once nothing restricts them |
+| Documents and other objects | key prefix `<organization id>/` (documents, thumbnails, renders, extraction output, message files) and `<reporting.artifactPrefix>/<organization id>/` (report runs) | `kernelports.PrefixDeleter.DeletePrefix` |
+| Search documents | every Meilisearch index whose filterable attributes include `organization_id` | `DeleteDocumentsByFilter organization_id = "<id>"` (GTC also deletes them as the rows go) |
+| Redis keys | `SCAN MATCH *<organization id>*` and `*<business unit id>*` (the GTC entity caches `cache:<entity>:<org>:<bu>:<id>` and `cache:organization:<org>`, and any other key that names the tenant) | `UNLINK`; pulids are unique, so no other tenant's key matches; sessions are keyed by session and user and are ended in the first step |
+| Temporal | per-record schedules (agents, conversation schedules, quality runs) | their modules' hourly reconcilers remove a schedule whose record is gone; work already started for the tenant fails to find its rows, and the entitlement backstop refuses scheduled activities of a tenant with no plan |
+
+Then `Remaining` counts every catalog table for the tenant (one `UNION ALL` statement); any row
+left fails the activity (retried, then the workflow fails and staff see the tenant applying), and
+only an empty count marks the tenant `removed`, records the ledger's `removed` row with the counts,
+and reports it. Kept: the `cloud_tenants` row (ids only) and the ledger.
+
+## The listener's tenant routes
+
+The managed listener (`internal/api/managedserver.go`, bearer `managed.token`, constant-time
+compare, 30-second timeouts) starts on a shared server too. `internal/cloud/api/tenanthandler`
+contributes four routes through `managedroutes.Contributor`; they answer 409 on a dedicated
+instance, and the dedicated routes answer 409 on a shared server:
+
+| Route | Body / query | Answer |
+|---|---|---|
+| `PUT /managed/v1/tenants/{instanceId}` | the control plane's `SharedTenant`, field for field (at most 256 KiB) | `200` the tenant's `SharedTenantStatus` (`instanceId`, `appliedRevision?`, `state`, `administrator?`, `lastArchive?`, `refused?`); `400` an entry for another instance or a revision below 1 |
+| `GET /managed/v1/tenants?after=&limit=` | cursor is the last `instanceId`; `limit` 1–200, default 100 | `200 {tenants: [SharedTenantStatus], next?}`; administrator facts are read for the page in one statement |
+| `GET /managed/v1/tenants/readings?from=&to=&after=&limit=` | `from`, `to` RFC 3339 on the hour, `from` within 35 days | `200 {tenants: [{instanceId, readings: [{meter, hour, quantity}]}], next?}` for every made tenant that is active or suspended (storage is still kept for a suspended one); each meter is one statement for the whole page (`HourlyCounter.CountByHourForOrganizations`, `LevelReader.LevelsForOrganizations`), so a page costs the same however many tenants it holds |
+| `PUT /managed/v1/tenants/usage` | `{tenants: [{instanceId, window?, overage, meters}]}`, at most 1,000 (4 MiB) | `200 {applied, refused: [{instanceId, code, reason?}]}`; each entry becomes that organization scope's usage state |
+
+What the existing routes do on a shared server:
+
+| Route | Shared server | Why |
+|---|---|---|
+| `GET /readings`, `PUT /state`, `GET|PUT /features`, `PUT /first-administrator/invite` | 409 | they answer the instance scope, which a shared server does not have; the tenant routes replace them |
+| `GET /log-requests`, `PUT /log-requests/{id}`, `POST /support/log-pulls` | 409 | log bundles hold every tenant's lines; the instance API refuses them from a shared server |
+| `GET|PUT|DELETE /system-email`, `POST /system-email/events` | kept | one sender serves the server; each event is resolved to its tenant by its message |
+| `GET|PUT /support-access`, `GET /support-access/grants` | kept | instance-wide key set and grants; the control plane does not yet send a shared server support keys, so nothing sets them |
+| `GET /data-usage` | kept | the server's database, documents and search totals, which the agent reports as its telemetry |
+
+`managed.instanceId` is not required on a shared server (it may name the server); `managed.token`
+is.
+
+## The tenant agent
+
+The shared server's link to the control plane is `services/operator/cmd/tenant-agent`, a second
+binary of the operator module with no Kubernetes or Helm import (see
+[operator.md](operator.md#the-tenant-agent)). It reads the tenants (`GET /v1/shared/tenants`, ETag),
+puts each tenant the TMS does not hold at that revision, reports the server and its tenants
+(`PUT /v1/shared/status`), relays usage both ways every 15 minutes, and sends host telemetry, the
+escrowed secrets, the system email credential and its events as the operator does.

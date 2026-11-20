@@ -37,6 +37,7 @@ type Server struct {
 
 	emailEvents emailEventState
 	dataUsage   dataUsageState
+	tenants     tenantState
 }
 
 func New(t testing.TB, token string) *Server {
@@ -46,6 +47,7 @@ func New(t testing.TB, token string) *Server {
 		spoiled:     map[string]bool{},
 		logs:        newLogState(),
 		emailEvents: newEmailEventState(),
+		tenants:     newTenantState(),
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /managed/v1/readings", s.getReadings)
@@ -62,6 +64,7 @@ func New(t testing.TB, token string) *Server {
 	mux.HandleFunc("POST /managed/v1/support/log-pulls", s.postLogPull)
 	s.routeSupport(mux)
 	mux.HandleFunc("GET /managed/v1/data-usage", s.getDataUsage)
+	s.routeTenants(mux)
 	srv := httptest.NewServer(s.authenticate(mux))
 	t.Cleanup(srv.Close)
 	s.URL = srv.URL
@@ -227,7 +230,11 @@ func (s *Server) putFeatures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, stated := keys["planEndsAt"]; !stated {
-		problem(w, http.StatusBadRequest, "The feature list must state planEndsAt, null when the plan is not ending")
+		problem(
+			w,
+			http.StatusBadRequest,
+			"The feature list must state planEndsAt, null when the plan is not ending",
+		)
 		return
 	}
 	if err = sonic.Unmarshal(raw, &body); err != nil ||

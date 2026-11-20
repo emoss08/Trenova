@@ -1,0 +1,45 @@
+# Trenova Commercial License
+
+Copyright 2026 Eric Moss
+
+## Scope
+
+This license applies to the software in this directory and its subdirectories (the "Commercial
+Software"). Everything else in this repository is licensed under the Functional Source License in
+the repository's root `LICENSE` file, and this license does not change those terms.
+
+## What you may do
+
+You may read the Commercial Software, and copy and modify it, only to develop and test
+contributions to Trenova or software that works with Trenova, and to evaluate it internally.
+
+## What needs an agreement
+
+You may not use the Commercial Software in production, and you may not offer it or software
+derived from it to third parties as a hosted or managed service, unless you have a written
+agreement with the Licensor that allows it. The Licensor's own hosted services run under this
+exception.
+
+## What you may not do
+
+You may not remove or alter this license or any notice in the Commercial Software, and you may
+not distribute the Commercial Software or modifications of it except as part of a contribution
+to this repository.
+
+## Contributions
+
+If you submit a modification of the Commercial Software to this repository, you grant the
+Licensor a perpetual, worldwide, irrevocable, royalty-free license to use, copy, modify,
+distribute and relicense it.
+
+## No future license
+
+Unlike the rest of the repository, the Commercial Software does not become available under the
+Apache License at any later date.
+
+## No warranty
+
+THE COMMERCIAL SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY ARISING FROM THE COMMERCIAL SOFTWARE OR ITS USE.

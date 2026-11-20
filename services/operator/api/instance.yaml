@@ -3,10 +3,20 @@ info:
   title: Trenova Control Plane instance API
   version: 0.1.0
   description: |
-    The API each instance's operator calls, served on the instance listener. Every request must
-    present a client certificate from the instance CA over TLS 1.3; the certificate names its
-    instance (a `urn:trenova:instance:{id}` URI SAN), and that is the only identity this API
-    knows. There are no other credentials and nothing here is reachable without one.
+    The API each instance's operator, and each shared server, calls, served on the instance
+    listener. Every request must present a client certificate from the instance CA over TLS 1.3.
+    A certificate names exactly one identity in its one URI SAN: an instance
+    (`urn:trenova:instance:{id}`) or a shared server (`urn:trenova:shared-server:{id}`, a Trenova
+    deployment Trenova staff run for many tenants). There are no other credentials and nothing
+    here is reachable without one.
+
+    **Who may call what.** Each operation says which identity may call it (`x-identity`:
+    `instance`, `shared_server` or both); any other answers `403 forbidden`. An instance calls
+    every operation but the `/v1/shared/` ones. A shared server calls the `/v1/shared/` ones,
+    `renewCertificate`, `reportTelemetry` (its machine), `getSecrets` (its own escrowed secrets,
+    for the one TMS it runs, and the system email sender) and the email events of its tenants;
+    never an instance's spec, status, usage, storage, commands or log bundles. Each identity is
+    rate limited on its own.
 
     **Enrolment.** Staff issue an instance's first certificate and key once, as an enrolment
     bundle, when its infrastructure is ready. The operator's first call should be
@@ -18,14 +28,22 @@ info:
     report with `reportStatus`. An instance becomes running once it reports `ready` with the
     desired revision applied.
 
+    **A shared server** converges its tenants to `listSharedTenants` (with `If-None-Match`) and
+    reports with `reportSharedStatus`, `reportSharedUsage` and `reportTelemetry`. A tenant becomes
+    running once the server reports it `active` with its revision applied, and is removed once
+    the server reports it `removed`. Every tenant is one organization of the server's TMS, and its
+    `instanceId` names it in every call.
+
     **Errors** are RFC 9457 problem details with a `code`. `401 unauthenticated` means the
-    certificate is unknown, revoked or names another instance; do not retry with it.
+    certificate is unknown, revoked or names an instance or server that is gone; do not retry with
+    it. `403 forbidden` means the certificate's identity may not call the operation.
 servers:
   - url: /
 paths:
   /v1/spec:
     get:
       operationId: getSpec
+      x-identity: [instance]
       summary: The desired spec
       parameters:
         - name: If-None-Match
@@ -54,6 +72,8 @@ paths:
           description: The operator already holds the desired revision.
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "503":
           description: |
             The desired spec names no release yet: it was written before staff set its channel.
@@ -73,6 +93,7 @@ paths:
   /v1/status:
     put:
       operationId: reportStatus
+      x-identity: [instance]
       summary: Report the instance's status
       description: The operator's latest view of the instance. Send it after converging and at least every minute.
       requestBody:
@@ -88,12 +109,15 @@ paths:
           $ref: "#/components/responses/Invalid"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "429":
           $ref: "#/components/responses/RateLimited"
 
   /v1/usage:
     post:
       operationId: reportUsage
+      x-identity: [instance]
       summary: Report usage, and learn what may continue
       description: |
         Hourly meter readings: for a counted meter, what was counted in the hour; for a level
@@ -123,12 +147,15 @@ paths:
           $ref: "#/components/responses/Invalid"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "429":
           $ref: "#/components/responses/RateLimited"
 
   /v1/telemetry:
     post:
       operationId: reportTelemetry
+      x-identity: [instance, shared_server]
       summary: Report what the instance is using
       description: |
         What the instance's machine, its parts and its data used, one sample a minute. The
@@ -151,12 +178,15 @@ paths:
           $ref: "#/components/responses/Invalid"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "429":
           $ref: "#/components/responses/RateLimited"
 
   /v1/certificate:
     post:
       operationId: renewCertificate
+      x-identity: [instance, shared_server]
       summary: Renew the client certificate
       description: |
         Signs a certificate for a key the operator generated (ECDSA P-256 or P-384, or Ed25519),
@@ -180,12 +210,15 @@ paths:
           $ref: "#/components/responses/Invalid"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "429":
           $ref: "#/components/responses/RateLimited"
 
   /v1/secrets:
     get:
       operationId: getSecrets
+      x-identity: [instance, shared_server]
       summary: The instance's escrowed secrets
       description: |
         The secrets that make the instance's data readable, which the control plane keeps in escrow:
@@ -210,12 +243,15 @@ paths:
                 $ref: "#/components/schemas/InstanceSecrets"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "429":
           $ref: "#/components/responses/RateLimited"
 
   /v1/storage:
     get:
       operationId: getStorage
+      x-identity: [instance]
       summary: The instance's object storage
       description: |
         The instance's two buckets and a credential for each, scoped to that bucket alone: the
@@ -240,6 +276,8 @@ paths:
                 $ref: "#/components/schemas/InstanceStorage"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "429":
@@ -248,6 +286,7 @@ paths:
   /v1/commands:
     get:
       operationId: listCommands
+      x-identity: [instance]
       summary: The commands waiting for the instance
       description: |
         What the control plane asks the instance to do besides converging to its spec: restart
@@ -268,12 +307,15 @@ paths:
                 $ref: "#/components/schemas/CommandList"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "429":
           $ref: "#/components/responses/RateLimited"
 
   /v1/commands/{commandId}:
     put:
       operationId: completeCommand
+      x-identity: [instance]
       summary: Answer a command
       description: |
         Says how a command ended. Answering again with the same outcome changes nothing; a command
@@ -299,6 +341,8 @@ paths:
           $ref: "#/components/responses/Invalid"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "429":
@@ -307,6 +351,7 @@ paths:
   /v1/log-bundles:
     post:
       operationId: registerLogBundle
+      x-identity: [instance]
       summary: Register a log bundle asked for inside Trenova
       description: |
         An administrator asked for the instance's logs inside Trenova. The operator registers the
@@ -331,6 +376,8 @@ paths:
           $ref: "#/components/responses/Invalid"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "409":
           $ref: "#/components/responses/Conflict"
         "429":
@@ -339,6 +386,7 @@ paths:
   /v1/log-bundles/{bundleId}:
     put:
       operationId: updateLogBundle
+      x-identity: [instance]
       summary: Report how a log bundle goes
       description: |
         A bundle goes `requested` → `collecting` → `stored`, `failed` or `refused`, and the control
@@ -368,6 +416,8 @@ paths:
           $ref: "#/components/responses/Invalid"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
         "429":
@@ -376,6 +426,7 @@ paths:
   /v1/email-events:
     get:
       operationId: listEmailEvents
+      x-identity: [instance, shared_server]
       summary: The system email events waiting for the instance
       description: |
         Bounces and spam complaints for email the instance sent through Trenova's sender. The
@@ -399,12 +450,15 @@ paths:
                 $ref: "#/components/schemas/EmailEventList"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "429":
           $ref: "#/components/responses/RateLimited"
 
   /v1/email-events/ack:
     post:
       operationId: ackEmailEvents
+      x-identity: [instance, shared_server]
       summary: Acknowledge system email events
       description: |
         The events the TMS took, by ID: 1 to 50, each once. They are deleted. An ID that is not
@@ -422,6 +476,168 @@ paths:
           $ref: "#/components/responses/Invalid"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/shared/tenants:
+    get:
+      operationId: listSharedTenants
+      x-identity: [shared_server]
+      summary: The tenants this shared server should hold
+      description: |
+        Every tenant placed on the calling server that the server has not yet reported `removed`,
+        as it should be: each tenant's spec revision, what to do with it (`lifecycle`), its
+        organization, plan, features, add-ons, allowances, first administrator and plan page, and
+        the commands to run for it. One document for the whole server, ordered by `instanceId`;
+        a server holds at most 1,000 tenants. Poll it every 15 seconds with `If-None-Match`: `304`
+        while nothing in it changed. Converge every tenant listed and report each with
+        `reportSharedStatus`; a tenant the server holds that is not listed is not this server's
+        any more: keep its data and say nothing of it until a later document lists it.
+      parameters:
+        - name: If-None-Match
+          in: header
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+          description: The `ETag` of the document the server holds.
+      responses:
+        "200":
+          description: The tenants.
+          headers:
+            ETag:
+              description: |
+                Strong and opaque, quoted: a digest of the document's exact bytes, so it changes
+                exactly when anything in it changes (a revision, a plan's end, a command, the
+                system email sender, the console's address). Send it back as `If-None-Match`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedTenantList"
+        "304":
+          description: The server already holds this document.
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/shared/status:
+    put:
+      operationId: reportSharedStatus
+      x-identity: [shared_server]
+      summary: Report the server's status and each tenant's
+      description: |
+        The server's latest view of itself and of each tenant it holds. Send it after converging and
+        at least every minute; a server silent for 10 minutes is an item on Trenova staff's
+        attention list. Every report replaces the server's last: its version, readiness, parts and
+        message. Each tenant entry replaces that tenant's last; a tenant the report leaves out keeps
+        its last entry. Reporting the same thing again changes nothing. An entry for an instance
+        that is not a tenant placed on this server (or one already reported `removed`) is refused
+        on its own, named in the answer's `refused`, and the rest are recorded.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SharedStatusReport"
+      responses:
+        "200":
+          description: Recorded; the entries refused, if any.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedReportAck"
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/shared/usage:
+    post:
+      operationId: reportSharedUsage
+      x-identity: [shared_server]
+      summary: Report the tenants' usage, and learn what each may continue
+      description: |
+        Hourly meter readings, each for one tenant, exactly as `reportUsage` takes an instance's
+        (counted meters: what was counted in the hour; a level, document storage: the level at the
+        hour's end; a reading for an hour already reported replaces it). At most 5,000 readings a
+        report; send more in several. Report at least every 15 minutes: a usage window closes and is
+        billed 30 minutes after it ends, and readings that arrive later are kept but not billed. A
+        reading for an instance that is not a tenant placed on this server is not recorded, and that
+        instance is named in `refused`; the rest are recorded.
+
+        The answer covers every tenant placed on the server, whether or not the report had readings
+        for it, so a server learns what each tenant may do with an empty report: each tenant's open
+        usage window, whether usage past its allowances continues and is billed, and every meter's
+        quantity so far against its allowance, as `UsageAck` says an instance's. Stop a tenant's
+        metered action while its meter is `stopped`. A tenant without an open window (not paid yet,
+        or its subscription has ended) has every metered action stopped. The usage window's state is
+        given only here, never in the tenants document.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SharedUsageReport"
+      responses:
+        "200":
+          description: Recorded; what each tenant may continue.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedUsageAck"
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/shared/storage:
+    get:
+      operationId: getSharedStorage
+      x-identity: [shared_server]
+      summary: Where to keep each tenant archive asked for, and the credential to keep it with
+      description: |
+        For each `archive` command the tenants document lists, where to write the archive and the
+        credential to write and read it with: the shared archive bucket of the tenant's region, the
+        archive's own prefix in it (`tenants/<instanceId>/archives/<commandId>/`), and the bucket's
+        own access key, which Trenova scopes at the provider to that bucket alone (read, write,
+        list, delete and multipart uploads in it). Write every object of an archive under its
+        prefix and nowhere else; the same key reads archives back (a restore) and lists and prunes
+        a tenant's archives. Keep the key only in memory or in the server's own sealed secrets,
+        never log it. When `sessionToken` and `expiresAt` are absent the key does not expire; fetch
+        this again when a write is refused, in case Trenova replaced it. Report the archive as the
+        tenant's `lastArchive` with its `location` (`s3://<bucket>/<prefix>`). A command whose region
+        has no archive bucket recorded yet is listed in `waiting` with why; fetch again in a minute.
+      responses:
+        "200":
+          description: The archives to write.
+          headers:
+            Cache-Control:
+              description: Always `no-store`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SharedStorage"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "429":
           $ref: "#/components/responses/RateLimited"
 
@@ -448,8 +664,16 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
+    Forbidden:
+      description: |
+        `forbidden`: the certificate's identity may not call this operation (an instance a shared
+        server's, or a shared server an instance's). Do not retry it with this certificate.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
     Unauthenticated:
-      description: The client certificate is unknown, revoked, or its instance is not served.
+      description: The client certificate is unknown, revoked, or its instance or server is not served.
       content:
         application/problem+json:
           schema:
@@ -505,6 +729,12 @@ components:
           type: string
           format: uuid
           description: The event's ID, to acknowledge it with.
+        instanceId:
+          type: string
+          format: uuid
+          description: |
+            The tenant the message was sent for, as its `trenova_instance` tag named it: present
+            only when a shared server lists its tenants' events.
         provider:
           type: string
           enum: [Resend, Postmark]
@@ -751,7 +981,8 @@ components:
 
     ProblemCode:
       type: string
-      enum: [validation_failed, invalid_request, unauthenticated, rate_limited, not_found, conflict, internal, unavailable]
+      enum: [validation_failed, invalid_request, unauthenticated, forbidden, rate_limited, not_found, conflict, internal,
+             unavailable]
 
     FieldError:
       type: object
@@ -778,12 +1009,20 @@ components:
       description: |
         What the instance should be. `schemaVersion` changes when a field's meaning changes; an
         operator refuses a version it does not know.
-      required: [schemaVersion, lifecycle, instanceId, organizationId, name, hostname, release, plan, placement,
+      required: [schemaVersion, lifecycle, kind, instanceId, organizationId, name, hostname, release, plan, placement,
                  addons, features, components, aiProvider, allowances, firstAdministrator]
       properties:
         schemaVersion:
           type: integer
           enum: [1]
+        kind:
+          type: string
+          enum: [dedicated, shared]
+          x-enum-varnames: [InstanceKindDedicated, InstanceKindShared]
+          description: |
+            `dedicated`: the instance has a machine of its own. Always `dedicated` here: a shared
+            tenant has no operator and its spec is never served by `getSpec`; its server reads it as
+            an entry of `listSharedTenants`.
         lifecycle:
           type: string
           enum: [active, suspended, decommissioned]
@@ -1230,6 +1469,18 @@ components:
         hardCap:
           type: boolean
           description: Whether the metered action stops at the allowance.
+        ceiling:
+          type: integer
+          format: int64
+          description: |
+            Where the metered action stops whatever the overage setting (at or above the
+            allowance); absent when there is none. Nothing past it is billed.
+        alwaysBilled:
+          type: boolean
+          description: |
+            Usage past the allowance is billed without the customer opting in to overage, so the
+            action continues past the allowance (up to the ceiling); absent when overage is the
+            customer's choice.
 
     StatusReport:
       type: object
@@ -1432,7 +1683,10 @@ components:
           $ref: "#/components/schemas/UsageWindow"
         overage:
           type: boolean
-          description: Whether usage beyond an allowance without a hard cap continues and is billed.
+          description: |
+            Whether usage beyond an allowance without a hard cap continues (up to its ceiling) and is
+            billed: the customer opted in to overage, or the plan bills usage past its allowances
+            always.
         meters:
           type: array
           items:
@@ -1468,6 +1722,10 @@ components:
           description: The window's allowance; 0 when the plan and add-ons include none.
         hardCap:
           type: boolean
+        ceiling:
+          type: integer
+          format: int64
+          description: Where the metered action stops whatever the overage setting; absent when there is none.
         stopped:
           type: boolean
           description: Whether the metered action must stop.
@@ -1977,3 +2235,444 @@ components:
         notAfter:
           type: string
           format: date-time
+
+    SharedTenantList:
+      type: object
+      description: |
+        Every tenant placed on the server and not yet reported `removed`, ordered by `instanceId`.
+      required: [tenants]
+      properties:
+        tenants:
+          type: array
+          maxItems: 1000
+          items:
+            $ref: "#/components/schemas/SharedTenant"
+        systemEmail:
+          $ref: "#/components/schemas/SpecSystemEmail"
+
+    SharedTenant:
+      type: object
+      description: |
+        One tenant as it should be: one organization (and its one business unit) of the server's
+        TMS, made the first time the tenant is listed with what `firstAdministrator` names, and
+        known by `instanceId` from then on. Every field is the tenant's desired state at `revision`;
+        a later revision may change any of them but `instanceId`, `organizationName` and
+        `firstAdministrator`'s person.
+      required: [instanceId, revision, lifecycle, organizationName, plan, addons, features, aiProvider,
+                 allowances, firstAdministrator, account, commands]
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: The tenant's instance in the control plane. Every report about the tenant names it.
+        revision:
+          type: integer
+          format: int64
+          minimum: 1
+          description: |
+            The tenant's spec revision. Report it as the tenant's `appliedRevision` once the tenant
+            holds everything this entry says.
+        lifecycle:
+          type: string
+          enum: [active, suspended, removed]
+          x-enum-varnames: [SharedTenantActive, SharedTenantSuspended, SharedTenantRemoved]
+          description: |
+            `active`: the tenant's people sign in and work, with the features listed. `suspended`:
+            keep every byte of the tenant's data, sign its people out, refuse its sign-ins with the
+            suspended page that points at the console, refuse its API calls and run none of its
+            background work; it is suspended while its subscription lapses, while Trenova staff hold
+            it, or while its server takes its final archive. `removed`: its final archive is taken;
+            delete the tenant's data and documents, then report it `removed`.
+        organizationName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: The tenant's organization as it was named when it was ordered; the first install names it so.
+        plan:
+          $ref: "#/components/schemas/SharedTenantPlan"
+        addons:
+          type: array
+          maxItems: 50
+          description: The add-ons the tenant has, by code.
+          items:
+            type: string
+        features:
+          type: array
+          maxItems: 200
+          description: The TMS catalog features the tenant's organization has; every other is off for it.
+          items:
+            type: string
+        addonEndings:
+          type: array
+          maxItems: 50
+          description: |
+            The add-ons whose removal is scheduled, each with when it ends; they stay in `addons` and
+            their features stay on until then. Absent when none is ending: the tenant's list is then
+            empty.
+          items:
+            $ref: "#/components/schemas/SpecAddonEnding"
+        aiProvider:
+          type: string
+          enum: [trenova, customer]
+          x-enum-varnames: [SharedTenantAiTrenova, SharedTenantAiCustomer]
+          description: Whose AI keys the tenant's AI features use.
+        allowances:
+          type: array
+          maxItems: 20
+          description: |
+            The tenant's monthly allowances. Which metered actions may continue now is the usage
+            answer's (`reportSharedUsage`), measured against these.
+          items:
+            $ref: "#/components/schemas/SpecAllowance"
+        firstAdministrator:
+          $ref: "#/components/schemas/SpecFirstAdministrator"
+        account:
+          $ref: "#/components/schemas/SpecAccount"
+        commands:
+          type: array
+          maxItems: 20
+          description: |
+            What the server is asked to do for the tenant besides converging to this entry, oldest
+            first: listed until the server reports it done (an `archive` as the tenant's
+            `lastArchive`). Carry each out once, by `id`. Empty when there is none.
+          items:
+            $ref: "#/components/schemas/SharedTenantCommand"
+
+    SharedTenantPlan:
+      type: object
+      description: "The plan the tenant is sold. It has no machine: the tenant runs on the server's."
+      required: [key, name, backupRetentionDays, support]
+      properties:
+        key:
+          type: string
+          description: The plan's key in the price book, such as `shared`.
+        name:
+          type: string
+          description: The plan's name, such as `Shared`.
+        backupRetentionDays:
+          type: integer
+          format: int64
+          minimum: 1
+          description: How many days the tenant's nightly archives are kept.
+        support:
+          type: string
+          enum: [email, business_hours, priority, contracted]
+          x-enum-varnames: [SharedTenantSupportEmail, SharedTenantSupportBusinessHours, SharedTenantSupportPriority,
+                            SharedTenantSupportContracted]
+
+    SharedTenantCommand:
+      description: |
+        One command, told apart by `kind`. `archive` is the only kind now; a server that reads a
+        kind it does not know leaves it be and reports nothing of it.
+      oneOf:
+        - $ref: "#/components/schemas/SharedArchiveCommand"
+      discriminator:
+        propertyName: kind
+        mapping:
+          archive: "#/components/schemas/SharedArchiveCommand"
+
+    SharedArchiveCommand:
+      type: object
+      description: |
+        Take an archive of the tenant alone: every table that carries it, in one consistent
+        snapshot, and its documents, in the tenant archive format. Write it where `getSharedStorage`
+        says for this `id`, then report it as the tenant's `lastArchive`. A `final` archive is taken
+        after the tenant is suspended for its removal: nothing changes it after.
+      required: [kind, id, purpose, requestedAt]
+      properties:
+        kind:
+          type: string
+          enum: [archive]
+          x-enum-varnames: [SharedCommandArchive]
+        id:
+          type: string
+          format: uuid
+          description: The archive's ID; report it as `lastArchive.commandId`.
+        purpose:
+          type: string
+          enum: [final]
+          x-enum-varnames: [SharedArchiveFinal]
+          description: "`final`: the archive the tenant's removal waits for."
+        requestedAt:
+          type: string
+          format: date-time
+
+    SharedStatusReport:
+      type: object
+      required: [ready, components, tenants]
+      properties:
+        version:
+          type: string
+          maxLength: 64
+          description: The Trenova release the server runs.
+        ready:
+          type: boolean
+          description: Whether every component is ready and the post-deploy checks pass.
+        components:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/ComponentStatus"
+        message:
+          type: string
+          maxLength: 500
+          description: A short explanation when not ready.
+        tenants:
+          type: array
+          maxItems: 1000
+          description: The tenants the server holds, each once.
+          items:
+            $ref: "#/components/schemas/SharedTenantStatus"
+
+    SharedTenantStatus:
+      type: object
+      description: One tenant as the server holds it now.
+      required: [instanceId, state]
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        appliedRevision:
+          type: integer
+          format: int64
+          minimum: 1
+          description: |
+            The newest revision the tenant holds everything of; absent before its first. The tenant
+            is running once it is `active` on its desired revision.
+        state:
+          type: string
+          enum: [applying, active, suspended, removed]
+          x-enum-varnames: [TenantApplying, TenantActive, TenantSuspended, TenantRemoved]
+          description: |
+            `applying` while the server converges the tenant to a revision; `active` or `suspended`
+            once it holds `appliedRevision`'s lifecycle; `removed` once its data and documents are
+            deleted after a `removed` revision, reported with that revision or a later one as
+            `appliedRevision`.
+        administrator:
+          $ref: "#/components/schemas/AdministratorStatus"
+        lastArchive:
+          $ref: "#/components/schemas/SharedArchiveReport"
+        refused:
+          $ref: "#/components/schemas/SharedTenantRefusal"
+
+    SharedArchiveReport:
+      type: object
+      description: |
+        The newest archive of the tenant the server took for an `archive` command, by its ID:
+        reported once it is written whole. Reporting the same archive again changes nothing.
+      required: [commandId, location, sizeBytes, sha256, takenAt]
+      properties:
+        commandId:
+          type: string
+          format: uuid
+          description: The `archive` command's `id`.
+        location:
+          type: string
+          minLength: 1
+          maxLength: 1024
+          description: Where it is, `s3://<bucket>/<prefix>`, as `getSharedStorage` named it.
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: The archive's size, all its objects together.
+        sha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: The lowercase hex SHA-256 of the archive's manifest.
+        takenAt:
+          type: string
+          format: date-time
+          description: When its snapshot was taken.
+
+    SharedTenantRefusal:
+      type: object
+      description: |
+        The newest revision of the tenant the server has read and will not apply as it is written,
+        and why. The tenant stays as it was. Sent with every report while it stands.
+      required: [revision, code, reason]
+      properties:
+        revision:
+          type: integer
+          format: int64
+          minimum: 1
+        code:
+          type: string
+          enum: [invalid]
+          x-enum-varnames: [SharedRefusedInvalid]
+          description: "`invalid`: the revision cannot be turned into what the tenant should be."
+        reason:
+          type: string
+          maxLength: 500
+          description: One line a staff member can read.
+
+    SharedReportAck:
+      type: object
+      required: [refused]
+      properties:
+        refused:
+          type: array
+          maxItems: 1000
+          description: The report's entries that were not recorded, each once; empty when all were.
+          items:
+            $ref: "#/components/schemas/SharedEntryRefused"
+
+    SharedEntryRefused:
+      type: object
+      required: [instanceId, code]
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          enum: [not_placed]
+          x-enum-varnames: [SharedEntryNotPlaced]
+          description: |
+            `not_placed`: the instance is not a tenant placed on this server, or it was already
+            reported `removed`. Stop reporting it.
+
+    SharedUsageReport:
+      type: object
+      required: [readings]
+      properties:
+        readings:
+          type: array
+          maxItems: 5000
+          items:
+            $ref: "#/components/schemas/SharedUsageReading"
+
+    SharedUsageReading:
+      type: object
+      required: [instanceId, meter, hour, quantity]
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+          description: The tenant the reading is for.
+        meter:
+          type: string
+          maxLength: 40
+          description: A catalog meter's key, such as `shipments`.
+        hour:
+          type: string
+          format: date-time
+          description: The start of the hour, on the hour, from 35 days ago to the current hour.
+        quantity:
+          type: integer
+          format: int64
+          minimum: 0
+          maximum: 1000000000000000
+          description: In the meter's unit (a count or bytes), at most 10^15. Each tenant's meter and hour once a report.
+
+    SharedUsageAck:
+      type: object
+      required: [tenants, refused]
+      properties:
+        tenants:
+          type: array
+          maxItems: 1000
+          description: Every tenant placed on the server, ordered by `instanceId`.
+          items:
+            $ref: "#/components/schemas/SharedTenantUsage"
+        refused:
+          type: array
+          maxItems: 5000
+          description: The instances whose readings were not recorded, each once; empty when none.
+          items:
+            $ref: "#/components/schemas/SharedEntryRefused"
+
+    SharedTenantUsage:
+      type: object
+      description: What one tenant may continue, as `UsageAck` says it of an instance.
+      required: [instanceId, overage, meters]
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        window:
+          $ref: "#/components/schemas/UsageWindow"
+        overage:
+          type: boolean
+          description: |
+            Whether usage beyond an allowance without a hard cap continues (up to its ceiling) and is
+            billed: the customer opted in to overage, or the plan bills usage past its allowances
+            always.
+        meters:
+          type: array
+          items:
+            $ref: "#/components/schemas/MeterUsage"
+
+    SharedStorage:
+      type: object
+      required: [archives, waiting]
+      properties:
+        archives:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/SharedArchiveTarget"
+        waiting:
+          type: array
+          maxItems: 100
+          description: The archive commands no credential could be given for now, with why; ask again in a minute.
+          items:
+            $ref: "#/components/schemas/SharedArchiveWaiting"
+
+    SharedArchiveTarget:
+      type: object
+      description: |
+        Where one archive is kept, and the credential to write and read it with: the region's archive
+        bucket's own key, scoped at the provider to that bucket.
+      required: [instanceId, commandId, endpoint, region, bucket, prefix, accessKeyId, secretAccessKey]
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        commandId:
+          type: string
+          format: uuid
+        endpoint:
+          type: string
+          description: The S3 API's URL, such as `https://s3.bhs.io.cloud.ovh.net`.
+        region:
+          type: string
+          description: The region requests are signed for.
+        bucket:
+          type: string
+        prefix:
+          type: string
+          description: "`tenants/<instanceId>/archives/<commandId>/`: write every object of the archive under it."
+        accessKeyId:
+          type: string
+        secretAccessKey:
+          type: string
+        sessionToken:
+          type: string
+          description: |
+            Present only for a temporary credential: send it as `X-Amz-Security-Token` with every
+            request. Absent for the bucket's own key.
+        expiresAt:
+          type: string
+          format: date-time
+          description: |
+            When a temporary credential stops working; absent for the bucket's own key, which does not
+            expire.
+
+    SharedArchiveWaiting:
+      type: object
+      required: [instanceId, commandId, reason]
+      properties:
+        instanceId:
+          type: string
+          format: uuid
+        commandId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          enum: [no_bucket, unavailable]
+          x-enum-varnames: [SharedArchiveNoBucket, SharedArchiveUnavailable]
+          description: |
+            `no_bucket`: Trenova has not recorded the archive bucket of the tenant's region yet.
+            `unavailable`: the credential could not be given just now.

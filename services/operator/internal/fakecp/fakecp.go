@@ -38,6 +38,7 @@ type usageKey struct {
 
 type Server struct {
 	InstanceID uuid.UUID
+	Kind       credential.Kind
 
 	caKey       *ecdsa.PrivateKey
 	caCert      *x509.Certificate
@@ -78,12 +79,14 @@ type Server struct {
 	bundles     bundleState
 	emailEvents emailEventState
 	telemetry   telemetryState
+	shared      sharedState
 }
 
 type Params struct {
-	Spec  instanceapi.InstanceSpec
-	Hosts []string
-	URL   string
+	Spec   instanceapi.InstanceSpec
+	Hosts  []string
+	URL    string
+	Shared bool
 }
 
 func New(p *Params) (*Server, error) {
@@ -108,8 +111,13 @@ func New(p *Params) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	kind := credential.KindInstance
+	if p.Shared {
+		kind = credential.KindSharedServer
+	}
 	s := &Server{
 		InstanceID: p.Spec.InstanceId,
+		Kind:       kind,
 		caKey:      caKey,
 		caCert:     caCert,
 		caPEM:      pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}),
@@ -123,6 +131,7 @@ func New(p *Params) (*Server, error) {
 		lifetime:   30 * 24 * time.Hour,
 		answers:    map[uuid.UUID]instanceapi.CommandResult{},
 		bundles:    newBundleState(),
+		shared:     newSharedState(),
 	}
 	if s.server, err = s.serverCertificate(p.Hosts); err != nil {
 		return nil, err
@@ -182,6 +191,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PUT /v1/log-bundles/{bundleId}", s.updateLogBundle)
 	mux.HandleFunc("GET /v1/email-events", s.listEmailEvents)
 	mux.HandleFunc("POST /v1/email-events/ack", s.ackEmailEvents)
+	s.routeShared(mux)
 	return s.authenticate(mux)
 }
 
@@ -268,14 +278,18 @@ func (s *Server) Bundle(lifetime time.Duration) (credential.Bundle, error) {
 	apiURL := s.url
 	s.mu.Unlock()
 	s.markValid(certPEM)
-	return credential.Bundle{
+	bundle := credential.Bundle{
 		InstanceID:  s.InstanceID.String(),
 		APIURL:      apiURL,
 		Certificate: string(certPEM),
 		PrivateKey:  string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der})),
 		CABundle:    string(s.caPEM),
 		NotAfter:    time.Now().Add(lifetime),
-	}, nil
+	}
+	if s.Kind == credential.KindSharedServer {
+		bundle.ServerID, bundle.InstanceID = bundle.InstanceID, ""
+	}
+	return bundle, nil
 }
 
 func (s *Server) SetLifetime(d time.Duration) {
@@ -704,7 +718,7 @@ func (s *Server) sign(pub *ecdsa.PublicKey, lifetime time.Duration) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
-	uri, err := url.Parse("urn:trenova:instance:" + s.InstanceID.String())
+	uri, err := url.Parse(s.Kind.URI(s.InstanceID))
 	if err != nil {
 		return nil, err
 	}

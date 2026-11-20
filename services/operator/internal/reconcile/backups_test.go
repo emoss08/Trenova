@@ -27,7 +27,8 @@ import (
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/controlplanetest"
 	"github.com/emoss08/trenova/operator/internal/credential"
-	"github.com/emoss08/trenova/operator/internal/escrow"
+	"github.com/emoss08/trenova/operator/internal/credential/secretstore"
+	"github.com/emoss08/trenova/operator/internal/escrow/escrowsecret"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
 	"github.com/emoss08/trenova/operator/internal/release"
@@ -102,7 +103,11 @@ func newBackupWorld(t *testing.T, spec instanceapi.InstanceSpec) *backupWorld {
 	return newBackupWorldWith(t, spec, noDatabases{})
 }
 
-func newBackupWorldWith(t *testing.T, spec instanceapi.InstanceSpec, dbs reconcile.Databases) *backupWorld {
+func newBackupWorldWith(
+	t *testing.T,
+	spec instanceapi.InstanceSpec,
+	dbs reconcile.Databases,
+) *backupWorld {
 	t.Helper()
 	cp := controlplanetest.New(t, spec)
 	kube := fake.NewClientset()
@@ -115,10 +120,13 @@ func newBackupWorldWith(t *testing.T, spec instanceapi.InstanceSpec, dbs reconci
 	require.NoError(t, err)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	transport := &credential.Transport{}
-	client, err := controlplane.New(cp.URL, &http.Client{Transport: transport, Timeout: 10 * time.Second})
+	client, err := controlplane.New(
+		cp.URL,
+		&http.Client{Transport: transport, Timeout: 10 * time.Second},
+	)
 	require.NoError(t, err)
 	creds := credential.NewManager(&credential.ManagerParams{
-		Store: credential.NewStore(credential.StoreParams{
+		Store: secretstore.New(secretstore.Params{
 			Client: kube, Namespace: "trenova-system", Enrolment: "enrolment", Identity: "identity",
 		}),
 		Transport: transport,
@@ -156,7 +164,7 @@ func newBackupWorldWith(t *testing.T, spec instanceapi.InstanceSpec, dbs reconci
 		Charts:       release.NewSource(release.SourceParams{Path: chartDir}),
 		Releases:     w.releases,
 		Health:       w.health,
-		Escrow: escrow.New(&escrow.Params{
+		Escrow: escrowsecret.New(&escrowsecret.Params{
 			Client: kube, ControlPlane: client, Namespace: "trenova", Name: values.EscrowSecret, Logger: logger,
 		}),
 		Usage:          &fakeUsage{now: time.Now},
@@ -233,14 +241,21 @@ func TestTheReportCarriesBackupHealthAndTheRestore(t *testing.T) {
 	t.Parallel()
 	spec := controlplanetest.Spec(uuid.New())
 	restore := uuid.New()
-	spec.Restore = &instanceapi.SpecRestore{Id: restore, Generation: "r1a2b3c4d", TargetTime: time.Now().Add(-time.Hour)}
+	spec.Restore = &instanceapi.SpecRestore{
+		Id:         restore,
+		Generation: "r1a2b3c4d",
+		TargetTime: time.Now().Add(-time.Hour),
+	}
 	w := newBackupWorld(t, spec)
 	last := time.Now().Add(-time.Hour).UTC().Truncate(time.Second)
 	w.backups.result = backup.Result{
 		Health: &instanceapi.BackupHealth{
 			WalArchiving: instanceapi.BackupHealthWalArchiving("healthy"), LastBaseBackupAt: &last,
 		},
-		Restore: &instanceapi.RestoreProgress{Id: restore, Phase: instanceapi.RestoreProgressPhase("ready")},
+		Restore: &instanceapi.RestoreProgress{
+			Id:    restore,
+			Phase: instanceapi.RestoreProgressPhase("ready"),
+		},
 	}
 	w.health.set(true)
 	w.loop.Tick(t.Context())
@@ -264,8 +279,10 @@ func TestTheFinalBackupIsReportedWithTheDecommissionedRevision(t *testing.T) {
 	spec.Lifecycle = instanceapi.Decommissioned
 	w := newBackupWorld(t, spec)
 	w.backups.result = backup.Result{
-		Health: &instanceapi.BackupHealth{WalArchiving: instanceapi.BackupHealthWalArchiving("healthy")},
-		Final:  &instanceapi.FinalBackup{Id: "20261114T120500", CompletedAt: time.Now().UTC()},
+		Health: &instanceapi.BackupHealth{
+			WalArchiving: instanceapi.BackupHealthWalArchiving("healthy"),
+		},
+		Final: &instanceapi.FinalBackup{Id: "20261114T120500", CompletedAt: time.Now().UTC()},
 	}
 	w.health.set(true)
 	w.loop.Tick(t.Context())
@@ -291,7 +308,9 @@ func listResult(list ...instanceapi.BackupEntry) backup.Result {
 		list = []instanceapi.BackupEntry{}
 	}
 	return backup.Result{
-		Health:  &instanceapi.BackupHealth{WalArchiving: instanceapi.BackupHealthWalArchiving("healthy")},
+		Health: &instanceapi.BackupHealth{
+			WalArchiving: instanceapi.BackupHealthWalArchiving("healthy"),
+		},
 		Backups: &list,
 	}
 }
@@ -318,7 +337,11 @@ func TestTheBackupListIsSentFirstAndThenOnlyWhenItChanges(t *testing.T) {
 	w.loop.Tick(t.Context())
 	held, lists := w.cp.Backups()
 	require.Equal(t, 1, lists)
-	require.Equal(t, []instanceapi.BackupEntry{dailyBackup(instanceapi.BackupEntryPhaseRunning, started)}, held)
+	require.Equal(
+		t,
+		[]instanceapi.BackupEntry{dailyBackup(instanceapi.BackupEntryPhaseRunning, started)},
+		held,
+	)
 
 	// Unchanged: the minute's report goes out without the list.
 	w.now = w.now.Add(2 * time.Minute)

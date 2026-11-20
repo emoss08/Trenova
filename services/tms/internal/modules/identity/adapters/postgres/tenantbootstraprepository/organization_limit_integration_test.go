@@ -67,6 +67,11 @@ type limitRig struct {
 
 func newLimitRig(t *testing.T, state *managedusage.State) *limitRig {
 	t.Helper()
+	return newLimitRigIn(t, state, false)
+}
+
+func newLimitRigIn(t *testing.T, state *managedusage.State, shared bool) *limitRig {
+	t.Helper()
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
@@ -75,7 +80,7 @@ func newLimitRig(t *testing.T, state *managedusage.State) *limitRig {
 	organizations := organizationmeter.New(organizationmeter.Params{DB: conn}).Reader
 	gate := managedusageservice.New(managedusageservice.Params{
 		Repo:   &heldState{state: state},
-		Scopes: managedscope.NewResolver(false),
+		Scopes: managedscope.NewResolver(shared),
 		Levels: []managedusageports.LevelReader{organizations},
 		Clock:  func() int64 { return time.Now().Unix() },
 		Logger: zap.NewNop(),
@@ -92,7 +97,7 @@ func newLimitRig(t *testing.T, state *managedusage.State) *limitRig {
 			Logger: zap.NewNop(),
 			Quota: quotaservice.NewManaged(
 				gate,
-				managedscope.NewResolver(false),
+				managedscope.NewResolver(shared),
 				func() int64 { return time.Now().Unix() },
 			),
 		}),
@@ -145,4 +150,12 @@ func TestAnInstanceWithNoUsageStateCreatesOrganizationsFreely(t *testing.T) {
 	rig := newLimitRig(t, nil)
 
 	require.NoError(t, rig.bootstrap(t, "nostate"))
+}
+
+func TestASharedServerAdmitsANewOrganizationUnderItsOwnScope(t *testing.T) {
+	state := organizationsAllowed(1)
+	rig := newLimitRigIn(t, state, true)
+
+	require.NoError(t, rig.bootstrap(t, "tenant"),
+		"the new organization is counted under its own scope, not refused for having no tenant")
 }

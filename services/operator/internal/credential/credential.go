@@ -25,8 +25,27 @@ var (
 	ErrIdentityInvalid = errors.New("the stored identity is not valid")
 )
 
+type Kind string
+
+const (
+	KindInstance     = Kind("instance")
+	KindSharedServer = Kind("shared-server")
+)
+
+func KindOf(raw string) Kind {
+	if Kind(raw) == KindSharedServer {
+		return KindSharedServer
+	}
+	return KindInstance
+}
+
+func (k Kind) URI(id uuid.UUID) string {
+	return "urn:trenova:" + string(KindOf(string(k))) + ":" + id.String()
+}
+
 type Bundle struct {
 	InstanceID  string    `json:"instanceId"`
+	ServerID    string    `json:"serverId"`
 	APIURL      string    `json:"apiUrl"`
 	Certificate string    `json:"certificate"`
 	PrivateKey  string    `json:"privateKey"`
@@ -35,6 +54,7 @@ type Bundle struct {
 }
 
 type Identity struct {
+	Kind         Kind
 	InstanceID   uuid.UUID
 	APIURL       string
 	CertPEM      []byte
@@ -54,11 +74,16 @@ func ParseBundle(body []byte) (Bundle, error) {
 }
 
 func (b *Bundle) Identity() (Identity, error) {
-	id, err := uuid.Parse(b.InstanceID)
+	kind, raw, field := KindInstance, b.InstanceID, "instanceId"
+	if b.ServerID != "" {
+		kind, raw, field = KindSharedServer, b.ServerID, "serverId"
+	}
+	id, err := uuid.Parse(raw)
 	if err != nil {
-		return Identity{}, fmt.Errorf("%w: instanceId: %w", ErrBundleInvalid, err)
+		return Identity{}, fmt.Errorf("%w: %s: %w", ErrBundleInvalid, field, err)
 	}
 	ident, err := NewIdentity(&IdentityParams{
+		Kind:       kind,
 		InstanceID: id,
 		APIURL:     b.APIURL,
 		CertPEM:    []byte(b.Certificate),
@@ -73,6 +98,7 @@ func (b *Bundle) Identity() (Identity, error) {
 }
 
 type IdentityParams struct {
+	Kind         Kind
 	InstanceID   uuid.UUID
 	APIURL       string
 	CertPEM      []byte
@@ -94,10 +120,12 @@ func NewIdentity(p *IdentityParams) (Identity, error) {
 	if !roots.AppendCertsFromPEM(p.CAPEM) {
 		return Identity{}, errors.New("caBundle holds no certificate")
 	}
-	if want := "urn:trenova:instance:" + p.InstanceID.String(); !namesInstance(pair.Leaf, want) {
+	kind := KindOf(string(p.Kind))
+	if want := kind.URI(p.InstanceID); !namesInstance(pair.Leaf, want) {
 		return Identity{}, fmt.Errorf("the certificate does not name %s", want)
 	}
 	return Identity{
+		Kind:         kind,
 		InstanceID:   p.InstanceID,
 		APIURL:       strings.TrimSuffix(p.APIURL, "/"),
 		CertPEM:      p.CertPEM,

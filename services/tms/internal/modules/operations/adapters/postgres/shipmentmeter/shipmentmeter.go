@@ -15,7 +15,10 @@ import (
 	"go.uber.org/fx"
 )
 
-const hour = 3600
+const (
+	hour                     = 3600
+	organizationsCountReason = "count the shipments each organization of a shared server created in each hour, in one statement, for the control plane's usage report; each organization is counted only for itself"
+)
 
 type Params struct {
 	fx.In
@@ -68,4 +71,38 @@ func (c *counter) CountByHour(
 		}
 		return counts, nil
 	})
+}
+
+func (c *counter) CountByHourForOrganizations(
+	ctx context.Context,
+	req *managedusageports.OrganizationsHourCountRequest,
+) ([]managedusageports.OrganizationHourCount, error) {
+	if len(req.OrganizationIDs) == 0 {
+		return []managedusageports.OrganizationHourCount{}, nil
+	}
+	ctx = dbscope.WithSystem(ctx, organizationsCountReason)
+	return dbtx.Read(
+		ctx,
+		c.db,
+		func(ctx context.Context) ([]managedusageports.OrganizationHourCount, error) {
+			s := shipmentdb.Shipments
+			bucket := keel.Int64Of(s.CreatedAt).Div(keel.Int64(hour)).Mul(keel.Int64(hour))
+			counts, err := keel.Into[managedusageports.OrganizationHourCount](
+				ctx,
+				c.db.Keel(ctx),
+				s.Where(
+					s.OrganizationID.In(req.OrganizationIDs...),
+					s.CreatedAt.Gte(req.Since),
+					s.CreatedAt.Lt(req.Until),
+				).
+					AllTenants().
+					Group(s.OrganizationID, bucket).
+					Pick(s.OrganizationID, bucket, keel.CastInt64(keel.Count())),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("count shipments by hour and organization: %w", err)
+			}
+			return counts, nil
+		},
+	)
 }

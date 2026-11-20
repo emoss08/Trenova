@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -87,7 +88,14 @@ func (r *repository) Bootstrap(
 		func(ctx context.Context) (*tenantports.BootstrapTenantResult, error) {
 			db := r.db.Keel(ctx)
 
-			if err := r.admitOrganization(ctx, db); err != nil {
+			if req.Organization.ID.IsNil() {
+				req.Organization.ID = pulid.MustNew("org_")
+			}
+			businessUnitID := pulid.MustNew("bu_")
+			if err := r.admitOrganization(ctx, db, pagination.TenantInfo{
+				OrgID: req.Organization.ID,
+				BuID:  businessUnitID,
+			}); err != nil {
 				return nil, err
 			}
 
@@ -118,7 +126,11 @@ func (r *repository) Bootstrap(
 			req.Owner.Username = username
 
 			result, err := tenantbootstrap.Bootstrap(ctx, db, tenantbootstrap.BootstrapParams{
-				BusinessUnit: &tenant.BusinessUnit{Name: req.BusinessUnitName, Code: code},
+				BusinessUnit: &tenant.BusinessUnit{
+					ID:   businessUnitID,
+					Name: req.BusinessUnitName,
+					Code: code,
+				},
 				Organization: req.Organization,
 				Owner:        req.Owner,
 				Now:          req.Now,
@@ -138,7 +150,11 @@ func (r *repository) Bootstrap(
 	)
 }
 
-func (r *repository) admitOrganization(ctx context.Context, db *keel.DB) error {
+func (r *repository) admitOrganization(
+	ctx context.Context,
+	db *keel.DB,
+	created pagination.TenantInfo,
+) error {
 	if !quotaservice.Enforcing(r.quota) {
 		return nil
 	}
@@ -147,8 +163,9 @@ func (r *repository) admitOrganization(ctx context.Context, db *keel.DB) error {
 	}
 
 	return quotaservice.EnforceAll(ctx, r.quota, platformplanports.QuotaRequest{
-		Meter:    platformcatalog.MeterOrganizationsTotal,
-		Quantity: 1,
+		TenantInfo: created,
+		Meter:      platformcatalog.MeterOrganizationsTotal,
+		Quantity:   1,
 	})
 }
 

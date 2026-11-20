@@ -24,7 +24,7 @@ var (
 		minTokenLength,
 	)
 	ErrInstanceIDInvalid = errors.New(
-		"managed.instanceId must be the instance's ID, a lowercase UUID, when managed.enabled is true",
+		"managed.instanceId must be the instance's ID, a lowercase UUID, when managed.enabled is true on a dedicated instance; a shared server may leave it out or name the server's ID",
 	)
 	ErrPortInvalid         = errors.New("managed.port must be between 1 and 65535")
 	ErrEmbeddingURLInvalid = errors.New(
@@ -148,8 +148,10 @@ func (c *Config) Validate() error {
 	if !c.Enabled {
 		return nil
 	}
-	if parsed, err := uuid.Parse(c.InstanceID); err != nil || parsed.String() != c.InstanceID {
-		return ErrInstanceIDInvalid
+	if c.Tenancy != TenancyShared || c.InstanceID != "" {
+		if parsed, err := uuid.Parse(c.InstanceID); err != nil || parsed.String() != c.InstanceID {
+			return ErrInstanceIDInvalid
+		}
 	}
 	if len(strings.TrimSpace(c.Token)) < minTokenLength {
 		return ErrTokenRequired

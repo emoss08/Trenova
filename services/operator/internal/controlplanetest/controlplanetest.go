@@ -20,7 +20,21 @@ type Server struct {
 
 func New(t testing.TB, spec instanceapi.InstanceSpec) *Server {
 	t.Helper()
-	fake, err := fakecp.New(&fakecp.Params{Spec: spec, Hosts: []string{"127.0.0.1"}})
+	return start(t, &fakecp.Params{Spec: spec, Hosts: []string{"127.0.0.1"}})
+}
+
+func NewShared(t testing.TB, serverID uuid.UUID) *Server {
+	t.Helper()
+	return start(t, &fakecp.Params{
+		Spec:   fakecp.Spec(serverID),
+		Hosts:  []string{"127.0.0.1"},
+		Shared: true,
+	})
+}
+
+func start(t testing.TB, params *fakecp.Params) *Server {
+	t.Helper()
+	fake, err := fakecp.New(params)
 	if err != nil {
 		t.Fatal(err)
 	}

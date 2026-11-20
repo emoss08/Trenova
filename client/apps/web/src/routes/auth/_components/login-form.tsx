@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SignOutNoticeAlert } from "@trenova/shared/components/session/sign-out-notice-alert";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { suspensionOf } from "@trenova/shared/lib/plan-limit";
 import { returnPathFrom } from "@trenova/shared/lib/router/return-path";
 import { signOutNoticeFrom } from "@trenova/shared/lib/sign-out-notice";
 import { authService } from "@trenova/shared/services/auth";
@@ -123,9 +124,12 @@ export function LoginForm({
     },
   });
 
+  const [suspension, setSuspension] = useState<{ manageUrl: string } | null>(null);
+
   const onSubmit = (data: LoginRequest) => {
     stage.burst();
-    mutate(data);
+    setSuspension(null);
+    mutate(data, { onError: (error) => setSuspension(suspensionOf(error)) });
   };
 
   if (challenge) {
@@ -217,6 +221,16 @@ export function LoginForm({
               }
             />
             {rootError && <AuthErrorText>{rootError}</AuthErrorText>}
+            {suspension?.manageUrl && (
+              <a
+                href={suspension.manageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ui-focus-ring text-auth-body rounded-sm text-sm font-medium underline underline-offset-2"
+              >
+                {t("Open the Trenova console")}
+              </a>
+            )}
             <AuthSubmit type="submit" busy={isPending} busyLabel={t("Verifying")}>
               {t("Sign in")}
             </AuthSubmit>

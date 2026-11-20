@@ -3,6 +3,8 @@ package authservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
@@ -31,6 +33,7 @@ func TestAuthenticateAPIKeyDisabled(t *testing.T) {
 
 	recorder := &stubUsageRecorder{}
 	svc := &Service{
+		standing: managedfeaturesports.AlwaysActive{},
 		akr:      apikeyportsmock.NewMockAPIKeyRepository(t),
 		usageBuf: recorder,
 		securityConfig: &securityconfig.Config{
@@ -67,6 +70,7 @@ func TestAuthenticateAPIKeyRejectsRevokedKey(t *testing.T) {
 
 	recorder := &stubUsageRecorder{}
 	svc := &Service{
+		standing: managedfeaturesports.AlwaysActive{},
 		akr:      repo,
 		usageBuf: recorder,
 		securityConfig: &securityconfig.Config{
@@ -104,6 +108,7 @@ func TestAuthenticateAPIKeyRejectsExpiredKey(t *testing.T) {
 
 	recorder := &stubUsageRecorder{}
 	svc := &Service{
+		standing: managedfeaturesports.AlwaysActive{},
 		akr:      repo,
 		usageBuf: recorder,
 		securityConfig: &securityconfig.Config{
@@ -158,6 +163,7 @@ func TestAuthenticateAPIKeyStateIsToldOnlyToTheSecretHolder(t *testing.T) {
 
 			recorder := &stubUsageRecorder{}
 			svc := &Service{
+				standing: managedfeaturesports.AlwaysActive{},
 				akr:      repo,
 				usageBuf: recorder,
 				securityConfig: &securityconfig.Config{
@@ -205,6 +211,7 @@ func TestAuthenticateAPIKeyRejectsInvalidSecret(t *testing.T) {
 
 	recorder := &stubUsageRecorder{}
 	svc := &Service{
+		standing: managedfeaturesports.AlwaysActive{},
 		akr:      repo,
 		usageBuf: recorder,
 		securityConfig: &securityconfig.Config{
@@ -246,6 +253,7 @@ func TestAuthenticateAPIKeySuccessReturnsMachinePrincipal(t *testing.T) {
 	recorder := &stubUsageRecorder{}
 
 	svc := &Service{
+		standing: managedfeaturesports.AlwaysActive{},
 		akr:      repo,
 		usageBuf: recorder,
 		securityConfig: &securityconfig.Config{

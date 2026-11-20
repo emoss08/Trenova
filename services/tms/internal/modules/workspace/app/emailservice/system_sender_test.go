@@ -214,7 +214,7 @@ func newTrenovaRig(t *testing.T, opts rigOptions) *trenovaRig {
 	r.logs = logs
 	r.svc = &Service{
 		l:               zap.New(core),
-		instanceID:      trenovaTestInstance,
+		instanceTags:    ConfiguredInstance{ID: trenovaTestInstance},
 		repo:            r.repo,
 		invoiceRepo:     noInvoiceAttempts{},
 		validator:       NewValidator(),
@@ -508,7 +508,7 @@ func TestSendPersistedRefusesATrenovaMessageWhenTheInstanceHasNoID(t *testing.T)
 	t.Parallel()
 
 	r := newTrenovaRig(t, rigOptions{withTrenova: true})
-	r.svc.instanceID = ""
+	r.svc.instanceTags = ConfiguredInstance{}
 	msg := r.persisted(t, email.KindSystem, email.TypePasswordReset)
 
 	sent, err := r.sendPersisted(t, msg)

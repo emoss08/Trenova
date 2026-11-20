@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/supportkeys"
 	"github.com/emoss08/trenova/operator/internal/tms"
+	"github.com/emoss08/trenova/operator/internal/tmssecret"
 	"github.com/emoss08/trenova/operator/internal/tmstest"
 )
 
@@ -25,7 +26,14 @@ const (
 )
 
 func key(kid, x string) instanceapi.SupportKey {
-	return instanceapi.SupportKey{Kid: kid, Kty: "OKP", Crv: "Ed25519", Alg: "EdDSA", Use: "sig", X: x}
+	return instanceapi.SupportKey{
+		Kid: kid,
+		Kty: "OKP",
+		Crv: "Ed25519",
+		Alg: "EdDSA",
+		Use: "sig",
+		X:   x,
+	}
 }
 
 func support(keys ...instanceapi.SupportKey) *instanceapi.SpecSupport {
@@ -47,11 +55,11 @@ func newRig(t *testing.T) *rig {
 	srv := tmstest.New(t, token)
 	kube := fake.NewClientset(&corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: "trenova-secrets", Namespace: "trenova"},
-		Data:       map[string][]byte{tms.TokenKey: []byte(token)},
+		Data:       map[string][]byte{tmssecret.TokenKey: []byte(token)},
 	})
 	client, err := tms.New(tms.Params{
 		URL: srv.URL + "/",
-		Tokens: tms.NewSecretTokens(tms.SecretTokensParams{
+		Tokens: tmssecret.NewSecretTokens(tmssecret.SecretTokensParams{
 			Client: kube, Namespace: "trenova", Name: "trenova-secrets",
 		}),
 	})
@@ -89,7 +97,12 @@ func TestDeliversNothingWhenTheKeyIDsMatch(t *testing.T) {
 	reordered := support(key("cp-2", keyTwo), key("cp-1", keyOne))
 	require.NoError(t, r.relay.Sync(t.Context(), reordered))
 
-	assert.Len(t, r.tms.SupportKeyPuts(), 1, "the same set of key ids, in any order, is not sent again")
+	assert.Len(
+		t,
+		r.tms.SupportKeyPuts(),
+		1,
+		"the same set of key ids, in any order, is not sent again",
+	)
 }
 
 func TestDeliversNothingWithoutSupportInTheSpec(t *testing.T) {
@@ -98,7 +111,9 @@ func TestDeliversNothingWithoutSupportInTheSpec(t *testing.T) {
 	r.tms.HoldSupportKeys(tms.SupportKeys{
 		InstanceID:  "held",
 		StaffDomain: "trenova.app",
-		Keys:        []tms.SupportKey{{Kid: "old", Kty: "OKP", Crv: "Ed25519", Alg: "EdDSA", Use: "sig", X: keyOne}},
+		Keys: []tms.SupportKey{
+			{Kid: "old", Kty: "OKP", Crv: "Ed25519", Alg: "EdDSA", Use: "sig", X: keyOne},
+		},
 	})
 
 	require.NoError(t, r.relay.Sync(t.Context(), nil))
@@ -142,7 +157,16 @@ func TestAChangedInstanceOrDomainIsDeliveredAgain(t *testing.T) {
 func TestAKeySetTheTMSRefusesIsAnErrorNamingOnlyTheKeyIDs(t *testing.T) {
 	t.Parallel()
 	r := newRig(t)
-	bad := support(instanceapi.SupportKey{Kid: "cp-rsa", Kty: "RSA", Crv: "", Alg: "RS256", Use: "sig", X: keyOne})
+	bad := support(
+		instanceapi.SupportKey{
+			Kid: "cp-rsa",
+			Kty: "RSA",
+			Crv: "",
+			Alg: "RS256",
+			Use: "sig",
+			X:   keyOne,
+		},
+	)
 
 	err := r.relay.Sync(t.Context(), bad)
 

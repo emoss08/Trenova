@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/shared/pulid"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
@@ -78,9 +80,12 @@ func (f *fakeRepo) Save(
 }
 
 type fakeCounter struct {
-	meter  platformcatalog.MeterKey
-	counts []managedusageports.HourCount
-	req    *managedusageports.HourCountRequest
+	meter    platformcatalog.MeterKey
+	counts   []managedusageports.HourCount
+	req      *managedusageports.HourCountRequest
+	byOrg    []managedusageports.OrganizationHourCount
+	orgReq   *managedusageports.OrganizationsHourCountRequest
+	orgAsked int
 }
 
 func (f *fakeCounter) Meter() platformcatalog.MeterKey { return f.meter }
@@ -93,12 +98,22 @@ func (f *fakeCounter) CountByHour(
 	return f.counts, nil
 }
 
+func (f *fakeCounter) CountByHourForOrganizations(
+	_ context.Context,
+	req *managedusageports.OrganizationsHourCountRequest,
+) ([]managedusageports.OrganizationHourCount, error) {
+	f.orgReq = req
+	f.orgAsked++
+	return f.byOrg, nil
+}
+
 type fakeLevel struct {
-	meter  platformcatalog.MeterKey
-	level  int64
-	err    error
-	levels map[string]int64
-	asked  []managedscope.Scope
+	meter    platformcatalog.MeterKey
+	level    int64
+	err      error
+	levels   map[string]int64
+	asked    []managedscope.Scope
+	orgAsked int
 }
 
 func (f *fakeLevel) Meter() platformcatalog.MeterKey { return f.meter }
@@ -109,6 +124,20 @@ func (f *fakeLevel) Level(_ context.Context, scope managedscope.Scope) (int64, e
 		return level, f.err
 	}
 	return f.level, f.err
+}
+
+func (f *fakeLevel) LevelsForOrganizations(
+	_ context.Context,
+	ids []pulid.ID,
+) ([]managedusageports.OrganizationLevel, error) {
+	f.orgAsked++
+	out := make([]managedusageports.OrganizationLevel, 0, len(ids))
+	for _, id := range ids {
+		if level, ok := f.levels[id.String()]; ok {
+			out = append(out, managedusageports.OrganizationLevel{OrganizationID: id, Quantity: level})
+		}
+	}
+	return out, f.err
 }
 
 func newService(

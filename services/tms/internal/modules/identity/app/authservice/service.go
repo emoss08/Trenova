@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
@@ -34,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -65,6 +67,7 @@ type Params struct {
 	LoginThrottle     sessionports.LoginThrottleStore
 	Plans             platformplanports.PlanService
 	Features          platformcatalogports.FeatureGate
+	Standing          managedfeaturesports.StandingReader
 	MFA               sessionports.MFAService
 	MFAChallenges     iamports.MFAChallengeRepository
 	RoleActivation    iamports.RoleActivationPolicy
@@ -93,6 +96,7 @@ type Service struct {
 	throttle       sessionports.LoginThrottleStore
 	plans          platformplanports.PlanService
 	features       platformcatalogports.FeatureGate
+	standing       managedfeaturesports.StandingReader
 	mfa            sessionports.MFAService
 	challenges     iamports.MFAChallengeRepository
 	activation     iamports.RoleActivationPolicy
@@ -124,6 +128,7 @@ func New(p Params) tenantports.AuthService {
 		throttle:       p.LoginThrottle,
 		plans:          p.Plans,
 		features:       p.Features,
+		standing:       p.Standing,
 		mfa:            p.MFA,
 		challenges:     p.MFAChallenges,
 		activation:     p.RoleActivation,
@@ -1173,6 +1178,14 @@ func (s *Service) createLoginResponse(
 	user *tenant.User,
 	authn loginSessionContext,
 ) (*tenantports.LoginResponse, error) {
+	if err := planservice.RefuseSuspended(ctx, s.standing, pagination.TenantInfo{
+		OrgID:  user.CurrentOrganizationID,
+		BuID:   user.BusinessUnitID,
+		UserID: user.ID,
+	}); err != nil {
+		return nil, err
+	}
+
 	sess, token, err := s.createSession(ctx, user, authn)
 	if err != nil {
 		return nil, err

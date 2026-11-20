@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -57,6 +59,7 @@ func serveThroughGuard(t *testing.T, tc guardCase) (*httptest.ResponseRecorder, 
 	guard := NewReadOnlyGuard(ReadOnlyGuardParams{
 		Plans:    tc.plans,
 		Features: tc.features,
+		Standing: managedfeaturesports.AlwaysActive{},
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &appconfig.Config{},

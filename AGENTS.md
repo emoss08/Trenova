@@ -85,7 +85,8 @@ and still break production or the build.
 
 - **Modules.** Code lives in its module; a module imports only strictly lower modules'
   `domain`, `ports` and `<name>contract` packages (`archlint`). Public code never imports
-  `internal/cloud`.
+  `internal/cloud` (only `internal/bootstrap` does; `scripts/archlint` fails otherwise): that
+  directory is under its own license, `internal/cloud/LICENSE`, not the root FSL.
 - **Tenancy.** Repository methods run in `dbtx.Read`/`dbtx.Write` and query through
   `Keel(ctx)`, never `keel.Write`/`keel.Read` directly
   ([data-access.md](docs/engineering/backend/data-access.md)).

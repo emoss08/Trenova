@@ -16,8 +16,10 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | Password reset requested or redeemed | `auth_events` | `passwordresetservice` | — |
 | Account invitation redeemed (a new user chose their first password) | `auth_events` | `passwordresetservice` | — |
 | Sign-in throttled (account or IP failure limit) | `auth_events` | `authservice.Login` | — |
-| Cloud signup requested, rejected, verified, provisioned (Cloud edition) | `auth_events` | `internal/cloud/signup/cloudsignupservice` | — |
-| Cloud signup owner granted Organization Administrator (Cloud edition) | `audit_entries` | `internal/cloud/signup/cloudsignupservice` | yes |
+| Shared-server tenant made: its first administrator, the Organization Administrator role and its grant (actor: system, `metadata.actor = trenova_control_plane` with the control plane instance id) | `audit_entries` | `internal/cloud/app/tenantlifecycle` | yes |
+| Shared-server tenant suspended or resumed by the control plane (`organization.suspended`, `organization.resumed`) | `audit_entries` | `internal/cloud/app/tenantlifecycle` | yes |
+| Shared-server tenant created, revision applied, refused, suspended, resumed, removal started, removed (counts only; kept after the tenant and its own audit trail are deleted) | `cloud_tenant_events` | `internal/cloud/app/tenantlifecycle` | — |
+| Sign-in refused because the organization is suspended | `auth_events` (the attempt's failure) | `authservice.createLoginResponse` | — |
 | Instance bootstrap (`trenova db bootstrap`) created the first administrator, the Organization Administrator role and its grant, and the system account | `audit_entries` | `instancebootstrapservice` | yes |
 | API key created, updated, rotated, revoked | `audit_entries` | `apikeyservice` | yes |
 | Role created or updated, assigned or unassigned, inheritance, separation of duty constraints, resource permissions | `audit_entries` | `roleservice` | yes |
