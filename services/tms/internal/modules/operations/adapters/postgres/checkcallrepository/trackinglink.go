@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
@@ -19,14 +21,16 @@ import (
 const defaultLinkPurgeLimit = 500
 
 type linkRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewTrackingLinks(p Params) checkcallports.TrackingLinkRepository {
 	return &linkRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.carrier-tracking-link-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.carrier-tracking-link-repository"),
 	}
 }
 
@@ -123,11 +127,15 @@ func (r *linkRepository) PurgeDead(ctx context.Context, before int64, limit int)
 
 		tl := checkcalldb.TrackingLinks
 		dead := tl.As("dead")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, dead.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		rows, err := tl.AllTenants().
 			Where(tl.ID.InQuery(
 				dead.AllTenants().
 					Pick(dead.ID).
-					Where(dead.RevokedAt.Coalesce(dead.ExpiresAt).Lt(before)).
+					Where(entitled, dead.RevokedAt.Coalesce(dead.ExpiresAt).Lt(before)).
 					Limit(limit),
 			)).
 			Delete(ctx, r.db.Keel(ctx))

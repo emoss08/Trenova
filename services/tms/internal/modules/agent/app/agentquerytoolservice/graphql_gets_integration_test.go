@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -95,25 +97,42 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 	logger := zap.NewNop()
 	lists, services := convertedListCases(conn, admin)
 	events := carrierintelrepository.NewEventRepository(carrierintelrepository.Params{
-		DB: conn, Logger: logger,
+		Entitlements: entitlementtest.Instance(),
+		DB:           conn, Logger: logger,
 	})
 	services.CarrierIntelReviewService = carrierintelreviewservice.New(
 		carrierintelreviewservice.Params{Logger: logger, EventRepo: events},
 	)
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
 	credentials := workercredentialrepository.New(
-		workercredentialrepository.Params{DB: conn, Logger: logger})
+		workercredentialrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
+	)
 	services.WorkerCredentialService = workercredentialservice.New(workercredentialservice.Params{
 		Logger: logger, Repo: credentials, WorkerRepo: workers,
 	})
 	draws := workerdrugalcoholrepository.New(
-		workerdrugalcoholrepository.Params{DB: conn, Logger: logger})
+		workerdrugalcoholrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
+	)
 	services.WorkerDrugAlcoholService = workerdrugalcoholservice.New(
 		workerdrugalcoholservice.Params{
 			Logger: logger, Repo: draws, WorkerRepo: workers,
 		},
 	)
-	hours := telematicsrepository.New(telematicsrepository.Params{DB: conn, Logger: logger})
+	hours := telematicsrepository.New(
+		telematicsrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
+	)
 	services.TelematicsService = telematicsservice.New(telematicsservice.Params{
 		Repo: hours, Logger: logger,
 	})

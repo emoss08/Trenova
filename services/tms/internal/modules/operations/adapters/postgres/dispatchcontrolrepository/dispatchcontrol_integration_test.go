@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -30,8 +32,9 @@ func TestGetOrCreateParticipatesInOuterTransaction(t *testing.T) {
 	ctx = data.Ctx(ctx)
 	conn := postgres.WrapDB(db)
 	repo := New(Params{
-		DB:     conn,
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           conn,
+		Logger:       zap.NewNop(),
 	})
 
 	lock := inttestutil.HoldTxLock(
@@ -90,8 +93,9 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 	ctx = data.Ctx(ctx)
 	conn := postgres.WrapDB(db)
 	repo := New(Params{
-		DB:     conn,
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           conn,
+		Logger:       zap.NewNop(),
 	})
 
 	const calls = 50
@@ -136,8 +140,9 @@ func TestListCoveragePlanningTenantsReturnsHorizonTenants(t *testing.T) {
 	ctx = data.Ctx(ctx)
 	conn := postgres.WrapDB(db)
 	repo := New(Params{
-		DB:     conn,
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           conn,
+		Logger:       zap.NewNop(),
 	})
 
 	tenant := pagination.TenantInfo{
@@ -172,7 +177,7 @@ func TestGetOrCreateInAReadOnlyTransactionWritesNothing(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	conn := postgres.WrapDB(db)
-	repo := New(Params{DB: conn, Logger: zap.NewNop()})
+	repo := New(Params{Entitlements: entitlementtest.Instance(), DB: conn, Logger: zap.NewNop()})
 
 	dc := dispatchcontroldb.DispatchControls
 	_, err := dc.Where(keel.True()).Delete(ctx, db)

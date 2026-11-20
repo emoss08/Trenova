@@ -300,11 +300,16 @@ func (o *observed) publish(
 		return
 	}
 	kernelports.AfterCommit(ctx, func(committed context.Context) {
-		observers, gateErr := platformcatalogports.Observing(committed, o.features, o.observers)
-		if gateErr != nil {
-			o.l.Warn("document change observers skipped", zap.Error(gateErr))
-		}
 		for _, change := range changes {
+			observers, gateErr := platformcatalogports.Observing(
+				committed,
+				o.features,
+				change.TenantInfo.DBTenant(),
+				o.observers,
+			)
+			if gateErr != nil {
+				o.l.Warn("document change observers skipped", zap.Error(gateErr))
+			}
 			for _, observer := range observers {
 				observer.DocumentsChanged(committed, change)
 			}

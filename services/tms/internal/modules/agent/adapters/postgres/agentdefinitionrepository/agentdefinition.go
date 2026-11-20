@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -32,19 +34,22 @@ var definitionErrors = dberror.Mapping{Entity: "AgentDefinition"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) agentdefinitionports.AgentDefinitionRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.agentdefinition-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.agentdefinition-repository"),
 	}
 }
 
@@ -266,8 +271,13 @@ func (r *repository) ListScheduledAcrossTenants(
 		}
 
 		d := agentdefinitiondb.Definitions
+		entitled, entitledErr := r.entitlements.ForWork(ctx, d.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		entities, err := d.AllTenants().
 			Where(
+				entitled,
 				d.TriggerMode.In(scheduledModes()...),
 				keel.When(req.AfterID.IsNotNil(), d.ID.Gt(req.AfterID)),
 			).

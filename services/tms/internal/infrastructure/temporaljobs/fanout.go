@@ -1,6 +1,7 @@
 package temporaljobs
 
 import (
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -11,6 +12,7 @@ type TenantPage struct {
 
 type FanOutOptions struct {
 	Label       string
+	Need        entitlement.Need
 	Concurrency int
 	ListPage    func(ctx workflow.Context, after *TenantWorkItem) (*TenantPage, error)
 	RunTenant   func(ctx workflow.Context, tenant TenantWorkItem) (int, error)
@@ -25,6 +27,9 @@ func RunTenantFanOut(
 	concurrency := NormalizeLimit(opts.Concurrency, DefaultTenantDispatchLimit)
 	maxPages := NormalizeLimit(opts.MaxPages, 5)
 	result := new(TenantRunResult)
+	if err := opts.Need.Validate(); err != nil {
+		return result, nil, err
+	}
 
 	var after *TenantWorkItem
 	for range maxPages {
@@ -36,10 +41,16 @@ func RunTenantFanOut(
 			return result, nil, nil
 		}
 		result.TenantsScanned += len(page.Tenants)
+		last := page.Tenants[len(page.Tenants)-1]
+		entitled, err := KeepEntitled(ctx, opts.Need, page.Tenants)
+		if err != nil {
+			return result, after, err
+		}
+		result.SkippedCount += len(page.Tenants) - len(entitled)
 
 		selector := workflow.NewSelector(ctx)
 		inFlight := 0
-		for _, tenant := range page.Tenants {
+		for _, tenant := range entitled {
 			for inFlight >= concurrency {
 				selector.Select(ctx)
 				inFlight--
@@ -69,7 +80,6 @@ func RunTenantFanOut(
 			inFlight--
 		}
 
-		last := page.Tenants[len(page.Tenants)-1]
 		after = &last
 		if !page.HasMore {
 			return result, nil, nil

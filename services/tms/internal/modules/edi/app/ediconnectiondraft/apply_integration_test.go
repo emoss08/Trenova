@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicommunicationprofilerepository"
@@ -81,7 +83,11 @@ func realService(t *testing.T) (context.Context, *keel.DB, *Service, pagination.
 	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&tenant.Organization{Name: "Trenova Logistics", ScacCode: "TRNV", Timezone: "America/Chicago"}, nil).
 		Maybe()
-	ladingRepos := ediladingrepository.Params{DB: conn, Logger: logger}
+	ladingRepos := ediladingrepository.Params{
+		Entitlements: entitlementtest.Instance(),
+		DB:           conn,
+		Logger:       logger,
+	}
 	runtime := edilading.NewRuntime(edilading.RuntimeParams{
 		Logger:   logger,
 		Projects: ediladingrepository.NewProjects(ladingRepos),

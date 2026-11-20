@@ -8,6 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
@@ -32,20 +35,29 @@ var ErrProviderTimedOut = fmt.Errorf("the AI provider did not answer within its 
 	context.DeadlineExceeded)
 
 type providerLimits struct {
-	spend aiproviderports.AIProviderSpendService
-	slots llmports.ProviderSlotRepository
-	keys  aiproviderports.AIProviderKeyRepository
+	spend             aiproviderports.AIProviderSpendService
+	slots             llmports.ProviderSlotRepository
+	keys              aiproviderports.AIProviderKeyRepository
+	organizationShare int
+	tenancy           *platformmetrics.Tenancy
 
 	mu      sync.Mutex
 	touched map[pulid.ID]time.Time
 }
 
 func NewProviderLimits(p *Params) *providerLimits {
+	share := 0
+	if p.TenantLimits != nil && p.Managed != nil &&
+		p.TenantLimits.AISlots.Organizations.On(p.Managed.SharedTenancy()) {
+		share = p.TenantLimits.AISlotsPerOrganization()
+	}
 	return &providerLimits{
-		spend:   p.Spend,
-		slots:   p.Slots,
-		keys:    p.Keys,
-		touched: make(map[pulid.ID]time.Time),
+		spend:             p.Spend,
+		slots:             p.Slots,
+		keys:              p.Keys,
+		organizationShare: share,
+		tenancy:           metrics.TenancyFrom(p.Metrics),
+		touched:           make(map[pulid.ID]time.Time),
 	}
 }
 
@@ -117,7 +129,8 @@ func (s *Engine) ClaimSlot(
 
 	ttl := timeout + slotMargin
 	token := pulid.MustNew("slot_").String()
-	acquired, err := s.awaitSlot(ctx, provider, token, ttl, waitsForSlot(ctx))
+	organization := s.Limits.sharedBy(provider)
+	acquired, err := s.awaitSlot(ctx, provider, organization, token, ttl, waitsForSlot(ctx))
 	if err != nil {
 		s.Logger.Warn("could not claim a provider slot; calling without one",
 			zap.String("provider", provider.Name),
@@ -125,12 +138,15 @@ func (s *Engine) ClaimSlot(
 		return func() {}, nil
 	}
 	if !acquired {
+		if organization.IsNotNil() {
+			s.Limits.tenancy.RecordLimitRefusal("ai_slots", platformmetrics.LimitScopeOrganization)
+		}
 		return nil, fmt.Errorf("%s: %w", provider.Name, llmports.ErrProviderBusy)
 	}
 
 	stop := make(chan struct{})
 	var once sync.Once
-	go s.holdSlot(context.WithoutCancel(ctx), provider.ID, token, ttl, stop)
+	go s.holdSlot(context.WithoutCancel(ctx), provider.ID, organization, token, ttl, stop)
 
 	return func() {
 		once.Do(func() {
@@ -138,8 +154,9 @@ func (s *Engine) ClaimSlot(
 			releaseCtx, release := context.WithTimeout(context.WithoutCancel(ctx), slotStoreTimeout)
 			defer release()
 			if releaseErr := s.Limits.slots.Release(releaseCtx, llmports.ProviderSlotRequest{
-				ProviderID: provider.ID,
-				Token:      token,
+				ProviderID:     provider.ID,
+				Token:          token,
+				OrganizationID: organization,
 			}); releaseErr != nil {
 				s.Logger.Warn("could not release a provider slot; it expires on its own",
 					zap.String("provider", provider.Name),
@@ -147,6 +164,13 @@ func (s *Engine) ClaimSlot(
 			}
 		})
 	}, nil
+}
+
+func (l *providerLimits) sharedBy(provider *aiprovider.Provider) pulid.ID {
+	if l.organizationShare <= 0 || !provider.BuiltIn {
+		return pulid.Nil
+	}
+	return provider.OrganizationID
 }
 
 type slotWaitKey struct{}
@@ -176,6 +200,7 @@ func waitsForSlot(ctx context.Context) bool {
 func (s *Engine) awaitSlot(
 	ctx context.Context,
 	provider *aiprovider.Provider,
+	organization pulid.ID,
 	token string,
 	ttl time.Duration,
 	wait bool,
@@ -184,13 +209,19 @@ func (s *Engine) awaitSlot(
 	if bound, ok := ctx.Deadline(); ok && bound.Before(deadline) {
 		deadline = bound
 	}
+	share := 0
+	if organization.IsNotNil() {
+		share = s.Limits.organizationShare
+	}
 	for {
 		storeCtx, cancel := context.WithTimeout(ctx, slotStoreTimeout)
 		acquired, err := s.Limits.slots.Acquire(storeCtx, llmports.AcquireProviderSlotRequest{
-			ProviderID: provider.ID,
-			Token:      token,
-			Limit:      provider.ResolvedMaxConcurrent(),
-			TTL:        ttl,
+			ProviderID:        provider.ID,
+			Token:             token,
+			Limit:             provider.ResolvedMaxConcurrent(),
+			TTL:               ttl,
+			OrganizationID:    organization,
+			OrganizationLimit: share,
 		})
 		cancel()
 		if err != nil || acquired || !wait || !time.Now().Add(slotPoll).Before(deadline) {
@@ -208,6 +239,7 @@ func (s *Engine) awaitSlot(
 func (s *Engine) holdSlot(
 	ctx context.Context,
 	providerID pulid.ID,
+	organization pulid.ID,
 	token string,
 	ttl time.Duration,
 	stop <-chan struct{},
@@ -222,9 +254,10 @@ func (s *Engine) holdSlot(
 		case <-ticker.C:
 			refreshCtx, cancel := context.WithTimeout(ctx, slotStoreTimeout)
 			_, err := s.Limits.slots.Refresh(refreshCtx, llmports.ProviderSlotRequest{
-				ProviderID: providerID,
-				Token:      token,
-				TTL:        ttl,
+				ProviderID:     providerID,
+				Token:          token,
+				TTL:            ttl,
+				OrganizationID: organization,
 			})
 			cancel()
 			if err != nil {

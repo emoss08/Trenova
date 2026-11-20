@@ -9,6 +9,8 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
@@ -50,7 +52,7 @@ func newQueueFixture(t *testing.T) *queueFixture {
 	a := seedtest.SeedFullTestData(t, ctx, admin)
 	b := seedtest.SeedAdditionalTenant(t, ctx, admin, "IMB")
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
-	params := Params{DB: conn, Logger: zap.NewNop()}
+	params := Params{Entitlements: entitlementtest.Instance(), DB: conn, Logger: zap.NewNop()}
 
 	f := &queueFixture{
 		admin:     admin,
@@ -182,12 +184,15 @@ func TestEveryQueuePatchIsOneValidStatement(t *testing.T) {
 
 	for name, patch := range cases {
 		message := f.newMessage(t, f.a, nil)
-		states, err := f.queue.UpdateQueueState(f.a.ctx, inboundmessageports.UpdateQueueStateRequest{
-			TenantInfo: f.a.info,
-			IDs:        []pulid.ID{message.ID},
-			Patch:      patch,
-			Now:        queueNow,
-		})
+		states, err := f.queue.UpdateQueueState(
+			f.a.ctx,
+			inboundmessageports.UpdateQueueStateRequest{
+				TenantInfo: f.a.info,
+				IDs:        []pulid.ID{message.ID},
+				Patch:      patch,
+				Now:        queueNow,
+			},
+		)
 		require.NoError(t, err, name)
 		require.Len(t, states, 1, name)
 		assert.Equal(t, message.ID, states[0].ID, name)
@@ -280,20 +285,26 @@ func TestTheReconcileReadsBothTimersAcrossTenants(t *testing.T) {
 		m.SnoozeEvent = inboundmessage.SnoozeEventInvoicePaid
 	})
 
-	refs, err := f.queue.ListOverdueParked(t.Context(), inboundmessageports.ListOverdueParkedRequest{
-		Now:   queueNow,
-		Limit: 500,
-	})
+	refs, err := f.queue.ListOverdueParked(
+		t.Context(),
+		inboundmessageports.ListOverdueParkedRequest{
+			Now:   queueNow,
+			Limit: 500,
+		},
+	)
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []inboundmessageports.ParkedRef{
 		{ID: snoozed.ID, OrganizationID: f.a.info.OrgID, BusinessUnitID: f.a.info.BuID},
 		{ID: awaiting.ID, OrganizationID: f.b.info.OrgID, BusinessUnitID: f.b.info.BuID},
 	}, refs)
 
-	capped, err := f.queue.ListOverdueParked(t.Context(), inboundmessageports.ListOverdueParkedRequest{
-		Now:   queueNow,
-		Limit: 1,
-	})
+	capped, err := f.queue.ListOverdueParked(
+		t.Context(),
+		inboundmessageports.ListOverdueParkedRequest{
+			Now:   queueNow,
+			Limit: 1,
+		},
+	)
 	require.NoError(t, err)
 	assert.Len(t, capped, 1)
 }
@@ -337,11 +348,14 @@ func TestMarkingAMailboxReceivedNeverMovesItBackwards(t *testing.T) {
 
 	mark := func(at int64) {
 		t.Helper()
-		require.NoError(t, f.mailboxes.MarkReceived(f.a.ctx, inboundmessageports.MailboxReceivedRequest{
-			TenantInfo: f.a.info,
-			MailboxID:  f.a.mailbox.ID,
-			ReceivedAt: at,
-		}))
+		require.NoError(
+			t,
+			f.mailboxes.MarkReceived(f.a.ctx, inboundmessageports.MailboxReceivedRequest{
+				TenantInfo: f.a.info,
+				MailboxID:  f.a.mailbox.ID,
+				ReceivedAt: at,
+			}),
+		)
 	}
 	lastReceived := func() int64 {
 		t.Helper()
@@ -403,13 +417,16 @@ func TestConcurrentMailboxTestClaimsLetExactlyOneThrough(t *testing.T) {
 	var wg conc.WaitGroup
 	for range 8 {
 		wg.Go(func() {
-			_, err := f.mailboxes.ClaimTestSend(f.a.ctx, inboundmessageports.ClaimMailboxTestRequest{
-				TenantInfo:     f.a.info,
-				MailboxID:      f.a.mailbox.ID,
-				Token:          pulid.MustNew("tst_").String(),
-				At:             queueNow,
-				LastSentBefore: queueNow - 60,
-			})
+			_, err := f.mailboxes.ClaimTestSend(
+				f.a.ctx,
+				inboundmessageports.ClaimMailboxTestRequest{
+					TenantInfo:     f.a.info,
+					MailboxID:      f.a.mailbox.ID,
+					Token:          pulid.MustNew("tst_").String(),
+					At:             queueNow,
+					LastSentBefore: queueNow - 60,
+				},
+			)
 			switch {
 			case err == nil:
 				claimed.Add(1)
@@ -432,10 +449,13 @@ func TestRetentionDeletesOnlyInsideOneTenant(t *testing.T) {
 	ours := f.newMessage(t, f.a, nil)
 	theirs := f.newMessage(t, f.b, nil)
 
-	deleted, err := f.messages.DeleteByIDs(f.a.ctx, inboundmessageports.DeleteInboundMessagesRequest{
-		TenantInfo: f.a.info,
-		IDs:        []pulid.ID{ours.ID, theirs.ID},
-	})
+	deleted, err := f.messages.DeleteByIDs(
+		f.a.ctx,
+		inboundmessageports.DeleteInboundMessagesRequest{
+			TenantInfo: f.a.info,
+			IDs:        []pulid.ID{ours.ID, theirs.ID},
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 1, deleted)
 

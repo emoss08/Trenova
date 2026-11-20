@@ -3,6 +3,8 @@ package rateimportservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,7 +18,7 @@ func TestUpload_RefusesAnInfectedSheetBeforeReadingIt(t *testing.T) {
 	t.Parallel()
 
 	gate := contentscanportsmock.NewInfectedGate("Xls.Dropper.Agent-1")
-	svc := &Service{l: zap.NewNop(), contentGate: gate}
+	svc := &Service{l: zap.NewNop(), contentGate: gate, slots: heavyslotstest.Unbounded()}
 	content := []byte("PK\x03\x04 not a workbook")
 
 	batch, err := svc.Upload(t.Context(), &UploadRequest{

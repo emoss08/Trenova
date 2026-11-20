@@ -5,6 +5,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
@@ -129,6 +132,7 @@ func (h *doclingHarness) runWorkflow(
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(h.activities)
 
 	env.ExecuteWorkflow(ProcessDocumentExtractionWorkflow, payload)

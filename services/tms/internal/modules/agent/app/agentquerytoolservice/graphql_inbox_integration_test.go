@@ -9,6 +9,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -105,14 +109,22 @@ func newInboxEnv(t *testing.T) *inboxEnv {
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	logger := zap.NewNop()
-	params := inboundmessagerepository.Params{DB: conn, Logger: logger}
+	params := inboundmessagerepository.Params{
+		Entitlements: entitlementtest.Instance(),
+		DB:           conn,
+		Logger:       logger,
+	}
 	messages := inboundmessagerepository.New(params)
 	queue := inboundmessagerepository.NewQueueRepository(params)
 	replies := inboundreplyrepository.New(inboundreplyrepository.Params{DB: conn})
 	users := userrepository.New(userrepository.Params{DB: conn, Logger: logger})
 	directory := &inboxDirectory{people: map[pulid.ID][]permissionports.PermittedUser{}}
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	captures := capturerepository.Params{DB: conn, Logger: logger}
+	captures := capturerepository.Params{
+		Entitlements: entitlementtest.Instance(),
+		DB:           conn,
+		Logger:       logger,
+	}
 	captureSupport := capturesupport.New(capturesupport.Params{Logger: logger, Permissions: engine})
 
 	resolvers := agentread.ResolverParams{
@@ -152,6 +164,7 @@ func newInboxEnv(t *testing.T) *inboxEnv {
 			Logger:  logger,
 			DB:      conn,
 			Managed: &managedconfig.Config{},
+			Metrics: metricstest.Disabled(),
 			Repo:    emailrepository.New(emailrepository.Params{DB: conn, Logger: logger}),
 		}),
 	}

@@ -131,30 +131,43 @@ func (r *repository) SetLifecycle(
 func (r *repository) DuePlanEndReminders(
 	ctx context.Context,
 	req *managedfeaturesports.DueRemindersRequest,
-) ([]managedscope.Scope, error) {
+) ([]managedfeaturesports.DueReminder, error) {
 	ctx = dbscope.WithSystem(ctx, "find the managed scopes whose plan ends within three days")
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]managedscope.Scope, error) {
-		s := managedfeaturesdb.States
-		due, err := s.
-			Where(
-				s.Lifecycle.Eq(managedfeatures.LifecycleActive),
-				s.PlanEndsAt.IsNotNull(),
-				s.PlanEndsAt.Gt(req.Now),
-				s.PlanEndsAt.Lte(req.Now+managedfeatures.PlanEndReminderLead),
-				s.PlanEndReminded.IsDistinctFromExpr(s.PlanEndsAt),
-			).
-			Order(s.PlanEndsAt.Asc(), s.ScopeKey.Asc()).
-			Limit(req.Limit).
-			List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("find plans that end within three days: %w", err)
-		}
-		scopes := make([]managedscope.Scope, 0, len(due))
-		for _, state := range due {
-			scopes = append(scopes, state.Scope())
-		}
-		return scopes, nil
-	})
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]managedfeaturesports.DueReminder, error) {
+			s := managedfeaturesdb.States
+			var after keel.Pred
+			if req.After != nil {
+				after = keel.Tuple(s.PlanEndsAt, s.ScopeKey).
+					Gt(keel.Tuple(req.After.EndsAt, req.After.Scope.Key()))
+			}
+			due, err := s.
+				Where(
+					activeLifecycle(),
+					s.PlanEndsAt.IsNotNull(),
+					s.PlanEndsAt.Gt(req.Now),
+					s.PlanEndsAt.Lte(req.Now+managedfeatures.PlanEndReminderLead),
+					s.PlanEndReminded.IsDistinctFromExpr(s.PlanEndsAt),
+					after,
+				).
+				Order(s.PlanEndsAt.Asc(), s.ScopeKey.Asc()).
+				Limit(req.Limit).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("find plans that end within three days: %w", err)
+			}
+			reminders := make([]managedfeaturesports.DueReminder, 0, len(due))
+			for _, state := range due {
+				reminders = append(reminders, managedfeaturesports.DueReminder{
+					Scope:  state.Scope(),
+					EndsAt: state.PlanEndsAt,
+				})
+			}
+			return reminders, nil
+		},
+	)
 }
 
 func (r *repository) RemindPlanEnd(
@@ -271,6 +284,19 @@ func (r *repository) History(
 	)
 }
 
+func ActivePlan() keel.Pred {
+	s := managedfeaturesdb.States
+	return keel.And(
+		activeLifecycle(),
+		keel.Raw("? > ?", s.ReceivedAt, keel.ConstInt64(0)),
+	)
+}
+
+func activeLifecycle() keel.Pred {
+	s := managedfeaturesdb.States
+	return s.Lifecycle.EqCol(keel.ConstText(string(managedfeatures.LifecycleActive)))
+}
+
 func (r *repository) AnyActiveScope(
 	ctx context.Context,
 	feature *platformcatalog.FeatureKey,
@@ -279,9 +305,8 @@ func (r *repository) AnyActiveScope(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		s := managedfeaturesdb.States
 		preds := []keel.Pred{
-			s.Lifecycle.Eq(managedfeatures.LifecycleActive),
+			ActivePlan(),
 			s.ScopeKey.Ne(managedscope.InstanceKey),
-			s.ReceivedAt.Gt(0),
 		}
 		if feature != nil {
 			preds = append(

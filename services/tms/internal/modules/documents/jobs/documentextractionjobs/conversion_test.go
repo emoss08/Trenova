@@ -9,6 +9,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
@@ -136,6 +141,7 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 	storage.Put(key, body)
 
 	activities := &Activities{
+		slots:  heavyslotstest.Unbounded(),
 		logger: zap.NewNop(),
 		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
@@ -190,6 +196,7 @@ func (h *doclingHarness) run(t *testing.T) *documentanalysis.ProcessDocumentInte
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(h.activities)
 
 	env.ExecuteWorkflow(ProcessDocumentExtractionWorkflow, h.payload)

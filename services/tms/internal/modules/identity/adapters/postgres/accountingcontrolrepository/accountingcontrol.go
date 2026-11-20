@@ -3,6 +3,8 @@ package accountingcontrolrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
@@ -21,19 +23,22 @@ var accountingControlErrors = dberror.Mapping{Entity: "AccountingControl"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) tenantports.AccountingControlRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.accountingcontrol-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.accountingcontrol-repository"),
 	}
 }
 
@@ -72,7 +77,13 @@ func (r *repository) ListAll(ctx context.Context) ([]*accountingcontrol.Accounti
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
-			entities, err := accountingcontroldb.AccountingControls.AllTenants().
+			ac := accountingcontroldb.AccountingControls
+			entitled, entitledErr := r.entitlements.ForWork(ctx, ac.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
+			entities, err := ac.AllTenants().
+				Where(entitled).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list accounting controls", zap.Error(err))
@@ -93,8 +104,13 @@ func (r *repository) ListWithScheduledPeriodClose(
 		r.db,
 		func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
 			ac := accountingcontroldb.AccountingControls
+			entitled, entitledErr := r.entitlements.ForWork(ctx, ac.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			entities, err := ac.AllTenants().
 				Where(
+					entitled,
 					ac.PeriodCloseMode.Eq(accountingcontrol.PeriodCloseModeSystemScheduled),
 					ac.RequirePeriodCloseApproval.IsFalse(),
 				).

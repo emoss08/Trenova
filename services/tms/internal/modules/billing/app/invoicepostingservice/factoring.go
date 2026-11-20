@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicedocument"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -28,7 +30,10 @@ func (s *Service) assignFactoring(
 	if entity.CustomerID.IsNil() {
 		return nil
 	}
-	factoring, err := s.features.Enabled(ctx, platformcatalog.FeatureFactoring)
+	factoring, err := s.features.Enabled(
+		dbscope.WithTenant(ctx, tenantInfo.DBTenant()),
+		platformcatalog.FeatureFactoring,
+	)
 	if err != nil {
 		return fmt.Errorf("ask whether factoring is on the plan: %w", err)
 	}

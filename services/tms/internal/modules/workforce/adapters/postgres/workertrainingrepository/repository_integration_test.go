@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
@@ -43,7 +45,13 @@ func TestGetCoursesByIDsReturnsOnlyTheTenantsCourses(t *testing.T) {
 	second := seedTrainingCourse(t, ctx, db, tenantA, "HOS")
 	foreign := seedTrainingCourse(t, ctx, db, tenantB, "FORKLIFT")
 
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 
 	entities, err := repo.GetCoursesByIDs(
 		tenantA.Ctx(ctx),

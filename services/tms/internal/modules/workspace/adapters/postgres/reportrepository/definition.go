@@ -3,6 +3,8 @@ package reportrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -26,19 +28,22 @@ var (
 type DefinitionParams struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type definitionRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewDefinitionRepository(p DefinitionParams) reportports.ReportDefinitionRepository {
 	return &definitionRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.report-definition-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.report-definition-repository"),
 	}
 }
 
@@ -120,8 +125,12 @@ func (r *definitionRepository) ListCatalogStale(
 	ctx = dbscope.WithSystem(ctx, "check saved report definitions against the report catalog")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportDefinition, error) {
 		d := reportdb.ReportDefinitions
+		entitled, entitledErr := r.entitlements.ForWork(ctx, d.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		older, err := d.AllTenants().
-			Where(d.CatalogVersion.Lt(req.CatalogVersion)).
+			Where(entitled, d.CatalogVersion.Lt(req.CatalogVersion)).
 			Limit(req.Limit).
 			All(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -133,7 +142,7 @@ func (r *definitionRepository) ListCatalogStale(
 		}
 
 		newer, err := d.AllTenants().
-			Where(d.CatalogVersion.Gt(req.CatalogVersion)).
+			Where(entitled, d.CatalogVersion.Gt(req.CatalogVersion)).
 			Limit(req.Limit-len(older)).
 			All(ctx, r.db.Keel(ctx))
 		if err != nil {

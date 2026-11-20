@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -34,8 +36,9 @@ var checkCallErrors = dberror.Mapping{Entity: "Check call"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {

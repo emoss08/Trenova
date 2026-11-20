@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/watchtowerrepository"
@@ -42,7 +44,11 @@ func newHarness(t *testing.T) *harness {
 		ctx: dbscope.WithTenant(ctx, tenant.DBTenant()),
 		db:  db,
 		repo: watchtowerrepository.New(
-			watchtowerrepository.Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
+			watchtowerrepository.Params{
+				Entitlements: entitlementtest.Instance(),
+				DB:           postgres.WrapDB(db),
+				Logger:       zap.NewNop(),
+			},
 		),
 		tenant: tenant,
 		userID: data.User.ID,

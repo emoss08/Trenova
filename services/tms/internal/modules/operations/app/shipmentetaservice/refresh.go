@@ -240,7 +240,12 @@ func (r *Refresher) announce(
 		return
 	}
 
-	observers, gateErr := platformcatalogports.Observing(ctx, r.features, r.observers)
+	observers, gateErr := platformcatalogports.Observing(
+		ctx,
+		r.features,
+		tenantInfo.DBTenant(),
+		r.observers,
+	)
 	if gateErr != nil {
 		r.l.Warn("stop ETA observers skipped", zap.Error(gateErr))
 	}

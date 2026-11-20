@@ -86,6 +86,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"go.uber.org/fx"
@@ -181,6 +182,7 @@ func SharedOptions() fx.Option {
 				assembler *invoicepacket.Assembler,
 				documents documentports.InvoiceDocumentService,
 				previews invoicepacket.PreviewCache,
+				slots kernelports.HeavyJobSlots,
 				logger *zap.Logger,
 			) billingqueueports.PacketPreviewer {
 				return invoicepacket.NewPreviewService(invoicepacket.PreviewParams{
@@ -189,6 +191,7 @@ func SharedOptions() fx.Option {
 					Assembler: assembler,
 					Documents: documents,
 					Previews:  previews,
+					Slots:     slots,
 					Logger:    logger,
 				})
 			},

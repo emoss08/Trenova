@@ -3,6 +3,9 @@ package ptojobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/workforce/jobs/ptojobs/ptocontract"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
@@ -53,6 +56,16 @@ func PTOAccrualWorkflow(
 
 	result := &PTOAccrualResult{}
 	result.TenantsScanned = len(tenants)
+
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureWorkforceTimeOff),
+		tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenants = kept
 
 	for _, tenant := range tenants {
 		afterID := pulid.Nil

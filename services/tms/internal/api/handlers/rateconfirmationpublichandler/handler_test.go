@@ -8,6 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -102,6 +105,8 @@ func newTestHandlerWith(
 		RateLimiter: middleware.NewRateLimiter(middleware.RateLimiterParams{
 			SecurityConfig: &cfg.Security,
 			Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
+			Managed:        &managedconfig.Config{},
+			TenantLimits:   &tenantlimitsconfig.Config{},
 			ErrorHandler:   errorHandler,
 			Logger:         zap.NewNop(),
 			Metrics: &metrics.Registry{

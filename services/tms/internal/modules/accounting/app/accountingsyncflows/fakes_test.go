@@ -435,6 +435,7 @@ func (f *fakeRecords) Claim(
 	for _, row := range f.rows {
 		if row.ConnectionID == req.ConnectionID &&
 			sameTenant(row.OrganizationID, row.BusinessUnitID, req.TenantInfo) &&
+			slices.Contains(req.ObjectTypes, row.ObjectType) &&
 			due(row, req.Now) {
 			picked = append(picked, row)
 		}

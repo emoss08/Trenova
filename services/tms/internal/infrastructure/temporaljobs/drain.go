@@ -5,6 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/workqueueports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -12,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"go.uber.org/zap"
 )
@@ -40,6 +42,10 @@ type DrainPayload struct {
 func (p *DrainPayload) TenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: p.OrganizationID, BuID: p.BusinessUnitID}
 }
+
+var errDrainWithoutEntitlements = errors.New(
+	"a tenant drain needs the entitlement filter that answers whether the tenant may be served",
+)
 
 // ErrDeferred is what a handler returns for a subject it chose not to work
 // yet, such as one past a concurrency cap: the subject is due again after
@@ -130,11 +136,13 @@ func drainWakes(signals workflow.ReceiveChannel) bool {
 
 // DrainDueParams is one page of a tenant drain's work, in an activity.
 type DrainDueParams struct {
-	Queue      workqueueports.Queue
-	Kind       string
-	Tenant     pagination.TenantInfo
-	PageSize   int
-	RetryAfter time.Duration
+	Queue        workqueueports.Queue
+	Need         entitlement.Need
+	Entitlements entitlementports.Filter
+	Kind         string
+	Tenant       pagination.TenantInfo
+	PageSize     int
+	RetryAfter   time.Duration
 	// Handle works the page's subjects and returns the ones that failed or
 	// were deferred (ErrDeferred); they are due again after RetryAfter, the
 	// rest are settled. details holds each subject's queued detail.
@@ -144,6 +152,17 @@ type DrainDueParams struct {
 // DrainDue claims a page of the tenant's due subjects, works them and settles
 // each, so a retry after a partial page picks up what is left.
 func DrainDue(ctx context.Context, p *DrainDueParams) (*DrainPage, error) {
+	if p.Entitlements == nil {
+		return nil, errDrainWithoutEntitlements
+	}
+	entitled, err := p.Entitlements.Keep(ctx, p.Need, []pulid.ID{p.Tenant.OrgID})
+	if err != nil {
+		return nil, err
+	}
+	if len(entitled) == 0 {
+		return &DrainPage{}, nil
+	}
+
 	now := timeutils.NowUnix()
 	due, err := p.Queue.ListDue(ctx, &workqueueports.ListDueRequest{
 		Kind:       p.Kind,
@@ -263,7 +282,6 @@ func (r *DrainRequester) Wake(ctx context.Context, tenant pagination.TenantInfo)
 			ID:            id,
 			TaskQueue:     r.TaskQueue,
 			StaticSummary: r.Summary,
-			Priority:      temporal.Priority{FairnessKey: tenant.OrgID.String()},
 		},
 		r.Workflow,
 		&DrainPayload{OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, Kind: r.Kind},

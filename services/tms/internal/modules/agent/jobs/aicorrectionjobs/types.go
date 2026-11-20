@@ -2,6 +2,7 @@ package aicorrectionjobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
 )
 
 const (
@@ -14,6 +15,7 @@ type AICorrectionRetentionInput struct {
 }
 
 type ListAICorrectionOrganizationsInput struct {
+	Need  entitlement.Need             `json:"need"`
 	After *temporaljobs.TenantWorkItem `json:"after,omitempty"`
 	Limit int                          `json:"limit"`
 }

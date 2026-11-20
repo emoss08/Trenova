@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
@@ -110,6 +113,16 @@ func PollInboundMailboxesWorkflow(
 		logger.Error("failed to list pollable EDI profiles", "error", err)
 		return nil, err
 	}
+
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureEDIIntegration),
+		profiles,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	profiles = kept
 
 	for _, profile := range profiles {
 		result.PolledProfiles++

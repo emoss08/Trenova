@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -79,7 +81,11 @@ func setupLedgerEnv(t *testing.T) *ledgerEnv {
 	}
 
 	controls := accountingcontrolrepository.New(
-		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		accountingcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	control, err := controls.GetByOrgID(e.ctx, e.tenantInfo.OrgID)
 	require.NoError(t, err)

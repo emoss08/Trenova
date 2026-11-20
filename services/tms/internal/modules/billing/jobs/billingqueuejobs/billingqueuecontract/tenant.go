@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -141,7 +140,6 @@ func (r *TenantRequester) signal(
 			ID:            id,
 			TaskQueue:     temporaltype.TaskQueueBilling.String(),
 			StaticSummary: tenantSummary,
-			Priority:      temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
 		},
 		TenantWorkflowName,
 		&TenantPayload{OrganizationID: tenantInfo.OrgID, BusinessUnitID: tenantInfo.BuID},

@@ -5,6 +5,8 @@ package conversationrepository_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -22,7 +24,11 @@ func TestRecordReadSinceFindsOnlyALaterToolResultThatCarriesTheRecord(t *testing
 	t.Cleanup(cleanup)
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	other := seedtest.SeedAdditionalTenant(t, ctx, db, "CV")
-	params := conversationrepository.Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}
+	params := conversationrepository.Params{
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(db),
+		Logger:       zap.NewNop(),
+	}
 	repo := conversationrepository.New(params)
 	activity := conversationrepository.NewConversationActivity(params)
 	tenantCtx := data.Ctx(ctx)
@@ -53,12 +59,15 @@ func TestRecordReadSinceFindsOnlyALaterToolResultThatCarriesTheRecord(t *testing
 
 	read := func(since int64, record pulid.ID) bool {
 		t.Helper()
-		found, readErr := activity.RecordReadSince(tenantCtx, &agentwaitports.RecordReadSinceRequest{
-			ThreadID:   thread.ID,
-			RecordID:   record,
-			TenantInfo: data.Info(),
-			Since:      since,
-		})
+		found, readErr := activity.RecordReadSince(
+			tenantCtx,
+			&agentwaitports.RecordReadSinceRequest{
+				ThreadID:   thread.ID,
+				RecordID:   record,
+				TenantInfo: data.Info(),
+				Since:      since,
+			},
+		)
 		require.NoError(t, readErr)
 
 		return found
@@ -69,12 +78,15 @@ func TestRecordReadSinceFindsOnlyALaterToolResultThatCarriesTheRecord(t *testing
 		"the person naming it and a failed read are not the agent reading it")
 	assert.False(t, read(100, pulid.MustNew("bqi_")), "another record was not read")
 
-	elsewhere, err := activity.RecordReadSince(other.Ctx(ctx), &agentwaitports.RecordReadSinceRequest{
-		ThreadID:   thread.ID,
-		RecordID:   watched,
-		TenantInfo: other.Info(),
-		Since:      100,
-	})
+	elsewhere, err := activity.RecordReadSince(
+		other.Ctx(ctx),
+		&agentwaitports.RecordReadSinceRequest{
+			ThreadID:   thread.ID,
+			RecordID:   watched,
+			TenantInfo: other.Info(),
+			Since:      100,
+		},
+	)
 	require.NoError(t, err)
 	assert.False(t, elsewhere, "another tenant reads nothing of the conversation")
 }

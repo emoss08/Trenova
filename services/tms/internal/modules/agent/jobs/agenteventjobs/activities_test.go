@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -39,7 +41,10 @@ type workingRuns struct {
 	asked   *agentruntimeports.CountOpenAgentRunsRequest
 }
 
-func (r *workingRuns) CountOpen(_ context.Context, req *agentruntimeports.CountOpenAgentRunsRequest) (int, error) {
+func (r *workingRuns) CountOpen(
+	_ context.Context,
+	req *agentruntimeports.CountOpenAgentRunsRequest,
+) (int, error) {
 	r.asked = req
 
 	return r.working, nil
@@ -72,7 +77,10 @@ type memoryQueue struct {
 	settled map[pulid.ID]*int64
 }
 
-func (q *memoryQueue) ListDue(_ context.Context, req *workqueueports.ListDueRequest) ([]workqueueports.Due, error) {
+func (q *memoryQueue) ListDue(
+	_ context.Context,
+	req *workqueueports.ListDueRequest,
+) ([]workqueueports.Due, error) {
 	q.listed++
 
 	return q.due[:min(len(q.due), req.Limit)], nil
@@ -123,11 +131,12 @@ func TestStartEventRunsStartsUpToTheAgentsRoom(t *testing.T) {
 	runs := &startedRuns{}
 	queue := &memoryQueue{due: queued(3), settled: map[pulid.ID]*int64{}}
 	a := NewActivities(ActivitiesParams{
-		Queue:       queue,
-		Definitions: &capDefinitions{maxRuns: 3},
-		Runs:        runs,
-		RunRepo:     runRepo,
-		Logger:      zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		Queue:        queue,
+		Definitions:  &capDefinitions{maxRuns: 3},
+		Runs:         runs,
+		RunRepo:      runRepo,
+		Logger:       zap.NewNop(),
 	})
 
 	page, err := a.StartEventRunsActivity(t.Context(), drainPayload(definitionID))
@@ -152,11 +161,12 @@ func TestStartEventRunsIsBlockedWhenTheAgentIsFull(t *testing.T) {
 
 	queue := &memoryQueue{due: queued(2), settled: map[pulid.ID]*int64{}}
 	a := NewActivities(ActivitiesParams{
-		Queue:       queue,
-		Definitions: &capDefinitions{maxRuns: 1},
-		Runs:        &startedRuns{},
-		RunRepo:     &workingRuns{working: 1},
-		Logger:      zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		Queue:        queue,
+		Definitions:  &capDefinitions{maxRuns: 1},
+		Runs:         &startedRuns{},
+		RunRepo:      &workingRuns{working: 1},
+		Logger:       zap.NewNop(),
 	})
 
 	page, err := a.StartEventRunsActivity(t.Context(), drainPayload(pulid.MustNew("agd_")))
@@ -175,8 +185,9 @@ func TestStartEventRunsSettlesOpenSubjectsAndRetriesFailures(t *testing.T) {
 	open, failing := due[0].SubjectID, due[1].SubjectID
 	queue := &memoryQueue{due: due, settled: map[pulid.ID]*int64{}}
 	a := NewActivities(ActivitiesParams{
-		Queue:       queue,
-		Definitions: &capDefinitions{maxRuns: 5},
+		Entitlements: entitlementtest.Instance(),
+		Queue:        queue,
+		Definitions:  &capDefinitions{maxRuns: 5},
 		Runs: &startedRuns{errs: map[pulid.ID]error{
 			open:    agentruntimeports.ErrAgentRunAlreadyOpen,
 			failing: errors.New("temporal unavailable"),

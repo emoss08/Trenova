@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -104,10 +106,16 @@ func ledgerResolvers(conn *postgres.Connection) agentread.ResolverParams {
 			),
 			Periods: periods,
 			Controls: accountingcontrolrepository.New(
-				accountingcontrolrepository.Params{DB: conn, Logger: logger}),
+				accountingcontrolrepository.Params{
+					Entitlements: entitlementtest.Instance(),
+					DB:           conn,
+					Logger:       logger,
+				},
+			),
 			Users: userrepository.New(userrepository.Params{DB: conn, Logger: logger}),
 			Customers: customerrepository.New(customerrepository.Params{
-				DB: conn, Logger: logger,
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn, Logger: logger,
 			}),
 			Locations: locationrepository.New(locationrepository.Params{DB: conn, Logger: logger}),
 			Ledger:    ledger,

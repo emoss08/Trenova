@@ -5,6 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/supportaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
@@ -35,6 +38,7 @@ func runSweep(t *testing.T, sweeper *scriptedSweeper) *testsuite.TestWorkflowEnv
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(NewActivities(ActivitiesParams{Sweeper: sweeper}))
 	env.RegisterWorkflow(SweepOrphanedOrganizationAccessWorkflow)
 	env.ExecuteWorkflow(SweepOrphanedOrganizationAccessWorkflow)
@@ -88,6 +92,7 @@ func TestSupportExpiryWorkflow_ReportsWhatItRecorded(t *testing.T) {
 	expiries := &scriptedExpiries{}
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(NewActivities(ActivitiesParams{SupportExpiries: expiries}))
 	env.RegisterWorkflow(RecordSupportAccessExpiriesWorkflow)
 	env.ExecuteWorkflow(RecordSupportAccessExpiriesWorkflow)

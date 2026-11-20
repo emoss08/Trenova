@@ -3,6 +3,7 @@ package rateconfirmationrepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -16,7 +17,11 @@ func TestDeadTokensQuery_PurgesAcrossTenantsInBoundedBatches(t *testing.T) {
 	sql, args := keeltest.RenderIn(
 		t,
 		ctx,
-		deadTokensQuery(tenderports.PurgeDeadTokensRequest{DeadBefore: 1_000}, 25).Limit(1),
+		deadTokensQuery(
+			tenderports.PurgeDeadTokensRequest{DeadBefore: 1_000},
+			keel.True(),
+			25,
+		).Limit(1),
 	)
 
 	assert.Contains(t, sql, `coalesce(dead."used_at", dead."revoked_at", dead."expires_at") < $1`)

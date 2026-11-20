@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
@@ -433,4 +436,52 @@ func TestListDueConnectionsAsksForRecordsDueNow(t *testing.T) {
 	require.Len(t, h.records.dueCalls, 1)
 	assert.Equal(t, 25, h.records.dueCalls[0].Limit)
 	assert.InDelta(t, time.Now().Unix(), h.records.dueCalls[0].Now, 2)
+}
+
+func TestDrainSendsOnlyWhatThePlanCoversNow(t *testing.T) {
+	t.Parallel()
+
+	gate := plantest.SharedServer()
+	h := newHarness(t, withFeatures(gate))
+	gate.Without(h.tenant.OrgID, platformcatalog.FeatureAccounting)
+
+	customerID, _ := h.mappedCustomer("Acme")
+	h.confirm(freightTarget(), "qb-item-freight")
+	h.mapPaymentAccounts(customerpayment.MethodCheck)
+	inv := h.postedInvoice(customerID, invoiceSpec{number: "INV-PLAN"})
+	payment := h.postedPayment(customerID, paymentSpec{
+		amountMinor: 150000,
+		applications: []*customerpayment.Application{
+			{InvoiceID: inv.ID, AppliedAmountMinor: 150000},
+		},
+	})
+	h.enqueueInvoice(t, inv)
+	h.enqueuePayment(t, payment, accountingsync.SyncOperationCreate)
+
+	result := h.drain(t)
+
+	assert.False(t, result.Held)
+	assert.Equal(t, []string{"CreateSalesDocument"}, h.writer.methods())
+	queued := h.only(
+		t,
+		accountingsync.SyncObjectCustomerPayment,
+		payment.ID,
+		accountingsync.SyncOperationCreate,
+	)
+	assert.Equal(t, accountingsync.SyncStatusQueued, queued.Status)
+	assert.Zero(t, queued.AttemptCount, "a record the plan no longer covers is never claimed")
+}
+
+func TestDrainHoldsATenantWithNoActivePlan(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, withFeatures(plantest.SharedServer()))
+	record := h.readyInvoice(t)
+
+	result := h.drain(t)
+
+	assert.True(t, result.Held)
+	assert.Zero(t, result.Claimed)
+	assert.Empty(t, h.writer.methods())
+	assert.Equal(t, accountingsync.SyncStatusQueued, h.records.get(record.ID).Status)
 }

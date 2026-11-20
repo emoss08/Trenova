@@ -5,6 +5,8 @@ package agentqualityrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -21,7 +23,13 @@ func TestControlUpsertCreatesTheFirstControl(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := NewControls(ControlParams{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := NewControls(
+		ControlParams{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 
 	_, err := repo.Get(ctx, tenant)

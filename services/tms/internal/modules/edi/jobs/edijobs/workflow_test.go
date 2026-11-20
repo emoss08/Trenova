@@ -4,6 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,6 +20,7 @@ func newDeliverWorkflowTestEnv(t *testing.T) *testsuite.TestWorkflowEnvironment 
 	t.Helper()
 	suite := &testsuite.WorkflowTestSuite{}
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterWorkflow(DeliverEDIMessageWorkflow)
 	return env
 }

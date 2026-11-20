@@ -70,9 +70,8 @@ func SweepWorkflowID(orgID pulid.ID) string {
 	return sweepWorkflowIDPrefix + orgID.String()
 }
 
-func EvaluationPriority(orgID pulid.ID) temporal.Priority {
+func EvaluationPriority() temporal.Priority {
 	return temporal.Priority{
 		PriorityKey: agentflowcontract.PriorityEvaluation,
-		FairnessKey: orgID.String(),
 	}
 }

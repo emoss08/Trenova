@@ -5,6 +5,8 @@ package carriersettlementcontrolrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
@@ -38,7 +40,13 @@ func TestCreateKeepsSundayPeriodEndAndNoPayDelay(t *testing.T) {
 	control.PayDelayDays = 0
 	require.NoError(t, cc.Create(ctx, db, control))
 
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	got, err := repo.GetOrCreate(ctx, tenant)
 	require.NoError(t, err)
 	assert.Equal(t, control.ID, got.ID)
@@ -61,7 +69,13 @@ func TestGetOrCreateWritesTheDefaultsForANewTenant(t *testing.T) {
 		Delete(ctx, db)
 	require.NoError(t, err)
 
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	got, err := repo.GetOrCreate(ctx, tenant)
 	require.NoError(t, err)
 

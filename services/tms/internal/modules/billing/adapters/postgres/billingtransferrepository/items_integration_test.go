@@ -5,6 +5,8 @@ package billingtransferrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -60,7 +62,13 @@ func TestRecordItemOutcomesWritesEveryOutcomeOfAFlush(t *testing.T) {
 
 	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 
 	run, err := repo.Create(ctx, &billingtransfer.BillingTransferRun{
 		OrganizationID: orgID,
@@ -200,7 +208,13 @@ func TestRecordItemOutcomesKeepsHowManyEachReasonHeldBack(t *testing.T) {
 
 	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 
 	run, err := repo.Create(ctx, &billingtransfer.BillingTransferRun{
 		OrganizationID: orgID,
@@ -222,28 +236,31 @@ func TestRecordItemOutcomesKeepsHowManyEachReasonHeldBack(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = repo.RecordItemOutcomes(ctx, &billingtransferports.RecordBillingTransferOutcomesRequest{
-		TenantInfo: tenant,
-		RunID:      run.ID,
-		Outcomes: []billingtransferports.BillingTransferItemOutcome{
-			{ShipmentID: shipments[0], Status: billingtransfer.ItemStatusTransferred},
-			{
-				ShipmentID:  shipments[1],
-				Status:      billingtransfer.ItemStatusNotTransferred,
-				FailureCode: billingtransfer.FailureAlreadyTransferred,
-			},
-			{
-				ShipmentID:  shipments[2],
-				Status:      billingtransfer.ItemStatusNotTransferred,
-				FailureCode: billingtransfer.FailureRequirementsUnmet,
-			},
-			{
-				ShipmentID:  shipments[3],
-				Status:      billingtransfer.ItemStatusNotTransferred,
-				FailureCode: billingtransfer.FailureRequirementsUnmet,
+	_, err = repo.RecordItemOutcomes(
+		ctx,
+		&billingtransferports.RecordBillingTransferOutcomesRequest{
+			TenantInfo: tenant,
+			RunID:      run.ID,
+			Outcomes: []billingtransferports.BillingTransferItemOutcome{
+				{ShipmentID: shipments[0], Status: billingtransfer.ItemStatusTransferred},
+				{
+					ShipmentID:  shipments[1],
+					Status:      billingtransfer.ItemStatusNotTransferred,
+					FailureCode: billingtransfer.FailureAlreadyTransferred,
+				},
+				{
+					ShipmentID:  shipments[2],
+					Status:      billingtransfer.ItemStatusNotTransferred,
+					FailureCode: billingtransfer.FailureRequirementsUnmet,
+				},
+				{
+					ShipmentID:  shipments[3],
+					Status:      billingtransfer.ItemStatusNotTransferred,
+					FailureCode: billingtransfer.FailureRequirementsUnmet,
+				},
 			},
 		},
-	})
+	)
 	require.NoError(t, err)
 
 	reread, err := repo.GetByID(ctx, &billingtransferports.GetBillingTransferRunRequest{

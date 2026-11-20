@@ -3,8 +3,9 @@ package retrievalplanobserver
 import (
 	"context"
 	"fmt"
-	"slices"
 	"time"
+
+	"github.com/emoss08/trenova/pkg/pagination"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
@@ -52,29 +53,39 @@ func (o *Observer) PlanChanged(
 	ctx context.Context,
 	replacement *managedfeatures.Replacement,
 ) error {
-	if !TurnedOn(replacement, platformcatalog.FeatureAIDesk) {
+	if !replacement.Gained(platformcatalog.FeatureAIDesk) {
 		return nil
 	}
 
-	if _, err := o.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
+	options := client.StartWorkflowOptions{
 		ID:                       SweepWorkflowID,
 		TaskQueue:                temporaltype.TaskQueueSystem.String(),
 		WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_USE_EXISTING,
 		StartDelay:               SweepDelay,
 		StaticSummary:            "Start search by meaning for every organization after Trenova AI was added",
-	}, retrievalservice.SweepWorkflowName); err != nil {
+	}
+	request := &retrievalservice.SweepRequest{}
+	if tenant, ok := replacement.Scope.Tenant(); ok {
+		organization := pagination.TenantInfo{
+			OrgID: tenant.OrganizationID,
+			BuID:  tenant.BusinessUnitID,
+		}
+		options.ID = retrievalservice.SweepWorkflowIDFor(tenant.OrganizationID)
+		options.StaticSummary = "Start search by meaning for an organization after Trenova AI was added"
+		request.Organization = &organization
+	}
+
+	if _, err := o.workflows.StartWorkflow(
+		ctx,
+		options,
+		retrievalservice.SweepWorkflowName,
+		request,
+	); err != nil {
 		return fmt.Errorf("start the retrieval sweep after Trenova AI was added: %w", err)
 	}
 
-	o.l.Info("Trenova AI was added; every organization's search index is checked shortly")
+	o.l.Info("Trenova AI was added; the search index is checked shortly",
+		zap.String("scope", replacement.Scope.Key()))
 
 	return nil
-}
-
-func TurnedOn(replacement *managedfeatures.Replacement, feature platformcatalog.FeatureKey) bool {
-	if !replacement.FeaturesChanged() || !slices.Contains(replacement.Current.Features, feature) {
-		return false
-	}
-
-	return replacement.Previous == nil || !slices.Contains(replacement.Previous.Features, feature)
 }

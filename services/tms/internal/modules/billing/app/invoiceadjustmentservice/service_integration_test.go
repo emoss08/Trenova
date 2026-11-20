@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -1023,17 +1025,26 @@ func newIntegrationHarness(
 		invoiceadjustmentrepository.Params{DB: conn, Logger: logger},
 	)
 	billingQueueRepo := billingqueuerepository.New(
-		billingqueuerepository.Params{DB: conn, Logger: logger},
+		billingqueuerepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	adjustmentCtrlRepo := invoiceadjustmentcontrolrepository.New(
 		invoiceadjustmentcontrolrepository.Params{DB: conn, Logger: logger},
 	)
 	accountingRepo := accountingcontrolrepository.New(
-		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		accountingcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	customerRepo := customerrepository.New(customerrepository.Params{
-		DB:     conn,
-		Logger: logger,
+		Entitlements: entitlementtest.Instance(),
+		DB:           conn,
+		Logger:       logger,
 	})
 	shipmentRepo := shipmentrepository.New(shipmentrepository.Params{
 		DB:     conn,
@@ -1052,7 +1063,11 @@ func newIntegrationHarness(
 		),
 	})
 	shipmentCtrlRepo := shipmentcontrolrepository.New(
-		shipmentcontrolrepository.Params{DB: conn, Logger: logger},
+		shipmentcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
@@ -1192,15 +1207,20 @@ func (h *integrationHarness) buildService(
 			Repo:        h.adjustmentRepo,
 			InvoiceRepo: h.invoiceRepo,
 			CustomerRepo: customerrepository.New(customerrepository.Params{
-				DB:     h.conn,
-				Logger: zap.NewNop(),
+				Entitlements: entitlementtest.Instance(),
+				DB:           h.conn,
+				Logger:       zap.NewNop(),
 			}),
 			BillingQueueRepo: h.billingQueueRepo,
 			ShipmentRepo: shipmentrepository.New(
 				shipmentrepository.Params{DB: h.conn, Logger: zap.NewNop()},
 			),
 			ShipmentCtrlRepo: shipmentcontrolrepository.New(
-				shipmentcontrolrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+				shipmentcontrolrepository.Params{
+					Entitlements: entitlementtest.Instance(),
+					DB:           h.conn,
+					Logger:       zap.NewNop(),
+				},
 			),
 			AdjustmentCtrlRepo: h.adjustmentCtrlRepo,
 			AccountingRepo:     h.accountingRepo,

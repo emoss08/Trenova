@@ -4,6 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -40,6 +43,7 @@ func newEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 	t.Helper()
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterWorkflow(RunReportWorkflow)
 
 	var a *Activities

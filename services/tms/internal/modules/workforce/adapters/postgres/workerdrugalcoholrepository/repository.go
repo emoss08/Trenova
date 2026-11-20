@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -49,19 +51,22 @@ var drawEntryErrors = dberror.Mapping{Entity: "DOTRandomDrawEntry"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) workerdotports.WorkerDrugAlcoholRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.worker-drug-alcohol-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.worker-drug-alcohol-repository"),
 	}
 }
 
@@ -728,6 +733,7 @@ func (r *repository) UpdateProfileRollup(
 
 func clearinghouseDueQuery(
 	req *workerdotports.ListWorkersWithClearinghouseDueRequest,
+	entitled keel.Pred,
 ) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
@@ -740,6 +746,7 @@ func clearinghouseDueQuery(
 		)).
 		Pick(w.ID, w.OrganizationID, w.BusinessUnitID).
 		Where(
+			entitled,
 			w.Status.Eq(domaintypes.StatusActive),
 			keel.Or(
 				wp.NextClearinghouseQueryDue.Lte(req.Until),
@@ -759,10 +766,15 @@ func (r *repository) ListWorkersWithClearinghouseDue(
 		"list workers due a clearinghouse query across every organization",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerTenantRef, error) {
+		w := workerdb.Workers
+		entitled, entitledErr := r.entitlements.ForWork(ctx, w.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		refs, err := keel.Into[workerports.WorkerTenantRef](
 			ctx,
 			r.db.Keel(ctx),
-			clearinghouseDueQuery(req),
+			clearinghouseDueQuery(req, entitled),
 		)
 		if err != nil {
 			r.l.Error("failed to list workers with clearinghouse due", zap.Error(err))

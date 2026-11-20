@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
@@ -51,7 +53,11 @@ func newSCIMHarness(t *testing.T) *scimHarness {
 	h := &scimHarness{
 		ctx:   ctx,
 		admin: admin,
-		repo:  &repository{db: dbtest.NewRLSConnection(t, admin, dsn), l: zap.NewNop()},
+		repo: &repository{
+			entitlements: entitlementtest.Instance(),
+			db:           dbtest.NewRLSConnection(t, admin, dsn),
+			l:            zap.NewNop(),
+		},
 	}
 	h.a = h.directory(t, seedtest.SeedFullTestData(t, ctx, admin), "acme", "scim_tenantAprefix")
 	h.b = h.directory(

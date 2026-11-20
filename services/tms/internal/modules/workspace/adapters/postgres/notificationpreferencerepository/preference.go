@@ -3,6 +3,8 @@ package notificationpreferencerepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -20,19 +22,22 @@ const maxDigestNotifications = 50
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) notificationports.PreferenceRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.notification-preference-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.notification-preference-repository"),
 	}
 }
 
@@ -115,8 +120,12 @@ func (r *repository) ListDigestSubscribers(
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*notification.Preference, error) {
 		p := notificationdb.Preferences
+		entitled, entitledErr := r.entitlements.ForWork(ctx, p.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		entities, err := p.AllTenants().
-			Where(p.EmailMode.Eq(notification.DeliveryModeAll), p.EmailDigest.IsTrue()).
+			Where(entitled, p.EmailMode.Eq(notification.DeliveryModeAll), p.EmailDigest.IsTrue()).
 			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list digest subscribers", zap.Error(err))

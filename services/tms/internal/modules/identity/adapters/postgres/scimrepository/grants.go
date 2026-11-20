@@ -108,13 +108,17 @@ func (r *repository) ListPendingDirectories(
 	ctx = dbscope.WithSystem(ctx, pendingScopeReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]scimports.PendingDirectory, error) {
 		su := scimdb.Users
+		entitled, entitledErr := r.entitlements.ForWork(ctx, su.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		directories, err := keel.Into[scimports.PendingDirectory](
 			ctx,
 			r.db.Keel(ctx),
 			su.AllTenants().
 				Group(su.OrganizationID, su.BusinessUnitID, su.DirectoryID).
 				Pick(su.OrganizationID, su.BusinessUnitID, su.DirectoryID).
-				Where(su.RolesReconciledVersion.NeCol(su.RolesVersion)).
+				Where(entitled, su.RolesReconciledVersion.NeCol(su.RolesVersion)).
 				Limit(limit),
 		)
 		if err != nil {
@@ -288,7 +292,12 @@ func (r *repository) MarkExpiredSaversPending(ctx context.Context, since, until 
 		ura := rbacdb.UserRoleAssignments
 		m := iamdb.SCIMGroupRoleMappings
 		su := scimdb.Users
+		entitled, entitledErr := r.entitlements.ForWork(ctx, su.OrganizationID.Col)
+		if entitledErr != nil {
+			return entitledErr
+		}
 		if _, err := su.AllTenants().Where(
+			entitled,
 			su.DirectoryID.InQuery(m.AllTenants().Pick(m.DirectoryID).Where(
 				m.SavedByID.InQuery(ura.AllTenants().Pick(ura.UserID).Where(
 					ura.ExpiresAt.Gt(since),

@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,6 +44,7 @@ func TestEvaluateWorkflowFoldsABurstIntoOneEvaluation(t *testing.T) {
 	t.Parallel()
 	var ts testsuite.WorkflowTestSuite
 	env := ts.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	var a *Activities
 	recorder := &batchRecorder{}
 	env.OnActivity(a.EvaluateFactoringTargetsActivity, mock.Anything, mock.Anything).

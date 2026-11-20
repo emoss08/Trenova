@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/importsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/databasesize"
+	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/entitledrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/managedfeaturesrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/managedusagerepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/recordvisibilityrepository"
@@ -49,6 +50,7 @@ func SharedOptions() fx.Option {
 			func(r *managedfeaturesservice.Receiver) managedfeaturesports.PlanEndReminder { return r },
 			managedplanservice.New,
 			featureGate,
+			entitledrepository.New,
 			managedusagerepository.New,
 			managedusageservice.New,
 			managedusageservice.NewReceiver,

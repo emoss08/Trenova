@@ -91,6 +91,13 @@ func (h *ProviderHealth) now() time.Time {
 	return h.clock()
 }
 
+func BreakerKey(provider *aiprovider.Provider) pulid.ID {
+	if !provider.BuiltIn || provider.OrganizationID.IsNil() {
+		return provider.ID
+	}
+	return pulid.ID(provider.ID.String() + ":" + provider.OrganizationID.String())
+}
+
 // Resting reports whether a provider is being left alone, and until when.
 func (h *ProviderHealth) Resting(id pulid.ID) (time.Time, bool) {
 	if h == nil {
@@ -272,7 +279,7 @@ func (s *Engine) Observe(ctx context.Context, provider *aiprovider.Provider, err
 		return
 	}
 
-	s.Health.Observe(ctx, provider.ID, err)
+	s.Health.Observe(ctx, BreakerKey(provider), err)
 }
 
 // unavailability reports a failure that says the provider, not the request,
@@ -308,7 +315,7 @@ func (h *ProviderHealth) Rested(
 
 	ready = make([]*aiprovider.Provider, 0, len(providers))
 	for _, provider := range providers {
-		openUntil, isResting := h.Resting(provider.ID)
+		openUntil, isResting := h.Resting(BreakerKey(provider))
 		if !isResting {
 			ready = append(ready, provider)
 
@@ -337,8 +344,8 @@ func (h *ProviderHealth) awakeIDs(providers []*aiprovider.Provider) []pulid.ID {
 		if provider == nil || provider.ID.IsNil() {
 			continue
 		}
-		if _, resting := h.restingLocked(provider.ID, now); !resting {
-			ids = append(ids, provider.ID)
+		if _, resting := h.restingLocked(BreakerKey(provider), now); !resting {
+			ids = append(ids, BreakerKey(provider))
 		}
 	}
 

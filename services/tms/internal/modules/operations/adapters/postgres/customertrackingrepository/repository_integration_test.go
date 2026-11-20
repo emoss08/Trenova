@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -57,8 +59,9 @@ func newHarness(t *testing.T) *harness {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	params := customertrackingrepository.Params{
-		DB:     postgres.WrapDB(db),
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(db),
+		Logger:       zap.NewNop(),
 	}
 	return &harness{
 		ctx:           dbscope.WithTenant(ctx, tenant.DBTenant()),

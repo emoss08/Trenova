@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
@@ -46,7 +48,11 @@ func setupMappingFixture(t *testing.T) *mappingFixture {
 	conn := postgres.WrapDB(db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	connections := accountingconnectionrepository.NewConnectionRepository(
-		accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},
+		accountingconnectionrepository.ConnectionParams{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       zap.NewNop(),
+		},
 	)
 	created, err := connections.Create(
 		ctx,

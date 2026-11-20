@@ -3,6 +3,8 @@ package paperworkcontract
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -63,7 +65,10 @@ func (r *Requester) RequestRead(ctx context.Context, doc *document.Document, use
 
 	tenant := pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID}
 	kernelports.AfterCommit(ctx, func(committed context.Context) {
-		onPlan, err := r.features.Enabled(committed, platformcatalog.FeatureDocumentIntelligence)
+		onPlan, err := r.features.Enabled(
+			dbscope.WithTenant(committed, tenant.DBTenant()),
+			platformcatalog.FeatureDocumentIntelligence,
+		)
 		if err != nil {
 			r.l.Warn(
 				"could not ask whether Document Intelligence is on the plan; the document is not read",
@@ -83,7 +88,6 @@ func (r *Requester) RequestRead(ctx context.Context, doc *document.Document, use
 				StaticSummary: "Nova reads a shipment document",
 				Priority: temporal.Priority{
 					PriorityKey: agentflowcontract.PriorityOneShot,
-					FairnessKey: tenant.OrgID.String(),
 				},
 			},
 			ReadWorkflowName,

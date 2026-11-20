@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -637,7 +639,11 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 		workerchecklistrepository.Params{DB: conn, Logger: logger},
 	)
 	training := workertrainingrepository.New(
-		workertrainingrepository.Params{DB: conn, Logger: logger},
+		workertrainingrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	reviews := performancereviewrepository.New(
 		performancereviewrepository.Params{DB: conn, Logger: logger},
@@ -647,7 +653,12 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 		checklistService: workerchecklistservice.New(workerchecklistservice.Params{
 			Logger: logger, Repo: checklists, WorkerRepo: workers,
 			CredentialRepo: workercredentialrepository.New(
-				workercredentialrepository.Params{DB: conn, Logger: logger}),
+				workercredentialrepository.Params{
+					Entitlements: entitlementtest.Instance(),
+					DB:           conn,
+					Logger:       logger,
+				},
+			),
 			DocumentRepo: documentrepository.New(
 				documentrepository.Params{DB: conn, Logger: logger},
 			),
@@ -659,7 +670,11 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	}
 	injuries := workerinjuryrepository.New(workerinjuryrepository.Params{DB: conn, Logger: logger})
 	tests := workerdrugalcoholrepository.New(
-		workerdrugalcoholrepository.Params{DB: conn, Logger: logger},
+		workerdrugalcoholrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	services.injuries, services.tests = injuries, tests
 	services.injuryService = workerinjuryservice.New(workerinjuryservice.Params{
@@ -684,14 +699,23 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	resolvers.WorkerInjuryService = services.injuryService
 	resolvers.WorkerDrugAlcoholService = services.testService
 	services.safety = workersafetyrepository.New(
-		workersafetyrepository.Params{DB: conn, Logger: logger},
+		workersafetyrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	services.safetyService = workersafetyservice.New(workersafetyservice.Params{
 		Logger: logger, Repo: services.safety, WorkerRepo: workers,
 	})
 	resolvers.WorkerSafetyService = services.safetyService
 	services.credentials = workercredentialrepository.New(
-		workercredentialrepository.Params{DB: conn, Logger: logger})
+		workercredentialrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
+	)
 	services.credentialService = workercredentialservice.New(workercredentialservice.Params{
 		Logger: logger, Repo: services.credentials, WorkerRepo: workers,
 	})

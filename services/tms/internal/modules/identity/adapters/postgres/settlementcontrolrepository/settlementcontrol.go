@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
@@ -23,19 +25,22 @@ var settlementControlErrors = dberror.Mapping{Entity: "SettlementControl"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) tenantports.SettlementControlRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.settlement-control-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.settlement-control-repository"),
 	}
 }
 
@@ -94,8 +99,12 @@ func (r *repository) ListAutoGenerate(
 		r.db,
 		func(ctx context.Context) ([]*settlementcontrol.SettlementControl, error) {
 			sc := settlementcontroldb.SettlementControls
+			entitled, entitledErr := r.entitlements.ForWork(ctx, sc.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			items, err := sc.AllTenants().
-				Where(sc.AutoGenerateBatches.IsTrue()).
+				Where(entitled, sc.AutoGenerateBatches.IsTrue()).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list auto-generate settlement controls: %w", err)
@@ -114,7 +123,13 @@ func (r *repository) ListAll(ctx context.Context) ([]*settlementcontrol.Settleme
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*settlementcontrol.SettlementControl, error) {
-			items, err := settlementcontroldb.SettlementControls.AllTenants().
+			sc := settlementcontroldb.SettlementControls
+			entitled, entitledErr := r.entitlements.ForWork(ctx, sc.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
+			items, err := sc.AllTenants().
+				Where(entitled).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list settlement controls: %w", err)

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
@@ -54,7 +56,11 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 	)
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	accountingRepo := accountingcontrolrepository.New(
-		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		accountingcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
@@ -228,7 +234,11 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 	)
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	accountingRepo := accountingcontrolrepository.New(
-		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		accountingcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
@@ -399,7 +409,11 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 	)
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	accountingRepo := accountingcontrolrepository.New(
-		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		accountingcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
@@ -632,7 +646,11 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 	)
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	accountingRepo := accountingcontrolrepository.New(
-		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		accountingcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
@@ -830,7 +848,11 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 	)
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	accountingRepo := accountingcontrolrepository.New(
-		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		accountingcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
@@ -992,7 +1014,11 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 	)
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	accountingRepo := accountingcontrolrepository.New(
-		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		accountingcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},

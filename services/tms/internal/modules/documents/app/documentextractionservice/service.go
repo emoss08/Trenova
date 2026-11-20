@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -266,7 +268,13 @@ func (s *Service) EnqueueExtraction(
 		return nil
 	}
 
-	onPlan, err := s.features.Enabled(ctx, platformcatalog.FeatureDocumentIntelligence)
+	onPlan, err := s.features.Enabled(
+		dbscope.WithTenant(ctx, dbscope.Tenant{
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
+		}),
+		platformcatalog.FeatureDocumentIntelligence,
+	)
 	if err != nil {
 		return fmt.Errorf("ask whether document intelligence is on the plan: %w", err)
 	}

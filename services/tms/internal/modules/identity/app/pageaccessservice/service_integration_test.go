@@ -5,6 +5,8 @@ package pageaccessservice_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rolerepository"
@@ -68,8 +70,9 @@ func TestPreview_ReadsASavedRoleAndItsAncestorsFromItsOwnOrganization(t *testing
 	other := insertRole(t, db, tenantB, permission.SensitivityRestricted, nil)
 
 	repo := rolerepository.New(rolerepository.Params{
-		DB:     postgres.WrapDB(db),
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(db),
+		Logger:       zap.NewNop(),
 	})
 	svc := newService(t, &engine{}, repo)
 	ctx = tenantA.Ctx(ctx)

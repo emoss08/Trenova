@@ -149,7 +149,6 @@ func waitedOptions(
 		Summary:                summary,
 		Priority: temporal.Priority{
 			PriorityKey: agentflowcontract.PriorityOneShot,
-			FairnessKey: organizationID.String(),
 		},
 	}
 }

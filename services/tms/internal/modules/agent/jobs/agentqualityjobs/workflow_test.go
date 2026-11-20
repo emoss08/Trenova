@@ -6,6 +6,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs/agentqualitycontract"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine"
@@ -99,6 +102,7 @@ func newSuiteHarness(t *testing.T, script suiteScript) *suiteHarness {
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	h := &suiteHarness{env: env}
 
 	env.RegisterWorkflowWithOptions(AgentSuiteRunWorkflow,
@@ -360,6 +364,7 @@ func TestAgentSuiteRunWorkflow_RecordsWhyItFailed(t *testing.T) {
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterWorkflowWithOptions(AgentSuiteRunWorkflow,
 		workflow.RegisterOptions{Name: agentqualitycontract.AgentSuiteRunWorkflowName})
 	env.RegisterActivity(&Activities{})
@@ -611,6 +616,7 @@ func newSweepHarness(t *testing.T, plan *agentqualityengine.SweepPlan) *sweepHar
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	h := &sweepHarness{env: env}
 
 	env.RegisterWorkflowWithOptions(AgentQualitySweepWorkflow,

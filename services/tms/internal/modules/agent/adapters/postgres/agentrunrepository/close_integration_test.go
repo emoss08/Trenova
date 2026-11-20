@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -40,7 +42,7 @@ func setupCloseFixture(t *testing.T) *closeFixture {
 		t:      t,
 		ctx:    data.Ctx(ctx),
 		db:     db,
-		repo:   New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}).(*repository),
+		repo:   New(Params{Entitlements: entitlementtest.Instance(), DB: postgres.WrapDB(db), Logger: zap.NewNop()}).(*repository),
 		tenant: pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID},
 		now:    timeutils.NowUnix(),
 	}
@@ -204,7 +206,13 @@ func TestCreateRefusesASecondOpenRunForASubject(t *testing.T) {
 	f := setupCloseFixture(t)
 	definitionID, subjectID := pulid.MustNew("agd_"), pulid.MustNew("shp_")
 
-	_, err := f.run(agent.RunTriggerEvent, agent.RunStatusAwaitingDecision, "wf-1", definitionID, subjectID)
+	_, err := f.run(
+		agent.RunTriggerEvent,
+		agent.RunStatusAwaitingDecision,
+		"wf-1",
+		definitionID,
+		subjectID,
+	)
 	require.NoError(t, err)
 
 	_, err = f.run(agent.RunTriggerWait, agent.RunStatusPending, "wf-2", definitionID, subjectID)
@@ -213,6 +221,12 @@ func TestCreateRefusesASecondOpenRunForASubject(t *testing.T) {
 	_, err = f.run(agent.RunTriggerManual, agent.RunStatusPending, "wf-3", definitionID, subjectID)
 	require.NoError(t, err, "a manual run is not one of the subject's event runs")
 
-	_, err = f.run(agent.RunTriggerEvent, agent.RunStatusAwaitingDecision, "", definitionID, subjectID)
+	_, err = f.run(
+		agent.RunTriggerEvent,
+		agent.RunStatusAwaitingDecision,
+		"",
+		definitionID,
+		subjectID,
+	)
 	require.NoError(t, err, "an inline run carries no workflow and is not the subject's run")
 }

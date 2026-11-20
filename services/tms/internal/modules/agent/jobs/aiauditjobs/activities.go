@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditexport"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditheartbeat"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditprojector"
@@ -141,21 +144,29 @@ type ExportActivitiesParams struct {
 	fx.In
 
 	Exports *aiauditexport.Exports
+	Slots   kernelports.HeavyJobSlots
 }
 
 // ExportActivities run on the report queue, beside the report renderers.
 type ExportActivities struct {
 	exports *aiauditexport.Exports
+	slots   kernelports.HeavyJobSlots
 }
 
 func NewExportActivities(p ExportActivitiesParams) *ExportActivities {
-	return &ExportActivities{exports: p.Exports}
+	return &ExportActivities{exports: p.Exports, slots: p.Slots}
 }
 
 func (a *ExportActivities) RunAIAuditExportActivity(
 	ctx context.Context,
 	payload *aiauditports.AIAuditExportPayload,
 ) (*ExportResult, error) {
+	ctx = dbscope.WithValidTenant(ctx, payload.TenantInfo().DBTenant())
+	release, err := a.slots.Hold(ctx, kernelports.HeavyJobExport)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 	export, err := a.exports.Run(ctx, payload.TenantInfo(), payload.ExportID, heartbeat(ctx))
 	if err != nil {
 		var notFound *errortypes.NotFoundError

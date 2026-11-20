@@ -4,6 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -78,6 +82,16 @@ func LateChargeAssessmentWorkflow(ctx workflow.Context) (*LateChargeAssessmentRe
 	}
 
 	result := &LateChargeAssessmentResult{TenantsDue: len(tenants)}
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureAccounting),
+		tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenants = kept
+
 	for _, tenantInfo := range tenants {
 		tenantResult := new(LateChargeTenantResult)
 		if err := workflow.ExecuteActivity(

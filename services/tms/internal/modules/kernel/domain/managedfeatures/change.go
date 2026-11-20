@@ -34,6 +34,13 @@ type Replacement struct {
 	PlanEnd       *PlanEndNotice
 }
 
+func (r *Replacement) Gained(feature platformcatalog.FeatureKey) bool {
+	if !r.Updated() {
+		return false
+	}
+	return r.Current.Has(feature) && !r.Previous.Has(feature)
+}
+
 func (r *Replacement) Updated() bool {
 	return r != nil && r.Current != r.Previous
 }

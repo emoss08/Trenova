@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -26,6 +28,7 @@ func TestComputeAITuneUpsWorkflow_ComputesEachOrganization(t *testing.T) {
 
 	var s testsuite.WorkflowTestSuite
 	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 
 	var a *Activities
@@ -41,7 +44,11 @@ func TestComputeAITuneUpsWorkflow_ComputesEachOrganization(t *testing.T) {
 			input *OrganizationAITuneUpsInput,
 		) (*OrganizationAITuneUpsResult, error) {
 			if input.OrganizationID == "org_b" {
-				return nil, temporal.NewNonRetryableApplicationError("broken", "Broken", errors.New("broken"))
+				return nil, temporal.NewNonRetryableApplicationError(
+					"broken",
+					"Broken",
+					errors.New("broken"),
+				)
 			}
 			return &OrganizationAITuneUpsResult{Suggested: 3}, nil
 		})

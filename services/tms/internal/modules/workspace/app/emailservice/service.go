@@ -13,6 +13,10 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -55,6 +59,8 @@ type Params struct {
 	Logger             *zap.Logger
 	DB                 kernelports.Transactor
 	Managed            *managedconfig.Config
+	TenantLimits       *tenantlimitsconfig.Config
+	Metrics            *metrics.Registry
 	Repo               emailports.EmailRepository
 	InvoiceRepo        invoiceports.InvoiceRepository
 	Validator          *Validator
@@ -86,27 +92,29 @@ type ObserverParams struct {
 }
 
 type Service struct {
-	l                  *zap.Logger
-	db                 kernelports.Transactor
-	instanceID         string
-	repo               emailports.EmailRepository
-	invoiceRepo        invoiceports.InvoiceRepository
-	validator          *Validator
-	integrationService *integrationservice.Service
-	encryptionService  *encryptionservice.Service
-	auditService       auditports.AuditService
-	providerSenders    map[email.Provider]ProviderSender
-	workflowStarter    kernelports.WorkflowStarter
-	storage            kernelports.Client
-	features           platformcatalogports.FeatureGate
-	realtime           realtimeports.RealtimeService
-	systemSenders      emailports.SystemSenders
-	directory          emailports.RecipientDirectory
-	systemMessages     emailports.SystemMessageLocator
-	rateLimits         kernelports.RateLimitStore
-	organizations      tenantports.OrganizationRepository
-	observers          atomic.Pointer[[]emailports.EmailMessageObserver]
-	observersMu        sync.Mutex
+	l                   *zap.Logger
+	db                  kernelports.Transactor
+	instanceID          string
+	organizationPerHour int
+	tenancy             *platformmetrics.Tenancy
+	repo                emailports.EmailRepository
+	invoiceRepo         invoiceports.InvoiceRepository
+	validator           *Validator
+	integrationService  *integrationservice.Service
+	encryptionService   *encryptionservice.Service
+	auditService        auditports.AuditService
+	providerSenders     map[email.Provider]ProviderSender
+	workflowStarter     kernelports.WorkflowStarter
+	storage             kernelports.Client
+	features            platformcatalogports.FeatureGate
+	realtime            realtimeports.RealtimeService
+	systemSenders       emailports.SystemSenders
+	directory           emailports.RecipientDirectory
+	systemMessages      emailports.SystemMessageLocator
+	rateLimits          kernelports.RateLimitStore
+	organizations       tenantports.OrganizationRepository
+	observers           atomic.Pointer[[]emailports.EmailMessageObserver]
+	observersMu         sync.Mutex
 }
 
 type HandleProviderEventParams struct {
@@ -118,9 +126,13 @@ type HandleProviderEventParams struct {
 
 func New(p Params) *Service {
 	return &Service{
-		l:                  p.Logger.Named("service.email"),
-		db:                 p.DB,
-		instanceID:         p.Managed.InstanceID,
+		l:          p.Logger.Named("service.email"),
+		db:         p.DB,
+		instanceID: p.Managed.InstanceID,
+		organizationPerHour: p.TenantLimits.OrganizationEmailPerHour(
+			p.Managed.SharedTenancy(),
+		),
+		tenancy:            p.Metrics.Tenancy,
 		repo:               p.Repo,
 		invoiceRepo:        p.InvoiceRepo,
 		validator:          p.Validator,
@@ -1160,7 +1172,12 @@ func (s *Service) messageChanged(ctx context.Context, msg *email.Message, event 
 	if registered == nil {
 		return
 	}
-	observers, err := platformcatalogports.Observing(ctx, s.features, *registered)
+	observers, err := platformcatalogports.Observing(
+		ctx,
+		s.features,
+		dbscope.Tenant{OrganizationID: msg.OrganizationID, BusinessUnitID: msg.BusinessUnitID},
+		*registered,
+	)
 	if err != nil {
 		s.l.Warn("email message observers skipped", zap.Error(err))
 	}

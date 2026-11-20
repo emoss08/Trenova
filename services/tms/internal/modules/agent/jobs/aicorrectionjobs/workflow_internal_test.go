@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,6 +30,7 @@ func TestAICorrectionRetentionWorkflow_PurgesEachOrganization(t *testing.T) {
 
 	var s testsuite.WorkflowTestSuite
 	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 
 	var a *Activities

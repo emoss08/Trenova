@@ -32,11 +32,16 @@ func (r *flows) ListDueInstances(
 		}
 
 		i := ladingprojectdb.FlowInstances
+		entitled, entitledErr := r.entitlements.ForWork(ctx, i.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		return keel.Into[ladingports.FlowInstanceRef](
 			ctx,
 			r.db.Keel(ctx),
 			i.Pick(i.ID, i.OrganizationID, i.BusinessUnitID).
 				Where(
+					entitled,
 					i.WakeAt.IsNotNull(),
 					i.WakeAt.Lte(req.Now),
 					i.Status.Ne(ladingproject.FlowInstanceStatusClosed),

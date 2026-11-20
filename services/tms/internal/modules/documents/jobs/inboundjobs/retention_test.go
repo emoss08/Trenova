@@ -6,6 +6,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/pkg/pagination"
+
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundupkeep"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -21,10 +25,29 @@ type listedTenants struct {
 	tenantports.TenantSyncRepository
 
 	organizations []tenant.SyncOrganization
+	needs         []entitlement.Need
 }
 
-func (t *listedTenants) ListOrganizations(context.Context) ([]tenant.SyncOrganization, error) {
-	return t.organizations, nil
+func (f *listedTenants) ListTenantsPage(
+	_ context.Context,
+	need entitlement.Need,
+	after pulid.ID,
+	limit int,
+) ([]pagination.TenantInfo, error) {
+	f.needs = append(f.needs, need)
+	page := make([]pagination.TenantInfo, 0, limit)
+	passed := after.IsNil()
+	for _, org := range f.organizations {
+		if !passed {
+			passed = org.ID == after
+			continue
+		}
+		if len(page) == limit {
+			break
+		}
+		page = append(page, pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID})
+	}
+	return page, nil
 }
 
 // scriptedPurger answers each tenant's passes from a queue of batch sizes.
@@ -87,6 +110,10 @@ func TestInboundMessageRetention_PagesEachTenantAndStepsOverAFailure(t *testing.
 
 	assert.Equal(t, 2*inboundRetentionBatch+7, result.Deleted)
 	assert.Equal(t, []string{broken.String()}, result.Failed)
+	assert.Equal(t,
+		[]entitlement.Need{entitlement.For(platformcatalog.FeatureAITriage)},
+		activities.tenants.(*listedTenants).needs,
+		"retention pages only through the organizations with AI triage")
 
 	perTenant := map[pulid.ID]int{}
 	cutoff := timeutils.NowUnix() - inboundupkeep.RetentionDays*24*60*60

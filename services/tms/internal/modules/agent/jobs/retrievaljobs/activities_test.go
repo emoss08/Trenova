@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -23,6 +26,7 @@ type organizationPager struct {
 
 func (p *organizationPager) ListTenantsPage(
 	_ context.Context,
+	_ entitlement.Need,
 	after pulid.ID,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
@@ -53,7 +57,7 @@ func TestListRetrievalOrganizationsActivity_PagesOverEveryOrganization(t *testin
 
 	page, err := newListActivities(pager).ListRetrievalOrganizationsActivity(
 		t.Context(),
-		&ListOrganizationsInput{Limit: 2},
+		&ListOrganizationsInput{Need: entitlement.For(platformcatalog.FeatureAIDesk), Limit: 2},
 	)
 	require.NoError(t, err)
 
@@ -76,7 +80,11 @@ func TestListRetrievalOrganizationsActivity_ContinuesAfterTheCursor(t *testing.T
 
 	page, err := newListActivities(pager).ListRetrievalOrganizationsActivity(
 		t.Context(),
-		&ListOrganizationsInput{After: &cursor, Limit: 2},
+		&ListOrganizationsInput{
+			Need:  entitlement.For(platformcatalog.FeatureAIDesk),
+			After: &cursor,
+			Limit: 2,
+		},
 	)
 	require.NoError(t, err)
 
@@ -92,7 +100,7 @@ func TestListRetrievalOrganizationsActivity_DefaultsThePageSize(t *testing.T) {
 
 	page, err := newListActivities(pager).ListRetrievalOrganizationsActivity(
 		t.Context(),
-		&ListOrganizationsInput{},
+		&ListOrganizationsInput{Need: entitlement.For(platformcatalog.FeatureAIDesk)},
 	)
 	require.NoError(t, err)
 
@@ -154,5 +162,9 @@ func TestSweepRetrievalSourcesActivity_LeavesAnIdleOrganizationAlone(t *testing.
 		},
 	)
 	require.NoError(t, err)
-	assert.Empty(t, pipeline.woken, "the sweep starts no workflow for an organization with nothing to do")
+	assert.Empty(
+		t,
+		pipeline.woken,
+		"the sweep starts no workflow for an organization with nothing to do",
+	)
 }

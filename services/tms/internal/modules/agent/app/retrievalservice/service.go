@@ -210,7 +210,7 @@ func (s *Service) Reindex(
 	if _, err := s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                       ReindexWorkflowID(tenant.OrgID, sourceType),
 		TaskQueue:                temporaltype.TaskQueueSystem.String(),
-		Priority:                 WorkflowPriorityFor(tenant.OrgID),
+		Priority:                 IndexPriority(),
 		WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_USE_EXISTING,
 		StaticSummary:            "Re-index " + sourceType.String() + " for retrieval",
 	}, ReindexSourceWorkflowName, ReindexSourceInput{

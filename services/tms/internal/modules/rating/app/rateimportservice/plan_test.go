@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -47,14 +49,19 @@ func (r *planImportRepo) Update(
 	return batch, nil
 }
 
-func importFixture(t *testing.T, status rateimport.Status) (*Service, *planImportRepo, *rateimport.RateImportBatch) {
+func importFixture(
+	t *testing.T,
+	status rateimport.Status,
+) (*Service, *planImportRepo, *rateimport.RateImportBatch) {
 	t.Helper()
 
 	agreementID := pulid.MustNew("rag_")
 	existing := &rateagreement.RateAgreementRule{
 		ID:      pulid.MustNew("rarl_"),
 		LaneKey: "ST:GA>ST:FL",
-		Inputs:  tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.RequireFromString("2.00"), "$/mi")},
+		Inputs: tarifftypes.Inputs{
+			"rate": rules.QuantityValue(decimal.RequireFromString("2.00"), "$/mi"),
+		},
 	}
 	batch := &rateimport.RateImportBatch{
 		ID:              pulid.MustNew("rib_"),
@@ -92,6 +99,7 @@ func importFixture(t *testing.T, status rateimport.Status) (*Service, *planImpor
 	repo := &planImportRepo{batch: batch}
 
 	return &Service{
+		slots:         heavyslotstest.Unbounded(),
 		l:             zap.NewNop(),
 		repo:          repo,
 		agreementRepo: agreements,
@@ -104,7 +112,10 @@ func TestPlanCommit_NamesTheAmendmentAndWritesNothing(t *testing.T) {
 
 	svc, repo, batch := importFixture(t, rateimport.StatusParsed)
 	plan, err := svc.PlanCommit(t.Context(), &CommitRequest{
-		TenantInfo:        pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: batch.OrganizationID,
+			BuID:  batch.BusinessUnitID,
+		},
 		RateImportBatchID: batch.ID,
 	})
 	require.NoError(t, err)
@@ -120,7 +131,10 @@ func TestPlanCommitAndDiscard_RefuseAnImportAlreadyClosed(t *testing.T) {
 
 	svc, repo, batch := importFixture(t, rateimport.StatusCommitted)
 	req := &CommitRequest{
-		TenantInfo:        pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: batch.OrganizationID,
+			BuID:  batch.BusinessUnitID,
+		},
 		RateImportBatchID: batch.ID,
 	}
 	_, err := svc.PlanCommit(t.Context(), req)
@@ -135,7 +149,10 @@ func TestPlanDiscard_ShowsTheDiscardWithoutSavingIt(t *testing.T) {
 
 	svc, repo, batch := importFixture(t, rateimport.StatusParsed)
 	change, err := svc.PlanDiscard(t.Context(), &CommitRequest{
-		TenantInfo:        pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: batch.OrganizationID,
+			BuID:  batch.BusinessUnitID,
+		},
 		RateImportBatchID: batch.ID,
 	})
 	require.NoError(t, err)
@@ -189,7 +206,10 @@ func TestCommit_LeavesTheBatchOpenWhenValidationRefuses(t *testing.T) {
 	svc.agreements = &recordingAmender{err: errors.New("overlapping lanes")}
 
 	_, err := svc.Commit(t.Context(), &CommitRequest{
-		TenantInfo:        pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: batch.OrganizationID,
+			BuID:  batch.BusinessUnitID,
+		},
 		RateImportBatchID: batch.ID,
 	})
 	require.Error(t, err)

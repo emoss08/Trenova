@@ -3,6 +3,9 @@ package documentuploadjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
@@ -96,6 +99,16 @@ func ReconcileDocumentUploadsWorkflow(
 
 	result := &ReconcileUploadsResult{}
 	result.TenantsScanned = len(tenantsResult.Tenants)
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureDocumentManagement),
+		tenantsResult.Tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenantsResult.Tenants = kept
+
 	for _, tenant := range tenantsResult.Tenants {
 		tenantPayload := *payload
 		tenantPayload.OrganizationID = tenant.OrganizationID

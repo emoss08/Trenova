@@ -5,6 +5,8 @@ package agentdefinitionrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -22,7 +24,13 @@ func TestGetByID_IsServedFromTheResultCacheUntilTheDefinitionChanges(t *testing.
 	row := findDefinitions(t, ctx, db, "TRUE", 1)[0]
 	tctx, tenant := row.tenant(ctx)
 	cached := cachetest.Open(t, ctx, dsn)
-	repo := New(Params{DB: postgres.WrapDB(cached), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(cached),
+			Logger:       zap.NewNop(),
+		},
+	)
 	request := agentdefinitionports.GetAgentDefinitionByIDRequest{ID: row.ID, TenantInfo: tenant}
 
 	var definition *agentdefinition.Definition

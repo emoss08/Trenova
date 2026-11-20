@@ -131,22 +131,38 @@ func (f *fakeRepo) SetLifecycle(
 func (f *fakeRepo) DuePlanEndReminders(
 	_ context.Context,
 	req *managedfeaturesports.DueRemindersRequest,
-) ([]managedscope.Scope, error) {
+) ([]managedfeaturesports.DueReminder, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.err != nil {
 		return nil, f.err
 	}
-	keys := make([]string, 0, len(f.states))
-	for key := range f.states {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	due := make([]managedscope.Scope, 0)
-	for _, key := range keys {
-		if state := f.states[key]; state.PlanEndReminderDue(req.Now) {
-			due = append(due, state.Scope())
+	due := make([]managedfeaturesports.DueReminder, 0)
+	for _, state := range f.states {
+		if state.PlanEndReminderDue(req.Now) {
+			due = append(due, managedfeaturesports.DueReminder{
+				Scope:  state.Scope(),
+				EndsAt: state.PlanEndsAt,
+			})
 		}
+	}
+	sort.Slice(due, func(i, j int) bool {
+		if due[i].EndsAt != due[j].EndsAt {
+			return due[i].EndsAt < due[j].EndsAt
+		}
+		return due[i].Scope.Key() < due[j].Scope.Key()
+	})
+	if req.After != nil {
+		start := sort.Search(len(due), func(i int) bool {
+			if due[i].EndsAt != req.After.EndsAt {
+				return due[i].EndsAt > req.After.EndsAt
+			}
+			return due[i].Scope.Key() > req.After.Scope.Key()
+		})
+		due = due[start:]
+	}
+	if req.Limit > 0 && len(due) > req.Limit {
+		due = due[:req.Limit]
 	}
 	return due, nil
 }

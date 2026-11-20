@@ -5,6 +5,8 @@ package weatheralertrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
@@ -25,7 +27,13 @@ func TestUpsertAlertAndExpireStaleAlerts(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	tenantInfo := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 
 	alert := &weatheralert.WeatherAlert{
@@ -96,7 +104,13 @@ func TestListByNWSIDsReturnsTheStoredMessages(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	tenantInfo := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 
 	effective := int64(100)

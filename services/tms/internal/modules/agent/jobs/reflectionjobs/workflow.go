@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
@@ -94,7 +93,7 @@ func ThreadReflectionWorkflow(
 		var a *Activities
 		var plan agentreflectionports.ReflectionPlan
 		err := workflow.ExecuteActivity(
-			withPriority(ctx, prepareOptions, input.TenantInfo),
+			withPriority(ctx, &prepareOptions),
 			a.PrepareThreadReflectionActivity, input.Request(),
 		).Get(ctx, &plan)
 		if err != nil {
@@ -130,7 +129,7 @@ func RunReflectionWorkflow(
 	var a *Activities
 	var plan agentreflectionports.ReflectionPlan
 	err := workflow.ExecuteActivity(
-		withPriority(ctx, prepareOptions, input.TenantInfo),
+		withPriority(ctx, &prepareOptions),
 		a.PrepareRunReflectionActivity, &agentreflectionports.ReflectOnRunRequest{
 			TenantInfo: input.TenantInfo,
 			RunID:      input.RunID,
@@ -153,7 +152,7 @@ func CorrectionReflectionWorkflow(
 	var a *Activities
 	var plan agentreflectionports.ReflectionPlan
 	err := workflow.ExecuteActivity(
-		withPriority(ctx, prepareOptions, input.TenantInfo),
+		withPriority(ctx, &prepareOptions),
 		a.PrepareCorrectionReflectionActivity, input,
 	).Get(ctx, &plan)
 	if err != nil {
@@ -178,7 +177,7 @@ func lookBack(
 	var a *Activities
 	var completion llmports.StructuredCompletionResult
 	err := workflow.ExecuteActivity(
-		withPriority(ctx, modelOptions, plan.TenantInfo),
+		withPriority(ctx, &modelOptions),
 		a.ReflectionModelActivity, plan,
 	).Get(ctx, &completion)
 	if err != nil {
@@ -190,7 +189,7 @@ func lookBack(
 
 	var outcome agentreflectionports.ReflectionOutcome
 	err = workflow.ExecuteActivity(
-		withPriority(ctx, finishOptions, plan.TenantInfo),
+		withPriority(ctx, &finishOptions),
 		a.FinishReflectionActivity, &FinishReflectionInput{Plan: plan, Result: &completion},
 	).Get(ctx, &outcome)
 	if err != nil {
@@ -216,7 +215,7 @@ func recordFailure(
 ) {
 	var a *Activities
 	failure := workflow.ExecuteActivity(
-		withPriority(ctx, failOptions, plan.TenantInfo),
+		withPriority(ctx, &failOptions),
 		a.FailReflectionActivity, &agentreflectionports.FailReflectionRequest{
 			Plan:    plan,
 			Message: cause.Error(),
@@ -270,14 +269,10 @@ func drain(signals workflow.ReceiveChannel) bool {
 	}
 }
 
-func withPriority(
-	ctx workflow.Context,
-	options workflow.ActivityOptions,
-	tenant pagination.TenantInfo,
-) workflow.Context {
+func withPriority(ctx workflow.Context, base *workflow.ActivityOptions) workflow.Context {
+	options := *base
 	options.Priority = temporal.Priority{
 		PriorityKey: agentflowcontract.PriorityBackground,
-		FairnessKey: tenant.OrgID.String(),
 	}
 
 	return workflow.WithActivityOptions(ctx, options)

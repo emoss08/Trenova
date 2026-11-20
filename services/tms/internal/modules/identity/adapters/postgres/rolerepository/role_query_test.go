@@ -3,6 +3,7 @@ package rolerepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -90,7 +91,7 @@ func TestOrphanedAssignmentsQueryCrossesTenants(t *testing.T) {
 	t.Parallel()
 
 	ctx := dbscope.WithSystem(t.Context(), "orphaned assignments test")
-	keeltest.SnapshotIn(t, ctx, orphanedAssignmentsQuery(100, 50))
+	keeltest.SnapshotIn(t, ctx, orphanedAssignmentsQuery(keel.True(), 100, 50))
 }
 
 func TestUsersWithPermissionQueryWalksParentRoles(t *testing.T) {

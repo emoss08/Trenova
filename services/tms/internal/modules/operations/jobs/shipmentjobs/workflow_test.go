@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
@@ -24,6 +26,7 @@ type ShipmentWorkflowTestSuite struct {
 
 func (s *ShipmentWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
+	s.env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 }
 
 func (s *ShipmentWorkflowTestSuite) AfterTest(_, _ string) {

@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -78,7 +77,6 @@ func (s *SendStarter) StartSend(
 				TaskQueue:             temporaltype.TaskQueueBilling.String(),
 				StaticSummary:         "Send factoring schedule " + submission.Number,
 				WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
-				Priority:              temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
 			},
 			SendWorkflowName,
 			payload,

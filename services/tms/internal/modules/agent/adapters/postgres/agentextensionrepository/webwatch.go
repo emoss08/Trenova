@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -28,14 +30,16 @@ const (
 var webWatchErrors = dberror.Mapping{Entity: webWatchEntityName}
 
 type webWatchRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewWebWatchRepository(p Params) agentextensionports.WebWatchRepository {
 	return &webWatchRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.agent-web-watch-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.agent-web-watch-repository"),
 	}
 }
 

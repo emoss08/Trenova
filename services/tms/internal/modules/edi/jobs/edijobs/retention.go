@@ -4,6 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -72,6 +76,16 @@ func PurgeEDIRawPayloadsWorkflow(ctx workflow.Context) (*PurgeEDIRawPayloadsResu
 		logger.Error("failed to list EDI retention tenants", "error", err)
 		return nil, err
 	}
+
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureEDIIntegration),
+		tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenants = kept
 
 	for _, tenantItem := range tenants {
 		var tenantResult PurgeEDIRawPayloadsTenantResult

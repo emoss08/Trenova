@@ -59,7 +59,10 @@ func (r *repository) ListUnreviewedItems(
 
 			out := make([]*billingqueueports.UnreviewedItem, 0, len(rows))
 			for _, row := range rows {
-				out = append(out, &billingqueueports.UnreviewedItem{ID: row.ID, CreatedAt: row.CreatedAt})
+				out = append(
+					out,
+					&billingqueueports.UnreviewedItem{ID: row.ID, CreatedAt: row.CreatedAt},
+				)
 			}
 
 			return out, nil
@@ -80,9 +83,13 @@ func (r *repository) ListNovaBacklogTenants(
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		bq := billingqueuedb.BillingQueueItems
+		entitled, entitledErr := r.entitlements.ForWork(ctx, bq.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := keel.Into[backlogTenant](ctx, r.db.Keel(ctx), bq.
 			Pick(bq.OrganizationID, bq.BusinessUnitID).
-			Where(unreviewed()...).
+			Where(append(unreviewed(), entitled)...).
 			Group(bq.OrganizationID, bq.BusinessUnitID).
 			Limit(limit).
 			AllTenants())
@@ -92,7 +99,10 @@ func (r *repository) ListNovaBacklogTenants(
 
 		out := make([]pagination.TenantInfo, 0, len(rows))
 		for _, row := range rows {
-			out = append(out, pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID})
+			out = append(
+				out,
+				pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID},
+			)
 		}
 
 		return out, nil

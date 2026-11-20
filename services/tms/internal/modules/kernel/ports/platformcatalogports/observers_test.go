@@ -5,9 +5,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -74,7 +77,12 @@ func observerList() []*namedObserver {
 func TestObservingSkipsObserversOfAnAddOnThatIsOffAndKeepsBaseOnes(t *testing.T) {
 	t.Parallel()
 
-	kept, err := platformcatalogports.Observing(t.Context(), plantest.BaseOnly(), observerList())
+	kept, err := platformcatalogports.Observing(
+		t.Context(),
+		plantest.BaseOnly(),
+		dbscope.Tenant{},
+		observerList(),
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"order derivation", "billing queue"}, names(kept))
@@ -85,7 +93,7 @@ func TestObservingAsksTheGateOncePerFeature(t *testing.T) {
 
 	gate := counting(plantest.AllFeatures())
 
-	_, err := platformcatalogports.Observing(t.Context(), gate, observerList())
+	_, err := platformcatalogports.Observing(t.Context(), gate, dbscope.Tenant{}, observerList())
 
 	require.NoError(t, err)
 	assert.Equal(t, map[platformcatalog.FeatureKey]int{
@@ -100,7 +108,12 @@ func TestObservingKeepsEveryObserverInOrderWithEveryFeatureOn(t *testing.T) {
 	t.Parallel()
 
 	list := observerList()
-	kept, err := platformcatalogports.Observing(t.Context(), plantest.AllFeatures(), list)
+	kept, err := platformcatalogports.Observing(
+		t.Context(),
+		plantest.AllFeatures(),
+		dbscope.Tenant{},
+		list,
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, names(list), names(kept))
@@ -113,7 +126,7 @@ func TestObservingSkipsTheObserversOfAFeatureItCouldNotAskAboutAndSaysWhich(t *t
 	storeDown := errors.New("plan store down")
 	gate.fail[platformcatalog.FeatureCustomerTracking] = storeDown
 
-	kept, err := platformcatalogports.Observing(t.Context(), gate, observerList())
+	kept, err := platformcatalogports.Observing(t.Context(), gate, dbscope.Tenant{}, observerList())
 
 	require.ErrorIs(t, err, storeDown)
 	assert.Contains(t, err.Error(), string(platformcatalog.FeatureCustomerTracking))
@@ -126,6 +139,7 @@ func TestObservingRefusesAnObserverThatNamesAnUnknownFeature(t *testing.T) {
 	kept, err := platformcatalogports.Observing(
 		t.Context(),
 		plantest.AllFeatures(),
+		dbscope.Tenant{},
 		[]*namedObserver{
 			{name: "unnamed"},
 			{name: "base", feature: platformcatalog.FeatureCoreTMS},
@@ -142,6 +156,7 @@ func TestObservingSkipsNilObservers(t *testing.T) {
 	kept, err := platformcatalogports.Observing(
 		t.Context(),
 		plantest.AllFeatures(),
+		dbscope.Tenant{},
 		[]platformcatalogports.FeatureObserver{
 			nil,
 			&namedObserver{feature: platformcatalog.FeatureCoreTMS},
@@ -150,4 +165,41 @@ func TestObservingSkipsNilObservers(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Len(t, kept, 1)
+}
+
+func TestObservingAsksForTheTenantTheChangeBelongsTo(t *testing.T) {
+	t.Parallel()
+
+	withAddOn := pulid.MustNew("org_")
+	without := pulid.MustNew("org_")
+	gate := plantest.SharedServer().
+		Planned(withAddOn).
+		Without(without, platformcatalog.FeatureEDIIntegration)
+	system := dbscope.WithSystem(t.Context(), "a sweep across organizations")
+	list := []*namedObserver{
+		{name: "base", feature: platformcatalog.FeatureCoreTMS},
+		{name: "edi", feature: platformcatalog.FeatureEDIIntegration},
+	}
+
+	kept, err := platformcatalogports.Observing(
+		system,
+		gate,
+		dbscope.Tenant{OrganizationID: withAddOn, BusinessUnitID: pulid.MustNew("bu_")},
+		list,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"base", "edi"}, names(kept))
+
+	kept, err = platformcatalogports.Observing(
+		system,
+		gate,
+		dbscope.Tenant{OrganizationID: without, BusinessUnitID: pulid.MustNew("bu_")},
+		list,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"base"}, names(kept))
+
+	kept, err = platformcatalogports.Observing(system, gate, dbscope.Tenant{}, list)
+	require.ErrorIs(t, err, managedscope.ErrNoTenantScope)
+	assert.Empty(t, kept)
 }

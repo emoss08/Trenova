@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -14,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/fileutils"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -38,10 +38,6 @@ type Notifier interface {
 	) (int64, error)
 }
 
-type TenantPager interface {
-	ListTenantsPage(ctx context.Context, after pulid.ID, limit int) ([]pagination.TenantInfo, error)
-}
-
 type WarningParams struct {
 	fx.In
 
@@ -59,7 +55,7 @@ type WarningResult struct {
 
 type Warnings struct {
 	notifier Notifier
-	tenants  TenantPager
+	tenants  tenantports.TenantPager
 	clock    timeutils.Clock
 	l        *zap.Logger
 }
@@ -125,7 +121,7 @@ func (w *Warnings) eachTenant(
 			pagination.TenantInfo{OrgID: tenant.OrganizationID, BuID: tenant.BusinessUnitID},
 		)
 	}
-	return tenantports.EachTenant(ctx, w.tenants, fn)
+	return tenantports.EachTenant(ctx, w.tenants, entitlement.AnyActive(), fn)
 }
 
 func (w *Warnings) warn(

@@ -86,10 +86,21 @@ func (r *repository) ListDueBillingSchedules(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerports.DueBillingSchedule, error) {
+			var entitled keel.Pred
+			if allTenants {
+				across, entitledErr := r.entitlements.ForWork(
+					ctx,
+					customerdb.CustomerBillingProfiles.OrganizationID.Col,
+				)
+				if entitledErr != nil {
+					return nil, entitledErr
+				}
+				entitled = across
+			}
 			rows, err := keel.Into[dueBillingScheduleRow](
 				ctx,
 				r.db.Keel(ctx),
-				dueBillingSchedulesQuery(allTenants),
+				dueBillingSchedulesQuery(allTenants, entitled),
 			)
 			if err != nil {
 				r.l.Error("failed to list due billing schedules", zap.Error(err))
@@ -106,7 +117,10 @@ func (r *repository) ListDueBillingSchedules(
 	)
 }
 
-func dueBillingSchedulesQuery(allTenants bool) keel.Query[*customer.CustomerBillingProfile] {
+func dueBillingSchedulesQuery(
+	allTenants bool,
+	entitled keel.Pred,
+) keel.Query[*customer.CustomerBillingProfile] {
 	cbp := customerdb.CustomerBillingProfiles
 	cus := customerdb.Customers
 
@@ -142,6 +156,7 @@ func dueBillingSchedulesQuery(allTenants bool) keel.Query[*customer.CustomerBill
 			cbp.BillingCurrency,
 		).
 		Where(
+			entitled,
 			cbp.InvoiceDelivery.Eq(customer.InvoiceDeliveryConsolidated),
 			cbp.BillingCycle.Ne(customer.BillingCycleImmediate),
 		).

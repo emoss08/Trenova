@@ -4,19 +4,37 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/testsuite"
+	"go.uber.org/zap"
 )
 
-func TestIsDueSkipsOrganizationsWithoutTheDesk(t *testing.T) {
+func TestListDueOrganizationsReadsOnlyTheOrganizationsWithTheDesk(t *testing.T) {
 	t.Parallel()
 
-	a := &Activities{features: plantest.Without(platformcatalog.FeatureAIDesk)}
+	tenants := tenantportsmock.NewMockTenantSyncRepository(t)
+	tenants.EXPECT().
+		ListTenantsPage(mock.Anything, entitlement.For(platformcatalog.FeatureAIDesk), mock.Anything, mock.Anything).
+		Return([]pagination.TenantInfo{}, nil).
+		Once()
 
-	due, err := a.isDue(t.Context(), plantest.Tenant(), time.Now().Unix())
+	a := &Activities{tenants: tenants, l: zap.NewNop()}
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestActivityEnvironment()
+	env.RegisterActivity(a.ListDueOrganizationsActivity)
 
+	value, err := env.ExecuteActivity(a.ListDueOrganizationsActivity, &DueOrganizationsInput{
+		Now: time.Now().Unix(),
+	})
 	require.NoError(t, err)
-	assert.False(t, due)
+
+	var due DueOrganizations
+	require.NoError(t, value.Get(&due))
+	assert.Empty(t, due.Due)
 }

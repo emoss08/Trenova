@@ -88,6 +88,12 @@ func (QuietReflections) AfterTurn(context.Context, *agentreflectionports.Reflect
 
 func (QuietReflections) AfterRun(context.Context, *agentreflectionports.ReflectOnRunRequest) {}
 
+func (QuietReflections) AfterCorrections(
+	context.Context,
+	*agentreflectionports.ReflectOnCorrectionsRequest,
+) {
+}
+
 // QuietChapters cues no chapter.
 type QuietChapters struct{}
 

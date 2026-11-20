@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
@@ -32,6 +34,7 @@ type pagedTenants struct {
 
 func (p pagedTenants) ListTenantsPage(
 	_ context.Context,
+	_ entitlement.Need,
 	after pulid.ID,
 	limit int,
 ) ([]pagination.TenantInfo, error) {

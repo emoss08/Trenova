@@ -103,7 +103,7 @@ func handle(
 	var a *Activities
 	var plan assistantchapterports.ChapterPlan
 	if err := workflow.ExecuteActivity(
-		withPriority(ctx, planOptions, tenant), a.PlanChapterActivity, req,
+		withPriority(ctx, &planOptions), a.PlanChapterActivity, req,
 	).Get(ctx, &plan); err != nil {
 		logger.Error("could not read what a turn means for its chapters",
 			"turnId", req.TurnID.String(), "error", err.Error())
@@ -119,7 +119,7 @@ func handle(
 	if plan.NeedsModel() {
 		var completion llmports.StructuredCompletionResult
 		if err := workflow.ExecuteActivity(
-			withPriority(ctx, modelOptions, tenant), a.ChapterModelActivity, &plan,
+			withPriority(ctx, &modelOptions), a.ChapterModelActivity, &plan,
 		).Get(ctx, &completion); err != nil {
 			logger.Warn("the chapter model did not answer; keeping what the turn gives",
 				"turnId", req.TurnID.String(), "error", err.Error())
@@ -130,7 +130,7 @@ func handle(
 
 	var outcome assistantchapterports.ChapterOutcome
 	if err := workflow.ExecuteActivity(
-		withPriority(ctx, applyOptions, tenant), a.ApplyChapterActivity, input,
+		withPriority(ctx, &applyOptions), a.ApplyChapterActivity, input,
 	).Get(ctx, &outcome); err != nil {
 		logger.Error("could not keep a conversation's chapters",
 			"turnId", req.TurnID.String(), "error", err.Error())
@@ -156,14 +156,10 @@ func (r *ChaptersResult) absorb(outcome *assistantchapterports.ChapterOutcome) {
 	}
 }
 
-func withPriority(
-	ctx workflow.Context,
-	options workflow.ActivityOptions,
-	tenant pagination.TenantInfo,
-) workflow.Context {
+func withPriority(ctx workflow.Context, base *workflow.ActivityOptions) workflow.Context {
+	options := *base
 	options.Priority = temporal.Priority{
 		PriorityKey: agentflowcontract.PriorityOneShot,
-		FairnessKey: tenant.OrgID.String(),
 	}
 
 	return workflow.WithActivityOptions(ctx, options)

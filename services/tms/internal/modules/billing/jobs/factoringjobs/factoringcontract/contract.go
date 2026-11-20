@@ -4,6 +4,8 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -12,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -110,7 +111,10 @@ func (r *Requester) RequestEvaluation(
 	if targets.Empty() || tenantInfo.OrgID.IsNil() || tenantInfo.BuID.IsNil() {
 		return
 	}
-	factoring, err := r.features.Enabled(ctx, platformcatalog.FeatureFactoring)
+	factoring, err := r.features.Enabled(
+		dbscope.WithTenant(ctx, tenantInfo.DBTenant()),
+		platformcatalog.FeatureFactoring,
+	)
 	if err != nil {
 		r.l.Warn("could not request a factoring readiness evaluation",
 			zap.String("organizationId", tenantInfo.OrgID.String()),
@@ -131,7 +135,6 @@ func (r *Requester) RequestEvaluation(
 				ID:            id,
 				TaskQueue:     temporaltype.TaskQueueBilling.String(),
 				StaticSummary: "Work out which invoices are ready to factor",
-				Priority:      temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
 			},
 			EvaluateWorkflowName,
 			&EvaluatePayload{

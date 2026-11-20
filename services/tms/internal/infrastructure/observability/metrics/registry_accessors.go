@@ -3,6 +3,8 @@ package metrics
 import (
 	"sync"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
+
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"go.uber.org/zap"
 )
@@ -16,6 +18,13 @@ func AssistantFrom(registry *Registry) *aimetrics.Assistant {
 	}
 
 	return registry.Assistant
+}
+
+func TenancyFrom(registry *Registry) *platformmetrics.Tenancy {
+	if registry == nil {
+		return nil
+	}
+	return registry.Tenancy
 }
 
 type genAIOnce struct {

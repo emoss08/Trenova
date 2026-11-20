@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundupkeep"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -22,6 +25,7 @@ func processEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 
 	var s testsuite.WorkflowTestSuite
 	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 	env.SetStartWorkflowOptions(client.StartWorkflowOptions{WorkflowExecutionTimeout: time.Hour})
 

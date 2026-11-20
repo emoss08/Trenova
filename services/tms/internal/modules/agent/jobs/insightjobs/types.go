@@ -10,6 +10,8 @@ package insightjobs
 import (
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 )
@@ -32,6 +34,7 @@ type InsightRefreshInput struct {
 
 // ListOrganizationsInput asks for one page of organizations.
 type ListOrganizationsInput struct {
+	Need  entitlement.Need             `json:"need"`
 	After *temporaljobs.TenantWorkItem `json:"after,omitempty"`
 	Limit int                          `json:"limit"`
 }

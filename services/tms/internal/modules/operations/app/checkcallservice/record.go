@@ -74,7 +74,12 @@ func (s *Service) record(
 	if len(s.observers) > 0 {
 		tenant, shipmentID, moveID := in.tenant, in.move.ShipmentID, in.move.ID
 		kernelports.AfterCommit(ctx, func(runCtx context.Context) {
-			observers, gateErr := platformcatalogports.Observing(runCtx, s.features, s.observers)
+			observers, gateErr := platformcatalogports.Observing(
+				runCtx,
+				s.features,
+				tenant.DBTenant(),
+				s.observers,
+			)
 			if gateErr != nil {
 				s.l.Warn("check call observers skipped", zap.Error(gateErr))
 			}

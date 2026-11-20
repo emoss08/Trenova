@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -312,8 +314,9 @@ func setupIntegrationService(t *testing.T) *integrationFixture {
 	redisClient := sharedtestutil.SetupTestRedis(t)
 
 	roleRepo := rolerepository.New(rolerepository.Params{
-		DB:     postgres.WrapDB(db),
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(db),
+		Logger:       zap.NewNop(),
 	})
 	cacheRepo := &integrationPermCacheRepo{client: redisClient}
 

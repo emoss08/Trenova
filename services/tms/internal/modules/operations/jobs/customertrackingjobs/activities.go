@@ -3,6 +3,10 @@ package customertrackingjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/workqueueports"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/customertrackingjobs/customertrackingcontract"
@@ -54,25 +58,28 @@ func (t *TenantRef) TenantInfo() pagination.TenantInfo {
 type ActivitiesParams struct {
 	fx.In
 
-	Notifier  customertrackingports.StatusNotifier
-	Queue     workqueueports.Queue
-	Requester *customertrackingcontract.Requester
-	Logger    *zap.Logger
+	Entitlements entitlementports.Filter
+	Notifier     customertrackingports.StatusNotifier
+	Queue        workqueueports.Queue
+	Requester    *customertrackingcontract.Requester
+	Logger       *zap.Logger
 }
 
 type Activities struct {
-	notifier  customertrackingports.StatusNotifier
-	queue     workqueueports.Queue
-	requester *customertrackingcontract.Requester
-	l         *zap.Logger
+	entitlements entitlementports.Filter
+	notifier     customertrackingports.StatusNotifier
+	queue        workqueueports.Queue
+	requester    *customertrackingcontract.Requester
+	l            *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		notifier:  p.Notifier,
-		queue:     p.Queue,
-		requester: p.Requester,
-		l:         p.Logger.Named("temporal.customer-status-activities"),
+		entitlements: p.Entitlements,
+		notifier:     p.Notifier,
+		queue:        p.Queue,
+		requester:    p.Requester,
+		l:            p.Logger.Named("temporal.customer-status-activities"),
 	}
 }
 
@@ -87,11 +94,13 @@ func (a *Activities) DrainCustomerStatusActivity(
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
 	return temporaljobs.DrainDue(ctx, &temporaljobs.DrainDueParams{
-		Queue:      a.queue,
-		Kind:       customertrackingcontract.DrainKind,
-		Tenant:     tenant,
-		PageSize:   drainPageSize,
-		RetryAfter: drainRetryAfter,
+		Need:         entitlement.For(platformcatalog.FeatureCustomerTracking),
+		Entitlements: a.entitlements,
+		Queue:        a.queue,
+		Kind:         customertrackingcontract.DrainKind,
+		Tenant:       tenant,
+		PageSize:     drainPageSize,
+		RetryAfter:   drainRetryAfter,
 		Handle: func(ctx context.Context, shipments []pulid.ID, _ map[pulid.ID]string) map[pulid.ID]error {
 			failed := make(map[pulid.ID]error)
 			for _, shipmentID := range shipments {

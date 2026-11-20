@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
@@ -34,11 +37,20 @@ type scriptedWorker struct {
 	now      func() time.Time
 }
 
-func (w *scriptedWorker) Schedule(context.Context, pagination.TenantInfo, pulid.ID) (*agentwaitcontract.Schedule, error) {
+func (w *scriptedWorker) Schedule(
+	context.Context,
+	pagination.TenantInfo,
+	pulid.ID,
+) (*agentwaitcontract.Schedule, error) {
 	return &w.schedule, nil
 }
 
-func (w *scriptedWorker) Check(_ context.Context, _ pagination.TenantInfo, _ pulid.ID, now int64) (*agentwaitcontract.Check, error) {
+func (w *scriptedWorker) Check(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ pulid.ID,
+	now int64,
+) (*agentwaitcontract.Check, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.checked = append(w.checked, now)
@@ -83,6 +95,7 @@ func execute(
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(NewActivities(ActivitiesParams{Worker: worker}))
 	env.RegisterWorkflow(AgentWaitWorkflow)
 	if during != nil {
@@ -111,9 +124,15 @@ func TestAgentWaitWorkflow_AnEventEndsTheWait(t *testing.T) {
 
 	worker := &scriptedWorker{}
 	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
-		worker.schedule = agentwaitcontract.Schedule{Open: true, ExpiresAt: clock(env, 24*time.Hour)}
+		worker.schedule = agentwaitcontract.Schedule{
+			Open:      true,
+			ExpiresAt: clock(env, 24*time.Hour),
+		}
 		env.RegisterDelayedCallback(func() {
-			env.SignalWorkflow(agentwaitcontract.MetSignal, agentwaitcontract.Met{Detail: "Arrived at stop stp_1."})
+			env.SignalWorkflow(
+				agentwaitcontract.MetSignal,
+				agentwaitcontract.Met{Detail: "Arrived at stop stp_1."},
+			)
 		}, 2*time.Hour)
 	})
 
@@ -129,7 +148,11 @@ func TestAgentWaitWorkflow_AMovedAppointmentPutsTheWaitOff(t *testing.T) {
 	worker := &scriptedWorker{}
 	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
 		due, later := clock(env, time.Hour), clock(env, 3*time.Hour)
-		worker.schedule = agentwaitcontract.Schedule{Open: true, DueAt: &due, ExpiresAt: clock(env, 24*time.Hour)}
+		worker.schedule = agentwaitcontract.Schedule{
+			Open:      true,
+			DueAt:     &due,
+			ExpiresAt: clock(env, 24*time.Hour),
+		}
 		worker.checks = []agentwaitcontract.Check{
 			{DueAt: &later},
 			{Met: true, Detail: "The appointment at Kroger DC is at 16:00."},
@@ -166,10 +189,19 @@ func TestAgentWaitWorkflow_ABusyConversationIsPickedUpOnceItIsFree(t *testing.T)
 
 	require.Len(t, worker.finished, 1)
 	assert.Equal(t, agentwait.StatusTimedOut, worker.finished[0].Status)
-	require.Len(t, worker.attempts, 4, "each busy answer is one attempt, never retried by the policy")
+	require.Len(
+		t,
+		worker.attempts,
+		4,
+		"each busy answer is one attempt, never retried by the policy",
+	)
 	assert.Equal(t, busyWaitFirst, worker.attempts[1].Sub(worker.attempts[0]))
-	assert.Greater(t, worker.attempts[3].Sub(worker.attempts[2]), worker.attempts[2].Sub(worker.attempts[1]),
-		"the wait for a busy conversation backs off")
+	assert.Greater(
+		t,
+		worker.attempts[3].Sub(worker.attempts[2]),
+		worker.attempts[2].Sub(worker.attempts[1]),
+		"the wait for a busy conversation backs off",
+	)
 }
 
 func TestAgentWaitWorkflow_ABrokenPickUpStopsAfterItsAttempts(t *testing.T) {
@@ -202,7 +234,11 @@ func TestAgentWaitWorkflow_AWaitClosedMeanwhileEndsQuietly(t *testing.T) {
 	worker := &scriptedWorker{}
 	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
 		due := clock(env, time.Hour)
-		worker.schedule = agentwaitcontract.Schedule{Open: true, DueAt: &due, ExpiresAt: clock(env, 24*time.Hour)}
+		worker.schedule = agentwaitcontract.Schedule{
+			Open:      true,
+			DueAt:     &due,
+			ExpiresAt: clock(env, 24*time.Hour),
+		}
 		worker.checks = []agentwaitcontract.Check{{Closed: true}}
 	})
 
@@ -214,12 +250,21 @@ func TestAgentWaitWorkflow_AMovedDueTimeIsReadAgain(t *testing.T) {
 
 	worker := &scriptedWorker{}
 	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
-		worker.schedule = agentwaitcontract.Schedule{Open: true, ExpiresAt: clock(env, 24*time.Hour)}
+		worker.schedule = agentwaitcontract.Schedule{
+			Open:      true,
+			ExpiresAt: clock(env, 24*time.Hour),
+		}
 		env.RegisterDelayedCallback(func() {
 			soon := clock(env, 30*time.Minute)
 			worker.mu.Lock()
-			worker.schedule = agentwaitcontract.Schedule{Open: true, DueAt: &soon, ExpiresAt: clock(env, 24*time.Hour)}
-			worker.checks = []agentwaitcontract.Check{{Met: true, Detail: "Drive time left: about 1h 59m."}}
+			worker.schedule = agentwaitcontract.Schedule{
+				Open:      true,
+				DueAt:     &soon,
+				ExpiresAt: clock(env, 24*time.Hour),
+			}
+			worker.checks = []agentwaitcontract.Check{
+				{Met: true, Detail: "Drive time left: about 1h 59m."},
+			}
 			worker.mu.Unlock()
 			env.SignalWorkflow(agentwaitcontract.RescheduleSignal, nil)
 		}, time.Hour)
@@ -307,10 +352,16 @@ func TestAgentWaitWorkflow_AKindThatDoesNotSettleIsPickedUpAtOnce(t *testing.T) 
 	var metAt time.Time
 	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
 		worker.now = env.Now
-		worker.schedule = agentwaitcontract.Schedule{Open: true, ExpiresAt: clock(env, 24*time.Hour)}
+		worker.schedule = agentwaitcontract.Schedule{
+			Open:      true,
+			ExpiresAt: clock(env, 24*time.Hour),
+		}
 		env.RegisterDelayedCallback(func() {
 			metAt = env.Now()
-			env.SignalWorkflow(agentwaitcontract.MetSignal, agentwaitcontract.Met{Detail: "Arrived."})
+			env.SignalWorkflow(
+				agentwaitcontract.MetSignal,
+				agentwaitcontract.Met{Detail: "Arrived."},
+			)
 		}, time.Hour)
 	})
 

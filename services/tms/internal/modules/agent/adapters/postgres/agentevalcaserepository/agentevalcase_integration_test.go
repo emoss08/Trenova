@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -63,10 +65,16 @@ func setup(t *testing.T) *fixture {
 	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
 
 	return &fixture{
-		base:       ctx,
-		ctx:        dbscope.WithTenant(ctx, tenant.DBTenant()),
-		db:         db,
-		repo:       New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}),
+		base: ctx,
+		ctx:  dbscope.WithTenant(ctx, tenant.DBTenant()),
+		db:   db,
+		repo: New(
+			Params{
+				Entitlements: entitlementtest.Instance(),
+				DB:           postgres.WrapDB(db),
+				Logger:       zap.NewNop(),
+			},
+		),
 		tenant:     tenant,
 		definition: row.ID,
 	}
@@ -323,7 +331,12 @@ func TestListAutomatic_ReturnsTheSystemsActiveCasesWithTheToolTheyExpect(t *test
 	})
 	require.NoError(t, err)
 
-	require.Len(t, listed, 1, "a retired case and a case a person wrote are not the system's to rotate")
+	require.Len(
+		t,
+		listed,
+		1,
+		"a retired case and a case a person wrote are not the system's to rotate",
+	)
 	assert.Equal(t, automatic.ID, listed[0].ID)
 	assert.Equal(t, "update_rate", listed[0].Tool)
 	assert.Equal(t, automatic.CreatedAt, listed[0].CreatedAt)
@@ -475,8 +488,11 @@ func TestListSamplingCases_ACaseThatFailedOnlyOnATrialIsNotFailing(t *testing.T)
 
 	require.Contains(t, cases, tried.ID)
 	require.Contains(t, cases, broken.ID)
-	assert.False(t, cases[tried.ID].Failing(),
-		"a failure on a model the agent does not run on does not put the case first in its next run")
+	assert.False(
+		t,
+		cases[tried.ID].Failing(),
+		"a failure on a model the agent does not run on does not put the case first in its next run",
+	)
 	assert.True(t, cases[broken.ID].Failing())
 }
 

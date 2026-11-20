@@ -193,7 +193,6 @@ func (d *Dispatcher) StartReading(
 		StaticSummary:            "Read a record's case",
 		Priority: temporal.Priority{
 			PriorityKey: agentflowcontract.PriorityOneShot,
-			FairnessKey: req.TenantInfo.OrgID.String(),
 		},
 	}, WriteCaseReadingWorkflowName, &WriteCaseReadingPayload{Request: req})
 	if err != nil {
@@ -238,7 +237,6 @@ func (d *Dispatcher) await(ctx context.Context, c *call, result any) (err error)
 		StaticSummary:            c.summary,
 		Priority: temporal.Priority{
 			PriorityKey: agentflowcontract.PriorityOneShot,
-			FairnessKey: c.organization.String(),
 		},
 	}, c.workflow, c.payload)
 	if err != nil {

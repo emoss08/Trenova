@@ -3,6 +3,10 @@ package aiauditjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -140,6 +144,14 @@ func VerifyAIAuditChainWorkflow(
 	var tenants []pagination.TenantInfo
 	if err := workflow.ExecuteActivity(ctx, a.ListAIAuditTenantsActivity).
 		Get(ctx, &tenants); err != nil {
+		return nil, err
+	}
+	tenants, err := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureAIAuditTrail),
+		tenants,
+	)
+	if err != nil {
 		return nil, err
 	}
 

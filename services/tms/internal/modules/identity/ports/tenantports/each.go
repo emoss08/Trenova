@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -12,18 +13,27 @@ import (
 const eachTenantPageSize = 100
 
 type TenantPager interface {
-	ListTenantsPage(ctx context.Context, after pulid.ID, limit int) ([]pagination.TenantInfo, error)
+	ListTenantsPage(
+		ctx context.Context,
+		need entitlement.Need,
+		after pulid.ID,
+		limit int,
+	) ([]pagination.TenantInfo, error)
 }
 
 func EachTenant(
 	ctx context.Context,
 	tenants TenantPager,
+	need entitlement.Need,
 	fn func(context.Context, pagination.TenantInfo) error,
 ) error {
+	if err := need.Validate(); err != nil {
+		return err
+	}
 	var errs []error
 	after := pulid.Nil
 	for {
-		page, err := tenants.ListTenantsPage(ctx, after, eachTenantPageSize)
+		page, err := tenants.ListTenantsPage(ctx, need, after, eachTenantPageSize)
 		if err != nil {
 			return errors.Join(append(errs, err)...)
 		}

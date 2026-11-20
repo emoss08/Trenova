@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/pollwatch"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -28,6 +30,8 @@ type WorkerManagerParams struct {
 	Registries     []registry.WorkerRegistry `group:"worker_registries"`
 	QueueFilter    *registry.QueueFilter
 	Polls          *pollwatch.Watch
+	Gate           platformcatalogports.FeatureGate
+	Entitlements   entitlementports.Filter
 }
 
 func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
@@ -39,7 +43,10 @@ func NewWorkerManager(p WorkerManagerParams) (*registry.WorkerManager, error) {
 		TemporalConfig: p.TemporalConfig,
 		Logger:         p.Logger,
 		MetricsHandler: temporalMetrics,
+		Gate:           p.Gate,
+		Refusals:       p.Metrics.Tenancy,
 	}))
+	manager.SetQueueActivities(NewEntitledActivities(p.Entitlements))
 
 	queueFilter := p.QueueFilter
 	queues := make([]string, 0, len(p.Registries))

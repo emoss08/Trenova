@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionaccuracyports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
-	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"go.uber.org/zap"
 )
@@ -59,6 +61,7 @@ func ExtractionAccuracyDriftWorkflow(
 	result := &ExtractionAccuracyDriftResult{FailedOrganizations: make([]string, 0)}
 	_, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "extraction accuracy drift",
+		Need:        entitlement.For(platformcatalog.FeatureDocumentIntelligence),
 		Concurrency: organizationConcurrency,
 		ListPage: func(
 			wctx workflow.Context,
@@ -74,6 +77,7 @@ func ExtractionAccuracyDriftWorkflow(
 				a.ListAICorrectionOrganizationsActivity,
 				&ListAICorrectionOrganizationsInput{
 					After: after,
+					Need:  entitlement.For(platformcatalog.FeatureDocumentIntelligence),
 					Limit: temporaljobs.DefaultOrganizationPageSize,
 				},
 			).Get(listCtx, &page)
@@ -82,7 +86,6 @@ func ExtractionAccuracyDriftWorkflow(
 		},
 		RunTenant: func(wctx workflow.Context, tenant temporaljobs.TenantWorkItem) (int, error) {
 			options := organizationOptions
-			options.Priority = temporal.Priority{FairnessKey: tenant.OrganizationID.String()}
 			activityCtx := workflow.WithActivityOptions(wctx, options)
 			var checked OrganizationDriftResult
 			if err := workflow.ExecuteActivity(

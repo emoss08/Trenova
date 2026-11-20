@@ -74,7 +74,7 @@ func DrainAccountingOutboxWorkflow(
 	signals := workflow.GetSignalChannel(ctx, accountingsynccontract.DrainSignalName)
 	actx := workflow.WithActivityOptions(
 		ctx,
-		withFairness(&drainActivityOptions, payload.OrganizationID),
+		withBackgroundPriority(&drainActivityOptions),
 	)
 	result := &DrainRunResult{Batches: payload.Batches}
 
@@ -169,7 +169,7 @@ func BackfillAccountingWorkflow(
 	var a *Activities
 	actx := workflow.WithActivityOptions(
 		ctx,
-		withFairness(&markActivityOptions, payload.OrganizationID),
+		withBackgroundPriority(&markActivityOptions),
 	)
 	result := &BackfillRunResult{Steps: payload.Steps}
 

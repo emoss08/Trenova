@@ -769,6 +769,11 @@ func (a *Activities) convertWithConverter(
 	if !a.converter.Enabled() {
 		return nil, kernelports.ErrDocumentConverterUnavailable
 	}
+	release, err := a.slots.Hold(ctx, kernelports.HeavyJobExtraction)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 
 	var taskID kernelports.ConversionTaskID
 	if resumable {

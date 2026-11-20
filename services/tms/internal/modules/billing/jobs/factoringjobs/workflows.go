@@ -3,6 +3,10 @@ package factoringjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"go.temporal.io/sdk/temporal"
@@ -114,6 +118,16 @@ func FactoringReadinessSweepWorkflow(ctx workflow.Context) (*SweepResult, error)
 	}
 
 	result := &SweepResult{}
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureFactoring),
+		tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenants = kept
+
 	for i := range tenants {
 		var swept factoringports.SweepResult
 		err := workflow.ExecuteActivity(tenantCtx, a.SweepFactoringTenantActivity, &tenants[i]).

@@ -4,6 +4,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )
 
@@ -27,12 +29,14 @@ type OrganizationSweepInput struct {
 }
 
 type ListOrganizationsInput struct {
+	Need  entitlement.Need             `json:"need"`
 	After *temporaljobs.TenantWorkItem `json:"after,omitempty"`
 	Limit int                          `json:"limit"`
 }
 
 type SweepInput struct {
-	After *temporaljobs.TenantWorkItem `json:"after,omitempty"`
+	After        *temporaljobs.TenantWorkItem `json:"after,omitempty"`
+	Organization *pagination.TenantInfo       `json:"organization,omitempty"`
 }
 
 type SweepResult struct {

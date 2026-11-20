@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -29,17 +31,23 @@ var waitErrors = dberror.Mapping{Entity: entityName}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) agentwaitports.AgentWaitRepository {
-	return &repository{db: p.DB, l: p.Logger.Named("postgres.agent-wait-repository")}
+	return &repository{
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.agent-wait-repository"),
+		entitlements: p.Entitlements,
+	}
 }
 
 func (r *repository) Insert(
@@ -229,8 +237,12 @@ func (r *repository) ListOverdueAcrossTenants(
 		}
 
 		w := agentwaitdb.Waits
+		entitled, entitledErr := r.entitlements.ForWork(ctx, w.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		items, err := w.AllTenants().
-			Where(w.Status.Eq(agentwait.StatusWaiting), w.ExpiresAt.Lt(req.ExpiredBefore)).
+			Where(entitled, w.Status.Eq(agentwait.StatusWaiting), w.ExpiresAt.Lt(req.ExpiredBefore)).
 			Order(w.ExpiresAt.Asc()).
 			Limit(limit).
 			List(ctx, r.db.Keel(ctx))

@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/heavyslots"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/infrastructure/redis"
 	"github.com/emoss08/trenova/internal/infrastructure/redis/accesscache"
@@ -28,6 +29,7 @@ var RedisRepositoriesModule = fx.Module("redis-repositories",
 		aicache.NewQueryVectorCache,
 		providerstate.NewProviderBreakerRepository,
 		providerstate.NewProviderSlotRepository,
+		heavyslots.New,
 		entitycache.NewCustomerCacheRepository,
 		entitycache.NewDocumentCacheRepository,
 		entitycache.NewShipmentImportChatCacheRepository,

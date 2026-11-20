@@ -363,6 +363,7 @@ func (l *Loader) validateConfig(config *Config) error {
 		config.AIAudit.Validate,
 		config.Managed.Validate,
 		config.Audit.Validate,
+		config.TenantLimits.Validate,
 	}
 	for _, validate := range validators {
 		if err := validate(); err != nil {

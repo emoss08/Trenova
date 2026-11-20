@@ -3,6 +3,8 @@ package rateconfirmationrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -28,19 +30,22 @@ var (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) rateconfirmationports.RateConfirmationRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.rate-confirmation-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.rate-confirmation-repository"),
 	}
 }
 
@@ -278,6 +283,7 @@ func (r *repository) RevokeTokensForRateConfirmation(
 
 func deadTokensQuery(
 	req tenderports.PurgeDeadTokensRequest,
+	entitled keel.Pred,
 	limit int,
 ) keel.Query[*rateconfirmation.RateConfirmationToken] {
 	t := rateconfirmationdb.RateConfirmationTokens
@@ -285,7 +291,7 @@ func deadTokensQuery(
 
 	return t.AllTenants().Where(t.ID.InQuery(dead.AllTenants().
 		Pick(dead.ID).
-		Where(dead.UsedAt.Coalesce(dead.RevokedAt, dead.ExpiresAt).Lt(req.DeadBefore)).
+		Where(entitled, dead.UsedAt.Coalesce(dead.RevokedAt, dead.ExpiresAt).Lt(req.DeadBefore)).
 		Limit(limit)))
 }
 
@@ -304,7 +310,12 @@ func (r *repository) PurgeDeadSignTokens(
 			limit = defaultTokenPurgeLimit
 		}
 
-		purged, err := deadTokensQuery(req, limit).Delete(ctx, r.db.Keel(ctx))
+		dead := rateconfirmationdb.RateConfirmationTokens.As("dead")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, dead.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
+		purged, err := deadTokensQuery(req, entitled, limit).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to purge dead rate confirmation tokens", zap.Error(err))
 			return 0, err

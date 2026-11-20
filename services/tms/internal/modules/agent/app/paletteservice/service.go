@@ -142,7 +142,6 @@ func (s *Service) Ask(
 		StaticSummary: "Nova answers a command palette question",
 		Priority: temporal.Priority{
 			PriorityKey: agentflowcontract.PriorityInteractive,
-			FairnessKey: tenant.OrgID.String(),
 		},
 	}, palettecontract.AnswerWorkflowName, &palettecontract.AnswerInput{
 		OrganizationID: tenant.OrgID,

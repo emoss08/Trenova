@@ -47,7 +47,7 @@ func (a *Activities) ListProfileOrganizationsActivity(
 	ctx context.Context,
 	input *ListOrganizationsInput,
 ) (*temporaljobs.TenantPage, error) {
-	return temporaljobs.OrganizationPage(ctx, a.tenants, input.After, input.Limit)
+	return temporaljobs.OrganizationPage(ctx, a.tenants, input.Need, input.After, input.Limit)
 }
 
 func (a *Activities) ListActiveUsersActivity(

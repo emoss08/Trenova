@@ -5,6 +5,8 @@ package rolerepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
@@ -22,7 +24,13 @@ func TestRoleResolutionIsServedFromTheResultCacheUntilARoleChanges(t *testing.T)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	cached := cachetest.Open(t, ctx, dsn)
-	repo := New(Params{DB: postgres.WrapDB(cached), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(cached),
+			Logger:       zap.NewNop(),
+		},
+	)
 	tctx := data.Ctx(ctx)
 
 	parent := newTestRole("Cached Parent", nil, "shipment")

@@ -13,6 +13,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
+
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/adapterregistry"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
@@ -68,9 +71,11 @@ type Params struct {
 	Files conversationports.MessageFileReader
 	// Features is the organization's plan: a task is served only when a
 	// feature that pays for it is on.
-	Features platformcatalogports.FeatureGate
-	BuiltIn  aiproviderports.BuiltInEmbedding
-	Support  supportaccessports.ModelCalls
+	Features     platformcatalogports.FeatureGate
+	BuiltIn      aiproviderports.BuiltInEmbedding
+	Support      supportaccessports.ModelCalls
+	Managed      *managedconfig.Config
+	TenantLimits *tenantlimitsconfig.Config
 }
 
 type Engine struct {

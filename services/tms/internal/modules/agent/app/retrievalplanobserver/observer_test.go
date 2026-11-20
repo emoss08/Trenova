@@ -8,9 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalplanobserver"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/api/enums/v1"
@@ -55,7 +59,12 @@ func newObserver(starter *fakeStarter) *retrievalplanobserver.Observer {
 }
 
 func state(features ...platformcatalog.FeatureKey) *managedfeatures.State {
-	return &managedfeatures.State{ID: "current", Features: features}
+	return &managedfeatures.State{
+		ScopeKey:   managedscope.InstanceKey,
+		Lifecycle:  managedfeatures.LifecycleActive,
+		Features:   features,
+		ReceivedAt: 1,
+	}
 }
 
 func TestPlanChanged_TrenovaAIAddedStartsOneDelayedSweep(t *testing.T) {
@@ -63,6 +72,7 @@ func TestPlanChanged_TrenovaAIAddedStartsOneDelayedSweep(t *testing.T) {
 
 	starter := &fakeStarter{}
 	err := newObserver(starter).PlanChanged(t.Context(), &managedfeatures.Replacement{
+		Scope:    managedscope.Instance(),
 		Previous: state(platformcatalog.FeatureAccounting),
 		Current:  state(platformcatalog.FeatureAccounting, platformcatalog.FeatureAIDesk),
 	})
@@ -71,7 +81,9 @@ func TestPlanChanged_TrenovaAIAddedStartsOneDelayedSweep(t *testing.T) {
 	require.Len(t, starter.started, 1)
 	run := starter.started[0]
 	assert.Equal(t, retrievalservice.SweepWorkflowName, run.workflow)
-	assert.Empty(t, run.args, "the sweep starts from the first organization")
+	require.Len(t, run.args, 1)
+	assert.Equal(t, &retrievalservice.SweepRequest{}, run.args[0],
+		"a dedicated instance's sweep starts from the first organization")
 	assert.Equal(t, retrievalplanobserver.SweepWorkflowID, run.options.ID)
 	assert.Equal(t, temporaltype.TaskQueueSystem.String(), run.options.TaskQueue)
 	assert.Equal(
@@ -89,7 +101,60 @@ func TestPlanChanged_TheStartingPlanWithTrenovaAIStartsASweep(t *testing.T) {
 
 	starter := &fakeStarter{}
 	err := newObserver(starter).PlanChanged(t.Context(), &managedfeatures.Replacement{
+		Scope:   managedscope.Instance(),
 		Current: state(platformcatalog.FeatureAIDesk),
+	})
+	require.NoError(t, err)
+	assert.Len(t, starter.started, 1)
+}
+
+func TestPlanChanged_AnOrganizationThatGainedTrenovaAIIsSweptAlone(t *testing.T) {
+	t.Parallel()
+
+	tenant := dbscope.Tenant{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+	scope := managedscope.Organization(tenant)
+	previous := state()
+	previous.ScopeKey = scope.Key()
+	current := state(platformcatalog.FeatureAIDesk)
+	current.ScopeKey = scope.Key()
+
+	starter := &fakeStarter{}
+	err := newObserver(starter).PlanChanged(t.Context(), &managedfeatures.Replacement{
+		Scope:    scope,
+		Previous: previous,
+		Current:  current,
+	})
+	require.NoError(t, err)
+
+	require.Len(t, starter.started, 1)
+	run := starter.started[0]
+	assert.Equal(t, retrievalservice.SweepWorkflowIDFor(tenant.OrganizationID), run.options.ID)
+	require.Len(t, run.args, 1)
+	assert.Equal(t, &retrievalservice.SweepRequest{Organization: &pagination.TenantInfo{
+		OrgID: tenant.OrganizationID,
+		BuID:  tenant.BusinessUnitID,
+	}}, run.args[0])
+}
+
+func TestPlanChanged_AResumedOrganizationWithTrenovaAIIsSwept(t *testing.T) {
+	t.Parallel()
+
+	tenant := dbscope.Tenant{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+	suspended := state(platformcatalog.FeatureAIDesk)
+	suspended.Lifecycle = managedfeatures.LifecycleSuspended
+	resumed := state(platformcatalog.FeatureAIDesk)
+
+	starter := &fakeStarter{}
+	err := newObserver(starter).PlanChanged(t.Context(), &managedfeatures.Replacement{
+		Scope:    managedscope.Organization(tenant),
+		Previous: suspended,
+		Current:  resumed,
 	})
 	require.NoError(t, err)
 	assert.Len(t, starter.started, 1)
@@ -123,6 +188,18 @@ func TestPlanChanged_StartsNothingWhen(t *testing.T) {
 			},
 		},
 		{
+			name: "the organization was suspended",
+			replacement: &managedfeatures.Replacement{
+				Previous: state(platformcatalog.FeatureAIDesk),
+				Current: &managedfeatures.State{
+					ScopeKey:   managedscope.InstanceKey,
+					Lifecycle:  managedfeatures.LifecycleSuspended,
+					Features:   []platformcatalog.FeatureKey{platformcatalog.FeatureAIDesk},
+					ReceivedAt: 1,
+				},
+			},
+		},
+		{
 			name: "another add-on was added",
 			replacement: &managedfeatures.Replacement{
 				Previous: state(),
@@ -146,6 +223,7 @@ func TestPlanChanged_AStartThatFailsIsReported(t *testing.T) {
 
 	starter := &fakeStarter{err: errors.New("temporal is unreachable")}
 	err := newObserver(starter).PlanChanged(t.Context(), &managedfeatures.Replacement{
+		Scope:    managedscope.Instance(),
 		Previous: state(),
 		Current:  state(platformcatalog.FeatureAIDesk),
 	})

@@ -274,7 +274,7 @@ func (w *Workflows) run(
 	tenant := payload.TenantInfo()
 	keep, _ := workflow.NewDisconnectedContext(ctx)
 
-	prepareCtx := workflow.WithActivityOptions(ctx, withPriority(prepareActivityOptions, payload))
+	prepareCtx := workflow.WithActivityOptions(ctx, withPriority(&prepareActivityOptions))
 	var prepared PrepareRunResult
 	if err := workflow.ExecuteActivity(prepareCtx, a.PrepareRunActivity, payload).
 		Get(prepareCtx, &prepared); err != nil {
@@ -294,7 +294,7 @@ func (w *Workflows) run(
 		}
 	})
 
-	openCtx := workflow.WithActivityOptions(runCtx, withPriority(prepareActivityOptions, payload))
+	openCtx := workflow.WithActivityOptions(runCtx, withPriority(&prepareActivityOptions))
 	var opened OpenRunResult
 	if err := workflow.ExecuteActivity(openCtx, a.OpenRunActivity, &OpenRunInput{
 		Payload:    payload,
@@ -314,7 +314,7 @@ func (w *Workflows) run(
 		)
 	}
 
-	finishCtx := workflow.WithActivityOptions(keep, withPriority(persistActivityOptions, payload))
+	finishCtx := workflow.WithActivityOptions(keep, withPriority(&persistActivityOptions))
 	var finished FinishRunResult
 	if err := workflow.ExecuteActivity(finishCtx, a.FinishRunActivity, &FinishRunInput{
 		Payload:    payload,
@@ -350,13 +350,10 @@ func (w *Workflows) run(
 	return nil
 }
 
-func withPriority(
-	options workflow.ActivityOptions,
-	payload *agentcontract.AgentRunPayload,
-) workflow.ActivityOptions {
+func withPriority(base *workflow.ActivityOptions) workflow.ActivityOptions {
+	options := *base
 	options.Priority = temporal.Priority{
 		PriorityKey: agentflowcontract.PriorityBackground,
-		FairnessKey: payload.OrganizationID.String(),
 	}
 
 	return options
@@ -386,7 +383,6 @@ func (w *Workflows) AgentEvaluationWorkflow(
 	options := prepareActivityOptions
 	options.Priority = temporal.Priority{
 		PriorityKey: agentflowcontract.PriorityEvaluation,
-		FairnessKey: payload.OrganizationID.String(),
 	}
 
 	openCtx := workflow.WithActivityOptions(ctx, options)

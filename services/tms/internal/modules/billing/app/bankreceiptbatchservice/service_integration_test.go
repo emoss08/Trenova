@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -209,7 +211,11 @@ func setupBatchIntegrationEnv(t *testing.T) *batchIntegrationEnv {
 		customerpaymentrepository.Params{DB: conn, Logger: logger},
 	)
 	accountingRepo := accountingcontrolrepository.New(
-		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		accountingcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 
 	seeded := billingtest.SeededTenant(t, ctx, db)
@@ -274,7 +280,11 @@ func createPostedCustomerPayment(
 	)
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	accountingRepo := accountingcontrolrepository.New(
-		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		accountingcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},

@@ -3,6 +3,11 @@ package retrievaljobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/pkg/pagination"
+
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
@@ -64,13 +69,9 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	}
 }
 
-func withOptions(
-	ctx workflow.Context,
-	options *workflow.ActivityOptions,
-	item temporaljobs.TenantWorkItem,
-) workflow.Context {
+func withOptions(ctx workflow.Context, options *workflow.ActivityOptions) workflow.Context {
 	scoped := *options
-	scoped.Priority = retrievalservice.WorkflowPriorityFor(item.OrganizationID)
+	scoped.Priority = retrievalservice.IndexPriority()
 
 	return workflow.WithActivityOptions(ctx, scoped)
 }
@@ -166,7 +167,7 @@ func (r *indexRun) waitForSignal() bool {
 
 func (r *indexRun) plan() (*retrievalports.RetrievalIndexPlan, error) {
 	r.steps++
-	actx := withOptions(r.ctx, &quickOptions, r.item)
+	actx := withOptions(r.ctx, &quickOptions)
 
 	var a *Activities
 	var plan retrievalports.RetrievalIndexPlan
@@ -222,7 +223,7 @@ func (r *indexRun) indexBatch(
 	sourceTypes []airetrieval.SourceType,
 ) (*retrievalports.RetrievalIndexBatchResult, error) {
 	r.steps++
-	actx := withOptions(r.ctx, &longOptions, r.item)
+	actx := withOptions(r.ctx, &longOptions)
 
 	var a *Activities
 	var batch retrievalports.RetrievalIndexBatchResult
@@ -244,7 +245,7 @@ func (r *indexRun) indexBatch(
 
 func (r *indexRun) completeModelChange(pendingModelKey string) (bool, error) {
 	r.steps++
-	actx := withOptions(r.ctx, &quickOptions, r.item)
+	actx := withOptions(r.ctx, &quickOptions)
 
 	var a *Activities
 	var change retrievalports.RetrievalModelChangeResult
@@ -271,7 +272,7 @@ func (r *indexRun) purge(modelKey string) error {
 	var a *Activities
 	for range maxPurgeCalls {
 		r.steps++
-		actx := withOptions(r.ctx, &longOptions, r.item)
+		actx := withOptions(r.ctx, &longOptions)
 
 		var purged retrievalports.RetrievalPurgeResult
 		if err := workflow.ExecuteActivity(actx, a.PurgeRetrievalModelActivity,
@@ -290,7 +291,7 @@ func (r *indexRun) purge(modelKey string) error {
 
 func (r *indexRun) sweep() (*retrievalports.RetrievalSweepResult, error) {
 	r.steps++
-	actx := withOptions(r.ctx, &longOptions, r.item)
+	actx := withOptions(r.ctx, &longOptions)
 
 	var a *Activities
 	var sweep retrievalports.RetrievalSweepResult
@@ -308,7 +309,7 @@ func ReindexRetrievalSourceWorkflow(
 		OrganizationID: input.OrganizationID,
 		BusinessUnitID: input.BusinessUnitID,
 	}
-	actx := withOptions(ctx, &quickOptions, item)
+	actx := withOptions(ctx, &quickOptions)
 	result := &ReindexResult{Marked: input.Marked}
 
 	var a *Activities
@@ -349,8 +350,12 @@ func RetrievalIndexSweepWorkflow(ctx workflow.Context, input *SweepInput) (*Swee
 
 	var a *Activities
 	result := &SweepResult{FailedOrganizations: make([]string, 0)}
+	if input.Organization != nil {
+		return sweepOrganization(ctx, *input.Organization, result)
+	}
 	_, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "Retrieval index sweep",
+		Need:        entitlement.For(platformcatalog.FeatureAIDesk),
 		Concurrency: organizationConcurrency,
 		ListPage: func(
 			wctx workflow.Context,
@@ -364,13 +369,14 @@ func RetrievalIndexSweepWorkflow(ctx workflow.Context, input *SweepInput) (*Swee
 			err := workflow.ExecuteActivity(listCtx, a.ListRetrievalOrganizationsActivity,
 				&ListOrganizationsInput{
 					After: after,
+					Need:  entitlement.For(platformcatalog.FeatureAIDesk),
 					Limit: temporaljobs.DefaultOrganizationPageSize,
 				}).Get(listCtx, &page)
 
 			return &page, err
 		},
 		RunTenant: func(wctx workflow.Context, tenant temporaljobs.TenantWorkItem) (int, error) {
-			actx := withOptions(wctx, &longOptions, tenant)
+			actx := withOptions(wctx, &longOptions)
 			var swept retrievalports.RetrievalSweepResult
 			if err := workflow.ExecuteActivity(actx, a.SweepRetrievalSourcesActivity,
 				&OrganizationSweepInput{TenantWorkItem: tenant, Wake: true}).
@@ -393,6 +399,39 @@ func RetrievalIndexSweepWorkflow(ctx workflow.Context, input *SweepInput) (*Swee
 	if next != nil {
 		return result, workflow.NewContinueAsNewError(ctx, RetrievalIndexSweepWorkflow,
 			&SweepInput{After: next})
+	}
+
+	return result, nil
+}
+
+func sweepOrganization(
+	ctx workflow.Context,
+	tenant pagination.TenantInfo,
+	result *SweepResult,
+) (*SweepResult, error) {
+	var a *Activities
+	items, err := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureAIDesk),
+		[]temporaljobs.TenantWorkItem{temporaljobs.NewTenantWorkItem(tenant, 1)},
+	)
+	if err != nil {
+		return result, err
+	}
+	for _, item := range items {
+		actx := withOptions(ctx, &longOptions)
+		var swept retrievalports.RetrievalSweepResult
+		if err = workflow.ExecuteActivity(actx, a.SweepRetrievalSourcesActivity,
+			&OrganizationSweepInput{TenantWorkItem: item, Wake: true}).
+			Get(actx, &swept); err != nil {
+			result.FailedOrganizations = append(
+				result.FailedOrganizations,
+				item.OrganizationID.String(),
+			)
+			return result, err
+		}
+		result.OrganizationsSwept++
+		result.Marked += swept.Marked
 	}
 
 	return result, nil

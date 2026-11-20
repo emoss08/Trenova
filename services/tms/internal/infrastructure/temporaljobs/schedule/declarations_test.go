@@ -35,6 +35,60 @@ type declaration struct {
 func TestEveryDeclaredScheduleNamesAKnownFeature(t *testing.T) {
 	t.Parallel()
 
+	found := declaredSchedules(t)
+	require.GreaterOrEqual(
+		t,
+		len(found),
+		100,
+		"the walk found too few schedules to be reading the tree",
+	)
+	for _, decl := range found {
+		assert.Empty(t, decl.problem, "%s", decl.pos)
+	}
+}
+
+var scheduleHarnessExceptions = map[string]string{
+	"modules/agent/jobs/evalcasejobs": "its schedules are part of agentjobs' provider and run in agentjobs' test",
+}
+
+func TestEverySchedulingPackageRunsItsSchedulesOnASharedServer(t *testing.T) {
+	t.Parallel()
+
+	dirs := map[string]bool{}
+	for _, decl := range declaredSchedules(t) {
+		dir, err := filepath.Rel(internalRoot, filepath.Dir(decl.pos.Filename))
+		require.NoError(t, err)
+		dirs[filepath.ToSlash(dir)] = true
+	}
+	for dir := range dirs {
+		if _, excepted := scheduleHarnessExceptions[dir]; excepted {
+			continue
+		}
+		assert.True(t, runsSchedulesOnASharedServer(t, filepath.Join(internalRoot, dir)),
+			"%s declares schedules but no test of it calls entitlementtest.RunSchedules", dir)
+	}
+	for dir := range scheduleHarnessExceptions {
+		assert.True(t, dirs[dir], "%s is excepted but declares no schedule", dir)
+	}
+}
+
+func runsSchedulesOnASharedServer(t *testing.T, dir string) bool {
+	t.Helper()
+	tests, err := filepath.Glob(filepath.Join(dir, "*_test.go"))
+	require.NoError(t, err)
+	for _, path := range tests {
+		src, readErr := os.ReadFile(path)
+		require.NoError(t, readErr)
+		if bytes.Contains(src, []byte("entitlementtest.RunSchedules(")) {
+			return true
+		}
+	}
+	return false
+}
+
+func declaredSchedules(t *testing.T) []declaration {
+	t.Helper()
+
 	catalog := catalogConstants(t)
 	fset := token.NewFileSet()
 	var found []declaration
@@ -86,15 +140,7 @@ func TestEveryDeclaredScheduleNamesAKnownFeature(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.GreaterOrEqual(
-		t,
-		len(found),
-		100,
-		"the walk found too few schedules to be reading the tree",
-	)
-	for _, decl := range found {
-		assert.Empty(t, decl.problem, "%s", decl.pos)
-	}
+	return found
 }
 
 func catalogConstants(t *testing.T) map[string]platformcatalog.FeatureKey {

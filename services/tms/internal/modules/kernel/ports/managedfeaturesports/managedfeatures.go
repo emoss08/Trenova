@@ -22,13 +22,19 @@ type LifecycleRequest struct {
 type DueRemindersRequest struct {
 	Now   int64
 	Limit int
+	After *DueReminder
+}
+
+type DueReminder struct {
+	Scope  managedscope.Scope
+	EndsAt int64
 }
 
 type StateRepository interface {
 	Get(ctx context.Context, scope managedscope.Scope) (*managedfeatures.State, error)
 	Replace(ctx context.Context, req *ReplaceRequest) (*managedfeatures.Replacement, error)
 	SetLifecycle(ctx context.Context, req *LifecycleRequest) (*managedfeatures.Replacement, error)
-	DuePlanEndReminders(ctx context.Context, req *DueRemindersRequest) ([]managedscope.Scope, error)
+	DuePlanEndReminders(ctx context.Context, req *DueRemindersRequest) ([]DueReminder, error)
 	RemindPlanEnd(
 		ctx context.Context,
 		scope managedscope.Scope,

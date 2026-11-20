@@ -9,6 +9,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/trenova/internal/testutil/pagetest"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -844,6 +846,7 @@ func newHarness(t *testing.T) *harness {
 	now := int64(1_784_000_000)
 
 	svc := fuelpurchaseservice.New(fuelpurchaseservice.Params{
+		Slots:        heavyslotstest.Unbounded(),
 		Logger:       zap.NewNop(),
 		Repo:         repo,
 		IFTARepo:     newFakeJurisdictions("TX", "OK", "ON"),

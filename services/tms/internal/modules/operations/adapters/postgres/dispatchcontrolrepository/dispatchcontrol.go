@@ -3,6 +3,8 @@ package dispatchcontrolrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -23,19 +25,22 @@ var dispatchControlErrors = dberror.Mapping{Entity: "DispatchControl"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) dispatchcontrolports.DispatchControlRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.dispatch-control-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.dispatch-control-repository"),
 	}
 }
 
@@ -191,9 +196,13 @@ func (r *repository) listTenantsWhere(
 ) ([]pagination.TenantInfo, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		dc := dispatchcontroldb.DispatchControls
+		entitled, entitledErr := r.entitlements.ForWork(ctx, dc.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := keel.Into[tenantRow](ctx, r.db.Keel(ctx), dc.AllTenants().
 			Pick(dc.OrganizationID, dc.BusinessUnitID).
-			Where(preds...).
+			Where(append(preds, entitled)...).
 			Order(dc.OrganizationID.Asc()))
 		if err != nil {
 			r.l.Error("failed to list dispatch control tenants", zap.Error(err))

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,6 +64,7 @@ func (o *PlanObserver) PlanChanged(
 	return tenantports.EachTenant(
 		ctx,
 		o.tenants,
+		entitlement.AnyActive(),
 		func(ctx context.Context, tenant pagination.TenantInfo) error {
 			o.notifier.OrganizationChanged(ctx, tenant)
 			return nil

@@ -43,6 +43,7 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
+	Slots                    kernelports.HeavyJobSlots
 	Logger                   *zap.Logger
 	AIConfig                 *aiconfig.Config
 	DocumentConversionConfig *documentconversionconfig.Config
@@ -63,6 +64,7 @@ type ActivitiesParams struct {
 }
 
 type Activities struct {
+	slots             kernelports.HeavyJobSlots
 	logger            *zap.Logger
 	cfg               *aiconfig.Config
 	metrics           *metrics.Registry
@@ -89,6 +91,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 	workflowStarter := p.WorkflowStarter
 
 	return &Activities{
+		slots:             p.Slots,
 		logger:            p.Logger.Named("temporal.document-extraction"),
 		cfg:               p.AIConfig,
 		metrics:           p.Metrics,

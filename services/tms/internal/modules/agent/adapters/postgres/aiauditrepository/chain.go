@@ -47,8 +47,12 @@ func (r *repository) ListChainHeads(ctx context.Context) ([]*aiaudit.AIAuditChai
 	ctx = dbscope.WithSystem(ctx, "list every organization's AI audit chain head")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditChainHead, error) {
 		h := aiauditdb.AIAuditChainHeads
+		entitled, entitledErr := r.entitlements.ForWork(ctx, h.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		heads, err := h.AllTenants().
-			Where(h.LastSeq.Gt(0)).
+			Where(entitled, h.LastSeq.Gt(0)).
 			Order(h.OrganizationID.Asc(), h.BusinessUnitID.Asc()).
 			All(ctx, r.db.Keel(ctx))
 		if err != nil {

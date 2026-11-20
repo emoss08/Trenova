@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/pkg/dbscope"
 )
 
 type FeatureObserver interface {
@@ -15,10 +16,14 @@ type FeatureObserver interface {
 func Observing[T FeatureObserver](
 	ctx context.Context,
 	gate FeatureGate,
+	tenant dbscope.Tenant,
 	observers []T,
 ) ([]T, error) {
 	if len(observers) == 0 {
 		return nil, nil
+	}
+	if !tenant.OrganizationID.IsNil() {
+		ctx = dbscope.WithTenant(ctx, tenant)
 	}
 
 	answers := make(map[platformcatalog.FeatureKey]bool, len(observers))

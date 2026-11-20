@@ -137,6 +137,7 @@ func (s *Effects) MarkCarriersUsed(
 	observers, err := platformcatalogports.Observing(
 		ctx,
 		s.features,
+		tenantInfo.DBTenant(),
 		[]carrierintelports.CarrierLifecycleObserver{s.lifecycle},
 	)
 	if err != nil {

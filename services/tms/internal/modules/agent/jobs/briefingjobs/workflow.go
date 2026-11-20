@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -97,6 +100,7 @@ func DailyBriefingWorkflow(ctx workflow.Context) (*DailyBriefingResult, error) {
 	}
 	_, _, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "Daily briefing",
+		Need:        entitlement.For(platformcatalog.FeatureAIDesk),
 		Concurrency: organizationConcurrency,
 		ListPage: func(workflow.Context, *temporaljobs.TenantWorkItem) (*temporaljobs.TenantPage, error) {
 			return &temporaljobs.TenantPage{Tenants: due.Due}, nil
@@ -105,7 +109,6 @@ func DailyBriefingWorkflow(ctx workflow.Context) (*DailyBriefingResult, error) {
 			childCtx := workflow.WithChildOptions(wctx, workflow.ChildWorkflowOptions{
 				WorkflowID: fmt.Sprintf("daily-briefing/%s/%d", tenant.OrganizationID, now),
 				TaskQueue:  temporaltype.TaskQueueSystem.String(),
-				Priority:   temporal.Priority{FairnessKey: tenant.OrganizationID.String()},
 			})
 
 			var written OrganizationBriefingResult

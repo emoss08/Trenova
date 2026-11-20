@@ -4,6 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
@@ -28,6 +31,7 @@ func TestChangesWorkflowSuite(t *testing.T) {
 
 func (s *ChangesWorkflowSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
+	s.env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 }
 
 func (s *ChangesWorkflowSuite) AfterTest(_, _ string) {

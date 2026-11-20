@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -37,17 +39,23 @@ var grantErrors = dberror.Mapping{Entity: "Support access grant"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type grantRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewGrantRepository(p Params) supportaccessports.GrantRepository {
-	return &grantRepository{db: p.DB, l: p.Logger.Named("postgres.support-access-grant-repository")}
+	return &grantRepository{
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.support-access-grant-repository"),
+		entitlements: p.Entitlements,
+	}
 }
 
 func live(now int64) keel.Pred {
@@ -346,7 +354,12 @@ func (r *grantRepository) ListUnrecordedExpiries(
 	ctx = dbscope.WithSystem(ctx, expirySweepReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*supportaccess.Grant, error) {
 		g := supportaccessdb.Grants
+		entitled, entitledErr := r.entitlements.ForWork(ctx, g.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := g.Where(
+			entitled,
 			g.RevokedAt.IsNull(),
 			g.ExpiryRecordedAt.IsNull(),
 			g.ExpiresAt.Lte(now),

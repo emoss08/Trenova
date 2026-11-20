@@ -721,7 +721,7 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected.Use(r.responseGuard.Install())
 	protected.Use(r.responseGuard.InstallListGuard())
 	protected.Use(r.readScopeMiddleware.Install())
-	protected.Use(r.rateLimiter.ByAPIKey())
+	protected.Use(r.rateLimiter.ByPrincipal())
 	protected.Use(middleware.NewLocaleMiddleware().Resolve())
 	protected.Use(middleware.NewSessionContextMiddleware(r.errorHandler).RequireCurrent())
 	protected.Use(middleware.NewCSRFMiddleware(r.securityConfig, r.errorHandler).RequireToken())

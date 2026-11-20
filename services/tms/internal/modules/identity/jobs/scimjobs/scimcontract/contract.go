@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -74,7 +73,6 @@ func (r *Requester) RequestReconcile(
 				ID:            ReconcileWorkflowID(directoryID),
 				TaskQueue:     temporaltype.TaskQueueSystem.String(),
 				StaticSummary: "Bring the roles a SCIM directory's groups grant up to date",
-				Priority:      temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
 			},
 			ReconcileWorkflowName,
 			&ReconcilePayload{

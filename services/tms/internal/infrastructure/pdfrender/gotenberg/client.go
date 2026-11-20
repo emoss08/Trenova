@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+
 	"github.com/cenkalti/backoff/v5"
 	"github.com/emoss08/trenova/internal/infrastructure/config/rendererconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -43,10 +45,12 @@ type Params struct {
 
 	RendererConfig *rendererconfig.Config
 	Logger         *zap.Logger
+	Slots          kernelports.HeavyJobSlots
 }
 
 type Client struct {
 	http    *http.Client
+	slots   kernelports.HeavyJobSlots
 	sem     *semaphore.Weighted
 	l       *zap.Logger
 	baseURL string
@@ -74,8 +78,9 @@ func New(p Params) *Client {
 				IdleConnTimeout:     90 * time.Second,
 			},
 		},
-		sem: semaphore.NewWeighted(int64(maxConcurrent)),
-		l:   p.Logger.Named("pdfrender.gotenberg"),
+		slots: p.Slots,
+		sem:   semaphore.NewWeighted(int64(maxConcurrent)),
+		l:     p.Logger.Named("pdfrender.gotenberg"),
 	}
 }
 
@@ -130,8 +135,11 @@ func (c *Client) Render(
 		return nil, errors.New("render request has no HTML")
 	}
 
-	// Queue in-process so a burst of previews lines up here instead of piling
-	// onto the browser. Acquire honours the caller's deadline.
+	release, err := c.slots.Hold(ctx, kernelports.HeavyJobPDF)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 	if err := c.sem.Acquire(ctx, 1); err != nil {
 		return nil, fmt.Errorf("wait for renderer slot: %w", err)
 	}

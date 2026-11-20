@@ -82,7 +82,7 @@ func PollAccountingChangesWorkflow(
 	signals := workflow.GetSignalChannel(ctx, accountingsynccontract.ChangesSignalName)
 	actx := workflow.WithActivityOptions(
 		ctx,
-		withFairness(&changesActivityOptions, payload.OrganizationID),
+		withBackgroundPriority(&changesActivityOptions),
 	)
 	result := &ChangesRunResult{Reads: payload.Reads}
 

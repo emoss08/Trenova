@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/rendererconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -38,7 +40,11 @@ func newTestClient(t *testing.T, baseURL string, mutate func(*rendererconfig.Con
 		mutate(&cfg.Renderer)
 	}
 
-	return New(Params{RendererConfig: &cfg.Renderer, Logger: zap.NewNop()})
+	return New(Params{
+		RendererConfig: &cfg.Renderer,
+		Logger:         zap.NewNop(),
+		Slots:          heavyslotstest.Unbounded(),
+	})
 }
 
 // capturedRequest is the parsed multipart body the fake renderer received.

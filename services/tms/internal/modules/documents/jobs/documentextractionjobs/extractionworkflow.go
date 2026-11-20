@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentaiextractionjobs"
@@ -199,6 +202,16 @@ func ReconcileDocumentExtractionWorkflow(
 
 	result := &documentanalysis.ReconcileDocumentIntelligenceResult{}
 	result.TenantsScanned = len(tenantsResult.Tenants)
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureDocumentIntelligence),
+		tenantsResult.Tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenantsResult.Tenants = kept
+
 	for _, tenant := range tenantsResult.Tenants {
 		tenantPayload := *payload
 		tenantPayload.OrganizationID = tenant.OrganizationID

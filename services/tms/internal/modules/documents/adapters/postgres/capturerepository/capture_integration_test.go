@@ -5,6 +5,8 @@ package capturerepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
@@ -34,7 +36,11 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	p := Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}
+	p := Params{
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(db),
+		Logger:       zap.NewNop(),
+	}
 	orgID, buID, userID := data.Organization.ID, data.BusinessUnit.ID, data.User.ID
 	ti := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
 

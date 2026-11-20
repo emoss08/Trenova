@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,13 +20,17 @@ func TestPollNWSAlertsWorkflow_PollsOnceForEveryTenantThenExpires(t *testing.T) 
 
 	var s testsuite.WorkflowTestSuite
 	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 
 	polled := &PollNWSAlertsResult{AlertsInFeed: 12}
 	polled.TenantsScanned = 3
 	polled.AddTenantResult(4, 8)
 	polled.AddTenantResult(0, 12)
-	polled.AddFailure(temporaljobs.TenantWorkItem{OrganizationID: pulid.ID("org_b")}, errors.New("db"))
+	polled.AddFailure(
+		temporaljobs.TenantWorkItem{OrganizationID: pulid.ID("org_b")},
+		errors.New("db"),
+	)
 
 	var a *Activities
 	env.OnActivity(a.PollNWSAlertsActivity, mock.Anything).Return(polled, nil).Once()
@@ -51,6 +57,7 @@ func TestPollNWSAlertsWorkflow_StillExpiresWhenTheFeedIsUnchanged(t *testing.T) 
 
 	var s testsuite.WorkflowTestSuite
 	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 
 	unchanged := &PollNWSAlertsResult{FeedUnchanged: true}
@@ -77,6 +84,7 @@ func TestPollNWSAlertsWorkflow_FailsWhenThePollFails(t *testing.T) {
 
 	var s testsuite.WorkflowTestSuite
 	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 
 	var a *Activities

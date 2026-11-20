@@ -340,6 +340,7 @@ func (s *Service) notifyObserver(
 	observers, err := platformcatalogports.Observing(
 		ctx,
 		s.features,
+		event.TenantInfo.DBTenant(),
 		[]carrierintelports.CarrierLifecycleObserver{s.observer},
 	)
 	if err != nil {

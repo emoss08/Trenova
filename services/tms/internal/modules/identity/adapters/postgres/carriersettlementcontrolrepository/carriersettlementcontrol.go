@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
@@ -23,19 +25,22 @@ var carrierSettlementControlErrors = dberror.Mapping{Entity: "CarrierSettlementC
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) tenantports.CarrierSettlementControlRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.carrier-settlement-control-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.carrier-settlement-control-repository"),
 	}
 }
 
@@ -98,8 +103,12 @@ func (r *repository) ListAutoGenerate(
 		r.db,
 		func(ctx context.Context) ([]*carriersettlementcontrol.CarrierSettlementControl, error) {
 			cc := carriersettlementcontroldb.CarrierSettlementControls
+			entitled, entitledErr := r.entitlements.ForWork(ctx, cc.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			items, err := cc.AllTenants().
-				Where(cc.AutoGenerateBatches.IsTrue()).
+				Where(entitled, cc.AutoGenerateBatches.IsTrue()).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list auto-generate carrier settlement controls: %w", err)

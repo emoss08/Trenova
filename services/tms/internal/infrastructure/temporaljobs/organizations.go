@@ -3,6 +3,7 @@ package temporaljobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -11,28 +12,33 @@ import (
 // children for before it lists the next page.
 const DefaultOrganizationPageSize = 200
 
-// TenantPager pages through organizations in id order
 // (tenantports.TenantSyncRepository).
 type TenantPager interface {
-	ListTenantsPage(ctx context.Context, after pulid.ID, limit int) ([]pagination.TenantInfo, error)
+	ListTenantsPage(
+		ctx context.Context,
+		need entitlement.Need,
+		after pulid.ID,
+		limit int,
+	) ([]pagination.TenantInfo, error)
 }
 
-// OrganizationPage reads one page of organizations in id order after the
-// cursor, from the database, so a fan-out never holds every organization at
-// once. It reads one more than the page to know whether another follows.
 func OrganizationPage(
 	ctx context.Context,
 	tenants TenantPager,
+	need entitlement.Need,
 	after *TenantWorkItem,
 	limit int,
 ) (*TenantPage, error) {
+	if err := need.Validate(); err != nil {
+		return nil, err
+	}
 	limit = NormalizeLimit(limit, DefaultOrganizationPageSize)
 	cursor := pulid.Nil
 	if after != nil {
 		cursor = after.OrganizationID
 	}
 
-	page, err := tenants.ListTenantsPage(ctx, cursor, limit+1)
+	page, err := tenants.ListTenantsPage(ctx, need, cursor, limit+1)
 	if err != nil {
 		return nil, err
 	}

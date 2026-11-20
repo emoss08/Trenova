@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 )
 
@@ -58,7 +57,6 @@ func (s *Starter) StartFitting(ctx context.Context, tenantInfo pagination.Tenant
 			TaskQueue:                temporaltype.TaskQueueDispatch.String(),
 			WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_USE_EXISTING,
 			StaticSummary:            "Fit the organization's freight forecast from its history",
-			Priority:                 temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
 		},
 		FitTenantWorkflowName,
 		&FitPayload{OrganizationID: tenantInfo.OrgID, BusinessUnitID: tenantInfo.BuID},

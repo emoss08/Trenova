@@ -3,6 +3,9 @@ package fiscaljobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -87,6 +90,16 @@ func FiscalYearCloseReadinessWorkflow(ctx workflow.Context) (*FiscalTenantRunRes
 
 	notifyCtx := workflow.WithActivityOptions(ctx, closeActivityOptions)
 
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureAccounting),
+		tenantsResult.Tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenantsResult.Tenants = kept
+
 	for _, tenant := range tenantsResult.Tenants {
 		item := temporaljobs.TenantWorkItem{
 			OrganizationID: tenant.OrganizationID,
@@ -146,6 +159,16 @@ func AutoCloseFiscalPeriodsWorkflow(ctx workflow.Context) (*FiscalTenantRunResul
 
 	closeCtx := workflow.WithActivityOptions(ctx, closeActivityOptions)
 	totalErrors := 0
+
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureAccounting),
+		tenantsResult.Tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenantsResult.Tenants = kept
 
 	for _, tenant := range tenantsResult.Tenants {
 		item := temporaljobs.TenantWorkItem{
@@ -209,6 +232,16 @@ func AutoCreateNextFiscalYearWorkflow(ctx workflow.Context) (*FiscalTenantRunRes
 
 	createCtx := workflow.WithActivityOptions(ctx, createActivityOptions)
 	totalSkipped := 0
+
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureAccounting),
+		tenantsResult.Tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenantsResult.Tenants = kept
 
 	for _, tenant := range tenantsResult.Tenants {
 		item := temporaljobs.TenantWorkItem{

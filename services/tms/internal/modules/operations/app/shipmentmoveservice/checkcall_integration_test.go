@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
@@ -133,10 +135,18 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 		MoveService:  moveSvc,
 	})
 	links := checkcallrepository.NewTrackingLinks(
-		checkcallrepository.Params{DB: conn, Logger: zap.NewNop()},
+		checkcallrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       zap.NewNop(),
+		},
 	)
 	controls := dispatchcontrolrepository.New(
-		dispatchcontrolrepository.Params{DB: conn, Logger: zap.NewNop()},
+		dispatchcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       zap.NewNop(),
+		},
 	)
 	svc := checkcallservice.New(checkcallservice.Params{
 		DB:              conn,
@@ -144,7 +154,11 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 		AppConfig:       &appconfig.Config{},
 		TenderingConfig: &tenderingconfig.Config{PublicBaseURL: "https://app.example.com"},
 		Repo: checkcallrepository.New(
-			checkcallrepository.Params{DB: conn, Logger: zap.NewNop()},
+			checkcallrepository.Params{
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn,
+				Logger:       zap.NewNop(),
+			},
 		),
 		Links:        links,
 		MoveRepo:     moveRepo,

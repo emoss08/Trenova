@@ -5,6 +5,8 @@ package customerrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile/trackingprofiledb"
@@ -138,7 +140,9 @@ func TestTheDatabaseRefusesTrackingRulesWithoutAStartTime(t *testing.T) {
 
 func TestTrackingProfileReaderDefaultsAndStaysInsideTheTenant(t *testing.T) {
 	f := newCustomerFixture(t)
-	reader := NewTrackingProfileReader(Params{DB: f.conn, Logger: zap.NewNop()})
+	reader := NewTrackingProfileReader(
+		Params{Entitlements: entitlementtest.Instance(), DB: f.conn, Logger: zap.NewNop()},
+	)
 	created, err := f.repo.Create(f.a.ctx, newCustomer(f.a, "TRK5"))
 	require.NoError(t, err)
 

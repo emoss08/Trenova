@@ -4,6 +4,8 @@ package capturerepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -20,14 +22,16 @@ const maxRequestsForTarget = 50
 var requestErrors = dberror.Mapping{Entity: "Capture request"}
 
 type requestRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewRequestRepository(p Params) captureports.CaptureRequestRepository {
 	return &requestRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.capture-request-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.capture-request-repository"),
 	}
 }
 
@@ -141,8 +145,12 @@ func (r *requestRepository) ListExpired(
 		r.db,
 		func(ctx context.Context) ([]*capturerequest.CaptureRequest, error) {
 			cr := capturerequestdb.CaptureRequests
+			entitled, entitledErr := r.entitlements.ForWork(ctx, cr.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			return orEmptyRequests(cr.AllTenants().
-				Where(cr.Status.In(waitingRequestStatuses...), cr.ExpiresAt.Lte(now)).
+				Where(entitled, cr.Status.In(waitingRequestStatuses...), cr.ExpiresAt.Lte(now)).
 				Order(cr.ExpiresAt.Asc()).
 				Limit(boundedLimit(limit)).
 				List(ctx, r.db.Keel(ctx)))

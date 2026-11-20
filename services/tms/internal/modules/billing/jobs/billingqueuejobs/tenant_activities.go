@@ -3,6 +3,9 @@ package billingqueuejobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -26,6 +29,18 @@ func (a *Activities) DrainRechecksActivity(
 ) (*DrainRechecksResult, error) {
 	tenant := payload.Tenant()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
+
+	entitled, err := a.entitlements.Keep(
+		ctx,
+		entitlement.For(platformcatalog.FeatureBilling),
+		[]pulid.ID{tenant.OrgID},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(entitled) == 0 {
+		return &DrainRechecksResult{}, nil
+	}
 
 	due, err := a.queueRepo.ListRecheckDue(ctx, &billingqueueports.ListRecheckDueRequest{
 		TenantInfo: tenant,
@@ -108,11 +123,14 @@ func (a *Activities) SweepRechecksActivity(
 	staleBefore int64,
 ) (*RecheckSweepResult, error) {
 	now := timeutils.NowUnix()
-	marked, err := a.queueRepo.MarkStaleRecheckDue(ctx, &billingqueueports.MarkStaleRecheckDueRequest{
-		StaleBefore: staleBefore,
-		Now:         now,
-		Limit:       recheckSweepItems,
-	})
+	marked, err := a.queueRepo.MarkStaleRecheckDue(
+		ctx,
+		&billingqueueports.MarkStaleRecheckDueRequest{
+			StaleBefore: staleBefore,
+			Now:         now,
+			Limit:       recheckSweepItems,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

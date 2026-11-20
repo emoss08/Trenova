@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantchapterrepository"
@@ -55,8 +57,9 @@ func newHarness(t *testing.T) *harness {
 			Logger: zap.NewNop(),
 		}),
 		conversations: conversationrepository.New(conversationrepository.Params{
-			DB:     conn,
-			Logger: zap.NewNop(),
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       zap.NewNop(),
 		}),
 		tenant: data.Info(),
 	}

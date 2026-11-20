@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
@@ -181,9 +183,19 @@ func TestConvertedLists_AccountingReadsUnderRowLevelSecurity(t *testing.T) {
 	logger := zap.NewNop()
 	repos := &accountingRepos{
 		connections: accountingconnectionrepository.NewConnectionRepository(
-			accountingconnectionrepository.ConnectionParams{DB: conn, Logger: logger}),
+			accountingconnectionrepository.ConnectionParams{
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn,
+				Logger:       logger,
+			},
+		),
 		records: accountingsyncrepository.NewSyncRecordRepository(
-			accountingsyncrepository.SyncRecordParams{DB: conn, Logger: logger}),
+			accountingsyncrepository.SyncRecordParams{
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn,
+				Logger:       logger,
+			},
+		),
 		findings: accountingdriftrepository.NewDriftFindingRepository(
 			accountingdriftrepository.DriftFindingParams{DB: conn, Logger: logger}),
 		mappings: accountingmappingrepository.NewMappingRepository(

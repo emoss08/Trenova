@@ -3,6 +3,9 @@ package billingjobs
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 
@@ -24,6 +27,7 @@ type BillingWorkflowTestSuite struct {
 
 func (s *BillingWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
+	s.env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 }
 
 func (s *BillingWorkflowTestSuite) AfterTest(_, _ string) {

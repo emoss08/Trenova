@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
@@ -1078,8 +1080,9 @@ func newIntegrationShipmentServiceWith(
 		),
 	})
 	controlRepo := shipmentcontrolrepository.New(shipmentcontrolrepository.Params{
-		DB:     conn,
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           conn,
+		Logger:       zap.NewNop(),
 	})
 	accessorialRepo := accessorialchargerepository.New(accessorialchargerepository.Params{
 		DB:     conn,

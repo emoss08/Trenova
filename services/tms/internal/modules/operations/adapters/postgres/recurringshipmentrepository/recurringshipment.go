@@ -3,6 +3,8 @@ package recurringshipmentrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -33,25 +35,28 @@ var runErrors = dberror.Mapping{Entity: "RecurringShipmentRun"}
 type Params struct {
 	fx.In
 
-	DB        *postgres.Connection
-	Logger    *zap.Logger
-	Generator seqgen.Generator
-	Quota     platformplanports.QuotaGuard
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
+	Generator    seqgen.Generator
+	Quota        platformplanports.QuotaGuard
 }
 
 type repository struct {
-	db        *postgres.Connection
-	l         *zap.Logger
-	generator seqgen.Generator
-	quota     platformplanports.QuotaGuard
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
+	generator    seqgen.Generator
+	quota        platformplanports.QuotaGuard
 }
 
 func New(p Params) recurringshipmentports.RecurringShipmentRepository {
 	return &repository{
-		db:        p.DB,
-		l:         p.Logger.Named("postgres.recurring-shipment-repository"),
-		generator: p.Generator,
-		quota:     quotaservice.OrUnlimited(p.Quota),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.recurring-shipment-repository"),
+		generator:    p.Generator,
+		quota:        quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -383,8 +388,13 @@ func (r *repository) ListDue(
 		r.db,
 		func(ctx context.Context) ([]*recurringshipment.RecurringShipment, error) {
 			rsh := recurringshipmentdb.RecurringShipments
+			entitled, entitledErr := r.entitlements.ForWork(ctx, rsh.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			q := rsh.AllTenants().
 				Where(
+					entitled,
 					rsh.Status.Eq(recurringshipment.StatusActive),
 					rsh.AutoGenerate.IsTrue(),
 					rsh.NextOccurrenceAt.IsNotNull(),

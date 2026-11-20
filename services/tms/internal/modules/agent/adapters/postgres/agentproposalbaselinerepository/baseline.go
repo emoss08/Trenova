@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -24,15 +26,17 @@ var baselineErrors = dberror.Mapping{Entity: "ProposalBaseline"}
 type Params struct {
 	fx.In
 
-	DB *postgres.Connection
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
 }
 
 type repository struct {
-	db *postgres.Connection
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
 }
 
 func New(p Params) agentproposalports.AgentProposalBaselineRepository {
-	return &repository{db: p.DB}
+	return &repository{db: p.DB, entitlements: p.Entitlements}
 }
 
 func (r *repository) Create(ctx context.Context, baseline *agentpreview.ProposalBaseline) error {
@@ -103,9 +107,14 @@ func (r *repository) PurgeOrphans(
 			limit = DefaultPurgeLimit
 		}
 
+		orphan := agentpreviewdb.ProposalBaselines.As("orphan")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, orphan.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		b := agentpreviewdb.ProposalBaselines
 		purged, err := b.AllTenants().
-			Where(b.ProposalID.InQuery(orphans(req.Before, limit))).
+			Where(b.ProposalID.InQuery(orphans(orphan, entitled, req.Before, limit))).
 			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("purge orphaned proposal baselines: %w", err)
@@ -119,13 +128,18 @@ func (r *repository) PurgeOrphans(
 // names. A proposal is filed after its baseline is kept, so only an old
 // baseline can be known to be an orphan: its filing was retried under
 // another id, or never happened.
-func orphans(before int64, limit int) keel.Query[*agentpreview.ProposalBaseline] {
-	orphan := agentpreviewdb.ProposalBaselines.As("orphan")
+func orphans(
+	orphan *agentpreviewdb.ProposalBaselinesTable,
+	entitled keel.Pred,
+	before int64,
+	limit int,
+) keel.Query[*agentpreview.ProposalBaseline] {
 	p := agentdb.AgentProposals
 
 	return orphan.AllTenants().
 		Pick(orphan.ProposalID).
 		Where(
+			entitled,
 			orphan.CreatedAt.Lt(before),
 			keel.NotExists(p.AllTenants().Where(
 				p.ID.EqCol(orphan.ProposalID),

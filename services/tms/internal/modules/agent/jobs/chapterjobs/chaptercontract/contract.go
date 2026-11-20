@@ -68,7 +68,6 @@ func (s *Scheduler) Cue(ctx context.Context, req *assistantchapterports.ChapterT
 			StaticSummary: "Mark and name the chapters of a conversation as it moves on",
 			Priority: temporal.Priority{
 				PriorityKey: agentflowcontract.PriorityOneShot,
-				FairnessKey: tenant.OrgID.String(),
 			},
 		},
 		ThreadChaptersWorkflowName,

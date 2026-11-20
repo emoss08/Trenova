@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/pkg/keelexpr"
 
 	"github.com/emoss08/keel"
@@ -31,21 +33,24 @@ var connectionErrors = dberror.Mapping{Entity: connectionEntity}
 type ConnectionParams struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type connectionRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewConnectionRepository(
 	p ConnectionParams,
 ) accountingconnectionports.AccountingConnectionRepository {
 	return &connectionRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.accounting-connection-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.accounting-connection-repository"),
 	}
 }
 
@@ -163,9 +168,14 @@ func (r *connectionRepository) ListDueForHealthCheck(
 			}
 
 			ac := accountingconnectiondb.AccountingConnections
+			entitled, entitledErr := r.entitlements.ForWork(ctx, ac.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			return withoutTokens().
 				AllTenants().
 				Where(
+					entitled,
 					ac.Status.In(ActiveStatuses()...),
 					keel.Or(ac.LastCheckedAt.IsNull(), ac.LastCheckedAt.Lt(req.CheckedBefore)),
 				).
@@ -424,9 +434,14 @@ func (r *connectionRepository) ListActive(
 			}
 
 			ac := accountingconnectiondb.AccountingConnections
+			entitled, entitledErr := r.entitlements.ForWork(ctx, ac.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			return withoutTokens().
 				AllTenants().
 				Where(
+					entitled,
 					ac.Status.In(ActiveStatuses()...),
 					keel.When(!req.AfterID.IsNil(), ac.ID.Gt(req.AfterID)),
 				).

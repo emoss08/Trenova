@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -32,19 +34,22 @@ var (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) billingtransferports.BillingTransferRunRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.billing-transfer-run-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.billing-transfer-run-repository"),
 	}
 }
 
@@ -242,8 +247,16 @@ func (r *repository) ListStale(
 			}
 
 			run := billingtransferdb.BillingTransferRuns
+			entitled, entitledErr := r.entitlements.ForWork(ctx, run.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			q := run.AllTenants().
-				Where(run.Status.In(statuses...), run.UpdatedAt.Lt(req.UpdatedBeforeUnix)).
+				Where(
+					entitled,
+					run.Status.In(statuses...),
+					run.UpdatedAt.Lt(req.UpdatedBeforeUnix),
+				).
 				Order(run.UpdatedAt.Asc())
 
 			var (

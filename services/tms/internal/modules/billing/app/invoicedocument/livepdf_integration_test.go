@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/rendererconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/gotenberg"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -92,6 +94,7 @@ func TestLiveInvoicePDFRendersThroughTheSidecar(t *testing.T) {
 	})
 
 	renderer := gotenberg.New(gotenberg.Params{
+		Slots: heavyslotstest.Unbounded(),
 		RendererConfig: &rendererconfig.Config{
 			GotenbergURL:   rendererURL,
 			RequestTimeout: 60 * time.Second,

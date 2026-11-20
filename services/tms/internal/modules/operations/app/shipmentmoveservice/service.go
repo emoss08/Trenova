@@ -112,7 +112,12 @@ func (s *service) notifyMoveObservers(
 	if move == nil || previous == move.Status {
 		return
 	}
-	observers, gateErr := platformcatalogports.Observing(ctx, s.features, s.moveObservers)
+	observers, gateErr := platformcatalogports.Observing(
+		ctx,
+		s.features,
+		tenantInfo.DBTenant(),
+		s.moveObservers,
+	)
 	if gateErr != nil {
 		s.l.Error("move status observer failed",
 			zap.String("moveId", move.ID.String()),

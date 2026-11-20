@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -30,17 +32,23 @@ var requestErrors = dberror.Mapping{Entity: "Log request"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) supportlogports.Repository {
-	return &repository{db: p.DB, l: p.Logger.Named("postgres.support-log-request-repository")}
+	return &repository{
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.support-log-request-repository"),
+		entitlements: p.Entitlements,
+	}
 }
 
 func inFlight() keel.Pred {
@@ -176,9 +184,16 @@ func (r *repository) Overdue(
 	ctx = dbscope.WithSystem(ctx, overdueSweepReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*supportlog.LogRequest, error) {
 		l := supportlogdb.LogRequests
-		rows, err := l.Where(keel.Or(
+		entitled, entitledErr := r.entitlements.ForWork(ctx, l.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
+		rows, err := l.Where(entitled, keel.Or(
 			keel.And(l.Status.Eq(supportlog.StatusRequested), l.CreatedAt.Lte(req.RequestedBefore)),
-			keel.And(l.Status.Eq(supportlog.StatusCollecting), l.CollectingAt.Lte(req.CollectingBefore)),
+			keel.And(
+				l.Status.Eq(supportlog.StatusCollecting),
+				l.CollectingAt.Lte(req.CollectingBefore),
+			),
 		)).
 			AllTenants().
 			Order(l.CreatedAt.Asc(), l.ID.Asc()).

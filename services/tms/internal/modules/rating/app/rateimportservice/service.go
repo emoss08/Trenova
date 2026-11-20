@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -41,6 +43,7 @@ const maxUploadBytes = 32 << 20
 type Params struct {
 	fx.In
 
+	Slots         kernelports.HeavyJobSlots
 	Logger        *zap.Logger
 	Repo          rateimportports.RateImportRepository
 	AgreementRepo rateagreementports.RateAgreementRepository
@@ -53,6 +56,7 @@ type Params struct {
 }
 
 type Service struct {
+	slots         kernelports.HeavyJobSlots
 	l             *zap.Logger
 	repo          rateimportports.RateImportRepository
 	agreementRepo rateagreementports.RateAgreementRepository
@@ -67,6 +71,7 @@ type Service struct {
 
 func New(p Params) *Service {
 	return &Service{
+		slots:         p.Slots,
 		l:             p.Logger.Named("service.rateimport"),
 		repo:          p.Repo,
 		agreementRepo: p.AgreementRepo,
@@ -137,6 +142,12 @@ func (s *Service) Upload(
 	if err != nil {
 		return nil, err
 	}
+
+	release, err := s.slots.Hold(ctx, kernelports.HeavyJobImport)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 
 	if _, err = contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
 		TenantInfo: req.TenantInfo,

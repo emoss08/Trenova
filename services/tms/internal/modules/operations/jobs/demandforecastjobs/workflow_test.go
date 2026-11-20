@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
@@ -95,7 +97,9 @@ func TestFitDemandForecastActivity_FitsThePayloadsTenantAndReportsTheGrade(t *te
 func TestFitDemandForecastActivity_ComputesNothingWithoutDispatchIntelligence(t *testing.T) {
 	t.Parallel()
 
-	forecasts := &fakeForecasts{quality: &demandforecast.Quality{Status: demandforecast.StatusReady}}
+	forecasts := &fakeForecasts{
+		quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
+	}
 	activities := NewActivities(ActivitiesParams{
 		Forecasts: forecasts,
 		Tenants:   &fakeTenants{},
@@ -193,6 +197,7 @@ func TestListForecastTenantsActivity_ReturnsTheListError(t *testing.T) {
 func newEnv() *testsuite.TestWorkflowEnvironment {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 
 	return env

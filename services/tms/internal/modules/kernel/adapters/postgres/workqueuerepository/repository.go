@@ -4,6 +4,8 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -26,17 +28,23 @@ const (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) workqueueports.Queue {
-	return &repository{db: p.DB, l: p.Logger.Named("postgres.work-queue-repository")}
+	return &repository{
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.work-queue-repository"),
+		entitlements: p.Entitlements,
+	}
 }
 
 func (r *repository) Enqueue(ctx context.Context, req *workqueueports.EnqueueRequest) error {
@@ -146,9 +154,13 @@ func (r *repository) ListDueTenants(
 	ctx = dbscope.WithSystem(ctx, dueTenantsReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		wq := workqueuedb.Items
+		entitled, entitledErr := r.entitlements.ForWork(ctx, wq.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := keel.Into[dueTenant](ctx, r.db.Keel(ctx),
 			wq.Pick(wq.OrganizationID, wq.BusinessUnitID).
-				Where(wq.Kind.Eq(req.Kind), wq.DueAt.Lte(req.Now)).
+				Where(entitled, wq.Kind.Eq(req.Kind), wq.DueAt.Lte(req.Now)).
 				Distinct().
 				Limit(req.Limit).
 				AllTenants(),
@@ -176,9 +188,13 @@ func (r *repository) ListDueKinds(
 	ctx = dbscope.WithSystem(ctx, dueKindsReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workqueueports.TenantKind, error) {
 		wq := workqueuedb.Items
+		entitled, entitledErr := r.entitlements.ForWork(ctx, wq.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := keel.Into[dueKind](ctx, r.db.Keel(ctx),
 			wq.Pick(wq.OrganizationID, wq.BusinessUnitID, wq.Kind).
-				Where(wq.Kind.HasPrefix(req.Prefix), wq.DueAt.Lte(req.Now)).
+				Where(entitled, wq.Kind.HasPrefix(req.Prefix), wq.DueAt.Lte(req.Now)).
 				Distinct().
 				Limit(req.Limit).
 				AllTenants(),

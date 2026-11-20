@@ -5,6 +5,8 @@ package agentdefinitionrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -37,7 +39,13 @@ func TestDelete_RemovesTheAgentFromEveryAllowlist(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx, tenant := asked.tenant(ctx)
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 
 	require.NoError(t, repo.Delete(ctx, agentdefinitionports.DeleteAgentDefinitionRequest{
 		ID:         asked.ID,

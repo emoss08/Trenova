@@ -106,8 +106,13 @@ func (r *repository) ListCreditReviewCustomers(
 		r.db,
 		func(ctx context.Context) ([]customerports.CreditReviewCustomer, error) {
 			cbp := customerdb.CustomerBillingProfiles
+			entitled, entitledErr := r.entitlements.ForWork(ctx, cbp.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			q := cbp.AllTenants().
 				Pick(cbp.OrganizationID, cbp.BusinessUnitID, cbp.CustomerID).
+				Where(entitled).
 				Order(cbp.OrganizationID.Asc(), cbp.BusinessUnitID.Asc(), cbp.CustomerID.Asc()).
 				Limit(req.Limit)
 			if req.After != nil {

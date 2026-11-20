@@ -5,6 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/supportlogservice"
 	"github.com/stretchr/testify/assert"
@@ -48,6 +51,7 @@ func TestSupportLogTimeoutWorkflow_ReportsWhatItFailed(t *testing.T) {
 	timeouts := &scriptedLogTimeouts{}
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(NewActivities(ActivitiesParams{SupportLogTimeouts: timeouts}))
 	env.RegisterWorkflow(FailOverdueSupportLogRequestsWorkflow)
 	env.ExecuteWorkflow(FailOverdueSupportLogRequestsWorkflow)

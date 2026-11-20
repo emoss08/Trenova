@@ -3,7 +3,9 @@ package agentproposalrepository
 import (
 	"context"
 	"fmt"
+
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/caseownerquery"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -31,19 +33,22 @@ var proposalErrors = dberror.Mapping{Entity: proposalEntity}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) agentproposalports.AgentProposalRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.agentproposal-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.agentproposal-repository"),
 	}
 }
 
@@ -287,8 +292,13 @@ func (r *repository) ExpirePending(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		p := agentdb.AgentProposals
 		plan := agentplandb.AgentPlans
+		entitled, entitledErr := r.entitlements.ForWork(ctx, p.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		n, err := p.AllTenants().
 			Where(
+				entitled,
 				p.Status.Eq(agent.ProposalStatusPending),
 				p.ExpiresAt.IsNotNull(),
 				p.ExpiresAt.Lte(req.Before),
@@ -322,6 +332,10 @@ func (r *repository) ListPendingForReminder(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
 		p := agentdb.AgentProposals
 		run := agentdb.AgentRuns
+		entitled, entitledErr := r.entitlements.ForWork(ctx, p.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		q := p.AllTenants().
 			Join(run,
 				run.ID.EqCol(p.RunID),
@@ -329,6 +343,7 @@ func (r *repository) ListPendingForReminder(
 				run.BusinessUnitID.EqCol(p.BusinessUnitID),
 			).
 			Where(
+				entitled,
 				p.Status.Eq(agent.ProposalStatusPending),
 				p.RemindedAt.IsNull(),
 				p.CreatedAt.Lte(req.Before),
@@ -506,7 +521,9 @@ func (r *repository) ReplacePendingForTargets(
 			proposal.TargetResource != req.TargetResource || proposal.TargetID.IsNil() {
 			return nil, fmt.Errorf(
 				"replace targeted proposals: every proposal must be of run %s, tool %s and name a %s",
-				runID, req.ToolName, req.TargetResource,
+				runID,
+				req.ToolName,
+				req.TargetResource,
 			)
 		}
 		targets = append(targets, proposal.TargetID)

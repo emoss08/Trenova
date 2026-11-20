@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/pkg/keelexpr"
 
 	"github.com/emoss08/keel"
@@ -31,19 +33,22 @@ const (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) conversationports.ConversationRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.conversation-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.conversation-repository"),
 	}
 }
 
@@ -271,7 +276,10 @@ func aboutRecord(wanted *bool) keel.Pred {
 	}
 
 	th := conversationdb.Threads
-	onACase := keel.And(th.SubjectID.IsNotNull(), th.SubjectType.In(deskcase.ConversationSubjects()...))
+	onACase := keel.And(
+		th.SubjectID.IsNotNull(),
+		th.SubjectType.In(deskcase.ConversationSubjects()...),
+	)
 	if *wanted {
 		return onACase
 	}
@@ -653,6 +661,7 @@ func (r *repository) AppendTurn(
 
 func staleThreadsQuery(
 	req *conversationports.DeleteStaleThreadsRequest,
+	entitled keel.Pred,
 	limit int,
 ) keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
@@ -660,6 +669,7 @@ func staleThreadsQuery(
 	return th.AllTenants().
 		Pick(th.ID, th.OrganizationID, th.BusinessUnitID).
 		Where(
+			entitled,
 			th.Origin.Eq(req.Origin),
 			th.LastMessageAt.Lt(req.Before),
 			th.CreatedAt.Lt(req.Before),
@@ -703,7 +713,12 @@ func (r *repository) deleteStaleThreads(
 	limit int,
 ) (int, error) {
 	db := r.db.Keel(ctx)
-	stale, err := staleThreadsQuery(req, limit).List(ctx, db)
+	th := conversationdb.Threads
+	entitled, entitledErr := r.entitlements.ForWork(ctx, th.OrganizationID.Col)
+	if entitledErr != nil {
+		return 0, entitledErr
+	}
+	stale, err := staleThreadsQuery(req, entitled, limit).List(ctx, db)
 	if err != nil {
 		return 0, err
 	}
@@ -740,7 +755,6 @@ func (r *repository) deleteStaleThreads(
 		return 0, err
 	}
 
-	th := conversationdb.Threads
 	n, err := th.AllTenants().
 		With(doomed).
 		Join(doomed, keel.And(

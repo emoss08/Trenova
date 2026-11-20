@@ -10,6 +10,8 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -140,6 +142,7 @@ func newPreviewHarness(t *testing.T, pages int) *previewHarness {
 		Assembler: NewAssembler(imaging, documents, zap.NewNop()),
 		Documents: documents,
 		Previews:  NewPreviewCache(),
+		Slots:     heavyslotstest.Unbounded(),
 		Logger:    zap.NewNop(),
 	}).(*PreviewService)
 	t.Cleanup(service.warms.Wait)

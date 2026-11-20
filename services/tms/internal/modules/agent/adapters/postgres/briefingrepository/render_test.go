@@ -3,6 +3,7 @@ package briefingrepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing/briefingdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
@@ -49,7 +50,7 @@ func TestStaleBatchSelectsTheOldestDaysAcrossTenants(t *testing.T) {
 	sql, args := keeltest.RenderIn(
 		t,
 		dbscope.WithSystem(t.Context(), "test"),
-		b.AllTenants().Where(staleBatch("2026-01-01", 500)),
+		b.AllTenants().Where(staleBatch(b.As("stale"), keel.True(), "2026-01-01", 500)),
 	)
 
 	assert.Contains(

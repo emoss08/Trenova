@@ -5,6 +5,8 @@ package accountingconnectionrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
@@ -135,7 +137,11 @@ func TestConnectionRepository_CertificateKeyIsATokenColumn(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(
-		ConnectionParams{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
+		ConnectionParams{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
 	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
@@ -215,7 +221,11 @@ func TestConnectionRepository_CertificateConnectionMustNameItsCertificate(t *tes
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(
-		ConnectionParams{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
+		ConnectionParams{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
 	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()

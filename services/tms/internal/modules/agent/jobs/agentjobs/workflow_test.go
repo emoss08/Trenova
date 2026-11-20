@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
@@ -43,6 +46,7 @@ type AgentRunWorkflowTestSuite struct {
 
 func (s *AgentRunWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
+	s.env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	s.completed = nil
 	s.expired = nil
 	s.opened = nil
@@ -283,6 +287,7 @@ type AgentScheduledRunWorkflowTestSuite struct {
 
 func (s *AgentScheduledRunWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
+	s.env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	s.env.RegisterActivity(&Activities{})
 }
 
@@ -332,6 +337,7 @@ type AssistantRetentionWorkflowTestSuite struct {
 
 func (s *AssistantRetentionWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
+	s.env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 }
 
 // Each sweep removes a batch at a time and keeps going while batches come

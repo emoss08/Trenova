@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncpush"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
@@ -66,6 +68,11 @@ type harnessOption func(*harnessConfig)
 
 type harnessConfig struct {
 	timezone string
+	features platformcatalogports.FeatureGate
+}
+
+func withFeatures(gate platformcatalogports.FeatureGate) harnessOption {
+	return func(c *harnessConfig) { c.features = gate }
 }
 
 func withTimezone(timezone string) harnessOption {
@@ -74,7 +81,7 @@ func withTimezone(timezone string) harnessOption {
 
 func newHarness(t *testing.T, opts ...harnessOption) *harness {
 	t.Helper()
-	cfg := harnessConfig{timezone: "UTC"}
+	cfg := harnessConfig{timezone: "UTC", features: plantest.AllFeatures()}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
@@ -148,6 +155,7 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Publisher:    h.events,
 		Watchtower:   h.watchtower,
 		Realtime:     &mocks.NoopRealtimeService{},
+		Features:     cfg.features,
 	})
 	return h
 }

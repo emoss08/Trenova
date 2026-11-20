@@ -74,8 +74,12 @@ func (r *webWatchRepository) ClaimDueChecks(
 		r.db,
 		func(ctx context.Context) ([]agentextensionports.WebWatchRef, error) {
 			w := extensionwebwatchdb.WebWatches
+			entitled, entitledErr := r.entitlements.ForWork(ctx, w.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			due := w.Pick(w.ID).
-				Where(w.NextCheckAt.Lte(req.Now)).
+				Where(entitled, w.NextCheckAt.Lte(req.Now)).
 				Order(w.NextCheckAt.Asc(), w.ID.Asc()).
 				Limit(req.Limit).
 				AllTenants()

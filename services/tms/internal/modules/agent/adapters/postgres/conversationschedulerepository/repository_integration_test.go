@@ -5,6 +5,8 @@ package conversationschedulerepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
@@ -32,7 +34,13 @@ func TestList_ReadsAPersonsSchedulesByNextRunWithTheirConversationTitles(t *test
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	tenant := pagination.TenantInfo{
 		OrgID:  data.Organization.ID,
 		BuID:   data.BusinessUnit.ID,
@@ -176,7 +184,13 @@ func TestCreate_NamesOnlyAnUnnamedConversation(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	tenant := pagination.TenantInfo{
 		OrgID:  data.Organization.ID,
 		BuID:   data.BusinessUnit.ID,

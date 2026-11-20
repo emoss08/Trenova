@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
@@ -60,6 +61,7 @@ type wiring struct {
 	Publisher     agenteventports.AgentEventPublisher
 	Watchtower    watchtowerports.WatchtowerProjector
 	Realtime      realtimeports.RealtimeService
+	Features      platformcatalogports.FeatureGate
 }
 
 type services struct {
@@ -106,6 +108,7 @@ func wire(p *wiring) services {
 			Sessions: p.Sessions,
 			Controls: p.Controls,
 			Effects:  effects,
+			Features: p.Features,
 			Parties: accountingsyncparty.New(
 				accountingsyncparty.Params{Kit: kit, Creator: p.Creator},
 			),

@@ -142,10 +142,11 @@ func (c PasswordResetConfig) GetMaxRequestsPerHour() int {
 }
 
 const (
-	defaultGraphQLMaxRequestBodyBytes       int64 = 1 << 20
-	defaultGraphQLCostBudgetPointsPerMin          = 6_000_000
-	defaultGraphQLCostBudgetBurst                 = 3_000_000
-	defaultGraphQLCostBudgetCleanupInterval       = 5 * time.Minute
+	defaultGraphQLMaxRequestBodyBytes      int64 = 1 << 20
+	defaultGraphQLCostBudgetPointsPerMin         = 6_000_000
+	defaultGraphQLCostBudgetBurst                = 3_000_000
+	defaultGraphQLOrganizationPointsPerMin       = 24_000_000
+	defaultGraphQLOrganizationBurst              = 6_000_000
 )
 
 const (
@@ -202,10 +203,11 @@ func (c *GraphQLConfig) GetMaxRequestBodyBytes() int64 {
 }
 
 type GraphQLCostBudgetConfig struct {
-	Enabled         bool          `mapstructure:"enabled"`
-	PointsPerMinute int           `mapstructure:"pointsPerMinute" validate:"omitempty,min=1"`
-	Burst           int           `mapstructure:"burst"           validate:"omitempty,min=1"`
-	CleanupInterval time.Duration `mapstructure:"cleanupInterval"`
+	Enabled                     bool `mapstructure:"enabled"`
+	PointsPerMinute             int  `mapstructure:"pointsPerMinute"             validate:"omitempty,min=1"`
+	Burst                       int  `mapstructure:"burst"                       validate:"omitempty,min=1"`
+	OrganizationPointsPerMinute int  `mapstructure:"organizationPointsPerMinute" validate:"omitempty,min=1"`
+	OrganizationBurst           int  `mapstructure:"organizationBurst"           validate:"omitempty,min=1"`
 }
 
 func (c *GraphQLCostBudgetConfig) GetPointsPerMinute() int {
@@ -222,11 +224,18 @@ func (c *GraphQLCostBudgetConfig) GetBurst() int {
 	return c.Burst
 }
 
-func (c *GraphQLCostBudgetConfig) GetCleanupInterval() time.Duration {
-	if c.CleanupInterval <= 0 {
-		return defaultGraphQLCostBudgetCleanupInterval
+func (c *GraphQLCostBudgetConfig) GetOrganizationPointsPerMinute() int {
+	if c.OrganizationPointsPerMinute <= 0 {
+		return defaultGraphQLOrganizationPointsPerMin
 	}
-	return c.CleanupInterval
+	return c.OrganizationPointsPerMinute
+}
+
+func (c *GraphQLCostBudgetConfig) GetOrganizationBurst() int {
+	if c.OrganizationBurst <= 0 {
+		return defaultGraphQLOrganizationBurst
+	}
+	return c.OrganizationBurst
 }
 
 type SessionConfig struct {

@@ -298,7 +298,10 @@ func (s *Service) resolveEventWorker(
 }
 
 func (s *Service) detectsVisits(ctx context.Context, tenantInfo pagination.TenantInfo) bool {
-	on, err := s.features.Enabled(ctx, platformcatalog.FeatureCustomerTracking)
+	on, err := s.features.Enabled(
+		dbscope.WithTenant(ctx, tenantInfo.DBTenant()),
+		platformcatalog.FeatureCustomerTracking,
+	)
 	if err != nil {
 		s.l.Warn("failed to ask whether customer tracking is on the plan",
 			zap.String("organizationId", tenantInfo.OrgID.String()),

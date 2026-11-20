@@ -55,8 +55,12 @@ func (r *repository) CloseSettled(
 	ctx = dbscope.WithSystem(ctx, closeSettledReason)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
 		run := agentdb.AgentRuns
+		entitled, entitledErr := r.entitlements.ForWork(ctx, run.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		settled := run.Pick(run.ID).
-			Where(awaitingWithNothingPending(run, true)).
+			Where(entitled, awaitingWithNothingPending(run, true)).
 			Order(run.UpdatedAt.Asc(), run.ID.Asc()).
 			Limit(req.Limit).
 			AllTenants()

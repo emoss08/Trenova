@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -23,19 +25,25 @@ const maxDeleteBatch = 1000
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 var _ paletteports.QuestionRepository = (*repository)(nil)
 
 func New(p Params) paletteports.QuestionRepository {
-	return &repository{db: p.DB, l: p.Logger.Named("postgres.palette-question-repository")}
+	return &repository{
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.palette-question-repository"),
+		entitlements: p.Entitlements,
+	}
 }
 
 func (r *repository) Create(ctx context.Context, question *palettequestion.Question) error {
@@ -201,9 +209,13 @@ func (r *repository) DeleteBefore(ctx context.Context, before int64, limit int) 
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		db := r.db.Keel(ctx)
 		q := palettequestiondb.Questions
+		entitled, entitledErr := r.entitlements.ForWork(ctx, q.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		stale, err := q.AllTenants().
 			Pick(q.ID, q.OrganizationID, q.BusinessUnitID).
-			Where(q.CreatedAt.Lt(before)).
+			Where(entitled, q.CreatedAt.Lt(before)).
 			Order(q.CreatedAt.Asc()).
 			Limit(limit).
 			List(ctx, db)

@@ -5,6 +5,8 @@ package workqueuerepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/workqueueports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -26,7 +28,13 @@ func TestQueueKeepsASubjectRequestedWhileItsWorkRan(t *testing.T) {
 	t.Cleanup(cleanup)
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	queue := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	queue := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	subject := pulid.MustNew("shp_")
 	const now = int64(1_000)
@@ -79,7 +87,13 @@ func TestQueuePushesAFailedSubjectBack(t *testing.T) {
 	t.Cleanup(cleanup)
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	queue := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	queue := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	subject := pulid.MustNew("shp_")
 
@@ -115,7 +129,13 @@ func TestQueueKeepsTheLatestDetailAndListsDueKinds(t *testing.T) {
 	t.Cleanup(cleanup)
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	queue := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	queue := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	subject := pulid.MustNew("shp_")
 	kind := "agent-event:" + pulid.MustNew("agd_").String()

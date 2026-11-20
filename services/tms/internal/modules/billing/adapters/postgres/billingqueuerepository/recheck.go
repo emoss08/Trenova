@@ -109,8 +109,13 @@ func (r *repository) MarkStaleRecheckDue(
 	ctx = dbscope.WithSystem(ctx, recheckStaleReason)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
 		bq := billingqueuedb.BillingQueueItems
+		entitled, entitledErr := r.entitlements.ForWork(ctx, bq.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		stale := bq.Pick(bq.ID).
 			Where(
+				entitled,
 				bq.Lane.In(billingqueue.ReviewLanes()...),
 				bq.Status.In(billingqueue.ReviewStatuses()...),
 				keel.Or(bq.CheckedAt.IsNull(), bq.CheckedAt.Lt(req.StaleBefore)),
@@ -139,11 +144,15 @@ func (r *repository) ListRecheckDueTenants(
 	ctx = dbscope.WithSystem(ctx, recheckTenantsReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		bq := billingqueuedb.BillingQueueItems
+		entitled, entitledErr := r.entitlements.ForWork(ctx, bq.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := keel.Into[recheckDueTenant](
 			ctx,
 			r.db.Keel(ctx),
 			bq.Pick(bq.OrganizationID, bq.BusinessUnitID).
-				Where(bq.RecheckDueAt.Lte(req.Now)).
+				Where(entitled, bq.RecheckDueAt.Lte(req.Now)).
 				Distinct().
 				Limit(req.Limit).
 				AllTenants(),

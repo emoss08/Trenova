@@ -7,10 +7,12 @@ import (
 	"maps"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/interceptors"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/temporal"
 )
 
 // desired is a declared schedule as the plan lets it run. A schedule whose
@@ -120,6 +122,7 @@ func (d desired) options() client.ScheduleOptions {
 			TaskQueue: d.TaskQueue,
 			Args:      d.Args,
 			Memo:      memo,
+			Priority:  temporal.Priority{FairnessKey: interceptors.SystemFairnessKey},
 		},
 		Overlap: overlapPolicy,
 	}

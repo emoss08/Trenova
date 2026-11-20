@@ -15,7 +15,6 @@ import (
 	"go.temporal.io/api/serviceerror"
 	workflowpb "go.temporal.io/api/workflow/v1"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -106,7 +105,6 @@ func (g *NovaGenerator) RequestGeneration(
 			ID:            id,
 			TaskQueue:     temporaltype.TaskQueueBilling.String(),
 			StaticSummary: novaGenerationSummary,
-			Priority:      temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
 		},
 		NovaGenerationWorkflowName,
 		&NovaGenerationPayload{OrganizationID: tenantInfo.OrgID, BusinessUnitID: tenantInfo.BuID},

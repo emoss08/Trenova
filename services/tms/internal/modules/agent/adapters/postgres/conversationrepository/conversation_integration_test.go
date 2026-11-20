@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -39,8 +41,9 @@ func newHarness(t *testing.T) *harness {
 		ctx:   data.Ctx(ctx),
 		other: other.Ctx(ctx),
 		repo: conversationrepository.New(conversationrepository.Params{
-			DB:     postgres.WrapDB(db),
-			Logger: zap.NewNop(),
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
 		}),
 		tenant: data.Info(),
 		userID: data.User.ID,

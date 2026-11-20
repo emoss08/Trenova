@@ -167,7 +167,7 @@ func (w *Workflows) compact(
 
 	var flow *agentflow.Activities
 	var reply modelstream.Reply
-	summaryCtx := workflow.WithActivityOptions(ctx, withCompactionPriority(summaryOptions, payload))
+	summaryCtx := workflow.WithActivityOptions(ctx, withCompactionPriority(&summaryOptions))
 	err = workflow.ExecuteActivity(summaryCtx, flow.ModelCallActivity, &agentflow.ModelCallInput{
 		Request: plan.Request,
 	}).Get(summaryCtx, &reply)
@@ -228,13 +228,10 @@ func (w *Workflows) endCompaction(
 	return ending
 }
 
-func withCompactionPriority(
-	options workflow.ActivityOptions,
-	payload *assistantcontract.CompactionPayload,
-) workflow.ActivityOptions {
+func withCompactionPriority(base *workflow.ActivityOptions) workflow.ActivityOptions {
+	options := *base
 	options.Priority = temporal.Priority{
 		PriorityKey: agentflowcontract.PriorityInteractive,
-		FairnessKey: payload.OrganizationID.String(),
 	}
 
 	return options

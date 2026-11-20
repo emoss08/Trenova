@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
@@ -214,9 +216,17 @@ func setupIntegrationEngine(t *testing.T) (*engine, *integrationEnv, *redis.Clie
 
 	registry := permissioncatalog.NewRegistry()
 	eng := &engine{
-		roleRepo:          rolerepository.New(rolerepository.Params{DB: conn, Logger: zap.NewNop()}),
-		cacheRepo:         cacheRepo,
-		userRepo:          userrepository.New(userrepository.Params{DB: conn, Logger: zap.NewNop()}),
+		roleRepo: rolerepository.New(
+			rolerepository.Params{
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn,
+				Logger:       zap.NewNop(),
+			},
+		),
+		cacheRepo: cacheRepo,
+		userRepo: userrepository.New(
+			userrepository.Params{DB: conn, Logger: zap.NewNop()},
+		),
 		registry:          registry,
 		routeRegistry:     routeaccess.NewRouteRegistry(),
 		plan:              onplan.New(registry, plantest.AllFeatures()),

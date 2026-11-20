@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -70,7 +72,13 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 	fixtureA := seedRoleTenantFixture(t, ctx, db, tenantA)
 	fixtureB := seedRoleTenantFixture(t, ctx, db, tenantB)
 
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	ctx = tenantA.Ctx(ctx)
 	ura := rbacdb.UserRoleAssignments
 	rps := rbacdb.ResourcePermissions

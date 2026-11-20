@@ -3,6 +3,8 @@ package customerrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -34,22 +36,25 @@ var (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
-	Quota  platformplanports.QuotaGuard
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
+	Quota        platformplanports.QuotaGuard
 }
 
 type repository struct {
-	db    *postgres.Connection
-	l     *zap.Logger
-	quota platformplanports.QuotaGuard
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
+	quota        platformplanports.QuotaGuard
 }
 
 func New(p Params) customerports.CustomerRepository {
 	return &repository{
-		db:    p.DB,
-		l:     p.Logger.Named("postgres.customer-repository"),
-		quota: quotaservice.OrUnlimited(p.Quota),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.customer-repository"),
+		quota:        quotaservice.OrUnlimited(p.Quota),
 	}
 }
 

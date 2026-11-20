@@ -197,7 +197,8 @@ func newTrenovaRig(t *testing.T, opts rigOptions) *trenovaRig {
 	r.repo.EXPECT().HasSuppression(mock.Anything, r.tenant, mock.Anything).
 		RunAndReturn(func(_ context.Context, _ pagination.TenantInfo, address string) (bool, error) {
 			return slices.Contains(opts.suppressed, mailtext.NormalizeEmailAddress(address)), nil
-		}).Maybe()
+		}).
+		Maybe()
 	r.repo.EXPECT().CreateMessageOnce(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, msg *email.Message) (*email.Message, bool, error) {
 			r.mu.Lock()
@@ -429,7 +430,10 @@ func TestResolveSenderNamesTheTrenovaSender(t *testing.T) {
 	t.Parallel()
 
 	r := newTrenovaRig(t, rigOptions{withTrenova: true})
-	sender, err := r.svc.ResolveSender(t.Context(), r.request(email.TypeNotification, memberAddress))
+	sender, err := r.svc.ResolveSender(
+		t.Context(),
+		r.request(email.TypeNotification, memberAddress),
+	)
 
 	require.NoError(t, err)
 	assert.True(t, sender.ViaTrenova)
@@ -487,7 +491,11 @@ func TestSendPersistedSendsATrenovaMessageWithTheTrenovaCredential(t *testing.T)
 	require.NoError(t, err)
 	assert.Equal(t, email.MessageStatusSent, sent.Status)
 	assert.Equal(t, map[string]string{"serverToken": trenovaTestKey}, r.provider.config)
-	assert.Equal(t, mailtext.FormatEmailAddress("Acme Freight via Trenova", trenovaTestFrom), r.provider.from)
+	assert.Equal(
+		t,
+		mailtext.FormatEmailAddress("Acme Freight via Trenova", trenovaTestFrom),
+		r.provider.from,
+	)
 	assert.Equal(
 		t,
 		map[string]string{systememail.InstanceTag: trenovaTestInstance},
@@ -577,4 +585,44 @@ func TestTheSettingsLineShowsWhenTrenovaCarriesTheOrganizationsSystemEmail(t *te
 	inUse, _, err = r.svc.SystemEmailInUse(t.Context(), r.tenant)
 	require.NoError(t, err)
 	assert.False(t, inUse)
+}
+
+func TestTheTrenovaSenderBoundsEachOrganizationInsideTheInstanceBudget(t *testing.T) {
+	t.Parallel()
+
+	r := newTrenovaRig(t, rigOptions{withTrenova: true})
+	r.svc.organizationPerHour = 40
+	r.rateLimits.deny = trenovaOrganizationKey
+	msg, err := r.svc.Send(t.Context(), r.request(email.TypeNotification, memberAddress))
+
+	require.Nil(t, msg)
+	require.True(t, errortypes.IsRateLimitError(err))
+	retryAfter, ok := errortypes.RetryAfterOf(err)
+	require.True(t, ok)
+	assert.Equal(t, 12*time.Minute, retryAfter)
+	assert.Contains(t, err.Error(), "This organization has sent as much email")
+	assert.Empty(t, r.sentMessages())
+
+	r.rateLimits.mu.Lock()
+	seen := slices.Clone(r.rateLimits.seen)
+	r.rateLimits.mu.Unlock()
+	require.Len(t, seen, 2)
+	assert.Equal(t, trenovaInstanceKey, seen[0].Key)
+	assert.Equal(t, trenovaOrganizationKey+r.tenant.OrgID.String(), seen[1].Key)
+	assert.Equal(t, 40, seen[1].Policy.Rate)
+}
+
+func TestTheTrenovaSenderLeavesOrganizationsUnboundedWhenTheBoundIsOff(t *testing.T) {
+	t.Parallel()
+
+	r := newTrenovaRig(t, rigOptions{withTrenova: true})
+	r.rateLimits.deny = trenovaOrganizationKey
+	_, err := r.svc.Send(t.Context(), r.request(email.TypeNotification, memberAddress))
+	require.NoError(t, err)
+
+	r.rateLimits.mu.Lock()
+	defer r.rateLimits.mu.Unlock()
+	for _, req := range r.rateLimits.seen {
+		assert.NotContains(t, req.Key, trenovaOrganizationKey)
+	}
 }

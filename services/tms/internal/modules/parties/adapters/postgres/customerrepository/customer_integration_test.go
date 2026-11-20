@@ -7,6 +7,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -56,9 +58,11 @@ func newCustomerFixture(t *testing.T) *customerFixture {
 	return &customerFixture{
 		conn:  conn,
 		admin: admin,
-		repo:  New(Params{DB: conn, Logger: zap.NewNop()}),
-		a:     customerTenant{ctx: a.Ctx(t.Context()), info: a.Info(), data: a},
-		b:     customerTenant{ctx: b.Ctx(t.Context()), info: b.Info(), data: b},
+		repo: New(
+			Params{Entitlements: entitlementtest.Instance(), DB: conn, Logger: zap.NewNop()},
+		),
+		a: customerTenant{ctx: a.Ctx(t.Context()), info: a.Info(), data: a},
+		b: customerTenant{ctx: b.Ctx(t.Context()), info: b.Info(), data: b},
 	}
 }
 
@@ -141,7 +145,14 @@ func TestCreateAddsDefaultBillingProfileWhenMissing(t *testing.T) {
 func TestCreateRefusesACustomerPastTheQuota(t *testing.T) {
 	f := newCustomerFixture(t)
 	guard := platformplanportsmock.NewMockQuotaGuard(t)
-	repo := New(Params{DB: f.conn, Logger: zap.NewNop(), Quota: guard})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           f.conn,
+			Logger:       zap.NewNop(),
+			Quota:        guard,
+		},
+	)
 	entity := newCustomer(f.a, "CUST9")
 
 	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{

@@ -4,6 +4,8 @@ package capturerepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -28,14 +30,16 @@ const maxMaintenanceBatch = 500
 var batchErrors = dberror.Mapping{Entity: "Capture batch"}
 
 type batchRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewBatchRepository(p Params) captureports.CaptureBatchRepository {
 	return &batchRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.capture-batch-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.capture-batch-repository"),
 	}
 }
 
@@ -290,8 +294,12 @@ func (r *batchRepository) ListStale(
 	ctx = dbscope.WithSystem(ctx, "list stale capture batches across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
 		b := capturedb.CaptureBatches
+		entitled, entitledErr := r.entitlements.ForWork(ctx, b.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		return orEmptyBatches(b.AllTenants().
-			Where(b.Status.In(req.Statuses...), b.UpdatedAt.Lt(req.UpdatedBefore)).
+			Where(entitled, b.Status.In(req.Statuses...), b.UpdatedAt.Lt(req.UpdatedBefore)).
 			Order(b.UpdatedAt.Asc()).
 			Limit(boundedLimit(req.Limit)).
 			List(ctx, r.db.Keel(ctx)))
@@ -305,8 +313,16 @@ func (r *batchRepository) ListRetentionDue(
 	ctx = dbscope.WithSystem(ctx, "list capture batches past retention across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
 		b := capturedb.CaptureBatches
+		entitled, entitledErr := r.entitlements.ForWork(ctx, b.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		return orEmptyBatches(b.AllTenants().
-			Where(b.Status.NotIn(inFlightBatchStatuses...), b.RetainUntil.Lte(req.Now)).
+			Where(
+				entitled,
+				b.Status.NotIn(inFlightBatchStatuses...),
+				b.RetainUntil.Lte(req.Now),
+			).
 			Order(b.RetainUntil.Asc()).
 			Limit(boundedLimit(req.Limit)).
 			List(ctx, r.db.Keel(ctx)))
@@ -323,8 +339,13 @@ func (r *batchRepository) ListRetentionReminders(
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
 		b := capturedb.CaptureBatches
+		entitled, entitledErr := r.entitlements.ForWork(ctx, b.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		return orEmptyBatches(b.AllTenants().
 			Where(
+				entitled,
 				b.Status.In(awaitingPersonStatuses...),
 				b.RetentionRemindedAt.IsNull(),
 				b.RetainUntil.Gt(req.From),

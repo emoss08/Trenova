@@ -5,6 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -189,6 +192,7 @@ func TestPurgeDeadTokensActivity_PropagatesRepositoryFailure(t *testing.T) {
 func TestPurgeTenderTokensWorkflow_RunsThePurgeActivity(t *testing.T) {
 	suite := &testsuite.WorkflowTestSuite{}
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterWorkflow(PurgeTenderTokensWorkflow)
 
 	var a *Activities

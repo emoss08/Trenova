@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -165,6 +167,7 @@ func TestPlanDocumentExtractionActivity_SkipsWhenControlDisabled(t *testing.T) {
 		}, nil)
 
 	activities := &Activities{
+		slots:  heavyslotstest.Unbounded(),
 		logger: zap.NewNop(),
 		metrics: &metrics.Registry{
 			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
@@ -231,6 +234,7 @@ func TestPlanDocumentExtractionActivity_RefusesAProfileThatIsNotRead(t *testing.
 		Return(doc, nil)
 
 	activities := &Activities{
+		slots:  heavyslotstest.Unbounded(),
 		logger: zap.NewNop(),
 		metrics: &metrics.Registry{
 			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
@@ -310,6 +314,7 @@ func TestAnalyzeConvertedDocumentActivity_SuppressesShipmentDraftOutsideShipment
 		})
 
 	activities := &Activities{
+		slots:  heavyslotstest.Unbounded(),
 		logger: zap.NewNop(),
 		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
@@ -417,6 +422,7 @@ func TestAnalyzeConvertedDocumentActivity_AutoCreatesAndAssociatesDocumentTypeFo
 		})
 
 	activities := &Activities{
+		slots:  heavyslotstest.Unbounded(),
 		logger: zap.NewNop(),
 		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
@@ -517,6 +523,7 @@ func TestAnalyzeConvertedDocumentActivity_AssociatesExistingDocumentTypeByName(t
 		Return(&documentshipmentdraft.DocumentShipmentDraft{}, nil)
 
 	activities := &Activities{
+		slots:  heavyslotstest.Unbounded(),
 		logger: zap.NewNop(),
 		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
@@ -617,6 +624,7 @@ func TestAnalyzeConvertedDocumentActivity_EnqueuesAsyncAIExtraction(t *testing.T
 		Return(nil, nil)
 
 	activities := &Activities{
+		slots:  heavyslotstest.Unbounded(),
 		logger: zap.NewNop(),
 		cfg:    &aiconfig.Config{DocumentExtraction: true},
 		metrics: &metrics.Registry{

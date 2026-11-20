@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
@@ -21,37 +23,40 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	ReviewRepo billingqueueports.BillingQueueReviewRepository
-	QueueRepo  billingqueueports.BillingQueueRepository
-	Review     billingqueueports.BillingQueueReviewService
-	Rechecks   billingqueueports.RecheckRequester
-	Assist     billingqueueports.BillingQueueAssistService
-	Generator  billingqueueports.NovaGenerator
-	Realtime   realtimeports.RealtimeService
-	Logger     *zap.Logger
+	Entitlements entitlementports.Filter
+	ReviewRepo   billingqueueports.BillingQueueReviewRepository
+	QueueRepo    billingqueueports.BillingQueueRepository
+	Review       billingqueueports.BillingQueueReviewService
+	Rechecks     billingqueueports.RecheckRequester
+	Assist       billingqueueports.BillingQueueAssistService
+	Generator    billingqueueports.NovaGenerator
+	Realtime     realtimeports.RealtimeService
+	Logger       *zap.Logger
 }
 
 type Activities struct {
-	repo      billingqueueports.BillingQueueReviewRepository
-	queueRepo billingqueueports.BillingQueueRepository
-	review    billingqueueports.BillingQueueReviewService
-	rechecks  billingqueueports.RecheckRequester
-	assist    billingqueueports.BillingQueueAssistService
-	generator billingqueueports.NovaGenerator
-	realtime  realtimeports.RealtimeService
-	l         *zap.Logger
+	entitlements entitlementports.Filter
+	repo         billingqueueports.BillingQueueReviewRepository
+	queueRepo    billingqueueports.BillingQueueRepository
+	review       billingqueueports.BillingQueueReviewService
+	rechecks     billingqueueports.RecheckRequester
+	assist       billingqueueports.BillingQueueAssistService
+	generator    billingqueueports.NovaGenerator
+	realtime     realtimeports.RealtimeService
+	l            *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		repo:      p.ReviewRepo,
-		queueRepo: p.QueueRepo,
-		review:    p.Review,
-		rechecks:  p.Rechecks,
-		assist:    p.Assist,
-		generator: p.Generator,
-		realtime:  p.Realtime,
-		l:         p.Logger.Named("billing-queue-activities"),
+		entitlements: p.Entitlements,
+		repo:         p.ReviewRepo,
+		queueRepo:    p.QueueRepo,
+		review:       p.Review,
+		rechecks:     p.Rechecks,
+		assist:       p.Assist,
+		generator:    p.Generator,
+		realtime:     p.Realtime,
+		l:            p.Logger.Named("billing-queue-activities"),
 	}
 }
 

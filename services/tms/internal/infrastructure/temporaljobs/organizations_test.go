@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +23,10 @@ type sortedTenants struct {
 func newSortedTenants(ids ...string) *sortedTenants {
 	tenants := make([]pagination.TenantInfo, 0, len(ids))
 	for _, id := range ids {
-		tenants = append(tenants, pagination.TenantInfo{OrgID: pulid.ID(id), BuID: pulid.ID("bu_" + id)})
+		tenants = append(
+			tenants,
+			pagination.TenantInfo{OrgID: pulid.ID(id), BuID: pulid.ID("bu_" + id)},
+		)
 	}
 	slices.SortFunc(tenants, func(a, b pagination.TenantInfo) int {
 		return strings.Compare(a.OrgID.String(), b.OrgID.String())
@@ -32,6 +37,7 @@ func newSortedTenants(ids ...string) *sortedTenants {
 
 func (s *sortedTenants) ListTenantsPage(
 	_ context.Context,
+	_ entitlement.Need,
 	after pulid.ID,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
@@ -66,19 +72,19 @@ func TestOrganizationPage_WalksEveryOrganizationOnce(t *testing.T) {
 
 	tenants := newSortedTenants("org_e", "org_a", "org_d", "org_b", "org_c")
 
-	first, err := OrganizationPage(t.Context(), tenants, nil, 2)
+	first, err := OrganizationPage(t.Context(), tenants, entitlement.AnyActive(), nil, 2)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"org_a", "org_b"}, ids(first))
 	assert.True(t, first.HasMore)
 
 	last := first.Tenants[len(first.Tenants)-1]
-	second, err := OrganizationPage(t.Context(), tenants, &last, 2)
+	second, err := OrganizationPage(t.Context(), tenants, entitlement.AnyActive(), &last, 2)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"org_c", "org_d"}, ids(second))
 	assert.True(t, second.HasMore)
 
 	last = second.Tenants[len(second.Tenants)-1]
-	third, err := OrganizationPage(t.Context(), tenants, &last, 2)
+	third, err := OrganizationPage(t.Context(), tenants, entitlement.AnyActive(), &last, 2)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"org_e"}, ids(third))
 	assert.False(t, third.HasMore)
@@ -91,7 +97,13 @@ func TestOrganizationPage_WalksEveryOrganizationOnce(t *testing.T) {
 func TestOrganizationPage_ExactPageHasNoMore(t *testing.T) {
 	t.Parallel()
 
-	page, err := OrganizationPage(t.Context(), newSortedTenants("org_a", "org_b"), nil, 2)
+	page, err := OrganizationPage(
+		t.Context(),
+		newSortedTenants("org_a", "org_b"),
+		entitlement.AnyActive(),
+		nil,
+		2,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"org_a", "org_b"}, ids(page))
 	assert.False(t, page.HasMore)

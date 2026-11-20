@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -76,7 +78,8 @@ func newFactoringRepos(conn *postgres.Connection) *factoringRepos {
 
 	return &factoringRepos{
 		customers: customerrepository.New(customerrepository.Params{
-			DB: conn, Logger: logger,
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn, Logger: logger,
 		}),
 		factors: factoringcompanyrepository.New(
 			factoringcompanyrepository.Params{DB: conn, Logger: logger}),

@@ -57,7 +57,7 @@ func (s *Scheduler) AfterTurn(
 			ID:            ThreadWorkflowID(req.ThreadID),
 			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
 			StaticSummary: "Look back over a conversation once it goes quiet",
-			Priority:      priorityFor(tenant),
+			Priority:      priorityFor(),
 		},
 		ThreadReflectionWorkflowName,
 		&ThreadReflectionInput{
@@ -84,7 +84,7 @@ func (s *Scheduler) AfterRun(ctx context.Context, req *agentreflectionports.Refl
 		TaskQueue:             temporaltype.TaskQueueAgentBackground.String(),
 		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
 		StaticSummary:         "Look back over a settled agent run",
-		Priority:              priorityFor(tenant),
+		Priority:              priorityFor(),
 	}, RunReflectionWorkflowName, &RunReflectionInput{
 		TenantInfo: tenant,
 		RunID:      req.RunID,
@@ -107,10 +107,9 @@ func tenantOnly(tenant pagination.TenantInfo) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID}
 }
 
-func priorityFor(tenant pagination.TenantInfo) temporal.Priority {
+func priorityFor() temporal.Priority {
 	return temporal.Priority{
 		PriorityKey: agentflowcontract.PriorityBackground,
-		FairnessKey: tenant.OrgID.String(),
 	}
 }
 
@@ -130,7 +129,7 @@ func (s *Scheduler) AfterCorrections(
 		TaskQueue:             temporaltype.TaskQueueAgentBackground.String(),
 		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
 		StaticSummary:         "Look back over what people kept changing of an agent's work",
-		Priority:              priorityFor(tenant),
+		Priority:              priorityFor(),
 	}, CorrectionReflectionWorkflowName, &input)
 	if err == nil {
 		return

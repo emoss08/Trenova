@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/detentionjobs/detentioncontract"
 
@@ -136,6 +139,16 @@ func SweepDetentionNoticesWorkflow(
 
 	result := &SweepDetentionNoticesResult{}
 	result.TenantsScanned = len(tenantsResult.Tenants)
+
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureDetention),
+		tenantsResult.Tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenantsResult.Tenants = kept
 
 	for _, tenant := range tenantsResult.Tenants {
 		var sweepResult *SweepTenantNoticesResult

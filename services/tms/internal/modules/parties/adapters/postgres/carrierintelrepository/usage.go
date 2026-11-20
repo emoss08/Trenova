@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -25,14 +27,16 @@ const (
 )
 
 type usageRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewUsageRepository(p Params) carrierintelports.CarrierIntelUsageRepository {
 	return &usageRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.carrier-intel-usage-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.carrier-intel-usage-repository"),
 	}
 }
 
@@ -243,9 +247,13 @@ func (r *usageRepository) DeleteOlderThan(
 		)
 
 		s := u.As("stale")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, s.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		stale := s.AllTenants().
 			Pick(s.ID).
-			Where(s.CreatedAt.Lt(before)).
+			Where(entitled, s.CreatedAt.Lt(before)).
 			Order(s.CreatedAt.Asc()).
 			Limit(batch)
 

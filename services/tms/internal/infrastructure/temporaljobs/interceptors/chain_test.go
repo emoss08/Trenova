@@ -30,11 +30,11 @@ func TestBuildWorkerInterceptorChain_BothDisabled(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 3)
+	require.Len(t, chain, 4)
 	assertRefusalLast(t, chain)
 	_, isTenantScope := chain[0].(*TenantScopeInterceptor)
 	assert.True(t, isTenantScope)
-	assertFailureLogging(t, chain[1])
+	assertFailureLogging(t, chain[2])
 }
 
 func TestBuildWorkerInterceptorChain_LoggingOnly(t *testing.T) {
@@ -55,9 +55,9 @@ func TestBuildWorkerInterceptorChain_LoggingOnly(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 3)
+	require.Len(t, chain, 4)
 	assertRefusalLast(t, chain)
-	_, ok := chain[1].(*LoggingInterceptor)
+	_, ok := chain[2].(*LoggingInterceptor)
 	assert.True(t, ok)
 }
 
@@ -81,11 +81,11 @@ func TestBuildWorkerInterceptorChain_MetricsOnly(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 4)
+	require.Len(t, chain, 5)
 	assertRefusalLast(t, chain)
-	_, ok := chain[1].(*MetricsInterceptor)
+	_, ok := chain[2].(*MetricsInterceptor)
 	assert.True(t, ok)
-	assertFailureLogging(t, chain[2])
+	assertFailureLogging(t, chain[3])
 }
 
 func TestBuildWorkerInterceptorChain_BothEnabled(t *testing.T) {
@@ -109,11 +109,11 @@ func TestBuildWorkerInterceptorChain_BothEnabled(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 4)
+	require.Len(t, chain, 5)
 	assertRefusalLast(t, chain)
-	_, ok := chain[1].(*MetricsInterceptor)
+	_, ok := chain[2].(*MetricsInterceptor)
 	assert.True(t, ok)
-	_, ok = chain[2].(*LoggingInterceptor)
+	_, ok = chain[3].(*LoggingInterceptor)
 	assert.True(t, ok)
 }
 
@@ -137,11 +137,11 @@ func TestBuildWorkerInterceptorChain_MetricsDisabledViaHandler(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 3)
+	require.Len(t, chain, 4)
 	assertRefusalLast(t, chain)
 	_, isTenantScope := chain[0].(*TenantScopeInterceptor)
 	assert.True(t, isTenantScope)
-	assertFailureLogging(t, chain[1])
+	assertFailureLogging(t, chain[2])
 }
 
 func TestBuildWorkerInterceptorChain_DefaultLogLevel(t *testing.T) {
@@ -162,9 +162,9 @@ func TestBuildWorkerInterceptorChain_DefaultLogLevel(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 3)
+	require.Len(t, chain, 4)
 	assertRefusalLast(t, chain)
-	loggingInt, ok := chain[1].(*LoggingInterceptor)
+	loggingInt, ok := chain[2].(*LoggingInterceptor)
 	require.True(t, ok)
 	assert.Equal(t, "info", loggingInt.logLevel)
 }
@@ -253,13 +253,13 @@ func TestBuildWorkerInterceptorChain_OrderMetricsThenLogging(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 4)
+	require.Len(t, chain, 5)
 	assertRefusalLast(t, chain)
 
-	_, firstIsMetrics := chain[1].(*MetricsInterceptor)
+	_, firstIsMetrics := chain[2].(*MetricsInterceptor)
 	assert.True(t, firstIsMetrics)
 
-	_, secondIsLogging := chain[2].(*LoggingInterceptor)
+	_, secondIsLogging := chain[3].(*LoggingInterceptor)
 	assert.True(t, secondIsLogging)
 }
 
@@ -281,10 +281,24 @@ func TestBuildWorkerInterceptorChain_NilNilMetricsHandler(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 3)
+	require.Len(t, chain, 4)
 	assertRefusalLast(t, chain)
-	_, ok := chain[1].(*LoggingInterceptor)
+	_, ok := chain[2].(*LoggingInterceptor)
 	assert.True(t, ok)
+}
+
+func TestBuildWorkerInterceptorChain_TheBackstopFollowsTheTenantScope(t *testing.T) {
+	t.Parallel()
+
+	chain := BuildWorkerInterceptorChain(ChainParams{
+		TemporalConfig: &temporalconfig.Config{},
+		Logger:         zap.NewNop(),
+	})
+
+	_, isTenantScope := chain[0].(*TenantScopeInterceptor)
+	assert.True(t, isTenantScope)
+	_, isBackstop := chain[1].(*EntitlementInterceptor)
+	assert.True(t, isBackstop, "the backstop reads the tenant the scope interceptor derives")
 }
 
 func assertRefusalLast(t *testing.T, chain []sdkinterceptor.WorkerInterceptor) {

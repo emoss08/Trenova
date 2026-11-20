@@ -6,6 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsynceffects"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncledger"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncparty"
@@ -40,6 +45,7 @@ type Params struct {
 	Sales    *accountingsyncsales.Pusher
 	Payables *accountingsyncpayables.Pusher
 	Ledger   *accountingsyncledger.Pusher
+	Features platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -52,6 +58,7 @@ type Service struct {
 	sales    *accountingsyncsales.Pusher
 	payables *accountingsyncpayables.Pusher
 	ledger   *accountingsyncledger.Pusher
+	features platformcatalogports.FeatureGate
 }
 
 //nolint:gocritic // dependency injection
@@ -66,6 +73,7 @@ func New(p Params) *Service {
 		sales:    p.Sales,
 		payables: p.Payables,
 		ledger:   p.Ledger,
+		features: p.Features,
 	}
 }
 
@@ -122,6 +130,14 @@ func (s *Service) Drain(
 	req *accountingsyncports.DrainAccountingSyncRequest,
 ) (*accountingsyncports.AccountingSyncDrainResult, error) {
 	result := new(accountingsyncports.AccountingSyncDrainResult)
+	covered, err := s.coveredTypes(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if len(covered) == 0 {
+		result.Held = true
+		return result, nil
+	}
 	conn, err := s.effects.ConnectionByID(ctx, req.TenantInfo, req.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -146,6 +162,7 @@ func (s *Service) Drain(
 	claimed, err := s.records.Claim(ctx, &accountingsyncports.ClaimAccountingSyncRecordsRequest{
 		TenantInfo:   req.TenantInfo,
 		ConnectionID: conn.ID,
+		ObjectTypes:  covered,
 		Now:          timeutils.NowUnix(),
 		Lease:        req.Lease,
 		Limit:        limit,
@@ -182,6 +199,31 @@ func (s *Service) Drain(
 		s.effects.RefreshAttention(ctx, sess.Conn)
 	}
 	return result, nil
+}
+
+func (s *Service) coveredTypes(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]accountingsync.SyncObjectType, error) {
+	scoped := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+	answers := make(map[platformcatalog.FeatureKey]bool, 2)
+	covered := make([]accountingsync.SyncObjectType, 0, len(accountingsync.AllSyncObjectTypes()))
+	for _, objectType := range accountingsync.AllSyncObjectTypes() {
+		feature := objectType.Feature()
+		on, asked := answers[feature]
+		if !asked {
+			var err error
+			on, err = s.features.Enabled(scoped, feature)
+			if err != nil {
+				return nil, fmt.Errorf("check what the plan covers before syncing: %w", err)
+			}
+			answers[feature] = on
+		}
+		if on {
+			covered = append(covered, objectType)
+		}
+	}
+	return covered, nil
 }
 
 func tally(

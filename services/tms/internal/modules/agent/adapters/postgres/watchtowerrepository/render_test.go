@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -250,7 +251,7 @@ func TestTenantsNeedingAttentionAreReadAcrossTenantsOnce(t *testing.T) {
 	sql, _ := keeltest.RenderIn(
 		t,
 		dbscope.WithSystem(t.Context(), "test"),
-		tenantsNeedingAttentionQuery(1_000),
+		tenantsNeedingAttentionQuery(keel.True(), 1_000),
 	)
 
 	assert.Contains(t, sql, `SELECT wi."organization_id", wi."business_unit_id"`, sql)
@@ -265,7 +266,7 @@ func TestRetentionDeletesOnlyItemsTheSourceIsDoneWith(t *testing.T) {
 	sql, args := keeltest.RenderIn(
 		t,
 		dbscope.WithSystem(t.Context(), "test"),
-		wi.AllTenants().Where(resolvedBefore(1_000, 500)),
+		wi.AllTenants().Where(resolvedBefore(wi.As("stale"), keel.True(), 1_000, 500)),
 	)
 
 	assert.Contains(t, sql, `."id" IN (SELECT stale."id" FROM "watchtower_items" stale`, sql)

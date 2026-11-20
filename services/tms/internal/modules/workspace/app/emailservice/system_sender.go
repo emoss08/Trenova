@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
+
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -25,6 +27,15 @@ import (
 const (
 	trenovaInstanceKey      = "email:trenova-sender:instance"
 	trenovaInvitationPrefix = "email:trenova-sender:invitations:"
+	trenovaOrganizationKey  = "email:trenova-sender:organization:"
+)
+
+type trenovaBudget int
+
+const (
+	budgetInstance = trenovaBudget(iota)
+	budgetOrganization
+	budgetInvitations
 )
 
 var (
@@ -147,12 +158,27 @@ func (s *Service) admitTrenovaRate(
 		Policy: trenovaInstancePolicy,
 		Cost:   min(cost, trenovaInstancePolicy.Burst),
 	}}
+	budgets := []trenovaBudget{budgetInstance}
+	if s.organizationPerHour > 0 {
+		policy := kernelports.RateLimitPolicy{
+			Rate:   s.organizationPerHour,
+			Period: time.Hour,
+			Burst:  min(s.organizationPerHour, trenovaInstancePolicy.Burst),
+		}
+		requests = append(requests, kernelports.RateLimitRequest{
+			Key:    trenovaOrganizationKey + req.TenantInfo.OrgID.String(),
+			Policy: policy,
+			Cost:   min(cost, policy.Burst),
+		})
+		budgets = append(budgets, budgetOrganization)
+	}
 	if req.Type.IsInvitation() {
 		requests = append(requests, kernelports.RateLimitRequest{
 			Key:    trenovaInvitationPrefix + req.TenantInfo.OrgID.String(),
 			Policy: trenovaInvitationPolicy,
 			Cost:   min(cost, trenovaInvitationPolicy.Burst),
 		})
+		budgets = append(budgets, budgetInvitations)
 	}
 	decisions, err := s.rateLimits.Check(ctx, requests)
 	if err != nil {
@@ -162,23 +188,37 @@ func (s *Service) admitTrenovaRate(
 		if decision.Allowed {
 			continue
 		}
-		minutes := retryMinutes(decision.RetryAfter)
-		if i > 0 {
-			return errortypes.NewRateLimitError(
-				"to",
-				"This organization has sent as many invitations as it may in an hour. "+
-					"Try again in {0} minutes, or add an email profile in the email settings.",
-				minutes,
-			).WithRetryAfter(decision.RetryAfter)
-		}
-		return errortypes.NewRateLimitError(
-			"to",
-			"Email Trenova sends for this instance has reached its hourly limit. "+
-				"Try again in {0} minutes, or add an email profile in the email settings.",
-			minutes,
-		).WithRetryAfter(decision.RetryAfter)
+		return s.overBudget(budgets[i], decision.RetryAfter)
 	}
 	return nil
+}
+
+func (s *Service) overBudget(budget trenovaBudget, retryAfter time.Duration) error {
+	minutes := retryMinutes(retryAfter)
+	if budget == budgetInvitations {
+		return errortypes.NewRateLimitError(
+			"to",
+			"This organization has sent as many invitations as it may in an hour. "+
+				"Try again in {0} minutes, or add an email profile in the email settings.",
+			minutes,
+		).WithRetryAfter(retryAfter)
+	}
+	if budget == budgetOrganization {
+		s.tenancy.RecordLimitRefusal("system_email", platformmetrics.LimitScopeOrganization)
+		return errortypes.NewRateLimitError(
+			"to",
+			"This organization has sent as much email through Trenova as it may in an hour. "+
+				"Try again in {0} minutes, or add an email profile in the email settings.",
+			minutes,
+		).WithRetryAfter(retryAfter)
+	}
+	s.tenancy.RecordLimitRefusal("system_email", platformmetrics.LimitScopeInstance)
+	return errortypes.NewRateLimitError(
+		"to",
+		"Email Trenova sends for this instance has reached its hourly limit. "+
+			"Try again in {0} minutes, or add an email profile in the email settings.",
+		minutes,
+	).WithRetryAfter(retryAfter)
 }
 
 func retryMinutes(d time.Duration) string {

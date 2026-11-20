@@ -8,6 +8,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
@@ -61,7 +65,12 @@ func NewReader(t testing.TB, opts Options) *agentread.Reader {
 				MonitoringConfig: monitoring, Logger: logger, Metrics: registry, Tracer: noopTracer{},
 			}),
 			CostBudget: gqlext.NewCostBudgetExtension(gqlext.CostBudgetParams{
-				SecurityConfig: &securityconfig.Config{}, Logger: logger, Metrics: registry,
+				SecurityConfig: &securityconfig.Config{},
+				Managed:        &managedconfig.Config{},
+				TenantLimits:   &tenantlimitsconfig.Config{},
+				Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
+				Logger:         logger,
+				Metrics:        registry,
 			}),
 			ReadOnly: gqlext.NewReadOnlyExtension(gqlext.ReadOnlyParams{Logger: logger}),
 			FieldGuard: gqlext.NewFieldGuardExtension(gqlext.FieldGuardParams{

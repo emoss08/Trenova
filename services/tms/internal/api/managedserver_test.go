@@ -124,7 +124,7 @@ func (f *fakeFeatureRepo) SetLifecycle(
 func (f *fakeFeatureRepo) DuePlanEndReminders(
 	context.Context,
 	*managedfeaturesports.DueRemindersRequest,
-) ([]managedscope.Scope, error) {
+) ([]managedfeaturesports.DueReminder, error) {
 	return nil, nil
 }
 

@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
-	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
@@ -54,7 +53,6 @@ func startNarration(
 		),
 		TaskQueue:         temporaltype.TaskQueueSystem.String(),
 		ParentClosePolicy: enums.PARENT_CLOSE_POLICY_ABANDON,
-		Priority:          temporal.Priority{FairnessKey: input.OrganizationID.String()},
 	})
 
 	return workflow.ExecuteChildWorkflow(childCtx, InsightNarrationWorkflow, &NarrationInput{

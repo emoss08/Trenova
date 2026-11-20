@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -27,19 +29,22 @@ var runErrors = dberror.Mapping{Entity: runEntity}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) agentruntimeports.AgentRunRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.agentrun-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.agentrun-repository"),
 	}
 }
 
@@ -262,8 +267,13 @@ func (r *repository) FailAbandoned(
 	ctx = dbscope.WithSystem(ctx, "end abandoned agent runs across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		run := agentdb.AgentRuns
+		entitled, entitledErr := r.entitlements.ForWork(ctx, run.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		n, err := run.AllTenants().
 			Where(
+				entitled,
 				run.Status.In(agent.WorkingRunStatuses()...),
 				run.CreatedAt.Lt(req.StartedBefore),
 			).

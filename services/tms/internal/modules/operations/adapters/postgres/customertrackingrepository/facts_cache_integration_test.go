@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/customertrackingrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -26,8 +28,9 @@ func TestNotifyingCustomersAreCachedPerTenantUntilAProfileChanges(t *testing.T) 
 
 	cached := cachetest.Open(t, t.Context(), h.dsn)
 	params := customertrackingrepository.Params{
-		DB:     postgres.WrapDB(cached),
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(cached),
+		Logger:       zap.NewNop(),
 	}
 	facts := customertrackingrepository.NewFacts(params)
 

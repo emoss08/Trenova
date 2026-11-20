@@ -389,7 +389,8 @@ func TestOnlyDueScopesAreFoundForTheReminder(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, found, 1)
-	assert.Equal(t, due, found[0])
+	assert.Equal(t, due, found[0].Scope)
+	assert.Equal(t, now+2*day, found[0].EndsAt)
 
 	_, err = repo.RemindPlanEnd(ctx, due, now)
 	require.NoError(t, err)
@@ -399,4 +400,44 @@ func TestOnlyDueScopesAreFoundForTheReminder(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Empty(t, found, "a reminded end is not found again")
+}
+
+func TestDuePlanEndRemindersPageInPlanEndOrder(t *testing.T) {
+	t.Parallel()
+
+	ctx, _, repo := newRepo(t)
+	const (
+		day = int64(86_400)
+		now = int64(1_794_650_400)
+	)
+	set := func(scope managedscope.Scope, endsAt int64) {
+		t.Helper()
+		_, err := repo.Replace(ctx, &managedfeaturesports.ReplaceRequest{
+			Scope:    scope,
+			Received: &managedfeatures.Received{PlanEndsAt: endsAt},
+			Now:      now - 30*day,
+		})
+		require.NoError(t, err)
+	}
+	first, second, third := organization(), organization(), organization()
+	set(first, now+day)
+	set(second, now+2*day)
+	set(third, now+2*day+1)
+
+	page, err := repo.DuePlanEndReminders(
+		ctx,
+		&managedfeaturesports.DueRemindersRequest{Now: now, Limit: 2},
+	)
+	require.NoError(t, err)
+	require.Len(t, page, 2)
+	assert.Equal(t, first, page[0].Scope)
+	assert.Equal(t, second, page[1].Scope)
+
+	next, err := repo.DuePlanEndReminders(
+		ctx,
+		&managedfeaturesports.DueRemindersRequest{Now: now, Limit: 2, After: &page[1]},
+	)
+	require.NoError(t, err)
+	require.Len(t, next, 1)
+	assert.Equal(t, third, next[0].Scope)
 }

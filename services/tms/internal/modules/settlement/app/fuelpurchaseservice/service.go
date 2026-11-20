@@ -3,6 +3,8 @@ package fuelpurchaseservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
@@ -48,6 +50,7 @@ type JurisdictionReader interface {
 type Params struct {
 	fx.In
 
+	Slots        kernelports.HeavyJobSlots
 	Logger       *zap.Logger
 	Repo         fuelpurchaseports.FuelPurchaseRepository
 	IFTARepo     iftaports.IFTARepository
@@ -62,6 +65,7 @@ type Params struct {
 }
 
 type Service struct {
+	slots         kernelports.HeavyJobSlots
 	l             *zap.Logger
 	repo          fuelpurchaseports.FuelPurchaseRepository
 	jurisdictions JurisdictionReader
@@ -78,6 +82,7 @@ type Service struct {
 
 func New(p Params) *Service {
 	return &Service{
+		slots:         p.Slots,
 		l:             p.Logger.Named("service.fuel-purchase"),
 		sheetLimits:   p.SheetLimits,
 		repo:          p.Repo,

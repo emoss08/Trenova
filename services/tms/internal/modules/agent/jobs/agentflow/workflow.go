@@ -562,12 +562,7 @@ func (fx *workflowEffects) openDelegateOptions(name string) workflow.ActivityOpt
 }
 
 func (fx *workflowEffects) priority() temporal.Priority {
-	priority := temporal.Priority{PriorityKey: fx.run.PriorityKey}
-	if fx.run.Actor != nil {
-		priority.FairnessKey = fx.run.Actor.OrganizationID.String()
-	}
-
-	return priority
+	return temporal.Priority{PriorityKey: fx.run.PriorityKey}
 }
 
 func (fx *workflowEffects) modelOptions() workflow.ActivityOptions {

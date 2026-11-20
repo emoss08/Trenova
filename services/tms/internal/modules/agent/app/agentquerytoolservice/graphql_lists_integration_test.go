@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -236,14 +238,16 @@ func convertedListCases(
 	})
 	holdReasons := holdreasonrepository.New(holdreasonrepository.Params{DB: conn, Logger: logger})
 	customers := customerrepository.New(customerrepository.Params{
-		DB: conn, Logger: logger,
+		Entitlements: entitlementtest.Instance(),
+		DB:           conn, Logger: logger,
 	})
 	locations := locationrepository.New(locationrepository.Params{DB: conn, Logger: logger})
 	carriers := carrierrepository.New(carrierrepository.Params{DB: conn, Logger: logger})
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
 	training := workertrainingrepository.New(workertrainingrepository.Params{
-		DB:     conn,
-		Logger: logger,
+		Entitlements: entitlementtest.Instance(),
+		DB:           conn,
+		Logger:       logger,
 	})
 	timeOff := workerptorepository.New(workerptorepository.Params{DB: conn, Logger: logger})
 	manufacturers := equipmentmanufacturerrepository.New(

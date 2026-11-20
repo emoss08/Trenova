@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
@@ -57,10 +56,9 @@ type RequestInput struct {
 
 // Priority keeps profile work behind people's turns and fair across
 // organizations.
-func Priority(tenantInfo pagination.TenantInfo) temporal.Priority {
+func Priority() temporal.Priority {
 	return temporal.Priority{
 		PriorityKey: agentflowcontract.PriorityBackground,
-		FairnessKey: tenantInfo.OrgID.String(),
 	}
 }
 
@@ -101,7 +99,7 @@ func (s *Scheduler) Request(ctx context.Context, req *agentprofileports.Generate
 			ID:            id,
 			TaskQueue:     temporaltype.TaskQueueSystem.String(),
 			StaticSummary: "Write an agent profile again",
-			Priority:      Priority(request.Ref.Tenant()),
+			Priority:      Priority(),
 		},
 		RequestWorkflowName,
 		&RequestInput{Request: request},

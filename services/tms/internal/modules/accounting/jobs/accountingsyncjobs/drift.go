@@ -76,7 +76,7 @@ func ReconcileAccountingDriftWorkflow(
 	var a *Activities
 	actx := workflow.WithActivityOptions(
 		ctx,
-		withFairness(&driftActivityOptions, payload.OrganizationID),
+		withBackgroundPriority(&driftActivityOptions),
 	)
 	if !payload.Started {
 		payload.Started = true

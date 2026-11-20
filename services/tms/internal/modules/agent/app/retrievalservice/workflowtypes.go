@@ -17,6 +17,7 @@ const (
 	WorkflowPriority              = 4
 
 	indexWorkflowIDPrefix   = "ai-index:"
+	indexSweepIDPrefix      = "ai-index-sweep:"
 	reindexWorkflowIDPrefix = "ai-reindex:"
 )
 
@@ -47,6 +48,14 @@ func (i ReindexSourceInput) TenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: i.OrganizationID, BuID: i.BusinessUnitID}
 }
 
+type SweepRequest struct {
+	Organization *pagination.TenantInfo `json:"organization,omitempty"`
+}
+
+func SweepWorkflowIDFor(orgID pulid.ID) string {
+	return indexSweepIDPrefix + orgID.String()
+}
+
 func IndexWorkflowID(orgID pulid.ID) string {
 	return indexWorkflowIDPrefix + orgID.String()
 }
@@ -55,15 +64,15 @@ func ReindexWorkflowID(orgID pulid.ID, sourceType airetrieval.SourceType) string
 	return reindexWorkflowIDPrefix + orgID.String() + ":" + sourceType.String()
 }
 
-func WorkflowPriorityFor(orgID pulid.ID) temporal.Priority {
-	return temporal.Priority{PriorityKey: WorkflowPriority, FairnessKey: orgID.String()}
+func IndexPriority() temporal.Priority {
+	return temporal.Priority{PriorityKey: WorkflowPriority}
 }
 
 func indexStartOptions(tenant pagination.TenantInfo) client.StartWorkflowOptions {
 	return client.StartWorkflowOptions{
 		ID:        IndexWorkflowID(tenant.OrgID),
 		TaskQueue: temporaltype.TaskQueueSystem.String(),
-		Priority:  WorkflowPriorityFor(tenant.OrgID),
+		Priority:  IndexPriority(),
 		StaticSummary: "Index retrieval sources for organization " +
 			tenant.OrgID.String(),
 	}

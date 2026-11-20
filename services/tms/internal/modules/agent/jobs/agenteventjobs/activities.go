@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
@@ -32,28 +36,31 @@ const (
 type ActivitiesParams struct {
 	fx.In
 
-	Queue       workqueueports.Queue
-	Definitions agentdefinitionports.AgentDefinitionRepository
-	Runs        agentruntimeports.AgentRunService
-	RunRepo     agentruntimeports.AgentRunRepository
-	Logger      *zap.Logger
+	Entitlements entitlementports.Filter
+	Queue        workqueueports.Queue
+	Definitions  agentdefinitionports.AgentDefinitionRepository
+	Runs         agentruntimeports.AgentRunService
+	RunRepo      agentruntimeports.AgentRunRepository
+	Logger       *zap.Logger
 }
 
 type Activities struct {
-	queue       workqueueports.Queue
-	definitions agentdefinitionports.AgentDefinitionRepository
-	runs        agentruntimeports.AgentRunService
-	runRepo     agentruntimeports.AgentRunRepository
-	l           *zap.Logger
+	entitlements entitlementports.Filter
+	queue        workqueueports.Queue
+	definitions  agentdefinitionports.AgentDefinitionRepository
+	runs         agentruntimeports.AgentRunService
+	runRepo      agentruntimeports.AgentRunRepository
+	l            *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		queue:       p.Queue,
-		definitions: p.Definitions,
-		runs:        p.Runs,
-		runRepo:     p.RunRepo,
-		l:           p.Logger.Named("job.agent-event-runs"),
+		entitlements: p.Entitlements,
+		queue:        p.Queue,
+		definitions:  p.Definitions,
+		runs:         p.Runs,
+		runRepo:      p.RunRepo,
+		l:            p.Logger.Named("job.agent-event-runs"),
 	}
 }
 
@@ -80,11 +87,13 @@ func (a *Activities) StartEventRunsActivity(
 	}
 
 	return temporaljobs.DrainDue(ctx, &temporaljobs.DrainDueParams{
-		Queue:      a.queue,
-		Kind:       payload.Kind,
-		Tenant:     tenant,
-		PageSize:   room,
-		RetryAfter: startRetryAfter,
+		Need:         entitlement.For(platformcatalog.FeatureAgentAutomation),
+		Entitlements: a.entitlements,
+		Queue:        a.queue,
+		Kind:         payload.Kind,
+		Tenant:       tenant,
+		PageSize:     room,
+		RetryAfter:   startRetryAfter,
 		Handle: func(ctx context.Context, subjects []pulid.ID, kinds map[pulid.ID]string) map[pulid.ID]error {
 			failed := make(map[pulid.ID]error)
 			for _, subjectID := range subjects {

@@ -202,7 +202,6 @@ func (s *Service) StartForDefinition(
 		StaticSummary:                            definition.Name,
 		Priority: temporal.Priority{
 			PriorityKey: priorityFor(trigger),
-			FairnessKey: req.TenantInfo.OrgID.String(),
 		},
 	}, agentcontract.AgentRunWorkflowName, payload); err != nil {
 		var started *serviceerror.WorkflowExecutionAlreadyStarted

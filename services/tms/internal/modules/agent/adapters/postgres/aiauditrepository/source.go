@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -47,14 +49,16 @@ var projectedEventKinds = []string{
 }
 
 type sourceRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewSource(p Params) aiauditports.AIAuditSourceRepository {
 	return &sourceRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.aiaudit-source-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.aiaudit-source-repository"),
 	}
 }
 
@@ -63,9 +67,11 @@ func keyset[T any](
 	ts keel.Int64Col,
 	id keelkinds.PulidIDCol,
 	page aiauditports.AIAuditSourcePage,
+	entitled keel.Pred,
 ) keel.Query[*T] {
 	return q.AllTenants().
 		Where(
+			entitled,
 			keel.Tuple(ts, id).Gt(keel.Tuple(page.AfterTS, page.AfterID)),
 			ts.Lte(page.UntilTS),
 		).
@@ -83,7 +89,11 @@ func (r *sourceRepository) ListRuns(
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
 		run := agentdb.AgentRuns
-		rows, err := keyset(run.Omit(run.Transcript), run.UpdatedAt, run.ID, page).
+		entitled, entitledErr := r.entitlements.ForWork(ctx, run.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
+		rows, err := keyset(run.Omit(run.Transcript), run.UpdatedAt, run.ID, page, entitled).
 			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read agent runs for the AI audit trail: %w", err)
@@ -106,11 +116,16 @@ func (r *sourceRepository) ListTurns(
 		r.db,
 		func(ctx context.Context) ([]*conversationturn.AssistantTurn, error) {
 			turn := conversationturndb.AssistantTurns
+			entitled, entitledErr := r.entitlements.ForWork(ctx, turn.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			rows, err := keyset(
 				turn.Query(),
 				turn.UpdatedAt,
 				turn.ID,
 				page,
+				entitled,
 			).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("read assistant turns for the AI audit trail: %w", err)
@@ -131,7 +146,11 @@ func (r *sourceRepository) ListUsage(
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiusage.AIUsageRecord, error) {
 		u := aiusagedb.AIUsageRecords
-		rows, err := keyset(u.Query(), u.CreatedAt, u.ID, page).List(ctx, r.db.Keel(ctx))
+		entitled, entitledErr := r.entitlements.ForWork(ctx, u.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
+		rows, err := keyset(u.Query(), u.CreatedAt, u.ID, page, entitled).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read AI usage for the AI audit trail: %w", err)
 		}
@@ -150,7 +169,11 @@ func (r *sourceRepository) ListPaletteToolCalls(
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*palettequestion.ToolCall, error) {
 		c := palettequestiondb.ToolCalls
-		rows, err := keyset(c.Query(), c.CreatedAt, c.ID, page).List(ctx, r.db.Keel(ctx))
+		entitled, entitledErr := r.entitlements.ForWork(ctx, c.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
+		rows, err := keyset(c.Query(), c.CreatedAt, c.ID, page, entitled).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read palette reads for the AI audit trail: %w", err)
 		}
@@ -169,9 +192,14 @@ func (r *sourceRepository) ListSteps(
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunstep.AgentRunStep, error) {
 		step := agentrunstepdb.AgentRunSteps
+		entitled, entitledErr := r.entitlements.ForWork(ctx, step.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := keyset(
 			step.Where(step.Kind.Eq(string(agentruntimeports.RunStepTool))),
 			step.UpdatedAt, step.ID, page,
+			entitled,
 		).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read agent run steps for the AI audit trail: %w", err)
@@ -191,9 +219,14 @@ func (r *sourceRepository) ListEvents(
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunevent.AgentRunEvent, error) {
 		event := agentruneventdb.AgentRunEvents
+		entitled, entitledErr := r.entitlements.ForWork(ctx, event.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := keyset(
 			event.Where(event.Kind.In(projectedEventKinds...)),
 			event.CreatedAt, event.ID, page,
+			entitled,
 		).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read agent run events for the AI audit trail: %w", err)
@@ -213,7 +246,11 @@ func (r *sourceRepository) ListProposals(
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
 		p := agentdb.AgentProposals
-		rows, err := keyset(p.Query(), p.UpdatedAt, p.ID, page).List(ctx, r.db.Keel(ctx))
+		entitled, entitledErr := r.entitlements.ForWork(ctx, p.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
+		rows, err := keyset(p.Query(), p.UpdatedAt, p.ID, page, entitled).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read agent proposals for the AI audit trail: %w", err)
 		}
@@ -232,9 +269,14 @@ func (r *sourceRepository) ListDecisions(
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdecision.AgentDecision, error) {
 		d := agentdecisiondb.AgentDecisions
+		entitled, entitledErr := r.entitlements.ForWork(ctx, d.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := keyset(
 			d.Omit(d.Preview).Where(d.ProposalID.IsNotNull()),
 			d.CreatedAt, d.ID, page,
+			entitled,
 		).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read agent decisions for the AI audit trail: %w", err)

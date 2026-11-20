@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundprocessing"
@@ -12,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -266,45 +268,55 @@ const (
 func (a *Activities) InboundMessageRetentionActivity(
 	ctx context.Context,
 ) (*InboundMessageRetentionResult, error) {
-	organizations, err := a.tenants.ListOrganizations(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list organizations: %w", err)
-	}
-
 	before := timeutils.NowUnix() - inboundupkeep.RetentionDays*24*60*60
 	result := &InboundMessageRetentionResult{}
-	for _, org := range organizations {
-		activity.RecordHeartbeat(ctx, org.ID.String())
-
-		tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
-		tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
-		for range inboundRetentionPasses {
-			deleted, pErr := a.purger.PurgeSettled(
-				tenantCtx,
-				inboundupkeep.PurgeSettledRequest{
-					TenantInfo: tenant,
-					Before:     before,
-					Limit:      inboundRetentionBatch,
-				},
-			)
-			if pErr != nil {
-				a.l.Warn("inbound retention failed for an organization",
-					zap.String("organizationId", org.ID.String()), zap.Error(pErr))
-				result.Failed = append(result.Failed, org.ID.String())
-
-				break
-			}
-			result.Deleted += deleted
-			if deleted < inboundRetentionBatch {
-				break
-			}
-		}
+	err := tenantports.EachTenant(
+		ctx,
+		a.tenants,
+		entitlement.For(platformcatalog.FeatureAITriage),
+		func(tenantCtx context.Context, tenant pagination.TenantInfo) error {
+			activity.RecordHeartbeat(ctx, tenant.OrgID.String())
+			a.purgeTenant(tenantCtx, tenant, before, result)
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list the organizations with AI triage: %w", err)
 	}
 
 	a.l.Info("inbound retention sweep complete",
 		zap.Int("deleted", result.Deleted), zap.Int("failed", len(result.Failed)))
 
 	return result, nil
+}
+
+func (a *Activities) purgeTenant(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	before int64,
+	result *InboundMessageRetentionResult,
+) {
+	for range inboundRetentionPasses {
+		deleted, err := a.purger.PurgeSettled(
+			ctx,
+			inboundupkeep.PurgeSettledRequest{
+				TenantInfo: tenant,
+				Before:     before,
+				Limit:      inboundRetentionBatch,
+			},
+		)
+		if err != nil {
+			a.l.Warn("inbound retention failed for an organization",
+				zap.String("organizationId", tenant.OrgID.String()), zap.Error(err))
+			result.Failed = append(result.Failed, tenant.OrgID.String())
+
+			return
+		}
+		result.Deleted += deleted
+		if deleted < inboundRetentionBatch {
+			return
+		}
+	}
 }
 
 // IngestFactorRemittanceActivity opens a remittance for each file a factor's

@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,19 +23,21 @@ import (
 type Params struct {
 	fx.In
 
-	DB *postgres.Connection
+	DB           *postgres.Connection
+	Entitlements entitlementports.Filter
 }
 
 type repository struct {
-	db *postgres.Connection
+	db           *postgres.Connection
+	entitlements entitlementports.Filter
 }
 
 func New(p Params) tenantports.TenantSyncRepository {
-	return &repository{db: p.DB}
+	return &repository{db: p.DB, entitlements: p.Entitlements}
 }
 
 func NewTenantLister(p Params) kernelports.TenantLister {
-	return &repository{db: p.DB}
+	return &repository{db: p.DB, entitlements: p.Entitlements}
 }
 
 func (r *repository) ListTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
@@ -80,19 +84,27 @@ func (r *repository) ListOrganizations(
 
 func (r *repository) ListTenantsPage(
 	ctx context.Context,
+	need entitlement.Need,
 	after pulid.ID,
 	limit int,
 ) ([]pagination.TenantInfo, error) {
-	ctx = dbscope.WithSystem(ctx, "page through organizations across every tenant for fan-out")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"page through the organizations entitled to a background job, across every tenant, for fan-out",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		if limit <= 0 {
 			return []pagination.TenantInfo{}, nil
 		}
 
 		o := tenantdb.Organizations
+		entitled, err := r.entitlements.Organizations(ctx, o.ID.Col, need)
+		if err != nil {
+			return nil, err
+		}
 		orgs, err := o.AllTenants().
 			Pick(o.ID, o.BusinessUnitID).
-			Where(keel.When(after.IsNotNil(), o.ID.Gt(after))).
+			Where(keel.When(after.IsNotNil(), o.ID.Gt(after)), entitled).
 			Order(o.ID.Asc()).
 			Limit(limit).
 			List(ctx, r.db.Keel(ctx))

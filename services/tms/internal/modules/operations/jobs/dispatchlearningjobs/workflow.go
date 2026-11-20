@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchlearningservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchlearningports"
@@ -74,6 +77,7 @@ func LearnDispatchStyleWorkflow(
 
 	result, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "Dispatch style learning",
+		Need:        entitlement.For(platformcatalog.FeatureDispatchIntelligence),
 		Concurrency: temporaljobs.DefaultTenantDispatchLimit,
 		ListPage: func(
 			wctx workflow.Context,

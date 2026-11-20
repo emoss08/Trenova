@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -32,8 +34,9 @@ func TestListDefinitionsPagesOnlyWhatTheViewerMaySee(t *testing.T) {
 		Build(t, ctx, db)
 
 	definitions := NewDefinitionRepository(DefinitionParams{
-		DB:     postgres.WrapDB(db),
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(db),
+		Logger:       zap.NewNop(),
 	})
 
 	viewer := pagination.TenantInfo{

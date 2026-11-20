@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -20,8 +21,10 @@ type TenantSyncRepository interface {
 		ctx context.Context,
 		ids []pulid.ID,
 	) ([]tenant.SyncOrganization, error)
-	// ListTenantsPage lists, across every tenant, the organizations after the
-	// cursor in id order, at most limit: a fan-out pages through them rather
-	// than reading every organization at once.
-	ListTenantsPage(ctx context.Context, after pulid.ID, limit int) ([]pagination.TenantInfo, error)
+	ListTenantsPage(
+		ctx context.Context,
+		need entitlement.Need,
+		after pulid.ID,
+		limit int,
+	) ([]pagination.TenantInfo, error)
 }

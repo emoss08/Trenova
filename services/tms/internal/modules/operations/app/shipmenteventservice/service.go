@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -102,7 +104,12 @@ func (s *service) announce(
 }
 
 func (s *service) notifyObservers(ctx context.Context, event *shipmentevent.Event) {
-	observers, gateErr := platformcatalogports.Observing(ctx, s.features, s.observers)
+	observers, gateErr := platformcatalogports.Observing(
+		ctx,
+		s.features,
+		dbscope.Tenant{OrganizationID: event.OrganizationID, BusinessUnitID: event.BusinessUnitID},
+		s.observers,
+	)
 	if gateErr != nil {
 		s.l.Warn(
 			"shipment event observer failed",

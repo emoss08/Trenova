@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -718,7 +720,15 @@ func (s *Service) notifyShipmentMutationObservers(
 	updated *shipment.Shipment,
 	actor *permissionports.RequestActor,
 ) {
-	observers, gateErr := platformcatalogports.Observing(ctx, s.features, s.mutationObservers)
+	observers, gateErr := platformcatalogports.Observing(
+		ctx,
+		s.features,
+		dbscope.Tenant{
+			OrganizationID: updated.OrganizationID,
+			BusinessUnitID: updated.BusinessUnitID,
+		},
+		s.mutationObservers,
+	)
 	if gateErr != nil {
 		s.l.Warn(
 			"shipment mutation observer failed",

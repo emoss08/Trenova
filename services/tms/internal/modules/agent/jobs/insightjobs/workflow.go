@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -84,6 +87,7 @@ func InsightRefreshWorkflow(
 	result := newInsightRefreshResult()
 	_, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "Insight refresh",
+		Need:        entitlement.For(platformcatalog.FeatureAIDesk),
 		Concurrency: organizationConcurrency,
 		ListPage: func(
 			wctx workflow.Context,
@@ -99,6 +103,7 @@ func InsightRefreshWorkflow(
 				a.ListOrganizationsActivity,
 				&ListOrganizationsInput{
 					After: after,
+					Need:  entitlement.For(platformcatalog.FeatureAIDesk),
 					Limit: temporaljobs.DefaultOrganizationPageSize,
 				},
 			).Get(listCtx, &page)
@@ -109,7 +114,6 @@ func InsightRefreshWorkflow(
 			childCtx := workflow.WithChildOptions(wctx, workflow.ChildWorkflowOptions{
 				WorkflowID: fmt.Sprintf("insight-refresh/%s/%d", tenant.OrganizationID, now),
 				TaskQueue:  temporaltype.TaskQueueSystem.String(),
-				Priority:   temporal.Priority{FairnessKey: tenant.OrganizationID.String()},
 			})
 
 			var refreshed OrganizationInsightsResult
@@ -153,7 +157,8 @@ func RefreshOrganizationInsightsWorkflow(
 	}
 	if result.Pending != nil {
 		if err := startNarration(ctx, input, result.Pending); err != nil {
-			workflow.GetLogger(ctx).Warn("could not wait on the insight narration batch", "error", err)
+			workflow.GetLogger(ctx).
+				Warn("could not wait on the insight narration batch", "error", err)
 		}
 	}
 

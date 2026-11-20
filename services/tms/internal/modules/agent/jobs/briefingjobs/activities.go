@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
@@ -15,8 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -48,7 +48,6 @@ type ActivitiesParams struct {
 	Controls       tenantports.AgentControlRepository
 	Tenants        tenantports.TenantSyncRepository
 	Orgs           tenantports.OrganizationRepository
-	Features       platformcatalogports.FeatureGate
 }
 
 type Activities struct {
@@ -62,7 +61,6 @@ type Activities struct {
 	controls       tenantports.AgentControlRepository
 	tenants        tenantports.TenantSyncRepository
 	orgs           tenantports.OrganizationRepository
-	features       platformcatalogports.FeatureGate
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -77,7 +75,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		controls:       p.Controls,
 		tenants:        p.Tenants,
 		orgs:           p.Orgs,
-		features:       p.Features,
 	}
 }
 
@@ -88,30 +85,32 @@ func (a *Activities) ListDueOrganizationsActivity(
 	ctx context.Context,
 	input *DueOrganizationsInput,
 ) (*DueOrganizations, error) {
-	organizations, err := a.tenants.ListOrganizations(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list organizations: %w", err)
-	}
-
 	result := &DueOrganizations{Due: make([]temporaljobs.TenantWorkItem, 0)}
-	for _, org := range organizations {
-		activity.RecordHeartbeat(ctx, org.ID.String())
+	err := tenantports.EachTenant(
+		ctx,
+		a.tenants,
+		entitlement.For(platformcatalog.FeatureAIDesk),
+		func(tenantCtx context.Context, tenantInfo pagination.TenantInfo) error {
+			activity.RecordHeartbeat(ctx, tenantInfo.OrgID.String())
 
-		tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
-		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
-		due, dErr := a.isDue(tenantCtx, tenantInfo, input.Now)
-		if dErr != nil {
-			a.l.Warn("could not decide whether a briefing is due",
-				zap.String("organization", org.ID.String()),
-				zap.Error(dErr),
-			)
-			result.Failed = append(result.Failed, org.ID.String())
+			due, dErr := a.isDue(tenantCtx, tenantInfo, input.Now)
+			if dErr != nil {
+				a.l.Warn("could not decide whether a briefing is due",
+					zap.String("organization", tenantInfo.OrgID.String()),
+					zap.Error(dErr),
+				)
+				result.Failed = append(result.Failed, tenantInfo.OrgID.String())
 
-			continue
-		}
-		if due {
-			result.Due = append(result.Due, temporaljobs.NewTenantWorkItem(tenantInfo, 1))
-		}
+				return nil
+			}
+			if due {
+				result.Due = append(result.Due, temporaljobs.NewTenantWorkItem(tenantInfo, 1))
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list the organizations with Trenova AI: %w", err)
 	}
 
 	return result, nil
@@ -257,11 +256,6 @@ func (a *Activities) isDue(
 	tenantInfo pagination.TenantInfo,
 	now int64,
 ) (bool, error) {
-	allowed, err := a.features.Enabled(ctx, platformcatalog.FeatureAIDesk)
-	if err != nil || !allowed {
-		return false, err
-	}
-
 	control, err := a.controls.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return false, err

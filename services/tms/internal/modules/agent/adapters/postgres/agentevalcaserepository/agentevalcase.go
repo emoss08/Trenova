@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -41,19 +43,22 @@ var evalCaseErrors = dberror.Mapping{Entity: entityName}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) agentqualityports.AgentEvalCaseRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.agentevalcase-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.agentevalcase-repository"),
 	}
 }
 
@@ -237,7 +242,10 @@ func (r *repository) ListCaptureCandidates(
 			p := agentdb.AgentProposals
 			run := agentdb.AgentRuns
 			captured := agentqualitydb.EvalCases.As("captured")
-
+			entitled, entitledErr := r.entitlements.ForWork(ctx, d.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			rows, err := keel.Into[agentqualityports.EvalCaseCaptureCandidate](
 				ctx,
 				r.db.Keel(ctx),
@@ -262,6 +270,7 @@ func (r *repository) ListCaptureCandidates(
 						run.BusinessUnitID.EqCol(p.BusinessUnitID),
 					).
 					Where(
+						entitled,
 						d.ProposalID.IsNotNull(),
 						d.Decision.In(capturedDecisions()...),
 						d.CreatedAt.Gte(req.Since),
@@ -293,8 +302,16 @@ func (r *repository) PurgeExpired(
 	}
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		due := agentqualitydb.EvalCases.As("due")
+		var entitled keel.Pred
+		if req.AllTenants {
+			across, err := r.entitlements.ForWork(ctx, due.OrganizationID.Col)
+			if err != nil {
+				return 0, err
+			}
+			entitled = across
+		}
 		keys := due.Pick(due.ID).
-			Where(keel.Or(
+			Where(entitled, keel.Or(
 				keel.And(due.ExpiresAt.IsNotNull(), due.ExpiresAt.Lte(req.Now)),
 				keel.When(req.CreatedBefore > 0, due.CreatedAt.Lt(req.CreatedBefore)),
 			)).
@@ -313,8 +330,13 @@ func (r *repository) PurgeOrphaned(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		orphan := agentqualitydb.EvalCases.As("orphan")
 		thread := conversationdb.Threads
+		entitled, entitledErr := r.entitlements.ForWork(ctx, orphan.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		keys := orphan.Pick(orphan.ID).
 			Where(
+				entitled,
 				orphan.SourceThreadID.IsNotNull(),
 				keel.NotExists(thread.AllTenants().Where(
 					thread.ID.EqCol(orphan.SourceThreadID),
@@ -413,9 +435,14 @@ func (r *repository) RetireStaleAutomatic(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		c := agentqualitydb.EvalCases
 		stale := agentqualitydb.EvalCases.As("stale")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, stale.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		keys := stale.AllTenants().
 			Pick(stale.ID).
 			Where(
+				entitled,
 				stale.Automatic.IsTrue(),
 				stale.Status.Eq(agentquality.CaseStatusActive),
 				stale.CreatedAt.Lt(req.CreatedBefore),
@@ -452,13 +479,17 @@ func (r *repository) AdoptCandidates(
 		func(ctx context.Context) ([]agentqualityports.AdoptedEvalCase, error) {
 			c := agentqualitydb.EvalCases
 			control := agentqualitycontroldb.Controls
-
+			entitled, entitledErr := r.entitlements.ForWork(ctx, c.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			adopted, err := keel.Into[agentqualityports.AdoptedEvalCase](
 				ctx,
 				r.db.Keel(ctx),
 				c.AllTenants().
 					Pick(c.ID, c.OrganizationID, c.BusinessUnitID, c.AgentDefinitionID).
 					Where(
+						entitled,
 						c.Status.Eq(agentquality.CaseStatusCandidate),
 						c.Source.Eq(agentquality.CaseSourceDecidedProposal),
 						c.CreatedByUserID.IsNull(),

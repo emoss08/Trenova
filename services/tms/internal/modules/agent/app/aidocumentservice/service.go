@@ -11,6 +11,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -70,7 +72,10 @@ func (s *Service) ExtractionAvailability(
 		return documentaiextractionports.ExtractionOffOnServer, nil
 	}
 
-	allowed, err := s.features.Enabled(ctx, platformcatalog.FeatureDocumentIntelligence)
+	allowed, err := s.features.Enabled(
+		dbscope.WithTenant(ctx, tenantInfo.DBTenant()),
+		platformcatalog.FeatureDocumentIntelligence,
+	)
 	if err != nil {
 		return "", err
 	}

@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/supportlog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/supportlogports"
@@ -37,7 +39,13 @@ func newLogRig(t *testing.T) *logRig {
 		tenant: data.Ctx(ctx),
 		plain:  ctx,
 		data:   data,
-		repo:   New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}),
+		repo: New(
+			Params{
+				Entitlements: entitlementtest.Instance(),
+				DB:           postgres.WrapDB(db),
+				Logger:       zap.NewNop(),
+			},
+		),
 	}
 }
 
@@ -51,7 +59,11 @@ func (r *logRig) ask(period supportlog.Period, at int64) (*supportlog.LogRequest
 	}))
 }
 
-func (r *logRig) report(req *supportlog.LogRequest, report *supportlog.Report, at int64) *supportlog.LogRequest {
+func (r *logRig) report(
+	req *supportlog.LogRequest,
+	report *supportlog.Report,
+	at int64,
+) *supportlog.LogRequest {
 	r.t.Helper()
 	changed, err := req.Apply(report, at)
 	require.NoError(r.t, err)
@@ -105,7 +117,11 @@ func TestOnlyOneLogRequestIsInFlightForTheWholeInstance(t *testing.T) {
 	assert.True(t, load.InFlight)
 	assert.Equal(t, 1, load.Recent)
 
-	collecting := rig.report(first, &supportlog.Report{Status: supportlog.StatusCollecting, BundleID: "bundle-1"}, logNow+120)
+	collecting := rig.report(
+		first,
+		&supportlog.Report{Status: supportlog.StatusCollecting, BundleID: "bundle-1"},
+		logNow+120,
+	)
 	assert.Equal(t, supportlog.StatusCollecting, collecting.Status)
 	sent := rig.report(collecting, &supportlog.Report{Status: supportlog.StatusSent}, logNow+180)
 	assert.Equal(t, supportlog.StatusSent, sent.Status)
@@ -114,7 +130,11 @@ func TestOnlyOneLogRequestIsInFlightForTheWholeInstance(t *testing.T) {
 	load, err = rig.repo.InstanceLoad(rig.plain, first.CreatedAt)
 	require.NoError(t, err)
 	assert.False(t, load.InFlight, "a finished request frees the instance for the next one")
-	assert.Zero(t, load.Recent, "only requests made after the given time count toward the day's limit")
+	assert.Zero(
+		t,
+		load.Recent,
+		"only requests made after the given time count toward the day's limit",
+	)
 
 	_, err = rig.ask(supportlog.PeriodHour, logNow+240)
 	require.NoError(t, err)
@@ -127,9 +147,16 @@ func TestAReportOnARequestThatChangedMeanwhileIsRefused(t *testing.T) {
 	require.NoError(t, err)
 	stale := *asked
 
-	rig.report(asked, &supportlog.Report{Status: supportlog.StatusCollecting, BundleID: "bundle-1"}, logNow+60)
+	rig.report(
+		asked,
+		&supportlog.Report{Status: supportlog.StatusCollecting, BundleID: "bundle-1"},
+		logNow+60,
+	)
 
-	changed, err := stale.Apply(&supportlog.Report{Status: supportlog.StatusFailed, Message: "no disk"}, logNow+90)
+	changed, err := stale.Apply(
+		&supportlog.Report{Status: supportlog.StatusFailed, Message: "no disk"},
+		logNow+90,
+	)
 	require.NoError(t, err)
 	require.True(t, changed)
 	_, err = rig.repo.SaveReport(rig.plain, &stale)
@@ -156,7 +183,11 @@ func TestTheSweepFindsRequestsNeverPickedUpOrNeverFinished(t *testing.T) {
 	assert.Empty(t, overdue(made-1, made-1), "still within its time to be picked up")
 	require.Len(t, overdue(made, made-1), 1, "never picked up")
 
-	rig.report(asked, &supportlog.Report{Status: supportlog.StatusCollecting, BundleID: "bundle-1"}, made+60)
+	rig.report(
+		asked,
+		&supportlog.Report{Status: supportlog.StatusCollecting, BundleID: "bundle-1"},
+		made+60,
+	)
 	assert.Empty(t, overdue(made+3_600, made+59), "collecting, and within its time to finish")
 	require.Len(t, overdue(made-1, made+60), 1, "never finished")
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -35,19 +37,22 @@ var controlErrors = dberror.Mapping{Entity: controlEntity}
 type ControlParams struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type controlRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewControls(p ControlParams) agentqualityports.AgentQualityControlRepository {
 	return &controlRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.agentqualitycontrol-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.agentqualitycontrol-repository"),
 	}
 }
 
@@ -207,13 +212,23 @@ func (r *controlRepository) ListScheduleTargets(
 		r.db,
 		func(ctx context.Context) ([]*agentqualityports.QualityScheduleTarget, error) {
 			org := tenantdb.Organizations
+			entitled, entitledErr := r.entitlements.ForWork(ctx, org.ID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			limit := clampLimit(req.Limit, defaultScheduleTargetCap, maxScheduleTargetCap)
 
 			rows, err := keel.Into[scheduleTargetRow](
 				ctx,
 				r.db.Keel(ctx),
 				scheduleTargetQuery(true).
-					Where(keel.When(req.AfterOrganizationID.IsNotNil(), org.ID.Gt(req.AfterOrganizationID))).
+					Where(
+						entitled,
+						keel.When(
+							req.AfterOrganizationID.IsNotNil(),
+							org.ID.Gt(req.AfterOrganizationID),
+						),
+					).
 					Order(org.ID.Asc()).
 					Limit(limit),
 			)

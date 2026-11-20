@@ -7,6 +7,8 @@ import (
 	"maps"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workfeature"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"go.temporal.io/api/serviceerror"
@@ -218,6 +220,7 @@ func (r *Reconciler) needsUpdate(existing *client.ScheduleListEntry, want desire
 }
 
 func (r *Reconciler) createSchedule(ctx context.Context, want desired) error {
+	ctx = workfeature.Starting(ctx, want.Feature)
 	sc := r.client.ScheduleClient()
 	opts := want.options()
 
@@ -242,6 +245,7 @@ func isScheduleAlreadyExists(err error) bool {
 }
 
 func (r *Reconciler) updateSchedule(ctx context.Context, want desired) error {
+	ctx = workfeature.Starting(ctx, want.Feature)
 	sc := r.client.ScheduleClient()
 	handle := sc.GetHandle(ctx, want.ID)
 

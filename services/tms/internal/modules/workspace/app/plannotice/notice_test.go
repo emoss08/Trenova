@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -53,6 +55,7 @@ type twoTenants struct{ tenants []pagination.TenantInfo }
 
 func (p twoTenants) ListTenantsPage(
 	_ context.Context,
+	_ entitlement.Need,
 	after pulid.ID,
 	_ int,
 ) ([]pagination.TenantInfo, error) {

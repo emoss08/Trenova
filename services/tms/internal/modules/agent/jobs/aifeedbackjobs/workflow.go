@@ -3,6 +3,9 @@ package aifeedbackjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -55,6 +58,7 @@ func AIFeedbackMaintenanceWorkflow(
 	result := newAIFeedbackMaintenanceResult()
 	_, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "AI feedback maintenance",
+		Need:        entitlement.For(platformcatalog.FeatureAgentAutomation),
 		Concurrency: organizationConcurrency,
 		ListPage: func(
 			wctx workflow.Context,
@@ -70,6 +74,7 @@ func AIFeedbackMaintenanceWorkflow(
 				a.ListAIFeedbackOrganizationsActivity,
 				&ListAIFeedbackOrganizationsInput{
 					After: after,
+					Need:  entitlement.For(platformcatalog.FeatureAgentAutomation),
 					Limit: temporaljobs.DefaultOrganizationPageSize,
 				},
 			).Get(listCtx, &page)
@@ -78,7 +83,6 @@ func AIFeedbackMaintenanceWorkflow(
 		},
 		RunTenant: func(wctx workflow.Context, tenant temporaljobs.TenantWorkItem) (int, error) {
 			options := organizationOptions
-			options.Priority = temporal.Priority{FairnessKey: tenant.OrganizationID.String()}
 			activityCtx := workflow.WithActivityOptions(wctx, options)
 			var maintained OrganizationAIFeedbackResult
 			if err := workflow.ExecuteActivity(

@@ -5,6 +5,8 @@ package accountingsyncrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
@@ -209,11 +211,13 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	conn := seeded.conn
 	logger := zap.NewNop()
 	invoices := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
-	records := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: logger})
+	records := NewSyncRecordRepository(
+		SyncRecordParams{Entitlements: entitlementtest.Instance(), DB: conn, Logger: logger},
+	)
 	source := accountingdriftrepository.NewDriftSource(
 		accountingdriftrepository.DriftSourceParams{DB: conn, Logger: logger},
 	)
-	connection, err := accountingconnectionrepository.NewConnectionRepository(accountingconnectionrepository.ConnectionParams{DB: conn, Logger: logger}).
+	connection, err := accountingconnectionrepository.NewConnectionRepository(accountingconnectionrepository.ConnectionParams{Entitlements: entitlementtest.Instance(), DB: conn, Logger: logger}).
 		Create(ctx, accountingtest.NewConnection(tenant, userID, accountingtest.Realm, 1_000))
 	require.NoError(t, err)
 

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -28,8 +30,9 @@ import (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 const (
@@ -44,14 +47,16 @@ var offerErrors = dberror.Mapping{Entity: "Tender offer"}
 var tokenErrors = dberror.Mapping{Entity: "Tender offer token"}
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) tenderports.TenderRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.tender-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.tender-repository"),
 	}
 }
 
@@ -299,7 +304,16 @@ func (r *repository) ListForSweep(
 		// dispatch, or after its last offer resolved without reaching a terminal
 		// tender status. Nudging a healthy workflow that is merely between
 		// offers is harmless.
+		var entitled keel.Pred
+		if system {
+			across, entitledErr := r.entitlements.ForWork(ctx, t.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
+			entitled = across
+		}
 		q := t.Where(
+			entitled,
 			t.Status.Eq(tender.StatusActive),
 			keel.Or(
 				keel.Exists(awaiting(inFlight.ExpiresAt.Lte(req.ExpiredBy))),
@@ -739,8 +753,13 @@ func (r *repository) ListAcceptedMissingRateConfirmation(
 				keel.NotExists(standingRateConfirmation),
 			)
 
+		entitled, entitledErr := r.entitlements.ForWork(ctx, t.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		entities, err := t.AllTenants().
 			Where(
+				entitled,
 				t.Status.Eq(tender.StatusAccepted),
 				t.AcceptedOfferID.IsNotNull(),
 				t.AcceptedAt.Gt(req.AcceptedAfter),
@@ -776,10 +795,17 @@ func (r *repository) PurgeDeadOfferTokens(
 
 		tk := tenderdb.TenderOfferTokens
 		dead := tk.As("dead")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, dead.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		n, err := tk.AllTenants().
 			Where(tk.ID.InQuery(dead.AllTenants().
 				Pick(dead.ID).
-				Where(dead.UsedAt.Coalesce(dead.RevokedAt, dead.ExpiresAt).Lt(req.DeadBefore)).
+				Where(
+					entitled,
+					dead.UsedAt.Coalesce(dead.RevokedAt, dead.ExpiresAt).Lt(req.DeadBefore),
+				).
 				Limit(limit))).
 			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -43,19 +45,22 @@ type webhookRow struct {
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) telematicsports.TelematicsRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.telematics-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.telematics-repository"),
 	}
 }
 
@@ -823,21 +828,37 @@ func (r *repository) CleanupExpired(
 		db := r.db.Keel(ctx)
 
 		e := telematicsdb.TelematicsEvents
-		events, err := e.AllTenants().Where(e.OccurredAt.Lt(eventsOlderThan)).Delete(ctx, db)
+		eventsEntitled, err := r.entitlements.ForWork(ctx, e.OrganizationID.Col)
+		if err != nil {
+			return 0, err
+		}
+		events, err := e.AllTenants().
+			Where(eventsEntitled, e.OccurredAt.Lt(eventsOlderThan)).
+			Delete(ctx, db)
 		if err != nil {
 			return 0, fmt.Errorf("cleanup telematics events: %w", err)
 		}
 
 		v := telematicsdb.WorkerHOSViolations
+		violationsEntitled, err := r.entitlements.ForWork(ctx, v.OrganizationID.Col)
+		if err != nil {
+			return 0, err
+		}
 		violations, err := v.AllTenants().
-			Where(v.ViolationStartAt.Lt(violationsOlderThan)).
+			Where(violationsEntitled, v.ViolationStartAt.Lt(violationsOlderThan)).
 			Delete(ctx, db)
 		if err != nil {
 			return 0, fmt.Errorf("cleanup hos violations: %w", err)
 		}
 
 		hl := telematicsdb.WorkerHOSLogs
-		logs, err := hl.AllTenants().Where(hl.LogStartAt.Lt(hosLogsOlderThan)).Delete(ctx, db)
+		logsEntitled, err := r.entitlements.ForWork(ctx, hl.OrganizationID.Col)
+		if err != nil {
+			return 0, err
+		}
+		logs, err := hl.AllTenants().
+			Where(logsEntitled, hl.LogStartAt.Lt(hosLogsOlderThan)).
+			Delete(ctx, db)
 		if err != nil {
 			return 0, fmt.Errorf("cleanup hos logs: %w", err)
 		}

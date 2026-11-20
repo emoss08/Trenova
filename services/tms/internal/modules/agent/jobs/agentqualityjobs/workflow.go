@@ -66,8 +66,9 @@ const (
 	judgeBatchWait      = 25 * time.Hour
 )
 
-func withPriority(options workflow.ActivityOptions, orgID pulid.ID) workflow.ActivityOptions {
-	options.Priority = agentqualitycontract.EvaluationPriority(orgID)
+func withPriority(base *workflow.ActivityOptions) workflow.ActivityOptions {
+	options := *base
+	options.Priority = agentqualitycontract.EvaluationPriority()
 
 	return options
 }
@@ -78,7 +79,7 @@ func childOptions(workflowID string, orgID pulid.ID) workflow.ChildWorkflowOptio
 		TaskQueue:             temporaltype.TaskQueueAgentHeavy.String(),
 		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		ParentClosePolicy:     enums.PARENT_CLOSE_POLICY_ABANDON,
-		Priority:              agentqualitycontract.EvaluationPriority(orgID),
+		Priority:              agentqualitycontract.EvaluationPriority(),
 	}
 }
 
@@ -97,7 +98,7 @@ func AgentQualitySweepWorkflow(
 
 	plan := payload.Plan
 	if plan == nil {
-		planCtx := workflow.WithActivityOptions(ctx, withPriority(planOptions, tenant.OrgID))
+		planCtx := workflow.WithActivityOptions(ctx, withPriority(&planOptions))
 		var planned agentqualityengine.SweepPlan
 		if err := workflow.ExecuteActivity(planCtx, a.PlanSweepActivity,
 			&agentqualityengine.SweepRequest{
@@ -115,7 +116,7 @@ func AgentQualitySweepWorkflow(
 	}
 
 	sweepID := workflow.GetInfo(ctx).WorkflowExecution.ID
-	stepCtx := workflow.WithActivityOptions(ctx, withPriority(stepOptions, tenant.OrgID))
+	stepCtx := workflow.WithActivityOptions(ctx, withPriority(&stepOptions))
 	handled := 0
 	for idx := payload.Cursor; idx < len(plan.Agents); idx++ {
 		if handled >= agentsPerExecution {
@@ -214,7 +215,7 @@ func AgentSuiteRunWorkflow(
 	var a *Activities
 	logger := workflow.GetLogger(ctx)
 	tenant := payload.TenantInfo()
-	stepCtx := workflow.WithActivityOptions(ctx, withPriority(stepOptions, tenant.OrgID))
+	stepCtx := workflow.WithActivityOptions(ctx, withPriority(&stepOptions))
 
 	stop := payload.StopReason
 	cursor := payload.Cursor
@@ -340,7 +341,7 @@ func submitJudgeBatch(
 ) *agentqualityengine.JudgeBatch {
 	submitCtx := workflow.WithActivityOptions(
 		ctx,
-		withPriority(submitBatchOptions, payload.OrganizationID),
+		withPriority(&submitBatchOptions),
 	)
 	var batch agentqualityengine.JudgeBatch
 	if err := workflow.ExecuteActivity(submitCtx, a.SubmitJudgeBatchActivity,
@@ -409,7 +410,7 @@ func judgeBatchAndFinalize(
 	if awaitJudgeBatch(ctx, a, suite, batch) {
 		collectCtx := workflow.WithActivityOptions(
 			ctx,
-			withPriority(collectBatchOptions, suite.OrganizationID),
+			withPriority(&collectBatchOptions),
 		)
 		var collected agentqualityengine.CollectedJudgeBatch
 		if err := workflow.ExecuteActivity(collectCtx, a.CollectJudgeBatchActivity,
@@ -449,7 +450,7 @@ func awaitJudgeBatch(
 	batch *agentqualityengine.JudgeBatch,
 ) bool {
 	logger := workflow.GetLogger(ctx)
-	pollCtx := workflow.WithActivityOptions(ctx, withPriority(stepOptions, suite.OrganizationID))
+	pollCtx := workflow.WithActivityOptions(ctx, withPriority(&stepOptions))
 	deadline := workflow.Now(ctx).Add(judgeBatchWait)
 	wait := judgeBatchFirstPoll
 	for {
@@ -489,8 +490,8 @@ func judgeEach(
 ) (int, string, error) {
 	logger := workflow.GetLogger(ctx)
 	tenant := payload.TenantInfo()
-	stepCtx := workflow.WithActivityOptions(ctx, withPriority(stepOptions, tenant.OrgID))
-	judgeCtx := workflow.WithActivityOptions(ctx, withPriority(judgeOptions, tenant.OrgID))
+	stepCtx := workflow.WithActivityOptions(ctx, withPriority(&stepOptions))
+	judgeCtx := workflow.WithActivityOptions(ctx, withPriority(&judgeOptions))
 
 	judged := 0
 	for _, evaluationID := range evaluationIDs {
@@ -532,7 +533,7 @@ func finalizeSuite(
 ) (*SuiteRunResult, error) {
 	finalizeCtx := workflow.WithActivityOptions(
 		ctx,
-		withPriority(finalizeOptions, payload.OrganizationID),
+		withPriority(&finalizeOptions),
 	)
 	var finalized agentqualityengine.FinalizedSuite
 	if err := workflow.ExecuteActivity(finalizeCtx, a.FinalizeSuiteActivity,
@@ -584,7 +585,7 @@ func failSuite(
 	defer cancel()
 	failCtx = workflow.WithActivityOptions(
 		failCtx,
-		withPriority(stepOptions, payload.OrganizationID),
+		withPriority(&stepOptions),
 	)
 
 	if err := workflow.ExecuteActivity(failCtx, a.FailSuiteActivity,

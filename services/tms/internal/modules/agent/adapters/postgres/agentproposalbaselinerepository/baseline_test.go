@@ -3,6 +3,8 @@ package agentproposalbaselinerepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview/agentpreviewdb"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +14,11 @@ func TestOrphans_AreOnlyOldBaselinesNoProposalNames(t *testing.T) {
 	t.Parallel()
 
 	ctx := dbscope.WithSystem(t.Context(), "test")
-	sql, args := keeltest.RenderIn(t, ctx, orphans(1767225600, 250))
+	sql, args := keeltest.RenderIn(
+		t,
+		ctx,
+		orphans(agentpreviewdb.ProposalBaselines.As("orphan"), keel.True(), 1767225600, 250),
+	)
 
 	assert.Contains(t, sql, `SELECT orphan."proposal_id"`)
 	assert.Contains(t, sql, `FROM "agent_proposal_baselines" orphan`)

@@ -4,6 +4,8 @@ import (
 	"context"
 	"maps"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -29,13 +31,15 @@ var activityErrors = dberror.Mapping{Entity: "Weather Alert Activity"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 type tenantRow struct {
@@ -45,8 +49,9 @@ type tenantRow struct {
 
 func New(p Params) weatheralertports.WeatherAlertRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.weather-alert-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.weather-alert-repository"),
 	}
 }
 
@@ -54,10 +59,14 @@ func (r *repository) ListTenants(ctx context.Context) ([]pagination.TenantInfo, 
 	ctx = dbscope.WithSystem(ctx, "list organizations for weather alert polling")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		o := tenantdb.Organizations
+		entitled, entitledErr := r.entitlements.ForWork(ctx, o.ID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := keel.Into[tenantRow](
 			ctx,
 			r.db.Keel(ctx),
-			o.AllTenants().Pick(o.ID, o.BusinessUnitID).Order(o.ID.Asc()),
+			o.AllTenants().Pick(o.ID, o.BusinessUnitID).Where(entitled).Order(o.ID.Asc()),
 		)
 		if err != nil {
 			return nil, err
@@ -264,9 +273,14 @@ func (r *repository) ExpireStaleAlerts(
 			now := timeutils.NowUnix()
 			db := r.db.Keel(ctx)
 			wa := weatheralertdb.WeatherAlerts
+			entitled, entitledErr := r.entitlements.ForWork(ctx, wa.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			expired, err := wa.AllTenants().
 				Pick(wa.ID, wa.LastUpdatedAt).
 				Where(
+					entitled,
 					wa.ExpiredAt.IsNull(),
 					wa.Expires.IsNotNull(),
 					wa.Expires.Lte(now),

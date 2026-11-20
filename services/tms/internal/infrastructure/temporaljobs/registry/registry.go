@@ -81,6 +81,7 @@ type WorkerManager struct {
 	queueActivities map[string]map[string]string
 	registries      []WorkerRegistry
 	interceptors    []interceptor.WorkerInterceptor
+	queueShared     any
 	logger          *zap.Logger
 	mu              sync.RWMutex
 }
@@ -89,6 +90,12 @@ func (m *WorkerManager) SetInterceptors(interceptors []interceptor.WorkerInterce
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.interceptors = interceptors
+}
+
+func (m *WorkerManager) SetQueueActivities(activities any) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.queueShared = activities
 }
 
 func NewWorkerManager(c client.Client, logger *zap.Logger) *WorkerManager {
@@ -164,6 +171,9 @@ func (m *WorkerManager) Register(registry WorkerRegistry) error {
 	if !exists {
 		w = worker.New(m.client, taskQueue, opts)
 		createdQueueWorker = true
+		if _, err := RegisterActivitiesFromStruct(w, m.queueShared, m.logger); err != nil {
+			return fmt.Errorf("register the shared activities for %s: %w", taskQueue, err)
+		}
 	}
 
 	if err := registry.RegisterActivities(w); err != nil {

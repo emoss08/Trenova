@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -29,19 +31,22 @@ var recognitionErrors = dberror.Mapping{Entity: "WorkerRecognition"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) workersafetyports.WorkerSafetyRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.worker-safety-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.worker-safety-repository"),
 	}
 }
 
@@ -338,16 +343,20 @@ func (r *repository) DeleteRecognition(
 	})
 }
 
-func lapsedQuery(req *workersafetyports.ListWorkersWithLapsedPointsRequest) keel.Query[*keel.Row] {
+func lapsedQuery(
+	req *workersafetyports.ListWorkersWithLapsedPointsRequest,
+	eventsEntitled keel.Pred,
+	actionsEntitled keel.Pred,
+) keel.Query[*keel.Row] {
 	e := workersafetydb.WorkerSafetyEvents
 	a := workerdisciplinedb.WorkerDisciplinaryActions
 
 	events := e.AllTenants().
 		Pick(e.WorkerID, e.OrganizationID, e.BusinessUnitID).
-		Where(e.PointsExpireAt.Gte(req.Since), e.PointsExpireAt.Lt(req.Until))
+		Where(eventsEntitled, e.PointsExpireAt.Gte(req.Since), e.PointsExpireAt.Lt(req.Until))
 	actions := a.AllTenants().
 		Pick(a.WorkerID, a.OrganizationID, a.BusinessUnitID).
-		Where(a.ExpiresAt.Gte(req.Since), a.ExpiresAt.Lt(req.Until))
+		Where(actionsEntitled, a.ExpiresAt.Gte(req.Since), a.ExpiresAt.Lt(req.Until))
 
 	lapsed := keel.CTE(
 		"lapsed",
@@ -378,7 +387,25 @@ func (r *repository) ListWorkersWithLapsedPoints(
 		"list workers with lapsed safety points across every organization",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerTenantRef, error) {
-		refs, err := keel.Into[workerports.WorkerTenantRef](ctx, r.db.Keel(ctx), lapsedQuery(req))
+		eventsEntitled, err := r.entitlements.ForWork(
+			ctx,
+			workersafetydb.WorkerSafetyEvents.OrganizationID.Col,
+		)
+		if err != nil {
+			return nil, err
+		}
+		actionsEntitled, err := r.entitlements.ForWork(
+			ctx,
+			workerdisciplinedb.WorkerDisciplinaryActions.OrganizationID.Col,
+		)
+		if err != nil {
+			return nil, err
+		}
+		refs, err := keel.Into[workerports.WorkerTenantRef](
+			ctx,
+			r.db.Keel(ctx),
+			lapsedQuery(req, eventsEntitled, actionsEntitled),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("list workers with lapsed safety points: %w", err)
 		}

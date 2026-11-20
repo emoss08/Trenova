@@ -109,9 +109,9 @@ database:
   password: postgres # Database password
   sslMode: disable # SSL mode: disable, require, verify-ca, verify-full
   sslRootCert: "" # CA file verify-ca and verify-full check the server against; empty uses the system's
-  statementTimeout: 10s # Per-statement database deadline
+  statementTimeout: 10s # Per-statement deadline on the tenant and system pools; on a shared server it bounds what one organization's query can hold
   lockTimeout: 5s # Maximum time a statement may wait for a lock
-  idleInTransactionSessionTimeout: 30s # Maximum time a transaction may sit idle
+  idleInTransactionSessionTimeout: 30s # Maximum time a transaction may sit idle before PostgreSQL ends it and frees its connection
   # Development only: print statements to stderr with their bound values, caller
   # and outcome. "errors" prints failed and slow ones, "all" every one, "off" none.
   queryLog: errors
@@ -295,10 +295,13 @@ security:
     maxRequestBodyBytes: 1048576 # Max /graphql request body (bytes); bounds the variables payload
     persistedDocumentsPath: internal/api/graphql/persisted-documents.json # Dev/test only: safelist file re-read on unknown hash
     costBudget:
-      enabled: true # Per-user budget of GraphQL operation cost points
+      enabled: true # Budget of GraphQL operation cost points per person (and unattended agent), kept in Redis so every API process charges the same budget
       pointsPerMinute: 6000000 # Sustained refill rate; a large table page costs ~20k, the worst ~200k
       burst: 3000000 # Must be at least the single-operation complexity limit (750000)
-      cleanupInterval: 5m # Idle users are dropped from the budget table after this
+      # An organization's people together, while tenantLimits.requests.organizations is on
+      # (a shared server by default). Refused operations answer 429 with Retry-After.
+      organizationPointsPerMinute: 24000000
+      organizationBurst: 6000000
   idempotency:
     disabled: false # Turn off Idempotency-Key replay (shipment create still dedupes on its own index)
     recordTTL: 24h # How long a completed response is kept for replay
@@ -577,6 +580,62 @@ managed:
   # `page`). Absolute http or https URLs; empty leaves the item out.
   supportUrl: ""
   newSupportRequestUrl: ""
+
+# Limits that keep one organization from crowding the others on a server many organizations
+# share. Each is bounded per organization with an instance cap behind it. A switch is auto,
+# on or off: auto turns the per-organization bound on for a shared server (managed.tenancy:
+# shared) and leaves it off on a dedicated or self-hosted install. 0 or unset takes the
+# default shown; the defaults are sized for one 24 GB server.
+tenantLimits:
+  requests:
+    # On: sessions, capture devices and agents count against their organization's bucket
+    # (security.rateLimit.tenant) as API keys always do, and every signed-in request against
+    # the instance bucket below. Over either answers 429 with Retry-After.
+    organizations: auto
+    instancePerMinute: 30000
+    instanceBurst: 3000
+  # Slots for heavy work, shared by every process through Redis. A job that finds none free
+  # waits in its queue: a person's request up to `wait`, then 429 "the server is busy" with
+  # Retry-After; a background job as long as its deadline allows, heartbeating, then its
+  # retry policy runs it again. A slot lapses after `hold` unless its holder is alive.
+  # Off for organizations still bounds the instance.
+  heavyJobs:
+    organizations: auto
+    pdf: # rendering with the PDF renderer
+      perOrganization: 2
+      total: 4
+      hold: 2m
+      wait: 15s
+    extraction: # document conversion (Docling) for extraction
+      perOrganization: 1
+      total: 1
+      hold: 10m
+      wait: 15s
+    export: # report runs, audit and AI audit exports
+      perOrganization: 1
+      total: 4
+      hold: 30m
+      wait: 15s
+    import: # rate sheet uploads and fuel card statement staging
+      perOrganization: 1
+      total: 4
+      hold: 5m
+      wait: 15s
+    preview: # invoice packet page previews; warming ahead of the viewer only takes a free slot
+      perOrganization: 1
+      total: 4
+      hold: 2m
+      wait: 15s
+  # Calls at once one organization may hold on the built-in embedding service, inside the
+  # service's own limit; its circuit breaker is kept per organization either way.
+  aiSlots:
+    organizations: auto
+    perOrganization: 2
+  # Email one organization may send through the instance's Trenova sender each hour, inside
+  # the instance's 3000. Over it the send is refused with when to try again.
+  email:
+    organizations: auto
+    perOrganizationPerHour: 300
 
 # Limits on one uploaded rate sheet, fuel card statement or factoring remittance (CSV or
 # XLSX). A file past any of them is refused with the limit it went past; 0 or unset takes

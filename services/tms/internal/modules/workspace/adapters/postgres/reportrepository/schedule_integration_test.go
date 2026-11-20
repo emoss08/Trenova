@@ -5,6 +5,8 @@ package reportrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -42,8 +44,12 @@ func TestListSchedulesShowsOwnSchedulesAndThoseOnOwnedReports(t *testing.T) {
 		Build(t, ctx, db)
 
 	conn := postgres.WrapDB(db)
-	definitions := NewDefinitionRepository(DefinitionParams{DB: conn, Logger: zap.NewNop()})
-	schedules := NewScheduleRepository(ScheduleParams{DB: conn, Logger: zap.NewNop()})
+	definitions := NewDefinitionRepository(
+		DefinitionParams{Entitlements: entitlementtest.Instance(), DB: conn, Logger: zap.NewNop()},
+	)
+	schedules := NewScheduleRepository(
+		ScheduleParams{Entitlements: entitlementtest.Instance(), DB: conn, Logger: zap.NewNop()},
+	)
 
 	owner := pagination.TenantInfo{
 		OrgID:  data.Organization.ID,

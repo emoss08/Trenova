@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -20,14 +22,16 @@ import (
 var linkErrors = dberror.Mapping{Entity: "Customer tracking link"}
 
 type linkRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewLinks(p Params) customertrackingports.LinkRepository {
 	return &linkRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.customer-tracking-link-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.customer-tracking-link-repository"),
 	}
 }
 
@@ -142,11 +146,15 @@ func (r *linkRepository) PurgeDead(ctx context.Context, before int64, limit int)
 
 		l := customertrackingdb.Links
 		dead := l.As("dead")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, dead.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		rows, err := l.AllTenants().
 			Where(l.ID.InQuery(
 				dead.AllTenants().
 					Pick(dead.ID).
-					Where(dead.RevokedAt.Coalesce(dead.ExpiresAt).Lt(before)).
+					Where(entitled, dead.RevokedAt.Coalesce(dead.ExpiresAt).Lt(before)).
 					Limit(limit),
 			)).
 			Delete(ctx, r.db.Keel(ctx))

@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -37,6 +40,7 @@ func TestWakeDueTriageWorkflowWakesWhatIsDue(t *testing.T) {
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	worker := &sweepWorker{woken: 3}
 	env.RegisterActivity(NewActivities(ActivitiesParams{Worker: worker}))
 	env.RegisterWorkflow(WakeDueTriageWorkflow)

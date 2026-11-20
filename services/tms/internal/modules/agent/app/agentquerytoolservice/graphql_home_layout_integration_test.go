@@ -5,6 +5,8 @@ package agentquerytoolservice_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rbacrepository"
@@ -38,15 +40,26 @@ func TestConvertedGets_HomeLayoutReadsThePersonsOwnPage(t *testing.T) {
 	logger := zap.NewNop()
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	layouts := homelayoutservice.New(homelayoutservice.Params{
-		Logger:           logger,
-		Repo:             homelayoutrepository.New(homelayoutrepository.Params{DB: conn, Logger: logger}),
-		RBACRepo:         rbacrepository.New(rbacrepository.Params{DB: conn, Logger: logger}),
-		RoleRepo:         rolerepository.New(rolerepository.Params{DB: conn, Logger: logger}),
+		Logger: logger,
+		Repo: homelayoutrepository.New(
+			homelayoutrepository.Params{DB: conn, Logger: logger},
+		),
+		RBACRepo: rbacrepository.New(rbacrepository.Params{DB: conn, Logger: logger}),
+		RoleRepo: rolerepository.New(
+			rolerepository.Params{
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn,
+				Logger:       logger,
+			},
+		),
 		PermissionEngine: engine,
 		Features:         plantest.AllFeatures(),
 	})
 	resolvers.HomeLayoutService = layouts
-	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
+	reader := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+	)
 	get, err := agentquerytoolservice.ConvertedGetTool("home_get_layout", reader, engine)
 	require.NoError(t, err)
 

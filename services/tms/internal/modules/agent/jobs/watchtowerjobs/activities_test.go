@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -209,10 +212,36 @@ type fakeTenantSync struct {
 
 	organizations []tenant.SyncOrganization
 	err           error
+	needs         []entitlement.Need
 }
 
 func (f *fakeTenantSync) ListOrganizations(context.Context) ([]tenant.SyncOrganization, error) {
 	return f.organizations, f.err
+}
+
+func (f *fakeTenantSync) ListTenantsPage(
+	_ context.Context,
+	need entitlement.Need,
+	after pulid.ID,
+	limit int,
+) ([]pagination.TenantInfo, error) {
+	f.needs = append(f.needs, need)
+	if f.err != nil {
+		return nil, f.err
+	}
+	page := make([]pagination.TenantInfo, 0, limit)
+	passed := after.IsNil()
+	for _, org := range f.organizations {
+		if !passed {
+			passed = org.ID == after
+			continue
+		}
+		if len(page) == limit {
+			break
+		}
+		page = append(page, pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID})
+	}
+	return page, nil
 }
 
 func runFactoringSweep(t *testing.T, a *Activities) (*WatchtowerSweepResult, error) {
@@ -254,6 +283,10 @@ func TestFactoringSweepReconcilesTheFactoringKindForEachOrganization(t *testing.
 	assert.Equal(t, 1, result.Resolved)
 	assert.Equal(t, []string{broken.OrgID.String()}, result.FailedOrganizations)
 	require.Len(t, tower.calls, 2)
+	assert.Equal(t,
+		[]entitlement.Need{entitlement.For(platformcatalog.FeatureAIWatchtower)},
+		a.tenants.(*fakeTenantSync).needs,
+		"the sweep pages only through the organizations with the watchtower")
 	for _, call := range tower.calls {
 		assert.Equal(t, watchtower.SourceFactoring, call.kind)
 		assert.True(t, call.scoped, "each organization runs under its own scope")

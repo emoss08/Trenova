@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -43,6 +45,7 @@ type twoTenants struct{}
 
 func (twoTenants) ListTenantsPage(
 	_ context.Context,
+	_ entitlement.Need,
 	after pulid.ID,
 	_ int,
 ) ([]pagination.TenantInfo, error) {

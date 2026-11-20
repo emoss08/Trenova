@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
@@ -26,14 +28,16 @@ const (
 var rawPayloadErrors = dberror.Mapping{Entity: rawPayloadEntityName}
 
 type rawPayloadRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewRawPayloadRepository(p Params) carrierintelports.CarrierIntelRawPayloadRepository {
 	return &rawPayloadRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.carrier-intel-raw-payload-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.carrier-intel-raw-payload-repository"),
 	}
 }
 
@@ -101,9 +105,13 @@ func (r *rawPayloadRepository) PurgeExpired(
 		)
 
 		e := p.As("expired")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, e.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		expired := e.AllTenants().
 			Pick(e.ID).
-			Where(e.ExpiresAt.Lt(before)).
+			Where(entitled, e.ExpiresAt.Lt(before)).
 			Order(e.ExpiresAt.Asc()).
 			Limit(batch)
 

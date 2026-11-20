@@ -8,16 +8,19 @@ import (
 )
 
 type AcquireProviderSlotRequest struct {
-	ProviderID pulid.ID
-	Token      string
-	Limit      int
-	TTL        time.Duration
+	ProviderID        pulid.ID
+	Token             string
+	Limit             int
+	TTL               time.Duration
+	OrganizationID    pulid.ID
+	OrganizationLimit int
 }
 
 type ProviderSlotRequest struct {
-	ProviderID pulid.ID
-	Token      string
-	TTL        time.Duration
+	ProviderID     pulid.ID
+	Token          string
+	TTL            time.Duration
+	OrganizationID pulid.ID
 }
 
 type ProviderSlotRepository interface {

@@ -48,6 +48,7 @@ type PreviewService struct {
 	assembler *Assembler
 	documents documentports.InvoiceDocumentService
 	previews  PreviewCache
+	slots     kernelports.HeavyJobSlots
 	warming   *semaphore.Weighted
 	warms     sync.WaitGroup
 	l         *zap.Logger
@@ -61,6 +62,7 @@ type PreviewParams struct {
 	Assembler *Assembler
 	Documents documentports.InvoiceDocumentService
 	Previews  PreviewCache
+	Slots     kernelports.HeavyJobSlots
 	Logger    *zap.Logger
 }
 
@@ -71,6 +73,7 @@ func NewPreviewService(p PreviewParams) billingqueueports.PacketPreviewer {
 		assembler: p.Assembler,
 		documents: p.Documents,
 		previews:  p.Previews,
+		slots:     p.Slots,
 		warming:   semaphore.NewWeighted(maxWarming),
 		l:         p.Logger.Named("invoice-packet-preview"),
 	}
@@ -232,13 +235,20 @@ func (s *PreviewService) chunk(
 	first := chunk*pageChunkSize + 1
 	last := min(first+pageChunkSize-1, preview.Pages)
 
-	return s.previews.LoadPages(
-		ctx,
-		PageChunkKey{Preview: key, Build: preview.Build, Chunk: chunk},
-		func(ctx context.Context) ([]billingqueueports.PacketPage, error) {
-			return s.assembler.RenderPages(ctx, preview.Content, first, last)
-		},
-	)
+	return viewerRetries(ctx, func() ([]billingqueueports.PacketPage, error) {
+		return s.previews.LoadPages(
+			ctx,
+			PageChunkKey{Preview: key, Build: preview.Build, Chunk: chunk},
+			func(ctx context.Context) ([]billingqueueports.PacketPage, error) {
+				release, err := s.previewSlot(ctx)
+				if err != nil {
+					return nil, err
+				}
+				defer release()
+				return s.assembler.RenderPages(ctx, preview.Content, first, last)
+			},
+		)
+	})
 }
 
 func (s *PreviewService) index(
@@ -246,13 +256,43 @@ func (s *PreviewService) index(
 	key PreviewKey,
 	preview *billingqueueports.PacketPreview,
 ) (*PageIndex, error) {
-	return s.previews.LoadIndex(
-		ctx,
-		PageIndexKey{Preview: key, Build: preview.Build},
-		func(ctx context.Context) (*PageIndex, error) {
-			return s.assembler.IndexPages(ctx, preview.Content, preview.Pages)
-		},
-	)
+	return viewerRetries(ctx, func() (*PageIndex, error) {
+		return s.previews.LoadIndex(
+			ctx,
+			PageIndexKey{Preview: key, Build: preview.Build},
+			func(ctx context.Context) (*PageIndex, error) {
+				release, err := s.previewSlot(ctx)
+				if err != nil {
+					return nil, err
+				}
+				defer release()
+				return s.assembler.IndexPages(ctx, preview.Content, preview.Pages)
+			},
+		)
+	})
+}
+
+func viewerRetries[T any](ctx context.Context, load func() (T, error)) (T, error) {
+	out, err := load()
+	if warming, _ := ctx.Value(warmingKey{}).(bool); !warming && errors.Is(err, errPreviewBusy) {
+		return load()
+	}
+	return out, err
+}
+
+type warmingKey struct{}
+
+var errPreviewBusy = errors.New("the server is busy drawing other previews")
+
+func (s *PreviewService) previewSlot(ctx context.Context) (func(), error) {
+	if warming, _ := ctx.Value(warmingKey{}).(bool); warming {
+		release, ok := s.slots.TryHold(ctx, kernelports.HeavyJobPreview)
+		if !ok {
+			return nil, errPreviewBusy
+		}
+		return release, nil
+	}
+	return s.slots.Hold(ctx, kernelports.HeavyJobPreview)
 }
 
 func (s *PreviewService) warm(
@@ -267,11 +307,14 @@ func (s *PreviewService) warm(
 		defer s.warming.Release(1)
 		warmCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), warmTimeout)
 		defer cancel()
-		if _, err := s.chunk(warmCtx, key, preview, 0); err != nil {
+		warmCtx = context.WithValue(warmCtx, warmingKey{}, true)
+		if _, err := s.chunk(warmCtx, key, preview, 0); errors.Is(err, errPreviewBusy) {
+			return
+		} else if err != nil {
 			s.l.Warn("could not draw a packet's first pages ahead of the viewer",
 				zap.String("billingQueueItemId", key.ItemID.String()), zap.Error(err))
 		}
-		if _, err := s.index(warmCtx, key, preview); err != nil {
+		if _, err := s.index(warmCtx, key, preview); err != nil && !errors.Is(err, errPreviewBusy) {
 			s.l.Warn("could not index a packet's pages ahead of the viewer",
 				zap.String("billingQueueItemId", key.ItemID.String()), zap.Error(err))
 		}

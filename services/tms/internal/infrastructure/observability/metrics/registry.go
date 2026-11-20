@@ -29,6 +29,7 @@ type Registry struct {
 	Error      *httpmetrics.Error
 	Database   *platformmetrics.Database
 	Temporal   *platformmetrics.Temporal
+	Tenancy    *platformmetrics.Tenancy
 	Assistant  *aimetrics.Assistant
 	Audit      *auditmetrics.Audit
 	Document   *documentmetrics.Document
@@ -66,6 +67,7 @@ func NewRegistry(cfg *monitoringconfig.Config, logger *zap.Logger) (*Registry, e
 			Error:           httpmetrics.NewError(nil, logger, false),
 			Database:        platformmetrics.NewDatabase(nil, logger, false),
 			Temporal:        platformmetrics.NewTemporal(nil, logger, false),
+			Tenancy:         platformmetrics.NewTenancy(nil, logger, false),
 			Assistant:       aimetrics.NewAssistant(nil, logger, false),
 			Audit:           auditmetrics.NewAudit(nil, logger, false),
 			Document:        documentmetrics.NewDocument(nil, logger, false),
@@ -106,6 +108,7 @@ func NewRegistry(cfg *monitoringconfig.Config, logger *zap.Logger) (*Registry, e
 		Error:           httpmetrics.NewError(registry, logger, true),
 		Database:        platformmetrics.NewDatabase(registry, logger, true),
 		Temporal:        platformmetrics.NewTemporal(registry, logger, true),
+		Tenancy:         platformmetrics.NewTenancy(registry, logger, true),
 		Assistant:       aimetrics.NewAssistant(registry, logger, true),
 		Audit:           auditmetrics.NewAudit(registry, logger, true),
 		Document:        documentmetrics.NewDocument(registry, logger, true),

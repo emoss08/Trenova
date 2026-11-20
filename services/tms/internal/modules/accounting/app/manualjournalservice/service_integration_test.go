@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -48,7 +50,11 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 		journalpostingrepository.Params{DB: conn, Logger: logger},
 	)
 	accountingRepo := accountingcontrolrepository.New(
-		accountingcontrolrepository.Params{DB: conn, Logger: logger},
+		accountingcontrolrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
 	)
 	fiscalYearRepo := fiscalyearrepository.New(
 		fiscalyearrepository.Params{DB: conn, Logger: logger},

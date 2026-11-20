@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -71,7 +70,6 @@ func (r *Requester) RequestRefresh(ctx context.Context, tenantInfo pagination.Te
 			ID:            id,
 			TaskQueue:     temporaltype.TaskQueueSystem.String(),
 			StaticSummary: "Plan the organization's uncovered moves again",
-			Priority:      temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
 		},
 		RefreshWorkflowName,
 		&RefreshPayload{

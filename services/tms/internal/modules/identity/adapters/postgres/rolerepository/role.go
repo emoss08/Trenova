@@ -3,6 +3,8 @@ package rolerepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -49,19 +51,22 @@ var (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) permissionports.RoleRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.role-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.role-repository"),
 	}
 }
 
@@ -634,10 +639,15 @@ func (r *repository) ListOrphanedAssignments(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]permissionports.OrphanedAssignment, error) {
+			ura := rbacdb.UserRoleAssignments
+			entitled, entitledErr := r.entitlements.ForWork(ctx, ura.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			orphans, err := keel.Into[permissionports.OrphanedAssignment](
 				ctx,
 				r.db.Keel(ctx),
-				orphanedAssignmentsQuery(now, limit),
+				orphanedAssignmentsQuery(entitled, now, limit),
 			)
 			if err != nil {
 				r.l.Error("failed to list orphaned role assignments", zap.Error(err))
@@ -652,7 +662,11 @@ func (r *repository) ListOrphanedAssignments(
 	)
 }
 
-func orphanedAssignmentsQuery(now int64, limit int) keel.Query[*rbac.UserRoleAssignment] {
+func orphanedAssignmentsQuery(
+	entitled keel.Pred,
+	now int64,
+	limit int,
+) keel.Query[*rbac.UserRoleAssignment] {
 	ura := rbacdb.UserRoleAssignments
 	o := tenantdb.Organizations
 	u := tenantdb.Users
@@ -665,6 +679,7 @@ func orphanedAssignmentsQuery(now int64, limit int) keel.Query[*rbac.UserRoleAss
 		DistinctOn(ura.OrganizationID, ura.UserID).
 		Pick(ura.UserID, ura.OrganizationID, o.BusinessUnitID).
 		Where(
+			entitled,
 			u.CurrentOrganizationID.NeCol(ura.OrganizationID),
 			keel.NotExists(m.Query().AllTenants().Where(
 				m.UserID.EqCol(ura.UserID),

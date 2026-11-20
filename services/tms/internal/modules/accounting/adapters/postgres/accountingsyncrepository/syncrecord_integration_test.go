@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
@@ -53,7 +55,11 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 	connections := accountingconnectionrepository.NewConnectionRepository(
-		accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},
+		accountingconnectionrepository.ConnectionParams{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       zap.NewNop(),
+		},
 	)
 	created, err := connections.Create(
 		ctx,
@@ -67,10 +73,16 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 		conn:       conn,
 		tenant:     tenant,
 		connection: created,
-		records:    NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: zap.NewNop()}),
-		backfills:  NewBackfillRepository(BackfillParams{DB: conn, Logger: zap.NewNop()}),
-		userID:     data.User.ID,
-		now:        now,
+		records: NewSyncRecordRepository(
+			SyncRecordParams{
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn,
+				Logger:       zap.NewNop(),
+			},
+		),
+		backfills: NewBackfillRepository(BackfillParams{DB: conn, Logger: zap.NewNop()}),
+		userID:    data.User.ID,
+		now:       now,
 	}
 }
 
@@ -110,7 +122,11 @@ func (f *syncFixture) updateConnection(
 ) {
 	t.Helper()
 	connections := accountingconnectionrepository.NewConnectionRepository(
-		accountingconnectionrepository.ConnectionParams{DB: f.conn, Logger: zap.NewNop()},
+		accountingconnectionrepository.ConnectionParams{
+			Entitlements: entitlementtest.Instance(),
+			DB:           f.conn,
+			Logger:       zap.NewNop(),
+		},
 	)
 	change(f.connection)
 	updated, err := connections.Update(f.ctx, f.connection)
@@ -133,6 +149,7 @@ func (f *syncFixture) claim(t *testing.T, now int64) []*accountingsync.Accountin
 	claimed, err := f.records.Claim(f.ctx, &accountingsyncports.ClaimAccountingSyncRecordsRequest{
 		TenantInfo:   f.tenant,
 		ConnectionID: f.connection.ID,
+		ObjectTypes:  accountingsync.AllSyncObjectTypes(),
 		Now:          now,
 		Lease:        time.Minute,
 	})
@@ -263,6 +280,7 @@ func TestSyncRecordRepository_ConcurrentClaimsNeverOverlap(t *testing.T) {
 				&accountingsyncports.ClaimAccountingSyncRecordsRequest{
 					TenantInfo:   f.tenant,
 					ConnectionID: f.connection.ID,
+					ObjectTypes:  accountingsync.AllSyncObjectTypes(),
 					Now:          f.now,
 					Lease:        time.Minute,
 					Limit:        15,
@@ -549,6 +567,7 @@ func TestSyncRecordRepository_IsTenantScoped(t *testing.T) {
 		&accountingsyncports.ClaimAccountingSyncRecordsRequest{
 			TenantInfo:   stranger,
 			ConnectionID: f.connection.ID,
+			ObjectTypes:  accountingsync.AllSyncObjectTypes(),
 			Now:          f.now,
 		},
 	)
@@ -699,7 +718,11 @@ func TestBackfillRepository_OneActivePerConnection(t *testing.T) {
 func TestConnectionRepository_SyncSettingsAndPauseRoundTrip(t *testing.T) {
 	f := setupSyncFixture(t)
 	connections := accountingconnectionrepository.NewConnectionRepository(
-		accountingconnectionrepository.ConnectionParams{DB: f.conn, Logger: zap.NewNop()},
+		accountingconnectionrepository.ConnectionParams{
+			Entitlements: entitlementtest.Instance(),
+			DB:           f.conn,
+			Logger:       zap.NewNop(),
+		},
 	)
 
 	f.connection.SetupStep = accountingconnection.SetupStepStartDate
@@ -728,4 +751,42 @@ func TestConnectionRepository_SyncSettingsAndPauseRoundTrip(t *testing.T) {
 	stored.SyncStartDate = nil
 	_, err = connections.Update(f.ctx, stored)
 	require.Error(t, err, "the database refuses a finished setup without a start date")
+}
+
+func TestSyncRecordRepository_ClaimTakesOnlyTheKindsThePlanCovers(t *testing.T) {
+	f := setupSyncFixture(t)
+	f.enableSync(t)
+
+	invoice := f.record(accountingsync.SyncObjectInvoice, "INV-PLAN", f.now)
+	journal := f.record(accountingsync.SyncObjectJournalEntry, "JE-PLAN", f.now)
+	f.enqueue(t, invoice, journal)
+
+	claimed, err := f.records.Claim(f.ctx, &accountingsyncports.ClaimAccountingSyncRecordsRequest{
+		TenantInfo:   f.tenant,
+		ConnectionID: f.connection.ID,
+		ObjectTypes: []accountingsync.SyncObjectType{
+			accountingsync.SyncObjectCustomer,
+			accountingsync.SyncObjectInvoice,
+			accountingsync.SyncObjectCreditMemo,
+			accountingsync.SyncObjectDebitMemo,
+		},
+		Now:   f.now + 1,
+		Lease: time.Minute,
+	})
+	require.NoError(t, err)
+	require.Len(t, claimed, 1)
+	assert.Equal(t, accountingsync.SyncObjectInvoice, claimed[0].ObjectType)
+
+	none, err := f.records.Claim(f.ctx, &accountingsyncports.ClaimAccountingSyncRecordsRequest{
+		TenantInfo:   f.tenant,
+		ConnectionID: f.connection.ID,
+		Now:          f.now + 1,
+		Lease:        time.Minute,
+	})
+	require.NoError(t, err)
+	assert.Empty(t, none, "a plan that covers nothing claims nothing")
+
+	later := f.claim(t, f.now+2)
+	require.Len(t, later, 1, "the ledger record waited, untouched, for the plan to cover it")
+	assert.Equal(t, accountingsync.SyncObjectJournalEntry, later[0].ObjectType)
 }

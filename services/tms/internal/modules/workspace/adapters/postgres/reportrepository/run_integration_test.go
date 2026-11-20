@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
@@ -40,8 +42,9 @@ func TestCountActiveUnderConcurrentEnqueue(t *testing.T) {
 		Build(t, ctx, db)
 
 	repo := NewRunRepository(RunParams{
-		DB:     postgres.WrapDB(db),
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(db),
+		Logger:       zap.NewNop(),
 	})
 
 	tenantA := pagination.TenantInfo{
@@ -125,8 +128,9 @@ func TestCountActiveIgnoresTerminalRuns(t *testing.T) {
 	}
 
 	repo := NewRunRepository(RunParams{
-		DB:     postgres.WrapDB(db),
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(db),
+		Logger:       zap.NewNop(),
 	})
 
 	statuses := []report.RunStatus{
@@ -173,8 +177,9 @@ func TestFinishedRunKeepsItsSampleOutOfLists(t *testing.T) {
 		UserID: data.User.ID,
 	}
 	repo := NewRunRepository(RunParams{
-		DB:     postgres.WrapDB(db),
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(db),
+		Logger:       zap.NewNop(),
 	})
 
 	ctx = tenantCtx(ctx, tenant)
@@ -224,8 +229,9 @@ func TestLatestComparableFindsTheRequestersPreviousRunOfTheSameReportAndParamete
 	colleagueTenant.UserID = colleague.ID
 
 	repo := NewRunRepository(RunParams{
-		DB:     postgres.WrapDB(db),
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(db),
+		Logger:       zap.NewNop(),
 	})
 	create := func(run *report.ReportRun) *report.ReportRun {
 		created, createErr := repo.Create(ctx, run)
@@ -284,8 +290,9 @@ func TestLatestComparableTreatsMissingAndEmptyParametersAlike(t *testing.T) {
 		UserID: data.User.ID,
 	}
 	repo := NewRunRepository(RunParams{
-		DB:     postgres.WrapDB(db),
-		Logger: zap.NewNop(),
+		Entitlements: entitlementtest.Instance(),
+		DB:           postgres.WrapDB(db),
+		Logger:       zap.NewNop(),
 	})
 
 	ctx = tenantCtx(ctx, tenant)

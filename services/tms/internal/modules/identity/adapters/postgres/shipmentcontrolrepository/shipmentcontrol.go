@@ -3,6 +3,8 @@ package shipmentcontrolrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
@@ -21,19 +23,22 @@ var shipmentControlErrors = dberror.Mapping{Entity: "ShipmentControl"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) tenantports.ShipmentControlRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.shipmentcontrol-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.shipmentcontrol-repository"),
 	}
 }
 
@@ -66,9 +71,13 @@ func (r *repository) ListDetentionEngineTenants(
 	ctx = dbscope.WithSystem(ctx, "list organizations with the detention engine on")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
 		sc := shipmentcontroldb.ShipmentControls
+		entitled, entitledErr := r.entitlements.ForWork(ctx, sc.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		q := sc.AllTenants().
 			Pick(sc.OrganizationID, sc.BusinessUnitID).
-			Where(sc.UseDetentionPolicyEngine.IsTrue()).
+			Where(entitled, sc.UseDetentionPolicyEngine.IsTrue()).
 			Order(sc.OrganizationID.Asc())
 		if limit > 0 {
 			q = q.Limit(limit)

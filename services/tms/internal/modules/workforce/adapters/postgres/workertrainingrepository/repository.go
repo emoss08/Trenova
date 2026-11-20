@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -44,19 +46,22 @@ type courseCount struct {
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) workertrainingports.WorkerTrainingRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.worker-training-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.worker-training-repository"),
 	}
 }
 
@@ -404,6 +409,7 @@ func reminderQuery(
 	ctx context.Context,
 	req *workertrainingports.ListTrainingRemindersRequest,
 	window keel.Pred,
+	entitled keel.Pred,
 ) keel.Query[*workertraining.WorkerTrainingRecord] {
 	tr := workertrainingdb.WorkerTrainingRecords
 	limit := req.Limit
@@ -412,6 +418,7 @@ func reminderQuery(
 	}
 
 	q := tr.Where(
+		entitled,
 		window,
 		tr.Worker().Status.Eq(domaintypes.StatusActive),
 		tr.Course().Status.Eq(domaintypes.StatusActive),
@@ -457,7 +464,15 @@ func (r *repository) ListDue(
 				tr.DueAt.Between(grace, horizon),
 			)
 
-			entities, err := reminderQuery(ctx, req, window).List(ctx, r.db.Keel(ctx))
+			var entitled keel.Pred
+			if dbscope.IsSystem(ctx) {
+				across, entitledErr := r.entitlements.ForWork(ctx, tr.OrganizationID.Col)
+				if entitledErr != nil {
+					return nil, entitledErr
+				}
+				entitled = across
+			}
+			entities, err := reminderQuery(ctx, req, window, entitled).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list due training", zap.Error(err))
 				return nil, fmt.Errorf("list due training: %w", err)
@@ -489,7 +504,15 @@ func (r *repository) ListExpiring(
 				tr.ExpiresAt.Between(grace, horizon),
 			)
 
-			entities, err := reminderQuery(ctx, req, window).List(ctx, r.db.Keel(ctx))
+			var entitled keel.Pred
+			if dbscope.IsSystem(ctx) {
+				across, entitledErr := r.entitlements.ForWork(ctx, tr.OrganizationID.Col)
+				if entitledErr != nil {
+					return nil, entitledErr
+				}
+				entitled = across
+			}
+			entities, err := reminderQuery(ctx, req, window, entitled).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list expiring training", zap.Error(err))
 				return nil, fmt.Errorf("list expiring training: %w", err)

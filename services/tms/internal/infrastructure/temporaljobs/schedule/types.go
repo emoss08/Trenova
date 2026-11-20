@@ -88,6 +88,7 @@ func (s *Schedule) GetWorkflowName() string {
 func (s *Schedule) Hash() string {
 	h := sha256.New()
 	h.Write([]byte(s.ID))
+	h.Write([]byte(s.Feature))
 	h.Write([]byte(s.Spec.Cron))
 	fmt.Fprintf(h, "%d", s.Spec.Interval)
 	h.Write([]byte(s.Spec.Timezone))

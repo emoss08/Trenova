@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -23,19 +25,22 @@ var billingControlErrors = dberror.Mapping{Entity: "BillingControl"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) tenantports.BillingControlRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.billingcontrol-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.billingcontrol-repository"),
 	}
 }
 
@@ -107,8 +112,13 @@ func (r *repository) listAll(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*billingcontrol.BillingControl, error) {
-			items, err := billingcontroldb.BillingControls.AllTenants().
-				Where(filter).
+			bc := billingcontroldb.BillingControls
+			entitled, entitledErr := r.entitlements.ForWork(ctx, bc.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
+			items, err := bc.AllTenants().
+				Where(entitled, filter).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", operation, err)

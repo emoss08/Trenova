@@ -5,6 +5,8 @@ package agentquerytoolservice_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/briefingrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
@@ -74,7 +76,13 @@ func TestConvertedGets_DailyBriefingIsCutToTheReader(t *testing.T) {
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	_, resolvers := convertedListCases(conn, admin)
 	logger := zap.NewNop()
-	repo := briefingrepository.New(briefingrepository.Params{DB: conn, Logger: logger})
+	repo := briefingrepository.New(
+		briefingrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
+	)
 
 	mine := agentreadtest.SeedTenant(t, admin, "A")
 	theirs := agentreadtest.SeedTenant(t, admin, "B")

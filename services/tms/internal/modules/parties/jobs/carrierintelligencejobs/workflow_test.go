@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelmonitorservice"
@@ -31,6 +33,7 @@ func TestWorkflowTestSuite(t *testing.T) {
 
 func (s *WorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
+	s.env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 }
 
 func (s *WorkflowTestSuite) AfterTest(_, _ string) {

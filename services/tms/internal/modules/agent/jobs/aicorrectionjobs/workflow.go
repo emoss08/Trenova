@@ -3,6 +3,9 @@ package aicorrectionjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -56,6 +59,7 @@ func AICorrectionRetentionWorkflow(
 	result := newAICorrectionRetentionResult()
 	_, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "AI correction retention",
+		Need:        entitlement.For(platformcatalog.FeatureAIDesk),
 		Concurrency: organizationConcurrency,
 		ListPage: func(
 			wctx workflow.Context,
@@ -71,6 +75,7 @@ func AICorrectionRetentionWorkflow(
 				a.ListAICorrectionOrganizationsActivity,
 				&ListAICorrectionOrganizationsInput{
 					After: after,
+					Need:  entitlement.For(platformcatalog.FeatureAIDesk),
 					Limit: temporaljobs.DefaultOrganizationPageSize,
 				},
 			).Get(listCtx, &page)
@@ -79,7 +84,6 @@ func AICorrectionRetentionWorkflow(
 		},
 		RunTenant: func(wctx workflow.Context, tenant temporaljobs.TenantWorkItem) (int, error) {
 			options := organizationOptions
-			options.Priority = temporal.Priority{FairnessKey: tenant.OrganizationID.String()}
 			activityCtx := workflow.WithActivityOptions(wctx, options)
 			var purged OrganizationAICorrectionResult
 			if err := workflow.ExecuteActivity(

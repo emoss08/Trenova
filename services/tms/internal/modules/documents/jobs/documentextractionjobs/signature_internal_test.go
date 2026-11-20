@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -149,6 +151,7 @@ func newSignatureFixture(t *testing.T, requiresSignature bool) *signatureFixture
 
 	return &signatureFixture{
 		activities: &Activities{
+			slots:  heavyslotstest.Unbounded(),
 			logger: zap.NewNop(),
 			metrics: &metrics.Registry{
 				Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),

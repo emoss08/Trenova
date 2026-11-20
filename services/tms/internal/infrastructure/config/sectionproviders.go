@@ -30,12 +30,14 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/updateconfig"
 	"go.uber.org/fx"
 )
 
 var SectionProviders = fx.Provide(
+	func(c *Config) *tenantlimitsconfig.Config { return &c.TenantLimits },
 	func(c *Config) *appconfig.Config { return &c.App },
 	func(c *Config) *databaseconfig.Config { return &c.Database },
 	func(c *Config) *monitoringconfig.Config { return &c.Monitoring },

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -309,30 +312,35 @@ func (a *Activities) sweepAll(
 	ctx context.Context,
 	sweep func(context.Context, pagination.TenantInfo) (*watchtowerports.WatchtowerSweepResult, error),
 ) (*WatchtowerSweepResult, error) {
-	organizations, err := a.tenants.ListOrganizations(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list organizations: %w", err)
-	}
-
 	result := newSweepResult()
-	for _, org := range organizations {
-		activity.RecordHeartbeat(ctx, org.ID.String())
+	err := tenantports.EachTenant(
+		ctx,
+		a.tenants,
+		entitlement.For(platformcatalog.FeatureAIWatchtower),
+		func(tenantCtx context.Context, tenant pagination.TenantInfo) error {
+			activity.RecordHeartbeat(ctx, tenant.OrgID.String())
 
-		tenant := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
-		tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
-		swept, sErr := sweep(tenantCtx, tenant)
-		if sErr != nil {
-			a.l.Error("watchtower sweep failed for organization",
-				zap.String("organization", org.ID.String()),
-				zap.Error(sErr),
-			)
-			result.FailedOrganizations = append(result.FailedOrganizations, org.ID.String())
+			swept, sErr := sweep(tenantCtx, tenant)
+			if sErr != nil {
+				a.l.Error("watchtower sweep failed for organization",
+					zap.String("organization", tenant.OrgID.String()),
+					zap.Error(sErr),
+				)
+				result.FailedOrganizations = append(
+					result.FailedOrganizations,
+					tenant.OrgID.String(),
+				)
 
-			continue
-		}
+				return nil
+			}
 
-		result.OrganizationsProcessed++
-		absorb(result, swept)
+			result.OrganizationsProcessed++
+			absorb(result, swept)
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list the organizations with the watchtower: %w", err)
 	}
 
 	a.l.Info("watchtower sweep complete",

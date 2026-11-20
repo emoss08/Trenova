@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/tenderjobs/tendercontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -22,6 +25,7 @@ func newTenderWorkflowTestEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 	t.Helper()
 	suite := &testsuite.WorkflowTestSuite{}
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterWorkflow(CarrierTenderWorkflow)
 	return env
 }
@@ -582,15 +586,17 @@ func TestCarrierTenderWorkflow_CounterHoldsPastTheOfferExpiryThenLapses(t *testi
 		Return(nil).Once()
 
 	var secondDispatchedAt time.Time
-	env.SetOnActivityStartedListener(func(info *activity.Info, _ context.Context, args converter.EncodedValues) {
-		if info.ActivityType.Name != "DispatchOfferActivity" {
-			return
-		}
-		var in TenderActivityInput
-		if err := args.Get(&in); err == nil && in.OfferID == fixture.offerTwo {
-			secondDispatchedAt = env.Now()
-		}
-	})
+	env.SetOnActivityStartedListener(
+		func(info *activity.Info, _ context.Context, args converter.EncodedValues) {
+			if info.ActivityType.Name != "DispatchOfferActivity" {
+				return
+			}
+			var in TenderActivityInput
+			if err := args.Get(&in); err == nil && in.OfferID == fixture.offerTwo {
+				secondDispatchedAt = env.Now()
+			}
+		},
+	)
 	start := env.Now()
 	env.RegisterDelayedCallback(func() {
 		env.SignalWorkflow(tendercontract.TenderSignalName, counterSignal(fixture.offerOne))

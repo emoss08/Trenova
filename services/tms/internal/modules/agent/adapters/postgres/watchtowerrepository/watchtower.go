@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/caseownerquery"
 
 	"github.com/emoss08/trenova/pkg/keelexpr"
@@ -39,19 +41,22 @@ var itemErrors = dberror.Mapping{Entity: "Exception"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) watchtowerports.WatchtowerRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.watchtower-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.watchtower-repository"),
 	}
 }
 
@@ -556,11 +561,12 @@ type tenantRow struct {
 	BusinessUnitID pulid.ID
 }
 
-func tenantsNeedingAttentionQuery(now int64) keel.Query[*watchtower.Item] {
+func tenantsNeedingAttentionQuery(entitled keel.Pred, now int64) keel.Query[*watchtower.Item] {
 	it := watchtowerdb.Items
 	return it.AllTenants().
 		Pick(it.OrganizationID, it.BusinessUnitID).
 		Where(
+			entitled,
 			it.ResolvedAt.IsNull(),
 			keel.Or(
 				keel.And(
@@ -583,7 +589,16 @@ func (r *repository) ListTenantsNeedingAttention(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with overdue or waking exceptions")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		rows, err := keel.Into[tenantRow](ctx, r.db.Keel(ctx), tenantsNeedingAttentionQuery(now))
+		it := watchtowerdb.Items
+		entitled, entitledErr := r.entitlements.ForWork(ctx, it.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
+		rows, err := keel.Into[tenantRow](
+			ctx,
+			r.db.Keel(ctx),
+			tenantsNeedingAttentionQuery(entitled, now),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("list tenants needing exception attention: %w", err)
 		}
@@ -965,12 +980,17 @@ func (r *repository) CountCleared(
 	})
 }
 
-func resolvedBefore(before int64, limit int) keel.Pred {
+func resolvedBefore(
+	stale *watchtowerdb.ItemsTable,
+	entitled keel.Pred,
+	before int64,
+	limit int,
+) keel.Pred {
 	it := watchtowerdb.Items
-	stale := it.As("stale")
 	return it.ID.InQuery(stale.AllTenants().
 		Pick(stale.ID).
 		Where(
+			entitled,
 			stale.ResolvedAt.IsNotNull(),
 			stale.ResolvedAt.Lt(before),
 			keel.Or(stale.ResolvedByID.IsNull(), stale.SourceClearedAt.IsNotNull()),
@@ -993,8 +1013,13 @@ func (r *repository) DeleteResolvedBefore(
 		}
 
 		it := watchtowerdb.Items
+		stale := it.As("stale")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, stale.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		n, err := it.AllTenants().
-			Where(resolvedBefore(req.Before, limit)).
+			Where(resolvedBefore(stale, entitled, req.Before, limit)).
 			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("delete resolved watchtower items: %w", err)

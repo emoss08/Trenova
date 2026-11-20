@@ -54,7 +54,7 @@ func (s *Engine) SettleAttempt(ctx context.Context, span trace.Span, attempt *Us
 	provider := attempt.Provider
 	cost := attemptCost(attempt)
 	if provider != nil && s.Health != nil && attempt.Err != nil {
-		if _, resting := s.Health.Resting(provider.ID); resting {
+		if _, resting := s.Health.Resting(BreakerKey(provider)); resting {
 			aitrace.RecordResting(span)
 		}
 	}

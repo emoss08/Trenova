@@ -1,6 +1,9 @@
 package aituneupjobs
 
-import "github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+import (
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+)
 
 const ComputeAITuneUpsWorkflowName = "ComputeAITuneUpsWorkflow"
 
@@ -9,6 +12,7 @@ type ComputeAITuneUpsInput struct {
 }
 
 type ListAITuneUpOrganizationsInput struct {
+	Need  entitlement.Need             `json:"need"`
 	After *temporaljobs.TenantWorkItem `json:"after,omitempty"`
 	Limit int                          `json:"limit"`
 }

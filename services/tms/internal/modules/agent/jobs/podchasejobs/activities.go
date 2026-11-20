@@ -5,6 +5,10 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -32,30 +36,33 @@ const (
 type ActivitiesParams struct {
 	fx.In
 
-	Queue   workqueueports.Queue
-	Facts   podchaseports.FactsReader
-	RunRepo agentruntimeports.AgentRunRepository
-	Asker   *podchase.Asker
-	Logger  *zap.Logger
+	Entitlements entitlementports.Filter
+	Queue        workqueueports.Queue
+	Facts        podchaseports.FactsReader
+	RunRepo      agentruntimeports.AgentRunRepository
+	Asker        *podchase.Asker
+	Logger       *zap.Logger
 }
 
 type Activities struct {
-	queue   workqueueports.Queue
-	facts   podchaseports.FactsReader
-	runRepo agentruntimeports.AgentRunRepository
-	asker   *podchase.Asker
-	l       *zap.Logger
+	entitlements entitlementports.Filter
+	queue        workqueueports.Queue
+	facts        podchaseports.FactsReader
+	runRepo      agentruntimeports.AgentRunRepository
+	asker        *podchase.Asker
+	l            *zap.Logger
 }
 
 func NewActivities(
 	p ActivitiesParams, //nolint:gocritic // fx requires an fx.In parameter struct by value
 ) *Activities {
 	return &Activities{
-		queue:   p.Queue,
-		facts:   p.Facts,
-		runRepo: p.RunRepo,
-		asker:   p.Asker,
-		l:       p.Logger.Named("job.pod-chase"),
+		entitlements: p.Entitlements,
+		queue:        p.Queue,
+		facts:        p.Facts,
+		runRepo:      p.RunRepo,
+		asker:        p.Asker,
+		l:            p.Logger.Named("job.pod-chase"),
 	}
 }
 
@@ -70,11 +77,13 @@ func (a *Activities) ChasePODsActivity(
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
 	return temporaljobs.DrainDue(ctx, &temporaljobs.DrainDueParams{
-		Queue:      a.queue,
-		Kind:       podchasecontract.DrainKind,
-		Tenant:     tenant,
-		PageSize:   chasePageSize,
-		RetryAfter: chaseRetryAfter,
+		Need:         entitlement.For(platformcatalog.FeatureAgentAutomation),
+		Entitlements: a.entitlements,
+		Queue:        a.queue,
+		Kind:         podchasecontract.DrainKind,
+		Tenant:       tenant,
+		PageSize:     chasePageSize,
+		RetryAfter:   chaseRetryAfter,
 		Handle: func(ctx context.Context, shipments []pulid.ID, agents map[pulid.ID]string) map[pulid.ID]error {
 			failed := make(map[pulid.ID]error)
 			for definitionID, group := range byAgent(shipments, agents) {

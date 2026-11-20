@@ -3,6 +3,8 @@ package reportrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/bytedance/sonic"
 
 	"github.com/emoss08/keel"
@@ -27,19 +29,22 @@ type activeRunCounts struct {
 type RunParams struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type runRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewRunRepository(p RunParams) reportports.ReportRunRepository {
 	return &runRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.report-run-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.report-run-repository"),
 	}
 }
 
@@ -172,9 +177,17 @@ func (r *runRepository) ListStale(
 	ctx = dbscope.WithSystem(ctx, "list stalled report runs across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
 		run := reportdb.ReportRuns
+		entitled, entitledErr := r.entitlements.ForWork(ctx, run.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		q := run.AllTenants().
 			Omit(run.Sample).
-			Where(run.Status.In(req.Statuses...), run.UpdatedAt.Lt(req.UpdatedBeforeUnix)).
+			Where(
+				entitled,
+				run.Status.In(req.Statuses...),
+				run.UpdatedAt.Lt(req.UpdatedBeforeUnix),
+			).
 			Order(run.UpdatedAt.Asc())
 		if req.Limit > 0 {
 			q = q.Limit(req.Limit)
@@ -197,9 +210,14 @@ func (r *runRepository) ListExpired(
 	ctx = dbscope.WithSystem(ctx, "list expired report artifacts across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
 		run := reportdb.ReportRuns
+		entitled, entitledErr := r.entitlements.ForWork(ctx, run.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		q := run.AllTenants().
 			Omit(run.Sample).
 			Where(
+				entitled,
 				run.Status.Eq(report.RunStatusSucceeded),
 				run.ArtifactExpiresAt.IsNotNull(),
 				run.ArtifactExpiresAt.Lt(req.CutoffUnix),

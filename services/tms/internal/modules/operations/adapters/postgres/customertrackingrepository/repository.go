@@ -2,6 +2,7 @@ package customertrackingrepository
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -20,6 +21,7 @@ const (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }

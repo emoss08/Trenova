@@ -61,7 +61,6 @@ func StartCompactionWorkflow(
 		StaticSummary:                            "Compact a conversation",
 		Priority: temporal.Priority{
 			PriorityKey: agentflowcontract.PriorityInteractive,
-			FairnessKey: actor.OrganizationID.String(),
 		},
 	}, CompactionWorkflowName, &CompactionPayload{
 		BasePayload: temporaltype.BasePayload{
@@ -161,7 +160,6 @@ func StartDryRunWorkflow(
 		StaticSummary:                            "Agent dry run",
 		Priority: temporal.Priority{
 			PriorityKey: agentflowcontract.PriorityInteractive,
-			FairnessKey: payload.Actor.OrganizationID.String(),
 		},
 	}, AgentDryRunWorkflowName, payload)
 }
@@ -203,7 +201,6 @@ func StartTurnWorkflow(
 		// busy Tenant from queueing everybody else's replies behind its own.
 		Priority: temporal.Priority{
 			PriorityKey: agentflowcontract.PriorityInteractive,
-			FairnessKey: start.Actor.OrganizationID.String(),
 		},
 	}, AssistantTurnWorkflowName, &AssistantTurnPayload{
 		BasePayload: temporaltype.BasePayload{

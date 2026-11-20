@@ -19,11 +19,12 @@ import (
 )
 
 const (
-	stateTTL        = 30 * time.Second
-	cachedScopes    = 10_000
-	unknownLogEvery = time.Hour
-	baseAnywhere    = platformcatalog.FeatureKey("")
-	remindersPerRun = 500
+	stateTTL            = 30 * time.Second
+	cachedScopes        = 10_000
+	unknownLogEvery     = time.Hour
+	baseAnywhere        = platformcatalog.FeatureKey("")
+	remindersPerPage    = 500
+	reminderPagesPerRun = 40
 )
 
 var ErrInstanceNotSuspended = errors.New(
@@ -227,30 +228,50 @@ func (s *Service) History(
 
 func (s *Service) RemindPlanEnds(ctx context.Context) ([]*managedfeatures.Replacement, error) {
 	now := s.clock()
-	due, err := s.repo.DuePlanEndReminders(ctx, &managedfeaturesports.DueRemindersRequest{
-		Now:   now,
-		Limit: remindersPerRun,
-	})
-	if err != nil {
-		return nil, err
-	}
-	reminded := make([]*managedfeatures.Replacement, 0, len(due))
-	for _, scope := range due {
-		replacement, rerr := s.repo.RemindPlanEnd(ctx, scope, now)
-		if rerr != nil {
-			return reminded, rerr
+	reminded := make([]*managedfeatures.Replacement, 0)
+	var errs []error
+	var after *managedfeaturesports.DueReminder
+	for range reminderPagesPerRun {
+		due, err := s.repo.DuePlanEndReminders(ctx, &managedfeaturesports.DueRemindersRequest{
+			Now:   now,
+			Limit: remindersPerPage,
+			After: after,
+		})
+		if err != nil {
+			return reminded, errors.Join(append(errs, err)...)
 		}
-		if !replacement.Updated() {
-			continue
+		for _, item := range due {
+			if err = ctx.Err(); err != nil {
+				return reminded, errors.Join(append(errs, err)...)
+			}
+			replacement, rerr := s.repo.RemindPlanEnd(ctx, item.Scope, now)
+			if rerr != nil {
+				s.l.Warn("could not record a plan end reminder; it is tried again next run",
+					zap.String("scope", item.Scope.Key()),
+					zap.Error(rerr),
+				)
+				errs = append(errs, fmt.Errorf("remind %s: %w", item.Scope.Key(), rerr))
+				continue
+			}
+			if !replacement.Updated() {
+				continue
+			}
+			s.forget(item.Scope)
+			s.l.Info("reminding the administrators that the plan ends in three days",
+				zap.String("scope", item.Scope.Key()),
+				zap.Int64("planEndsAt", replacement.Current.PlanEndsAt),
+			)
+			reminded = append(reminded, replacement)
 		}
-		s.forget(scope)
-		s.l.Info("reminding the administrators that the plan ends in three days",
-			zap.String("scope", scope.Key()),
-			zap.Int64("planEndsAt", replacement.Current.PlanEndsAt),
-		)
-		reminded = append(reminded, replacement)
+		if len(due) < remindersPerPage {
+			return reminded, errors.Join(errs...)
+		}
+		after = &due[len(due)-1]
 	}
-	return reminded, nil
+	s.l.Info("plan end reminders reached the bound of one run; the next run continues",
+		zap.Int("reminded", len(reminded)),
+	)
+	return reminded, errors.Join(errs...)
 }
 
 func (s *Service) forget(scope managedscope.Scope) {

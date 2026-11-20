@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
@@ -193,6 +195,12 @@ func (s *Service) Stage(
 	if err != nil {
 		return nil, err
 	}
+
+	release, err := s.slots.Hold(ctx, kernelports.HeavyJobImport)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 
 	storedMapping := batch.Mapping
 	if batch.StagedAt != nil {

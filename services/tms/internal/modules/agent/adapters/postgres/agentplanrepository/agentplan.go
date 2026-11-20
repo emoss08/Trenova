@@ -3,7 +3,9 @@ package agentplanrepository
 import (
 	"context"
 	"fmt"
+
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/caseownerquery"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -28,19 +30,22 @@ var planErrors = dberror.Mapping{Entity: planEntity}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) agentplanports.AgentPlanRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.agentplan-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.agentplan-repository"),
 	}
 }
 
@@ -253,8 +258,13 @@ func (r *repository) ExpirePending(
 	ctx = dbscope.WithSystem(ctx, "expire stale agent plans across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		p := agentplandb.AgentPlans
+		entitled, entitledErr := r.entitlements.ForWork(ctx, p.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		n, err := p.AllTenants().
 			Where(
+				entitled,
 				p.Status.Eq(agentplan.PlanStatusPending),
 				p.ExpiresAt.IsNotNull(),
 				p.ExpiresAt.Lte(req.Before),

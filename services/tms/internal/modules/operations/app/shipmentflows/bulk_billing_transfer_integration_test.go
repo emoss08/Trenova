@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
@@ -175,7 +177,13 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 		),
 		OrderRepository: orderRepo,
 	})
-	customerRepo := customerrepository.New(customerrepository.Params{DB: conn, Logger: logger})
+	customerRepo := customerrepository.New(
+		customerrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
+	)
 	userRepo := userrepository.New(userrepository.Params{DB: conn, Logger: logger})
 	realtime := &mocks.NoopRealtimeService{}
 
@@ -198,7 +206,11 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 		Logger: logger,
 		DB:     conn,
 		Repo: billingqueuerepository.New(
-			billingqueuerepository.Params{DB: conn, Logger: logger},
+			billingqueuerepository.Params{
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn,
+				Logger:       logger,
+			},
 		),
 		ShipmentRepo:         shipmentRepo,
 		CustomerRepo:         customerRepo,
@@ -225,7 +237,11 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 			documentrepository.Params{DB: conn, Logger: logger},
 		),
 		BillingRepo: billingcontrolrepository.New(
-			billingcontrolrepository.Params{DB: conn, Logger: logger},
+			billingcontrolrepository.Params{
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn,
+				Logger:       logger,
+			},
 		),
 		BillingQueueService: billingQueue,
 		Permissions:         permissionportsmock.NewMockPermissionEngine(t),

@@ -3,6 +3,9 @@ package aituneupjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -51,6 +54,7 @@ func ComputeAITuneUpsWorkflow(
 	result := newComputeAITuneUpsResult()
 	_, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "AI tune-ups",
+		Need:        entitlement.For(platformcatalog.FeatureAgentAutomation),
 		Concurrency: organizationConcurrency,
 		ListPage: func(
 			wctx workflow.Context,
@@ -66,6 +70,7 @@ func ComputeAITuneUpsWorkflow(
 				a.ListAITuneUpOrganizationsActivity,
 				&ListAITuneUpOrganizationsInput{
 					After: after,
+					Need:  entitlement.For(platformcatalog.FeatureAgentAutomation),
 					Limit: temporaljobs.DefaultOrganizationPageSize,
 				},
 			).Get(listCtx, &page)
@@ -74,7 +79,6 @@ func ComputeAITuneUpsWorkflow(
 		},
 		RunTenant: func(wctx workflow.Context, tenant temporaljobs.TenantWorkItem) (int, error) {
 			options := organizationOptions
-			options.Priority = temporal.Priority{FairnessKey: tenant.OrganizationID.String()}
 			activityCtx := workflow.WithActivityOptions(wctx, options)
 			var computed OrganizationAITuneUpsResult
 			if err := workflow.ExecuteActivity(

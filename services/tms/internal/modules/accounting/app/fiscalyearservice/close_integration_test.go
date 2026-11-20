@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
@@ -624,7 +626,11 @@ func setupCloseFixture(
 				glaccountrepository.Params{DB: conn, Logger: logger},
 			),
 			AccountingRepo: accountingcontrolrepository.New(
-				accountingcontrolrepository.Params{DB: conn, Logger: logger},
+				accountingcontrolrepository.Params{
+					Entitlements: entitlementtest.Instance(),
+					DB:           conn,
+					Logger:       logger,
+				},
 			),
 			JournalPostRepo: postingRepo,
 			CustomerLedger: customerledgerrepository.New(

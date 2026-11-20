@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -34,6 +35,7 @@ type SweepInput struct {
 }
 
 type ListOrganizationsInput struct {
+	Need  entitlement.Need             `json:"need"`
 	After *temporaljobs.TenantWorkItem `json:"after,omitempty"`
 	Limit int                          `json:"limit"`
 }

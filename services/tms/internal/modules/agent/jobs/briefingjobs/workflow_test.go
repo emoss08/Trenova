@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -30,6 +32,7 @@ func TestDailyBriefingWorkflow_WritesEachDueOrganizationInItsOwnChild(t *testing
 
 	var s testsuite.WorkflowTestSuite
 	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 	env.RegisterWorkflow(WriteOrganizationBriefingWorkflow)
 
@@ -87,6 +90,7 @@ func TestDailyBriefingWorkflow_AnHourWithNobodyDue(t *testing.T) {
 
 	var s testsuite.WorkflowTestSuite
 	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 	env.RegisterWorkflow(WriteOrganizationBriefingWorkflow)
 
@@ -111,6 +115,7 @@ func TestWriteOrganizationBriefingWorkflow_WritesTheBoardAndAccountingBriefsAfte
 
 	var s testsuite.WorkflowTestSuite
 	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 
 	var a *Activities
@@ -157,6 +162,7 @@ func TestWriteOrganizationBriefingWorkflow_AFailedBoardBriefKeepsTheMorning(t *t
 
 	var s testsuite.WorkflowTestSuite
 	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 
 	var a *Activities
@@ -185,6 +191,7 @@ func TestWriteOrganizationBriefingWorkflow_AFailedAccountingBriefKeepsTheMorning
 
 	var s testsuite.WorkflowTestSuite
 	env := s.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterActivity(&Activities{})
 
 	var a *Activities

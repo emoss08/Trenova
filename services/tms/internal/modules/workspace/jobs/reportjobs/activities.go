@@ -54,6 +54,7 @@ const rowsSidecarSuffix = ".rows.json"
 type ActivitiesParams struct {
 	fx.In
 
+	Slots               kernelports.HeavyJobSlots
 	RunRepo             reportports.ReportRunRepository
 	DefinitionRepo      reportports.ReportDefinitionRepository
 	ScheduleRepo        reportports.ReportScheduleRepository
@@ -76,6 +77,7 @@ type ActivitiesParams struct {
 }
 
 type Activities struct {
+	slots        kernelports.HeavyJobSlots
 	runRepo      reportports.ReportRunRepository
 	defRepo      reportports.ReportDefinitionRepository
 	scheduleRepo reportports.ReportScheduleRepository
@@ -101,6 +103,7 @@ type Activities struct {
 //nolint:gocritic // fx.In parameter structs must be passed by value
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
+		slots:        p.Slots,
 		runRepo:      p.RunRepo,
 		defRepo:      p.DefinitionRepo,
 		scheduleRepo: p.ScheduleRepo,
@@ -397,6 +400,15 @@ func (a *Activities) ExecuteAndRenderActivity(
 			err.Error(), ErrTypeReportValidation, err,
 		)
 	}
+
+	release, err := a.slots.Hold(
+		dbscope.WithValidTenant(ctx, tenant.DBTenant()),
+		kernelports.HeavyJobExport,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 
 	stream, err := a.engine.Run(run.Context, &run.Request)
 	if err != nil {

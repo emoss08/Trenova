@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -264,7 +266,11 @@ func (s *Service) gate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (agentprofileports.SkipReason, error) {
-	if err := platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureAgentAutomation); err != nil {
+	if err := platformcatalogports.RequireFeature(
+		dbscope.WithTenant(ctx, tenantInfo.DBTenant()),
+		s.features,
+		platformcatalog.FeatureAgentAutomation,
+	); err != nil {
 		if errortypes.IsPlanRestrictionError(err) {
 			return agentprofileports.SkipNotAllowed, nil
 		}
@@ -353,7 +359,13 @@ func (s *Service) onPlan(
 		return org, nil
 	}
 
-	brokerage, err := s.features.Enabled(ctx, platformcatalog.FeatureCarrierBrokerage)
+	brokerage, err := s.features.Enabled(
+		dbscope.WithTenant(ctx, dbscope.Tenant{
+			OrganizationID: org.ID,
+			BusinessUnitID: org.BusinessUnitID,
+		}),
+		platformcatalog.FeatureCarrierBrokerage,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("ask whether carrier brokerage is on the plan: %w", err)
 	}

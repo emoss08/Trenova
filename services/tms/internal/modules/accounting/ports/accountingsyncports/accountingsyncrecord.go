@@ -68,6 +68,7 @@ type CountAccountingSyncInFlightRequest struct {
 type ClaimAccountingSyncRecordsRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
+	ObjectTypes  []accountingsync.SyncObjectType
 	Now          int64
 	Lease        time.Duration
 	Limit        int

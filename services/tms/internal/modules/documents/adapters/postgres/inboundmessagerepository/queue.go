@@ -17,8 +17,9 @@ import (
 
 func NewQueueRepository(p Params) inboundmessageports.TriageQueueRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.triage-queue-repository"),
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.triage-queue-repository"),
+		entitlements: p.Entitlements,
 	}
 }
 
@@ -541,10 +542,15 @@ func (r *repository) ListOverdueParked(
 			return []inboundmessageports.ParkedRef{}, nil
 		}
 
+		m := inboundmessagedb.InboundMessages
+		entitled, entitledErr := r.entitlements.ForWork(ctx, m.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		refs, err := keel.Into[inboundmessageports.ParkedRef](
 			ctx,
 			r.db.Keel(ctx),
-			overdueParkedQuery(req),
+			overdueParkedQuery(req, entitled),
 		)
 		if err != nil {
 			return nil, err
@@ -554,12 +560,16 @@ func (r *repository) ListOverdueParked(
 	})
 }
 
-func overdueParkedQuery(req inboundmessageports.ListOverdueParkedRequest) keel.Compound {
+func overdueParkedQuery(
+	req inboundmessageports.ListOverdueParkedRequest,
+	entitled keel.Pred,
+) keel.Compound {
 	m := inboundmessagedb.InboundMessages
 
 	snoozed := m.AllTenants().
 		Pick(m.ID, m.OrganizationID, m.BusinessUnitID).
 		Where(
+			entitled,
 			m.Parked.Eq(inboundmessage.ParkingSnoozed),
 			m.SnoozedUntil.IsNotNull(),
 			m.SnoozedUntil.Lte(req.Now),
@@ -568,6 +578,7 @@ func overdueParkedQuery(req inboundmessageports.ListOverdueParkedRequest) keel.C
 	awaiting := m.AllTenants().
 		Pick(m.ID, m.OrganizationID, m.BusinessUnitID).
 		Where(
+			entitled,
 			m.Parked.Eq(inboundmessage.ParkingAwaitingReply),
 			m.AwaitingUntil.Lte(req.Now),
 		).

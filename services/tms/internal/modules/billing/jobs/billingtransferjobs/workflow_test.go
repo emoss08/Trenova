@@ -5,6 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingtransferjobs/billingtransfercontract"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
@@ -42,6 +45,7 @@ func newEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterWorkflow(BulkBillingTransferWorkflow)
 
 	var a *Activities

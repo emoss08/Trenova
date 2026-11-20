@@ -4,6 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
@@ -29,6 +32,7 @@ func TestSendWorkflowPreparesThenDelivers(t *testing.T) {
 	t.Parallel()
 	var ts testsuite.WorkflowTestSuite
 	env := ts.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	var a *Activities
 	env.OnActivity(a.PrepareFactoringSubmissionActivity, mock.Anything, mock.Anything).
 		Return(nil).
@@ -54,6 +58,7 @@ func TestSendWorkflowMarksFailedAfterEveryRetry(t *testing.T) {
 	t.Parallel()
 	var ts testsuite.WorkflowTestSuite
 	env := ts.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	var a *Activities
 	payload := sendPayload()
 	env.OnActivity(a.PrepareFactoringSubmissionActivity, mock.Anything, mock.Anything).Return(nil)
@@ -79,6 +84,7 @@ func TestSendWorkflowStopsAtARefusal(t *testing.T) {
 	t.Parallel()
 	var ts testsuite.WorkflowTestSuite
 	env := ts.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	var a *Activities
 	env.OnActivity(a.PrepareFactoringSubmissionActivity, mock.Anything, mock.Anything).
 		Return(temporal.NewNonRetryableApplicationError(

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -27,19 +29,22 @@ const (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) briefingports.BriefingRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.briefing-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.briefing-repository"),
 	}
 }
 
@@ -208,8 +213,13 @@ func (r *repository) DeleteBefore(
 		}
 
 		b := briefingdb.Briefings
+		stale := b.As("stale")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, stale.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		n, err := b.AllTenants().
-			Where(staleBatch(req.BeforeDate, limit)).
+			Where(staleBatch(stale, entitled, req.BeforeDate, limit)).
 			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("delete briefings: %w", err)
@@ -219,12 +229,16 @@ func (r *repository) DeleteBefore(
 	})
 }
 
-func staleBatch(beforeDate string, limit int) keel.Pred {
+func staleBatch(
+	stale *briefingdb.BriefingsTable,
+	entitled keel.Pred,
+	beforeDate string,
+	limit int,
+) keel.Pred {
 	b := briefingdb.Briefings
-	stale := b.As("stale")
 	return b.ID.InQuery(stale.AllTenants().
 		Pick(stale.ID).
-		Where(stale.BriefingDate.Lt(beforeDate)).
+		Where(entitled, stale.BriefingDate.Lt(beforeDate)).
 		Order(stale.BriefingDate.Asc()).
 		Limit(limit))
 }

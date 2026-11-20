@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -49,10 +51,16 @@ func newFixture(t *testing.T) *fixture {
 }
 
 func (f *fixture) grants() supportaccessports.GrantRepository {
-	return NewGrantRepository(Params{DB: f.conn, Logger: zap.NewNop()})
+	return NewGrantRepository(
+		Params{Entitlements: entitlementtest.Instance(), DB: f.conn, Logger: zap.NewNop()},
+	)
 }
 
-func (f *fixture) create(t *testing.T, tenant *seedtest.TestData, email string) (*supportaccess.Grant, error) {
+func (f *fixture) create(
+	t *testing.T,
+	tenant *seedtest.TestData,
+	email string,
+) (*supportaccess.Grant, error) {
 	t.Helper()
 	info := tenant.Info()
 	principal := supportaccess.NewPrincipalUser(supportaccess.PrincipalUserParams{
@@ -211,7 +219,9 @@ func TestSupportGrants_TheSupportPrincipalCannotBeRenamedOrActivated(t *testing.
 
 func TestAssertionLedger_TwoUsesOfOneAssertionAtOnceLetOneIn(t *testing.T) {
 	f := newFixture(t)
-	ledger := NewAssertionLedger(Params{DB: f.conn, Logger: zap.NewNop()})
+	ledger := NewAssertionLedger(
+		Params{Entitlements: entitlementtest.Instance(), DB: f.conn, Logger: zap.NewNop()},
+	)
 	id := "as_" + pulid.MustNew("x").String()[2:]
 
 	const attempts = 8
@@ -242,7 +252,9 @@ func TestAssertionLedger_TwoUsesOfOneAssertionAtOnceLetOneIn(t *testing.T) {
 
 func TestAssertionLedger_ForgetsIDsThatCanNoLongerVerify(t *testing.T) {
 	f := newFixture(t)
-	ledger := NewAssertionLedger(Params{DB: f.conn, Logger: zap.NewNop()})
+	ledger := NewAssertionLedger(
+		Params{Entitlements: entitlementtest.Instance(), DB: f.conn, Logger: zap.NewNop()},
+	)
 	old := "as_" + pulid.MustNew("x").String()[2:]
 
 	used, err := ledger.Use(t.Context(), &supportaccess.AssertionUse{
@@ -258,13 +270,16 @@ func TestAssertionLedger_ForgetsIDsThatCanNoLongerVerify(t *testing.T) {
 
 	var remaining int
 	require.NoError(t, keel.Pool(f.admin).QueryRow(t.Context(),
-		`SELECT count(*) FROM support_assertion_uses WHERE assertion_id = $1`, old).Scan(&remaining))
+		`SELECT count(*) FROM support_assertion_uses WHERE assertion_id = $1`, old).
+		Scan(&remaining))
 	assert.Zero(t, remaining)
 }
 
 func TestSupportKeySet_IsOneInstanceWideRow(t *testing.T) {
 	f := newFixture(t)
-	keys := NewKeySetRepository(Params{DB: f.conn, Logger: zap.NewNop()})
+	keys := NewKeySetRepository(
+		Params{Entitlements: entitlementtest.Instance(), DB: f.conn, Logger: zap.NewNop()},
+	)
 
 	_, err := keys.Get(t.Context())
 	require.ErrorIs(t, err, supportaccess.ErrNoKeySet)
@@ -304,7 +319,10 @@ func TestSupportGrants_TheInstanceWideListHoldsOnlyLiveGrantsOfEveryOrganization
 	_, err = repo.Revoke(f.a.Ctx(t.Context()), &revoked, f.now)
 	require.NoError(t, err)
 
-	live, err := repo.ListLive(t.Context(), &supportaccessports.ListLiveRequest{Now: f.now, Limit: 100})
+	live, err := repo.ListLive(
+		t.Context(),
+		&supportaccessports.ListLiveRequest{Now: f.now, Limit: 100},
+	)
 	require.NoError(t, err)
 	names := make(map[pulid.ID]string, len(live))
 	for _, grant := range live {
@@ -315,13 +333,23 @@ func TestSupportGrants_TheInstanceWideListHoldsOnlyLiveGrantsOfEveryOrganization
 	assert.Equal(t, f.b.Organization.Name, names[inB.ID])
 	assert.NotContains(t, names, ended.ID)
 
-	one, err := repo.ListLive(t.Context(), &supportaccessports.ListLiveRequest{Now: f.now, Limit: 1})
+	one, err := repo.ListLive(
+		t.Context(),
+		&supportaccessports.ListLiveRequest{Now: f.now, Limit: 1},
+	)
 	require.NoError(t, err)
 	assert.Len(t, one, 1, "the list is bounded by what the caller asks for")
 
-	later, err := repo.ListLive(t.Context(), &supportaccessports.ListLiveRequest{Now: f.now + 4*3600 + 1, Limit: 100})
+	later, err := repo.ListLive(
+		t.Context(),
+		&supportaccessports.ListLiveRequest{Now: f.now + 4*3600 + 1, Limit: 100},
+	)
 	require.NoError(t, err)
-	assert.Empty(t, later, "a grant past its expiry is not live, whether or not the sweep has recorded it")
+	assert.Empty(
+		t,
+		later,
+		"a grant past its expiry is not live, whether or not the sweep has recorded it",
+	)
 }
 
 func (f *fixture) execAs(t *testing.T, userID pulid.ID, statement string, args ...any) error {
@@ -344,16 +372,40 @@ func TestPaymentDestinations_ASupportPrincipalCannotChangeWhereMoneyIsSent(t *te
 	require.NoError(t, err)
 	org := f.a.Organization.ID.String()
 
-	err = f.execAs(t, grant.PrincipalUserID, `UPDATE organizations SET city = 'Elsewhere' WHERE id = $1`, org)
+	err = f.execAs(
+		t,
+		grant.PrincipalUserID,
+		`UPDATE organizations SET city = 'Elsewhere' WHERE id = $1`,
+		org,
+	)
 	require.Error(t, err)
-	assert.True(t, dberror.IsSupportPaymentDestinationRefusal(err), "refused as a payment destination: %v", err)
+	assert.True(
+		t,
+		dberror.IsSupportPaymentDestinationRefusal(err),
+		"refused as a payment destination: %v",
+		err,
+	)
 
-	require.NoError(t,
-		f.execAs(t, grant.PrincipalUserID, `UPDATE organizations SET timezone = 'America/Chicago' WHERE id = $1`, org),
-		"a column that sends no money stays writable to full support")
-	require.NoError(t,
-		f.execAs(t, grant.PrincipalUserID, `UPDATE organizations SET city = city WHERE id = $1`, org),
-		"saving a row without changing where money goes is not a change")
+	require.NoError(
+		t,
+		f.execAs(
+			t,
+			grant.PrincipalUserID,
+			`UPDATE organizations SET timezone = 'America/Chicago' WHERE id = $1`,
+			org,
+		),
+		"a column that sends no money stays writable to full support",
+	)
+	require.NoError(
+		t,
+		f.execAs(
+			t,
+			grant.PrincipalUserID,
+			`UPDATE organizations SET city = city WHERE id = $1`,
+			org,
+		),
+		"saving a row without changing where money goes is not a change",
+	)
 	require.NoError(t,
 		f.execAs(t, f.a.User.ID, `UPDATE organizations SET city = 'Elsewhere' WHERE id = $1`, org),
 		"the organization's own people change it as before")
@@ -459,7 +511,12 @@ func TestSupportGrants_AnEndedGrantCannotBeExtended(t *testing.T) {
 	next.DurationHours = 24
 	next.ExtendedByID = f.a.User.ID
 	_, err = repo.Extend(f.a.Ctx(t.Context()), &next, f.now)
-	require.ErrorIs(t, err, supportaccess.ErrGrantNotFound, "the write proves the grant is still live")
+	require.ErrorIs(
+		t,
+		err,
+		supportaccess.ErrGrantNotFound,
+		"the write proves the grant is still live",
+	)
 
 	expired := f.createAt(t, f.now-5*3600, f.now-3600)
 	late := *expired
@@ -530,7 +587,13 @@ func TestOutbound_TheDatabaseGuardsExactlyWhatThePolicyNames(t *testing.T) {
 					guard.WhenColumn = column
 				}
 			}
-			require.NotEmpty(t, guard.WhenColumn, "%s has a condition the policy does not name: %s", table, def)
+			require.NotEmpty(
+				t,
+				guard.WhenColumn,
+				"%s has a condition the policy does not name: %s",
+				table,
+				def,
+			)
 		}
 		if args != "" {
 			guard.Columns = strings.Split(strings.TrimSuffix(args, `\000`), `\000`)

@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -38,9 +40,15 @@ func newRoleFixture(t *testing.T) *roleFixture {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 
 	return &roleFixture{
-		ctx:  data.Ctx(ctx),
-		db:   db,
-		repo: New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()}),
+		ctx: data.Ctx(ctx),
+		db:  db,
+		repo: New(
+			Params{
+				Entitlements: entitlementtest.Instance(),
+				DB:           postgres.WrapDB(db),
+				Logger:       zap.NewNop(),
+			},
+		),
 		data: data,
 	}
 }

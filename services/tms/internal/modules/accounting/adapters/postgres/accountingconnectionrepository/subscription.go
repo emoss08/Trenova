@@ -3,6 +3,8 @@ package accountingconnectionrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -27,21 +29,24 @@ var subscriptionErrors = dberror.Mapping{Entity: subscriptionEntity}
 type SubscriptionParams struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type subscriptionRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewSubscriptionRepository(
 	p SubscriptionParams,
 ) accountingconnectionports.AccountingWebhookSubscriptionRepository {
 	return &subscriptionRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.accounting-webhook-subscription-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.accounting-webhook-subscription-repository"),
 	}
 }
 
@@ -112,6 +117,10 @@ func (r *subscriptionRepository) ListConnections(
 			}
 
 			ac := accountingconnectiondb.AccountingConnections
+			entitled, entitledErr := r.entitlements.ForWork(ctx, ac.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			ws := accountingconnectiondb.AccountingWebhookSubscriptions
 			held := ws.AllTenants().Where(
 				ws.ConnectionID.EqCol(ac.ID),
@@ -122,6 +131,7 @@ func (r *subscriptionRepository) ListConnections(
 			return withoutTokens().
 				AllTenants().
 				Where(
+					entitled,
 					ac.IntegrationType.In(req.IntegrationTypes...),
 					keel.Or(
 						ac.Status.Ne(accountingconnection.ConnectionStatusDisconnected),

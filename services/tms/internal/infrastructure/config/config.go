@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/updateconfig"
 )
@@ -66,6 +67,7 @@ type Config struct {
 	Imports             importsconfig.Config             `mapstructure:"imports"`
 	ContentScan         contentscanconfig.Config         `mapstructure:"contentScan"`
 	Managed             managedconfig.Config             `mapstructure:"managed"`
+	TenantLimits        tenantlimitsconfig.Config        `mapstructure:"tenantLimits"`
 }
 
 // IsProductionLike reports whether an environment holds real data: production and staging

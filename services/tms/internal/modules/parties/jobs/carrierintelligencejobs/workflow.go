@@ -3,6 +3,9 @@ package carrierintelligencejobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelmonitorservice"
@@ -117,6 +120,7 @@ func CarrierIntelSweepWorkflow(
 	var a *Activities
 	result, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "Carrier intelligence sweep",
+		Need:        entitlement.For(platformcatalog.FeatureCarrierBrokerage),
 		Concurrency: temporaljobs.DefaultTenantDispatchLimit,
 		ListPage: func(wctx workflow.Context, after *temporaljobs.TenantWorkItem) (*temporaljobs.TenantPage, error) {
 			if after == nil {
@@ -150,6 +154,7 @@ func CarrierIntelReconcileWorkflow(
 	driftCheck := workflow.Now(ctx).UTC().Weekday() == sundayDriftCheckDay
 	result, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "Carrier intelligence reconcile",
+		Need:        entitlement.For(platformcatalog.FeatureCarrierBrokerage),
 		Concurrency: temporaljobs.DefaultTenantDispatchLimit,
 		ListPage: func(wctx workflow.Context, after *temporaljobs.TenantWorkItem) (*temporaljobs.TenantPage, error) {
 			if after == nil {
@@ -182,6 +187,7 @@ func CarrierIntelDigestWorkflow(
 	var a *Activities
 	result, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "Carrier intelligence digest",
+		Need:        entitlement.For(platformcatalog.FeatureCarrierBrokerage),
 		Concurrency: temporaljobs.DefaultTenantDispatchLimit,
 		ListPage: func(wctx workflow.Context, after *temporaljobs.TenantWorkItem) (*temporaljobs.TenantPage, error) {
 			if after == nil {
@@ -225,6 +231,7 @@ func CarrierIntelMaintenanceWorkflow(
 
 	result, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "Carrier intelligence prune",
+		Need:        entitlement.For(platformcatalog.FeatureCarrierBrokerage),
 		Concurrency: temporaljobs.DefaultTenantDispatchLimit,
 		ListPage: func(wctx workflow.Context, after *temporaljobs.TenantWorkItem) (*temporaljobs.TenantPage, error) {
 			if after == nil {

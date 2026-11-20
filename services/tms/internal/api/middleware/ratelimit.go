@@ -6,6 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
@@ -30,7 +34,15 @@ const (
 	HeaderRetryAfter         = "Retry-After"
 
 	rateLimitPeriod = time.Minute
+
+	RateLimitScopeInstance = securityconfig.RateLimitScope("instance")
+	instanceRequestsKey    = "instance:requests"
 )
+
+var tenancyScopes = map[securityconfig.RateLimitScope]string{ //nolint:exhaustive // only the buckets the tenancy metrics count
+	securityconfig.RateLimitScopeTenant: platformmetrics.LimitScopeOrganization,
+	RateLimitScopeInstance:              platformmetrics.LimitScopeInstance,
+}
 
 type RateLimiterParams struct {
 	fx.In
@@ -40,16 +52,20 @@ type RateLimiterParams struct {
 	ErrorHandler   *helpers.ErrorHandler
 	Logger         *zap.Logger
 	Metrics        *metrics.Registry
+	Managed        *managedconfig.Config
+	TenantLimits   *tenantlimitsconfig.Config
 }
 
 type RateLimiter struct {
-	enabled      bool
-	store        kernelports.RateLimitStore
-	errorHandler *helpers.ErrorHandler
-	logger       *zap.Logger
-	metrics      *httpmetrics.RateLimit
-	policies     map[securityconfig.RateLimitScope]kernelports.RateLimitPolicy
-	exemptPaths  []string
+	enabled        bool
+	everyPrincipal bool
+	tenancy        *platformmetrics.Tenancy
+	store          kernelports.RateLimitStore
+	errorHandler   *helpers.ErrorHandler
+	logger         *zap.Logger
+	metrics        *httpmetrics.RateLimit
+	policies       map[securityconfig.RateLimitScope]kernelports.RateLimitPolicy
+	exemptPaths    []string
 }
 
 type scopedRequest struct {
@@ -86,6 +102,16 @@ func NewRateLimiter(p RateLimiterParams) *RateLimiter {
 		}
 	}
 
+	everyPrincipal := p.TenantLimits.Requests.Organizations.On(p.Managed.SharedTenancy())
+	if everyPrincipal {
+		rate, burst := p.TenantLimits.InstanceRequests()
+		policies[RateLimitScopeInstance] = kernelports.RateLimitPolicy{
+			Rate:   rate,
+			Period: rateLimitPeriod,
+			Burst:  burst,
+		}
+	}
+
 	exempt := make([]string, 0, len(cfg.ExemptPathPrefixes))
 	for _, prefix := range cfg.ExemptPathPrefixes {
 		if trimmed := strings.TrimSpace(prefix); trimmed != "" {
@@ -94,13 +120,15 @@ func NewRateLimiter(p RateLimiterParams) *RateLimiter {
 	}
 
 	return &RateLimiter{
-		enabled:      cfg.Enabled,
-		store:        p.Store,
-		errorHandler: p.ErrorHandler,
-		logger:       logger.Named("ratelimit"),
-		metrics:      rateLimitMetrics,
-		policies:     policies,
-		exemptPaths:  exempt,
+		enabled:        cfg.Enabled,
+		everyPrincipal: everyPrincipal,
+		tenancy:        p.Metrics.Tenancy,
+		store:          p.Store,
+		errorHandler:   p.ErrorHandler,
+		logger:         logger.Named("ratelimit"),
+		metrics:        rateLimitMetrics,
+		policies:       policies,
+		exemptPaths:    exempt,
 	}
 }
 
@@ -117,14 +145,14 @@ func (m *RateLimiter) ByClientIP() gin.HandlerFunc {
 	}
 }
 
-func (m *RateLimiter) ByAPIKey() gin.HandlerFunc {
+func (m *RateLimiter) ByPrincipal() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if m.skip(c) {
 			c.Next()
 			return
 		}
 
-		if m.enforce(c, m.apiKeyRequests(c)) {
+		if m.enforce(c, m.principalRequests(c)) {
 			c.Next()
 		}
 	}
@@ -202,15 +230,19 @@ func (m *RateLimiter) anonymousRequests(c *gin.Context) []scopedRequest {
 	}}
 }
 
-func (m *RateLimiter) apiKeyRequests(c *gin.Context) []scopedRequest {
+func (m *RateLimiter) principalRequests(c *gin.Context) []scopedRequest {
 	authCtx := authctx.GetAuthContext(c)
-	if !authCtx.IsAPIKey() || authCtx.APIKeyID.IsNil() || authCtx.OrganizationID.IsNil() {
+	if authCtx == nil || authCtx.OrganizationID.IsNil() {
+		return nil
+	}
+	apiKey := authCtx.IsAPIKey() && authCtx.APIKeyID.IsNotNil()
+	if !apiKey && !m.everyPrincipal {
 		return nil
 	}
 
 	orgTag := "{" + authCtx.OrganizationID.String() + "}"
-	requests := make([]scopedRequest, 0, 2)
-	if policy, ok := m.policies[securityconfig.RateLimitScopeAPIKey]; ok {
+	requests := make([]scopedRequest, 0, 3)
+	if policy, ok := m.policies[securityconfig.RateLimitScopeAPIKey]; ok && apiKey {
 		requests = append(requests, scopedRequest{
 			scope: securityconfig.RateLimitScopeAPIKey,
 			request: kernelports.RateLimitRequest{
@@ -226,6 +258,17 @@ func (m *RateLimiter) apiKeyRequests(c *gin.Context) []scopedRequest {
 			scope: securityconfig.RateLimitScopeTenant,
 			request: kernelports.RateLimitRequest{
 				Key:    orgTag + ":tenant",
+				Policy: policy,
+				Cost:   1,
+			},
+		})
+	}
+
+	if policy, ok := m.policies[RateLimitScopeInstance]; ok {
+		requests = append(requests, scopedRequest{
+			scope: RateLimitScopeInstance,
+			request: kernelports.RateLimitRequest{
+				Key:    instanceRequestsKey,
 				Policy: policy,
 				Cost:   1,
 			},
@@ -326,6 +369,9 @@ func (m *RateLimiter) reject(
 ) {
 	m.writeHeaders(c, req, decision)
 	c.Header(HeaderRateLimitScope, string(req.scope))
+	if scope, ok := tenancyScopes[req.scope]; ok {
+		m.tenancy.RecordLimitRefusal("requests", scope)
+	}
 	c.Header(HeaderRetryAfter, strconv.Itoa(timeutils.CeilSeconds(decision.RetryAfter)))
 	m.errorHandler.HandleError(
 		c,

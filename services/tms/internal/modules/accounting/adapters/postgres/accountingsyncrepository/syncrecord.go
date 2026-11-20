@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/pkg/keelexpr"
 
 	"github.com/emoss08/keel"
@@ -55,21 +57,24 @@ var syncRecordErrors = dberror.Mapping{Entity: syncRecordEntity}
 type SyncRecordParams struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type syncRecordRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewSyncRecordRepository(
 	p SyncRecordParams,
 ) accountingsyncports.AccountingSyncRecordRepository {
 	return &syncRecordRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.accounting-sync-record-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.accounting-sync-record-repository"),
 	}
 }
 
@@ -324,6 +329,9 @@ func (r *syncRecordRepository) Claim(
 			if req == nil || req.ConnectionID.IsNil() {
 				return nil, errors.New("claiming accounting sync records needs a connection")
 			}
+			if len(req.ObjectTypes) == 0 {
+				return []*accountingsync.AccountingSyncRecord{}, nil
+			}
 
 			limit := req.Limit
 			if limit <= 0 {
@@ -345,7 +353,14 @@ func (r *syncRecordRepository) Claim(
 			sr := accountingsyncdb.AccountingSyncRecords
 			picked := sr.As(pickedRecordAlias)
 			due := picked.Pick(picked.ID).
-				Where(picked.ConnectionID.Eq(req.ConnectionID), dueRecords(picked, now)).
+				Where(
+					picked.ConnectionID.Eq(req.ConnectionID),
+					dueRecords(picked, now),
+					keel.When(
+						len(req.ObjectTypes) < len(accountingsync.AllSyncObjectTypes()),
+						picked.ObjectType.In(req.ObjectTypes...),
+					),
+				).
 				Order(dispatchRankOrder(picked), picked.QueuedAt.Asc(), picked.ID.Asc()).
 				Limit(limit).
 				Lock(keel.ForUpdate, keel.SkipLocked)
@@ -736,6 +751,10 @@ func (r *syncRecordRepository) ListDueConnections(
 
 			sr := accountingsyncdb.AccountingSyncRecords
 			ac := accountingconnectiondb.AccountingConnections
+			entitled, entitledErr := r.entitlements.ForWork(ctx, sr.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			due, err := keel.Into[accountingsyncports.AccountingSyncDueConnection](
 				ctx,
 				r.db.Keel(ctx),
@@ -749,6 +768,7 @@ func (r *syncRecordRepository) ListDueConnections(
 					DistinctOn(sr.ConnectionID).
 					Pick(sr.OrganizationID, sr.BusinessUnitID, sr.ConnectionID).
 					Where(
+						entitled,
 						ac.Status.In(accountingconnectionrepository.ActiveStatuses()...),
 						ac.SetupStep.Eq(accountingconnection.SetupStepComplete),
 						ac.SyncStartDate.IsNotNull(),
@@ -794,9 +814,14 @@ func (r *syncRecordRepository) PurgeHistory(
 			if req.PayloadsSyncedBefore > 0 {
 				sr := accountingsyncdb.AccountingSyncRecords
 				picked := sr.As(pickedRecordAlias)
+				entitled, entitledErr := r.entitlements.ForWork(ctx, picked.OrganizationID.Col)
+				if entitledErr != nil {
+					return nil, entitledErr
+				}
 				stale := picked.AllTenants().
 					Pick(picked.ID).
 					Where(
+						entitled,
 						picked.Status.Eq(accountingsync.SyncStatusSynced),
 						picked.SyncedAt.Lt(req.PayloadsSyncedBefore),
 						picked.Payload.IsNotNull(),
@@ -818,9 +843,13 @@ func (r *syncRecordRepository) PurgeHistory(
 			if req.AttemptsBefore > 0 {
 				sa := accountingsyncdb.AccountingSyncAttempts
 				purged := sa.As(purgedAttemptAlias)
+				entitled, entitledErr := r.entitlements.ForWork(ctx, purged.OrganizationID.Col)
+				if entitledErr != nil {
+					return nil, entitledErr
+				}
 				old := purged.AllTenants().
 					Pick(purged.ID).
-					Where(purged.CreatedAt.Lt(req.AttemptsBefore)).
+					Where(entitled, purged.CreatedAt.Lt(req.AttemptsBefore)).
 					Limit(limit)
 				deleted, err := sa.AllTenants().Where(sa.ID.InQuery(old)).Delete(ctx, db)
 				if err != nil {

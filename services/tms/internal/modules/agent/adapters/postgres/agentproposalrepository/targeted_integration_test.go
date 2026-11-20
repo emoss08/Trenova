@@ -5,6 +5,8 @@ package agentproposalrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
@@ -52,7 +54,13 @@ func TestReplacePendingForTargets_SupersedesAnEarlierRunsProposalForTheSameMove(
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 
@@ -69,25 +77,33 @@ func TestReplacePendingForTargets_SupersedesAnEarlierRunsProposalForTheSameMove(
 
 	replanned, untouched := pulid.MustNew("sm_"), pulid.MustNew("sm_")
 	firstRun := newRun()
-	first, err := repo.ReplacePendingForTargets(ctx, &agentproposalports.ReplaceTargetedProposalsRequest{
-		TenantInfo:     tenant,
-		ToolName:       coverageTool,
-		TargetResource: "shipment_move",
-		Proposals: []*agent.AgentProposal{
-			coverageProposalFor(tenant, firstRun, replanned),
-			coverageProposalFor(tenant, firstRun, untouched),
+	first, err := repo.ReplacePendingForTargets(
+		ctx,
+		&agentproposalports.ReplaceTargetedProposalsRequest{
+			TenantInfo:     tenant,
+			ToolName:       coverageTool,
+			TargetResource: "shipment_move",
+			Proposals: []*agent.AgentProposal{
+				coverageProposalFor(tenant, firstRun, replanned),
+				coverageProposalFor(tenant, firstRun, untouched),
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	require.Len(t, first, 2)
 
 	secondRun := newRun()
-	second, err := repo.ReplacePendingForTargets(ctx, &agentproposalports.ReplaceTargetedProposalsRequest{
-		TenantInfo:     tenant,
-		ToolName:       coverageTool,
-		TargetResource: "shipment_move",
-		Proposals:      []*agent.AgentProposal{coverageProposalFor(tenant, secondRun, replanned)},
-	})
+	second, err := repo.ReplacePendingForTargets(
+		ctx,
+		&agentproposalports.ReplaceTargetedProposalsRequest{
+			TenantInfo:     tenant,
+			ToolName:       coverageTool,
+			TargetResource: "shipment_move",
+			Proposals: []*agent.AgentProposal{
+				coverageProposalFor(tenant, secondRun, replanned),
+			},
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, second, 1)
 
@@ -106,7 +122,12 @@ func TestReplacePendingForTargets_SupersedesAnEarlierRunsProposalForTheSameMove(
 	}
 	assert.Len(t, pending, 2, "one pending proposal per move")
 	assert.Equal(t, second[0].ID, byMove[replanned], "the newer plan's proposal is the one waiting")
-	assert.Equal(t, first[1].ID, byMove[untouched], "a move the new plan left out keeps its proposal")
+	assert.Equal(
+		t,
+		first[1].ID,
+		byMove[untouched],
+		"a move the new plan left out keeps its proposal",
+	)
 
 	superseded, err := repo.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 		ID:         first[0].ID,
@@ -122,7 +143,13 @@ func TestListPendingByTargets_LeavesOutAProposalPastItsExpiry(t *testing.T) {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	ctx = data.Ctx(ctx)
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
 
@@ -137,12 +164,15 @@ func TestListPendingByTargets_LeavesOutAProposalPastItsExpiry(t *testing.T) {
 	moveID := pulid.MustNew("sm_")
 	expired := coverageProposalFor(tenant, run.ID, moveID)
 	expired.ExpiresAt = now - 60
-	_, err := repo.ReplacePendingForTargets(ctx, &agentproposalports.ReplaceTargetedProposalsRequest{
-		TenantInfo:     tenant,
-		ToolName:       coverageTool,
-		TargetResource: "shipment_move",
-		Proposals:      []*agent.AgentProposal{expired},
-	})
+	_, err := repo.ReplacePendingForTargets(
+		ctx,
+		&agentproposalports.ReplaceTargetedProposalsRequest{
+			TenantInfo:     tenant,
+			ToolName:       coverageTool,
+			TargetResource: "shipment_move",
+			Proposals:      []*agent.AgentProposal{expired},
+		},
+	)
 	require.NoError(t, err)
 
 	pending, err := repo.ListPendingByTargets(ctx, &agentproposalports.ListPendingByTargetsRequest{

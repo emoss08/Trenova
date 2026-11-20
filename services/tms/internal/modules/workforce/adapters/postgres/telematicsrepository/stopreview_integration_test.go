@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -66,7 +68,11 @@ func setupStopReview(t *testing.T) *stopReviewFixture {
 		ctx: dbscope.WithTenant(ctx, tenantInfo.DBTenant()),
 		db:  db,
 		repo: telematicsrepository.New(
-			telematicsrepository.Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()},
+			telematicsrepository.Params{
+				Entitlements: entitlementtest.Instance(),
+				DB:           postgres.WrapDB(db),
+				Logger:       zap.NewNop(),
+			},
 		),
 		tenantInfo: tenantInfo,
 		shipmentID: seeded.ShipmentID,

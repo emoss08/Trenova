@@ -5,6 +5,8 @@ package aiauditrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
@@ -35,7 +37,13 @@ func TestRecordVerificationWritesTheTenantsChainHead(t *testing.T) {
 
 	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 
 	head, err := repo.RecordVerification(ctx, &aiauditports.RecordAIAuditVerificationRequest{
 		TenantInfo:  tenant,

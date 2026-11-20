@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -45,19 +47,22 @@ type typeCount struct {
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) workercredentialports.WorkerCredentialRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.worker-credential-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.worker-credential-repository"),
 	}
 }
 
@@ -510,6 +515,7 @@ func expiryWindow(
 func expiringQuery(
 	ctx context.Context,
 	req *workercredentialports.ListExpiringWorkerCredentialsRequest,
+	entitled keel.Pred,
 ) keel.Query[*workercredential.WorkerCredential] {
 	c := workercredentialdb.WorkerCredentials
 	ct := c.CredentialType()
@@ -525,6 +531,7 @@ func expiringQuery(
 	}
 
 	q := c.Where(
+		entitled,
 		c.Status.Eq(workercredential.CredentialStatusActive),
 		keel.When(!req.AnyExpiry, c.ExpiresAt.Between(grace, horizon)),
 		c.Worker().Status.Eq(domaintypes.StatusActive),
@@ -567,7 +574,18 @@ func (r *repository) ListExpiring(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workercredential.WorkerCredential, error) {
-			entities, err := expiringQuery(ctx, req).List(ctx, r.db.Keel(ctx))
+			var entitled keel.Pred
+			if dbscope.IsSystem(ctx) {
+				across, entitledErr := r.entitlements.ForWork(
+					ctx,
+					workercredentialdb.WorkerCredentials.OrganizationID.Col,
+				)
+				if entitledErr != nil {
+					return nil, entitledErr
+				}
+				entitled = across
+			}
+			entities, err := expiringQuery(ctx, req, entitled).List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list expiring worker credentials", zap.Error(err))
 				return nil, fmt.Errorf("list expiring worker credentials: %w", err)

@@ -9,6 +9,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -383,7 +385,12 @@ func operationsServices(conn *postgres.Connection, services *agentread.ResolverP
 		recurringshipmentservice.Params{
 			Logger: logger,
 			Repo: recurringshipmentrepository.New(
-				recurringshipmentrepository.Params{DB: conn, Logger: logger}),
+				recurringshipmentrepository.Params{
+					Entitlements: entitlementtest.Instance(),
+					DB:           conn,
+					Logger:       logger,
+				},
+			),
 		},
 	)
 	services.ServiceFailureReasonCodeSvc = servicefailurereasoncodeservice.New(
@@ -397,7 +404,9 @@ func operationsServices(conn *postgres.Connection, services *agentread.ResolverP
 			detentionrepository.OccurrenceParams{DB: conn, Logger: logger}),
 		Effects: detentioneffects.New(detentioneffects.Params{Logger: logger}),
 	})
-	services.TenderRepo = tenderrepository.New(tenderrepository.Params{DB: conn, Logger: logger})
+	services.TenderRepo = tenderrepository.New(
+		tenderrepository.Params{Entitlements: entitlementtest.Instance(), DB: conn, Logger: logger},
+	)
 }
 
 // operationsListCases are the converted order, recurring shipment, reason
@@ -420,7 +429,12 @@ func operationsListCases(world *operationsWorld, conn *postgres.Connection) []re
 			tool: "shipment_list_recurring", marked: paused, oldMarked: oldPaused,
 			old: operationsquerytools.NewListRecurringShipmentsTool(
 				recurringshipmentrepository.New(
-					recurringshipmentrepository.Params{DB: conn, Logger: logger}),
+					recurringshipmentrepository.Params{
+						Entitlements: entitlementtest.Instance(),
+						DB:           conn,
+						Logger:       logger,
+					},
+				),
 			),
 			write: world.writeSeries,
 		},

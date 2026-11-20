@@ -3,6 +3,9 @@ package aianalyticsjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -52,6 +55,7 @@ func RefreshAIAnalyticsWorkflow(
 	result := newRefreshAIAnalyticsResult()
 	_, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "AI analytics",
+		Need:        entitlement.For(platformcatalog.FeatureAgentAutomation),
 		Concurrency: organizationConcurrency,
 		ListPage: func(
 			wctx workflow.Context,
@@ -75,7 +79,6 @@ func RefreshAIAnalyticsWorkflow(
 		},
 		RunTenant: func(wctx workflow.Context, tenant temporaljobs.TenantWorkItem) (int, error) {
 			options := organizationOptions
-			options.Priority = temporal.Priority{FairnessKey: tenant.OrganizationID.String()}
 			activityCtx := workflow.WithActivityOptions(wctx, options)
 			var refreshed OrganizationAIAnalyticsResult
 			if err := workflow.ExecuteActivity(

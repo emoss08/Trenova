@@ -3,6 +3,9 @@ package shipmentjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
@@ -102,6 +105,16 @@ func AutoDelayShipmentsWorkflow(ctx workflow.Context) (*AutoDelayShipmentsResult
 	}
 	result.TenantsScanned = len(tenantsResult.Tenants)
 
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureCoreTMS),
+		tenantsResult.Tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenantsResult.Tenants = kept
+
 	for _, tenant := range tenantsResult.Tenants {
 		payload := &ShipmentTenantWorkPayload{TenantWorkItem: tenant}
 
@@ -154,6 +167,16 @@ func AutoCancelShipmentsWorkflow(ctx workflow.Context) (*AutoCancelShipmentsResu
 		CompletedAt: workflow.Now(ctx).Unix(),
 	}
 	result.TenantsScanned = len(tenantsResult.Tenants)
+
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureCoreTMS),
+		tenantsResult.Tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenantsResult.Tenants = kept
 
 	for _, tenant := range tenantsResult.Tenants {
 		payload := &ShipmentTenantWorkPayload{TenantWorkItem: tenant}

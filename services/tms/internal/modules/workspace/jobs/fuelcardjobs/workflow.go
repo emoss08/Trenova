@@ -3,6 +3,9 @@ package fuelcardjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -54,6 +57,16 @@ func FuelCardSyncWorkflow(ctx workflow.Context) (*temporaljobs.TenantRunResult, 
 
 	result := new(temporaljobs.TenantRunResult)
 	result.TenantsScanned = len(tenantsResult.Tenants)
+
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureFuelTax),
+		tenantsResult.Tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenantsResult.Tenants = kept
 
 	for _, tenant := range tenantsResult.Tenants {
 		var syncResult *SyncTenantResult

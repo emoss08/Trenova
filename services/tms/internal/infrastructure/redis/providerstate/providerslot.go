@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/infrastructure/redis/slotstore"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
@@ -15,40 +16,6 @@ const providerSlotPrefix = "ai:slots"
 
 var errIncompleteSlotRequest = errors.New("provider slot request is incomplete")
 
-var providerSlotAcquireScript = redis.NewScript(`
-local now = redis.call('TIME')
-local nowMs = tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000)
-local limit = tonumber(ARGV[1])
-local ttl = tonumber(ARGV[2])
-redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', nowMs)
-if redis.call('ZSCORE', KEYS[1], ARGV[3]) then
-  redis.call('ZADD', KEYS[1], nowMs + ttl, ARGV[3])
-  return 1
-end
-if redis.call('ZCARD', KEYS[1]) >= limit then
-  return 0
-end
-redis.call('ZADD', KEYS[1], nowMs + ttl, ARGV[3])
-if redis.call('PTTL', KEYS[1]) < ttl then
-  redis.call('PEXPIRE', KEYS[1], ttl)
-end
-return 1
-`)
-
-var providerSlotRefreshScript = redis.NewScript(`
-if not redis.call('ZSCORE', KEYS[1], ARGV[2]) then
-  return 0
-end
-local now = redis.call('TIME')
-local nowMs = tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000)
-local ttl = tonumber(ARGV[1])
-redis.call('ZADD', KEYS[1], 'XX', nowMs + ttl, ARGV[2])
-if redis.call('PTTL', KEYS[1]) < ttl then
-  redis.call('PEXPIRE', KEYS[1], ttl)
-end
-return 1
-`)
-
 type ProviderSlotParams struct {
 	fx.In
 
@@ -56,15 +23,35 @@ type ProviderSlotParams struct {
 }
 
 type providerSlotRepository struct {
-	client *redis.Client
+	slots *slotstore.Store
 }
 
 func NewProviderSlotRepository(p ProviderSlotParams) llmports.ProviderSlotRepository {
-	return &providerSlotRepository{client: p.Client}
+	return &providerSlotRepository{slots: slotstore.New(p.Client)}
 }
 
 func providerSlotKey(providerID pulid.ID) string {
 	return providerSlotPrefix + ":" + providerID.String()
+}
+
+func organizationSlotKey(providerID, organizationID pulid.ID) string {
+	return providerSlotKey(providerID) + ":org:" + organizationID.String()
+}
+
+func bounds(
+	providerID pulid.ID,
+	limit int,
+	organizationID pulid.ID,
+	organizationLimit int,
+) []slotstore.Bound {
+	out := []slotstore.Bound{{Key: providerSlotKey(providerID), Limit: max(limit, 1)}}
+	if organizationID.IsNotNil() && organizationLimit > 0 {
+		out = append(out, slotstore.Bound{
+			Key:   organizationSlotKey(providerID, organizationID),
+			Limit: organizationLimit,
+		})
+	}
+	return out
 }
 
 func (r *providerSlotRepository) Acquire(
@@ -74,20 +61,11 @@ func (r *providerSlotRepository) Acquire(
 	if req.ProviderID.IsNil() || req.Token == "" || req.Limit <= 0 || req.TTL <= 0 {
 		return false, fmt.Errorf("acquire provider slot: %w", errIncompleteSlotRequest)
 	}
-
-	acquired, err := providerSlotAcquireScript.Run(
-		ctx,
-		r.client,
-		[]string{providerSlotKey(req.ProviderID)},
-		req.Limit,
-		req.TTL.Milliseconds(),
-		req.Token,
-	).Int()
-	if err != nil {
-		return false, fmt.Errorf("acquire provider slot: %w", err)
-	}
-
-	return acquired == 1, nil
+	return r.slots.Acquire(ctx, slotstore.Claim{
+		Bounds: bounds(req.ProviderID, req.Limit, req.OrganizationID, req.OrganizationLimit),
+		Token:  req.Token,
+		TTL:    req.TTL,
+	})
 }
 
 func (r *providerSlotRepository) Refresh(
@@ -97,19 +75,11 @@ func (r *providerSlotRepository) Refresh(
 	if req.ProviderID.IsNil() || req.Token == "" || req.TTL <= 0 {
 		return false, fmt.Errorf("refresh provider slot: %w", errIncompleteSlotRequest)
 	}
-
-	held, err := providerSlotRefreshScript.Run(
-		ctx,
-		r.client,
-		[]string{providerSlotKey(req.ProviderID)},
-		req.TTL.Milliseconds(),
-		req.Token,
-	).Int()
-	if err != nil {
-		return false, fmt.Errorf("refresh provider slot: %w", err)
-	}
-
-	return held == 1, nil
+	return r.slots.Refresh(ctx, slotstore.Claim{
+		Bounds: bounds(req.ProviderID, 1, req.OrganizationID, 1),
+		Token:  req.Token,
+		TTL:    req.TTL,
+	})
 }
 
 func (r *providerSlotRepository) Release(
@@ -119,10 +89,8 @@ func (r *providerSlotRepository) Release(
 	if req.ProviderID.IsNil() || req.Token == "" {
 		return nil
 	}
-
-	if err := r.client.ZRem(ctx, providerSlotKey(req.ProviderID), req.Token).Err(); err != nil {
-		return fmt.Errorf("release provider slot: %w", err)
-	}
-
-	return nil
+	return r.slots.Release(ctx, slotstore.Claim{
+		Bounds: bounds(req.ProviderID, 1, req.OrganizationID, 1),
+		Token:  req.Token,
+	})
 }

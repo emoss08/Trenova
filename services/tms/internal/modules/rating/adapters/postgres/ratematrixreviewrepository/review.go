@@ -3,6 +3,8 @@ package ratematrixreviewrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -29,19 +31,22 @@ var reviewErrors = dberror.Mapping{Entity: "RateMatrixReview"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) ratematrixports.RateMatrixReviewRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.ratematrix-review-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.ratematrix-review-repository"),
 	}
 }
 
@@ -137,8 +142,13 @@ func (r *repository) ListStaleSubmissions(
 		}
 
 		rm := ratematrixdb.RateMatrixes
+		entitled, entitledErr := r.entitlements.ForWork(ctx, rm.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		matrices, err := rm.AllTenants().
 			Where(
+				entitled,
 				rm.Status.Eq(formulatemplate.StatusInReview),
 				rm.SubmittedAt.IsNotNull(),
 				rm.SubmittedAt.Lt(req.SubmittedBefore),

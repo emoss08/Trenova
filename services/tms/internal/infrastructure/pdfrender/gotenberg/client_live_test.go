@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/rendererconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -35,6 +37,7 @@ func liveClient(t *testing.T) *Client {
 	}
 
 	return New(Params{
+		Slots: heavyslotstest.Unbounded(),
 		RendererConfig: &rendererconfig.Config{
 			GotenbergURL:   baseURL,
 			RequestTimeout: 60 * time.Second,

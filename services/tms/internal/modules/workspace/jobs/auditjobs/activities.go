@@ -3,6 +3,8 @@ package auditjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditalertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
@@ -19,6 +21,7 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
+	Slots     kernelports.HeavyJobSlots
 	Retention *auditretention.Retention
 	Sealer    *auditintegrity.Sealer
 	Verifier  *auditintegrity.Verifier
@@ -28,6 +31,7 @@ type ActivitiesParams struct {
 }
 
 type Activities struct {
+	slots     kernelports.HeavyJobSlots
 	retention *auditretention.Retention
 	sealer    *auditintegrity.Sealer
 	verifier  *auditintegrity.Verifier
@@ -38,6 +42,7 @@ type Activities struct {
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
+		slots:     p.Slots,
 		retention: p.Retention,
 		sealer:    p.Sealer,
 		verifier:  p.Verifier,
@@ -97,6 +102,11 @@ func (a *Activities) RunExportActivity(
 		OrganizationID: payload.OrganizationID,
 		BusinessUnitID: payload.BusinessUnitID,
 	})
+	release, err := a.slots.Hold(ctx, kernelports.HeavyJobExport)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 	export, err := a.exports.Run(ctx, tenant, payload.ExportID, heartbeat(ctx))
 	if err != nil {
 		return nil, retryable("Failed to write the audit export", err)

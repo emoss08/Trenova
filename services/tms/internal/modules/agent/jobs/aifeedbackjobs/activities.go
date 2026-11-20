@@ -48,7 +48,7 @@ func (a *Activities) ListAIFeedbackOrganizationsActivity(
 	ctx context.Context,
 	input *ListAIFeedbackOrganizationsInput,
 ) (*temporaljobs.TenantPage, error) {
-	return temporaljobs.OrganizationPage(ctx, a.tenants, input.After, input.Limit)
+	return temporaljobs.OrganizationPage(ctx, a.tenants, input.Need, input.After, input.Limit)
 }
 
 func (a *Activities) MaintainOrganizationAIFeedbackActivity(

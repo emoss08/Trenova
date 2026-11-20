@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/connection"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/interceptors"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workfeature"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/contrib/opentelemetry"
@@ -92,8 +94,12 @@ func NewTemporalClient(p TemporalClientParams) (TemporalClientResult, error) {
 	// a client's worker interceptors to every worker built from it, so
 	// workflows and activities are traced as well as the calls that start them.
 	clientOptions.Interceptors = append(
-		[]interceptor.ClientInterceptor{tracing},
+		[]interceptor.ClientInterceptor{tracing, interceptors.NewFairness()},
 		clientOptions.Interceptors...,
+	)
+	clientOptions.ContextPropagators = append(
+		clientOptions.ContextPropagators,
+		workfeature.NewPropagator(),
 	)
 
 	handler, handlerErr := sdkMetricsHandler(p.Metrics, log)

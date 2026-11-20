@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
@@ -177,7 +179,12 @@ func TestConvertedLists_SchedulingAndRandomTestingReadTheTenantsOwnUnderRowLevel
 		DB: conn, Logger: logger, Assignments: crossref.RotaAssignments(),
 	})
 	draws := workerdrugalcoholrepository.New(
-		workerdrugalcoholrepository.Params{DB: conn, Logger: logger})
+		workerdrugalcoholrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
+	)
 	resolvers.SchedulingService = schedulingservice.New(schedulingservice.Params{
 		Logger: logger, Repo: schedules,
 	})

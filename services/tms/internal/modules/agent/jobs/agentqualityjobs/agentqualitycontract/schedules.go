@@ -93,7 +93,7 @@ func SweepScheduleOptions(target *agentqualityports.QualityScheduleTarget) clien
 				OrganizationID: target.OrganizationID,
 				BusinessUnitID: target.BusinessUnitID,
 			}},
-			Priority: EvaluationPriority(target.OrganizationID),
+			Priority: EvaluationPriority(),
 		},
 	}
 }
@@ -252,7 +252,7 @@ func (s *QualitySchedules) StartSuiteRun(
 		ID:                    workflowID,
 		TaskQueue:             temporaltype.TaskQueueAgentHeavy.String(),
 		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
-		Priority:              EvaluationPriority(start.TenantInfo.OrgID),
+		Priority:              EvaluationPriority(),
 	}, AgentSuiteRunWorkflowName, &SuiteRunPayload{
 		OrganizationID:    start.TenantInfo.OrgID,
 		BusinessUnitID:    start.TenantInfo.BuID,

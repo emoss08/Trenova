@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -297,7 +299,10 @@ func (s *Service) EnqueueAfterPost(
 	if entity == nil {
 		return
 	}
-	ediOn, err := s.features.Enabled(ctx, platformcatalog.FeatureEDIIntegration)
+	ediOn, err := s.features.Enabled(
+		dbscope.WithTenant(ctx, tenantInfo.DBTenant()),
+		platformcatalog.FeatureEDIIntegration,
+	)
 	if err != nil {
 		s.l.Warn("failed to resolve invoice EDI plan after post", zap.Error(err))
 		return

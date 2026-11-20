@@ -3,6 +3,8 @@ package formulalibraryreviewrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
@@ -27,19 +29,22 @@ var reviewErrors = dberror.Mapping{Entity: "FormulaLibraryReview"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) formulalibraryports.FormulaLibraryReviewRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.formula-library-review-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.formula-library-review-repository"),
 	}
 }
 
@@ -138,8 +143,13 @@ func (r *repository) ListStaleSubmissions(
 			}
 
 			fl := formulalibrarydb.FormulaLibraries
+			entitled, entitledErr := r.entitlements.ForWork(ctx, fl.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			libraries, err := fl.AllTenants().
 				Where(
+					entitled,
 					fl.Status.Eq(formulatemplate.StatusInReview),
 					fl.SubmittedAt.IsNotNull(),
 					fl.SubmittedAt.Lt(req.SubmittedBefore),

@@ -90,7 +90,6 @@ func (w *Workflows) dryRun(
 	options := prepareOptions
 	options.Priority = temporal.Priority{
 		PriorityKey: agentflowcontract.PriorityInteractive,
-		FairnessKey: payload.Actor.OrganizationID.String(),
 	}
 	if err := workflow.ExecuteActivity(
 		workflow.WithActivityOptions(ctx, options), a.PrepareDryRunActivity, payload,

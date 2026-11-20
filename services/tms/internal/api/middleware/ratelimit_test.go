@@ -8,6 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
@@ -45,6 +50,15 @@ func newTestRateLimiter(
 	rateLimitCfg securityconfig.RateLimitConfig,
 	store kernelports.RateLimitStore,
 ) *RateLimiter {
+	return newTenancyRateLimiter(rateLimitCfg, store, &managedconfig.Config{}, nil)
+}
+
+func newTenancyRateLimiter(
+	rateLimitCfg securityconfig.RateLimitConfig,
+	store kernelports.RateLimitStore,
+	managed *managedconfig.Config,
+	tenancy *platformmetrics.Tenancy,
+) *RateLimiter {
 	cfg := &config.Config{
 		App: appconfig.Config{Debug: true},
 		Security: securityconfig.Config{
@@ -62,7 +76,13 @@ func newTestRateLimiter(
 		Logger: zap.NewNop(),
 		Metrics: &metrics.Registry{
 			RateLimit: httpmetrics.NewRateLimit(nil, zap.NewNop(), false),
+			Tenancy:   tenancy,
 		},
+		Managed: managed,
+		TenantLimits: &tenantlimitsconfig.Config{Requests: tenantlimitsconfig.Requests{
+			InstancePerMinute: 60,
+			InstanceBurst:     3,
+		}},
 	})
 }
 
@@ -87,7 +107,7 @@ func apiKeyRouter(
 	router.GET("/test", func(c *gin.Context) {
 		principal(c)
 		c.Next()
-	}, limiter.ByAPIKey(), func(c *gin.Context) {
+	}, limiter.ByPrincipal(), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
 	return router
@@ -150,7 +170,7 @@ func TestRateLimiter_ByClientIP_ThrottlesAfterBurst(t *testing.T) {
 	assert.Equal(t, http.StatusOK, other.Code, "buckets are per client IP")
 }
 
-func TestRateLimiter_ByAPIKey_KeysAPIKeysSeparately(t *testing.T) {
+func TestRateLimiter_ByPrincipal_KeysAPIKeysSeparately(t *testing.T) {
 	t.Parallel()
 
 	store := &recordingStore{inner: newMemoryStore()}
@@ -188,7 +208,7 @@ func TestRateLimiter_ByAPIKey_KeysAPIKeysSeparately(t *testing.T) {
 	assert.Equal(t, "{"+orgID.String()+"}:tenant", last[1].Key)
 }
 
-func TestRateLimiter_ByAPIKey_LeavesFirstPartyPrincipalsUnmetered(t *testing.T) {
+func TestRateLimiter_ByPrincipal_LeavesFirstPartyPrincipalsUnmetered(t *testing.T) {
 	t.Parallel()
 
 	store := &recordingStore{inner: newMemoryStore()}
@@ -224,7 +244,7 @@ func TestRateLimiter_ByAPIKey_LeavesFirstPartyPrincipalsUnmetered(t *testing.T) 
 	assert.Empty(t, store.requests, "only API keys reach the rate limit store")
 }
 
-func TestRateLimiter_ByAPIKey_TenantCeilingSpansKeys(t *testing.T) {
+func TestRateLimiter_ByPrincipal_TenantCeilingSpansKeys(t *testing.T) {
 	t.Parallel()
 
 	limiter := newTestRateLimiter(securityconfig.RateLimitConfig{
@@ -385,4 +405,85 @@ func TestRateLimiter_RetryAfterRoundsUpToWholeSeconds(t *testing.T) {
 
 	current = current.Add(15 * time.Second)
 	assert.Equal(t, http.StatusOK, serve(router, http.MethodGet, "/test", "10.0.0.1:1").Code)
+}
+
+func sharedServer() *managedconfig.Config {
+	return &managedconfig.Config{Enabled: true, Tenancy: managedconfig.TenancyShared}
+}
+
+func refusals(t *testing.T, registry *prometheus.Registry, scope string) float64 {
+	t.Helper()
+	families, err := registry.Gather()
+	require.NoError(t, err)
+	for _, family := range families {
+		if family.GetName() != "trenova_tenancy_limit_refusals_total" {
+			continue
+		}
+		for _, metric := range family.GetMetric() {
+			for _, label := range metric.GetLabel() {
+				if label.GetName() == "scope" && label.GetValue() == scope {
+					return metric.GetCounter().GetValue()
+				}
+			}
+		}
+	}
+	return 0
+}
+
+func TestRateLimiter_ByPrincipal_CountsSessionsInTheirOrganizationOnASharedServer(t *testing.T) {
+	t.Parallel()
+
+	registry := prometheus.NewRegistry()
+	limiter := newTenancyRateLimiter(securityconfig.RateLimitConfig{
+		Enabled: true,
+		Tenant:  securityconfig.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 2},
+	}, newMemoryStore(), sharedServer(), platformmetrics.NewTenancy(registry, zap.NewNop(), true))
+
+	buID := pulid.MustNew("bu_")
+	busy := pulid.MustNew("org_")
+	session := apiKeyRouter(limiter, func(c *gin.Context) {
+		authctx.SetAuthContext(c, pulid.MustNew("usr_"), buID, busy)
+	})
+	other := apiKeyRouter(limiter, func(c *gin.Context) {
+		authctx.SetAuthContext(c, pulid.MustNew("usr_"), buID, pulid.MustNew("org_"))
+	})
+
+	assert.Equal(t, http.StatusOK, serve(session, http.MethodGet, "/test", "10.0.0.1:1").Code)
+	assert.Equal(t, http.StatusOK, serve(session, http.MethodGet, "/test", "10.0.0.2:1").Code)
+
+	limited := serve(session, http.MethodGet, "/test", "10.0.0.3:1")
+	assert.Equal(t, http.StatusTooManyRequests, limited.Code,
+		"one organization's sessions share its bucket")
+	assert.Equal(t, "tenant", limited.Header().Get(HeaderRateLimitScope))
+	assert.NotEmpty(t, limited.Header().Get(HeaderRetryAfter))
+	assert.InDelta(t, 1, refusals(t, registry, platformmetrics.LimitScopeOrganization), 0)
+
+	assert.Equal(t, http.StatusOK, serve(other, http.MethodGet, "/test", "10.0.0.1:1").Code,
+		"another organization keeps working")
+}
+
+func TestRateLimiter_ByPrincipal_TheInstanceBucketSpansOrganizations(t *testing.T) {
+	t.Parallel()
+
+	registry := prometheus.NewRegistry()
+	limiter := newTenancyRateLimiter(securityconfig.RateLimitConfig{
+		Enabled: true,
+		Tenant:  securityconfig.RateLimitScopeConfig{RequestsPerMinute: 600, BurstSize: 100},
+	}, newMemoryStore(), sharedServer(), platformmetrics.NewTenancy(registry, zap.NewNop(), true))
+
+	buID := pulid.MustNew("bu_")
+	for i := range 3 {
+		router := apiKeyRouter(limiter, func(c *gin.Context) {
+			authctx.SetAuthContext(c, pulid.MustNew("usr_"), buID, pulid.MustNew("org_"))
+		})
+		assert.Equal(t, http.StatusOK, serve(router, http.MethodGet, "/test", "10.0.0.1:1").Code, i)
+	}
+
+	router := apiKeyRouter(limiter, func(c *gin.Context) {
+		authctx.SetAuthContext(c, pulid.MustNew("usr_"), buID, pulid.MustNew("org_"))
+	})
+	limited := serve(router, http.MethodGet, "/test", "10.0.0.1:1")
+	assert.Equal(t, http.StatusTooManyRequests, limited.Code)
+	assert.Equal(t, "instance", limited.Header().Get(HeaderRateLimitScope))
+	assert.InDelta(t, 1, refusals(t, registry, platformmetrics.LimitScopeInstance), 0)
 }

@@ -6,6 +6,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/telematicsrepository"
@@ -31,7 +33,13 @@ func TestConvertedLists_PositionsReadTheTenantsRecentReadings(t *testing.T) {
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	cases, services := convertedListCases(conn, admin)
-	repo := telematicsrepository.New(telematicsrepository.Params{DB: conn, Logger: zap.NewNop()})
+	repo := telematicsrepository.New(
+		telematicsrepository.Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       zap.NewNop(),
+		},
+	)
 	services.TelematicsService = telematicsservice.New(telematicsservice.Params{
 		Repo: repo, Logger: zap.NewNop(),
 	})

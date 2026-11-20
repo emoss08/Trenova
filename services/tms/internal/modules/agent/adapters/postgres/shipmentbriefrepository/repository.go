@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
@@ -20,19 +22,22 @@ const maxDeleteBatch = 1000
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) shipmentbriefports.ShipmentBriefRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.shipment-brief-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.shipment-brief-repository"),
 	}
 }
 
@@ -103,10 +108,14 @@ func (r *repository) DeleteBefore(
 
 		b := shipmentbriefdb.Briefs
 		stale := b.As("stale")
+		entitled, entitledErr := r.entitlements.ForWork(ctx, stale.OrganizationID.Col)
+		if entitledErr != nil {
+			return 0, entitledErr
+		}
 		n, err := b.AllTenants().
 			Where(b.ID.InQuery(stale.AllTenants().
 				Pick(stale.ID).
-				Where(stale.BriefDate.Lt(req.BeforeDate)).
+				Where(entitled, stale.BriefDate.Lt(req.BeforeDate)).
 				Order(stale.BriefDate.Asc()).
 				Limit(limit))).
 			Delete(ctx, r.db.Keel(ctx))

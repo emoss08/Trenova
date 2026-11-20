@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/pkg/keelexpr"
 
 	"github.com/emoss08/keel"
@@ -34,19 +36,22 @@ const (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type repository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func New(p Params) conversationscheduleports.ConversationScheduleRepository {
 	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.conversation-schedule-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.conversation-schedule-repository"),
 	}
 }
 
@@ -268,8 +273,12 @@ func (r *repository) ListAcrossTenants(
 			}
 
 			s := conversationscheduledb.Schedules
+			entitled, entitledErr := r.entitlements.ForWork(ctx, s.OrganizationID.Col)
+			if entitledErr != nil {
+				return nil, entitledErr
+			}
 			entities, err := s.AllTenants().
-				Where(keel.When(req.AfterID.IsNotNil(), s.ID.Gt(req.AfterID))).
+				Where(entitled, keel.When(req.AfterID.IsNotNil(), s.ID.Gt(req.AfterID))).
 				Order(s.ID.Asc()).
 				Limit(limit).
 				List(ctx, r.db.Keel(ctx))

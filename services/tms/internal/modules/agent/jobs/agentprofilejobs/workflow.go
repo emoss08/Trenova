@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentprofilejobs/agentprofilecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/temporal"
@@ -105,6 +107,7 @@ func SweepWorkflow(ctx workflow.Context, input *SweepInput) (*SweepResult, error
 	result := &SweepResult{}
 	_, next, err := temporaljobs.RunTenantFanOut(ctx, temporaljobs.FanOutOptions{
 		Label:       "Agent profiles",
+		Need:        entitlement.For(platformcatalog.FeatureAgentAutomation),
 		Concurrency: organizationConcurrency,
 		ListPage: func(
 			wctx workflow.Context,
@@ -120,6 +123,7 @@ func SweepWorkflow(ctx workflow.Context, input *SweepInput) (*SweepResult, error
 				a.ListProfileOrganizationsActivity,
 				&ListOrganizationsInput{
 					After: after,
+					Need:  entitlement.For(platformcatalog.FeatureAgentAutomation),
 					Limit: temporaljobs.DefaultOrganizationPageSize,
 				},
 			).Get(listCtx, &page)
@@ -130,7 +134,7 @@ func SweepWorkflow(ctx workflow.Context, input *SweepInput) (*SweepResult, error
 			childCtx := workflow.WithChildOptions(wctx, workflow.ChildWorkflowOptions{
 				WorkflowID: fmt.Sprintf("agent-profiles/%s/%d", tenant.OrganizationID, now),
 				TaskQueue:  temporaltype.TaskQueueSystem.String(),
-				Priority:   priorityFor(tenant.TenantInfo()),
+				Priority:   priorityFor(),
 			})
 
 			var written OrganizationResult
@@ -191,7 +195,7 @@ func OrganizationWorkflow(
 	}
 
 	var a *Activities
-	listCtx := withPriority(ctx, &listOptions, tenantInfo)
+	listCtx := withPriority(ctx, &listOptions)
 	var users []pulid.ID
 	if err := workflow.ExecuteActivity(listCtx, a.ListActiveUsersActivity, &ActiveUsersInput{
 		TenantWorkItem: input.TenantWorkItem,
@@ -295,7 +299,7 @@ func generate(
 	var a *Activities
 	var plan agentprofileports.GenerationPlan
 	if err := workflow.ExecuteActivity(
-		withPriority(ctx, &prepareOptions, tenantInfo),
+		withPriority(ctx, &prepareOptions),
 		a.PrepareProfileActivity, req,
 	).Get(ctx, &plan); err != nil {
 		return err
@@ -311,7 +315,7 @@ func generate(
 	finish := &agentprofileports.FinishGenerationRequest{Plan: &plan}
 	var reply ModelReply
 	if err := workflow.ExecuteActivity(
-		withPriority(ctx, &modelOptions, tenantInfo),
+		withPriority(ctx, &modelOptions),
 		a.ProfileModelActivity, &plan,
 	).Get(ctx, &reply); err != nil {
 		finish.Error = "The model could not write the profile: " + err.Error()
@@ -325,7 +329,7 @@ func generate(
 
 	var outcome agentprofileports.GenerationOutcome
 	if err := workflow.ExecuteActivity(
-		withPriority(ctx, &finishOptions, tenantInfo),
+		withPriority(ctx, &finishOptions),
 		a.FinishProfileActivity, finish,
 	).Get(ctx, &outcome); err != nil {
 		return err
@@ -333,7 +337,7 @@ func generate(
 	result.absorb(&outcome)
 
 	if err := workflow.ExecuteActivity(
-		withPriority(ctx, &pruneOptions, tenantInfo),
+		withPriority(ctx, &pruneOptions),
 		a.PruneProfileActivity, &plan.Ref,
 	).Get(ctx, nil); err != nil {
 		workflow.GetLogger(ctx).Warn("could not prune an agent profile's old versions",
@@ -358,7 +362,7 @@ func childOptions(
 	return workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{
 		WorkflowID: fmt.Sprintf("agent-profile/%s/%s/%d", req.Ref.OrganizationID, key, now),
 		TaskQueue:  temporaltype.TaskQueueSystem.String(),
-		Priority:   priorityFor(req.Ref.Tenant()),
+		Priority:   priorityFor(),
 	})
 }
 
@@ -439,17 +443,13 @@ func merge(current, next *agentprofileports.GenerateRequest) {
 	}
 }
 
-func priorityFor(tenantInfo pagination.TenantInfo) temporal.Priority {
-	return agentprofilecontract.Priority(tenantInfo)
+func priorityFor() temporal.Priority {
+	return agentprofilecontract.Priority()
 }
 
-func withPriority(
-	ctx workflow.Context,
-	options *workflow.ActivityOptions,
-	tenantInfo pagination.TenantInfo,
-) workflow.Context {
+func withPriority(ctx workflow.Context, options *workflow.ActivityOptions) workflow.Context {
 	prioritized := *options
-	prioritized.Priority = priorityFor(tenantInfo)
+	prioritized.Priority = priorityFor()
 
 	return workflow.WithActivityOptions(ctx, prioritized)
 }

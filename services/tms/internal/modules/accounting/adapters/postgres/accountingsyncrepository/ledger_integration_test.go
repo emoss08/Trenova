@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingledgerrepository"
@@ -443,9 +445,19 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 	})
 
 	t.Run("posted journals without a record are candidates", func(t *testing.T) {
-		records := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: zap.NewNop()})
+		records := NewSyncRecordRepository(
+			SyncRecordParams{
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn,
+				Logger:       zap.NewNop(),
+			},
+		)
 		connection, connErr := accountingconnectionrepository.NewConnectionRepository(
-			accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},
+			accountingconnectionrepository.ConnectionParams{
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn,
+				Logger:       zap.NewNop(),
+			},
 		).
 			Create(ctx, accountingtest.NewConnection(tenant, userID, accountingtest.Realm, 1_000))
 		require.NoError(t, connErr)
@@ -615,7 +627,11 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 				"undoing the carried-forward entry is left out with it")
 
 			connections := accountingconnectionrepository.NewConnectionRepository(
-				accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},
+				accountingconnectionrepository.ConnectionParams{
+					Entitlements: entitlementtest.Instance(),
+					DB:           conn,
+					Logger:       zap.NewNop(),
+				},
 			)
 			connection, connErr := connections.GetByType(
 				ctx,
@@ -633,7 +649,11 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 			require.NoError(t, connErr)
 			connectionID := connection.ID
 			found, candErr := NewSyncRecordRepository(
-				SyncRecordParams{DB: conn, Logger: zap.NewNop()},
+				SyncRecordParams{
+					Entitlements: entitlementtest.Instance(),
+					DB:           conn,
+					Logger:       zap.NewNop(),
+				},
 			).
 				ListCandidates(ctx, &accountingsyncports.ListAccountingSyncCandidatesRequest{
 					TenantInfo:   tenant,

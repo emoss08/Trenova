@@ -3,6 +3,9 @@ package customertrackingjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/customertrackingjobs/customertrackingcontract"
 	"go.temporal.io/sdk/temporal"
@@ -106,6 +109,16 @@ func CustomerStatusSweepWorkflow(ctx workflow.Context) (*SweepResult, error) {
 	}
 
 	result := &SweepResult{}
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureCustomerTracking),
+		tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenants = kept
+
 	for i := range tenants {
 		var swept EvaluateResult
 		err := workflow.ExecuteActivity(tenantCtx, a.SweepCustomerStatusTenantActivity, &tenants[i]).

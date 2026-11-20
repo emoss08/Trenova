@@ -61,7 +61,13 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   carries what the work needs beyond its subject (the event kind of an agent's queued run). The job's sweep calls `DrainRequester.WakeDue` as the backstop for a lost wake
   (`etajobs.ShipmentEtaDrainWorkflow`). A queue that is a property of the row itself keeps it
   on the row instead (`billing_queue_items.recheck_due_at`, `BillingQueueTenantWorkflow`).
-  Pass a tenant `FairnessKey` so one tenant's burst does not starve the rest.
+  The fairness interceptor keys each start by its tenant; never set a `FairnessKey` by hand.
+- **Work for a tenant reaches only an entitled, active tenant.** A fan-out lists through a helper
+  that takes an `entitlement.Need` or passes its page through `temporaljobs.KeepEntitled`; a
+  cross-tenant statement composes `entitlementports.Filter.ForWork`; work that belongs to no tenant
+  says why. See [shared-tenancy.md](../shared-tenancy.md#background-work).
+- **Heavy work takes a slot.** PDF rendering, extraction, exports, imports and previews hold a
+  `kernelports.HeavyJobSlots` slot for their run; a new kind of heavy work adds a kind there.
 - **A timer over a time column is a sweep, not a workflow per row.** A snoozed message, an EDI
   flow's next wake and a web watch's next check are columns with a partial index; a one-minute
   schedule claims what is due (`WakeDueTriageWorkflow`, `DispatchDueFlowTimersWorkflow`,

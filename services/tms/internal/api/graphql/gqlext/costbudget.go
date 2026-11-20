@@ -2,23 +2,24 @@ package gqlext
 
 import (
 	"context"
-	"math"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/errcode"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/querycost"
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"golang.org/x/time/rate"
 )
 
 const (
@@ -26,30 +27,27 @@ const (
 	CostBudgetErrorCode       = "OPERATION_COST_BUDGET_EXCEEDED"
 	rejectionReasonCostBudget = "cost_budget"
 	minCostBudgetRetryAfter   = time.Second
+	costBudgetPeriod          = time.Minute
 )
 
 type CostBudgetParams struct {
 	fx.In
 
 	SecurityConfig *securityconfig.Config
+	Managed        *managedconfig.Config
+	TenantLimits   *tenantlimitsconfig.Config
+	Store          kernelports.RateLimitStore
 	Logger         *zap.Logger
 	Metrics        *metrics.Registry
 }
 
 type CostBudgetExtension struct {
-	cfg     securityconfig.GraphQLCostBudgetConfig
-	metrics *httpmetrics.GraphQL
-	l       *zap.Logger
-	now     func() time.Time
-
-	mu          sync.Mutex
-	budgets     map[string]*costBudget
-	lastCleanup time.Time
-}
-
-type costBudget struct {
-	limiter  *rate.Limiter
-	lastSeen time.Time
+	cfg           securityconfig.GraphQLCostBudgetConfig
+	store         kernelports.RateLimitStore
+	organizations bool
+	metrics       *httpmetrics.GraphQL
+	tenancy       *platformmetrics.Tenancy
+	l             *zap.Logger
 }
 
 var _ interface {
@@ -58,24 +56,13 @@ var _ interface {
 } = (*CostBudgetExtension)(nil)
 
 func NewCostBudgetExtension(p CostBudgetParams) *CostBudgetExtension {
-	return newCostBudgetExtension(
-		p.SecurityConfig.GraphQL.CostBudget,
-		p.Metrics.GraphQL,
-		p.Logger.Named("api.graphql.costbudget"),
-	)
-}
-
-func newCostBudgetExtension(
-	cfg securityconfig.GraphQLCostBudgetConfig,
-	graphQLMetrics *httpmetrics.GraphQL,
-	logger *zap.Logger,
-) *CostBudgetExtension {
 	return &CostBudgetExtension{
-		cfg:     cfg,
-		metrics: graphQLMetrics,
-		l:       logger,
-		now:     time.Now,
-		budgets: make(map[string]*costBudget),
+		cfg:           p.SecurityConfig.GraphQL.CostBudget,
+		store:         p.Store,
+		organizations: p.TenantLimits.Requests.Organizations.On(p.Managed.SharedTenancy()),
+		metrics:       p.Metrics.GraphQL,
+		tenancy:       p.Metrics.Tenancy,
+		l:             p.Logger.Named("api.graphql.costbudget"),
 	}
 }
 
@@ -101,102 +88,96 @@ func (e *CostBudgetExtension) MutateOperationContext(
 	}
 
 	authCtx, ok := gqlctx.AuthContext(ctx)
-	if !ok || authCtx == nil {
+	if !ok || authCtx == nil || authCtx.OrganizationID.IsNil() {
 		return nil
 	}
 
-	retryAfter, allowed := e.allow(budgetKey(authCtx), cost)
-	if allowed {
+	requests := e.requests(authCtx, cost)
+	decisions, err := e.store.Check(ctx, requests)
+	if err != nil || len(decisions) != len(requests) {
+		e.l.Warn("could not check the GraphQL cost budget; allowing the operation",
+			zap.Error(err))
 		return nil
 	}
 
+	denied := -1
+	for i := range decisions {
+		if decisions[i].Allowed {
+			continue
+		}
+		if denied < 0 || decisions[i].RetryAfter > decisions[denied].RetryAfter {
+			denied = i
+		}
+	}
+	if denied < 0 {
+		return nil
+	}
+
+	retryAfter := max(decisions[denied].RetryAfter, minCostBudgetRetryAfter).Round(time.Second)
 	e.metrics.RecordRejection(rejectionReasonCostBudget)
+	if denied > 0 {
+		e.tenancy.RecordLimitRefusal("graphql_cost", platformmetrics.LimitScopeOrganization)
+	}
 	if status, found := gqlctx.ResponseStatusFrom(ctx); found {
 		status.Override(http.StatusTooManyRequests, retryAfter)
 	}
 	e.l.Warn("GraphQL operation exceeded the cost budget",
 		zap.String("operation", opCtx.OperationName),
 		zap.Int("cost", cost),
+		zap.Bool("organization", denied > 0),
 		zap.Duration("retry_after", retryAfter),
 		zap.String("request_id", gqlctx.RequestID(ctx)),
 	)
 
-	err := gqlerror.Errorf(
+	gqlErr := gqlerror.Errorf(
 		"operation cost %d exceeds the remaining request budget; retry in %s",
 		cost,
 		retryAfter,
 	)
-	errcode.Set(err, CostBudgetErrorCode)
+	errcode.Set(gqlErr, CostBudgetErrorCode)
 
-	return err
+	return gqlErr
 }
 
-func (e *CostBudgetExtension) allow(key string, cost int) (time.Duration, bool) {
-	now := e.now()
-
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	e.cleanupLocked(now)
-
-	budget, ok := e.budgets[key]
-	if !ok {
-		budget = &costBudget{limiter: rate.NewLimiter(e.refillRate(), e.burst())}
-		e.budgets[key] = budget
+func (e *CostBudgetExtension) requests(
+	authCtx *authctx.AuthContext,
+	cost int,
+) []kernelports.RateLimitRequest {
+	principal := kernelports.RateLimitPolicy{
+		Rate:   e.cfg.GetPointsPerMinute(),
+		Period: costBudgetPeriod,
+		Burst:  max(e.cfg.GetBurst(), querycost.MaxOperationCost),
 	}
-	budget.lastSeen = now
-
-	if budget.limiter.AllowN(now, cost) {
-		return 0, true
+	requests := []kernelports.RateLimitRequest{{
+		Key:    budgetKey(authCtx),
+		Policy: principal,
+		Cost:   min(cost, principal.Burst),
+	}}
+	if !e.organizations {
+		return requests
 	}
-
-	return retryAfterFor(budget.limiter, now, cost), false
-}
-
-func (e *CostBudgetExtension) cleanupLocked(now time.Time) {
-	interval := e.cfg.GetCleanupInterval()
-	if !e.lastCleanup.IsZero() && now.Sub(e.lastCleanup) < interval {
-		return
+	organization := kernelports.RateLimitPolicy{
+		Rate:   e.cfg.GetOrganizationPointsPerMinute(),
+		Period: costBudgetPeriod,
+		Burst:  max(e.cfg.GetOrganizationBurst(), querycost.MaxOperationCost),
 	}
-
-	for key, budget := range e.budgets {
-		if now.Sub(budget.lastSeen) > interval {
-			delete(e.budgets, key)
-		}
-	}
-	e.lastCleanup = now
-}
-
-func (e *CostBudgetExtension) refillRate() rate.Limit {
-	return rate.Limit(float64(e.cfg.GetPointsPerMinute()) / time.Minute.Seconds())
-}
-
-func (e *CostBudgetExtension) burst() int {
-	return max(e.cfg.GetBurst(), querycost.MaxOperationCost)
-}
-
-func retryAfterFor(limiter *rate.Limiter, now time.Time, cost int) time.Duration {
-	deficit := float64(cost) - limiter.TokensAt(now)
-	if deficit <= 0 {
-		return minCostBudgetRetryAfter
-	}
-
-	seconds := math.Ceil(deficit / float64(limiter.Limit()))
-	retryAfter := time.Duration(seconds) * time.Second
-	if retryAfter < minCostBudgetRetryAfter {
-		return minCostBudgetRetryAfter
-	}
-
-	return retryAfter
+	return append(requests, kernelports.RateLimitRequest{
+		Key:    organizationBudgetKey(authCtx),
+		Policy: organization,
+		Cost:   min(cost, organization.Burst),
+	})
 }
 
 // budgetKey is whose bucket an operation is charged to: a person's own, and
-// an unattended agent's own, which has no person behind it.
 func budgetKey(authCtx *authctx.AuthContext) string {
 	principal := authCtx.UserID
 	if authCtx.IsAgent() {
 		principal = authCtx.PrincipalID
 	}
 
-	return authCtx.OrganizationID.String() + "|" + principal.String()
+	return "{" + authCtx.OrganizationID.String() + "}:gqlcost:" + principal.String()
+}
+
+func organizationBudgetKey(authCtx *authctx.AuthContext) string {
+	return "{" + authCtx.OrganizationID.String() + "}:gqlcost"
 }

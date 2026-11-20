@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -83,7 +82,6 @@ func (s *RemittanceStageStarter) StartStage(
 				StaticSummary:            "Read factor remittance " + remittance.FileName,
 				WorkflowIDReusePolicy:    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 				WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_USE_EXISTING,
-				Priority:                 temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
 			},
 			RemittanceStageWorkflowName,
 			payload,

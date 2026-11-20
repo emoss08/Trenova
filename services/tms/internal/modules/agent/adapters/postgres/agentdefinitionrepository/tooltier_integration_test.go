@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/jackc/pgx/v5"
@@ -75,7 +77,13 @@ func TestSetToolTier_PromotesACoreToolTheAgentDoesNotList(t *testing.T) {
 
 	row := findDefinitions(t, ctx, db, "NOT ('agent_create_memory' = ANY(tool_names))", 1)[0]
 	ctx, tenant := row.tenant(ctx)
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 
 	require.NoError(t, repo.SetToolTier(ctx, agentdefinitionports.SetAgentDefinitionToolTierRequest{
 		ID:         row.ID,
@@ -112,7 +120,13 @@ func TestSetToolTier_MergesIntoAnAgentSavedWithNoTiers(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx, tenant := row.tenant(ctx)
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 	require.NoError(t, repo.SetToolTier(ctx, agentdefinitionports.SetAgentDefinitionToolTierRequest{
 		ID:         row.ID,
 		TenantInfo: tenant,

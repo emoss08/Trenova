@@ -120,7 +120,7 @@ func (a *Activities) ListRetrievalOrganizationsActivity(
 	ctx context.Context,
 	input *ListOrganizationsInput,
 ) (*temporaljobs.TenantPage, error) {
-	page, err := temporaljobs.OrganizationPage(ctx, a.tenants, input.After, input.Limit)
+	page, err := temporaljobs.OrganizationPage(ctx, a.tenants, input.Need, input.After, input.Limit)
 	if err != nil {
 		return nil, fmt.Errorf("list organizations to sweep for retrieval: %w", err)
 	}

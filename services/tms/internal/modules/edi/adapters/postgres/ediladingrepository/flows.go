@@ -4,6 +4,8 @@ package ediladingrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -30,14 +32,16 @@ var (
 )
 
 type flows struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewFlows(p Params) ladingports.FlowRepository {
 	return &flows{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.edi-flow-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.edi-flow-repository"),
 	}
 }
 

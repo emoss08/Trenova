@@ -82,8 +82,13 @@ fails it, fix it in the same change if it is small, or name it in your report.
   row back is a `RateLimitError` with `RetryAfter`. Never read-then-write, never an in-process
   limiter (replicas do not share it). Release the claim if the side effect fails
   (`ClaimTestSend` in `inboundmessagerepository/mailbox.go`).
-- **Fair across tenants.** Fan-out passes a tenant fairness key; per-tenant work is batched so one
-  large organization cannot starve the rest; public endpoints are rate limited.
+- **Fair across tenants.** The fairness interceptor keys every workflow and activity by tenant;
+  per-tenant work is batched so one large organization cannot starve the rest; public endpoints
+  are rate limited. On a shared server every limit is per organization with an instance cap behind
+  it ([shared-tenancy.md](../shared-tenancy.md#limits)).
+- **Background work filters by plan in one read.** A fan-out or sweep filters tenants by
+  entitlement in the statement or page it already runs, never a gate call per tenant
+  ([shared-tenancy.md](../shared-tenancy.md#background-work)).
 - **Hear a record change off the stream, never by polling.** Work that must wake when a
   record changes registers the record with `realtimeports.RecordWatchFeed` and follows it
   from a worker: every write already publishes an invalidation, and the feed reads only each

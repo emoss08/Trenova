@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
@@ -64,7 +66,7 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 	return &syncFixture{
 		ctx:  ctx,
 		db:   db,
-		repo: New(Params{DB: conn, Logger: logger}).(*repository),
+		repo: New(Params{Entitlements: entitlementtest.Instance(), DB: conn, Logger: logger}).(*repository),
 		shipmentRepo: shipmentrepository.New(shipmentrepository.Params{
 			DB:     conn,
 			Logger: logger,

@@ -4,13 +4,16 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
-	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -105,11 +108,10 @@ func CheckAccountingConnectionsWorkflow(ctx workflow.Context) (*HealthSweepResul
 	return result, nil
 }
 
-func withFairness(base *workflow.ActivityOptions, orgID pulid.ID) workflow.ActivityOptions {
+func withBackgroundPriority(base *workflow.ActivityOptions) workflow.ActivityOptions {
 	options := *base
 	options.Priority = temporal.Priority{
 		PriorityKey: agentflowcontract.PriorityBackground,
-		FairnessKey: orgID.String(),
 	}
 	return options
 }
@@ -122,7 +124,7 @@ func RefreshAccountingReferenceWorkflow(
 	logger := workflow.GetLogger(ctx)
 	markCtx := workflow.WithActivityOptions(
 		ctx,
-		withFairness(&markActivityOptions, payload.OrganizationID),
+		withBackgroundPriority(&markActivityOptions),
 	)
 
 	if err := workflow.ExecuteActivity(markCtx, a.MarkAccountingReferenceRefreshStartedActivity, payload).
@@ -158,7 +160,7 @@ func refreshReference(
 	logger := workflow.GetLogger(ctx)
 	pullCtx := workflow.WithActivityOptions(
 		ctx,
-		withFairness(&referenceActivityOptions, payload.OrganizationID),
+		withBackgroundPriority(&referenceActivityOptions),
 	)
 
 	for _, kind := range accountingprovider.AllReferenceKinds() {
@@ -185,7 +187,7 @@ func refreshReference(
 	}
 	modelCtx := workflow.WithActivityOptions(
 		ctx,
-		withFairness(&modelPassActivityOptions, payload.OrganizationID),
+		withBackgroundPriority(&modelPassActivityOptions),
 	)
 	var applied int
 	if err := workflow.ExecuteActivity(modelCtx, a.AccountingMappingModelPassActivity, payload, rescored.NeedsModel).
@@ -232,6 +234,16 @@ func RefreshAllAccountingReferenceWorkflow(
 	}
 
 	result := &ReferenceSweepResult{Started: payload.Started}
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureAccountingIntegration),
+		page.Connections,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	page.Connections = kept
+
 	for idx := range page.Connections {
 		conn := &page.Connections[idx]
 		childCtx := workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{

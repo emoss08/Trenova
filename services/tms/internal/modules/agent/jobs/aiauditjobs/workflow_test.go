@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs"
@@ -78,6 +81,7 @@ func TestSchedules(t *testing.T) {
 func newEnv() *testsuite.TestWorkflowEnvironment {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterWorkflow(VerifyAIAuditChainWorkflow)
 	env.RegisterWorkflow(VerifyAIAuditTenantsWorkflow)
 	env.RegisterWorkflow(AIAuditExportWorkflow)

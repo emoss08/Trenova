@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
@@ -19,14 +21,16 @@ import (
 var exportErrors = dberror.Mapping{Entity: "AI audit export"}
 
 type exportRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewExport(p Params) aiauditports.AIAuditExportRepository {
 	return &exportRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.aiaudit-export-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.aiaudit-export-repository"),
 	}
 }
 
@@ -115,8 +119,13 @@ func (r *exportRepository) ListExpired(
 	ctx = dbscope.WithSystem(ctx, "list expired AI audit exports across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditExport, error) {
 		x := aiauditdb.AIAuditExports
+		entitled, entitledErr := r.entitlements.ForWork(ctx, x.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := x.AllTenants().
 			Where(
+				entitled,
 				x.ArtifactKey.Ne(""),
 				x.ArtifactExpiresAt.Lte(before),
 				x.Status.Eq(aiaudit.ExportStatusSucceeded),
@@ -142,8 +151,13 @@ func (r *exportRepository) ListStale(
 	ctx = dbscope.WithSystem(ctx, "list stale AI audit exports across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditExport, error) {
 		x := aiauditdb.AIAuditExports
+		entitled, entitledErr := r.entitlements.ForWork(ctx, x.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		rows, err := x.AllTenants().
 			Where(
+				entitled,
 				x.Status.In(aiaudit.ExportStatusPending, aiaudit.ExportStatusRunning),
 				x.UpdatedAt.Lt(updatedBefore),
 			).

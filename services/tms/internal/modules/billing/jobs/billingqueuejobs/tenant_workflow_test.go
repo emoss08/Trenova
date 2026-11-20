@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -27,6 +30,7 @@ func newTenantEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
+	env.RegisterActivity(temporaljobs.NewEntitledActivities(entitlementtest.Instance()))
 	env.RegisterWorkflow(BillingQueueTenantWorkflow)
 
 	var a *Activities
@@ -162,7 +166,10 @@ func TestTenantWorkflowKeepsTheBriefToItsOwnPace(t *testing.T) {
 			return nil
 		})
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(billingqueuecontract.TenantSignalName, billingqueuecontract.TenantSignal{})
+		env.SignalWorkflow(
+			billingqueuecontract.TenantSignalName,
+			billingqueuecontract.TenantSignal{},
+		)
 	}, tenantDebounce+time.Second)
 
 	env.ExecuteWorkflow(BillingQueueTenantWorkflow, tenantPayload())

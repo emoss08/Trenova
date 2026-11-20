@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -183,11 +185,21 @@ func TestConvertedLists_ReportReadsUnderRowLevelSecurity(t *testing.T) {
 	catalog, err := reportengine.NewCatalog()
 	require.NoError(t, err)
 	scheduleRepo := reportrepository.NewScheduleRepository(
-		reportrepository.ScheduleParams{DB: conn, Logger: logger})
+		reportrepository.ScheduleParams{
+			Entitlements: entitlementtest.Instance(),
+			DB:           conn,
+			Logger:       logger,
+		},
+	)
 	reportingService, err := reporting.New(reporting.Params{
 		Logger: logger,
 		RunRepo: reportrepository.NewRunRepository(
-			reportrepository.RunParams{DB: conn, Logger: logger}),
+			reportrepository.RunParams{
+				Entitlements: entitlementtest.Instance(),
+				DB:           conn,
+				Logger:       logger,
+			},
+		),
 		ScheduleRepo: scheduleRepo,
 		Engine: reportengine.New(reportengine.Params{
 			LC:              fxtest.NewLifecycle(t),

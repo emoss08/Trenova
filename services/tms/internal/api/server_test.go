@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
+
 	"github.com/emoss08/trenova/internal/testutil/metricstest"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -180,6 +183,8 @@ func TestRateLimit_ForgedForwardedForCannotMintNewBuckets(t *testing.T) {
 	limiter := middleware.NewRateLimiter(middleware.RateLimiterParams{
 		SecurityConfig: &cfg.Security,
 		Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
+		Managed:        &managedconfig.Config{},
+		TenantLimits:   &tenantlimitsconfig.Config{},
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,

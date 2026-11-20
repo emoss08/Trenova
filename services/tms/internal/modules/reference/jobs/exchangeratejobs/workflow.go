@@ -3,6 +3,9 @@ package exchangeratejobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -51,6 +54,16 @@ func RefreshExchangeRatesWorkflow(ctx workflow.Context) (*RefreshExchangeRatesRe
 
 	result := &RefreshExchangeRatesResult{}
 	result.TenantsScanned = len(tenantsResult.Tenants)
+	kept, keepErr := temporaljobs.KeepEntitled(
+		ctx,
+		entitlement.For(platformcatalog.FeatureExchangeRateIntegration),
+		tenantsResult.Tenants,
+	)
+	if keepErr != nil {
+		return nil, keepErr
+	}
+	tenantsResult.Tenants = kept
+
 	for _, tenant := range tenantsResult.Tenants {
 		payload := &RefreshExchangeRateTenantPayload{
 			TenantWorkItem: tenant,

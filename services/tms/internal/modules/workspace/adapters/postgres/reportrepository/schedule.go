@@ -3,6 +3,8 @@ package reportrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -20,19 +22,22 @@ var scheduleErrors = dberror.Mapping{Entity: "ReportSchedule"}
 type ScheduleParams struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	Entitlements entitlementports.Filter
+	DB           *postgres.Connection
+	Logger       *zap.Logger
 }
 
 type scheduleRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	entitlements entitlementports.Filter
+	db           *postgres.Connection
+	l            *zap.Logger
 }
 
 func NewScheduleRepository(p ScheduleParams) reportports.ReportScheduleRepository {
 	return &scheduleRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.report-schedule-repository"),
+		entitlements: p.Entitlements,
+		db:           p.DB,
+		l:            p.Logger.Named("postgres.report-schedule-repository"),
 	}
 }
 
@@ -158,8 +163,12 @@ func (r *scheduleRepository) ListDue(
 	ctx = dbscope.WithSystem(ctx, "list report schedules due across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportSchedule, error) {
 		s := reportdb.ReportSchedules
+		entitled, entitledErr := r.entitlements.ForWork(ctx, s.OrganizationID.Col)
+		if entitledErr != nil {
+			return nil, entitledErr
+		}
 		q := s.AllTenants().
-			Where(s.Enabled.IsTrue(), s.NextRunAt.IsNotNull(), s.NextRunAt.Lte(nowUnix)).
+			Where(entitled, s.Enabled.IsTrue(), s.NextRunAt.IsNotNull(), s.NextRunAt.Lte(nowUnix)).
 			Order(s.NextRunAt.Asc())
 		if limit > 0 {
 			q = q.Limit(limit)

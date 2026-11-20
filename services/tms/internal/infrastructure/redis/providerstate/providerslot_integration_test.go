@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/redis/slotstore"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -19,7 +21,7 @@ func setupProviderSlots(t *testing.T) *providerSlotRepository {
 	client := testutil.SetupTestRedis(t)
 	t.Cleanup(func() { client.FlushDB(t.Context()) })
 
-	return &providerSlotRepository{client: client}
+	return &providerSlotRepository{slots: slotstore.New(client)}
 }
 
 func TestProviderSlots_HoldNoMoreThanTheLimit_Integration(t *testing.T) {
@@ -100,4 +102,29 @@ func TestProviderSlots_RefreshExtendsAHeldLease_Integration(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.False(t, ok, "a refreshed lease still holds its slot")
+}
+
+func TestProviderSlots_BoundOneOrganizationsShareOfASharedProvider_Integration(t *testing.T) {
+	repo := setupProviderSlots(t)
+	provider := pulid.MustNew("aiprv_")
+	busy := pulid.MustNew("org_")
+	quiet := pulid.MustNew("org_")
+	claim := func(org pulid.ID, token string) bool {
+		ok, err := repo.Acquire(t.Context(), llmports.AcquireProviderSlotRequest{
+			ProviderID: provider, Token: token, Limit: 4, TTL: time.Minute,
+			OrganizationID: org, OrganizationLimit: 2,
+		})
+		require.NoError(t, err)
+		return ok
+	}
+
+	assert.True(t, claim(busy, "a"))
+	assert.True(t, claim(busy, "b"))
+	assert.False(t, claim(busy, "c"), "a third call from one organization waits for its share")
+	assert.True(t, claim(quiet, "d"), "another organization still reaches the provider")
+
+	require.NoError(t, repo.Release(t.Context(), llmports.ProviderSlotRequest{
+		ProviderID: provider, Token: "a", OrganizationID: busy,
+	}))
+	assert.True(t, claim(busy, "c"))
 }

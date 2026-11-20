@@ -3,6 +3,10 @@ package etajobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/entitlement"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/entitlementports"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/workqueueports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
@@ -43,28 +47,31 @@ func (t *TenantRef) TenantInfo() pagination.TenantInfo {
 type ActivitiesParams struct {
 	fx.In
 
-	Refresher stopetaports.Refresher
-	StopEtas  stopetaports.Repository
-	Queue     workqueueports.Queue
-	Requester *etacontract.Requester
-	Logger    *zap.Logger
+	Entitlements entitlementports.Filter
+	Refresher    stopetaports.Refresher
+	StopEtas     stopetaports.Repository
+	Queue        workqueueports.Queue
+	Requester    *etacontract.Requester
+	Logger       *zap.Logger
 }
 
 type Activities struct {
-	refresher stopetaports.Refresher
-	stopEtas  stopetaports.Repository
-	queue     workqueueports.Queue
-	requester *etacontract.Requester
-	l         *zap.Logger
+	entitlements entitlementports.Filter
+	refresher    stopetaports.Refresher
+	stopEtas     stopetaports.Repository
+	queue        workqueueports.Queue
+	requester    *etacontract.Requester
+	l            *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		refresher: p.Refresher,
-		stopEtas:  p.StopEtas,
-		queue:     p.Queue,
-		requester: p.Requester,
-		l:         p.Logger.Named("temporal.shipment-eta-activities"),
+		entitlements: p.Entitlements,
+		refresher:    p.Refresher,
+		stopEtas:     p.StopEtas,
+		queue:        p.Queue,
+		requester:    p.Requester,
+		l:            p.Logger.Named("temporal.shipment-eta-activities"),
 	}
 }
 
@@ -79,11 +86,13 @@ func (a *Activities) DrainShipmentEtasActivity(
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
 	return temporaljobs.DrainDue(ctx, &temporaljobs.DrainDueParams{
-		Queue:      a.queue,
-		Kind:       etacontract.DrainKind,
-		Tenant:     tenant,
-		PageSize:   drainPageSize,
-		RetryAfter: drainRetryAfter,
+		Need:         entitlement.For(platformcatalog.FeatureCustomerTracking),
+		Entitlements: a.entitlements,
+		Queue:        a.queue,
+		Kind:         etacontract.DrainKind,
+		Tenant:       tenant,
+		PageSize:     drainPageSize,
+		RetryAfter:   drainRetryAfter,
 		Handle: func(ctx context.Context, shipments []pulid.ID, _ map[pulid.ID]string) map[pulid.ID]error {
 			if _, err := a.refresher.RefreshShipments(ctx, tenant, shipments); err != nil {
 				a.l.Warn("shipment eta refresh failed; the page is tried again shortly",

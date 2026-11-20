@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/entitlementtest"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
@@ -43,7 +45,13 @@ func TestGetTypesByIDsReturnsOnlyTheTenantsTypes(t *testing.T) {
 	second := seedCredentialType(t, ctx, db, tenantA, "TWIC")
 	foreign := seedCredentialType(t, ctx, db, tenantB, "PASSPORT")
 
-	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	repo := New(
+		Params{
+			Entitlements: entitlementtest.Instance(),
+			DB:           postgres.WrapDB(db),
+			Logger:       zap.NewNop(),
+		},
+	)
 
 	entities, err := repo.GetTypesByIDs(
 		tenantA.Ctx(ctx),
