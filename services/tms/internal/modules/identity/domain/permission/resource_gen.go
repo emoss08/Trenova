@@ -195,6 +195,7 @@ const (
 	ResourceAccountingReport         Resource = "accounting_report"
 	ResourceAccountingIntegration    Resource = "accounting_integration"
 	ResourceAccountingSync           Resource = "accounting_sync"
+	ResourceAccountingReconciliation Resource = "accounting_reconciliation"
 
 	// Payroll & Settlements
 	ResourceDriverPayProfile   Resource = "driver_pay_profile"

@@ -6,10 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/shared/as2"
 	"github.com/gin-gonic/gin"
 )
@@ -20,14 +18,7 @@ const (
 )
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
-	rg.POST(
-		as2InboundRoute,
-		h.features.RequireFeature(
-			platformcatalog.FeatureEDIIntegration,
-			middleware.AnswerWith(h.refuseAS2Message),
-		),
-		h.receiveAS2Message,
-	)
+	rg.POST(as2InboundRoute, h.receiveAS2Message)
 }
 
 func (h *Handler) receiveAS2Message(c *gin.Context) {
@@ -36,19 +27,6 @@ func (h *Handler) receiveAS2Message(c *gin.Context) {
 		return
 	}
 	result, err := h.as2Service.ReceiveAS2Message(c.Request.Context(), request)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	h.writeAS2Result(c, result)
-}
-
-func (h *Handler) refuseAS2Message(c *gin.Context) {
-	request, ok := h.as2Request(c)
-	if !ok {
-		return
-	}
-	result, err := h.as2Service.RefuseAS2Message(request)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

@@ -5,8 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/operations/app/customertrackingservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -20,7 +18,6 @@ type Params struct {
 	Service      customertrackingports.CustomerTrackingService
 	ErrorHandler *helpers.ErrorHandler
 	RateLimiter  *middleware.RateLimiter
-	Features     *middleware.FeatureGuard
 }
 
 // Handler serves the customer's shipment tracking page. It is public: the token
@@ -30,7 +27,6 @@ type Handler struct {
 	service     customertrackingports.CustomerTrackingService
 	eh          *helpers.ErrorHandler
 	rateLimiter *middleware.RateLimiter
-	features    *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
@@ -38,17 +34,12 @@ func New(p Params) *Handler {
 		service:     p.Service,
 		eh:          p.ErrorHandler,
 		rateLimiter: p.RateLimiter,
-		features:    p.Features,
 	}
 }
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/shipment-tracking-links")
 	api.Use(h.rateLimiter.ByPublicToken(tokenParam))
-	api.Use(h.features.RequireFeature(
-		platformcatalog.FeatureCustomerTracking,
-		middleware.AnswerError(customertrackingservice.InvalidLinkError),
-	))
 	api.GET("/:token/", h.preview)
 	api.GET("/:token/proof-of-delivery/", h.downloadPod)
 }

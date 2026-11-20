@@ -37,6 +37,13 @@ func (failingGate) Enabled(context.Context, platformcatalog.FeatureKey) (bool, e
 	return false, errPlanUnavailable
 }
 
+func (r failingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return r.Enabled(ctx, feature)
+}
+
 func addOnFeatures() []platformcatalog.FeatureKey {
 	keys := make([]platformcatalog.FeatureKey, 0)
 	for _, feature := range platformcatalog.Features() {
@@ -260,7 +267,10 @@ func TestPlan_CheckBatchAnswersEachItemOnItsOwn(t *testing.T) {
 		BusinessUnitID: c.buID,
 		OrganizationID: c.orgID,
 		Checks: []permissionports.ResourceOperationCheck{
-			{Resource: permission.ResourceGeneralLedgerAccount.String(), Operation: permission.OpRead},
+			{
+				Resource:  permission.ResourceGeneralLedgerAccount.String(),
+				Operation: permission.OpRead,
+			},
 			{Resource: permission.ResourceShipment.String(), Operation: permission.OpRead},
 			{Resource: "not_a_resource", Operation: permission.OpRead},
 			{Resource: permission.ResourceShipment.String(), Operation: permission.OpDelete},
@@ -303,7 +313,10 @@ func TestPlan_CheckBatchOfOnlyOffPlanItemsReadsNoPermissions(t *testing.T) {
 		BusinessUnitID: c.buID,
 		OrganizationID: c.orgID,
 		Checks: []permissionports.ResourceOperationCheck{
-			{Resource: permission.ResourceGeneralLedgerAccount.String(), Operation: permission.OpRead},
+			{
+				Resource:  permission.ResourceGeneralLedgerAccount.String(),
+				Operation: permission.OpRead,
+			},
 			{Resource: permission.ResourceAssistant.String(), Operation: permission.OpCreate},
 		},
 	})

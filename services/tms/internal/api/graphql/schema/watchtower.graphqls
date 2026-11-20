@@ -21,6 +21,7 @@ enum WatchtowerSourceKind {
   TelematicsStopVisit
   AgentQualityRegression
   AccountingSync
+  AccountingReconciliation
   NoCheckCall
   EtaAtRisk
   MissedPickup

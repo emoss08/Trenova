@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -92,6 +93,13 @@ func (s *Service) resolveToken(
 		OrganizationID: token.OrganizationID,
 		BusinessUnitID: token.BusinessUnitID,
 	})
+	brokerage, err := s.features.Enabled(ctx, platformcatalog.FeatureCarrierBrokerage)
+	if err != nil {
+		return ctx, nil, nil, err
+	}
+	if !brokerage {
+		return ctx, nil, nil, InvalidTokenError()
+	}
 	entity, err := s.repo.GetByID(ctx, &rateconfirmationports.GetRateConfirmationByIDRequest{
 		TenantInfo:         tenantInfo,
 		RateConfirmationID: token.RateConfirmationID,

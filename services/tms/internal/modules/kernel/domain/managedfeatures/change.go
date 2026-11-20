@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -14,6 +15,7 @@ type Change struct {
 	keel.Table `keel:"managed_feature_changes"`
 
 	ID        pulid.ID                     `json:"id"        keel:"id,pk,autoid:mfc_"`
+	ScopeKey  string                       `json:"scopeKey"  keel:"scope_key"`
 	Added     []platformcatalog.FeatureKey `json:"added"     keel:"added,jsonb"`
 	Removed   []platformcatalog.FeatureKey `json:"removed"   keel:"removed,jsonb"`
 	Ending    []AddOnEnding                `json:"ending"    keel:"ending,jsonb"`
@@ -23,6 +25,7 @@ type Change struct {
 }
 
 type Replacement struct {
+	Scope         managedscope.Scope
 	Previous      *State
 	Current       *State
 	Change        *Change
@@ -39,16 +42,29 @@ func (r *Replacement) Changed() bool {
 	return r != nil && r.Change != nil
 }
 
+func (r *Replacement) LifecycleChanged() bool {
+	if !r.Updated() {
+		return false
+	}
+	return r.Previous.lifecycle() != r.Current.lifecycle()
+}
+
 func (r *Replacement) FeaturesChanged() bool {
 	if !r.Updated() {
 		return false
 	}
-	return r.Previous == nil || !slices.Equal(r.Previous.Features, r.Current.Features)
+	return !r.Previous.HasList() || !slices.Equal(r.Previous.Features, r.Current.Features)
 }
 
-func Replace(held *State, received *Received, now int64) *Replacement {
+func Replace(
+	scope managedscope.Scope,
+	held *State,
+	received *Received,
+	now int64,
+) *Replacement {
 	next := Normalize(received.Features)
 	out := &Replacement{
+		Scope:         scope,
 		Previous:      held,
 		Unknown:       next.Unknown,
 		UnknownAddOns: []platformcatalog.AddOnKey{},
@@ -75,7 +91,7 @@ func Replace(held *State, received *Received, now int64) *Replacement {
 	}
 	marks, notice := announcePlanEnd(marksOf(held), received.PlanEndsAt, now)
 
-	if held != nil &&
+	if held.HasList() &&
 		slices.Equal(held.Features, next.Features) &&
 		slices.Equal(held.AddOnEndings, endings) &&
 		held.PlanURL == planURL &&
@@ -86,12 +102,14 @@ func Replace(held *State, received *Received, now int64) *Replacement {
 	}
 
 	out.Current = &State{
-		ID:              CurrentStateID,
-		Features:        next.Features,
-		AddOnEndings:    endings,
-		PlanURL:         planURL,
-		FinalBackupDays: backupDays,
-		ReceivedAt:      now,
+		ScopeKey:            scope.Key(),
+		ScopeBusinessUnitID: scope.BusinessUnitID(),
+		Lifecycle:           held.lifecycle(),
+		Features:            next.Features,
+		AddOnEndings:        endings,
+		PlanURL:             planURL,
+		FinalBackupDays:     backupDays,
+		ReceivedAt:          now,
 	}
 	marks.apply(out.Current)
 	if notice != nil {
@@ -99,6 +117,30 @@ func Replace(held *State, received *Received, now int64) *Replacement {
 	}
 	out.PlanEnd = notice
 	out.Change = planChange(held, out.Current, now)
+	return out
+}
+
+func SetLifecycle(
+	scope managedscope.Scope,
+	held *State,
+	lifecycle Lifecycle,
+) *Replacement {
+	out := &Replacement{Scope: scope, Previous: held, Current: held}
+	if held != nil && held.lifecycle() == lifecycle {
+		return out
+	}
+	next := State{
+		ScopeKey:            scope.Key(),
+		ScopeBusinessUnitID: scope.BusinessUnitID(),
+		Features:            []platformcatalog.FeatureKey{},
+		AddOnEndings:        []AddOnEnding{},
+		FinalBackupDays:     held.BackupDays(),
+	}
+	if held != nil {
+		next = *held
+	}
+	next.Lifecycle = lifecycle
+	out.Current = &next
 	return out
 }
 
@@ -124,15 +166,17 @@ func planChange(held, current *State, now int64) *Change {
 		}
 	}
 
-	if held != nil && len(added) == 0 && len(removed) == 0 && len(ending) == 0 && len(kept) == 0 {
+	starting := !held.HasList()
+	if !starting && len(added) == 0 && len(removed) == 0 && len(ending) == 0 && len(kept) == 0 {
 		return nil
 	}
 	return &Change{
+		ScopeKey:  current.ScopeKey,
 		Added:     added,
 		Removed:   removed,
 		Ending:    ending,
 		Kept:      kept,
-		Starting:  held == nil,
+		Starting:  starting,
 		ChangedAt: now,
 	}
 }

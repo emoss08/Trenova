@@ -26,6 +26,10 @@ func (failingGate) Enabled(context.Context, platformcatalog.FeatureKey) (bool, e
 	return false, errors.New("the feature state could not be read")
 }
 
+func (failingGate) EnabledAnywhere(context.Context, platformcatalog.FeatureKey) (bool, error) {
+	return false, errors.New("the feature state could not be read")
+}
+
 func newService(
 	config *managedconfig.Config,
 	gate platformcatalogports.FeatureGate,

@@ -4,7 +4,9 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderdispatch"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
@@ -30,6 +32,7 @@ type Service struct {
 	dispatcher *tenderdispatch.Service
 	effects    *tendereffects.Effects
 	negotiator *tendernegotiation.Service
+	features   platformcatalogports.FeatureGate
 }
 
 type Params struct {
@@ -42,6 +45,7 @@ type Params struct {
 	Dispatcher *tenderdispatch.Service
 	Effects    *tendereffects.Effects
 	Negotiator *tendernegotiation.Service
+	Features   platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service {
@@ -53,6 +57,7 @@ func New(p Params) *Service {
 		dispatcher: p.Dispatcher,
 		effects:    p.Effects,
 		negotiator: p.Negotiator,
+		features:   p.Features,
 	}
 }
 
@@ -194,6 +199,13 @@ func (s *Service) resolveToken(
 		OrganizationID: token.OrganizationID,
 		BusinessUnitID: token.BusinessUnitID,
 	})
+	brokerage, err := s.features.Enabled(ctx, platformcatalog.FeatureCarrierBrokerage)
+	if err != nil {
+		return ctx, nil, nil, err
+	}
+	if !brokerage {
+		return ctx, nil, nil, InvalidTokenError()
+	}
 	offer, err := s.repo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
 		TenantInfo:    tenantInfo,
 		OfferID:       token.TenderOfferID,

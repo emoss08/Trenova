@@ -16,7 +16,7 @@ func TestUsageIsNilWithoutAStateOrAWindow(t *testing.T) {
 
 	storage := &fakeLevel{meter: platformcatalog.MeterDocumentStorageBytes, level: 7}
 	svc := newService(&fakeRepo{}, nil, []managedusageports.LevelReader{storage})
-	usage, err := svc.Usage(t.Context())
+	usage, err := svc.Usage(t.Context(), instance)
 	require.NoError(t, err)
 	assert.Nil(t, usage, "no state yet")
 
@@ -27,7 +27,7 @@ func TestUsageIsNilWithoutAStateOrAWindow(t *testing.T) {
 			Quantity: 5,
 		}},
 	}}, nil, []managedusageports.LevelReader{storage})
-	usage, err = svc.Usage(t.Context())
+	usage, err = svc.Usage(t.Context(), instance)
 	require.NoError(t, err)
 	assert.Nil(t, usage, "a state with no billing period")
 }
@@ -59,7 +59,7 @@ func TestUsageReadsALevelMeterLiveAndACountedMeterFromTheState(t *testing.T) {
 		},
 	}}, nil, []managedusageports.LevelReader{storage, unnamed})
 
-	usage, err := svc.Usage(t.Context())
+	usage, err := svc.Usage(t.Context(), instance)
 	require.NoError(t, err)
 	require.NotNil(t, usage)
 	assert.Equal(t, now-hour, usage.PeriodStart)
@@ -92,6 +92,6 @@ func TestUsageReturnsALevelReadFailure(t *testing.T) {
 		&fakeLevel{meter: platformcatalog.MeterOrganizationsTotal, err: down},
 	})
 
-	_, err := svc.Usage(t.Context())
+	_, err := svc.Usage(t.Context(), instance)
 	require.ErrorIs(t, err, down)
 }

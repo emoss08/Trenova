@@ -27,6 +27,13 @@ func (g *fakeGate) Enabled(_ context.Context, feature platformcatalog.FeatureKey
 	return !g.disabled[feature], nil
 }
 
+func (g *fakeGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return g.Enabled(ctx, feature)
+}
+
 func disabling(features ...platformcatalog.FeatureKey) *fakeGate {
 	gate := &fakeGate{disabled: map[platformcatalog.FeatureKey]bool{}}
 	for _, feature := range features {

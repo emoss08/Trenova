@@ -3,6 +3,7 @@ package managedusageservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"go.uber.org/fx"
@@ -31,12 +32,20 @@ func NewReceiver(p ReceiverParams) *Receiver {
 	}
 }
 
-func (r *Receiver) Readings(ctx context.Context, since int64) ([]Reading, error) {
-	return r.usage.Readings(ctx, since)
+func (r *Receiver) Readings(
+	ctx context.Context,
+	scope managedscope.Scope,
+	since int64,
+) ([]Reading, error) {
+	return r.usage.Readings(ctx, scope, since)
 }
 
-func (r *Receiver) SetState(ctx context.Context, state *managedusage.State) error {
-	change, err := r.usage.SetState(ctx, state)
+func (r *Receiver) SetState(
+	ctx context.Context,
+	scope managedscope.Scope,
+	state *managedusage.State,
+) error {
+	change, err := r.usage.SetState(ctx, scope, state)
 	if err != nil {
 		return err
 	}

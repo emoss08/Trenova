@@ -17,6 +17,7 @@ func Resources() []*permissionspec.ResourceDefinition {
 		accountingControlResource(),
 		accountingIntegrationResource(),
 		accountingSyncResource(),
+		accountingReconciliationResource(),
 		billingControlResource(),
 		costingControlResource(),
 		invoiceAdjustmentControlResource(),
@@ -51,7 +52,7 @@ func accountingControlResource() *permissionspec.ResourceDefinition {
 func accountingIntegrationResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAccountingIntegration.String(),
-		Feature:     platformcatalog.FeatureAccounting,
+		Feature:     platformcatalog.FeatureAccountingIntegration,
 		DisplayName: "Accounting Integration",
 		Description: "The connection to the organization's accounting system and how Trenova maps to it",
 		Category:    "Accounting",
@@ -142,25 +143,48 @@ func accountingIntegrationResource() *permissionspec.ResourceDefinition {
 func accountingSyncResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
 		Resource:    permission.ResourceAccountingSync.String(),
-		Feature:     platformcatalog.FeatureAccounting,
+		Feature:     platformcatalog.FeatureAccountingIntegration,
 		DisplayName: "Accounting Sync",
-		Description: "What has been sent to the accounting system, what failed and where the two disagree",
+		Description: "What has been sent to the accounting system and what failed",
 		Category:    "Accounting",
 		Operations: []permissionspec.OperationDefinition{
 			{
 				Operation:   permission.OpRead,
 				DisplayName: "View",
-				Description: "View sync status, records and differences",
+				Description: "View sync status and records",
 			},
 			{
 				Operation:   permission.OpUpdate,
 				DisplayName: "Update",
-				Description: "Retry, skip and resolve sync records and differences, apply inbound changes and release held syncs",
+				Description: "Retry, skip and redate sync records and release held syncs",
 			},
 			{
 				Operation:   permission.OpExport,
 				DisplayName: "Export",
 				Description: "Export sync records",
+			},
+		},
+		DefaultSensitivity: permission.SensitivityInternal,
+	}
+}
+
+func accountingReconciliationResource() *permissionspec.ResourceDefinition {
+	return &permissionspec.ResourceDefinition{
+		Resource:    permission.ResourceAccountingReconciliation.String(),
+		Feature:     platformcatalog.FeatureAccounting,
+		DisplayName: "Accounting Reconciliation",
+		Description: "Where the accounting system and Trenova disagree, and the payments it recorded",
+		Category:    "Accounting",
+		Operations: []permissionspec.OperationDefinition{
+			{
+				Operation:   permission.OpRead,
+				DisplayName: "View",
+				Description: "View differences and the payments the accounting system recorded",
+			},
+			{
+				Operation:   permission.OpUpdate,
+				DisplayName: "Update",
+				Description: "Resolve or dismiss differences, check again, and apply or ignore recorded payments",
 			},
 		},
 		DefaultSensitivity: permission.SensitivityInternal,

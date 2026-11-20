@@ -65,6 +65,7 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
 
 const SYNC_UPDATE = `${Resource.AccountingSync}:${Operation.Update}`;
 const INTEGRATION_MANAGE = `${Resource.AccountingIntegration}:${Operation.Manage}`;
+const RECONCILIATION_READ = `${Resource.AccountingReconciliation}:${Operation.Read}`;
 
 const connection: AccountingConnection = {
   id: "acctc_1",
@@ -183,7 +184,7 @@ beforeEach(() => {
   for (const mock of Object.values(mocks)) {
     if (typeof mock === "function") mock.mockReset();
   }
-  mocks.granted = new Set([SYNC_UPDATE, INTEGRATION_MANAGE]);
+  mocks.granted = new Set([SYNC_UPDATE, INTEGRATION_MANAGE, RECONCILIATION_READ]);
 });
 
 describe("LedgerSummary", () => {
@@ -213,6 +214,14 @@ describe("LedgerSummary", () => {
       "QuickBooksOnline",
       expect.anything(),
     );
+  });
+
+  it("shows no drift figure to someone who cannot read reconciliation", () => {
+    mocks.granted = new Set([SYNC_UPDATE, INTEGRATION_MANAGE]);
+    renderWith(<LedgerSummary summary={summary()} />);
+
+    expect(screen.queryByRole("link", { name: /Drift findings/ })).not.toBeInTheDocument();
+    expect(mocks.fetchAccountingDriftOverview).not.toHaveBeenCalled();
   });
 
   it("shows no drift figure before syncing starts", () => {

@@ -69,7 +69,7 @@ func (s *Service) CompleteAuthorization(
 	ctx context.Context,
 	req *accountingconnectionports.CompleteAccountingAuthorizationRequest,
 ) (*accountingconnectionports.AccountingAuthorizationCompletion, error) {
-	if err := s.kit.RequireAccounting(ctx); err != nil {
+	if err := s.kit.RequireAccountingIntegration(ctx); err != nil {
 		return nil, err
 	}
 	accountingProvider, err := s.kit.Provider(req.IntegrationType)
@@ -228,7 +228,7 @@ func (s *Service) ChooseCompany(
 	ctx context.Context,
 	req *accountingconnectionports.ChooseAccountingCompanyRequest,
 ) (*accountingconnection.AccountingConnection, error) {
-	if err := s.kit.RequireAccounting(ctx); err != nil {
+	if err := s.kit.RequireAccountingIntegration(ctx); err != nil {
 		return nil, err
 	}
 	accountingProvider, err := s.kit.Provider(req.IntegrationType)
@@ -627,7 +627,7 @@ func (s *Service) StartAuthorization(
 	ctx context.Context,
 	req *accountingconnectionports.StartAccountingAuthorizationRequest,
 ) (*accountingconnectionports.AccountingAuthorizationStart, error) {
-	if err := s.kit.RequireAccounting(ctx); err != nil {
+	if err := s.kit.RequireAccountingIntegration(ctx); err != nil {
 		return nil, err
 	}
 	provider, err := s.kit.Provider(req.IntegrationType)

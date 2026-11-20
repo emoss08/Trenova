@@ -47,7 +47,7 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }));
 
-const SYNC_UPDATE = `${Resource.AccountingSync}:${Operation.Update}`;
+const SYNC_UPDATE = `${Resource.AccountingReconciliation}:${Operation.Update}`;
 
 function finding(overrides: Partial<AccountingDriftFinding> = {}): AccountingDriftFinding {
   return {

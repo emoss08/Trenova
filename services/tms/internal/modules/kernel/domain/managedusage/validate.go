@@ -43,6 +43,13 @@ func (s *State) Validate() error {
 		if m.Allowance < 0 {
 			field.Add("allowance", errortypes.ErrInvalid, "The allowance cannot be negative")
 		}
+		if m.Ceiling < 0 || (m.Ceiling > 0 && m.Ceiling < m.Allowance) {
+			field.Add(
+				"ceiling",
+				errortypes.ErrInvalid,
+				"The ceiling is 0 for none, or at least the allowance",
+			)
+		}
 	}
 	return me.Err()
 }

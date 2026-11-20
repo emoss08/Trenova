@@ -15,11 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"go.uber.org/zap"
 )
 
@@ -37,6 +37,7 @@ type wiring struct {
 	Poller        accountinginboundports.AccountingChangePoller
 	Subscriptions accountingconnectionports.AccountingWebhookSubscriptionRepository
 	Certificates  accountingconnectionports.AccountingPendingCertificateRepository
+	Features      platformcatalogports.FeatureGate
 }
 
 type services struct {
@@ -66,7 +67,7 @@ func wire(w *wiring) services {
 		Refresher:    w.Refresher,
 		Certificates: w.Certificates,
 		Realtime:     &mocks.NoopRealtimeService{},
-		Features:     plantest.AllFeatures(),
+		Features:     w.Features,
 	})
 	health := accountingconnectionhealth.New(accountingconnectionhealth.Params{
 		Logger:      l,

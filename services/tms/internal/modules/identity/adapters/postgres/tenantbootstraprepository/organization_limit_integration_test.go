@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -30,14 +31,14 @@ type heldState struct {
 	state *managedusage.State
 }
 
-func (h *heldState) Get(context.Context) (*managedusage.State, error) {
+func (h *heldState) Get(context.Context, managedscope.Scope) (*managedusage.State, error) {
 	if h.state == nil {
 		return nil, managedusage.ErrNoState
 	}
 	return h.state, nil
 }
 
-func (h *heldState) Save(_ context.Context, state *managedusage.State) error {
+func (h *heldState) Save(_ context.Context, _ managedscope.Scope, state *managedusage.State) error {
 	h.state = state
 	return nil
 }
@@ -74,6 +75,7 @@ func newLimitRig(t *testing.T, state *managedusage.State) *limitRig {
 	organizations := organizationmeter.New(organizationmeter.Params{DB: conn}).Reader
 	gate := managedusageservice.New(managedusageservice.Params{
 		Repo:   &heldState{state: state},
+		Scopes: managedscope.NewResolver(false),
 		Levels: []managedusageports.LevelReader{organizations},
 		Clock:  func() int64 { return time.Now().Unix() },
 		Logger: zap.NewNop(),
@@ -88,7 +90,11 @@ func newLimitRig(t *testing.T, state *managedusage.State) *limitRig {
 		repo: New(Params{
 			DB:     conn,
 			Logger: zap.NewNop(),
-			Quota:  quotaservice.NewManaged(gate, func() int64 { return time.Now().Unix() }),
+			Quota: quotaservice.NewManaged(
+				gate,
+				managedscope.NewResolver(false),
+				func() int64 { return time.Now().Unix() },
+			),
 		}),
 		stateID:  data.State.ID,
 		existing: existing,

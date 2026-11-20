@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -82,6 +83,13 @@ func (s *Service) ReceiveWebhook(
 		OrganizationID: mailbox.OrganizationID,
 		BusinessUnitID: mailbox.BusinessUnitID,
 	})
+	onPlan, err := s.features.Enabled(ctx, platformcatalog.FeatureAITriage)
+	if err != nil {
+		return nil, fmt.Errorf("ask whether inbound triage is on the plan: %w", err)
+	}
+	if !onPlan {
+		return nil, ErrUnknownMailbox
+	}
 
 	if err = s.verify(mailbox, req); err != nil {
 		return nil, err

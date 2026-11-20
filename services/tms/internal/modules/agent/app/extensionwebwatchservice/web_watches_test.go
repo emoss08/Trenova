@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -112,7 +113,12 @@ type memoryWatches struct {
 	cleared   []pulid.ID
 }
 
-func (m *memoryWatches) ScheduleCheck(_ context.Context, _ pagination.TenantInfo, id pulid.ID, _ int64) error {
+func (m *memoryWatches) ScheduleCheck(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	id pulid.ID,
+	_ int64,
+) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -377,6 +383,7 @@ func newBareWatchFixture(t *testing.T, webBase string) *watchFixture {
 		Watches:    w.watches,
 		Findings:   w.findings,
 		AppConfig:  &appconfig.Config{WebBaseURL: webBase},
+		Features:   plantest.AllFeatures(),
 	})
 	w.svc.now = func() int64 { return agentextensiontest.Now }
 
@@ -495,7 +502,12 @@ func TestSettingAWatchRecordsItThenFollowsIt(t *testing.T) {
 	assert.True(t, stored.HasSecret())
 	assert.NotContains(t, stored.Secrets[extensionwebwatch.WebWatchSecretField], testWatchSecret,
 		"the webhook secret is kept encrypted")
-	assert.Equal(t, []pulid.ID{view.ID}, w.watches.scheduledSince(0), "a new watch is checked at once")
+	assert.Equal(
+		t,
+		[]pulid.ID{view.ID},
+		w.watches.scheduledSince(0),
+		"a new watch is checked at once",
+	)
 }
 
 func TestAWatchNeedsTrenovaAtAPublicAddress(t *testing.T) {
@@ -741,4 +753,34 @@ func TestADeliverySignedWithTheWatchsSecretAsksForACheck(t *testing.T) {
 		}))
 	assert.Equal(t, []pulid.ID{view.ID}, w.watches.scheduledSince(before),
 		"a signed delivery checks the watch now")
+}
+
+func TestADeliveryForAnOrganizationWithoutAgentsChecksNothing(t *testing.T) {
+	t.Parallel()
+
+	w := newWatchFixture(t, testWebBase)
+	view := w.set(t)
+	signed := http.Header{}
+	signed.Set(testSignatureName, testWatchSecret)
+	deliver := func() error {
+		return w.svc.ReceiveWebWatchDelivery(t.Context(),
+			&agentextensionports.ReceiveWebWatchDeliveryRequest{
+				TenantInfo: w.tenant,
+				WatchID:    view.ID,
+				Delivery:   agentextensionports.WebWatchDelivery{Header: signed},
+			})
+	}
+
+	before := len(w.watches.scheduledSince(0))
+	w.svc.features = plantest.SharedServer().
+		Without(w.tenant.OrgID, platformcatalog.FeatureAgentAutomation)
+	err := deliver()
+	require.True(t, errortypes.IsNotFoundError(err), "answered like a watch that does not exist")
+	assert.Empty(t, w.watches.scheduledSince(before))
+
+	w.svc.features = plantest.SharedServer().
+		Planned(w.tenant.OrgID).
+		Without(pulid.MustNew("org_"), platformcatalog.FeatureAgentAutomation)
+	require.NoError(t, deliver(), "another organization's plan does not count")
+	assert.Equal(t, []pulid.ID{view.ID}, w.watches.scheduledSince(before))
 }

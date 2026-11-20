@@ -18,3 +18,7 @@ func NewAllowAll() *AllowAll {
 func (*AllowAll) Enabled(context.Context, platformcatalog.FeatureKey) (bool, error) {
 	return true, nil
 }
+
+func (*AllowAll) EnabledAnywhere(context.Context, platformcatalog.FeatureKey) (bool, error) {
+	return true, nil
+}

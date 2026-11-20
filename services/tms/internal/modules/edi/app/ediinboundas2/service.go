@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -24,6 +25,7 @@ type Params struct {
 	Inbound         *ediinboundservice.Service
 	WorkflowStarter kernelports.WorkflowStarter
 	Metrics         *metrics.Registry
+	Features        platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -35,6 +37,7 @@ type Service struct {
 	workflowStarter kernelports.WorkflowStarter
 	metrics         *documentmetrics.EDI
 	maxFileBytes    int64
+	features        platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service {
@@ -49,5 +52,6 @@ func New(p Params) *Service {
 		workflowStarter: p.WorkflowStarter,
 		metrics:         ediMetrics,
 		maxFileBytes:    p.EDIConfig.GetMaxInboundFileBytes(),
+		features:        p.Features,
 	}
 }

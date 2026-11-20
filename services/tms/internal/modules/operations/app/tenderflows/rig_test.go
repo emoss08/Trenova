@@ -165,6 +165,7 @@ func (s *rig) assemble() {
 		Dispatcher: s.dispatcher,
 		Effects:    s.effects,
 		Negotiator: s.negotiator,
+		Features:   plantest.AllFeatures(),
 	})
 	if s.intelGate != nil {
 		s.effects.SetIntelGate(s.intelGate)

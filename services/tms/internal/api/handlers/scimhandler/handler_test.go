@@ -10,6 +10,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -216,4 +217,26 @@ func TestSCIMRoutes_RefuseAnOversizedBody(t *testing.T) {
 
 	assert.Equal(t, http.StatusRequestEntityTooLarge, w.Code)
 	assert.Nil(t, provisioner.created)
+}
+
+func TestToSCIMError_AnAddressHeldElsewhereIsAConflictThatNamesNobody(t *testing.T) {
+	t.Parallel()
+
+	refusal := errortypes.NewMultiError()
+	refusal.AddError(tenant.NewUnavailableEmailAddressError())
+
+	for name, err := range map[string]error{
+		"refusal": refusal,
+		"field":   tenant.NewUnavailableEmailAddressError(),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			scimErr := toSCIMError(err)
+
+			assert.Equal(t, http.StatusConflict, scimErr.Status)
+			assert.Equal(t, scimproto.ScimTypeUniqueness, scimErr.ScimType)
+			assert.Contains(t, scimErr.Detail, tenant.NewUnavailableEmailAddressError().Message)
+		})
+	}
 }

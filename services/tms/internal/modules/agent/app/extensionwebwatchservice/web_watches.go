@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/url"
 	"slices"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -715,8 +717,12 @@ func (s *Service) ReceiveWebWatchDelivery(
 	if err != nil {
 		return err
 	}
+	onPlan, err := s.features.Enabled(ctx, platformcatalog.FeatureAgentAutomation)
+	if err != nil {
+		return fmt.Errorf("ask whether agents are on the plan: %w", err)
+	}
 	provider, ok := s.watchers[watch.ExtensionType]
-	if !ok || !watch.HasSecret() {
+	if !onPlan || !ok || !watch.HasSecret() {
 		return errortypes.NewNotFoundError("Web watch not found")
 	}
 

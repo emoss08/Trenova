@@ -122,7 +122,7 @@ func TestAccountingDrift_WithoutTheOverviewSaysSo(t *testing.T) {
 		},
 	}}
 	engine := &mocks.DenyResourcesPermissionEngine{
-		Denied: []string{permission.ResourceAccountingSync.String()},
+		Denied: []string{permission.ResourceAccountingReconciliation.String()},
 	}
 	tool := accountingList(t, "accounting_list_drift_findings", reader, engine)
 

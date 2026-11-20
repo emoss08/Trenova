@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -77,8 +79,16 @@ func TestAddOnEndingsAreRefusedWhenMalformed(t *testing.T) {
 		ok      bool
 	}{
 		{name: "none", endings: []managedfeatures.AddOnEnding{}, ok: true},
-		{name: "a known add-on", endings: []managedfeatures.AddOnEnding{ending("ACC", dec14)}, ok: true},
-		{name: "a well-shaped unknown add-on", endings: []managedfeatures.AddOnEnding{ending("ZZZ9", dec14)}, ok: true},
+		{
+			name:    "a known add-on",
+			endings: []managedfeatures.AddOnEnding{ending("ACC", dec14)},
+			ok:      true,
+		},
+		{
+			name:    "a well-shaped unknown add-on",
+			endings: []managedfeatures.AddOnEnding{ending("ZZZ9", dec14)},
+			ok:      true,
+		},
 		{name: "lower case", endings: []managedfeatures.AddOnEnding{ending("acc", dec14)}},
 		{name: "one letter", endings: []managedfeatures.AddOnEnding{ending("A", dec14)}},
 		{name: "too long", endings: []managedfeatures.AddOnEnding{ending("ABCDEFGHIJK", dec14)}},
@@ -111,7 +121,11 @@ func TestNormalizeEndingsDropsUnknownAddOnsAndKeepsTheEarliestEnd(t *testing.T) 
 		ending("BASE", dec14),
 	})
 
-	assert.Equal(t, []managedfeatures.AddOnEnding{ending("ACC", dec14), ending("SEC", jan14)}, got.Endings)
+	assert.Equal(
+		t,
+		[]managedfeatures.AddOnEnding{ending("ACC", dec14), ending("SEC", jan14)},
+		got.Endings,
+	)
 	assert.Equal(t, []platformcatalog.AddOnKey{"BASE", "ZZZ"}, got.Unknown)
 }
 
@@ -119,13 +133,13 @@ func TestReplaceKeepsThePlanURLAndEndingsWhenARequestLeavesThemOut(t *testing.T)
 	t.Parallel()
 
 	held := &managedfeatures.State{
-		ID:           managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		Features:     []platformcatalog.FeatureKey{"tms.accounting"},
 		AddOnEndings: []managedfeatures.AddOnEnding{ending("ACC", dec14)},
 		PlanURL:      planURL,
 	}
 
-	r := managedfeatures.Replace(held, features("tms.accounting"), 500)
+	r := managedfeatures.Replace(managedscope.Instance(), held, features("tms.accounting"), 500)
 
 	assert.False(t, r.Updated())
 	assert.Same(t, held, r.Current)
@@ -134,9 +148,12 @@ func TestReplaceKeepsThePlanURLAndEndingsWhenARequestLeavesThemOut(t *testing.T)
 func TestReplaceStoresANewPlanURLWithoutRecordingAPlanChange(t *testing.T) {
 	t.Parallel()
 
-	held := &managedfeatures.State{Features: []platformcatalog.FeatureKey{"tms.accounting"}}
+	held := &managedfeatures.State{
+		ReceivedAt: 1,
+		Features:   []platformcatalog.FeatureKey{"tms.accounting"},
+	}
 
-	r := managedfeatures.Replace(held, &managedfeatures.Received{
+	r := managedfeatures.Replace(managedscope.Instance(), held, &managedfeatures.Received{
 		Features: []platformcatalog.FeatureKey{"tms.accounting"},
 		PlanURL:  text(planURL),
 	}, 500)
@@ -151,10 +168,11 @@ func TestReplaceRecordsAnAddOnSetToEnd(t *testing.T) {
 	t.Parallel()
 
 	held := &managedfeatures.State{
-		Features: []platformcatalog.FeatureKey{"ai.desk", "tms.accounting"},
+		ReceivedAt: 1,
+		Features:   []platformcatalog.FeatureKey{"ai.desk", "tms.accounting"},
 	}
 
-	r := managedfeatures.Replace(held, &managedfeatures.Received{
+	r := managedfeatures.Replace(managedscope.Instance(), held, &managedfeatures.Received{
 		Features: []platformcatalog.FeatureKey{"ai.desk", "tms.accounting"},
 		AddOnEndings: endings(
 			ending("ACC", dec14),
@@ -189,7 +207,7 @@ func TestReplaceRecordsAMovedEndAsANewEnding(t *testing.T) {
 		AddOnEndings: []managedfeatures.AddOnEnding{ending("ACC", dec14)},
 	}
 
-	r := managedfeatures.Replace(held, &managedfeatures.Received{
+	r := managedfeatures.Replace(managedscope.Instance(), held, &managedfeatures.Received{
 		Features:     []platformcatalog.FeatureKey{"tms.accounting"},
 		AddOnEndings: endings(ending("ACC", jan14)),
 	}, 700)
@@ -207,7 +225,7 @@ func TestReplaceRecordsAnAddOnThatStaysWhenItsEndIsCalledOff(t *testing.T) {
 		AddOnEndings: []managedfeatures.AddOnEnding{ending("ACC", dec14)},
 	}
 
-	r := managedfeatures.Replace(held, &managedfeatures.Received{
+	r := managedfeatures.Replace(managedscope.Instance(), held, &managedfeatures.Received{
 		Features:     []platformcatalog.FeatureKey{"tms.accounting"},
 		AddOnEndings: endings(),
 	}, 800)
@@ -226,7 +244,7 @@ func TestReplaceRecordsAnAddOnThatLeftOnItsDayAsLeftNotKept(t *testing.T) {
 		AddOnEndings: []managedfeatures.AddOnEnding{ending("ACC", dec14)},
 	}
 
-	r := managedfeatures.Replace(held, &managedfeatures.Received{
+	r := managedfeatures.Replace(managedscope.Instance(), held, &managedfeatures.Received{
 		Features:     []platformcatalog.FeatureKey{"ai.desk"},
 		AddOnEndings: endings(),
 	}, 900)

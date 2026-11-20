@@ -25,6 +25,13 @@ func (failingGate) Enabled(context.Context, platformcatalog.FeatureKey) (bool, e
 	return false, errors.New("plan store unreachable")
 }
 
+func (r failingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return r.Enabled(ctx, feature)
+}
+
 func serveThroughFeatureGuard(
 	t *testing.T,
 	gate platformcatalogports.FeatureGate,

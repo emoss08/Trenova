@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
@@ -21,6 +22,7 @@ type fakeGate struct {
 
 func (f *fakeGate) Decide(
 	_ context.Context,
+	_ managedscope.Scope,
 	meter platformcatalog.MeterKey,
 	requested int64,
 ) (managedusage.Decision, error) {
@@ -30,7 +32,7 @@ func (f *fakeGate) Decide(
 	return managedusage.Decide(f.state, meter, requested), nil
 }
 
-func (f *fakeGate) State(context.Context) (*managedusage.State, error) {
+func (f *fakeGate) State(context.Context, managedscope.Scope) (*managedusage.State, error) {
 	return f.state, f.err
 }
 
@@ -48,7 +50,7 @@ func TestManagedUsageProviderStopsAtTheAllowance(t *testing.T) {
 			HardCap:   true,
 		}},
 	}}
-	p := usageservice.NewManagedUsageProvider(gate)
+	p := usageservice.NewManagedUsageProvider(gate, managedscope.NewResolver(false))
 
 	res, err := p.CheckLimit(t.Context(), &platformcatalogports.UsageLimitCheckRequest{
 		MeterKey: platformcatalog.MeterDocumentStorageBytes,
@@ -80,7 +82,10 @@ func TestManagedUsageProviderStopsAtTheAllowance(t *testing.T) {
 func TestManagedUsageProviderReturnsAGateFailure(t *testing.T) {
 	t.Parallel()
 
-	p := usageservice.NewManagedUsageProvider(&fakeGate{err: errors.New("down")})
+	p := usageservice.NewManagedUsageProvider(
+		&fakeGate{err: errors.New("down")},
+		managedscope.NewResolver(false),
+	)
 	_, err := p.CheckLimit(t.Context(), &platformcatalogports.UsageLimitCheckRequest{
 		MeterKey: platformcatalog.MeterDocumentStorageBytes,
 		Quantity: 1,
@@ -107,7 +112,7 @@ func TestAnUploadAtTheStorageLimitIsRefusedWithTheStorageWordingWhenOverageIsOff
 
 	err := usageservice.CheckDocumentBytesLimit(
 		t.Context(),
-		usageservice.NewManagedUsageProvider(storageGate(false)),
+		usageservice.NewManagedUsageProvider(storageGate(false), managedscope.NewResolver(false)),
 		usageservice.DocumentBytesUsageParams{Bytes: 1},
 	)
 
@@ -123,7 +128,7 @@ func TestAnUploadAtTheStorageLimitIsAllowedWhenOverageIsOn(t *testing.T) {
 
 	require.NoError(t, usageservice.CheckDocumentBytesLimit(
 		t.Context(),
-		usageservice.NewManagedUsageProvider(storageGate(true)),
+		usageservice.NewManagedUsageProvider(storageGate(true), managedscope.NewResolver(false)),
 		usageservice.DocumentBytesUsageParams{Bytes: 1},
 	))
 }

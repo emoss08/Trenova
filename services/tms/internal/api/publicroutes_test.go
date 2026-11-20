@@ -36,6 +36,55 @@ var baseWaysIn = map[string]string{
 		"feature but managed mode, and the handler registers nothing when managed.enabled is off",
 }
 
+// entryGated are the ways in whose plan check runs in the service once the
+// request names its tenant: on a shared server a route has no tenant, so a
+// route guard could only ask whether any organization holds the feature. Each
+// names the package that checks and the feature it names; the test proves the
+// package passes that feature to a check.
+type entryCheck struct {
+	dir     string
+	feature string
+}
+
+var entryGated = map[string]entryCheck{
+	"scimHandler.RegisterRoutes": {
+		"internal/modules/identity/app/scimservice", "FeatureIdentity",
+	},
+	"authHandler.RegisterRoutes": {
+		"internal/modules/identity/app/authservice", "FeatureIdentity",
+	},
+	"driverPortalHandler.RegisterRoutes": {
+		"internal/modules/workforce/app/driverportalinvitationservice", "FeatureDriverPortal",
+	},
+	"telematicsHandler.RegisterPublicRoutes": {
+		"internal/modules/workforce/app/telematicsservice", "FeatureSamsaraIntegration",
+	},
+	"accountingWebhookHandler.RegisterPublicRoutes": {
+		"internal/modules/accounting/app/accountingconnectionwebhook", "FeatureAccounting",
+	},
+	"agentExtensionHandler.RegisterPublicRoutes": {
+		"internal/modules/agent/app/extensionwebwatchservice", "FeatureAgentAutomation",
+	},
+	"ediHandler.RegisterPublicRoutes": {
+		"internal/modules/edi/app/ediinboundas2", "FeatureEDIIntegration",
+	},
+	"inboundHandler.RegisterPublicRoutes": {
+		"internal/modules/documents/app/inboundintake", "FeatureAITriage",
+	},
+	"tenderPublicHandler.RegisterPublicRoutes": {
+		"internal/modules/operations/app/tenderresponse", "FeatureCarrierBrokerage",
+	},
+	"rateConfirmationPublicHandler.RegisterPublicRoutes": {
+		"internal/modules/rating/app/rateconfirmationservice", "FeatureCarrierBrokerage",
+	},
+	"carrierTrackingPublicHandler.RegisterPublicRoutes": {
+		"internal/modules/operations/app/checkcallservice", "FeatureCustomerTracking",
+	},
+	"shipmentTrackingPublicHandler.RegisterPublicRoutes": {
+		"internal/modules/operations/app/customertrackingservice", "FeatureCustomerTracking",
+	},
+}
+
 type registration struct {
 	field  string
 	method string
@@ -64,13 +113,25 @@ func TestEveryRouteWithoutASessionDeclaresItsFeature(t *testing.T) {
 
 		declares := registrationDeclaresFeature(t, fset, dir, reg.method)
 		_, base := baseWaysIn[reg.String()]
+		entry, gated := entryGated[reg.String()]
 		switch {
-		case declares && base:
-			t.Errorf("%s declares a feature and is also listed as base; drop it from the list", reg)
+		case declares && (base || gated):
+			t.Errorf(
+				"%s declares a feature on its routes and is also listed; drop it from the list",
+				reg,
+			)
+		case base && gated:
+			t.Errorf("%s is listed both as base and as checked at its service entry", reg)
+		case gated:
+			assert.Truef(t, packageNamesFeature(t, fset, entry),
+				"%s is listed as checked in %s, which passes platformcatalog.%s to no call",
+				reg, entry.dir, entry.feature)
 		case !declares && !base:
 			t.Errorf(
 				"%s registers routes with no signed-in caller and names no feature: "+
-					"wrap them in FeatureGuard.RequireFeature or list them as base with a reason",
+					"check it at the service entry under the request's tenant and list it in "+
+					"entryGated, wrap the routes in FeatureGuard.RequireFeature, or list "+
+					"them as base with a reason",
 				reg,
 			)
 		}
@@ -78,6 +139,14 @@ func TestEveryRouteWithoutASessionDeclaresItsFeature(t *testing.T) {
 
 	for name := range baseWaysIn {
 		assert.True(t, seen[name], "%s is listed as base but registers no public routes", name)
+	}
+	for name := range entryGated {
+		assert.True(
+			t,
+			seen[name],
+			"%s is listed as entry-gated but registers no public routes",
+			name,
+		)
 	}
 }
 
@@ -205,6 +274,53 @@ func registrationDeclaresFeature(
 	require.True(t, ok, "%s has no method %s", dir, method)
 
 	return callsFeatureGuard(registration, methods, 0)
+}
+
+func packageNamesFeature(t *testing.T, fset *token.FileSet, check entryCheck) bool {
+	t.Helper()
+
+	dir := filepath.Join(moduleRoot, check.dir)
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		file, parseErr := parser.ParseFile(
+			fset,
+			filepath.Join(dir, name),
+			nil,
+			parser.SkipObjectResolution,
+		)
+		require.NoError(t, parseErr)
+		if passesFeature(file, check.feature) {
+			return true
+		}
+	}
+	return false
+}
+
+func passesFeature(file *ast.File, feature string) bool {
+	found := false
+	ast.Inspect(file, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok || found {
+			return !found
+		}
+		for _, arg := range call.Args {
+			sel, isSel := arg.(*ast.SelectorExpr)
+			if !isSel || sel.Sel.Name != feature {
+				continue
+			}
+			if pkg, isIdent := sel.X.(*ast.Ident); isIdent && pkg.Name == "platformcatalog" {
+				found = true
+			}
+		}
+		return !found
+	})
+	return found
 }
 
 func callsFeatureGuard(fn *ast.FuncDecl, methods map[string]*ast.FuncDecl, depth int) bool {

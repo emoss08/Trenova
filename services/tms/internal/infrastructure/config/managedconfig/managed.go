@@ -37,14 +37,28 @@ var (
 	ErrEmbeddingModelWithoutURL = errors.New(
 		"managed.embedding.model is set without managed.embedding.url",
 	)
+	ErrTenancyInvalid = errors.New(
+		"managed.tenancy must be dedicated or shared",
+	)
+	ErrSharedTenancyNotManaged = errors.New(
+		"managed.tenancy shared requires managed.enabled",
+	)
 	ErrSupportURLInvalid = fmt.Errorf(
 		"managed.supportUrl and managed.newSupportRequestUrl must each be empty or an http or https URL with a host, no user information, fragment or space, at most %d characters",
 		maxSupportURLLen,
 	)
 )
 
+type Tenancy string
+
+const (
+	TenancyDedicated = Tenancy("dedicated")
+	TenancyShared    = Tenancy("shared")
+)
+
 type Config struct {
 	Enabled              bool      `mapstructure:"enabled"`
+	Tenancy              Tenancy   `mapstructure:"tenancy"`
 	InstanceID           string    `mapstructure:"instanceId"`
 	Host                 string    `mapstructure:"host"                 validate:"omitempty,hostname|ip"`
 	Port                 int       `mapstructure:"port"`
@@ -67,6 +81,7 @@ type Embedding struct {
 func Defaults() map[string]any {
 	return map[string]any{
 		"enabled":              false,
+		"tenancy":              string(TenancyDedicated),
 		"instanceId":           "",
 		"host":                 defaultHost,
 		"port":                 defaultPort,
@@ -90,6 +105,10 @@ func (c *Config) GetPort() int {
 		return defaultPort
 	}
 	return c.Port
+}
+
+func (c *Config) SharedTenancy() bool {
+	return c != nil && c.Enabled && c.Tenancy == TenancyShared
 }
 
 func (c *Config) BuiltInEmbedding() (Embedding, bool) {
@@ -117,6 +136,15 @@ func (e Embedding) Configured() bool {
 }
 
 func (c *Config) Validate() error {
+	switch c.Tenancy {
+	case "", TenancyDedicated:
+	case TenancyShared:
+		if !c.Enabled {
+			return ErrSharedTenancyNotManaged
+		}
+	default:
+		return ErrTenancyInvalid
+	}
 	if !c.Enabled {
 		return nil
 	}

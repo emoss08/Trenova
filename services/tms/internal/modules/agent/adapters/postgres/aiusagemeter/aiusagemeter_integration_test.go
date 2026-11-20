@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -57,10 +58,16 @@ func TestPagesAreSummedFromTheSourceRowsAndAResentHourAnswersTheSame(t *testing.
 	counter := aiusagemeter.New(aiusagemeter.Params{DB: postgres.WrapDB(db)}).Pages
 	now := timeutils.NowUnix()
 	current := now - now%3600
-	req := &managedusageports.HourCountRequest{Since: current - 3600, Until: current + 2*3600}
-	total := func() int64 {
+	req := &managedusageports.HourCountRequest{
+		Scope: managedscope.Instance(),
+		Since: current - 3600,
+		Until: current + 2*3600,
+	}
+	totalFor := func(scope managedscope.Scope) int64 {
 		t.Helper()
-		counts, countErr := counter.CountByHour(ctx, req)
+		scoped := *req
+		scoped.Scope = scope
+		counts, countErr := counter.CountByHour(ctx, &scoped)
 		require.NoError(t, countErr)
 		var sum int64
 		for _, c := range counts {
@@ -68,8 +75,21 @@ func TestPagesAreSummedFromTheSourceRowsAndAResentHourAnswersTheSame(t *testing.
 		}
 		return sum
 	}
+	total := func() int64 {
+		t.Helper()
+		return totalFor(managedscope.Instance())
+	}
+	own := managedscope.Organization(dbscope.Tenant{
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+	})
+	other := managedscope.Organization(dbscope.Tenant{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	})
 
 	before := total()
+	ownBefore := totalFor(own)
 
 	for _, r := range []*aiusage.AIUsageRecord{
 		record(aiusage.FeatureDocumentIntelligenceExtract, true, 3),
@@ -83,4 +103,6 @@ func TestPagesAreSummedFromTheSourceRowsAndAResentHourAnswersTheSame(t *testing.
 	first := total()
 	assert.Equal(t, before+8, first, "only successful extractions count, by their pages")
 	assert.Equal(t, first, total(), "reading the same hours again gives the same answer")
+	assert.Equal(t, ownBefore+8, totalFor(own), "an organization's scope counts its own pages")
+	assert.Zero(t, totalFor(other), "and no other organization's")
 }

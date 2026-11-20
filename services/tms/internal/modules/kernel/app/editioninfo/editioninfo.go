@@ -1,10 +1,15 @@
 package editioninfo
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 )
 
-const SelfHostedName = "community"
+const (
+	SelfHostedName = "community"
+	ManagedName    = "managed"
+	SharedName     = "shared"
+)
 
 type Static struct {
 	name   string
@@ -19,6 +24,17 @@ func NewStatic(name string, sharedTenancy bool) Static {
 
 func SelfHosted() ediports.EditionInfo {
 	return NewStatic(SelfHostedName, false)
+}
+
+func New(cfg *managedconfig.Config) ediports.EditionInfo {
+	switch {
+	case cfg.SharedTenancy():
+		return NewStatic(SharedName, true)
+	case cfg.Enabled:
+		return NewStatic(ManagedName, false)
+	default:
+		return SelfHosted()
+	}
 }
 
 func (s Static) Name() string {

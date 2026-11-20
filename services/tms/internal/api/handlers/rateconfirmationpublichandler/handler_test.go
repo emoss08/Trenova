@@ -2,6 +2,7 @@ package rateconfirmationpublichandler
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,11 +15,14 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -64,10 +68,18 @@ func (f *tokenRepo) MarkTokenUsed(
 }
 
 func newTestHandler(repo *tokenRepo) *Handler {
+	return newTestHandlerWith(repo, plantest.AllFeatures())
+}
+
+func newTestHandlerWith(
+	repo rateconfirmationports.RateConfirmationRepository,
+	features platformcatalogports.FeatureGate,
+) *Handler {
 	service := rateconfirmationservice.New(rateconfirmationservice.Params{
-		Logger: zap.NewNop(),
-		DB:     dbtest.NopConnection{},
-		Repo:   repo,
+		Logger:   zap.NewNop(),
+		DB:       dbtest.NopConnection{},
+		Repo:     repo,
+		Features: features,
 	})
 	cfg := &config.Config{
 		Security: securityconfig.Config{
@@ -87,11 +99,6 @@ func newTestHandler(repo *tokenRepo) *Handler {
 	return New(Params{
 		Service:      service,
 		ErrorHandler: errorHandler,
-		Features: middleware.NewFeatureGuard(middleware.FeatureGuardParams{
-			Features:     plantest.AllFeatures(),
-			ErrorHandler: errorHandler,
-			Logger:       zap.NewNop(),
-		}),
 		RateLimiter: middleware.NewRateLimiter(middleware.RateLimiterParams{
 			SecurityConfig: &cfg.Security,
 			Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
@@ -213,4 +220,87 @@ func TestPerTokenThrottleCapsBursts(t *testing.T) {
 	router.ServeHTTP(otherRec, otherReq)
 	assert.NotEqual(t, http.StatusTooManyRequests, otherRec.Code,
 		"the throttle is per token, not global")
+}
+
+type serverRepo struct {
+	rateconfirmationports.RateConfirmationRepository
+
+	tenants []*tokenRepo
+}
+
+func (s *serverRepo) GetTokenByHash(
+	ctx context.Context,
+	tokenHash string,
+) (*rateconfirmation.RateConfirmationToken, error) {
+	for _, repo := range s.tenants {
+		if token, _ := repo.GetTokenByHash(ctx, tokenHash); token != nil {
+			return token, nil
+		}
+	}
+	return nil, nil //nolint:nilnil // mirrors the production contract
+}
+
+func (s *serverRepo) GetByID(
+	ctx context.Context,
+	req *rateconfirmationports.GetRateConfirmationByIDRequest,
+) (*rateconfirmation.RateConfirmation, error) {
+	for _, repo := range s.tenants {
+		if entity, err := repo.GetByID(ctx, req); err == nil {
+			return entity, nil
+		}
+	}
+	return nil, errortypes.NewNotFoundError("Rate confirmation not found")
+}
+
+type brokerageByOrganization map[pulid.ID]bool
+
+func (b brokerageByOrganization) Enabled(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	tenant, ok := dbscope.TenantFrom(ctx)
+	if !ok {
+		return false, errors.New("a shared server refuses a plan question with no tenant")
+	}
+	return feature == platformcatalog.FeatureCarrierBrokerage && b[tenant.OrganizationID], nil
+}
+
+func (brokerageByOrganization) EnabledAnywhere(
+	context.Context,
+	platformcatalog.FeatureKey,
+) (bool, error) {
+	return false, errors.New("a public link never asks about every organization")
+}
+
+func preview(router *gin.Engine, raw string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/rate-confirmation-links/"+raw+"/", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	return rec
+}
+
+func TestALinkAnswersOnlyForAnOrganizationWithBrokerageOnTheSameServer(t *testing.T) {
+	withBrokerage, withBrokerageRaw := signedRepo()
+	without, _ := signedRepo()
+	withoutRaw := "raw-other-token"
+	without.token.TokenHash = tokenutils.Hash(withoutRaw)
+	router := newTestRouter(newTestHandlerWith(
+		&serverRepo{tenants: []*tokenRepo{withBrokerage, without}},
+		brokerageByOrganization{withBrokerage.entity.OrganizationID: true},
+	))
+
+	allowed := preview(router, withBrokerageRaw)
+	require.Equal(t, http.StatusOK, allowed.Code, allowed.Body.String())
+	assert.Contains(t, allowed.Body.String(), "Eastline Transport")
+
+	refused := preview(router, withoutRaw)
+	require.GreaterOrEqual(t, refused.Code, http.StatusBadRequest)
+	require.Less(t, refused.Code, http.StatusInternalServerError)
+	assert.Contains(
+		t,
+		refused.Body.String(),
+		"no longer valid",
+		"the same answer as an unknown link",
+	)
+	assert.NotContains(t, refused.Body.String(), "Eastline Transport")
 }

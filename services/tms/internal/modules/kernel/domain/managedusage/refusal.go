@@ -19,6 +19,10 @@ var allowanceRefusals = map[platformcatalog.MeterKey]errortypes.BaseError{
 	},
 }
 
+var ceilingRefusal = errortypes.BaseError{
+	Message: "Your plan allows at most {0} of this in a billing period, and this period has reached it. Move to a larger plan from your Trenova account to keep going.",
+}
+
 func Refusal(
 	meter platformcatalog.MeterKey,
 	limit, used, requested int64,
@@ -33,6 +37,17 @@ func Refusal(
 	if meter == platformcatalog.MeterOrganizationsTotal {
 		err.Args = []any{limit}
 	}
+	return err
+}
+
+func CeilingRefusal(
+	meter platformcatalog.MeterKey,
+	ceiling, used int64,
+	plan string,
+) *errortypes.QuotaExceededError {
+	err := errortypes.NewQuotaExceededError(string(meter), ceiling, used, plan)
+	err.Message = ceilingRefusal.Message
+	err.Args = []any{ceiling}
 	return err
 }
 

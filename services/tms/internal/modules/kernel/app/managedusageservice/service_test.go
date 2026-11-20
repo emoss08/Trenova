@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
@@ -21,32 +22,58 @@ const (
 	now  = int64(1_762_351_200 + 1_234)
 )
 
+var instance = managedscope.Instance()
+
 type fakeRepo struct {
-	mu    sync.Mutex
-	state *managedusage.State
-	gets  int
-	err   error
+	mu     sync.Mutex
+	state  *managedusage.State
+	scoped map[string]*managedusage.State
+	gets   int
+	getsBy map[string]int
+	err    error
 }
 
-func (f *fakeRepo) Get(context.Context) (*managedusage.State, error) {
+func (f *fakeRepo) Get(
+	_ context.Context,
+	scope managedscope.Scope,
+) (*managedusage.State, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.gets++
+	if f.getsBy == nil {
+		f.getsBy = map[string]int{}
+	}
+	f.getsBy[scope.Key()]++
 	if f.err != nil {
 		return nil, f.err
 	}
-	if f.state == nil {
+	held := f.state
+	if !scope.IsInstance() {
+		held = f.scoped[scope.Key()]
+	}
+	if held == nil {
 		return nil, managedusage.ErrNoState
 	}
-	c := *f.state
+	c := *held
 	return &c, nil
 }
 
-func (f *fakeRepo) Save(_ context.Context, s *managedusage.State) error {
+func (f *fakeRepo) Save(
+	_ context.Context,
+	scope managedscope.Scope,
+	s *managedusage.State,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	c := *s
-	f.state = &c
+	if scope.IsInstance() {
+		f.state = &c
+		return nil
+	}
+	if f.scoped == nil {
+		f.scoped = map[string]*managedusage.State{}
+	}
+	f.scoped[scope.Key()] = &c
 	return nil
 }
 
@@ -67,22 +94,40 @@ func (f *fakeCounter) CountByHour(
 }
 
 type fakeLevel struct {
-	meter platformcatalog.MeterKey
-	level int64
-	err   error
+	meter  platformcatalog.MeterKey
+	level  int64
+	err    error
+	levels map[string]int64
+	asked  []managedscope.Scope
 }
 
 func (f *fakeLevel) Meter() platformcatalog.MeterKey { return f.meter }
 
-func (f *fakeLevel) Level(context.Context) (int64, error) { return f.level, f.err }
+func (f *fakeLevel) Level(_ context.Context, scope managedscope.Scope) (int64, error) {
+	f.asked = append(f.asked, scope)
+	if level, ok := f.levels[scope.Key()]; ok {
+		return level, f.err
+	}
+	return f.level, f.err
+}
 
 func newService(
 	repo *fakeRepo,
 	counters []managedusageports.HourlyCounter,
 	levels []managedusageports.LevelReader,
 ) *managedusageservice.Service {
+	return newServiceIn(repo, false, counters, levels)
+}
+
+func newServiceIn(
+	repo *fakeRepo,
+	shared bool,
+	counters []managedusageports.HourlyCounter,
+	levels []managedusageports.LevelReader,
+) *managedusageservice.Service {
 	return managedusageservice.New(managedusageservice.Params{
 		Repo:     repo,
+		Scopes:   managedscope.NewResolver(shared),
 		Counters: counters,
 		Levels:   levels,
 		Clock:    func() int64 { return now },
@@ -96,12 +141,12 @@ func TestSetStateThenDecide(t *testing.T) {
 	repo := &fakeRepo{}
 	svc := newService(repo, nil, nil)
 
-	d, err := svc.Decide(t.Context(), platformcatalog.MeterShipmentsTotal, 1)
+	d, err := svc.Decide(t.Context(), instance, platformcatalog.MeterShipmentsTotal, 1)
 	require.NoError(t, err)
 	assert.True(t, d.Allowed)
 	assert.False(t, d.Managed, "no state yet: nothing is limited")
 
-	change, err := svc.SetState(t.Context(), &managedusage.State{
+	change, err := svc.SetState(t.Context(), instance, &managedusage.State{
 		WindowStart: now - hour,
 		WindowEnd:   now + hour,
 		Meters: []managedusage.Meter{{
@@ -116,9 +161,9 @@ func TestSetStateThenDecide(t *testing.T) {
 	assert.Nil(t, change.Previous, "the first state has nothing before it")
 	assert.Equal(t, repo.state.ReceivedAt, change.Current.ReceivedAt)
 	assert.Equal(t, now, repo.state.ReceivedAt)
-	assert.Equal(t, managedusage.CurrentStateID, repo.state.ID)
+	assert.Equal(t, managedscope.InstanceKey, repo.state.ScopeKey)
 
-	d, err = svc.Decide(t.Context(), platformcatalog.MeterShipmentsTotal, 1)
+	d, err = svc.Decide(t.Context(), instance, platformcatalog.MeterShipmentsTotal, 1)
 	require.NoError(t, err)
 	assert.False(t, d.Allowed, "the write invalidated the cached state")
 	assert.Equal(t, managedusage.ReasonStopped, d.Reason)
@@ -130,7 +175,7 @@ func TestTheStateIsCached(t *testing.T) {
 	repo := &fakeRepo{}
 	svc := newService(repo, nil, nil)
 	for range 5 {
-		_, err := svc.Decide(t.Context(), platformcatalog.MeterShipmentsTotal, 1)
+		_, err := svc.Decide(t.Context(), instance, platformcatalog.MeterShipmentsTotal, 1)
 		require.NoError(t, err)
 	}
 	assert.Equal(t, 1, repo.gets)
@@ -140,7 +185,7 @@ func TestAReadFailureIsReturned(t *testing.T) {
 	t.Parallel()
 
 	svc := newService(&fakeRepo{err: errors.New("down")}, nil, nil)
-	_, err := svc.Decide(t.Context(), platformcatalog.MeterShipmentsTotal, 1)
+	_, err := svc.Decide(t.Context(), instance, platformcatalog.MeterShipmentsTotal, 1)
 	require.Error(t, err)
 }
 
@@ -149,7 +194,7 @@ func TestSetStateRefusesAnInvalidState(t *testing.T) {
 
 	repo := &fakeRepo{}
 	svc := newService(repo, nil, nil)
-	_, err := svc.SetState(t.Context(), &managedusage.State{WindowStart: 1})
+	_, err := svc.SetState(t.Context(), instance, &managedusage.State{WindowStart: 1})
 	require.Error(t, err)
 	assert.Nil(t, repo.state)
 }
@@ -172,7 +217,7 @@ func TestReadings(t *testing.T) {
 		[]managedusageports.LevelReader{storage},
 	)
 
-	readings, err := svc.Readings(t.Context(), current-2*hour)
+	readings, err := svc.Readings(t.Context(), instance, current-2*hour)
 	require.NoError(t, err)
 	assert.Equal(t, []managedusageservice.Reading{
 		{Meter: platformcatalog.MeterShipmentsTotal, Hour: current - 2*hour, Quantity: 3},
@@ -209,7 +254,7 @@ func TestReadingsRefuseABadSince(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := svc.Readings(t.Context(), tt.since)
+			_, err := svc.Readings(t.Context(), instance, tt.since)
 			require.ErrorIs(t, err, tt.err)
 		})
 	}
@@ -222,7 +267,7 @@ func TestReadingsReturnAReaderFailure(t *testing.T) {
 	svc := newService(&fakeRepo{}, nil, []managedusageports.LevelReader{
 		&fakeLevel{meter: platformcatalog.MeterDocumentStorageBytes, err: errors.New("down")},
 	})
-	_, err := svc.Readings(t.Context(), current)
+	_, err := svc.Readings(t.Context(), instance, current)
 	require.Error(t, err)
 }
 
@@ -250,12 +295,12 @@ func TestALevelMeterIsDecidedOnTheLiveLevelNotTheRelayedQuantity(t *testing.T) {
 		[]managedusageports.LevelReader{storage},
 	)
 
-	d, err := svc.Decide(t.Context(), platformcatalog.MeterDocumentStorageBytes, 600)
+	d, err := svc.Decide(t.Context(), instance, platformcatalog.MeterDocumentStorageBytes, 600)
 	require.NoError(t, err)
 	assert.True(t, d.Allowed, "deleting documents frees room before the next relay")
 	assert.Equal(t, int64(400), d.Used)
 
-	d, err = svc.Decide(t.Context(), platformcatalog.MeterDocumentStorageBytes, 601)
+	d, err = svc.Decide(t.Context(), instance, platformcatalog.MeterDocumentStorageBytes, 601)
 	require.NoError(t, err)
 	assert.False(t, d.Allowed)
 	assert.Equal(t, managedusage.ReasonAllowance, d.Reason)
@@ -271,7 +316,7 @@ func TestALevelMeterTheStateDoesNotNameIsNotRead(t *testing.T) {
 		[]managedusageports.LevelReader{orgs},
 	)
 
-	d, err := svc.Decide(t.Context(), platformcatalog.MeterOrganizationsTotal, 1)
+	d, err := svc.Decide(t.Context(), instance, platformcatalog.MeterOrganizationsTotal, 1)
 	require.NoError(t, err)
 	assert.True(t, d.Allowed)
 	assert.False(t, d.Managed)
@@ -283,7 +328,7 @@ func TestSetStateReportsThePreviousState(t *testing.T) {
 	repo := &fakeRepo{state: storageState(100, 1000, false)}
 	svc := newService(repo, nil, nil)
 
-	change, err := svc.SetState(t.Context(), storageState(900, 1000, false))
+	change, err := svc.SetState(t.Context(), instance, storageState(900, 1000, false))
 	require.NoError(t, err)
 	require.NotNil(t, change.Previous)
 	previous, _ := change.Previous.Meter(platformcatalog.MeterDocumentStorageBytes)
@@ -317,7 +362,7 @@ func TestTheReceiverTellsEveryObserverAndAFailingOneDoesNotFailTheWrite(t *testi
 		Logger:    zap.NewNop(),
 	})
 
-	require.NoError(t, receiver.SetState(t.Context(), storageState(10, 1000, false)))
+	require.NoError(t, receiver.SetState(t.Context(), instance, storageState(10, 1000, false)))
 	require.Len(t, failing.changes, 1)
 	require.Len(t, working.changes, 1)
 	assert.NotNil(t, repo.state)
@@ -333,7 +378,7 @@ func TestTheReceiverTellsNoObserverOfAnInvalidState(t *testing.T) {
 		Logger:    zap.NewNop(),
 	})
 
-	require.Error(t, receiver.SetState(t.Context(), &managedusage.State{WindowStart: 1}))
+	require.Error(t, receiver.SetState(t.Context(), instance, &managedusage.State{WindowStart: 1}))
 	assert.Empty(t, observer.changes)
 }
 
@@ -353,7 +398,7 @@ func TestReadingsListTheFourAppMeters(t *testing.T) {
 		},
 	)
 
-	readings, err := svc.Readings(t.Context(), current)
+	readings, err := svc.Readings(t.Context(), instance, current)
 	require.NoError(t, err)
 	meters := make([]platformcatalog.MeterKey, 0, len(readings))
 	for _, r := range readings {

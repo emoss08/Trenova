@@ -24,6 +24,7 @@ var changesTable = schema.Table{
 	Plural: `Changes`,
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "scope_key", Quoted: `"scope_key"`, Field: "ScopeKey", Kind: schema.KindString, Flags: 0, Label: `Scope Key`, JSON: `scopeKey`},
 		{Name: "added", Quoted: `"added"`, Field: "Added", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Added`, JSON: `added`},
 		{Name: "removed", Quoted: `"removed"`, Field: "Removed", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Removed`, JSON: `removed`},
 		{Name: "ending", Quoted: `"ending"`, Field: "Ending", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Ending`, JSON: `ending`},
@@ -33,9 +34,9 @@ var changesTable = schema.Table{
 	},
 	PK:         []int32{0},
 	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{1, 2, 3, 4, 5, 6},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:     []int32{1, 2, 3, 4, 5, 6, 7},
 	Returning:  nil,
 	Version:    -1,
 	AutoID:     0,
@@ -55,6 +56,7 @@ var changesRef = keel.Ref{Table: &changesTable}
 type ChangesTable struct {
 	keel.TableBase
 	ID        keelkinds.PulidIDCol
+	ScopeKey  keel.StringCol
 	Added     keel.JSONBCol
 	Removed   keel.JSONBCol
 	Ending    keel.JSONBCol
@@ -67,12 +69,13 @@ type ChangesTable struct {
 var Changes = &ChangesTable{
 	TableBase: keel.TableBase{Ref: &changesRef},
 	ID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &changesRef, Index: 0}}},
-	Added:     keel.JSONBCol{Col: keel.Col{Ref: &changesRef, Index: 1}},
-	Removed:   keel.JSONBCol{Col: keel.Col{Ref: &changesRef, Index: 2}},
-	Ending:    keel.JSONBCol{Col: keel.Col{Ref: &changesRef, Index: 3}},
-	Kept:      keel.JSONBCol{Col: keel.Col{Ref: &changesRef, Index: 4}},
-	Starting:  keel.BoolCol{Col: keel.Col{Ref: &changesRef, Index: 5}},
-	ChangedAt: keel.Int64Col{Col: keel.Col{Ref: &changesRef, Index: 6}},
+	ScopeKey:  keel.StringCol{Col: keel.Col{Ref: &changesRef, Index: 1}},
+	Added:     keel.JSONBCol{Col: keel.Col{Ref: &changesRef, Index: 2}},
+	Removed:   keel.JSONBCol{Col: keel.Col{Ref: &changesRef, Index: 3}},
+	Ending:    keel.JSONBCol{Col: keel.Col{Ref: &changesRef, Index: 4}},
+	Kept:      keel.JSONBCol{Col: keel.Col{Ref: &changesRef, Index: 5}},
+	Starting:  keel.BoolCol{Col: keel.Col{Ref: &changesRef, Index: 6}},
+	ChangedAt: keel.Int64Col{Col: keel.Col{Ref: &changesRef, Index: 7}},
 }
 
 // BuildChanges builds the table of managed_feature_changes for ref. Generated relation and alias methods call it.
@@ -80,12 +83,13 @@ func BuildChanges(r *keel.Ref) *ChangesTable {
 	return &ChangesTable{
 		TableBase: keel.TableBase{Ref: r},
 		ID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		Added:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 1}},
-		Removed:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 2}},
-		Ending:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 3}},
-		Kept:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 4}},
-		Starting:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
-		ChangedAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		ScopeKey:  keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
+		Added:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 2}},
+		Removed:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 3}},
+		Ending:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 4}},
+		Kept:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
+		Starting:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
+		ChangedAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 	}
 }
 
@@ -477,16 +481,18 @@ func ptrChange(p unsafe.Pointer, c int32) any {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
 	case 1:
-		return &r.Added
+		return &r.ScopeKey
 	case 2:
-		return &r.Removed
+		return &r.Added
 	case 3:
-		return &r.Ending
+		return &r.Removed
 	case 4:
-		return &r.Kept
+		return &r.Ending
 	case 5:
-		return &r.Starting
+		return &r.Kept
 	case 6:
+		return &r.Starting
+	case 7:
 		return &r.ChangedAt
 	}
 	return nil
@@ -498,28 +504,30 @@ func valueChange(p unsafe.Pointer, c int32) any {
 	case 0:
 		return string(r.ID)
 	case 1:
+		return r.ScopeKey
+	case 2:
 		if r.Added == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Added
-	case 2:
+	case 3:
 		if r.Removed == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Removed
-	case 3:
+	case 4:
 		if r.Ending == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Ending
-	case 4:
+	case 5:
 		if r.Kept == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Kept
-	case 5:
-		return r.Starting
 	case 6:
+		return r.Starting
+	case 7:
 		return r.ChangedAt
 	}
 	return nil
@@ -534,7 +542,9 @@ var statesTable = schema.Table{
 	Label:  `State`,
 	Plural: `States`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
+		{Name: "scope_key", Quoted: `"scope_key"`, Field: "ScopeKey", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Scope Key`, JSON: `scopeKey`},
+		{Name: "scope_business_unit_id", Quoted: `"scope_business_unit_id"`, Field: "ScopeBusinessUnitID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Scope Business Unit ID`, JSON: `scopeBusinessUnitId`},
+		{Name: "lifecycle", Quoted: `"lifecycle"`, Field: "Lifecycle", Kind: schema.KindString, Flags: 0, Label: `Lifecycle`, JSON: `lifecycle`, Enum: enumLifecycle[:]},
 		{Name: "features", Quoted: `"features"`, Field: "Features", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Features`, JSON: `features`},
 		{Name: "addon_endings", Quoted: `"addon_endings"`, Field: "AddOnEndings", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Add On Endings`, JSON: `addOnEndings`},
 		{Name: "plan_url", Quoted: `"plan_url"`, Field: "PlanURL", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Plan URL`, JSON: `planUrl`},
@@ -546,9 +556,9 @@ var statesTable = schema.Table{
 	},
 	PK:         []int32{0},
 	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 	Returning:  nil,
 	Version:    -1,
 	AutoID:     -1,
@@ -567,44 +577,50 @@ var statesRef = keel.Ref{Table: &statesTable}
 // StatesTable is the table of managedfeatures.State.
 type StatesTable struct {
 	keel.TableBase
-	ID               keel.StringCol
-	Features         keel.JSONBCol
-	AddOnEndings     keel.JSONBCol
-	PlanURL          keel.StringCol
-	PlanEndsAt       keel.Int64Col
-	PlanEndAnnounced keel.Int64Col
-	PlanEndReminded  keel.Int64Col
-	FinalBackupDays  keel.Int64Col
-	ReceivedAt       keel.Int64Col
+	ScopeKey            keel.StringCol
+	ScopeBusinessUnitID keelkinds.PulidIDCol
+	Lifecycle           LifecycleCol
+	Features            keel.JSONBCol
+	AddOnEndings        keel.JSONBCol
+	PlanURL             keel.StringCol
+	PlanEndsAt          keel.Int64Col
+	PlanEndAnnounced    keel.Int64Col
+	PlanEndReminded     keel.Int64Col
+	FinalBackupDays     keel.Int64Col
+	ReceivedAt          keel.Int64Col
 }
 
 // States references the managed_feature_states table.
 var States = &StatesTable{
-	TableBase:        keel.TableBase{Ref: &statesRef},
-	ID:               keel.StringCol{Col: keel.Col{Ref: &statesRef, Index: 0}},
-	Features:         keel.JSONBCol{Col: keel.Col{Ref: &statesRef, Index: 1}},
-	AddOnEndings:     keel.JSONBCol{Col: keel.Col{Ref: &statesRef, Index: 2}},
-	PlanURL:          keel.StringCol{Col: keel.Col{Ref: &statesRef, Index: 3}},
-	PlanEndsAt:       keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 4}},
-	PlanEndAnnounced: keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 5}},
-	PlanEndReminded:  keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 6}},
-	FinalBackupDays:  keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 7}},
-	ReceivedAt:       keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 8}},
+	TableBase:           keel.TableBase{Ref: &statesRef},
+	ScopeKey:            keel.StringCol{Col: keel.Col{Ref: &statesRef, Index: 0}},
+	ScopeBusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &statesRef, Index: 1}}},
+	Lifecycle:           LifecycleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &statesRef, Index: 2}}},
+	Features:            keel.JSONBCol{Col: keel.Col{Ref: &statesRef, Index: 3}},
+	AddOnEndings:        keel.JSONBCol{Col: keel.Col{Ref: &statesRef, Index: 4}},
+	PlanURL:             keel.StringCol{Col: keel.Col{Ref: &statesRef, Index: 5}},
+	PlanEndsAt:          keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 6}},
+	PlanEndAnnounced:    keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 7}},
+	PlanEndReminded:     keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 8}},
+	FinalBackupDays:     keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 9}},
+	ReceivedAt:          keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 10}},
 }
 
 // BuildStates builds the table of managed_feature_states for ref. Generated relation and alias methods call it.
 func BuildStates(r *keel.Ref) *StatesTable {
 	return &StatesTable{
-		TableBase:        keel.TableBase{Ref: r},
-		ID:               keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
-		Features:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 1}},
-		AddOnEndings:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 2}},
-		PlanURL:          keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		PlanEndsAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		PlanEndAnnounced: keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		PlanEndReminded:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		FinalBackupDays:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		ReceivedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		TableBase:           keel.TableBase{Ref: r},
+		ScopeKey:            keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
+		ScopeBusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		Lifecycle:           LifecycleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Features:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 3}},
+		AddOnEndings:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 4}},
+		PlanURL:             keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		PlanEndsAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		PlanEndAnnounced:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		PlanEndReminded:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		FinalBackupDays:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		ReceivedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 	}
 }
 
@@ -616,7 +632,7 @@ func (t *StatesTable) As(alias string) *StatesTable { return keel.Alias(t.Ref, a
 
 // Get returns the managed_feature_states row with the given key, or keel.ErrNotFound.
 func (t *StatesTable) Get(ctx context.Context, db *keel.DB, key string) (*managedfeatures.State, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
+	return t.Where(t.ScopeKey.Eq(key)).One(ctx, db)
 }
 
 // StatesQuery is a query over managedfeatures.State.
@@ -994,22 +1010,26 @@ func ptrState(p unsafe.Pointer, c int32) any {
 	r := (*managedfeatures.State)(p)
 	switch c {
 	case 0:
-		return &r.ID
+		return &r.ScopeKey
 	case 1:
-		return &r.Features
+		return (*string)(unsafe.Pointer(&r.ScopeBusinessUnitID))
 	case 2:
-		return &r.AddOnEndings
+		return (*string)(unsafe.Pointer(&r.Lifecycle))
 	case 3:
-		return &r.PlanURL
+		return &r.Features
 	case 4:
-		return &r.PlanEndsAt
+		return &r.AddOnEndings
 	case 5:
-		return &r.PlanEndAnnounced
+		return &r.PlanURL
 	case 6:
-		return &r.PlanEndReminded
+		return &r.PlanEndsAt
 	case 7:
-		return (*int64)(unsafe.Pointer(&r.FinalBackupDays))
+		return &r.PlanEndAnnounced
 	case 8:
+		return &r.PlanEndReminded
+	case 9:
+		return (*int64)(unsafe.Pointer(&r.FinalBackupDays))
+	case 10:
 		return &r.ReceivedAt
 	}
 	return nil
@@ -1019,40 +1039,47 @@ func valueState(p unsafe.Pointer, c int32) any {
 	r := (*managedfeatures.State)(p)
 	switch c {
 	case 0:
-		return r.ID
+		return r.ScopeKey
 	case 1:
+		if r.ScopeBusinessUnitID == "" {
+			return nil
+		}
+		return string(r.ScopeBusinessUnitID)
+	case 2:
+		return string(r.Lifecycle)
+	case 3:
 		if r.Features == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Features
-	case 2:
+	case 4:
 		if r.AddOnEndings == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.AddOnEndings
-	case 3:
+	case 5:
 		if r.PlanURL == "" {
 			return nil
 		}
 		return r.PlanURL
-	case 4:
+	case 6:
 		if r.PlanEndsAt == 0 {
 			return nil
 		}
 		return r.PlanEndsAt
-	case 5:
+	case 7:
 		if r.PlanEndAnnounced == 0 {
 			return nil
 		}
 		return r.PlanEndAnnounced
-	case 6:
+	case 8:
 		if r.PlanEndReminded == 0 {
 			return nil
 		}
 		return r.PlanEndReminded
-	case 7:
+	case 9:
 		return int64(r.FinalBackupDays)
-	case 8:
+	case 10:
 		return r.ReceivedAt
 	}
 	return nil
@@ -1060,3 +1087,31 @@ func valueState(p unsafe.Pointer, c int32) any {
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
 const intIs64 = unsafe.Sizeof(int(0)) - 8
+
+var enumLifecycle = [...]schema.EnumValue{
+	{Value: `active`, Label: `Active`},
+	{Value: `suspended`, Label: `Suspended`},
+}
+
+// LifecycleCol is a column of managedfeatures.Lifecycle values.
+type LifecycleCol struct{ keel.TypedStringCol }
+
+func (c LifecycleCol) Eq(v managedfeatures.Lifecycle) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c LifecycleCol) Ne(v managedfeatures.Lifecycle) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c LifecycleCol) Gt(v managedfeatures.Lifecycle) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c LifecycleCol) Gte(v managedfeatures.Lifecycle) keel.Pred { return c.Text().Gte(string(v)) }
+func (c LifecycleCol) Lt(v managedfeatures.Lifecycle) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c LifecycleCol) Lte(v managedfeatures.Lifecycle) keel.Pred { return c.Text().Lte(string(v)) }
+func (c LifecycleCol) IsDistinctFrom(v managedfeatures.Lifecycle) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c LifecycleCol) Between(lo, hi managedfeatures.Lifecycle) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c LifecycleCol) To(v managedfeatures.Lifecycle) keel.Assignment { return c.Text().To(string(v)) }
+func (c LifecycleCol) In(vs ...managedfeatures.Lifecycle) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c LifecycleCol) NotIn(vs ...managedfeatures.Lifecycle) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}

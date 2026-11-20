@@ -20,6 +20,9 @@ func (s *Service) Overview(
 	ctx context.Context,
 	req *accountingdriftports.AccountingDriftOverviewRequest,
 ) (*accountingdriftports.AccountingDriftOverview, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	conn, err := accountingconnlookup.ByType(
 		ctx,
 		s.connections,
@@ -64,6 +67,9 @@ func (s *Service) List(
 	ctx context.Context,
 	req *accountingdriftports.ListAccountingDriftFindingsRequest,
 ) (*pagination.CursorListResult[*accountingdrift.AccountingDriftFinding], error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	conn, err := accountingconnlookup.ByType(
 		ctx,
 		s.connections,
@@ -97,6 +103,9 @@ func (s *Service) Get(
 	ctx context.Context,
 	req *accountingdriftports.GetAccountingDriftFindingRequest,
 ) (*accountingdrift.AccountingDriftFinding, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	return s.findingByID(ctx, req.TenantInfo, req.ID, false)
 }
 
@@ -105,6 +114,9 @@ func (s *Service) CheckNow(
 	tenantInfo pagination.TenantInfo,
 	integrationType integration.Type,
 ) (*accountingdriftports.AccountingDriftOverview, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	conn, err := accountingconnlookup.ByType(ctx, s.connections, tenantInfo, integrationType)
 	if err != nil {
 		return nil, err

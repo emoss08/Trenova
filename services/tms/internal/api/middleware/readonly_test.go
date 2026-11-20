@@ -30,6 +30,13 @@ func (g featureGate) Enabled(_ context.Context, feature platformcatalog.FeatureK
 	return !g.disabled[feature], nil
 }
 
+func (g featureGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return g.Enabled(ctx, feature)
+}
+
 type guardCase struct {
 	plans    platformplanports.PlanService
 	features featureGate

@@ -99,7 +99,7 @@ func (s *Service) PrepareCertificate(
 	ctx context.Context,
 	req *accountingconnectionports.PrepareAccountingCertificateRequest,
 ) (*accountingconnectionports.AccountingPreparedCertificate, error) {
-	if err := s.kit.RequireAccounting(ctx); err != nil {
+	if err := s.kit.RequireAccountingIntegration(ctx); err != nil {
 		return nil, err
 	}
 	provider, err := s.requireCertificates(req.IntegrationType)
@@ -156,7 +156,7 @@ func (s *Service) ConnectWithCertificate(
 	ctx context.Context,
 	req *accountingconnectionports.ConnectAccountingWithCertificateRequest,
 ) (*accountingconnectionports.AccountingAuthorizationCompletion, error) {
-	if err := s.kit.RequireAccounting(ctx); err != nil {
+	if err := s.kit.RequireAccountingIntegration(ctx); err != nil {
 		return nil, err
 	}
 	provider, err := s.requireCertificates(req.IntegrationType)
@@ -256,7 +256,7 @@ func (s *Service) RenewCertificate(
 	ctx context.Context,
 	req *accountingconnectionports.RenewAccountingCertificateRequest,
 ) (*accountingconnection.AccountingConnection, error) {
-	if err := s.kit.RequireAccounting(ctx); err != nil {
+	if err := s.kit.RequireAccountingIntegration(ctx); err != nil {
 		return nil, err
 	}
 	if multiErr := validateCertificateID("certificateId", req.CertificateID); multiErr.HasErrors() {

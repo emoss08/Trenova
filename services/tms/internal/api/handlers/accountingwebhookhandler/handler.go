@@ -6,11 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -24,14 +22,12 @@ type Params struct {
 	Webhooks     accountingconnectionports.AccountingWebhookReceiver
 	Connectors   accountingconnectorports.AccountingConnectorRegistry
 	ErrorHandler *helpers.ErrorHandler
-	Features     *middleware.FeatureGuard
 }
 
 type Handler struct {
 	webhooks   accountingconnectionports.AccountingWebhookReceiver
 	connectors accountingconnectorports.AccountingConnectorRegistry
 	eh         *helpers.ErrorHandler
-	features   *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
@@ -39,7 +35,6 @@ func New(p Params) *Handler {
 		webhooks:   p.Webhooks,
 		connectors: p.Connectors,
 		eh:         p.ErrorHandler,
-		features:   p.Features,
 	}
 }
 
@@ -51,10 +46,6 @@ const validationTokenParam = "validationToken"
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/webhooks/accounting")
-	api.Use(h.features.RequireFeature(
-		platformcatalog.FeatureAccounting,
-		middleware.AnswerStatus(http.StatusOK),
-	))
 	api.POST("/:provider/", h.receive)
 	api.POST("/:provider/:app/", h.receive)
 	api.GET("/:provider/", h.handshake)

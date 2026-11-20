@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/onplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type planGate struct {
@@ -15,6 +17,16 @@ type planGate struct {
 
 func (e *engine) newPlanGate() planGate {
 	return planGate{Memo: e.plan.Memo()}
+}
+
+func planScope(ctx context.Context, orgID, buID pulid.ID) context.Context {
+	if orgID.IsNil() {
+		return ctx
+	}
+	if tenant, ok := dbscope.TenantFrom(ctx); ok && tenant.OrganizationID == orgID {
+		return ctx
+	}
+	return dbscope.WithTenant(ctx, dbscope.Tenant{OrganizationID: orgID, BusinessUnitID: buID})
 }
 
 func (p planGate) withhold(ctx context.Context, permissions map[string]uint32) error {

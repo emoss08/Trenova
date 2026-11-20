@@ -3,6 +3,8 @@ package managedfeatures_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +26,7 @@ func addOnNames(addOns []platformcatalog.AddOn) []string {
 func TestReplaceRecordsTheFirstListAsTheStartingPlan(t *testing.T) {
 	t.Parallel()
 
-	r := managedfeatures.Replace(nil, features("ai.desk", "tms.core"), 100)
+	r := managedfeatures.Replace(managedscope.Instance(), nil, features("ai.desk", "tms.core"), 100)
 
 	require.True(t, r.Changed())
 	assert.Nil(t, r.Previous)
@@ -39,10 +41,10 @@ func TestReplaceRecordsNothingForAnUnchangedList(t *testing.T) {
 	t.Parallel()
 
 	held := &managedfeatures.State{
-		ID:       managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		Features: []platformcatalog.FeatureKey{"ai.desk", "tms.accounting"},
 	}
-	r := managedfeatures.Replace(
+	r := managedfeatures.Replace(managedscope.Instance(),
 		held,
 		features("tms.accounting", "ai.desk", "tms.core", "tms.teleport"),
 		200,
@@ -56,8 +58,11 @@ func TestReplaceRecordsNothingForAnUnchangedList(t *testing.T) {
 func TestReplaceRecordsWhatWasAddedAndRemoved(t *testing.T) {
 	t.Parallel()
 
-	held := &managedfeatures.State{Features: []platformcatalog.FeatureKey{"tms.accounting"}}
-	r := managedfeatures.Replace(held, features("ai.desk"), 300)
+	held := &managedfeatures.State{
+		ReceivedAt: 1,
+		Features:   []platformcatalog.FeatureKey{"tms.accounting"},
+	}
+	r := managedfeatures.Replace(managedscope.Instance(), held, features("ai.desk"), 300)
 
 	require.True(t, r.Changed())
 	assert.False(t, r.Change.Starting)

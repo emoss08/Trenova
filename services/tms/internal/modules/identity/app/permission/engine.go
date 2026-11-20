@@ -135,7 +135,10 @@ func (e *engine) Check(
 	log := e.checkLogger("Check", req)
 	req = requestInSession(ctx, req)
 
-	denial, offPlan, err := e.newPlanGate().Resource(ctx, req.Resource)
+	denial, offPlan, err := e.newPlanGate().Resource(
+		planScope(ctx, req.OrganizationID, req.BusinessUnitID),
+		req.Resource,
+	)
 	if err != nil {
 		log.Error("failed to read the plan", zap.Error(err))
 		return nil, err
@@ -676,9 +679,10 @@ func (e *engine) CheckBatch(
 	)
 
 	plan := e.newPlanGate()
+	planCtx := planScope(ctx, req.OrganizationID, req.BusinessUnitID)
 	onPlan := make([]int, 0, len(req.Checks))
 	for i, check := range req.Checks {
-		denial, offPlan, err := plan.Resource(ctx, check.Resource)
+		denial, offPlan, err := plan.Resource(planCtx, check.Resource)
 		if err != nil {
 			return nil, err
 		}
@@ -935,13 +939,14 @@ func (e *engine) GetLightManifest(
 
 	perms := load.perms
 	plan := e.newPlanGate()
-	unavailable, err := plan.Unavailable(ctx)
+	planCtx := planScope(ctx, orgID, pulid.Nil)
+	unavailable, err := plan.Unavailable(planCtx)
 	if err != nil {
 		log.Error("failed to read the plan", zap.Error(err))
 		return nil, err
 	}
 	permissions := e.lightResourceBitmasks(perms)
-	if err = plan.withhold(ctx, permissions); err != nil {
+	if err = plan.withhold(planCtx, permissions); err != nil {
 		log.Error("failed to read the plan", zap.Error(err))
 		return nil, err
 	}
@@ -1105,7 +1110,12 @@ func (e *engine) GetResourcePermissions(
 		return nil, err
 	}
 
-	return e.resourceDetailOnPlan(ctx, e.newPlanGate(), load.perms, resource)
+	return e.resourceDetailOnPlan(
+		planScope(ctx, orgID, pulid.Nil),
+		e.newPlanGate(),
+		load.perms,
+		resource,
+	)
 }
 
 func (e *engine) GetResourcePermissionsBatch(
@@ -1130,11 +1140,12 @@ func (e *engine) GetResourcePermissionsBatch(
 	}
 
 	plan := e.newPlanGate()
+	planCtx := planScope(ctx, orgID, pulid.Nil)
 	for _, resource := range resources {
 		if _, seen := details[resource]; seen || !e.registered(resource) {
 			continue
 		}
-		detail, detailErr := e.resourceDetailOnPlan(ctx, plan, load.perms, resource)
+		detail, detailErr := e.resourceDetailOnPlan(planCtx, plan, load.perms, resource)
 		if detailErr != nil {
 			return nil, detailErr
 		}
@@ -1207,7 +1218,8 @@ func (e *engine) GetEffectivePermissions(
 	e.metrics.Permission.RecordClosureSize(len(roles))
 
 	effective := e.buildEffectivePermissions(userID, orgID, roles)
-	if err = e.newPlanGate().markEffective(ctx, effective); err != nil {
+	planCtx := planScope(ctx, orgID, pulid.Nil)
+	if err = e.newPlanGate().markEffective(planCtx, effective); err != nil {
 		log.Error("failed to read the plan", zap.Error(err))
 		return nil, err
 	}

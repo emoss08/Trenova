@@ -110,7 +110,7 @@ function DriftFindingDetail({
   const t = useT();
   const labels = useAccountingDriftLabels();
   const syncLabels = useAccountingSyncLabels();
-  const { allowed: canUpdate } = usePermission(Resource.AccountingSync, Operation.Update);
+  const { allowed: canUpdate } = usePermission(Resource.AccountingReconciliation, Operation.Update);
   const [action, setAction] = useState<DriftAction | null>(null);
   const currency = finding.currencyCode;
   const isOpen = finding.status === "Open";

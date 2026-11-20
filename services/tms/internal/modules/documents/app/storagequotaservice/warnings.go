@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
@@ -81,15 +82,22 @@ func (w *Warnings) StateChanged(
 	switch {
 	case is && !was:
 		w.l.Info("document storage crossed the warning share of its allowance",
+			zap.String("scope", change.Scope.Key()),
 			zap.Int64("used", meter.Quantity),
 			zap.Int64("included", meter.Allowance),
 		)
-		return w.eachTenant(ctx, func(ctx context.Context, tenant pagination.TenantInfo) error {
-			return w.warn(ctx, tenant, meter)
-		})
+		return w.eachTenant(
+			ctx,
+			change.Scope,
+			func(ctx context.Context, tenant pagination.TenantInfo) error {
+				return w.warn(ctx, tenant, meter)
+			},
+		)
 	case was && !is:
-		w.l.Info("document storage dropped below the warning share of its allowance")
-		return w.eachTenant(ctx, w.clear)
+		w.l.Info("document storage dropped below the warning share of its allowance",
+			zap.String("scope", change.Scope.Key()),
+		)
+		return w.eachTenant(ctx, change.Scope, w.clear)
 	default:
 		return nil
 	}
@@ -108,8 +116,15 @@ func nearlyFull(state *managedusage.State) (bool, managedusage.Meter) {
 
 func (w *Warnings) eachTenant(
 	ctx context.Context,
+	scope managedscope.Scope,
 	fn func(context.Context, pagination.TenantInfo) error,
 ) error {
+	if tenant, ok := scope.Tenant(); ok {
+		return fn(
+			ctx,
+			pagination.TenantInfo{OrgID: tenant.OrganizationID, BuID: tenant.BusinessUnitID},
+		)
+	}
 	return tenantports.EachTenant(ctx, w.tenants, fn)
 }
 

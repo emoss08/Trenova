@@ -72,7 +72,10 @@ func (e *engine) AgentsUsable(
 		}, nil
 	}
 
-	denial, offPlan, err := e.newPlanGate().Resource(ctx, req.Resource)
+	denial, offPlan, err := e.newPlanGate().Resource(
+		planScope(ctx, actor.OrganizationID, actor.BusinessUnitID),
+		req.Resource,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +141,10 @@ func (e *engine) RoleCoverage(
 		return []permissionports.RoleCoverage{}, nil
 	}
 
-	offPlan, err := e.newPlanGate().offPlan(ctx, coverageResources(req.Required)...)
+	offPlan, err := e.newPlanGate().offPlan(
+		planScope(ctx, req.OrganizationID, pulid.Nil),
+		coverageResources(req.Required)...,
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -8,6 +8,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
@@ -18,10 +19,10 @@ import (
 )
 
 const (
-	hour        = int64(time.Hour / time.Second)
-	MaxLookback = 35 * 24 * time.Hour
-	stateTTL    = 30 * time.Second
-	stateKey    = managedusage.CurrentStateID
+	hour         = int64(time.Hour / time.Second)
+	MaxLookback  = 35 * 24 * time.Hour
+	stateTTL     = 30 * time.Second
+	cachedScopes = 10_000
 )
 
 var (
@@ -40,6 +41,7 @@ type Params struct {
 	fx.In
 
 	Repo     managedusageports.StateRepository
+	Scopes   *managedscope.Resolver
 	Counters []managedusageports.HourlyCounter `group:"managed_hourly_counters"`
 	Levels   []managedusageports.LevelReader   `group:"managed_level_readers"`
 	Clock    timeutils.Clock
@@ -48,6 +50,7 @@ type Params struct {
 
 type Service struct {
 	repo     managedusageports.StateRepository
+	scopes   *managedscope.Resolver
 	counters []managedusageports.HourlyCounter
 	levels   []managedusageports.LevelReader
 	clock    timeutils.Clock
@@ -75,21 +78,28 @@ func New(p Params) *Service {
 	})
 	return &Service{
 		repo:     p.Repo,
+		scopes:   p.Scopes,
 		counters: counters,
 		levels:   levels,
 		clock:    p.Clock,
 		l:        p.Logger.Named("managed-usage"),
 		cache: otter.Must(&otter.Options[string, cached]{
-			MaximumSize:      1,
+			MaximumSize:      cachedScopes,
 			ExpiryCalculator: otter.ExpiryWriting[string, cached](stateTTL),
 		}),
 	}
 }
 
-func (s *Service) State(ctx context.Context) (*managedusage.State, error) {
-	c, err := s.cache.Get(ctx, stateKey, otter.LoaderFunc[string, cached](
+func (s *Service) State(
+	ctx context.Context,
+	scope managedscope.Scope,
+) (*managedusage.State, error) {
+	if err := s.scopes.Accepts(scope); err != nil {
+		return nil, err
+	}
+	c, err := s.cache.Get(ctx, scope.Key(), otter.LoaderFunc[string, cached](
 		func(ctx context.Context, _ string) (cached, error) {
-			state, err := s.repo.Get(ctx)
+			state, err := s.repo.Get(ctx, scope)
 			if errors.Is(err, managedusage.ErrNoState) {
 				return cached{}, nil
 			}
@@ -107,10 +117,11 @@ func (s *Service) State(ctx context.Context) (*managedusage.State, error) {
 
 func (s *Service) Decide(
 	ctx context.Context,
+	scope managedscope.Scope,
 	meter platformcatalog.MeterKey,
 	requested int64,
 ) (managedusage.Decision, error) {
-	state, err := s.State(ctx)
+	state, err := s.State(ctx, scope)
 	if err != nil {
 		return managedusage.Decision{}, err
 	}
@@ -118,15 +129,18 @@ func (s *Service) Decide(
 	if _, named := stateMeter(state, meter); !isLevel || !named {
 		return managedusage.Decide(state, meter, requested), nil
 	}
-	level, err := reader.Level(ctx)
+	level, err := reader.Level(ctx, scope)
 	if err != nil {
 		return managedusage.Decision{}, fmt.Errorf("read the level of %s: %w", meter, err)
 	}
 	return managedusage.DecideAt(state, meter, level, requested), nil
 }
 
-func (s *Service) Usage(ctx context.Context) (*managedusage.Usage, error) {
-	state, err := s.State(ctx)
+func (s *Service) Usage(
+	ctx context.Context,
+	scope managedscope.Scope,
+) (*managedusage.Usage, error) {
+	state, err := s.State(ctx, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +153,7 @@ func (s *Service) Usage(ctx context.Context) (*managedusage.Usage, error) {
 		if !isLevel {
 			continue
 		}
-		level, lerr := reader.Level(ctx)
+		level, lerr := reader.Level(ctx, scope)
 		if lerr != nil {
 			return nil, fmt.Errorf("read the level of %s: %w", m.Meter, lerr)
 		}
@@ -148,7 +162,9 @@ func (s *Service) Usage(ctx context.Context) (*managedusage.Usage, error) {
 	return managedusage.UsageOf(state, levels), nil
 }
 
-func (s *Service) levelReader(meter platformcatalog.MeterKey) (managedusageports.LevelReader, bool) {
+func (s *Service) levelReader(
+	meter platformcatalog.MeterKey,
+) (managedusageports.LevelReader, bool) {
 	for _, lr := range s.levels {
 		if lr.Meter() == meter {
 			return lr, true
@@ -169,28 +185,33 @@ func stateMeter(
 
 func (s *Service) SetState(
 	ctx context.Context,
+	scope managedscope.Scope,
 	state *managedusage.State,
 ) (*managedusageports.StateChange, error) {
+	if err := s.scopes.Accepts(scope); err != nil {
+		return nil, err
+	}
 	if err := state.Validate(); err != nil {
 		return nil, err
 	}
-	state.ID = managedusage.CurrentStateID
+	state.ScopeKey = scope.Key()
 	state.ReceivedAt = s.clock()
-	previous, err := s.repo.Get(ctx)
+	previous, err := s.repo.Get(ctx, scope)
 	if err != nil && !errors.Is(err, managedusage.ErrNoState) {
 		return nil, err
 	}
-	if err = s.repo.Save(ctx, state); err != nil {
+	if err = s.repo.Save(ctx, scope, state); err != nil {
 		return nil, err
 	}
-	s.cache.Invalidate(stateKey)
+	s.cache.Invalidate(scope.Key())
 	s.l.Info("the control plane set the usage state",
+		zap.String("scope", scope.Key()),
 		zap.Bool("window", state.HasWindow()),
 		zap.Bool("overage", state.Overage),
 		zap.Int("meters", len(state.Meters)),
 		zap.Int("stopped", stoppedCount(state)),
 	)
-	return &managedusageports.StateChange{Previous: previous, Current: state}, nil
+	return &managedusageports.StateChange{Scope: scope, Previous: previous, Current: state}, nil
 }
 
 func stoppedCount(state *managedusage.State) int {
@@ -203,7 +224,14 @@ func stoppedCount(state *managedusage.State) int {
 	return n
 }
 
-func (s *Service) Readings(ctx context.Context, since int64) ([]Reading, error) {
+func (s *Service) Readings(
+	ctx context.Context,
+	scope managedscope.Scope,
+	since int64,
+) ([]Reading, error) {
+	if err := s.scopes.Accepts(scope); err != nil {
+		return nil, err
+	}
 	now := s.clock()
 	current := now - now%hour
 	switch {
@@ -218,6 +246,7 @@ func (s *Service) Readings(ctx context.Context, since int64) ([]Reading, error) 
 	readings := make([]Reading, 0, len(s.counters)*hours+len(s.levels))
 	for _, c := range s.counters {
 		counts, err := c.CountByHour(ctx, &managedusageports.HourCountRequest{
+			Scope: scope,
 			Since: since,
 			Until: current + hour,
 		})
@@ -233,7 +262,7 @@ func (s *Service) Readings(ctx context.Context, since int64) ([]Reading, error) 
 		}
 	}
 	for _, lr := range s.levels {
-		level, err := lr.Level(ctx)
+		level, err := lr.Level(ctx, scope)
 		if err != nil {
 			return nil, fmt.Errorf("read the level of %s: %w", lr.Meter(), err)
 		}

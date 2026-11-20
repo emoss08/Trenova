@@ -283,14 +283,6 @@ func (c *Consumer) trimLoop(ctx context.Context) {
 
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (c *Consumer) processMessage(ctx context.Context, msg redis.XMessage) error {
-	alerts, err := c.features.Enabled(ctx, platformcatalog.FeatureTableChangeAlerts)
-	if err != nil {
-		return fmt.Errorf("ask whether change alerts are on the plan: %w", err)
-	}
-	if !alerts {
-		return nil
-	}
-
 	payloadStr, ok := msg.Values["payload"].(string)
 	if !ok {
 		return errors.New("message payload is not a string")
@@ -317,6 +309,13 @@ func (c *Consumer) processMessage(ctx context.Context, msg redis.XMessage) error
 		OrganizationID: pulid.ID(orgID),
 		BusinessUnitID: pulid.ID(buID),
 	})
+	alerts, err := c.features.Enabled(ctx, platformcatalog.FeatureTableChangeAlerts)
+	if err != nil {
+		return fmt.Errorf("ask whether change alerts are on the plan: %w", err)
+	}
+	if !alerts {
+		return nil
+	}
 
 	recordID := extractStringField(event.NewData, event.OldData, "id")
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
@@ -47,6 +48,13 @@ func (s *Service) resolveToken(ctx context.Context, token string) (*resolvedLink
 
 	tenant := pagination.TenantInfo{OrgID: link.OrganizationID, BuID: link.BusinessUnitID}
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
+	tracking, err := s.features.Enabled(ctx, platformcatalog.FeatureCustomerTracking)
+	if err != nil {
+		return nil, err
+	}
+	if !tracking {
+		return nil, InvalidLinkError()
+	}
 	move, err := s.loadMove(ctx, tenant, link.ShipmentMoveID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {

@@ -52,7 +52,7 @@ func (ur *repository) Create(
 
 		if err := tenantdb.Users.Create(ctx, db, req.User); err != nil {
 			log.Error("failed to insert user", zap.Error(err))
-			return nil, userUniqueViolation(err)
+			return nil, userUniqueViolation(err, ur.shared)
 		}
 
 		req.Membership.UserID = req.User.ID
@@ -119,7 +119,7 @@ type identityMatches struct {
 	Username     bool
 }
 
-func userUniqueViolation(err error) error {
+func userUniqueViolation(err error, sharedTenancy bool) error {
 	if !dberror.IsUniqueConstraintViolation(err) {
 		return err
 	}
@@ -127,9 +127,9 @@ func userUniqueViolation(err error) error {
 	me := errortypes.NewMultiError()
 	switch dberror.ExtractConstraintName(err) {
 	case usersEmailAddressIndex:
-		me.AddError(tenant.NewDuplicateEmailAddressError())
+		me.AddError(tenant.EmailAddressTakenError(sharedTenancy))
 	case usersUsernameIndex:
-		me.AddError(tenant.NewDuplicateUsernameError())
+		me.AddError(tenant.UsernameTakenError(sharedTenancy))
 	default:
 		return err
 	}

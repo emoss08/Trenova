@@ -3,6 +3,8 @@ package managedusage_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/stretchr/testify/assert"
@@ -10,7 +12,7 @@ import (
 
 func state(overage bool, m managedusage.Meter) *managedusage.State {
 	return &managedusage.State{
-		ID:          managedusage.CurrentStateID,
+		ScopeKey:    managedscope.InstanceKey,
 		WindowStart: 1_700_000_000,
 		WindowEnd:   1_702_592_000,
 		Overage:     overage,

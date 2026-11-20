@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/scim"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -83,6 +84,65 @@ func TestCreateUser_NeverLinksTheSystemUser(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, scimproto.ScimTypeUniqueness, scimErr.ScimType)
 	assert.Empty(t, h.repo.links)
+}
+
+func TestCreateUser_NeverLinksASupportPrincipal(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.repo.member = &tenant.User{
+		ID:             pulid.MustNew(supportaccess.PrincipalIDPrefix),
+		BusinessUnitID: h.dir.BusinessUnitID,
+		Username:       "sup-0123456789abcdef",
+		EmailAddress:   "sup-0123456789abcdef@support.trenova.invalid",
+		Status:         domaintypes.StatusInactive,
+	}
+
+	_, err := h.svc.CreateUser(
+		t.Context(),
+		h.dir,
+		newUserResource("sup-0123456789abcdef@support.trenova.invalid"),
+	)
+
+	scimErr, ok := scimproto.AsError(err)
+	require.True(t, ok)
+	assert.Equal(t, scimproto.ScimTypeUniqueness, scimErr.ScimType)
+	assert.Equal(t, tenant.NewUnavailableEmailAddressError().Message, scimErr.Detail)
+	assert.Empty(t, h.repo.links)
+	assert.Empty(t, h.accounts.restored)
+}
+
+func TestCreateUser_AnAddressHeldByAnotherCompanyIsAConflictThatNamesNobody(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.accounts.createErr = tenant.NewUnavailableEmailAddressError()
+
+	_, err := h.svc.CreateUser(t.Context(), h.dir, newUserResource("ada@globex.example"))
+
+	require.ErrorIs(t, err, h.accounts.createErr)
+	require.Len(t, h.accounts.created, 1, "the lookup found nobody, so a new account was tried")
+	assert.Empty(t, h.repo.links, "nobody outside the business unit is linked")
+	assert.Empty(t, h.accounts.restored)
+	assert.Empty(t, h.accounts.updated)
+}
+
+func TestCreateUser_RelinksTheCompanysOwnDeactivatedUser(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	member := h.activeMember()
+	member.Status = domaintypes.StatusInactive
+	h.repo.member = member
+
+	created, err := h.svc.CreateUser(t.Context(), h.dir, newUserResource(member.EmailAddress))
+
+	require.NoError(t, err)
+	assert.Empty(t, h.accounts.created)
+	require.Len(t, h.repo.links, 1)
+	assert.Equal(t, member.ID.String(), created.ID)
+	require.Len(t, h.accounts.restored, 1)
+	assert.Equal(t, h.dir.OrganizationID, h.accounts.restored[0].Actor.OrganizationID)
 }
 
 func TestCreateUser_NeedsAnEmailAddress(t *testing.T) {

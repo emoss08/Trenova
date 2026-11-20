@@ -46,6 +46,7 @@ type harness struct {
 	encryption   *encryptionservice.Service
 	tenant       pagination.TenantInfo
 	userID       pulid.ID
+	plan         *switchedPlan
 }
 
 func newHarness(t *testing.T) *harness {
@@ -67,8 +68,10 @@ func newHarness(t *testing.T) *harness {
 		),
 		tenant: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		userID: pulid.MustNew("usr_"),
+		plan:   &switchedPlan{gate: plantest.AllFeatures()},
 	}
 	h.svc = wire(&wiring{
+		Features:     h.plan,
 		Connections:  h.connections,
 		Apps:         h.apps,
 		States:       h.states,

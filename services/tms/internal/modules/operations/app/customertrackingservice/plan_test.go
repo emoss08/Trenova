@@ -55,3 +55,24 @@ func TestTrackingLinksAndPreviewsAreRefusedWithoutCustomerTracking(t *testing.T)
 
 	assert.Empty(t, h.links.rows, "no link is minted off the plan")
 }
+
+func TestACustomerLinkAnswersOnlyForAnOrganizationWithCustomerTracking(t *testing.T) {
+	h := newHarness()
+	sh := pickedUpShipment(h)
+	token := h.issue(t, sh)
+
+	h.service.features = plantest.SharedServer().
+		Without(testTenant.OrgID, platformcatalog.FeatureCustomerTracking)
+	_, err := h.service.PreviewByToken(t.Context(), token)
+	assert.ErrorContains(t, err, "This tracking link is no longer valid",
+		"the same answer as an unknown link")
+	_, err = h.service.DownloadPodByToken(t.Context(), token)
+	assert.ErrorContains(t, err, "This tracking link is no longer valid")
+
+	h.service.features = plantest.SharedServer().
+		Planned(testTenant.OrgID).
+		Without(pulid.MustNew("org_"), platformcatalog.FeatureCustomerTracking)
+	view, err := h.service.PreviewByToken(t.Context(), token)
+	assert.NoError(t, err, "another organization's plan does not count")
+	assert.NotNil(t, view)
+}

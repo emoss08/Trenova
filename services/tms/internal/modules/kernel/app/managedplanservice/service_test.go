@@ -7,9 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedplanservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,12 +24,15 @@ type historyRepo struct {
 	changes []*managedfeatures.Change
 	reads   int
 	limit   int
+	scope   managedscope.Scope
 }
 
 func (r *historyRepo) History(
 	_ context.Context,
+	scope managedscope.Scope,
 	limit int,
 ) (*managedfeatures.State, []*managedfeatures.Change, error) {
+	r.scope = scope
 	r.reads++
 	r.limit = limit
 	return r.held, r.changes, nil
@@ -35,9 +41,14 @@ func (r *historyRepo) History(
 type usageReader struct {
 	usage *managedusage.Usage
 	reads int
+	scope managedscope.Scope
 }
 
-func (u *usageReader) Usage(context.Context) (*managedusage.Usage, error) {
+func (u *usageReader) Usage(
+	_ context.Context,
+	scope managedscope.Scope,
+) (*managedusage.Usage, error) {
+	u.scope = scope
 	u.reads++
 	return u.usage, nil
 }
@@ -51,6 +62,7 @@ func TestPlanOnASelfHostedInstallReadsNothingAndSaysItIsNotManaged(t *testing.T)
 		Config: &managedconfig.Config{Enabled: false},
 		Repo:   repo,
 		Usage:  usage,
+		Scopes: managedscope.NewResolver(false),
 	})
 
 	plan, err := svc.Plan(t.Context())
@@ -83,6 +95,7 @@ func TestPlanListsTheAddOnsAndTheRecentChanges(t *testing.T) {
 		Config: &managedconfig.Config{Enabled: true},
 		Repo:   repo,
 		Usage:  &usageReader{},
+		Scopes: managedscope.NewResolver(false),
 	})
 
 	plan, err := svc.Plan(t.Context())
@@ -104,6 +117,7 @@ func TestPlanBeforeAnyListHasOnlyTheBasePlan(t *testing.T) {
 		Config: &managedconfig.Config{Enabled: true},
 		Repo:   &historyRepo{},
 		Usage:  &usageReader{},
+		Scopes: managedscope.NewResolver(false),
 	})
 
 	plan, err := svc.Plan(t.Context())
@@ -118,7 +132,11 @@ func TestPlanBeforeAnyListHasOnlyTheBasePlan(t *testing.T) {
 func TestPlanCarriesTheManageLinkTheUsageAndScheduledEndings(t *testing.T) {
 	t.Parallel()
 
-	usage := &managedusage.Usage{PeriodStart: 100, PeriodEnd: 200, Meters: []managedusage.MeterUsage{}}
+	usage := &managedusage.Usage{
+		PeriodStart: 100,
+		PeriodEnd:   200,
+		Meters:      []managedusage.MeterUsage{},
+	}
 	repo := &historyRepo{
 		held: &managedfeatures.State{
 			Features: []platformcatalog.FeatureKey{"ai.desk", "tms.accounting"},
@@ -132,6 +150,7 @@ func TestPlanCarriesTheManageLinkTheUsageAndScheduledEndings(t *testing.T) {
 		Config: &managedconfig.Config{Enabled: true},
 		Repo:   repo,
 		Usage:  &usageReader{usage: usage},
+		Scopes: managedscope.NewResolver(false),
 	})
 
 	plan, err := svc.Plan(t.Context())
@@ -141,4 +160,29 @@ func TestPlanCarriesTheManageLinkTheUsageAndScheduledEndings(t *testing.T) {
 	require.Len(t, plan.View.Included, 2)
 	assert.Equal(t, int64(900), plan.View.Included[0].EndsAt)
 	assert.Zero(t, plan.View.Included[1].EndsAt)
+}
+
+func TestPlanOnASharedServerIsTheSignedInOrganizations(t *testing.T) {
+	t.Parallel()
+
+	repo := &historyRepo{}
+	usage := &usageReader{}
+	svc := managedplanservice.New(managedplanservice.Params{
+		Config: &managedconfig.Config{Enabled: true, Tenancy: managedconfig.TenancyShared},
+		Repo:   repo,
+		Usage:  usage,
+		Scopes: managedscope.NewResolver(true),
+	})
+	tenant := dbscope.Tenant{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+
+	_, err := svc.Plan(dbscope.WithTenant(t.Context(), tenant))
+	require.NoError(t, err)
+	assert.Equal(t, managedscope.Organization(tenant), repo.scope)
+	assert.Equal(t, managedscope.Organization(tenant), usage.scope)
+
+	_, err = svc.Plan(t.Context())
+	require.ErrorIs(t, err, managedscope.ErrNoTenantScope)
 }

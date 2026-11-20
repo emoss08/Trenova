@@ -250,6 +250,13 @@ func (unreachableTrackingGate) Enabled(
 	return true, nil
 }
 
+func (r unreachableTrackingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return r.Enabled(ctx, feature)
+}
+
 func TestServiceRecordTreatsAPlanQuestionThatFailsLikeAFailingObserver(t *testing.T) {
 	t.Parallel()
 
@@ -268,6 +275,10 @@ func TestServiceRecordTreatsAPlanQuestionThatFailsLikeAFailingObserver(t *testin
 
 	require.NoError(t, err, "a notification stays best-effort")
 	require.Len(t, repo.inserted, 1)
-	require.Empty(t, tracking.events, "the observer whose feature could not be asked about is skipped")
+	require.Empty(
+		t,
+		tracking.events,
+		"the observer whose feature could not be asked about is skipped",
+	)
 	require.Len(t, base.events, 1)
 }

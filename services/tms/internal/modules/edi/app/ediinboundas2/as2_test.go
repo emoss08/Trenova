@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/as2"
@@ -140,8 +141,9 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 
 	edis := ediServices()
 	service := New(Params{
-		Metrics: metricstest.Disabled(),
-		Logger:  zap.NewNop(),
+		Features: plantest.AllFeatures(),
+		Metrics:  metricstest.Disabled(),
+		Logger:   zap.NewNop(),
 		Inbound: ediinboundservice.New(
 			ediinboundservice.Params{
 				Logger:          zap.NewNop(),
@@ -234,6 +236,7 @@ func TestReceiveAS2MessageRejectsUnsignedWhenPartnerCertConfigured(t *testing.T)
 		Once()
 
 	service := New(Params{
+		Features:    plantest.AllFeatures(),
 		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
@@ -316,8 +319,9 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 		Once()
 
 	service := New(Params{
-		Metrics: metricstest.Disabled(),
-		Logger:  zap.NewNop(),
+		Features: plantest.AllFeatures(),
+		Metrics:  metricstest.Disabled(),
+		Logger:   zap.NewNop(),
 		Inbound: ediinboundservice.New(
 			ediinboundservice.Params{
 				Logger:          zap.NewNop(),
@@ -362,6 +366,7 @@ func TestReceiveAS2MessageAnswersUnknownIdentifiersWithAnUnsignedFailureReceipt(
 		Once()
 
 	service := New(Params{
+		Features:    plantest.AllFeatures(),
 		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
@@ -423,6 +428,7 @@ func TestReceiveAS2MessageAnswersKnownAndUnknownPairsAlikeWhenNothingVerifies(t 
 		Return(nil, errortypes.NewNotFoundError("EDICommunicationProfile not found")).
 		Once()
 	service := New(Params{
+		Features:    plantest.AllFeatures(),
 		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
@@ -513,6 +519,7 @@ func TestSendAsyncAS2MDNRejectsUncontrolledReturnURL(t *testing.T) {
 	t.Parallel()
 
 	service := New(Params{
+		Features: plantest.AllFeatures(),
 		Metrics:  metricstest.Disabled(),
 		Logger:   zap.NewNop(),
 		Delivery: ediServices().Delivery,
@@ -540,6 +547,7 @@ func TestSendAsyncAS2MDNRequiresPayload(t *testing.T) {
 	t.Parallel()
 
 	service := New(Params{
+		Features: plantest.AllFeatures(),
 		Metrics:  metricstest.Disabled(),
 		Logger:   zap.NewNop(),
 		Delivery: ediServices().Delivery,
@@ -584,6 +592,7 @@ func TestReceiveAS2MessageReturnsFailureMDNOnBadPayload(t *testing.T) {
 		Once()
 
 	service := New(Params{
+		Features:    plantest.AllFeatures(),
 		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
@@ -648,6 +657,7 @@ func TestReceiveAS2MessageAnswersAFailedDecryptionWithOneFixedReceipt(t *testing
 		Once()
 
 	service := New(Params{
+		Features:    plantest.AllFeatures(),
 		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
@@ -731,6 +741,7 @@ func TestReceiveAS2MessageRejectsAnySignerWhenNoPartnerCertificateIsConfigured(t
 				Once()
 
 			service := New(Params{
+				Features:    plantest.AllFeatures(),
 				Metrics:     metricstest.Disabled(),
 				Logger:      zap.NewNop(),
 				ProfileRepo: profileRepo,
@@ -817,6 +828,7 @@ func TestReceiveAS2MessageRoutesASignedMDNToReceiptHandling(t *testing.T) {
 		Once()
 	service := &Service{
 		l:           zap.NewNop(),
+		features:    plantest.AllFeatures(),
 		profileRepo: profileRepo,
 		delivery: edidelivery.New(edidelivery.Params{
 			Logger:      zap.NewNop(),
@@ -859,6 +871,7 @@ func TestReceiveAS2MessageKeepsAReceiptAwayFromAnAddressThatNamesNoProfile(t *te
 		Return(nil, errortypes.NewNotFoundError("EDICommunicationProfile not found")).
 		Once()
 	service := New(Params{
+		Features:    plantest.AllFeatures(),
 		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,

@@ -53,7 +53,7 @@ func driftFindingOptions() []toolpreview.Option {
 
 func driftFindingRecord(finding *accountingdrift.AccountingDriftFinding) toolpreview.Record {
 	return toolpreview.Record{
-		Resource: permission.ResourceAccountingSync,
+		Resource: permission.ResourceAccountingReconciliation,
 		ID:       finding.ID,
 		Label:    driftLabel(finding),
 		Version:  changepreview.PreviewVersion(finding.Version),

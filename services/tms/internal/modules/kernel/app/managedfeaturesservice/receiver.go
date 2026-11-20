@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -36,12 +37,32 @@ func NewReceiver(p ReceiverParams) *Receiver {
 	}
 }
 
-func (r *Receiver) State(ctx context.Context) (*managedfeatures.State, error) {
-	return r.features.State(ctx)
+func (r *Receiver) State(
+	ctx context.Context,
+	scope managedscope.Scope,
+) (*managedfeatures.State, error) {
+	return r.features.State(ctx, scope)
 }
 
-func (r *Receiver) SetFeatures(ctx context.Context, received *managedfeatures.Received) error {
-	replacement, err := r.features.SetFeatures(ctx, received)
+func (r *Receiver) SetFeatures(
+	ctx context.Context,
+	scope managedscope.Scope,
+	received *managedfeatures.Received,
+) error {
+	replacement, err := r.features.SetFeatures(ctx, scope, received)
+	if err != nil {
+		return err
+	}
+	r.tell(ctx, replacement)
+	return nil
+}
+
+func (r *Receiver) SetLifecycle(
+	ctx context.Context,
+	scope managedscope.Scope,
+	lifecycle managedfeatures.Lifecycle,
+) error {
+	replacement, err := r.features.SetLifecycle(ctx, scope, lifecycle)
 	if err != nil {
 		return err
 	}
@@ -52,18 +73,14 @@ func (r *Receiver) SetFeatures(ctx context.Context, received *managedfeatures.Re
 func (r *Receiver) RemindPlanEnd(
 	ctx context.Context,
 ) (*managedfeaturesports.PlanEndReminderResult, error) {
-	replacement, err := r.features.RemindPlanEnd(ctx)
+	reminded, err := r.features.RemindPlanEnds(ctx)
+	for _, replacement := range reminded {
+		r.tell(ctx, replacement)
+	}
 	if err != nil {
 		return nil, err
 	}
-	if replacement.PlanEnd == nil {
-		return &managedfeaturesports.PlanEndReminderResult{}, nil
-	}
-	r.tell(ctx, replacement)
-	return &managedfeaturesports.PlanEndReminderResult{
-		Reminded: true,
-		EndsAt:   replacement.PlanEnd.EndsAt,
-	}, nil
+	return &managedfeaturesports.PlanEndReminderResult{Reminded: len(reminded)}, nil
 }
 
 func (r *Receiver) tell(ctx context.Context, replacement *managedfeatures.Replacement) {
@@ -75,7 +92,10 @@ func (r *Receiver) tell(ctx context.Context, replacement *managedfeatures.Replac
 	defer cancel()
 	for _, observer := range r.observers {
 		if err := observer.PlanChanged(observeCtx, replacement); err != nil {
-			r.l.Warn("a plan change observer failed", zap.Error(err))
+			r.l.Warn("a plan change observer failed",
+				zap.String("scope", replacement.Scope.Key()),
+				zap.Error(err),
+			)
 		}
 	}
 }

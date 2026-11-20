@@ -131,10 +131,15 @@ func (r *repository) FindMember(ctx context.Context, emailAddress string) (*tena
 		m := tenantdb.OrganizationMemberships
 
 		user, err := u.Where(
+			u.BusinessUnitID.Eq(tenantScope.BusinessUnitID),
 			u.EmailAddress.Lower().Eq(strings.ToLower(emailAddress)),
 			keel.Or(
-				keel.Exists(m.Where(m.UserID.EqCol(u.ID))),
 				u.CurrentOrganizationID.Eq(tenantScope.OrganizationID),
+				keel.Exists(m.Where(
+					m.UserID.EqCol(u.ID),
+					m.OrganizationID.Eq(tenantScope.OrganizationID),
+					m.BusinessUnitID.Eq(tenantScope.BusinessUnitID),
+				)),
 			),
 		).One(ctx, r.db.Keel(ctx))
 		if err != nil {

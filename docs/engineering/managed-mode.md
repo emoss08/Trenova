@@ -30,18 +30,24 @@ count, or one page when it is not known; routing is not an extraction) and organ
 (`tenantbootstraprepository.Bootstrap`, the one place an organization is created, under the
 provisioning lock).
 
-Everything here is instance-wide. The feature gate and the usage state are one row each with no
-tenant in them, and every reader counts across all organizations (`dbscope.WithSystem`): the
-organizations on an instance share its features, its shipments, its pages and its storage, and
-none of them has an allowance of its own.
+Everything here is held per **scope** ([shared-tenancy.md](shared-tenancy.md)). A dedicated
+instance (`managed.tenancy: dedicated`, the default) has one scope, the instance: its organizations
+share its features, its shipments, its pages and its storage, none of them has an allowance of its
+own, and every reader counts across all organizations (`dbscope.WithSystem`). A shared server
+(`managed.tenancy: shared`) has one scope per organization, and the same tables, services and rules
+answer for each organization alone. The operator's listener below writes the instance scope and is
+off on a shared server.
 
 ## The state
 
-`managed_usage_states` holds one row (`id = 'current'`, a global table): the open window, whether
-overage is billed, and each app meter's quantity, allowance, hard cap and `stopped`, exactly as the
-control plane last answered. The operator replaces it every relay (`PUT /managed/v1/state`). Every
-API and worker process reads it through a 30-second in-process cache (otter, one entry); the
-process that takes the write drops its entry at once, the others within the TTL.
+`managed_usage_states` holds one row per scope (`scope_key`: `instance`, or an organization's id on
+a shared server; a global table): the open window, whether overage is billed, and each app meter's
+quantity, allowance, hard cap, ceiling and `stopped`, exactly as the control plane last answered.
+The operator replaces the instance's row every relay (`PUT /managed/v1/state`). Every API and worker
+process reads it through a 30-second in-process cache (otter, keyed by scope, at most 10,000
+entries); the process that takes the write drops that scope's entry at once, the others within the
+TTL. `managedusageports.Gate.Decide` and `State` take the scope; `ManagedQuotaGuard` and
+`ManagedUsageProvider` resolve it from the tenant they are given (`managedscope.Resolver.ForTenant`).
 
 `managedusage.Decide` is the whole rule:
 
@@ -49,6 +55,9 @@ process that takes the write drops its entry at once, the others within the TTL.
   its first relay, and the control plane decides which meters it sells);
 - no open window: every named meter stops (unpaid, or the subscription ended);
 - `stopped`: the meter stops;
+- a ceiling (`ceiling` > 0), when the requested quantity would cross it: the action stops whatever
+  the overage setting (`ReasonCeiling`, refused with `managedusage.CeilingRefusal`, which names the
+  ceiling and no price). A ceiling is 0 for none or at least the allowance;
 - a hard cap, or overage not billed: the action stops when the requested quantity would cross the
   allowance, so one large batch cannot overrun it between two reports.
 
@@ -67,7 +76,8 @@ the same through its copy table (`apps/web/src/lib/plan-limit-copy.ts`, plan `ma
 ## Storage
 
 - **Warning.** At `managedusage.StorageWarnRatio` (80%) of the included storage, the organization
-  administrators (`organization:update`) of every organization get one notice
+  administrators (`organization:update`) of the scope's organizations (every organization for the
+  instance, the one organization on a shared server) get one notice
   (`storagequotaservice.Warnings`, a `managed_state_observers` member that
   `managedusageservice.Receiver` tells after every state the operator sets). It compares the
   previous state with the new one, so it fires once per crossing; dropping back below resolves the
@@ -149,22 +159,26 @@ stores the list, so a repeated list or a retried request announces nothing twice
 
 The three-day reminder ("Your plan ends in 3 days") runs on the `managed-plan-end-reminder`
 schedule (`workspace/jobs/planendjobs`, hourly, created only when `managed.enabled`): one
-activity calls `managedfeaturesports.PlanEndReminder`, which locks and reads the one state row,
-sends the reminder only when the end is less than three days away, not yet past and not yet
-reminded, and stores `plan_end_reminded` in the same transaction. It is bounded by construction:
-one row, one read, nothing while the plan is not ending.
+activity calls `managedfeaturesports.PlanEndReminder`, which finds the active scopes whose end is
+less than three days away, not yet past and not yet reminded (`DuePlanEndReminders`, at most 500 a
+run, `idx_managed_feature_states_plan_ends_at`), then for each locks and reads its row, sends the
+reminder and stores `plan_end_reminded` in the same transaction.
 
 Every notice goes through the same observer as the add-on notices (`workspace/app/plannotice`),
-to each organization's administrators (`organization:update`, at most 25, `NotifyPermitted`),
+to the administrators of the scope it concerns (every organization for the instance, the one
+organization on a shared server) (`organization:update`, at most 25, `NotifyPermitted`),
 keyed `managed-plan:plan-end` so a later notice about the end replaces an open earlier one, and
 linking to `/admin/plan`. The receiver tells the observers after every stored change, and the
 observer publishes `managed_plan`/`updated` to each organization, so an open Your plan page
 refetches (`RESOURCE_QUERY_KEY_MAP.managed_plan` in `realtime-patching.ts`). The page shows the
 end as a warning notice above the usage, with Keep plan opening `manageUrl` for whoever sees it.
 
-`managed_feature_states` holds one row (`id = 'current'`, a global table) with the list, the plan
-URL (`plan_url`, null until one arrives) and the add-on endings (`addon_endings`), with the list as
-stored:
+`managed_feature_states` holds one row per scope (`scope_key`, with `scope_business_unit_id` for an
+organization; a global table) with the list, the plan URL (`plan_url`, null until one arrives), the
+add-on endings (`addon_endings`) and the scope's `lifecycle` (`active`, or `suspended`: a suspended
+organization has no features, base included; the instance is always active, and
+`managedfeaturesservice.SetLifecycle` refuses it). `received_at` is 0 for a scope suspended before
+its first list. The list is stored normalised:
 `managedfeatures.Normalize` drops base features (always on), duplicates and keys the catalogue
 (`platformcatalog`) does not know, and sorts the rest, so the same set is always the same value.
 An unknown key is ignored rather than refused because a newer control plane may sell a feature
@@ -174,12 +188,17 @@ endings with the stored ones and writes nothing when all are equal; a change is 
 receive time, drops the cache and is logged with the count, the features added and removed, the
 endings set and called off, and any ignored keys (at warn).
 
-`managedfeaturesservice.Service` is the `FeatureGate` in managed mode, read through the same
-30-second one-entry otter cache as the usage state:
+`managedfeaturesservice.Service` is the `FeatureGate` in managed mode, read through a 30-second otter
+cache keyed by scope, like the usage state. `Enabled` answers for the context's scope (an error on
+a shared server when the context carries no tenant); `EnabledAnywhere` answers the instance's list
+on a dedicated install and, on a shared server, whether any active organization has the feature
+(`AnyActiveScope`, cached per feature for the same 30 seconds and dropped on any write):
 
 - a base feature is always on, with no read;
 - an add-on feature is on only when the stored list holds it;
-- before any list arrives, only base features are on;
+- before any list arrives, only base features are on for the instance; on a shared server an
+  organization the control plane has sent no plan for has nothing at all, base included, and a
+  suspended one has nothing either;
 - a key the catalogue does not know is off.
 
 The background schedules follow the list too. Every schedule names the feature its work belongs
@@ -194,11 +213,11 @@ Self-hosted installs keep `AllowAll`: every feature is on and the table is never
 ### The change record, the notice and the page
 
 - **The record.** `managedfeaturesrepository.Replace` takes the received list under a
-  transaction-scoped advisory lock (`keel.LockKey`, so two puts never both record a change), reads
+  transaction-scoped advisory lock per scope (`keel.LockKey`, so two puts never both record a change), reads
   the held list, and lets `managedfeatures.Replace` decide. A list equal to the held one writes
   nothing. A different one replaces `managed_feature_states` and inserts one row into
   `managed_feature_changes` (a global table: when, the keys `added` and `removed`, and `starting`)
-  in the same transaction, then deletes every row but the newest 200. The first list an instance
+  in the same transaction, then deletes every row of that scope but its newest 200. The first list an instance
   receives is recorded with `starting = true`: it is the starting plan, not a change. A change row
   also records `ending` (an add-on on the plan newly set to end, or whose end moved, with its new
   end) and `kept` (an add-on whose scheduled end was called off while it is still on the plan; one
@@ -295,8 +314,12 @@ TMS keeps, so a resent hour is always the truth and a missed relay is made good 
 Each reader lives in the module that owns its table and joins the fx groups
 `managed_hourly_counters` or `managed_level_readers`; the kernel service fills the hours with
 no rows with zeros. A new meter is a reader in its module plus the control plane's `appMeter`.
-The readers are instance-wide (`dbscope.WithSystem`, listed in `rlslint`) because the whole
-instance is one customer. `since` must be on the hour, within 35 days and not after the current
+Each reader takes the scope: the instance is read across organizations (`dbscope.WithSystem`,
+listed in `rlslint`) because a dedicated instance is one customer, and an organization scope is read
+under its own tenant scope through the tenant-first indexes (`idx_shipments_org_bu_created_at`,
+`idx_ai_usage_records_tenant_feature_time`, `document_storage_totals`' key, and
+`idx_organizations_business_unit` for the organizations of its business unit). The listener asks for
+the instance, so it keeps answering instance totals. `since` must be on the hour, within 35 days and not after the current
 hour.
 
 Storage is billed at its highest point in the cycle. An hourly level is enough for that: storage

@@ -151,6 +151,10 @@ GraphQL extension group or public-config contributors for an overlay to join. Th
 (`PlanService`, `QuotaGuard`, `FeatureGate`, `BillingProvider`, `UsageProvider`,
 `EditionInfo`) keep their self-hosted implementations; decide behaviour from an injected port,
 never from `platform.mode`. A paid add-on is a feature, not a plan capability: ask the
-instance-wide `FeatureGate` (`platformcatalogports.RequireFeature`), which takes no tenant. Background
-schedules ask it too: each one names its feature, and one whose feature is off is paused
-([jobs.md](backend/jobs.md#a-schedule-names-its-feature)).
+`FeatureGate` (`platformcatalogports.RequireFeature`). It answers for the scope the context
+carries, so ask with the tenant the work is for in `dbscope`: on a shared server a question with
+no tenant is an error, not a yes ([shared-tenancy.md](shared-tenancy.md)). Work that belongs to no
+tenant (schedule pausing, start-up) asks `EnabledAnywhere` instead: each schedule names its
+feature, and one whose feature no scope has is paused
+([jobs.md](backend/jobs.md#a-schedule-names-its-feature)). This rule used to say the gate takes no
+tenant; that stopped being true when a shared server began answering per organization.

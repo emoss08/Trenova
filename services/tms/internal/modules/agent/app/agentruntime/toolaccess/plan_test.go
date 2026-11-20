@@ -156,3 +156,56 @@ func TestPlanAddOns_BoundsEachAddOnsLine(t *testing.T) {
 	assert.Len(t, addOns[0].Features, toolaccess.MaxPlanFeatureNames)
 	assert.Equal(t, 1, addOns[0].MoreFeatures)
 }
+
+// Differences with the books and the payments they recorded are the
+// Accounting add-on's; the outbound queue is every plan's accounting
+// integration. Without the add-on the agent works the queue but is offered
+// nothing that reconciles.
+func TestToolSet_WithoutAccountingOffersNoReconciliationToolButKeepsTheQueue(t *testing.T) {
+	t.Parallel()
+
+	const (
+		driftTool   = "accounting_resolve_drift_finding"
+		inboundTool = "accounting_apply_inbound_change"
+		queueTool   = "accounting_retry_sync_record"
+	)
+	tools := []agenttoolports.AgentQueryTool{
+		&agenttest.StubQueryTool{
+			ToolName: driftTool,
+			Resource: permission.ResourceAccountingReconciliation,
+		},
+		&agenttest.StubQueryTool{
+			ToolName: inboundTool,
+			Resource: permission.ResourceAccountingReconciliation,
+		},
+		&agenttest.StubQueryTool{ToolName: queueTool, Resource: permission.ResourceAccountingSync},
+	}
+
+	registry := permissioncatalog.Default()
+	reconciliation, _ := registry.FeatureOf(permission.ResourceAccountingReconciliation.String())
+	queue, _ := registry.FeatureOf(permission.ResourceAccountingSync.String())
+	require.Equal(t, platformcatalog.FeatureAccounting, reconciliation)
+	require.NotEqual(t, platformcatalog.FeatureAccounting, queue)
+
+	access := accesstest.New(&toolaccess.AccessParams{
+		QueryTools: &agenttest.StubQueryRegistry{Tools: tools},
+		Permissions: &agenttest.StubPermissions{OffPlan: map[string]permissionports.PlanDenial{
+			permission.ResourceAccountingReconciliation.String(): permissionports.NewPlanDenial(
+				platformcatalog.FeatureAccounting,
+			),
+		}},
+		Registry: registry,
+		Plan:     onplan.New(registry, plantest.Without(platformcatalog.FeatureAccounting)),
+	})
+	set := access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(driftTool, inboundTool, queueTool),
+		Actor:      runtimetest.Actor(),
+		Input:      "fix the differences with the books and retry what failed to send",
+	})
+
+	assert.Contains(t, set.Allowed, queueTool)
+	for _, name := range []string{driftTool, inboundTool} {
+		assert.NotContains(t, set.Allowed, name)
+		assert.False(t, set.Offers(name), name)
+	}
+}

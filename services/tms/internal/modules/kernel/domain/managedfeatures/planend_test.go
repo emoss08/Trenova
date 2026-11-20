@@ -3,6 +3,8 @@ package managedfeatures_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,7 +20,7 @@ const (
 )
 
 func planEnding(held *managedfeatures.State, endsAt, at int64) *managedfeatures.Replacement {
-	return managedfeatures.Replace(held, &managedfeatures.Received{
+	return managedfeatures.Replace(managedscope.Instance(), held, &managedfeatures.Received{
 		Features:   []platformcatalog.FeatureKey{"tms.accounting"},
 		PlanEndsAt: endsAt,
 	}, at)
@@ -76,7 +78,7 @@ func TestASetPlanEndIsAnnouncedOnceAndAKeptPlanOnce(t *testing.T) {
 	t.Parallel()
 
 	held := &managedfeatures.State{
-		ID:       managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		Features: []platformcatalog.FeatureKey{"tms.accounting"},
 	}
 
@@ -98,7 +100,12 @@ func TestASetPlanEndIsAnnouncedOnceAndAKeptPlanOnce(t *testing.T) {
 	require.True(t, kept.Updated())
 	require.NotNil(t, kept.PlanEnd)
 	assert.Equal(t, managedfeatures.PlanEndKept, kept.PlanEnd.Kind)
-	assert.Equal(t, periodEnd, kept.PlanEnd.EndsAt, "the kept notice names the end that will not happen")
+	assert.Equal(
+		t,
+		periodEnd,
+		kept.PlanEnd.EndsAt,
+		"the kept notice names the end that will not happen",
+	)
 	assert.Zero(t, kept.Current.PlanEndsAt)
 	assert.Zero(t, kept.Current.PlanEndAnnounced)
 
@@ -114,7 +121,11 @@ func TestASetPlanEndIsAnnouncedOnceAndAKeptPlanOnce(t *testing.T) {
 func TestAPlanEndLearnedUnderThreeDaysAheadNeedsNoReminder(t *testing.T) {
 	t.Parallel()
 
-	late := planEnding(&managedfeatures.State{ID: managedfeatures.CurrentStateID}, today+2*oneDay, today)
+	late := planEnding(
+		&managedfeatures.State{ScopeKey: managedscope.InstanceKey, ReceivedAt: 1},
+		today+2*oneDay,
+		today,
+	)
 
 	require.NotNil(t, late.PlanEnd)
 	assert.Equal(t, managedfeatures.PlanEndSet, late.PlanEnd.Kind)
@@ -126,7 +137,11 @@ func TestAPlanEndLearnedUnderThreeDaysAheadNeedsNoReminder(t *testing.T) {
 func TestTheReminderComesOnceInTheLastThreeDays(t *testing.T) {
 	t.Parallel()
 
-	set := planEnding(&managedfeatures.State{ID: managedfeatures.CurrentStateID}, periodEnd, today)
+	set := planEnding(
+		&managedfeatures.State{ScopeKey: managedscope.InstanceKey, ReceivedAt: 1},
+		periodEnd,
+		today,
+	)
 
 	early := managedfeatures.RemindPlanEnd(set.Current, periodEnd-4*oneDay)
 	assert.False(t, early.Updated(), "not before three days ahead")
@@ -146,7 +161,7 @@ func TestTheReminderComesOnceInTheLastThreeDays(t *testing.T) {
 
 	assert.False(t, managedfeatures.RemindPlanEnd(nil, today).Updated())
 	assert.False(t, managedfeatures.RemindPlanEnd(
-		&managedfeatures.State{ID: managedfeatures.CurrentStateID},
+		&managedfeatures.State{ScopeKey: managedscope.InstanceKey, ReceivedAt: 1},
 		today,
 	).Updated(), "nothing while the plan is not ending")
 }
@@ -154,7 +169,11 @@ func TestTheReminderComesOnceInTheLastThreeDays(t *testing.T) {
 func TestAMovedEndIsANewEndAndItsReminderComesAgain(t *testing.T) {
 	t.Parallel()
 
-	set := planEnding(&managedfeatures.State{ID: managedfeatures.CurrentStateID}, periodEnd, today)
+	set := planEnding(
+		&managedfeatures.State{ScopeKey: managedscope.InstanceKey, ReceivedAt: 1},
+		periodEnd,
+		today,
+	)
 	reminded := managedfeatures.RemindPlanEnd(set.Current, periodEnd-2*oneDay)
 	require.True(t, reminded.Updated())
 
@@ -168,12 +187,12 @@ func TestAChangedFinalBackupDayCountStoresWithoutANotice(t *testing.T) {
 	t.Parallel()
 
 	held := &managedfeatures.State{
-		ID:              managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		Features:        []platformcatalog.FeatureKey{"tms.accounting"},
 		FinalBackupDays: 30,
 	}
 
-	changed := managedfeatures.Replace(held, &managedfeatures.Received{
+	changed := managedfeatures.Replace(managedscope.Instance(), held, &managedfeatures.Received{
 		Features:        []platformcatalog.FeatureKey{"tms.accounting"},
 		FinalBackupDays: 7,
 	}, today)
@@ -188,7 +207,7 @@ func TestAnUntoldDayCountKeepsTheOneHeld(t *testing.T) {
 	t.Parallel()
 
 	held := &managedfeatures.State{
-		ID:              managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		Features:        []platformcatalog.FeatureKey{"tms.accounting"},
 		FinalBackupDays: 7,
 	}
@@ -199,7 +218,12 @@ func TestAnUntoldDayCountKeepsTheOneHeld(t *testing.T) {
 	set := planEnding(held, periodEnd, today)
 	require.NotNil(t, set.PlanEnd)
 	assert.Equal(t, 7, set.Current.FinalBackupDays)
-	assert.Equal(t, 7, set.PlanEnd.FinalBackupDays, "the notice says the number held when it is made")
+	assert.Equal(
+		t,
+		7,
+		set.PlanEnd.FinalBackupDays,
+		"the notice says the number held when it is made",
+	)
 
 	first := planEnding(nil, periodEnd, today)
 	assert.Equal(t, managedfeatures.DefaultFinalBackupDays, first.Current.FinalBackupDays)
@@ -210,7 +234,7 @@ func TestTheReminderSaysTheHeldDayCount(t *testing.T) {
 	t.Parallel()
 
 	held := &managedfeatures.State{
-		ID:               managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		PlanEndsAt:       periodEnd,
 		PlanEndAnnounced: periodEnd,
 		FinalBackupDays:  7,

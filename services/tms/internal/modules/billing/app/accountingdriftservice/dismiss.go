@@ -21,7 +21,7 @@ import (
 )
 
 var dismissPermissions = []requiredPermission{
-	{permission.ResourceAccountingSync, permission.OpUpdate},
+	{permission.ResourceAccountingReconciliation, permission.OpUpdate},
 }
 
 func (s *Service) toleranceMinor(ctx context.Context, tenant pagination.TenantInfo) (int64, error) {
@@ -68,6 +68,9 @@ func (s *Service) PreviewDismiss(
 	req *accountingdriftports.DismissAccountingDriftRequest,
 	actor *permissionports.RequestActor,
 ) (*accountingdriftports.AccountingDriftFixPreview, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	if err := s.authorize(ctx, actor, dismissPermissions); err != nil {
 		return nil, err
 	}
@@ -95,6 +98,9 @@ func (s *Service) Dismiss(
 	req *accountingdriftports.DismissAccountingDriftRequest,
 	actor *permissionports.RequestActor,
 ) (*accountingdrift.AccountingDriftFinding, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	if err := s.authorize(ctx, actor, dismissPermissions); err != nil {
 		return nil, err
 	}
@@ -140,7 +146,7 @@ func (s *Service) logAudit(
 	comment string,
 ) {
 	params := &auditports.LogActionParams{
-		Resource:       permission.ResourceAccountingSync,
+		Resource:       permission.ResourceAccountingReconciliation,
 		ResourceID:     finding.ID.String(),
 		Operation:      permission.OpUpdate,
 		UserID:         userID,

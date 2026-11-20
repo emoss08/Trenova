@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnlookup"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
@@ -44,7 +47,7 @@ const (
 	driftEventsPerPoll   = 20
 )
 
-var permissionResource = permission.ResourceAccountingSync.String()
+var permissionResource = permission.ResourceAccountingReconciliation.String()
 
 type Params struct {
 	fx.In
@@ -72,6 +75,7 @@ type Params struct {
 	Publisher        agenteventports.AgentEventPublisher
 	Watchtower       watchtowerports.WatchtowerProjector
 	Realtime         realtimeports.RealtimeService
+	Features         platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -99,6 +103,7 @@ type Service struct {
 	watchtower       watchtowerports.WatchtowerProjector
 	realtime         realtimeports.RealtimeService
 	now              func() time.Time
+	features         platformcatalogports.FeatureGate
 }
 
 var _ accountinginboundports.AccountingInboundService = (*Service)(nil)
@@ -130,7 +135,12 @@ func New(p Params) *Service {
 		watchtower:       p.Watchtower,
 		realtime:         p.Realtime,
 		now:              time.Now,
+		features:         p.Features,
 	}
+}
+
+func (s *Service) requireAccounting(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureAccounting)
 }
 
 func tenantOf(conn *accountingconnection.AccountingConnection) pagination.TenantInfo {
@@ -164,6 +174,9 @@ func (s *Service) List(
 	ctx context.Context,
 	req *accountinginboundports.ListAccountingInboundChangesRequest,
 ) (*pagination.CursorListResult[*accountinginbound.AccountingInboundChange], error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -191,6 +204,9 @@ func (s *Service) Get(
 	ctx context.Context,
 	req *accountinginboundports.GetAccountingInboundChangeRequest,
 ) (*accountinginbound.AccountingInboundChange, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	return s.changes.GetByID(ctx, accountinginboundports.GetAccountingInboundChangeQuery{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,
@@ -201,6 +217,9 @@ func (s *Service) Overview(
 	ctx context.Context,
 	req *accountinginboundports.AccountingInboundOverviewRequest,
 ) (*accountinginboundports.AccountingInboundOverview, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
@@ -230,6 +249,9 @@ func (s *Service) Ignore(
 	req *accountinginboundports.DecideAccountingInboundChangeRequest,
 	actor *permissionports.RequestActor,
 ) (*accountinginbound.AccountingInboundChange, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError(
 			"Ignoring a payment from the accounting system requires an authenticated user",
@@ -282,7 +304,7 @@ func (s *Service) logAudit(
 	comment string,
 ) {
 	params := &auditports.LogActionParams{
-		Resource:       permission.ResourceAccountingSync,
+		Resource:       permission.ResourceAccountingReconciliation,
 		ResourceID:     change.ID.String(),
 		Operation:      permission.OpUpdate,
 		UserID:         userID,
@@ -345,7 +367,7 @@ func (s *Service) refreshAttention(
 		s.watchtower.Resolve(
 			ctx,
 			tenant,
-			watchtower.SourceAccountingSync,
+			watchtower.SourceAccountingReconciliation,
 			watchtoweraccounting.AccountingInboundAttentionSourceID(conn, reason),
 		)
 	}

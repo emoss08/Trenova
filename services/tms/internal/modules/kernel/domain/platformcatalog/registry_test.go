@@ -53,7 +53,7 @@ func TestEveryDeclaredFeatureIsRegistered(t *testing.T) {
 	t.Parallel()
 
 	declared := declaredFeatureKeys(t)
-	require.Len(t, declared, 40)
+	require.Len(t, declared, 41)
 
 	for name, key := range declared {
 		feature, ok := platformcatalog.Lookup(key)
@@ -130,12 +130,12 @@ func TestFeaturesBelongToTheirCatalogAddOn(t *testing.T) {
 			"tms.core", "tms.dispatch", "tms.fleet", "tms.billing", "workforce.core",
 			"document_management", "analytics.workspace", "platform.administration",
 			"platform.api_keys", "platform.global_search", "platform.realtime_notifications",
-			"integrations.exchange_rates",
+			"integrations.exchange_rates", "integrations.accounting", "tms.driver_portal",
 		},
 		platformcatalog.AddOnAccounting: {"tms.accounting", "tms.factoring"},
 		platformcatalog.AddOnRating:     {"tms.rating", "tms.detention"},
 		platformcatalog.AddOnFuel:       {"tms.fuel_tax"},
-		platformcatalog.AddOnDriverPay:  {"tms.settlement", "tms.driver_portal"},
+		platformcatalog.AddOnDriverPay:  {"tms.settlement"},
 		platformcatalog.AddOnHR: {
 			"workforce.time_off", "workforce.time_tracking", "workforce.talent",
 			"workforce.benefits", "workforce.self_service",

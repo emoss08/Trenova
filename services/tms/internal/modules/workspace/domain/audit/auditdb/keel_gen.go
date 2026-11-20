@@ -4512,6 +4512,7 @@ var enumPermissionResource = [...]schema.EnumValue{
 	{Value: `accounting_report`, Label: `Accounting Report`},
 	{Value: `accounting_integration`, Label: `Accounting Integration`},
 	{Value: `accounting_sync`, Label: `Accounting Sync`},
+	{Value: `accounting_reconciliation`, Label: `Accounting Reconciliation`},
 	{Value: `driver_pay_profile`, Label: `Driver Pay Profile`, Doc: `Payroll & Settlements`},
 	{Value: `recurring_deduction`, Label: `Recurring Deduction`},
 	{Value: `recurring_earning`, Label: `Recurring Earning`},

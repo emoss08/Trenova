@@ -1037,13 +1037,13 @@ const accountingModule: NavModule = {
           id: "accounting-inbound",
           label: "Payments from the books",
           path: "/accounting/sync/inbound",
-          resource: Resource.AccountingSync,
+          resource: Resource.AccountingReconciliation,
         },
         {
           id: "accounting-drift",
           label: "Drift findings",
           path: "/accounting/sync/drift",
-          resource: Resource.AccountingSync,
+          resource: Resource.AccountingReconciliation,
         },
         {
           id: "accounting-mappings",

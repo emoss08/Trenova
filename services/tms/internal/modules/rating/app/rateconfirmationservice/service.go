@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -57,6 +58,7 @@ type Params struct {
 	AuditService          auditports.AuditService
 	AppConfig             *appconfig.Config
 	TenderingConfig       *tenderingconfig.Config
+	Features              platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -75,6 +77,7 @@ type Service struct {
 	auditService          auditports.AuditService
 	appConfig             *appconfig.Config
 	tenderingConfig       *tenderingconfig.Config
+	features              platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service {
@@ -94,6 +97,7 @@ func New(p Params) *Service {
 		auditService:          p.AuditService,
 		appConfig:             p.AppConfig,
 		tenderingConfig:       p.TenderingConfig,
+		features:              p.Features,
 	}
 }
 

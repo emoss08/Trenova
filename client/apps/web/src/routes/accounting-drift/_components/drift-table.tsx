@@ -44,7 +44,7 @@ export default function DriftTable({
       emptyTitle={t("No drift findings yet")}
       queryKey={ACCOUNTING_DRIFT_TABLE_KEY}
       graphql={graphql}
-      resource={Resource.AccountingSync}
+      resource={Resource.AccountingReconciliation}
       columns={columns}
       TablePanel={Panel}
       enableCreateAction={false}

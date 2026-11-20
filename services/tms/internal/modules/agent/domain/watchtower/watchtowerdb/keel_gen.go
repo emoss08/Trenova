@@ -2613,6 +2613,7 @@ var enumSourceKind = [...]schema.EnumValue{
 	{Value: `TelematicsStopVisit`, Label: `Source Telematics Stop Visit`},
 	{Value: `AgentQualityRegression`, Label: `Source Agent Quality Regression`},
 	{Value: `AccountingSync`, Label: `Source Accounting Sync`},
+	{Value: `AccountingReconciliation`, Label: `Source Accounting Reconciliation`},
 	{Value: `NoCheckCall`, Label: `Source No Check Call`},
 	{Value: `EtaAtRisk`, Label: `Source ETA At Risk`},
 	{Value: `MissedPickup`, Label: `Source Missed Pickup`},

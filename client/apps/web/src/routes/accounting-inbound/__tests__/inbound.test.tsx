@@ -44,7 +44,8 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }));
 
-const SYNC_UPDATE = `${Resource.AccountingSync}:${Operation.Update}`;
+const SYNC_UPDATE = `${Resource.AccountingReconciliation}:${Operation.Update}`;
+const RECONCILIATION_READ = `${Resource.AccountingReconciliation}:${Operation.Read}`;
 
 function change(overrides: Partial<AccountingInboundChange> = {}): AccountingInboundChange {
   return {
@@ -428,6 +429,18 @@ describe("InboundChangePanel", () => {
 });
 
 describe("InboundPaymentsLink", () => {
+  beforeEach(() => {
+    mocks.granted = new Set([RECONCILIATION_READ]);
+  });
+
+  it("is hidden and asks nothing of someone who cannot read reconciliation", () => {
+    mocks.granted = new Set();
+    const { container } = renderWith(<InboundPaymentsLink system="QuickBooksOnline" />);
+
+    expect(container).toBeEmptyDOMElement();
+    expect(mocks.fetchAccountingInboundOverview).not.toHaveBeenCalled();
+  });
+
   it("counts the payments waiting to be applied", async () => {
     mocks.fetchAccountingInboundOverview.mockResolvedValue(overview());
     renderWith(<InboundPaymentsLink system="QuickBooksOnline" />);

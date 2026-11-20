@@ -3,9 +3,11 @@ package managedfeaturesservice
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
@@ -18,24 +20,33 @@ import (
 
 const (
 	stateTTL        = 30 * time.Second
-	stateKey        = managedfeatures.CurrentStateID
+	cachedScopes    = 10_000
 	unknownLogEvery = time.Hour
+	baseAnywhere    = platformcatalog.FeatureKey("")
+	remindersPerRun = 500
+)
+
+var ErrInstanceNotSuspended = errors.New(
+	"a dedicated instance is always active; only a shared server's organization scopes are suspended",
 )
 
 type Params struct {
 	fx.In
 
 	Repo   managedfeaturesports.StateRepository
+	Scopes *managedscope.Resolver
 	Clock  timeutils.Clock
 	Logger *zap.Logger
 }
 
 type Service struct {
-	repo    managedfeaturesports.StateRepository
-	clock   timeutils.Clock
-	l       *zap.Logger
-	cache   *otter.Cache[string, cached]
-	unknown *rate.Sometimes
+	repo     managedfeaturesports.StateRepository
+	scopes   *managedscope.Resolver
+	clock    timeutils.Clock
+	l        *zap.Logger
+	cache    *otter.Cache[string, cached]
+	anywhere *otter.Cache[platformcatalog.FeatureKey, bool]
+	unknown  *rate.Sometimes
 }
 
 type cached struct {
@@ -46,21 +57,32 @@ var _ platformcatalogports.FeatureGate = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
-		repo:  p.Repo,
-		clock: p.Clock,
-		l:     p.Logger.Named("managed-features"),
+		repo:   p.Repo,
+		scopes: p.Scopes,
+		clock:  p.Clock,
+		l:      p.Logger.Named("managed-features"),
 		cache: otter.Must(&otter.Options[string, cached]{
-			MaximumSize:      1,
+			MaximumSize:      cachedScopes,
 			ExpiryCalculator: otter.ExpiryWriting[string, cached](stateTTL),
+		}),
+		anywhere: otter.Must(&otter.Options[platformcatalog.FeatureKey, bool]{
+			MaximumSize:      len(platformcatalog.Features()) + 1,
+			ExpiryCalculator: otter.ExpiryWriting[platformcatalog.FeatureKey, bool](stateTTL),
 		}),
 		unknown: &rate.Sometimes{First: 1, Interval: unknownLogEvery},
 	}
 }
 
-func (s *Service) State(ctx context.Context) (*managedfeatures.State, error) {
-	c, err := s.cache.Get(ctx, stateKey, otter.LoaderFunc[string, cached](
+func (s *Service) State(
+	ctx context.Context,
+	scope managedscope.Scope,
+) (*managedfeatures.State, error) {
+	if err := s.scopes.Accepts(scope); err != nil {
+		return nil, err
+	}
+	c, err := s.cache.Get(ctx, scope.Key(), otter.LoaderFunc[string, cached](
 		func(ctx context.Context, _ string) (cached, error) {
-			state, err := s.repo.Get(ctx)
+			state, err := s.repo.Get(ctx, scope)
 			if errors.Is(err, managedfeatures.ErrNoState) {
 				return cached{}, nil
 			}
@@ -81,25 +103,70 @@ func (s *Service) Enabled(ctx context.Context, feature platformcatalog.FeatureKe
 	if !ok {
 		return false, nil
 	}
-	if known.IsBase() {
-		return true, nil
-	}
-	state, err := s.State(ctx)
+	scope, err := s.scopes.Scope(ctx)
 	if err != nil {
 		return false, err
+	}
+	if known.IsBase() && !s.scopes.Shared() {
+		return true, nil
+	}
+	state, err := s.State(ctx, scope)
+	if err != nil {
+		return false, err
+	}
+	if known.IsBase() {
+		return state.HasList() && !state.Suspended(), nil
 	}
 	return state.Has(feature), nil
 }
 
+func (s *Service) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	known, ok := platformcatalog.Lookup(feature)
+	if !ok {
+		return false, nil
+	}
+	if !s.scopes.Shared() {
+		if known.IsBase() {
+			return true, nil
+		}
+		state, err := s.State(ctx, managedscope.Instance())
+		if err != nil {
+			return false, err
+		}
+		return state.Has(feature), nil
+	}
+
+	key := feature
+	if known.IsBase() {
+		key = baseAnywhere
+	}
+	return s.anywhere.Get(ctx, key, otter.LoaderFunc[platformcatalog.FeatureKey, bool](
+		func(ctx context.Context, key platformcatalog.FeatureKey) (bool, error) {
+			if key == baseAnywhere {
+				return s.repo.AnyActiveScope(ctx, nil)
+			}
+			return s.repo.AnyActiveScope(ctx, &key)
+		},
+	))
+}
+
 func (s *Service) SetFeatures(
 	ctx context.Context,
+	scope managedscope.Scope,
 	received *managedfeatures.Received,
 ) (*managedfeatures.Replacement, error) {
+	if err := s.scopes.Accepts(scope); err != nil {
+		return nil, err
+	}
 	now := s.clock()
 	if err := received.Validate(now); err != nil {
 		return nil, err
 	}
 	replacement, err := s.repo.Replace(ctx, &managedfeaturesports.ReplaceRequest{
+		Scope:    scope,
 		Received: received,
 		Now:      now,
 	})
@@ -110,28 +177,90 @@ func (s *Service) SetFeatures(
 		s.logUnknown(replacement)
 		return replacement, nil
 	}
-	s.cache.Invalidate(stateKey)
+	s.forget(scope)
 	s.logChange(replacement)
 	return replacement, nil
 }
 
-func (s *Service) RemindPlanEnd(ctx context.Context) (*managedfeatures.Replacement, error) {
-	replacement, err := s.repo.RemindPlanEnd(ctx, s.clock())
+func (s *Service) SetLifecycle(
+	ctx context.Context,
+	scope managedscope.Scope,
+	lifecycle managedfeatures.Lifecycle,
+) (*managedfeatures.Replacement, error) {
+	if err := s.scopes.Accepts(scope); err != nil {
+		return nil, err
+	}
+	if scope.IsInstance() {
+		return nil, ErrInstanceNotSuspended
+	}
+	if !lifecycle.IsValid() {
+		return nil, fmt.Errorf("%w: %q", managedfeatures.ErrUnknownLifecycle, lifecycle)
+	}
+	replacement, err := s.repo.SetLifecycle(ctx, &managedfeaturesports.LifecycleRequest{
+		Scope:     scope,
+		Lifecycle: lifecycle,
+	})
 	if err != nil {
 		return nil, err
 	}
 	if !replacement.Updated() {
 		return replacement, nil
 	}
-	s.cache.Invalidate(stateKey)
-	s.l.Info("reminding the administrators that the plan ends in three days",
-		zap.Int64("planEndsAt", replacement.Current.PlanEndsAt),
+	s.forget(scope)
+	s.l.Info("the control plane set a scope's lifecycle",
+		zap.String("scope", scope.Key()),
+		zap.String("lifecycle", string(lifecycle)),
 	)
 	return replacement, nil
 }
 
+func (s *Service) History(
+	ctx context.Context,
+	scope managedscope.Scope,
+	limit int,
+) (*managedfeatures.State, []*managedfeatures.Change, error) {
+	if err := s.scopes.Accepts(scope); err != nil {
+		return nil, nil, err
+	}
+	return s.repo.History(ctx, scope, limit)
+}
+
+func (s *Service) RemindPlanEnds(ctx context.Context) ([]*managedfeatures.Replacement, error) {
+	now := s.clock()
+	due, err := s.repo.DuePlanEndReminders(ctx, &managedfeaturesports.DueRemindersRequest{
+		Now:   now,
+		Limit: remindersPerRun,
+	})
+	if err != nil {
+		return nil, err
+	}
+	reminded := make([]*managedfeatures.Replacement, 0, len(due))
+	for _, scope := range due {
+		replacement, rerr := s.repo.RemindPlanEnd(ctx, scope, now)
+		if rerr != nil {
+			return reminded, rerr
+		}
+		if !replacement.Updated() {
+			continue
+		}
+		s.forget(scope)
+		s.l.Info("reminding the administrators that the plan ends in three days",
+			zap.String("scope", scope.Key()),
+			zap.Int64("planEndsAt", replacement.Current.PlanEndsAt),
+		)
+		reminded = append(reminded, replacement)
+	}
+	return reminded, nil
+}
+
+func (s *Service) forget(scope managedscope.Scope) {
+	s.cache.Invalidate(scope.Key())
+	s.anywhere.InvalidateAll()
+}
+
 func (s *Service) logChange(replacement *managedfeatures.Replacement) {
 	fields := []zap.Field{
+		zap.String("scope", replacement.Scope.Key()),
 		zap.Int("features", len(replacement.Current.Features)),
 		zap.Int("addOnEndings", len(replacement.Current.AddOnEndings)),
 		zap.Bool("planUrl", replacement.Current.PlanURL != ""),

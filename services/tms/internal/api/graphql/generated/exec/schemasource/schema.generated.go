@@ -1158,7 +1158,7 @@ type AccountingAppliedObject {
 }
 
 "A payment recorded in the accounting system against documents Trenova sent."
-type AccountingInboundChange @kind(resource: "accounting_sync") {
+type AccountingInboundChange @kind(resource: "accounting_reconciliation") {
   id: ID!
   kind: AccountingInboundChangeKind!
   status: AccountingInboundChangeStatus!
@@ -1313,7 +1313,7 @@ type AccountingDriftLine {
 }
 
 "A difference between a document Trenova sent and what the accounting system holds now."
-type AccountingDriftFinding @kind(resource: "accounting_sync") {
+type AccountingDriftFinding @kind(resource: "accounting_reconciliation") {
   id: ID!
   connectionId: ID!
   objectType: AccountingSyncObjectType!
@@ -1385,7 +1385,7 @@ type AccountingDriftSummary {
   resolvedSince: Int!
 }
 
-type AccountingDriftOverview @kind(resource: "accounting_sync") {
+type AccountingDriftOverview @kind(resource: "accounting_reconciliation") {
   connectionId: ID!
   providerName: String!
   "When the last full check finished."
@@ -34631,6 +34631,7 @@ enum WatchtowerSourceKind {
   TelematicsStopVisit
   AgentQualityRegression
   AccountingSync
+  AccountingReconciliation
   NoCheckCall
   EtaAtRisk
   MissedPickup

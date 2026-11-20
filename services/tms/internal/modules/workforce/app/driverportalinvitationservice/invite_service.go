@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -23,6 +24,7 @@ type Params struct {
 	Templates    documenttemplateports.DocumentTemplateResolver
 	AuditService auditports.AuditService
 	Sessions     sessionports.SessionRepository
+	Features     platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -34,6 +36,7 @@ type Service struct {
 	templates    documenttemplateports.DocumentTemplateResolver
 	auditService auditports.AuditService
 	sessions     sessionports.SessionRepository
+	features     platformcatalogports.FeatureGate
 }
 
 //nolint:gocritic // fx param structs are passed by value
@@ -47,5 +50,6 @@ func New(p Params) *Service {
 		templates:    p.Templates,
 		auditService: p.AuditService,
 		sessions:     p.Sessions,
+		features:     p.Features,
 	}
 }

@@ -331,11 +331,11 @@ func TestAdjustNeedsThePermissionOfWhatItPosts(t *testing.T) {
 	require.NoError(t, err, "pushing posts nothing in Trenova")
 }
 
-func TestFixNeedsAccountingSyncUpdate(t *testing.T) {
+func TestFixNeedsAccountingReconciliationUpdate(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 	finding, _ := h.invoiceFinding(t, 125_000, "1200.00")
-	h.perms.denied[permission.ResourceAccountingSync.String()] = true
+	h.perms.denied[permission.ResourceAccountingReconciliation.String()] = true
 
 	_, err := h.resolve(t, finding, accountingdrift.DriftPushTrenovaValue, h.person())
 

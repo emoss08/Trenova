@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -107,6 +108,13 @@ func (s *Service) receiveAS2Message(
 		OrganizationID: profile.OrganizationID,
 		BusinessUnitID: profile.BusinessUnitID,
 	})
+	onPlan, err := s.features.Enabled(ctx, platformcatalog.FeatureEDIIntegration)
+	if err != nil {
+		return nil, fmt.Errorf("ask whether EDI is on the plan: %w", err)
+	}
+	if !onPlan {
+		return s.RefuseAS2Message(req)
+	}
 	if as2.IsMDN(req.ContentType, req.Body) {
 		if err = s.delivery.ApplyAS2MDN(ctx, &edidelivery.ApplyAS2MDNRequest{
 			PartnerID:   profile.EDIPartnerID,

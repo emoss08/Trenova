@@ -198,7 +198,7 @@ func (e *Enqueuer) EnqueueJournal(
 		!accountingsync.JournalSendable(posted.EntryType, "") {
 		return nil
 	}
-	on, err := e.accountingOn(ctx)
+	on, err := e.featureOn(ctx, accountingsync.SyncObjectJournalEntry.Feature())
 	if err != nil || !on {
 		return err
 	}
@@ -320,7 +320,7 @@ func (e *Enqueuer) coveringConnections(
 	ctx context.Context,
 	req *accountingsyncports.AccountingSyncEnqueueRequest,
 ) ([]*accountingconnection.AccountingConnection, error) {
-	on, err := e.accountingOn(ctx)
+	on, err := e.featureOn(ctx, req.ObjectType.Feature())
 	if err != nil || !on {
 		return nil, err
 	}
@@ -477,10 +477,13 @@ func (e *Enqueuer) QueueCandidates(
 	return e.QueueRecords(ctx, accountingsynceffects.TenantOf(conn), records)
 }
 
-func (e *Enqueuer) accountingOn(ctx context.Context) (bool, error) {
-	on, err := e.features.Enabled(ctx, platformcatalog.FeatureAccounting)
+func (e *Enqueuer) featureOn(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	on, err := e.features.Enabled(ctx, feature)
 	if err != nil {
-		return false, fmt.Errorf("accounting sync: ask whether accounting is on the plan: %w", err)
+		return false, fmt.Errorf("accounting sync: ask whether %s is on the plan: %w", feature, err)
 	}
 	return on, nil
 }

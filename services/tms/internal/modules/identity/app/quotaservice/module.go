@@ -3,6 +3,7 @@ package quotaservice
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -15,12 +16,13 @@ type Params struct {
 
 	Config *managedconfig.Config
 	Gate   managedusageports.Gate
+	Scopes *managedscope.Resolver
 	Clock  timeutils.Clock
 }
 
 func New(p Params) platformplanports.QuotaGuard {
 	if p.Config != nil && p.Config.Enabled {
-		return NewManaged(p.Gate, p.Clock)
+		return NewManaged(p.Gate, p.Scopes, p.Clock)
 	}
 	return NewUnlimited()
 }

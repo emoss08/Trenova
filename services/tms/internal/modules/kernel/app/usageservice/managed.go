@@ -4,22 +4,28 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 )
 
 const PlanManaged = "managed"
 
 type ManagedUsageProvider struct {
 	NoopUsageProvider
-	gate managedusageports.Gate
+	gate   managedusageports.Gate
+	scopes *managedscope.Resolver
 }
 
 var _ platformcatalogports.UsageProvider = (*ManagedUsageProvider)(nil)
 
-func NewManagedUsageProvider(gate managedusageports.Gate) *ManagedUsageProvider {
-	return &ManagedUsageProvider{gate: gate}
+func NewManagedUsageProvider(
+	gate managedusageports.Gate,
+	scopes *managedscope.Resolver,
+) *ManagedUsageProvider {
+	return &ManagedUsageProvider{gate: gate, scopes: scopes}
 }
 
 func (p *ManagedUsageProvider) CheckLimit(
@@ -30,7 +36,14 @@ func (p *ManagedUsageProvider) CheckLimit(
 	if checkedAt == 0 {
 		checkedAt = time.Now().Unix()
 	}
-	d, err := p.gate.Decide(ctx, req.MeterKey, req.Quantity)
+	scope, err := p.scopes.ForTenant(dbscope.Tenant{
+		OrganizationID: req.OrganizationID,
+		BusinessUnitID: req.BusinessUnitID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	d, err := p.gate.Decide(ctx, scope, req.MeterKey, req.Quantity)
 	if err != nil {
 		return nil, err
 	}

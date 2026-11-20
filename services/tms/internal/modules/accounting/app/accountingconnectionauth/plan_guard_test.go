@@ -13,14 +13,14 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestAccountingConnectionsRefuseWhenTheAccountingAddOnIsOff(t *testing.T) {
+func TestAccountingConnectionsRefuseWhenAccountingIntegrationsAreOff(t *testing.T) {
 	t.Parallel()
 
 	svc := New(Params{
 		Logger: zap.NewNop(),
 		Kit: accountingconnectionkit.New(accountingconnectionkit.Params{
 			Logger:   zap.NewNop(),
-			Features: plantest.Without(platformcatalog.FeatureAccounting),
+			Features: plantest.Without(platformcatalog.FeatureAccountingIntegration),
 		}),
 	})
 	tenant := plantest.Tenant()

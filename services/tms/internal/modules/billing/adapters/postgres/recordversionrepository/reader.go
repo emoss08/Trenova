@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift/accountingdriftdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound/accountinginbounddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
@@ -211,6 +213,16 @@ var lookups = map[permission.Resource]lookup{
 		t := accountingsyncdb.AccountingSyncRecords
 		return t.Pick(t.Version).Where(t.ID.Eq(id))
 	}),
+	permission.ResourceAccountingReconciliation: {kinds: map[string]lookup{
+		"acctdf_": by(func(id pulid.ID) keel.Projection {
+			t := accountingdriftdb.AccountingDriftFindings
+			return t.Pick(t.Version).Where(t.ID.Eq(id))
+		}),
+		"acctic_": by(func(id pulid.ID) keel.Projection {
+			t := accountinginbounddb.AccountingInboundChanges
+			return t.Pick(t.Version).Where(t.ID.Eq(id))
+		}),
+	}},
 	permission.ResourceTender: by(func(id pulid.ID) keel.Projection {
 		t := tenderdb.Tenders
 		return t.Pick(t.Version).Where(t.ID.Eq(id))

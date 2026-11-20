@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/scim"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -168,20 +170,88 @@ func TestUsers_AnotherTenantSeesNothingADirectoryLinked(t *testing.T) {
 	require.NoError(t, err, "a delete from another tenant leaves the link in place")
 }
 
-func TestFindMember_FindsOnlyMembersOfTheDirectorysOrganization(t *testing.T) {
+// A directory finds only the people its own organization already has: a
+// user whose current organization is the directory's, or who holds a
+// membership in it, within its business unit. A user only a sister
+// organization has is not found, because linking would let this directory's
+// identity provider add them here and rewrite their name and address, which
+// the sister organization's administrators own. Another company's user is
+// never found, with or without a membership of their own.
+func TestFindMember_FindsOnlyThePeopleTheDirectorysOrganizationHas(t *testing.T) {
 	h := newSCIMHarness(t)
+
+	sister := seedtest.NewOrganization(h.a.data.BusinessUnit.ID, h.a.data.State.ID).
+		WithName("Acme West").
+		WithScacCode("ACWS").
+		WithDOTNumber("7654321").
+		Build(t, h.ctx, h.admin)
+	sisterOnly := seedtest.NewUser(sister.ID, h.a.data.BusinessUnit.ID).
+		WithUsername("acme_west_only").
+		WithEmail("west-only@acme.example").
+		Build(t, h.ctx, h.admin)
+	h.membership(t, sisterOnly, sister.ID, h.a.data.BusinessUnit.ID)
+	sharedMember := seedtest.NewUser(sister.ID, h.a.data.BusinessUnit.ID).
+		WithUsername("acme_west_shared").
+		WithEmail("west-shared@acme.example").
+		Build(t, h.ctx, h.admin)
+	h.membership(t, sharedMember, sister.ID, h.a.data.BusinessUnit.ID)
+	h.membership(t, sharedMember, h.a.data.Organization.ID, h.a.data.BusinessUnit.ID)
+
+	strangerWithMembership := seedtest.NewUser(
+		h.b.data.Organization.ID,
+		h.b.data.BusinessUnit.ID,
+	).
+		WithUsername("globex_member").
+		WithEmail("member@globex.example").
+		Build(t, h.ctx, h.admin)
+	h.membership(t, strangerWithMembership, h.b.data.Organization.ID, h.b.data.BusinessUnit.ID)
+	strangerAlone := seedtest.NewUser(h.b.data.Organization.ID, h.b.data.BusinessUnit.ID).
+		WithUsername("globex_unlinked").
+		WithEmail("unlinked@globex.example").
+		Build(t, h.ctx, h.admin)
 
 	member, err := h.repo.FindMember(h.a.ctx, h.a.data.User.EmailAddress)
 	require.NoError(t, err)
-	assert.Equal(t, h.a.data.User.ID, member.ID)
+	assert.Equal(t, h.a.data.User.ID, member.ID, "a user whose organization is the directory's")
 
-	_, err = h.repo.FindMember(h.a.ctx, h.b.data.User.EmailAddress)
-	require.Error(t, err)
-	assert.True(t, errortypes.IsNotFoundError(err))
+	shared, err := h.repo.FindMember(h.a.ctx, "WEST-SHARED@acme.example")
+	require.NoError(t, err)
+	assert.Equal(t, sharedMember.ID, shared.ID,
+		"a sister organization's user who is also a member here")
+
+	for name, address := range map[string]string{
+		"a user only the sister organization has":   sisterOnly.EmailAddress,
+		"another company's user with a membership":  strangerWithMembership.EmailAddress,
+		"another company's user with no membership": strangerAlone.EmailAddress,
+		"another company's seeded user":             h.b.data.User.EmailAddress,
+	} {
+		_, err = h.repo.FindMember(h.a.ctx, address)
+		require.Error(t, err, name)
+		assert.True(t, errortypes.IsNotFoundError(err), name)
+	}
 
 	_, err = h.repo.FindMember(h.b.ctx, h.a.data.User.EmailAddress)
 	require.Error(t, err)
-	assert.True(t, errortypes.IsNotFoundError(err))
+	assert.True(t, errortypes.IsNotFoundError(err), "nor the other way round")
+}
+
+func (h *scimHarness) membership(
+	t *testing.T,
+	user *tenant.User,
+	organizationID, businessUnitID pulid.ID,
+) {
+	t.Helper()
+
+	require.NoError(t, tenantdb.OrganizationMemberships.Create(
+		dbscope.WithSystem(h.ctx, "seed a membership for the test"),
+		h.admin,
+		&tenant.OrganizationMembership{
+			UserID:         user.ID,
+			OrganizationID: organizationID,
+			BusinessUnitID: businessUnitID,
+			JoinedAt:       timeutils.NowUnix(),
+		},
+	))
 }
 
 func TestRoleSources_MatchMappingsTheirSaverStillNames(t *testing.T) {

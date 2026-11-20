@@ -1,16 +1,20 @@
 package rateconfirmationservice
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -42,6 +46,7 @@ func setupPublicTest(t *testing.T) *publicTestDeps {
 		repo:                  deps.repo,
 		carrierAssignmentRepo: deps.carrierAssignmentRepo,
 		auditService:          &mocks.NoopAuditService{},
+		features:              plantest.AllFeatures(),
 	}
 	return deps
 }
@@ -265,4 +270,61 @@ func TestConfirmByTokenFailureLeavesTokenUsable(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, deps.repo.markedUsed,
 		"a failed confirmation must not burn the carrier's only link")
+}
+
+func TestAPublicLinkIsDeadForAnOrganizationWithoutBrokerage(t *testing.T) {
+	t.Parallel()
+
+	deps := setupPublicTest(t)
+	entity := signableRateCon(deps)
+	raw, _ := mintTestToken(deps, entity)
+
+	deps.svc.features = plantest.Without(platformcatalog.FeatureCarrierBrokerage)
+	_, err := deps.svc.PreviewByToken(t.Context(), raw)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), invalidLinkCopy, "the same answer as an unknown link")
+
+	deps.svc.features = plantest.AllFeatures()
+	view, err := deps.svc.PreviewByToken(t.Context(), raw)
+	require.NoError(t, err)
+	assert.NotNil(t, view)
+}
+
+func TestTheBrokeragePlanIsAskedForTheLinksOwnOrganization(t *testing.T) {
+	t.Parallel()
+
+	deps := setupPublicTest(t)
+	entity := signableRateCon(deps)
+	raw, _ := mintTestToken(deps, entity)
+	gate := &tenantRecordingGate{}
+	deps.svc.features = gate
+
+	_, err := deps.svc.PreviewByToken(t.Context(), raw)
+	require.NoError(t, err)
+	require.Len(t, gate.asked, 1)
+	assert.Equal(t, entity.OrganizationID, gate.asked[0].OrganizationID)
+	assert.Equal(t, entity.BusinessUnitID, gate.asked[0].BusinessUnitID)
+}
+
+type tenantRecordingGate struct {
+	asked []dbscope.Tenant
+}
+
+func (g *tenantRecordingGate) Enabled(
+	ctx context.Context,
+	_ platformcatalog.FeatureKey,
+) (bool, error) {
+	tenant, ok := dbscope.TenantFrom(ctx)
+	if !ok {
+		return false, errors.New("asked with no tenant")
+	}
+	g.asked = append(g.asked, tenant)
+	return true, nil
+}
+
+func (g *tenantRecordingGate) EnabledAnywhere(
+	context.Context,
+	platformcatalog.FeatureKey,
+) (bool, error) {
+	return false, errors.New("a public link never asks about every organization")
 }

@@ -13,6 +13,7 @@ var ErrUnknownFeature = errors.New("unknown platform feature")
 
 type FeatureGate interface {
 	Enabled(ctx context.Context, feature platformcatalog.FeatureKey) (bool, error)
+	EnabledAnywhere(ctx context.Context, feature platformcatalog.FeatureKey) (bool, error)
 }
 
 func RequireFeature(

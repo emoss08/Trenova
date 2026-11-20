@@ -5,12 +5,15 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -74,7 +77,7 @@ func newNotices(notifier *recordingNotifier) (*Notices, []pagination.TenantInfo)
 }
 
 func planEnd(held *managedfeatures.State, endsAt int64) *managedfeatures.Replacement {
-	return managedfeatures.Replace(held, &managedfeatures.Received{
+	return managedfeatures.Replace(managedscope.Instance(), held, &managedfeatures.Received{
 		Features:   []platformcatalog.FeatureKey{"tms.accounting"},
 		PlanEndsAt: endsAt,
 	}, noticeNow)
@@ -88,7 +91,7 @@ func TestASetPlanEndTellsTheAdministratorsWhenTheirWorkspaceGoes(t *testing.T) {
 	notifier := &recordingNotifier{}
 	notices, tenants := newNotices(notifier)
 	held := &managedfeatures.State{
-		ID:              managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		Features:        []platformcatalog.FeatureKey{"tms.accounting"},
 		FinalBackupDays: 7,
 	}
@@ -98,7 +101,8 @@ func TestASetPlanEndTellsTheAdministratorsWhenTheirWorkspaceGoes(t *testing.T) {
 	require.Len(t, notifier.sent, len(tenants))
 	sent := notifier.sent[0].Notification
 	assert.Equal(t, "Your plan ends on Dec 14, 2026", sent.Title)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"Trenova stays available until then. After that, this workspace is taken down and a final backup is kept for 7 days. An owner or admin of your Trenova account can keep the plan before then.",
 		sent.Message,
 	)
@@ -125,7 +129,7 @@ func TestAKeptPlanSaysItContinues(t *testing.T) {
 	notifier := &recordingNotifier{}
 	notices, _ := newNotices(notifier)
 	held := &managedfeatures.State{
-		ID:               managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		Features:         []platformcatalog.FeatureKey{"tms.accounting"},
 		PlanEndsAt:       planEndsAt,
 		PlanEndAnnounced: planEndsAt,
@@ -146,7 +150,7 @@ func TestTheThreeDayReminderSaysWhenTheWorkspaceGoes(t *testing.T) {
 	notifier := &recordingNotifier{}
 	notices, _ := newNotices(notifier)
 	held := &managedfeatures.State{
-		ID:               managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		PlanEndsAt:       planEndsAt,
 		PlanEndAnnounced: planEndsAt,
 		FinalBackupDays:  7,
@@ -158,7 +162,8 @@ func TestTheThreeDayReminderSaysWhenTheWorkspaceGoes(t *testing.T) {
 	require.NotEmpty(t, notifier.sent)
 	sent := notifier.sent[0].Notification
 	assert.Equal(t, "Your plan ends in 3 days", sent.Title)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"After Dec 14, 2026, this workspace is taken down and a final backup is kept for 7 days. An owner or admin of your Trenova account can keep the plan before then.",
 		sent.Message,
 	)
@@ -172,15 +177,21 @@ func TestAPlanChangeTellsOpenPagesInEveryOrganization(t *testing.T) {
 	realtime := &recordingRealtime{}
 	notices.realtime = realtime
 	held := &managedfeatures.State{
-		ID:       managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		Features: []platformcatalog.FeatureKey{"tms.accounting"},
 	}
 	planURL := "https://console.trenova.cloud/instances/1/plan"
 
-	require.NoError(t, notices.PlanChanged(t.Context(), managedfeatures.Replace(held, &managedfeatures.Received{
-		Features: []platformcatalog.FeatureKey{"tms.accounting"},
-		PlanURL:  &planURL,
-	}, noticeNow)))
+	require.NoError(
+		t,
+		notices.PlanChanged(
+			t.Context(),
+			managedfeatures.Replace(managedscope.Instance(), held, &managedfeatures.Received{
+				Features: []platformcatalog.FeatureKey{"tms.accounting"},
+				PlanURL:  &planURL,
+			}, noticeNow),
+		),
+	)
 
 	assert.Empty(t, notifier.sent, "a new address notifies nobody")
 	require.Len(t, realtime.published, len(tenants))
@@ -190,17 +201,35 @@ func TestAPlanChangeTellsOpenPagesInEveryOrganization(t *testing.T) {
 	}
 
 	realtime.published = nil
-	require.NoError(t, notices.PlanChanged(t.Context(), managedfeatures.Replace(
-		&managedfeatures.State{ID: managedfeatures.CurrentStateID, Features: held.Features, PlanURL: planURL},
-		&managedfeatures.Received{Features: held.Features, PlanURL: &planURL},
-		noticeNow,
-	)))
+	require.NoError(
+		t,
+		notices.PlanChanged(t.Context(), managedfeatures.Replace(
+			managedscope.Instance(),
+			&managedfeatures.State{
+				ScopeKey:   managedscope.InstanceKey,
+				ReceivedAt: 1,
+				Features:   held.Features,
+				PlanURL:    planURL,
+			},
+			&managedfeatures.Received{Features: held.Features, PlanURL: &planURL},
+			noticeNow,
+		)),
+	)
 	assert.Empty(t, realtime.published, "nothing changed, so nothing is told")
 }
 
 func change(before, after []platformcatalog.FeatureKey) *managedfeatures.Replacement {
-	held := &managedfeatures.State{ID: managedfeatures.CurrentStateID, Features: before}
-	return managedfeatures.Replace(held, &managedfeatures.Received{Features: after}, noticeNow)
+	held := &managedfeatures.State{
+		ScopeKey:   managedscope.InstanceKey,
+		ReceivedAt: 1,
+		Features:   before,
+	}
+	return managedfeatures.Replace(
+		managedscope.Instance(),
+		held,
+		&managedfeatures.Received{Features: after},
+		noticeNow,
+	)
 }
 
 func TestDroppingAnAddOnTellsEachOrganizationsAdministratorsOnce(t *testing.T) {
@@ -223,7 +252,8 @@ func TestDroppingAnAddOnTellsEachOrganizationsAdministratorsOnce(t *testing.T) {
 		assert.Equal(t, EventPlanChanged, req.Notification.EventType)
 		assert.Equal(t, notification.PriorityHigh, req.Notification.Priority)
 		assert.Equal(t, "Dispatch Intelligence is no longer on your plan", req.Notification.Title)
-		assert.Equal(t,
+		assert.Equal(
+			t,
 			"Everything you entered is kept. It comes back if you add Dispatch Intelligence again from your Trenova account.",
 			req.Notification.Message,
 		)
@@ -277,11 +307,14 @@ func TestTheStartingPlanNotifiesNobody(t *testing.T) {
 	notifier := &recordingNotifier{}
 	notices, _ := newNotices(notifier)
 
-	require.NoError(t, notices.PlanChanged(t.Context(), managedfeatures.Replace(
-		nil,
-		&managedfeatures.Received{Features: []platformcatalog.FeatureKey{"ai.desk"}},
-		noticeNow,
-	)))
+	require.NoError(
+		t,
+		notices.PlanChanged(t.Context(), managedfeatures.Replace(managedscope.Instance(),
+			nil,
+			&managedfeatures.Received{Features: []platformcatalog.FeatureKey{"ai.desk"}},
+			noticeNow,
+		)),
+	)
 
 	assert.Empty(t, notifier.sent)
 }
@@ -327,4 +360,37 @@ func TestAFailedNoticeIsReportedAndTheOtherOrganizationsAreStillTold(t *testing.
 
 	require.Error(t, err)
 	assert.Len(t, notifier.sent, len(tenants))
+}
+
+func TestAnOrganizationsPlanChangeTellsOnlyThatOrganization(t *testing.T) {
+	t.Parallel()
+
+	notifier := &recordingNotifier{}
+	notices, _ := newNotices(notifier)
+	realtime := &recordingRealtime{}
+	notices.realtime = realtime
+	tenant := dbscope.Tenant{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+	scope := managedscope.Organization(tenant)
+	held := &managedfeatures.State{
+		ScopeKey:            scope.Key(),
+		ScopeBusinessUnitID: tenant.BusinessUnitID,
+		Features:            []platformcatalog.FeatureKey{"tms.accounting"},
+		ReceivedAt:          1,
+	}
+
+	require.NoError(t, notices.PlanChanged(t.Context(), managedfeatures.Replace(
+		scope,
+		held,
+		&managedfeatures.Received{Features: []platformcatalog.FeatureKey{}},
+		noticeNow,
+	)))
+
+	require.Len(t, notifier.sent, 1, "not every organization on the server")
+	assert.Equal(t, tenant.OrganizationID, notifier.sent[0].Tenant.OrgID)
+	assert.Equal(t, tenant.BusinessUnitID, notifier.sent[0].Tenant.BuID)
+	require.Len(t, realtime.published, 1)
+	assert.Equal(t, tenant.OrganizationID, realtime.published[0].OrganizationID)
 }

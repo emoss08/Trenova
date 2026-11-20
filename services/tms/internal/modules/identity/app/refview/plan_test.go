@@ -96,6 +96,13 @@ func (failingGate) Enabled(context.Context, platformcatalog.FeatureKey) (bool, e
 	return false, errors.New("the plan is unavailable")
 }
 
+func (r failingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return r.Enabled(ctx, feature)
+}
+
 func readsEverything() access {
 	return access{reads: map[permission.Resource]bool{
 		invoiceKind:   true,
@@ -287,6 +294,13 @@ func (g *countingGate) Enabled(
 	}
 	g.asked[feature]++
 	return g.Gate.Enabled(ctx, feature)
+}
+
+func (g *countingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return g.Enabled(ctx, feature)
 }
 
 func TestPort_MapsAPlanWithholdingAndNamesItsFeature(t *testing.T) {

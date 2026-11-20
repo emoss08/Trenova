@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
@@ -29,6 +30,7 @@ type stoppedGate struct{}
 
 func (stoppedGate) Decide(
 	_ context.Context,
+	_ managedscope.Scope,
 	meter platformcatalog.MeterKey,
 	requested int64,
 ) (managedusage.Decision, error) {
@@ -43,7 +45,7 @@ func (stoppedGate) Decide(
 	}, meter, requested), nil
 }
 
-func (stoppedGate) State(context.Context) (*managedusage.State, error) {
+func (stoppedGate) State(context.Context, managedscope.Scope) (*managedusage.State, error) {
 	return &managedusage.State{}, nil
 }
 
@@ -52,7 +54,11 @@ func TestAnExtractionStopsWhenItsAllowanceIsStopped(t *testing.T) {
 
 	svc := &Service{
 		features: plantest.AllFeatures(),
-		quota:    quotaservice.NewManaged(stoppedGate{}, func() int64 { return 0 }),
+		quota: quotaservice.NewManaged(
+			stoppedGate{},
+			managedscope.NewResolver(false),
+			func() int64 { return 0 },
+		),
 	}
 
 	result, err := svc.runStructured(t.Context(), newExtractCall(
@@ -69,7 +75,11 @@ func TestRoutingIsNotMeteredAsAnExtraction(t *testing.T) {
 
 	svc := &Service{
 		features: plantest.AllFeatures(),
-		quota:    quotaservice.NewManaged(stoppedGate{}, func() int64 { return 0 }),
+		quota: quotaservice.NewManaged(
+			stoppedGate{},
+			managedscope.NewResolver(false),
+			func() int64 { return 0 },
+		),
 	}
 
 	require.NoError(t, svc.admit(t.Context(), &structuredCall{
@@ -84,6 +94,7 @@ type pagesGate struct {
 
 func (g pagesGate) Decide(
 	_ context.Context,
+	_ managedscope.Scope,
 	meter platformcatalog.MeterKey,
 	requested int64,
 ) (managedusage.Decision, error) {
@@ -100,7 +111,7 @@ func (g pagesGate) Decide(
 	}, meter, requested), nil
 }
 
-func (pagesGate) State(context.Context) (*managedusage.State, error) {
+func (pagesGate) State(context.Context, managedscope.Scope) (*managedusage.State, error) {
 	return &managedusage.State{}, nil
 }
 
@@ -116,7 +127,11 @@ func TestAnExtractionThatWouldCrossThePageAllowanceIsRefusedWithOverageOff(t *te
 
 	svc := &Service{
 		features: plantest.AllFeatures(),
-		quota:    quotaservice.NewManaged(pagesGate{}, func() int64 { return 0 }),
+		quota: quotaservice.NewManaged(
+			pagesGate{},
+			managedscope.NewResolver(false),
+			func() int64 { return 0 },
+		),
 	}
 
 	require.NoError(t, svc.admit(t.Context(), pagedExtraction(5)))
@@ -132,7 +147,11 @@ func TestAnExtractionPastThePageAllowanceRunsWithOverageOn(t *testing.T) {
 
 	svc := &Service{
 		features: plantest.AllFeatures(),
-		quota:    quotaservice.NewManaged(pagesGate{overage: true}, func() int64 { return 0 }),
+		quota: quotaservice.NewManaged(
+			pagesGate{overage: true},
+			managedscope.NewResolver(false),
+			func() int64 { return 0 },
+		),
 	}
 
 	require.NoError(t, svc.admit(t.Context(), pagedExtraction(500)))
@@ -144,7 +163,11 @@ func TestADocumentWithUnknownPagesIsAdmittedAndCountedAsOnePage(t *testing.T) {
 	call := pagedExtraction(0)
 	svc := &Service{
 		features: plantest.AllFeatures(),
-		quota:    quotaservice.NewManaged(pagesGate{}, func() int64 { return 0 }),
+		quota: quotaservice.NewManaged(
+			pagesGate{},
+			managedscope.NewResolver(false),
+			func() int64 { return 0 },
+		),
 	}
 
 	require.NoError(t, svc.admit(t.Context(), call))
@@ -154,7 +177,12 @@ func TestADocumentWithUnknownPagesIsAdmittedAndCountedAsOnePage(t *testing.T) {
 func TestOnlyAnExtractionCarriesPagesOnItsUsageRecord(t *testing.T) {
 	t.Parallel()
 
-	extract := documentAttribution(plantest.Tenant(), "", aiusage.FeatureDocumentIntelligenceExtract, 7)
+	extract := documentAttribution(
+		plantest.Tenant(),
+		"",
+		aiusage.FeatureDocumentIntelligenceExtract,
+		7,
+	)
 	route := documentAttribution(plantest.Tenant(), "", aiusage.FeatureDocumentIntelligenceRoute, 7)
 
 	require.Equal(t, 7, extract.Pages)

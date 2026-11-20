@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
@@ -30,6 +31,9 @@ func (s *Service) MyPTO(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*worker.WorkerPTO, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureWorkforceTimeOff); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -49,6 +53,9 @@ func (s *Service) RequestMyPTO(
 	tenantInfo pagination.TenantInfo,
 	req *RequestMyPTORequest,
 ) (*worker.WorkerPTO, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureWorkforceTimeOff); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -96,6 +103,9 @@ func (s *Service) MyPTOBalances(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*ptoledgerservice.BalanceView, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureWorkforceTimeOff); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -119,6 +129,9 @@ func (s *Service) CancelMyPTO(
 	tenantInfo pagination.TenantInfo,
 	ptoID pulid.ID,
 ) (*worker.WorkerPTO, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureWorkforceTimeOff); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -164,6 +177,9 @@ func (s *Service) MyExpenses(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*payexpense.Expense, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -182,6 +198,9 @@ func (s *Service) SubmitMyExpense(
 	tenantInfo pagination.TenantInfo,
 	req *SubmitMyExpenseRequest,
 ) (*payexpense.Expense, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -224,6 +243,9 @@ func (s *Service) CancelMyExpense(
 	tenantInfo pagination.TenantInfo,
 	expenseID pulid.ID,
 ) (*payexpense.Expense, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -240,6 +262,9 @@ func (s *Service) UploadMyExpenseReceipt(
 	file *multipart.FileHeader,
 	actor *permissionports.RequestActor,
 ) (*payexpense.Expense, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -362,6 +387,9 @@ func (s *Service) MyLoadPayEstimate(
 	shipmentID pulid.ID,
 	moveID pulid.ID,
 ) (*driversettlementaccrualservice.MovePayEstimate, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -389,6 +417,9 @@ func (s *Service) MyYtdPay(
 	tenantInfo pagination.TenantInfo,
 	year int,
 ) (*driversettlementworkspaceservice.WorkerYTDPaySummary, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

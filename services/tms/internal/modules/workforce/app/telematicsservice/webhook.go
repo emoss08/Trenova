@@ -36,6 +36,9 @@ func (s *Service) ProcessWebhook(
 		return err
 	}
 	ctx = dbscope.WithTenant(ctx, cfg.TenantInfo.DBTenant())
+	if err = s.requireWebhookProvider(ctx, req.ProviderType); err != nil {
+		return err
+	}
 
 	if strings.TrimSpace(cfg.WebhookSecret) == "" {
 		return errortypes.NewValidationError(

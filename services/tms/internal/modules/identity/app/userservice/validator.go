@@ -3,6 +3,7 @@ package userservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -14,7 +15,8 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	Repo tenantports.UserRepository
+	Repo    tenantports.UserRepository
+	Managed *managedconfig.Config
 }
 
 type Validator struct {
@@ -25,13 +27,14 @@ func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*tenant.User]().
 			WithModelName("User").
-			WithCustomRule(identityUniquenessRule(p.Repo)).
+			WithCustomRule(identityUniquenessRule(p.Repo, p.Managed.SharedTenancy())).
 			Build(),
 	}
 }
 
 func identityUniquenessRule(
 	users tenantports.UserRepository,
+	sharedTenancy bool,
 ) validationframework.Rule[*tenant.User] {
 	return validationframework.NewRule[*tenant.User]("identity_uniqueness").
 		WithStage(validationframework.StageDataIntegrity).
@@ -54,10 +57,10 @@ func identityUniquenessRule(
 			}
 
 			if conflicts.EmailAddress {
-				multiErr.AddError(tenant.NewDuplicateEmailAddressError())
+				multiErr.AddError(tenant.EmailAddressTakenError(sharedTenancy))
 			}
 			if conflicts.Username {
-				multiErr.AddError(tenant.NewDuplicateUsernameError())
+				multiErr.AddError(tenant.UsernameTakenError(sharedTenancy))
 			}
 
 			return nil

@@ -5,29 +5,65 @@ import (
 	"slices"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
-	CurrentStateID         = "current"
 	DefaultFinalBackupDays = 30
 	MaxFinalBackupDays     = 3650
 )
 
-var ErrNoState = errors.New("the control plane has not set a feature list yet")
+var (
+	ErrNoState          = errors.New("the control plane has not set a feature list yet")
+	ErrUnknownLifecycle = errors.New("a scope's lifecycle is active or suspended")
+)
+
+type Lifecycle string
+
+const (
+	LifecycleActive    = Lifecycle("active")
+	LifecycleSuspended = Lifecycle("suspended")
+)
+
+func (l Lifecycle) IsValid() bool {
+	return l == LifecycleActive || l == LifecycleSuspended
+}
 
 type State struct {
 	keel.Table `keel:"managed_feature_states"`
 
-	ID               string                       `json:"id"               keel:"id,pk"`
-	Features         []platformcatalog.FeatureKey `json:"features"         keel:"features,jsonb"`
-	AddOnEndings     []AddOnEnding                `json:"addOnEndings"     keel:"addon_endings,jsonb"`
-	PlanURL          string                       `json:"planUrl"          keel:"plan_url,nullzero"`
-	PlanEndsAt       int64                        `json:"planEndsAt"       keel:"plan_ends_at,nullzero"`
-	PlanEndAnnounced int64                        `json:"planEndAnnounced" keel:"plan_end_announced,nullzero"`
-	PlanEndReminded  int64                        `json:"planEndReminded"  keel:"plan_end_reminded,nullzero"`
-	FinalBackupDays  int                          `json:"finalBackupDays"  keel:"final_backup_days"`
-	ReceivedAt       int64                        `json:"receivedAt"       keel:"received_at"`
+	ScopeKey            string                       `json:"scopeKey"            keel:"scope_key,pk"`
+	ScopeBusinessUnitID pulid.ID                     `json:"scopeBusinessUnitId" keel:"scope_business_unit_id,nullzero"`
+	Lifecycle           Lifecycle                    `json:"lifecycle"           keel:"lifecycle"`
+	Features            []platformcatalog.FeatureKey `json:"features"            keel:"features,jsonb"`
+	AddOnEndings        []AddOnEnding                `json:"addOnEndings"        keel:"addon_endings,jsonb"`
+	PlanURL             string                       `json:"planUrl"             keel:"plan_url,nullzero"`
+	PlanEndsAt          int64                        `json:"planEndsAt"          keel:"plan_ends_at,nullzero"`
+	PlanEndAnnounced    int64                        `json:"planEndAnnounced"    keel:"plan_end_announced,nullzero"`
+	PlanEndReminded     int64                        `json:"planEndReminded"     keel:"plan_end_reminded,nullzero"`
+	FinalBackupDays     int                          `json:"finalBackupDays"     keel:"final_backup_days"`
+	ReceivedAt          int64                        `json:"receivedAt"          keel:"received_at"`
+}
+
+func (s *State) Scope() managedscope.Scope {
+	return managedscope.FromKey(s.ScopeKey, s.ScopeBusinessUnitID)
+}
+
+func (s *State) Suspended() bool {
+	return s != nil && s.Lifecycle == LifecycleSuspended
+}
+
+func (s *State) HasList() bool {
+	return s != nil && s.ReceivedAt > 0
+}
+
+func (s *State) lifecycle() Lifecycle {
+	if s == nil || !s.Lifecycle.IsValid() {
+		return LifecycleActive
+	}
+	return s.Lifecycle
 }
 
 func (s *State) BackupDays() int {
@@ -38,7 +74,7 @@ func (s *State) BackupDays() int {
 }
 
 func (s *State) Has(feature platformcatalog.FeatureKey) bool {
-	if s == nil {
+	if s == nil || s.Suspended() {
 		return false
 	}
 	return slices.Contains(s.Features, feature)

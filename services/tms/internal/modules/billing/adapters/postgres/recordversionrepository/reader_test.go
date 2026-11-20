@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel/schema"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift/accountingdriftdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound/accountinginbounddb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile/ediinboundfiledb"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
@@ -175,6 +177,14 @@ func TestRecordsSharingAResourceAreToldApartByTheirIDs(t *testing.T) {
 		"report run": {
 			Resource: permission.ResourceReport,
 			ID:       newID(t, reportdb.ReportRunsSchema()),
+		},
+		"accounting drift finding": {
+			Resource: permission.ResourceAccountingReconciliation,
+			ID:       newID(t, accountingdriftdb.AccountingDriftFindingsSchema()),
+		},
+		"accounting inbound change": {
+			Resource: permission.ResourceAccountingReconciliation,
+			ID:       newID(t, accountinginbounddb.AccountingInboundChangesSchema()),
 		},
 	} {
 		lookup, ok := lookups[target.Resource]

@@ -59,7 +59,14 @@ func (g *fakeGate) fail(err error) {
 	g.err = err
 }
 
-func (g *fakeGate) Enabled(_ context.Context, feature platformcatalog.FeatureKey) (bool, error) {
+func (g *fakeGate) Enabled(context.Context, platformcatalog.FeatureKey) (bool, error) {
+	return false, errors.New("a schedule asks whether any scope has its feature, never one scope")
+}
+
+func (g *fakeGate) EnabledAnywhere(
+	_ context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	g.calls++

@@ -3,6 +3,7 @@ package managedusageports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
@@ -14,11 +15,12 @@ const (
 )
 
 type StateRepository interface {
-	Get(ctx context.Context) (*managedusage.State, error)
-	Save(ctx context.Context, state *managedusage.State) error
+	Get(ctx context.Context, scope managedscope.Scope) (*managedusage.State, error)
+	Save(ctx context.Context, scope managedscope.Scope, state *managedusage.State) error
 }
 
 type HourCountRequest struct {
+	Scope managedscope.Scope
 	Since int64
 	Until int64
 }
@@ -35,23 +37,25 @@ type HourlyCounter interface {
 
 type LevelReader interface {
 	Meter() platformcatalog.MeterKey
-	Level(ctx context.Context) (int64, error)
+	Level(ctx context.Context, scope managedscope.Scope) (int64, error)
 }
 
 type Gate interface {
 	Decide(
 		ctx context.Context,
+		scope managedscope.Scope,
 		meter platformcatalog.MeterKey,
 		requested int64,
 	) (managedusage.Decision, error)
-	State(ctx context.Context) (*managedusage.State, error)
+	State(ctx context.Context, scope managedscope.Scope) (*managedusage.State, error)
 }
 
 type UsageReader interface {
-	Usage(ctx context.Context) (*managedusage.Usage, error)
+	Usage(ctx context.Context, scope managedscope.Scope) (*managedusage.Usage, error)
 }
 
 type StateChange struct {
+	Scope    managedscope.Scope
 	Previous *managedusage.State
 	Current  *managedusage.State
 }

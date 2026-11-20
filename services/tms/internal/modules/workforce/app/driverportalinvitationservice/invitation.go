@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
@@ -459,6 +461,16 @@ func (s *Service) lookupAcceptableInvitation(
 			errortypes.ErrInvalid,
 			"This invitation has expired or was revoked. Ask your carrier to send a new one.",
 		)
+	}
+	if err = platformcatalogports.RequireFeature(
+		dbscope.WithTenant(ctx, dbscope.Tenant{
+			OrganizationID: invitation.OrganizationID,
+			BusinessUnitID: invitation.BusinessUnitID,
+		}),
+		s.features,
+		platformcatalog.FeatureDriverPortal,
+	); err != nil {
+		return nil, err
 	}
 	return invitation, nil
 }

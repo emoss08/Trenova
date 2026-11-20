@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,13 +23,14 @@ type fakeGate struct {
 
 func (f *fakeGate) Decide(
 	_ context.Context,
+	_ managedscope.Scope,
 	meter platformcatalog.MeterKey,
 	requested int64,
 ) (managedusage.Decision, error) {
 	return managedusage.Decide(f.state, meter, requested), nil
 }
 
-func (f *fakeGate) State(context.Context) (*managedusage.State, error) {
+func (f *fakeGate) State(context.Context, managedscope.Scope) (*managedusage.State, error) {
 	return f.state, nil
 }
 
@@ -36,6 +38,7 @@ func managedGuard(state *managedusage.State) platformplanports.QuotaGuard {
 	return quotaservice.New(quotaservice.Params{
 		Config: &managedconfig.Config{Enabled: true},
 		Gate:   &fakeGate{state: state},
+		Scopes: managedscope.NewResolver(false),
 		Clock:  func() int64 { return 42 },
 	})
 }

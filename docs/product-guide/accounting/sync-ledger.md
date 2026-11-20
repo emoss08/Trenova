@@ -105,6 +105,8 @@ Keywords: backfill, historical invoices, send old documents
 ## Notes
 Viewing the ledger needs read access to accounting sync; retrying, releasing, skipping, pausing
 and resuming need update access; a backfill needs manage access to the accounting integration.
+The differences and recorded-payments counts show only to people with read access to accounting
+reconciliation, on a plan with the Accounting add-on.
 A document that fails for a temporary reason is retried on its own, backing off from 30 seconds
 to 6 hours, and is marked failed after 8 tries. Invoices, customer payments, customers, carrier and
 driver settlements, carriers and workers show where they stand in the accounting system on their own

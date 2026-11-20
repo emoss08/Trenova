@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -232,7 +233,16 @@ func (s *Service) recordWebhook(
 	holders []*accountingconnection.AccountingConnection,
 	verified []string,
 ) error {
-	if _, err := s.connections.MarkWebhookReceived(
+	holders, err := s.kit.Entitled(ctx, holders, platformcatalog.FeatureAccounting)
+	if err != nil {
+		return err
+	}
+	verified = entitledRealms(holders, verified)
+	if len(verified) == 0 {
+		s.l.Debug("verified webhook for companies whose organizations do not have Accounting")
+		return nil
+	}
+	if _, err = s.connections.MarkWebhookReceived(
 		ctx,
 		accountingconnectionports.MarkAccountingWebhookRequest{
 			IntegrationType: req.IntegrationType,
@@ -245,6 +255,21 @@ func (s *Service) recordWebhook(
 
 	s.pollChanged(ctx, holders, verified)
 	return nil
+}
+
+func entitledRealms(
+	holders []*accountingconnection.AccountingConnection,
+	verified []string,
+) []string {
+	kept := make([]string, 0, len(verified))
+	for _, realm := range verified {
+		if slices.ContainsFunc(holders, func(h *accountingconnection.AccountingConnection) bool {
+			return h.ExternalRealmID == realm
+		}) {
+			kept = append(kept, realm)
+		}
+	}
+	return kept
 }
 
 func (s *Service) pollChanged(

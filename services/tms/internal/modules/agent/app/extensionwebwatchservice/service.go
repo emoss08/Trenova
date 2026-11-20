@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -44,6 +45,7 @@ type Params struct {
 	Watches    agentextensionports.WebWatchRepository
 	Findings   agentextensionports.WebWatchFindingRepository
 	AppConfig  *appconfig.Config
+	Features   platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -55,6 +57,7 @@ type Service struct {
 	findings agentextensionports.WebWatchFindingRepository
 	webBase  string
 	now      func() int64
+	features platformcatalogports.FeatureGate
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -78,5 +81,6 @@ func New(p Params) *Service {
 		findings: p.Findings,
 		webBase:  webBaseOf(p.AppConfig),
 		now:      timeutils.NowUnix,
+		features: p.Features,
 	}
 }

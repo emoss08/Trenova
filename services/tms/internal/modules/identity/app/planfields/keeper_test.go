@@ -183,6 +183,13 @@ func (g failingGate) Enabled(context.Context, platformcatalog.FeatureKey) (bool,
 	return false, g.err
 }
 
+func (g failingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return g.Enabled(ctx, feature)
+}
+
 func TestKeep_FailsWhenThePlanCannotBeRead(t *testing.T) {
 	t.Parallel()
 

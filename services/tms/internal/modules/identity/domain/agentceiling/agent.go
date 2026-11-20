@@ -250,6 +250,12 @@ var agentAllowedPermissions = map[permission.Resource]map[permission.Operation]s
 		permission.OpRead:   {},
 		permission.OpUpdate: {},
 	},
+	// Reading where the books disagree and the payments the accounting
+	// system recorded, and proposing a fix, a dismissal or applying a payment.
+	permission.ResourceAccountingReconciliation: {
+		permission.OpRead:   {},
+		permission.OpUpdate: {},
+	},
 	// The load monitor works the exceptions on the loads it watches: it notes
 	// what a carrier said, snoozes what cannot move yet, routes an exception to
 	// its owner and proposes closing what is dealt with. Each write starts as a

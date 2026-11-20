@@ -174,7 +174,10 @@ func TestResolveAccountingDrift_PreviewsThenFixesAsTheApprover(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(
 		t,
-		agenttoolports.ToolTarget{Resource: permission.ResourceAccountingSync, ID: finding.ID},
+		agenttoolports.ToolTarget{
+			Resource: permission.ResourceAccountingReconciliation,
+			ID:       finding.ID,
+		},
 		target,
 	)
 }
@@ -257,6 +260,7 @@ func TestAccountingDriftTools_AskAPersonFirst(t *testing.T) {
 	operator := &fakeDriftOperator{}
 	resolve := newResolveAccountingDriftTool(operator).(agenttoolports.ToolPolicyDeclarer).Policy()
 	assert.Equal(t, agent.TierActWithApproval, resolve.MaxTier)
+	assert.Equal(t, permission.ResourceAccountingReconciliation, resolve.Resource)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, resolve.Egress)
 	for _, tool := range []agenttoolports.AgentTool{
 		newDismissAccountingDriftTool(operator),
@@ -264,6 +268,6 @@ func TestAccountingDriftTools_AskAPersonFirst(t *testing.T) {
 	} {
 		policy := tool.(agenttoolports.ToolPolicyDeclarer).Policy()
 		assert.Equal(t, agent.TierActWithApproval, policy.MaxTier, policy.Name)
-		assert.Equal(t, permission.ResourceAccountingSync, policy.Resource, policy.Name)
+		assert.Equal(t, permission.ResourceAccountingReconciliation, policy.Resource, policy.Name)
 	}
 }

@@ -199,6 +199,7 @@ export const Resource = {
   AccountingReport: "accounting_report",
   AccountingIntegration: "accounting_integration",
   AccountingSync: "accounting_sync",
+  AccountingReconciliation: "accounting_reconciliation",
 
   // Payroll & Settlements
   DriverPayProfile: "driver_pay_profile",

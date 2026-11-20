@@ -159,7 +159,7 @@ func (r *Reconciler) withheldFeatures(
 
 	withheld := make([]platformcatalog.FeatureKey, 0)
 	for _, feature := range slices.Sorted(maps.Keys(named)) {
-		on, err := r.features.Enabled(ctx, feature)
+		on, err := r.features.EnabledAnywhere(ctx, feature)
 		if err != nil {
 			return nil, fmt.Errorf("feature %q: %w", feature, err)
 		}

@@ -3,6 +3,7 @@ package accountingconnectionkit
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"time"
 
@@ -30,8 +31,40 @@ const (
 
 var RealmIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,100}$`)
 
+func (k *Kit) RequireAccountingIntegration(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(
+		ctx,
+		k.features,
+		platformcatalog.FeatureAccountingIntegration,
+	)
+}
+
 func (k *Kit) RequireAccounting(ctx context.Context) error {
 	return platformcatalogports.RequireFeature(ctx, k.features, platformcatalog.FeatureAccounting)
+}
+
+func (k *Kit) Entitled(
+	ctx context.Context,
+	conns []*accountingconnection.AccountingConnection,
+	feature platformcatalog.FeatureKey,
+) ([]*accountingconnection.AccountingConnection, error) {
+	on := make(map[pulid.ID]bool, len(conns))
+	kept := make([]*accountingconnection.AccountingConnection, 0, len(conns))
+	for _, conn := range conns {
+		entitled, asked := on[conn.OrganizationID]
+		if !asked {
+			var err error
+			entitled, err = k.features.Enabled(ConnectionScope(ctx, conn), feature)
+			if err != nil {
+				return nil, fmt.Errorf("ask whether %s is on the plan: %w", feature, err)
+			}
+			on[conn.OrganizationID] = entitled
+		}
+		if entitled {
+			kept = append(kept, conn)
+		}
+	}
+	return kept, nil
 }
 
 func (k *Kit) RequestReferenceRefresh(

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
@@ -90,53 +91,67 @@ func (n *Notices) PlanChanged(
 	notices := n.addOnNotices(ctx, replacement)
 	if end := n.planEndNotice(ctx, replacement.PlanEnd); end != nil {
 		notices = append(notices, *end)
-		n.l.Info("the plan's end changed; telling each organization's administrators",
+		n.l.Info("the plan's end changed; telling the administrators of the scope it concerns",
+			zap.String("scope", replacement.Scope.Key()),
 			zap.String("notice", string(replacement.PlanEnd.Kind)),
 			zap.Int64("endsAt", replacement.PlanEnd.EndsAt),
 		)
 	}
 
-	return n.eachTenant(ctx, func(ctx context.Context, tenant pagination.TenantInfo) error {
-		var errs []error
-		for i := range notices {
-			if _, err := n.notifier.NotifyPermitted(ctx, notificationservice.NotifyPermittedRequest{
-				Tenant:       tenant,
-				Resource:     permission.ResourceOrganization,
-				Operation:    permission.OpUpdate,
-				Limit:        maxNoticeRecipients,
-				Now:          n.clock(),
-				Notification: notices[i],
-			}); err != nil {
-				errs = append(errs, err)
-			}
+	return n.eachTenant(
+		ctx,
+		replacement.Scope,
+		func(ctx context.Context, tenant pagination.TenantInfo) error {
+			return n.tell(ctx, tenant, notices)
+		},
+	)
+}
+
+func (n *Notices) tell(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	notices []notification.Notification,
+) error {
+	var errs []error
+	for i := range notices {
+		if _, err := n.notifier.NotifyPermitted(ctx, notificationservice.NotifyPermittedRequest{
+			Tenant:       tenant,
+			Resource:     permission.ResourceOrganization,
+			Operation:    permission.OpUpdate,
+			Limit:        maxNoticeRecipients,
+			Now:          n.clock(),
+			Notification: notices[i],
+		}); err != nil {
+			errs = append(errs, err)
 		}
-		if err := n.realtime.PublishResourceInvalidation(
-			ctx,
-			&realtimeports.PublishResourceInvalidationRequest{
-				OrganizationID: tenant.OrgID,
-				BusinessUnitID: tenant.BuID,
-				Resource:       PlanResource,
-				Action:         "updated",
-			},
-		); err != nil {
-			n.l.Warn("cannot tell open pages that the plan changed", zap.Error(err))
-		}
-		return errors.Join(errs...)
-	})
+	}
+	if err := n.realtime.PublishResourceInvalidation(
+		ctx,
+		&realtimeports.PublishResourceInvalidationRequest{
+			OrganizationID: tenant.OrgID,
+			BusinessUnitID: tenant.BuID,
+			Resource:       PlanResource,
+			Action:         "updated",
+		},
+	); err != nil {
+		n.l.Warn("cannot tell open pages that the plan changed", zap.Error(err))
+	}
+	return errors.Join(errs...)
 }
 
 func (n *Notices) addOnNotices(
 	ctx context.Context,
 	replacement *managedfeatures.Replacement,
 ) []notification.Notification {
-	if !replacement.FeaturesChanged() || replacement.Previous == nil {
+	if !replacement.FeaturesChanged() || !replacement.Previous.HasList() {
 		return []notification.Notification{}
 	}
 	shift := managedfeatures.Shift(replacement.Previous.Features, replacement.Current.Features)
 	if shift.Empty() {
 		return []notification.Notification{}
 	}
-	n.l.Info("the plan's add-ons changed; telling each organization's administrators",
+	n.l.Info("the plan's add-ons changed; telling the administrators of the scope it concerns",
+		zap.String("scope", replacement.Scope.Key()),
 		zap.Int("left", len(shift.Left)),
 		zap.Int("joined", len(shift.Joined)),
 	)
@@ -232,7 +247,14 @@ func notice(
 
 func (n *Notices) eachTenant(
 	ctx context.Context,
+	scope managedscope.Scope,
 	fn func(context.Context, pagination.TenantInfo) error,
 ) error {
+	if tenant, ok := scope.Tenant(); ok {
+		return fn(
+			ctx,
+			pagination.TenantInfo{OrgID: tenant.OrganizationID, BuID: tenant.BusinessUnitID},
+		)
+	}
 	return tenantports.EachTenant(ctx, n.tenants, fn)
 }

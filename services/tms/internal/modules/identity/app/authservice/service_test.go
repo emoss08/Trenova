@@ -579,6 +579,7 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 		or:             orgRepo,
 		ssoRepo:        ssoRepo,
 		stateRepo:      stateRepo,
+		features:       plantest.AllFeatures(),
 		securityConfig: &securityconfig.Config{},
 		serverConfig: &serverconfig.Config{
 			CORS: serverconfig.CORSConfig{

@@ -35,12 +35,22 @@ func counting(inner platformcatalogports.FeatureGate) *countingGate {
 	}
 }
 
-func (g *countingGate) Enabled(ctx context.Context, feature platformcatalog.FeatureKey) (bool, error) {
+func (g *countingGate) Enabled(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
 	g.asked[feature]++
 	if err := g.fail[feature]; err != nil {
 		return false, err
 	}
 	return g.inner.Enabled(ctx, feature)
+}
+
+func (g *countingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return g.Enabled(ctx, feature)
 }
 
 func names(observers []*namedObserver) []string {
@@ -132,7 +142,10 @@ func TestObservingSkipsNilObservers(t *testing.T) {
 	kept, err := platformcatalogports.Observing(
 		t.Context(),
 		plantest.AllFeatures(),
-		[]platformcatalogports.FeatureObserver{nil, &namedObserver{feature: platformcatalog.FeatureCoreTMS}},
+		[]platformcatalogports.FeatureObserver{
+			nil,
+			&namedObserver{feature: platformcatalog.FeatureCoreTMS},
+		},
 	)
 
 	require.NoError(t, err)

@@ -118,7 +118,7 @@ func driftListSpec() readspec.List {
 		QueryNote: "Words to find in the document number, the party name or who " +
 			"changed it.",
 		Names:    accountingSystemName,
-		Resource: permission.ResourceAccountingSync,
+		Resource: permission.ResourceAccountingReconciliation,
 		Alongside: []readspec.Alongside{{
 			Key:       keyAccountingOverview,
 			Operation: "DeskAccountingDriftOverview",
@@ -143,7 +143,7 @@ func inboundListSpec() readspec.List {
 		QueryNote: "Words to find in the payment's number or the customer or vendor " +
 			"name.",
 		Names:    accountingSystemName,
-		Resource: permission.ResourceAccountingSync,
+		Resource: permission.ResourceAccountingReconciliation,
 		Shape:    inboundActions,
 	}
 }

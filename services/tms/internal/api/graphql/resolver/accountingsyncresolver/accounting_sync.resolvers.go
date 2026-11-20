@@ -721,7 +721,7 @@ func (r *MutationResolver) ChangeAccountingBackfill(ctx context.Context, input g
 }
 
 func (r *MutationResolver) ApplyAccountingInboundChange(ctx context.Context, id string) (*accountinginbound.AccountingInboundChange, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -740,7 +740,7 @@ func (r *MutationResolver) ApplyAccountingInboundChange(ctx context.Context, id 
 }
 
 func (r *MutationResolver) IgnoreAccountingInboundChange(ctx context.Context, input gqlmodel.IgnoreAccountingInboundChangeInput) (*accountinginbound.AccountingInboundChange, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -760,7 +760,7 @@ func (r *MutationResolver) IgnoreAccountingInboundChange(ctx context.Context, in
 }
 
 func (r *MutationResolver) ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingdrift.AccountingDriftFinding, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -780,7 +780,7 @@ func (r *MutationResolver) ResolveAccountingDrift(ctx context.Context, input gql
 }
 
 func (r *MutationResolver) DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingdrift.AccountingDriftFinding, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -800,7 +800,7 @@ func (r *MutationResolver) DismissAccountingDrift(ctx context.Context, input gql
 }
 
 func (r *MutationResolver) CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*accountingdriftports.AccountingDriftOverview, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -984,7 +984,7 @@ func (r *QueryResolver) AccountingBackfills(ctx context.Context, integrationType
 }
 
 func (r *QueryResolver) AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*accountinginboundports.AccountingInboundOverview, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -996,7 +996,7 @@ func (r *QueryResolver) AccountingInboundOverview(ctx context.Context, integrati
 }
 
 func (r *QueryResolver) AccountingInboundChangeTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingInboundChangeConnection, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -1019,7 +1019,7 @@ func (r *QueryResolver) AccountingInboundChangeTable(ctx context.Context, integr
 }
 
 func (r *QueryResolver) AccountingInboundChange(ctx context.Context, id string) (*accountinginbound.AccountingInboundChange, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -1035,7 +1035,7 @@ func (r *QueryResolver) AccountingInboundChange(ctx context.Context, id string) 
 }
 
 func (r *QueryResolver) AccountingInboundApplyPreview(ctx context.Context, id string) (*accountinginboundports.AccountingInboundApplyPreview, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -1051,7 +1051,7 @@ func (r *QueryResolver) AccountingInboundApplyPreview(ctx context.Context, id st
 }
 
 func (r *QueryResolver) AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*accountingdriftports.AccountingDriftOverview, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -1063,7 +1063,7 @@ func (r *QueryResolver) AccountingDriftOverview(ctx context.Context, integration
 }
 
 func (r *QueryResolver) AccountingDriftFindingTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingDriftFindingConnection, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -1086,7 +1086,7 @@ func (r *QueryResolver) AccountingDriftFindingTable(ctx context.Context, integra
 }
 
 func (r *QueryResolver) AccountingDriftFinding(ctx context.Context, id string) (*accountingdrift.AccountingDriftFinding, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
@@ -1102,7 +1102,7 @@ func (r *QueryResolver) AccountingDriftFinding(ctx context.Context, id string) (
 }
 
 func (r *QueryResolver) AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingdriftports.AccountingDriftFixPreview, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountingReconciliation, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}

@@ -51,7 +51,8 @@ Keywords: automatic payments, apply automatically, turn off payment sync, inboun
 3. Select **Save**.
 
 ## Notes
-Viewing the page needs read access to accounting sync; applying and ignoring need update access,
+Viewing the page needs read access to accounting reconciliation, part of the Accounting add-on;
+applying and ignoring need update access,
 and applying also needs permission to post customer payments or to mark the settlement paid.
 A payment applied here cannot be voided or changed from Trenova while it pays more than one
 document, because the books hold it as one payment; change it in the accounting system instead. A

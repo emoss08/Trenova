@@ -4,8 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -58,10 +61,14 @@ func TestAPlanChangeHasEveryOrganizationReadItsPermissionsAgain(t *testing.T) {
 
 	all := tenants(130)
 	changes := &recordedChanges{}
-	observer := &PlanObserver{notifier: changes, tenants: pagedTenants{tenants: all}, l: zap.NewNop()}
+	observer := &PlanObserver{
+		notifier: changes,
+		tenants:  pagedTenants{tenants: all},
+		l:        zap.NewNop(),
+	}
 
-	err := observer.PlanChanged(t.Context(), managedfeatures.Replace(
-		&managedfeatures.State{ID: managedfeatures.CurrentStateID},
+	err := observer.PlanChanged(t.Context(), managedfeatures.Replace(managedscope.Instance(),
+		&managedfeatures.State{ScopeKey: managedscope.InstanceKey, ReceivedAt: 1},
 		&managedfeatures.Received{
 			Features: []platformcatalog.FeatureKey{platformcatalog.FeatureAIDesk},
 		},
@@ -80,13 +87,17 @@ func TestAnUnchangedPlanDisturbsNobody(t *testing.T) {
 	t.Parallel()
 
 	changes := &recordedChanges{}
-	observer := &PlanObserver{notifier: changes, tenants: pagedTenants{tenants: tenants(3)}, l: zap.NewNop()}
+	observer := &PlanObserver{
+		notifier: changes,
+		tenants:  pagedTenants{tenants: tenants(3)},
+		l:        zap.NewNop(),
+	}
 
 	held := &managedfeatures.State{
-		ID:       managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		Features: []platformcatalog.FeatureKey{platformcatalog.FeatureAIDesk},
 	}
-	err := observer.PlanChanged(t.Context(), managedfeatures.Replace(
+	err := observer.PlanChanged(t.Context(), managedfeatures.Replace(managedscope.Instance(),
 		held,
 		&managedfeatures.Received{
 			Features: []platformcatalog.FeatureKey{platformcatalog.FeatureAIDesk},
@@ -101,14 +112,18 @@ func TestAPlanChangeThatOnlySchedulesAnEndDisturbsNobody(t *testing.T) {
 	t.Parallel()
 
 	changes := &recordedChanges{}
-	observer := &PlanObserver{notifier: changes, tenants: pagedTenants{tenants: tenants(3)}, l: zap.NewNop()}
+	observer := &PlanObserver{
+		notifier: changes,
+		tenants:  pagedTenants{tenants: tenants(3)},
+		l:        zap.NewNop(),
+	}
 
 	held := &managedfeatures.State{
-		ID:       managedfeatures.CurrentStateID,
+		ScopeKey: managedscope.InstanceKey, ReceivedAt: 1,
 		Features: []platformcatalog.FeatureKey{platformcatalog.FeatureAccounting},
 	}
 	endings := []managedfeatures.AddOnEnding{{AddOn: platformcatalog.AddOnAccounting, EndsAt: 99}}
-	err := observer.PlanChanged(t.Context(), managedfeatures.Replace(
+	err := observer.PlanChanged(t.Context(), managedfeatures.Replace(managedscope.Instance(),
 		held,
 		&managedfeatures.Received{
 			Features:     []platformcatalog.FeatureKey{platformcatalog.FeatureAccounting},
@@ -118,4 +133,53 @@ func TestAPlanChangeThatOnlySchedulesAnEndDisturbsNobody(t *testing.T) {
 	))
 	require.NoError(t, err)
 	assert.Empty(t, changes.organizations)
+}
+
+func TestAnOrganizationsPlanChangeHasOnlyThatOrganizationReadItsPermissionsAgain(t *testing.T) {
+	t.Parallel()
+
+	changes := &recordedChanges{}
+	observer := &PlanObserver{
+		notifier: changes,
+		tenants:  pagedTenants{tenants: tenants(3)},
+		l:        zap.NewNop(),
+	}
+	org := pulid.MustNew("org_")
+	scope := managedscope.Organization(
+		dbscope.Tenant{OrganizationID: org, BusinessUnitID: pulid.MustNew("bu_")},
+	)
+
+	err := observer.PlanChanged(t.Context(), managedfeatures.Replace(
+		scope,
+		&managedfeatures.State{ScopeKey: scope.Key(), ReceivedAt: 1},
+		&managedfeatures.Received{
+			Features: []platformcatalog.FeatureKey{platformcatalog.FeatureAIDesk},
+		},
+		1,
+	))
+	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{org}, changes.organizations)
+}
+
+func TestSuspendingAnOrganizationHasItReadItsPermissionsAgain(t *testing.T) {
+	t.Parallel()
+
+	changes := &recordedChanges{}
+	observer := &PlanObserver{
+		notifier: changes,
+		tenants:  pagedTenants{tenants: tenants(3)},
+		l:        zap.NewNop(),
+	}
+	org := pulid.MustNew("org_")
+	scope := managedscope.Organization(
+		dbscope.Tenant{OrganizationID: org, BusinessUnitID: pulid.MustNew("bu_")},
+	)
+
+	err := observer.PlanChanged(t.Context(), managedfeatures.SetLifecycle(
+		scope,
+		&managedfeatures.State{ScopeKey: scope.Key(), ReceivedAt: 1},
+		managedfeatures.LifecycleSuspended,
+	))
+	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{org}, changes.organizations)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage/managedusagedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
@@ -32,10 +33,16 @@ func New(p Params) managedusageports.StateRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.managed-usage-repository")}
 }
 
-func (r *repository) Get(ctx context.Context) (*managedusage.State, error) {
-	ctx = dbscope.WithSystem(ctx, "read the usage state the control plane set for this instance")
+func (r *repository) Get(
+	ctx context.Context,
+	scope managedscope.Scope,
+) (*managedusage.State, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"read the usage state the control plane set for one managed scope",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*managedusage.State, error) {
-		state, err := managedusagedb.States.Get(ctx, r.db.Keel(ctx), managedusage.CurrentStateID)
+		state, err := managedusagedb.States.Get(ctx, r.db.Keel(ctx), scope.Key())
 		if errors.Is(err, keel.ErrNotFound) {
 			return nil, managedusage.ErrNoState
 		}
@@ -46,16 +53,23 @@ func (r *repository) Get(ctx context.Context) (*managedusage.State, error) {
 	})
 }
 
-func (r *repository) Save(ctx context.Context, state *managedusage.State) error {
-	ctx = dbscope.WithSystem(ctx, "record the usage state the control plane set for this instance")
+func (r *repository) Save(
+	ctx context.Context,
+	scope managedscope.Scope,
+	state *managedusage.State,
+) error {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"record the usage state the control plane set for one managed scope",
+	)
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		s := managedusagedb.States
-		state.ID = managedusage.CurrentStateID
+		state.ScopeKey = scope.Key()
 		if _, err := s.Upsert(
 			ctx,
 			r.db.Keel(ctx),
 			[]*managedusage.State{state},
-			keel.OnConflict(s.ID).Update(
+			keel.OnConflict(s.ScopeKey).Update(
 				s.WindowStart,
 				s.WindowEnd,
 				s.Overage,

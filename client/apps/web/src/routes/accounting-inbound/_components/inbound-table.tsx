@@ -37,7 +37,7 @@ export default function InboundTable({
       emptyTitle={t("No payments from the books yet")}
       queryKey={ACCOUNTING_INBOUND_TABLE_KEY}
       graphql={graphql}
-      resource={Resource.AccountingSync}
+      resource={Resource.AccountingReconciliation}
       columns={columns}
       TablePanel={Panel}
       enableCreateAction={false}

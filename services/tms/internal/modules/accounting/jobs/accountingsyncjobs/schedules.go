@@ -17,7 +17,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "accounting-connection-check",
-			Feature:       platformcatalog.FeatureAccounting,
+			Feature:       platformcatalog.FeatureAccountingIntegration,
 			Description:   "Refresh expiring accounting authorizations and check every connection answers",
 			Spec:          schedule.Cron("7 * * * *"),
 			Workflow:      CheckAccountingConnectionsWorkflow,
@@ -41,7 +41,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-reference-refresh",
-			Feature:       platformcatalog.FeatureAccounting,
+			Feature:       platformcatalog.FeatureAccountingIntegration,
 			Description:   "Pull every active accounting connection's reference data and re-score open mappings",
 			Spec:          schedule.Cron("17 7 * * *"),
 			Workflow:      RefreshAllAccountingReferenceWorkflow,
@@ -90,7 +90,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-sync-dispatch",
-			Feature:       platformcatalog.FeatureAccounting,
+			Feature:       platformcatalog.FeatureAccountingIntegration,
 			Description:   "Wake the sender for every accounting connection with documents due",
 			Spec:          schedule.Cron("*/5 * * * *"),
 			Workflow:      KickDueAccountingSyncWorkflow,
@@ -102,7 +102,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-sync-safety-net",
-			Feature:       platformcatalog.FeatureAccounting,
+			Feature:       platformcatalog.FeatureAccountingIntegration,
 			Description:   "Queue posted documents that never reached the accounting outbox",
 			Spec:          schedule.Cron("23 * * * *"),
 			Workflow:      AccountingSafetyNetWorkflow,
@@ -114,7 +114,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            "accounting-sync-retention",
-			Feature:       platformcatalog.FeatureAccounting,
+			Feature:       platformcatalog.FeatureAccountingIntegration,
 			Description:   "Clear accounting sync payloads and attempts older than 90 days",
 			Spec:          schedule.Cron("41 4 * * *"),
 			Workflow:      PurgeAccountingSyncWorkflow,

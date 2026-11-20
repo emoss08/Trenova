@@ -33,7 +33,7 @@ export function AccountingDriftPage() {
     ...accountingSync.driftOverview(system),
     enabled: resolved.system !== null,
   });
-  const { allowed: canUpdate } = usePermission(Resource.AccountingSync, Operation.Update);
+  const { allowed: canUpdate } = usePermission(Resource.AccountingReconciliation, Operation.Update);
   const actions = useAccountingDriftActions();
   const providerName = syncSummary.data?.providerName ?? t("the accounting system");
   const connection = syncSummary.data?.connection ?? null;

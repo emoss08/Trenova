@@ -103,7 +103,7 @@ function InboundChangeDetail({
 }) {
   const t = useT();
   const labels = useAccountingInboundLabels();
-  const { allowed: canUpdate } = usePermission(Resource.AccountingSync, Operation.Update);
+  const { allowed: canUpdate } = usePermission(Resource.AccountingReconciliation, Operation.Update);
   const actions = useAccountingInboundActions();
   const [ignoring, setIgnoring] = useState(false);
   const applicable = accountingInboundCanApply(change.status, change.reason);

@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -92,11 +91,6 @@ func newRouter(service *fakeService) *gin.Engine {
 	handler := New(Params{
 		Service:      service,
 		ErrorHandler: errorHandler,
-		Features: middleware.NewFeatureGuard(middleware.FeatureGuardParams{
-			Features:     plantest.AllFeatures(),
-			ErrorHandler: errorHandler,
-			Logger:       zap.NewNop(),
-		}),
 		RateLimiter: middleware.NewRateLimiter(middleware.RateLimiterParams{
 			SecurityConfig: &cfg.Security,
 			Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),

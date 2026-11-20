@@ -24,6 +24,13 @@ func (failingGate) Enabled(context.Context, platformcatalog.FeatureKey) (bool, e
 	return false, errPlanUnavailable
 }
 
+func (r failingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return r.Enabled(ctx, feature)
+}
+
 type countingGate struct {
 	platformcatalogports.FeatureGate
 
@@ -39,6 +46,13 @@ func (g *countingGate) Enabled(
 	}
 	g.asked[feature]++
 	return g.FeatureGate.Enabled(ctx, feature)
+}
+
+func (g *countingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return g.Enabled(ctx, feature)
 }
 
 func registry(t *testing.T) *permissioncatalog.Registry {

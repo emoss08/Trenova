@@ -120,12 +120,12 @@ var recordKinds = map[Kind]recordKindSpec{
 	},
 	AccountingInboundChange: {
 		"acctic_",
-		permission.ResourceAccountingSync,
+		permission.ResourceAccountingReconciliation,
 		"accounting inbound change",
 	},
 	AccountingDriftFinding: {
 		"acctdf_",
-		permission.ResourceAccountingSync,
+		permission.ResourceAccountingReconciliation,
 		"accounting drift finding",
 	},
 	CarrierIntelligenceEvent: {

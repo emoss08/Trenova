@@ -181,10 +181,11 @@ func (f *fakeMembers) GetTenantMember(
 }
 
 type fakeAccounts struct {
-	created  []*directoryaccounts.CreateRequest
-	updated  []*directoryaccounts.UpdateRequest
-	revoked  []*directoryaccounts.AccessRequest
-	restored []*directoryaccounts.AccessRequest
+	createErr error
+	created   []*directoryaccounts.CreateRequest
+	updated   []*directoryaccounts.UpdateRequest
+	revoked   []*directoryaccounts.AccessRequest
+	restored  []*directoryaccounts.AccessRequest
 }
 
 func (f *fakeAccounts) Create(
@@ -192,6 +193,9 @@ func (f *fakeAccounts) Create(
 	req *directoryaccounts.CreateRequest,
 ) (*tenant.User, error) {
 	f.created = append(f.created, req)
+	if f.createErr != nil {
+		return nil, f.createErr
+	}
 	return &tenant.User{
 		ID:                    pulid.MustNew("usr_"),
 		BusinessUnitID:        req.Actor.BusinessUnitID,

@@ -5,12 +5,15 @@ import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { usePermission } from "@/hooks/use-permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 
 export function InboundPaymentsLink({ system }: { system: AccountingSystem }) {
   const t = useT();
-  const overview = useQuery(accountingSync.inboundOverview(system));
+  const { allowed } = usePermission(Resource.AccountingReconciliation, Operation.Read);
+  const overview = useQuery({ ...accountingSync.inboundOverview(system), enabled: allowed });
   const data = overview.data;
-  if (!data) {
+  if (!allowed || !data) {
     return null;
   }
   const waiting = data.summary.proposed;

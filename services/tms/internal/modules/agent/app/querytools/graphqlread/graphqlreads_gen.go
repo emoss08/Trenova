@@ -224,7 +224,7 @@ var Reads = map[string]Read{
 		Reason:    "Drift findings are a record kind of the accounting sync resource, read by accountingDriftFindingTable for one accounting system.",
 		RootField: "accountingDriftFindingTable",
 		Node:      "AccountingDriftFinding",
-		Resource:  "accounting_sync",
+		Resource:  "accounting_reconciliation",
 		Entity:    func() domaintypes.PostgresSearchable { return new(accountingdrift.AccountingDriftFinding) },
 		Variables: []Variable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
@@ -232,7 +232,7 @@ var Reads = map[string]Read{
 			{Name: "integrationType", Type: "AccountingSystem", NonNull: true, List: false, Kind: "enum", Enum: []string{"QuickBooksOnline", "Xero", "BusinessCentral", "NetSuite"}, Description: "The accounting system, such as QuickBooksOnline or Xero."},
 		},
 		Alongside: []Alongside{
-			{Operation: "DeskAccountingDriftOverview", RootField: "accountingDriftOverview", Resource: "accounting_sync", Keys: []string{"integrationType"}, Object: true},
+			{Operation: "DeskAccountingDriftOverview", RootField: "accountingDriftOverview", Resource: "accounting_reconciliation", Keys: []string{"integrationType"}, Object: true},
 		},
 		Fields: []Field{
 			{Name: "id", Type: "ID", Kind: "scalar", List: false, NonNull: true, Selected: true},
@@ -275,7 +275,7 @@ var Reads = map[string]Read{
 		Reason:    "Inbound changes are a record kind of the accounting sync resource, read by accountingInboundChangeTable for one accounting system.",
 		RootField: "accountingInboundChangeTable",
 		Node:      "AccountingInboundChange",
-		Resource:  "accounting_sync",
+		Resource:  "accounting_reconciliation",
 		Entity:    func() domaintypes.PostgresSearchable { return new(accountinginbound.AccountingInboundChange) },
 		Variables: []Variable{
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},

@@ -160,7 +160,9 @@ func reviewedItem() *billingqueue.BillingQueueItem {
 	}
 }
 
-func TestBillingQueueItemConnectionToModel_WithholdsTheAgentReviewWithoutAgentAutomation(t *testing.T) {
+func TestBillingQueueItemConnectionToModel_WithholdsTheAgentReviewWithoutAgentAutomation(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	gate := &countingGate{FeatureGate: plantest.BaseOnly()}
@@ -230,6 +232,13 @@ func (g *countingGate) Enabled(
 	return g.FeatureGate.Enabled(ctx, feature)
 }
 
+func (g *countingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return g.Enabled(ctx, feature)
+}
+
 func (g *countingGate) asked(feature platformcatalog.FeatureKey) int {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -241,6 +250,13 @@ type failingGate struct{}
 
 func (failingGate) Enabled(context.Context, platformcatalog.FeatureKey) (bool, error) {
 	return false, errors.New("the plan could not be read")
+}
+
+func (r failingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return r.Enabled(ctx, feature)
 }
 
 func onplanMemo(gate platformcatalogports.FeatureGate) *onplan.Memo {

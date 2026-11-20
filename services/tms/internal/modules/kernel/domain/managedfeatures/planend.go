@@ -62,7 +62,7 @@ func announcePlanEnd(held planEndMarks, next, now int64) (planEndMarks, *PlanEnd
 }
 
 func (s *State) PlanEndReminderDue(now int64) bool {
-	if s == nil || s.PlanEndsAt == 0 || s.PlanEndReminded == s.PlanEndsAt {
+	if s == nil || s.Suspended() || s.PlanEndsAt == 0 || s.PlanEndReminded == s.PlanEndsAt {
 		return false
 	}
 	return now >= s.PlanEndsAt-PlanEndReminderLead && now < s.PlanEndsAt
@@ -70,11 +70,16 @@ func (s *State) PlanEndReminderDue(now int64) bool {
 
 func RemindPlanEnd(held *State, now int64) *Replacement {
 	if !held.PlanEndReminderDue(now) {
-		return &Replacement{Previous: held, Current: held}
+		out := &Replacement{Previous: held, Current: held}
+		if held != nil {
+			out.Scope = held.Scope()
+		}
+		return out
 	}
 	current := *held
 	current.PlanEndReminded = held.PlanEndsAt
 	return &Replacement{
+		Scope:    held.Scope(),
 		Previous: held,
 		Current:  &current,
 		PlanEnd: &PlanEndNotice{

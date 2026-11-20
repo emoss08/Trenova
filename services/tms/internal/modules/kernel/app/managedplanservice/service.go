@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
@@ -18,6 +19,7 @@ type Params struct {
 	Config *managedconfig.Config
 	Repo   managedfeaturesports.StateRepository
 	Usage  managedusageports.UsageReader
+	Scopes *managedscope.Resolver
 }
 
 type Plan struct {
@@ -34,10 +36,11 @@ type Service struct {
 	managed bool
 	repo    managedfeaturesports.StateRepository
 	usage   managedusageports.UsageReader
+	scopes  *managedscope.Resolver
 }
 
 func New(p Params) *Service {
-	return &Service{managed: p.Config.Enabled, repo: p.Repo, usage: p.Usage}
+	return &Service{managed: p.Config.Enabled, repo: p.Repo, usage: p.Usage, scopes: p.Scopes}
 }
 
 func (s *Service) Plan(ctx context.Context) (*Plan, error) {
@@ -53,11 +56,15 @@ func (s *Service) Plan(ctx context.Context) (*Plan, error) {
 		}, nil
 	}
 
-	held, changes, err := s.repo.History(ctx, managedfeatures.PlanHistoryLimit)
+	scope, err := s.scopes.Scope(ctx)
 	if err != nil {
 		return nil, err
 	}
-	usage, err := s.usage.Usage(ctx)
+	held, changes, err := s.repo.History(ctx, scope, managedfeatures.PlanHistoryLimit)
+	if err != nil {
+		return nil, err
+	}
+	usage, err := s.usage.Usage(ctx, scope)
 	if err != nil {
 		return nil, err
 	}

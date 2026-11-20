@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedfeaturesservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
@@ -28,6 +29,7 @@ import (
 const managedToken = "0123456789abcdef0123456789abcdef"
 
 type fakeManagedUsage struct {
+	scope    managedscope.Scope
 	since    int64
 	readings []managedusageservice.Reading
 	err      error
@@ -36,13 +38,20 @@ type fakeManagedUsage struct {
 
 func (f *fakeManagedUsage) Readings(
 	_ context.Context,
+	scope managedscope.Scope,
 	since int64,
 ) ([]managedusageservice.Reading, error) {
+	f.scope = scope
 	f.since = since
 	return f.readings, f.err
 }
 
-func (f *fakeManagedUsage) SetState(_ context.Context, s *managedusage.State) error {
+func (f *fakeManagedUsage) SetState(
+	_ context.Context,
+	scope managedscope.Scope,
+	s *managedusage.State,
+) error {
+	f.scope = scope
 	if err := s.Validate(); err != nil {
 		return err
 	}
@@ -60,7 +69,13 @@ type fakeFeatureRepo struct {
 	err     error
 }
 
-func (f *fakeFeatureRepo) Get(context.Context) (*managedfeatures.State, error) {
+func (f *fakeFeatureRepo) Get(
+	_ context.Context,
+	scope managedscope.Scope,
+) (*managedfeatures.State, error) {
+	if !scope.IsInstance() {
+		return nil, errors.New("the listener writes only the instance scope")
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.err != nil {
@@ -83,7 +98,10 @@ func (f *fakeFeatureRepo) Replace(
 	if f.err != nil {
 		return nil, f.err
 	}
-	replacement := managedfeatures.Replace(f.state, req.Received, req.Now)
+	if !req.Scope.IsInstance() {
+		return nil, errors.New("the listener writes only the instance scope")
+	}
+	replacement := managedfeatures.Replace(req.Scope, f.state, req.Received, req.Now)
 	if !replacement.Updated() {
 		return replacement, nil
 	}
@@ -96,8 +114,30 @@ func (f *fakeFeatureRepo) Replace(
 	return replacement, nil
 }
 
+func (f *fakeFeatureRepo) SetLifecycle(
+	context.Context,
+	*managedfeaturesports.LifecycleRequest,
+) (*managedfeatures.Replacement, error) {
+	return nil, errors.New("the listener never sets a lifecycle")
+}
+
+func (f *fakeFeatureRepo) DuePlanEndReminders(
+	context.Context,
+	*managedfeaturesports.DueRemindersRequest,
+) ([]managedscope.Scope, error) {
+	return nil, nil
+}
+
+func (f *fakeFeatureRepo) AnyActiveScope(
+	context.Context,
+	*platformcatalog.FeatureKey,
+) (bool, error) {
+	return false, errors.New("a dedicated instance never asks about other scopes")
+}
+
 func (f *fakeFeatureRepo) RemindPlanEnd(
 	_ context.Context,
+	_ managedscope.Scope,
 	now int64,
 ) (*managedfeatures.Replacement, error) {
 	f.mu.Lock()
@@ -112,6 +152,7 @@ func (f *fakeFeatureRepo) RemindPlanEnd(
 
 func (f *fakeFeatureRepo) History(
 	context.Context,
+	managedscope.Scope,
 	int,
 ) (*managedfeatures.State, []*managedfeatures.Change, error) {
 	return f.state, f.changes, nil
@@ -129,12 +170,20 @@ func (r featureRig) Enabled(ctx context.Context, key platformcatalog.FeatureKey)
 	return r.gate.Enabled(ctx, key)
 }
 
+func (r featureRig) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return r.Enabled(ctx, feature)
+}
+
 func newFeatures(
 	repo *fakeFeatureRepo,
 	observers ...managedfeaturesports.PlanObserver,
 ) featureRig {
 	gate := managedfeaturesservice.New(managedfeaturesservice.Params{
 		Repo:   repo,
+		Scopes: managedscope.NewResolver(false),
 		Clock:  func() int64 { return featuresReceivedAt },
 		Logger: zap.NewNop(),
 	})
@@ -316,7 +365,13 @@ func TestManagedSetFeaturesStoresThePlanURLAndAddOnEndings(t *testing.T) {
 		{AddOn: platformcatalog.AddOnAccounting, EndsAt: 1_797_206_400},
 	}, repo.state.AddOnEndings, "an add-on the catalogue does not know is dropped")
 
-	rec = serveFeatures(t, features, http.MethodPut, managedToken, `{"features": ["tms.accounting"]}`)
+	rec = serveFeatures(
+		t,
+		features,
+		http.MethodPut,
+		managedToken,
+		`{"features": ["tms.accounting"]}`,
+	)
 	require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
 	assert.Equal(t, "https://console.trenova.cloud/instances/0193/plan", repo.state.PlanURL,
 		"a request without a plan URL keeps the stored one")
@@ -345,7 +400,12 @@ func TestManagedSetFeaturesStoresTheFinalBackupDaysAndKeepsThemWhenUntold(t *tes
 	} {
 		rec = serveFeatures(t, features, http.MethodPut, managedToken, untold)
 		require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
-		assert.Equal(t, 7, repo.state.FinalBackupDays, "a request that does not say keeps the held number")
+		assert.Equal(
+			t,
+			7,
+			repo.state.FinalBackupDays,
+			"a request that does not say keeps the held number",
+		)
 	}
 }
 
@@ -391,7 +451,12 @@ func TestManagedSetFeaturesStoresAPlanEndThatHasPassed(t *testing.T) {
 		`{"features": ["tms.accounting"], "planEndsAt": "2026-11-07T10:00:00Z"}`)
 	require.Equal(t, http.StatusNoContent, rec.Code, rec.Body.String())
 	require.NotNil(t, repo.state)
-	assert.Equal(t, int64(1_794_045_600), repo.state.PlanEndsAt, "the end stays while the instance is taken down")
+	assert.Equal(
+		t,
+		int64(1_794_045_600),
+		repo.state.PlanEndsAt,
+		"the end stays while the instance is taken down",
+	)
 }
 
 func TestManagedSetFeaturesRefusesAPlanEndTooFarAheadOrMalformed(t *testing.T) {
@@ -503,6 +568,7 @@ func TestManagedReadings(t *testing.T) {
 		"/managed/v1/readings?since=2026-11-05T10:00:00Z", managedToken, "")
 	require.Equal(t, http.StatusOK, rec.Code)
 	assert.Equal(t, int64(1_793_872_800), usage.since)
+	assert.True(t, usage.scope.IsInstance(), "the operator reads the instance's totals")
 	assert.JSONEq(t,
 		`{"readings":[{"meter":"shipments.total","hour":"2026-11-05T10:00:00Z","quantity":7}]}`,
 		rec.Body.String())
@@ -542,6 +608,7 @@ func TestManagedSetState(t *testing.T) {
 	m, ok := usage.state.Meter(platformcatalog.MeterShipmentsTotal)
 	require.True(t, ok)
 	assert.Equal(t, int64(500), m.Allowance)
+	assert.True(t, usage.scope.IsInstance(), "the operator writes the instance's state")
 }
 
 func TestManagedSetStateWithoutAWindow(t *testing.T) {
@@ -727,8 +794,10 @@ func TestManagedSetFeaturesAnswers204AndKeepsTheChangeWhenNotifyingFails(t *test
 	t.Parallel()
 
 	repo := &fakeFeatureRepo{state: &managedfeatures.State{
-		ID:       managedfeatures.CurrentStateID,
-		Features: []platformcatalog.FeatureKey{"tms.dispatch_intelligence"},
+		ScopeKey:   managedscope.InstanceKey,
+		Lifecycle:  managedfeatures.LifecycleActive,
+		Features:   []platformcatalog.FeatureKey{"tms.dispatch_intelligence"},
+		ReceivedAt: featuresReceivedAt - 3_600,
 	}}
 	observer := &failingPlanObserver{}
 	rec := serveFeatures(t, newFeatures(repo, observer), http.MethodPut, managedToken,

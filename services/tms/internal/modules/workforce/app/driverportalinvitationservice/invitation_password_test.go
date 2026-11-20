@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/testutil/mocks/portalaccessportsmock"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/tokenutils"
@@ -37,7 +38,11 @@ func TestAcceptInvitationRefusesAWeakPasswordBeforeLookingUpTheToken(t *testing.
 			t.Parallel()
 
 			portalRepo := portalaccessportsmock.NewMockPortalAccessRepository(t)
-			svc := &Service{l: zap.NewNop(), portalRepo: portalRepo}
+			svc := &Service{
+				l:          zap.NewNop(),
+				portalRepo: portalRepo,
+				features:   plantest.AllFeatures(),
+			}
 
 			result, err := svc.AcceptInvitation(t.Context(), &AcceptInvitationRequest{
 				Token:    "invite-token",
@@ -65,7 +70,7 @@ func TestAcceptInvitationRefusesAPasswordContainingTheInvitedEmail(t *testing.T)
 		GetInvitationByTokenHash(mock.Anything, tokenutils.Hash("invite-token")).
 		Return(invitation, nil).
 		Once()
-	svc := &Service{l: zap.NewNop(), portalRepo: portalRepo}
+	svc := &Service{l: zap.NewNop(), portalRepo: portalRepo, features: plantest.AllFeatures()}
 
 	result, err := svc.AcceptInvitation(t.Context(), &AcceptInvitationRequest{
 		Token:    "invite-token",

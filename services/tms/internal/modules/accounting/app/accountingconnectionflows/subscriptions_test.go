@@ -313,6 +313,7 @@ func newBCHarness(t *testing.T) *bcHarness {
 		Refresher:     h.refresher,
 		Poller:        h.poller,
 		Subscriptions: subs,
+		Features:      h.plan,
 	})
 	bh := &bcHarness{harness: h, bc: bc, subs: subs}
 	bh.conn = bh.seedConnection(t)

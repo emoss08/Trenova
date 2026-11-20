@@ -10,13 +10,15 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures/managedfeaturesdb"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const replaceLockKey = "managed-feature-list"
+const lockKeyPrefix = "managed-feature-list:"
 
 type Params struct {
 	fx.In
@@ -34,19 +36,21 @@ func New(p Params) managedfeaturesports.StateRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.managed-features-repository")}
 }
 
-func (r *repository) Get(ctx context.Context) (*managedfeatures.State, error) {
-	ctx = dbscope.WithSystem(ctx, "read the feature list the control plane set for this instance")
+func (r *repository) Get(
+	ctx context.Context,
+	scope managedscope.Scope,
+) (*managedfeatures.State, error) {
+	ctx = dbscope.WithSystem(ctx, "read the plan the control plane set for one managed scope")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*managedfeatures.State, error) {
-		return r.held(ctx)
+		return r.held(ctx, scope)
 	})
 }
 
-func (r *repository) held(ctx context.Context) (*managedfeatures.State, error) {
-	state, err := managedfeaturesdb.States.Get(
-		ctx,
-		r.db.Keel(ctx),
-		managedfeatures.CurrentStateID,
-	)
+func (r *repository) held(
+	ctx context.Context,
+	scope managedscope.Scope,
+) (*managedfeatures.State, error) {
+	state, err := managedfeaturesdb.States.Get(ctx, r.db.Keel(ctx), scope.Key())
 	if errors.Is(err, keel.ErrNotFound) {
 		return nil, managedfeatures.ErrNoState
 	}
@@ -56,23 +60,30 @@ func (r *repository) held(ctx context.Context) (*managedfeatures.State, error) {
 	return state, nil
 }
 
+func (r *repository) lock(ctx context.Context, db *keel.DB, scope managedscope.Scope) error {
+	if err := keel.LockKey(ctx, db, lockKeyPrefix+scope.Key()); err != nil {
+		return fmt.Errorf("lock the managed feature list: %w", err)
+	}
+	return nil
+}
+
 func (r *repository) Replace(
 	ctx context.Context,
 	req *managedfeaturesports.ReplaceRequest,
 ) (*managedfeatures.Replacement, error) {
-	ctx = dbscope.WithSystem(ctx, "record the feature list the control plane set for this instance")
+	ctx = dbscope.WithSystem(ctx, "record the plan the control plane set for one managed scope")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*managedfeatures.Replacement, error) {
 		db := r.db.Keel(ctx)
-		if err := keel.LockKey(ctx, db, replaceLockKey); err != nil {
-			return nil, fmt.Errorf("lock the managed feature list: %w", err)
+		if err := r.lock(ctx, db, req.Scope); err != nil {
+			return nil, err
 		}
 
-		held, err := r.held(ctx)
+		held, err := r.held(ctx, req.Scope)
 		if err != nil && !errors.Is(err, managedfeatures.ErrNoState) {
 			return nil, err
 		}
 
-		replacement := managedfeatures.Replace(held, req.Received, req.Now)
+		replacement := managedfeatures.Replace(req.Scope, held, req.Received, req.Now)
 		if !replacement.Updated() {
 			return replacement, nil
 		}
@@ -90,18 +101,75 @@ func (r *repository) Replace(
 	})
 }
 
-func (r *repository) RemindPlanEnd(
+func (r *repository) SetLifecycle(
 	ctx context.Context,
-	now int64,
+	req *managedfeaturesports.LifecycleRequest,
 ) (*managedfeatures.Replacement, error) {
-	ctx = dbscope.WithSystem(ctx, "record the reminder that this instance's plan is ending")
+	ctx = dbscope.WithSystem(ctx, "record whether one managed scope is active or suspended")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*managedfeatures.Replacement, error) {
 		db := r.db.Keel(ctx)
-		if err := keel.LockKey(ctx, db, replaceLockKey); err != nil {
-			return nil, fmt.Errorf("lock the managed feature list: %w", err)
+		if err := r.lock(ctx, db, req.Scope); err != nil {
+			return nil, err
 		}
 
-		held, err := r.held(ctx)
+		held, err := r.held(ctx, req.Scope)
+		if err != nil && !errors.Is(err, managedfeatures.ErrNoState) {
+			return nil, err
+		}
+
+		replacement := managedfeatures.SetLifecycle(req.Scope, held, req.Lifecycle)
+		if !replacement.Updated() {
+			return replacement, nil
+		}
+		if err = r.store(ctx, db, replacement.Current); err != nil {
+			return nil, err
+		}
+		return replacement, nil
+	})
+}
+
+func (r *repository) DuePlanEndReminders(
+	ctx context.Context,
+	req *managedfeaturesports.DueRemindersRequest,
+) ([]managedscope.Scope, error) {
+	ctx = dbscope.WithSystem(ctx, "find the managed scopes whose plan ends within three days")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]managedscope.Scope, error) {
+		s := managedfeaturesdb.States
+		due, err := s.
+			Where(
+				s.Lifecycle.Eq(managedfeatures.LifecycleActive),
+				s.PlanEndsAt.IsNotNull(),
+				s.PlanEndsAt.Gt(req.Now),
+				s.PlanEndsAt.Lte(req.Now+managedfeatures.PlanEndReminderLead),
+				s.PlanEndReminded.IsDistinctFromExpr(s.PlanEndsAt),
+			).
+			Order(s.PlanEndsAt.Asc(), s.ScopeKey.Asc()).
+			Limit(req.Limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("find plans that end within three days: %w", err)
+		}
+		scopes := make([]managedscope.Scope, 0, len(due))
+		for _, state := range due {
+			scopes = append(scopes, state.Scope())
+		}
+		return scopes, nil
+	})
+}
+
+func (r *repository) RemindPlanEnd(
+	ctx context.Context,
+	scope managedscope.Scope,
+	now int64,
+) (*managedfeatures.Replacement, error) {
+	ctx = dbscope.WithSystem(ctx, "record the reminder that one managed scope's plan is ending")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*managedfeatures.Replacement, error) {
+		db := r.db.Keel(ctx)
+		if err := r.lock(ctx, db, scope); err != nil {
+			return nil, err
+		}
+
+		held, err := r.held(ctx, scope)
 		if errors.Is(err, managedfeatures.ErrNoState) {
 			return managedfeatures.RemindPlanEnd(nil, now), nil
 		}
@@ -126,7 +194,9 @@ func (r *repository) store(ctx context.Context, db *keel.DB, state *managedfeatu
 		ctx,
 		db,
 		[]*managedfeatures.State{state},
-		keel.OnConflict(s.ID).Update(
+		keel.OnConflict(s.ScopeKey).Update(
+			s.ScopeBusinessUnitID,
+			s.Lifecycle,
 			s.Features,
 			s.AddOnEndings,
 			s.PlanURL,
@@ -155,11 +225,14 @@ func (r *repository) recordChange(
 	}
 
 	kept := managedfeaturesdb.Changes.As("kept")
-	if _, err := c.Where(c.ID.NotInQuery(kept.
-		Pick(kept.ID).
-		Order(kept.ChangedAt.Desc(), kept.ID.Desc()).
-		Limit(managedfeatures.ChangeHistoryLimit))).
-		Delete(ctx, db); err != nil {
+	if _, err := c.Where(
+		c.ScopeKey.Eq(change.ScopeKey),
+		c.ID.NotInQuery(kept.
+			Pick(kept.ID).
+			Where(kept.ScopeKey.Eq(change.ScopeKey)).
+			Order(kept.ChangedAt.Desc(), kept.ID.Desc()).
+			Limit(managedfeatures.ChangeHistoryLimit)),
+	).Delete(ctx, db); err != nil {
 		r.l.Error("failed to prune the managed feature changes", zap.Error(err))
 		return fmt.Errorf("prune the managed feature changes: %w", err)
 	}
@@ -168,20 +241,25 @@ func (r *repository) recordChange(
 
 func (r *repository) History(
 	ctx context.Context,
+	scope managedscope.Scope,
 	limit int,
 ) (*managedfeatures.State, []*managedfeatures.Change, error) {
-	ctx = dbscope.WithSystem(ctx, "read the feature list history the control plane set for this instance")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"read the plan history the control plane set for one managed scope",
+	)
 	return dbtx.Read2(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*managedfeatures.State, []*managedfeatures.Change, error) {
-			held, err := r.held(ctx)
+			held, err := r.held(ctx, scope)
 			if err != nil && !errors.Is(err, managedfeatures.ErrNoState) {
 				return nil, nil, err
 			}
 
 			c := managedfeaturesdb.Changes
 			changes, err := c.
+				Where(c.ScopeKey.Eq(scope.Key())).
 				Order(c.ChangedAt.Desc(), c.ID.Desc()).
 				Limit(limit).
 				List(ctx, r.db.Keel(ctx))
@@ -191,4 +269,30 @@ func (r *repository) History(
 			return held, changes, nil
 		},
 	)
+}
+
+func (r *repository) AnyActiveScope(
+	ctx context.Context,
+	feature *platformcatalog.FeatureKey,
+) (bool, error) {
+	ctx = dbscope.WithSystem(ctx, "ask whether any managed scope on this server has a feature")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		s := managedfeaturesdb.States
+		preds := []keel.Pred{
+			s.Lifecycle.Eq(managedfeatures.LifecycleActive),
+			s.ScopeKey.Ne(managedscope.InstanceKey),
+			s.ReceivedAt.Gt(0),
+		}
+		if feature != nil {
+			preds = append(
+				preds,
+				s.Features.Contains(keel.JSONB([]platformcatalog.FeatureKey{*feature})),
+			)
+		}
+		found, err := s.Where(preds...).Exists(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return false, fmt.Errorf("ask whether any managed scope has a feature: %w", err)
+		}
+		return found, nil
+	})
 }

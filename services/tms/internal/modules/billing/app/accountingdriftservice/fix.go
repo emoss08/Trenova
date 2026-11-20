@@ -76,7 +76,9 @@ func fixPermissions(
 	finding *accountingdrift.AccountingDriftFinding,
 	direction accountingdrift.DriftDirection,
 ) []requiredPermission {
-	needed := []requiredPermission{{permission.ResourceAccountingSync, permission.OpUpdate}}
+	needed := []requiredPermission{
+		{permission.ResourceAccountingReconciliation, permission.OpUpdate},
+	}
 	if direction != accountingdrift.DriftAdjustTrenova {
 		return needed
 	}
@@ -125,6 +127,9 @@ func (s *Service) PreviewResolve(
 	req *accountingdriftports.ResolveAccountingDriftRequest,
 	actor *permissionports.RequestActor,
 ) (*accountingdriftports.AccountingDriftFixPreview, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	finding, err := s.findingByID(ctx, req.TenantInfo, req.ID, false)
 	if err != nil {
 		return nil, err
@@ -144,6 +149,9 @@ func (s *Service) Resolve(
 	req *accountingdriftports.ResolveAccountingDriftRequest,
 	actor *permissionports.RequestActor,
 ) (*accountingdrift.AccountingDriftFinding, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	current, err := s.findingByID(ctx, req.TenantInfo, req.ID, false)
 	if err != nil {
 		return nil, err

@@ -139,8 +139,11 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   (`FeatureCoreTMS`, `FeatureBilling`, `FeatureAdministration`, …), never nothing. Work that
   serves base and add-on features alike (the rollup refresh) is base.
   `TestEveryDeclaredScheduleNamesAKnownFeature` reads every declaration in the tree.
-- The reconciler asks the instance-wide `FeatureGate` once per feature. A schedule whose feature
-  is off is still created, but paused, with a note saying the plan does not include the feature;
+- The reconciler asks `FeatureGate.EnabledAnywhere` once per feature: a schedule belongs to no
+  tenant, so it runs while any scope on the install has its feature (the instance on a dedicated
+  install, any active organization on a shared server; [shared-tenancy.md](../shared-tenancy.md)).
+  Work it fans out to tenants still asks each tenant's plan. A schedule whose feature
+  is off everywhere is still created, but paused, with a note saying the plan does not include the feature;
   when the feature is on it runs unless its declaration says `Paused: true`. The paused state and
   its reason are part of the hash in the note, so a plan change is an update and an unchanged plan
   is not. With every feature on (self-hosted) the hash is the declaration's own.

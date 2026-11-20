@@ -21,6 +21,37 @@ func TestValidate(t *testing.T) {
 		{name: "off needs nothing", cfg: managedconfig.Config{}, withoutInstance: true},
 		{name: "on with a token", cfg: managedconfig.Config{Enabled: true, Token: token}},
 		{
+			name: "dedicated tenancy",
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Tenancy: managedconfig.TenancyDedicated,
+			},
+		},
+		{
+			name: "shared tenancy on a managed server",
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Tenancy: managedconfig.TenancyShared,
+			},
+		},
+		{
+			name:            "shared tenancy without managed",
+			cfg:             managedconfig.Config{Tenancy: managedconfig.TenancyShared},
+			withoutInstance: true,
+			err:             managedconfig.ErrSharedTenancyNotManaged,
+		},
+		{
+			name: "a tenancy that is neither",
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Tenancy: managedconfig.Tenancy("pooled"),
+			},
+			err: managedconfig.ErrTenancyInvalid,
+		},
+		{
 			name:            "on without the instance's ID",
 			cfg:             managedconfig.Config{Enabled: true, Token: token},
 			withoutInstance: true,
@@ -61,47 +92,71 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name: "on with the embedding service",
-			cfg: managedconfig.Config{Enabled: true, Token: token, Embedding: managedconfig.Embedding{
-				URL:   "http://trenova-embedding:11434",
-				Model: "nomic-embed-text:v1.5",
-			}},
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Embedding: managedconfig.Embedding{
+					URL:   "http://trenova-embedding:11434",
+					Model: "nomic-embed-text:v1.5",
+				},
+			},
 		},
 		{
 			name: "an embedding URL with a path",
-			cfg: managedconfig.Config{Enabled: true, Token: token, Embedding: managedconfig.Embedding{
-				URL:   "http://trenova-embedding:11434/v1",
-				Model: "nomic-embed-text:v1.5",
-			}},
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Embedding: managedconfig.Embedding{
+					URL:   "http://trenova-embedding:11434/v1",
+					Model: "nomic-embed-text:v1.5",
+				},
+			},
 			err: managedconfig.ErrEmbeddingURLInvalid,
 		},
 		{
 			name: "an embedding URL that is not http",
-			cfg: managedconfig.Config{Enabled: true, Token: token, Embedding: managedconfig.Embedding{
-				URL:   "file:///models",
-				Model: "nomic-embed-text:v1.5",
-			}},
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Embedding: managedconfig.Embedding{
+					URL:   "file:///models",
+					Model: "nomic-embed-text:v1.5",
+				},
+			},
 			err: managedconfig.ErrEmbeddingURLInvalid,
 		},
 		{
 			name: "an embedding URL with credentials",
-			cfg: managedconfig.Config{Enabled: true, Token: token, Embedding: managedconfig.Embedding{
-				URL:   "http://user:pass@trenova-embedding:11434",
-				Model: "nomic-embed-text:v1.5",
-			}},
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Embedding: managedconfig.Embedding{
+					URL:   "http://user:pass@trenova-embedding:11434",
+					Model: "nomic-embed-text:v1.5",
+				},
+			},
 			err: managedconfig.ErrEmbeddingURLInvalid,
 		},
 		{
 			name: "an embedding URL without a model",
-			cfg: managedconfig.Config{Enabled: true, Token: token, Embedding: managedconfig.Embedding{
-				URL: "http://trenova-embedding:11434",
-			}},
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Embedding: managedconfig.Embedding{
+					URL: "http://trenova-embedding:11434",
+				},
+			},
 			err: managedconfig.ErrEmbeddingModelMissing,
 		},
 		{
 			name: "an embedding model without a URL",
-			cfg: managedconfig.Config{Enabled: true, Token: token, Embedding: managedconfig.Embedding{
-				Model: "nomic-embed-text:v1.5",
-			}},
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Embedding: managedconfig.Embedding{
+					Model: "nomic-embed-text:v1.5",
+				},
+			},
 			err: managedconfig.ErrEmbeddingModelWithoutURL,
 		},
 		{
@@ -180,6 +235,24 @@ func TestDefaults(t *testing.T) {
 		"the loader applies TRENOVA_MANAGED_INSTANCEID only to a key it knows")
 	require.Contains(t, managedconfig.Defaults(), "supportUrl")
 	require.Contains(t, managedconfig.Defaults(), "newSupportRequestUrl")
+}
+
+func TestSharedTenancyIsOnlyAManagedServers(t *testing.T) {
+	t.Parallel()
+
+	var none *managedconfig.Config
+	require.False(t, none.SharedTenancy())
+	require.False(t, (&managedconfig.Config{Tenancy: managedconfig.TenancyShared}).SharedTenancy())
+	require.False(t, (&managedconfig.Config{Enabled: true}).SharedTenancy())
+	require.False(t, (&managedconfig.Config{
+		Enabled: true,
+		Tenancy: managedconfig.TenancyDedicated,
+	}).SharedTenancy())
+	require.True(t, (&managedconfig.Config{
+		Enabled: true,
+		Tenancy: managedconfig.TenancyShared,
+	}).SharedTenancy())
+	require.Contains(t, managedconfig.Defaults(), "tenancy")
 }
 
 func TestSupportIsOnlyAManagedInstances(t *testing.T) {

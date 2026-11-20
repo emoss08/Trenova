@@ -14,7 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,6 +38,7 @@ type Params struct {
 	Enqueuer    *accountingsyncenqueue.Enqueuer
 	Effects     *accountingsynceffects.Effects
 	Backfills   *accountingsyncbackfill.Service
+	Features    platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -46,6 +49,7 @@ type Service struct {
 	enqueuer    *accountingsyncenqueue.Enqueuer
 	effects     *accountingsynceffects.Effects
 	backfills   *accountingsyncbackfill.Service
+	features    platformcatalogports.FeatureGate
 }
 
 //nolint:gocritic // dependency injection
@@ -58,6 +62,7 @@ func New(p Params) *Service {
 		enqueuer:    p.Enqueuer,
 		effects:     p.Effects,
 		backfills:   p.Backfills,
+		features:    p.Features,
 	}
 }
 
@@ -97,6 +102,14 @@ func (s *Service) UpdateSettings(
 		)
 	}
 
+	if err = s.requireLedgerSide(
+		ctx,
+		req.DriverSettlements ||
+			(req.InboundPayments != "" && req.InboundPayments != accountingconnection.InboundPaymentsOff),
+	); err != nil {
+		return nil, err
+	}
+
 	before := jsonutils.MustToJSON(conn)
 	previous := settingsSnapshot{
 		sendingDrivers: conn.SyncsDriverSettlements(),
@@ -121,6 +134,13 @@ func (s *Service) UpdateSettings(
 	})
 	s.effects.PublishInvalidation(ctx, req.TenantInfo, req.UserID, updated.ID)
 	return updated, nil
+}
+
+func (s *Service) requireLedgerSide(ctx context.Context, needed bool) error {
+	if !needed {
+		return nil
+	}
+	return platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureAccounting)
 }
 
 type settingsSnapshot struct {
@@ -172,6 +192,9 @@ func (s *Service) EnableSync(
 	provider := accountingprovider.ProviderName(conn.IntegrationType)
 	now := timeutils.NowUnix()
 	if err = checkEnableSync(conn, req, provider, now); err != nil {
+		return nil, err
+	}
+	if err = s.requireLedgerSide(ctx, req.DriverSettlements); err != nil {
 		return nil, err
 	}
 
@@ -370,6 +393,10 @@ func (s *Service) ChooseMode(
 			"{0} is not connected. A person must connect it from the integrations page.",
 			provider,
 		)
+	}
+
+	if err = s.requireLedgerSide(ctx, req.Mode == accountingprovider.SyncModeLedger); err != nil {
+		return nil, err
 	}
 
 	before := jsonutils.MustToJSON(conn)

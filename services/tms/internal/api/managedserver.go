@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedfeaturesservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
@@ -43,13 +44,21 @@ const (
 )
 
 type ManagedUsage interface {
-	Readings(ctx context.Context, since int64) ([]managedusageservice.Reading, error)
-	SetState(ctx context.Context, state *managedusage.State) error
+	Readings(
+		ctx context.Context,
+		scope managedscope.Scope,
+		since int64,
+	) ([]managedusageservice.Reading, error)
+	SetState(ctx context.Context, scope managedscope.Scope, state *managedusage.State) error
 }
 
 type ManagedFeatures interface {
-	State(ctx context.Context) (*managedfeatures.State, error)
-	SetFeatures(ctx context.Context, received *managedfeatures.Received) error
+	State(ctx context.Context, scope managedscope.Scope) (*managedfeatures.State, error)
+	SetFeatures(
+		ctx context.Context,
+		scope managedscope.Scope,
+		received *managedfeatures.Received,
+	) error
 }
 
 type ManagedServerParams struct {
@@ -217,7 +226,7 @@ func NewManagedHandler(p *ManagedHandlerParams) http.Handler {
 }
 
 func StartManagedServer(p ManagedServerParams) {
-	if !p.Config.Enabled {
+	if !p.Config.Enabled || p.Config.SharedTenancy() {
 		return
 	}
 	logger := p.Logger.Named("managed-server")
@@ -286,7 +295,7 @@ func (h *managedHandler) readings(w http.ResponseWriter, r *http.Request) {
 		h.problem(w, http.StatusBadRequest, "since must be an RFC 3339 time on the hour")
 		return
 	}
-	readings, err := h.usage.Readings(r.Context(), since.Unix())
+	readings, err := h.usage.Readings(r.Context(), managedscope.Instance(), since.Unix())
 	switch {
 	case errors.Is(err, managedusageservice.ErrSinceNotOnTheHour),
 		errors.Is(err, managedusageservice.ErrSinceInFuture),
@@ -327,7 +336,7 @@ func (h *managedHandler) setState(w http.ResponseWriter, r *http.Request) {
 	if in.Window != nil {
 		state.WindowStart, state.WindowEnd = in.Window.Start.Unix(), in.Window.End.Unix()
 	}
-	err = h.usage.SetState(r.Context(), state)
+	err = h.usage.SetState(r.Context(), managedscope.Instance(), state)
 	invalid, isInvalid := errortypes.RefusalOf(err)
 	switch {
 	case isInvalid:
@@ -356,7 +365,7 @@ func (h *managedHandler) setFeatures(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	err = h.features.SetFeatures(r.Context(), in.received())
+	err = h.features.SetFeatures(r.Context(), managedscope.Instance(), in.received())
 	invalid, isInvalid := errortypes.RefusalOf(err)
 	switch {
 	case isInvalid:
@@ -371,14 +380,14 @@ func (h *managedHandler) setFeatures(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *managedHandler) heldFeatures(w http.ResponseWriter, r *http.Request) {
-	state, err := h.features.State(r.Context())
+	state, err := h.features.State(r.Context(), managedscope.Instance())
 	if err != nil {
 		h.l.Error("cannot read the feature list for the operator", zap.Error(err))
 		h.problem(w, http.StatusInternalServerError, "")
 		return
 	}
 	out := managedHeldFeatures{Features: []platformcatalog.FeatureKey{}}
-	if state != nil {
+	if state.HasList() {
 		if state.Features != nil {
 			out.Features = state.Features
 		}

@@ -44,7 +44,7 @@ func inboundChangeOptions() []toolpreview.Option {
 
 func inboundChangeRecord(change *accountinginbound.AccountingInboundChange) toolpreview.Record {
 	return toolpreview.Record{
-		Resource: permission.ResourceAccountingSync,
+		Resource: permission.ResourceAccountingReconciliation,
 		ID:       change.ID,
 		Label:    inboundLabel(change),
 		Version:  changepreview.PreviewVersion(change.Version),

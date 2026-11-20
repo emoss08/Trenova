@@ -192,6 +192,36 @@ func NewDuplicateEmailAddressError() *errortypes.Error {
 	)
 }
 
+func NewUnavailableEmailAddressError() *errortypes.Error {
+	return errortypes.NewValidationError(
+		"emailAddress",
+		errortypes.ErrDuplicate,
+		"This email address can't be used for this user. Use a different address.",
+	)
+}
+
+func NewUnavailableUsernameError() *errortypes.Error {
+	return errortypes.NewValidationError(
+		"username",
+		errortypes.ErrDuplicate,
+		"This username can't be used. Choose a different one.",
+	)
+}
+
+func EmailAddressTakenError(sharedTenancy bool) *errortypes.Error {
+	if sharedTenancy {
+		return NewUnavailableEmailAddressError()
+	}
+	return NewDuplicateEmailAddressError()
+}
+
+func UsernameTakenError(sharedTenancy bool) *errortypes.Error {
+	if sharedTenancy {
+		return NewUnavailableUsernameError()
+	}
+	return NewDuplicateUsernameError()
+}
+
 func NewNoOrganizationMembershipsError() *errortypes.Error {
 	return errortypes.NewValidationError(
 		"organizationIds",

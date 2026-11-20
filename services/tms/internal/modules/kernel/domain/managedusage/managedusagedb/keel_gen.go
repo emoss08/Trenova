@@ -21,7 +21,7 @@ var statesTable = schema.Table{
 	Label:  `State`,
 	Plural: `States`,
 	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `ID`, JSON: `id`},
+		{Name: "scope_key", Quoted: `"scope_key"`, Field: "ScopeKey", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Scope Key`, JSON: `scopeKey`},
 		{Name: "window_start", Quoted: `"window_start"`, Field: "WindowStart", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Window Start`, JSON: `windowStart`},
 		{Name: "window_end", Quoted: `"window_end"`, Field: "WindowEnd", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Window End`, JSON: `windowEnd`},
 		{Name: "overage", Quoted: `"overage"`, Field: "Overage", Kind: schema.KindBool, Flags: 0, Label: `Overage`, JSON: `overage`},
@@ -51,7 +51,7 @@ var statesRef = keel.Ref{Table: &statesTable}
 // StatesTable is the table of managedusage.State.
 type StatesTable struct {
 	keel.TableBase
-	ID          keel.StringCol
+	ScopeKey    keel.StringCol
 	WindowStart keel.Int64Col
 	WindowEnd   keel.Int64Col
 	Overage     keel.BoolCol
@@ -62,7 +62,7 @@ type StatesTable struct {
 // States references the managed_usage_states table.
 var States = &StatesTable{
 	TableBase:   keel.TableBase{Ref: &statesRef},
-	ID:          keel.StringCol{Col: keel.Col{Ref: &statesRef, Index: 0}},
+	ScopeKey:    keel.StringCol{Col: keel.Col{Ref: &statesRef, Index: 0}},
 	WindowStart: keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 1}},
 	WindowEnd:   keel.Int64Col{Col: keel.Col{Ref: &statesRef, Index: 2}},
 	Overage:     keel.BoolCol{Col: keel.Col{Ref: &statesRef, Index: 3}},
@@ -74,7 +74,7 @@ var States = &StatesTable{
 func BuildStates(r *keel.Ref) *StatesTable {
 	return &StatesTable{
 		TableBase:   keel.TableBase{Ref: r},
-		ID:          keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
+		ScopeKey:    keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
 		WindowStart: keel.Int64Col{Col: keel.Col{Ref: r, Index: 1}},
 		WindowEnd:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
 		Overage:     keel.BoolCol{Col: keel.Col{Ref: r, Index: 3}},
@@ -91,7 +91,7 @@ func (t *StatesTable) As(alias string) *StatesTable { return keel.Alias(t.Ref, a
 
 // Get returns the managed_usage_states row with the given key, or keel.ErrNotFound.
 func (t *StatesTable) Get(ctx context.Context, db *keel.DB, key string) (*managedusage.State, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
+	return t.Where(t.ScopeKey.Eq(key)).One(ctx, db)
 }
 
 // StatesQuery is a query over managedusage.State.
@@ -469,7 +469,7 @@ func ptrState(p unsafe.Pointer, c int32) any {
 	r := (*managedusage.State)(p)
 	switch c {
 	case 0:
-		return &r.ID
+		return &r.ScopeKey
 	case 1:
 		return &r.WindowStart
 	case 2:
@@ -488,7 +488,7 @@ func valueState(p unsafe.Pointer, c int32) any {
 	r := (*managedusage.State)(p)
 	switch c {
 	case 0:
-		return r.ID
+		return r.ScopeKey
 	case 1:
 		if r.WindowStart == 0 {
 			return nil

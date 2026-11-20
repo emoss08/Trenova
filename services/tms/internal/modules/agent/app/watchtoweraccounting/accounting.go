@@ -27,15 +27,13 @@ const (
 type AccountingSyncSource struct {
 	repo    accountingconnectionports.AccountingConnectionRepository
 	records accountingsyncports.AccountingSyncRecordRepository
-	inbound accountinginboundports.AccountingInboundChangeRepository
 }
 
 func NewAccountingSyncSource(
 	repo accountingconnectionports.AccountingConnectionRepository,
 	records accountingsyncports.AccountingSyncRecordRepository,
-	inbound accountinginboundports.AccountingInboundChangeRepository,
 ) watchtowerports.WatchtowerSource {
-	return &AccountingSyncSource{repo: repo, records: records, inbound: inbound}
+	return &AccountingSyncSource{repo: repo, records: records}
 }
 
 func (s *AccountingSyncSource) Kind() watchtower.SourceKind {
@@ -80,6 +78,42 @@ func (s *AccountingSyncSource) Snapshot(
 			if item, open := DescribeAccountingSyncAttention(conn, key, keyed); open {
 				items = append(items, item)
 			}
+		}
+	}
+
+	return items, nil
+}
+
+type AccountingReconciliationSource struct {
+	repo    accountingconnectionports.AccountingConnectionRepository
+	inbound accountinginboundports.AccountingInboundChangeRepository
+}
+
+func NewAccountingReconciliationSource(
+	repo accountingconnectionports.AccountingConnectionRepository,
+	inbound accountinginboundports.AccountingInboundChangeRepository,
+) watchtowerports.WatchtowerSource {
+	return &AccountingReconciliationSource{repo: repo, inbound: inbound}
+}
+
+func (s *AccountingReconciliationSource) Kind() watchtower.SourceKind {
+	return watchtower.SourceAccountingReconciliation
+}
+
+func (s *AccountingReconciliationSource) Snapshot(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) ([]watchtowerports.WatchtowerItemInput, error) {
+	connections, err := s.repo.ListByTenant(ctx, tenant)
+	if err != nil {
+		return nil, err
+	}
+
+	now := timeutils.NowUnix()
+	items := make([]watchtowerports.WatchtowerItemInput, 0, len(connections))
+	for _, conn := range connections {
+		if !conn.IsSyncing() {
+			continue
 		}
 		inbound, inboundErr := s.inbound.ListAttention(
 			ctx,

@@ -7,10 +7,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,6 +25,13 @@ type failingGate struct{}
 
 func (failingGate) Enabled(context.Context, platformcatalog.FeatureKey) (bool, error) {
 	return false, errors.New("the plan could not be read")
+}
+
+func (r failingGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return r.Enabled(ctx, feature)
 }
 
 func signInService(
@@ -136,4 +146,76 @@ func TestEnforcePasswordLoginPolicy_EnforcesSingleSignOnOnlyOnThePlan(t *testing
 	svc, _ = signInService(t, plantest.Without(platformcatalog.FeatureIdentity), true)
 	err = svc.enforcePasswordLoginPolicy(t.Context(), "acme", user, target(svc))
 	require.NoError(t, err, "with single sign-on off the plan, password sign-in is the way in")
+}
+
+type organizationGate struct {
+	on map[pulid.ID]bool
+}
+
+func (g organizationGate) Enabled(
+	ctx context.Context,
+	_ platformcatalog.FeatureKey,
+) (bool, error) {
+	tenant, ok := dbscope.TenantFrom(ctx)
+	if !ok {
+		return false, errors.New("asked with no tenant")
+	}
+	return g.on[tenant.OrganizationID], nil
+}
+
+func (g organizationGate) EnabledAnywhere(
+	context.Context,
+	platformcatalog.FeatureKey,
+) (bool, error) {
+	return false, errors.New("sign-in never asks about every organization")
+}
+
+func TestSignInPagesAskTheOrganizationTheSlugNames(t *testing.T) {
+	t.Parallel()
+
+	svc, cfg := signInService(t, organizationGate{}, false)
+	org, err := svc.or.GetByLoginSlug(t.Context(), "acme")
+	require.NoError(t, err)
+
+	svc.features = organizationGate{on: map[pulid.ID]bool{org.ID: true}}
+	providers, err := svc.ListAuthProviders(t.Context(), "acme")
+	require.NoError(t, err)
+	require.Len(t, providers, 1)
+	assert.Equal(t, cfg.ID, providers[0].ID)
+	metadata, err := svc.GetTenantLoginMetadata(t.Context(), "acme")
+	require.NoError(t, err)
+	assert.Equal(t, []string{string(sso.SSOProviderOkta)}, metadata.EnabledProviders)
+
+	svc.features = organizationGate{on: map[pulid.ID]bool{}}
+	providers, err = svc.ListAuthProviders(t.Context(), "acme")
+	require.NoError(t, err)
+	assert.Empty(t, providers, "another organization's plan does not count")
+}
+
+func TestSingleSignOnStartsOnlyForAnOrganizationWithItOnThePlan(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := signInService(t, organizationGate{}, false)
+	org, err := svc.or.GetByLoginSlug(t.Context(), "acme")
+	require.NoError(t, err)
+
+	_, err = svc.StartSSOLogin(t.Context(), tenantports.StartSSOLoginRequest{
+		Provider:         sso.SSOProviderOkta,
+		OrganizationSlug: "acme",
+	})
+	require.True(t, errortypes.IsNotFoundError(err), "off the plan reads as not set up: %v", err)
+
+	reached := errors.New("the configuration was read")
+	configs := tenantportsmock.NewMockSSOConfigRepository(t)
+	configs.EXPECT().
+		GetEnabledByOrganizationID(mock.Anything, org.ID, sso.SSOProviderOkta).
+		Return(nil, reached).
+		Once()
+	svc.ssoRepo = configs
+	svc.features = organizationGate{on: map[pulid.ID]bool{org.ID: true}}
+	_, err = svc.StartSSOLogin(t.Context(), tenantports.StartSSOLoginRequest{
+		Provider:         sso.SSOProviderOkta,
+		OrganizationSlug: "acme",
+	})
+	require.ErrorIs(t, err, reached, "on the plan it goes on to the organization's configuration")
 }

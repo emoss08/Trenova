@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -45,10 +46,14 @@ func (c *pages) CountByHour(
 	ctx context.Context,
 	req *managedusageports.HourCountRequest,
 ) ([]managedusageports.HourCount, error) {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"add up the pages Document Intelligence extracted in each hour on this managed instance",
-	)
+	if tenant, ok := req.Scope.Tenant(); ok {
+		ctx = dbscope.WithTenant(ctx, tenant)
+	} else {
+		ctx = dbscope.WithSystem(
+			ctx,
+			"add up the pages Document Intelligence extracted in each hour on this managed instance",
+		)
+	}
 	return dbtx.Read(ctx, c.db, func(ctx context.Context) ([]managedusageports.HourCount, error) {
 		u := aiusagedb.AIUsageRecords
 		return byHour(ctx, c.db.Keel(ctx), &hourly{
@@ -76,10 +81,12 @@ func byHour(ctx context.Context, db *keel.DB, h *hourly) ([]managedusageports.Ho
 	counts, err := keel.Into[managedusageports.HourCount](
 		ctx,
 		db,
-		u.AllTenants().
+		tenantscope.Scoped(
+			ctx,
+			u.Where(u.CreatedAt.Gte(h.req.Since), u.CreatedAt.Lt(h.req.Until), h.filter),
+		).
 			Group(bucket).
-			Pick(bucket, h.value).
-			Where(u.CreatedAt.Gte(h.req.Since), u.CreatedAt.Lt(h.req.Until), h.filter),
+			Pick(bucket, h.value),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("count %s by hour: %w", h.meter, err)

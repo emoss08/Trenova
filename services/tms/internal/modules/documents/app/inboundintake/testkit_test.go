@@ -18,10 +18,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -61,6 +63,7 @@ type testService struct {
 	email         emailports.EmailService
 	notify        *inboundqueue.Notifier
 	now           func() int64
+	features      platformcatalogports.FeatureGate
 }
 
 type quietIndexer struct {
@@ -128,6 +131,9 @@ func (t *testService) supplyDefaults() {
 	}
 	if t.indexer == nil {
 		t.indexer = quietIndexer{}
+	}
+	if t.features == nil {
+		t.features = plantest.AllFeatures()
 	}
 }
 
@@ -199,5 +205,6 @@ func (t *testService) intake() *Service {
 		mailbox:      mailbox,
 		processing:   processing,
 		queue:        queue,
+		features:     t.features,
 	}
 }

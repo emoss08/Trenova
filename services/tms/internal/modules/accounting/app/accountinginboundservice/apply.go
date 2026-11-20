@@ -267,6 +267,9 @@ func (s *Service) Apply(
 	req *accountinginboundports.DecideAccountingInboundChangeRequest,
 	actor *permissionports.RequestActor,
 ) (*accountinginbound.AccountingInboundChange, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	if actor == nil || actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError(
 			"Applying a payment from the accounting system requires an authenticated user",
@@ -602,6 +605,9 @@ func (s *Service) PreviewApply(
 	ctx context.Context,
 	req *accountinginboundports.GetAccountingInboundChangeRequest,
 ) (*accountinginboundports.AccountingInboundApplyPreview, error) {
+	if err := s.requireAccounting(ctx); err != nil {
+		return nil, err
+	}
 	change, err := s.changes.GetByID(ctx, accountinginboundports.GetAccountingInboundChangeQuery{
 		TenantInfo: req.TenantInfo,
 		ID:         req.ID,

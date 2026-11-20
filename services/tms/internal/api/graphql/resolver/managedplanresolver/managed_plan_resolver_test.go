@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedplanservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
@@ -36,6 +37,7 @@ type heldPlan struct {
 
 func (h heldPlan) History(
 	context.Context,
+	managedscope.Scope,
 	int,
 ) (*managedfeatures.State, []*managedfeatures.Change, error) {
 	return &managedfeatures.State{
@@ -91,7 +93,7 @@ func TestManagedPlanSaysWhenThePlanEndsOnlyWhileItIsEnding(t *testing.T) {
 	assert.Nil(t, plan.EndsAt, "a self-hosted install has no plan to end")
 }
 
-func (h heldPlan) Usage(context.Context) (*managedusage.Usage, error) {
+func (h heldPlan) Usage(context.Context, managedscope.Scope) (*managedusage.Usage, error) {
 	return h.usage, nil
 }
 
@@ -104,6 +106,7 @@ func resolverFor(managed bool, granted map[string]bool, repo heldPlan) *QueryRes
 			Config: &managedconfig.Config{Enabled: managed},
 			Repo:   repo,
 			Usage:  repo,
+			Scopes: managedscope.NewResolver(false),
 		}),
 	}}
 }
@@ -212,7 +215,12 @@ func TestManagedPlanAnswersTheManageLinkUsageAndScheduledEndings(t *testing.T) {
 	assert.Equal(t, 312, plan.Usage.Meters[0].Used)
 	assert.Equal(t, "Document storage", plan.Usage.Meters[1].Name)
 	assert.Equal(t, gqlmodel.ManagedPlanMeterUnitBytes, plan.Usage.Meters[1].Unit)
-	assert.Equal(t, 18_400_000_000, plan.Usage.Meters[1].Used, "bytes past 32 bits are carried whole")
+	assert.Equal(
+		t,
+		18_400_000_000,
+		plan.Usage.Meters[1].Used,
+		"bytes past 32 bits are carried whole",
+	)
 
 	require.Len(t, plan.Changes, 1)
 	require.Len(t, plan.Changes[0].Ending, 1)

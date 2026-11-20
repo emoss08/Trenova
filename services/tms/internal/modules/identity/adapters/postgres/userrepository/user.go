@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -45,22 +47,25 @@ var userErrors = dberror.Mapping{Entity: "User"}
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
-	Quota  platformplanports.QuotaGuard
+	DB      *postgres.Connection
+	Logger  *zap.Logger
+	Quota   platformplanports.QuotaGuard
+	Managed *managedconfig.Config
 }
 
 type repository struct {
-	db    *postgres.Connection
-	l     *zap.Logger
-	quota platformplanports.QuotaGuard
+	db     *postgres.Connection
+	l      *zap.Logger
+	quota  platformplanports.QuotaGuard
+	shared bool
 }
 
 func New(p Params) tenantports.UserRepository {
 	return &repository{
-		db:    p.DB,
-		l:     p.Logger.Named("postgres.user-repository"),
-		quota: quotaservice.OrUnlimited(p.Quota),
+		db:     p.DB,
+		l:      p.Logger.Named("postgres.user-repository"),
+		quota:  quotaservice.OrUnlimited(p.Quota),
+		shared: p.Managed.SharedTenancy(),
 	}
 }
 

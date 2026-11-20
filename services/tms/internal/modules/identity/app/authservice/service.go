@@ -7,6 +7,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/url"
 	"slices"
 	"strings"
@@ -302,7 +303,7 @@ func (s *Service) GetTenantLoginMetadata(
 		EnabledProviders: []string{},
 		PasswordEnabled:  true,
 	}
-	if !s.singleSignOnListed(ctx) {
+	if !s.singleSignOnListed(organizationScope(ctx, org.ID, org.BusinessUnitID, pulid.Nil)) {
 		return resp, nil
 	}
 
@@ -331,7 +332,8 @@ func (s *Service) ListAuthProviders(
 	}
 
 	providers := make([]tenantports.AuthProviderSummary, 0, len(loginConfig.configs))
-	if !s.singleSignOnListed(ctx) {
+	org := loginConfig.organization
+	if !s.singleSignOnListed(organizationScope(ctx, org.ID, org.BusinessUnitID, pulid.Nil)) {
 		return providers, nil
 	}
 	for _, cfg := range loginConfig.configs {
@@ -345,6 +347,17 @@ func (s *Service) ListAuthProviders(
 	}
 
 	return providers, nil
+}
+
+func (s *Service) requireSingleSignOn(ctx context.Context) error {
+	enabled, err := s.features.Enabled(ctx, platformcatalog.FeatureIdentity)
+	if err != nil {
+		return fmt.Errorf("ask whether single sign-on is on the plan: %w", err)
+	}
+	if !enabled {
+		return errortypes.NewNotFoundError("{0} not found within your organization", "SSOConfig")
+	}
+	return nil
 }
 
 func (s *Service) singleSignOnListed(ctx context.Context) bool {
@@ -369,6 +382,9 @@ func (s *Service) StartSSOLogin(
 		return "", err
 	}
 	ctx = organizationScope(ctx, org.ID, org.BusinessUnitID, pulid.Nil)
+	if err = s.requireSingleSignOn(ctx); err != nil {
+		return "", err
+	}
 
 	ssoConfig, err := s.resolveSSOConfig(ctx, org.ID, req)
 	if err != nil {
@@ -376,7 +392,11 @@ func (s *Service) StartSSOLogin(
 	}
 	req.Provider = ssoConfig.Provider
 
-	handoff, ok, err := ssoStartHandoff(ssoConfig.OIDCRedirectURL, &req, s.serverConfig.CORS.AllowedOrigins)
+	handoff, ok, err := ssoStartHandoff(
+		ssoConfig.OIDCRedirectURL,
+		&req,
+		s.serverConfig.CORS.AllowedOrigins,
+	)
 	if err != nil {
 		return "", err
 	}
@@ -486,6 +506,10 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		loginState.BusinessUnitID,
 		pulid.Nil,
 	)
+	if err = s.requireSingleSignOn(scoped); err != nil {
+		attempt.fail(authErrorSSOConfig)
+		return nil, err
+	}
 
 	ssoConfig, err := s.resolveSSOConfigForCallback(scoped, loginState)
 	if err != nil {
@@ -1064,7 +1088,10 @@ func (s *Service) createSession(
 	authn loginSessionContext,
 ) (*session.Session, string, error) {
 	if supportaccess.IsPrincipalID(user.ID) {
-		s.l.Error("refused to sign in a Trenova support principal", zap.String("userID", user.ID.String()))
+		s.l.Error(
+			"refused to sign in a Trenova support principal",
+			zap.String("userID", user.ID.String()),
+		)
 		return nil, "", errInvalidCredentials
 	}
 

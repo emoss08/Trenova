@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
@@ -42,7 +45,7 @@ const (
 	maxCustomers     = 200
 )
 
-var permissionResource = permission.ResourceAccountingSync.String()
+var permissionResource = permission.ResourceAccountingReconciliation.String()
 
 type Params struct {
 	fx.In
@@ -70,6 +73,7 @@ type Params struct {
 	Publisher     agenteventports.AgentEventPublisher
 	Watchtower    watchtowerports.WatchtowerProjector
 	Realtime      realtimeports.RealtimeService
+	Features      platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -97,6 +101,7 @@ type Service struct {
 	watchtower    watchtowerports.WatchtowerProjector
 	realtime      realtimeports.RealtimeService
 	now           func() time.Time
+	features      platformcatalogports.FeatureGate
 }
 
 var (
@@ -132,7 +137,12 @@ func New(p Params) *Service {
 		watchtower:    p.Watchtower,
 		realtime:      p.Realtime,
 		now:           time.Now,
+		features:      p.Features,
 	}
+}
+
+func (s *Service) requireAccounting(ctx context.Context) error {
+	return platformcatalogports.RequireFeature(ctx, s.features, platformcatalog.FeatureAccounting)
 }
 
 type readSession struct {
@@ -283,7 +293,7 @@ func (s *Service) refreshAttention(
 		s.watchtower.Resolve(
 			ctx,
 			tenant,
-			watchtower.SourceAccountingSync,
+			watchtower.SourceAccountingReconciliation,
 			watchtoweraccounting.AccountingDriftAttentionSourceID(conn, kind),
 		)
 	}

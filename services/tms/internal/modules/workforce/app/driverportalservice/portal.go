@@ -99,15 +99,15 @@ type PortalEscrowSummary struct {
 	Transactions []*payescrow.EscrowTransaction `json:"transactions"`
 }
 
+func (s *Service) requirePlan(ctx context.Context, feature platformcatalog.FeatureKey) error {
+	return platformcatalogports.RequireFeature(ctx, s.features, feature)
+}
+
 func (s *Service) ResolveWorker(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*worker.Worker, error) {
-	if err := platformcatalogports.RequireFeature(
-		ctx,
-		s.features,
-		platformcatalog.FeatureDriverPortal,
-	); err != nil {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureDriverPortal); err != nil {
 		return nil, err
 	}
 	wrk, err := s.portalRepo.GetWorkerByUserID(ctx, tenantInfo)
@@ -466,6 +466,9 @@ func (s *Service) MyPeriodSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*PortalPeriodSummary, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -501,6 +504,9 @@ func (s *Service) MyRecentPayEvents(
 	tenantInfo pagination.TenantInfo,
 	limit int,
 ) ([]*driversettlement.PayEvent, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -540,6 +546,9 @@ func (s *Service) MySettlements(
 	tenantInfo pagination.TenantInfo,
 	limit, offset int,
 ) (*pagination.ListResult[*driversettlement.Settlement], error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -562,6 +571,9 @@ func (s *Service) MySettlement(
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
 ) (*driversettlement.Settlement, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -597,6 +609,9 @@ func (s *Service) MyEscrow(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*PortalEscrowSummary, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -631,6 +646,9 @@ func (s *Service) MyAdvances(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]*payadvance.PayAdvance, error) {
+	if err := s.requirePlan(ctx, platformcatalog.FeatureSettlement); err != nil {
+		return nil, err
+	}
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

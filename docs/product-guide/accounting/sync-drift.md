@@ -61,7 +61,8 @@ Keywords: reconcile now, compare now, run drift check
 2. Select **Check now**. The check runs in the background; the page shows when it last finished.
 
 ## Notes
-Viewing the page needs read access to accounting sync; fixing and dismissing need update access.
+Viewing the page needs read access to accounting reconciliation, part of the Accounting add-on;
+fixing and dismissing need update access.
 Adjusting Trenova also needs permission to change invoices, or customer payments for a reversal.
 Adjust Trenova is offered for invoices and debit memos, and for customer payments voided or
 deleted in the books; settlements, credit memos and customer balances offer only Push Trenova's

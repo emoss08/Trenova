@@ -4,11 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -90,6 +92,7 @@ func TestTheStorageNoticeFiresOncePerCrossing(t *testing.T) {
 	}
 	for _, step := range steps {
 		require.NoError(t, w.StateChanged(t.Context(), &managedusageports.StateChange{
+			Scope:    managedscope.Instance(),
 			Previous: step.previous,
 			Current:  step.current,
 		}))
@@ -115,7 +118,40 @@ func TestTheFirstStateAlreadyPastTheShareWarns(t *testing.T) {
 	}
 
 	require.NoError(t, w.StateChanged(t.Context(), &managedusageports.StateChange{
+		Scope:   managedscope.Instance(),
 		Current: storageAt(950),
 	}))
-	assert.Len(t, notifier.warned, 2)
+	assert.Len(t, notifier.warned, 2, "an instance's state concerns every organization on it")
+}
+
+func TestAnOrganizationsStorageNoticeGoesToItsOwnAdministratorsOnly(t *testing.T) {
+	t.Parallel()
+
+	notifier := &recordingNotifier{}
+	w := &Warnings{
+		notifier: notifier,
+		tenants:  twoTenants{},
+		clock:    func() int64 { return 100 },
+		l:        zap.NewNop(),
+	}
+	tenant := dbscope.Tenant{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+
+	require.NoError(t, w.StateChanged(t.Context(), &managedusageports.StateChange{
+		Scope:   managedscope.Organization(tenant),
+		Current: storageAt(950),
+	}))
+	require.Len(t, notifier.warned, 1)
+	assert.Equal(t, tenant.OrganizationID, notifier.warned[0].Tenant.OrgID)
+	assert.Equal(t, tenant.BusinessUnitID, notifier.warned[0].Tenant.BuID)
+
+	require.NoError(t, w.StateChanged(t.Context(), &managedusageports.StateChange{
+		Scope:    managedscope.Organization(tenant),
+		Previous: storageAt(950),
+		Current:  storageAt(100),
+	}))
+	require.Len(t, notifier.resolved, 1)
+	assert.Equal(t, tenant.OrganizationID, notifier.resolved[0].OrganizationID)
 }

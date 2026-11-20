@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/directoryaccounts"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/scim"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -168,8 +169,8 @@ func (s *Service) provisionUser(
 		existing, findErr := s.repo.FindMember(txCtx, desired.profile.EmailAddress)
 		switch {
 		case findErr == nil:
-			if existing.Username == tenant.SystemUsername {
-				return scimproto.Uniqueness("A user with this email address already exists")
+			if !linkable(existing) {
+				return scimproto.Uniqueness(tenant.NewUnavailableEmailAddressError().Message)
 			}
 			linked = true
 			link := newLink(dir, existing.ID, desired, false)
@@ -199,6 +200,10 @@ func (s *Service) provisionUser(
 	})
 
 	return record, linked, err
+}
+
+func linkable(user *tenant.User) bool {
+	return user.Username != tenant.SystemUsername && !supportaccess.IsPrincipalID(user.ID)
 }
 
 func newLink(

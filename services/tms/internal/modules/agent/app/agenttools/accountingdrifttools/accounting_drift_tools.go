@@ -135,7 +135,7 @@ func (t *ResolveAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agenttooltrust.ToolKindAction,
-		Resource:      permission.ResourceAccountingSync,
+		Resource:      permission.ResourceAccountingReconciliation,
 		Operation:     permission.OpUpdate,
 		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
@@ -152,7 +152,7 @@ func (t *ResolveAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 func (t *ResolveAccountingDriftTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramFindingID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(params, paramFindingID, permission.ResourceAccountingReconciliation)
 }
 
 func (t *ResolveAccountingDriftTool) request(
@@ -266,7 +266,7 @@ func (t *DismissAccountingDriftTool) ParamSchema() map[string]any {
 
 func (t *DismissAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		Resource:  permission.ResourceAccountingSync,
+		Resource:  permission.ResourceAccountingReconciliation,
 		Operation: permission.OpUpdate,
 		Tier:      agent.TierActWithApproval,
 		Rationale: "Closes a difference with the books without fixing it, so a person " +
@@ -277,7 +277,7 @@ func (t *DismissAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 func (t *DismissAccountingDriftTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramFindingID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(params, paramFindingID, permission.ResourceAccountingReconciliation)
 }
 
 func (t *DismissAccountingDriftTool) plan(
@@ -371,7 +371,7 @@ func (t *CheckAccountingDriftTool) ParamSchema() map[string]any {
 
 func (t *CheckAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		Resource:   permission.ResourceAccountingSync,
+		Resource:   permission.ResourceAccountingReconciliation,
 		Operation:  permission.OpUpdate,
 		Tier:       agent.TierActWithApproval,
 		Idempotent: true,

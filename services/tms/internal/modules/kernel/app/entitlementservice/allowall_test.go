@@ -21,6 +21,9 @@ func TestAllowAllEnablesEveryCatalogFeature(t *testing.T) {
 		enabled, err := gate.Enabled(t.Context(), feature.Key)
 		require.NoError(t, err, feature.Key)
 		assert.True(t, enabled, feature.Key)
+		anywhere, err := gate.EnabledAnywhere(t.Context(), feature.Key)
+		require.NoError(t, err, feature.Key)
+		assert.True(t, anywhere, feature.Key)
 		require.NoError(t, platformcatalogports.RequireFeature(t.Context(), gate, feature.Key))
 	}
 }

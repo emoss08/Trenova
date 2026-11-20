@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,14 +25,12 @@ type Params struct {
 	Service      *tenderresponse.Service
 	ErrorHandler *helpers.ErrorHandler
 	RateLimiter  *middleware.RateLimiter
-	Features     *middleware.FeatureGuard
 }
 
 type Handler struct {
 	service     *tenderresponse.Service
 	eh          *helpers.ErrorHandler
 	rateLimiter *middleware.RateLimiter
-	features    *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
@@ -41,17 +38,12 @@ func New(p Params) *Handler {
 		service:     p.Service,
 		eh:          p.ErrorHandler,
 		rateLimiter: p.RateLimiter,
-		features:    p.Features,
 	}
 }
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/tender-offers")
 	api.Use(h.rateLimiter.ByPublicToken(tokenParam))
-	api.Use(h.features.RequireFeature(
-		platformcatalog.FeatureCarrierBrokerage,
-		middleware.AnswerError(tenderresponse.InvalidTokenError),
-	))
 	api.GET("/:token/", h.preview)
 	api.POST("/:token/accept/", h.accept)
 	api.POST("/:token/decline/", h.decline)

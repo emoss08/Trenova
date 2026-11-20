@@ -30,6 +30,8 @@ type QuotaDecision struct {
 	Allowed     bool                     `json:"allowed"`
 	Unlimited   bool                     `json:"unlimited"`
 	Limit       int64                    `json:"limit"`
+	Ceiling     int64                    `json:"ceiling,omitempty"`
+	CeilingHit  bool                     `json:"ceilingHit,omitempty"`
 	Used        int64                    `json:"used"`
 	Remaining   int64                    `json:"remaining"`
 	Requested   int64                    `json:"requested"`

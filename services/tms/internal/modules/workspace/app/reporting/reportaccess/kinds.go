@@ -15,12 +15,18 @@ type kind struct {
 }
 
 var entityKinds = map[string]kind{
-	"accessorial_charge":        {resource: permission.ResourceAccessorialCharge},
-	"account_type":              {resource: permission.ResourceAccountType},
-	"accounting_drift_finding":  {resource: permission.ResourceAccountingSync, withinRecord: true},
-	"accounting_inbound_change": {resource: permission.ResourceAccountingSync, withinRecord: true},
-	"accounting_sync_record":    {resource: permission.ResourceAccountingSync},
-	"agreement":                 {resource: permission.ResourceFactoringAgreement},
+	"accessorial_charge": {resource: permission.ResourceAccessorialCharge},
+	"account_type":       {resource: permission.ResourceAccountType},
+	"accounting_drift_finding": {
+		resource:     permission.ResourceAccountingReconciliation,
+		withinRecord: true,
+	},
+	"accounting_inbound_change": {
+		resource:     permission.ResourceAccountingReconciliation,
+		withinRecord: true,
+	},
+	"accounting_sync_record": {resource: permission.ResourceAccountingSync},
+	"agreement":              {resource: permission.ResourceFactoringAgreement},
 	"application": {
 		resource:     permission.ResourceCustomerPayment,
 		withinRecord: true,

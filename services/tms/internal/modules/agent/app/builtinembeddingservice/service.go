@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 )
@@ -51,7 +52,10 @@ func (s *Service) Provider(
 		return nil, false, nil
 	}
 
-	included, err := s.features.Enabled(ctx, platformcatalog.FeatureAIDesk)
+	included, err := s.features.Enabled(
+		dbscope.WithValidTenant(ctx, tenant.DBTenant()),
+		platformcatalog.FeatureAIDesk,
+	)
 	if err != nil {
 		return nil, false, fmt.Errorf("read whether the plan includes Trenova AI: %w", err)
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/entitlementservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedfeaturesservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedfeatures"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/stretchr/testify/assert"
@@ -15,9 +16,11 @@ import (
 	"go.uber.org/zap"
 )
 
-type noFeatureList struct{}
+type noFeatureList struct {
+	managedfeaturesports.StateRepository
+}
 
-func (noFeatureList) Get(context.Context) (*managedfeatures.State, error) {
+func (noFeatureList) Get(context.Context, managedscope.Scope) (*managedfeatures.State, error) {
 	return nil, managedfeatures.ErrNoState
 }
 
@@ -28,20 +31,10 @@ func (noFeatureList) Replace(
 	return &managedfeatures.Replacement{}, nil
 }
 
-func (noFeatureList) RemindPlanEnd(context.Context, int64) (*managedfeatures.Replacement, error) {
-	return &managedfeatures.Replacement{}, nil
-}
-
-func (noFeatureList) History(
-	context.Context,
-	int,
-) (*managedfeatures.State, []*managedfeatures.Change, error) {
-	return nil, nil, nil
-}
-
 func newManagedFeatures() *managedfeaturesservice.Service {
 	return managedfeaturesservice.New(managedfeaturesservice.Params{
 		Repo:   noFeatureList{},
+		Scopes: managedscope.NewResolver(false),
 		Clock:  func() int64 { return 0 },
 		Logger: zap.NewNop(),
 	})
@@ -68,4 +61,15 @@ func TestFeatureGateAllowsEverythingWhenSelfHosted(t *testing.T) {
 	on, err := gate.Enabled(t.Context(), platformcatalog.FeatureAccounting)
 	require.NoError(t, err)
 	assert.True(t, on)
+}
+
+func TestTheScopeResolverFollowsTheTenancy(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, scopeResolver(&managedconfig.Config{}).Shared())
+	assert.False(t, scopeResolver(&managedconfig.Config{Enabled: true}).Shared())
+	assert.True(t, scopeResolver(&managedconfig.Config{
+		Enabled: true,
+		Tenancy: managedconfig.TenancyShared,
+	}).Shared())
 }

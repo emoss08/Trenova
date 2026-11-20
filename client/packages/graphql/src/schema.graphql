@@ -2732,7 +2732,7 @@ enum AccountingDriftDirection {
 """
 A difference between a document Trenova sent and what the accounting system holds now.
 """
-type AccountingDriftFinding @kind(resource: "accounting_sync") {
+type AccountingDriftFinding @kind(resource: "accounting_reconciliation") {
   connectionId: ID!
   currencyCode: String!
   """For a customer balance, the documents that differ."""
@@ -2857,7 +2857,7 @@ type AccountingDriftLine {
   trenovaMinor: Int!
 }
 
-type AccountingDriftOverview @kind(resource: "accounting_sync") {
+type AccountingDriftOverview @kind(resource: "accounting_reconciliation") {
   """
   Why the last check could not read the accounting system. Empty when it could.
   """
@@ -2930,7 +2930,7 @@ type AccountingInboundApplyPreview {
 """
 A payment recorded in the accounting system against documents Trenova sent.
 """
-type AccountingInboundChange @kind(resource: "accounting_sync") {
+type AccountingInboundChange @kind(resource: "accounting_reconciliation") {
   amountMinor: Int!
   appliedObjects: [AccountingAppliedObject!]!
   currencyCode: String!
@@ -38194,6 +38194,7 @@ is a projection of it, keyed by kind and id, and resolves when the source
 does.
 """
 enum WatchtowerSourceKind {
+  AccountingReconciliation
   AccountingSync
   AgentException
   AgentPlan

@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/versionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedfeaturesports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
@@ -32,7 +33,8 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			editioninfo.SelfHosted,
+			editioninfo.New,
+			scopeResolver,
 			realtimeservice.New,
 			versionservice.New,
 			encryptionservice.New,
@@ -72,9 +74,10 @@ func APIOptions() fx.Option {
 func usageProvider(
 	cfg *managedconfig.Config,
 	gate managedusageports.Gate,
+	scopes *managedscope.Resolver,
 ) platformcatalogports.UsageProvider {
 	if cfg.Enabled {
-		return usageservice.NewManagedUsageProvider(gate)
+		return usageservice.NewManagedUsageProvider(gate, scopes)
 	}
 	return usageservice.NewNoopUsageProvider()
 }
@@ -87,6 +90,10 @@ func featureGate(
 		return managed
 	}
 	return entitlementservice.NewAllowAll()
+}
+
+func scopeResolver(cfg *managedconfig.Config) *managedscope.Resolver {
+	return managedscope.NewResolver(cfg.SharedTenancy())
 }
 
 func spreadsheetLimits(cfg *importsconfig.Config) rateimport.Limits {

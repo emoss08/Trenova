@@ -31,6 +31,13 @@ func (g featureGate) Enabled(_ context.Context, feature platformcatalog.FeatureK
 	return !slices.Contains(g.disabled, feature), nil
 }
 
+func (g featureGate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return g.Enabled(ctx, feature)
+}
+
 func readOnlyOperation(operation ast.Operation) *gqlgen.OperationContext {
 	return &gqlgen.OperationContext{
 		OperationName: "TestOperation",
@@ -64,7 +71,10 @@ func TestReadOnlyExtensionRefusesMutationsFromAReadOnlyOrganization(t *testing.T
 	})
 	status := gqlctx.NewResponseStatus()
 
-	gqlErr := ext.MutateOperationContext(readOnlyContext(tenant, status), readOnlyOperation(ast.Mutation))
+	gqlErr := ext.MutateOperationContext(
+		readOnlyContext(tenant, status),
+		readOnlyOperation(ast.Mutation),
+	)
 
 	require.NotNil(t, gqlErr)
 	restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](gqlErr)

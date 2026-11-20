@@ -131,7 +131,10 @@ func TestApplyAccountingInboundChange_AppliesAsTheApprover(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(
 		t,
-		agenttoolports.ToolTarget{Resource: permission.ResourceAccountingSync, ID: change.ID},
+		agenttoolports.ToolTarget{
+			Resource: permission.ResourceAccountingReconciliation,
+			ID:       change.ID,
+		},
 		target,
 	)
 }
@@ -204,4 +207,6 @@ func TestAccountingInboundTools_AskAPersonFirst(t *testing.T) {
 
 	ignore := newIgnoreAccountingInboundChangeTool(&fakeInboundOperator{}).(agenttoolports.ToolPolicyDeclarer).Policy()
 	assert.Equal(t, agent.TierActWithApproval, ignore.MaxTier)
+	assert.Equal(t, permission.ResourceAccountingReconciliation, apply.Resource)
+	assert.Equal(t, permission.ResourceAccountingReconciliation, ignore.Resource)
 }

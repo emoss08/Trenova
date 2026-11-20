@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -44,6 +46,7 @@ const (
 
 	resolveInvitationScopeReason = "resolve a driver portal invitation link before its tenant is known"
 	emailAvailableScopeReason    = "check that a portal sign-in email is not already used by any account"
+	usernameTakenScopeReason     = "check that a portal username is not already used by any account, since usernames are unique across every tenant"
 )
 
 var (
@@ -55,22 +58,25 @@ var (
 type Params struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
-	Quota  platformplanports.QuotaGuard
+	DB      *postgres.Connection
+	Logger  *zap.Logger
+	Quota   platformplanports.QuotaGuard
+	Managed *managedconfig.Config
 }
 
 type portalAccessRepository struct {
-	db    *postgres.Connection
-	l     *zap.Logger
-	quota platformplanports.QuotaGuard
+	db     *postgres.Connection
+	l      *zap.Logger
+	quota  platformplanports.QuotaGuard
+	shared bool
 }
 
 func New(p Params) portalaccessports.PortalAccessRepository {
 	return &portalAccessRepository{
-		db:    p.DB,
-		l:     p.Logger.Named("postgres.driver-portal-repository"),
-		quota: quotaservice.OrUnlimited(p.Quota),
+		db:     p.DB,
+		l:      p.Logger.Named("postgres.driver-portal-repository"),
+		quota:  quotaservice.OrUnlimited(p.Quota),
+		shared: p.Managed.SharedTenancy(),
 	}
 }
 
@@ -283,7 +289,7 @@ func (r *portalAccessRepository) ActivatePortalAccess(
 			return nil, err
 		}
 
-		req.User.Username, err = r.uniqueUsername(ctx, invitation, req.User.Username)
+		req.User.Username, err = r.uniqueUsername(ctx, req.User.Username)
 		if err != nil {
 			return nil, err
 		}
@@ -409,6 +415,13 @@ func (r *portalAccessRepository) ensureEmailAvailable(ctx context.Context, email
 	if err != nil {
 		return fmt.Errorf("check portal user email: %w", err)
 	}
+	if exists && r.shared {
+		return errortypes.NewValidationError(
+			"email",
+			errortypes.ErrInvalid,
+			"This email address can't be used for a portal account. Contact your carrier to resolve this.",
+		)
+	}
 	if exists {
 		return errortypes.NewValidationError(
 			"email",
@@ -417,6 +430,19 @@ func (r *portalAccessRepository) ensureEmailAvailable(ctx context.Context, email
 		)
 	}
 	return nil
+}
+
+func (r *portalAccessRepository) usernameTaken(
+	ctx context.Context,
+	candidate string,
+) (bool, error) {
+	ctx = dbscope.WithSystem(ctx, usernameTakenScopeReason)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		u := tenantdb.Users
+		return u.AllTenants().
+			Where(u.Username.Lower().EqExpr(keel.Text(candidate).Lower())).
+			Exists(ctx, r.db.Keel(ctx))
+	})
 }
 
 func (r *portalAccessRepository) ensureDriverRole(
@@ -450,19 +476,10 @@ func (r *portalAccessRepository) ensureDriverRole(
 	return role, nil
 }
 
-func (r *portalAccessRepository) uniqueUsername(
-	ctx context.Context,
-	invitation *portalinvitation.PortalInvitation,
-	base string,
-) (string, error) {
-	u := tenantdb.Users
-	db := r.db.Keel(ctx)
+func (r *portalAccessRepository) uniqueUsername(ctx context.Context, base string) (string, error) {
 	candidate := base
 	for suffix := 2; ; suffix++ {
-		exists, err := u.Where(
-			u.CurrentOrganizationID.Eq(invitation.OrganizationID),
-			u.Username.Lower().Eq(strings.ToLower(candidate)),
-		).Exists(ctx, db)
+		exists, err := r.usernameTaken(ctx, candidate)
 		if err != nil {
 			return "", fmt.Errorf("check portal username: %w", err)
 		}

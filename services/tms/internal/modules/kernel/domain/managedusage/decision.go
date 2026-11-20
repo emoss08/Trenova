@@ -10,6 +10,7 @@ const (
 	ReasonNoWindow   = Reason("no_usage_window")
 	ReasonStopped    = Reason("stopped")
 	ReasonAllowance  = Reason("allowance_reached")
+	ReasonCeiling    = Reason("ceiling_reached")
 )
 
 type Decision struct {
@@ -18,10 +19,15 @@ type Decision struct {
 	Allowed     bool
 	Reason      Reason
 	Limit       int64
+	Ceiling     int64
 	Used        int64
 	Requested   int64
 	WindowStart int64
 	WindowEnd   int64
+}
+
+func (d *Decision) CeilingReached() bool {
+	return d.Reason == ReasonCeiling
 }
 
 func (d *Decision) Remaining() int64 {
@@ -53,6 +59,7 @@ func decide(s *State, meter platformcatalog.MeterKey, level *int64, requested in
 	}
 	d.Managed = true
 	d.Limit = m.Allowance
+	d.Ceiling = m.Ceiling
 	d.Used = m.Quantity
 	d.WindowStart = s.WindowStart
 	d.WindowEnd = s.WindowEnd
@@ -61,6 +68,8 @@ func decide(s *State, meter platformcatalog.MeterKey, level *int64, requested in
 		d.Allowed, d.Reason = false, ReasonNoWindow
 	case m.Stopped:
 		d.Allowed, d.Reason = false, ReasonStopped
+	case m.Ceiling > 0 && requested > 0 && m.Quantity+requested > m.Ceiling:
+		d.Allowed, d.Reason = false, ReasonCeiling
 	case (m.HardCap || !s.Overage) && requested > 0 && m.Quantity+requested > m.Allowance:
 		d.Allowed, d.Reason = false, ReasonAllowance
 	default:

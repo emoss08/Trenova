@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/auditctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,7 +38,6 @@ type Params struct {
 	RateLimiter *middleware.RateLimiter
 	AppConfig   *appconfig.Config
 	Logger      *zap.Logger
-	Features    *middleware.FeatureGuard
 }
 
 type Handler struct {
@@ -47,7 +45,6 @@ type Handler struct {
 	rateLimiter *middleware.RateLimiter
 	appConfig   *appconfig.Config
 	l           *zap.Logger
-	features    *middleware.FeatureGuard
 }
 
 func New(p Params) *Handler {
@@ -56,7 +53,6 @@ func New(p Params) *Handler {
 		rateLimiter: p.RateLimiter,
 		appConfig:   p.AppConfig,
 		l:           p.Logger.Named("handler.scim"),
-		features:    p.Features,
 	}
 }
 
@@ -64,7 +60,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/scim/:" + tenantSlugParam + "/v2")
 	api.Use(
 		middleware.NewBodyLimit(maxBodyBytes),
-		h.features.RequireFeature(platformcatalog.FeatureIdentity, middleware.AnswerWith(h.refuse)),
 		h.requireDirectory(),
 	)
 

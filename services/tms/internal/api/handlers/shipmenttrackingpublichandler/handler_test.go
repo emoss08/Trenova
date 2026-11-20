@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
-	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -108,11 +107,6 @@ func newRouter() *gin.Engine {
 	handler := New(Params{
 		Service:      &fakeService{},
 		ErrorHandler: errorHandler,
-		Features: middleware.NewFeatureGuard(middleware.FeatureGuardParams{
-			Features:     plantest.AllFeatures(),
-			ErrorHandler: errorHandler,
-			Logger:       zap.NewNop(),
-		}),
 		RateLimiter: middleware.NewRateLimiter(middleware.RateLimiterParams{
 			SecurityConfig: &cfg.Security,
 			Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),

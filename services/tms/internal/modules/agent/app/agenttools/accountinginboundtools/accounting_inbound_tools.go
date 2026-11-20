@@ -131,7 +131,7 @@ func (t *ApplyAccountingInboundChangeTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
 		Kind:          agenttooltrust.ToolKindAction,
-		Resource:      permission.ResourceAccountingSync,
+		Resource:      permission.ResourceAccountingReconciliation,
 		Operation:     permission.OpUpdate,
 		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
@@ -149,7 +149,11 @@ func (t *ApplyAccountingInboundChangeTool) Policy() agenttoolports.ToolPolicy {
 func (t *ApplyAccountingInboundChangeTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramInboundChangeID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(
+		params,
+		paramInboundChangeID,
+		permission.ResourceAccountingReconciliation,
+	)
 }
 
 func (t *ApplyAccountingInboundChangeTool) PlanPreview(
@@ -251,7 +255,7 @@ func (t *IgnoreAccountingInboundChangeTool) ParamSchema() map[string]any {
 
 func (t *IgnoreAccountingInboundChangeTool) Policy() agenttoolports.ToolPolicy {
 	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
-		Resource:  permission.ResourceAccountingSync,
+		Resource:  permission.ResourceAccountingReconciliation,
 		Operation: permission.OpUpdate,
 		Tier:      agent.TierActWithApproval,
 		Rationale: "Keeps a payment the books hold out of Trenova for good, so a person " +
@@ -262,7 +266,11 @@ func (t *IgnoreAccountingInboundChangeTool) Policy() agenttoolports.ToolPolicy {
 func (t *IgnoreAccountingInboundChangeTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramInboundChangeID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(
+		params,
+		paramInboundChangeID,
+		permission.ResourceAccountingReconciliation,
+	)
 }
 
 func (t *IgnoreAccountingInboundChangeTool) request(

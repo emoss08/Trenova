@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -117,6 +118,7 @@ func newHarness(t *testing.T) *harness {
 		Publisher:    h.events,
 		Realtime:     &mocks.NoopRealtimeService{},
 		Watchtower:   &mocks.NoopWatchtowerProjector{},
+		Features:     plantest.AllFeatures(),
 	})
 	h.svc.now = func() time.Time { return h.now }
 	return h

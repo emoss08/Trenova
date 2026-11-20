@@ -31,6 +31,14 @@ func DecisionError(decision *platformplanports.QuotaDecision) error {
 	if decision == nil || decision.Allowed {
 		return nil
 	}
+	if decision.Plan == platformplan.PlanKeyManaged && decision.CeilingHit {
+		return managedusage.CeilingRefusal(
+			decision.Meter,
+			decision.Ceiling,
+			decision.Used,
+			decision.Plan.String(),
+		)
+	}
 	if decision.Plan == platformplan.PlanKeyManaged {
 		return managedusage.Refusal(
 			decision.Meter,

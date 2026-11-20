@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -45,6 +46,7 @@ type Params struct {
 	// It lands at Received and waits, which is what a mailbox on AlwaysReview does with every
 	// message anyway.
 	Workflows kernelports.WorkflowStarter
+	Features  platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -65,6 +67,7 @@ type Service struct {
 	mailbox      *inboundmailbox.Service
 	processing   *inboundprocessing.Service
 	queue        *inboundqueue.Service
+	features     platformcatalogports.FeatureGate
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -93,5 +96,6 @@ func New(p Params) *Service {
 		mailbox:    p.Mailbox,
 		processing: p.Processing,
 		queue:      p.Queue,
+		features:   p.Features,
 	}
 }

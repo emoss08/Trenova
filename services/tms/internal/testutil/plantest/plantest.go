@@ -12,9 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -100,6 +102,74 @@ func (g *Gate) Enabled(_ context.Context, feature platformcatalog.FeatureKey) (b
 	_, off := g.off[feature]
 
 	return !off, nil
+}
+
+func (g *Gate) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return g.Enabled(ctx, feature)
+}
+
+// Organizations is a shared server's gate: an organization it was told about
+// has every feature except those taken from it, one it was never told about
+// has nothing (the control plane has sent it no plan), and a question asked
+// with no tenant in the context is refused, as a shared server refuses it.
+type Organizations struct {
+	off map[pulid.ID]map[platformcatalog.FeatureKey]struct{}
+}
+
+var _ platformcatalogports.FeatureGate = (*Organizations)(nil)
+
+func SharedServer() *Organizations {
+	return &Organizations{off: map[pulid.ID]map[platformcatalog.FeatureKey]struct{}{}}
+}
+
+func (g *Organizations) Planned(organizationIDs ...pulid.ID) *Organizations {
+	for _, organizationID := range organizationIDs {
+		if g.off[organizationID] == nil {
+			g.off[organizationID] = map[platformcatalog.FeatureKey]struct{}{}
+		}
+	}
+	return g
+}
+
+func (g *Organizations) Without(
+	organizationID pulid.ID,
+	features ...platformcatalog.FeatureKey,
+) *Organizations {
+	off := g.off[organizationID]
+	if off == nil {
+		off = make(map[platformcatalog.FeatureKey]struct{}, len(features))
+		g.off[organizationID] = off
+	}
+	for _, feature := range features {
+		off[feature] = struct{}{}
+	}
+	return g
+}
+
+func (g *Organizations) Enabled(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	tenant, ok := dbscope.TenantFrom(ctx)
+	if !ok || tenant.OrganizationID.IsNil() {
+		return false, managedscope.ErrNoTenantScope
+	}
+	off, planned := g.off[tenant.OrganizationID]
+	if !planned {
+		return false, nil
+	}
+	_, withheld := off[feature]
+	return !withheld, nil
+}
+
+func (g *Organizations) EnabledAnywhere(
+	context.Context,
+	platformcatalog.FeatureKey,
+) (bool, error) {
+	return true, nil
 }
 
 // AllOn is the plan lookup over the process's registry with every feature on.

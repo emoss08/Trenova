@@ -9959,6 +9959,7 @@ export type WatchtowerSeverity =
  * does.
  */
 export type WatchtowerSourceKind =
+  | 'AccountingReconciliation'
   | 'AccountingSync'
   | 'AgentException'
   | 'AgentPlan'

@@ -27,6 +27,13 @@ func (unreadablePlan) Enabled(context.Context, platformcatalog.FeatureKey) (bool
 	return false, errors.New("the plan is unavailable")
 }
 
+func (r unreadablePlan) EnabledAnywhere(
+	ctx context.Context,
+	feature platformcatalog.FeatureKey,
+) (bool, error) {
+	return r.Enabled(ctx, feature)
+}
+
 type planned struct {
 	body   map[string]any
 	access string

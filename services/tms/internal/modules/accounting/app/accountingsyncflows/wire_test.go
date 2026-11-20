@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"go.uber.org/zap"
 )
 
@@ -136,6 +137,7 @@ func wire(p *wiring) services {
 			Enqueuer:    p.Enqueuer,
 			Effects:     effects,
 			Backfills:   backfills,
+			Features:    plantest.AllFeatures(),
 		}),
 		actions: accountingsyncactions.New(
 			accountingsyncactions.Params{Records: p.Records, Effects: effects},

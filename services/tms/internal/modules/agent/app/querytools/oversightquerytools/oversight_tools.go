@@ -547,6 +547,7 @@ func outsideMark(item *watchtower.Item) (agent.SourcedRef, bool) {
 		watchtower.SourceTenderExhausted,
 		watchtower.SourceAgentQualityRegression,
 		watchtower.SourceAccountingSync,
+		watchtower.SourceAccountingReconciliation,
 		watchtower.SourceFactoring:
 	}
 	if source == "" {
@@ -594,6 +595,7 @@ func (w *watchtowerRunIDs) add(item *watchtower.Item) {
 		watchtower.SourceTenderExhausted,
 		watchtower.SourceAgentQualityRegression,
 		watchtower.SourceAccountingSync,
+		watchtower.SourceAccountingReconciliation,
 		watchtower.SourceFactoring:
 	}
 }

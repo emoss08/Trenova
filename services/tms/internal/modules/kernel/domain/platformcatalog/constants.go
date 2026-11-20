@@ -5,6 +5,7 @@ const (
 	FeatureDispatch                = FeatureKey("tms.dispatch")
 	FeatureBilling                 = FeatureKey("tms.billing")
 	FeatureAccounting              = FeatureKey("tms.accounting")
+	FeatureAccountingIntegration   = FeatureKey("integrations.accounting")
 	FeatureFleetMaintenance        = FeatureKey("tms.fleet")
 	FeatureSettlement              = FeatureKey("tms.settlement")
 	FeatureDriverPortal            = FeatureKey("tms.driver_portal")

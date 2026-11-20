@@ -105,8 +105,10 @@ func (s SubjectType) Resource() (permission.Resource, bool) {
 		return permission.ResourceFormulaTemplate, true
 	case SubjectFormulaLibrary:
 		return permission.ResourceFormulaLibrary, true
-	case SubjectAccountingSyncRecord, SubjectAccountingInbound, SubjectAccountingDrift:
+	case SubjectAccountingSyncRecord:
 		return permission.ResourceAccountingSync, true
+	case SubjectAccountingInbound, SubjectAccountingDrift:
+		return permission.ResourceAccountingReconciliation, true
 	case SubjectInvoice:
 		return permission.ResourceInvoice, true
 	case SubjectInvoiceDispute:

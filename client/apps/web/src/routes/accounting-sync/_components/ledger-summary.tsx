@@ -30,6 +30,10 @@ export function LedgerSummary({ summary }: { summary: AccountingSyncSummary }) {
     ...tablePaginationSearchParamsParser,
   });
   const current = activeBucket(filters.fieldFilters);
+  const { allowed: seesReconciliation } = usePermission(
+    Resource.AccountingReconciliation,
+    Operation.Read,
+  );
 
   const select = (bucket: LedgerBucket) => {
     void setFilters({
@@ -71,7 +75,7 @@ export function LedgerSummary({ summary }: { summary: AccountingSyncSummary }) {
         active={current === "attention"}
         onClick={() => select("attention")}
       />
-      {summary.connection?.syncEnabledAt != null ? (
+      {summary.connection?.syncEnabledAt != null && seesReconciliation ? (
         <LedgerDriftItem system={summary.integrationType} />
       ) : null}
     </KpiStrip>

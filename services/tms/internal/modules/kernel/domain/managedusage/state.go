@@ -7,8 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 )
 
-const CurrentStateID = "current"
-
 var ErrNoState = errors.New("the control plane has not set a usage state yet")
 
 type Unit string
@@ -33,13 +31,14 @@ type Meter struct {
 	Quantity  int64                    `json:"quantity"`
 	Allowance int64                    `json:"allowance"`
 	HardCap   bool                     `json:"hardCap"`
+	Ceiling   int64                    `json:"ceiling,omitempty"`
 	Stopped   bool                     `json:"stopped"`
 }
 
 type State struct {
 	keel.Table `keel:"managed_usage_states"`
 
-	ID          string  `json:"id"          keel:"id,pk"`
+	ScopeKey    string  `json:"scopeKey"    keel:"scope_key,pk"`
 	WindowStart int64   `json:"windowStart" keel:"window_start,nullzero"`
 	WindowEnd   int64   `json:"windowEnd"   keel:"window_end,nullzero"`
 	Overage     bool    `json:"overage"     keel:"overage"`

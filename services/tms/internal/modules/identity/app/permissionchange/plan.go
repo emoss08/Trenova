@@ -44,7 +44,17 @@ func (o *PlanObserver) PlanChanged(
 	ctx context.Context,
 	replacement *managedfeatures.Replacement,
 ) error {
-	if !replacement.FeaturesChanged() {
+	if !replacement.FeaturesChanged() && !replacement.LifecycleChanged() {
+		return nil
+	}
+
+	if tenant, ok := replacement.Scope.Tenant(); ok {
+		o.l.Info("an organization's plan changed; its permissions are read again",
+			zap.String("organizationId", tenant.OrganizationID.String()))
+		o.notifier.OrganizationChanged(ctx, pagination.TenantInfo{
+			OrgID: tenant.OrganizationID,
+			BuID:  tenant.BusinessUnitID,
+		})
 		return nil
 	}
 
