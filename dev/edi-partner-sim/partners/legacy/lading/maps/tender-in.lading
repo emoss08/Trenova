@@ -1,0 +1,97 @@
+map tenderIn
+  from ashgrove.204
+  to   loadTender
+  use  common
+
+key      <- B204 else reject "The tender has no Ashgrove load number"
+purpose  <- B2A01 via purposes else reject "Ashgrove sent purpose {B2A01}, which its guide does not define"
+payment  <- B206.upper() via payments
+bol      <- reference(L11, "BM")
+poNumber <- reference(L11, "PO")
+refs     <- refs(L11)
+notes    <- if exists NTE.02 then [(NTE.02 ?? "").upper()] else []
+
+let billTo = 0100
+customer <- lookup Customer(billTo.N104) learn party(billTo)
+
+let trailer = 0200.N7
+equipment <- trailer.11.upper() via equipment
+  else hold "Ashgrove asked for equipment we don't run: {trailer.11}"
+
+weight        <- weight(L301, L312 ?? "L") else warn "Ashgrove sent no total weight"
+pieces        <- L311
+total         <- money(L305, partner.currency)
+freightCharge <- total
+
+stops <- each 0300 as stop {
+  let party = stop.0310
+  sequence <- stop.S501
+  type     <- stop.S502.upper() via stopTypes else reject "Stop {stop.S501} has no type Trenova reads: {stop.S502}"
+  location <- lookup Location(party.N104) learn address(party)
+  code     <- party.N104
+  name     <- party.N102.titleCase()
+  address  <- address(party)
+  window   <- window(stop.G62, partner.zone)
+    else reject "Stop {stop.S501} has no appointment"
+  weight <- weight(stop.S503, stop.S504)
+  pieces <- int(stop.S505)
+  refs   <- refs(stop.L11)
+  notes  <- if exists stop.NTE.02 then [(stop.NTE.02 ?? "").upper()] else []
+}
+
+commodities <- each 0300.map(s => s.0320).flatten as line {
+  description <- line.L502.titleCase()
+  hazmat      <- not line.0325.isEmpty
+}
+
+test "Ashgrove's lowercase tender becomes a three-stop load" {
+  given file "samples/tender-original.x12"
+  given lookup Customer("AP") = "Ashgrove Industrial Supply"
+  expect key == "1000037"
+  expect purpose == Original
+  expect payment == Collect
+  expect bol == "646458"
+  expect poNumber == "P63832"
+  expect refs["BM"] == "646458"
+  expect stops.count == 3
+  expect stops.first.type == Pickup
+  expect stops.last.type == Delivery
+  expect stops.last.refs["AO"] == "9046"
+  expect stops.last.notes == ["CALL B4 DEL"]
+  expect equipment == "VAN"
+  expect total == $1_418.75
+  expect weight == 7_090 lb
+  expect commodities.count == 2
+  expect no rejects
+}
+
+test "times with no zone code are Ashgrove's Eastern time, even at a Central stop" {
+  given file "samples/tender-original.x12"
+  expect stops.first.window.start == @2026-02-12T07:00[America/New_York]
+  expect stops.last.window.start == @2026-02-13T07:00[America/New_York]
+}
+
+test "a sparse tender reads with three-hour windows and no freight lines" {
+  given file "samples/tender-sparse.x12"
+  expect poNumber == none
+  expect commodities.isEmpty
+  expect stops.count == 3
+  expect stops.first.window.end == @2026-02-09T16:00[America/New_York]
+  expect no rejects
+}
+
+test "a hazmat line is flagged" {
+  given file "samples/tender-hazmat.x12"
+  expect commodities.count(c => c.hazmat) == 1
+}
+
+test "a resend reads exactly as the original" {
+  given file "samples/tender-resend.x12"
+  expect key == "1000037"
+  expect purpose == Original
+}
+
+property "everything Ashgrove has tendered still reads" {
+  vary file in samples "samples/tender-*.x12"
+  expect no rejects
+}

@@ -31,7 +31,6 @@
   "Business days from sent to funded for the last schedules": "最近各清单从发送到放款的工作日数",
   "Business days from submission to funding.": "从提交到放款的工作日数。",
   "Cancelled before it was funded": "放款前已取消",
-  "Cash account": "现金科目",
   "Changes from v{0}": "与 v{0} 相比的变更",
   "Chargeback window": "退款追索期限",
   "Chargeback window cannot be longer than 730 days": "退款追索期限不得超过 730 天",

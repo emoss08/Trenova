@@ -48,6 +48,20 @@ type ARLedgerEntry {
   sourceObjectId: String!
   amountMinor: Int!
   relatedInvoiceId: ID
+  "The customer's balance after this entry."
+  runningBalanceMinor: Int!
+}
+
+"""
+A page of a customer's ledger between two dates, oldest first. The first page
+opens on the balance carried in from before the start date; each later page
+opens on the balance the page before it ended on.
+"""
+type ARLedgerPage {
+  openingBalanceMinor: Int!
+  entries: [ARLedgerEntry!]!
+  hasNextPage: Boolean!
+  endCursor: String
 }
 
 type ARStatementTransaction {
@@ -298,7 +312,13 @@ extend type Query {
   accountingBriefing: AccountingBriefing!
   arAgingSummary(asOfDate: Timestamp): ARAgingSummary!
   arOpenItems(customerId: ID, asOfDate: Timestamp): [AROpenItem!]!
-  arCustomerLedger(customerId: ID!): [ARLedgerEntry!]!
+  arCustomerLedger(
+    customerId: ID!
+    startDate: Timestamp
+    endDate: Timestamp
+    first: Int
+    after: String
+  ): ARLedgerPage!
   arCustomerStatement(customerId: ID!, startDate: Timestamp, asOfDate: Timestamp): ARCustomerStatement!
   arDashboardKpis: ARDashboardKPIs!
   arDsoTrend(weeks: Int): [ARDSOTrendPoint!]!

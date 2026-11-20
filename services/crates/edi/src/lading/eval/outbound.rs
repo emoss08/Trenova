@@ -7,7 +7,7 @@ use serde::Serialize;
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
 
-use super::interp::{Eval, Frame, Interp, Lineage};
+use super::interp::{Eval, Frame, Halt, Interp, Lineage};
 use super::value::{Value, decimal_text, display, local};
 use crate::lading::check::x12 as nav;
 use crate::lading::syntax::ast::{Block, ElementAssign, Stmt};
@@ -66,10 +66,12 @@ impl Interp<'_> {
             instances: vec![OutInstance::default()],
             findings: Vec::new(),
         };
-        for stmt in stmts {
-            self.write_stmt(frame, guide, stmt, &mut output, 0)?;
-        }
-        Ok(output)
+        let writing = std::mem::replace(&mut self.writing, true);
+        let result = stmts
+            .iter()
+            .try_for_each(|stmt| self.write_stmt(frame, guide, stmt, &mut output, 0));
+        self.writing = writing;
+        result.map(|()| output)
     }
 
     fn write_block(
@@ -158,14 +160,26 @@ impl Interp<'_> {
                 };
                 if let Some((list, binder)) = each {
                     let items = self.eval(frame, list)?;
-                    for (index, item) in items.items().iter().enumerate() {
-                        let child = new_instance(output, instance, node);
-                        frame.push();
-                        frame.bind(&binder.name, item.clone());
-                        frame.bind("index", Value::Int(i64::try_from(index).unwrap_or(0)));
-                        let result = self.write_block(frame, guide, body, output, child);
-                        frame.pop();
-                        result?;
+                    let mut written = 0;
+                    for item in items.items() {
+                        let item = Item {
+                            binder: &binder.name,
+                            value: item.clone(),
+                            index: written,
+                        };
+                        if self.write_item(
+                            frame,
+                            guide,
+                            body,
+                            output,
+                            (instance, Some(node)),
+                            item,
+                        )? {
+                            written += 1;
+                        }
+                    }
+                    if written == 0 && !items.items().is_empty() {
+                        return Err(Halt::NotSent);
                     }
                 } else {
                     let child = new_instance(output, instance, node);
@@ -192,13 +206,20 @@ impl Interp<'_> {
                         .collect(),
                     other => other.items().to_vec(),
                 };
-                for (index, item) in entries.into_iter().enumerate() {
-                    frame.push();
-                    frame.bind(&binder.name, item);
-                    frame.bind("index", Value::Int(i64::try_from(index).unwrap_or(0)));
-                    let result = self.write_block(frame, guide, body, output, instance);
-                    frame.pop();
-                    result?;
+                let mut written = 0;
+                let count = entries.len();
+                for value in entries {
+                    let item = Item {
+                        binder: &binder.name,
+                        value,
+                        index: written,
+                    };
+                    if self.write_item(frame, guide, body, output, (instance, None), item)? {
+                        written += 1;
+                    }
+                }
+                if written == 0 && count > 0 {
+                    return Err(Halt::NotSent);
                 }
             }
             Stmt::When { cond, body, span } => {
@@ -214,6 +235,47 @@ impl Interp<'_> {
             _ => {}
         }
         Ok(())
+    }
+
+    /// Writes one item of an `each`, in a new instance of `place.1` when it names a loop. An item
+    /// holding a value its crosswalk says is not sent is left out, with everything it wrote.
+    fn write_item(
+        &mut self,
+        frame: &mut Frame,
+        guide: usize,
+        body: &Block,
+        output: &mut Output,
+        place: (usize, Option<usize>),
+        item: Item<'_>,
+    ) -> Eval<bool> {
+        let (instance, node) = place;
+        let mark = Mark {
+            instances: output.instances.len(),
+            segments: output.instances[instance].segments.len(),
+            loops: output.instances[instance].loops.len(),
+            findings: output.findings.len(),
+            lineage: self.lineage.len(),
+            trace: self.trace_depth(),
+        };
+        let target = node.map_or(instance, |node| new_instance(output, instance, node));
+        frame.push();
+        frame.bind(item.binder, item.value);
+        frame.bind("index", Value::Int(i64::try_from(item.index).unwrap_or(0)));
+        let result = self.write_block(frame, guide, body, output, target);
+        frame.pop();
+        match result {
+            Ok(()) => Ok(true),
+            Err(Halt::NotSent) => {
+                output.instances.truncate(mark.instances);
+                output.instances[instance].segments.truncate(mark.segments);
+                output.instances[instance].loops.truncate(mark.loops);
+                output.findings.truncate(mark.findings);
+                self.lineage.truncate(mark.lineage);
+                self.truncate_trace(mark.trace);
+                Ok(false)
+            }
+            Err(other) => Err(other),
+        }
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -317,6 +379,23 @@ impl Interp<'_> {
             value: display(value),
         });
     }
+}
+
+/// One item an `each` writes: its binder, its value and its position among the items written.
+struct Item<'b> {
+    binder: &'b str,
+    value: Value,
+    index: usize,
+}
+
+/// How much of a run's output there was before an item, to take back an item not sent.
+struct Mark {
+    instances: usize,
+    segments: usize,
+    loops: usize,
+    findings: usize,
+    lineage: usize,
+    trace: usize,
 }
 
 fn new_instance(output: &mut Output, parent: usize, node: usize) -> usize {

@@ -2,7 +2,6 @@ package shipmentinputmapping
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -140,13 +139,16 @@ func applyShipmentMeasures(
 	if entity.TotalChargeAmount, err = nullDecimalFromInput(input.TotalChargeAmount); err != nil {
 		return err
 	}
-	if entity.TemperatureMin, err = int16PtrFromInput(
+	if entity.TemperatureMin, err = gqlscalar.NarrowIntPtr[int16](
 		"temperatureMin",
 		input.TemperatureMin,
 	); err != nil {
 		return err
 	}
-	entity.TemperatureMax, err = int16PtrFromInput("temperatureMax", input.TemperatureMax)
+	entity.TemperatureMax, err = gqlscalar.NarrowIntPtr[int16](
+		"temperatureMax",
+		input.TemperatureMax,
+	)
 	return err
 }
 
@@ -304,6 +306,20 @@ func shipmentStopsFromInput(
 		if input.Handling != nil {
 			handling = shipmentvocab.StopHandling(*input.Handling)
 		}
+		temperatureMin, err := gqlscalar.NarrowIntPtr[int16](
+			path+".temperatureMin",
+			input.TemperatureMin,
+		)
+		if err != nil {
+			return nil, err
+		}
+		temperatureMax, err := gqlscalar.NarrowIntPtr[int16](
+			path+".temperatureMax",
+			input.TemperatureMax,
+		)
+		if err != nil {
+			return nil, err
+		}
 		stop := &shipmentdomain.Stop{
 			ID:                     id,
 			BusinessUnitID:         authCtx.BusinessUnitID,
@@ -317,6 +333,8 @@ func shipmentStopsFromInput(
 			Sequence:               gqlscalar.Int64Value(input.Sequence),
 			Pieces:                 gqlscalar.Int64Ptr(input.Pieces),
 			Weight:                 gqlscalar.Int64Ptr(input.Weight),
+			TemperatureMin:         temperatureMin,
+			TemperatureMax:         temperatureMax,
 			ScheduledWindowStart:   gqlscalar.Int64Value(input.ScheduledWindowStart),
 			ScheduledWindowEnd:     gqlscalar.Int64Ptr(input.ScheduledWindowEnd),
 			ActualArrival:          gqlscalar.Int64Ptr(input.ActualArrival),
@@ -364,7 +382,7 @@ func shipmentAdditionalChargesFromInput(
 		}
 		unit := int16(1)
 		if input.Unit != nil {
-			parsedUnit, unitErr := int16FromInput("unit", *input.Unit)
+			parsedUnit, unitErr := gqlscalar.NarrowInt[int16](path+".unit", *input.Unit)
 			if unitErr != nil {
 				return nil, unitErr
 			}
@@ -429,6 +447,20 @@ func shipmentCommoditiesFromInput(
 		if err != nil {
 			return nil, err
 		}
+		temperatureMin, err := gqlscalar.NarrowIntPtr[int16](
+			path+".temperatureMin",
+			input.TemperatureMin,
+		)
+		if err != nil {
+			return nil, err
+		}
+		temperatureMax, err := gqlscalar.NarrowIntPtr[int16](
+			path+".temperatureMax",
+			input.TemperatureMax,
+		)
+		if err != nil {
+			return nil, err
+		}
 		commodity := &shipmentdomain.ShipmentCommodity{
 			ID:             id,
 			BusinessUnitID: authCtx.BusinessUnitID,
@@ -440,6 +472,8 @@ func shipmentCommoditiesFromInput(
 			LengthFeet:     input.LengthFeet,
 			WidthFeet:      input.WidthFeet,
 			HeightFeet:     input.HeightFeet,
+			TemperatureMin: temperatureMin,
+			TemperatureMax: temperatureMax,
 		}
 		if commodity.Pieces == 0 {
 			commodity.Pieces = 1
@@ -566,26 +600,4 @@ func decimalFromInput(value *string) (decimal.Decimal, error) {
 		)
 	}
 	return parsed, nil
-}
-
-func int16PtrFromInput(field string, value *int) (*int16, error) {
-	if value == nil {
-		return nil, nil //nolint:nilnil // an omitted input leaves the optional field unset
-	}
-	converted, err := int16FromInput(field, *value)
-	if err != nil {
-		return nil, err
-	}
-	return &converted, nil
-}
-
-func int16FromInput(field string, value int) (int16, error) {
-	if value < math.MinInt16 || value > math.MaxInt16 {
-		return 0, errortypes.NewValidationError(
-			field,
-			errortypes.ErrInvalid,
-			"{0} is outside the allowed range", field,
-		)
-	}
-	return int16(value), nil
 }

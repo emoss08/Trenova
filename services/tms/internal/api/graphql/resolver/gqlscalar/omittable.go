@@ -41,7 +41,7 @@ func ApplyRequired[T any](field, label string, value graphql.Omittable[*T], dest
 	return nil
 }
 
-func ApplyRequiredInt[D ~int16 | ~int32 | ~int64](
+func ApplyRequiredInt[D NarrowInteger](
 	field, label string,
 	value graphql.Omittable[*int],
 	dest *D,
@@ -50,9 +50,14 @@ func ApplyRequiredInt[D ~int16 | ~int32 | ~int64](
 	if err != nil {
 		return err
 	}
-	if resolved.Set {
-		*dest = D(resolved.Value)
+	if !resolved.Set {
+		return nil
 	}
+	narrowed, err := NarrowInt[D](field, resolved.Value)
+	if err != nil {
+		return err
+	}
+	*dest = narrowed
 
 	return nil
 }

@@ -42,7 +42,8 @@ export type ARAgingSummary = ArAgingSummaryQuery["arAgingSummary"];
 export type ARAgingRow = ARAgingSummary["rows"][number];
 export type ARAgingBuckets = ARAgingSummary["totals"];
 export type AROpenItem = ArOpenItemsQuery["arOpenItems"][number];
-export type ARLedgerEntry = ArCustomerLedgerQuery["arCustomerLedger"][number];
+export type ARLedgerPage = ArCustomerLedgerQuery["arCustomerLedger"];
+export type ARLedgerEntry = ARLedgerPage["entries"][number];
 export type ARCustomerStatement = ArCustomerStatementQuery["arCustomerStatement"];
 export type ARStatementTransaction = ARCustomerStatement["transactions"][number];
 export type ARDashboardKpis = ArDashboardKpisQuery["arDashboardKpis"];
@@ -87,12 +88,13 @@ export async function fetchArOpenItems(
 
 export async function fetchArCustomerLedger(
   customerId: string,
+  page: { first: number; after?: string | null },
   options?: { signal?: AbortSignal },
 ) {
   const data = await requestGraphQL({
     document: ArCustomerLedgerDocument,
     operationName: "ArCustomerLedger",
-    variables: { customerId },
+    variables: { customerId, first: page.first, after: page.after ?? undefined },
     signal: options?.signal,
   });
   return data.arCustomerLedger;

@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol/carriersettlementcontroldb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -45,16 +44,9 @@ func (r *repository) GetOrCreate(
 	tenantInfo pagination.TenantInfo,
 ) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	newDefault := func() *carriersettlementcontrol.CarrierSettlementControl {
-		return &carriersettlementcontrol.CarrierSettlementControl{
-			ID:                      pulid.MustNew("carstlc_"),
-			BusinessUnitID:          tenantInfo.BuID,
-			OrganizationID:          tenantInfo.OrgID,
-			PayTrigger:              settlementcontrol.PayTriggerShipmentDelivered,
-			PayPeriodFrequency:      settlementcontrol.PayPeriodFrequencyWeekly,
-			PeriodEndDayOfWeek:      6,
-			PayDelayDays:            5,
-			RequireSeparateApprover: true,
-		}
+		control := carriersettlementcontrol.NewDefault(tenantInfo.OrgID, tenantInfo.BuID)
+		control.ID = pulid.MustNew("carstlc_")
+		return control
 	}
 
 	return dbtx.GetOrCreate(

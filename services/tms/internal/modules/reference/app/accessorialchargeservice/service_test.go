@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dataentrycontrolportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
@@ -28,25 +29,25 @@ func newTestValidator() *Validator {
 }
 
 type testDeps struct {
-	repo        *accessorialchargeportsmock.MockAccessorialChargeRepository
-	audit       *auditportsmock.MockAuditService
-	transformer *accessorialchargeportsmock.MockDataTransformer
-	svc         *Service
+	repo      *accessorialchargeportsmock.MockAccessorialChargeRepository
+	audit     *auditportsmock.MockAuditService
+	formatter *dataentrycontrolportsmock.MockTextFormatter
+	svc       *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	auditSvc := auditportsmock.NewMockAuditService(t)
-	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
 	svc := &Service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		validator:    newTestValidator(),
 		auditService: auditSvc,
-		transformer:  transformer,
+		formatter:    formatter,
 	}
-	return &testDeps{repo: repo, audit: auditSvc, transformer: transformer, svc: svc}
+	return &testDeps{repo: repo, audit: auditSvc, formatter: formatter, svc: svc}
 }
 
 func newTestEntity() *accessorialcharge.AccessorialCharge {
@@ -86,7 +87,7 @@ func TestCreate_Success(t *testing.T) {
 	created.BusinessUnitID = entity.BusinessUnitID
 	created.OrganizationID = entity.OrganizationID
 
-	deps.transformer.On("TransformAccessorialCharge", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(created, nil)
 	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -95,29 +96,29 @@ func TestCreate_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, created.ID, result.ID)
 	assert.Equal(t, created.Code, result.Code)
-	deps.transformer.AssertExpectations(t)
+	deps.formatter.AssertExpectations(t)
 	deps.repo.AssertExpectations(t)
 	deps.audit.AssertExpectations(t)
 }
 
-func TestCreate_TransformError(t *testing.T) {
+func TestCreate_FormatError(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	ctx := t.Context()
 	entity := newCreateEntity()
 	userID := pulid.MustNew("usr_")
-	transformErr := errors.New("transform failed")
+	formatErr := errors.New("format failed")
 
-	deps.transformer.On("TransformAccessorialCharge", mock.Anything, mock.Anything).
-		Return(transformErr)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).
+		Return(formatErr)
 
 	result, err := deps.svc.Create(ctx, entity, userID)
 
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Equal(t, transformErr, err)
+	assert.Equal(t, formatErr, err)
 	deps.repo.AssertNotCalled(t, "Create")
-	deps.transformer.AssertExpectations(t)
+	deps.formatter.AssertExpectations(t)
 }
 
 func TestCreate_RepoError(t *testing.T) {
@@ -128,7 +129,7 @@ func TestCreate_RepoError(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	repoErr := errors.New("database error")
 
-	deps.transformer.On("TransformAccessorialCharge", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(nil, repoErr)
 
 	result, err := deps.svc.Create(ctx, entity, userID)
@@ -136,7 +137,7 @@ func TestCreate_RepoError(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.Equal(t, repoErr, err)
-	deps.transformer.AssertExpectations(t)
+	deps.formatter.AssertExpectations(t)
 	deps.repo.AssertExpectations(t)
 	deps.audit.AssertNotCalled(t, "LogAction")
 }
@@ -154,7 +155,7 @@ func TestUpdate_Success(t *testing.T) {
 	original.BusinessUnitID = entity.BusinessUnitID
 	original.Code = "OLD"
 
-	deps.transformer.On("TransformAccessorialCharge", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(entity, nil)
 	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -164,7 +165,7 @@ func TestUpdate_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, entity.ID, result.ID)
 	assert.Equal(t, entity.Code, result.Code)
-	deps.transformer.AssertExpectations(t)
+	deps.formatter.AssertExpectations(t)
 	deps.repo.AssertExpectations(t)
 	deps.audit.AssertExpectations(t)
 }
@@ -177,7 +178,7 @@ func TestUpdate_RepoGetError(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	getErr := errors.New("not found")
 
-	deps.transformer.On("TransformAccessorialCharge", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, getErr)
 
 	result, err := deps.svc.Update(ctx, entity, userID)
@@ -186,7 +187,7 @@ func TestUpdate_RepoGetError(t *testing.T) {
 	assert.Nil(t, result)
 	assert.Equal(t, getErr, err)
 	deps.repo.AssertNotCalled(t, "Update")
-	deps.transformer.AssertExpectations(t)
+	deps.formatter.AssertExpectations(t)
 	deps.repo.AssertExpectations(t)
 }
 
@@ -267,7 +268,7 @@ func TestCreate_ValidationError(t *testing.T) {
 	entity := newTestEntity()
 	userID := pulid.MustNew("usr_")
 
-	deps.transformer.On("TransformAccessorialCharge", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Create(ctx, entity, userID)
 
@@ -276,22 +277,22 @@ func TestCreate_ValidationError(t *testing.T) {
 	deps.repo.AssertNotCalled(t, "Create")
 }
 
-func TestUpdate_TransformError(t *testing.T) {
+func TestUpdate_FormatError(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	ctx := t.Context()
 	entity := newTestEntity()
 	userID := pulid.MustNew("usr_")
-	transformErr := errors.New("transform failed")
+	formatErr := errors.New("format failed")
 
-	deps.transformer.On("TransformAccessorialCharge", mock.Anything, mock.Anything).
-		Return(transformErr)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).
+		Return(formatErr)
 
 	result, err := deps.svc.Update(ctx, entity, userID)
 
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Equal(t, transformErr, err)
+	assert.Equal(t, formatErr, err)
 	deps.repo.AssertNotCalled(t, "GetByID")
 }
 
@@ -308,7 +309,7 @@ func TestUpdate_RepoUpdateError(t *testing.T) {
 	original.OrganizationID = entity.OrganizationID
 	original.BusinessUnitID = entity.BusinessUnitID
 
-	deps.transformer.On("TransformAccessorialCharge", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(nil, updateErr)
 
@@ -381,7 +382,7 @@ func TestNew(t *testing.T) {
 
 	repo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 	auditSvc := auditportsmock.NewMockAuditService(t)
-	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
 	validator := newTestValidator()
 
 	svc := New(Params{
@@ -389,7 +390,7 @@ func TestNew(t *testing.T) {
 		Repo:         repo,
 		Validator:    validator,
 		AuditService: auditSvc,
-		Transformer:  transformer,
+		Formatter:    formatter,
 	})
 
 	require.NotNil(t, svc)
@@ -413,15 +414,16 @@ func TestCreate_AuditLogError(t *testing.T) {
 	created.BusinessUnitID = entity.BusinessUnitID
 	created.OrganizationID = entity.OrganizationID
 
-	deps.transformer.On("TransformAccessorialCharge", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(created, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("audit error"))
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).
+		Return(errors.New("audit error"))
 
 	result, err := deps.svc.Create(ctx, entity, userID)
 
 	require.NoError(t, err)
 	assert.Equal(t, created.ID, result.ID)
-	deps.transformer.AssertExpectations(t)
+	deps.formatter.AssertExpectations(t)
 	deps.repo.AssertExpectations(t)
 	deps.audit.AssertExpectations(t)
 }
@@ -444,7 +446,7 @@ func TestUpdate_ValidationError(t *testing.T) {
 		Version:        1,
 	}
 
-	deps.transformer.On("TransformAccessorialCharge", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Update(ctx, entity, userID)
 
@@ -467,7 +469,7 @@ func TestUpdate_AuditLogError(t *testing.T) {
 	original.BusinessUnitID = entity.BusinessUnitID
 	original.Code = "OLD"
 
-	deps.transformer.On("TransformAccessorialCharge", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(entity, nil)
 	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).
@@ -477,7 +479,7 @@ func TestUpdate_AuditLogError(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, entity.ID, result.ID)
-	deps.transformer.AssertExpectations(t)
+	deps.formatter.AssertExpectations(t)
 	deps.repo.AssertExpectations(t)
 	deps.audit.AssertExpectations(t)
 }

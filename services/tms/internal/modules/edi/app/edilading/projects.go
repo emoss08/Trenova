@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/pkg/x12"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/client"
@@ -74,17 +75,18 @@ func NewProjects(p ProjectsParams) *Projects { //nolint:gocritic // fx params ar
 }
 
 type CreateProjectRequest struct {
-	TenantInfo  pagination.TenantInfo `json:"-"`
-	PartnerID   pulid.ID              `json:"partnerId"`
-	Role        string                `json:"role"`
-	Sets        []string              `json:"sets"`
-	Them        *[2]string            `json:"them"`
-	Us          *[2]string            `json:"us"`
-	Group       *[2]string            `json:"group"`
-	Separators  []string              `json:"separators"`
-	Usage       string                `json:"usage"`
-	Acknowledge string                `json:"acknowledge"`
-	AckWithin   int                   `json:"ackWithin"`
+	TenantInfo       pagination.TenantInfo `json:"-"`
+	PartnerID        pulid.ID              `json:"partnerId"`
+	Role             string                `json:"role"`
+	Sets             []string              `json:"sets"`
+	Them             *[2]string            `json:"them"`
+	Us               *[2]string            `json:"us"`
+	Group            *[2]string            `json:"group"`
+	Separators       []string              `json:"separators"`
+	LineEnding       x12.LineEnding        `json:"lineEnding"`
+	Usage            string                `json:"usage"`
+	Acknowledge      string                `json:"acknowledge"`
+	AckWithinSeconds int64                 `json:"ackWithinSeconds"`
 }
 
 // CreateProject starts a partner's project from the starter for its role: a draft that checks
@@ -143,18 +145,19 @@ func (s *Projects) CreateProject(
 // StarterFor is the starter request for a partner.
 func StarterFor(partner *edi.EDIPartner, req *CreateProjectRequest) *lading.StarterRequest {
 	return &lading.StarterRequest{
-		Name:        partner.Code,
-		Label:       partner.Name,
-		Role:        req.Role,
-		Them:        req.Them,
-		Us:          req.Us,
-		Zone:        partner.Timezone,
-		Group:       req.Group,
-		Separators:  req.Separators,
-		Usage:       req.Usage,
-		Acknowledge: req.Acknowledge,
-		AckWithin:   req.AckWithin,
-		Sets:        req.Sets,
+		Name:             partner.Code,
+		Label:            partner.Name,
+		Role:             req.Role,
+		Them:             req.Them,
+		Us:               req.Us,
+		Zone:             partner.Timezone,
+		Group:            req.Group,
+		Separators:       req.Separators,
+		LineEnding:       req.LineEnding,
+		Usage:            req.Usage,
+		Acknowledge:      req.Acknowledge,
+		AckWithinSeconds: req.AckWithinSeconds,
+		Sets:             req.Sets,
 	}
 }
 
@@ -185,6 +188,23 @@ func validateCreate(req *CreateProjectRequest) error {
 			"acknowledge",
 			errortypes.ErrInvalid,
 			"Acknowledgment must be 997, 999 or none",
+		)
+	}
+	switch req.LineEnding {
+	case "", x12.LineEndingNone, x12.LineEndingLF, x12.LineEndingCRLF, x12.LineEndingCR:
+	default:
+		multiErr.Add(
+			"lineEnding",
+			errortypes.ErrInvalid,
+			"Line ending must be none, a line feed, a carriage return and line feed, or a carriage return",
+		)
+	}
+	if req.AckWithinSeconds < 0 ||
+		time.Duration(req.AckWithinSeconds)*time.Second > lading.MaxAckWithin {
+		multiErr.Add(
+			"ackWithinSeconds",
+			errortypes.ErrInvalid,
+			"Acknowledgment window must be between 1 second and 7 days",
 		)
 	}
 	return multiErr.Err()

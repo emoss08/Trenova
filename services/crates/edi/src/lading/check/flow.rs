@@ -13,7 +13,8 @@ use super::{Checker, MapInfo, Program, Source};
 use crate::lading::facts::Target;
 use crate::lading::schema;
 use crate::lading::syntax::ast::{
-    Action, ExpectAck, FlowDecl, Header, Ident, Item, Otherwise, Receive, Respond, Send,
+    Action, AwaitAnswer, ExpectAck, FlowDecl, Header, Ident, Item, Otherwise, Receive, Respond,
+    Send, Unless,
 };
 use crate::lading::types::Type;
 
@@ -102,6 +103,15 @@ impl Checker<'_> {
                 }
             }
         }
+        env.bind("sent", sent_type(program, &clauses), Span::default());
+        env.bind(
+            "instance",
+            Type::Struct(vec![
+                ("exists".into(), Type::Bool),
+                ("key".into(), Type::Text),
+            ]),
+            Span::default(),
+        );
         let tender_received = clauses.iter().any(
             |clause| matches!(clause, FlowDecl::Receive(receive) if receive.set.name == "204"),
         );
@@ -127,6 +137,7 @@ impl Checker<'_> {
                 FlowDecl::Respond(respond) => self.respond(&mut env, respond, tender_received),
                 FlowDecl::Send(send) => self.send(&mut env, send),
                 FlowDecl::Expect(expect) => self.expect_ack(&mut env, expect),
+                FlowDecl::Await(answer) => self.await_answer(&mut env, answer, &clauses),
             }
         }
     }
@@ -522,7 +533,7 @@ impl Checker<'_> {
                             ),
                         );
                         if let Some(close) =
-                            nearest(&purpose.name, ["Original", "Change", "Cancel"])
+                            nearest(&purpose.name, ["Original", "Change", "Replace", "Cancel"])
                         {
                             diagnostic =
                                 diagnostic.with_fix(super::replace_fix(purpose.span, close));
@@ -556,11 +567,29 @@ impl Checker<'_> {
                 }
             }
             self.action(env, &arm.action, document);
+            if !arm.guards.is_empty() {
+                env.push();
+                env.bind(
+                    "current",
+                    Type::Record("loadTender").optional(),
+                    Span::default(),
+                );
+                for guard in &arm.guards {
+                    self.condition(env, &guard.cond);
+                    self.expect_type(env, &guard.message, &Type::Text);
+                }
+                env.pop();
+            }
         }
         if has_purpose && !bare && !receive.arms.is_empty() {
-            let missing: Vec<&str> = ["Original", "Change", "Cancel"]
+            let handled = |variant: &str| {
+                seen.contains(variant)
+                    || (variant == "Replace" && seen.contains("Change"))
+                    || (variant == "Change" && seen.contains("Replace"))
+            };
+            let missing: Vec<&str> = ["Original", "Change", "Replace", "Cancel"]
                 .into_iter()
-                .filter(|variant| !seen.contains(variant))
+                .filter(|variant| !handled(variant))
                 .collect();
             if !missing.is_empty() {
                 self.report(
@@ -671,30 +700,35 @@ impl Checker<'_> {
             }
             Action::Cancel { unless, span } => {
                 only_tender(self, env, *span, "cancel");
-                if let Some((state, otherwise)) = unless {
-                    if schema::STATES.iter().any(|(name, _)| *name == state.name) {
-                        self.occurrence(
-                            env.unit,
-                            state.span,
-                            Target::Builtin(format!("state.{}", state.name)),
-                            false,
-                            false,
-                        );
-                    } else {
-                        let mut diagnostic = Diagnostic::error(
-                            "unknown-state",
-                            state.span,
-                            Message::with(
-                                message!("{0} is not a state: dispatched, delivered or invoiced"),
-                                [Arg::from(state.name.as_str())],
-                            ),
-                        );
-                        if let Some(close) =
-                            nearest(&state.name, schema::STATES.iter().map(|(name, _)| *name))
-                        {
-                            diagnostic = diagnostic.with_fix(super::replace_fix(state.span, close));
+                if let Some((Unless { states, .. }, otherwise)) = unless {
+                    for state in states {
+                        if schema::STATES.iter().any(|(name, _)| *name == state.name) {
+                            self.occurrence(
+                                env.unit,
+                                state.span,
+                                Target::Builtin(format!("state.{}", state.name)),
+                                false,
+                                false,
+                            );
+                        } else {
+                            let mut diagnostic = Diagnostic::error(
+                                "unknown-state",
+                                state.span,
+                                Message::with(
+                                    message!(
+                                        "{0} is not a state: dispatched, delivered or invoiced"
+                                    ),
+                                    [Arg::from(state.name.as_str())],
+                                ),
+                            );
+                            if let Some(close) =
+                                nearest(&state.name, schema::STATES.iter().map(|(name, _)| *name))
+                            {
+                                diagnostic =
+                                    diagnostic.with_fix(super::replace_fix(state.span, close));
+                            }
+                            self.report(env.unit, diagnostic);
                         }
-                        self.report(env.unit, diagnostic);
                     }
                     if matches!(otherwise.as_ref(), Action::Cancel { .. }) {
                         self.report(
@@ -886,6 +920,70 @@ impl Checker<'_> {
         env.pop();
     }
 
+    fn await_answer(&mut self, env: &mut Env, answer: &AwaitAnswer, clauses: &[FlowDecl]) {
+        if answer.set.name != "990" {
+            self.report(
+                env.unit,
+                Diagnostic::error(
+                    "unknown-set",
+                    answer.set.span,
+                    Message::new(message!(
+                        "A flow awaits the 990 that answers the tender it sent"
+                    )),
+                ),
+            );
+        }
+        let sends_tender = clauses
+            .iter()
+            .any(|clause| matches!(clause, FlowDecl::Send(send) if send.set.name == "204"));
+        if !sends_tender {
+            self.report(
+                env.unit,
+                Diagnostic::error(
+                    "await-without-send",
+                    answer.span,
+                    Message::new(message!(
+                        "await waits for the answer to a tender this flow sends: add send 204"
+                    )),
+                ),
+            );
+        }
+        let receives = clauses.iter().any(
+            |clause| matches!(clause, FlowDecl::Receive(receive) if receive.set.name == answer.set.name),
+        );
+        if !receives && answer.set.name == "990" {
+            self.report(
+                env.unit,
+                Diagnostic::error(
+                    "await-without-receive",
+                    answer.set.span,
+                    Message::new(message!(
+                        "The flow never receives the 990 it awaits: add receive 990"
+                    )),
+                ),
+            );
+        }
+        match &answer.within {
+            Some(within) => {
+                self.expect_type(env, within, &Type::Duration);
+            }
+            None => self.report(
+                env.unit,
+                Diagnostic::error(
+                    "expect-within",
+                    answer.set.span,
+                    Message::new(message!("Say how long to wait: within 2 h")),
+                ),
+            ),
+        }
+        env.push();
+        env.bind("message", message_type(), Span::default());
+        if let Some(escalate) = &answer.escalate {
+            self.expect_type(env, escalate, &Type::Text);
+        }
+        env.pop();
+    }
+
     fn expect_ack(&mut self, env: &mut Env, expect: &ExpectAck) {
         if !matches!(expect.set.name.as_str(), "997" | "999") {
             self.report(
@@ -923,18 +1021,43 @@ impl Checker<'_> {
             );
         }
         env.push();
-        env.bind(
-            "message",
-            Type::Struct(vec![
-                ("set".into(), Type::Text),
-                ("control".into(), Type::Text),
-                ("key".into(), Type::Text),
-            ]),
-            Span::default(),
-        );
+        env.bind("message", message_type(), Span::default());
         if let Some(escalate) = &expect.escalate {
             self.expect_type(env, escalate, &Type::Text);
         }
         env.pop();
     }
+}
+
+/// What an escalation about a message reads as `message`.
+fn message_type() -> Type {
+    Type::Struct(vec![
+        ("set".into(), Type::Text),
+        ("control".into(), Type::Text),
+        ("key".into(), Type::Text),
+    ])
+}
+
+/// What a flow reads as `sent`: the last document each send clause and the response wrote,
+/// under its binder, none until one is sent.
+fn sent_type(program: &Program, clauses: &[FlowDecl]) -> Type {
+    let mut fields: Vec<(String, Type)> = Vec::new();
+    for clause in clauses {
+        let map = match clause {
+            FlowDecl::Send(send) => send.map.as_ref(),
+            FlowDecl::Respond(respond) => respond.map.as_ref(),
+            _ => None,
+        };
+        let Some(document) = map
+            .and_then(|map| program.maps.get(&map.name))
+            .and_then(|info| info.document)
+        else {
+            continue;
+        };
+        let binder = document_binder(document);
+        if fields.iter().all(|(name, _)| name != binder) {
+            fields.push((binder.into(), Type::Record(document).optional()));
+        }
+    }
+    Type::Struct(fields)
 }

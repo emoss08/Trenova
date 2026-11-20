@@ -541,10 +541,6 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		entity *shipment.Shipment,
 	) (*shipment.Shipment, error)
-	UpdateOperationalLifecycle(
-		ctx context.Context,
-		entity *shipment.Shipment,
-	) (*shipment.Shipment, error)
 	UpdateDerivedState(
 		ctx context.Context,
 		entity *shipment.Shipment,

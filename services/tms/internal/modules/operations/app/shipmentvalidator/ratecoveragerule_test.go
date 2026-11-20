@@ -134,7 +134,7 @@ func TestRateCoverageAdvisory(t *testing.T) {
 			assert.Contains(t, advisory.Error(), tt.contains)
 			assert.Equal(t, errortypes.SeverityRequireReview, advisory.Severity)
 			assert.Equal(t, rateCoverageRuleKey, advisory.RuleKey)
-			assert.Equal(t, "freightChargeAmount", advisory.Field)
+			assert.Equal(t, "freightChargeAmount", advisory.Field())
 		})
 	}
 }

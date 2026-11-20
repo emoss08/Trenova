@@ -39,6 +39,17 @@ func (s *Service) DownloadSharedDocument(
 		OrganizationID: share.OrganizationID,
 		BusinessUnitID: share.BusinessUnitID,
 	})
+	if share.Invoice != nil {
+		replaced, hiddenErr := s.hiddenAsReplaced(ctx, share.Invoice)
+		if hiddenErr != nil {
+			return nil, hiddenErr
+		}
+		if replaced {
+			return nil, errortypes.NewNotFoundError(
+				"This invoice has been replaced. Ask the sender for the current invoice",
+			)
+		}
+	}
 	content, err := s.documentService.GetDownloadContent(ctx, documentports.GetDocumentByIDRequest{
 		ID: share.DocumentID,
 		TenantInfo: pagination.TenantInfo{

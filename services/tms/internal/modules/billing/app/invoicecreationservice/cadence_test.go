@@ -34,7 +34,7 @@ func TestGuardStatementCadenceDemandsAReason(t *testing.T) {
 	assert.Equal(
 		t,
 		"offCycleReason",
-		validationErr.Field,
+		validationErr.Field(),
 		"the client keys off this field to ask for a reason instead of showing a dead end",
 	)
 	assert.Equal(t, errortypes.ErrRequired, validationErr.Code)

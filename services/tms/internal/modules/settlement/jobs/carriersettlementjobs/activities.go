@@ -54,7 +54,6 @@ func (a *Activities) GenerateCarrierSettlementBatchesActivity(
 	if err != nil {
 		return nil, err
 	}
-	now := timeutils.NowUnix()
 
 	for _, control := range controls {
 		result.OrganizationsChecked++
@@ -63,15 +62,10 @@ func (a *Activities) GenerateCarrierSettlementBatchesActivity(
 			BuID:  control.BusinessUnitID,
 		}
 		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
-		bounds := carriersettlementservice.ResolveCurrentPeriod(control, now)
 
 		batch, genErr := a.settlementService.GenerateBatch(
 			tenantCtx,
-			&carriersettlementservice.GenerateBatchRequest{
-				TenantInfo:  tenantInfo,
-				PeriodStart: bounds.PeriodStart,
-				PeriodEnd:   bounds.PeriodEnd,
-			},
+			&carriersettlementservice.GenerateBatchRequest{TenantInfo: tenantInfo},
 			systemActor(),
 		)
 		if genErr != nil {

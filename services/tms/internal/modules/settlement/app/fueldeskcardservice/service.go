@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
@@ -73,7 +72,7 @@ type Service struct {
 	purchases     purchaseReader
 	desk          fuelpurchaseports.FuelDeskCardReader
 	ifta          rateResolver
-	organizations orgzone.OrganizationReader
+	organizations tenantports.OrganizationReader
 	users         userReader
 	now           func() time.Time
 }
@@ -138,7 +137,7 @@ func (s *Service) GetPurchaseCard(
 		return nil, err
 	}
 
-	loc, err := orgzone.Location(ctx, s.organizations, req.TenantInfo)
+	loc, err := tenantports.OrganizationLocation(ctx, s.organizations, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +338,7 @@ func (s *Service) GetFuelCardCard(
 		return nil, err
 	}
 
-	loc, err := orgzone.Location(ctx, s.organizations, req.TenantInfo)
+	loc, err := tenantports.OrganizationLocation(ctx, s.organizations, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}

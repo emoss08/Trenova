@@ -348,6 +348,36 @@ func interchangeFields() []*Spec {
 		separatorField(SegmentSep, "Segment terminator", "~"),
 		separatorField(ComponentSep, "Component separator", ">"),
 		separatorField(RepetitionSep, "Repetition separator", "^"),
+		lineEndingField(),
+	}
+}
+
+func lineEndingField() *Spec {
+	return &Spec{
+		Key:      LineEnding,
+		Label:    "Line ending after each segment",
+		Scope:    ScopeInterchange,
+		Required: true,
+		Fallback: LineEndingNone,
+		Normalize: choice(map[string]string{
+			"none": LineEndingNone, "lf": LineEndingLF, "line feed": LineEndingLF,
+			"newline": LineEndingLF, "new line": LineEndingLF, "\n": LineEndingLF,
+			"crlf": LineEndingCRLF, "cr lf": LineEndingCRLF, "cr/lf": LineEndingCRLF,
+			"\r\n": LineEndingCRLF, "cr": LineEndingCR, "carriage return": LineEndingCR,
+		}),
+		spelled: map[string][]string{
+			LineEndingNone: {
+				"no line feed", "no line ending", "no line break", "no new line",
+				"no newline", "without a line feed", "without line feeds",
+			},
+			LineEndingLF: {"line feed", "linefeed", "new line", "newline"},
+			LineEndingCRLF: {
+				"crlf", "cr/lf", "cr lf", "carriage return line feed",
+				"carriage return and line feed", "carriage return and a line feed",
+				"carriage return/line feed",
+			},
+			LineEndingCR: {"carriage return"},
+		},
 	}
 }
 
@@ -405,11 +435,11 @@ func setFieldsFor(
 			},
 		},
 		{
-			Key:       prefix + SetAttrAckWindowMinutes,
+			Key:       prefix + SetAttrAckWindow,
 			Label:     name + " acknowledgment window",
 			Scope:     ScopeSet,
-			Normalize: normalizeMinutes,
-			matches:   matchesMinutes,
+			Normalize: normalizeDuration,
+			matches:   matchesDuration,
 		},
 	}
 }

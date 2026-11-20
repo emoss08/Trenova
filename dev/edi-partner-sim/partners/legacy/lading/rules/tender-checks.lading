@@ -1,0 +1,57 @@
+rules tenderChecks for tenderIn
+  use common
+
+/// No stop can open before the one ahead of it.
+rule "stops run in order" {
+  require stops.first.window.start <= stops.last.window.start
+    else decline "Delivery is scheduled before pickup"
+}
+
+/// Every delivery needs a postal code for routing.
+rule "a consignee has a postal code" {
+  for stop in stops where stop.type == Delivery {
+    require exists stop.address.postal
+      else reject at stop.address.postal "The consignee at stop {stop.sequence} has no postal code"
+  }
+}
+
+/// Ashgrove often leaves the freight lines off; the driver needs to know what he is hauling.
+rule "a tender says what it carries" {
+  warn "Ashgrove sent no freight lines: call for the commodity and the piece count" when commodities.isEmpty
+}
+
+/// Hazmat needs a planner's eyes on placards and the driver's endorsement.
+rule "hazmat needs eyes" {
+  let hazardous = commodities.filter(c => c.hazmat ?? false)
+  warn "{hazardous.count} hazmat line(s) on board: check placards" when not hazardous.isEmpty
+}
+
+/// A rate under the minimum is almost always a keying mistake.
+rule "the rate covers the minimum" {
+  hold "The rate is under the {partner.minimumCharge} minimum" when (total ?? $0.00) < partner.minimumCharge
+}
+
+test "a normal tender passes every rule" {
+  given file "samples/tender-original.x12"
+  expect no holds
+  expect no rejects
+  expect no declines
+  expect no warnings
+}
+
+test "a tender with no freight lines warns" {
+  given file "samples/tender-sparse.x12"
+  expect warned "Ashgrove sent no freight lines: call for the commodity and the piece count"
+  expect no holds
+}
+
+test "a hazmat tender warns" {
+  given file "samples/tender-hazmat.x12"
+  expect warned "1 hazmat line(s) on board: check placards"
+}
+
+test "a minimum above the rate holds" {
+  given file "samples/tender-original.x12"
+  given setting minimumCharge = $1_500.00
+  expect held "The rate is under the $1,500.00 minimum"
+}

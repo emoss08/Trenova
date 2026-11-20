@@ -142,7 +142,7 @@ func TestAShipmentsOwnValueOutsideItsConstraintRefusesTheRateOnItsTariffInputs(t
 	require.Error(t, err)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "tariffInputs", validation.Field)
+	assert.Equal(t, "tariffInputs", validation.Field())
 	assert.Equal(t,
 		"`rate` must be from $0.50/mi to $15.00/mi; $0.10/mi is outside it",
 		errortypes.LocalizedText(t.Context(), err),

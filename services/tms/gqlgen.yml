@@ -5852,6 +5852,9 @@ models:
   ARLedgerEntry:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARLedgerEntry
+  ARLedgerPage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARLedgerPage
   ARStatementTransaction:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports.ARStatementTransaction

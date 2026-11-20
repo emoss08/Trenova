@@ -3965,6 +3965,24 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
+			{
+				Name:     "temperatureMin",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.EDITenderCommodity)
+					return obj.TemperatureMin, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "temperatureMax",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.EDITenderCommodity)
+					return obj.TemperatureMax, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
 		}},
 		{Object: "EdiTenderStop", Fields: []*gqlexec.Field{
 			{
@@ -4065,6 +4083,24 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.EDITenderStop)
 					return obj.Weight, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "temperatureMin",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.EDITenderStop)
+					return obj.TemperatureMin, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "temperatureMax",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.EDITenderStop)
+					return obj.TemperatureMax, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},

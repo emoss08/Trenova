@@ -106,6 +106,72 @@ func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) RunAndReturn(r
 	return _c
 }
 
+// GetCustomerLedgerBalance provides a mock function for the type MockAccountsReceivableRepository
+func (_mock *MockAccountsReceivableRepository) GetCustomerLedgerBalance(ctx context.Context, req customerledgerports.GetCustomerLedgerBalanceRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCustomerLedgerBalance")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, customerledgerports.GetCustomerLedgerBalanceRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, customerledgerports.GetCustomerLedgerBalanceRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, customerledgerports.GetCustomerLedgerBalanceRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAccountsReceivableRepository_GetCustomerLedgerBalance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCustomerLedgerBalance'
+type MockAccountsReceivableRepository_GetCustomerLedgerBalance_Call struct {
+	*mock.Call
+}
+
+// GetCustomerLedgerBalance is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetCustomerLedgerBalanceRequest
+func (_e *MockAccountsReceivableRepository_Expecter) GetCustomerLedgerBalance(ctx any, req any) *MockAccountsReceivableRepository_GetCustomerLedgerBalance_Call {
+	return &MockAccountsReceivableRepository_GetCustomerLedgerBalance_Call{Call: _e.mock.On("GetCustomerLedgerBalance", ctx, req)}
+}
+
+func (_c *MockAccountsReceivableRepository_GetCustomerLedgerBalance_Call) Run(run func(ctx context.Context, req customerledgerports.GetCustomerLedgerBalanceRequest)) *MockAccountsReceivableRepository_GetCustomerLedgerBalance_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 customerledgerports.GetCustomerLedgerBalanceRequest
+		if args[1] != nil {
+			arg1 = args[1].(customerledgerports.GetCustomerLedgerBalanceRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAccountsReceivableRepository_GetCustomerLedgerBalance_Call) Return(n int64, err error) *MockAccountsReceivableRepository_GetCustomerLedgerBalance_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockAccountsReceivableRepository_GetCustomerLedgerBalance_Call) RunAndReturn(run func(ctx context.Context, req customerledgerports.GetCustomerLedgerBalanceRequest) (int64, error)) *MockAccountsReceivableRepository_GetCustomerLedgerBalance_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetCustomerName provides a mock function for the type MockAccountsReceivableRepository
 func (_mock *MockAccountsReceivableRepository) GetCustomerName(ctx context.Context, req customerledgerports.GetARCustomerNameRequest) (string, error) {
 	ret := _mock.Called(ctx, req)
@@ -240,27 +306,27 @@ func (_c *MockAccountsReceivableRepository_ListARAging_Call) RunAndReturn(run fu
 	return _c
 }
 
-// ListCustomerLedger provides a mock function for the type MockAccountsReceivableRepository
-func (_mock *MockAccountsReceivableRepository) ListCustomerLedger(ctx context.Context, req customerledgerports.ListCustomerLedgerRequest) ([]*customerledgerports.ARLedgerEntry, error) {
+// ListCustomerLedgerWindow provides a mock function for the type MockAccountsReceivableRepository
+func (_mock *MockAccountsReceivableRepository) ListCustomerLedgerWindow(ctx context.Context, req customerledgerports.ListCustomerLedgerWindowRequest) ([]*customerledgerports.ARLedgerEntry, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListCustomerLedger")
+		panic("no return value specified for ListCustomerLedgerWindow")
 	}
 
 	var r0 []*customerledgerports.ARLedgerEntry
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, customerledgerports.ListCustomerLedgerRequest) ([]*customerledgerports.ARLedgerEntry, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, customerledgerports.ListCustomerLedgerWindowRequest) ([]*customerledgerports.ARLedgerEntry, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, customerledgerports.ListCustomerLedgerRequest) []*customerledgerports.ARLedgerEntry); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, customerledgerports.ListCustomerLedgerWindowRequest) []*customerledgerports.ARLedgerEntry); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*customerledgerports.ARLedgerEntry)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, customerledgerports.ListCustomerLedgerRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, customerledgerports.ListCustomerLedgerWindowRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -268,27 +334,27 @@ func (_mock *MockAccountsReceivableRepository) ListCustomerLedger(ctx context.Co
 	return r0, r1
 }
 
-// MockAccountsReceivableRepository_ListCustomerLedger_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCustomerLedger'
-type MockAccountsReceivableRepository_ListCustomerLedger_Call struct {
+// MockAccountsReceivableRepository_ListCustomerLedgerWindow_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCustomerLedgerWindow'
+type MockAccountsReceivableRepository_ListCustomerLedgerWindow_Call struct {
 	*mock.Call
 }
 
-// ListCustomerLedger is a helper method to define mock.On call
+// ListCustomerLedgerWindow is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.ListCustomerLedgerRequest
-func (_e *MockAccountsReceivableRepository_Expecter) ListCustomerLedger(ctx any, req any) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
-	return &MockAccountsReceivableRepository_ListCustomerLedger_Call{Call: _e.mock.On("ListCustomerLedger", ctx, req)}
+//   - req repositories.ListCustomerLedgerWindowRequest
+func (_e *MockAccountsReceivableRepository_Expecter) ListCustomerLedgerWindow(ctx any, req any) *MockAccountsReceivableRepository_ListCustomerLedgerWindow_Call {
+	return &MockAccountsReceivableRepository_ListCustomerLedgerWindow_Call{Call: _e.mock.On("ListCustomerLedgerWindow", ctx, req)}
 }
 
-func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) Run(run func(ctx context.Context, req customerledgerports.ListCustomerLedgerRequest)) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
+func (_c *MockAccountsReceivableRepository_ListCustomerLedgerWindow_Call) Run(run func(ctx context.Context, req customerledgerports.ListCustomerLedgerWindowRequest)) *MockAccountsReceivableRepository_ListCustomerLedgerWindow_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 customerledgerports.ListCustomerLedgerRequest
+		var arg1 customerledgerports.ListCustomerLedgerWindowRequest
 		if args[1] != nil {
-			arg1 = args[1].(customerledgerports.ListCustomerLedgerRequest)
+			arg1 = args[1].(customerledgerports.ListCustomerLedgerWindowRequest)
 		}
 		run(
 			arg0,
@@ -298,12 +364,12 @@ func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) Run(run func
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) Return(aRLedgerEntrys []*customerledgerports.ARLedgerEntry, err error) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
+func (_c *MockAccountsReceivableRepository_ListCustomerLedgerWindow_Call) Return(aRLedgerEntrys []*customerledgerports.ARLedgerEntry, err error) *MockAccountsReceivableRepository_ListCustomerLedgerWindow_Call {
 	_c.Call.Return(aRLedgerEntrys, err)
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) RunAndReturn(run func(ctx context.Context, req customerledgerports.ListCustomerLedgerRequest) ([]*customerledgerports.ARLedgerEntry, error)) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
+func (_c *MockAccountsReceivableRepository_ListCustomerLedgerWindow_Call) RunAndReturn(run func(ctx context.Context, req customerledgerports.ListCustomerLedgerWindowRequest) ([]*customerledgerports.ARLedgerEntry, error)) *MockAccountsReceivableRepository_ListCustomerLedgerWindow_Call {
 	_c.Call.Return(run)
 	return _c
 }

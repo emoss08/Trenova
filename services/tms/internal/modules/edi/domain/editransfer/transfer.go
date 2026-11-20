@@ -16,7 +16,6 @@ import (
 
 type LoadTenderPayload struct {
 	PurposeCode              LoadTenderPurposeCode                `json:"purposeCode,omitempty"`
-	TenderOfferID            pulid.ID                             `json:"tenderOfferId,omitempty"`
 	ShipmentID               pulid.ID                             `json:"shipmentId"`
 	BusinessUnitID           pulid.ID                             `json:"businessUnitId"`
 	OrganizationID           pulid.ID                             `json:"organizationId"`
@@ -28,7 +27,12 @@ type LoadTenderPayload struct {
 	CustomerLabel            string                               `json:"customerLabel,omitempty"`
 	FormulaTemplateID        pulid.ID                             `json:"formulaTemplateId"`
 	FormulaTemplateLabel     string                               `json:"formulaTemplateLabel,omitempty"`
+	ProNumber                string                               `json:"proNumber,omitempty"`
+	MoveNumber               int64                                `json:"moveNumber,omitempty"`
 	BOL                      string                               `json:"bol,omitempty"`
+	PONumber                 string                               `json:"poNumber,omitempty"`
+	Payment                  string                               `json:"payment,omitempty"`
+	Equipment                string                               `json:"equipment,omitempty"`
 	Pieces                   *int64                               `json:"pieces,omitempty"`
 	Weight                   *int64                               `json:"weight,omitempty"`
 	TemperatureMin           *int16                               `json:"temperatureMin,omitempty"`
@@ -66,6 +70,8 @@ type LoadTenderStop struct {
 	Sequence             int64    `json:"sequence"`
 	Pieces               *int64   `json:"pieces,omitempty"`
 	Weight               *int64   `json:"weight,omitempty"`
+	TemperatureMin       *int16   `json:"temperatureMin,omitempty"`
+	TemperatureMax       *int16   `json:"temperatureMax,omitempty"`
 	ScheduledWindowStart int64    `json:"scheduledWindowStart"`
 	ScheduledWindowEnd   *int64   `json:"scheduledWindowEnd,omitempty"`
 	AddressLine          string   `json:"addressLine,omitempty"`
@@ -78,6 +84,9 @@ type LoadTenderCommodity struct {
 	CommodityDescription string   `json:"commodityDescription,omitempty"`
 	Weight               int64    `json:"weight"`
 	Pieces               int64    `json:"pieces"`
+	TemperatureMin       *int16   `json:"temperatureMin,omitempty"`
+	TemperatureMax       *int16   `json:"temperatureMax,omitempty"`
+	Hazmat               bool     `json:"hazmat,omitempty"`
 }
 
 type LoadTenderCharge struct {

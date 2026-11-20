@@ -259,7 +259,7 @@ func TestBootstrapRejectsAPasswordOutsideThePolicy(t *testing.T) {
 			var multiErr *errortypes.MultiError
 			require.ErrorAs(t, err, &multiErr)
 			require.Len(t, multiErr.Errors, 1)
-			assert.Equal(t, fieldPassword, multiErr.Errors[0].Field)
+			assert.Equal(t, fieldPassword, multiErr.Errors[0].Field())
 			assert.Zero(t, d.repo.getCalls)
 		})
 	}
@@ -433,7 +433,7 @@ func TestBootstrapWithALinkRefusesAPassword(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, fieldPassword, multiErr.Errors[0].Field)
+	assert.Equal(t, fieldPassword, multiErr.Errors[0].Field())
 	assert.Zero(t, d.repo.getCalls)
 }
 
@@ -449,5 +449,5 @@ func TestBootstrapRefusesAnUnknownAdministratorSetup(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, fieldAdminSetup, multiErr.Errors[0].Field)
+	assert.Equal(t, fieldAdminSetup, multiErr.Errors[0].Field())
 }

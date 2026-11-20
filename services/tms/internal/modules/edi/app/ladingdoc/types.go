@@ -11,6 +11,7 @@ const (
 const (
 	PurposeOriginal = "Original"
 	PurposeChange   = "Change"
+	PurposeReplace  = "Replace"
 	PurposeCancel   = "Cancel"
 )
 
@@ -61,25 +62,27 @@ type Window struct {
 }
 
 type Stop struct {
-	Sequence int64             `json:"sequence"`
-	Type     string            `json:"type"`
-	Location *Ref              `json:"location,omitempty"`
-	Name     string            `json:"name,omitempty"`
-	Code     string            `json:"code,omitempty"`
-	Address  *Address          `json:"address,omitempty"`
-	Window   Window            `json:"window"`
-	Weight   *Measure          `json:"weight,omitempty"`
-	Pieces   *int64            `json:"pieces,omitempty"`
-	Refs     map[string]string `json:"refs,omitempty"`
-	Notes    []string          `json:"notes,omitempty"`
+	Sequence    int64             `json:"sequence"`
+	Type        string            `json:"type"`
+	Location    *Ref              `json:"location,omitempty"`
+	Name        string            `json:"name,omitempty"`
+	Code        string            `json:"code,omitempty"`
+	Address     *Address          `json:"address,omitempty"`
+	Window      Window            `json:"window"`
+	Weight      *Measure          `json:"weight,omitempty"`
+	Pieces      *int64            `json:"pieces,omitempty"`
+	Temperature *TemperatureRange `json:"temperature,omitempty"`
+	Refs        map[string]string `json:"refs,omitempty"`
+	Notes       []string          `json:"notes,omitempty"`
 }
 
 type CommodityLine struct {
-	Commodity   *Ref     `json:"commodity,omitempty"`
-	Description string   `json:"description"`
-	Weight      *Measure `json:"weight,omitempty"`
-	Pieces      *int64   `json:"pieces,omitempty"`
-	Hazmat      *bool    `json:"hazmat,omitempty"`
+	Commodity   *Ref              `json:"commodity,omitempty"`
+	Description string            `json:"description"`
+	Weight      *Measure          `json:"weight,omitempty"`
+	Pieces      *int64            `json:"pieces,omitempty"`
+	Temperature *TemperatureRange `json:"temperature,omitempty"`
+	Hazmat      *bool             `json:"hazmat,omitempty"`
 }
 
 type Charge struct {
@@ -189,6 +192,7 @@ type FreightInvoice struct {
 	ProNumber    string             `json:"proNumber,omitempty"`
 	Weight       *Measure           `json:"weight,omitempty"`
 	BillTo       *Party             `json:"billTo,omitempty"`
+	Payment      string             `json:"payment,omitempty"`
 	Total        Money              `json:"total"`
 	Lines        []InvoiceLine      `json:"lines,omitempty"`
 	Shipments    []InvoicedShipment `json:"shipments,omitempty"`

@@ -51,9 +51,12 @@ func leaveCaseFromInput(
 	if input.Frequency != nil {
 		entity.Frequency = *input.Frequency
 	}
-	if input.EligibilityHoursWorked != nil {
-		hours := int32(*input.EligibilityHoursWorked)
-		entity.EligibilityHoursWorked = &hours
+	if err = gqlscalar.ApplyIntPtr(
+		"eligibilityHoursWorked",
+		input.EligibilityHoursWorked,
+		&entity.EligibilityHoursWorked,
+	); err != nil {
+		return nil, err
 	}
 
 	return entity, nil
@@ -94,9 +97,12 @@ func leaveCaseUpdateRequest(
 		Notes:             input.Notes,
 		UserID:            userID,
 	}
-	if input.EligibilityHoursWorked != nil {
-		hours := int32(*input.EligibilityHoursWorked)
-		req.EligibilityHoursWorked = &hours
+	if err = gqlscalar.ApplyIntPtr(
+		"eligibilityHoursWorked",
+		input.EligibilityHoursWorked,
+		&req.EligibilityHoursWorked,
+	); err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -230,25 +236,43 @@ func leaveControlRequest(
 		return nil, err
 	}
 
+	if input.Version < 0 {
+		return nil, errortypes.NewValidationError(
+			"version",
+			errortypes.ErrInvalid,
+			"Version cannot be negative",
+		)
+	}
+
 	req := &workerleaveservice.UpdateControlRequest{
 		TenantInfo:             tenantInfo,
+		Version:                int64(input.Version),
 		MeasurementMethod:      input.MeasurementMethod,
 		EntitlementWeeks:       gqldecimal.NullDecimalValue(entitlement),
 		MilitaryCaregiverWeeks: gqldecimal.NullDecimalValue(caregiver),
 		WorkweekHours:          gqldecimal.NullDecimalValue(workweek),
 		UserID:                 userID,
 	}
-	if input.EligibilityMonths != nil {
-		months := int32(*input.EligibilityMonths)
-		req.EligibilityMonths = &months
+	if err = gqlscalar.ApplyIntPtr(
+		"eligibilityMonths",
+		input.EligibilityMonths,
+		&req.EligibilityMonths,
+	); err != nil {
+		return nil, err
 	}
-	if input.EligibilityHours != nil {
-		hours := int32(*input.EligibilityHours)
-		req.EligibilityHours = &hours
+	if err = gqlscalar.ApplyIntPtr(
+		"eligibilityHours",
+		input.EligibilityHours,
+		&req.EligibilityHours,
+	); err != nil {
+		return nil, err
 	}
-	if input.CertificationDueDays != nil {
-		days := int32(*input.CertificationDueDays)
-		req.CertificationDueDays = &days
+	if err = gqlscalar.ApplyIntPtr(
+		"certificationDueDays",
+		input.CertificationDueDays,
+		&req.CertificationDueDays,
+	); err != nil {
+		return nil, err
 	}
 
 	return req, nil

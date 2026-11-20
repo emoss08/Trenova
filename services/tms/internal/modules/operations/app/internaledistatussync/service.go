@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,6 +56,7 @@ type Observer struct {
 	realtime           realtimeports.RealtimeService
 	invalidator        shipmentinvalidationports.ShipmentInvalidator
 	orderDerivation    orderports.OrderDerivationService
+	coordinator        *shipmentstate.Coordinator
 	lifecycleApplier   *internaledilifecycle.Applier
 }
 
@@ -62,10 +64,6 @@ type shipmentRepository interface {
 	GetByID(
 		ctx context.Context,
 		req *shipmentports.GetShipmentByIDRequest,
-	) (*shipment.Shipment, error)
-	UpdateOperationalLifecycle(
-		ctx context.Context,
-		entity *shipment.Shipment,
 	) (*shipment.Shipment, error)
 	UpdateStatus(
 		ctx context.Context,
@@ -101,6 +99,7 @@ type side struct {
 }
 
 type syncContext struct {
+	event         *shipmentevent.Event
 	link          *edisync.ShipmentLink
 	direction     edisync.TransferChangeDirection
 	source        *shipment.Shipment
@@ -130,11 +129,20 @@ func New(p Params) *Observer {
 		realtime:           p.Realtime,
 		invalidator:        p.Invalidator,
 		orderDerivation:    p.OrderDerivation,
+		coordinator:        p.Coordinator,
 		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
 			ShipmentRepo: p.ShipmentRepo,
 			Coordinator:  p.Coordinator,
 		}),
 	}
+}
+
+func (o *Observer) SetStopActuals(stopActuals internaledilifecycle.StopActualReconciler) {
+	o.lifecycleApplier = internaledilifecycle.New(internaledilifecycle.Params{
+		ShipmentRepo: o.shipmentRepo,
+		Coordinator:  o.coordinator,
+		StopActuals:  stopActuals,
+	})
 }
 
 func (o *Observer) OnShipmentEvent(ctx context.Context, event *shipmentevent.Event) error {
@@ -181,6 +189,7 @@ func (o *Observer) handleLink(
 	}
 
 	var result syncContext
+	var refusal error
 	err := o.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		result, txErr = o.buildSyncContext(txCtx, event, link)
@@ -202,6 +211,10 @@ func (o *Observer) handleLink(
 
 		result.updated, txErr = o.applyChange(txCtx, result)
 		if txErr != nil {
+			if result.changeType == edisync.TransferChangeTypeShipmentLifecycle214 &&
+				errortypes.IsRefusal(txErr) {
+				refusal = txErr
+			}
 			return txErr
 		}
 
@@ -218,8 +231,51 @@ func (o *Observer) handleLink(
 			}
 		}
 
+		if lifecycleLeftStatus(result) {
+			return nil
+		}
 		result.mirroredEvent = buildMirroredEvent(event, result)
 		return o.shipmentEventRepo.Insert(txCtx, result.mirroredEvent)
+	})
+	if refusal != nil {
+		return o.recordRefusedLifecycle(ctx, event, link, refusal)
+	}
+	if err != nil {
+		return err
+	}
+
+	o.publishResult(ctx, result)
+	return nil
+}
+
+func (o *Observer) recordRefusedLifecycle(
+	ctx context.Context,
+	event *shipmentevent.Event,
+	link *edisync.ShipmentLink,
+	refusal error,
+) error {
+	var result syncContext
+	err := o.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		var txErr error
+		result, txErr = o.buildSyncContext(txCtx, event, link)
+		if txErr != nil || result.link == nil ||
+			result.changeType != edisync.TransferChangeTypeShipmentLifecycle214 {
+			result = syncContext{}
+			return txErr
+		}
+		if result.transfer.Status == edisync.TransferChangeStatusApplied {
+			markRefused(result.transfer, refusal)
+		}
+
+		inserted, txErr := o.transferChangeRepo.CreateTransferChangeIdempotent(
+			txCtx,
+			result.transfer,
+		)
+		if txErr != nil {
+			return txErr
+		}
+		result.transfer = inserted.TransferChange
+		return nil
 	})
 	if err != nil {
 		return err
@@ -227,6 +283,15 @@ func (o *Observer) handleLink(
 
 	o.publishResult(ctx, result)
 	return nil
+}
+
+func markRefused(change *edisync.TransferChange, refusal error) {
+	change.Status = edisync.TransferChangeStatusPendingReview
+	change.ConflictStatus = edisync.TransferChangeConflictConflict
+	change.ConflictReason = "Could not apply linked shipment stop actuals: " +
+		errortypes.Summary(refusal)
+	change.AppliedAt = nil
+	change.Payload["conflictReason"] = change.ConflictReason
 }
 
 func (o *Observer) buildSyncContext(
@@ -238,6 +303,7 @@ func (o *Observer) buildSyncContext(
 	if !ok {
 		return syncContext{}, nil
 	}
+	result.event = event
 	result.link = link
 	result.previous = shipmentvocab.Status(metadataString(event.Metadata, "previousStatus"))
 	result.cancelReason = metadataString(event.Metadata, "reason")
@@ -350,7 +416,11 @@ func (o *Observer) applyChange(
 	}
 
 	if result.changeType == edisync.TransferChangeTypeShipmentLifecycle214 {
-		return o.lifecycleApplier.ApplyPrepared(ctx, result.lifecyclePlan)
+		return o.lifecycleApplier.ApplyPrepared(ctx, internaledilifecycle.ApplyRequest{
+			Plan:          result.lifecyclePlan,
+			SourceEventID: result.event.ID.String(),
+			CorrelationID: result.event.CorrelationID,
+		})
 	}
 
 	return o.shipmentRepo.UpdateStatus(
@@ -598,6 +668,13 @@ func buildPayload(event *shipmentevent.Event, result syncContext) map[string]any
 	return payload
 }
 
+func lifecycleLeftStatus(result syncContext) bool {
+	return result.changeType == edisync.TransferChangeTypeShipmentLifecycle214 &&
+		result.lifecyclePlan != nil &&
+		result.updated != nil &&
+		result.lifecyclePlan.OppositeOriginal.Status == result.updated.Status
+}
+
 func buildMirroredEvent(
 	sourceEvent *shipmentevent.Event,
 	result syncContext,
@@ -632,7 +709,7 @@ func buildMirroredEvent(
 		Type:           eventType,
 		Severity:       severityForStatus(newStatus),
 		ActorType:      shipmentevent.ActorEDI,
-		ActorLabel:     "Internal EDI",
+		ActorLabel:     internaledilifecycle.ActorLabel,
 		Summary:        summary,
 		Metadata:       metadata,
 		OccurredAt:     sourceEvent.OccurredAt,
@@ -667,7 +744,10 @@ func eventCanSync(event *shipmentevent.Event) bool {
 func isLifecycleCandidate(event *shipmentevent.Event) bool {
 	switch event.Type {
 	case shipmentevent.TypeStatusChanged,
-		shipmentevent.TypeStopCompleted,
+		shipmentevent.TypeStopArrived,
+		shipmentevent.TypeStopDeparted,
+		shipmentevent.TypeStopArrivalCorrected,
+		shipmentevent.TypeStopDepartureCorrected,
 		shipmentevent.TypeMoveStatusChanged,
 		shipmentevent.TypeMoveDeparted,
 		shipmentevent.TypeMoveArrived:

@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -239,7 +238,7 @@ func (s *Service) Today(
 
 	day := req.BriefingDate
 	if day == "" {
-		location, err := orgzone.Location(ctx, s.organization, req.TenantInfo)
+		location, err := tenantports.OrganizationLocation(ctx, s.organization, req.TenantInfo)
 		if err != nil {
 			return nil, err
 		}

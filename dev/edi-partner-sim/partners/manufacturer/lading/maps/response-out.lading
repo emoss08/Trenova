@@ -1,0 +1,35 @@
+map responseOut
+  from tenderResponse
+  to   kestrel.990
+  use  common
+
+B1 {
+  01 <- scac ?? org.scac
+  02 <- key
+  03 <- respondedAt
+  04 <- decision via decisions
+}
+N9 when exists reason { 01 <- "ZZ", 02 <- reason.truncate(30) }
+N9 when decision == Decline and not exists reason { 01 <- "ZZ", 02 <- partner.declineNote.truncate(30) }
+
+test "an acceptance writes exactly this 990" {
+  given tenderResponse { key: "KVW-100037", decision: Accept, respondedAt: @2026-04-24T10:05[America/Chicago] }
+  expect x12 == "ST*990*0001~B1*TRNV*KVW-100037*20260424*A~SE*3*0001~"
+}
+
+test "a decline without a reason carries the dispatch note" {
+  given tenderResponse { key: "KVW-100037", decision: Decline, respondedAt: @2026-04-24T10:05[America/Chicago] }
+  expect x12 contains "N9*ZZ*Call Trenova dispatch at 815-5~"
+}
+
+property "any reason fits the N9" {
+  vary why in ["No capacity", "Equipment unavailable on the requested date at Rockford", "Weather"]
+  given tenderResponse { key: "KVW-100001", decision: Decline, reason: why, respondedAt: @2026-04-24T14:30Z }
+  expect x12 contains "N9*ZZ*"
+}
+
+property "every decision writes a reservation code" {
+  vary decision in Decision
+  given tenderResponse { key: "KVW-100001", decision: decision, respondedAt: @2026-04-24T14:30Z }
+  expect x12 contains "B1*TRNV*KVW-100001*20260424*"
+}

@@ -67,6 +67,7 @@ type AccountingControl struct {
 	DefaultEscrowLiabilityAccountID         pulid.ID `json:"defaultEscrowLiabilityAccountId"         keel:"default_escrow_liability_account_id,nullzero"`
 	DefaultDriverReimbursementAccountID     pulid.ID `json:"defaultDriverReimbursementAccountId"     keel:"default_driver_reimbursement_account_id,nullzero"`
 	DefaultEscrowInterestExpenseAccountID   pulid.ID `json:"defaultEscrowInterestExpenseAccountId"   keel:"default_escrow_interest_expense_account_id,nullzero"`
+	DefaultEscrowAdjustmentAccountID        pulid.ID `json:"defaultEscrowAdjustmentAccountId"        keel:"default_escrow_adjustment_account_id,nullzero"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`

@@ -137,6 +137,7 @@ type Shipment struct {
 	FreightTerms              shipmentvocab.FreightTerms          `json:"freightTerms"               keel:"freight_terms"`
 	SourceDocumentID          string                              `json:"sourceDocumentId,omitempty"`
 	PreviousCustomerID        pulid.ID                            `json:"-"`
+	OrderPONumber             string                              `json:"-"`
 
 	SearchVector          string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
 	Rank                  string `json:"-"         keel:"rank,computed"`

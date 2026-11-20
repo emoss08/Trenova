@@ -3,6 +3,7 @@ package ladingdoc
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 	"time"
@@ -73,6 +74,13 @@ func fahrenheit(degrees *int16) *Measure {
 	return &Measure{Value: strconv.Itoa(int(*degrees)), Unit: UnitFahrenheit}
 }
 
+func temperatureOf(low, high *int16) *TemperatureRange {
+	if low == nil && high == nil {
+		return nil
+	}
+	return &TemperatureRange{Min: fahrenheit(low), Max: fahrenheit(high)}
+}
+
 func money(amount decimal.NullDecimal, currency string) *Money {
 	if !amount.Valid {
 		return nil
@@ -111,6 +119,15 @@ func refs(values map[string]string) map[string]string {
 	return out
 }
 
+func invoiceRefs(payload *edipayload.FreightInvoicePayload) map[string]string {
+	values := make(map[string]string, len(payload.ReferenceNumbers)+1)
+	maps.Copy(values, payload.ReferenceNumbers)
+	if poNumber := strings.TrimSpace(payload.PONumber); poNumber != "" {
+		values[edipayload.RefPurchaseOrder] = poNumber
+	}
+	return refs(values)
+}
+
 func encode(document any) (jsonutils.RawJSON, error) {
 	encoded, err := sonic.Marshal(document)
 	if err != nil {
@@ -128,6 +145,13 @@ func purposeOf(code editransfer.LoadTenderPurposeCode) string {
 	case editransfer.LoadTenderPurposeOriginal:
 	}
 	return PurposeOriginal
+}
+
+func paymentOf(payment string) string {
+	if payments[payment] {
+		return payment
+	}
+	return ""
 }
 
 func stopTypeOf(stopType string) string {
@@ -153,6 +177,9 @@ func FromLoadTender(
 		Key:           key,
 		Purpose:       purposeOf(payload.PurposeCode),
 		BOL:           payload.BOL,
+		PONumber:      payload.PONumber,
+		Payment:       paymentOf(payload.Payment),
+		Equipment:     payload.Equipment,
 		Customer:      ref(payload.CustomerID, "", payload.CustomerLabel),
 		ServiceType:   ref(payload.ServiceTypeID, "", payload.ServiceTypeLabel),
 		ShipmentType:  ref(payload.ShipmentTypeID, "", payload.ShipmentTypeLabel),
@@ -164,12 +191,7 @@ func FromLoadTender(
 		FreightCharge: money(payload.FreightChargeAmount, ""),
 		OtherCharges:  money(payload.OtherChargeAmount, ""),
 	}
-	if payload.TemperatureMin != nil || payload.TemperatureMax != nil {
-		document.Temperature = &TemperatureRange{
-			Min: fahrenheit(payload.TemperatureMin),
-			Max: fahrenheit(payload.TemperatureMax),
-		}
-	}
+	document.Temperature = temperatureOf(payload.TemperatureMin, payload.TemperatureMax)
 	sequence := int64(0)
 	for moveIndex := range payload.Moves {
 		for stopIndex := range payload.Moves[moveIndex].Stops {
@@ -180,14 +202,15 @@ func FromLoadTender(
 			sequence++
 			zone := zones.of(stop.LocationID)
 			written := Stop{
-				Sequence: sequence,
-				Type:     stopTypeOf(stop.Type),
-				Location: ref(stop.LocationID, stop.LocationCode, stop.LocationLabel),
-				Name:     stop.LocationName,
-				Code:     stop.LocationCode,
-				Window:   Window{Start: at(stop.ScheduledWindowStart, zone)},
-				Weight:   pounds(stop.Weight),
-				Pieces:   stop.Pieces,
+				Sequence:    sequence,
+				Type:        stopTypeOf(stop.Type),
+				Location:    ref(stop.LocationID, stop.LocationCode, stop.LocationLabel),
+				Name:        stop.LocationName,
+				Code:        stop.LocationCode,
+				Window:      Window{Start: at(stop.ScheduledWindowStart, zone)},
+				Weight:      pounds(stop.Weight),
+				Pieces:      stop.Pieces,
+				Temperature: temperatureOf(stop.TemperatureMin, stop.TemperatureMax),
 			}
 			if stop.ScheduledWindowEnd != nil && *stop.ScheduledWindowEnd > 0 {
 				end := at(*stop.ScheduledWindowEnd, zone)
@@ -218,6 +241,7 @@ func FromLoadTender(
 				commodity.CommodityLabel,
 				"Freight",
 			),
+			Temperature: temperatureOf(commodity.TemperatureMin, commodity.TemperatureMax),
 		}
 		if commodity.Weight > 0 {
 			line.Weight = pounds(&commodity.Weight)
@@ -225,6 +249,10 @@ func FromLoadTender(
 		if commodity.Pieces > 0 {
 			pieces := commodity.Pieces
 			line.Pieces = &pieces
+		}
+		if commodity.Hazmat {
+			hazmat := true
+			line.Hazmat = &hazmat
 		}
 		document.Commodities = append(document.Commodities, line)
 	}
@@ -352,8 +380,9 @@ func FromFreightInvoice(
 		BOL:          payload.BOL,
 		ProNumber:    payload.ProNumber,
 		Weight:       pounds(payload.Weight),
+		Payment:      payload.Payment,
 		Total:        moneyOf(payload.TotalAmount.Decimal, currency),
-		Refs:         refs(payload.ReferenceNumbers),
+		Refs:         invoiceRefs(payload),
 		Custom:       custom,
 	}
 	if payload.BillToName != "" {

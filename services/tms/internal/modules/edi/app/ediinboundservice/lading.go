@@ -260,6 +260,7 @@ func rejectionMessage(findings []x12.Finding) string {
 }
 
 type received struct {
+	interchange *parsedInterchange
 	file        *ediinboundfile.EDIInboundFile
 	partner     *edi.EDIPartner
 	message     *edimessage.EDIMessage
@@ -299,15 +300,18 @@ func (s *Service) receive(ctx context.Context, in *received) transactionOutcome 
 		outcome.err = fmt.Errorf("the partner's flow %s: %w", in.read.flow, err)
 		return outcome
 	}
-	if _, err = s.messageRepo.LinkMessageFlow(ctx, &edimessageports.LinkEDIMessageFlowRequest{
-		ID:             in.message.ID,
-		TenantInfo:     tenantInfo,
-		FlowInstanceID: dispatched.Instance.ID,
-	}); err != nil {
-		outcome.err = err
-		return outcome
+	if dispatched.Opened() {
+		if _, err = s.messageRepo.LinkMessageFlow(ctx, &edimessageports.LinkEDIMessageFlowRequest{
+			ID:             in.message.ID,
+			TenantInfo:     tenantInfo,
+			FlowInstanceID: dispatched.Instance.ID,
+		}); err != nil {
+			outcome.err = err
+			return outcome
+		}
 	}
 
+	in.rejectForFlow(dispatched.Actions)
 	transfer := dispatched.Instance.TransferID
 	for index := range dispatched.Actions {
 		action := &dispatched.Actions[index]
@@ -346,6 +350,21 @@ func (s *Service) receive(ctx context.Context, in *received) transactionOutcome 
 		))
 	}
 	return outcome
+}
+
+func (in *received) rejectForFlow(actions []lading.FlowAction) {
+	for index := range actions {
+		action := &actions[index]
+		if action.Kind != lading.ActionAcknowledge || !action.Rejected || action.Message == nil {
+			continue
+		}
+		in.read.result.Outcomes = append(in.read.result.Outcomes, lading.Outcome{
+			Kind:    lading.OutcomeReject,
+			Message: action.Message.String(),
+		})
+		in.read.apply(in.interchange, in.transaction)
+		return
+	}
 }
 
 func (s *Service) act(
@@ -443,13 +462,18 @@ func statusDetails(
 	details := &shipmentStatusDetails{
 		controlNumber: transaction.controlNumber,
 		referenceID:   status.ProNumber,
-		shipmentRef:   firstNonEmpty(status.References["shipmentId"], status.BOL),
+		shipmentRef:   firstNonEmpty(status.Key, status.BOL),
 		statusCode:    status.StatusCode,
 		reasonCode:    status.StatusReasonCode,
 		eventAt:       status.EventDate,
 		events:        status.Events,
 	}
+	values := make([]string, 0, len(status.References)+1)
+	values = append(values, status.Key)
 	for _, value := range status.References {
+		values = append(values, value)
+	}
+	for _, value := range values {
 		if value != "" && !slices.Contains(details.references, value) {
 			details.references = append(details.references, value)
 		}

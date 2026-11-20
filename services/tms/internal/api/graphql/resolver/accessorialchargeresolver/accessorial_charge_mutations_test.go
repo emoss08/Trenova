@@ -126,7 +126,7 @@ func TestApplyAccessorialChargeInput_RejectsAnAmountThatIsNotADecimal(t *testing
 
 	var valErr *errortypes.Error
 	require.ErrorAs(t, err, &valErr)
-	assert.Equal(t, "amount", valErr.Field)
+	assert.Equal(t, "amount", valErr.Field())
 }
 
 func TestApplyAccessorialChargeInput_KeepsWhatTheInputDoesNotCarry(t *testing.T) {

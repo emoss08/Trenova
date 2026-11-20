@@ -1,0 +1,90 @@
+rules tenderOutChecks for tenderOut
+  use common
+
+/// Quarrystone books a load against the equipment it runs; a tender without one is refused.
+rule "the load names equipment Quarrystone runs" {
+  require exists (equipment via equipment.back)
+    else hold "Name the equipment (van, reefer or flatbed) before tendering {key} to Quarrystone"
+}
+
+/// Quarrystone bills against the tendered rate and plans by weight.
+rule "the load carries its rate, weight and BOL" {
+  require exists total else hold "Set the rate on {key} before tendering it to Quarrystone"
+  require exists weight else hold "Set the weight on {key} before tendering it to Quarrystone"
+  require exists pieces else hold "Set the piece count on {key} before tendering it to Quarrystone"
+  require exists bol else hold "Quarrystone needs the BOL on {key} before it books the load"
+}
+
+/// Quarrystone books dock appointments from both ends of every window.
+rule "every stop has its freight, its address and a whole window" {
+  for stop in stops {
+    require exists stop.weight and exists stop.pieces
+      else hold "Stop {stop.sequence} on {key} needs its weight and pieces for Quarrystone"
+    require exists stop.window.end
+      else hold "Stop {stop.sequence} on {key} needs the end of its appointment window for Quarrystone"
+    require exists stop.address.postal
+      else hold "Stop {stop.sequence} on {key} needs a street address with a postal code for Quarrystone"
+  }
+}
+
+test "a complete tender goes out" {
+  given loadTender {
+    key: "S26030552001"
+    bol: "BOL-552001"
+    equipment: "REEFER"
+    weight: 30_000 lb
+    pieces: 10
+    total: $1_200.00
+    stops: [
+      { sequence: 1, type: Pickup, name: "Front Range Mill", address: { line1: "4100 Brighton Blvd", city: "Denver", state: "CO", postal: "80216" }, window: { start: @2026-03-09T07:00[America/Denver], end: @2026-03-09T09:00[America/Denver] }, weight: 30_000 lb, pieces: 10 },
+      { sequence: 2, type: Delivery, name: "Prairie Supply", address: { line1: "900 N Broadway", city: "Wichita", state: "KS", postal: "67214" }, window: { start: @2026-03-10T08:00[America/Chicago], end: @2026-03-10T10:00[America/Chicago] }, weight: 30_000 lb, pieces: 10 }
+    ]
+  }
+  expect no holds
+  expect no rejects
+}
+
+test "a tender with no equipment is held" {
+  given loadTender {
+    key: "S26030552001"
+    bol: "BOL-552001"
+    weight: 30_000 lb
+    pieces: 10
+    total: $1_200.00
+    stops: [
+      { sequence: 1, type: Pickup, address: { line1: "4100 Brighton Blvd", city: "Denver", state: "CO", postal: "80216" }, window: { start: @2026-03-09T07:00[America/Denver], end: @2026-03-09T09:00[America/Denver] }, weight: 30_000 lb, pieces: 10 },
+      { sequence: 2, type: Delivery, address: { line1: "900 N Broadway", city: "Wichita", state: "KS", postal: "67214" }, window: { start: @2026-03-10T08:00[America/Chicago], end: @2026-03-10T10:00[America/Chicago] }, weight: 30_000 lb, pieces: 10 }
+    ]
+  }
+  expect held "Name the equipment (van, reefer or flatbed) before tendering S26030552001 to Quarrystone"
+}
+
+test "a delivery with only its opening time is held" {
+  given loadTender {
+    key: "S26030552001"
+    bol: "BOL-552001"
+    equipment: "VAN"
+    weight: 30_000 lb
+    pieces: 10
+    total: $1_200.00
+    stops: [
+      { sequence: 1, type: Pickup, address: { line1: "4100 Brighton Blvd", city: "Denver", state: "CO", postal: "80216" }, window: { start: @2026-03-09T07:00[America/Denver], end: @2026-03-09T09:00[America/Denver] }, weight: 30_000 lb, pieces: 10 },
+      { sequence: 2, type: Delivery, address: { line1: "900 N Broadway", city: "Wichita", state: "KS", postal: "67214" }, window: { start: @2026-03-10T08:00[America/Chicago] }, weight: 30_000 lb, pieces: 10 }
+    ]
+  }
+  expect held "Stop 2 on S26030552001 needs the end of its appointment window for Quarrystone"
+}
+
+test "a tender with no weight is held" {
+  given loadTender {
+    key: "S26030552001"
+    bol: "BOL-552001"
+    equipment: "VAN"
+    total: $1_200.00
+    stops: [
+      { sequence: 1, type: Pickup, address: { line1: "4100 Brighton Blvd", city: "Denver", state: "CO", postal: "80216" }, window: { start: @2026-03-09T07:00[America/Denver], end: @2026-03-09T09:00[America/Denver] } },
+      { sequence: 2, type: Delivery, address: { line1: "900 N Broadway", city: "Wichita", state: "KS", postal: "67214" }, window: { start: @2026-03-10T08:00[America/Chicago], end: @2026-03-10T10:00[America/Chicago] } }
+    ]
+  }
+  expect held "Set the weight on S26030552001 before tendering it to Quarrystone"
+}

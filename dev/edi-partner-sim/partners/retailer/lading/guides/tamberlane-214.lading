@@ -1,0 +1,16 @@
+guide tamberlane.214 from x12.004010.214 "Tamberlane Stores Shipment Status 4010 rev 7"
+
+/// Tamberlane takes six status codes and six reason codes, and wants the city on every status.
+B10 { 01 required; 02 required length 10..10; 03 required }
+L11 max 2 { 02 codes "BM", "PO" }
+MAN unused
+K1 unused
+AT8 unused
+loop 0100 unused
+loop 0200 unused
+loop 0205 required max 10
+0205.0210.AT7 { 01 required codes "X3", "AF", "X1", "D1", "AG", "SD"; 02 required codes "NS", "AJ", "AO", "AM", "AH", "B1"; 03 unused; 04 unused; 05 required; 06 required length 4..4; 07 required codes "CT", "ET", "MT", "PT" }
+0205.0210.MS1 required { 01 required; 02 required; 03 codes "US" }
+0205.0210.MS2 unused
+0205.0210.M7 unused
+0205.L11 max 1 { 02 codes "QN" }

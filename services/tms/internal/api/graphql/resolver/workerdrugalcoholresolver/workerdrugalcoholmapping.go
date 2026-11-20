@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -223,9 +222,12 @@ func dotViolationUpdateRequest(
 		Notes:                     input.Notes,
 		UserID:                    userID,
 	}
-	if input.FollowUpTestCount != nil {
-		count := int32(*input.FollowUpTestCount)
-		req.FollowUpTestCount = &count
+	if err = gqlscalar.ApplyIntPtr(
+		"followUpTestCount",
+		input.FollowUpTestCount,
+		&req.FollowUpTestCount,
+	); err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -269,8 +271,12 @@ func clearinghouseQueryFromInput(
 	if input.Result != nil {
 		entity.Result = *input.Result
 	}
-	if input.ViolationCount != nil {
-		entity.ViolationCount = int32(*input.ViolationCount)
+	if err = gqlscalar.ApplyInt(
+		"violationCount",
+		input.ViolationCount,
+		&entity.ViolationCount,
+	); err != nil {
+		return nil, err
 	}
 
 	return entity, nil
@@ -297,13 +303,17 @@ func completeQueryRequest(
 			"Document is invalid",
 		)
 	}
+	violationCount, err := gqlscalar.NarrowIntValue[int32]("violationCount", input.ViolationCount)
+	if err != nil {
+		return nil, err
+	}
 
 	return &workerdrugalcoholservice.CompleteQueryRequest{
 		TenantInfo:     tenantInfo,
 		QueryID:        queryID,
 		Result:         input.Result,
 		CompletedAt:    gqlscalar.Int64Value(input.CompletedAt),
-		ViolationCount: intutils.SafeToInt32(gqlscalar.IntValue(input.ViolationCount)),
+		ViolationCount: violationCount,
 		Reference:      gqlscalar.StringValue(input.Reference),
 		DocumentID:     documentID,
 		Notes:          gqlscalar.StringValue(input.Notes),
@@ -314,7 +324,19 @@ func completeQueryRequest(
 func randomPoolFromInput(
 	input *gqlmodel.DOTRandomPoolInput,
 	tenantInfo pagination.TenantInfo,
-) *dotrandom.DOTRandomPool {
+) (*dotrandom.DOTRandomPool, error) {
+	drugRatePercent, err := gqlscalar.NarrowInt[int16]("drugRatePercent", input.DrugRatePercent)
+	if err != nil {
+		return nil, err
+	}
+	alcoholRatePercent, err := gqlscalar.NarrowInt[int16](
+		"alcoholRatePercent",
+		input.AlcoholRatePercent,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	entity := &dotrandom.DOTRandomPool{
 		OrganizationID:      tenantInfo.OrgID,
 		BusinessUnitID:      tenantInfo.BuID,
@@ -323,8 +345,8 @@ func randomPoolFromInput(
 		Description:         gqlscalar.StringValue(input.Description),
 		Status:              domaintypes.StatusActive,
 		Period:              input.Period,
-		DrugRatePercent:     int16(input.DrugRatePercent),
-		AlcoholRatePercent:  int16(input.AlcoholRatePercent),
+		DrugRatePercent:     drugRatePercent,
+		AlcoholRatePercent:  alcoholRatePercent,
 		IncludedDriverTypes: input.IncludedDriverTypes,
 		IsDefault:           gqlscalar.BoolValue(input.IsDefault),
 	}
@@ -335,7 +357,7 @@ func randomPoolFromInput(
 		entity.IncludedDriverTypes = []string{}
 	}
 
-	return entity
+	return entity, nil
 }
 
 func randomPoolCursorConnectionToModel(

@@ -117,11 +117,12 @@ func TestCreateRejectsInvalidPTO(t *testing.T) {
 
 	repoCalled := false
 	svc := &Service{
-		db:           dbtest.NopConnection{},
-		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		realtime:     &mocks.NoopRealtimeService{},
-		ledger:       untrackedLedger(),
-		l:            zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		driverNotify:  quietDriverNotify(t, unknownWorkers(t)),
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			create: func(
 				_ context.Context,
@@ -153,11 +154,12 @@ func TestCreatePersistsValidPTO(t *testing.T) {
 
 	audit := &fakeAuditService{}
 	svc := &Service{
-		db:           dbtest.NopConnection{},
-		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		realtime:     &mocks.NoopRealtimeService{},
-		ledger:       untrackedLedger(),
-		l:            zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		driverNotify:  quietDriverNotify(t, unknownWorkers(t)),
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			create: func(
 				_ context.Context,
@@ -270,11 +272,12 @@ func TestCreateRejectsOverlappingPTO(t *testing.T) {
 
 	repoCalled := false
 	svc := &Service{
-		db:           dbtest.NopConnection{},
-		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		realtime:     &mocks.NoopRealtimeService{},
-		ledger:       untrackedLedger(),
-		l:            zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		driverNotify:  quietDriverNotify(t, unknownWorkers(t)),
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			hasOverlap: func(
 				_ context.Context,
@@ -308,11 +311,12 @@ func TestRejectRequiresReason(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{
-		db:           dbtest.NopConnection{},
-		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		realtime:     &mocks.NoopRealtimeService{},
-		ledger:       untrackedLedger(),
-		l:            zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		driverNotify:  quietDriverNotify(t, unknownWorkers(t)),
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,
@@ -361,11 +365,12 @@ func TestTransitionRefusesInvalidSourceStatus(t *testing.T) {
 			current := storedPTO(tc.from)
 			updateCalled := false
 			svc := &Service{
-				db:           dbtest.NopConnection{},
-				driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-				realtime:     &mocks.NoopRealtimeService{},
-				ledger:       untrackedLedger(),
-				l:            zap.NewNop(),
+				db:            dbtest.NopConnection{},
+				driverNotify:  quietDriverNotify(t, unknownWorkers(t)),
+				realtime:      &mocks.NoopRealtimeService{},
+				ledger:        untrackedLedger(),
+				organizations: utcOrganizations{},
+				l:             zap.NewNop(),
 				repo: &fakePTORepo{
 					getByID: func(
 						_ context.Context,
@@ -407,11 +412,12 @@ func TestTransitionCarriesReasonVersionAndAudit(t *testing.T) {
 	audit := &fakeAuditService{}
 	var captured *workerptoports.UpdatePTOStatusRequest
 	svc := &Service{
-		db:           dbtest.NopConnection{},
-		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		realtime:     &mocks.NoopRealtimeService{},
-		ledger:       untrackedLedger(),
-		l:            zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		driverNotify:  quietDriverNotify(t, unknownWorkers(t)),
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,
@@ -458,11 +464,12 @@ func TestCancelApprovedPTO(t *testing.T) {
 	current := storedPTO(worker.PTOStatusApproved)
 	audit := &fakeAuditService{}
 	svc := &Service{
-		db:           dbtest.NopConnection{},
-		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		realtime:     &mocks.NoopRealtimeService{},
-		ledger:       untrackedLedger(),
-		l:            zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		driverNotify:  quietDriverNotify(t, unknownWorkers(t)),
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,
@@ -495,7 +502,12 @@ func TestCancelApprovedPTO(t *testing.T) {
 func TestBulkActionValidation(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{ledger: untrackedLedger(), l: zap.NewNop(), repo: &fakePTORepo{}}
+	svc := &Service{
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
+		repo:          &fakePTORepo{},
+	}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
 	_, err := svc.BulkAction(t.Context(), &workerptoports.PTOBulkActionRequest{
@@ -536,11 +548,12 @@ func TestBulkActionReportsPerItemOutcomes(t *testing.T) {
 	audit := &fakeAuditService{}
 	var updates []*workerptoports.UpdatePTOStatusRequest
 	svc := &Service{
-		db:           dbtest.NopConnection{},
-		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		realtime:     &mocks.NoopRealtimeService{},
-		ledger:       untrackedLedger(),
-		l:            zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		driverNotify:  quietDriverNotify(t, unknownWorkers(t)),
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			getByIDs: func(
 				_ context.Context,
@@ -600,11 +613,12 @@ func TestUpdateRefusesNonRequestedPTO(t *testing.T) {
 	current := storedPTO(worker.PTOStatusApproved)
 	updateCalled := false
 	svc := &Service{
-		db:           dbtest.NopConnection{},
-		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		realtime:     &mocks.NoopRealtimeService{},
-		ledger:       untrackedLedger(),
-		l:            zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		driverNotify:  quietDriverNotify(t, unknownWorkers(t)),
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,
@@ -641,11 +655,12 @@ func TestUpdateExcludesItselfFromOverlapAndAudits(t *testing.T) {
 	var overlapReq *workerptoports.PTOOverlapRequest
 	var persisted *worker.WorkerPTO
 	svc := &Service{
-		db:           dbtest.NopConnection{},
-		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		realtime:     &mocks.NoopRealtimeService{},
-		ledger:       untrackedLedger(),
-		l:            zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		driverNotify:  quietDriverNotify(t, unknownWorkers(t)),
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,
@@ -704,11 +719,12 @@ func TestUpdateRejectsOverlap(t *testing.T) {
 
 	current := storedPTO(worker.PTOStatusRequested)
 	svc := &Service{
-		db:           dbtest.NopConnection{},
-		driverNotify: quietDriverNotify(t, unknownWorkers(t)),
-		realtime:     &mocks.NoopRealtimeService{},
-		ledger:       untrackedLedger(),
-		l:            zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		driverNotify:  quietDriverNotify(t, unknownWorkers(t)),
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(
 				_ context.Context,

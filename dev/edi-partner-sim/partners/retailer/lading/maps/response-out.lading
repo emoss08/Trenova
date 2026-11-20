@@ -1,0 +1,34 @@
+map responseOut
+  from tenderResponse
+  to   tamberlane.990
+  use  common
+
+B1 {
+  01 <- scac ?? org.scac
+  02 <- key
+  03 <- respondedAt
+  04 <- decision via decisions
+}
+K1 when exists reason { 01 <- reason.truncate(30) }
+K1 when decision == Decline and not exists reason { 01 <- partner.declineNote.truncate(30) }
+
+test "an acceptance writes exactly this 990" {
+  given tenderResponse { key: "TS10000004", decision: Accept, respondedAt: @2026-05-29T06:40[America/Chicago] }
+  expect x12 == "ST|990|0001~B1|TRNV|TS10000004|20260529|A~SE|3|0001~"
+}
+
+test "a decline carries its reason in K1" {
+  given tenderResponse { key: "TS10000004", decision: Decline, reason: "No van in Joliet on the 2nd", respondedAt: @2026-05-29T06:40[America/Chicago] }
+  expect x12 contains "K1|No van in Joliet on the 2nd~"
+}
+
+test "a decline without a reason carries the default note" {
+  given tenderResponse { key: "TS10000004", decision: Decline, respondedAt: @2026-05-29T06:40[America/Chicago] }
+  expect x12 contains "K1|Capacity not available~"
+}
+
+property "every decision writes a reservation code" {
+  vary decision in Decision
+  given tenderResponse { key: "TS10000001", decision: decision, respondedAt: @2026-05-29T14:30Z }
+  expect x12 contains "B1|TRNV|TS10000001|20260529|"
+}

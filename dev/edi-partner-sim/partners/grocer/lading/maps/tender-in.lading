@@ -1,0 +1,126 @@
+map tenderIn
+  from meadowridge.204
+  to   loadTender
+  use  common
+
+key      <- B204 else reject "The tender has no Meadowridge run number"
+purpose  <- B2A01 via purposes else reject "Meadowridge sent purpose {B2A01}, which its guide does not define"
+payment  <- B206 via payments
+bol      <- reference(L11, "BM")
+poNumber <- reference(L11, "PO")
+refs     <- refs(L11)
+notes    <- NTE.map(n => n.02)
+
+let billTo = 0100[N101 == "BT"]
+customer <- lookup Customer(billTo.N104) learn party(billTo)
+
+let trailer = 0200.N7
+equipment <- trailer.11 via equipment
+  else hold "Meadowridge asked for equipment we don't run: {trailer.11}"
+
+// Meadowridge sends a range per commodity class on each stop (0370: N7 and MEA), never one set
+// point. Each stop keeps where its own ranges overlap; the run rides in one reefer compartment,
+// so the load keeps where every range overlaps: the warmest floor and the coldest ceiling. When
+// they cross, tenderChecks holds the load.
+let ranges = 0300.map(s => s.0370).flatten.map(e => e.MEA)
+when not ranges.isEmpty {
+  temperature <- {
+    min: temperature(ranges.map(m => m.05).max(t => t), "F")
+    max: temperature(ranges.map(m => m.06).min(t => t), "F")
+  }
+}
+
+weight        <- weight(L301, L312 ?? "L") else warn "Meadowridge sent no total weight"
+pieces        <- L311
+total         <- money(L305, partner.currency)
+freightCharge <- total
+
+stops <- each 0300 as stop {
+  let party = stop.0310
+  sequence <- stop.S501
+  type     <- stop.S502 via stopTypes else reject "Stop {stop.S501} has no type"
+  location <- lookup Location(party.N104) learn address(party)
+  code     <- party.N104
+  name     <- party.N102.titleCase()
+  address  <- address(party)
+  window   <- window(stop.G62, location.zone ?? partner.zone)
+    else reject "Stop {stop.S501} has no appointment"
+  weight <- weight(stop.S503, stop.S504)
+  pieces <- int(stop.S505)
+  refs   <- refs(stop.L11)
+  notes  <- stop.NTE.map(n => n.02)
+  let held = stop.0370.map(e => e.MEA)
+  when not held.isEmpty {
+    temperature <- {
+      min: temperature(held.map(m => m.05).max(t => t), "F")
+      max: temperature(held.map(m => m.06).min(t => t), "F")
+    }
+  }
+}
+
+commodities <- each 0300.map(s => s.0320).flatten as line {
+  commodity   <- lookup Commodity(line.L503)
+  description <- line.L502.titleCase()
+  weight      <- weight(line.AT8.03, line.AT8.02)
+  pieces      <- line.AT8.04
+}
+
+test "Meadowridge's run becomes a six-stop reefer load" {
+  given file "samples/tender-original.x12"
+  given lookup Customer("MRF-AP") = "Meadowridge Fresh Markets"
+  expect key == "MF1000008"
+  expect purpose == Original
+  expect stops.count == 6
+  expect stops.filter(s => s.type == Delivery).count == 5
+  expect stops.first.window.start == @2026-06-09T02:00[America/Chicago]
+  expect equipment == "REEFER"
+  expect total == $5_906.86
+  expect weight == 31_900 lb
+  expect commodities.count == 3
+  expect no rejects
+}
+
+test "the load rides where every stop's ranges overlap" {
+  given file "samples/tender-original.x12"
+  expect temperature.min == 34 °F
+  expect temperature.max == 38 °F
+}
+
+test "each stop keeps where its own ranges overlap" {
+  given file "samples/tender-original.x12"
+  expect stops.first.temperature.min == 34 °F
+  expect stops.first.temperature.max == 38 °F
+  expect stops[1].temperature.min == 33 °F
+  expect stops[1].temperature.max == 38 °F
+  expect stops[1].notes == ["STORE CLOSES TO RECEIVING AT 1400"]
+}
+
+test "a frozen run keeps its range below zero" {
+  given file "samples/tender-frozen.x12"
+  expect temperature.min == -20 °F
+  expect temperature.max == -10 °F
+  expect stops.count == 7
+}
+
+test "ranges that don't overlap cross" {
+  given file "samples/tender-mixed.x12"
+  expect temperature.min > temperature.max
+}
+
+test "a replacement reads as a replacement" {
+  given file "samples/tender-replace.x12"
+  expect purpose == Replace
+  expect key == "MF1000008"
+}
+
+test "a tender with only what the guide requires reads" {
+  given file "samples/tender-sparse.x12"
+  expect poNumber == none
+  expect notes.isEmpty
+  expect no rejects
+}
+
+property "everything Meadowridge has tendered still reads" {
+  vary file in samples "samples/tender-*.x12"
+  expect no rejects
+}

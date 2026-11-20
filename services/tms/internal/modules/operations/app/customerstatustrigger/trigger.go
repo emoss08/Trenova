@@ -54,9 +54,12 @@ func Evaluates(eventType shipmentevent.Type) bool {
 		shipmentevent.TypeMoveStatusChanged,
 		shipmentevent.TypeMoveDeparted,
 		shipmentevent.TypeMoveArrived,
-		shipmentevent.TypeStopCompleted:
+		shipmentevent.TypeStopArrived,
+		shipmentevent.TypeStopDeparted:
 		return true
 	case shipmentevent.TypeShipmentCreated,
+		shipmentevent.TypeStopArrivalCorrected,
+		shipmentevent.TypeStopDepartureCorrected,
 		shipmentevent.TypeDriverAssigned,
 		shipmentevent.TypeDriverReassigned,
 		shipmentevent.TypeDriverUnassigned,

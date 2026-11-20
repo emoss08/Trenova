@@ -2,6 +2,7 @@ package detentionresolver
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -22,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -72,7 +72,12 @@ func detentionTierToModel(
 	return model
 }
 
-func detentionPolicyToModel(entity *detentionpolicy.DetentionPolicy) *gqlmodel.DetentionPolicy {
+// detentionPolicyToModel maps a policy, marking it as the organization's
+// default when shipment control names it; defaultID is read once per request.
+func detentionPolicyToModel(
+	entity *detentionpolicy.DetentionPolicy,
+	defaultID pulid.ID,
+) *gqlmodel.DetentionPolicy {
 	if entity == nil {
 		return nil
 	}
@@ -85,7 +90,7 @@ func detentionPolicyToModel(entity *detentionpolicy.DetentionPolicy) *gqlmodel.D
 		Code:                        entity.Code,
 		Description:                 entity.Description,
 		Status:                      entity.Status,
-		IsOrgDefault:                entity.IsOrgDefault,
+		IsOrganizationDefault:       defaultID.IsNotNil() && entity.ID == defaultID,
 		Priority:                    int(entity.Priority),
 		SpecificityScore:            int(entity.SpecificityScore),
 		ShipmentTypeIds:             gqlid.PulidsToStrings(entity.ShipmentTypeIDs),
@@ -156,12 +161,13 @@ func detentionPolicyToModel(entity *detentionpolicy.DetentionPolicy) *gqlmodel.D
 
 func detentionPolicyConnectionToModel(
 	result *pagination.CursorListResult[*detentionpolicy.DetentionPolicy],
+	defaultID pulid.ID,
 ) (*gqlmodel.DetentionPolicyConnection, error) {
 	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *detentionpolicy.DetentionPolicy, cursor string) *gqlmodel.DetentionPolicyEdge {
 			return &gqlmodel.DetentionPolicyEdge{
-				Node:   detentionPolicyToModel(node),
+				Node:   detentionPolicyToModel(node, defaultID),
 				Cursor: cursor,
 			}
 		},
@@ -216,11 +222,8 @@ func detentionPolicyFromInput(
 	if input.Status != nil {
 		entity.Status = *input.Status
 	}
-	if input.IsOrgDefault != nil {
-		entity.IsOrgDefault = *input.IsOrgDefault
-	}
-	if input.Priority != nil {
-		entity.Priority = intutils.SafeToInt16(*input.Priority)
+	if err = applyDetentionPolicyNumbers(entity, input); err != nil {
+		return nil, err
 	}
 
 	if entity.CustomerID, err = pulidPtrFromStringPtr(
@@ -268,21 +271,6 @@ func detentionPolicyFromInput(
 	if input.LateArrivalRule != nil {
 		entity.LateArrivalRule = *input.LateArrivalRule
 	}
-	if input.LateArrivalGraceMinutes != nil {
-		entity.LateArrivalGraceMinutes = intutils.SafeToInt16(*input.LateArrivalGraceMinutes)
-	}
-	if input.BillingFreeMinutes != nil {
-		entity.BillingFreeMinutes = intutils.SafeToInt32(*input.BillingFreeMinutes)
-	}
-	entity.PickupFreeMinutes = intPtrToInt32Ptr(input.PickupFreeMinutes)
-	entity.DeliveryFreeMinutes = intPtrToInt32Ptr(input.DeliveryFreeMinutes)
-	entity.PayFreeMinutes = intPtrToInt32Ptr(input.PayFreeMinutes)
-	if input.MinimumBillableMinutes != nil {
-		entity.MinimumBillableMinutes = intutils.SafeToInt32(*input.MinimumBillableMinutes)
-	}
-	if input.BillingIncrementMinutes != nil {
-		entity.BillingIncrementMinutes = intutils.SafeToInt16(*input.BillingIncrementMinutes)
-	}
 	if input.RoundingMode != nil {
 		entity.RoundingMode = *input.RoundingMode
 	}
@@ -294,7 +282,6 @@ func detentionPolicyFromInput(
 		return nil, err
 	}
 
-	entity.MaxBillableMinutesPerStop = intPtrToInt32Ptr(input.MaxBillableMinutesPerStop)
 	if entity.MaxChargePerStop, err = gqldecimal.NullDecimalFromStringPtr(
 		input.MaxChargePerStop, "maxChargePerStop",
 	); err != nil {
@@ -313,7 +300,6 @@ func detentionPolicyFromInput(
 	if input.DayBoundaryMode != nil {
 		entity.DayBoundaryMode = *input.DayBoundaryMode
 	}
-	entity.ConvertToLayoverAtMinutes = intPtrToInt32Ptr(input.ConvertToLayoverAtMinutes)
 	if entity.LayoverAccessorialChargeID, err = pulidPtrFromStringPtr(
 		input.LayoverAccessorialChargeID, "layoverAccessorialChargeId",
 	); err != nil {
@@ -322,14 +308,6 @@ func detentionPolicyFromInput(
 
 	if input.NotificationRequirement != nil {
 		entity.NotificationRequirement = *input.NotificationRequirement
-	}
-	if input.NotificationLeadMinutes != nil {
-		entity.NotificationLeadMinutes = intutils.SafeToInt16(*input.NotificationLeadMinutes)
-	}
-	if input.NotificationDeadlineMinutes != nil {
-		entity.NotificationDeadlineMinutes = intutils.SafeToInt16(
-			*input.NotificationDeadlineMinutes,
-		)
 	}
 	if input.UnnotifiedBehavior != nil {
 		entity.UnnotifiedBehavior = *input.UnnotifiedBehavior
@@ -366,6 +344,72 @@ func detentionPolicyFromInput(
 	return entity, nil
 }
 
+func applyDetentionPolicyNumbers(
+	entity *detentionpolicy.DetentionPolicy,
+	input *gqlmodel.DetentionPolicyInput,
+) error {
+	optional := []struct {
+		field string
+		value *int
+		dest  **int32
+	}{
+		{"pickupFreeMinutes", input.PickupFreeMinutes, &entity.PickupFreeMinutes},
+		{"deliveryFreeMinutes", input.DeliveryFreeMinutes, &entity.DeliveryFreeMinutes},
+		{"payFreeMinutes", input.PayFreeMinutes, &entity.PayFreeMinutes},
+		{
+			"maxBillableMinutesPerStop",
+			input.MaxBillableMinutesPerStop,
+			&entity.MaxBillableMinutesPerStop,
+		},
+		{
+			"convertToLayoverAtMinutes",
+			input.ConvertToLayoverAtMinutes,
+			&entity.ConvertToLayoverAtMinutes,
+		},
+	}
+	for _, field := range optional {
+		narrowed, err := gqlscalar.NarrowIntPtr[int32](field.field, field.value)
+		if err != nil {
+			return err
+		}
+		*field.dest = narrowed
+	}
+
+	int16Fields := []struct {
+		field string
+		value *int
+		dest  *int16
+	}{
+		{"priority", input.Priority, &entity.Priority},
+		{"lateArrivalGraceMinutes", input.LateArrivalGraceMinutes, &entity.LateArrivalGraceMinutes},
+		{"billingIncrementMinutes", input.BillingIncrementMinutes, &entity.BillingIncrementMinutes},
+		{"notificationLeadMinutes", input.NotificationLeadMinutes, &entity.NotificationLeadMinutes},
+		{
+			"notificationDeadlineMinutes",
+			input.NotificationDeadlineMinutes,
+			&entity.NotificationDeadlineMinutes,
+		},
+	}
+	for _, field := range int16Fields {
+		if err := gqlscalar.ApplyInt(field.field, field.value, field.dest); err != nil {
+			return err
+		}
+	}
+	if err := gqlscalar.ApplyInt(
+		"billingFreeMinutes",
+		input.BillingFreeMinutes,
+		&entity.BillingFreeMinutes,
+	); err != nil {
+		return err
+	}
+
+	return gqlscalar.ApplyInt(
+		"minimumBillableMinutes",
+		input.MinimumBillableMinutes,
+		&entity.MinimumBillableMinutes,
+	)
+}
+
 func detentionTiersFromInput(
 	inputs []*gqlmodel.DetentionTierInput,
 	tenantInfo pagination.TenantInfo,
@@ -384,12 +428,21 @@ func detentionTiersFromInput(
 		if err != nil {
 			return nil, err
 		}
+		path := "tiers[" + strconv.Itoa(index) + "]"
+		fromMinute, err := gqlscalar.NarrowInt[int32](path+".fromMinute", input.FromMinute)
+		if err != nil {
+			return nil, err
+		}
+		toMinute, err := gqlscalar.NarrowIntPtr[int32](path+".toMinute", input.ToMinute)
+		if err != nil {
+			return nil, err
+		}
 
 		tier := &detentionpolicy.DetentionPolicyTier{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			FromMinute:     intutils.SafeToInt32(input.FromMinute),
-			ToMinute:       intPtrToInt32Ptr(input.ToMinute),
+			FromMinute:     fromMinute,
+			ToMinute:       toMinute,
 			Rate:           rate,
 			RateUnit:       detentionpolicy.TierRateUnitHour,
 			SortOrder:      int32(index),
@@ -401,8 +454,12 @@ func detentionTiersFromInput(
 		if input.Label != nil {
 			tier.Label = *input.Label
 		}
-		if input.SortOrder != nil {
-			tier.SortOrder = intutils.SafeToInt32(*input.SortOrder)
+		if err = gqlscalar.ApplyInt(
+			path+".sortOrder",
+			input.SortOrder,
+			&tier.SortOrder,
+		); err != nil {
+			return nil, err
 		}
 
 		tiers = append(tiers, tier)
@@ -813,14 +870,6 @@ func intPtrToInt64Ptr(value *int) *int64 {
 		return nil
 	}
 	v := int64(*value)
-	return &v
-}
-
-func intPtrToInt32Ptr(value *int) *int32 {
-	if value == nil {
-		return nil
-	}
-	v := intutils.SafeToInt32(*value)
 	return &v
 }
 

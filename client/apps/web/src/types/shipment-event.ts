@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { stopTypeSchema } from "@trenova/shared/types/shipment";
 import { userSchema } from "@trenova/shared/types/user";
 import { holdSeveritySchema, holdTypeSchema } from "@/types/hold-reason";
 import {
@@ -17,7 +18,10 @@ export const shipmentEventTypeSchema = z.enum([
   "MoveStatusChanged",
   "MoveDeparted",
   "MoveArrived",
-  "StopCompleted",
+  "StopArrived",
+  "StopDeparted",
+  "StopArrivalCorrected",
+  "StopDepartureCorrected",
   "DriverAssigned",
   "DriverReassigned",
   "DriverUnassigned",
@@ -122,6 +126,11 @@ export const shipmentMoveEventSchema = shipmentEventEnvelopeSchema.extend({
   stopId: optionalGraphQLStringSchema,
   previousStatus: optionalGraphQLStringSchema,
   newStatus: optionalGraphQLStringSchema,
+  stopNumber: optionalGraphQLIntSchema,
+  stopType: optionalGraphQL(stopTypeSchema),
+  locationName: optionalGraphQLStringSchema,
+  actualAt: optionalGraphQLIntSchema,
+  previousActualAt: optionalGraphQLIntSchema,
 });
 export type ShipmentMoveEvent = z.infer<typeof shipmentMoveEventSchema>;
 

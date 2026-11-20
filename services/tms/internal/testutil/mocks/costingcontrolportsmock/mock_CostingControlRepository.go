@@ -175,55 +175,44 @@ func (_c *MockCostingControlRepository_Update_Call) RunAndReturn(run func(ctx co
 	return _c
 }
 
-// UpdateCategory provides a mock function for the type MockCostingControlRepository
-func (_mock *MockCostingControlRepository) UpdateCategory(ctx context.Context, category *costingcontrol.CostCategory) (*costingcontrol.CostCategory, error) {
-	ret := _mock.Called(ctx, category)
+// UpdateCategories provides a mock function for the type MockCostingControlRepository
+func (_mock *MockCostingControlRepository) UpdateCategories(ctx context.Context, categories []*costingcontrol.CostCategory) error {
+	ret := _mock.Called(ctx, categories)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateCategory")
+		panic("no return value specified for UpdateCategories")
 	}
 
-	var r0 *costingcontrol.CostCategory
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *costingcontrol.CostCategory) (*costingcontrol.CostCategory, error)); ok {
-		return returnFunc(ctx, category)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *costingcontrol.CostCategory) *costingcontrol.CostCategory); ok {
-		r0 = returnFunc(ctx, category)
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*costingcontrol.CostCategory) error); ok {
+		r0 = returnFunc(ctx, categories)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*costingcontrol.CostCategory)
-		}
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *costingcontrol.CostCategory) error); ok {
-		r1 = returnFunc(ctx, category)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
-// MockCostingControlRepository_UpdateCategory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateCategory'
-type MockCostingControlRepository_UpdateCategory_Call struct {
+// MockCostingControlRepository_UpdateCategories_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateCategories'
+type MockCostingControlRepository_UpdateCategories_Call struct {
 	*mock.Call
 }
 
-// UpdateCategory is a helper method to define mock.On call
+// UpdateCategories is a helper method to define mock.On call
 //   - ctx context.Context
-//   - category *costingcontrol.CostCategory
-func (_e *MockCostingControlRepository_Expecter) UpdateCategory(ctx any, category any) *MockCostingControlRepository_UpdateCategory_Call {
-	return &MockCostingControlRepository_UpdateCategory_Call{Call: _e.mock.On("UpdateCategory", ctx, category)}
+//   - categories []*costingcontrol.CostCategory
+func (_e *MockCostingControlRepository_Expecter) UpdateCategories(ctx any, categories any) *MockCostingControlRepository_UpdateCategories_Call {
+	return &MockCostingControlRepository_UpdateCategories_Call{Call: _e.mock.On("UpdateCategories", ctx, categories)}
 }
 
-func (_c *MockCostingControlRepository_UpdateCategory_Call) Run(run func(ctx context.Context, category *costingcontrol.CostCategory)) *MockCostingControlRepository_UpdateCategory_Call {
+func (_c *MockCostingControlRepository_UpdateCategories_Call) Run(run func(ctx context.Context, categories []*costingcontrol.CostCategory)) *MockCostingControlRepository_UpdateCategories_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *costingcontrol.CostCategory
+		var arg1 []*costingcontrol.CostCategory
 		if args[1] != nil {
-			arg1 = args[1].(*costingcontrol.CostCategory)
+			arg1 = args[1].([]*costingcontrol.CostCategory)
 		}
 		run(
 			arg0,
@@ -233,12 +222,12 @@ func (_c *MockCostingControlRepository_UpdateCategory_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockCostingControlRepository_UpdateCategory_Call) Return(costCategory *costingcontrol.CostCategory, err error) *MockCostingControlRepository_UpdateCategory_Call {
-	_c.Call.Return(costCategory, err)
+func (_c *MockCostingControlRepository_UpdateCategories_Call) Return(err error) *MockCostingControlRepository_UpdateCategories_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockCostingControlRepository_UpdateCategory_Call) RunAndReturn(run func(ctx context.Context, category *costingcontrol.CostCategory) (*costingcontrol.CostCategory, error)) *MockCostingControlRepository_UpdateCategory_Call {
+func (_c *MockCostingControlRepository_UpdateCategories_Call) RunAndReturn(run func(ctx context.Context, categories []*costingcontrol.CostCategory) error) *MockCostingControlRepository_UpdateCategories_Call {
 	_c.Call.Return(run)
 	return _c
 }

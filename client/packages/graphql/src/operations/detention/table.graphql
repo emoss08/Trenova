@@ -16,7 +16,7 @@ fragment DetentionPolicyRowFields on DetentionPolicy {
   code
   description
   status
-  isOrgDefault
+  isOrganizationDefault
   priority
   specificityScore
   customerId

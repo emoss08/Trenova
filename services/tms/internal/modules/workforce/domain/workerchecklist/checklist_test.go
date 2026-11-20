@@ -92,7 +92,7 @@ func TestChecklistTemplate_Validate(t *testing.T) {
 	empty.Items = nil
 	multiErr = errortypes.NewMultiError()
 	empty.Validate(multiErr)
-	assert.Equal(t, "items", multiErr.Errors[0].Field)
+	assert.Equal(t, "items", multiErr.Errors[0].Field())
 }
 
 func TestChecklistTriggerForEvent(t *testing.T) {

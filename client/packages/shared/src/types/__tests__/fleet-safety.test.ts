@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { dashControlFormSchema } from "../driver-pay";
 import { safetyViolationFormSchema } from "../fleet-safety";
 
 function baseViolation() {
@@ -40,70 +39,5 @@ describe("safetyViolationFormSchema", () => {
     expect(
       safetyViolationFormSchema.safeParse({ ...baseViolation(), basic: "Paperwork" }).success,
     ).toBe(false);
-  });
-});
-
-function baseDashControl() {
-  return {
-    requireLoadAcknowledgment: true,
-    allowLoadRefusals: true,
-    allowStopActions: true,
-    allowLoadDocumentUpload: true,
-    allowLoadComments: true,
-    showLoadPay: true,
-    showPayEstimates: true,
-    allowExpenseSubmission: true,
-    requireExpenseReceipt: false,
-    allowSettlementDisputes: true,
-    allowProfileDocumentUpload: true,
-    allowContactInfoEdit: true,
-    requireContactChangeApproval: false,
-    allowPtoRequests: true,
-    sendCredentialReminders: true,
-    driverDigestCadence: "Immediate" as const,
-    driverDigestWeekday: "1" as const,
-    enableDetentionAlerts: true,
-    detentionAlertThresholdMinutes: 120,
-  };
-}
-
-describe("dashControlFormSchema digest settings", () => {
-  // The weekday is bound to a select, which writes strings. The schema has to
-  // accept what the control actually produces; the integer the column wants is
-  // made at the call site.
-  it("takes the weekday as the string a select writes", () => {
-    expect(dashControlFormSchema.safeParse(baseDashControl()).success).toBe(true);
-    expect(
-      dashControlFormSchema.safeParse({ ...baseDashControl(), driverDigestWeekday: 1 }).success,
-    ).toBe(false);
-  });
-
-  it("refuses a day that is not a day of the week", () => {
-    expect(
-      dashControlFormSchema.safeParse({ ...baseDashControl(), driverDigestWeekday: "7" }).success,
-    ).toBe(false);
-  });
-
-  // A digest with reminders switched off would collect obligations and send
-  // nothing, which reads as a working setting that quietly does nothing.
-  it("refuses a round-up with driver reminders switched off", () => {
-    const result = dashControlFormSchema.safeParse({
-      ...baseDashControl(),
-      driverDigestCadence: "Weekly",
-      sendCredentialReminders: false,
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues[0]?.path).toEqual(["driverDigestCadence"]);
-    }
-  });
-
-  it("allows reminders off while every driver is told one at a time", () => {
-    expect(
-      dashControlFormSchema.safeParse({
-        ...baseDashControl(),
-        sendCredentialReminders: false,
-      }).success,
-    ).toBe(true);
   });
 });

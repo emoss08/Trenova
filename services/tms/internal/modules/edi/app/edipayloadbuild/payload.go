@@ -25,12 +25,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-const (
-	referenceBOL        = "bol"
-	referencePRO        = "pro"
-	referenceShipmentID = "shipmentId"
-)
-
 func BuildTenderPayload(source *shipment.Shipment) editransfer.LoadTenderPayload {
 	payload := editransfer.LoadTenderPayload{
 		PurposeCode:          editransfer.LoadTenderPurposeOriginal,
@@ -45,7 +39,10 @@ func BuildTenderPayload(source *shipment.Shipment) editransfer.LoadTenderPayload
 		CustomerLabel:        customerLabel(source),
 		FormulaTemplateID:    source.FormulaTemplateID,
 		FormulaTemplateLabel: formulaTemplateLabel(source),
+		ProNumber:            source.ProNumber,
 		BOL:                  source.BOL,
+		Payment:              string(source.FreightTerms),
+		Equipment:            EquipmentCode(source),
 		Pieces:               source.Pieces,
 		Weight:               source.Weight,
 		TemperatureMin:       source.TemperatureMin,
@@ -148,6 +145,8 @@ func LoadTenderMoveFromShipmentMove(move *shipment.ShipmentMove) editransfer.Loa
 			Sequence:             stop.Sequence,
 			Pieces:               stop.Pieces,
 			Weight:               stop.Weight,
+			TemperatureMin:       stop.TemperatureMin,
+			TemperatureMax:       stop.TemperatureMax,
 			ScheduledWindowStart: stop.ScheduledWindowStart,
 			ScheduledWindowEnd:   stop.ScheduledWindowEnd,
 			AddressLine:          stringutils.FirstNonEmpty(stop.AddressLine, locAddr),
@@ -178,7 +177,23 @@ func LoadTenderCommodityFromShipmentCommodity(
 		CommodityDescription: commodityDescription(commodity),
 		Weight:               commodity.Weight,
 		Pieces:               commodity.Pieces,
+		TemperatureMin:       commodity.TemperatureMin,
+		TemperatureMax:       commodity.TemperatureMax,
+		Hazmat:               commodityHazmat(commodity),
 	}
+}
+
+func EquipmentCode(source *shipment.Shipment) string {
+	if source == nil {
+		return ""
+	}
+	if source.TrailerType != nil && source.TrailerType.Code != "" {
+		return source.TrailerType.Code
+	}
+	if source.TractorType != nil {
+		return source.TractorType.Code
+	}
+	return ""
 }
 
 func BuildFreightInvoicePayload(source *invoice.Invoice) edipayload.DocumentPayload {
@@ -195,6 +210,8 @@ func BuildFreightInvoicePayload(source *invoice.Invoice) edipayload.DocumentPayl
 			source.ShipmentProNumber,
 			shipmentProNumber(source.Shipment),
 		),
+		PONumber:           strings.TrimSpace(source.PONumber),
+		ShipperReference:   partnerReference(source.Shipment),
 		BillToName:         source.BillToName,
 		BillToAddressLine1: source.BillToAddressLine1,
 		BillToAddressLine2: source.BillToAddressLine2,
@@ -203,23 +220,16 @@ func BuildFreightInvoicePayload(source *invoice.Invoice) edipayload.DocumentPayl
 		BillToPostalCode:   source.BillToPostalCode,
 		BillToCountry:      source.BillToCountry,
 		CurrencyCode:       source.CurrencyCode,
+		Payment:            shipmentFreightTerms(source.Shipment),
 		TotalAmount: decimal.NullDecimal{
 			Decimal: source.TotalAmount,
 			Valid:   true,
 		},
 		LineCharges: make([]edipayload.FreightInvoiceCharge, 0, len(source.Lines)),
-		ReferenceNumbers: map[string]string{
-			"qualifier": "BM",
-			referenceBOL: stringutils.FirstNonEmpty(
-				source.ShipmentBOL,
-				shipmentBOL(source.Shipment),
-			),
-			referencePRO: stringutils.FirstNonEmpty(
-				source.ShipmentProNumber,
-				shipmentProNumber(source.Shipment),
-			),
-			referenceShipmentID: source.ShipmentID.String(),
-		},
+	}
+	payload.ReferenceNumbers = partnerReferences(payload.BOL, payload.ProNumber)
+	if payload.PONumber != "" {
+		payload.ReferenceNumbers[edipayload.RefPurchaseOrder] = payload.PONumber
 	}
 
 	lines := make([]*invoice.InvoiceLine, 0, len(source.Lines))
@@ -310,11 +320,7 @@ func BuildShipmentStatusPayload(source *shipment.Shipment) edipayload.DocumentPa
 	payload := edipayload.ShipmentStatusPayload{
 		ShipmentID: source.ID,
 		StatusCode: "X3",
-		References: map[string]string{
-			referenceShipmentID: source.ID.String(),
-			referenceBOL:        source.BOL,
-			referencePRO:        source.ProNumber,
-		},
+		References: partnerReferences(source.BOL, source.ProNumber),
 	}
 	applyShipmentStatusShipment(&payload, source)
 	if len(source.Moves) > 0 &&
@@ -336,23 +342,16 @@ func BuildShipmentEventStatusPayload(
 	event *shipmentevent.Event,
 	source *shipment.Shipment,
 ) edipayload.DocumentPayload {
+	stop := shipmentEventStop(event, source)
 	payload := edipayload.ShipmentStatusPayload{
 		ShipmentID: event.ShipmentID,
-		StatusCode: shipmentEventStatusCode(event),
+		EventID:    event.ID,
+		StatusCode: shipmentEventStatusCode(event, stop, completesShipment(source, stop)),
 		EventDate:  event.OccurredAt,
 		EventTime:  event.OccurredAt,
-		References: map[string]string{
-			referenceShipmentID: event.ShipmentID.String(),
-			"eventId":           event.ID.String(),
-			"eventType":         string(event.Type),
-			referenceBOL:        shipmentBOL(source),
-			referencePRO:        shipmentProNumber(source),
-		},
+		References: partnerReferences(shipmentBOL(source), shipmentProNumber(source)),
 	}
 	applyShipmentStatusShipment(&payload, source)
-	if event.Summary != "" {
-		payload.References["summary"] = event.Summary
-	}
 	if reason := stringutils.FirstNonEmpty(
 		metadataString(event.Metadata, "statusReasonCode"),
 		metadataString(event.Metadata, "reasonCode"),
@@ -373,7 +372,6 @@ func BuildShipmentEventStatusPayload(
 	if lateMinutes, ok := metadataInt64(event.Metadata, "lateMinutes"); ok {
 		payload.LateMinutes = &lateMinutes
 	}
-	stop := shipmentEventStop(event, source)
 	applyShipmentStatusStop(&payload, stop)
 	return edipayload.DocumentPayload{
 		TransactionSet: edidocument.TransactionSet214,
@@ -434,15 +432,8 @@ func BuildServiceFailureShipmentStatusPayload(
 		LateMinutes:          &failure.LateMinutes,
 		ServiceFailureID:     &failure.ID,
 		ServiceFailureNumber: failure.Number,
-		References: map[string]string{
-			referenceShipmentID: failure.ShipmentID.String(),
-			"serviceFailureId":  failure.ID.String(),
-			"serviceFailure":    failure.Number,
-			referenceBOL:        shipmentBOL(source),
-			referencePRO:        shipmentProNumber(source),
-			"type":              string(failure.Type),
-			"status":            string(failure.Status),
-		},
+		ServiceFailureStatus: string(failure.Status),
+		References:           partnerReferences(shipmentBOL(source), shipmentProNumber(source)),
 	}
 	applyShipmentStatusShipment(&status, source)
 	if failure.ReasonCodeID != nil {
@@ -457,10 +448,6 @@ func BuildServiceFailureShipmentStatusPayload(
 			)
 		}
 	}
-	if strings.TrimSpace(failure.Notes) != "" {
-		status.References["notes"] = strings.TrimSpace(failure.Notes)
-	}
-
 	move := serviceFailureMove(source, failure.ShipmentMoveID)
 	stop := serviceFailureStop(source, failure.StopID)
 	if stop == nil {
@@ -609,15 +596,21 @@ func BuildTenderResponsePayload(transfer *editransfer.EDITransfer) edipayload.Do
 	}
 }
 
-func shipmentEventStatusCode(event *shipmentevent.Event) string {
+func shipmentEventStatusCode(
+	event *shipmentevent.Event,
+	stop *shipment.Stop,
+	final bool,
+) string {
 	//nolint:exhaustive // Unmapped shipment events intentionally fall back to the generic status code.
 	switch event.Type {
+	case shipmentevent.TypeStopArrived:
+		return stopStatusCode(stop, false, false)
+	case shipmentevent.TypeStopDeparted:
+		return stopStatusCode(stop, true, final)
 	case shipmentevent.TypeMoveDeparted:
-		return "AF"
+		return stopStatusCode(stop, stopDeparted(stop, event.OccurredAt), false)
 	case shipmentevent.TypeMoveArrived:
-		return "X1"
-	case shipmentevent.TypeStopCompleted:
-		return "D1"
+		return stopStatusCode(stop, true, true)
 	case shipmentevent.TypeShipmentCanceled:
 		return "A7"
 	case shipmentevent.TypeStatusChanged:
@@ -630,12 +623,56 @@ func shipmentEventStatusCode(event *shipmentevent.Event) string {
 			shipmentvocab.StatusReadyToInvoice:
 			return "D1"
 		case shipmentvocab.StatusDelayed:
-			return "A3"
+			return "SD"
 		case shipmentvocab.StatusCanceled:
 			return "A7"
 		}
 	}
 	return "X3"
+}
+
+func completesShipment(source *shipment.Shipment, stop *shipment.Stop) bool {
+	if source == nil || stop == nil {
+		return false
+	}
+	var last *shipment.ShipmentMove
+	for _, move := range source.Moves {
+		if move == nil || move.Status == shipmentvocab.MoveStatusCanceled ||
+			len(move.ActiveStopsBySequence()) == 0 {
+			continue
+		}
+		if last == nil || move.Sequence >= last.Sequence {
+			last = move
+		}
+	}
+	if last == nil {
+		return false
+	}
+	stops := last.ActiveStopsBySequence()
+	return stops[len(stops)-1].ID == stop.ID
+}
+
+func stopDeparted(stop *shipment.Stop, occurredAt int64) bool {
+	return stop != nil && stop.ActualDeparture != nil && *stop.ActualDeparture <= occurredAt
+}
+
+func stopStatusCode(stop *shipment.Stop, departed, completesMove bool) string {
+	pickup := stop != nil && stop.IsOriginStop()
+	if stop == nil {
+		pickup = !departed
+	}
+	switch {
+	case pickup && departed:
+		return "AF"
+	case pickup:
+		return "X3"
+	case !departed:
+		return "X1"
+	case completesMove:
+		return "D1"
+	default:
+		return "CD"
+	}
 }
 
 func applyShipmentStatusShipment(
@@ -647,10 +684,7 @@ func applyShipmentStatusShipment(
 	}
 	payload.BOL = source.BOL
 	payload.ProNumber = source.ProNumber
-	payload.ShipperReference = stringutils.FirstNonEmpty(
-		strings.TrimSpace(source.ExternalReference),
-		source.BOL,
-	)
+	payload.ShipperReference = partnerReference(source)
 	payload.Weight = source.Weight
 	payload.Pieces = source.Pieces
 }
@@ -691,25 +725,27 @@ func shipmentEventStop(event *shipmentevent.Event, source *shipment.Shipment) *s
 	if source == nil {
 		return nil
 	}
-	var moveFallback *shipment.Stop
+	var fallback *shipment.Stop
 	for _, move := range source.Moves {
 		if move == nil {
 			continue
 		}
-		for _, stop := range move.Stops {
-			if stop == nil {
-				continue
-			}
+		stops := move.ActiveStopsBySequence()
+		for _, stop := range stops {
 			if event.StopID.IsNotNil() && stop.ID == event.StopID {
 				return stop
 			}
-			if event.MoveID.IsNotNil() && move.ID == event.MoveID && moveFallback == nil {
-				moveFallback = stop
-			}
+		}
+		if event.MoveID.IsNil() || move.ID != event.MoveID || len(stops) == 0 {
+			continue
+		}
+		fallback = stops[0]
+		if event.Type == shipmentevent.TypeMoveArrived {
+			fallback = stops[len(stops)-1]
 		}
 	}
-	if moveFallback != nil {
-		return moveFallback
+	if fallback != nil {
+		return fallback
 	}
 	if len(source.Moves) > 0 && source.Moves[0] != nil && len(source.Moves[0].Stops) > 0 {
 		return source.Moves[0].Stops[0]
@@ -757,11 +793,36 @@ func metadataString(metadata map[string]any, key string) string {
 	}
 }
 
+func partnerReferences(bol, proNumber string) map[string]string {
+	references := make(map[string]string, 3)
+	if bol = strings.TrimSpace(bol); bol != "" {
+		references[edipayload.RefBillOfLading] = bol
+	}
+	if proNumber = strings.TrimSpace(proNumber); proNumber != "" {
+		references[edipayload.RefCarrierPRO] = proNumber
+	}
+	return references
+}
+
+func partnerReference(source *shipment.Shipment) string {
+	if source == nil {
+		return ""
+	}
+	return stringutils.FirstNonEmpty(strings.TrimSpace(source.ExternalReference), source.BOL)
+}
+
 func shipmentBOL(source *shipment.Shipment) string {
 	if source == nil {
 		return ""
 	}
 	return source.BOL
+}
+
+func shipmentFreightTerms(source *shipment.Shipment) string {
+	if source == nil {
+		return ""
+	}
+	return string(source.FreightTerms)
 }
 
 func shipmentProNumber(source *shipment.Shipment) string {
@@ -915,6 +976,10 @@ func commodityName(commodity *shipment.ShipmentCommodity) string {
 	}
 
 	return commodity.Commodity.Name
+}
+
+func commodityHazmat(commodity *shipment.ShipmentCommodity) bool {
+	return commodity.Commodity != nil && commodity.Commodity.HazardousMaterialID.IsNotNil()
 }
 
 func commodityDescription(commodity *shipment.ShipmentCommodity) string {

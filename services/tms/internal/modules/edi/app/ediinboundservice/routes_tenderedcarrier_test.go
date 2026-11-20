@@ -167,12 +167,13 @@ func (f *tenderedCarrierFixture) expectSystemUser() {
 		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil)
 }
 
-func rawShipmentStatus214(offerRef, statusCode string) string {
-	segments := []string{"ST*214*0001", "B10*PRO-77*SHIP-1001*SCAC"}
-	if offerRef != "" {
-		segments = append(segments, "L11*"+offerRef+"*CR")
+func rawShipmentStatus214(statusCode string) string {
+	segments := []string{
+		"ST*214*0001",
+		"B10*PRO-77*SHIP-1001*SCAC",
+		"LX*1",
+		"AT7*" + statusCode + "*NS***20260107*1200",
 	}
-	segments = append(segments, "LX*1", "AT7*"+statusCode+"*NS***20260107*1200")
 	segments = append(segments, "SE*"+strconv.Itoa(len(segments)+1)+"*0001")
 	return "ISA*00*          *00*          *ZZ*CARRIER        *ZZ*TRENOVA        " +
 		"*260107*1200*^*00401*000000301*0*P*>~" +
@@ -270,7 +271,7 @@ func TestRouteShipmentStatus_RecipientHitDoesNotUseOfferFallback(t *testing.T) {
 		).
 		Once()
 
-	transaction, details := parse214Transaction(t, rawShipmentStatus214("", "AF"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214("AF"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
@@ -312,7 +313,7 @@ func TestRouteShipmentStatus_RecipientMissMatchesAcceptedOffer(t *testing.T) {
 		}).
 		Once()
 
-	transaction, details := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "AF"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214("AF"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
@@ -328,13 +329,13 @@ func TestRouteShipmentStatus_RecipientMissMatchesAcceptedOffer(t *testing.T) {
 	}, warnings)
 	require.Equal(t, 1, fixture.tenderRepo.acceptedCalls)
 	request := fixture.tenderRepo.lastAcceptedReq
-	require.Equal(t, offer.ID, request.OfferID)
 	require.Equal(t, fixture.partner.ID, request.PartnerID)
 	require.Equal(t, fixture.file.OrganizationID, request.TenantInfo.OrgID)
 	require.Equal(t, fixture.file.BusinessUnitID, request.TenantInfo.BuID)
-	require.Contains(t, request.References, "SHIP-1001")
-	require.Contains(t, request.References, "PRO-77")
-	require.NotContains(t, request.References, offer.ID.String())
+	require.Equal(t, []tender.OfferStatus{tender.OfferStatusAccepted}, request.Statuses)
+	require.Contains(t, request.Keys, tender.PartnerKey{ProNumber: "SHIP-1001"})
+	require.Contains(t, request.Keys, tender.PartnerKey{ProNumber: "SHIP", Move: 1001})
+	require.NotContains(t, request.Keys, tender.PartnerKey{ProNumber: "PRO-77"})
 
 	require.NotNil(t, recordedComment)
 	require.Equal(t, offer.Tender.ShipmentID, recordedComment.ShipmentID)
@@ -357,7 +358,7 @@ func TestRouteShipmentStatus_RecipientMissAndOfferMissWarns(t *testing.T) {
 	fixture := newTenderedCarrierFixture(t)
 	fixture.expectRecipientMiss()
 
-	transaction, details := parse214Transaction(t, rawShipmentStatus214("", "AF"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214("AF"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
@@ -388,7 +389,7 @@ func TestRouteShipmentStatus_OfferBusinessErrorBecomesWarning(t *testing.T) {
 		Return(nil, errortypes.NewBusinessError("system user is unavailable")).
 		Once()
 
-	transaction, details := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "AF"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214("AF"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
@@ -481,7 +482,7 @@ func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
 		Once()
 	recordedEvents := fixture.expectTrackingEvents(move, 1)
 
-	transaction, details := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "X3"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214("X3"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
@@ -534,7 +535,7 @@ func TestRouteShipmentStatus_D1RecordsArriveAndDepartAtDestination(t *testing.T)
 		Once()
 	recordedEvents := fixture.expectTrackingEvents(move, 2)
 
-	transaction, details := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "D1"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214("D1"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
@@ -591,7 +592,7 @@ func TestRouteShipmentStatus_StopActualBusinessErrorBecomesWarningKeepsComment(t
 		}, nil).
 		Once()
 
-	transaction, details := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "X1"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214("X1"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
@@ -614,7 +615,7 @@ func TestRouteShipmentStatus_OfferInfrastructureErrorPropagates(t *testing.T) {
 	fixture.tenderRepo.acceptedErr = errors.New("database unavailable")
 	fixture.expectRecipientMiss()
 
-	transaction, details := parse214Transaction(t, rawShipmentStatus214("", "AF"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214("AF"))
 	_, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
@@ -707,8 +708,11 @@ func TestRouteFreightInvoice_RecipientMissMatchesAcceptedOfferByBOL(t *testing.T
 	require.NoError(t, err)
 	require.Empty(t, warnings)
 	require.Equal(t, 1, fixture.tenderRepo.acceptedCalls)
-	require.True(t, fixture.tenderRepo.lastAcceptedReq.OfferID.IsNil())
-	require.Contains(t, fixture.tenderRepo.lastAcceptedReq.References, "BOL-42")
+	require.Contains(
+		t,
+		fixture.tenderRepo.lastAcceptedReq.Keys,
+		tender.PartnerKey{ProNumber: "BOL-42"},
+	)
 
 	require.NotNil(t, recordedInvoice)
 	require.Equal(t, offer.Tender.ShipmentID, recordedInvoice.ShipmentID)

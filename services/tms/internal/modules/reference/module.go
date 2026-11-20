@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/shipmenttyperepository"
 	"github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
-	"github.com/emoss08/trenova/internal/modules/reference/app/datatransformer"
 	"github.com/emoss08/trenova/internal/modules/reference/app/documenttypeservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/dothazmatreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/reference/app/exchangerateservice"
@@ -51,7 +50,6 @@ func SharedOptions() fx.Option {
 			commodityservice.NewValidator,
 			documenttypeservice.NewValidator,
 			holdreasonservice.NewValidator,
-			datatransformer.New,
 			accessorialchargeservice.New,
 			servicetypeservice.New,
 			shipmenttypeservice.New,

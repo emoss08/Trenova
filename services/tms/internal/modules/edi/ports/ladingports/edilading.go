@@ -2,12 +2,15 @@ package ladingports
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+var ErrFlowInstanceExists = errors.New("edi: another message opened this flow instance first")
 
 type GetLadingProjectRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -170,7 +173,7 @@ type FlowRepository interface {
 		ctx context.Context,
 		req GetFlowInstanceByKeyRequest,
 	) (*ladingproject.FlowInstance, error)
-	OpenInstance(
+	CreateInstance(
 		ctx context.Context,
 		instance *ladingproject.FlowInstance,
 	) (*ladingproject.FlowInstance, error)
@@ -199,7 +202,8 @@ type FlowRepository interface {
 	ListDueInstances(
 		ctx context.Context,
 		req *ListDueFlowInstancesRequest,
-	) ([]DueFlowInstance, error)
+	) ([]FlowInstanceRef, error)
+	LocateInstance(ctx context.Context, id pulid.ID) (FlowInstanceRef, error)
 }
 
 type GetLadingReplayRequest struct {
@@ -260,12 +264,12 @@ type ListDueFlowInstancesRequest struct {
 	Exclude []pulid.ID
 }
 
-type DueFlowInstance struct {
+type FlowInstanceRef struct {
 	ID             pulid.ID
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
 }
 
-func (d DueFlowInstance) TenantInfo() pagination.TenantInfo {
+func (d FlowInstanceRef) TenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: d.OrganizationID, BuID: d.BusinessUnitID}
 }

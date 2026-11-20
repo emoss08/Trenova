@@ -175,7 +175,7 @@ func TestResolvePeriodRefusesAnInactivePeriodAndAMissingOne(t *testing.T) {
 	require.Error(t, err)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "accountingDate", validation.Field)
+	assert.Equal(t, "accountingDate", validation.Field())
 }
 
 func TestResolveWorkflowFollowsThePostingMode(t *testing.T) {

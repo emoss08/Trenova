@@ -6,7 +6,8 @@ use trenova_module_kit::span::Span;
 
 use super::Parser;
 use crate::lading::syntax::ast::{
-    Action, ExpectAck, FlowDecl, Ident, Item, Otherwise, Receive, ReceiveArm, Respond, Send,
+    Action, AwaitAnswer, ExpectAck, FlowDecl, Guard, GuardKind, Ident, Item, Otherwise, Receive,
+    ReceiveArm, Respond, Send, Unless,
 };
 use crate::lading::syntax::token::Tok;
 
@@ -16,6 +17,7 @@ const FLOW_STARTS: &[&str] = &[
     "respond",
     "send",
     "expect",
+    "await",
     "test",
     "property",
     "fn",
@@ -38,8 +40,11 @@ impl Parser<'_> {
         if self.at_word("expect") {
             return Item::Flow(FlowDecl::Expect(self.expect_ack()));
         }
+        if self.at_word("await") {
+            return Item::Flow(FlowDecl::Await(self.await_answer()));
+        }
         self.error_here(Message::new(message!(
-            "A flow holds receive, respond, send and expect clauses"
+            "A flow holds receive, respond, send, expect and await clauses"
         )));
         self.skip_line();
         Item::Error(self.since(start))
@@ -134,9 +139,11 @@ impl Parser<'_> {
                 };
                 self.expect(Tok::RArrow, "->");
                 let action = self.action();
+                let guards = self.guards();
                 receive.arms.push(ReceiveArm {
                     purpose,
                     action,
+                    guards,
                     span: self.since(arm_start),
                 });
             } else {
@@ -148,6 +155,34 @@ impl Parser<'_> {
         }
         receive.span = self.since(start);
         receive
+    }
+
+    /// The `hold when cond "message"` and `reject when cond "message"` after an arm's action.
+    fn guards(&mut self) -> Vec<Guard> {
+        let mut guards = Vec::new();
+        loop {
+            if self.at_line_end() && !self.clause_continues(&["hold", "reject"]) {
+                break;
+            }
+            let start = self.token().span.start;
+            let kind = if self.eat_word("hold").is_some() {
+                GuardKind::Hold
+            } else if self.eat_word("reject").is_some() {
+                GuardKind::Reject
+            } else {
+                break;
+            };
+            self.expect_word("when");
+            let cond = self.expr();
+            let message = self.expr();
+            guards.push(Guard {
+                kind,
+                cond,
+                message,
+                span: self.since(start),
+            });
+        }
+        guards
     }
 
     fn action(&mut self) -> Action {
@@ -193,11 +228,23 @@ impl Parser<'_> {
         }
         if self.eat_word("cancel").is_some() {
             let unless = if self.eat_word("unless").is_some() {
-                let state = self
-                    .name("dispatched, delivered or invoiced")
-                    .unwrap_or_else(|| Ident::new("", self.token().span));
+                let mut states = Vec::new();
+                loop {
+                    states.push(
+                        self.name("dispatched, delivered or invoiced")
+                            .unwrap_or_else(|| Ident::new("", self.token().span)),
+                    );
+                    if self.eat(Tok::Comma).is_none() {
+                        break;
+                    }
+                }
+                let or_later = self.at_word("or") && self.word_at(1, "later");
+                if or_later {
+                    self.eat_word("or");
+                    self.eat_word("later");
+                }
                 self.expect_word("else");
-                Some((state, Box::new(self.action())))
+                Some((Unless { states, or_later }, Box::new(self.action())))
             } else {
                 None
             };
@@ -351,6 +398,35 @@ impl Parser<'_> {
         }
         send.span = self.since(start);
         send
+    }
+
+    fn await_answer(&mut self) -> AwaitAnswer {
+        let start = self.token().span.start;
+        self.eat_word("await");
+        let set = self.set_name();
+        let mut answer = AwaitAnswer {
+            set,
+            within: None,
+            escalate: None,
+            span: Span::default(),
+        };
+        loop {
+            if self.at_line_end() && !self.clause_continues(&["within", "else"]) {
+                break;
+            }
+            if self.eat_word("within").is_some() {
+                answer.within = Some(self.additive_only());
+            } else if self.eat_word("else").is_some() {
+                self.expect_word("escalate");
+                answer.escalate = Some(self.expr());
+            } else {
+                self.error_here(Message::new(message!("Expected within or else")));
+                self.skip_line();
+                break;
+            }
+        }
+        answer.span = self.since(start);
+        answer
     }
 
     fn expect_ack(&mut self) -> ExpectAck {

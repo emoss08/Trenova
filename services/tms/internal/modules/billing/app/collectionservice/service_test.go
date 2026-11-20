@@ -301,7 +301,7 @@ func TestLogActivity_OnlyTakesContactKinds(t *testing.T) {
 
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "kind", fieldErr.Field)
+	assert.Equal(t, "kind", fieldErr.Field())
 }
 
 func TestAssignCollector_RecordsTheChangeAndTellsTheNewCollector(t *testing.T) {
@@ -345,7 +345,7 @@ func TestAssignCollector_RefusesSomeoneOutsideTheOrganization(t *testing.T) {
 
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "collectorId", fieldErr.Field)
+	assert.Equal(t, "collectorId", fieldErr.Field())
 	assert.Empty(t, repo.saved)
 }
 

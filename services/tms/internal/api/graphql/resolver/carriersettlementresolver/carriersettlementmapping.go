@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 func (r *MutationResolver) carrierSettlementAction(
@@ -156,22 +155,20 @@ func carrierSettlementControlFromInput(
 		)
 	}
 	return &carriersettlementcontrol.CarrierSettlementControl{
-		OrganizationID:            tenantInfo.OrgID,
-		BusinessUnitID:            tenantInfo.BuID,
-		Version:                   int64(input.Version),
-		PayTrigger:                input.PayTrigger,
-		PayPeriodFrequency:        input.PayPeriodFrequency,
-		PeriodEndDayOfWeek:        input.PeriodEndDayOfWeek,
-		PayDelayDays:              input.PayDelayDays,
-		AutoGenerateBatches:       input.AutoGenerateBatches,
-		AutoPostOnApprove:         input.AutoPostOnApprove,
-		RequireSeparateApprover:   input.RequireSeparateApprover,
-		VarianceToleranceMinor:    int64(input.VarianceToleranceMinor),
-		AutoMatchInboundInvoices:  input.AutoMatchInboundInvoices,
-		AutoAcceptWithinTolerance: input.AutoAcceptWithinTolerance,
-		HoldUntilInvoiceMatched: typeutils.ValueOrZero(
-			input.HoldUntilInvoiceMatched,
-		),
+		OrganizationID:                          tenantInfo.OrgID,
+		BusinessUnitID:                          tenantInfo.BuID,
+		Version:                                 int64(input.Version),
+		PayTrigger:                              input.PayTrigger,
+		PayPeriodFrequency:                      input.PayPeriodFrequency,
+		PeriodEndDayOfWeek:                      input.PeriodEndDayOfWeek,
+		PayDelayDays:                            input.PayDelayDays,
+		AutoGenerateBatches:                     input.AutoGenerateBatches,
+		AutoPostOnApprove:                       input.AutoPostOnApprove,
+		RequireSeparateApprover:                 input.RequireSeparateApprover,
+		VarianceToleranceMinor:                  int64(input.VarianceToleranceMinor),
+		AutoMatchInboundInvoices:                input.AutoMatchInboundInvoices,
+		AutoAcceptWithinTolerance:               input.AutoAcceptWithinTolerance,
+		HoldUntilInvoiceMatched:                 input.HoldUntilInvoiceMatched,
 		DefaultAPAccountID:                      apAccountID,
 		DefaultPurchasedTransportationAccountID: expenseAccountID,
 	}, nil

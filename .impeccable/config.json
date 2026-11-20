@@ -116,6 +116,15 @@
         ],
         "createdAt": "2026-11-05T15:38:49.870Z",
         "reason": "Claude: a review page that documents the Desk with screenshots, not product UI"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "dev/edi-partner-sim/internal/viewer/static/viewer.css"
+        ],
+        "createdAt": "2026-11-20T11:29:00.694Z",
+        "reason": "Approved mockup (user approved the edi-sim viewer artifact 2026-11-20): the 2px rule ties an X12 finding note to the flagged segment above it, a code-review margin note, not a card accent"
       }
     ]
   }

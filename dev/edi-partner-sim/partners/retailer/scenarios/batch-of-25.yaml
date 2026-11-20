@@ -1,0 +1,11 @@
+name: twenty-five tenders in one interchange become twenty-five loads
+description: >
+  Tamberlane packs 25 tenders into one ISA/GS. Every one is acknowledged in the 999, becomes its
+  own flow, and is answered with its own 990 once a planner accepts.
+within: 5m
+steps:
+  - send: { set: "204", as: b, count: 25 }
+  - expect: { ack: b, accepted: true }
+  - expect: { flow: b, status: Open, count: 1 }
+  - trenova: { decide: b, decision: accept }
+  - expect: { wire: "990", about: b, elements: { B1-04: A } }

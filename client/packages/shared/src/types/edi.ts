@@ -267,6 +267,8 @@ export const loadTenderStopSchema = z.object({
   sequence: z.number(),
   pieces: nullableNumberSchema,
   weight: nullableNumberSchema,
+  temperatureMin: nullableNumberSchema,
+  temperatureMax: nullableNumberSchema,
   scheduledWindowStart: nullableNumberSchema,
   scheduledWindowEnd: nullableNumberSchema,
   addressLine: z.string().nullish(),
@@ -290,6 +292,8 @@ export const loadTenderCommoditySchema = z.object({
   commodityDescription: z.string().nullish(),
   weight: z.number(),
   pieces: z.number(),
+  temperatureMin: nullableNumberSchema,
+  temperatureMax: nullableNumberSchema,
 });
 
 export type LoadTenderCommodity = z.infer<typeof loadTenderCommoditySchema>;
@@ -308,7 +312,6 @@ export type LoadTenderCharge = z.infer<typeof loadTenderChargeSchema>;
 
 export const loadTenderPayloadSchema = z.object({
   purposeCode: z.string().nullish(),
-  tenderOfferId: z.string().nullish(),
   shipmentId: z.string().nullish(),
   businessUnitId: z.string().nullish(),
   organizationId: z.string().nullish(),
@@ -320,6 +323,8 @@ export const loadTenderPayloadSchema = z.object({
   customerLabel: z.string().nullish(),
   formulaTemplateId: z.string().nullish(),
   formulaTemplateLabel: z.string().nullish(),
+  proNumber: z.string().nullish(),
+  moveNumber: z.number().nullish(),
   bol: z.string().nullish(),
   pieces: z.number().nullish(),
   weight: z.number().nullish(),
@@ -836,6 +841,7 @@ export type EDIX12Envelope = {
   segmentTerminator: string;
   componentSeparator: string;
   repetitionSeparator: string;
+  lineEnding?: "none" | "lf" | "crLf" | "cr";
 };
 
 export type InspectX12Request = {

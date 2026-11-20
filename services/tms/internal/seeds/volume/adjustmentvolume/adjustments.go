@@ -691,7 +691,6 @@ func (g *adjustmentPhase) adjPreview(
 			fail("invoiceId", "Paid invoices cannot be adjusted by policy")
 		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval:
 			pv.approval = true
-		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithoutApproval:
 		}
 	case invoice.SettlementStatusPartiallyPaid:
 		switch control.PartiallyPaidInvoiceAdjustmentPolicy {
@@ -699,7 +698,6 @@ func (g *adjustmentPhase) adjPreview(
 			fail("invoiceId", "Partially paid invoices cannot be adjusted by policy")
 		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval:
 			pv.approval = true
-		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithoutApproval:
 		}
 	case invoice.SettlementStatusUnpaid:
 	}

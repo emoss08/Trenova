@@ -16,14 +16,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPlanUpdate_TransformsAndReturnsTheStoredRecordBesideTheChange(t *testing.T) {
+func TestPlanUpdate_FormatsAndReturnsTheStoredRecordBesideTheChange(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTest(t)
 	entity := newTestEntity()
 	stored := *entity
 	stored.Name = "Old Name"
-	deps.transformer.On("TransformCustomer", mock.Anything, entity).Return(nil)
+	deps.formatter.On("Format", mock.Anything, entity).Return(nil)
 	deps.repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&stored, nil)
 
 	change, err := deps.svc.PlanUpdate(t.Context(), entity)
@@ -53,7 +53,7 @@ func TestPlanUpdate_ReadsTheStoredTrackingSettingsAndKeepsTheirStartTime(t *test
 	)
 	stored.TrackingProfile.NotifyDelivered = true
 	stored.TrackingProfile.NotificationsEnabledAt = &enabledAt
-	deps.transformer.On("TransformCustomer", mock.Anything, entity).Return(nil)
+	deps.formatter.On("Format", mock.Anything, entity).Return(nil)
 	deps.repo.EXPECT().GetByID(
 		mock.Anything,
 		mock.MatchedBy(func(req customerports.GetCustomerByIDRequest) bool {
@@ -78,7 +78,7 @@ func TestPlanCreate_StampsWhenStatusEmailsStart(t *testing.T) {
 		entity.ID,
 	)
 	entity.TrackingProfile.NotifyPickedUp = true
-	deps.transformer.On("TransformCustomer", mock.Anything, entity).Return(nil)
+	deps.formatter.On("Format", mock.Anything, entity).Return(nil)
 
 	before := timeutils.NowUnix()
 	planned, err := deps.svc.PlanCreate(t.Context(), entity)
@@ -96,11 +96,17 @@ func TestPlanBulkUpdateStatus_RefusesAStatusAndARecordItDoesNotKnow(t *testing.T
 		[]*customer.Customer{entity}, nil,
 	)
 
-	_, err := deps.svc.PlanBulkUpdateStatus(t.Context(), &customerports.BulkUpdateCustomerStatusRequest{
-		TenantInfo:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		CustomerIDs: []pulid.ID{entity.ID, pulid.MustNew("cus_")},
-		Status:      domaintypes.Status("Retired"),
-	})
+	_, err := deps.svc.PlanBulkUpdateStatus(
+		t.Context(),
+		&customerports.BulkUpdateCustomerStatusRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			CustomerIDs: []pulid.ID{entity.ID, pulid.MustNew("cus_")},
+			Status:      domaintypes.Status("Retired"),
+		},
+	)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	fields := make([]string, 0, len(multiErr.Errors))

@@ -179,7 +179,7 @@ func TestCapabilityPolicy_WarnEnforcementPassesWithAdvisory(t *testing.T) {
 	require.Len(t, advisories, 1)
 
 	advisory := advisories[0]
-	require.Equal(t, "weight", advisory.Field)
+	require.Equal(t, "weight", advisory.Field())
 	require.Equal(t, errortypes.SeverityWarn, advisory.Severity)
 	require.Equal(t, modeprofile.RuleKeyMaxShipmentWeight.String(), advisory.RuleKey)
 }
@@ -428,7 +428,7 @@ func TestCapabilityPolicy_DimensionsRequiredWarnRecordsAdvisory(t *testing.T) {
 
 	require.Nil(t, multiErr)
 	require.Len(t, advisories, 1)
-	require.Equal(t, "commodities[0]", advisories[0].Field)
+	require.Equal(t, "commodities[0]", advisories[0].Field())
 	require.Equal(
 		t,
 		modeprofile.RuleKeyDimensionsRequired.String(),

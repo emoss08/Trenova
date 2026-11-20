@@ -37,7 +37,6 @@ var shipmentControlsTable = schema.Table{
 		{Name: "detention_charge_id", Quoted: `"detention_charge_id"`, Field: "DetentionChargeID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Detention Charge ID`, JSON: `detentionChargeId`},
 		{Name: "use_detention_policy_engine", Quoted: `"use_detention_policy_engine"`, Field: "UseDetentionPolicyEngine", Kind: schema.KindBool, Flags: 0, Label: `Use Detention Policy Engine`, JSON: `useDetentionPolicyEngine`},
 		{Name: "default_detention_policy_id", Quoted: `"default_detention_policy_id"`, Field: "DefaultDetentionPolicyID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Default Detention Policy ID`, JSON: `defaultDetentionPolicyId`},
-		{Name: "track_customer_rejections", Quoted: `"track_customer_rejections"`, Field: "TrackCustomerRejections", Kind: schema.KindBool, Flags: 0, Label: `Track Customer Rejections`, JSON: `trackCustomerRejections`},
 		{Name: "check_for_duplicate_bols", Quoted: `"check_for_duplicate_bols"`, Field: "CheckForDuplicateBOLs", Kind: schema.KindBool, Flags: 0, Label: `Check For Duplicate BOLs`, JSON: `checkForDuplicateBols`},
 		{Name: "allow_move_removals", Quoted: `"allow_move_removals"`, Field: "AllowMoveRemovals", Kind: schema.KindBool, Flags: 0, Label: `Allow Move Removals`, JSON: `allowMoveRemovals`},
 		{Name: "check_hazmat_segregation", Quoted: `"check_hazmat_segregation"`, Field: "CheckHazmatSegregation", Kind: schema.KindBool, Flags: 0, Label: `Check Hazmat Segregation`, JSON: `checkHazmatSegregation`},
@@ -47,14 +46,14 @@ var shipmentControlsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
 	Returning:    []int32{6, 7},
-	Version:      18,
+	Version:      17,
 	AutoID:       0,
-	AutoCreate:   19,
-	AutoUpdate:   20,
+	AutoCreate:   18,
+	AutoUpdate:   19,
 	IDPrefix:     "sc_",
 	New:          newShipmentControl,
 	NewN:         newNShipmentControl,
@@ -83,7 +82,6 @@ type ShipmentControlsTable struct {
 	DetentionChargeID            keelkinds.PulidIDCol
 	UseDetentionPolicyEngine     keel.BoolCol
 	DefaultDetentionPolicyID     keelkinds.PulidIDCol
-	TrackCustomerRejections      keel.BoolCol
 	CheckForDuplicateBOLs        keel.BoolCol
 	AllowMoveRemovals            keel.BoolCol
 	CheckHazmatSegregation       keel.BoolCol
@@ -109,13 +107,12 @@ var ShipmentControls = &ShipmentControlsTable{
 	DetentionChargeID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentControlsRef, Index: 11}}},
 	UseDetentionPolicyEngine:     keel.BoolCol{Col: keel.Col{Ref: &shipmentControlsRef, Index: 12}},
 	DefaultDetentionPolicyID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentControlsRef, Index: 13}}},
-	TrackCustomerRejections:      keel.BoolCol{Col: keel.Col{Ref: &shipmentControlsRef, Index: 14}},
-	CheckForDuplicateBOLs:        keel.BoolCol{Col: keel.Col{Ref: &shipmentControlsRef, Index: 15}},
-	AllowMoveRemovals:            keel.BoolCol{Col: keel.Col{Ref: &shipmentControlsRef, Index: 16}},
-	CheckHazmatSegregation:       keel.BoolCol{Col: keel.Col{Ref: &shipmentControlsRef, Index: 17}},
-	Version:                      keel.Int64Col{Col: keel.Col{Ref: &shipmentControlsRef, Index: 18}},
-	CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &shipmentControlsRef, Index: 19}},
-	UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &shipmentControlsRef, Index: 20}},
+	CheckForDuplicateBOLs:        keel.BoolCol{Col: keel.Col{Ref: &shipmentControlsRef, Index: 14}},
+	AllowMoveRemovals:            keel.BoolCol{Col: keel.Col{Ref: &shipmentControlsRef, Index: 15}},
+	CheckHazmatSegregation:       keel.BoolCol{Col: keel.Col{Ref: &shipmentControlsRef, Index: 16}},
+	Version:                      keel.Int64Col{Col: keel.Col{Ref: &shipmentControlsRef, Index: 17}},
+	CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &shipmentControlsRef, Index: 18}},
+	UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &shipmentControlsRef, Index: 19}},
 }
 
 // BuildShipmentControls builds the table of shipment_controls for ref. Generated relation and alias methods call it.
@@ -136,13 +133,12 @@ func BuildShipmentControls(r *keel.Ref) *ShipmentControlsTable {
 		DetentionChargeID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		UseDetentionPolicyEngine:     keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
 		DefaultDetentionPolicyID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		TrackCustomerRejections:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 14}},
-		CheckForDuplicateBOLs:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
-		AllowMoveRemovals:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
-		CheckHazmatSegregation:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
-		Version:                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		CheckForDuplicateBOLs:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 14}},
+		AllowMoveRemovals:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
+		CheckHazmatSegregation:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
+		Version:                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 	}
 }
 
@@ -562,18 +558,16 @@ func ptrShipmentControl(p unsafe.Pointer, c int32) any {
 	case 13:
 		return (**string)(unsafe.Pointer(&r.DefaultDetentionPolicyID))
 	case 14:
-		return &r.TrackCustomerRejections
-	case 15:
 		return &r.CheckForDuplicateBOLs
-	case 16:
+	case 15:
 		return &r.AllowMoveRemovals
-	case 17:
+	case 16:
 		return &r.CheckHazmatSegregation
-	case 18:
+	case 17:
 		return &r.Version
-	case 19:
+	case 18:
 		return &r.CreatedAt
-	case 20:
+	case 19:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -626,18 +620,16 @@ func valueShipmentControl(p unsafe.Pointer, c int32) any {
 		}
 		return string(*r.DefaultDetentionPolicyID)
 	case 14:
-		return r.TrackCustomerRejections
-	case 15:
 		return r.CheckForDuplicateBOLs
-	case 16:
+	case 15:
 		return r.AllowMoveRemovals
-	case 17:
+	case 16:
 		return r.CheckHazmatSegregation
-	case 18:
+	case 17:
 		return r.Version
-	case 19:
+	case 18:
 		return r.CreatedAt
-	case 20:
+	case 19:
 		return r.UpdatedAt
 	}
 	return nil

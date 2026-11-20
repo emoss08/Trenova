@@ -1,8 +1,5 @@
+import { SettingsPage } from "@/components/settings/settings-page";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { lazy } from "react";
 import { BillingControlSkeleton } from "./skeleton";
 
@@ -12,32 +9,12 @@ export function BillingControlPage() {
   const t = useT();
 
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: t("Billing control"),
-        description: t("Configure and manage your billing control settings"),
-      }}
+    <SettingsPage
+      title={t("Billing control")}
+      description={t("Configure and manage your billing control settings")}
+      skeleton={<BillingControlSkeleton />}
     >
-      <BillingControlAlert />
-      <LazyComponent fallback={<BillingControlSkeleton />}>
-        <BillingControlForm />
-      </LazyComponent>
-    </PageLayout>
-  );
-}
-
-function BillingControlAlert() {
-  const t = useT();
-
-  return (
-    <Alert variant="warning" size="sm">
-      <AlertTriangleIcon />
-      <AlertTitle>{t("Critical financial configuration")}</AlertTitle>
-      <AlertDescription>
-        {t(
-          "Billing Control settings directly impact your organization's revenue processing, financial reporting, and customer invoicing. Changes to these settings should be made infrequently and only after thorough review by financial stakeholders.",
-        )}
-      </AlertDescription>
-    </Alert>
+      <BillingControlForm />
+    </SettingsPage>
   );
 }

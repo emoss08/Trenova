@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -271,7 +270,7 @@ func (a *Activities) isDue(
 		return false, nil
 	}
 
-	location, err := orgzone.Location(ctx, a.orgs, tenantInfo)
+	location, err := tenantports.OrganizationLocation(ctx, a.orgs, tenantInfo)
 	if err != nil {
 		return false, err
 	}

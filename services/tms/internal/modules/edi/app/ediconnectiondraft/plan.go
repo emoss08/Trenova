@@ -372,6 +372,7 @@ var catalogPositions = func() map[string]int {
 		ediconnectionfield.SegmentSep,
 		ediconnectionfield.ComponentSep,
 		ediconnectionfield.RepetitionSep,
+		ediconnectionfield.LineEnding,
 	}
 	positions := make(map[string]int, len(order))
 	for index, key := range order {

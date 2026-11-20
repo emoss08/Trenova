@@ -2,47 +2,92 @@ package accountingcontrolservice
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/internal/testutil/validationtest"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
-func NewTestValidator() *Validator {
-	return &Validator{
-		validator: newValidatorBuilder().Build(),
-	}
+func newTestValidator() *Validator {
+	return newTestValidatorWith(validationtest.NewIntegrity(), configuredOANDARepo())
 }
 
-func NewTestValidatorWithGLAccountCheck(
-	glAccountExists validationframework.CustomReferenceCheckFunc,
-) *Validator {
-	builder := newValidatorBuilder().WithReferenceChecker(customChecksOnly{})
-	addGLAccountReferenceChecks(builder, glAccountExists)
-
-	return &Validator{
-		validator: builder.Build(),
-	}
+func newTestValidatorWithIntegrity(integrity *validationtest.Integrity) *Validator {
+	return newTestValidatorWith(integrity, configuredOANDARepo())
 }
 
-func NewTestValidatorWithIntegrationRepository(
+func newTestValidatorWithIntegrationRepository(
 	integrationRepo integrationports.IntegrationRepository,
 ) *Validator {
-	return &Validator{
-		validator: newValidatorBuilderWithIntegrationRepo(integrationRepo).Build(),
+	return newTestValidatorWith(validationtest.NewIntegrity(), integrationRepo)
+}
+
+func newTestValidatorWith(
+	integrity *validationtest.Integrity,
+	integrationRepo integrationports.IntegrationRepository,
+) *Validator {
+	return NewValidator(ValidatorParams{
+		Integrity:       integrity,
+		IntegrationRepo: integrationRepo,
+	})
+}
+
+func configuredOANDARepo() *stubAccountingControlIntegrationRepo {
+	return &stubAccountingControlIntegrationRepo{
+		record: validOANDAIntegration(true, "encrypted-key"),
 	}
 }
 
-type customChecksOnly struct{}
+type stubAccountingControlIntegrationRepo struct {
+	record *integration.Integration
+	err    error
+}
 
-func (customChecksOnly) CheckReference(
-	context.Context,
-	*validationframework.ReferenceRequest,
-) (bool, error) {
-	return false, errors.New("accounting control references are checked through custom checks")
+func (s *stubAccountingControlIntegrationRepo) ListByTenant(
+	_ context.Context,
+	_ pagination.TenantInfo,
+) ([]*integration.Integration, error) {
+	return nil, nil
+}
+
+func (s *stubAccountingControlIntegrationRepo) ListEnabledByType(
+	_ context.Context,
+	_ integration.Type,
+) ([]*integration.Integration, error) {
+	return nil, nil
+}
+
+func (s *stubAccountingControlIntegrationRepo) GetByType(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ integration.Type,
+) (*integration.Integration, error) {
+	return s.record, s.err
+}
+
+func (s *stubAccountingControlIntegrationRepo) Upsert(
+	_ context.Context,
+	_ *integration.Integration,
+) (*integration.Integration, error) {
+	return nil, nil
+}
+
+var _ integrationports.IntegrationRepository = (*stubAccountingControlIntegrationRepo)(nil)
+
+func validOANDAIntegration(enabled bool, apiKey string) *integration.Integration {
+	return &integration.Integration{
+		Type:    integration.TypeOANDAExchangeRates,
+		Enabled: enabled,
+		Configuration: map[string]any{
+			"apiKey":          apiKey,
+			"baseUrl":         "https://exchange-rates-api.oanda.com",
+			"defaultRateType": "mid",
+		},
+	}
 }
 
 func validAccountingControl() *accountingcontrol.AccountingControl {
@@ -84,4 +129,13 @@ func validAccountingControl() *accountingcontrol.AccountingControl {
 		DefaultWriteOffAccountID:         pulid.MustNew("gla_"),
 		DefaultRetainedEarningsAccountID: pulid.MustNew("gla_"),
 	}
+}
+
+func validMultiCurrencyAccountingControl() *accountingcontrol.AccountingControl {
+	entity := validAccountingControl()
+	entity.CurrencyMode = accountingcontrol.CurrencyModeMultiCurrency
+	entity.ExchangeRateOverridePolicy = accountingcontrol.ExchangeRateOverrideRequireApproval
+	entity.RealizedFXGainAccountID = pulid.MustNew("gla_")
+	entity.RealizedFXLossAccountID = pulid.MustNew("gla_")
+	return entity
 }

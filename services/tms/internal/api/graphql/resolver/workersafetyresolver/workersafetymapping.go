@@ -59,6 +59,14 @@ func applySafetyEventFields(entity *workersafety.WorkerSafetyEvent, f *safetyEve
 	if err != nil {
 		return err
 	}
+	inspectionLevel, err := gqlscalar.NarrowIntPtr[int16]("inspectionLevel", f.inspectionLevel)
+	if err != nil {
+		return err
+	}
+	points, err := gqlscalar.NarrowIntPtr[int32]("points", f.points)
+	if err != nil {
+		return err
+	}
 
 	entity.Kind = f.kind
 	entity.Severity = f.severity
@@ -78,14 +86,9 @@ func applySafetyEventFields(entity *workersafety.WorkerSafetyEvent, f *safetyEve
 	} else {
 		entity.InspectionResult = workersafety.InspectionResultNone
 	}
-	if f.inspectionLevel != nil {
-		level := int16(*f.inspectionLevel) //nolint:gosec // bounded by validation
-		entity.InspectionLevel = &level
-	} else {
-		entity.InspectionLevel = nil
-	}
-	if f.points != nil {
-		entity.Points = int32(*f.points) //nolint:gosec // bounded by validation
+	entity.InspectionLevel = inspectionLevel
+	if points != nil {
+		entity.Points = *points
 	} else {
 		entity.Points = workersafety.DefaultSafetyPoints(
 			entity.Kind,
@@ -245,9 +248,12 @@ func issueActionRequestFromInput(
 		RecordEmploymentEvent: gqlscalar.BoolValue(input.RecordEmploymentEvent),
 		UserID:                userID,
 	}
-	if input.SuspensionDays != nil {
-		days := int32(*input.SuspensionDays) //nolint:gosec // bounded by validation
-		req.SuspensionDays = &days
+	if err = gqlscalar.ApplyIntPtr(
+		"suspensionDays",
+		input.SuspensionDays,
+		&req.SuspensionDays,
+	); err != nil {
+		return nil, err
 	}
 	return req, nil
 }

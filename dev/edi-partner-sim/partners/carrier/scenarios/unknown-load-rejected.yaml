@@ -1,0 +1,10 @@
+name: a 214 for a load Trenova never tendered is rejected in the 997
+description: >
+  Alongside its real answers, Quarrystone sends a status for a load it invents. Trenova's 997
+  accepts the real ones and rejects the stray.
+steps:
+  - script: { answers: [ { stray: true } ] }
+  - trenova: { tender: c1 }
+  - expect: { wire: "204", about: c1 }
+  - expect: { ack: c1, set: "990", accepted: true }
+  - expect: { ack: c1, set: "214", accepted: false }

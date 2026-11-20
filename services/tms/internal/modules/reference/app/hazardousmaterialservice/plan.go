@@ -16,7 +16,7 @@ func (s *Service) PlanCreate(
 	ctx context.Context,
 	entity *hazardousmaterial.HazardousMaterial,
 ) (*hazardousmaterial.HazardousMaterial, error) {
-	if err := s.transformer.TransformHazardousMaterial(ctx, entity); err != nil {
+	if err := s.formatter.Format(ctx, entity); err != nil {
 		return nil, err
 	}
 
@@ -31,7 +31,7 @@ func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *hazardousmaterial.HazardousMaterial,
 ) (*kernelports.RecordChange[hazardousmaterial.HazardousMaterial], error) {
-	if err := s.transformer.TransformHazardousMaterial(ctx, entity); err != nil {
+	if err := s.formatter.Format(ctx, entity); err != nil {
 		return nil, err
 	}
 

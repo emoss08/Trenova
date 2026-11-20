@@ -43,7 +43,7 @@ func (r *MutationResolver) CreateDetentionPolicy(ctx context.Context, input gqlm
 		return nil, err
 	}
 
-	return detentionPolicyToModel(created), nil
+	return detentionPolicyToModel(created, pulid.Nil), nil
 }
 
 func (r *MutationResolver) UpdateDetentionPolicy(ctx context.Context, id string, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error) {
@@ -67,7 +67,12 @@ func (r *MutationResolver) UpdateDetentionPolicy(ctx context.Context, id string,
 		return nil, err
 	}
 
-	return detentionPolicyToModel(updated), nil
+	defaultID, err := r.DetentionPolicyService.DefaultPolicyID(ctx, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return detentionPolicyToModel(updated, defaultID), nil
 }
 
 func (r *MutationResolver) DeleteDetentionPolicy(ctx context.Context, id string) (bool, error) {
@@ -241,7 +246,12 @@ func (r *QueryResolver) DetentionPolicies(ctx context.Context, input gqlmodel.Da
 		return nil, err
 	}
 
-	return detentionPolicyConnectionToModel(result)
+	defaultID, err := r.DetentionPolicyService.DefaultPolicyID(ctx, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return detentionPolicyConnectionToModel(result, defaultID)
 }
 
 func (r *QueryResolver) DetentionPolicy(ctx context.Context, id string) (*gqlmodel.DetentionPolicy, error) {
@@ -264,7 +274,12 @@ func (r *QueryResolver) DetentionPolicy(ctx context.Context, id string) (*gqlmod
 		return nil, err
 	}
 
-	return detentionPolicyToModel(entity), nil
+	defaultID, err := r.DetentionPolicyService.DefaultPolicyID(ctx, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return detentionPolicyToModel(entity, defaultID), nil
 }
 
 func (r *QueryResolver) DetentionDesk(ctx context.Context, includeAwaitingApproval *bool, urgency *gqlmodel.DetentionDeskUrgency, shipmentID *string, proNumber *string) ([]*gqlmodel.DetentionDeskEntry, error) {

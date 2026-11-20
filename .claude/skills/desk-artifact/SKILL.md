@@ -68,7 +68,7 @@ round trips, and never make the client stitch records together.
     the generated keel tables, under `dbtx.Read` and `Keel(ctx)`.
   - Register both in the module's `module.go`.
 - Put the date logic on the server: quarters, months and "today" are worked out in the
-  organization's time zone (`orgzone.Location`). Money is decimals or minor units, never
+  organization's time zone (`tenantports.OrganizationLocation`). Money is decimals or minor units, never
   floats.
 - **Permissions:** the resolver calls `RequirePermission` for the card's own resource. Every
   section that reads another resource is included only when `HasPermission` allows it; leave

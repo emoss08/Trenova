@@ -1,10 +1,13 @@
 package selectoption
 
 import (
+	"errors"
+	"math"
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -62,26 +65,36 @@ func BoolFilter(filters map[string]any, key string) bool {
 	}
 }
 
-func Int16Filter(filters map[string]any, key string) int16 {
+func Int16Filter(filters map[string]any, key string) (int16, error) {
 	value, ok := filters[key]
 	if !ok {
-		return 0
+		return 0, nil
 	}
+	field := "filters." + key
 	switch v := value.(type) {
 	case float64:
-		return int16(v)
+		if v < math.MinInt16 || v > math.MaxInt16 {
+			return 0, gqlscalar.NarrowRangeError[int16](field)
+		}
+		return int16(v), nil
 	case int:
-		return int16(v) //nolint:gosec // callers pass calendar years
+		return gqlscalar.NarrowInt[int16](field, v)
 	case int64:
-		return int16(v) //nolint:gosec // callers pass calendar years
+		if v < math.MinInt16 || v > math.MaxInt16 {
+			return 0, gqlscalar.NarrowRangeError[int16](field)
+		}
+		return int16(v), nil
 	case string:
 		parsed, err := strconv.ParseInt(v, 10, 16)
-		if err != nil {
-			return 0
+		if errors.Is(err, strconv.ErrRange) {
+			return 0, gqlscalar.NarrowRangeError[int16](field)
 		}
-		return int16(parsed)
+		if err != nil {
+			return 0, nil
+		}
+		return int16(parsed), nil
 	default:
-		return 0
+		return 0, nil
 	}
 }
 

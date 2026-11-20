@@ -29,7 +29,7 @@ func TestApplyRequired_RefusesAnExplicitNull(t *testing.T) {
 
 	var valErr *errortypes.Error
 	require.ErrorAs(t, err, &valErr)
-	assert.Equal(t, "name", valErr.Field)
+	assert.Equal(t, "name", valErr.Field())
 	assert.Equal(t, errortypes.ErrRequired, valErr.Code)
 	assert.Equal(t, "kept", name)
 }

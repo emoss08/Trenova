@@ -1,7 +1,10 @@
 package lading
 
 import (
+	"time"
+
 	"github.com/emoss08/trenova/pkg/wasmmodule"
+	"github.com/emoss08/trenova/pkg/x12"
 	"github.com/emoss08/trenova/shared/jsonutils"
 )
 
@@ -118,22 +121,24 @@ const (
 
 const (
 	AcknowledgeNone = "none"
+	MaxAckWithin    = 7 * 24 * time.Hour
 )
 
 type StarterRequest struct {
-	Name        string     `json:"name"`
-	Label       string     `json:"label,omitempty"`
-	Role        string     `json:"role"`
-	Them        *[2]string `json:"them,omitempty"`
-	Us          *[2]string `json:"us,omitempty"`
-	Zone        string     `json:"zone,omitempty"`
-	Group       *[2]string `json:"group,omitempty"`
-	Version     string     `json:"version,omitempty"`
-	Separators  []string   `json:"separators,omitempty"`
-	Usage       string     `json:"usage,omitempty"`
-	Acknowledge string     `json:"acknowledge,omitempty"`
-	AckWithin   int        `json:"ackWithin,omitempty"`
-	Sets        []string   `json:"sets,omitempty"`
+	Name             string         `json:"name"`
+	Label            string         `json:"label,omitempty"`
+	Role             string         `json:"role"`
+	Them             *[2]string     `json:"them,omitempty"`
+	Us               *[2]string     `json:"us,omitempty"`
+	Zone             string         `json:"zone,omitempty"`
+	Group            *[2]string     `json:"group,omitempty"`
+	Version          string         `json:"version,omitempty"`
+	Separators       []string       `json:"separators,omitempty"`
+	LineEnding       x12.LineEnding `json:"lineEnding,omitempty"`
+	Usage            string         `json:"usage,omitempty"`
+	Acknowledge      string         `json:"acknowledge,omitempty"`
+	AckWithinSeconds int64          `json:"ackWithinSeconds,omitempty"`
+	Sets             []string       `json:"sets,omitempty"`
 }
 
 type Starter struct {

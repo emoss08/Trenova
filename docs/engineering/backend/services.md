@@ -61,6 +61,11 @@ and announce what happened. The reference is
   puts each message on its field; `Err()` is the only way out of a report.
 - Validate everything that crosses a trust boundary: request input, webhook payloads, files, model
   output an agent produced. Model output is input.
+- Entered codes, names, emails and cities follow the tenant's data entry control. The entity says
+  which fields are which in `ApplyTextFormat(dataentrycontrol.TextFormat)`, and its service calls
+  `dataentrycontrolports.TextFormatter.Format` before validating, on create and update
+  (`carrierservice/plan.go`, `workerservice`). A failed read stops the save. Sign-in emails are
+  never formatted.
 
 ## Errors
 

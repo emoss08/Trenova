@@ -98,6 +98,10 @@ export function TextareaField<T extends FieldValues>({
             description={description}
             required={isRequired(rules, required)}
             error={fieldState.error?.message}
+            controlSize="wide"
+            htmlFor={inputId}
+            descriptionId={descriptionId}
+            errorId={errorId}
           >
             {footer !== undefined ? (
               <div

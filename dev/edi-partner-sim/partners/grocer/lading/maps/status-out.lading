@@ -1,0 +1,45 @@
+map statusOut
+  from shipmentStatus
+  to   meadowridge.214
+  use  common
+
+B10 { 01 <- proNumber ?? key, 02 <- key, 03 <- org.scac }
+L11 when exists bol { 01 <- bol, 02 <- "BM" }
+L11 when exists shipperReference { 01 <- shipperReference, 02 <- "PO" }
+
+// Meadowridge's guide takes the four US time codes; a time Trenova holds in UTC goes out in
+// Meadowridge's own zone instead.
+0205 <- each events as event {
+  let at = if event.at.zoneCode() in usZones then event.at else event.at.inZone(partner.zone)
+  LX { 01 <- index + 1 }
+  0210 {
+    AT7 {
+      01 <- event.kind via statusCodes
+      02 <- event.reason ?? "NS"
+      05 <- at
+      06 <- at
+      07 <- at.zoneCode()
+    }
+    MS1 when exists event.city { 01 <- event.city.upper(), 02 <- event.state, 03 <- event.country ?? "US" }
+  }
+  L11 { 01 <- text(event.stop ?? 0), 02 <- "QN" }
+}
+
+test "each drop's arrival and delivery go out with the stop" {
+  given shipmentStatus {
+    key: "MF1000008"
+    bol: "5861735303"
+    events: [
+      { kind: ArrivedDelivery, at: @2026-06-09T09:05[America/Chicago], stop: 2, city: "Minneapolis", state: "MN" },
+      { kind: Delivered, at: @2026-06-09T09:50[America/Chicago], stop: 2, city: "Minneapolis", state: "MN" }
+    ]
+  }
+  expect x12 contains "B10*MF1000008*MF1000008*TRNV~L11*5861735303*BM~"
+  expect x12 contains "LX*1~AT7*X1*NS***20260609*0905*CT~MS1*MINNEAPOLIS*MN*US~L11*2*QN~"
+  expect x12 contains "LX*2~AT7*D1*NS***20260609*0950*CT~"
+}
+
+test "a time held in UTC goes out in Central time" {
+  given shipmentStatus { key: "MF1000008", bol: "5861735303", events: [{ kind: Delivered, at: @2026-06-04T12:40Z, stop: 3, city: "Memphis", state: "TN" }] }
+  expect x12 contains "***20260604*0740*CT~"
+}

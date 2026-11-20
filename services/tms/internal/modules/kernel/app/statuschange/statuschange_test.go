@@ -66,7 +66,7 @@ func TestPlan_RefusesWhatTheWriteCannotDo(t *testing.T) {
 			var multiErr *errortypes.MultiError
 			require.ErrorAs(t, err, &multiErr)
 			require.NotEmpty(t, multiErr.Errors)
-			assert.Equal(t, tc.field, multiErr.Errors[0].Field)
+			assert.Equal(t, tc.field, multiErr.Errors[0].Field())
 		})
 	}
 }

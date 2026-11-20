@@ -825,10 +825,11 @@ func FromServices(s *Services) *Resolver {
 		DriverPortalRecordsService: s.DriverPortalRecordsService,
 	}
 	ptopolicyDeps := &ptopolicyresolver.Deps{
-		Core:             s.Core,
-		PtoPolicyService: s.PtoPolicyService,
-		PtoLedgerService: s.PtoLedgerService,
-		WorkflowStarter:  s.WorkflowStarter,
+		Core:                s.Core,
+		OrganizationService: s.OrganizationService,
+		PtoPolicyService:    s.PtoPolicyService,
+		PtoLedgerService:    s.PtoLedgerService,
+		WorkflowStarter:     s.WorkflowStarter,
 	}
 	rateDeps := &rateresolver.Deps{
 		Core:                 s.Core,
@@ -846,12 +847,13 @@ func FromServices(s *Services) *Resolver {
 		RecurringShipmentService: s.RecurringShipmentService,
 	}
 	reportDeps := &reportresolver.Deps{
-		Core:                   s.Core,
-		TableExportService:     s.TableExportService,
-		ReportingService:       s.ReportingService,
-		ReportViewService:      s.ReportViewService,
-		ReportScheduleService:  s.ReportScheduleService,
-		ReportDashboardService: s.ReportDashboardService,
+		Core:                      s.Core,
+		AccountsReceivableService: s.AccountsReceivableService,
+		TableExportService:        s.TableExportService,
+		ReportingService:          s.ReportingService,
+		ReportViewService:         s.ReportViewService,
+		ReportScheduleService:     s.ReportScheduleService,
+		ReportDashboardService:    s.ReportDashboardService,
 	}
 	roleDeps := &roleresolver.Deps{
 		Core:        s.Core,

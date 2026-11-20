@@ -1,0 +1,55 @@
+rules statusChecks for statusOut
+
+/// Kestrel can't match a status without the BOL it gave us.
+rule "a status quotes the BOL" {
+  require exists bol else hold "Kestrel needs the BOL on every status: add it before sending"
+}
+
+/// An event dated in the future is a typo; it must not reach Kestrel.
+rule "no status from the future" {
+  for event in events {
+    require event.at <= now() + 1 h
+      else reject at event.at "A status dated {event.at} is in the future"
+  }
+}
+
+test "a status with its BOL goes out" {
+  given now = @2026-04-26T20:00Z
+  given shipmentStatus {
+    key: "KVW-100037"
+    bol: "8100798987"
+    events: [{ kind: Delivered, at: @2026-04-26T19:30Z }]
+  }
+  expect no holds
+  expect no rejects
+}
+
+test "a status without a BOL is held" {
+  given now = @2026-04-26T20:00Z
+  given shipmentStatus { key: "KVW-100037", events: [{ kind: Delivered, at: @2026-04-26T19:30Z }] }
+  expect held "Kestrel needs the BOL on every status: add it before sending"
+}
+
+test "a status from tomorrow is rejected" {
+  given now = @2026-04-26T20:00Z
+  given shipmentStatus { key: "KVW-100037", bol: "8100798987", events: [{ kind: Delivered, at: @2026-04-27T19:30Z }] }
+  expect rejected
+}
+
+test "a dispatch status is never sent" {
+  given now = @2026-04-26T20:00Z
+  given shipmentStatus { key: "KVW-100037", bol: "8100798987", events: [{ kind: Dispatched, at: @2026-04-26T12:00Z }] }
+  expect no sent
+}
+
+test "a dispatch among other statuses is left out of the 214" {
+  given now = @2026-04-26T20:00Z
+  given shipmentStatus {
+    key: "KVW-100037"
+    bol: "8100798987"
+    events: [{ kind: Dispatched, at: @2026-04-26T12:00Z }, { kind: ArrivedPickup, at: @2026-04-26T13:00Z }]
+  }
+  expect sent
+  expect x12 contains "LX*1~AT7*X3*"
+  expect no rejects
+}

@@ -162,7 +162,7 @@ func TestResolveRefusesADocumentOutsideTheTenantOrMissing(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "input.documentIds[1]", multiErr.Errors[0].Field)
+	assert.Equal(t, "input.documentIds[1]", multiErr.Errors[0].Field())
 }
 
 func TestResolveRefusesAnArchivedDocument(t *testing.T) {
@@ -180,7 +180,7 @@ func TestResolveRefusesAnArchivedDocument(t *testing.T) {
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "documentIds[0]", multiErr.Errors[0].Field)
+	assert.Equal(t, "documentIds[0]", multiErr.Errors[0].Field())
 }
 
 func TestResolveRefusesADocumentThePersonCannotRead(t *testing.T) {

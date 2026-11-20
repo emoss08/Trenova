@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -49,6 +50,7 @@ type Params struct {
 	Sync                      accountingsyncports.AccountingSyncEnqueuer
 	Fields                    permissionports.FieldAccess
 	PlanFields                permissionports.PlanFieldKeeper
+	Formatter                 dataentrycontrolports.TextFormatter
 }
 
 type Service struct {
@@ -68,6 +70,7 @@ type Service struct {
 	sync                      accountingsyncports.AccountingSyncEnqueuer
 	fields                    permissionports.FieldAccess
 	planFields                permissionports.PlanFieldKeeper
+	formatter                 dataentrycontrolports.TextFormatter
 }
 
 //nolint:gocritic // dependency injection
@@ -88,6 +91,7 @@ func New(p Params) *Service {
 		sync:                      p.Sync,
 		fields:                    p.Fields,
 		planFields:                p.PlanFields,
+		formatter:                 p.Formatter,
 	}
 }
 
@@ -269,6 +273,11 @@ func (s *Service) Create(
 		return nil, err
 	}
 
+	if err := s.formatter.Format(ctx, entity); err != nil {
+		log.Error("failed to format worker", zap.Error(err))
+		return nil, err
+	}
+
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -387,6 +396,11 @@ func (s *Service) update(
 		if err = s.planFields.Keep(ctx, permission.ResourceWorker, entity, original); err != nil {
 			return nil, err
 		}
+	}
+
+	if err = s.formatter.Format(ctx, entity); err != nil {
+		log.Error("failed to format worker", zap.Error(err))
+		return nil, err
 	}
 
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {

@@ -309,14 +309,6 @@ func TestPolicy_ValidationRules(t *testing.T) {
 			wantField: "tiers",
 		},
 		{
-			name: "org default policy carrying scope",
-			mutate: func(p *detentionpolicy.DetentionPolicy) {
-				p.IsOrgDefault = true
-				p.CustomerID = new(pulid.MustNew("cus_"))
-			},
-			wantField: "isOrgDefault",
-		},
-		{
 			name: "auto-approve above the approval-required threshold",
 			mutate: func(p *detentionpolicy.DetentionPolicy) {
 				p.RequireApprovalOverAmount = decimal.NewNullDecimal(decimal.NewFromInt(100))

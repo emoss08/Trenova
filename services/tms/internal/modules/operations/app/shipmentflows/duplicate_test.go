@@ -203,7 +203,7 @@ func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 			assert.False(t, started, "nothing is copied once the copy is refused")
 			var validationErr *errortypes.Error
 			require.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "shipmentId", validationErr.Field)
+			assert.Equal(t, "shipmentId", validationErr.Field())
 			assert.Contains(t, validationErr.Error(), "SEED-DET-009")
 		})
 	}

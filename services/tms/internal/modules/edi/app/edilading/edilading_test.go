@@ -136,7 +136,7 @@ func TestNotReady_NamesEveryReasonAVersionCannotBeCertified(t *testing.T) {
 	var multi *errortypes.MultiError
 	require.ErrorAs(t, err, &multi)
 	require.Len(t, multi.Errors, 4, "errors, failing tests, no tests and uncovered flow clauses")
-	assert.Equal(t, "files", multi.Errors[0].Field)
+	assert.Equal(t, "files", multi.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrRequired, multi.Errors[2].Code, "a project with no tests")
 }
 
@@ -209,7 +209,7 @@ func TestStartReplay_RefusesAPeriodThatEndsBeforeItStarts(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "to", validation.Field)
+	assert.Equal(t, "to", validation.Field())
 	assert.Equal(t, errortypes.ErrInvalid, validation.Code)
 }
 

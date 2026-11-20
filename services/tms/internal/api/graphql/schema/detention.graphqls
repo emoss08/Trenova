@@ -174,7 +174,8 @@ type DetentionPolicy {
   code: String!
   description: String!
   status: DetentionPolicyStatus!
-  isOrgDefault: Boolean!
+  "Whether shipment control names this policy as the organization's default, the one that governs a stop no other policy covers. A default stays active and covers all freight."
+  isOrganizationDefault: Boolean!
   priority: Int!
   specificityScore: Int!
   customerId: ID
@@ -249,7 +250,6 @@ input DetentionPolicyInput {
   code: String!
   description: String
   status: DetentionPolicyStatus = Draft
-  isOrgDefault: Boolean = false
   priority: Int = 0
   customerId: ID
   locationId: ID

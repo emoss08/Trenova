@@ -107,7 +107,7 @@ func TestCreateVersionMismatchError(t *testing.T) {
 
 	var ve *errortypes.Error
 	require.True(t, errors.As(result, &ve))
-	assert.Equal(t, "version", ve.Field)
+	assert.Equal(t, "version", ve.Field())
 	assert.Equal(t, errortypes.ErrVersionMismatch, ve.Code)
 	assert.Contains(t, ve.Error(), "Shipment")
 	assert.Contains(t, ve.Error(), "ship_123")
@@ -140,7 +140,7 @@ func TestCreateBulkVersionMismatchError(t *testing.T) {
 
 	var ve *errortypes.Error
 	require.True(t, errors.As(result, &ve))
-	assert.Equal(t, "version", ve.Field)
+	assert.Equal(t, "version", ve.Field())
 	assert.Equal(t, errortypes.ErrVersionMismatch, ve.Code)
 	assert.Contains(t, ve.Error(), "Order")
 	assert.Contains(t, ve.Error(), "id_001")

@@ -557,7 +557,7 @@ func assertValidationField(t *testing.T, err error, field string) {
 	t.Helper()
 	var vErr *errortypes.Error
 	require.ErrorAs(t, err, &vErr)
-	assert.Equal(t, field, vErr.Field)
+	assert.Equal(t, field, vErr.Field())
 }
 
 func TestGenerate_UsesOrganizationTimezoneForBounds(t *testing.T) {

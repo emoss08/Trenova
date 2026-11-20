@@ -257,4 +257,4 @@ document digest.
 | Artifact | `assistantservice/toolartifacts/edi_connection_draft.go`; client `routes/desk/_components/artifacts/kinds/edi-connection-draft/` (with `connection-draft-skeleton.tsx`) |
 | Approval card | `components/assistant/proposal-presenters.ts` (`edi_apply_connection_draft`) |
 | Bench | `deskbench/scenarios/edi.yaml` (`edi-guide-new-partner`, `edi-guide-revised`), fixtures `deskbench/fixtures/attachments/edi-guide.html` + `edi-guides.json`, rendered by `render.mjs` |
-| Simulator spec | `dev/edi-partner-sim/specs/simpartner-implementation-guide.txt`, held to the simulator by `internal/sim/spec_test.go` and drafted by `ediconnectiondraft/simulator_spec_test.go` |
+| Simulator spec | `dev/edi-partner-sim/specs/manufacturer-implementation-guide.txt`, the guide of the simulator's manufacturer partner (`partners/manufacturer`), held to it by `internal/sim/spec_test.go` and drafted by `ediconnectiondraft/simulator_spec_test.go` |

@@ -32,6 +32,7 @@ use super::syntax::ast::{CsvColumn, Endpoint, Header, Item, SettingDecl, TypeExp
 use super::syntax::parser::{Parsed, parse};
 use super::types::Type;
 use crate::x12::guide::compiled::CompiledGuide;
+use crate::x12::separators::LineEnding;
 
 pub use env::Env;
 
@@ -229,11 +230,32 @@ impl Program {
                     .collect()
             })
             .unwrap_or_default();
-        if written.len() == 4 {
-            written
-        } else {
-            vec!['*', '~', '>', '^']
+        match written.len() {
+            4 => written,
+            3 => [written, vec!['^']].concat(),
+            _ => vec!['*', '~', '>', '^'],
         }
+    }
+
+    /// What Trenova writes after each segment terminator: the partner file's `line ending`, or
+    /// nothing.
+    #[must_use]
+    pub fn line_ending(&self) -> LineEnding {
+        self.interchange()
+            .and_then(|interchange| interchange.line_ending.as_ref())
+            .and_then(|ending| line_ending_named(&ending.name))
+            .unwrap_or_default()
+    }
+
+    /// How many separators the interchange's version writes: four from 004020, which added the
+    /// repetition separator, and three before.
+    #[must_use]
+    pub fn separator_count(&self) -> usize {
+        let repeats = self
+            .interchange()
+            .and_then(|interchange| interchange.version.as_ref())
+            .is_none_or(|version| version.name.as_str() >= "004020");
+        if repeats { 4 } else { 3 }
     }
 
     /// Whether any file has an error.
@@ -1066,6 +1088,30 @@ impl<'p> Checker<'p> {
 }
 
 /// The ACME project of `testdata/lading/acme`, for tests across the crate.
+/// The line ending a partner file's `line ending` clause names: `none`, `lf`, `crlf` or `cr`.
+#[must_use]
+pub fn line_ending_named(word: &str) -> Option<LineEnding> {
+    [
+        LineEnding::None,
+        LineEnding::Lf,
+        LineEnding::CrLf,
+        LineEnding::Cr,
+    ]
+    .into_iter()
+    .find(|ending| line_ending_word(*ending) == word)
+}
+
+/// The word a partner file's `line ending` clause names a line ending by.
+#[must_use]
+pub fn line_ending_word(ending: LineEnding) -> &'static str {
+    match ending {
+        LineEnding::None => "none",
+        LineEnding::Lf => "lf",
+        LineEnding::CrLf => "crlf",
+        LineEnding::Cr => "cr",
+    }
+}
+
 #[cfg(test)]
 pub(crate) mod corpus {
     use std::path::Path;
@@ -1197,7 +1243,7 @@ mod check_tests {
             })
             .collect();
         assert!(failed.is_empty(), "{}", failed.join("\n"));
-        assert_eq!(report.tests.len(), 53);
+        assert_eq!(report.tests.len(), 71);
     }
 
     /// Asserts the program has no finding as severe as `least`, or more.
@@ -1303,7 +1349,7 @@ mod findings {
             ),
             (
                 "lib/common.lading",
-                "  \"04\" <-> Change\n  \"05\" -> Change\n",
+                "  \"04\" <-> Change\n  \"05\" <-> Replace\n",
                 "",
                 "crosswalk-misses-code",
             ),
@@ -1397,6 +1443,30 @@ mod findings {
                 "respond 990 via responseOut",
                 "respond 990 via responseOut\n  otherwise accept\n\nrespond 990 via responseOut",
                 "flow-respond-taken",
+            ),
+            (
+                "partner.lading",
+                "  usage test",
+                "  line ending crcr\n  usage test",
+                "interchange-line-ending",
+            ),
+            (
+                "flows/tender.lading",
+                "send 210 via invoiceOut on InvoicePosted",
+                "send 210 via invoiceOut on InvoicePosted\n\nawait 990 within 2 h else escalate \"No answer\"",
+                "await-without-send",
+            ),
+            (
+                "partner.lading",
+                "separators \"*\" \"~\" \">\"",
+                "separators \"*\" \"~\" \">\" \"^\"",
+                "interchange-separators",
+            ),
+            (
+                "flows/tender.lading",
+                "  on Original -> create",
+                "  on Original -> create reject when not instance.exist \"Unknown\"",
+                "unknown-member",
             ),
         ];
         let mut failures = Vec::new();
@@ -1539,6 +1609,40 @@ mod findings {
             &unit.source[..change.span.start as usize],
             "rules tenderChecks for tenderIn"
         );
+    }
+
+    #[test]
+    fn a_filter_on_a_loop_a_guide_allows_once_still_checks() {
+        let mut project = super::corpus::acme_mfg();
+        let guide = project
+            .files
+            .iter_mut()
+            .find(|file| file.path == "guides/acme-204.lading")
+            .expect("guide");
+        guide.source = guide.source.replacen(
+            "loop 0100 required min 2 max 3",
+            "loop 0100 required max 1",
+            1,
+        );
+        let program = check(&project, &super::corpus::acme_mfg_context());
+        let found: Vec<String> = program
+            .units
+            .iter()
+            .flat_map(|unit| unit.diagnostics.iter())
+            .filter(|found| found.severity == trenova_module_kit::diagnostic::Severity::Error)
+            .map(|found| format!("{}: {}", found.code, found.message.english()))
+            .collect();
+        assert!(found.is_empty(), "{found:?}");
+    }
+
+    #[test]
+    fn not_sent_names_only_what_is_written() {
+        let found = codes(
+            "lib/common.lading",
+            "  \"05\" <-> Replace\n",
+            "  \"05\" <-> Replace\n  Replace <-> not sent\n",
+        );
+        assert!(!found.is_empty(), "{found:?}");
     }
 
     #[test]

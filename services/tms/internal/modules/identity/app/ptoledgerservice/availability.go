@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
@@ -76,7 +77,7 @@ func (s *Service) workerCalcContext(
 		hire = wrk.Profile.HireDate
 		termination = wrk.Profile.TerminationDate
 	}
-	loc, err = s.OrgLocation(ctx, tenantInfo)
+	loc, err = tenantports.OrganizationLocation(ctx, s.orgRepo, tenantInfo)
 	if err != nil {
 		return 0, nil, nil, err
 	}
@@ -162,7 +163,7 @@ func (s *Service) CheckAvailability(
 
 	remaining := result.ProjectedAvailableDays.Sub(req.Days)
 	if remaining.LessThan(result.FloorDays) {
-		loc, err := s.OrgLocation(ctx, req.TenantInfo)
+		loc, err := tenantports.OrganizationLocation(ctx, s.orgRepo, req.TenantInfo)
 		if err != nil {
 			return nil, err
 		}

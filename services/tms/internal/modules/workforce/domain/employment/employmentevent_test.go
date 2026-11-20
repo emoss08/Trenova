@@ -69,7 +69,7 @@ func TestEmploymentEventKind_CanRecord(t *testing.T) {
 			}
 			var verr *errortypes.Error
 			require.ErrorAs(t, err, &verr)
-			assert.Equal(t, "kind", verr.Field)
+			assert.Equal(t, "kind", verr.Field())
 		})
 	}
 }

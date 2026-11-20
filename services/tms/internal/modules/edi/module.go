@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edialert"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectiondraft"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediflowclock"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundapply"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
@@ -95,6 +96,7 @@ func SharedOptions() fx.Option {
 			edidelivery.New,
 			edisetup.New,
 			edioutbound.New,
+			ediflowclock.New,
 			ediservicefailure.New,
 			edioverview.New,
 			ediinboundapply.New,

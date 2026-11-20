@@ -1,5 +1,6 @@
 import { LOCALE_NAMES, LOCALES, type Locale } from "@trenova/shared/i18n/generated/locales";
 import type { AccountCategory } from "@/types/account-type";
+import type { CostRateSource } from "@/types/cost-control";
 import type {
   AccountingBasis,
   ClosedPeriodPostingPolicy,
@@ -34,7 +35,8 @@ import type {
   UnratedShipmentDisposition,
 } from "@/types/billing-control";
 import type { FieldType } from "@/types/custom-field";
-import type { CaseFormat } from "@/types/data-entry-control";
+import type { DriverDigestCadence } from "@/types/dash-control";
+import type { CaseFormat, EmailCaseFormat } from "@/types/data-entry-control";
 import type {
   ComplianceEnforcementLevel,
   ServiceIncidentType,
@@ -1103,16 +1105,64 @@ export const journalSourceEventChoices = [
   { value: "CreditMemoPosted", label: "Credit memo posted" },
   { value: "DebitMemoPosted", label: "Debit memo posted" },
   { value: "CustomerPaymentPosted", label: "Customer payment posted" },
+  { value: "CustomerShortPayRecognized", label: "Customer short pay recognized" },
+  { value: "CustomerPaymentReversed", label: "Customer payment reversed" },
   { value: "VendorBillPosted", label: "Vendor bill posted" },
   { value: "VendorPaymentPosted", label: "Vendor payment posted" },
+  { value: "DriverSettlementPosted", label: "Driver settlement posted" },
+  { value: "DriverSettlementVoided", label: "Driver settlement voided" },
+  { value: "EscrowInterestAccrued", label: "Escrow interest accrued" },
+  { value: "EscrowAdjusted", label: "Escrow adjusted" },
+  { value: "EscrowRefunded", label: "Escrow refunded" },
   { value: "CarrierSettlementPosted", label: "Carrier settlement posted" },
   { value: "CarrierSettlementVoided", label: "Carrier settlement voided" },
   { value: "CarrierSettlementPaid", label: "Carrier settlement paid" },
+  { value: "DriverSettlementPaid", label: "Driver settlement paid" },
   { value: "FactoringFunded", label: "Factor funding recorded" },
   { value: "FactoringReserveReleased", label: "Factoring reserve released" },
   { value: "FactoringChargedBack", label: "Factoring chargeback recorded" },
   { value: "FactoringChargebackReversed", label: "Factoring chargeback reversed" },
 ] satisfies ReadonlyArray<GenericSelectOption<JournalSourceEvent>>;
+
+/** The ledger each journal source event belongs to, so the list reads by where it posts from. */
+export const journalSourceEventGroups = [
+  {
+    label: "Customers",
+    events: [
+      "InvoicePosted",
+      "CreditMemoPosted",
+      "DebitMemoPosted",
+      "CustomerPaymentPosted",
+      "CustomerShortPayRecognized",
+      "CustomerPaymentReversed",
+    ],
+  },
+  { label: "Vendors", events: ["VendorBillPosted", "VendorPaymentPosted"] },
+  {
+    label: "Driver settlements",
+    events: [
+      "DriverSettlementPosted",
+      "DriverSettlementVoided",
+      "DriverSettlementPaid",
+      "EscrowInterestAccrued",
+      "EscrowAdjusted",
+      "EscrowRefunded",
+    ],
+  },
+  {
+    label: "Carrier settlements",
+    events: ["CarrierSettlementPosted", "CarrierSettlementVoided", "CarrierSettlementPaid"],
+  },
+  {
+    label: "Factoring",
+    events: [
+      "FactoringFunded",
+      "FactoringReserveReleased",
+      "FactoringChargedBack",
+      "FactoringChargebackReversed",
+    ],
+  },
+] as const satisfies ReadonlyArray<{ label: string; events: readonly JournalSourceEvent[] }>;
 
 export const manualJournalEntryPolicyChoices = [
   { value: "AllowAll", label: "Allow all" },
@@ -1141,7 +1191,10 @@ export const periodCloseModeChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<PeriodCloseMode>>;
 
 export const lockedPeriodPostingPolicyChoices = [
-  { value: "BlockSubledgerAllowManualJe", label: "Block subledger, allow manual JE" },
+  {
+    value: "BlockSubledgerAllowManualJe",
+    label: "Block subledger posting, allow manual journals",
+  },
 ] satisfies ReadonlyArray<GenericSelectOption<LockedPeriodPostingPolicy>>;
 
 export const closedPeriodPostingPolicyChoices = [
@@ -1398,26 +1451,26 @@ export const paymentTermChoices = [
   { value: "Net90", label: "Net 90", color: "var(--foreground-subtle)" },
 ] satisfies ReadonlyArray<GenericSelectOption<PaymentTerm>>;
 
+/** Whether a paid, partly paid or disputed invoice may be adjusted. */
 export const adjustmentEligibilityPolicyChoices = [
-  { value: "Disallow", label: "Disallow", color: "var(--danger)" },
-  { value: "AllowWithApproval", label: "Allow with approval", color: "var(--info)" },
-  { value: "AllowWithoutApproval", label: "Allow without approval", color: "var(--warning)" },
+  { value: "Disallow", label: "Not allowed", color: "var(--danger)" },
+  { value: "AllowWithApproval", label: "With approval", color: "var(--info)" },
 ] satisfies ReadonlyArray<GenericSelectOption<AdjustmentEligibilityPolicy>>;
 
 export const adjustmentAccountingDatePolicyChoices = [
   {
     value: "UseOriginalIfOpenElseNextOpen",
-    label: "Use original if open else next open",
+    label: "Invoice date while its period is open",
   },
-  { value: "AlwaysNextOpen", label: "Always next open" },
+  { value: "AlwaysNextOpen", label: "Next open period" },
 ] satisfies ReadonlyArray<GenericSelectOption<AdjustmentAccountingDatePolicy>>;
 
 export const closedPeriodAdjustmentPolicyChoices = [
-  { value: "Disallow", label: "Disallow", color: "var(--danger)" },
-  { value: "RequireReopen", label: "Require reopen", color: "var(--warning)" },
+  { value: "Disallow", label: "Not allowed", color: "var(--danger)" },
+  { value: "RequireReopen", label: "Reopen the period first", color: "var(--warning)" },
   {
     value: "PostInNextOpenPeriodWithApproval",
-    label: "Post in next open period with approval",
+    label: "Next open period, with approval",
     color: "var(--info)",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<ClosedPeriodAdjustmentPolicy>>;
@@ -1428,49 +1481,49 @@ export const requirementPolicyChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<RequirementPolicy>>;
 
 export const approvalPolicyChoices = [
-  { value: "None", label: "None", color: "var(--foreground-subtle)" },
+  { value: "None", label: "Never", color: "var(--foreground-subtle)" },
   { value: "Always", label: "Always", color: "var(--danger)" },
-  { value: "AmountThreshold", label: "Amount threshold", color: "var(--info)" },
+  { value: "AmountThreshold", label: "From an amount", color: "var(--info)" },
 ] satisfies ReadonlyArray<GenericSelectOption<ApprovalPolicy>>;
 
 export const writeOffApprovalPolicyChoices = [
-  { value: "Disallow", label: "Disallow", color: "var(--danger)" },
-  { value: "AlwaysRequireApproval", label: "Always require approval", color: "var(--info)" },
+  { value: "Disallow", label: "Not allowed", color: "var(--danger)" },
+  { value: "AlwaysRequireApproval", label: "Always with approval", color: "var(--info)" },
   {
     value: "RequireApprovalAboveThreshold",
-    label: "Require approval above threshold",
+    label: "Approval from an amount",
     color: "var(--warning)",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<WriteOffApprovalPolicy>>;
 
 export const replacementInvoiceReviewPolicyChoices = [
-  { value: "NoAdditionalReview", label: "No additional review", color: "var(--foreground-subtle)" },
+  { value: "NoAdditionalReview", label: "Never", color: "var(--foreground-subtle)" },
   {
     value: "RequireReviewWhenEconomicTermsChange",
-    label: "Require review when economic terms change",
+    label: "When the amount changes",
     color: "var(--info)",
   },
-  { value: "AlwaysRequireReview", label: "Always require review", color: "var(--danger)" },
+  { value: "AlwaysRequireReview", label: "Always", color: "var(--danger)" },
 ] satisfies ReadonlyArray<GenericSelectOption<ReplacementInvoiceReviewPolicy>>;
 
 export const customerCreditBalancePolicyChoices = [
-  { value: "Disallow", label: "Disallow", color: "var(--danger)" },
-  { value: "AllowUnappliedCredit", label: "Allow unapplied credit", color: "var(--info)" },
+  { value: "Disallow", label: "Not allowed", color: "var(--danger)" },
+  { value: "AllowUnappliedCredit", label: "Allowed", color: "var(--info)" },
 ] satisfies ReadonlyArray<GenericSelectOption<CustomerCreditBalancePolicy>>;
 
 export const overCreditPolicyChoices = [
-  { value: "Block", label: "Block", color: "var(--danger)" },
-  { value: "AllowWithApproval", label: "Allow with approval", color: "var(--info)" },
+  { value: "Block", label: "Not allowed", color: "var(--danger)" },
+  { value: "AllowWithApproval", label: "With approval", color: "var(--info)" },
 ] satisfies ReadonlyArray<GenericSelectOption<OverCreditPolicy>>;
 
 export const supersededInvoiceVisibilityPolicyChoices = [
   {
     value: "ShowCurrentOnlyExternally",
-    label: "Show current only externally",
+    label: "Current invoice only",
   },
   {
     value: "ShowCurrentAndSupersededExternally",
-    label: "Show current and superseded externally",
+    label: "Current and replaced invoices",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<SupersededInvoiceVisibilityPolicy>>;
 
@@ -1587,11 +1640,19 @@ export const currencyChoices = [
 ] satisfies ReadonlyArray<SelectOption>;
 
 export const caseFormatChoices = [
-  { value: "AsEntered", label: "As entered" },
-  { value: "Upper", label: "UPPER" },
-  { value: "Lower", label: "lower" },
-  { value: "TitleCase", label: "Title case" },
+  { value: "AsEntered", label: "As entered", description: "Keeps the text exactly as typed." },
+  { value: "Upper", label: "UPPER", description: "Capitalizes every letter." },
+  { value: "Lower", label: "lower", description: "Makes every letter small." },
+  {
+    value: "TitleCase",
+    label: "Title case",
+    description: "Capitalizes the first letter of each word.",
+  },
 ] satisfies ReadonlyArray<GenericSelectOption<CaseFormat>>;
+export const emailCaseFormatChoices = caseFormatChoices.filter(
+  (choice): choice is (typeof caseFormatChoices)[number] & { value: EmailCaseFormat } =>
+    choice.value !== "TitleCase",
+);
 export const resourceTypeChoices = [
   { value: "Shipment", label: "Shipment" },
   { value: "Trailer", label: "Trailer" },
@@ -2171,6 +2232,41 @@ export const settlementPayTriggerChoices = [
   },
 ] satisfies ReadonlyArray<GenericSelectOption<SettlementPayTrigger>>;
 
+/** When a carrier's cost on a brokered load counts toward its settlement. */
+export const carrierPayTriggerChoices = [
+  {
+    label: "Move completed",
+    value: "MoveCompleted",
+    color: "var(--success)",
+    description: "Each carrier's cost counts as soon as its own leg of the load is completed.",
+  },
+  {
+    label: "Shipment delivered",
+    value: "ShipmentDelivered",
+    color: "var(--info)",
+    description: "Carrier cost counts once the whole shipment is delivered.",
+  },
+  {
+    label: "Ready to invoice",
+    value: "PODReceived",
+    color: "var(--warning)",
+    description: "Carrier cost counts once the paperwork is in and the shipment can be invoiced.",
+  },
+  {
+    label: "Shipment invoiced",
+    value: "ShipmentInvoiced",
+    color: "var(--accent-violet)",
+    description: "Carrier cost counts only after the customer has been invoiced.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<SettlementPayTrigger>>;
+
+/** How often escrow interest is paid, in months; 49 CFR 376.12(k) allows at most a quarter. */
+export const escrowInterestFrequencyChoices = [
+  { label: "Monthly", value: 1 },
+  { label: "Every two months", value: 2 },
+  { label: "Quarterly", value: 3 },
+] satisfies ReadonlyArray<GenericSelectOption<number>>;
+
 export const settlementDisputeStatusChoices = [
   {
     label: "Open",
@@ -2333,6 +2429,24 @@ export const weekdayChoices = [
   { label: "Friday", value: 5 },
   { label: "Saturday", value: 6 },
 ] satisfies ReadonlyArray<GenericSelectOption<number>>;
+
+export const driverDigestCadenceChoices = [
+  {
+    label: "One notice per item",
+    value: "Immediate",
+    description: "Each credential and course gets a reminder of its own.",
+  },
+  {
+    label: "Daily round-up",
+    value: "Daily",
+    description: "One notice a day with everything due in the week ahead.",
+  },
+  {
+    label: "Weekly round-up",
+    value: "Weekly",
+    description: "One notice a week with everything due in the two weeks ahead.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<DriverDigestCadence>>;
 
 /* -------------------------------------------------------------------------- */
 /*                              Rate agreements                                */
@@ -2576,3 +2690,22 @@ export const fuelPurchaseImportStatusChoices = [
     color: "var(--foreground-subtle)",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<FuelPurchaseImportStatus>>;
+
+/** Where a cost category's rate per mile comes from (cost control). */
+export const costRateSourceChoices = [
+  {
+    value: "Benchmark",
+    label: "Industry benchmark",
+    description: "The published rate shown beside the category.",
+  },
+  {
+    value: "Override",
+    label: "Your own rate",
+    description: "A rate per mile you enter.",
+  },
+  {
+    value: "GLActual",
+    label: "GL actuals",
+    description: "Posted expenses over the rolling window, per mile driven.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<CostRateSource>>;

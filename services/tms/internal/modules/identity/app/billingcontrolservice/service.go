@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,6 +25,7 @@ type Params struct {
 	Validator        *Validator
 	AuditService     auditports.AuditService
 	PricingTemplates permissionports.PricingTemplatePlan
+	Features         platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -32,6 +34,7 @@ type Service struct {
 	validator        *Validator
 	auditService     auditports.AuditService
 	pricingTemplates permissionports.PricingTemplatePlan
+	features         platformcatalogports.FeatureGate
 }
 
 func New(p Params) *Service {
@@ -41,6 +44,7 @@ func New(p Params) *Service {
 		validator:        p.Validator,
 		auditService:     p.AuditService,
 		pricingTemplates: p.PricingTemplates,
+		features:         p.Features,
 	}
 }
 
@@ -48,7 +52,17 @@ func (s *Service) Get(
 	ctx context.Context,
 	req tenantports.GetBillingControlRequest,
 ) (*billingcontrol.BillingControl, error) {
-	return s.repo.GetByOrgID(ctx, req.TenantInfo.OrgID)
+	entity, err := s.repo.GetByOrgID(ctx, req.TenantInfo.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	onPlan, err := tenantports.QueueReviewOnPlan(ctx, s.features)
+	if err != nil {
+		return nil, err
+	}
+	entity.ApplyQueueReviewPlan(onPlan)
+
+	return entity, nil
 }
 
 func (s *Service) Update(

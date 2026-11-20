@@ -1,6 +1,11 @@
 import { MAPPING_ENTITY_LABELS } from "@/lib/edi/mapping-entity-labels";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import {
+  temperatureLabel,
+  temperatureOf,
+  type TemperatureRange,
+} from "@trenova/shared/lib/temperature";
 import type {
   EDIMappingPreview,
   EDIMappingResolution,
@@ -251,10 +256,12 @@ function loadLine(
   pieces: number | null | undefined,
   weight: number | null | undefined,
   t: TranslateFn,
+  temperature: TemperatureRange = { min: null, max: null },
 ): string {
   return [
     pieces ? t("{0, plural, one {# piece} other {# pieces}}", pieces) : "",
     weight ? t("{0} lb", formatNumber(weight)) : "",
+    temperatureLabel(temperature, t),
   ]
     .filter(Boolean)
     .join(" · ");
@@ -326,7 +333,7 @@ export function tenderRoute(
           stop.scheduledWindowStart && end
             ? `${cardMoment(stop.scheduledWindowStart)} – ${cardMomentAfter(stop.scheduledWindowStart, end)}`
             : cardMoment(stop.scheduledWindowStart),
-        load: loadLine(stop.pieces, stop.weight, t),
+        load: loadLine(stop.pieces, stop.weight, t, temperatureOf(stop)),
         mapping: mapped
           ? mapped.resolved
             ? {
@@ -350,14 +357,7 @@ export function tenderFreight(
   t: TranslateFn,
 ): { facts: CardFact[]; commodities: FreightLine[] } {
   const payload = transfer.tenderPayload;
-  const min = payload.temperatureMin;
-  const max = payload.temperatureMax;
-  const temperature =
-    min !== null && min !== undefined && max !== null && max !== undefined
-      ? t("{0}–{1} °F", formatNumber(min), formatNumber(max))
-      : (min ?? max) !== null && (min ?? max) !== undefined
-        ? t("{0} °F", formatNumber((min ?? max) as number))
-        : "";
+  const temperature = temperatureLabel(temperatureOf(payload), t);
   const facts: [string, string, string | null | undefined][] = [
     ["customer", t("Customer"), payload.customerLabel],
     ["service", t("Service"), payload.serviceTypeLabel],
@@ -377,7 +377,7 @@ export function tenderFreight(
         commodity.commodityName?.trim() ||
         commodity.commodityDescription?.trim() ||
         t("Commodity"),
-      load: loadLine(commodity.pieces, commodity.weight, t),
+      load: loadLine(commodity.pieces, commodity.weight, t, temperatureOf(commodity)),
     })),
   };
 }

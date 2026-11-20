@@ -3,7 +3,6 @@ package ediinboundservice
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundapply"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -15,59 +14,28 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
 
-// splitTenderOfferCandidates scans reference candidates for an echoed tof_
-// offer id and returns it alongside the remaining non-offer references.
-func splitTenderOfferCandidates(candidates []string) (pulid.ID, []string) {
-	offerID := pulid.Nil
-	references := make([]string, 0, len(candidates))
-	for _, candidate := range candidates {
-		candidate = strings.TrimSpace(candidate)
-		if candidate == "" {
-			continue
-		}
-		if strings.HasPrefix(candidate, tenderOfferReferencePrefix) {
-			if offerID.IsNil() {
-				if id, parseErr := pulid.Parse(candidate); parseErr == nil {
-					offerID = id
-				}
-			}
-			continue
-		}
-		references = append(references, candidate)
-	}
-	return offerID, references
-}
+var acceptedOfferStatuses = []tender.OfferStatus{tender.OfferStatusAccepted}
 
-// resolveAcceptedTenderOffer matches an inbound carrier document to the
-// accepted tender offer it answers, for outbound carrier tenders that
-// deliberately have no tender recipient row.
-func (s *Service) resolveAcceptedTenderOffer(
+func (s *Service) resolvePartnerOffer(
 	ctx context.Context,
 	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
-	offerID pulid.ID,
 	references []string,
+	statuses ...tender.OfferStatus,
 ) (*tender.TenderOffer, error) {
-	if offerID.IsNil() && len(references) == 0 {
+	keys := tender.ParsePartnerKeys(references...)
+	if len(keys) == 0 {
 		return nil, errortypes.NewNotFoundError("Tender offer")
 	}
-	return s.tenderRepo.GetAcceptedOfferForPartnerReference(
-		ctx,
-		tenderports.GetAcceptedOfferForPartnerReferenceRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: file.OrganizationID,
-				BuID:  file.BusinessUnitID,
-			},
-			PartnerID:  partner.ID,
-			OfferID:    offerID,
-			References: references,
-		},
-	)
+	return s.tenderRepo.GetOfferForPartnerKey(ctx, tenderports.GetOfferForPartnerKeyRequest{
+		TenantInfo: inboundFileTenant(file),
+		PartnerID:  partner.ID,
+		Keys:       keys,
+		Statuses:   statuses,
+	})
 }
 
 func (s *Service) routeTenderedShipmentStatus(
@@ -77,11 +45,10 @@ func (s *Service) routeTenderedShipmentStatus(
 	details *shipmentStatusDetails,
 	reference string,
 ) ([]string, error) {
-	candidates := make([]string, 0, len(details.references)+2)
-	candidates = append(candidates, details.shipmentRef, details.referenceID)
-	candidates = append(candidates, details.references...)
-	offerID, references := splitTenderOfferCandidates(candidates)
-	offer, err := s.resolveAcceptedTenderOffer(ctx, file, partner, offerID, references)
+	references := make([]string, 0, len(details.references)+1)
+	references = append(references, details.shipmentRef)
+	references = append(references, details.references...)
+	offer, err := s.resolvePartnerOffer(ctx, file, partner, references, acceptedOfferStatuses...)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return []string{
@@ -165,20 +132,15 @@ func (s *Service) resolveFreightInvoiceOffer(
 	partner *edi.EDIPartner,
 	payload *edipayload.FreightInvoicePayload,
 ) (*tender.TenderOffer, []string, error) {
-	referenceCandidates := make([]string, 0, len(payload.ReferenceNumbers))
+	references := make([]string, 0, len(payload.ReferenceNumbers)+2)
+	references = append(references, payload.Key, payload.BOL)
 	for _, value := range payload.ReferenceNumbers {
-		referenceCandidates = append(referenceCandidates, value)
+		references = append(references, value)
 	}
-	offerID, _ := splitTenderOfferCandidates(referenceCandidates)
-	references := stringutils.NonEmptyStrings(
-		payload.ReferenceNumbers["shipmentId"],
-		payload.BOL,
-		payload.ProNumber,
-	)
-	if offerID.IsNil() && len(references) == 0 {
+	if len(tender.ParsePartnerKeys(references...)) == 0 {
 		return nil, nil, nil
 	}
-	offer, err := s.resolveAcceptedTenderOffer(ctx, file, partner, offerID, references)
+	offer, err := s.resolvePartnerOffer(ctx, file, partner, references, acceptedOfferStatuses...)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, []string{

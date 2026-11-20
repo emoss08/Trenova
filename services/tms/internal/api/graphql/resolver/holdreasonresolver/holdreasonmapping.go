@@ -3,8 +3,6 @@ package holdreasonresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/shared/intutils"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
@@ -55,17 +53,24 @@ func holdReasonConnectionToModel(
 func holdReasonFromInput(
 	input *gqlmodel.HoldReasonInput,
 	authCtx *authctx.AuthContext,
-) *holdreason.HoldReason {
+) (*holdreason.HoldReason, error) {
 	entity := &holdreason.HoldReason{
 		OrganizationID: authCtx.OrganizationID,
 		BusinessUnitID: authCtx.BusinessUnitID,
 	}
-	applyHoldReasonInput(entity, input)
+	if err := applyHoldReasonInput(entity, input); err != nil {
+		return nil, err
+	}
 
-	return entity
+	return entity, nil
 }
 
-func applyHoldReasonInput(entity *holdreason.HoldReason, input *gqlmodel.HoldReasonInput) {
+func applyHoldReasonInput(entity *holdreason.HoldReason, input *gqlmodel.HoldReasonInput) error {
+	sortOrder, err := gqlscalar.NarrowInt[int32]("sortOrder", input.SortOrder)
+	if err != nil {
+		return err
+	}
+
 	entity.Type = input.Type
 	entity.Code = input.Code
 	entity.Label = input.Label
@@ -76,9 +81,11 @@ func applyHoldReasonInput(entity *holdreason.HoldReason, input *gqlmodel.HoldRea
 	entity.DefaultBlocksDelivery = input.DefaultBlocksDelivery
 	entity.DefaultBlocksBilling = input.DefaultBlocksBilling
 	entity.DefaultVisibleToCustomer = input.DefaultVisibleToCustomer
-	entity.SortOrder = intutils.SafeToInt32(input.SortOrder)
+	entity.SortOrder = sortOrder
 	entity.ExternalMap = input.ExternalMap
 	if input.Version != nil {
 		entity.Version = int64(*input.Version)
 	}
+
+	return nil
 }

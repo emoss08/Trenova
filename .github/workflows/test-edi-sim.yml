@@ -1,0 +1,65 @@
+name: EDI Simulator Conformance
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "dev/edi-partner-sim/**"
+      - "services/crates/edi/**"
+      - "services/tms/pkg/lading/**"
+      - "services/tms/pkg/x12/**"
+      - ".github/workflows/test-edi-sim.yml"
+      - ".github/actions/setup-go/**"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "dev/edi-partner-sim/**"
+      - "services/crates/edi/**"
+      - "services/tms/pkg/lading/**"
+      - "services/tms/pkg/x12/**"
+      - ".github/workflows/test-edi-sim.yml"
+      - ".github/actions/setup-go/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  conform:
+    name: Oracle, Partners and Conform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+        with:
+          r2-endpoint: ${{ secrets.R2_BUILD_CACHE_ENDPOINT }}
+          r2-access-key-id: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_ACCESS_KEY_ID || secrets.R2_BUILD_CACHE_READ_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
+
+      # The edi crate's wasm is checked in (services/tms/pkg/x12/edi.wasm), so a crate change
+      # without a rebuilt module tests the old one; rust.yml checks the two stay in step.
+      - name: Test the oracle, the partners and conform
+        working-directory: ./dev/edi-partner-sim
+        run: go test ./internal/oracle/... ./internal/partner/... ./internal/conform/...
+
+      - name: Conform every partner over 50 seeds
+        working-directory: ./dev/edi-partner-sim
+        run: go run ./cmd/edi-sim conform --count 50 --report "$RUNNER_TEMP/conform-report.json"
+
+      - name: Upload the conform report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conform-report
+          path: ${{ runner.temp }}/conform-report.json
+          if-no-files-found: ignore

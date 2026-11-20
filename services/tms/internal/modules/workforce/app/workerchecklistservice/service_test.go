@@ -447,7 +447,7 @@ func TestSkipItem_NeedsNoteAndEvidenceMustBelongToWorker(t *testing.T) {
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "note", verr.Field)
+	assert.Equal(t, "note", verr.Field())
 
 	h.docs.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
@@ -457,7 +457,7 @@ func TestSkipItem_NeedsNoteAndEvidenceMustBelongToWorker(t *testing.T) {
 		ID: fuel.ID, TenantInfo: h.tenant, EvidenceDocumentID: pulid.MustNew("doc_"), UserID: h.userID,
 	})
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "evidenceDocumentId", verr.Field)
+	assert.Equal(t, "evidenceDocumentId", verr.Field())
 }
 
 func TestReopenItem_ReopensCompletedChecklist(t *testing.T) {
@@ -519,7 +519,7 @@ func TestCancel_LeavesItemsAndRefusesInactiveTemplate(t *testing.T) {
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "templateId", verr.Field)
+	assert.Equal(t, "templateId", verr.Field())
 }
 
 func TestProgressWindow(t *testing.T) {

@@ -1,4 +1,7 @@
 {
+  "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts": "Configure los períodos de pago de los transportistas, los activadores de devengo de costos, la automatización de lotes, la tolerancia de cotejo de facturas y las cuentas de contabilización de cuentas por pagar",
+  "Configure case formatting rules for data entry across the system": "Configure las reglas de formato de mayúsculas para la introducción de datos en todo el sistema",
+  "Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.": "Configure la política de la organización para abonos, refacturaciones, cancelaciones y revisión de ajustes de facturas.",
   "Every page in {0} you can open.": "Todas las páginas de {0} que puede abrir.",
   "No pages you can open here": "No hay páginas que pueda abrir aquí",
   "None of the pages here are open to you. An administrator can grant access or turn this part of Trenova on.": "Ninguna de las páginas de aquí está disponible para usted. Un administrador puede darle acceso o activar esta parte de Trenova."

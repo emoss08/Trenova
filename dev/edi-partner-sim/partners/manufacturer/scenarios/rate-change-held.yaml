@@ -1,0 +1,18 @@
+name: a rate change after acceptance is held for a planner, then released
+description: >
+  Kestrel changes the rate on a load Trenova already accepted. The change is acknowledged but
+  held: the planner sees why, releases it, and the conversation carries on to delivery.
+steps:
+  - send: { set: "204", as: t1 }
+  - expect: { ack: t1 }
+  - trenova: { decide: t1, decision: accept }
+  - expect: { wire: "990", about: t1, elements: { B1-04: A } }
+  - send: { set: "204", variation: change, of: t1, delta: { ratePercent: 12 } }
+  - expect: { ack: t1 }
+  - expect: { flow: t1, status: Held, why: changed the rate }
+  - trenova: { release: t1 }
+  - expect: { flow: t1, status: Open }
+  - trenova: { dispatch: t1 }
+  - trenova: { deliver: t1 }
+  - advance: { about: t1, by: 5m }
+  - expect: { wire: "214", about: t1, statuses: [X3, AF] }

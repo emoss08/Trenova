@@ -222,7 +222,7 @@ func TestHydrateShipment_UnknownReferenceIsAValidationError(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "serviceTypeId", validation.Field)
+	assert.Equal(t, "serviceTypeId", validation.Field())
 	assert.Contains(t, err.Error(), missing.String())
 	assert.Nil(t, entity.ServiceType)
 }

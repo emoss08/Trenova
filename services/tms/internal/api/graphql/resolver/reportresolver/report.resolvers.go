@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -846,6 +848,44 @@ func (r *MutationResolver) ScheduleTableView(ctx context.Context, input gqlmodel
 		EmailRecipients: input.EmailRecipients,
 		EmailAttach:     gqlscalar.BoolValue(input.EmailAttach),
 		EmailInline:     gqlscalar.BoolValue(input.EmailInline),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return tableExportResultToModel(result), nil
+}
+
+func (r *MutationResolver) ExportCustomerLedger(ctx context.Context, input gqlmodel.ExportCustomerLedgerInput) (*gqlmodel.TableExportResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAccountsReceivable, permission.OpExport)
+	if err != nil {
+		return nil, err
+	}
+
+	customerID, err := pulid.MustParse(input.CustomerID)
+	if err != nil {
+		return nil, errortypes.NewValidationError("customerId", errortypes.ErrInvalid, "Choose the customer whose ledger to export")
+	}
+
+	definition, err := r.AccountsReceivableService.CustomerLedgerReport(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		customerledgerports.ARLedgerPageRequest{
+			CustomerID: customerID,
+			StartDate:  int64(gqlscalar.DerefInt(input.StartDate)),
+			EndDate:    int64(gqlscalar.DerefInt(input.EndDate)),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.TableExportService.ExportDefinition(ctx, &tableexportservice.DefinitionExportRequest{
+		Request:     reportingRequest(authCtx),
+		Name:        input.Name,
+		Description: accountsreceivableservice.LedgerReportDescription,
+		Category:    accountsreceivableservice.LedgerReportCategory,
+		Definition:  definition,
+		Format:      report.Format(input.Format),
 	})
 	if err != nil {
 		return nil, err

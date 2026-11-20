@@ -1,0 +1,35 @@
+set: "214"
+version: "004010"
+group: QM
+title: Acme fixture 214
+segments:
+  ST:
+    elements:
+      - { pos: 1, type: ID, min: 3, max: 3, usage: M, fixed: "214" }
+      - { pos: 2, type: AN, min: 4, max: 9, usage: M }
+  B10:
+    elements:
+      - { pos: 1, type: AN, min: 1, max: 30, usage: M }
+      - { pos: 2, type: AN, min: 1, max: 30, usage: M }
+      - { pos: 3, type: ID, min: 2, max: 4, usage: M, fixed: TRNV }
+  LX:
+    elements:
+      - { pos: 1, type: N0, min: 1, max: 6, usage: M }
+  AT7:
+    elements:
+      - { pos: 1, type: ID, min: 2, max: 2, usage: M, codes: [X3, AF, X1, D1, CD] }
+      - { pos: 2, type: ID, min: 2, max: 2, usage: M }
+  SE:
+    elements:
+      - { pos: 1, type: N0, min: 1, max: 10, usage: M }
+      - { pos: 2, type: AN, min: 4, max: 9, usage: M }
+structure:
+  - { seg: ST, usage: M }
+  - { seg: B10, usage: M }
+  - loop: "0205"
+    usage: M
+    max: 20
+    body:
+      - { seg: LX, usage: M }
+      - { seg: AT7, usage: M }
+  - { seg: SE, usage: M }

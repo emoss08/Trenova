@@ -33,7 +33,7 @@ func TestParseMessageRefusesASignatureItHasNoCertificateToVerify(t *testing.T) {
 	_, err := ParseMessage(built.ContentType, built.Body, &ParseMessageOptions{
 		DecryptionCertificate: receiver.Certificate,
 		DecryptionKey:         receiver.Key,
-		TransferEncoding:      built.Headers.Get("Content-Transfer-Encoding"),
+		EntityHeaders:         built.Headers,
 		RequireSignature:      true,
 	})
 
@@ -50,7 +50,7 @@ func TestParseMessageDoesNotCallAnUnverifiedSignatureSigned(t *testing.T) {
 	parsed, err := ParseMessage(built.ContentType, built.Body, &ParseMessageOptions{
 		DecryptionCertificate: receiver.Certificate,
 		DecryptionKey:         receiver.Key,
-		TransferEncoding:      built.Headers.Get("Content-Transfer-Encoding"),
+		EntityHeaders:         built.Headers,
 	})
 
 	require.NoError(t, err)
@@ -69,7 +69,7 @@ func TestParseMessageRefusesASignerOtherThanThePartner(t *testing.T) {
 		DecryptionCertificate: receiver.Certificate,
 		DecryptionKey:         receiver.Key,
 		PartnerCertificate:    partner.Certificate,
-		TransferEncoding:      built.Headers.Get("Content-Transfer-Encoding"),
+		EntityHeaders:         built.Headers,
 		RequireSignature:      true,
 	})
 

@@ -1,0 +1,14 @@
+guide meadowridge.210 from x12.004010.210 "Meadowridge Fresh Markets Freight Invoice 4010 v2.3"
+
+/// Meadowridge pays linehaul, stop-offs, lumpers, fuel and detention, each on its own line.
+B3 { 02 required; 03 required length 9..9; 04 codes "PP"; 06 required; 07 required; 11 required }
+N9 max 3 { 01 codes "BM", "PO" }
+C3 unused
+ITD unused
+loop 0100 required max 1
+0100.N1 { 01 codes "BT"; 02 required }
+loop 0200 unused
+loop 0300 unused
+loop 0400 required
+0400.L1 required max 1 { 01 required; 04 required; 08 codes "SOC", "LUM", "FUE", "DET" }
+L3 { 05 required }

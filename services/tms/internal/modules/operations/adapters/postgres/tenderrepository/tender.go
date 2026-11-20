@@ -187,55 +187,44 @@ func (r *repository) GetOfferByID(
 	})
 }
 
-// GetAcceptedOfferForPartnerReference resolves a late-arriving carrier 214/210
-// to the accepted offer it belongs to. It anchors on OFFER status rather than
-// tender status because the tender row may have moved on by the time the
-// carrier's status or invoice document arrives.
-func (r *repository) GetAcceptedOfferForPartnerReference(
+func (r *repository) GetOfferForPartnerKey(
 	ctx context.Context,
-	req tenderports.GetAcceptedOfferForPartnerReferenceRequest,
+	req tenderports.GetOfferForPartnerKeyRequest,
 ) (*tender.TenderOffer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.TenderOffer, error) {
-		if req.OfferID.IsNil() && len(req.References) == 0 {
+		if len(req.Keys) == 0 {
 			return nil, errortypes.NewNotFoundError("Tender offer")
 		}
 
 		o := tenderdb.TenderOffers
 		sp := o.Tender().Shipment()
-		references := make([]pulid.ID, len(req.References))
-		for i, reference := range req.References {
-			references[i] = pulid.ID(reference)
-		}
-
-		var match []keel.Pred
-		if !req.OfferID.IsNil() {
-			match = append(match, o.ID.Eq(req.OfferID))
-		}
-		if len(req.References) > 0 {
-			match = append(match,
-				sp.ID.In(references...),
-				sp.ProNumber.In(req.References...),
-				sp.BOL.In(req.References...),
-			)
+		mv := o.Tender().ShipmentMove()
+		match := make([]keel.Pred, 0, len(req.Keys))
+		for _, key := range req.Keys {
+			if key.Move < 1 {
+				match = append(match, sp.ProNumber.Eq(key.ProNumber))
+				continue
+			}
+			match = append(match, keel.And(
+				sp.ProNumber.Eq(key.ProNumber),
+				mv.Sequence.Eq(key.MoveSequence()),
+			))
 		}
 
 		entity, err := o.Where(
 			o.EDIPartnerID.Eq(req.PartnerID),
-			o.Status.Eq(tender.OfferStatusAccepted),
-			sp.ID.IsNotNull(),
+			keel.When(len(req.Statuses) > 0, o.Status.In(req.Statuses...)),
+			sp.ProNumber.In(tender.ProNumbersOf(req.Keys)...),
 			keel.Or(match...),
 		).
 			Load(o.Tender(), o.Carrier()).
-			Order(o.RespondedAt.Desc().NullsLast()).
+			Order(o.CreatedAt.Desc()).
 			First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if !dberror.IsNotFoundError(err) {
-				r.l.Error(
-					"failed to get accepted tender offer for partner reference",
-					zap.Error(err),
-				)
+				r.l.Error("failed to get tender offer for partner key", zap.Error(err))
 			}
-			return nil, offerErrors.Map(err, req.OfferID.String())
+			return nil, offerErrors.Map(err, tender.ProNumbersOf(req.Keys)[0])
 		}
 
 		return entity, nil

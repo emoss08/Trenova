@@ -141,7 +141,7 @@ func TestUpdateStatusRefusesTerminalSource(t *testing.T) {
 
 	var validationErr *errortypes.Error
 	require.ErrorAs(t, err, &validationErr)
-	assert.Equal(t, "status", validationErr.Field)
+	assert.Equal(t, "status", validationErr.Field())
 
 	fetched, err := f.repo.GetByID(ctx, &workerptoports.GetPTOByIDRequest{
 		ID:         pto.ID,

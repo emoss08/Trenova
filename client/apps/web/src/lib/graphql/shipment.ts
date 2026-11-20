@@ -762,6 +762,8 @@ function toShipmentMoveInput(move: Shipment["moves"][number]): ShipmentMoveInput
         sequence: stop.sequence,
         pieces: stop.pieces,
         weight: stop.weight,
+        temperatureMin: stop.temperatureMin,
+        temperatureMax: stop.temperatureMax,
         scheduledWindowStart: stop.scheduledWindowStart,
         scheduledWindowEnd: stop.scheduledWindowEnd,
         actualArrival: stop.actualArrival,
@@ -808,6 +810,8 @@ function toCommodityInput(commodity: Shipment["commodities"][number]): ShipmentC
     lengthFeet: commodity.lengthFeet,
     widthFeet: commodity.widthFeet,
     heightFeet: commodity.heightFeet,
+    temperatureMin: commodity.temperatureMin,
+    temperatureMax: commodity.temperatureMax,
     version: commodity.version,
   };
 }

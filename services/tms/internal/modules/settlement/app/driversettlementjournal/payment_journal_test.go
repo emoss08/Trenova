@@ -146,7 +146,7 @@ func TestPaymentJournalNeedsACashAccount(t *testing.T) {
 		PostPayment(t.Context(), entity, pulid.MustNew("usr_"), 1)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "accountingControl", validation.Field)
+	assert.Equal(t, "accountingControl", validation.Field())
 }
 
 func TestASettlementPostedWithoutAJournalRecordsNoPaymentJournal(t *testing.T) {
@@ -191,7 +191,7 @@ func TestASettlementPostedBeforeThePayableSnapshotPaysFromTheDefaultPayable(t *t
 	_, err = PaymentJournal(entity, control, pulid.MustNew("usr_"), 1, 1)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "accountingControl", validation.Field)
+	assert.Equal(t, "accountingControl", validation.Field())
 }
 
 func TestAZeroSettlementRecordsNoPaymentJournal(t *testing.T) {

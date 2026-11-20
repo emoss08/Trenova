@@ -16,6 +16,10 @@ var (
 	ErrRLSProvisionSameRole     = errors.New(
 		"the application and system roles must be different database roles",
 	)
+	ErrRLSProvisionMigratorRole = errors.New(
+		"database.migrator must name a different role from database.user so the application " +
+			"role does not own the tables it is isolated from",
+	)
 )
 
 type RLSProvisionResult struct {
@@ -120,6 +124,22 @@ type RLSLoginRole struct {
 type ProvisionRLSRolesParams struct {
 	App    RLSLoginRole
 	System RLSLoginRole
+}
+
+func ProvisionConfiguredRLSRoles(
+	ctx context.Context,
+	db *keel.DB,
+	cfg *databaseconfig.Config,
+) ([]string, error) {
+	if cfg == nil || !cfg.Migrator.Configured() ||
+		strings.EqualFold(strings.TrimSpace(cfg.Migrator.User), strings.TrimSpace(cfg.User)) {
+		return nil, ErrRLSProvisionMigratorRole
+	}
+
+	return ProvisionRLSRoles(ctx, db, ProvisionRLSRolesParams{
+		App:    RLSLoginRole{User: cfg.User, Password: cfg.Password},
+		System: RLSLoginRole{User: cfg.System.User, Password: cfg.System.Password},
+	})
 }
 
 func ProvisionRLSRoles(

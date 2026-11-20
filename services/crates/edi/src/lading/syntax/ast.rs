@@ -405,6 +405,8 @@ pub struct Interchange {
     pub version: Option<Ident>,
     /// The separators: element, segment, component, repetition.
     pub separators: Vec<TextLit>,
+    /// `line ending none|lf|crlf|cr`: what is written after each segment terminator.
+    pub line_ending: Option<Ident>,
     /// `test` or `production`.
     pub usage: Option<Ident>,
     /// The whole block.
@@ -918,6 +920,9 @@ impl Expr {
 pub enum TestStep {
     /// `given file "path"`
     GivenFile(TextLit),
+    /// `given transaction n`: only the nth transaction of the file, from 1; without it a map
+    /// test runs on every transaction the file holds.
+    GivenTransaction(u32, Span),
     /// `given text "..."`
     GivenText(Expr),
     /// `given loadTender { ... }`
@@ -1159,10 +1164,10 @@ pub enum Action {
         /// The whole action.
         span: Span,
     },
-    /// `cancel unless state else action`
+    /// `cancel unless state[, state] else action`, or `unless state or later else action`
     Cancel {
-        /// The state that stops the cancel, and what to do instead.
-        unless: Option<(Ident, Box<Action>)>,
+        /// The states that stop the cancel, and what to do instead.
+        unless: Option<(Unless, Box<Action>)>,
         /// The whole action.
         span: Span,
     },
@@ -1192,6 +1197,37 @@ impl Action {
     }
 }
 
+/// The load states a `cancel unless` names.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Unless {
+    /// The states named.
+    pub states: Vec<Ident>,
+    /// Whether the last state stands for itself and every state after it (`or later`).
+    pub or_later: bool,
+}
+
+/// What a guard on a receive arm does when its condition holds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GuardKind {
+    /// `hold when cond "message"`: hold instead of acting.
+    Hold,
+    /// `reject when cond "message"`: reject the transaction in the acknowledgment.
+    Reject,
+}
+
+/// `hold when cond "message"` or `reject when cond "message"` after an arm's action.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Guard {
+    /// What it does.
+    pub kind: GuardKind,
+    /// When.
+    pub cond: Expr,
+    /// Why.
+    pub message: Expr,
+    /// The whole guard.
+    pub span: Span,
+}
+
 /// One `on Purpose -> action`, or a bare `-> action`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReceiveArm {
@@ -1199,6 +1235,8 @@ pub struct ReceiveArm {
     pub purpose: Option<Ident>,
     /// The action.
     pub action: Action,
+    /// What stops the action, checked in order before it.
+    pub guards: Vec<Guard>,
     /// The whole arm.
     pub span: Span,
 }
@@ -1293,6 +1331,19 @@ pub struct ExpectAck {
     pub span: Span,
 }
 
+/// `await 990 within d else escalate "m"`: the partner's answer to a tender Trenova sent.
+#[derive(Debug, Clone, PartialEq)]
+pub struct AwaitAnswer {
+    /// The answer's set.
+    pub set: Ident,
+    /// The deadline.
+    pub within: Option<Expr>,
+    /// The escalation message.
+    pub escalate: Option<Expr>,
+    /// The whole clause.
+    pub span: Span,
+}
+
 /// A flow clause.
 #[derive(Debug, Clone, PartialEq)]
 pub enum FlowDecl {
@@ -1304,6 +1355,8 @@ pub enum FlowDecl {
     Send(Send),
     /// `expect`
     Expect(ExpectAck),
+    /// `await`
+    Await(AwaitAnswer),
 }
 
 impl FlowDecl {
@@ -1315,6 +1368,7 @@ impl FlowDecl {
             Self::Respond(item) => item.span,
             Self::Send(item) => item.span,
             Self::Expect(item) => item.span,
+            Self::Await(item) => item.span,
         }
     }
 }

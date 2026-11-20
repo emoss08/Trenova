@@ -54,6 +54,9 @@ func (s *Service) ExecuteFlowActions(
 		switch action.Kind {
 		case lading.ActionSend:
 			message, err := s.SendFlowMessage(ctx, tenantInfo, dispatched, action, actionCtx)
+			if errors.Is(err, errNothingSent) {
+				continue
+			}
 			if err != nil {
 				failures = append(failures, fmt.Errorf("send %s: %w", action.Set, err))
 				continue
@@ -138,6 +141,10 @@ func (s *Service) SendFlowMessage(
 		DisableDeliveryQueue: actionCtx.DisableDeliveryQueue,
 		IdempotencyKey:       flowIdempotencyKey(actionCtx.IdempotencyKey, instance, action.ID),
 	}, o, &writeOptions{flowInstanceID: instance.ID, flowSendID: action.ID})
+	if errors.Is(err, errNothingSent) {
+		s.reportNothingSent(ctx, tenantInfo, dispatched, action.ID)
+		return nil, err
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -158,6 +165,28 @@ func (s *Service) SendFlowMessage(
 		)
 	}
 	return message, nil
+}
+
+var errNothingSent = errortypes.NewBusinessError(
+	"Nothing in this document is sent to this partner",
+)
+
+func (s *Service) reportNothingSent(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	dispatched *edilading.Dispatched,
+	sendID string,
+) {
+	if _, err := s.flows.DispatchTo(ctx, dispatched.Instance, &edilading.DispatchRequest{
+		TenantInfo: tenantInfo,
+		Program:    dispatched.Program,
+		Event:      lading.FlowEvent{Kind: lading.EventSent, ID: sendID},
+	}); err != nil {
+		s.l.Warn("failed to tell a flow its message had nothing to send",
+			zap.String("instanceId", dispatched.Instance.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func flowIdempotencyKey(given string, instance *ladingproject.FlowInstance, sendID string) string {
@@ -221,12 +250,19 @@ func (s *Service) alertFlow(
 	})
 }
 
+type FlowTimer struct {
+	Instance *ladingproject.FlowInstance
+	Woke     bool
+	Actions  []lading.FlowAction
+	Sent     []*edimessage.EDIMessage
+}
+
 // DispatchFlowTimer wakes a flow instance whose timer fired and carries out what it asks.
 func (s *Service) DispatchFlowTimer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	instanceID pulid.ID,
-) (*ladingproject.FlowInstance, error) {
+) (*FlowTimer, error) {
 	instance, err := s.flowRepo.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
 		TenantInfo: tenantInfo,
 		ID:         instanceID,
@@ -235,7 +271,7 @@ func (s *Service) DispatchFlowTimer(
 		return nil, err
 	}
 	if instance.WakeAt == nil || *instance.WakeAt > time.Now().Unix() {
-		return instance, nil
+		return &FlowTimer{Instance: instance}, nil
 	}
 	dispatched, err := s.flows.DispatchTo(ctx, instance, &edilading.DispatchRequest{
 		TenantInfo: tenantInfo,
@@ -244,10 +280,13 @@ func (s *Service) DispatchFlowTimer(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.ExecuteFlowActions(ctx, tenantInfo, dispatched, nil); err != nil {
-		return dispatched.Instance, err
-	}
-	return dispatched.Instance, nil
+	sent, err := s.ExecuteFlowActions(ctx, tenantInfo, dispatched, nil)
+	return &FlowTimer{
+		Instance: dispatched.Instance,
+		Woke:     true,
+		Actions:  dispatched.Actions,
+		Sent:     sent,
+	}, err
 }
 
 // dueFlowPage bounds how many due instances one read returns, and

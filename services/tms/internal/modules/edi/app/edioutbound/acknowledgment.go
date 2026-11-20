@@ -377,6 +377,7 @@ func writeAcknowledgment(
 			Component:  envelope.ComponentSeparator,
 			Repetition: envelope.RepetitionSeparator,
 			Segment:    envelope.SegmentTerminator,
+			LineEnding: x12.LineEnding(envelope.LineEnding),
 		},
 		Acknowledgments: []x12.AcknowledgeInput{{
 			Group: group,

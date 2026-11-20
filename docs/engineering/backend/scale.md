@@ -39,6 +39,15 @@ fails it, fix it in the same change if it is small, or name it in your report.
   near-ordered read takes 69 ms this way against 548 ms as per-driver probes through about 26
   historical assignments each, under the application role, and the plain board read 10-23 ms
   against 100-130 ms.
+- **One read per record, not per child.** A computation over a record's children (a
+  shipment's stops) reads what any child could need in one bounded query and picks each
+  child's share in memory: detention recalculation reads the candidate policies for every
+  stop's facility and arrival window, the stops' stored occurrences and the winning policies'
+  charges once each (`detentionsync`: `GetResolutionCandidates`, `ListByStops`, `GetByIDs`),
+  and writes each stop without reading it again.
+  When the filter is an `AND` of `IS NULL OR =` pairs, spell it as the exact arms
+  (`(a IS NULL AND b IS NULL) OR (a IS NULL AND b = ANY(…)) OR …`) so each arm is an index
+  condition on a tenant-first index; Postgres does not expand the product itself.
 - **History in one pass.** A balance or state "as of" a series of dates is never a correlated
   subquery per row per date. Read the changes once, fold them into segments with a window
   function, expand each segment onto the dates it covers, and read only rows open now or

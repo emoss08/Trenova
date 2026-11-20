@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +23,7 @@ type Params struct {
 	Repo         documenttypeports.DocumentTypeRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Transformer  accessorialchargeports.DataTransformer
+	Formatter    dataentrycontrolports.TextFormatter
 }
 
 type Service struct {
@@ -31,7 +31,7 @@ type Service struct {
 	repo         documenttypeports.DocumentTypeRepository
 	validator    *Validator
 	auditService auditports.AuditService
-	transformer  accessorialchargeports.DataTransformer
+	formatter    dataentrycontrolports.TextFormatter
 }
 
 func New(p Params) *Service {
@@ -40,7 +40,7 @@ func New(p Params) *Service {
 		repo:         p.Repo,
 		validator:    p.Validator,
 		auditService: p.AuditService,
-		transformer:  p.Transformer,
+		formatter:    p.Formatter,
 	}
 }
 
@@ -84,8 +84,8 @@ func (s *Service) Create(
 	entity *documenttype.DocumentType,
 	userID pulid.ID,
 ) (*documenttype.DocumentType, error) {
-	if err := s.transformer.TransformDocumentType(ctx, entity); err != nil {
-		s.l.Error("failed to transform document type", zap.Error(err))
+	if err := s.formatter.Format(ctx, entity); err != nil {
+		s.l.Error("failed to format document type", zap.Error(err))
 		return nil, err
 	}
 
@@ -121,8 +121,8 @@ func (s *Service) Update(
 	entity *documenttype.DocumentType,
 	userID pulid.ID,
 ) (*documenttype.DocumentType, error) {
-	if err := s.transformer.TransformDocumentType(ctx, entity); err != nil {
-		s.l.Error("failed to transform document type", zap.Error(err))
+	if err := s.formatter.Format(ctx, entity); err != nil {
+		s.l.Error("failed to format document type", zap.Error(err))
 		return nil, err
 	}
 

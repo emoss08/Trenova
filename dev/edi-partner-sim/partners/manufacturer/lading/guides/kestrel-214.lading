@@ -1,0 +1,16 @@
+guide kestrel.214 from x12.004010.214 "Kestrel Valve Works Shipment Status Guide 3.0"
+
+/// Kestrel matches every status to the load by its load number and the BOL it gave us.
+B10 { 01 required; 02 required length 10..10; 03 required }
+L11 max 2 { 02 codes "BM", "PO" }
+MAN unused
+K1 unused
+AT8 unused
+loop 0100 unused
+loop 0200 unused
+loop 0205 required max 20
+0205.0210.AT7 { 01 required codes "X3", "AF", "X1", "D1", "CD", "X6", "AG", "SD", "A9"; 02 required; 05 required; 06 required length 4..4; 07 required codes "CT", "ET", "MT", "PT", "UT" }
+0205.0210.MS1 { 01 required; 02 required; 03 codes "US" }
+0205.0210.MS2 unused
+0205.0210.M7 unused
+0205.L11 max 1 { 02 codes "QN" }

@@ -25,6 +25,7 @@ type Params struct {
 
 	Logger           *zap.Logger
 	BillingRepo      tenantports.BillingControlRepository
+	AdjustmentRepo   tenantports.InvoiceAdjustmentControlRepository
 	CustomerRepo     customerports.CustomerRepository
 	DocumentService  documentports.InvoiceDocumentService
 	EDI              *invoiceediservice.Service
@@ -46,6 +47,7 @@ type Params struct {
 // Service emails invoices and serves their shared documents.
 type Service struct {
 	billingRepo      tenantports.BillingControlRepository
+	adjustmentRepo   tenantports.InvoiceAdjustmentControlRepository
 	customerRepo     customerports.CustomerRepository
 	documentService  documentports.InvoiceDocumentService
 	edi              *invoiceediservice.Service
@@ -71,6 +73,7 @@ func New(p Params) *Service {
 	l := p.Logger.Named("service.invoice")
 	return &Service{
 		billingRepo:      p.BillingRepo,
+		adjustmentRepo:   p.AdjustmentRepo,
 		customerRepo:     p.CustomerRepo,
 		documentService:  p.DocumentService,
 		edi:              p.EDI,

@@ -207,12 +207,31 @@ func (f *fakeAdvanceRepo) Update(
 	return f.update(ctx, entity)
 }
 
+type fakeEscrowJournal struct {
+	posted []*payescrow.EscrowTransaction
+	err    error
+}
+
+func (f *fakeEscrowJournal) PostEscrowTransaction(
+	_ context.Context,
+	_ *payescrow.EscrowAccount,
+	transaction *payescrow.EscrowTransaction,
+) (*pulid.ID, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	f.posted = append(f.posted, transaction)
+	batchID := pulid.MustNew("jb_")
+	return &batchID, nil
+}
+
 func newTestService() (*Service, *fakeAuditService) {
 	audit := &fakeAuditService{}
 	svc := &Service{
-		l:            zap.NewNop(),
-		db:           dbtest.NopConnection{},
-		auditService: audit,
+		l:             zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		escrowJournal: &fakeEscrowJournal{},
+		auditService:  audit,
 	}
 	return svc, audit
 }

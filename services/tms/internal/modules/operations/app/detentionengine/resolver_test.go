@@ -59,7 +59,7 @@ func matchInput() *detentionpolicy.MatchInput {
 func TestResolvePolicy_NoCandidates(t *testing.T) {
 	t.Parallel()
 
-	res := detentionengine.ResolvePolicy(nil, matchInput())
+	res := detentionengine.ResolvePolicy(nil, matchInput(), pulid.Nil)
 
 	assert.False(t, res.Found())
 	assert.Contains(t, res.Explanation, "No detention policy")
@@ -68,7 +68,7 @@ func TestResolvePolicy_NoCandidates(t *testing.T) {
 func TestResolvePolicy_OrgDefaultWins_WhenNothingElseMatches(t *testing.T) {
 	t.Parallel()
 
-	orgDefault := policy("ORG", func(p *detentionpolicy.DetentionPolicy) { p.IsOrgDefault = true })
+	orgDefault := policy("ORG", nil)
 	otherCustomer := policy("OTHER", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = ptr(pulid.MustNew("cus_"))
 	})
@@ -76,16 +76,20 @@ func TestResolvePolicy_OrgDefaultWins_WhenNothingElseMatches(t *testing.T) {
 	res := detentionengine.ResolvePolicy(
 		[]*detentionpolicy.DetentionPolicy{otherCustomer, orgDefault},
 		matchInput(),
+		orgDefault.ID,
 	)
 
 	require.True(t, res.Found())
 	assert.Equal(t, "ORG", res.Policy.Code)
+	assert.Equal(t,
+		"ORG (ORG) is the only policy covering this stop; it applies as the organization default.",
+		res.Explanation)
 }
 
 func TestResolvePolicy_SpecificityBeatsGeneral(t *testing.T) {
 	t.Parallel()
 
-	orgDefault := policy("ORG", func(p *detentionpolicy.DetentionPolicy) { p.IsOrgDefault = true })
+	orgDefault := policy("ORG", nil)
 	customerPolicy := policy("CUST", func(p *detentionpolicy.DetentionPolicy) {
 		p.CustomerID = &resolveCustomerID
 	})
@@ -97,6 +101,7 @@ func TestResolvePolicy_SpecificityBeatsGeneral(t *testing.T) {
 	res := detentionengine.ResolvePolicy(
 		[]*detentionpolicy.DetentionPolicy{orgDefault, customerPolicy, facilityPolicy},
 		matchInput(),
+		orgDefault.ID,
 	)
 
 	require.True(t, res.Found())
@@ -114,18 +119,67 @@ func TestResolvePolicy_PriorityOverridesSpecificity(t *testing.T) {
 		p.LocationID = &resolveLocationID
 	})
 	override := policy("OVERRIDE", func(p *detentionpolicy.DetentionPolicy) {
-		p.IsOrgDefault = true
 		p.Priority = 100
 	})
 
 	res := detentionengine.ResolvePolicy(
 		[]*detentionpolicy.DetentionPolicy{facilityPolicy, override},
 		matchInput(),
+		pulid.Nil,
 	)
 
 	require.True(t, res.Found())
 	assert.Equal(t, "OVERRIDE", res.Policy.Code,
 		"an explicit priority is the escape hatch above computed specificity")
+}
+
+func TestResolvePolicy_OrgDefaultRanksBelowEveryOtherMatch_WhateverItsPriority(t *testing.T) {
+	t.Parallel()
+
+	orgDefault := policy("ORG", func(p *detentionpolicy.DetentionPolicy) {
+		p.Priority = 100
+	})
+	allFreight := policy("ALL", nil)
+
+	res := detentionengine.ResolvePolicy(
+		[]*detentionpolicy.DetentionPolicy{orgDefault, allFreight},
+		matchInput(),
+		orgDefault.ID,
+	)
+
+	require.True(t, res.Found())
+	assert.Equal(t, "ALL", res.Policy.Code,
+		"the default governs only stops no other policy covers")
+	assert.Equal(t,
+		"ALL (ALL) won over 1 other matching policy because it applies to all freight "+
+			"(priority 0, specificity 0) while the next closest, ORG (ORG), applies "+
+			"as the organization default (priority 100, specificity 0).",
+		res.Explanation)
+
+	require.Len(t, res.Verdicts, 2)
+	assert.Equal(t, allFreight.ID, res.Verdicts[0].PolicyID)
+	assert.True(t, res.Verdicts[0].IsWinner)
+	assert.Equal(t, orgDefault.ID, res.Verdicts[1].PolicyID)
+	assert.False(t, res.Verdicts[1].IsWinner)
+	assert.Equal(t, "as the organization default", res.Verdicts[1].Reason)
+}
+
+func TestResolvePolicy_InactiveOrgDefaultDoesNotGovern(t *testing.T) {
+	t.Parallel()
+
+	orgDefault := policy("ORG", func(p *detentionpolicy.DetentionPolicy) {
+		p.Status = detentionpolicy.PolicyStatusInactive
+	})
+
+	res := detentionengine.ResolvePolicy(
+		[]*detentionpolicy.DetentionPolicy{orgDefault},
+		matchInput(),
+		orgDefault.ID,
+	)
+
+	assert.False(t, res.Found())
+	require.Len(t, res.Verdicts, 1)
+	assert.Equal(t, "Policy status is Inactive", res.Verdicts[0].Reason)
 }
 
 func TestResolvePolicy_TieBreaksOnAge(t *testing.T) {
@@ -143,6 +197,7 @@ func TestResolvePolicy_TieBreaksOnAge(t *testing.T) {
 	res := detentionengine.ResolvePolicy(
 		[]*detentionpolicy.DetentionPolicy{newer, older},
 		matchInput(),
+		pulid.Nil,
 	)
 
 	require.True(t, res.Found())
@@ -163,10 +218,10 @@ func TestResolvePolicy_IsDeterministicRegardlessOfInputOrder(t *testing.T) {
 	})
 
 	forward := detentionengine.ResolvePolicy(
-		[]*detentionpolicy.DetentionPolicy{a, b}, matchInput(),
+		[]*detentionpolicy.DetentionPolicy{a, b}, matchInput(), pulid.Nil,
 	)
 	reverse := detentionengine.ResolvePolicy(
-		[]*detentionpolicy.DetentionPolicy{b, a}, matchInput(),
+		[]*detentionpolicy.DetentionPolicy{b, a}, matchInput(), pulid.Nil,
 	)
 
 	require.True(t, forward.Found())
@@ -191,6 +246,7 @@ func TestResolvePolicy_EffectiveDatingExcludesExpired(t *testing.T) {
 	res := detentionengine.ResolvePolicy(
 		[]*detentionpolicy.DetentionPolicy{expired, current},
 		matchInput(),
+		pulid.Nil,
 	)
 
 	require.True(t, res.Found())
@@ -209,6 +265,7 @@ func TestResolvePolicy_NotYetEffectiveIsExcluded(t *testing.T) {
 	res := detentionengine.ResolvePolicy(
 		[]*detentionpolicy.DetentionPolicy{future},
 		matchInput(),
+		pulid.Nil,
 	)
 
 	assert.False(t, res.Found())
@@ -238,6 +295,7 @@ func TestResolvePolicy_VerdictsExplainEveryCandidate(t *testing.T) {
 	res := detentionengine.ResolvePolicy(
 		[]*detentionpolicy.DetentionPolicy{winner, wrongCustomer, inactive, appointmentOnly},
 		in,
+		pulid.Nil,
 	)
 
 	require.True(t, res.Found())
@@ -265,6 +323,7 @@ func TestResolvePolicy_NilCandidatesAreSkipped(t *testing.T) {
 	res := detentionengine.ResolvePolicy(
 		[]*detentionpolicy.DetentionPolicy{nil, policy("OK", nil), nil},
 		matchInput(),
+		pulid.Nil,
 	)
 
 	require.True(t, res.Found())
@@ -286,6 +345,7 @@ func TestResolvePolicy_ExplanationNamesTheRunnerUp(t *testing.T) {
 	res := detentionengine.ResolvePolicy(
 		[]*detentionpolicy.DetentionPolicy{customer, facility},
 		matchInput(),
+		pulid.Nil,
 	)
 
 	require.True(t, res.Found())
@@ -300,6 +360,7 @@ func TestResolvePolicy_SingleMatchExplanation(t *testing.T) {
 	res := detentionengine.ResolvePolicy(
 		[]*detentionpolicy.DetentionPolicy{policy("ONLY", nil)},
 		matchInput(),
+		pulid.Nil,
 	)
 
 	require.True(t, res.Found())

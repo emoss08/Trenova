@@ -3,8 +3,8 @@ package fuelpurchaseservice_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +37,7 @@ func TestPlanCreatePurchase_ResolvesWhatCreateWouldSaveAndSavesNothing(t *testin
 	})
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "jurisdictionId", fieldErr.Field)
+	assert.Equal(t, "jurisdictionId", fieldErr.Field())
 }
 
 func TestPlanUpdatePurchase_ShowsTheChangeWithoutSavingIt(t *testing.T) {
@@ -77,7 +77,7 @@ func TestPlanUpdatePurchase_ShowsTheChangeWithoutSavingIt(t *testing.T) {
 	})
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "source", fieldErr.Field)
+	assert.Equal(t, "source", fieldErr.Field())
 }
 
 func TestPlanDeletePurchase_RefusesAStaleVersion(t *testing.T) {
@@ -174,7 +174,7 @@ func TestPlanCommit_ListsThePurchasesAndCommitsNothing(t *testing.T) {
 	})
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "status", fieldErr.Field)
+	assert.Equal(t, "status", fieldErr.Field())
 }
 
 func TestPlanDiscard_ShowsTheDiscardAndRefusesACommittedImport(t *testing.T) {

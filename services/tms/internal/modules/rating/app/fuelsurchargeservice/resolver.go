@@ -5,7 +5,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -59,7 +59,7 @@ func (s *Service) ResolveShipmentCharge(
 
 	program = applyOverrideTerms(program, req.Override)
 
-	loc, err := orgzone.Location(ctx, s.organizations, tenantInfo)
+	loc, err := tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
 	if err != nil {
 		log.Warn("failed to load organization timezone", zap.Error(err))
 		return nil, nil

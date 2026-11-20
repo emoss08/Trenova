@@ -453,6 +453,7 @@ func (s *Service) processTransaction(
 		return outcome
 	}
 	outcome = s.receive(ctx, &received{
+		interchange: interchange,
 		file:        file,
 		partner:     partner,
 		message:     message,

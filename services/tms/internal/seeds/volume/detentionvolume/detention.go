@@ -2,10 +2,12 @@ package detentionvolume
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hash/fnv"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionengine"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
@@ -87,12 +89,13 @@ var (
 )
 
 type Deriver struct {
-	g        *volumegen.Generator
-	now      int64
-	policies []*detentionpolicy.DetentionPolicy
-	payRates map[pulid.ID]decimal.NullDecimal
-	counts   map[detention.OccurrenceStatus]int
-	total    int
+	g               *volumegen.Generator
+	now             int64
+	policies        []*detentionpolicy.DetentionPolicy
+	defaultPolicyID pulid.ID
+	payRates        map[pulid.ID]decimal.NullDecimal
+	counts          map[detention.OccurrenceStatus]int
+	total           int
 }
 
 type Derived struct {
@@ -119,17 +122,28 @@ func Load(ctx context.Context, g *volumegen.Generator) (*Deriver, error) {
 		return nil, fmt.Errorf("load detention policies: %w", err)
 	}
 
+	control, err := shipmentcontroldb.ShipmentControls.Query().One(ctx, g.DB)
+	if err != nil && !errors.Is(err, keel.ErrNotFound) {
+		return nil, fmt.Errorf("load shipment control: %w", err)
+	}
+
+	var defaultPolicyID pulid.ID
+	if control != nil && control.DefaultDetentionPolicyID != nil {
+		defaultPolicyID = *control.DefaultDetentionPolicyID
+	}
+
 	rates, err := loadPayRates(ctx, g)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Deriver{
-		g:        g,
-		now:      volumegen.Unix(g.Now),
-		policies: policies,
-		payRates: rates,
-		counts:   make(map[detention.OccurrenceStatus]int),
+		g:               g,
+		now:             volumegen.Unix(g.Now),
+		policies:        policies,
+		defaultPolicyID: defaultPolicyID,
+		payRates:        rates,
+		counts:          make(map[detention.OccurrenceStatus]int),
 	}, nil
 }
 
@@ -249,7 +263,7 @@ func (d *Deriver) compute(
 		StopType:       stop.Type,
 		ScheduleType:   stop.ScheduleType,
 		Timestamp:      *stop.ActualArrival,
-	})
+	}, d.defaultPolicyID)
 	if !resolution.Found() {
 		return nil
 	}

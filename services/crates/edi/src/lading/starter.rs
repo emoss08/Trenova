@@ -4,7 +4,9 @@
 
 use serde::{Deserialize, Serialize};
 
+use super::check::line_ending_word;
 use super::project::SourceFile;
+use crate::x12::separators::LineEnding;
 
 /// What the starter is for.
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -36,15 +38,19 @@ pub struct StarterRequest {
     /// The element, segment, component and repetition separators Trenova writes.
     #[serde(default)]
     pub separators: Option<Vec<String>>,
+    /// What Trenova writes after each segment terminator.
+    #[serde(default)]
+    pub line_ending: Option<LineEnding>,
     /// `test` or `production`.
     #[serde(default)]
     pub usage: Option<String>,
     /// The functional acknowledgment: `997`, `999` or `none`.
     #[serde(default)]
     pub acknowledge: Option<String>,
-    /// How many minutes the partner has to acknowledge what Trenova sends.
+    /// How many seconds the partner has to acknowledge what Trenova sends, from one second to
+    /// a week; half an hour when none.
     #[serde(default)]
-    pub ack_within: Option<u32>,
+    pub ack_within_seconds: Option<u32>,
     /// The sets the partner exchanges (`204`, `990`, `214`, `210`); every set of the role when
     /// empty.
     #[serde(default)]
@@ -85,7 +91,7 @@ interchange {
   us {{usQualifier}} "{{usId}}"
 {{group}}  version {{version}}
   separators {{separators}}
-  usage {{usage}}
+{{lineEnding}}  usage {{usage}}
 }
 
 zone {{zone}}
@@ -110,7 +116,7 @@ crosswalk purposes: Code<B2A01> <-> TenderPurpose {
   "00" <-> Original
   "01" <-> Cancel
   "04" <-> Change
-  "05" -> Change
+  "05" <-> Replace
   else -> Original
 }
 
@@ -247,11 +253,12 @@ property "every event writes a status" {
 const INVOICE_OUT: &str = r#"map invoiceOut
   from freightInvoice
   to   x12.004010.210
+  use  common
 
 B3 {
   02 <- number
   03 <- key
-  04 <- "PP"
+  04 <- payment via payments ?? "PP"
   06 <- date
   07 <- total
   09 <- deliveryDate
@@ -273,6 +280,11 @@ L3 { 05 <- total }
 test "an invoice writes its total" {
   given freightInvoice { number: "INV-1", date: @2026-01-12, total: $1_000.00 }
   expect x12 contains "L3{{e}}{{e}}{{e}}{{e}}{{e}}100000{{s}}"
+}
+
+test "an invoice says who pays, as the tender did" {
+  given freightInvoice { number: "INV-1", date: @2026-01-12, total: $1_000.00, payment: Collect }
+  expect x12 contains "B3{{e}}{{e}}INV-1{{e}}{{e}}CC{{e}}"
 }
 "#;
 
@@ -303,7 +315,7 @@ send 210 via invoiceOut on InvoicePosted
 ";
 
 const EXPECT: &str = r#"
-expect {{ack}} for every send within {{ackWithin}} min else resend 1 then escalate "{{label}} has not acknowledged {message.set} {message.control}"
+expect {{ack}} for every send within {{ackWithin}} else resend 1 then escalate "{{label}} has not acknowledged {message.set} {message.control}"
 "#;
 
 const CARRIER_TENDER_TESTS: &str = r#"
@@ -491,8 +503,8 @@ test "an offered load is tendered" {
   event TenderOffered {
     key: "L-1001"
     stops: [
-      { sequence: 1, type: Pickup, window: { start: @2026-01-10T08:00[America/Chicago] } },
-      { sequence: 2, type: Delivery, window: { start: @2026-01-11T10:00[America/Chicago] } }
+      { sequence: 1, type: Pickup, name: "Dock 4", window: { start: @2026-01-10T08:00[America/Chicago] } },
+      { sequence: 2, type: Delivery, name: "Store 12", window: { start: @2026-01-11T10:00[America/Chicago] } }
     ]
   }
   expect sent 204
@@ -540,6 +552,7 @@ struct Envelope {
     usage: &'static str,
     ack: &'static str,
     ack_within: u32,
+    line_ending: LineEnding,
 }
 
 impl Envelope {
@@ -580,8 +593,15 @@ impl Envelope {
                     .iter()
                     .collect::<std::collections::BTreeSet<_>>()
                     .len();
-                (chars.len() == 4 && distinct == 4)
-                    .then(|| [chars[0], chars[1], chars[2], chars[3]])
+                match chars.as_slice() {
+                    [element, segment, component, repetition] if distinct == 4 => {
+                        Some([*element, *segment, *component, *repetition])
+                    }
+                    [element, segment, component] if distinct == 3 && !chars.contains(&'^') => {
+                        Some([*element, *segment, *component, '^'])
+                    }
+                    _ => None,
+                }
             })
             .unwrap_or(['*', '~', '>', '^']);
         let usage = match request.usage.as_deref() {
@@ -605,10 +625,16 @@ impl Envelope {
             usage,
             ack,
             ack_within: request
-                .ack_within
-                .filter(|minutes| (1..=10_080).contains(minutes))
-                .unwrap_or(30),
+                .ack_within_seconds
+                .filter(|seconds| (1..=MAX_ACK_WITHIN).contains(seconds))
+                .unwrap_or(DEFAULT_ACK_WITHIN),
+            line_ending: request.line_ending.unwrap_or_default(),
         }
+    }
+
+    /// Whether the version has a repetition separator: 004020 and later.
+    fn repeats(&self) -> bool {
+        self.version.as_str() >= "004020"
     }
 
     /// An interchange from the partner holding one transaction set.
@@ -631,7 +657,11 @@ impl Envelope {
             pad(&self.us.1),
             "260109".to_owned(),
             "1200".to_owned(),
-            repetition.to_string(),
+            if self.repeats() {
+                repetition.to_string()
+            } else {
+                "U".to_owned()
+            },
             "00401".to_owned(),
             format!("{control:09}"),
             "0".to_owned(),
@@ -661,12 +691,12 @@ impl Envelope {
         lines.push(format!("SE{element}{}{element}0001", body.len() + 2));
         lines.push(format!("GE{element}1{element}{control}"));
         lines.push(format!("IEA{element}1{element}{control:09}"));
-        lines
-            .into_iter()
-            .map(|line| format!("{line}{segment}"))
-            .collect::<Vec<_>>()
-            .join("\n")
-            + "\n"
+        let after = match self.line_ending {
+            LineEnding::None => "\n",
+            written => written.as_str(),
+        };
+        let terminator = format!("{segment}{after}");
+        lines.join(&terminator) + &terminator
     }
 }
 
@@ -777,6 +807,24 @@ pub fn document_sample(document: &str) -> Option<&'static str> {
     }
 }
 
+/// The longest an acknowledgment may take, in seconds: a week.
+const MAX_ACK_WITHIN: u32 = 604_800;
+
+/// How long a partner has to acknowledge when the request says nothing, in seconds.
+const DEFAULT_ACK_WITHIN: u32 = 1_800;
+
+/// Seconds as a Lading duration in the largest unit that holds them exactly: `45 s`, `30 min`,
+/// `4 h`, `2 d`.
+fn duration_text(seconds: u32) -> String {
+    [(86_400, "d"), (3_600, "h"), (60, "min")]
+        .into_iter()
+        .find(|(unit, _)| seconds.is_multiple_of(*unit))
+        .map_or_else(
+            || format!("{seconds} s"),
+            |(unit, name)| format!("{} {name}", seconds / unit),
+        )
+}
+
 /// The starter project for a request.
 #[must_use]
 #[allow(clippy::too_many_lines)]
@@ -796,6 +844,7 @@ pub fn starter(request: &StarterRequest) -> Starter {
     let separators = envelope
         .separators
         .iter()
+        .take(if envelope.repeats() { 4 } else { 3 })
         .map(|c| format!("\"{}\"", c.escape_default()))
         .collect::<Vec<_>>()
         .join(" ");
@@ -804,6 +853,10 @@ pub fn starter(request: &StarterRequest) -> Starter {
         .as_ref()
         .map(|(theirs, ours)| format!("  group \"{theirs}\" <-> \"{ours}\"\n"))
         .unwrap_or_default();
+    let line_ending = match line_ending_word(envelope.line_ending) {
+        "none" => String::new(),
+        word => format!("  line ending {word}\n"),
+    };
     let fill = |template: &str| {
         template
             .replace("{{name}}", &name)
@@ -818,7 +871,8 @@ pub fn starter(request: &StarterRequest) -> Starter {
             .replace("{{usage}}", envelope.usage)
             .replace("{{zone}}", &zone)
             .replace("{{ack}}", envelope.ack)
-            .replace("{{ackWithin}}", &envelope.ack_within.to_string())
+            .replace("{{ackWithin}}", &duration_text(envelope.ack_within))
+            .replace("{{lineEnding}}", &line_ending)
             .replace(
                 "{{e}}",
                 &envelope.separators[0].escape_default().to_string(),
@@ -998,10 +1052,11 @@ impl From<StarterFile> for SourceFile {
 
 #[cfg(test)]
 mod tests {
-    use super::{StarterRequest, sanitize, starter};
+    use super::{StarterRequest, duration_text, sanitize, starter};
     use crate::lading::check::check;
     use crate::lading::project::{Context, Org, Project, Sample};
     use crate::lading::testing::run_tests;
+    use crate::x12::separators::LineEnding;
 
     fn checked(request: &StarterRequest) {
         let role = request.role.as_str();
@@ -1093,6 +1148,16 @@ mod tests {
     }
 
     #[test]
+    fn an_acknowledgment_window_is_written_in_its_largest_exact_unit() {
+        assert_eq!(duration_text(45), "45 s");
+        assert_eq!(duration_text(90), "90 s");
+        assert_eq!(duration_text(1_800), "30 min");
+        assert_eq!(duration_text(14_400), "4 h");
+        assert_eq!(duration_text(5_400), "90 min");
+        assert_eq!(duration_text(604_800), "7 d");
+    }
+
+    #[test]
     fn the_carrier_starter_is_ready() {
         checked(&request("carrier"));
     }
@@ -1111,7 +1176,8 @@ mod tests {
         carrier.separators = Some(vec!["|".into(), "\n".into(), ":".into(), "^".into()]);
         carrier.usage = Some("production".into());
         carrier.acknowledge = Some("999".into());
-        carrier.ack_within = Some(60);
+        carrier.ack_within_seconds = Some(3_600);
+        carrier.line_ending = Some(LineEnding::CrLf);
         carrier.sets = vec!["204".into(), "990".into()];
         checked(&carrier);
         let built = starter(&carrier);
@@ -1121,9 +1187,24 @@ mod tests {
             "{partner}"
         );
         assert!(partner.contains("usage production"), "{partner}");
+        assert!(
+            partner.contains("separators \"|\" \"\\n\" \":\"\n"),
+            "004010 has no repetition separator: {partner}"
+        );
+        assert!(
+            built.samples[0].content.contains("|U|00401|"),
+            "{}",
+            built.samples[0].content
+        );
         let flow = &built.files.last().expect("flow").source;
         assert!(flow.contains("acknowledge with 999"), "{flow}");
-        assert!(flow.contains("within 60 min"), "{flow}");
+        assert!(flow.contains("within 1 h else"), "{flow}");
+        assert!(partner.contains("  line ending crlf\n"), "{partner}");
+        assert!(
+            built.samples[0].content.contains("\r\nGS|"),
+            "{:?}",
+            built.samples[0].content
+        );
         assert!(!flow.contains("send 214"), "{flow}");
         assert!(
             built

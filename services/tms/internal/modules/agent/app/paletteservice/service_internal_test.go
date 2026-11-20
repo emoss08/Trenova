@@ -50,7 +50,7 @@ func TestValidQuestion_TrimsItAndRefusesAnEmptyOne(t *testing.T) {
 	_, err = validQuestion(&paletteports.Question{Content: "   "})
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "content", multiErr.Errors[0].Field)
+	assert.Equal(t, "content", multiErr.Errors[0].Field())
 }
 
 func TestSeed_OpensTheDeskConversationWithTheQuestionAndTheAnswer(t *testing.T) {

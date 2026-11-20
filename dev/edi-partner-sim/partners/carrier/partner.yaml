@@ -1,0 +1,54 @@
+name: carrier
+display: Quarrystone Freight Lines
+role: carrier
+zone: America/Denver
+
+them:
+  qualifier: "02"
+  id: QYSF
+  group: QYSF
+  scac: QYSF
+trenova:
+  qualifier: ZZ
+  id: TRENOVABRK
+  group: TRENOVA
+
+envelope:
+  version: "004010"
+  separators:
+    element: "|"
+    segment: "~"
+    component: ":"
+    repetition: "^"
+  terminator: crlf
+  squeezedIsa: false
+  usage: T
+
+transport:
+  as2:
+    id: QYSF-AS2
+    signed: true
+    encrypted: true
+    compressed: true
+    mdn: async
+
+batching:
+  transactionsPerGroup: 1
+  groupsPerInterchange: 1
+
+acknowledgment:
+  sends: "997"
+  expects: "997"
+  ta1: false
+  delay: 2m
+  reject:
+    when: errors
+    sets: []
+  never: 0
+
+answers:
+  policy: accept
+  pace: 2s
+
+sends: ["990", "214", "210", "997"]
+receives: ["204", "997"]

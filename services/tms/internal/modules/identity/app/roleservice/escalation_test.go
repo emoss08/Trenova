@@ -300,7 +300,7 @@ func TestCreateRole_RefusesParentsInAnotherOrganization(t *testing.T) {
 	require.Error(t, err)
 	var validationErr *errortypes.Error
 	require.True(t, errors.As(err, &validationErr))
-	assert.Equal(t, "parentRoleIds", validationErr.Field)
+	assert.Equal(t, "parentRoleIds", validationErr.Field())
 }
 
 func TestCreateRole_CannotCreateASystemRole(t *testing.T) {

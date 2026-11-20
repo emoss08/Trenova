@@ -473,8 +473,7 @@ input UpdateCarrierSettlementControlInput {
   varianceToleranceMinor: Int!
   autoMatchInboundInvoices: Boolean!
   autoAcceptWithinTolerance: Boolean!
-  "Omitted leaves the current setting as it is."
-  holdUntilInvoiceMatched: Boolean
+  holdUntilInvoiceMatched: Boolean!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
 }

@@ -328,7 +328,9 @@ Every check of one validation goes to the database as one `keel.Batch` in one re
 transaction (or the caller's): each uniqueness check is a `SELECT EXISTS`, and references to
 the same table, column and conditions share one `col = ANY($1)` read. A reference that is not
 by `id`, or must match more than existence, says so on `WithReference`
-(`Column: "user_id"`, `Conditions` for an active driving position); a list of references
+(`Column: "user_id"`, `Conditions` for an active driving position; a condition's `Op` also
+tests for null or for an effective date already begun, as the default detention policy in
+`shipmentcontrolservice` does); a list of references
 (intermediate stops) is a `WithReferenceList`. Tables are named by their keel name and resolved
 through the generated catalog, so a validator imports neither the checker nor another
 module's `*db` package. A field that already failed validation is not checked again: its
@@ -666,6 +668,23 @@ a write touched (`keel_rollup_dirty`) and a refresh that recomputes them. The de
   protects it, and `reconcile()` revokes the application role's writes on every table named in
   `keel_rollup_state`: only the refresh writes a rollup. A tenant writes only its own dirty
   marks and reads none ([row-level-security.md](../row-level-security.md)).
+- **A sum that must be exact now is kept in the writing transaction, not refreshed.** A keel
+  rollup lags its source by up to a refresh, which an analytics page tolerates and a money
+  figure a person is about to send does not. Keep that sum in a plain table maintained by
+  statement triggers with transition tables (`INSERT … ON CONFLICT DO UPDATE SET n = n +
+  EXCLUDED.n`, rows grouped and ordered so concurrent writers lock in one order; deletes
+  subtract), backfilled in the migration that adds the triggers, and read it alongside the
+  source rows of the one open bucket: a customer's opening balance is
+  `customer_ledger_monthly_balances` before the start's month plus that month's entries up to
+  the start (`accountsreceivablerepository.ledgerBalanceQuery`); an organization's stored bytes
+  are `document_storage_totals`.
+- **Keep a filter that changes after the write out of the stored key.** When a sum leaves out
+  rows by a condition decided elsewhere and later (an invoice sold to a non-recourse factor,
+  which follows the factor, the agreement and charge-backs), store the sum by the record the
+  condition is about and apply the condition when reading: a customer's credit exposure is its
+  monthly balances less the `customer_ledger_invoice_balances` rows whose invoice is sold without
+  recourse now (`customerledgerrepository.nonRecourseFactoredQuery`). A partial index on the
+  rows that still carry a balance keeps that read to the open items.
 
 ## Caching
 

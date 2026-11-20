@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/directoryaccounts"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/scim"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -120,7 +120,7 @@ func (s *Service) CreateUser(
 
 	ctx = scopedTo(ctx, dir)
 	if !timeutils.IsValidLocation(desired.profile.Timezone) {
-		zone, zoneErr := orgzone.Location(ctx, s.organizations, dir.TenantInfo())
+		zone, zoneErr := tenantports.OrganizationLocation(ctx, s.organizations, dir.TenantInfo())
 		if zoneErr != nil {
 			return nil, zoneErr
 		}

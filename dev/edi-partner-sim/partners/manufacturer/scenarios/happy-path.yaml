@@ -1,0 +1,20 @@
+name: a tender is accepted, delivered, invoiced and every document acknowledged
+description: >
+  The baseline conversation: Kestrel tenders a load, Trenova acknowledges it, a planner accepts,
+  the load is dispatched and delivered, its stop events go out as 214s, the posted invoice goes
+  out as a 210 for the tendered total, and Kestrel's 997s reconcile every document Trenova sent.
+within: 3m
+steps:
+  - send: { set: "204", as: t1 }
+  - expect: { ack: t1, accepted: true, within: 2m }
+  - trenova: { decide: t1, decision: accept }
+  - expect: { wire: "990", about: t1, elements: { B1-04: A } }
+  - expect: { trenova: { shipment: t1 } }
+  - trenova: { dispatch: t1 }
+  - trenova: { deliver: t1 }
+  - advance: { about: t1, by: 5m }
+  - expect: { wire: "214", about: t1, statuses: [X3, AF, X1, D1] }
+  - trenova: { invoice: t1 }
+  - expect: { wire: "210", about: t1, total: tendered }
+  - expect: { reconciled: t1, within: 4m }
+  - expect: { trenova: { shipment: t1, status: Invoiced } }

@@ -588,10 +588,15 @@ tasks:
         vars:
           DOCKER_SERVICES: "{{.DOCKER_MINIMAL_SERVICES}}"
 
-  docker-down:
-    desc: Stop all services
+  docker-up-all:
+    desc: "Start every service, the optional profiles included (clamav, samsara-sim, mail-sim); clamav alone reserves 3G"
     cmds:
-      - "{{.DOCKER_COMPOSE_LOCAL}} down"
+      - "{{.DOCKER_COMPOSE_LOCAL}} --profile clamav --profile samsara-sim --profile mail-sim up -d"
+
+  docker-down:
+    desc: Stop all services, the optional profiles included
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} --profile clamav --profile samsara-sim --profile mail-sim down"
 
   docker-restart:
     desc: Restart all services
@@ -642,6 +647,12 @@ tasks:
     cmds:
       - "{{.DEVDB_PATH}} reset -yes"
       - "{{.DEVDB_PATH}} up -env {{.DB_ENV}}"
+
+  db-roles:
+    desc: "Create or update the application and system login roles named in config (database.user, database.system.user); run after db-migrate on a new database"
+    deps: [build-devdb]
+    cmds:
+      - "{{.DEVDB_PATH}} provision-roles"
 
   db-setup:
     desc: Set up a new database (migrate and seed)

@@ -1,0 +1,19 @@
+guide quarrystone.214 from x12.004010.214 "Quarrystone Freight Lines Shipment Status 3.4"
+
+/// Quarrystone sends one status per message, quoting its PRO, Trenova's shipment ID and the BOL.
+B10 { 01 required; 02 required; 03 fixed "QYSF" }
+L11 max 2 { 02 codes "BM", "PO" }
+MAN unused
+K1 unused
+AT8 unused
+loop 0100 unused
+loop 0200 unused
+loop 0205 required max 10
+0205.0210.AT7 { 01 required codes "X3", "AF", "X1", "D1", "SD"; 02 required; 05 required; 06 required; 07 required codes "CT", "ET", "MT", "PT" }
+0205.0210.MS1 { 01 required; 02 required; 03 codes "US" }
+0205.0210.MS2 { 01 fixed "QYSF"; 02 required }
+0205.0210.M7 unused
+0205.L11 max 1 { 02 codes "QN" }
+loop 0205.0220 unused
+loop 0205.0250 unused
+loop 0205.0260 unused

@@ -243,6 +243,9 @@ func (s *Service) applyEscrowTransaction(
 	tx *payescrow.EscrowTransaction,
 ) (*payescrow.EscrowAccount, error) {
 	StampEscrowTransaction(account, tx)
+	if tx.ID.IsNil() {
+		tx.ID = pulid.MustNew("esctx_")
+	}
 
 	multiErr := errortypes.NewMultiError()
 	tx.Validate(multiErr)
@@ -251,6 +254,9 @@ func (s *Service) applyEscrowTransaction(
 	}
 
 	if _, err := s.escrowRepo.AppendTransaction(ctx, tx); err != nil {
+		return nil, err
+	}
+	if _, err := s.escrowJournal.PostEscrowTransaction(ctx, account, tx); err != nil {
 		return nil, err
 	}
 	account.BalanceMinor = tx.BalanceAfterMinor

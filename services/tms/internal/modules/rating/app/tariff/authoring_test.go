@@ -275,7 +275,7 @@ func TestBillingContent_RefusesWhatCannotRate(t *testing.T) {
 			}, tt.billing)
 			var validation *errortypes.Error
 			require.ErrorAs(t, err, &validation)
-			assert.Equal(t, FieldFormulaTemplateID, validation.Field)
+			assert.Equal(t, FieldFormulaTemplateID, validation.Field())
 			assert.Contains(t, validation.Error(), tt.wantErr)
 		})
 	}

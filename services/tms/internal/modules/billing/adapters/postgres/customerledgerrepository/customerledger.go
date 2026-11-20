@@ -55,27 +55,39 @@ func (r *repository) SumBalanceAsOf(
 	req customerledgerports.SumCustomerLedgerBalanceRequest,
 ) (int64, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cle := customerledgerdb.CustomerLedgerEntries
-		total, err := keel.IntoOne[int64](ctx, r.db.Keel(ctx), cle.
-			Pick(keel.NumericOf(cle.AmountMinor.Sum()).Coalesce(0)).
-			Where(cle.TransactionDate.Lte(req.AsOfDate)))
+		parts, err := keel.Into[int64](ctx, r.db.Keel(ctx), balanceAsOfQuery(req.AsOfDate))
 		if err != nil {
 			r.l.Error("failed to sum customer ledger balance", zap.Error(err))
 			return 0, err
 		}
 
+		var total int64
+		for _, part := range parts {
+			total += part
+		}
 		return total, nil
 	})
 }
 
-func nonRecourseFactoredEntry(cle *customerledgerdb.CustomerLedgerEntriesTable) keel.Pred {
-	inv := invoicedb.Invoices.As("inv")
-	return keel.Exists(inv.Where(
-		inv.ID.EqCol(cle.RelatedInvoiceID.Coalesce(
-			keel.CaseString().When(cle.SourceObjectType.Eq("Invoice"), cle.SourceObjectID).End(),
-		)),
-		receivablesql.SoldWithoutRecourse(inv),
-	))
+func balanceAsOfQuery(asOf int64) keel.Compound {
+	cut := customerledger.MonthStart(asOf + 1)
+	return keel.UnionAll(closedMonthsBeforeQuery(cut), entriesBetweenQuery(cut, asOf))
+}
+
+func closedMonthsBeforeQuery(cut int64) keel.Query[*customerledger.MonthlyBalance] {
+	mb := customerledgerdb.MonthlyBalances
+	return mb.
+		Pick(keel.NumericOf(mb.AmountMinor.Sum()).Coalesce(0)).
+		Where(mb.MonthStart.Lt(cut))
+}
+
+func entriesBetweenQuery(
+	from, through int64,
+) keel.Query[*customerledger.CustomerLedgerEntry] {
+	cle := customerledgerdb.CustomerLedgerEntries
+	return cle.
+		Pick(keel.NumericOf(cle.AmountMinor.Sum()).Coalesce(0)).
+		Where(cle.TransactionDate.Gte(from), cle.TransactionDate.Lte(through))
 }
 
 type customerBalance struct {
@@ -92,21 +104,62 @@ func (r *repository) SumCustomerBalances(
 		return balances, nil
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int64, error) {
-		cle := customerledgerdb.CustomerLedgerEntries
-		rows, err := keel.Into[customerBalance](ctx, r.db.Keel(ctx), cle.
-			Pick(cle.CustomerID, keel.NumericOf(cle.AmountMinor.Sum()).Coalesce(0)).
-			Where(
-				cle.CustomerID.In(req.CustomerIDs...),
-				keel.When(req.ExcludeNonRecourseFactored, keel.Not(nonRecourseFactoredEntry(cle))),
-			).
-			Group(cle.CustomerID))
+		totals, err := keel.Into[customerBalance](
+			ctx,
+			r.db.Keel(ctx),
+			customerTotalsQuery(req.CustomerIDs),
+		)
 		if err != nil {
 			r.l.Error("failed to sum customer balances", zap.Error(err))
 			return nil, err
 		}
-		for _, rec := range rows {
+		for _, rec := range totals {
 			balances[rec.CustomerID] = rec.Balance
+		}
+		if !req.ExcludeNonRecourseFactored {
+			return balances, nil
+		}
+
+		sold, err := keel.Into[customerBalance](
+			ctx,
+			r.db.Keel(ctx),
+			nonRecourseFactoredQuery(req.CustomerIDs),
+		)
+		if err != nil {
+			r.l.Error("failed to sum non-recourse factored balances", zap.Error(err))
+			return nil, err
+		}
+		for _, rec := range sold {
+			balances[rec.CustomerID] -= rec.Balance
 		}
 		return balances, nil
 	})
+}
+
+func customerTotalsQuery(
+	customerIDs []pulid.ID,
+) keel.Query[*customerledger.MonthlyBalance] {
+	mb := customerledgerdb.MonthlyBalances
+	return mb.
+		Pick(mb.CustomerID, keel.NumericOf(mb.AmountMinor.Sum()).Coalesce(0)).
+		Where(mb.CustomerID.In(customerIDs...)).
+		Group(mb.CustomerID)
+}
+
+func nonRecourseFactoredQuery(
+	customerIDs []pulid.ID,
+) keel.Query[*customerledger.InvoiceBalance] {
+	ib := customerledgerdb.InvoiceBalances
+	inv := invoicedb.Invoices.As("inv")
+	return ib.
+		Pick(ib.CustomerID, keel.NumericOf(ib.AmountMinor.Sum()).Coalesce(0)).
+		Where(
+			ib.CustomerID.In(customerIDs...),
+			ib.AmountMinor.Ne(0),
+			keel.Exists(inv.Where(
+				inv.ID.EqCol(ib.InvoiceID),
+				receivablesql.SoldWithoutRecourse(inv),
+			)),
+		).
+		Group(ib.CustomerID)
 }

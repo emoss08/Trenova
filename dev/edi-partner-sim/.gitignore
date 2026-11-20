@@ -1,3 +1,10 @@
 .sim-identity/
 build/
 .sim-sftp/
+.sim-state.json
+.sim-run
+report.json
+run-report.json
+soak-report.json
+.sim-bin/
+.sim-serve.log

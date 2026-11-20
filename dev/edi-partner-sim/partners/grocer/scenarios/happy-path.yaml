@@ -1,0 +1,17 @@
+name: a reefer run is accepted automatically, delivered and invoiced
+description: >
+  Meadowridge's runs are accepted without a planner (autoAccept). The 990 follows the 997 on its
+  own; the run is dispatched and delivered, its 214s and 210 go out over compressed, encrypted
+  AS2, and Meadowridge's 997s reconcile them.
+within: 4m
+steps:
+  - send: { set: "204", as: t1 }
+  - expect: { ack: t1, accepted: true }
+  - expect: { wire: "990", about: t1, elements: { B1-04: A } }
+  - trenova: { dispatch: t1 }
+  - trenova: { deliver: t1 }
+  - advance: { about: t1, by: 10m }
+  - expect: { wire: "214", about: t1, statuses: [X3, AF, X1, D1] }
+  - trenova: { invoice: t1 }
+  - expect: { wire: "210", about: t1, total: tendered }
+  - expect: { reconciled: t1, within: 6m }

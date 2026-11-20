@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -197,7 +196,7 @@ type Service struct {
 	memories      memoryStore
 	keeper        memoryKeeper
 	retention     retentionReader
-	organizations orgzone.OrganizationReader
+	organizations tenantports.OrganizationReader
 	permissions   permissionChecker
 	redactor      *redactor
 	now           func() int64

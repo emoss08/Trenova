@@ -3,6 +3,7 @@ package customerresolver
 import (
 	"context"
 	"errors"
+	"math"
 	"testing"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -245,12 +246,34 @@ func TestApplyCustomerInput_SetsTheTrackingSettingsOnTheStoredProfile(t *testing
 	assert.Equal(t, &enabledAt, profile.NotificationsEnabledAt, "the service stamps the start time")
 }
 
-func TestClampLinkTTLDays_KeepsAnOutOfRangeNumberFromWrapping(t *testing.T) {
+func TestApplyCustomerInput_RefusesALinkLifetimeThatWouldWrap(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, int16(0), clampLinkTTLDays(-5))
-	assert.Equal(t, int16(30), clampLinkTTLDays(30))
-	assert.Equal(t, int16(181), clampLinkTTLDays(1_000_000))
+	input := customerInput()
+	input.TrackingProfile = &gqlmodel.CustomerTrackingProfileInput{LinkTTLDays: 65_550}
+
+	err := applyCustomerInput(&customer.Customer{}, &input)
+
+	var valErr *errortypes.Error
+	require.ErrorAs(t, err, &valErr)
+	assert.Equal(t, "trackingProfile.linkTtlDays", valErr.Field())
+	assert.Equal(t, errortypes.ErrInvalid, valErr.Code)
+	assert.Equal(t, "Must be between {0} and {1}", valErr.Message)
+	assert.Equal(t, []any{int64(math.MinInt16), int64(math.MaxInt16)}, valErr.Args)
+}
+
+func TestApplyCustomerInput_RefusesABillingCountThatWouldWrap(t *testing.T) {
+	t.Parallel()
+
+	input := customerInput()
+	input.BillingProfile = &gqlmodel.CustomerBillingProfileInput{InvoiceCopies: math.MaxInt16 + 1}
+
+	err := applyCustomerInput(&customer.Customer{}, &input)
+
+	var valErr *errortypes.Error
+	require.ErrorAs(t, err, &valErr)
+	assert.Equal(t, "billingProfile.invoiceCopies", valErr.Field())
+	assert.Equal(t, "Must be between {0} and {1}", valErr.Message)
 }
 
 func TestApplyCustomerInput_KeepsTheCreditReviewOnTheExistingProfile(t *testing.T) {
@@ -287,7 +310,7 @@ func TestApplyCustomerInput_NamesAMalformedCreditLimit(t *testing.T) {
 
 	var valErr *errortypes.Error
 	require.ErrorAs(t, err, &valErr)
-	assert.Equal(t, "billingProfile.creditLimit", valErr.Field)
+	assert.Equal(t, "billingProfile.creditLimit", valErr.Field())
 }
 
 func TestApplyCustomerInput_RequiresAState(t *testing.T) {
@@ -300,7 +323,7 @@ func TestApplyCustomerInput_RequiresAState(t *testing.T) {
 
 	var valErr *errortypes.Error
 	require.ErrorAs(t, err, &valErr)
-	assert.Equal(t, "stateId", valErr.Field)
+	assert.Equal(t, "stateId", valErr.Field())
 }
 
 func TestApplyCustomerPatch_ChangesOnlyTheFieldsItCarries(t *testing.T) {

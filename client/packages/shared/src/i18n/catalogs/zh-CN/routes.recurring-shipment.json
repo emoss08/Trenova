@@ -16,6 +16,7 @@
   "Days your facilities are closed. An occurrence landing on one of these follows the exception policy instead of generating a shipment.": "您的场站关闭的日子。发生时点落在这些日子时，会依例外政策处理，而不会生成运单。",
   "Every generated shipment copies this one's stops, commodities, and charges. Changing it does not touch shipments already generated.": "每笔生成的运单都会复制此运单的停靠点、货品与费用。变更此运单不会影响已生成的运单。",
   "Every scheduled occurrence generates a shipment.": "每个排定的发生时点都会生成一笔运单。",
+  "Exception policy": "例外处理政策",
   "Failed to generate shipment": "生成运单失败",
   "Failed to update series status": "更新系列状态失败",
   "Generate now": "立即生成",

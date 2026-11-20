@@ -168,12 +168,12 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 	require.NoError(t, err)
 
 	request := &ReceiveAS2MessageRequest{
-		InboundToken:     as2ReceiverToken,
-		From:             "PARTNER-AS2",
-		To:               "TRENOVA-AS2",
-		MessageID:        built.MessageID,
-		ContentType:      built.ContentType,
-		TransferEncoding: built.Headers.Get("Content-Transfer-Encoding"),
+		InboundToken:  as2ReceiverToken,
+		From:          "PARTNER-AS2",
+		To:            "TRENOVA-AS2",
+		MessageID:     built.MessageID,
+		ContentType:   built.ContentType,
+		EntityHeaders: built.Headers,
 		DispositionNotificationTo: built.Headers.Get(
 			as2.HeaderDispositionNotificationTo,
 		),
@@ -249,12 +249,12 @@ func TestReceiveAS2MessageRejectsUnsignedWhenPartnerCertConfigured(t *testing.T)
 	require.NoError(t, err)
 
 	result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
-		From:             "PARTNER-AS2",
-		To:               "TRENOVA-AS2",
-		MessageID:        built.MessageID,
-		ContentType:      built.ContentType,
-		TransferEncoding: built.Headers.Get("Content-Transfer-Encoding"),
-		Body:             built.Body,
+		From:          "PARTNER-AS2",
+		To:            "TRENOVA-AS2",
+		MessageID:     built.MessageID,
+		ContentType:   built.ContentType,
+		EntityHeaders: built.Headers,
+		Body:          built.Body,
 	})
 	require.NoError(t, err)
 	require.True(t, result.Rejected)
@@ -339,12 +339,12 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 	require.NoError(t, err)
 
 	result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
-		From:             "PARTNER-AS2",
-		To:               "TRENOVA-AS2",
-		MessageID:        built.MessageID,
-		ContentType:      built.ContentType,
-		TransferEncoding: built.Headers.Get("Content-Transfer-Encoding"),
-		Body:             built.Body,
+		From:          "PARTNER-AS2",
+		To:            "TRENOVA-AS2",
+		MessageID:     built.MessageID,
+		ContentType:   built.ContentType,
+		EntityHeaders: built.Headers,
+		Body:          built.Body,
 	})
 	require.NoError(t, err)
 	require.False(t, result.Rejected)
@@ -448,7 +448,7 @@ func TestReceiveAS2MessageAnswersKnownAndUnknownPairsAlikeWhenNothingVerifies(t 
 			To:                             "TRENOVA-AS2",
 			MessageID:                      built.MessageID,
 			ContentType:                    built.ContentType,
-			TransferEncoding:               built.Headers.Get("Content-Transfer-Encoding"),
+			EntityHeaders:                  built.Headers,
 			DispositionNotificationOptions: "signed-receipt-protocol=required, pkcs7-signature",
 			Body:                           built.Body,
 		})
@@ -602,12 +602,12 @@ func TestReceiveAS2MessageReturnsFailureMDNOnBadPayload(t *testing.T) {
 	require.NoError(t, err)
 
 	result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
-		From:             "PARTNER-AS2",
-		To:               "TRENOVA-AS2",
-		MessageID:        built.MessageID,
-		ContentType:      built.ContentType,
-		TransferEncoding: built.Headers.Get("Content-Transfer-Encoding"),
-		Body:             built.Body,
+		From:          "PARTNER-AS2",
+		To:            "TRENOVA-AS2",
+		MessageID:     built.MessageID,
+		ContentType:   built.ContentType,
+		EntityHeaders: built.Headers,
+		Body:          built.Body,
 	})
 	require.NoError(t, err)
 	require.True(t, result.Rejected)
@@ -667,12 +667,12 @@ func TestReceiveAS2MessageAnswersAFailedDecryptionWithOneFixedReceipt(t *testing
 	require.NoError(t, err)
 
 	result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
-		From:             "PARTNER-AS2",
-		To:               "TRENOVA-AS2",
-		MessageID:        built.MessageID,
-		ContentType:      built.ContentType,
-		TransferEncoding: built.Headers.Get("Content-Transfer-Encoding"),
-		Body:             built.Body,
+		From:          "PARTNER-AS2",
+		To:            "TRENOVA-AS2",
+		MessageID:     built.MessageID,
+		ContentType:   built.ContentType,
+		EntityHeaders: built.Headers,
+		Body:          built.Body,
 	})
 	require.NoError(t, err)
 	require.True(t, result.Rejected)
@@ -749,12 +749,12 @@ func TestReceiveAS2MessageRejectsAnySignerWhenNoPartnerCertificateIsConfigured(t
 			require.NoError(t, err)
 
 			result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
-				From:             "PARTNER-AS2",
-				To:               "TRENOVA-AS2",
-				MessageID:        built.MessageID,
-				ContentType:      built.ContentType,
-				TransferEncoding: built.Headers.Get("Content-Transfer-Encoding"),
-				Body:             built.Body,
+				From:          "PARTNER-AS2",
+				To:            "TRENOVA-AS2",
+				MessageID:     built.MessageID,
+				ContentType:   built.ContentType,
+				EntityHeaders: built.Headers,
+				Body:          built.Body,
 			})
 
 			require.NoError(t, err)

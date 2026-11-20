@@ -82,9 +82,11 @@ type Deps struct {
 	ShipmentCommentRepo shipmentcommentports.ShipmentCommentRepository
 	UserRepo            tenantports.UserRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
+	OrderRepo           orderports.OrderRepository
 	TenderRepo          tenderports.TenderRepository
 	CarrierRepo         carrierports.CarrierRepository
 	ShipmentMoveRepo    shipmentmoveports.ShipmentMoveRepository
+	ShipmentMoves       shipmentmoveports.ShipmentMoveService
 	TrackingEvents      trackingeventports.TrackingEventService
 	ShipmentReader      shipmentserviceports.ShipmentReader
 	ShipmentWriter      shipmentserviceports.ShipmentWriter
@@ -158,7 +160,9 @@ func New(d Deps) *Services {
 		UserRepo:            d.UserRepo,
 	})
 	s.Payloads = edipayloadbuild.New(edipayloadbuild.Params{
+		OrderRepo:          d.OrderRepo,
 		ServiceFailureRepo: d.ServiceFailureRepo,
+		ShipmentRepo:       d.ShipmentRepo,
 		ShipmentSvc:        d.ShipmentReader,
 	})
 	s.TenderMapping = editendermapping.New(editendermapping.Params{
@@ -260,6 +264,7 @@ func New(d Deps) *Services {
 		OrderDerivation:    d.OrderDerivation,
 		ShipmentEventRepo:  d.ShipmentEventRepo,
 		ShipmentLinkRepo:   d.ShipmentLinkRepo,
+		ShipmentMoves:      d.ShipmentMoves,
 		ShipmentRepo:       d.ShipmentRepo,
 		Shipments:          s.Shipments,
 		TransferChangeRepo: d.TransferChangeRepo,
@@ -272,6 +277,7 @@ func New(d Deps) *Services {
 		Logger:         d.Logger,
 		Outbound:       s.Outbound,
 		PartnerRepo:    d.PartnerRepo,
+		Payload:        s.Payloads,
 		ProfileRepo:    d.ProfileRepo,
 		Recipient:      s.Recipients,
 		ShipmentSvc:    d.ShipmentReader,
@@ -286,6 +292,7 @@ func New(d Deps) *Services {
 		Logger:              d.Logger,
 		Outbound:            s.Outbound,
 		PartnerRepo:         d.PartnerRepo,
+		Payload:             s.Payloads,
 		Recipient:           s.Recipients,
 		ShipmentLinkRepo:    d.ShipmentLinkRepo,
 		ShipmentSvc:         d.ShipmentReader,

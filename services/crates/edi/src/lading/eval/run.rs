@@ -149,9 +149,9 @@ pub struct TransactionResult {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WriteResult {
-    /// The interchange.
+    /// The interchange, with the partner's line ending after each segment.
     pub text: String,
-    /// The transaction set alone, ST to SE.
+    /// The transaction set alone, ST to SE, with nothing between its segments.
     pub transaction: String,
     /// The document as written, after its rules' fixes.
     pub document: Json,
@@ -188,6 +188,10 @@ pub struct RunResult {
     pub coverage: BTreeSet<(usize, u32)>,
     /// Evaluation steps used.
     pub steps: u64,
+    /// Whether an outbound map wrote nothing to send: every item held a value its crosswalk
+    /// says is not sent to this partner.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub not_sent: bool,
 }
 
 /// What a run is given, from a request.
@@ -271,6 +275,40 @@ pub fn run(program: &Program, request: &RunRequest) -> RunResult {
         .unmapped
         .dedup_by(|a, b| a.kind == b.kind && a.code == b.code);
     result
+}
+
+/// Writes a document with an outbound map, its rules when `rules` holds, and reads the result
+/// back against the guide, as a run does: what a test's flow sends and a map test's input go
+/// through it.
+#[must_use]
+pub fn write_message(
+    program: &Program,
+    given: &Given,
+    map: &str,
+    json: &Json,
+    rules: bool,
+) -> RunResult {
+    let Some(info) = program.maps.get(map) else {
+        return failed(Message::with(
+            message!("There is no map named {0}"),
+            [Arg::from(map)],
+        ));
+    };
+    let Source::Document(document) = info.source else {
+        return failed(Message::new(message!(
+            "The input is not what this map reads"
+        )));
+    };
+    let request = RunRequest {
+        map: map.to_owned(),
+        input: RunInput::Document(json.clone()),
+        settings: BTreeMap::new(),
+        lookups: Vec::new(),
+        now: None,
+        control: Control::default(),
+        rules,
+    };
+    run_outbound(program, given, &request, info, document, json)
 }
 
 fn failed(message: Message) -> RunResult {
@@ -495,7 +533,7 @@ fn run_x12(
                 entry.document = document;
                 entry.fixes = fixes;
             }
-            Err(Halt::Budget) => result.error = Some(budget()),
+            Err(_) => result.error = Some(budget()),
         }
         entry.unread = unread(&tree)
             .into_iter()
@@ -593,7 +631,7 @@ fn run_document_input(
             entry.document = document;
             entry.fixes = fixes;
         }
-        Err(Halt::Budget) => result.error = Some(budget()),
+        Err(_) => result.error = Some(budget()),
     }
     absorb(&mut result, &mut entry, interp);
     result.transactions.push(entry);
@@ -628,7 +666,7 @@ fn run_outbound(
         for unit in rules_of(program, &request.map) {
             match interp.run_rules(unit, value.clone(), &mut fixes) {
                 Ok(after) => value = after,
-                Err(Halt::Budget) => return failed(budget()),
+                Err(_) => return failed(budget()),
             }
         }
     }
@@ -638,6 +676,14 @@ fn run_outbound(
     let output = match interp.write_document(&mut frame, guide, &stmts) {
         Ok(output) => output,
         Err(Halt::Budget) => return failed(budget()),
+        Err(Halt::NotSent) => {
+            return RunResult {
+                not_sent: true,
+                steps: interp.steps(),
+                coverage: interp.coverage.clone(),
+                ..RunResult::default()
+            };
+        }
     };
     let body = interp.lay_out(guide, &output);
     let (text, transaction) = envelope(program, guide, given, request.control, body);
@@ -713,12 +759,17 @@ pub fn envelope(
     let compiled = &program.guides[guide].compiled;
     let model = compiled.guide();
     let separators = program.partner_separators();
+    let five = model.version.starts_with("005");
     let wire = crate::x12::separators::WireSeparators {
         element: separators[0].to_string(),
         segment: separators[1].to_string(),
         component: separators[2].to_string(),
-        repetition: separators[3].to_string(),
-        line_ending: crate::x12::separators::LineEnding::None,
+        repetition: if five {
+            separators[3].to_string()
+        } else {
+            String::new()
+        },
+        line_ending: program.line_ending(),
     };
     let interchange = program.interchange();
     let party = |them: bool| {
@@ -755,7 +806,6 @@ pub fn envelope(
         .unwrap_or(ZoneValue::UTC);
     let (days, seconds, _) = local(given.now, zone);
     let (year, month, day) = civil_from_days(days);
-    let five = model.version.starts_with("005");
     let text_element = |value: String| Element::Text(value);
     let isa = vec![
         text_element("ISA".into()),
@@ -827,7 +877,10 @@ pub fn envelope(
     .map(|written| written.text)
     .unwrap_or_default();
     let transaction = write(&WriteRequest {
-        separators: Some(wire),
+        separators: Some(crate::x12::separators::WireSeparators {
+            line_ending: crate::x12::separators::LineEnding::None,
+            ..wire
+        }),
         segments: transaction_segments,
         counts: true,
     })

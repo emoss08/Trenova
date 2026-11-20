@@ -490,8 +490,8 @@ input UpdateDashControlInput {
   allowPtoRequests: Boolean!
   sendCredentialReminders: Boolean!
   requireContactChangeApproval: Boolean!
-  driverDigestCadence: DriverDigestCadence
-  driverDigestWeekday: Int
+  driverDigestCadence: DriverDigestCadence!
+  driverDigestWeekday: Int!
   enableDetentionAlerts: Boolean!
   detentionAlertThresholdMinutes: Int!
 }

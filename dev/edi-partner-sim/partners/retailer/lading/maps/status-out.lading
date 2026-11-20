@@ -1,0 +1,51 @@
+map statusOut
+  from shipmentStatus
+  to   tamberlane.214
+  use  common
+
+B10 { 01 <- proNumber ?? key, 02 <- key, 03 <- org.scac }
+L11 when exists bol { 01 <- bol, 02 <- "BM" }
+L11 when exists shipperReference { 01 <- shipperReference, 02 <- "PO" }
+
+// Tamberlane's guide takes the four US time codes; a time Trenova holds in UTC goes out in
+// Tamberlane's own zone instead.
+0205 <- each events as event {
+  let at = if event.at.zoneCode() in usZones then event.at else event.at.inZone(partner.zone)
+  LX { 01 <- index + 1 }
+  0210 {
+    AT7 {
+      01 <- event.kind via statusCodes
+      02 <- event.reason ?? "NS"
+      05 <- at
+      06 <- at
+      07 <- at.zoneCode()
+    }
+    MS1 { 01 <- (event.city ?? "").upper(), 02 <- event.state, 03 <- event.country ?? "US" }
+  }
+  L11 when exists event.stop { 01 <- text(event.stop), 02 <- "QN" }
+}
+
+test "a delivery writes the AT7 with its reason and the MS1" {
+  given shipmentStatus {
+    key: "TS10000004"
+    proNumber: "PRO-3001"
+    bol: "0719744701"
+    events: [{ kind: Delivered, at: @2026-06-04T07:40[America/Chicago], stop: 3, city: "Memphis", state: "TN" }]
+  }
+  expect x12 contains "B10|PRO-3001|TS10000004|TRNV~L11|0719744701|BM~"
+  expect x12 contains "LX|1~AT7|D1|NS|||20260604|0740|CT~MS1|MEMPHIS|TN|US~L11|3|QN~"
+}
+
+test "a delay writes its reason code" {
+  given shipmentStatus {
+    key: "TS10000004"
+    bol: "0719744701"
+    events: [{ kind: Delayed, reason: "AO", at: @2026-06-03T09:15[America/Chicago], city: "Omaha", state: "NE" }]
+  }
+  expect x12 contains "AT7|SD|AO|||20260603|0915|CT~"
+}
+
+test "a time held in UTC goes out in Central time" {
+  given shipmentStatus { key: "TS10000004", bol: "0719744701", events: [{ kind: Delivered, at: @2026-06-04T12:40Z, stop: 3, city: "Memphis", state: "TN" }] }
+  expect x12 contains "|||20260604|0740|CT~"
+}

@@ -1,0 +1,163 @@
+flow tender with kestrel
+
+receive 204 as tender
+  via tenderIn, rules tenderChecks
+  key tender.key
+  acknowledge with 997
+  on Original -> create
+  on Change   -> update stops, commodities, refs, notes keep customer, total
+    hold when tender.total != current.total "Kestrel changed the rate on {tender.key}"
+  on Cancel   -> cancel unless dispatched or later else hold "Kestrel cancelled {tender.key} after dispatch"
+
+respond 990 via responseOut
+  accept automatically when partner.autoAccept and not held and not declined
+  decline automatically when declined and partner.autoDecline
+  otherwise planner decides within partner.answerWithin else escalate "Kestrel tender {tender.key} needs an answer"
+
+send 214 via statusOut on StopArrived, StopDeparted, EtaChanged, Delivered
+  where exists status.bol
+  batch within 5 min
+  until Delivered
+
+send 210 via invoiceOut on InvoicePosted key invoice.key ?? invoice.number
+
+expect 997 for every send within 30 min else resend 2 then escalate "Kestrel has not acknowledged {message.set} {message.control}"
+
+test "a new tender becomes a load and is acknowledged" {
+  receive file "samples/tender-original.x12"
+  expect created
+  expect sent 997
+}
+
+test "the same tender sent again is held, not created twice" {
+  receive file "samples/tender-original.x12"
+  receive file "samples/tender-duplicate.x12"
+  expect held "A load already exists for this tender"
+}
+
+test "a replacement with the same rate updates the load" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  receive file "samples/tender-replace.x12"
+  expect updated
+  expect no held
+}
+
+test "a moved delivery with the same rate updates the load" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  receive file "samples/tender-moved.x12"
+  expect updated
+  expect no held
+}
+
+test "a change to the rate is held for a planner" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  receive file "samples/tender-change.x12"
+  expect held "Kestrel changed the rate on KVW-100037"
+}
+
+test "an added stop changes the rate and is held" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  receive file "samples/tender-added-stop.x12"
+  expect held "Kestrel changed the rate on KVW-100037"
+}
+
+test "a change before its original has no load to update" {
+  receive file "samples/tender-change.x12"
+  expect held "There is no load to update"
+}
+
+test "a cancellation before dispatch cancels the load" {
+  receive file "samples/tender-original.x12"
+  receive file "samples/tender-cancel.x12"
+  expect cancelled
+}
+
+test "a cancellation after dispatch is held" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  event Dispatched { key: "KVW-100037", bol: "8100798987", events: [{ kind: Dispatched, at: @2026-04-26T11:00Z }] }
+  receive file "samples/tender-cancel.x12"
+  expect held "Kestrel cancelled KVW-100037 after dispatch"
+  expect no cancelled
+}
+
+test "a planner's acceptance is answered with a 990" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  expect sent 990 accept
+}
+
+test "a planner's decline is answered with a 990" {
+  receive file "samples/tender-original.x12"
+  respond decline "No trucks in Rockford on the 26th"
+  expect sent 990 decline
+}
+
+test "a tender the rules decline is declined automatically" {
+  receive file "samples/tender-backwards.x12"
+  expect sent 990 decline
+}
+
+test "an unanswered tender escalates after two hours" {
+  receive file "samples/tender-original.x12"
+  advance 2 h
+  expect escalated "Kestrel tender KVW-100037 needs an answer"
+}
+
+test "arrivals within five minutes go out as one 214" {
+  given now = @2026-04-26T13:00Z
+  receive file "samples/tender-original.x12"
+  respond accept
+  event StopArrived { key: "KVW-100037", bol: "8100798987", events: [{ kind: ArrivedPickup, at: @2026-04-26T12:02Z, stop: 1 }] }
+  event StopDeparted { key: "KVW-100037", bol: "8100798987", events: [{ kind: DepartedPickup, at: @2026-04-26T12:55Z, stop: 1 }] }
+  advance 5 min
+  expect sent 214
+}
+
+test "an acknowledged status needs nothing more" {
+  given now = @2026-04-27T00:00Z
+  event Delivered { key: "KVW-100037", bol: "8100798987", events: [{ kind: Delivered, at: @2026-04-26T23:30Z, stop: 2 }] }
+  advance 5 min
+  ack accepted
+  advance 2 h
+  expect no escalated
+}
+
+test "a rejected acknowledgment escalates at once" {
+  given now = @2026-04-27T00:00Z
+  event Delivered { key: "KVW-100037", bol: "8100798987", events: [{ kind: Delivered, at: @2026-04-26T23:30Z, stop: 2 }] }
+  advance 5 min
+  ack rejected
+  expect escalated "The partner rejected 214 0001: Kestrel has not acknowledged 214 0001"
+}
+
+test "a posted invoice is sent" {
+  event InvoicePosted {
+    number: "INV-2001"
+    date: @2026-04-28
+    key: "KVW-100037"
+    bol: "8100798987"
+    payment: ThirdParty
+    total: $1_029.41
+    billTo: { name: "Kestrel Valve Works Accounts Payable" }
+    lines: [{ sequence: 1, description: "Linehaul", amount: $1_029.41 }]
+  }
+  expect sent 210
+}
+
+test "an invoice Kestrel cannot pay is held, not sent" {
+  event InvoicePosted {
+    number: "INV-2001"
+    date: @2026-04-28
+    key: "KVW-100037"
+    bol: "8100798987"
+    total: $1_029.41
+    lines: [{ sequence: 1, description: "Linehaul", amount: $1_029.41 }]
+  }
+  expect held "Kestrel needs the bill-to on every invoice"
+  expect no sent 210
+}

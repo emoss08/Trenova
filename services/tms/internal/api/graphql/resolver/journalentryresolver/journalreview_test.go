@@ -50,5 +50,5 @@ func TestJournalReviewRequestParsesEveryEntryID(t *testing.T) {
 	_, err = journalReviewRequest(authCtx, gqlmodel.JournalReviewInput{EntryIds: []string{"not-an-id"}})
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "entryIds", validation.Field)
+	assert.Equal(t, "entryIds", validation.Field())
 }

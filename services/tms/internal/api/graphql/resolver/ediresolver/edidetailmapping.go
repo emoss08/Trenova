@@ -85,12 +85,14 @@ func tenderStopsToModel(payload *editransfer.LoadTenderPayload) []*gqlmodel.EDIT
 				Address: optionalText(stringutils.FirstNonEmpty(
 					stop.LocationAddressLine1, stop.AddressLine,
 				)),
-				City:         optionalText(stop.LocationCity),
-				State:        optionalText(stop.LocationStateCode),
-				PostalCode:   optionalText(stop.LocationPostalCode),
-				WindowCloses: optionalInt(stop.ScheduledWindowEnd),
-				Pieces:       optionalInt(stop.Pieces),
-				Weight:       optionalInt(stop.Weight),
+				City:           optionalText(stop.LocationCity),
+				State:          optionalText(stop.LocationStateCode),
+				PostalCode:     optionalText(stop.LocationPostalCode),
+				WindowCloses:   optionalInt(stop.ScheduledWindowEnd),
+				Pieces:         optionalInt(stop.Pieces),
+				Weight:         optionalInt(stop.Weight),
+				TemperatureMin: optionalInt(stop.TemperatureMin),
+				TemperatureMax: optionalInt(stop.TemperatureMax),
 			}
 			if opens > 0 {
 				model.WindowOpens = &opens
@@ -114,8 +116,10 @@ func tenderCommoditiesToModel(
 				commodity.CommodityName,
 				commodity.CommodityDescription,
 			),
-			Weight: int(commodity.Weight),
-			Pieces: int(commodity.Pieces),
+			Weight:         int(commodity.Weight),
+			Pieces:         int(commodity.Pieces),
+			TemperatureMin: optionalInt(commodity.TemperatureMin),
+			TemperatureMax: optionalInt(commodity.TemperatureMax),
 		})
 	}
 

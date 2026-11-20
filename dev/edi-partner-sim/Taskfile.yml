@@ -2,23 +2,32 @@ version: "3"
 
 tasks:
   sim:
-    desc: Run the AS2 + SFTP partner simulator (persisted identity + mailbox in ./.sim-*)
+    desc: Serve every partner (AS2, SFTP mailboxes, control API), keeping keys, mailboxes and history in ./.sim-*
     cmds:
-      - go run ./cmd/edi-partner-sim -identity-dir ./.sim-identity -sftp-root ./.sim-sftp {{.CLI_ARGS}}
+      - go run ./cmd/edi-sim serve --identity-dir ./.sim-identity --sftp-root ./.sim-sftp --state ./.sim-state.json {{.CLI_ARGS}}
 
-  e2e:
-    desc: Run the end-to-end EDI scenario against a live Trenova stack
+  conform:
+    desc: Prove every partner's Lading project against its guides, no Trenova needed
     cmds:
-      - go run ./cmd/edi-e2e {{.CLI_ARGS}}
+      - go run ./cmd/edi-sim conform {{.CLI_ARGS}}
+
+  run:
+    desc: Play every partner's scenarios against a running Trenova (needs task sim, the API and the worker)
+    cmds:
+      - go run ./cmd/edi-sim run {{.CLI_ARGS}}
+
+  soak:
+    desc: Hold many happy-path conversations against a running Trenova and measure them
+    cmds:
+      - go run ./cmd/edi-sim soak {{.CLI_ARGS}}
 
   test:
-    desc: Run simulator unit tests
+    desc: Run the simulator's unit tests
     cmds:
-      - go test ./...
+      - go test ./cmd/... ./internal/...
 
   build:
-    desc: Build both binaries
+    desc: Build edi-sim
     cmds:
       - mkdir -p ./build
-      - go build -o ./build/edi-partner-sim{{exeExt}} ./cmd/edi-partner-sim
-      - go build -o ./build/edi-e2e{{exeExt}} ./cmd/edi-e2e
+      - go build -o ./build/edi-sim{{exeExt}} ./cmd/edi-sim

@@ -93,7 +93,7 @@ func TestCheck_RefusesAndRecordsAnInfectedFile(t *testing.T) {
 
 	var refusal *errortypes.Error
 	require.ErrorAs(t, contentscanports.RefusalError("file", err), &refusal)
-	assert.Equal(t, "file", refusal.Field)
+	assert.Equal(t, "file", refusal.Field())
 	assert.Equal(t, []any{"Win.Test.EICAR_HDB-1"}, refusal.Args)
 }
 
@@ -248,7 +248,7 @@ func TestCheck_RefusesAFileTooLargeToScanEvenWhenFailingOpen(t *testing.T) {
 	})
 	var validation *errortypes.Error
 	require.ErrorAs(t, refusal, &validation)
-	assert.Equal(t, "file", validation.Field)
+	assert.Equal(t, "file", validation.Field())
 	assert.Contains(t, refusal.Error(), "too large to be checked for malware")
 	assert.Contains(t, refusal.Error(), "100")
 	assert.NotContains(t, refusal.Error(), "Try again")

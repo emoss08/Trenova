@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
 	"github.com/emoss08/trenova/internal/modules/operations/app/tenderlifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -53,9 +54,11 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	crossref.LocationColumns,
 	crossref.MoveColumns,
 	crossref.InvoiceSettlementColumns,
+	internaledistatussync.New,
 	fx.Annotate(
-		internaledistatussync.New,
-		fx.As(new(shipmenteventports.ShipmentEventObserver)),
+		func(o *internaledistatussync.Observer) shipmenteventports.ShipmentEventObserver {
+			return o
+		},
 		fx.ResultTags(`group:"shipment_event_observers"`),
 	),
 	fx.Annotate(
@@ -160,6 +163,12 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	// EDITenderChannel, so the channel arrives after both services are built.
 	func(s *tenderdispatch.Service, ediTenders *editenderservice.Service) {
 		s.SetEDITenderChannel(ediTenders)
+	},
+	func(
+		observer *internaledistatussync.Observer,
+		moves shipmentmoveports.ShipmentMoveService,
+	) {
+		observer.SetStopActuals(moves)
 	},
 	fx.Annotate(
 		func(

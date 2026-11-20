@@ -306,11 +306,16 @@ func (r *Sources) BenefitPlan(
 		return selectoption.Connection(items, len(items), 0)
 	}
 
+	planYear, err := selectoption.Int16Filter(req.Filters, "planYear")
+	if err != nil {
+		return nil, err
+	}
+
 	result, err := r.BenefitsService.PlanSelectOptions(
 		ctx,
 		&driverpayports.BenefitPlanSelectOptionsRequest{
 			SelectQueryRequest: req.SelectQuery,
-			PlanYear:           selectoption.Int16Filter(req.Filters, "planYear"),
+			PlanYear:           planYear,
 		},
 	)
 	if err != nil {

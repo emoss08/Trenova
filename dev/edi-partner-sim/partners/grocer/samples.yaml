@@ -1,0 +1,45 @@
+- file: tender-original.x12
+  set: "204"
+  seed: 8
+  control: 701
+  variation: { kind: original }
+- file: tender-duplicate.x12
+  set: "204"
+  seed: 8
+  control: 702
+  variation: { kind: duplicate }
+- file: tender-replace.x12
+  set: "204"
+  seed: 8
+  control: 703
+  variation: { kind: replace, delta: { move: { stop: 0, by: 2h } } }
+- file: tender-replace-rate.x12
+  set: "204"
+  seed: 8
+  control: 704
+  variation: { kind: replace, delta: { ratePercent: 6 } }
+- file: tender-replace-added-stop.x12
+  set: "204"
+  seed: 8
+  control: 705
+  variation: { kind: replace, delta: { addStop: true } }
+- file: tender-cancel.x12
+  set: "204"
+  seed: 8
+  control: 706
+  variation: { kind: cancel }
+- file: tender-mixed.x12
+  set: "204"
+  seed: 7
+  control: 710
+  variation: { kind: original }
+- file: tender-frozen.x12
+  set: "204"
+  seed: 25
+  control: 720
+  variation: { kind: original }
+- file: tender-sparse.x12
+  set: "204"
+  seed: 15
+  control: 730
+  variation: { kind: original, sparse: true }

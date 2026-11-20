@@ -548,7 +548,7 @@ func TestBulkTransferToBilling_RejectsEmptyAndOversizedRequests(t *testing.T) {
 			assert.Nil(t, response)
 			var multiErr *errortypes.MultiError
 			require.ErrorAs(t, err, &multiErr)
-			assert.Equal(t, "shipmentIds", multiErr.Errors[0].Field)
+			assert.Equal(t, "shipmentIds", multiErr.Errors[0].Field())
 		})
 	}
 }

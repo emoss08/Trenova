@@ -1,0 +1,8 @@
+name: the carrier declines a tender and the load stays Trenova's to cover
+steps:
+  - script: { answers: [ { decline: NO CAPACITY ON LANE } ] }
+  - trenova: { tender: c1 }
+  - expect: { wire: "204", about: c1 }
+  - expect: { ack: c1, set: "990", accepted: true }
+  - expect: { wire: "997", about: c1 }
+  - expect: { trenova: { shipment: c1, status: New } }

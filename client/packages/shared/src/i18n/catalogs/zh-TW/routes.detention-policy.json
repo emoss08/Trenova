@@ -136,7 +136,6 @@
   "The billing code the stay converts to once the layover boundary is crossed.": "跨越過夜停留界線後，此次停留所轉換成的帳務代碼。",
   "The billing unit minutes are rounded onto. Typically 15, 30, or 60.": "分鐘數四捨五入所依據的計費單位。通常為 15、30 或 60。",
   "The clock starts the moment the driver arrives, even if early.": "駕駛員一抵達就開始計時，即使提早抵達亦然。",
-  "The fallback used when no narrower policy matches. A default cannot target a customer, facility, or type.": "當沒有更明確的政策相符時所使用的備援。預設政策不得針對特定客戶、場所或類型。",
   "The minutes of lateness are subtracted from the allowance.": "遲到的分鐘數會從允許時間中扣除。",
   "The most common contract term: an early driver does not begin accruing until the appointment.": "最常見的合約條款：提早抵達的駕駛員要到預約時間才開始累計。",
   "The policy only governs stops arriving on or after this date.": "此政策僅適用於在此日期當日或之後到達的停靠點。",

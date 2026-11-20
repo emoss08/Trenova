@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringsql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -12,6 +13,12 @@ import (
 )
 
 const SecondsPerDay = int64(86400)
+
+func LedgerInvoiceID(cle *customerledgerdb.CustomerLedgerEntriesTable) keel.Expr {
+	return cle.RelatedInvoiceID.Coalesce(
+		keel.CaseString().When(cle.SourceObjectType.Eq("Invoice"), cle.SourceObjectID).End(),
+	)
+}
 
 func ReceivableBillType(inv *invoicedb.InvoicesTable) keel.Pred {
 	return inv.BillType.In(billingvocab.BillTypeInvoice, billingvocab.BillTypeDebitMemo)

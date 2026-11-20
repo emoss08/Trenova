@@ -1,3 +1,4 @@
+import { temperatureLabel } from "@trenova/shared/lib/temperature";
 import { formatMessage } from "@trenova/shared/i18n/format-message";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { formatPercent } from "@trenova/shared/lib/utils";
@@ -40,7 +41,6 @@ import {
   STAGE_TONE,
   stageLabel,
   stopTypeLabel,
-  temperatureLabel,
   totalMiles,
   windowLabel,
   type JourneyStop,

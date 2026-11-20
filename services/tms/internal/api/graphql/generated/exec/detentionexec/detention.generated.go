@@ -2572,12 +2572,12 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDetentionPolicyStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionpolicyᚐPolicyStatus),
 			},
 			{
-				Name:     "isOrgDefault",
+				Name:     "isOrganizationDefault",
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
-					return obj.IsOrgDefault, nil
+					return obj.IsOrganizationDefault, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -4568,9 +4568,6 @@ func unmarshalInputDetentionPolicyInput(ctx context.Context, ec *gqlexec.Exec, o
 	if _, present := asMap["status"]; !present {
 		asMap["status"] = "Draft"
 	}
-	if _, present := asMap["isOrgDefault"]; !present {
-		asMap["isOrgDefault"] = false
-	}
 	if _, present := asMap["priority"]; !present {
 		asMap["priority"] = 0
 	}
@@ -4629,7 +4626,7 @@ func unmarshalInputDetentionPolicyInput(ctx context.Context, ec *gqlexec.Exec, o
 		asMap["currency"] = "USD"
 	}
 
-	fieldsInOrder := [...]string{"name", "code", "description", "status", "isOrgDefault", "priority", "customerId", "locationId", "shipmentTypeIds", "serviceTypeIds", "commodityIds", "stopTypes", "appointmentStopsOnly", "effectiveStartDate", "effectiveEndDate", "clockStartBasis", "lateArrivalRule", "lateArrivalGraceMinutes", "billingFreeMinutes", "pickupFreeMinutes", "deliveryFreeMinutes", "payFreeMinutes", "minimumBillableMinutes", "billingIncrementMinutes", "roundingMode", "rateSource", "accessorialChargeId", "tiers", "maxBillableMinutesPerStop", "maxChargePerStop", "maxChargePerDay", "maxChargePerShipment", "dayBoundaryMode", "convertToLayoverAtMinutes", "layoverAccessorialChargeId", "notificationRequirement", "notificationLeadMinutes", "notificationDeadlineMinutes", "unnotifiedBehavior", "autoSendNotice", "attachNoticePdf", "sendDepartureSummary", "requireApprovalOverAmount", "autoApproveUnderAmount", "currency", "comments", "version"}
+	fieldsInOrder := [...]string{"name", "code", "description", "status", "priority", "customerId", "locationId", "shipmentTypeIds", "serviceTypeIds", "commodityIds", "stopTypes", "appointmentStopsOnly", "effectiveStartDate", "effectiveEndDate", "clockStartBasis", "lateArrivalRule", "lateArrivalGraceMinutes", "billingFreeMinutes", "pickupFreeMinutes", "deliveryFreeMinutes", "payFreeMinutes", "minimumBillableMinutes", "billingIncrementMinutes", "roundingMode", "rateSource", "accessorialChargeId", "tiers", "maxBillableMinutesPerStop", "maxChargePerStop", "maxChargePerDay", "maxChargePerShipment", "dayBoundaryMode", "convertToLayoverAtMinutes", "layoverAccessorialChargeId", "notificationRequirement", "notificationLeadMinutes", "notificationDeadlineMinutes", "unnotifiedBehavior", "autoSendNotice", "attachNoticePdf", "sendDepartureSummary", "requireApprovalOverAmount", "autoApproveUnderAmount", "currency", "comments", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4664,13 +4661,6 @@ func unmarshalInputDetentionPolicyInput(ctx context.Context, ec *gqlexec.Exec, o
 				return it, err
 			}
 			it.Status = data
-		case "isOrgDefault":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isOrgDefault"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.IsOrgDefault = data
 		case "priority":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
 			data, err := unmarshalOInt2ᚖint(ctx, ec, v)

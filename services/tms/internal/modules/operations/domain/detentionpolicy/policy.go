@@ -43,7 +43,6 @@ type DetentionPolicy struct {
 	Description    string       `keel:"description,nullzero"       json:"description"`
 	Status         PolicyStatus `keel:"status"                     json:"status"`
 
-	IsOrgDefault     bool       `json:"isOrgDefault"     keel:"is_org_default"`
 	Priority         int16      `json:"priority"         keel:"priority"`
 	SpecificityScore int32      `json:"specificityScore" keel:"specificity_score"`
 	CustomerID       *pulid.ID  `json:"customerId"       keel:"customer_id"`
@@ -152,6 +151,57 @@ func (p *DetentionPolicy) ComputeSpecificity() int32 {
 	}
 
 	return score
+}
+
+// CoversAllFreight reports whether the policy pins no scope at all, the shape
+// shipment control requires of the organization's default policy.
+func (p *DetentionPolicy) CoversAllFreight() bool {
+	return p.ComputeSpecificity() == 0 && !p.AppointmentStopsOnly
+}
+
+// SameScope reports whether two policies pin exactly the same freight, so
+// that at equal priority neither could ever be preferred over the other.
+func (p *DetentionPolicy) SameScope(other *DetentionPolicy) bool {
+	if other == nil {
+		return false
+	}
+
+	return sameID(p.CustomerID, other.CustomerID) &&
+		sameID(p.LocationID, other.LocationID) &&
+		sameSet(p.ShipmentTypeIDs, other.ShipmentTypeIDs) &&
+		sameSet(p.ServiceTypeIDs, other.ServiceTypeIDs) &&
+		sameSet(p.CommodityIDs, other.CommodityIDs) &&
+		sameSet(p.StopTypes, other.StopTypes) &&
+		p.AppointmentStopsOnly == other.AppointmentStopsOnly
+}
+
+func sameID(a, b *pulid.ID) bool {
+	aNil := a == nil || a.IsNil()
+	bNil := b == nil || b.IsNil()
+	if aNil || bNil {
+		return aNil == bNil
+	}
+
+	return *a == *b
+}
+
+func sameSet[T comparable](a, b []T) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	held := make(map[T]int, len(a))
+	for _, v := range a {
+		held[v]++
+	}
+	for _, v := range b {
+		if held[v] == 0 {
+			return false
+		}
+		held[v]--
+	}
+
+	return true
 }
 
 // FreeMinutesForStopType resolves the free-time allowance, preferring the
@@ -340,7 +390,6 @@ func (p *DetentionPolicy) Validate(multiErr *errortypes.MultiError) {
 	p.validateCaps(multiErr)
 	p.validateNotification(multiErr)
 	p.validateRateSource(multiErr)
-	p.validateScope(multiErr)
 	validateTiers(p.Tiers, multiErr)
 }
 
@@ -481,17 +530,6 @@ func (p *DetentionPolicy) validateRateSource(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (p *DetentionPolicy) validateScope(multiErr *errortypes.MultiError) {
-	if !p.IsOrgDefault {
-		return
-	}
-
-	if p.ComputeSpecificity() != 0 {
-		multiErr.Add("isOrgDefault", errortypes.ErrInvalid,
-			"The organization default policy cannot target a customer, facility, or type")
-	}
-}
-
 func (p *DetentionPolicy) BeforeCreate(ctx context.Context) error {
 	if p.Status == "" {
 		p.Status = PolicyStatusDraft
@@ -538,14 +576,6 @@ func (p *DetentionPolicy) BeforeCreate(ctx context.Context) error {
 	if p.ConvertToLayoverAtMinutes == nil {
 		p.LayoverAccessorialChargeID = nil
 	}
-	if p.IsOrgDefault {
-		p.CustomerID = nil
-		p.LocationID = nil
-		p.ShipmentTypeIDs = nil
-		p.ServiceTypeIDs = nil
-		p.CommodityIDs = nil
-		p.StopTypes = nil
-	}
 	p.SpecificityScore = p.ComputeSpecificity()
 
 	return nil
@@ -567,14 +597,6 @@ func (p *DetentionPolicy) BeforeUpdate(ctx context.Context) error {
 	if p.ConvertToLayoverAtMinutes == nil {
 		p.LayoverAccessorialChargeID = nil
 	}
-	if p.IsOrgDefault {
-		p.CustomerID = nil
-		p.LocationID = nil
-		p.ShipmentTypeIDs = nil
-		p.ServiceTypeIDs = nil
-		p.CommodityIDs = nil
-		p.StopTypes = nil
-	}
 	p.SpecificityScore = p.ComputeSpecificity()
 
 	return nil
@@ -587,8 +609,8 @@ func (DetentionPolicy) Constraints() []keel.Constraint {
 			Message: "Detention policy with this code already exists in your organization",
 		},
 		{
-			Name:    "uq_detention_policies_org_default",
-			Message: "Your organization already has a default detention policy",
+			Name:    "fk_shipment_controls_default_detention_policy",
+			Message: "This policy is the organization's default detention policy. Choose another default in Shipment Controls before deleting it",
 		},
 		{
 			Name:    "fk_detention_policies_accessorial",

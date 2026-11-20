@@ -95,16 +95,7 @@ func (s *Service) pendingLedgerRecords(ctx context.Context, sess *readSession) (
 }
 
 func (s *Service) location(ctx context.Context, sess *readSession) (*time.Location, error) {
-	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
-		TenantInfo: sess.tenant,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if org == nil {
-		return time.UTC, nil
-	}
-	return timeutils.LoadLocation(org.Timezone), nil
+	return tenantports.OrganizationLocation(ctx, s.organizations, sess.tenant)
 }
 
 func (s *Service) reconcileTrialBalance(

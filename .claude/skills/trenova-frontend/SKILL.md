@@ -154,17 +154,18 @@ field components from `apps/web/src/components/fields/`; table panels through
 `FormCreatePanel`/`FormEditPanel`. Footers are right-aligned, Cancel (`outline`) then the
 primary. Dialogs take `size`, never an arbitrary max-width.
 
-A settings page is `SettingsSection`s in one centred column with a `FormSaveDock`
-(`components/settings/`; dispatch control is the reference). Put the shared fields straight
-inside a section, with no `FormControl`, `FormGroup` or `layout` prop: the section makes each
-one a row (name and meaning left, compact control right). Fields under a switch go in
-`SettingsNested show={…}`, a dependent section in `SettingsReveal`, a page with several jobs
-in `SettingsTabs` (define the tabs and the form fields each holds in a `<page>-tabs.ts` the
-skeleton also reads, and open the refused tab with `tabHoldingError` from both the submit's
-`catch` and `handleSubmit`'s invalid callback). A tabbed page is `PageLayout fill className="pb-0"`
-with `Form className={settingsFillClass}`, so the tab row holds its place and only the tab's
-settings scroll. Control pages still on stacked `Card`s are
-moved to this when touched.
+A settings page is `SettingsPage` (`components/settings/settings-page.tsx`) around a form
+that is `SettingsForm` (`settings-form.tsx`): the shell owns the form, the optimistic save,
+`prepare` (hidden settings sent as the server requires), the tab in the address, opening a
+refused tab and the save dock. A page brings only its record, a `<page>-tabs.ts` (tab
+labels, the fields each tab holds, a pure `<page>Tabs(...)` and a `use<Page>Tabs()` hook that
+the skeleton's `SettingsPageSkeleton` also reads) and one component per tab of
+`SettingsSection`s. Accounting and dispatch control are the reference. Put the shared fields
+straight inside a section, with no `FormControl`, `FormGroup` or `layout` prop: the section
+makes each one a row (name and meaning left, compact control right). Fields under a switch go
+in `SettingsNested show={…}`, a dependent section in `SettingsReveal`. Control pages still on
+stacked `Card`s move to this when touched, following "Moving a control page" in
+design-system.md.
 
 Every shared field takes what it is told as its own props, the same on all of them:
 `required` (true, a condition, or the words said when the field is empty) and `clearable`.

@@ -877,12 +877,9 @@ writes:
     tools: [masterdata_update_commodity]
 
   # costing
-  "mutation updateCostCategory":
+  "mutation saveCostingControl":
     exempt: configuration
-    reason: "Cost categories define the costing model every margin is computed with."
-  "mutation updateCostingControl":
-    exempt: configuration
-    reason: "An organization-wide control an administrator sets once; every later write depends on it."
+    reason: "The organization's cost model, its settings and categories saved together; every margin is computed with it."
 
   # customer
   "mutation bulkUpdateCustomerStatus":
@@ -2877,6 +2874,9 @@ writes:
     reason: "Puts rows back through the same writes startBulkEdit applies (bulkUpdateCustomerStatus, bulkUpdateLocationStatus, bulkUpdateCarrierStatus, transferShipmentOwnership)."
 
   # tableexport
+  "mutation exportCustomerLedger":
+    exempt: duplicate
+    reason: "Saves a customer's ledger window through createReportDefinition and runs it through runReport; those writes are listed under report."
   "mutation exportTableView":
     exempt: duplicate
     reason: "Saves a table's view through createReportDefinition and runs it through runReport; those writes are listed under report."

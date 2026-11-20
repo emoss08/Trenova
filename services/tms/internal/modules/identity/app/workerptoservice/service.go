@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
@@ -32,23 +33,25 @@ import (
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	DB           kernelports.Transactor
-	Repo         workerptoports.WorkerPTORepository
-	Ledger       *ptoledgerservice.Service
-	AuditService auditports.AuditService
-	DriverNotify *drivernotificationservice.Service
-	Realtime     realtimeports.RealtimeService
+	Logger        *zap.Logger
+	DB            kernelports.Transactor
+	Repo          workerptoports.WorkerPTORepository
+	Ledger        *ptoledgerservice.Service
+	Organizations tenantports.OrganizationRepository
+	AuditService  auditports.AuditService
+	DriverNotify  *drivernotificationservice.Service
+	Realtime      realtimeports.RealtimeService
 }
 
 type Service struct {
-	l            *zap.Logger
-	db           kernelports.Transactor
-	repo         workerptoports.WorkerPTORepository
-	ledger       *ptoledgerservice.Service
-	auditService auditports.AuditService
-	driverNotify *drivernotificationservice.Service
-	realtime     realtimeports.RealtimeService
+	l             *zap.Logger
+	db            kernelports.Transactor
+	repo          workerptoports.WorkerPTORepository
+	ledger        *ptoledgerservice.Service
+	organizations tenantports.OrganizationReader
+	auditService  auditports.AuditService
+	driverNotify  *drivernotificationservice.Service
+	realtime      realtimeports.RealtimeService
 }
 
 const maxPTOChartRangeSeconds int64 = 366 * 24 * 60 * 60
@@ -57,13 +60,14 @@ var _ workerptoports.WorkerPTOService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
-		l:            p.Logger.Named("service.workerpto"),
-		db:           p.DB,
-		repo:         p.Repo,
-		ledger:       p.Ledger,
-		auditService: p.AuditService,
-		driverNotify: p.DriverNotify,
-		realtime:     p.Realtime,
+		l:             p.Logger.Named("service.workerpto"),
+		db:            p.DB,
+		repo:          p.Repo,
+		ledger:        p.Ledger,
+		organizations: p.Organizations,
+		auditService:  p.AuditService,
+		driverNotify:  p.DriverNotify,
+		realtime:      p.Realtime,
 	}
 }
 
@@ -567,7 +571,7 @@ func (s *Service) prepareLedgerFields(
 	if err != nil {
 		return nil, err
 	}
-	loc, err := s.ledger.OrgLocation(ctx, tenantInfo)
+	loc, err := tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
 	if err != nil {
 		return nil, err
 	}

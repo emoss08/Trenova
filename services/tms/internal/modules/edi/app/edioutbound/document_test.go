@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editenderrecipient"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -204,4 +206,97 @@ func TestResolvePayloadRejectsShipmentEventMismatch(t *testing.T) {
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "Shipment ID must match")
+}
+
+func TestFreightInvoiceKey_IsTheReferenceTheShipperTenderedUnder(t *testing.T) {
+	t.Parallel()
+
+	payload := &edipayload.FreightInvoicePayload{
+		ShipmentID:       pulid.MustNew("shp_"),
+		ProNumber:        "S2603001042",
+		BOL:              "BOL-1",
+		ShipperReference: "MFG-LOAD-88",
+		Key:              "LOAD-KEY-1",
+	}
+	require.Equal(t, "LOAD-KEY-1", freightInvoiceKey(payload),
+		"a payload that names the partner's key is sent under it")
+
+	payload.Key = ""
+	require.Equal(t, "MFG-LOAD-88", freightInvoiceKey(payload))
+
+	payload.ShipperReference = ""
+	require.Equal(t, "BOL-1", freightInvoiceKey(payload))
+
+	payload.BOL = ""
+	require.Equal(t, "S2603001042", freightInvoiceKey(payload),
+		"with no better reference the invoice goes under the shipment's PRO number")
+
+	payload.ProNumber = ""
+	require.Empty(t, freightInvoiceKey(payload), "the shipment's id is never the key")
+}
+
+func TestShipmentStatusKey_FallsBackToThePRONumberNeverTheID(t *testing.T) {
+	t.Parallel()
+
+	payload := &edipayload.ShipmentStatusPayload{
+		ShipmentID:       pulid.MustNew("shp_"),
+		ProNumber:        "S2603001042",
+		BOL:              "BOL-1",
+		ShipperReference: "MFG-LOAD-88",
+		Key:              "LOAD-KEY-1",
+	}
+	require.Equal(t, "LOAD-KEY-1", shipmentStatusKey(payload))
+
+	payload.Key = ""
+	require.Equal(t, "MFG-LOAD-88", shipmentStatusKey(payload))
+
+	payload.ShipperReference = ""
+	require.Equal(t, "BOL-1", shipmentStatusKey(payload))
+
+	payload.BOL = ""
+	require.Equal(t, "S2603001042", shipmentStatusKey(payload))
+
+	payload.ProNumber = ""
+	require.Empty(t, shipmentStatusKey(payload))
+}
+
+func TestLoadTenderKey_IsTheShipmentsNumber(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name    string
+		payload editransfer.LoadTenderPayload
+		want    string
+	}{
+		{
+			name: "a whole shipment goes under its PRO number",
+			payload: editransfer.LoadTenderPayload{
+				ShipmentID: pulid.MustNew("shp_"),
+				ProNumber:  "S2603001042",
+				BOL:        "BOL-1",
+			},
+			want: "S2603001042",
+		},
+		{
+			name: "one move of several goes under the PRO number and the move",
+			payload: editransfer.LoadTenderPayload{
+				ShipmentID: pulid.MustNew("shp_"),
+				ProNumber:  "S2603001042",
+				MoveNumber: 2,
+			},
+			want: "S2603001042-2",
+		},
+		{
+			name:    "a load with no number has no key",
+			payload: editransfer.LoadTenderPayload{ShipmentID: pulid.MustNew("shp_")},
+			want:    "",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, tc.want, loadTenderKey(&tc.payload))
+		})
+	}
 }

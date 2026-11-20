@@ -12,9 +12,9 @@ use trenova_module_kit::span::Span;
 
 use super::check::tests::{Subject, glob_matches, subject};
 use super::check::{MapInfo, Program, Source};
-use super::eval::interp::{Frame, Given, Halt, Interp, OutcomeKind2, RUN_STEPS};
+use super::eval::interp::{Frame, Given, Interp, OutcomeKind2, RUN_STEPS};
 use super::eval::json::{from_json, to_json};
-use super::eval::run::{Control, envelope, fill_value, read_x12, rules_of, statements, unread};
+use super::eval::run::{fill_value, read_x12, sendable, unread, write_message};
 use super::eval::value::{Value, display, equal};
 use super::flow::{FlowAction, FlowEvent, FlowState, outcome_inputs, route, step};
 use super::syntax::ast::{
@@ -334,6 +334,7 @@ struct Runner<'p> {
     bindings: Vec<(String, Value)>,
     failures: Vec<Failure>,
     coverage: BTreeSet<(usize, u32)>,
+    transaction: Option<u32>,
 }
 
 /// What a map run in a test produced.
@@ -344,6 +345,75 @@ struct Produced {
     rejected: bool,
     warnings: Vec<String>,
     x12: String,
+    /// Why the partner's guide or the writer would refuse what an outbound map wrote.
+    invalid: Vec<String>,
+    /// Whether an outbound map wrote nothing to send.
+    not_sent: bool,
+}
+
+/// A send a flow test's flow asked for that did not go out, as the host would leave it.
+struct Unsent {
+    set: String,
+    /// `held`, `rejected` or `not sent`.
+    why: &'static str,
+    message: String,
+}
+
+/// One instance of a flow test's flow: the conversation about one key.
+#[derive(Default)]
+struct Instance {
+    key: Option<String>,
+    state: FlowState,
+    wake: Option<i64>,
+}
+
+/// What a flow test's flow did so far, across the instances its keys opened.
+#[derive(Default)]
+struct FlowRun {
+    instances: Vec<Instance>,
+    current: usize,
+    actions: Vec<FlowAction>,
+    unsent: Vec<Unsent>,
+    control_numbers: u32,
+}
+
+impl FlowRun {
+    /// Makes the instance for `key` current, opening it on its first event; an event without a
+    /// key (a planner's decision, an acknowledgment) goes to the instance last used.
+    fn select(&mut self, key: Option<String>) {
+        if let Some(key) = key {
+            if let Some(index) = self
+                .instances
+                .iter()
+                .position(|instance| instance.key.as_deref() == Some(key.as_str()))
+            {
+                self.current = index;
+                return;
+            }
+            if let Some(index) = self
+                .instances
+                .iter()
+                .position(|instance| instance.key.is_none())
+            {
+                self.instances[index].key = Some(key);
+                self.current = index;
+                return;
+            }
+            self.instances.push(Instance {
+                key: Some(key),
+                ..Instance::default()
+            });
+            self.current = self.instances.len() - 1;
+        } else if self.instances.is_empty() {
+            self.instances.push(Instance::default());
+            self.current = 0;
+        }
+    }
+
+    fn instance(&mut self) -> &mut Instance {
+        self.select(None);
+        &mut self.instances[self.current]
+    }
 }
 
 impl<'p> Runner<'p> {
@@ -361,6 +431,7 @@ impl<'p> Runner<'p> {
             bindings: Vec::new(),
             failures: Vec::new(),
             coverage: BTreeSet::new(),
+            transaction: None,
         }
     }
 
@@ -403,12 +474,23 @@ impl<'p> Runner<'p> {
         for (step, span) in steps {
             self.given_step(step, *span);
         }
-        let produced = self.produce();
-        let Some(produced) = produced else {
+        let Some(produced) = self.produce() else {
             return;
         };
-        for (step, span) in steps {
-            self.expect_step(step, *span, &produced);
+        let several = produced.len() > 1;
+        for (index, one) in produced.iter().enumerate() {
+            let before = self.failures.len();
+            for (step, span) in steps {
+                self.expect_step(step, *span, one);
+            }
+            if several {
+                for failure in &mut self.failures[before..] {
+                    failure.message = Message::with(
+                        message!("In transaction {0}: {1}"),
+                        [Arg::from(index + 1), Arg::from(failure.message.english())],
+                    );
+                }
+            }
         }
     }
 
@@ -436,6 +518,7 @@ impl<'p> Runner<'p> {
                 let value = self.eval(text, None);
                 self.input = Some(Input::Text(display(&value)));
             }
+            TestStep::GivenTransaction(index, _) => self.transaction = Some(*index),
             TestStep::GivenDocument { document, value } => {
                 let value = self.eval(value, None);
                 let given = self.given.clone();
@@ -494,13 +577,14 @@ impl<'p> Runner<'p> {
         }
     }
 
-    /// Runs what the test is about on its input.
+    /// Runs what the test is about on its input: one result per transaction a message holds
+    /// (or the one `given transaction` picks), or one for any other input.
     #[allow(clippy::too_many_lines)]
-    fn produce(&mut self) -> Option<Produced> {
+    fn produce(&mut self) -> Option<Vec<Produced>> {
         let program = self.program;
         let given = self.given.clone();
         match self.subject {
-            Subject::Library | Subject::None | Subject::Flow => Some(Produced::default()),
+            Subject::Library | Subject::None | Subject::Flow => Some(vec![Produced::default()]),
             Subject::Guide => {
                 let Header::Guide { name, .. } = program.units[self.unit].header() else {
                     return None;
@@ -508,7 +592,7 @@ impl<'p> Runner<'p> {
                 let guide = *program.guide_names.get(&name.name)?;
                 let text = match &self.input {
                     Some(Input::X12(text) | Input::Text(text)) => text.clone(),
-                    _ => return Some(Produced::default()),
+                    _ => return Some(vec![Produced::default()]),
                 };
                 let mut produced = Produced::default();
                 match read_x12(program, guide, &text) {
@@ -526,31 +610,59 @@ impl<'p> Runner<'p> {
                     }
                     Err(_) => produced.rejected = true,
                 }
-                Some(produced)
+                Some(vec![produced])
             }
             Subject::Inbound(_) => {
                 let (map, info, rules) = self.map_info()?;
-                let mut interp = Interp::new(program, &given, RUN_STEPS);
                 let mut frame = Frame::new(info.unit);
-                let mut produced = Produced::default();
                 match (&info.source, self.input.clone()) {
                     (Source::X12(guide), Some(Input::X12(text) | Input::Text(text))) => {
-                        match read_x12(program, *guide, &text) {
-                            Ok(transactions) => {
-                                let Some(first) = transactions.into_iter().next() else {
-                                    return Some(produced);
-                                };
-                                produced.rejected = first.rejected;
-                                let Some(tree) = first.tree else {
-                                    return Some(produced);
-                                };
-                                frame.root = Some(tree);
-                            }
+                        let transactions = match read_x12(program, *guide, &text) {
+                            Ok(transactions) => transactions,
                             Err(message) => {
                                 self.fail(Span::default(), message);
                                 return None;
                             }
+                        };
+                        let count = transactions.len();
+                        let picked: Vec<_> = transactions
+                            .into_iter()
+                            .enumerate()
+                            .filter(|(index, _)| {
+                                self.transaction
+                                    .is_none_or(|wanted| wanted as usize == index + 1)
+                            })
+                            .map(|(_, transaction)| transaction)
+                            .collect();
+                        if let Some(wanted) = self.transaction
+                            && picked.is_empty()
+                        {
+                            self.fail(
+                                Span::default(),
+                                Message::with(
+                                    message!("The message holds {0} transactions, not {1}"),
+                                    [Arg::from(count), Arg::from(i64::from(wanted))],
+                                ),
+                            );
+                            return None;
                         }
+                        let mut all = Vec::new();
+                        for transaction in picked {
+                            let mut produced = Produced {
+                                rejected: transaction.rejected,
+                                ..Produced::default()
+                            };
+                            if let Some(tree) = transaction.tree {
+                                let mut frame = Frame::new(info.unit);
+                                frame.root = Some(tree);
+                                self.fill(&given, &map, rules, info, frame, &mut produced)?;
+                            }
+                            all.push(produced);
+                        }
+                        if all.is_empty() {
+                            all.push(Produced::default());
+                        }
+                        return Some(all);
                     }
                     (Source::Json, Some(Input::X12(text) | Input::Text(text))) => {
                         match serde_json::from_str(&text) {
@@ -591,49 +703,84 @@ impl<'p> Runner<'p> {
                         return None;
                     }
                 }
-                match fill_value(&mut interp, &map, rules, info, frame) {
-                    Ok((document, _)) => produced.document = Some(document),
-                    Err(Halt::Budget) => {
-                        self.fail(
-                            Span::default(),
-                            Message::new(message!("The run used more than its budget of steps")),
-                        );
-                        return None;
-                    }
-                }
-                produced.outcomes = std::mem::take(&mut interp.outcomes);
-                self.coverage.extend(interp.coverage.iter().copied());
-                Some(produced)
+                let mut produced = Produced::default();
+                self.fill(&given, &map, rules, info, frame, &mut produced)?;
+                Some(vec![produced])
             }
             Subject::Outbound(_) => {
                 let (map, info, rules) = self.map_info()?;
-                let Some(Input::Document(mut document)) = self.input.clone() else {
-                    return Some(Produced::default());
+                let Some(Input::Document(document)) = self.input.clone() else {
+                    return Some(vec![Produced::default()]);
                 };
-                let guide = info.target_guide?;
-                let mut interp = Interp::new(program, &given, RUN_STEPS);
-                let mut fixes = Vec::new();
-                if rules {
-                    for rules_unit in rules_of(program, &map) {
-                        document = interp.run_rules(rules_unit, document, &mut fixes).ok()?;
-                    }
+                let result = write_message(program, &given, &map, &to_json(&document), rules);
+                self.coverage.extend(result.coverage.iter().copied());
+                if let Some(error) = result.error {
+                    self.fail(Span::default(), error);
+                    return None;
                 }
-                let mut frame = Frame::new(info.unit);
-                frame.document = Some(document.clone());
-                let stmts = statements(program, info.unit);
-                let output = interp.write_document(&mut frame, guide, &stmts).ok()?;
-                let body = interp.lay_out(guide, &output);
-                let (_, transaction) = envelope(program, guide, &given, Control::default(), body);
-                self.coverage.extend(interp.coverage.iter().copied());
-                Some(Produced {
-                    document: Some(document),
-                    outcomes: std::mem::take(&mut interp.outcomes),
-                    rejected: false,
+                if result.not_sent {
+                    return Some(vec![Produced {
+                        document: Some(document),
+                        not_sent: true,
+                        ..Produced::default()
+                    }]);
+                }
+                let output = result.output?;
+                let invalid: Vec<String> = output
+                    .findings
+                    .iter()
+                    .filter(|finding| finding.severity == "error")
+                    .map(|finding| finding.message.english())
+                    .chain(
+                        output
+                            .validation
+                            .iter()
+                            .filter(|finding| finding.severity == Severity::Error)
+                            .map(|finding| finding.message.english()),
+                    )
+                    .collect();
+                let written = info
+                    .document
+                    .and_then(|name| {
+                        from_json(program, &output.document, &Type::Record(name), "").ok()
+                    })
+                    .unwrap_or(document);
+                Some(vec![Produced {
+                    document: Some(written),
+                    outcomes: output.outcomes,
+                    rejected: !invalid.is_empty(),
                     warnings: Vec::new(),
-                    x12: transaction,
-                })
+                    x12: output.transaction,
+                    invalid,
+                    not_sent: false,
+                }])
             }
         }
+    }
+
+    /// Fills an inbound map's document and runs its rules into `produced`.
+    fn fill(
+        &mut self,
+        given: &Given,
+        map: &str,
+        rules: bool,
+        info: &MapInfo,
+        frame: Frame,
+        produced: &mut Produced,
+    ) -> Option<()> {
+        let mut interp = Interp::new(self.program, given, RUN_STEPS);
+        if let Ok((document, _)) = fill_value(&mut interp, map, rules, info, frame) {
+            produced.document = Some(document);
+        } else {
+            self.fail(
+                Span::default(),
+                Message::new(message!("The run used more than its budget of steps")),
+            );
+            return None;
+        }
+        produced.outcomes = std::mem::take(&mut interp.outcomes);
+        self.coverage.extend(interp.coverage.iter().copied());
+        Some(())
     }
 
     fn expect_step(&mut self, step: &TestStep, span: Span, produced: &Produced) {
@@ -646,7 +793,18 @@ impl<'p> Runner<'p> {
                 } else {
                     produced.x12 == wanted
                 };
-                if !holds {
+                if !produced.invalid.is_empty() {
+                    self.fail(
+                        span,
+                        Message::with(
+                            message!("The map wrote {0}, and the partner's guide refuses it: {1}"),
+                            [
+                                Arg::from(produced.x12.as_str()),
+                                Arg::from(produced.invalid.join("; ")),
+                            ],
+                        ),
+                    );
+                } else if !holds {
                     self.fail(
                         span,
                         Message::with(
@@ -673,6 +831,7 @@ impl<'p> Runner<'p> {
                     _ => None,
                 };
                 let found = match kind {
+                    None if what.name == "sent" => !produced.not_sent && !produced.x12.is_empty(),
                     Some(OutcomeKind2::Reject) if produced.rejected => true,
                     Some(OutcomeKind2::Warn)
                         if !produced.warnings.is_empty() && detail.is_none() =>
@@ -700,6 +859,11 @@ impl<'p> Runner<'p> {
                         .outcomes
                         .iter()
                         .map(|outcome| outcome.message.clone())
+                        .chain(produced.invalid.iter().cloned())
+                        .chain(produced.not_sent.then(|| {
+                            Message::new(message!("Nothing in it is sent to this partner"))
+                                .english()
+                        }))
                         .collect();
                     self.fail(
                         span,
@@ -762,14 +926,11 @@ impl<'p> Runner<'p> {
             return;
         };
         let flow = flow.name.clone();
-        let mut state = FlowState::default();
-        let mut actions: Vec<FlowAction> = Vec::new();
-        let mut wake: Option<i64> = None;
-        let mut control_numbers = 0u32;
+        let mut run = FlowRun::default();
         for (step_kind, span) in steps {
             self.given_step(step_kind, *span);
             let mut moves_load: Option<&'static str> = None;
-            let event = match step_kind {
+            let events = match step_kind {
                 TestStep::Receive { file, source } => {
                     let text = if *file {
                         let path = display(&self.eval(source, None));
@@ -790,8 +951,8 @@ impl<'p> Runner<'p> {
                     } else {
                         display(&self.eval(source, None))
                     };
-                    if let Some(event) = self.receive(&flow, &text) {
-                        Some(event)
+                    if let Some(events) = self.receive(&flow, &text) {
+                        events
                     } else {
                         self.fail(
                             *span,
@@ -802,7 +963,7 @@ impl<'p> Runner<'p> {
                         continue;
                     }
                 }
-                TestStep::Respond { accept, reason } => Some(FlowEvent::Planner {
+                TestStep::Respond { accept, reason } => vec![FlowEvent::Planner {
                     decision: if *accept {
                         "accept".into()
                     } else {
@@ -812,7 +973,7 @@ impl<'p> Runner<'p> {
                         .as_ref()
                         .map(|reason| display(&self.eval(reason, None)))
                         .unwrap_or_default(),
-                }),
+                }],
                 TestStep::Event { kind, value } => {
                     let document = value
                         .as_ref()
@@ -823,42 +984,41 @@ impl<'p> Runner<'p> {
                     let interp = Interp::new(program, &given, RUN_STEPS);
                     let document = interp.coerce(document, &Type::Record(name));
                     moves_load = load_state_after(&kind.name);
-                    Some(FlowEvent::Trenova {
+                    vec![FlowEvent::Trenova {
                         event: kind.name.clone(),
                         document: to_json(&document),
-                    })
+                    }]
                 }
                 TestStep::Ack(accepted) => {
-                    let control = state
+                    let control = run
+                        .instance()
+                        .state
                         .pending
                         .first()
                         .map(|pending| pending.control.clone())
                         .unwrap_or_default();
-                    Some(FlowEvent::Ack {
+                    vec![FlowEvent::Ack {
                         control,
                         accepted: *accepted,
-                    })
+                    }]
                 }
                 TestStep::Advance(duration) => {
                     if let Value::Duration(seconds) = self.eval(duration, None) {
                         self.given.now += seconds;
                     }
-                    let mut fired = 0;
-                    while wake.is_some_and(|at| at <= self.given.now) && fired < 64 {
-                        fired += 1;
-                        let result = step(
-                            program,
-                            &flow,
-                            state.clone(),
-                            &FlowEvent::Timer,
-                            self.given.now,
-                            &self.given,
-                        );
-                        self.absorb_flow(&result, &mut actions);
-                        state = result.state;
-                        wake = result.wake;
+                    for index in 0..run.instances.len() {
+                        run.current = index;
+                        let mut fired = 0;
+                        while run.instances[index]
+                            .wake
+                            .is_some_and(|at| at <= self.given.now)
+                            && fired < 64
+                        {
+                            fired += 1;
+                            self.feed(&flow, &mut run, &FlowEvent::Timer);
+                        }
                     }
-                    None
+                    Vec::new()
                 }
                 TestStep::ExpectOutcome {
                     negated,
@@ -870,16 +1030,35 @@ impl<'p> Runner<'p> {
                         ExprKind::Name(word) => word.clone(),
                         _ => display(&self.eval(detail, None)),
                     });
-                    let found = actions.iter().any(|action| {
-                        flow_matches(
-                            action,
-                            &what.name,
-                            set.as_ref().map(|set| set.name.as_str()),
-                            detail.as_deref(),
-                        )
-                    });
+                    let set = set.as_ref().map(|set| set.name.as_str());
+                    let found = run
+                        .actions
+                        .iter()
+                        .any(|action| flow_matches(action, &what.name, set, detail.as_deref()))
+                        || run.unsent.iter().any(|unsent| {
+                            unsent.why == what.name
+                                && set.is_none_or(|wanted| wanted == unsent.set)
+                                && detail
+                                    .as_deref()
+                                    .is_none_or(|detail| unsent.message.contains(detail))
+                        });
                     if found == *negated {
-                        let listed: Vec<String> = actions.iter().map(describe).collect();
+                        let listed: Vec<String> = run
+                            .actions
+                            .iter()
+                            .map(describe)
+                            .chain(run.unsent.iter().map(|unsent| {
+                                Message::with(
+                                    message!("{0} not sent, {1}: {2}"),
+                                    [
+                                        Arg::from(unsent.set.as_str()),
+                                        Arg::from(unsent.why),
+                                        Arg::from(unsent.message.as_str()),
+                                    ],
+                                )
+                                .english()
+                            }))
+                            .collect();
                         self.fail(
                             *span,
                             if *negated {
@@ -895,97 +1074,176 @@ impl<'p> Runner<'p> {
                             },
                         );
                     }
-                    None
+                    Vec::new()
                 }
-                _ => None,
+                _ => Vec::new(),
             };
-            if let Some(event) = event {
-                let result = step(
-                    program,
-                    &flow,
-                    state.clone(),
-                    &event,
-                    self.given.now,
-                    &self.given,
-                );
-                self.absorb_flow(&result, &mut actions);
-                state = result.state;
-                wake = result.wake;
+            for event in &events {
+                run.select(route(program, &flow, event, self.given.now));
+                self.feed(&flow, &mut run, event);
+                let state = &mut run.instance().state;
                 if let Some(next) = moves_load
                     && state.load.exists
                 {
                     next.clone_into(&mut state.load.state);
                 }
-                let sent: Vec<String> = result
-                    .actions
-                    .iter()
-                    .filter_map(|action| match action {
-                        FlowAction::Send { id, .. } => Some(id.clone()),
-                        _ => None,
-                    })
-                    .collect();
-                for id in sent {
-                    control_numbers += 1;
-                    let report = FlowEvent::Sent {
-                        id,
-                        control: format!("{control_numbers:04}"),
-                    };
-                    let result = step(
-                        program,
-                        &flow,
-                        state.clone(),
-                        &report,
-                        self.given.now,
-                        &self.given,
-                    );
-                    state = result.state;
-                    wake = result.wake;
-                }
             }
         }
     }
 
-    fn absorb_flow(&mut self, result: &super::flow::FlowStep, actions: &mut Vec<FlowAction>) {
+    /// Takes one flow step, then writes each message it sends with its map, rules and the
+    /// partner's guide as the host does: one that writes is reported sent with the next control
+    /// number; one held or refused stays unsent, as the host leaves it; one that holds nothing
+    /// the partner takes is reported as nothing sent.
+    fn feed(&mut self, flow: &str, run: &mut FlowRun, event: &FlowEvent) {
+        let program = self.program;
+        let instance = run.instance();
+        let result = step(
+            program,
+            flow,
+            instance.state.clone(),
+            event,
+            self.given.now,
+            &self.given,
+        );
         self.coverage.extend(result.coverage.iter().copied());
-        actions.extend(result.actions.iter().cloned());
+        instance.state = result.state;
+        instance.wake = result.wake;
+        for action in result.actions {
+            let FlowAction::Send {
+                id,
+                set,
+                map,
+                document,
+            } = &action
+            else {
+                run.actions.push(action);
+                continue;
+            };
+            let written = write_message(program, &self.given, map, document, true);
+            self.coverage.extend(written.coverage.iter().copied());
+            let control = if written.not_sent {
+                run.unsent.push(Unsent {
+                    set: set.clone(),
+                    why: "not sent",
+                    message: Message::new(message!("Nothing in it is sent to this partner"))
+                        .english(),
+                });
+                Some(String::new())
+            } else if let Some(error) = &written.error {
+                run.unsent.push(Unsent {
+                    set: set.clone(),
+                    why: "rejected",
+                    message: error.english(),
+                });
+                None
+            } else if let Some(output) = written.output.as_ref().filter(|output| !sendable(output))
+            {
+                run.unsent.push(blocked(set, output));
+                None
+            } else {
+                run.control_numbers += 1;
+                Some(format!("{:04}", run.control_numbers))
+            };
+            let id = id.clone();
+            if control
+                .as_deref()
+                .is_some_and(|control| !control.is_empty())
+            {
+                run.actions.push(action);
+            }
+            if let Some(control) = control {
+                let instance = run.instance();
+                let report = step(
+                    program,
+                    flow,
+                    instance.state.clone(),
+                    &FlowEvent::Sent { id, control },
+                    self.given.now,
+                    &self.given,
+                );
+                instance.state = report.state;
+                instance.wake = report.wake;
+            }
+        }
     }
 
-    /// A message received: read by the receive clause's map and rules.
-    fn receive(&mut self, flow: &str, text: &str) -> Option<FlowEvent> {
+    /// A message received: each transaction of each set it holds, read by the receive clause's
+    /// map and rules, in order.
+    fn receive(&mut self, flow: &str, text: &str) -> Option<Vec<FlowEvent>> {
         let program = self.program;
         let unit = *program.flows.get(flow)?;
-        let set = transaction_set(text);
-        let receive = program.units[unit]
-            .items()
-            .iter()
-            .find_map(|item| match item {
-                Item::Flow(FlowDecl::Receive(receive)) if receive.set.name == set => Some(receive),
-                _ => None,
-            })?;
-        let map = receive.map.as_ref()?.name.clone();
-        let info = program.maps.get(&map)?;
-        let Source::X12(guide) = info.source else {
-            return None;
-        };
-        let transaction = read_x12(program, guide, text).ok()?.into_iter().next()?;
-        let given = self.given.clone();
-        let mut interp = Interp::new(program, &given, RUN_STEPS);
-        let mut frame = Frame::new(info.unit);
-        let tree = transaction.tree?;
-        frame.root = Some(tree);
-        let (document, _) =
-            fill_value(&mut interp, &map, receive.rules.is_some(), info, frame).ok()?;
-        self.coverage.extend(interp.coverage.iter().copied());
-        let document = to_json(&document);
-        let event = FlowEvent::Received {
-            set,
-            document,
-            outcomes: outcome_inputs(&interp.outcomes),
-            current: None,
-            load: None,
-        };
-        let _ = route(program, flow, &event, self.given.now);
-        Some(event)
+        let mut events = Vec::new();
+        for set in transaction_sets(text) {
+            let receive = program.units[unit]
+                .items()
+                .iter()
+                .find_map(|item| match item {
+                    Item::Flow(FlowDecl::Receive(receive)) if receive.set.name == set => {
+                        Some(receive)
+                    }
+                    _ => None,
+                })?;
+            let map = receive.map.as_ref()?.name.clone();
+            let info = program.maps.get(&map)?;
+            let Source::X12(guide) = info.source else {
+                return None;
+            };
+            for transaction in read_x12(program, guide, text).ok()? {
+                let given = self.given.clone();
+                let mut interp = Interp::new(program, &given, RUN_STEPS);
+                let mut frame = Frame::new(info.unit);
+                frame.root = Some(transaction.tree?);
+                let (document, _) =
+                    fill_value(&mut interp, &map, receive.rules.is_some(), info, frame).ok()?;
+                self.coverage.extend(interp.coverage.iter().copied());
+                events.push(FlowEvent::Received {
+                    set: set.clone(),
+                    document: to_json(&document),
+                    outcomes: outcome_inputs(&interp.outcomes),
+                    current: None,
+                    load: None,
+                });
+            }
+        }
+        (!events.is_empty()).then_some(events)
+    }
+}
+
+/// What a send the host would refuse says: held when only the rules held it, rejected when the
+/// rules rejected it or the writer or the partner's guide found an error.
+fn blocked(set: &str, output: &super::eval::run::WriteResult) -> Unsent {
+    let outcome = |kind: OutcomeKind2| output.outcomes.iter().any(|found| found.kind == kind);
+    let why = if outcome(OutcomeKind2::Hold) && !outcome(OutcomeKind2::Reject) {
+        "held"
+    } else {
+        "rejected"
+    };
+    let message = output
+        .outcomes
+        .iter()
+        .filter(|found| matches!(found.kind, OutcomeKind2::Reject | OutcomeKind2::Hold))
+        .map(|found| found.message.clone())
+        .chain(
+            output
+                .findings
+                .iter()
+                .filter(|finding| finding.severity == "error")
+                .map(|finding| finding.message.english()),
+        )
+        .chain(
+            output
+                .validation
+                .iter()
+                .filter(|finding| finding.severity == Severity::Error)
+                .map(|finding| finding.message.english()),
+        )
+        .collect::<Vec<_>>()
+        .join("; ");
+    Unsent {
+        set: set.to_owned(),
+        why,
+        message,
     }
 }
 
@@ -1000,9 +1258,9 @@ fn load_state_after(event: &str) -> Option<&'static str> {
     }
 }
 
-/// The set of the first transaction in an interchange: ST01, read with the separators ISA
-/// declares.
-fn transaction_set(text: &str) -> String {
+/// The sets of the transactions in an interchange, each once, in the order they first appear:
+/// ST01, read with the separators ISA declares.
+fn transaction_sets(text: &str) -> Vec<String> {
     let trimmed = text.trim_start();
     let element = trimmed.chars().nth(3).unwrap_or('*');
     let terminator = trimmed
@@ -1011,14 +1269,17 @@ fn transaction_set(text: &str) -> String {
         .nth(15)
         .and_then(|(at, _)| trimmed[at..].chars().nth(2))
         .unwrap_or('~');
-    trimmed
-        .split(terminator)
-        .map(str::trim)
-        .find_map(|segment| {
-            let mut elements = segment.split(element);
-            (elements.next() == Some("ST")).then(|| elements.next().unwrap_or_default().to_owned())
-        })
-        .unwrap_or_default()
+    let mut sets: Vec<String> = Vec::new();
+    for segment in trimmed.split(terminator).map(str::trim) {
+        let mut elements = segment.split(element);
+        if elements.next() == Some("ST") {
+            let set = elements.next().unwrap_or_default().to_owned();
+            if !sets.contains(&set) {
+                sets.push(set);
+            }
+        }
+    }
+    sets
 }
 
 /// Whether a flow action is what a test expects.
@@ -1055,16 +1316,29 @@ fn flow_matches(action: &FlowAction, what: &str, set: Option<&str>, detail: Opti
         | ("cancelled", FlowAction::Cancel)
         | ("applied", FlowAction::Apply { .. })
         | ("ignored", FlowAction::Ignore) => true,
-        ("rejected", FlowAction::Acknowledge { rejected, .. }) => *rejected,
+        (
+            "rejected",
+            FlowAction::Acknowledge {
+                rejected, message, ..
+            },
+        ) => *rejected && message.as_ref().map_or(detail.is_none(), text_matches),
         _ => false,
     }
 }
 
 fn describe(action: &FlowAction) -> String {
     match action {
-        FlowAction::Acknowledge { set, rejected } => format!(
-            "acknowledge {set}{}",
-            if *rejected { " rejected" } else { "" }
+        FlowAction::Acknowledge {
+            set,
+            rejected,
+            message,
+        } => format!(
+            "acknowledge {set}{}{}",
+            if *rejected { " rejected" } else { "" },
+            message
+                .as_ref()
+                .map(|message| format!(" \"{}\"", message.english()))
+                .unwrap_or_default()
         ),
         FlowAction::Create { .. } => "create".into(),
         FlowAction::Update { fields, .. } => format!("update {}", fields.join(", ")),
@@ -1107,6 +1381,7 @@ fn coverage(program: &Program, covered: &BTreeSet<(usize, u32)>) -> Vec<FileCove
                 }
                 Item::Flow(FlowDecl::Respond(respond)) => spans.push(respond.span),
                 Item::Flow(FlowDecl::Send(send)) => spans.push(send.span),
+                Item::Flow(FlowDecl::Await(answer)) => spans.push(answer.span),
                 _ => {}
             }
         }

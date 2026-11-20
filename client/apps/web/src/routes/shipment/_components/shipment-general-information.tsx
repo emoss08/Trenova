@@ -11,6 +11,12 @@ import { ApiRequestError } from "@trenova/shared/lib/api";
 import { customer } from "@/lib/queries/customer";
 import { shipment } from "@/lib/queries/shipment";
 import { shipmentService } from "@/services/shipment";
+import {
+  lineTemperatures,
+  loadTemperature,
+  temperatureLabel,
+  type TemperatureRange,
+} from "@trenova/shared/lib/temperature";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
@@ -36,6 +42,49 @@ export default function ShipmentGeneralInformation() {
   const { data: shipmentUIPolicy } = useQuery({ ...shipment.uiPolicy() });
 
   const profile = getProfile(shipmentUIPolicy);
+  const [moves, commodities] = useWatch({ control, name: ["moves", "commodities"] });
+  const derived = loadTemperature(lineTemperatures(moves, commodities));
+
+  const temperatureDescriptors: FieldDescriptor[] = derived
+    ? [
+        {
+          name: "temperatureMin",
+          cols: "full",
+          render: () => <DerivedLoadTemperature range={derived} />,
+        },
+      ]
+    : [
+        {
+          name: "temperatureMin",
+          capability: CAPABILITIES.temperatureControl,
+          render: ({ required }) => (
+            <NumberField
+              control={control}
+              name="temperatureMin"
+              description={t("The minimum temperature for the shipment.")}
+              label={t("Temperature min")}
+              placeholder={t("Enter temperature min")}
+              sideText={t("°F")}
+              required={required}
+            />
+          ),
+        },
+        {
+          name: "temperatureMax",
+          capability: CAPABILITIES.temperatureControl,
+          render: ({ required }) => (
+            <NumberField
+              control={control}
+              name="temperatureMax"
+              label={t("Temperature max")}
+              description={t("The maximum temperature for the shipment.")}
+              placeholder={t("Enter temperature max")}
+              sideText={t("°F")}
+              required={required}
+            />
+          ),
+        },
+      ];
 
   const descriptors: FieldDescriptor[] = [
     {
@@ -65,42 +114,33 @@ export default function ShipmentGeneralInformation() {
         />
       ),
     },
-    {
-      name: "temperatureMin",
-      capability: CAPABILITIES.temperatureControl,
-      render: ({ required }) => (
-        <NumberField
-          control={control}
-          name="temperatureMin"
-          description={t("The minimum temperature for the shipment.")}
-          label={t("Temperature min")}
-          placeholder={t("Enter temperature min")}
-          sideText={t("°F")}
-          required={required}
-        />
-      ),
-    },
-    {
-      name: "temperatureMax",
-      capability: CAPABILITIES.temperatureControl,
-      render: ({ required }) => (
-        <NumberField
-          control={control}
-          name="temperatureMax"
-          label={t("Temperature max")}
-          description={t("The maximum temperature for the shipment.")}
-          placeholder={t("Enter temperature max")}
-          sideText={t("°F")}
-          required={required}
-        />
-      ),
-    },
+    ...temperatureDescriptors,
   ];
 
   return (
     <Inner>
       <CapabilityFields descriptors={descriptors} profile={profile} />
     </Inner>
+  );
+}
+
+/**
+ * The load's range when its stops or commodity lines set their own: derived from them on save, so
+ * it is shown, not typed a second time.
+ */
+function DerivedLoadTemperature({ range }: { range: TemperatureRange }) {
+  const t = useT();
+
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium">{t("Temperature")}</p>
+      <p className="text-sm tabular-nums">{temperatureLabel(range, t)}</p>
+      <p className="text-muted-foreground text-xs">
+        {t(
+          "Set from the ranges on the stops and commodities: the range they all share, or the span from the coldest to the warmest when they share none.",
+        )}
+      </p>
+    </div>
   );
 }
 

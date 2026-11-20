@@ -1,0 +1,18 @@
+rules statusChecks for statusOut
+  use common
+
+/// Ashgrove matches a status by the BOL it gave us.
+rule "a status quotes the BOL" {
+  require exists bol else hold "Ashgrove needs the BOL on every status: add it before sending"
+}
+
+test "a delivery with its BOL goes out" {
+  given shipmentStatus { key: "1000037", bol: "646458", events: [{ kind: Delivered, at: @2026-02-13T14:40Z }] }
+  expect no holds
+  expect no rejects
+}
+
+test "an arrival is never sent" {
+  given shipmentStatus { key: "1000037", bol: "646458", events: [{ kind: ArrivedDelivery, at: @2026-02-13T14:40Z }] }
+  expect no sent
+}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,6 +16,8 @@ import (
 var (
 	_ validationframework.Entity = (*InvoiceAdjustmentControl)(nil)
 )
+
+const unknownOption = "Choose one of the listed options"
 
 type InvoiceAdjustmentControl struct {
 	keel.Table `keel:"invoice_adjustment_controls"`
@@ -97,19 +100,71 @@ func (iac *InvoiceAdjustmentControl) BeforeCreate(_ context.Context) error {
 func (iac *InvoiceAdjustmentControl) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		iac,
-		validation.Field(&iac.PartiallyPaidInvoiceAdjustmentPolicy, validation.Required),
-		validation.Field(&iac.PaidInvoiceAdjustmentPolicy, validation.Required),
-		validation.Field(&iac.DisputedInvoiceAdjustmentPolicy, validation.Required),
-		validation.Field(&iac.AdjustmentAccountingDatePolicy, validation.Required),
-		validation.Field(&iac.ClosedPeriodAdjustmentPolicy, validation.Required),
-		validation.Field(&iac.AdjustmentReasonRequirement, validation.Required),
-		validation.Field(&iac.StandardAdjustmentApprovalPolicy, validation.Required),
-		validation.Field(&iac.WriteOffApprovalPolicy, validation.Required),
-		validation.Field(&iac.ReplacementInvoiceReviewPolicy, validation.Required),
-		validation.Field(&iac.CustomerCreditBalancePolicy, validation.Required),
-		validation.Field(&iac.OverCreditPolicy, validation.Required),
-		validation.Field(&iac.SupersededInvoiceVisibilityPolicy, validation.Required),
+		validation.Field(
+			&iac.PartiallyPaidInvoiceAdjustmentPolicy,
+			validation.Required,
+			domainvalidation.ValidEnum[AdjustmentEligibilityPolicy](unknownOption),
+		),
+		validation.Field(
+			&iac.PaidInvoiceAdjustmentPolicy,
+			validation.Required,
+			domainvalidation.ValidEnum[AdjustmentEligibilityPolicy](unknownOption),
+		),
+		validation.Field(
+			&iac.DisputedInvoiceAdjustmentPolicy,
+			validation.Required,
+			domainvalidation.ValidEnum[AdjustmentEligibilityPolicy](unknownOption),
+		),
+		validation.Field(
+			&iac.AdjustmentAccountingDatePolicy,
+			validation.Required,
+			domainvalidation.ValidEnum[AdjustmentAccountingDatePolicy](unknownOption),
+		),
+		validation.Field(
+			&iac.ClosedPeriodAdjustmentPolicy,
+			validation.Required,
+			domainvalidation.ValidEnum[ClosedPeriodAdjustmentPolicy](unknownOption),
+		),
+		validation.Field(
+			&iac.AdjustmentReasonRequirement,
+			validation.Required,
+			domainvalidation.ValidEnum[RequirementPolicy](unknownOption),
+		),
+		validation.Field(
+			&iac.StandardAdjustmentApprovalPolicy,
+			validation.Required,
+			domainvalidation.ValidEnum[ApprovalPolicy](unknownOption),
+		),
+		validation.Field(
+			&iac.WriteOffApprovalPolicy,
+			validation.Required,
+			domainvalidation.ValidEnum[WriteOffApprovalPolicy](unknownOption),
+		),
+		validation.Field(
+			&iac.ReplacementInvoiceReviewPolicy,
+			validation.Required,
+			domainvalidation.ValidEnum[ReplacementInvoiceReviewPolicy](unknownOption),
+		),
+		validation.Field(
+			&iac.CustomerCreditBalancePolicy,
+			validation.Required,
+			domainvalidation.ValidEnum[CustomerCreditBalancePolicy](unknownOption),
+		),
+		validation.Field(
+			&iac.OverCreditPolicy,
+			validation.Required,
+			domainvalidation.ValidEnum[OverCreditPolicy](unknownOption),
+		),
+		validation.Field(
+			&iac.SupersededInvoiceVisibilityPolicy,
+			validation.Required,
+			domainvalidation.ValidEnum[SupersededInvoiceVisibilityPolicy](unknownOption),
+		),
 	))
+}
+
+func (iac *InvoiceAdjustmentControl) ShowsReplacedInvoicesExternally() bool {
+	return iac.SupersededInvoiceVisibilityPolicy == SupersededInvoiceVisibilityPolicyShowCurrentAndSupersededExternally
 }
 
 func (iac *InvoiceAdjustmentControl) GetID() pulid.ID {

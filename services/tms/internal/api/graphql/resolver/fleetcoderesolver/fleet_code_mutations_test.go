@@ -125,7 +125,7 @@ func TestApplyFleetCodeInput_RequiresAManager(t *testing.T) {
 
 	var valErr *errortypes.Error
 	require.ErrorAs(t, err, &valErr)
-	assert.Equal(t, "managerId", valErr.Field)
+	assert.Equal(t, "managerId", valErr.Field())
 }
 
 func TestApplyFleetCodePatch_ChangesOnlyTheFieldsItCarries(t *testing.T) {

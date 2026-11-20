@@ -1,7 +1,12 @@
 import type { SettingsTabSpec } from "@/components/settings/settings-tab";
 import type { DispatchControl } from "@/types/dispatch-control";
 import { PlanFeature } from "@/lib/plan-feature";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { usePlanFeature } from "@trenova/shared/hooks/use-plan-feature";
+import {
+  hasOrganizationCapability,
+  OrganizationCapability,
+} from "@trenova/shared/types/organization-capability";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export type DispatchControlTab =
@@ -146,4 +151,16 @@ export function dispatchControlTabs({
     if (tab === "tenders") return brokers && plan.brokerage;
     return true;
   }).map((tab) => ({ value: tab, label: TAB_LABELS[tab], fields: TAB_FIELDS[tab] }));
+}
+
+/** The tabs this organization sees, for the form and its loading state alike. */
+export function useDispatchControlTabs(): DispatchControlTabSpec[] {
+  const capabilities = useOrgCapabilities();
+  const plan = useDispatchControlPlan();
+
+  return dispatchControlTabs({
+    runsAssets: hasOrganizationCapability(capabilities, OrganizationCapability.AssetOperations),
+    brokers: hasOrganizationCapability(capabilities, OrganizationCapability.Brokerage),
+    plan,
+  });
 }

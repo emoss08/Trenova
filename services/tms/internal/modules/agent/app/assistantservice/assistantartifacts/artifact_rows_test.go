@@ -345,7 +345,7 @@ func TestRowsArguments(t *testing.T) {
 				var multiErr *errortypes.MultiError
 				require.ErrorAs(t, err, &multiErr)
 				require.NotEmpty(t, multiErr.Errors)
-				assert.Equal(t, tc.refused, multiErr.Errors[0].Field)
+				assert.Equal(t, tc.refused, multiErr.Errors[0].Field())
 				return
 			}
 			require.NoError(t, err)

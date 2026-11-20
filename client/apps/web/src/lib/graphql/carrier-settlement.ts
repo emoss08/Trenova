@@ -8,7 +8,6 @@ import type {
   CarrierSettlementActionInput,
   CarrierSettlementBatchDetailQuery,
   CarrierSettlementBatchTableQuery,
-  CarrierSettlementControlQuery,
   CarrierSettlementDetailQuery,
   CarrierSettlementTableQuery,
   CarrierSettlementWorkspaceSummaryQuery,
@@ -18,7 +17,6 @@ import type {
   MarkCarrierSettlementPaidInput,
   RemoveCarrierSettlementAdjustmentInput,
   SuggestCarrierForEdiInvoiceQuery,
-  UpdateCarrierSettlementControlInput,
 } from "@trenova/graphql/generated/graphql";
 import {
   AcceptCarrierInvoiceMatchDocument,
@@ -54,6 +52,7 @@ import {
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { QueryClient } from "@tanstack/react-query";
+import type { CarrierSettlementControl } from "@/types/carrier-settlement-control";
 
 /**
  * Invalidates every query the carrier settlement workspace renders — the queue
@@ -94,7 +93,6 @@ export type CarrierSettlementLineRow = NonNullable<CarrierSettlementDetail["line
 export type CarrierSettlementBatchDetail = NonNullable<
   CarrierSettlementBatchDetailQuery["carrierSettlementBatch"]
 >;
-export type CarrierSettlementControl = CarrierSettlementControlQuery["carrierSettlementControl"];
 export type CarrierSettlementWorkspaceSummary =
   CarrierSettlementWorkspaceSummaryQuery["carrierSettlementWorkspaceSummary"];
 export type CarrierLedgerEntryRow = CarrierLedgerEntriesQuery["carrierLedgerEntries"][number];
@@ -419,13 +417,36 @@ export async function removeCarrierSettlementAdjustment(
   return data.removeCarrierSettlementAdjustment;
 }
 
-export async function updateCarrierSettlementControl(input: UpdateCarrierSettlementControlInput) {
+/**
+ * Saves an organization's carrier settlement control and returns it as saved: the server
+ * stores the settings it was sent under a new version.
+ */
+export async function updateCarrierSettlementControl(
+  record: CarrierSettlementControl,
+): Promise<CarrierSettlementControl> {
   const data = await requestGraphQL({
     document: UpdateCarrierSettlementControlDocument,
     operationName: "UpdateCarrierSettlementControl",
-    variables: { input },
+    variables: {
+      input: {
+        version: record.version,
+        payTrigger: record.payTrigger,
+        payPeriodFrequency: record.payPeriodFrequency,
+        periodEndDayOfWeek: record.periodEndDayOfWeek,
+        payDelayDays: record.payDelayDays,
+        autoGenerateBatches: record.autoGenerateBatches,
+        autoPostOnApprove: record.autoPostOnApprove,
+        requireSeparateApprover: record.requireSeparateApprover,
+        varianceToleranceMinor: record.varianceToleranceMinor,
+        autoMatchInboundInvoices: record.autoMatchInboundInvoices,
+        autoAcceptWithinTolerance: record.autoAcceptWithinTolerance,
+        holdUntilInvoiceMatched: record.holdUntilInvoiceMatched,
+        defaultApAccountId: record.defaultApAccountId,
+        defaultPurchasedTransportationAccountId: record.defaultPurchasedTransportationAccountId,
+      },
+    },
   });
-  return data.updateCarrierSettlementControl;
+  return { ...record, version: data.updateCarrierSettlementControl.version };
 }
 
 export async function linkEdiCarrierInvoiceToCarrier(invoiceId: string, carrierId: string) {

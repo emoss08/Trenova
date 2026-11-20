@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/resultcache"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -145,21 +146,28 @@ func (r *repository) Update(
 	})
 }
 
-func (r *repository) UpdateCategory(
+func (r *repository) UpdateCategories(
 	ctx context.Context,
-	category *costingcontrol.CostCategory,
-) (*costingcontrol.CostCategory, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*costingcontrol.CostCategory, error) {
-		if err := costingcontroldb.CostCategories.Save(ctx, r.db.Keel(ctx), category); err != nil {
-			r.l.Error(
-				"failed to update cost category",
-				zap.String("categoryID", category.ID.String()),
-				zap.Error(err),
-			)
-			return nil, costCategoryErrors.Map(err, category.ID.String())
+	categories []*costingcontrol.CostCategory,
+) error {
+	if len(categories) == 0 {
+		return nil
+	}
+
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		db := r.db.Keel(ctx)
+		for _, category := range categories {
+			if err := costingcontroldb.CostCategories.Save(ctx, db, category); err != nil {
+				r.l.Error(
+					"failed to update cost category",
+					zap.String("categoryID", category.ID.String()),
+					zap.Error(err),
+				)
+				return costCategoryErrors.Map(err, category.ID.String())
+			}
 		}
 
-		return category, nil
+		return nil
 	})
 }
 
@@ -167,27 +175,36 @@ func (r *repository) ReplaceCategoryGLAccounts(
 	ctx context.Context,
 	req *costingcontrolports.ReplaceCategoryGLAccountsRequest,
 ) error {
+	if len(req.Categories) == 0 {
+		return nil
+	}
+
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		ccga := costingcontroldb.CostCategoryGLAccounts
 		db := r.db.Keel(ctx)
-		if _, err := ccga.Where(ccga.CostCategoryID.Eq(req.CostCategoryID)).
+
+		categoryIDs := make([]pulid.ID, 0, len(req.Categories))
+		links := make([]*costingcontrol.CostCategoryGLAccount, 0, len(req.Categories))
+		for _, category := range req.Categories {
+			categoryIDs = append(categoryIDs, category.CostCategoryID)
+			for _, glAccountID := range category.GLAccountIDs {
+				links = append(links, &costingcontrol.CostCategoryGLAccount{
+					BusinessUnitID: req.TenantInfo.BuID,
+					OrganizationID: req.TenantInfo.OrgID,
+					CostCategoryID: category.CostCategoryID,
+					GLAccountID:    glAccountID,
+				})
+			}
+		}
+
+		if _, err := ccga.Where(ccga.CostCategoryID.In(categoryIDs...)).
 			Delete(ctx, db); err != nil {
 			r.l.Error("failed to clear cost category GL accounts", zap.Error(err))
 			return err
 		}
 
-		if len(req.GLAccountIDs) == 0 {
+		if len(links) == 0 {
 			return nil
-		}
-
-		links := make([]*costingcontrol.CostCategoryGLAccount, 0, len(req.GLAccountIDs))
-		for _, glAccountID := range req.GLAccountIDs {
-			links = append(links, &costingcontrol.CostCategoryGLAccount{
-				BusinessUnitID: req.TenantInfo.BuID,
-				OrganizationID: req.TenantInfo.OrgID,
-				CostCategoryID: req.CostCategoryID,
-				GLAccountID:    glAccountID,
-			})
 		}
 
 		if err := ccga.CreateMany(ctx, db, links); err != nil {

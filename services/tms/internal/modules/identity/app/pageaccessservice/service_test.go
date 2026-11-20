@@ -374,7 +374,7 @@ func TestPreview_RefusesARoleInheritingFromAnotherOrganization(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "parentRoleIds", validation.Field)
+	assert.Equal(t, "parentRoleIds", validation.Field())
 }
 
 func TestPreview_RefusesAnAmbiguousOrInvalidRole(t *testing.T) {

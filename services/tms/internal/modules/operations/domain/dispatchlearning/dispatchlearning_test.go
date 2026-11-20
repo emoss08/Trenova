@@ -277,7 +277,7 @@ func TestValidate_RefusesAnImpossibleStyle(t *testing.T) {
 			tt.style.Validate(multiErr)
 
 			require.True(t, multiErr.HasErrors())
-			assert.Equal(t, tt.field, multiErr.Errors[0].Field)
+			assert.Equal(t, tt.field, multiErr.Errors[0].Field())
 		})
 	}
 }

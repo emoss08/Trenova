@@ -1,0 +1,30 @@
+guide quarrystone.210 from x12.004010.210 "Quarrystone Freight Lines Freight Invoice 4.0"
+
+/// Quarrystone bills each load on its own invoice, quoting Trenova's shipment ID, its PRO and the
+/// BOL, with a line for linehaul, fuel and each accessorial.
+B3 { 02 required; 03 required; 04 codes "PP", "CC", "TP"; 06 required; 07 required; 09 required; 10 codes "035"; 11 fixed "QYSF" }
+C3 { 01 codes "USD" }
+ITD unused
+N9 max 3 { 01 codes "BM", "PO", "CN" }
+G62 unused
+R3 unused
+H3 unused
+K1 unused
+loop 0100 max 2
+0100.N1 { 01 codes "SH", "CN"; 02 required }
+0100.N2 unused
+0100.N3 unused
+0100.N9 unused
+loop 0200 unused
+loop 0300 unused
+loop 0400 required max 20
+0400.L5 { 01 required; 02 required }
+0400.L1 required { 01 required; 04 required; 08 codes "400", "FUE", "SOC", "DET" }
+0400.N9 unused
+0400.POD unused
+0400.L0 unused
+0400.L4 unused
+0400.L7 unused
+0400.K1 unused
+loop 0400.0460 unused
+L3 { 01 required; 02 codes "G"; 05 required }

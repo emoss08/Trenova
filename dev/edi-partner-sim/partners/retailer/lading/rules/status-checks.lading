@@ -1,0 +1,78 @@
+rules statusChecks for statusOut
+  use common
+
+/// Tamberlane matches a status by the BOL it gave us.
+rule "a status quotes the BOL" {
+  require exists bol else hold "Tamberlane needs the BOL on every status: add it before sending"
+}
+
+/// A reason code outside Tamberlane's six would come back rejected in its 999.
+rule "only reasons Tamberlane takes" {
+  for event in events {
+    require (event.reason ?? "NS") in reasonCodes
+      else reject at event.reason "Tamberlane takes no reason code {event.reason ?? ""}"
+  }
+}
+
+/// Tamberlane charges back a delay reported without a cause.
+rule "a delay names its cause" {
+  for event in events where event.kind == Delayed {
+    require (event.reason ?? "NS") != "NS"
+      else hold "Tamberlane needs a reason code on every delay"
+  }
+}
+
+/// Tamberlane's guide requires MS1 on every status.
+rule "a status says where" {
+  for event in events {
+    require exists event.city and exists event.state
+      else hold "Tamberlane needs the city and state on every status"
+  }
+}
+
+/// An event dated in the future is a typo; it must not reach Tamberlane.
+rule "no status from the future" {
+  for event in events {
+    require event.at <= now() + 1 h
+      else reject at event.at "A status dated {event.at} is in the future"
+  }
+}
+
+test "a delivery with its BOL and place goes out" {
+  given now = @2026-06-04T14:00Z
+  given shipmentStatus { key: "TS10000004", bol: "0719744701", events: [{ kind: Delivered, at: @2026-06-04T12:40Z, city: "Memphis", state: "TN" }] }
+  expect no holds
+  expect no rejects
+}
+
+test "a delay without a cause is held" {
+  given now = @2026-06-04T14:00Z
+  given shipmentStatus { key: "TS10000004", bol: "0719744701", events: [{ kind: Delayed, at: @2026-06-04T12:40Z, city: "Omaha", state: "NE" }] }
+  expect held "Tamberlane needs a reason code on every delay"
+}
+
+test "a reason Tamberlane does not take is rejected" {
+  given now = @2026-06-04T14:00Z
+  given shipmentStatus { key: "TS10000004", bol: "0719744701", events: [{ kind: Delayed, reason: "ZZ", at: @2026-06-04T12:40Z, city: "Omaha", state: "NE" }] }
+  expect rejected
+}
+
+test "a status with no place is held" {
+  given now = @2026-06-04T14:00Z
+  given shipmentStatus { key: "TS10000004", bol: "0719744701", events: [{ kind: ArrivedDelivery, at: @2026-06-04T12:40Z }] }
+  expect held "Tamberlane needs the city and state on every status"
+}
+
+test "an en-route status is never sent" {
+  given now = @2026-06-04T14:00Z
+  given shipmentStatus { key: "TS10000004", bol: "0719744701", events: [{ kind: EnRoute, at: @2026-06-04T12:40Z, city: "Omaha", state: "NE" }] }
+  expect no sent
+}
+
+property "every status Tamberlane takes goes out" {
+  vary kind in [ArrivedPickup, DepartedPickup, ArrivedDelivery, Delivered, EtaChanged]
+  given now = @2026-06-04T14:00Z
+  given shipmentStatus { key: "TS10000004", bol: "0719744701", events: [{ kind: kind, at: @2026-06-04T12:40Z, city: "Omaha", state: "NE" }] }
+  expect no rejects
+  expect no holds
+}

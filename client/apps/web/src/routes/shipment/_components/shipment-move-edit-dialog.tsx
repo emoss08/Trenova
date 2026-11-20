@@ -42,6 +42,7 @@ import {
   useWatch,
 } from "react-hook-form";
 import { type MoveProblem, moveProblems, problemText } from "./move/move-problems";
+import { TemperatureRangeFields } from "./temperature-range-fields";
 
 export type MoveDialogState =
   | { open: false }
@@ -61,6 +62,8 @@ const STOP_FIELDS_DRAWN = new Set([
   "type",
   "pieces",
   "weight",
+  "temperatureMin",
+  "temperatureMax",
   "scheduleType",
   "handling",
   "scheduledWindowStart",
@@ -454,6 +457,11 @@ function StopCard({
             />
           </FormControl>
         </FormGroup>
+
+        <TemperatureRangeFields
+          prefix={`moves.${moveIndex}.stops.${stopIndex}`}
+          description={t("The range the freight is kept at from this stop on")}
+        />
 
         <div>
           <div className="mb-1.5 flex items-center gap-1">

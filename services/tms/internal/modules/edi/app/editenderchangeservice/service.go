@@ -3,6 +3,7 @@ package editenderchangeservice
 import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edipayloadbuild"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editendermapping"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editenderrecipient"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
@@ -21,6 +22,7 @@ type Params struct {
 	Logger              *zap.Logger
 	Outbound            *edioutbound.Service
 	PartnerRepo         edipartnerports.EDIPartnerRepository
+	Payload             *edipayloadbuild.Service
 	Recipient           *editenderrecipient.Service
 	ShipmentLinkRepo    editenderports.EDIShipmentLinkRepository
 	ShipmentSvc         shipmentserviceports.ShipmentReader
@@ -43,6 +45,7 @@ type Service struct {
 	transferRepo        editenderports.EDILoadTenderTransferRepository
 	delivery            *edidelivery.Service
 	outbound            *edioutbound.Service
+	payload             *edipayloadbuild.Service
 	recipient           *editenderrecipient.Service
 	tenderMapping       *editendermapping.Service
 }
@@ -61,6 +64,7 @@ func New(p Params) *Service {
 		transferRepo:        p.TransferRepo,
 		delivery:            p.Delivery,
 		outbound:            p.Outbound,
+		payload:             p.Payload,
 		recipient:           p.Recipient,
 		tenderMapping:       p.TenderMapping,
 	}

@@ -1,0 +1,90 @@
+library common
+
+crosswalk stopTypes: Code<S502> <-> StopType {
+  "LD" <-> Pickup
+  "UL" <-> Delivery
+}
+
+// Kestrel replaces a tender (05) as often as it changes one (04); the flow handles a
+// replacement as a change.
+crosswalk purposes: Code<B2A01> <-> TenderPurpose {
+  "00" <-> Original
+  "01" <-> Cancel
+  "04" <-> Change
+  "05" <-> Replace
+}
+
+// Kestrel pays prepaid or through a third party; an invoice for anything else says prepaid.
+crosswalk payments: Code<B206> <-> Payment {
+  "PP" <-> Prepaid
+  "TP" <-> ThirdParty
+  else <- "PP"
+}
+
+crosswalk decisions: Code<B104> <-> Decision {
+  "A" <-> Accept
+  "D" <-> Decline
+}
+
+// Kestrel's 214 guide takes nine status codes. It takes no Dispatched, Loaded or
+// AppointmentSet status: a status of one of them is never sent.
+crosswalk statusCodes: Code<AT701> <-> EventKind {
+  "X3" <-> ArrivedPickup
+  "AF" <-> DepartedPickup
+  "X1" <-> ArrivedDelivery
+  "D1" <-> Delivered
+  "CD" <-> DepartedDelivery
+  "X6" <-> EnRoute
+  "AG" <-> EtaChanged
+  "SD" <-> Delayed
+  "A9" <-> Exception
+  not sent <- Dispatched, Loaded, AppointmentSet
+  else -> Exception
+}
+
+crosswalk equipment: Text <-> Text {
+  "TF" <-> "VAN"
+  "RT" <-> "REEFER"
+  "FT" <-> "FLATBED"
+}
+
+/// The window a stop gets when Kestrel sends only its opening time.
+const defaultWindow = 2 h
+
+/// The appointment window from a stop's dates: 37 or 53 opens it, 38 or 54 closes it. Kestrel
+/// writes each time with its zone code, which wins over the zone given.
+fn window(dates: [Segment<G62>], zone: Zone) -> Window? {
+  let opens = dates.find(d => d.01 in ["37", "53"])
+  let closes = dates.find(d => d.01 in ["38", "54"])
+  let start = at(opens.02, opens.04, zoneFromCode(opens.05 ?? "") ?? zone)
+  Window {
+    start <- start
+    end   <- at(closes.02, closes.04, zoneFromCode(closes.05 ?? "") ?? zone) ?? (start ?? now()) + defaultWindow
+  }
+}
+
+/// The first reference with a qualifier.
+fn reference(segments: [Segment<L11>], qualifier: Text) -> Text? =
+  segments.find(s => s.02 == qualifier).01
+
+/// Kestrel sends ZIP+4 half the time; Trenova keeps five digits.
+fn postal(code: Text) -> Text? = if code.matches(r"^\d{9}$") then code.zip5() else code
+
+test "no dates make no window" {
+  expect window([], partner.zone) == none
+}
+
+test "a nine-digit zip keeps five digits" {
+  expect postal("554131234") == "55413"
+  expect postal("61109") == "61109"
+}
+
+test "equipment reads both ways" {
+  expect "RT" via equipment == "REEFER"
+  expect "FLATBED" via equipment.back == "FT"
+  expect "ZZ" via equipment == none
+}
+
+test "a replacement reads as a replacement" {
+  expect "05" via purposes == Replace
+}

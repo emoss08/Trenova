@@ -209,8 +209,12 @@ pub fn complete(session: &Session, offset: u32) -> Completion {
         || previous_word == "->" && session.line_word(start) == "fn"
     {
         types(&mut items);
+    } else if previous_word == "ending" && session.line_word(start) == "line" {
+        for word in ["none", "lf", "crlf", "cr"] {
+            items.push(item(word, "keyword", "", None, "0"));
+        }
     } else if previous_word == "given" {
-        for word in ["file", "text", "setting", "lookup", "now"] {
+        for word in ["file", "text", "transaction", "setting", "lookup", "now"] {
             items.push(item(word, "keyword", "", None, "0"));
         }
         for document in schema::DOCUMENTS {
@@ -623,6 +627,13 @@ fn statement(session: &Session, offset: u32, header: &Header, items: &mut Vec<It
                 "keyword",
                 "",
                 "expect 997 for every send within ${1:30 min} else escalate \"${2:message}\"",
+                "0",
+            ));
+            items.push(snippet(
+                "await",
+                "keyword",
+                "",
+                "await 990 within ${1:2 h} else escalate \"${2:message}\"",
                 "0",
             ));
         }

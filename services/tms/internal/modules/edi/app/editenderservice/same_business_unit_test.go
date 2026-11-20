@@ -15,13 +15,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/orderportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,6 +42,7 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 	sourcePartnerID := pulid.MustNew("edip_")
 	targetPartnerID := pulid.MustNew("edip_")
 	sourceShipmentID := pulid.MustNew("sp_")
+	orderID := pulid.MustNew("ord_")
 
 	sourcePartner := &edi.EDIPartner{
 		ID:                     sourcePartnerID,
@@ -143,11 +147,21 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 			ID:                sourceShipmentID,
 			BusinessUnitID:    buID,
 			OrganizationID:    sourceOrgID,
+			OrderID:           orderID,
 			Status:            shipmentvocab.StatusNew,
 			ServiceTypeID:     pulid.MustNew("st_"),
 			CustomerID:        pulid.MustNew("cus_"),
 			FormulaTemplateID: pulid.MustNew("ft_"),
 		}, nil)
+
+	orders := orderportsmock.NewMockOrderRepository(t)
+	orders.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req orderports.GetOrderByIDRequest) bool {
+			return req.ID == orderID &&
+				req.TenantInfo.OrgID == sourceOrgID &&
+				req.TenantInfo.BuID == buID
+		})).
+		Return(&order.Order{ID: orderID, PONumber: " 8978300638 "}, nil)
 
 	service := &Service{
 		db:             dbtest.NopConnection{},
@@ -157,6 +171,10 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 		profileRepo:    profileRepo,
 		transferRepo:   transferRepo,
 		shipmentSvc:    shipmentSvc,
+		payload: edipayloadbuild.New(edipayloadbuild.Params{
+			OrderRepo:   orders,
+			ShipmentSvc: shipmentSvc,
+		}),
 		tenderMapping: editendermapping.New(editendermapping.Params{
 			MappingProfileRepo: mappingProfileRepo,
 		}),
@@ -212,4 +230,6 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 	require.NotNil(t, createdTransfer)
 	require.Equal(t, buID, createdTransfer.SourceBusinessUnitID)
 	require.Equal(t, buID, createdTransfer.TargetBusinessUnitID)
+	require.Equal(t, "8978300638", createdTransfer.TenderPayload.PONumber,
+		"the transfer carries the source shipment's purchase order to the receiving tenant")
 }

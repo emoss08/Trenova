@@ -72,7 +72,7 @@ func TestAWatchNamesAtMostTwentySitesAndNoWildcards(t *testing.T) {
 	multiErr = errortypes.NewMultiError()
 	wildcard.Validate(multiErr)
 	require.True(t, multiErr.HasErrors())
-	assert.Equal(t, "sites", multiErr.Errors[0].Field)
+	assert.Equal(t, "sites", multiErr.Errors[0].Field())
 }
 
 func TestAWatchLastsAMonthByDefaultAndAtMostAQuarter(t *testing.T) {

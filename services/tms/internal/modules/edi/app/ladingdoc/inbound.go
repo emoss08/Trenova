@@ -2,6 +2,7 @@ package ladingdoc
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/temperaturerange"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -95,6 +97,32 @@ func wholePounds(measure *Measure) *int64 {
 	return &value
 }
 
+func degreesOf(temperature *TemperatureRange) (low, high *int16) {
+	if temperature == nil {
+		return nil, nil
+	}
+	return wholeDegrees(temperature.Min), wholeDegrees(temperature.Max)
+}
+
+func loadTemperature(payload *editransfer.LoadTenderPayload, document *LoadTender) {
+	lines := make([]temperaturerange.Range, 0, len(document.Stops)+len(document.Commodities))
+	for _, move := range payload.Moves {
+		for index := range move.Stops {
+			stop := &move.Stops[index]
+			lines = append(lines, temperaturerange.Of(stop.TemperatureMin, stop.TemperatureMax))
+		}
+	}
+	for index := range payload.Commodities {
+		line := &payload.Commodities[index]
+		lines = append(lines, temperaturerange.Of(line.TemperatureMin, line.TemperatureMax))
+	}
+	load := temperaturerange.Load(lines)
+	if !load.Set() {
+		load.Min, load.Max = degreesOf(document.Temperature)
+	}
+	payload.TemperatureMin, payload.TemperatureMax = load.Min, load.Max
+}
+
 func wholeDegrees(measure *Measure) *int16 {
 	if measure == nil {
 		return nil
@@ -164,7 +192,7 @@ func source(
 
 func purposeCode(purpose string) editransfer.LoadTenderPurposeCode {
 	switch purpose {
-	case PurposeChange:
+	case PurposeChange, PurposeReplace:
 		return editransfer.LoadTenderPurposeChange
 	case PurposeCancel:
 		return editransfer.LoadTenderPurposeCancel
@@ -173,10 +201,10 @@ func purposeCode(purpose string) editransfer.LoadTenderPurposeCode {
 	}
 }
 
-var paymentCodes = map[string]string{
-	"Prepaid":    "PP",
-	"Collect":    "CC",
-	"ThirdParty": "TP",
+var payments = map[string]bool{
+	"Prepaid":    true,
+	"Collect":    true,
+	"ThirdParty": true,
 }
 
 // ToLoadTender is the tender payload of a loadTender a map read. Every reference carries the
@@ -195,6 +223,9 @@ func ToLoadTender(
 	payload := &editransfer.LoadTenderPayload{
 		PurposeCode:              purposeCode(document.Purpose),
 		BOL:                      document.BOL,
+		PONumber:                 document.PONumber,
+		Payment:                  paymentOf(document.Payment),
+		Equipment:                document.Equipment,
 		Weight:                   wholePounds(document.Weight),
 		Pieces:                   document.Pieces,
 		TotalChargeAmount:        amountOf(document.Total),
@@ -204,18 +235,8 @@ func ToLoadTender(
 		RequiredMappingEntityIDs: map[edi.MappingEntityType][]pulid.ID{},
 		CustomFields:             document.Custom,
 	}
-	if payment := paymentCodes[document.Payment]; payment != "" {
-		payload.RatingDetail["paymentMethod"] = payment
-	}
-	if document.PONumber != "" {
-		payload.RatingDetail["poNumber"] = document.PONumber
-	}
 	if document.ProNumber != "" {
 		payload.RatingDetail["proNumber"] = document.ProNumber
-	}
-	if document.Temperature != nil {
-		payload.TemperatureMin = wholeDegrees(document.Temperature.Min)
-		payload.TemperatureMax = wholeDegrees(document.Temperature.Max)
 	}
 	need := mapped{payload: payload}
 	payload.CustomerID, payload.CustomerLabel = source(
@@ -240,6 +261,7 @@ func ToLoadTender(
 		document.ShipmentType,
 		unmapped,
 		"shipmentType",
+		defaultMappingKey,
 	)
 	need.require(edi.MappingEntityTypeCustomer, payload.CustomerID)
 	need.require(edi.MappingEntityTypeServiceType, payload.ServiceTypeID)
@@ -260,6 +282,7 @@ func ToLoadTender(
 			Weight:               wholePounds(stop.Weight),
 			ScheduledWindowStart: unix(stop.Window.Start),
 		}
+		written.TemperatureMin, written.TemperatureMax = degreesOf(stop.Temperature)
 		if written.Sequence == 0 {
 			written.Sequence = int64(index + 1)
 		}
@@ -327,9 +350,14 @@ func ToLoadTender(
 		if line.Pieces != nil {
 			commodity.Pieces = *line.Pieces
 		}
+		if line.Hazmat != nil {
+			commodity.Hazmat = *line.Hazmat
+		}
+		commodity.TemperatureMin, commodity.TemperatureMax = degreesOf(line.Temperature)
 		need.require(edi.MappingEntityTypeCommodity, id)
 		payload.Commodities = append(payload.Commodities, commodity)
 	}
+	loadTemperature(payload, &document)
 	for index := range document.Charges {
 		charge := &document.Charges[index]
 		id, label := source(
@@ -410,11 +438,10 @@ func ToShipmentStatus(raw jsonutils.RawJSON) (*edipayload.ShipmentStatusPayload,
 		Weight:           wholePounds(document.Weight),
 		Pieces:           document.Pieces,
 		EquipmentNumber:  document.Equipment,
-		References:       map[string]string{"shipmentId": document.Key},
+		Key:              document.Key,
+		References:       map[string]string{},
 	}
-	for key, value := range document.Refs {
-		payload.References[key] = value
-	}
+	maps.Copy(payload.References, document.Refs)
 	for index := range document.Events {
 		event := &document.Events[index]
 		written := edipayload.ShipmentStatusEvent{
@@ -462,17 +489,14 @@ func ToFreightInvoice(raw jsonutils.RawJSON) (*edipayload.FreightInvoicePayload,
 		DeliveryDate:     unixDay(document.DeliveryDate),
 		BOL:              document.BOL,
 		ProNumber:        document.ProNumber,
+		Key:              document.Key,
+		PONumber:         document.Refs[edipayload.RefPurchaseOrder],
 		Weight:           wholePounds(document.Weight),
 		CurrencyCode:     stringutils.FirstNonEmpty(document.Total.Currency, DefaultCurency),
 		TotalAmount:      amountOf(&document.Total),
 		ReferenceNumbers: map[string]string{},
 	}
-	for key, value := range document.Refs {
-		payload.ReferenceNumbers[key] = value
-	}
-	if document.Key != "" {
-		payload.ReferenceNumbers["shipmentId"] = document.Key
-	}
+	maps.Copy(payload.ReferenceNumbers, document.Refs)
 	if document.BillTo != nil {
 		payload.BillToName = document.BillTo.Name
 		if address := document.BillTo.Address; address != nil {

@@ -35,7 +35,6 @@ type wiring struct {
 	AccessorialRepo   accessorialchargeports.AccessorialChargeRepository
 	AgreementRepo     rateagreementports.RateAgreementRepository
 	PayAssignmentRepo driverpayports.WorkerPayAssignmentRepository
-	PayProfileRepo    driverpayports.PayProfileRepository
 	Organizations     tenantports.OrganizationRepository
 	NoticeRepo        detentionports.DetentionNoticeRepository
 	AnalyticsRepo     detentionports.DetentionAnalyticsRepository
@@ -83,7 +82,6 @@ func wire(p *wiring) services {
 		AccessorialRepo:   p.AccessorialRepo,
 		AgreementRepo:     p.AgreementRepo,
 		PayAssignmentRepo: p.PayAssignmentRepo,
-		PayProfileRepo:    p.PayProfileRepo,
 		CommentRepo:       p.CommentRepo,
 		Watchtower:        p.Watchtower,
 		Publisher:         p.Publisher,

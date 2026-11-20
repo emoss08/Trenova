@@ -222,7 +222,7 @@ func TestService_Create_QuotaExceeded(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.True(t, errors.As(err, &multiErr))
 	assert.True(t, multiErr.HasErrors())
-	assert.Equal(t, "resourceType", multiErr.Errors[0].Field)
+	assert.Equal(t, "resourceType", multiErr.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrInvalid, multiErr.Errors[0].Code)
 	repo.AssertExpectations(t)
 }
@@ -348,7 +348,7 @@ func TestService_Update_BreakingChange_FieldTypeChange(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.True(t, errors.As(err, &multiErr))
 	assert.True(t, multiErr.HasErrors())
-	assert.Equal(t, "fieldType", multiErr.Errors[0].Field)
+	assert.Equal(t, "fieldType", multiErr.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrBreakingChange, multiErr.Errors[0].Code)
 	repo.AssertExpectations(t)
 	valueRepo.AssertExpectations(t)

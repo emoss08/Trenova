@@ -105,6 +105,13 @@ func (s *Service) PlanSend(
 	plan.Warnings = append(plan.Warnings, templateWarnings("subject", wording.Subject.Unknown)...)
 	plan.Warnings = append(plan.Warnings, templateWarnings("body", wording.Body.Unknown)...)
 	plan.Errors = append(plan.Errors, sendEligibilityErrors(entity, deliveryProfile.Customer)...)
+	replaced, err := s.hiddenAsReplaced(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	if replaced {
+		plan.Errors = append(plan.Errors, replacedInvoiceSendError)
+	}
 	if err = s.checkSuppressedRecipients(ctx, plan, profile, req.TenantInfo); err != nil {
 		return nil, err
 	}

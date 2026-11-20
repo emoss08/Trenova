@@ -3,7 +3,9 @@ package tableexportservice
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -45,6 +47,16 @@ type ExportRequest struct {
 	Format report.Format
 }
 
+type DefinitionExportRequest struct {
+	reporting.Request
+
+	Name        string
+	Description string
+	Category    string
+	Definition  *ir.Definition
+	Format      report.Format
+}
+
 type ScheduleRequest struct {
 	reporting.Request
 
@@ -66,12 +78,8 @@ type Result struct {
 }
 
 func (s *Service) Export(ctx context.Context, req *ExportRequest) (*Result, error) {
-	if !req.Format.IsValid() {
-		return nil, errortypes.NewValidationError(
-			"format",
-			errortypes.ErrInvalid,
-			"Choose a file format",
-		)
+	if err := checkFormat(req.Format); err != nil {
+		return nil, err
 	}
 
 	definition, built, err := s.saveDefinition(ctx, &req.Request, req.Name, &req.View, req.Format)
@@ -79,17 +87,67 @@ func (s *Service) Export(ctx context.Context, req *ExportRequest) (*Result, erro
 		return nil, err
 	}
 
-	run, err := s.reporting.RunReport(ctx, &reporting.RunReportRequest{
-		Request:      req.Request,
-		DefinitionID: definition.ID,
-		Format:       req.Format,
-		Trigger:      report.RunTriggerManual,
-	})
+	run, err := s.run(ctx, &req.Request, definition.ID, req.Format)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Result{DefinitionID: definition.ID, Run: run, Skipped: built.Skipped}, nil
+}
+
+func (s *Service) ExportDefinition(
+	ctx context.Context,
+	req *DefinitionExportRequest,
+) (*Result, error) {
+	if err := checkFormat(req.Format); err != nil {
+		return nil, err
+	}
+
+	definition, err := s.reporting.CreateDefinition(ctx, &reporting.SaveDefinitionRequest{
+		Request:       req.Request,
+		Name:          strings.TrimSpace(req.Name),
+		Description:   req.Description,
+		Category:      req.Category,
+		Visibility:    report.VisibilityPrivate,
+		Status:        report.DefinitionStatusActive,
+		DefaultFormat: req.Format,
+		Definition:    req.Definition,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	run, err := s.run(ctx, &req.Request, definition.ID, req.Format)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Result{DefinitionID: definition.ID, Run: run}, nil
+}
+
+func checkFormat(format report.Format) error {
+	if format.IsValid() {
+		return nil
+	}
+	return errortypes.NewValidationError(
+		"format",
+		errortypes.ErrInvalid,
+		"Choose a file format",
+	)
+}
+
+func (s *Service) run(
+	ctx context.Context,
+	request *reporting.Request,
+	definitionID pulid.ID,
+	format report.Format,
+) (*report.ReportRun, error) {
+	return s.reporting.RunReport(ctx, &reporting.RunReportRequest{
+		Request:      *request,
+		DefinitionID: definitionID,
+		Format:       format,
+		Trigger:      report.RunTriggerManual,
+	})
 }
 
 func (s *Service) Schedule(ctx context.Context, req *ScheduleRequest) (*Result, error) {

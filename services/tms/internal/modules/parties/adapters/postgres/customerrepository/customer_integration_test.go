@@ -270,7 +270,7 @@ func TestCreateMapsDuplicateCodeToAFieldError(t *testing.T) {
 
 	var fieldErr *errortypes.Error
 	require.True(t, errors.As(err, &fieldErr), err.Error())
-	assert.Equal(t, "code", fieldErr.Field)
+	assert.Equal(t, "code", fieldErr.Field())
 
 	_, err = f.repo.Create(f.b.ctx, newCustomer(f.b, "DUP1"))
 	require.NoError(t, err, "codes are unique per tenant")

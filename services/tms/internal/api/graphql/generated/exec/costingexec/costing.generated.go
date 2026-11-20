@@ -577,30 +577,17 @@ var Shard = &gqlexec.Shard{
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
-				Name:       "updateCostingControl",
+				Name:       "saveCostingControl",
 				NonNull:    true,
 				IsResolver: true,
 				HasChild:   true,
 				ChildType:  "CostingControl",
-				Args:       field_Mutation_updateCostingControl_args,
+				Args:       field_Mutation_saveCostingControl_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[MutationResolver](ec, "Mutation@costing").UpdateCostingControl(ctx, fc.Args["input"].(gqlmodel.CostingControlInput))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@costing").SaveCostingControl(ctx, fc.Args["input"].(gqlmodel.CostingControlSaveInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNCostingControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostingControl),
-			},
-			{
-				Name:       "updateCostCategory",
-				NonNull:    true,
-				IsResolver: true,
-				HasChild:   true,
-				ChildType:  "CostCategory",
-				Args:       field_Mutation_updateCostCategory_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[MutationResolver](ec, "Mutation@costing").UpdateCostCategory(ctx, fc.Args["input"].(gqlmodel.CostCategoryUpdateInput))
-				},
-				Marshal: gqlexec.Marshal(marshalNCostCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostCategory),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -1046,6 +1033,7 @@ var Shard = &gqlexec.Shard{
 	Inputs: []gqlexec.Input{
 		{Name: "CostCategoryUpdateInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCostCategoryUpdateInput)},
 		{Name: "CostingControlInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCostingControlInput)},
+		{Name: "CostingControlSaveInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCostingControlSaveInput)},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "Mutation@costing", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
@@ -1054,8 +1042,7 @@ var Shard = &gqlexec.Shard{
 }
 
 type MutationResolver interface {
-	UpdateCostingControl(ctx context.Context, input gqlmodel.CostingControlInput) (*gqlmodel.CostingControl, error)
-	UpdateCostCategory(ctx context.Context, input gqlmodel.CostCategoryUpdateInput) (*gqlmodel.CostCategory, error)
+	SaveCostingControl(ctx context.Context, input gqlmodel.CostingControlSaveInput) (*gqlmodel.CostingControl, error)
 }
 
 type QueryResolver interface {
@@ -1079,24 +1066,11 @@ var (
 	errNoChild10 = errors.New("field of type Float does not have child fields")
 )
 
-func field_Mutation_updateCostingControl_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+func field_Mutation_saveCostingControl_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.CostingControlInput, error) {
-			return unmarshalNCostingControlInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostingControlInput(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func field_Mutation_updateCostCategory_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.CostCategoryUpdateInput, error) {
-			return unmarshalNCostCategoryUpdateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostCategoryUpdateInput(ctx, ec, v)
+		func(ctx context.Context, v any) (gqlmodel.CostingControlSaveInput, error) {
+			return unmarshalNCostingControlSaveInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostingControlSaveInput(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -1303,14 +1277,55 @@ func unmarshalInputCostingControlInput(ctx context.Context, ec *gqlexec.Exec, ob
 	return it, nil
 }
 
+func unmarshalInputCostingControlSaveInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.CostingControlSaveInput, error) {
+	var it gqlmodel.CostingControlSaveInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"control", "categories"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "control":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("control"))
+			data, err := unmarshalOCostingControlInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostingControlInput(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Control = data
+		case "categories":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categories"))
+			data, err := unmarshalNCostCategoryUpdateInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostCategoryUpdateInputᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Categories = data
+		}
+	}
+	return it, nil
+}
+
 func unmarshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCostCategoryUpdateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostCategoryUpdateInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CostCategoryUpdateInput, error) {
+func unmarshalNCostCategoryUpdateInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostCategoryUpdateInputᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]*gqlmodel.CostCategoryUpdateInput, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNCostCategoryUpdateInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostCategoryUpdateInput)
+}
+
+func unmarshalNCostCategoryUpdateInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostCategoryUpdateInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.CostCategoryUpdateInput, error) {
 	res, err := unmarshalInputCostCategoryUpdateInput(ctx, ec, v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalNCostRateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostRateSource(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CostRateSource, error) {
@@ -1319,8 +1334,8 @@ func unmarshalNCostRateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNCostingControlInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostingControlInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CostingControlInput, error) {
-	res, err := unmarshalInputCostingControlInput(ctx, ec, v)
+func unmarshalNCostingControlSaveInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostingControlSaveInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.CostingControlSaveInput, error) {
+	res, err := unmarshalInputCostingControlSaveInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1341,6 +1356,14 @@ func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]
 func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOCostingControlInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostingControlInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.CostingControlInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := unmarshalInputCostingControlInput(ctx, ec, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {

@@ -1,0 +1,7 @@
+name: a planner's decline is answered with a 990 and no load is built
+steps:
+  - send: { set: "204", as: t1 }
+  - expect: { ack: t1 }
+  - trenova: { decide: t1, decision: decline, reason: No trucks in Rockford that day }
+  - expect: { wire: "990", about: t1, elements: { B1-04: D } }
+  - expect: { trenova: { shipment: t1, exists: false } }

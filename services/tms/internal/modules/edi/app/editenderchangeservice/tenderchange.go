@@ -455,7 +455,7 @@ func applyTenderPayloadToShipment(
 		edi.MappingEntityTypeServiceType,
 		payload.ServiceTypeID,
 	)
-	target.ShipmentTypeID = editendermapping.OptionalMappedID(
+	target.ShipmentTypeID = mustMappedID(
 		mappings,
 		edi.MappingEntityTypeShipmentType,
 		payload.ShipmentTypeID,
@@ -552,6 +552,8 @@ func mappedTenderStops(
 			Sequence:             stop.Sequence,
 			Pieces:               stop.Pieces,
 			Weight:               stop.Weight,
+			TemperatureMin:       stop.TemperatureMin,
+			TemperatureMax:       stop.TemperatureMax,
 			ScheduledWindowStart: stop.ScheduledWindowStart,
 			ScheduledWindowEnd:   stop.ScheduledWindowEnd,
 			AddressLine:          stop.AddressLine,
@@ -593,6 +595,8 @@ func mappedTenderCommodities(
 			CommodityID:    targetID,
 			Weight:         commodity.Weight,
 			Pieces:         commodity.Pieces,
+			TemperatureMin: commodity.TemperatureMin,
+			TemperatureMax: commodity.TemperatureMax,
 		}
 		if transfer != nil {
 			item.BusinessUnitID = transfer.TargetBusinessUnitID

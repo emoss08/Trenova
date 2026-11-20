@@ -1,0 +1,8 @@
+guide quarrystone.990 from x12.004010.990 "Quarrystone Freight Lines Tender Response 2.0"
+
+/// Quarrystone quotes Trenova's shipment ID, gives its PRO on an acceptance and says why in K1
+/// when it declines.
+B1 { 01 fixed "QYSF"; 02 required; 03 required; 04 codes "A", "D" }
+N9 { 01 codes "CN" }
+G62 unused
+K1 { 01 required }

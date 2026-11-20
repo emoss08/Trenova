@@ -137,7 +137,7 @@ func TestService_Update_RejectsInvalidDocument(t *testing.T) {
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "attentionMetrics[0]", multiErr.Errors[0].Field)
+	assert.Equal(t, "attentionMetrics[0]", multiErr.Errors[0].Field())
 }
 
 func TestService_Update_CreatesRowWhenNoneExists(t *testing.T) {

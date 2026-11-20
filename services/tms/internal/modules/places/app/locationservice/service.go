@@ -13,9 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
-	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,7 +32,7 @@ type Params struct {
 	UsStateRepo   usstateports.UsStateRepository
 	Validator     *Validator
 	AuditService  auditports.AuditService
-	Transformer   accessorialchargeports.DataTransformer
+	Formatter     dataentrycontrolports.TextFormatter
 	CodeGenerator tenantports.LocationCodeGenerator
 }
 
@@ -42,7 +42,7 @@ type Service struct {
 	usStateRepo   usstateports.UsStateRepository
 	validator     *Validator
 	auditService  auditports.AuditService
-	transformer   accessorialchargeports.DataTransformer
+	formatter     dataentrycontrolports.TextFormatter
 	codeGenerator tenantports.LocationCodeGenerator
 }
 
@@ -53,7 +53,7 @@ func New(p Params) *Service {
 		usStateRepo:   p.UsStateRepo,
 		validator:     p.Validator,
 		auditService:  p.AuditService,
-		transformer:   p.Transformer,
+		formatter:     p.Formatter,
 		codeGenerator: p.CodeGenerator,
 	}
 }
@@ -144,8 +144,8 @@ func (s *Service) Create(
 		zap.String("principalID", auditActor.PrincipalID.String()),
 	)
 
-	if err := s.transformer.TransformLocation(ctx, entity); err != nil {
-		log.Error("failed to transform location", zap.Error(err))
+	if err := s.formatter.Format(ctx, entity); err != nil {
+		log.Error("failed to format location", zap.Error(err))
 		return nil, err
 	}
 	entity.NormalizeGeofence()

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -42,7 +42,7 @@ func (s *Service) AgentSummary(
 		worstLimit = aifeedbackports.DefaultAgentFeedbackWorstLimit
 	}
 
-	location, err := orgzone.Location(ctx, s.organizations, req.TenantInfo)
+	location, err := tenantports.OrganizationLocation(ctx, s.organizations, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}

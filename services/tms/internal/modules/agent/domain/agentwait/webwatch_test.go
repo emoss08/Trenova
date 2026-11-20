@@ -61,7 +61,7 @@ func TestAWebWatchWaitNamesItsWatchAndWatchesIt(t *testing.T) {
 	multiErr = errortypes.NewMultiError()
 	missing.Validate(multiErr)
 	require.True(t, multiErr.HasErrors())
-	assert.Equal(t, "webWatchId", multiErr.Errors[0].Field)
+	assert.Equal(t, "webWatchId", multiErr.Errors[0].Field())
 }
 
 func TestWhatAWebWatchFoundIsOutsideText(t *testing.T) {

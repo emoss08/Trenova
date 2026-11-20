@@ -5192,14 +5192,14 @@ func unmarshalInputUpdateDashControlInput(ctx context.Context, ec *gqlexec.Exec,
 			it.RequireContactChangeApproval = data
 		case "driverDigestCadence":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driverDigestCadence"))
-			data, err := unmarshalODriverDigestCadence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋdashcontrolᚐDriverDigestCadence(ctx, ec, v)
+			data, err := unmarshalNDriverDigestCadence2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋdashcontrolᚐDriverDigestCadence(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.DriverDigestCadence = data
 		case "driverDigestWeekday":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driverDigestWeekday"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			data, err := unmarshalNInt2int(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -5334,6 +5334,12 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNDriverDigestCadence2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋdashcontrolᚐDriverDigestCadence(ctx context.Context, ec *gqlexec.Exec, v any) (dashcontrol.DriverDigestCadence, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := dashcontrol.DriverDigestCadence(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5461,15 +5467,6 @@ func unmarshalODisputeAdjustmentInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 		return nil, nil
 	}
 	res, err := unmarshalInputDisputeAdjustmentInput(ctx, ec, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalODriverDigestCadence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋdashcontrolᚐDriverDigestCadence(ctx context.Context, ec *gqlexec.Exec, v any) (*dashcontrol.DriverDigestCadence, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := dashcontrol.DriverDigestCadence(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

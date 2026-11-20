@@ -152,7 +152,7 @@ func TestUpdate_RefusesAnAIAuditTrailKeptUnderAYear(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "aiAuditRetentionPeriod", multiErr.Errors[0].Field)
+	assert.Equal(t, "aiAuditRetentionPeriod", multiErr.Errors[0].Field())
 }
 
 func TestUpdate_RefusesAICorrectionsKeptUnderAMonth(t *testing.T) {
@@ -172,7 +172,7 @@ func TestUpdate_RefusesAICorrectionsKeptUnderAMonth(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "aiCorrectionRetentionPeriod", multiErr.Errors[0].Field)
+	assert.Equal(t, "aiCorrectionRetentionPeriod", multiErr.Errors[0].Field())
 }
 
 func TestGet_DefaultsAICorrectionRetentionWhenNothingIsSaved(t *testing.T) {
@@ -208,7 +208,7 @@ func TestUpdate_RefusesFinancialAuditEntriesKeptUnderSevenYears(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "auditFinancialRetentionDays", multiErr.Errors[0].Field)
+	assert.Equal(t, "auditFinancialRetentionDays", multiErr.Errors[0].Field())
 }
 
 func TestUpdate_KeepsAnAuditClassLeftUnsetAtItsFloor(t *testing.T) {

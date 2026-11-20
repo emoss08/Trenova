@@ -120,7 +120,7 @@ func TestCreateIntegration_ExternalReferenceNamesOneLiveShipmentPerCustomer(t *t
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.NotEmpty(t, multiErr.Errors)
-	assert.Equal(t, "externalReference", multiErr.Errors[0].Field)
+	assert.Equal(t, "externalReference", multiErr.Errors[0].Field())
 	assert.Contains(t, multiErr.Error(), created.ProNumber)
 
 	err = shipmentdb.Shipments.Create(ctx, db, &shipment.Shipment{

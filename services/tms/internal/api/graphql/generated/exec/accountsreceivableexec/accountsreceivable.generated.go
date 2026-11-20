@@ -33,6 +33,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ARDSOTrendPoint", Implementors: []string{"ARDSOTrendPoint"}},
 		{Name: "ARDashboardKPIs", Implementors: []string{"ARDashboardKPIs"}},
 		{Name: "ARLedgerEntry", Implementors: []string{"ARLedgerEntry"}},
+		{Name: "ARLedgerPage", Implementors: []string{"ARLedgerPage"}},
 		{Name: "ARMonthlyCollectionPoint", Implementors: []string{"ARMonthlyCollectionPoint"}},
 		{Name: "AROpenItem", Implementors: []string{"AROpenItem"}},
 		{Name: "ARPaymentStats", Implementors: []string{"ARPaymentStats"}},
@@ -1194,6 +1195,58 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
+			{
+				Name:     "runningBalanceMinor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerledgerports.ARLedgerEntry)
+					return obj.RunningBalanceMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+		}},
+		{Object: "ARLedgerPage", Fields: []*gqlexec.Field{
+			{
+				Name:     "openingBalanceMinor",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerledgerports.ARLedgerPage)
+					return obj.OpeningBalanceMinor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:      "entries",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ARLedgerEntry",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerledgerports.ARLedgerPage)
+					return obj.Entries, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNARLedgerEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARLedgerEntryᚄ),
+			},
+			{
+				Name:     "hasNextPage",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerledgerports.ARLedgerPage)
+					return obj.HasNextPage, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "endCursor",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerledgerports.ARLedgerPage)
+					return obj.EndCursor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
 		}},
 		{Object: "ARMonthlyCollectionPoint", Fields: []*gqlexec.Field{
 			{
@@ -1786,13 +1839,13 @@ var Shard = &gqlexec.Shard{
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
-				ChildType:  "ARLedgerEntry",
+				ChildType:  "ARLedgerPage",
 				Args:       field_Query_arCustomerLedger_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArCustomerLedger(ctx, fc.Args["customerId"].(string))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@accountsreceivable").ArCustomerLedger(ctx, fc.Args["customerId"].(string), fc.Args["startDate"].(*int), fc.Args["endDate"].(*int), fc.Args["first"].(*int), fc.Args["after"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNARLedgerEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARLedgerEntryᚄ),
+				Marshal: gqlexec.Marshal(marshalNARLedgerPage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARLedgerPage),
 			},
 			{
 				Name:       "arCustomerStatement",
@@ -1927,7 +1980,7 @@ type QueryResolver interface {
 	AccountingBriefing(ctx context.Context) (*accountingbriefports.AccountingBriefing, error)
 	ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error)
 	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*customerledgerports.AROpenItem, error)
-	ArCustomerLedger(ctx context.Context, customerID string) ([]*customerledgerports.ARLedgerEntry, error)
+	ArCustomerLedger(ctx context.Context, customerID string, startDate *int, endDate *int, first *int, after *string) (*customerledgerports.ARLedgerPage, error)
 	ArCustomerStatement(ctx context.Context, customerID string, startDate *int, asOfDate *int) (*customerledgerports.ARCustomerStatement, error)
 	ArDashboardKpis(ctx context.Context) (*customerledgerports.ARDashboardKPIs, error)
 	ArDsoTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARDSOTrendPoint, error)
@@ -1984,7 +2037,7 @@ func field_Query_arOpenItems_args(ctx context.Context, ec *gqlexec.Exec, rawArgs
 }
 
 func field_Query_arCustomerLedger_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 5)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "customerId",
 		func(ctx context.Context, v any) (string, error) {
 			return unmarshalNID2string(ctx, ec, v)
@@ -1993,6 +2046,38 @@ func field_Query_arCustomerLedger_args(ctx context.Context, ec *gqlexec.Exec, ra
 		return nil, err
 	}
 	args["customerId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "startDate",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOTimestamp2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["startDate"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "endDate",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOTimestamp2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["endDate"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "after",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg4
 	return args, nil
 }
 
@@ -2129,6 +2214,14 @@ func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, e
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2302,6 +2395,14 @@ func marshalNARLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ARLedgerEntry", v)
+}
+
+func marshalNARLedgerPage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARLedgerPage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARLedgerPage) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ARLedgerPage", v)
 }
 
 func marshalNARMonthlyCollectionPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARMonthlyCollectionPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARMonthlyCollectionPoint) graphql.Marshaler {

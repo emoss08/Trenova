@@ -3,6 +3,7 @@ package carriersettlementworkspaceservice
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementrealtime"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"go.uber.org/fx"
@@ -13,6 +14,7 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
+	Settlements       *carriersettlementservice.Service
 	SettlementRepo    carriersettlementports.CarrierSettlementRepository
 	BatchRepo         carriersettlementports.CarrierSettlementBatchRepository
 	CostEventRepo     carriersettlementports.CarrierCostEventRepository
@@ -24,6 +26,7 @@ type Params struct {
 type Service struct {
 	l                 *zap.Logger
 	publisher         carriersettlementrealtime.Publisher
+	settlements       *carriersettlementservice.Service
 	settlementRepo    carriersettlementports.CarrierSettlementRepository
 	batchRepo         carriersettlementports.CarrierSettlementBatchRepository
 	costEventRepo     carriersettlementports.CarrierCostEventRepository
@@ -37,6 +40,7 @@ func New(p Params) *Service {
 	return &Service{
 		l:                 l,
 		publisher:         p.Publisher,
+		settlements:       p.Settlements,
 		settlementRepo:    p.SettlementRepo,
 		batchRepo:         p.BatchRepo,
 		costEventRepo:     p.CostEventRepo,

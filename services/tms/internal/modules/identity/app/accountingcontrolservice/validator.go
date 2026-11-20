@@ -86,6 +86,30 @@ func addGLAccountReferenceChecks(
 		}).
 		WithOptionalReferenceCheck("realizedFxLossAccountId", glAccountsTable, "Realized FX loss account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.RealizedFXLossAccountID
+		}).
+		WithOptionalReferenceCheck("defaultDriverPayExpenseAccountId", glAccountsTable, "Default driver pay expense account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+			return ac.DefaultDriverPayExpenseAccountID
+		}).
+		WithOptionalReferenceCheck("defaultPurchasedTransportationAccountId", glAccountsTable, "Default purchased transportation account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+			return ac.DefaultPurchasedTransportationAccountID
+		}).
+		WithOptionalReferenceCheck("defaultSettlementsPayableAccountId", glAccountsTable, "Default settlements payable account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+			return ac.DefaultSettlementsPayableAccountID
+		}).
+		WithOptionalReferenceCheck("defaultDriverAdvanceAccountId", glAccountsTable, "Default driver advance account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+			return ac.DefaultDriverAdvanceAccountID
+		}).
+		WithOptionalReferenceCheck("defaultDriverReimbursementAccountId", glAccountsTable, "Default driver reimbursement account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+			return ac.DefaultDriverReimbursementAccountID
+		}).
+		WithOptionalReferenceCheck("defaultEscrowLiabilityAccountId", glAccountsTable, "Default escrow liability account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+			return ac.DefaultEscrowLiabilityAccountID
+		}).
+		WithOptionalReferenceCheck("defaultEscrowInterestExpenseAccountId", glAccountsTable, "Default escrow interest expense account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+			return ac.DefaultEscrowInterestExpenseAccountID
+		}).
+		WithOptionalReferenceCheck("defaultEscrowAdjustmentAccountId", glAccountsTable, "Default escrow adjustment account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+			return ac.DefaultEscrowAdjustmentAccountID
 		})
 }
 
@@ -381,10 +405,6 @@ func requireEnabledOANDAIntegration(
 	entity *accountingcontrol.AccountingControl,
 	multiErr *errortypes.MultiError,
 ) error {
-	if integrationRepo == nil {
-		return nil
-	}
-
 	record, err := integrationRepo.GetByType(ctx, pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,

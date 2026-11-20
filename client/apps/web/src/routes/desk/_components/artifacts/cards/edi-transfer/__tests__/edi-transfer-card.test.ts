@@ -194,6 +194,17 @@ describe("tenderRoute", () => {
     ]);
   });
 
+  it("says the range a multi-temperature drop keeps its freight at", () => {
+    const record = transfer("mappingRequired");
+    const drop = record.tenderPayload.moves?.[0]?.stops[1];
+    if (drop) {
+      drop.temperatureMin = -10;
+      drop.temperatureMax = 0;
+    }
+    const route = tenderRoute(record, undefined, t);
+    expect(route.stops.map((stop) => stop.load)).toEqual(["24 pieces · 42,000 lb", "-10–0°F"]);
+  });
+
   it("reads a stop's mapping from the live preview when there is one", () => {
     const preview = mappingPreview();
     const location = preview.all.find((row) => row.sourceId === "HEB-SAT");
@@ -214,10 +225,19 @@ describe("tenderFreight and tenderCharges", () => {
         { key: "service", label: "Service", value: "Default service type for inbound tenders" },
         { key: "weight", label: "Weight", value: "42,000 lb" },
         { key: "pieces", label: "Pieces", value: "24" },
-        { key: "temperature", label: "Temperature", value: "34–38 °F" },
+        { key: "temperature", label: "Temperature", value: "34–38°F" },
       ],
       commodities: [{ key: "FROZEN-0", label: "Frozen poultry", load: "24 pieces · 42,000 lb" }],
     });
+  });
+
+  it("says the range a commodity line keeps on its own", () => {
+    const record = transfer("approved");
+    const line = record.tenderPayload.commodities?.[0];
+    if (line) line.temperatureMax = -5;
+    expect(tenderFreight(record, t).commodities).toEqual([
+      { key: "FROZEN-0", label: "Frozen poultry", load: "24 pieces · 42,000 lb · ≤ -5°F" },
+    ]);
   });
 
   it("writes the rate as a ledger to its total", () => {

@@ -456,6 +456,6 @@ func assertValidation(t *testing.T, err error, field string, code errortypes.Err
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, field, validation.Field)
+	assert.Equal(t, field, validation.Field())
 	assert.Equal(t, code, validation.Code)
 }

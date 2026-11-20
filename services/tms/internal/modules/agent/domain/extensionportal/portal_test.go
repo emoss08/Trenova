@@ -87,7 +87,7 @@ func TestPortalSiteRefusesAStartPageOffItsAddresses(t *testing.T) {
 			site.Validate(multiErr)
 
 			require.True(t, multiErr.HasErrors())
-			assert.Equal(t, "startUrl", multiErr.Errors[0].Field)
+			assert.Equal(t, "startUrl", multiErr.Errors[0].Field())
 		})
 	}
 }

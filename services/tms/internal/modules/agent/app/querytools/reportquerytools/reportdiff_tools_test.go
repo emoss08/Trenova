@@ -134,7 +134,7 @@ func TestCompareReportRuns_NamesWhichRunCannotBeRead(t *testing.T) {
 
 	var invalid *errortypes.Error
 	require.ErrorAs(t, err, &invalid)
-	assert.Equal(t, "runIdA", invalid.Field)
+	assert.Equal(t, "runIdA", invalid.Field())
 	assert.Contains(t, invalid.Message, "before its rows were stored")
 }
 

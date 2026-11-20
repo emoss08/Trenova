@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -310,17 +311,27 @@ func (s *Service) documentFor(
 		if tender == nil {
 			tender = payload.Shipment
 		}
-		key = tender.ShipmentID.String()
-		if tender.TenderOfferID.IsNotNil() {
-			key = tender.TenderOfferID.String()
-		}
+		key = loadTenderKey(tender)
 		custom, customErr := s.loadCustomFields(ctx, tenantInfo, tender.ShipmentID)
 		if customErr != nil {
 			return "", nil, customErr
 		}
+		if tender.PONumber == "" {
+			tender.PONumber, err = s.payload.ShipmentPurchaseOrder(
+				ctx,
+				tenantInfo,
+				tender.ShipmentID,
+			)
+			if err != nil {
+				return "", nil, err
+			}
+		}
 		document, err = ladingdoc.FromLoadTender(tender, key, zones, custom)
 	case payload.TenderResponse != nil:
-		key = s.tenderKey(ctx, tenantInfo, payload.TenderResponse.TransferID)
+		key, err = s.tenderKey(ctx, tenantInfo, payload.TenderResponse.TransferID)
+		if err != nil {
+			return "", nil, err
+		}
 		document, err = ladingdoc.FromTenderResponse(
 			payload.TenderResponse,
 			key,
@@ -330,11 +341,7 @@ func (s *Service) documentFor(
 		)
 	case payload.ShipmentStatus != nil:
 		status := payload.ShipmentStatus
-		key = stringutils.FirstNonEmpty(
-			status.ShipperReference,
-			status.BOL,
-			status.ShipmentID.String(),
-		)
+		key = shipmentStatusKey(status)
 		custom, customErr := s.loadCustomFields(ctx, tenantInfo, status.ShipmentID)
 		if customErr != nil {
 			return "", nil, customErr
@@ -342,11 +349,7 @@ func (s *Service) documentFor(
 		document, err = ladingdoc.FromShipmentStatus(status, key, zones, custom)
 	case payload.FreightInvoice != nil:
 		invoicePayload := payload.FreightInvoice
-		key = stringutils.FirstNonEmpty(
-			invoicePayload.ReferenceNumbers["shipmentId"],
-			invoicePayload.BOL,
-			invoicePayload.ShipmentID.String(),
-		)
+		key = freightInvoiceKey(invoicePayload)
 		custom, customErr := s.loadCustomFields(ctx, tenantInfo, invoicePayload.ShipmentID)
 		if customErr != nil {
 			return "", nil, customErr
@@ -364,6 +367,28 @@ func (s *Service) documentFor(
 		return "", nil, errortypes.NewValidationError("payload", errortypes.ErrInvalid, err.Error())
 	}
 	return key, document, nil
+}
+
+func loadTenderKey(payload *editransfer.LoadTenderPayload) string {
+	return tender.PartnerKey{ProNumber: payload.ProNumber, Move: payload.MoveNumber}.String()
+}
+
+func shipmentStatusKey(payload *edipayload.ShipmentStatusPayload) string {
+	return stringutils.FirstNonEmpty(
+		payload.Key,
+		payload.ShipperReference,
+		payload.BOL,
+		payload.ProNumber,
+	)
+}
+
+func freightInvoiceKey(payload *edipayload.FreightInvoicePayload) string {
+	return stringutils.FirstNonEmpty(
+		payload.Key,
+		payload.ShipperReference,
+		payload.BOL,
+		payload.ProNumber,
+	)
 }
 
 func (s *Service) loadCustomFields(
@@ -391,22 +416,19 @@ func (s *Service) tenderKey(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	transferID pulid.ID,
-) string {
+) (string, error) {
 	if transferID.IsNil() {
-		return ""
+		return "", nil
 	}
 	transfer, err := s.transferRepo.GetTransferByID(ctx, editenderports.GetEDITransferByIDRequest{
 		ID:         transferID,
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
-		return transferID.String()
+		return "", fmt.Errorf("read the tendered transfer: %w", err)
 	}
-	if key, ok := transfer.TenderPayload.RatingDetail["externalShipmentId"].(string); ok &&
-		key != "" {
-		return key
-	}
-	return transferID.String()
+	key, _ := transfer.TenderPayload.RatingDetail["externalShipmentId"].(string)
+	return stringutils.FirstNonEmpty(strings.TrimSpace(key), transfer.TenderPayload.BOL), nil
 }
 
 type writeOptions struct {
@@ -437,6 +459,9 @@ func (s *Service) render(
 	}
 	if result.Error != nil {
 		return nil, result.Error.ValidationError("document", errortypes.ErrInvalid)
+	}
+	if result.NotSent {
+		return nil, errNothingSent
 	}
 	if result.Output == nil {
 		return nil, errortypes.NewBusinessError("Map {0} wrote no message", o.mapName)
@@ -989,7 +1014,7 @@ func (s *Service) resolvePayload(
 				invoiceEntity.Number,
 			)
 		}
-		return edipayloadbuild.BuildFreightInvoicePayload(invoiceEntity), nil
+		return s.payload.FreightInvoicePayload(ctx, req.TenantInfo, invoiceEntity)
 	}
 	if !req.ShipmentEventID.IsNil() {
 		if transactionSet != edidocument.TransactionSet214 {
@@ -1076,7 +1101,11 @@ func (s *Service) resolvePayload(
 	if transactionSet == edidocument.TransactionSet214 {
 		return edipayloadbuild.BuildShipmentStatusPayload(source), nil
 	}
-	return edipayload.NewLoadTenderDocumentPayload(edipayloadbuild.BuildTenderPayload(source)), nil
+	tender, err := s.payload.TenderPayload(ctx, req.TenantInfo, source)
+	if err != nil {
+		return edipayload.DocumentPayload{}, err
+	}
+	return edipayload.NewLoadTenderDocumentPayload(tender), nil
 }
 
 func sourceTransactionSetError(

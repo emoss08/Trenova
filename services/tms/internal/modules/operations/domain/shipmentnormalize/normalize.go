@@ -3,6 +3,7 @@ package shipmentnormalize
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/temperaturerange"
 )
 
 // BillTo folds a bill-to that names the ordering customer back to
@@ -52,4 +53,42 @@ func EntryMethod(s, original *shipment.Shipment) {
 	}
 
 	s.EntryMethod = shipmentvocab.EntryMethodManual
+}
+
+func LineTemperatures(s *shipment.Shipment) []temperaturerange.Range {
+	ranges := make([]temperaturerange.Range, 0)
+	for _, move := range s.Moves {
+		if move == nil || move.Status == shipmentvocab.MoveStatusCanceled {
+			continue
+		}
+		for _, stop := range move.ActiveStopsBySequence() {
+			if line := temperaturerange.Of(stop.TemperatureMin, stop.TemperatureMax); line.Set() {
+				ranges = append(ranges, line)
+			}
+		}
+	}
+	for _, commodity := range s.Commodities {
+		if commodity == nil {
+			continue
+		}
+		line := temperaturerange.Of(commodity.TemperatureMin, commodity.TemperatureMax)
+		if line.Set() {
+			ranges = append(ranges, line)
+		}
+	}
+	return ranges
+}
+
+func Temperature(s *shipment.Shipment) bool {
+	if s == nil {
+		return false
+	}
+	lines := LineTemperatures(s)
+	if len(lines) == 0 {
+		return false
+	}
+	load := temperaturerange.Load(lines)
+	s.TemperatureMin = load.Min
+	s.TemperatureMax = load.Max
+	return true
 }

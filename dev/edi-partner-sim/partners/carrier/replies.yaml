@@ -1,0 +1,24 @@
+tender:
+  file: tender-out.x12
+  seed: 7
+  control: 701
+  at: "2026-03-01T09:30-07:00"
+
+replies:
+  - { file: response-accept.x12, control: 801, reply: response, scenario: { seed: 7 } }
+  - file: response-decline.x12
+    control: 802
+    reply: response
+    scenario: { seed: 7, decline: "No driver near the pickup" }
+  - { file: status-arrived.x12, control: 803, reply: status, status: X3, scenario: { seed: 7, delay: 1 } }
+  - { file: status-delayed.x12, control: 804, reply: status, status: SD, scenario: { seed: 7, delay: 1 } }
+  - file: status-delivered.x12
+    control: 805
+    reply: status
+    status: D1
+    last: true
+    scenario: { seed: 7, delay: 1 }
+  - { file: status-stray.x12, control: 806, reply: stray, scenario: { seed: 7 } }
+  - { file: invoice-matching.x12, control: 807, reply: invoice, scenario: { seed: 7 } }
+  - { file: invoice-over.x12, control: 808, reply: invoice, scenario: { seed: 7, deltaCents: 17500 } }
+  - { file: invoice-misfooted.x12, control: 809, reply: invoice, scenario: { seed: 7, misfooted: true } }

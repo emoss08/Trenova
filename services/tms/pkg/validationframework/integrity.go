@@ -12,8 +12,23 @@ type FieldCheck struct {
 	CaseSensitive bool
 }
 
+// ConditionOp is how a Condition compares its column. The zero value is
+// equality with Value.
+type ConditionOp string
+
+const (
+	ConditionEq ConditionOp = ""
+	// ConditionIsNull holds when the column is null; Value is ignored.
+	ConditionIsNull ConditionOp = "is_null"
+	// ConditionNullOrNotAfterNow holds when the column, a Unix time in
+	// seconds, is null or not later than the moment the check runs: an
+	// effective date that has already begun. Value is ignored.
+	ConditionNullOrNotAfterNow ConditionOp = "null_or_not_after_now"
+)
+
 type Condition struct {
 	Column string
+	Op     ConditionOp
 	Value  any
 }
 

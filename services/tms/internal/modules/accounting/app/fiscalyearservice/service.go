@@ -17,9 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,7 +41,7 @@ type Params struct {
 	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
 	Validator        *Validator
 	AuditService     auditports.AuditService
-	Transformer      accessorialchargeports.DataTransformer
+	Formatter        dataentrycontrolports.TextFormatter
 	CloseService     *fiscalcloseservice.Service
 }
 
@@ -52,7 +52,7 @@ type Service struct {
 	fiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
 	validator        *Validator
 	auditService     auditports.AuditService
-	transformer      accessorialchargeports.DataTransformer
+	formatter        dataentrycontrolports.TextFormatter
 	closeService     *fiscalcloseservice.Service
 }
 
@@ -64,7 +64,7 @@ func New(p Params) *Service {
 		fiscalPeriodRepo: p.FiscalPeriodRepo,
 		validator:        p.Validator,
 		auditService:     p.AuditService,
-		transformer:      p.Transformer,
+		formatter:        p.Formatter,
 		closeService:     p.CloseService,
 	}
 }
@@ -333,8 +333,8 @@ func (s *Service) Create(
 		zap.String("userID", userID.String()),
 	)
 
-	if err := s.transformer.TransformFiscalYear(ctx, entity); err != nil {
-		log.Error("failed to transform fiscal year", zap.Error(err))
+	if err := s.formatter.Format(ctx, entity); err != nil {
+		log.Error("failed to format fiscal year", zap.Error(err))
 		return nil, err
 	}
 
@@ -427,8 +427,8 @@ func (s *Service) Update(
 
 	preserveLifecycle(original, entity)
 
-	if err = s.transformer.TransformFiscalYear(ctx, entity); err != nil {
-		log.Error("failed to transform fiscal year", zap.Error(err))
+	if err = s.formatter.Format(ctx, entity); err != nil {
+		log.Error("failed to format fiscal year", zap.Error(err))
 		return nil, err
 	}
 

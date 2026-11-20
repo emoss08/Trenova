@@ -1,0 +1,132 @@
+set: "204"
+
+purposes:
+  original: "00"
+  duplicate: "00"
+  change: "04"
+  cancel: "01"
+
+duplicates: resend
+
+load:
+  start: "2026-02-02"
+  days: 90
+  number: { prefix: "", digits: 7 }
+  bol: { prefix: "", digits: 6 }
+  po: { prefix: "P", digits: 5, chance: 0.5 }
+  pickupRef: { prefix: "", digits: 5, chance: 0.3 }
+  appointment: { prefix: "", digits: 4, chance: 0.3 }
+  payment:
+    - { code: PP, weight: 6 }
+    - { code: CC, weight: 2 }
+    - { code: TP, weight: 1 }
+  stops: { min: 2, max: 3, extraPickup: 0.1 }
+  origins:
+    - { code: "0001", name: ASHGROVE IND SUPPLY WHSE 1, street: 1450 ROUTE 30, city: YORK, state: PA }
+    - { code: "0002", name: ASHGROVE IND SUPPLY WHSE 2, street: 80 RIVERFRONT RD, city: PITTSBURGH, state: PA }
+  billTo: { code: "AP", name: ASHGROVE INDUSTRIAL SUPPLY, street: 1450 ROUTE 30, city: YORK, state: PA, zip: "17406" }
+  consignees:
+    code: "C"
+    names:
+      - KEYSTONE MILL SERVICE
+      - NORTHERN TIER FABRICATION
+      - ALLEGHENY PLANT MAINTENANCE
+      - RIDGEWAY BEARING AND DRIVE
+  equipment:
+    - { code: TF, weight: 5, lengthFt: 48 }
+    - { code: FT, weight: 2, lengthFt: 48 }
+  weight: { min: 2000, max: 38000 }
+  pieces: { min: 3, max: 18 }
+  lines: { min: 1, max: 2 }
+  commodities:
+    - { description: BEARINGS, code: "6629" }
+    - { description: POWER TRANSMISSION PARTS, code: "6631" }
+    - { description: STEEL PIPE, code: "3317" }
+    - { description: INDUSTRIAL FASTENERS, code: "3452" }
+    - description: CUTTING OIL
+      code: "2992"
+      hazmat: { un: NA1993, class: COMB, name: COMBUSTIBLE LIQUID NOS }
+  hazmat: 0.1
+  rate: { perMileCents: { min: 190, max: 300 }, minimumCents: 35000, stopOffCents: 5000 }
+  window: { leadDays: { min: 0, max: 5 }, pickupHours: { min: 7, max: 13 }, hours: 3, mph: 45, dwellHours: 1 }
+  zip4: 0
+  contact: 0.6
+  notes:
+    chance: 0.5
+    load: [CALL B4 PU, NO TARP NEEDED, DRIVER LOAD]
+    delivery: [CALL B4 DEL, RECV 7A-3P ONLY]
+
+segments:
+  - seg: B2
+    el: ["", "{scac}", "", "{load.number}", "", "{load.payment|lower}"]
+  - seg: B2A
+    el: ["{purpose}"]
+  - seg: L11
+    el: ["{load.bol}", bm]
+  - seg: L11
+    when: load.po
+    optional: true
+    el: ["{load.po}", po]
+  - seg: NTE
+    when: load.note
+    optional: true
+    el: ["", "{load.note|lower}"]
+  - body:
+      - seg: N1
+        el: [bt, "{billTo.name}", "92", "{billTo.code}"]
+      - seg: N4
+        optional: true
+        el: ["{billTo.city}", "{billTo.state}", "{billTo.zip}"]
+  - seg: N7
+    el: ["", "0", "", "", "", "", "", "", "", "", "{equipment.code|lower}"]
+  - each: stops
+    as: stop
+    body:
+      - seg: S5
+        el: ["{stop.sequence}", "{stop.kind|map:pickup=ld,delivery=ul}", "{stop.weight}", L, "{stop.pieces}", PC]
+      - seg: L11
+        when: stop.pickupRef
+        optional: true
+        el: ["{stop.pickupRef}", p8]
+      - seg: L11
+        when: stop.appointment
+        optional: true
+        el: ["{stop.appointment}", ao]
+      - seg: G62
+        el:
+          - "{stop.kind|map:pickup=37,delivery=53}"
+          - "{stop.window.start|date}"
+          - G
+          - "{stop.window.start|time}"
+      - seg: G62
+        optional: true
+        el:
+          - "{stop.kind|map:pickup=38,delivery=54}"
+          - "{stop.window.end|date}"
+          - L
+          - "{stop.window.end|time}"
+      - seg: NTE
+        when: stop.note
+        optional: true
+        el: ["", "{stop.note|lower}"]
+      - seg: N1
+        el: ["{stop.kind|map:pickup=sh,delivery=cn}", "{stop.party.name}", "92", "{stop.party.code}"]
+      - seg: N3
+        el: ["{stop.party.street}"]
+      - seg: N4
+        el: ["{stop.party.city}", "{stop.party.state}", "{stop.party.zip}"]
+      - seg: G61
+        when: stop.party.contact
+        optional: true
+        el: [IC, "{stop.party.contact}", TE, "{stop.party.phone}"]
+      - each: stop.lines
+        as: line
+        optional: true
+        body:
+          - seg: L5
+            el: ["{line.number}", "{line.description}"]
+          - seg: LH1
+            when: line.hazmat
+            el: [PC, "{line.pieces}", "{line.hazmat.un}"]
+  - seg: L3
+    el: ["{load.weight}", G, "", "", "{load.total}"]

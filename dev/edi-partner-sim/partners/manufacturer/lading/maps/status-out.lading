@@ -1,0 +1,40 @@
+map statusOut
+  from shipmentStatus
+  to   kestrel.214
+  use  common
+
+B10 { 01 <- proNumber ?? key, 02 <- key, 03 <- org.scac }
+L11 when exists bol { 01 <- bol, 02 <- "BM" }
+L11 when exists shipperReference { 01 <- shipperReference, 02 <- "PO" }
+
+0205 <- each events as event {
+  LX { 01 <- index + 1 }
+  0210 {
+    AT7 {
+      01 <- event.kind via statusCodes
+      02 <- event.reason ?? "NS"
+      05 <- event.at
+      06 <- event.at
+      07 <- event.at.zoneCode()
+    }
+    MS1 when exists event.city { 01 <- event.city.upper(), 02 <- event.state, 03 <- event.country ?? "US" }
+  }
+  L11 when exists event.stop { 01 <- text(event.stop), 02 <- "QN" }
+}
+
+test "an arrival at the consignee writes the AT7 and MS1" {
+  given shipmentStatus {
+    key: "KVW-100037"
+    proNumber: "PRO-2001"
+    bol: "8100798987"
+    events: [{ kind: ArrivedDelivery, at: @2026-04-26T15:52[America/Chicago], stop: 2, city: "Minneapolis", state: "MN" }]
+  }
+  expect x12 contains "B10*PRO-2001*KVW-100037*TRNV~L11*8100798987*BM~"
+  expect x12 contains "LX*1~AT7*X1*NS***20260426*1552*CT~MS1*MINNEAPOLIS*MN*US~L11*2*QN~"
+}
+
+property "every status Kestrel takes writes its code" {
+  vary kind in [ArrivedPickup, DepartedPickup, EnRoute, EtaChanged, Delayed, ArrivedDelivery, DepartedDelivery, Delivered, Exception]
+  given shipmentStatus { key: "KVW-100001", events: [{ kind: kind, at: @2026-04-26T14:30Z }] }
+  expect x12 contains "AT7*"
+}

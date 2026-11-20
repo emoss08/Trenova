@@ -1,0 +1,143 @@
+flow tender with tamberlane
+
+receive 204 as tender
+  via tenderIn, rules tenderChecks
+  key tender.key
+  acknowledge with 999
+  on Original -> create
+  on Change   -> update stops, commodities, refs, notes keep customer, total
+    hold when tender.total != current.total "Tamberlane changed the rate on {tender.key}"
+  on Cancel   -> cancel unless dispatched or later else hold "Tamberlane cancelled {tender.key} after dispatch"
+
+respond 990 via responseOut
+  accept automatically when partner.autoAccept and not held and not declined
+  decline automatically when declined and partner.autoDecline
+  otherwise planner decides within partner.answerWithin else escalate "Tamberlane re-tenders {tender.key} when it has no 990 within {partner.answerWithin}"
+
+send 214 via statusOut on StopArrived, StopDeparted, EtaChanged, ServiceFailure, Delivered
+  where exists status.bol
+  batch within 15 min
+  until Delivered
+
+send 210 via invoiceOut on InvoicePosted key invoice.key ?? invoice.number
+
+expect 999 for every send within 15 min else resend 1 then escalate "Tamberlane has not acknowledged {message.set} {message.control}"
+
+test "a new tender becomes a load and is acknowledged with a 999" {
+  receive file "samples/tender-original.x12"
+  expect created
+  expect sent 999
+  expect no sent 997
+}
+
+test "a change to the rate is held for a planner" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  receive file "samples/tender-change.x12"
+  expect held "Tamberlane changed the rate on TS10000004"
+}
+
+test "a moved store appointment at the same rate updates the load" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  receive file "samples/tender-moved.x12"
+  expect updated
+  expect no held
+}
+
+test "a cancellation before dispatch cancels the load" {
+  receive file "samples/tender-original.x12"
+  receive file "samples/tender-cancel.x12"
+  expect cancelled
+}
+
+test "a cancellation after dispatch is held" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  event Dispatched { key: "TS10000004", bol: "0719744701", events: [{ kind: Dispatched, at: @2026-06-02T12:00Z }] }
+  receive file "samples/tender-cancel.x12"
+  expect held "Tamberlane cancelled TS10000004 after dispatch"
+  expect no cancelled
+}
+
+test "a planner's acceptance within the hour is answered with a 990" {
+  receive file "samples/tender-original.x12"
+  advance 45 min
+  respond accept
+  expect sent 990 accept
+  expect no escalated
+}
+
+test "a tender unanswered for an hour escalates before Tamberlane re-tenders it" {
+  receive file "samples/tender-original.x12"
+  advance 1 h
+  expect escalated "Tamberlane re-tenders TS10000004 when it has no 990 within 1 h"
+}
+
+test "a backwards window is declined automatically" {
+  receive file "samples/tender-backwards.x12"
+  expect sent 990 decline
+}
+
+test "a heavy load is held, not answered" {
+  receive file "samples/tender-heavy.x12"
+  expect created
+  expect held "Over 43,500 lb: a planner decides"
+  expect no sent 990
+}
+
+test "store arrivals within fifteen minutes go out as one 214" {
+  given now = @2026-06-03T12:30Z
+  receive file "samples/tender-original.x12"
+  respond accept
+  event StopArrived { key: "TS10000004", bol: "0719744701", events: [{ kind: ArrivedDelivery, at: @2026-06-03T12:02Z, stop: 2, city: "Omaha", state: "NE" }] }
+  event StopDeparted { key: "TS10000004", bol: "0719744701", events: [{ kind: DepartedPickup, at: @2026-06-03T12:10Z, stop: 2, city: "Omaha", state: "NE" }] }
+  advance 15 min
+  expect sent 214
+}
+
+test "a service failure goes out as a delay" {
+  given now = @2026-06-03T12:30Z
+  receive file "samples/tender-original.x12"
+  respond accept
+  event ServiceFailure { key: "TS10000004", bol: "0719744701", events: [{ kind: Delayed, reason: "AO", at: @2026-06-03T12:02Z, stop: 3, city: "Omaha", state: "NE" }] }
+  advance 15 min
+  expect sent 214
+}
+
+test "a 999 rejection escalates at once" {
+  given now = @2026-06-04T13:00Z
+  event Delivered { key: "TS10000004", bol: "0719744701", events: [{ kind: Delivered, at: @2026-06-04T12:40Z, stop: 3, city: "Memphis", state: "TN" }] }
+  advance 15 min
+  ack rejected
+  expect escalated "The partner rejected 214 0001: Tamberlane has not acknowledged 214 0001"
+}
+
+test "an unacknowledged status is resent once, then escalated" {
+  given now = @2026-06-04T13:00Z
+  event Delivered { key: "TS10000004", bol: "0719744701", events: [{ kind: Delivered, at: @2026-06-04T12:40Z, stop: 3, city: "Memphis", state: "TN" }] }
+  advance 15 min
+  advance 15 min
+  advance 15 min
+  expect escalated "Tamberlane has not acknowledged 214 0001"
+}
+
+test "a posted invoice is sent" {
+  event InvoicePosted {
+    number: "INV-3001"
+    date: @2026-06-05
+    key: "TS10000004"
+    bol: "0719744701"
+    total: $3_713.35
+    refs: ["PO": "8978300638"]
+    billTo: { name: "Tamberlane Stores Freight Payables" }
+    lines: [{ sequence: 1, description: "Linehaul", amount: $3_713.35 }]
+  }
+  expect sent 210
+}
+
+test "every tender of a batched file opens its own load" {
+  receive file "samples/tender-batch.x12"
+  expect created
+  expect no held "A load already exists for this tender"
+}

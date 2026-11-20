@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
@@ -75,39 +76,162 @@ func NewAnalytics(p Params) customerledgerports.ARAnalyticsRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.ar-analytics-repository")}
 }
 
-func (r *repository) ListCustomerLedger(
+type ledgerEntryRecord struct {
+	ID                  pulid.ID
+	CustomerID          pulid.ID
+	TransactionDate     int64
+	LineNumber          int64
+	EventType           string
+	DocumentNumber      string
+	SourceObjectType    string
+	SourceObjectID      string
+	AmountMinor         int64
+	RelatedInvoiceID    pulid.ID
+	SupersededInvoiceID pulid.ID
+}
+
+func (rec *ledgerEntryRecord) entry() *customerledgerports.ARLedgerEntry {
+	return &customerledgerports.ARLedgerEntry{
+		CustomerID:          rec.CustomerID,
+		TransactionDate:     rec.TransactionDate,
+		EventType:           rec.EventType,
+		DocumentNumber:      rec.DocumentNumber,
+		SourceObjectType:    rec.SourceObjectType,
+		SourceObjectID:      rec.SourceObjectID,
+		AmountMinor:         rec.AmountMinor,
+		RelatedInvoiceID:    rec.RelatedInvoiceID,
+		SupersededInvoiceID: rec.SupersededInvoiceID,
+		Position: customerledgerports.ARLedgerPosition{
+			TransactionDate: rec.TransactionDate,
+			LineNumber:      rec.LineNumber,
+			ID:              rec.ID,
+		},
+	}
+}
+
+func (r *repository) GetCustomerLedgerBalance(
 	ctx context.Context,
-	req customerledgerports.ListCustomerLedgerRequest,
+	req customerledgerports.GetCustomerLedgerBalanceRequest,
+) (int64, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
+		parts, err := keel.Into[int64](
+			ctx,
+			r.db.Keel(ctx),
+			ledgerBalanceQuery(req.CustomerID, req.Before),
+		)
+		if err != nil {
+			return 0, fmt.Errorf("get customer ledger balance: %w", err)
+		}
+
+		var balance int64
+		for _, part := range parts {
+			balance += part
+		}
+		return balance, nil
+	})
+}
+
+func ledgerBalanceQuery(customerID pulid.ID, before int64) keel.Compound {
+	month := customerledger.MonthStart(before)
+	return keel.UnionAll(
+		closedMonthsQuery(customerID, month),
+		openingMonthQuery(customerID, month, before),
+	)
+}
+
+func closedMonthsQuery(
+	customerID pulid.ID,
+	month int64,
+) keel.Query[*customerledger.MonthlyBalance] {
+	mb := customerledgerdb.MonthlyBalances
+	return mb.
+		Pick(keel.NumericOf(mb.AmountMinor.Sum()).Coalesce(0)).
+		Where(mb.CustomerID.Eq(customerID), mb.MonthStart.Lt(month))
+}
+
+func openingMonthQuery(
+	customerID pulid.ID,
+	month, before int64,
+) keel.Query[*customerledger.CustomerLedgerEntry] {
+	cle := customerledgerdb.CustomerLedgerEntries
+	return cle.
+		Pick(keel.NumericOf(cle.AmountMinor.Sum()).Coalesce(0)).
+		Where(
+			cle.CustomerID.Eq(customerID),
+			cle.TransactionDate.Gte(month),
+			cle.TransactionDate.Lt(before),
+		)
+}
+
+func (r *repository) ListCustomerLedgerWindow(
+	ctx context.Context,
+	req customerledgerports.ListCustomerLedgerWindowRequest,
 ) ([]*customerledgerports.ARLedgerEntry, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARLedgerEntry, error) {
-			cle := customerledgerdb.CustomerLedgerEntries
-			rows, err := keel.Into[customerledgerports.ARLedgerEntry](ctx, r.db.Keel(ctx), cle.
-				Pick(
-					cle.CustomerID,
-					cle.TransactionDate,
-					cle.SourceEventType,
-					cle.DocumentNumber.Coalesce(""),
-					cle.SourceObjectType,
-					cle.SourceObjectID,
-					cle.AmountMinor,
-					cle.RelatedInvoiceID.Coalesce(""),
-				).
-				Where(cle.CustomerID.Eq(req.CustomerID)).
-				Order(cle.TransactionDate.Asc(), cle.LineNumber.Asc()))
+			records, err := keel.Into[ledgerEntryRecord](
+				ctx,
+				r.db.Keel(ctx),
+				ledgerWindowQuery(&req),
+			)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("list customer ledger window: %w", err)
 			}
 
-			entries := make([]*customerledgerports.ARLedgerEntry, 0, len(rows))
-			for i := range rows {
-				entries = append(entries, &rows[i])
+			entries := make([]*customerledgerports.ARLedgerEntry, 0, len(records))
+			for i := range records {
+				entries = append(entries, records[i].entry())
 			}
 			return entries, nil
 		},
 	)
+}
+
+func ledgerWindowQuery(
+	req *customerledgerports.ListCustomerLedgerWindowRequest,
+) keel.Query[*customerledger.CustomerLedgerEntry] {
+	cle := customerledgerdb.CustomerLedgerEntries
+	replaced := invoicedb.Invoices.As("replaced")
+	return cle.
+		Pick(
+			cle.ID,
+			cle.CustomerID,
+			cle.TransactionDate,
+			cle.LineNumber,
+			cle.SourceEventType,
+			cle.DocumentNumber.Coalesce(""),
+			cle.SourceObjectType,
+			cle.SourceObjectID,
+			cle.AmountMinor,
+			cle.RelatedInvoiceID.Coalesce(""),
+			replaced.ID.Coalesce(""),
+		).
+		LeftJoin(
+			replaced,
+			replaced.ID.EqCol(receivablesql.LedgerInvoiceID(cle)),
+			replaced.SupersededByInvoiceID.IsNotNull(),
+		).
+		Where(
+			cle.CustomerID.Eq(req.CustomerID),
+			keel.When(req.From > 0, cle.TransactionDate.Gte(req.From)),
+			cle.TransactionDate.Lte(req.Through),
+			afterLedgerPosition(cle, req.After),
+		).
+		Order(cle.TransactionDate.Asc(), cle.LineNumber.Asc(), cle.ID.Asc()).
+		Limit(req.Limit)
+}
+
+func afterLedgerPosition(
+	cle *customerledgerdb.CustomerLedgerEntriesTable,
+	after *customerledgerports.ARLedgerPosition,
+) keel.Pred {
+	if after == nil {
+		return nil
+	}
+	return keel.Tuple(cle.TransactionDate, cle.LineNumber, cle.ID).
+		Gt(keel.Tuple(after.TransactionDate, after.LineNumber, after.ID.String()))
 }
 
 func pastDueDays(inv *invoicedb.InvoicesTable, asOf int64) keel.Int64Expr {

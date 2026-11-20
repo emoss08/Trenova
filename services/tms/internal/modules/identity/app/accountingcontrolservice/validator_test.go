@@ -1,187 +1,128 @@
 package accountingcontrolservice
 
 import (
-	"context"
-	"sync"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
+	"github.com/emoss08/trenova/internal/testutil/validationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type glAccountCheck struct {
-	OrganizationID pulid.ID
-	BusinessUnitID pulid.ID
-	AccountID      pulid.ID
-}
-
-type capturingGLAccountCheck struct {
-	mu       sync.Mutex
-	valid    bool
-	requests []glAccountCheck
-}
-
-func (c *capturingGLAccountCheck) check(
-	_ context.Context,
-	orgID, buID, accountID pulid.ID,
-) (bool, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.requests = append(c.requests, glAccountCheck{
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		AccountID:      accountID,
-	})
-	return c.valid, nil
-}
-
-type stubAccountingControlIntegrationRepo struct {
-	record *integration.Integration
-	err    error
-}
-
-func (s *stubAccountingControlIntegrationRepo) ListByTenant(
-	_ context.Context,
-	_ pagination.TenantInfo,
-) ([]*integration.Integration, error) {
-	return nil, nil
-}
-
-func (s *stubAccountingControlIntegrationRepo) ListEnabledByType(
-	_ context.Context,
-	_ integration.Type,
-) ([]*integration.Integration, error) {
-	return nil, nil
-}
-
-func (s *stubAccountingControlIntegrationRepo) GetByType(
-	_ context.Context,
-	_ pagination.TenantInfo,
-	_ integration.Type,
-) (*integration.Integration, error) {
-	return s.record, s.err
-}
-
-func (s *stubAccountingControlIntegrationRepo) Upsert(
-	_ context.Context,
-	_ *integration.Integration,
-) (*integration.Integration, error) {
-	return nil, nil
-}
-
-var _ integrationports.IntegrationRepository = (*stubAccountingControlIntegrationRepo)(nil)
-
-func TestNewTestValidator(t *testing.T) {
+func TestValidateUpdate_AllowsAValidAccountingControl(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
-	require.NotNil(t, v)
+	err := newTestValidator().ValidateUpdate(t.Context(), validAccountingControl())
+
+	validationtest.Outcome(t, err).Valid()
 }
 
 func TestValidateUpdate_AllowsRecognizedISOCurrencyCode(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.FunctionalCurrencyCode = "sek"
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidator().ValidateUpdate(t.Context(), entity)
 
-	assert.Nil(t, multiErr)
+	validationtest.Outcome(t, err).Valid()
 }
 
 func TestValidateUpdate_RejectsUnknownCurrencyCode(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.FunctionalCurrencyCode = "ZZZ"
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidator().ValidateUpdate(t.Context(), entity)
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "functionalCurrencyCode")
+	validationtest.Refused(t, err).Refuses("functionalCurrencyCode", errortypes.ErrInvalid)
 }
 
 func TestValidateUpdate_RejectsMultiCurrencyWhenOANDAConfigMissing(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
+	v := newTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
 		err: errortypes.NewNotFoundError("integration not found"),
 	})
-	entity := validMultiCurrencyAccountingControl()
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := v.ValidateUpdate(t.Context(), validMultiCurrencyAccountingControl())
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "currencyMode")
+	validationtest.Refused(t, err).Exactly(
+		validationtest.At("currencyMode", errortypes.ErrInvalidOperation),
+	)
 }
 
 func TestValidateUpdate_RejectsMultiCurrencyWhenOANDADisabled(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
+	v := newTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
 		record: validOANDAIntegration(false, "encrypted-key"),
 	})
-	entity := validMultiCurrencyAccountingControl()
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := v.ValidateUpdate(t.Context(), validMultiCurrencyAccountingControl())
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "currencyMode")
+	validationtest.Refused(t, err).Exactly(
+		validationtest.At("currencyMode", errortypes.ErrInvalidOperation),
+	)
 }
 
 func TestValidateUpdate_RejectsMultiCurrencyWhenOANDAAPIKeyMissing(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
+	v := newTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
 		record: validOANDAIntegration(true, ""),
 	})
-	entity := validMultiCurrencyAccountingControl()
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := v.ValidateUpdate(t.Context(), validMultiCurrencyAccountingControl())
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "currencyMode")
+	validationtest.Refused(t, err).Exactly(
+		validationtest.At("currencyMode", errortypes.ErrInvalidOperation),
+	)
 }
 
 func TestValidateUpdate_AllowsMultiCurrencyWhenOANDAEnabledAndConfigured(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
-		record: validOANDAIntegration(true, "encrypted-key"),
+	v := newTestValidatorWithIntegrationRepository(configuredOANDARepo())
+
+	err := v.ValidateUpdate(t.Context(), validMultiCurrencyAccountingControl())
+
+	validationtest.Outcome(t, err).Valid()
+}
+
+func TestValidateUpdate_FailsWhenTheIntegrationLookupFails(t *testing.T) {
+	t.Parallel()
+
+	v := newTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
+		err: assert.AnError,
 	})
-	entity := validMultiCurrencyAccountingControl()
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := v.ValidateUpdate(t.Context(), validMultiCurrencyAccountingControl())
 
-	assert.Nil(t, multiErr)
+	assert.ErrorIs(t, validationtest.Failed(t, err), assert.AnError)
 }
 
 func TestValidateUpdate_RequiresDisallowedExchangeRateOverridesForSingleCurrency(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.ExchangeRateOverridePolicy = accountingcontrol.ExchangeRateOverrideRequireApproval
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidator().ValidateUpdate(t.Context(), entity)
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "exchangeRateOverridePolicy")
+	validationtest.Refused(t, err).Exactly(
+		validationtest.At("exchangeRateOverridePolicy", errortypes.ErrInvalidOperation),
+	)
 }
 
 func TestValidateUpdate_RejectsDuplicateAutoPostEvents(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.AutoPostSourceEvents = []accountingcontrol.JournalSourceEventType{
 		accountingcontrol.JournalSourceEventInvoicePosted,
@@ -189,98 +130,166 @@ func TestValidateUpdate_RejectsDuplicateAutoPostEvents(t *testing.T) {
 		accountingcontrol.JournalSourceEventVendorBillPosted,
 	}
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidator().ValidateUpdate(t.Context(), entity)
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "autoPostSourceEvents[1]")
+	validationtest.Refused(t, err).Refuses("autoPostSourceEvents[1]", errortypes.ErrDuplicate)
 }
 
 func TestValidateUpdate_RejectsIncompatibleAccountingBasisCombination(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.AccountingBasis = accountingcontrol.AccountingBasisCash
 	entity.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnInvoicePost
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidator().ValidateUpdate(t.Context(), entity)
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "revenueRecognitionPolicy")
+	validationtest.Refused(t, err).
+		Refuses("revenueRecognitionPolicy", errortypes.ErrInvalidOperation)
 }
 
 func TestValidateUpdate_SkipsOptionalReferenceChecksForZeroValueIDs(t *testing.T) {
 	t.Parallel()
 
-	checker := &capturingGLAccountCheck{valid: true}
-	v := NewTestValidatorWithGLAccountCheck(checker.check)
+	integrity := validationtest.NewIntegrity()
 	entity := validAccountingControl()
-	entity.DefaultTaxLiabilityAccountID = pulid.ID("")
-	entity.DefaultWriteOffAccountID = pulid.ID("")
-	entity.DefaultRetainedEarningsAccountID = pulid.ID("")
+	entity.DefaultTaxLiabilityAccountID = pulid.Nil
+	entity.DefaultWriteOffAccountID = pulid.Nil
+	entity.DefaultRetainedEarningsAccountID = pulid.Nil
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidatorWithIntegrity(integrity).ValidateUpdate(t.Context(), entity)
 
-	require.Nil(t, multiErr)
-	assert.Len(t, checker.requests, 6)
+	validationtest.Outcome(t, err).Valid()
+	request := onlyIntegrityRequest(t, integrity)
+	assert.Len(t, request.References, 6)
 }
 
 func TestValidateUpdate_ChecksEveryGLAccountReferenceInTheEntityTenant(t *testing.T) {
 	t.Parallel()
 
-	checker := &capturingGLAccountCheck{valid: true}
-	v := NewTestValidatorWithGLAccountCheck(checker.check)
-	entity := validAccountingControl()
-	entity.RealizedFXGainAccountID = pulid.MustNew("gla_")
-	entity.RealizedFXLossAccountID = pulid.MustNew("gla_")
-	entity.CurrencyMode = accountingcontrol.CurrencyModeMultiCurrency
-	entity.ExchangeRateOverridePolicy = accountingcontrol.ExchangeRateOverrideRequireApproval
+	integrity := validationtest.NewIntegrity()
+	entity := validMultiCurrencyAccountingControl()
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidatorWithIntegrity(integrity).ValidateUpdate(t.Context(), entity)
 
-	assert.Nil(t, multiErr)
-	require.Len(t, checker.requests, 11)
-	for _, req := range checker.requests {
-		assert.NotEmpty(t, req.AccountID)
-		assert.Equal(t, entity.OrganizationID, req.OrganizationID)
-		assert.Equal(t, entity.BusinessUnitID, req.BusinessUnitID)
+	validationtest.Outcome(t, err).Valid()
+	request := onlyIntegrityRequest(t, integrity)
+	assert.Equal(t, entity.OrganizationID, request.OrganizationID)
+	assert.Equal(t, entity.BusinessUnitID, request.BusinessUnitID)
+	require.Len(t, request.References, 11)
+	for _, reference := range request.References {
+		assert.Equal(t, glAccountsTable, reference.Table)
+		assert.NotEmpty(t, reference.ID)
 	}
+}
+
+func TestValidateUpdate_ChecksDriverPayAccountReferencesInTheEntityTenant(t *testing.T) {
+	t.Parallel()
+
+	integrity := validationtest.NewIntegrity()
+	entity := validAccountingControl()
+	for _, account := range driverPayAccounts() {
+		account.set(entity, pulid.MustNew("gla_"))
+	}
+
+	err := newTestValidatorWithIntegrity(integrity).ValidateUpdate(t.Context(), entity)
+
+	validationtest.Outcome(t, err).Valid()
+	request := onlyIntegrityRequest(t, integrity)
+	assert.Equal(t, entity.OrganizationID, request.OrganizationID)
+	assert.Equal(t, entity.BusinessUnitID, request.BusinessUnitID)
+	require.Len(t, request.References, 17)
+	checked := make(map[pulid.ID]struct{}, len(request.References))
+	for _, reference := range request.References {
+		assert.Equal(t, glAccountsTable, reference.Table)
+		checked[reference.ID] = struct{}{}
+	}
+	for _, account := range driverPayAccounts() {
+		assert.Contains(t, checked, account.get(entity), account.field)
+	}
+}
+
+func TestValidateUpdate_RejectsDriverPayAccountOutsideTheTenant(t *testing.T) {
+	t.Parallel()
+
+	for _, account := range driverPayAccounts() {
+		t.Run(account.field, func(t *testing.T) {
+			t.Parallel()
+
+			foreign := pulid.MustNew("gla_")
+			integrity := validationtest.NewIntegrity().Missing(glAccountsTable, foreign)
+			entity := validAccountingControl()
+			account.set(entity, foreign)
+
+			err := newTestValidatorWithIntegrity(integrity).ValidateUpdate(t.Context(), entity)
+
+			validationtest.Refused(t, err).Exactly(
+				validationtest.At(account.field, errortypes.ErrInvalidReference),
+			)
+		})
+	}
+}
+
+func TestValidateUpdate_RejectsStandardAccountOutsideTheTenant(t *testing.T) {
+	t.Parallel()
+
+	foreign := pulid.MustNew("gla_")
+	integrity := validationtest.NewIntegrity().Missing(glAccountsTable, foreign)
+	entity := validAccountingControl()
+	entity.DefaultCashAccountID = foreign
+
+	err := newTestValidatorWithIntegrity(integrity).ValidateUpdate(t.Context(), entity)
+
+	validationtest.Refused(t, err).Exactly(
+		validationtest.At("defaultCashAccountId", errortypes.ErrInvalidReference),
+	)
+}
+
+func TestValidateUpdate_FailsWhenTheReferenceCheckFails(t *testing.T) {
+	t.Parallel()
+
+	integrity := validationtest.NewIntegrity().FailWith(assert.AnError)
+
+	err := newTestValidatorWithIntegrity(integrity).
+		ValidateUpdate(t.Context(), validAccountingControl())
+
+	assert.ErrorIs(t, validationtest.Failed(t, err), assert.AnError)
 }
 
 func TestValidateUpdate_RejectsZeroReconciliationToleranceWhenEnabled(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.ReconciliationMode = accountingcontrol.ReconciliationModeWarnOnly
 	entity.ReconciliationToleranceAmount = decimal.Zero
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidator().ValidateUpdate(t.Context(), entity)
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "reconciliationToleranceAmount")
+	validationtest.Refused(t, err).Exactly(
+		validationtest.At("reconciliationToleranceAmount", errortypes.ErrInvalidOperation),
+	)
 }
 
 func TestValidateUpdate_RequiresCreditAndDebitMemoEventsForInvoicePostingRecognition(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.AutoPostSourceEvents = []accountingcontrol.JournalSourceEventType{
 		accountingcontrol.JournalSourceEventInvoicePosted,
 		accountingcontrol.JournalSourceEventVendorBillPosted,
 	}
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidator().ValidateUpdate(t.Context(), entity)
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "autoPostSourceEvents")
+	validationtest.Refused(t, err).Exactly(
+		validationtest.At("autoPostSourceEvents", errortypes.ErrInvalidOperation),
+		validationtest.At("autoPostSourceEvents", errortypes.ErrInvalidOperation),
+	)
 }
 
 func TestValidateUpdate_RejectsInvoiceEventsForCashReceiptRecognition(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnCashReceipt
 	entity.AutoPostSourceEvents = []accountingcontrol.JournalSourceEventType{
@@ -289,30 +298,28 @@ func TestValidateUpdate_RejectsInvoiceEventsForCashReceiptRecognition(t *testing
 		accountingcontrol.JournalSourceEventVendorBillPosted,
 	}
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidator().ValidateUpdate(t.Context(), entity)
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "autoPostSourceEvents")
+	validationtest.Refused(t, err).Refuses("autoPostSourceEvents", errortypes.ErrInvalidOperation)
 }
 
 func TestValidateUpdate_RejectsScheduledCloseWithApproval(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.PeriodCloseMode = accountingcontrol.PeriodCloseModeSystemScheduled
 	entity.RequirePeriodCloseApproval = true
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidator().ValidateUpdate(t.Context(), entity)
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "requirePeriodCloseApproval")
+	validationtest.Refused(t, err).Exactly(
+		validationtest.At("requirePeriodCloseApproval", errortypes.ErrInvalidOperation),
+	)
 }
 
 func TestValidateUpdate_RequiresCashAccountForCustomerPaymentPosting(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.DefaultCashAccountID = pulid.Nil
 	entity.AutoPostSourceEvents = append(
@@ -320,16 +327,16 @@ func TestValidateUpdate_RequiresCashAccountForCustomerPaymentPosting(t *testing.
 		accountingcontrol.JournalSourceEventCustomerPaymentPosted,
 	)
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidator().ValidateUpdate(t.Context(), entity)
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "defaultCashAccountId")
+	validationtest.Refused(t, err).Exactly(
+		validationtest.At("defaultCashAccountId", errortypes.ErrRequired),
+	)
 }
 
 func TestValidateUpdate_RequiresUnappliedCashAccountForCustomerPaymentPosting(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator()
 	entity := validAccountingControl()
 	entity.DefaultUnappliedCashAccountID = pulid.Nil
 	entity.AutoPostSourceEvents = append(
@@ -337,41 +344,104 @@ func TestValidateUpdate_RequiresUnappliedCashAccountForCustomerPaymentPosting(t 
 		accountingcontrol.JournalSourceEventCustomerPaymentPosted,
 	)
 
-	multiErr := v.ValidateUpdate(t.Context(), entity)
+	err := newTestValidator().ValidateUpdate(t.Context(), entity)
 
-	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "defaultUnappliedCashAccountId")
+	validationtest.Refused(t, err).Exactly(
+		validationtest.At("defaultUnappliedCashAccountId", errortypes.ErrRequired),
+	)
 }
 
-func assertErrorField(t *testing.T, multiErr *errortypes.MultiError, field string) {
-	t.Helper()
-
-	for _, err := range multiErr.Errors {
-		if err.Field == field {
-			return
-		}
-	}
-
-	t.Fatalf("expected validation error for field %q, got %#v", field, multiErr.Errors)
+type driverPayAccount struct {
+	field string
+	get   func(*accountingcontrol.AccountingControl) pulid.ID
+	set   func(*accountingcontrol.AccountingControl, pulid.ID)
 }
 
-func validMultiCurrencyAccountingControl() *accountingcontrol.AccountingControl {
-	entity := validAccountingControl()
-	entity.CurrencyMode = accountingcontrol.CurrencyModeMultiCurrency
-	entity.ExchangeRateOverridePolicy = accountingcontrol.ExchangeRateOverrideRequireApproval
-	entity.RealizedFXGainAccountID = pulid.MustNew("gla_")
-	entity.RealizedFXLossAccountID = pulid.MustNew("gla_")
-	return entity
-}
-
-func validOANDAIntegration(enabled bool, apiKey string) *integration.Integration {
-	return &integration.Integration{
-		Type:    integration.TypeOANDAExchangeRates,
-		Enabled: enabled,
-		Configuration: map[string]any{
-			"apiKey":          apiKey,
-			"baseUrl":         "https://exchange-rates-api.oanda.com",
-			"defaultRateType": "mid",
+func driverPayAccounts() []driverPayAccount {
+	return []driverPayAccount{
+		{
+			field: "defaultDriverPayExpenseAccountId",
+			get: func(ac *accountingcontrol.AccountingControl) pulid.ID {
+				return ac.DefaultDriverPayExpenseAccountID
+			},
+			set: func(ac *accountingcontrol.AccountingControl, id pulid.ID) {
+				ac.DefaultDriverPayExpenseAccountID = id
+			},
+		},
+		{
+			field: "defaultPurchasedTransportationAccountId",
+			get: func(ac *accountingcontrol.AccountingControl) pulid.ID {
+				return ac.DefaultPurchasedTransportationAccountID
+			},
+			set: func(ac *accountingcontrol.AccountingControl, id pulid.ID) {
+				ac.DefaultPurchasedTransportationAccountID = id
+			},
+		},
+		{
+			field: "defaultSettlementsPayableAccountId",
+			get: func(ac *accountingcontrol.AccountingControl) pulid.ID {
+				return ac.DefaultSettlementsPayableAccountID
+			},
+			set: func(ac *accountingcontrol.AccountingControl, id pulid.ID) {
+				ac.DefaultSettlementsPayableAccountID = id
+			},
+		},
+		{
+			field: "defaultDriverAdvanceAccountId",
+			get: func(ac *accountingcontrol.AccountingControl) pulid.ID {
+				return ac.DefaultDriverAdvanceAccountID
+			},
+			set: func(ac *accountingcontrol.AccountingControl, id pulid.ID) {
+				ac.DefaultDriverAdvanceAccountID = id
+			},
+		},
+		{
+			field: "defaultDriverReimbursementAccountId",
+			get: func(ac *accountingcontrol.AccountingControl) pulid.ID {
+				return ac.DefaultDriverReimbursementAccountID
+			},
+			set: func(ac *accountingcontrol.AccountingControl, id pulid.ID) {
+				ac.DefaultDriverReimbursementAccountID = id
+			},
+		},
+		{
+			field: "defaultEscrowLiabilityAccountId",
+			get: func(ac *accountingcontrol.AccountingControl) pulid.ID {
+				return ac.DefaultEscrowLiabilityAccountID
+			},
+			set: func(ac *accountingcontrol.AccountingControl, id pulid.ID) {
+				ac.DefaultEscrowLiabilityAccountID = id
+			},
+		},
+		{
+			field: "defaultEscrowInterestExpenseAccountId",
+			get: func(ac *accountingcontrol.AccountingControl) pulid.ID {
+				return ac.DefaultEscrowInterestExpenseAccountID
+			},
+			set: func(ac *accountingcontrol.AccountingControl, id pulid.ID) {
+				ac.DefaultEscrowInterestExpenseAccountID = id
+			},
+		},
+		{
+			field: "defaultEscrowAdjustmentAccountId",
+			get: func(ac *accountingcontrol.AccountingControl) pulid.ID {
+				return ac.DefaultEscrowAdjustmentAccountID
+			},
+			set: func(ac *accountingcontrol.AccountingControl, id pulid.ID) {
+				ac.DefaultEscrowAdjustmentAccountID = id
+			},
 		},
 	}
+}
+
+func onlyIntegrityRequest(
+	t *testing.T,
+	integrity *validationtest.Integrity,
+) validationframework.IntegrityRequest {
+	t.Helper()
+
+	requests := integrity.Requests()
+	require.Len(t, requests, 1)
+
+	return requests[0]
 }

@@ -13,10 +13,14 @@ type GetCostingControlRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
-type ReplaceCategoryGLAccountsRequest struct {
-	TenantInfo     pagination.TenantInfo
+type CategoryGLAccounts struct {
 	CostCategoryID pulid.ID
 	GLAccountIDs   []pulid.ID
+}
+
+type ReplaceCategoryGLAccountsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Categories []CategoryGLAccounts
 }
 
 type CostingControlRepository interface {
@@ -30,10 +34,10 @@ type CostingControlRepository interface {
 		entity *costingcontrol.CostingControl,
 	) (*costingcontrol.CostingControl, error)
 
-	UpdateCategory(
+	UpdateCategories(
 		ctx context.Context,
-		category *costingcontrol.CostCategory,
-	) (*costingcontrol.CostCategory, error)
+		categories []*costingcontrol.CostCategory,
+	) error
 
 	ReplaceCategoryGLAccounts(
 		ctx context.Context,

@@ -166,7 +166,10 @@ func (r *MutationResolver) CreateDOTRandomPool(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	entity := randomPoolFromInput(&input, resolvercore.TenantInfo(authCtx))
+	entity, err := randomPoolFromInput(&input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
 	return r.WorkerDrugAlcoholService.CreatePool(ctx, entity, authCtx.UserID)
 }
 
@@ -181,7 +184,10 @@ func (r *MutationResolver) UpdateDOTRandomPool(ctx context.Context, id string, v
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Pool is invalid")
 	}
 
-	entity := randomPoolFromInput(&input, resolvercore.TenantInfo(authCtx))
+	entity, err := randomPoolFromInput(&input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
 	entity.ID = poolID
 	entity.Version = int64(version)
 	return r.WorkerDrugAlcoholService.UpdatePool(ctx, entity, authCtx.UserID)

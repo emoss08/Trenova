@@ -2,6 +2,7 @@ package shipmentinputmapping
 
 import (
 	"errors"
+	"math"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -162,8 +163,12 @@ func TestShipmentFromInput_RejectsOutOfRangeTemperature(t *testing.T) {
 		OrganizationID: pulid.MustNew("org_"),
 	})
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "temperatureMin")
+	var valErr *errortypes.Error
+	require.ErrorAs(t, err, &valErr)
+	assert.Equal(t, "temperatureMin", valErr.Path.String())
+	assert.Equal(t, errortypes.ErrInvalid, valErr.Code)
+	assert.Equal(t, "Must be between {0} and {1}", valErr.Message)
+	assert.Equal(t, []any{int64(math.MinInt16), int64(math.MaxInt16)}, valErr.Args)
 }
 
 func TestShipmentFromInput_AllowsAShipmentRatedByHand(t *testing.T) {
@@ -213,7 +218,7 @@ func assertRatingMethodError(t *testing.T, err error, code errortypes.ErrorCode)
 
 	var typed *errortypes.Error
 	require.True(t, errors.As(err, &typed))
-	assert.Equal(t, "formulaTemplateId", typed.Field)
+	assert.Equal(t, "formulaTemplateId", typed.Field())
 	assert.Equal(t, code, typed.Code)
 }
 

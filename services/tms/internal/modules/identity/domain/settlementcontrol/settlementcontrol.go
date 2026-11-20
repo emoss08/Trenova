@@ -1,7 +1,7 @@
 package settlementcontrol
 
 import (
-	"context"
+	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -14,6 +14,8 @@ import (
 
 var (
 	_ validationframework.Entity = (*SettlementControl)(nil)
+
+	maxVarianceThresholdPct = decimal.RequireFromString("999.9999")
 )
 
 type PayPeriodFrequency string
@@ -86,6 +88,23 @@ type SettlementControl struct {
 	Organization *tenant.Organization `json:"organization,omitempty"`
 }
 
+func NewDefault(orgID, buID pulid.ID) *SettlementControl {
+	return &SettlementControl{
+		OrganizationID:                orgID,
+		BusinessUnitID:                buID,
+		PayPeriodFrequency:            PayPeriodFrequencyWeekly,
+		PeriodEndDayOfWeek:            int(time.Saturday),
+		PayDelayDays:                  5,
+		PayTrigger:                    PayTriggerShipmentDelivered,
+		AllowNegativeNet:              true,
+		AutoAttachAccruals:            true,
+		VarianceThresholdPct:          decimal.NewFromInt(25),
+		VarianceLookbackWeeks:         8,
+		EscrowInterestFrequencyMonths: 3,
+		RequireSeparateApprover:       true,
+	}
+}
+
 func (sc *SettlementControl) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(sc,
 		validation.Field(&sc.PayPeriodFrequency, validation.Required),
@@ -116,11 +135,12 @@ func (sc *SettlementControl) Validate(multiErr *errortypes.MultiError) {
 			"Pay delay days must be between 0 and 30",
 		)
 	}
-	if sc.VarianceThresholdPct.IsNegative() {
+	if sc.VarianceThresholdPct.IsNegative() ||
+		sc.VarianceThresholdPct.GreaterThan(maxVarianceThresholdPct) {
 		multiErr.Add(
 			"varianceThresholdPct",
 			errortypes.ErrInvalid,
-			"Variance threshold cannot be negative",
+			"Variance threshold must be between 0 and 999.9999",
 		)
 	}
 	if sc.VarianceLookbackWeeks < 1 || sc.VarianceLookbackWeeks > 52 {
@@ -154,29 +174,3 @@ func (sc *SettlementControl) GetTableName() string { return "settlement_controls
 func (sc *SettlementControl) GetOrganizationID() pulid.ID { return sc.OrganizationID }
 
 func (sc *SettlementControl) GetBusinessUnitID() pulid.ID { return sc.BusinessUnitID }
-
-func (sc *SettlementControl) BeforeCreate(ctx context.Context) error {
-	if sc.PayPeriodFrequency == "" {
-		sc.PayPeriodFrequency = PayPeriodFrequencyWeekly
-	}
-	if sc.PeriodEndDayOfWeek == 0 {
-		sc.PeriodEndDayOfWeek = 6
-	}
-	if sc.PayDelayDays == 0 {
-		sc.PayDelayDays = 5
-	}
-	if sc.PayTrigger == "" {
-		sc.PayTrigger = PayTriggerShipmentDelivered
-	}
-	if sc.VarianceThresholdPct.IsZero() {
-		sc.VarianceThresholdPct = decimal.RequireFromString("25")
-	}
-	if sc.VarianceLookbackWeeks == 0 {
-		sc.VarianceLookbackWeeks = 8
-	}
-	if sc.EscrowInterestFrequencyMonths == 0 {
-		sc.EscrowInterestFrequencyMonths = 3
-	}
-
-	return nil
-}

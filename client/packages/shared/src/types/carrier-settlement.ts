@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { optionalStringSchema } from "./helpers";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 export const carrierSettlementStatusSchema = z.enum([
   "Draft",
@@ -46,22 +45,3 @@ export const generateCarrierBatchFormSchema = z.object({
   notes: optionalStringSchema,
 });
 export type GenerateCarrierBatchFormValues = z.infer<typeof generateCarrierBatchFormSchema>;
-
-export const carrierSettlementControlFormSchema = z.object({
-  payTrigger: z.enum(["MoveCompleted", "ShipmentDelivered", "PODReceived", "ShipmentInvoiced"]),
-  payPeriodFrequency: z.enum(["Weekly", "Biweekly", "Monthly"]),
-  periodEndDayOfWeek: z.number().int().min(0).max(6),
-  payDelayDays: z.number().int().min(0).max(60),
-  autoGenerateBatches: z.boolean(),
-  autoPostOnApprove: z.boolean(),
-  requireSeparateApprover: z.boolean(),
-  varianceTolerance: z
-    .number()
-    .min(0, { error: () => translate("Variance tolerance cannot be negative") }),
-  autoMatchInboundInvoices: z.boolean(),
-  autoAcceptWithinTolerance: z.boolean(),
-  holdUntilInvoiceMatched: z.boolean(),
-  defaultApAccountId: z.string().optional().nullable(),
-  defaultPurchasedTransportationAccountId: z.string().optional().nullable(),
-});
-export type CarrierSettlementControlFormValues = z.infer<typeof carrierSettlementControlFormSchema>;

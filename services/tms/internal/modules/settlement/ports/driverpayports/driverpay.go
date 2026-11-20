@@ -82,6 +82,12 @@ type GetWorkerPayAssignmentRequest struct {
 	AsOf       int64                 `json:"asOf"`
 }
 
+type GetWorkerPayAssignmentsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	WorkerIDs  []pulid.ID            `json:"workerIds"`
+	AsOf       int64                 `json:"asOf"`
+}
+
 type ListWorkerPayAssignmentsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	WorkerID   pulid.ID              `json:"workerId"`
@@ -97,6 +103,10 @@ type WorkerPayAssignmentRepository interface {
 		ctx context.Context,
 		req GetWorkerPayAssignmentRequest,
 	) (*payassignment.WorkerPayAssignment, error)
+	GetEffectiveForWorkers(
+		ctx context.Context,
+		req GetWorkerPayAssignmentsRequest,
+	) (map[pulid.ID]*payassignment.WorkerPayAssignment, error)
 	ListForWorker(
 		ctx context.Context,
 		req ListWorkerPayAssignmentsRequest,

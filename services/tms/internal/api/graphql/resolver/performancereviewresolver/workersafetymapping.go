@@ -1,6 +1,7 @@
 package performancereviewresolver
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -17,18 +18,29 @@ func reviewTemplateFromInput(
 	input *gqlmodel.PerformanceReviewTemplateInput,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) *workerreview.PerformanceReviewTemplate {
+) (*workerreview.PerformanceReviewTemplate, error) {
 	items := make([]workerreview.ReviewItem, 0, len(input.Items))
-	for _, item := range input.Items {
+	for i, item := range input.Items {
 		if item == nil {
 			continue
+		}
+		weight, err := gqlscalar.NarrowInt[int32](
+			"items["+strconv.Itoa(i)+"].weight",
+			item.Weight,
+		)
+		if err != nil {
+			return nil, err
 		}
 		items = append(items, workerreview.ReviewItem{
 			Key:         strings.TrimSpace(item.Key),
 			Label:       strings.TrimSpace(item.Label),
 			Description: strings.TrimSpace(gqlscalar.StringValue(item.Description)),
-			Weight:      int32(item.Weight), //nolint:gosec // bounded by validation
+			Weight:      weight,
 		})
+	}
+	cadenceMonths, err := gqlscalar.NarrowIntPtr[int32]("cadenceMonths", input.CadenceMonths)
+	if err != nil {
+		return nil, err
 	}
 	entity := &workerreview.PerformanceReviewTemplate{
 		ID:             id,
@@ -41,12 +53,9 @@ func reviewTemplateFromInput(
 		IsDefault:      input.IsDefault,
 		Items:          items,
 		Version:        int64(gqlscalar.IntValue(input.Version)),
+		CadenceMonths:  cadenceMonths,
 	}
-	if input.CadenceMonths != nil {
-		months := int32(*input.CadenceMonths) //nolint:gosec // bounded by validation
-		entity.CadenceMonths = &months
-	}
-	return entity
+	return entity, nil
 }
 
 func updateReviewRequestFromInput(
@@ -59,17 +68,21 @@ func updateReviewRequestFromInput(
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Review is invalid")
 	}
 	ratings := make([]workerreview.ReviewRating, 0, len(input.Ratings))
-	for _, rating := range input.Ratings {
+	for i, rating := range input.Ratings {
 		if rating == nil {
 			continue
+		}
+		score, scoreErr := gqlscalar.NarrowIntPtr[int32](
+			"ratings["+strconv.Itoa(i)+"].score",
+			rating.Score,
+		)
+		if scoreErr != nil {
+			return nil, scoreErr
 		}
 		entry := workerreview.ReviewRating{
 			Key:     rating.Key,
 			Comment: gqlscalar.StringValue(rating.Comment),
-		}
-		if rating.Score != nil {
-			score := int32(*rating.Score) //nolint:gosec // bounded by validation
-			entry.Score = &score
+			Score:   score,
 		}
 		ratings = append(ratings, entry)
 	}

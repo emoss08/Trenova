@@ -253,14 +253,7 @@ func (g *settlementPhase) csLoadSetup(ctx context.Context) (*csSetup, error) {
 	case err != nil:
 		return nil, fmt.Errorf("load carrier settlement control: %w", err)
 	case control == nil:
-		control = &carriersettlementcontrol.CarrierSettlementControl{
-			OrganizationID:     g.Refs.OrgID,
-			BusinessUnitID:     g.Refs.BuID,
-			PayTrigger:         settlementcontrol.PayTriggerShipmentDelivered,
-			PayPeriodFrequency: settlementcontrol.PayPeriodFrequencyWeekly,
-			PeriodEndDayOfWeek: 6,
-			PayDelayDays:       5,
-		}
+		control = carriersettlementcontrol.NewDefault(g.Refs.OrgID, g.Refs.BuID)
 		if err = carriersettlementcontroldb.CarrierSettlementControls.Create(ctx, g.DB, control); err != nil {
 			return nil, fmt.Errorf("create carrier settlement control: %w", err)
 		}

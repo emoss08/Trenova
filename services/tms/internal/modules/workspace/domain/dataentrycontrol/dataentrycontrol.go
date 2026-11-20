@@ -68,9 +68,8 @@ func (dec *DataEntryControl) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(
 			&dec.EmailCase,
 			validation.Required.Error("Email case is required"),
-			domainvalidation.ValidEnum[CaseFormat](
-				"email case must be one of: AsEntered, Upper, Lower, TitleCase",
-			),
+			validation.In(CaseFormatAsEntered, CaseFormatUpper, CaseFormatLower).
+				Error("email case must be one of: AsEntered, Upper, Lower"),
 		),
 		validation.Field(
 			&dec.CityCase,

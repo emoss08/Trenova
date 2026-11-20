@@ -10,6 +10,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+var maxRerateVarianceTolerancePercent = decimal.RequireFromString("999.999999")
+
 type Validator struct {
 	validator tenantedvalidation.EntityValidator[*invoiceadjustmentcontrol.InvoiceAdjustmentControl]
 }
@@ -18,16 +20,16 @@ func NewValidator() *Validator {
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*invoiceadjustmentcontrol.InvoiceAdjustmentControl]().
 			WithModelName("InvoiceAdjustmentControl").
-			WithCustomRule(createEligibilityRule()).
+			WithCustomRule(createClosedPeriodRule()).
 			WithCustomRule(createApprovalThresholdRule()).
 			WithCustomRule(createCreditBalanceRule()).
 			Build(),
 	}
 }
 
-func createEligibilityRule() validationframework.Rule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+func createClosedPeriodRule() validationframework.Rule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
 	return validationframework.NewRule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](
-		"eligibility",
+		"closed_period",
 	).
 		OnUpdate().
 		WithStage(validationframework.StageBusinessRules).
@@ -37,27 +39,6 @@ func createEligibilityRule() validationframework.Rule[*invoiceadjustmentcontrol.
 			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
-			if entity.PaidInvoiceAdjustmentPolicy == invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithoutApproval {
-				multiErr.Add(
-					"paidInvoiceAdjustmentPolicy",
-					errortypes.ErrInvalidOperation,
-					"Paid invoice adjustments must not be allowed without approval",
-				)
-			}
-			if entity.PartiallyPaidInvoiceAdjustmentPolicy == invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithoutApproval {
-				multiErr.Add(
-					"partiallyPaidInvoiceAdjustmentPolicy",
-					errortypes.ErrInvalidOperation,
-					"Partially paid invoice adjustments must not be allowed without approval",
-				)
-			}
-			if entity.DisputedInvoiceAdjustmentPolicy == invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithoutApproval {
-				multiErr.Add(
-					"disputedInvoiceAdjustmentPolicy",
-					errortypes.ErrInvalidOperation,
-					"Disputed invoice adjustments must not be allowed without approval",
-				)
-			}
 			if entity.ClosedPeriodAdjustmentPolicy == invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicyRequireReopen &&
 				entity.AdjustmentAccountingDatePolicy != invoiceadjustmentcontrol.AdjustmentAccountingDateUseOriginalIfOpenElseNextOpen {
 				multiErr.Add(
@@ -114,6 +95,16 @@ func createApprovalThresholdRule() validationframework.Rule[*invoiceadjustmentco
 					"rerateVarianceTolerancePercent",
 					errortypes.ErrInvalid,
 					"Rerate variance tolerance percent must not be negative",
+				)
+			}
+			if entity.RerateVarianceTolerancePercent.GreaterThan(
+				maxRerateVarianceTolerancePercent,
+			) {
+				multiErr.Add(
+					"rerateVarianceTolerancePercent",
+					errortypes.ErrInvalid,
+					"Rerate variance tolerance percent must be at most {0}",
+					maxRerateVarianceTolerancePercent.String(),
 				)
 			}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"go.uber.org/fx"
@@ -29,6 +30,7 @@ type Params struct {
 	OrderDerivation    orderports.OrderDerivationService
 	ShipmentEventRepo  shipmenteventports.ShipmentEventRepository
 	ShipmentLinkRepo   editenderports.EDIShipmentLinkRepository
+	ShipmentMoves      shipmentmoveports.ShipmentMoveService
 	ShipmentRepo       shipmentports.ShipmentRepository
 	Shipments          *editendershipment.Service
 	TransferChangeRepo editenderports.EDITransferChangeRepository
@@ -36,7 +38,6 @@ type Params struct {
 
 type Service struct {
 	auditService       auditports.AuditService
-	coordinator        *shipmentstate.Coordinator
 	db                 kernelports.Transactor
 	l                  *zap.Logger
 	lifecycleApplier   *internaledilifecycle.Applier
@@ -52,12 +53,12 @@ type Service struct {
 func New(p Params) *Service {
 	return &Service{
 		auditService: p.AuditService,
-		coordinator:  p.Coordinator,
 		db:           p.DB,
 		l:            p.Logger.Named("service.edi"),
 		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
 			ShipmentRepo: p.ShipmentRepo,
 			Coordinator:  p.Coordinator,
+			StopActuals:  p.ShipmentMoves,
 		}),
 		orderDerivation:    p.OrderDerivation,
 		shipmentEventRepo:  p.ShipmentEventRepo,

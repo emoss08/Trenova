@@ -259,7 +259,7 @@ func TestAssign_RefusesInactiveAndPastDue(t *testing.T) {
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "courseId", verr.Field)
+	assert.Equal(t, "courseId", verr.Field())
 
 	past := h.now - 5*day
 	_, err = h.svc.Assign(context.Background(), &workertrainingservice.AssignRequest{
@@ -267,7 +267,7 @@ func TestAssign_RefusesInactiveAndPastDue(t *testing.T) {
 	})
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "dueAt", multiErr.Errors[0].Field)
+	assert.Equal(t, "dueAt", multiErr.Errors[0].Field())
 }
 
 func TestComplete_ScoresAndSetsExpiry(t *testing.T) {
@@ -287,7 +287,7 @@ func TestComplete_ScoresAndSetsExpiry(t *testing.T) {
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr, "a scored course needs a score")
-	assert.Equal(t, "score", verr.Field)
+	assert.Equal(t, "score", verr.Field())
 
 	failed, err := h.svc.Complete(context.Background(), &workertrainingservice.CompleteRequest{
 		TenantInfo: h.tenant, ID: record.ID, Score: decimal.NewNullDecimal(decimal.NewFromInt(60)), UserID: h.userID,
@@ -348,7 +348,7 @@ func TestComplete_DocumentMustBelongToWorker(t *testing.T) {
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "documentId", verr.Field)
+	assert.Equal(t, "documentId", verr.Field())
 
 	ownDoc := pulid.MustNew("doc_")
 	h.docs.EXPECT().
@@ -377,7 +377,7 @@ func TestWaiveAndCancel(t *testing.T) {
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr, "a waiver needs a reason")
-	assert.Equal(t, "reason", verr.Field)
+	assert.Equal(t, "reason", verr.Field())
 
 	waived, err := h.svc.Waive(context.Background(), &workertrainingservice.StatusRequest{
 		TenantInfo: h.tenant, ID: record.ID, Reason: "Equivalent certificate on file", UserID: h.userID,

@@ -219,7 +219,7 @@ func TestAgreementLifecycle(t *testing.T) {
 	require.Error(t, err)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "effectiveFrom", validation.Field)
+	assert.Equal(t, "effectiveFrom", validation.Field())
 
 	draft := env.agreement(factor.ID, now, nil)
 	draft.Status = factoring.AgreementStatusDraft

@@ -11,9 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
-	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -23,93 +21,25 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func (r *MutationResolver) UpdateCostingControl(ctx context.Context, input gqlmodel.CostingControlInput) (*gqlmodel.CostingControl, error) {
+func (r *MutationResolver) SaveCostingControl(ctx context.Context, input gqlmodel.CostingControlSaveInput) (*gqlmodel.CostingControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCostingControl, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	existing, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
-		TenantInfo: resolvercore.TenantInfo(authCtx),
-	})
+	req, err := costingSaveRequestFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+	req.TenantInfo = resolvercore.TenantInfo(authCtx)
+	req.Actor = actorutil.FromAuthContext(authCtx)
+
+	saved, err := r.CostingService.Save(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	entity, err := costingControlFromInput(&input, existing)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err = r.CostingService.Update(ctx, entity, actorutil.FromAuthContext(authCtx)); err != nil {
-		return nil, err
-	}
-
-	updated, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
-		TenantInfo: resolvercore.TenantInfo(authCtx),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return costingControlToModel(updated), nil
-}
-
-func (r *MutationResolver) UpdateCostCategory(ctx context.Context, input gqlmodel.CostCategoryUpdateInput) (*gqlmodel.CostCategory, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceCostingControl, permission.OpUpdate)
-	if err != nil {
-		return nil, err
-	}
-
-	categoryID, err := pulid.MustParse(input.ID)
-	if err != nil {
-		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid cost category")
-	}
-
-	control, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
-		TenantInfo: resolvercore.TenantInfo(authCtx),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	existing := findCostCategory(control, categoryID)
-	if existing == nil {
-		return nil, errortypes.NewNotFoundError("Cost category not found")
-	}
-
-	entity, err := costCategoryFromUpdateInput(&input, existing)
-	if err != nil {
-		return nil, err
-	}
-
-	glAccountIDs, err := gqlid.PulidsFromStrings(input.GlAccountIds, "glAccountIds")
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err = r.CostingService.UpdateCategory(ctx, &costingservice.UpdateCategoryParams{
-		Category:     entity,
-		GLAccountIDs: glAccountIDs,
-		TenantInfo:   resolvercore.TenantInfo(authCtx),
-		UserID:       authCtx.UserID,
-	}); err != nil {
-		return nil, err
-	}
-
-	refreshed, err := r.CostingService.Get(ctx, &costingcontrolports.GetCostingControlRequest{
-		TenantInfo: resolvercore.TenantInfo(authCtx),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	updated := findCostCategory(refreshed, categoryID)
-	if updated == nil {
-		return nil, errortypes.NewNotFoundError("Cost category not found")
-	}
-
-	return costCategoryToModel(updated), nil
+	return costingControlToModel(saved), nil
 }
 
 func (r *QueryResolver) CostingControl(ctx context.Context) (*gqlmodel.CostingControl, error) {

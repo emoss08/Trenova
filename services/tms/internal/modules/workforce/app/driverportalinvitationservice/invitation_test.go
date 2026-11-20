@@ -136,7 +136,7 @@ func TestInviteWorker_RefusedWhenAssetOperationsDisabled(t *testing.T) {
 
 	validationErr := new(errortypes.Error)
 	require.ErrorAs(t, err, &validationErr)
-	assert.Equal(t, "feature", validationErr.Field)
+	assert.Equal(t, "feature", validationErr.Field())
 	assert.Equal(t, errortypes.ErrInvalidOperation, validationErr.Code)
 	assert.Equal(
 		t,

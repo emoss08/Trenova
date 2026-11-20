@@ -81,6 +81,46 @@ func (r *workerPayAssignmentRepository) GetEffectiveForWorker(
 	)
 }
 
+// GetEffectiveForWorkers reads, in one query, the assignment each worker is
+// paid under at AsOf, with its profile and components, keyed by worker. A
+// worker with no assignment in effect is absent from the map.
+func (r *workerPayAssignmentRepository) GetEffectiveForWorkers(
+	ctx context.Context,
+	req driverpayports.GetWorkerPayAssignmentsRequest,
+) (map[pulid.ID]*payassignment.WorkerPayAssignment, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID]*payassignment.WorkerPayAssignment, error) {
+			if len(req.WorkerIDs) == 0 {
+				return map[pulid.ID]*payassignment.WorkerPayAssignment{}, nil
+			}
+
+			wpa := payassignmentdb.WorkerPayAssignments
+			items, err := wpa.Where(
+				wpa.WorkerID.In(req.WorkerIDs...),
+				wpa.EffectiveFrom.Lte(req.AsOf),
+				openAfter(wpa.EffectiveTo, req.AsOf),
+			).
+				Load(orderedComponents(wpa.PayProfile())).
+				Order(wpa.WorkerID.Asc(), wpa.EffectiveFrom.Desc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("get effective pay assignments: %w", err)
+			}
+
+			byWorker := make(map[pulid.ID]*payassignment.WorkerPayAssignment, len(req.WorkerIDs))
+			for _, item := range items {
+				if _, seen := byWorker[item.WorkerID]; !seen {
+					byWorker[item.WorkerID] = item
+				}
+			}
+
+			return byWorker, nil
+		},
+	)
+}
+
 func (r *workerPayAssignmentRepository) ListForWorker(
 	ctx context.Context,
 	req driverpayports.ListWorkerPayAssignmentsRequest,

@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediflowclock"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -194,11 +195,14 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 }
 
 /*
-Agent tools read through persisted GraphQL operations, and they run on the
-worker as well as in the API. Nothing asks for the reader until a converted
-tool does, and fx.ValidateApp checks only what is asked for, so these ask for
-it in both processes, in both worker binaries, and in the worker the desk bench
-runs in process, which went without it until `trenova desk` could not start.
+Agent tools read through persisted GraphQL operations, and the tool catalog is
+part of the shared graph, so every process builds them. Nothing asks for the
+reader until a converted tool does, and fx.ValidateApp checks only what is
+asked for, so these ask for it in both processes, in both worker binaries, in
+the worker the desk bench runs in process, and in bare bootstrap.Options, which
+one-shot commands such as `trenova edi flows advance` run on. The desk bench
+and then that command each went without it until they could not start, which
+is why the reader now comes from core.Options instead of each process's own.
 */
 func TestWiring_EveryProcessBuildsTheAgentGraphQLReader(t *testing.T) {
 	t.Parallel()
@@ -210,6 +214,7 @@ func TestWiring_EveryProcessBuildsTheAgentGraphQLReader(t *testing.T) {
 		"worker binary": {core.Options(), workerapp.Modules(), workerapp.Options(), need},
 		"api binary":    {core.Options(), apiapp.Options(), need},
 		"desk bench":    {bootstrap.Options(), bootstrap.UnscheduledWorkerOptions(), need},
+		"command":       {bootstrap.Options(), need},
 	}
 	for name, options := range graphs {
 		t.Run(name, func(t *testing.T) {
@@ -218,4 +223,13 @@ func TestWiring_EveryProcessBuildsTheAgentGraphQLReader(t *testing.T) {
 			require.NoError(t, fx.ValidateApp(options...))
 		})
 	}
+}
+
+func TestWiring_EDIFlowAdvanceCommandGraphResolves(t *testing.T) {
+	t.Parallel()
+
+	require.NoError(t, fx.ValidateApp(
+		bootstrap.Options(),
+		fx.Invoke(func(*ediflowclock.Service) {}),
+	))
 }

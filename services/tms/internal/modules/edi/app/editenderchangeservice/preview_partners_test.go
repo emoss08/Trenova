@@ -18,9 +18,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/orderportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -217,4 +220,77 @@ func TestPreviewCancelNotices_NamesTheOtherSideOfEachActiveLink(t *testing.T) {
 	assert.Equal(t, partnerOrg, notices[0].OrganizationID)
 	assert.Equal(t, edidocument.TransactionSet214, notices[0].TransactionSet)
 	assert.Equal(t, "A7", notices[0].StatusCode)
+}
+
+func TestPlanTenderChanges_QuotesTheOrdersPurchaseOrderLikeTheBaseline(t *testing.T) {
+	t.Parallel()
+
+	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
+	orderID := pulid.MustNew("ord_")
+	original := &shipment.Shipment{
+		ID:             pulid.MustNew("shp_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		OrderID:        orderID,
+		BOL:            "BOL-1",
+	}
+	updated := *original
+	updated.BOL = "BOL-2"
+	baseline := edipayloadbuild.BuildTenderPayload(original)
+	baseline.PONumber = "PO-1"
+	recipient := &editenderchange.TenderRecipient{
+		ID:                    pulid.MustNew("etr_"),
+		SourceShipmentID:      original.ID,
+		RecipientKind:         editenderchange.TenderRecipientKindExternal,
+		LatestBaselinePayload: baseline,
+		LatestBaselineHash:    editenderrecipient.PayloadHash(&baseline),
+	}
+
+	recipients := editenderportsmock.NewMockEDITenderRecipientRepository(t)
+	recipients.EXPECT().
+		ListActiveTenderRecipientsForSourceShipment(mock.Anything, mock.Anything).
+		Return([]*editenderchange.TenderRecipient{recipient}, nil)
+	orders := orderportsmock.NewMockOrderRepository(t)
+	orders.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req orderports.GetOrderByIDRequest) bool {
+			return req.ID == orderID && req.TenantInfo.OrgID == orgID && req.TenantInfo.BuID == buID
+		})).
+		Return(&order.Order{ID: orderID, PONumber: "PO-1"}, nil).
+		Once()
+	svc := &Service{
+		tenderRecipientRepo: recipients,
+		payload:             edipayloadbuild.New(edipayloadbuild.Params{OrderRepo: orders}),
+	}
+
+	plan, err := svc.planTenderChanges(t.Context(), original, &updated, nil)
+	require.NoError(t, err)
+	require.NotNil(t, plan)
+	assert.Equal(t, "PO-1", plan.payload.PONumber)
+	require.Len(t, plan.recipients, 1)
+	diff := diffTenderPayloads(&recipient.LatestBaselinePayload, plan.payload)
+	assert.Contains(t, diff, "bol")
+	assert.NotContains(t, diff, "poNumber",
+		"an unchanged purchase order is not a change to the tender")
+}
+
+func TestPlanTenderChanges_AnUnchangedShipmentReadsNothing(t *testing.T) {
+	t.Parallel()
+
+	original := &shipment.Shipment{
+		ID:             pulid.MustNew("shp_"),
+		OrganizationID: pulid.MustNew("org_"),
+		OrderID:        pulid.MustNew("ord_"),
+		BOL:            "BOL-1",
+	}
+	updated := *original
+	svc := &Service{
+		tenderRecipientRepo: editenderportsmock.NewMockEDITenderRecipientRepository(t),
+		payload: edipayloadbuild.New(edipayloadbuild.Params{
+			OrderRepo: orderportsmock.NewMockOrderRepository(t),
+		}),
+	}
+
+	plan, err := svc.planTenderChanges(t.Context(), original, &updated, nil)
+	require.NoError(t, err)
+	assert.Nil(t, plan)
 }

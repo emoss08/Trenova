@@ -100,7 +100,7 @@ func TestReplaceOrganizationMemberships_RefusesRemovingEveryOrganization(t *test
 	require.Error(t, err)
 	var validationErr *errortypes.Error
 	require.ErrorAs(t, err, &validationErr)
-	assert.Equal(t, "organizationIds", validationErr.Field)
+	assert.Equal(t, "organizationIds", validationErr.Field())
 	deps.repo.AssertNotCalled(t, "ListOrganizationMemberships", mock.Anything, mock.Anything, mock.Anything)
 }
 

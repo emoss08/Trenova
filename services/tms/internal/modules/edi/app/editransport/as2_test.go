@@ -103,7 +103,7 @@ func TestAS2TransportDeliverSyncMDN(t *testing.T) {
 				DecryptionCertificate: partner.certificate,
 				DecryptionKey:         partner.key,
 				PartnerCertificate:    local.certificate,
-				TransferEncoding:      r.Header.Get("Content-Transfer-Encoding"),
+				EntityHeaders:         r.Header,
 				RequireSignature:      true,
 				RequireEncryption:     true,
 			},

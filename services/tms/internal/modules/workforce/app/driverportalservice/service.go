@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
@@ -31,7 +32,7 @@ type Params struct {
 	PayEventRepo        driversettlementports.PayEventRepository
 	AdvanceRepo         driverpayports.PayAdvanceRepository
 	EscrowRepo          driverpayports.EscrowAccountRepository
-	SettlementControl   tenantports.SettlementControlRepository
+	Settlements         *driversettlementservice.Service
 	DashControlRepo     tenantports.DashControlRepository
 	DocumentTypeRepo    documenttypeports.DocumentTypeRepository
 	PTORepo             workerptoports.WorkerPTORepository
@@ -56,7 +57,7 @@ type Service struct {
 	payEventRepo        driversettlementports.PayEventRepository
 	advanceRepo         driverpayports.PayAdvanceRepository
 	escrowRepo          driverpayports.EscrowAccountRepository
-	settlementControl   tenantports.SettlementControlRepository
+	settlements         *driversettlementservice.Service
 	dashControlRepo     tenantports.DashControlRepository
 	documentTypeRepo    documenttypeports.DocumentTypeRepository
 	ptoRepo             workerptoports.WorkerPTORepository
@@ -82,7 +83,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		payEventRepo:        p.PayEventRepo,
 		advanceRepo:         p.AdvanceRepo,
 		escrowRepo:          p.EscrowRepo,
-		settlementControl:   p.SettlementControl,
+		settlements:         p.Settlements,
 		dashControlRepo:     p.DashControlRepo,
 		documentTypeRepo:    p.DocumentTypeRepo,
 		ptoRepo:             p.PTORepo,

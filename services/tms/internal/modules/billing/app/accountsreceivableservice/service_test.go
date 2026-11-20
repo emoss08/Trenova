@@ -2,10 +2,15 @@ package accountsreceivableservice
 
 import (
 	"testing"
+	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerledgerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerstatement"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -76,15 +81,20 @@ func TestGetCustomerStatementBuildsBalanceForwardAndRunningBalance(t *testing.T)
 		Return("Acme", nil).
 		Once()
 	repo.EXPECT().
-		ListCustomerLedger(mock.Anything, mock.Anything).
+		GetCustomerLedgerBalance(mock.Anything, customerledgerports.GetCustomerLedgerBalanceRequest{
+			CustomerID: customerID,
+			Before:     15,
+		}).
+		Return(int64(10000), nil).
+		Once()
+	repo.EXPECT().
+		ListCustomerLedgerWindow(mock.Anything, customerledgerports.ListCustomerLedgerWindowRequest{
+			CustomerID: customerID,
+			From:       15,
+			Through:    40,
+			Limit:      customerstatement.MaxTransactions + 1,
+		}).
 		Return([]*customerledgerports.ARLedgerEntry{
-			{
-				CustomerID:      customerID,
-				TransactionDate: 10,
-				EventType:       "InvoicePosted",
-				DocumentNumber:  "INV-1",
-				AmountMinor:     10000,
-			},
 			{
 				CustomerID:      customerID,
 				TransactionDate: 20,
@@ -136,4 +146,95 @@ func TestGetCustomerStatementBuildsBalanceForwardAndRunningBalance(t *testing.T)
 	assert.Equal(t, int64(6000), statement.Transactions[0].RunningBalanceMinor)
 	assert.Equal(t, int64(9000), statement.Transactions[1].RunningBalanceMinor)
 	assert.Equal(t, int64(9000), statement.Aging.TotalOpenMinor)
+}
+
+func TestGetCustomerStatementCoversTheMonthBeforeWithoutAStart(t *testing.T) {
+	t.Parallel()
+
+	customerID := pulid.MustNew("cus_")
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	asOf := time.Date(2026, time.March, 31, 23, 0, 0, 0, chicago).Unix()
+	start := time.Date(2026, time.February, 28, 23, 0, 0, 0, chicago).Unix()
+	orgs := tenantportsmock.NewMockOrganizationRepository(t)
+	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.Organization{Timezone: "America/Chicago"}, nil).Once()
+	repo := customerledgerportsmock.NewMockAccountsReceivableRepository(t)
+	repo.EXPECT().GetCustomerName(mock.Anything, mock.Anything).Return("Acme", nil).Once()
+	repo.EXPECT().
+		GetCustomerLedgerBalance(mock.Anything, customerledgerports.GetCustomerLedgerBalanceRequest{
+			CustomerID: customerID,
+			Before:     start,
+		}).
+		Return(int64(700), nil).
+		Once()
+	repo.EXPECT().
+		ListCustomerLedgerWindow(mock.Anything, customerledgerports.ListCustomerLedgerWindowRequest{
+			CustomerID: customerID,
+			From:       start,
+			Through:    asOf,
+			Limit:      customerstatement.MaxTransactions + 1,
+		}).
+		Return(nil, nil).
+		Once()
+	repo.EXPECT().ListOpenItems(mock.Anything, mock.Anything).Return(nil, nil).Once()
+	repo.EXPECT().GetCustomerAging(mock.Anything, mock.Anything).Return(nil, nil).Once()
+	svc := &Service{repo: repo, organizations: orgs}
+
+	statement, err := svc.GetCustomerStatement(
+		t.Context(), pagination.TenantInfo{}, customerID, 0, asOf,
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, start, statement.StartDate)
+	assert.Equal(t, int64(700), statement.OpeningBalanceMinor)
+	assert.Equal(t, int64(700), statement.EndingBalanceMinor)
+	assert.Empty(t, statement.Transactions)
+}
+
+func TestGetCustomerStatementRefusesASpanPastAYear(t *testing.T) {
+	t.Parallel()
+
+	repo := customerledgerportsmock.NewMockAccountsReceivableRepository(t)
+	svc := &Service{repo: repo}
+	asOf := int64(1000 * 24 * 60 * 60)
+
+	_, err := svc.GetCustomerStatement(
+		t.Context(),
+		pagination.TenantInfo{},
+		pulid.MustNew("cus_"),
+		asOf-(customerstatement.MaxPeriodDays+1)*24*60*60,
+		asOf,
+	)
+
+	var validation *errortypes.Error
+	require.ErrorAs(t, err, &validation)
+	assert.Equal(t, "startDate", validation.Field())
+}
+
+func TestGetCustomerStatementRefusesAPeriodWithTooManyTransactions(t *testing.T) {
+	t.Parallel()
+
+	customerID := pulid.MustNew("cus_")
+	entries := make([]*customerledgerports.ARLedgerEntry, customerstatement.MaxTransactions+1)
+	for i := range entries {
+		entries[i] = &customerledgerports.ARLedgerEntry{CustomerID: customerID, AmountMinor: 1}
+	}
+	repo := customerledgerportsmock.NewMockAccountsReceivableRepository(t)
+	repo.EXPECT().GetCustomerName(mock.Anything, mock.Anything).Return("Acme", nil).Once()
+	repo.EXPECT().
+		GetCustomerLedgerBalance(mock.Anything, mock.Anything).
+		Return(int64(0), nil).
+		Once()
+	repo.EXPECT().
+		ListCustomerLedgerWindow(mock.Anything, mock.Anything).
+		Return(entries, nil).
+		Once()
+	svc := &Service{repo: repo}
+
+	_, err := svc.GetCustomerStatement(t.Context(), pagination.TenantInfo{}, customerID, 10, 20)
+
+	var validation *errortypes.Error
+	require.ErrorAs(t, err, &validation)
+	assert.Equal(t, "startDate", validation.Field())
 }

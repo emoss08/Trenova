@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -70,7 +71,7 @@ func (s *Service) previewTransition(
 		ReturnsLedger: releasesUsage(current, params.target),
 		Location:      time.UTC,
 	}
-	if preview.Location, err = s.ledger.OrgLocation(ctx, params.req.TenantInfo); err != nil {
+	if preview.Location, err = tenantports.OrganizationLocation(ctx, s.organizations, params.req.TenantInfo); err != nil {
 		return nil, err
 	}
 	if !params.notifyWorker {

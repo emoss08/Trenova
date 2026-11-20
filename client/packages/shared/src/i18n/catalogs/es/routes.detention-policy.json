@@ -136,7 +136,6 @@
   "The billing code the stay converts to once the layover boundary is crossed.": "El código de facturación al que se convierte la permanencia una vez superado el límite de escala.",
   "The billing unit minutes are rounded onto. Typically 15, 30, or 60.": "La unidad de facturación a la que se redondean los minutos. Normalmente 15, 30 o 60.",
   "The clock starts the moment the driver arrives, even if early.": "El reloj empieza a correr en el momento en que llega el conductor, aunque llegue temprano.",
-  "The fallback used when no narrower policy matches. A default cannot target a customer, facility, or type.": "La alternativa que se utiliza cuando no coincide ninguna política más específica. Un valor predeterminado no puede dirigirse a un cliente, una instalación o un tipo.",
   "The minutes of lateness are subtracted from the allowance.": "Los minutos de retraso se restan del margen permitido.",
   "The most common contract term: an early driver does not begin accruing until the appointment.": "El término contractual más común: un conductor que llega temprano no empieza a acumular hasta la hora de la cita.",
   "The policy only governs stops arriving on or after this date.": "La política solo rige las paradas que lleguen en esta fecha o después.",

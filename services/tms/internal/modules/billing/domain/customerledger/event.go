@@ -1,6 +1,7 @@
 package customerledger
 
 import (
+	"maps"
 	"strings"
 	"unicode"
 
@@ -37,6 +38,10 @@ func EventLabel(eventType string) string {
 		return label
 	}
 	return spellOut(eventType)
+}
+
+func EventLabels() map[string]string {
+	return maps.Clone(eventLabels)
 }
 
 func spellOut(name string) string {

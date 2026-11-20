@@ -522,7 +522,7 @@ func TestRecord_TerminationCascades(t *testing.T) {
 	_, err = h.record(employment.EmploymentEventTerminated, effective+86400, nil)
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr, "a second termination is refused")
-	assert.Equal(t, "kind", verr.Field)
+	assert.Equal(t, "kind", verr.Field())
 }
 
 func TestRecord_TerminationNeedsReason(t *testing.T) {
@@ -536,7 +536,7 @@ func TestRecord_TerminationNeedsReason(t *testing.T) {
 	)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "reason", multiErr.Errors[0].Field)
+	assert.Equal(t, "reason", multiErr.Errors[0].Field())
 	assert.Empty(t, h.workers.updated, "validation runs before any effect")
 }
 
@@ -589,7 +589,7 @@ func TestRecord_TransferValidatesFleetAndRecordsBothSides(t *testing.T) {
 	)
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "fleetCodeId", verr.Field)
+	assert.Equal(t, "fleetCodeId", verr.Field())
 }
 
 func TestRecord_LeaveAndSuspensionPairing(t *testing.T) {
@@ -601,7 +601,7 @@ func TestRecord_LeaveAndSuspensionPairing(t *testing.T) {
 
 	_, err = h.record(employment.EmploymentEventLeaveStarted, 1_800_000_000, nil)
 	require.ErrorAs(t, err, &verr, "a leave must say what kind it is")
-	assert.Equal(t, "leaveType", verr.Field)
+	assert.Equal(t, "leaveType", verr.Field())
 
 	fmla := worker.LeaveTypeFMLA
 	started, err := h.record(
@@ -645,7 +645,7 @@ func TestRecord_PromotionRequiresAChange(t *testing.T) {
 	)
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "driverType", verr.Field)
+	assert.Equal(t, "driverType", verr.Field())
 
 	otr := worker.DriverTypeOTR
 	result, err := h.record(
@@ -690,7 +690,7 @@ func TestAmend_CorrectsNarrativeWithoutReplayingEffects(t *testing.T) {
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr, "an amendment must say why")
-	assert.Equal(t, "amendmentNote", verr.Field)
+	assert.Equal(t, "amendmentNote", verr.Field())
 
 	newEffective := int64(1_800_086_400)
 	reason := "Resigned"
@@ -723,7 +723,7 @@ func TestAmend_CorrectsNarrativeWithoutReplayingEffects(t *testing.T) {
 		UserID:        h.userID,
 	})
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "version", verr.Field)
+	assert.Equal(t, "version", verr.Field())
 }
 
 // A termination closes the onboarding it interrupts before it opens the

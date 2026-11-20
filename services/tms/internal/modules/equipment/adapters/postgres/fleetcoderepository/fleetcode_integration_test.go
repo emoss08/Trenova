@@ -168,7 +168,7 @@ func TestFleetCodeRepository(t *testing.T) {
 		})
 		var validation *errortypes.Error
 		require.ErrorAs(t, err, &validation)
-		assert.Equal(t, "managerId", validation.Field)
+		assert.Equal(t, "managerId", validation.Field())
 	})
 
 	t.Run("a connection pages newest first with every cursor resumable", func(t *testing.T) {

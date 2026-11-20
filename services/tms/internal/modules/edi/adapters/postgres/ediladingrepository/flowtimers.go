@@ -9,9 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject/ladingprojectdb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const dueInstancesReason = "list the open EDI flow instances in every tenant whose timer is due"
+const (
+	dueInstancesReason   = "list the open EDI flow instances in every tenant whose timer is due"
+	locateInstanceReason = "find the tenant of the EDI flow instance a development clock advance names, before its tenant is known"
+)
 
 // ListDueInstances reads the open instances whose timer is due, oldest first,
 // by the partial index on wake_at. It is the only timer behind a flow: the
@@ -19,16 +23,16 @@ const dueInstancesReason = "list the open EDI flow instances in every tenant who
 func (r *flows) ListDueInstances(
 	ctx context.Context,
 	req *ladingports.ListDueFlowInstancesRequest,
-) ([]ladingports.DueFlowInstance, error) {
+) ([]ladingports.FlowInstanceRef, error) {
 	ctx = dbscope.WithSystem(ctx, dueInstancesReason)
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]ladingports.DueFlowInstance, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]ladingports.FlowInstanceRef, error) {
 		if req.Limit <= 0 {
-			return []ladingports.DueFlowInstance{}, nil
+			return []ladingports.FlowInstanceRef{}, nil
 		}
 
 		i := ladingprojectdb.FlowInstances
-		return keel.Into[ladingports.DueFlowInstance](
+		return keel.Into[ladingports.FlowInstanceRef](
 			ctx,
 			r.db.Keel(ctx),
 			i.Pick(i.ID, i.OrganizationID, i.BusinessUnitID).
@@ -42,5 +46,27 @@ func (r *flows) ListDueInstances(
 				Limit(req.Limit).
 				AllTenants(),
 		)
+	})
+}
+
+func (r *flows) LocateInstance(
+	ctx context.Context,
+	id pulid.ID,
+) (ladingports.FlowInstanceRef, error) {
+	ctx = dbscope.WithSystem(ctx, locateInstanceReason)
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (ladingports.FlowInstanceRef, error) {
+		i := ladingprojectdb.FlowInstances
+		ref, err := keel.IntoOne[ladingports.FlowInstanceRef](
+			ctx,
+			r.db.Keel(ctx),
+			i.Pick(i.ID, i.OrganizationID, i.BusinessUnitID).
+				Where(i.ID.Eq(id)).
+				AllTenants(),
+		)
+		if err != nil {
+			return ladingports.FlowInstanceRef{}, instanceErrors.Map(err, id.String())
+		}
+		return ref, nil
 	})
 }

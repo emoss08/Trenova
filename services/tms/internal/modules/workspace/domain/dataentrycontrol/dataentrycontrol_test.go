@@ -76,6 +76,20 @@ func TestDataEntryControl_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "title case email fails",
+			modify: func(dec *DataEntryControl) {
+				dec.EmailCase = CaseFormatTitleCase
+			},
+			wantErr: true,
+		},
+		{
+			name: "as entered email passes",
+			modify: func(dec *DataEntryControl) {
+				dec.EmailCase = CaseFormatAsEntered
+			},
+			wantErr: false,
+		},
+		{
 			name: "empty city case fails",
 			modify: func(dec *DataEntryControl) {
 				dec.CityCase = CaseFormat("")

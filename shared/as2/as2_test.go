@@ -38,7 +38,7 @@ func TestBuildAndParseSignedEncryptedMessage(t *testing.T) {
 		DecryptionCertificate: receiver.Certificate,
 		DecryptionKey:         receiver.Key,
 		PartnerCertificate:    sender.Certificate,
-		TransferEncoding:      built.Headers.Get("Content-Transfer-Encoding"),
+		EntityHeaders:         built.Headers,
 		RequireSignature:      true,
 		RequireEncryption:     true,
 	})
@@ -71,7 +71,7 @@ func TestBuildAndParseCompressedSignedEncryptedMessage(t *testing.T) {
 		DecryptionCertificate: receiver.Certificate,
 		DecryptionKey:         receiver.Key,
 		PartnerCertificate:    sender.Certificate,
-		TransferEncoding:      built.Headers.Get("Content-Transfer-Encoding"),
+		EntityHeaders:         built.Headers,
 	})
 	require.NoError(t, err)
 	require.True(t, parsed.Compressed)

@@ -201,6 +201,7 @@ func (s *Service) prepareCreate(
 		return nil, err
 	}
 
+	shipmentnormalize.Temperature(entity)
 	s.effects.ApplyShipmentEnvelope(ctx, entity)
 
 	if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
@@ -496,6 +497,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
+	shipmentnormalize.Temperature(entity)
 	s.effects.ApplyShipmentEnvelope(ctx, entity)
 
 	if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {

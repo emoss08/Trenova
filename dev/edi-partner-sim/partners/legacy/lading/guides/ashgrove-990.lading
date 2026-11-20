@@ -1,0 +1,7 @@
+guide ashgrove.990 from x12.004010.990 "Ashgrove Industrial Supply Tender Response (1998)"
+
+/// Ashgrove's translator reads B1 and nothing else: a decline reason has nowhere to go.
+B1 { 01 required; 02 required length 7..7; 03 required; 04 required codes "A", "D" }
+N9 unused
+G62 unused
+K1 unused

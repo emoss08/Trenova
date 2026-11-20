@@ -6,27 +6,33 @@ import "time"
 // clamping to the last day of a shorter month so 31 January + 1 month is
 // 28 February, never 3 March. The time of day is preserved.
 func AddMonthsUTC(ts int64, months int) int64 {
+	return AddMonths(time.Unix(ts, 0).UTC(), months).Unix()
+}
+
+// AddMonths moves t by whole calendar months in t's own location, clamping to
+// the last day of a shorter month so 31 March - 1 month is 28 (or 29)
+// February, never 3 March as time.AddDate normalizes it. The wall-clock time
+// of day is preserved.
+func AddMonths(t time.Time, months int) time.Time {
 	if months == 0 {
-		return ts
+		return t
 	}
-	t := time.Unix(ts, 0).UTC()
 	year, month, day := t.Date()
-	target := time.Date(
-		year,
-		month+time.Month(months),
-		1,
+	loc := t.Location()
+	targetYear, targetMonth, _ := time.Date(year, month+time.Month(months), 1, 0, 0, 0, 0, loc).
+		Date()
+	lastDay := time.Date(targetYear, targetMonth+1, 0, 0, 0, 0, 0, loc).Day()
+	day = min(day, lastDay)
+	return time.Date(
+		targetYear,
+		targetMonth,
+		day,
 		t.Hour(),
 		t.Minute(),
 		t.Second(),
-		0,
-		time.UTC,
+		t.Nanosecond(),
+		loc,
 	)
-	lastDay := time.Date(target.Year(), target.Month()+1, 0, 0, 0, 0, 0, time.UTC).Day()
-	if day > lastDay {
-		day = lastDay
-	}
-	return time.Date(target.Year(), target.Month(), day, t.Hour(), t.Minute(), t.Second(), 0, time.UTC).
-		Unix()
 }
 
 // YearOfUnix is the UTC calendar year an instant falls in. Regulatory logs are

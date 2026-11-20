@@ -1053,7 +1053,7 @@ func TestStageRefusesMismatchedDocument(t *testing.T) {
 	require.Error(t, err)
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "documentId", fieldErr.Field)
+	assert.Equal(t, "documentId", fieldErr.Field())
 
 	wrongType := h.docs.add(
 		h.tenant,
@@ -1119,7 +1119,7 @@ func TestStageOnCommittedBatchRefused(t *testing.T) {
 	require.Error(t, err)
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "status", fieldErr.Field)
+	assert.Equal(t, "status", fieldErr.Field())
 }
 
 func TestStageDedupesAgainstFileAndDatabase(t *testing.T) {
@@ -1211,7 +1211,7 @@ func TestCommitTwiceRefused(t *testing.T) {
 	require.Error(t, err)
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "status", fieldErr.Field)
+	assert.Equal(t, "status", fieldErr.Field())
 
 	_, err = h.svc.Commit(t.Context(), &fuelpurchaseservice.CommitRequest{
 		TenantInfo: h.tenant,
@@ -1221,7 +1221,7 @@ func TestCommitTwiceRefused(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "version", fieldErr.Field)
+	assert.Equal(t, "version", fieldErr.Field())
 
 	assert.Len(t, h.repo.purchases, 1)
 	assert.Equal(t, 1, h.repo.commits)
@@ -1311,7 +1311,7 @@ func TestStageSizeCap(t *testing.T) {
 	require.Error(t, err)
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "documentId", fieldErr.Field)
+	assert.Equal(t, "documentId", fieldErr.Field())
 	assert.Contains(t, fieldErr.Message, "too large")
 
 	unsupported := h.docs.add(
@@ -1446,7 +1446,7 @@ func TestCardCancelRequiresReason(t *testing.T) {
 	require.Error(t, err)
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "reason", fieldErr.Field)
+	assert.Equal(t, "reason", fieldErr.Field())
 
 	cancelled, err := h.svc.CancelCard(t.Context(), &fuelpurchaseservice.CancelCardRequest{
 		TenantInfo: h.tenant,
@@ -1487,7 +1487,7 @@ func TestCardUniquenessAndTransitions(t *testing.T) {
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "lastFour", multiErr.Errors[0].Field)
+	assert.Equal(t, "lastFour", multiErr.Errors[0].Field())
 
 	suspended := *card
 	suspended.Status = fuelpurchase.CardStatusSuspended
@@ -1595,7 +1595,7 @@ func TestCreatePurchaseResolvesJurisdictionAndCard(t *testing.T) {
 	require.Error(t, err)
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "tractorId", fieldErr.Field)
+	assert.Equal(t, "tractorId", fieldErr.Field())
 
 	duplicate := h.newPurchase()
 	duplicate.TransactionReference = "ABC-1"
@@ -1632,7 +1632,7 @@ func TestUpdatePurchaseForbidsSourceChange(t *testing.T) {
 	require.Error(t, err)
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "source", fieldErr.Field)
+	assert.Equal(t, "source", fieldErr.Field())
 
 	edited := *created
 	edited.Source = ""

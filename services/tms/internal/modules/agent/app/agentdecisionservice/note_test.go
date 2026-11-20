@@ -86,7 +86,7 @@ func TestDecide_RefusesANoteLongerThanTheBound(t *testing.T) {
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "note", multiErr.Errors[0].Field)
+	assert.Equal(t, "note", multiErr.Errors[0].Field())
 	assert.Nil(t, h.decisions.created, "nothing is recorded")
 }
 

@@ -31,6 +31,8 @@ const (
 
 const (
 	reportCatalogDTO    = "GraphQL report catalog manifest DTO"
+	managedPlanDTO      = "GraphQL managed plan DTO built from the plan the control plane sent"
+	supportAccessDTO    = "GraphQL support access DTO built from the record, its people and live sessions"
 	reportPreviewDTO    = "GraphQL report preview DTO"
 	jsonbValueObject    = "GraphQL value object stored as JSONB without column projection metadata"
 	homeWidgetDTO       = "GraphQL home widget catalog DTO"
@@ -45,6 +47,18 @@ const (
 
 var nonProjectionObjects = map[string]string{
 	"CarrierIntelRuleSetting":         "GraphQL DTO built by its resolver",
+	"SupportAccessGrant":              supportAccessDTO,
+	"SupportAccessSettings":           supportAccessDTO,
+	"SupportLogRequest":               supportAccessDTO,
+	"SupportLogRequests":              supportAccessDTO,
+	"SupportSession":                  supportAccessDTO,
+	"ManagedPlan":                     managedPlanDTO,
+	"ManagedPlanAddOn":                managedPlanDTO,
+	"ManagedPlanAddOnEnding":          managedPlanDTO,
+	"ManagedPlanChange":               managedPlanDTO,
+	"ManagedPlanFeature":              managedPlanDTO,
+	"ManagedPlanMeter":                managedPlanDTO,
+	"ManagedPlanUsage":                managedPlanDTO,
 	"BillingQueueHeadline":            "GraphQL billing queue item headline built from its review issues",
 	"BillingQueueAdjustmentRebill":    "GraphQL view of the rebill inside a queue item's adjustment context",
 	"BillingQueueAdjustmentMemo":      "GraphQL view of the memo inside a queue item's adjustment context",

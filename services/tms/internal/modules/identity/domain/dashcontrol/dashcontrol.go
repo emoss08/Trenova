@@ -2,6 +2,7 @@ package dashcontrol
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -14,6 +15,9 @@ import (
 const (
 	minDetentionAlertMinutes = int16(15)
 	maxDetentionAlertMinutes = int16(1440)
+
+	DefaultDetentionAlertMinutes = int16(120)
+	DefaultDriverDigestWeekday   = int16(time.Monday)
 )
 
 // DriverDigestCadence is how a driver hears about what they owe. Immediate
@@ -103,16 +107,14 @@ func (dc *DashControl) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Business unit is required"),
 		),
 		validation.Field(&dc.DetentionAlertThresholdMinutes,
-			validation.When(dc.EnableDetentionAlerts,
-				validation.Required.Error(
-					"Detention alert threshold must be between 15 minutes and 24 hours",
-				),
-				validation.Min(minDetentionAlertMinutes).Error(
-					"Detention alert threshold must be between 15 minutes and 24 hours",
-				),
-				validation.Max(maxDetentionAlertMinutes).Error(
-					"Detention alert threshold must be between 15 minutes and 24 hours",
-				),
+			validation.Required.Error(
+				"Detention alert threshold must be between 15 minutes and 24 hours",
+			),
+			validation.Min(minDetentionAlertMinutes).Error(
+				"Detention alert threshold must be between 15 minutes and 24 hours",
+			),
+			validation.Max(maxDetentionAlertMinutes).Error(
+				"Detention alert threshold must be between 15 minutes and 24 hours",
 			),
 		),
 		// Each of these settings only means anything while the capability it
@@ -167,11 +169,8 @@ func (dc *DashControl) BeforeCreate(_ context.Context) error {
 	if dc.DriverDigestCadence == "" {
 		dc.DriverDigestCadence = DigestImmediate
 	}
-	if dc.DriverDigestWeekday == 0 {
-		dc.DriverDigestWeekday = 1
-	}
 	if dc.DetentionAlertThresholdMinutes == 0 {
-		dc.DetentionAlertThresholdMinutes = 120
+		dc.DetentionAlertThresholdMinutes = DefaultDetentionAlertMinutes
 	}
 
 	return nil

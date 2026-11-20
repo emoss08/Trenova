@@ -26,40 +26,37 @@ type fakeTenderRepository struct {
 
 	offer   *tender.TenderOffer
 	err     error
-	lastReq tenderports.GetTenderOfferByIDRequest
+	lastReq tenderports.GetOfferForPartnerKeyRequest
 	calls   int
 
 	acceptedOffer   *tender.TenderOffer
 	acceptedErr     error
-	lastAcceptedReq tenderports.GetAcceptedOfferForPartnerReferenceRequest
+	lastAcceptedReq tenderports.GetOfferForPartnerKeyRequest
 	acceptedCalls   int
 }
 
-func (f *fakeTenderRepository) GetOfferByID(
+func (f *fakeTenderRepository) GetOfferForPartnerKey(
 	_ context.Context,
-	req tenderports.GetTenderOfferByIDRequest,
+	req tenderports.GetOfferForPartnerKeyRequest,
 ) (*tender.TenderOffer, error) {
-	f.calls++
-	f.lastReq = req
-	if f.err != nil {
-		return nil, f.err
+	if len(req.Statuses) == 0 {
+		f.calls++
+		f.lastReq = req
+		return found(f.offer, f.err)
 	}
-	return f.offer, nil
-}
-
-func (f *fakeTenderRepository) GetAcceptedOfferForPartnerReference(
-	_ context.Context,
-	req tenderports.GetAcceptedOfferForPartnerReferenceRequest,
-) (*tender.TenderOffer, error) {
 	f.acceptedCalls++
 	f.lastAcceptedReq = req
-	if f.acceptedErr != nil {
-		return nil, f.acceptedErr
+	return found(f.acceptedOffer, f.acceptedErr)
+}
+
+func found(offer *tender.TenderOffer, err error) (*tender.TenderOffer, error) {
+	if err != nil {
+		return nil, err
 	}
-	if f.acceptedOffer == nil {
+	if offer == nil {
 		return nil, errortypes.NewNotFoundError("Tender offer")
 	}
-	return f.acceptedOffer, nil
+	return offer, nil
 }
 
 type fakeTenderResponseRecorder struct {
@@ -133,19 +130,18 @@ func (f *tenderOfferRouteFixture) newOffer(offerID pulid.ID) *tender.TenderOffer
 	}
 }
 
-func rawTenderResponse990(offerRef, reservationCode, remarks string) string {
+const offeredProNumber = "S2603001042"
+
+func rawTenderResponse990(key, reservationCode, remarks string) string {
 	raw := "ISA*00*          *00*          *ZZ*CARRIER        *ZZ*TRENOVA        " +
 		"*260107*1200*^*00401*000000201*0*P*>~" +
 		"GS*GF*CARRIER*TRENOVA*20260107*1200*201*X*004010~" +
 		"ST*990*0001~" +
-		"B1*SCAC*SHIP-1001*20260107*" + reservationCode + "~"
-	if offerRef != "" {
-		raw += "L11*" + offerRef + "*CR~"
-	}
+		"B1*SCAC*" + key + "*20260107*" + reservationCode + "~"
 	if remarks != "" {
 		raw += "K1*" + remarks + "~"
 	}
-	raw += "SE*5*0001~GE*1*201~IEA*1*000000201~"
+	raw += "SE*4*0001~GE*1*201~IEA*1*000000201~"
 	return raw
 }
 
@@ -173,13 +169,13 @@ func parse990Transaction(t *testing.T, raw string) (*parsedTransaction, *tenderR
 	return transaction, details
 }
 
-func TestRouteTenderResponse_OfferFirstAccept(t *testing.T) {
+func TestRouteTenderResponse_MatchesTheOfferByTheNumberItQuotes(t *testing.T) {
 	t.Parallel()
 
 	fixture := newTenderOfferRouteFixture(t)
 	offerID := pulid.MustNew("tof_")
 	fixture.tenderRepo.offer = fixture.newOffer(offerID)
-	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offeredProNumber, "A", ""))
 
 	warnings, err := fixture.service.routeTenderResponse(
 		t.Context(),
@@ -192,10 +188,12 @@ func TestRouteTenderResponse_OfferFirstAccept(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, warnings)
 	require.Equal(t, 1, fixture.tenderRepo.calls)
-	require.Equal(t, offerID, fixture.tenderRepo.lastReq.OfferID)
-	require.True(t, fixture.tenderRepo.lastReq.IncludeTender)
-	require.Equal(t, fixture.file.OrganizationID, fixture.tenderRepo.lastReq.TenantInfo.OrgID)
-	require.Equal(t, fixture.file.BusinessUnitID, fixture.tenderRepo.lastReq.TenantInfo.BuID)
+	request := fixture.tenderRepo.lastReq
+	require.Equal(t, fixture.partner.ID, request.PartnerID)
+	require.Equal(t, fixture.file.OrganizationID, request.TenantInfo.OrgID)
+	require.Equal(t, fixture.file.BusinessUnitID, request.TenantInfo.BuID)
+	require.Empty(t, request.Statuses)
+	require.Equal(t, []tender.PartnerKey{{ProNumber: offeredProNumber}}, request.Keys)
 	require.Len(t, fixture.recorder.requests, 1)
 	recorded := fixture.recorder.requests[0]
 	require.Equal(t, offerID, recorded.OfferID)
@@ -204,15 +202,39 @@ func TestRouteTenderResponse_OfferFirstAccept(t *testing.T) {
 	require.Empty(t, recorded.DeclineReason)
 }
 
-func TestRouteTenderResponse_OfferFirstDeclineCarriesReason(t *testing.T) {
+func TestRouteTenderResponse_AMoveKeyNamesTheShipmentAndTheMove(t *testing.T) {
 	t.Parallel()
 
 	fixture := newTenderOfferRouteFixture(t)
-	offerID := pulid.MustNew("tof_")
-	fixture.tenderRepo.offer = fixture.newOffer(offerID)
+	fixture.tenderRepo.offer = fixture.newOffer(pulid.MustNew("tof_"))
 	transaction, details := parse990Transaction(
 		t,
-		rawTenderResponse990(offerID.String(), "D", "No capacity"),
+		rawTenderResponse990(offeredProNumber+"-2", "A", ""),
+	)
+
+	_, err := fixture.service.routeTenderResponse(
+		t.Context(),
+		fixture.file,
+		fixture.partner,
+		transaction,
+		details,
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, []tender.PartnerKey{
+		{ProNumber: offeredProNumber + "-2"},
+		{ProNumber: offeredProNumber, Move: 2},
+	}, fixture.tenderRepo.lastReq.Keys)
+}
+
+func TestRouteTenderResponse_OfferDeclineCarriesReason(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTenderOfferRouteFixture(t)
+	fixture.tenderRepo.offer = fixture.newOffer(pulid.MustNew("tof_"))
+	transaction, details := parse990Transaction(
+		t,
+		rawTenderResponse990(offeredProNumber, "D", "No capacity"),
 	)
 
 	warnings, err := fixture.service.routeTenderResponse(
@@ -239,11 +261,10 @@ func TestRouteTenderResponse_OfferDeclineCodesRecordDecline(t *testing.T) {
 			t.Parallel()
 
 			fixture := newTenderOfferRouteFixture(t)
-			offerID := pulid.MustNew("tof_")
-			fixture.tenderRepo.offer = fixture.newOffer(offerID)
+			fixture.tenderRepo.offer = fixture.newOffer(pulid.MustNew("tof_"))
 			transaction, details := parse990Transaction(
 				t,
-				rawTenderResponse990(offerID.String(), code, ""),
+				rawTenderResponse990(offeredProNumber, code, ""),
 			)
 
 			warnings, err := fixture.service.routeTenderResponse(
@@ -268,9 +289,8 @@ func TestRouteTenderResponse_OfferMissingReservationCodeIsNotApplied(t *testing.
 	t.Parallel()
 
 	fixture := newTenderOfferRouteFixture(t)
-	offerID := pulid.MustNew("tof_")
-	fixture.tenderRepo.offer = fixture.newOffer(offerID)
-	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "", ""))
+	fixture.tenderRepo.offer = fixture.newOffer(pulid.MustNew("tof_"))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offeredProNumber, "", ""))
 
 	warnings, err := fixture.service.routeTenderResponse(
 		t.Context(),
@@ -283,7 +303,8 @@ func TestRouteTenderResponse_OfferMissingReservationCodeIsNotApplied(t *testing.
 	require.NoError(t, err)
 	require.Len(t, warnings, 1)
 	require.Contains(t, warnings[0], "no reservation code")
-	require.Contains(t, warnings[0], offerID.String())
+	require.Contains(t, warnings[0], offeredProNumber)
+	require.NotContains(t, warnings[0], "tof_")
 	require.Empty(t, fixture.recorder.requests)
 }
 
@@ -291,9 +312,8 @@ func TestRouteTenderResponse_OfferUnknownReservationCodeIsNotApplied(t *testing.
 	t.Parallel()
 
 	fixture := newTenderOfferRouteFixture(t)
-	offerID := pulid.MustNew("tof_")
-	fixture.tenderRepo.offer = fixture.newOffer(offerID)
-	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "Q", ""))
+	fixture.tenderRepo.offer = fixture.newOffer(pulid.MustNew("tof_"))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offeredProNumber, "Q", ""))
 
 	warnings, err := fixture.service.routeTenderResponse(
 		t.Context(),
@@ -313,10 +333,9 @@ func TestRouteTenderResponse_OfferBusinessErrorIsHandled(t *testing.T) {
 	t.Parallel()
 
 	fixture := newTenderOfferRouteFixture(t)
-	offerID := pulid.MustNew("tof_")
-	fixture.tenderRepo.offer = fixture.newOffer(offerID)
+	fixture.tenderRepo.offer = fixture.newOffer(pulid.MustNew("tof_"))
 	fixture.recorder.err = errortypes.NewBusinessError("This offer is no longer available")
-	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offeredProNumber, "A", ""))
 
 	warnings, err := fixture.service.routeTenderResponse(
 		t.Context(),
@@ -328,7 +347,7 @@ func TestRouteTenderResponse_OfferBusinessErrorIsHandled(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, warnings, 1)
-	require.Contains(t, warnings[0], offerID.String())
+	require.Contains(t, warnings[0], offeredProNumber)
 	require.Contains(t, warnings[0], "no longer available")
 }
 
@@ -336,10 +355,9 @@ func TestRouteTenderResponse_OfferInfrastructureErrorFailsTransaction(t *testing
 	t.Parallel()
 
 	fixture := newTenderOfferRouteFixture(t)
-	offerID := pulid.MustNew("tof_")
-	fixture.tenderRepo.offer = fixture.newOffer(offerID)
+	fixture.tenderRepo.offer = fixture.newOffer(pulid.MustNew("tof_"))
 	fixture.recorder.err = errors.New("temporal unavailable")
-	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offeredProNumber, "A", ""))
 
 	_, err := fixture.service.routeTenderResponse(
 		t.Context(),
@@ -353,18 +371,14 @@ func TestRouteTenderResponse_OfferInfrastructureErrorFailsTransaction(t *testing
 	require.Contains(t, err.Error(), "temporal unavailable")
 }
 
-func TestRouteTenderResponse_PartnerMismatchDoesNotRecord(t *testing.T) {
+func TestRouteTenderResponse_OfferLookupFailureFailsTransaction(t *testing.T) {
 	t.Parallel()
 
 	fixture := newTenderOfferRouteFixture(t)
-	offerID := pulid.MustNew("tof_")
-	offer := fixture.newOffer(offerID)
-	otherPartnerID := pulid.MustNew("edip_")
-	offer.EDIPartnerID = &otherPartnerID
-	fixture.tenderRepo.offer = offer
-	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
+	fixture.tenderRepo.err = errors.New("database unavailable")
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offeredProNumber, "A", ""))
 
-	warnings, err := fixture.service.routeTenderResponse(
+	_, err := fixture.service.routeTenderResponse(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
@@ -372,24 +386,22 @@ func TestRouteTenderResponse_PartnerMismatchDoesNotRecord(t *testing.T) {
 		details,
 	)
 
-	require.NoError(t, err)
-	require.Len(t, warnings, 1)
-	require.Contains(t, warnings[0], "was not tendered to partner")
+	require.ErrorContains(t, err, "database unavailable")
 	require.Empty(t, fixture.recorder.requests)
 }
 
-func TestRouteTenderResponse_NoOfferReferenceFallsThroughToLegacy(t *testing.T) {
+func TestRouteTenderResponse_NoOfferFallsThroughToTheRecipients(t *testing.T) {
 	t.Parallel()
 
 	fixture := newTenderOfferRouteFixture(t)
-	transaction, details := parse990Transaction(t, rawTenderResponse990("", "A", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offeredProNumber, "A", ""))
 
 	fixture.recipientRepo.EXPECT().
 		GetActiveExternalRecipientByShipmentReference(
 			mock.Anything,
 			mock.MatchedBy(
 				func(req editenderports.GetActiveExternalEDITenderRecipientByReferenceRequest) bool {
-					return req.Reference == "SHIP-1001" && req.PartnerID == fixture.partner.ID
+					return req.Reference == offeredProNumber && req.PartnerID == fixture.partner.ID
 				},
 			),
 		).
@@ -407,49 +419,8 @@ func TestRouteTenderResponse_NoOfferReferenceFallsThroughToLegacy(t *testing.T) 
 	require.NoError(t, err)
 	require.Len(t, warnings, 1)
 	require.Contains(t, warnings[0], "could not be matched to an outbound tender")
-	require.Equal(t, 0, fixture.tenderRepo.calls)
+	require.Equal(t, 1, fixture.tenderRepo.calls)
 	require.Empty(t, fixture.recorder.requests)
-}
-
-func TestRouteTenderResponse_UnknownOfferFallsThroughToLegacy(t *testing.T) {
-	t.Parallel()
-
-	fixture := newTenderOfferRouteFixture(t)
-	offerID := pulid.MustNew("tof_")
-	fixture.tenderRepo.err = errortypes.NewNotFoundError("TenderOffer")
-	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
-
-	fixture.recipientRepo.EXPECT().
-		GetActiveExternalRecipientByShipmentReference(mock.Anything, mock.Anything).
-		Return(nil, errortypes.NewNotFoundError("EDITenderRecipient")).
-		Once()
-
-	warnings, err := fixture.service.routeTenderResponse(
-		t.Context(),
-		fixture.file,
-		fixture.partner,
-		transaction,
-		details,
-	)
-
-	require.NoError(t, err)
-	require.Len(t, warnings, 2)
-	require.Contains(t, warnings[0], "references unknown tender offer")
-	require.Empty(t, fixture.recorder.requests)
-}
-
-func TestTenderOfferReference_IgnoresNonOfferReferences(t *testing.T) {
-	t.Parallel()
-
-	details := &tenderResponseDetails{
-		shipmentRef: "SHIP-1001",
-		references:  []string{"BOL-42", "tof_short", "PRO-77"},
-	}
-	require.True(t, tenderOfferReference(details).IsNil())
-
-	offerID := pulid.MustNew("tof_")
-	details.references = append(details.references, offerID.String())
-	require.Equal(t, offerID, tenderOfferReference(details))
 }
 
 func findSegmentsByID(

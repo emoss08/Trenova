@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -45,21 +44,9 @@ func (r *repository) GetOrCreate(
 	tenantInfo pagination.TenantInfo,
 ) (*settlementcontrol.SettlementControl, error) {
 	newDefault := func() *settlementcontrol.SettlementControl {
-		return &settlementcontrol.SettlementControl{
-			ID:                            pulid.MustNew("stlc_"),
-			BusinessUnitID:                tenantInfo.BuID,
-			OrganizationID:                tenantInfo.OrgID,
-			PayPeriodFrequency:            settlementcontrol.PayPeriodFrequencyWeekly,
-			PeriodEndDayOfWeek:            6,
-			PayDelayDays:                  5,
-			PayTrigger:                    settlementcontrol.PayTriggerShipmentDelivered,
-			AllowNegativeNet:              true,
-			AutoAttachAccruals:            true,
-			VarianceThresholdPct:          decimal.NewFromInt(25),
-			VarianceLookbackWeeks:         8,
-			EscrowInterestFrequencyMonths: 3,
-			RequireSeparateApprover:       true,
-		}
+		control := settlementcontrol.NewDefault(tenantInfo.OrgID, tenantInfo.BuID)
+		control.ID = pulid.MustNew("stlc_")
+		return control
 	}
 
 	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*settlementcontrol.SettlementControl]{

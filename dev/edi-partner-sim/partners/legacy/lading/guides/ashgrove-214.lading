@@ -1,0 +1,16 @@
+guide ashgrove.214 from x12.004010.214 "Ashgrove Industrial Supply Shipment Status (1998)"
+
+/// Ashgrove takes two statuses, in its own Eastern time with no time code.
+B10 { 01 required; 02 required length 7..7; 03 required }
+L11 max 1 { 02 codes "BM" }
+MAN unused
+K1 unused
+AT8 unused
+loop 0100 unused
+loop 0200 unused
+loop 0205 required max 5
+0205.0210.AT7 { 01 required codes "AF", "D1"; 02 required codes "NS"; 03 unused; 04 unused; 05 required; 06 required length 4..4; 07 unused }
+0205.0210.MS1 unused
+0205.0210.MS2 unused
+0205.0210.M7 unused
+0205.L11 unused

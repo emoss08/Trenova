@@ -214,7 +214,7 @@ func TestTurningOnWithoutAKeyIsRefused(t *testing.T) {
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "configuration.apiKey", multiErr.Errors[0].Field)
+	assert.Equal(t, "configuration.apiKey", multiErr.Errors[0].Field())
 }
 
 func TestInvalidSettingsAreRefused(t *testing.T) {
@@ -235,7 +235,7 @@ func TestInvalidSettingsAreRefused(t *testing.T) {
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "configuration.resultsPerSearch", multiErr.Errors[0].Field)
+	assert.Equal(t, "configuration.resultsPerSearch", multiErr.Errors[0].Field())
 }
 
 func TestAStaleVersionIsRefused(t *testing.T) {
@@ -616,7 +616,7 @@ func TestOnlyOneVendorServesACapability(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "enabled", multiErr.Errors[0].Field)
+	assert.Equal(t, "enabled", multiErr.Errors[0].Field())
 	assert.Equal(t,
 		"{0} is already on and gives agents the same tools. Turn it off before turning on {1}.",
 		multiErr.Errors[0].Message,
@@ -717,6 +717,6 @@ func TestParallelSettingsRefuseAnExaDepth(t *testing.T) {
 	)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "configuration.searchType", multiErr.Errors[0].Field)
+	assert.Equal(t, "configuration.searchType", multiErr.Errors[0].Field())
 	assert.Equal(t, "Search depth must be fast, basic or advanced", multiErr.Errors[0].Message)
 }

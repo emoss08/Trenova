@@ -40,7 +40,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -1085,11 +1084,10 @@ func (r *QueryResolver) CurrentSettlementPeriod(ctx context.Context) (*settlemen
 	if err != nil {
 		return nil, err
 	}
-	control, err := r.SettlementControlService.Get(ctx, resolvercore.TenantInfo(authCtx))
+	bounds, err := r.DriverSettlementService.CurrentPeriod(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
-	bounds := driversettlementservice.ResolveCurrentPeriod(control, timeutils.NowUnix())
 	return &bounds, nil
 }
 

@@ -159,8 +159,8 @@ export const detentionPolicySchema = z
       .max(50),
     description: z.string().default(""),
     status: detentionPolicyStatusSchema.default("Draft"),
+    isOrganizationDefault: z.boolean().default(false),
 
-    isOrgDefault: z.boolean().default(false),
     priority: z.number().int().default(0),
     specificityScore: z.number().int().default(0),
     customerId: z.string().nullish(),

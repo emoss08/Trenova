@@ -50,7 +50,7 @@ func requireValidationField(t *testing.T, err error, field string) {
 	t.Helper()
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, field, validation.Field)
+	assert.Equal(t, field, validation.Field())
 }
 
 func (h *harness) seedRecord(

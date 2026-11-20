@@ -184,6 +184,10 @@ impl Parser<'_> {
         if self.eat_word("text").is_some() {
             return Some(TestStep::GivenText(self.expr()));
         }
+        if self.eat_word("transaction").is_some() {
+            let (index, span) = self.uint("which transaction, from 1")?;
+            return Some(TestStep::GivenTransaction(index, span));
+        }
         if self.eat_word("setting").is_some() {
             let name = self.name("a setting")?;
             self.expect(Tok::Assign, "=");
@@ -213,7 +217,7 @@ impl Parser<'_> {
             return Some(TestStep::GivenDocument { document, value });
         }
         self.error_here(Message::new(message!(
-            "Expected file, text, setting, lookup, now or a document after given"
+            "Expected file, text, transaction, setting, lookup, now or a document after given"
         )));
         None
     }

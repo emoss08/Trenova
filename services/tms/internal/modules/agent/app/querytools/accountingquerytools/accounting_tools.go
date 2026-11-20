@@ -509,8 +509,9 @@ func (t *getCustomerStatementTool) ParamSchema() map[string]any {
 		querytool.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
 			"The customer's id, from customer_list, receivable_get_aging or "+querytool.OnThePage),
 		querytool.ParamStartDate: agenttoolschema.Date(
-			"The first day of the statement period. Omit for the " +
-				"customer's whole history.",
+			"The first day of the statement period, at most 366 days " +
+				"before the statement date. Omit for the calendar month before " +
+				"the statement date.",
 		),
 		querytool.ParamAsOf: agenttoolschema.Date("The statement date. Defaults to today."),
 	}, querytool.ParamCustomerID)

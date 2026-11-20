@@ -73,7 +73,7 @@ func TestDisciplinaryLadder(t *testing.T) {
 	multiErr := errortypes.NewMultiError()
 	action.Validate(multiErr)
 	require.True(t, multiErr.HasErrors())
-	assert.Equal(t, "suspensionDays", multiErr.Errors[0].Field)
+	assert.Equal(t, "suspensionDays", multiErr.Errors[0].Field())
 	action.DefaultExpiry()
 	require.NotNil(t, action.ExpiresAt)
 	assert.Equal(t, timeutils.AddMonthsUTC(now, 12), *action.ExpiresAt)

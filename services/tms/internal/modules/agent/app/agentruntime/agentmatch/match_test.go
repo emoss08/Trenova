@@ -435,7 +435,7 @@ func TestMatchAgent_RefusesAQuestionPastTheLimit(t *testing.T) {
 	require.Error(t, err)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "text", validation.Field)
+	assert.Equal(t, "text", validation.Field())
 	assert.Nil(t, found)
 }
 
@@ -555,7 +555,7 @@ func TestMatchAgent_RefusesMoreKindsOfRecordThanAQuestionCanName(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "contextKinds", validation.Field)
+	assert.Equal(t, "contextKinds", validation.Field())
 }
 
 func TestMatchAgent_DoesNotEmbedAQuestionThatNamesNothingAToolDoes(t *testing.T) {

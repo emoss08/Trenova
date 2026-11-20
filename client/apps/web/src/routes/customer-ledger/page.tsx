@@ -5,17 +5,18 @@ import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { CustomerAutocompleteField } from "@/components/autocomplete-fields";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
-import { ar } from "@/lib/queries/ar";
-import { useQuery } from "@tanstack/react-query";
+import { ar, customerLedgerPages } from "@/lib/queries/ar";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { CoinsHandIcon, Download01Icon, File06Icon } from "@trenova/shared/components/icons";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "@tanstack/react-router";
 import { MemoEntryButton } from "@/components/billing/memo-entry-button";
 import { CustomerSnapshotHeader } from "./_components/customer-snapshot-header";
+import { LedgerExportDialog } from "./_components/ledger-export-dialog";
 import { LedgerTable } from "./_components/ledger-table";
 
 type FilterValues = {
@@ -37,6 +38,8 @@ export function CustomerLedgerPage() {
 
   const navigate = useNavigate();
   const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
+  const { allowed: canExport } = usePermission(Resource.AccountsReceivable, Operation.Export);
+  const [exportOpen, setExportOpen] = useState(false);
   const [searchParams, setSearchParams] = useQueryParams();
   const initialCustomerId = searchParams.get("customerId") ?? "";
 
@@ -63,42 +66,17 @@ export function CustomerLedgerPage() {
     }
   }, [customerId, searchParams, setSearchParams]);
 
-  const { data: entries, isLoading: ledgerLoading } = useQuery({
-    ...ar.customerLedger(customerId),
+  const ledger = useInfiniteQuery({
+    ...customerLedgerPages(customerId),
     enabled: Boolean(customerId),
   });
+  const ledgerLoading = ledger.isLoading;
+  const entries = ledger.data?.pages.flatMap((page) => page.entries);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     ...ar.customerProfile(customerId),
     enabled: Boolean(customerId),
   });
-
-  const handleExport = () => {
-    if (!entries?.length) return;
-    let runningBalance = 0;
-    const rows = [
-      ["Date", "Document", "Event", "Source Type", "Amount", "Balance"],
-      ...entries.map((entry) => {
-        runningBalance += entry.amountMinor;
-        return [
-          new Date(entry.transactionDate * 1000).toISOString().slice(0, 10),
-          entry.documentNumber,
-          entry.eventType,
-          entry.sourceObjectType,
-          (entry.amountMinor / 100).toFixed(2),
-          (runningBalance / 100).toFixed(2),
-        ];
-      }),
-    ];
-    const csv = rows.map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `customer-ledger-${customerId}.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <PageLayout
@@ -107,10 +85,12 @@ export function CustomerLedgerPage() {
         description: t("Statement-style transaction history with the customer's AR profile."),
         actions: customerId ? (
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleExport} disabled={!entries?.length}>
-              <Download01Icon className="size-4" />
-              {t("Export")}
-            </Button>
+            {canExport ? (
+              <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
+                <Download01Icon className="size-4" />
+                {t("Export")}
+              </Button>
+            ) : null}
             <Button
               variant="outline"
               size="sm"
@@ -178,8 +158,19 @@ export function CustomerLedgerPage() {
                 columns={LEDGER_COLUMNS}
               />
             ) : (
-              <LedgerTable entries={entries} />
+              <LedgerTable
+                entries={entries}
+                hasNextPage={ledger.hasNextPage}
+                isFetchingNextPage={ledger.isFetchingNextPage}
+                onLoadMore={() => void ledger.fetchNextPage()}
+              />
             )}
+            <LedgerExportDialog
+              open={exportOpen}
+              onOpenChange={setExportOpen}
+              customerId={customerId}
+              customerName={profile?.snapshot.customerName}
+            />
           </>
         )}
       </>

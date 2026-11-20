@@ -354,7 +354,7 @@ func TestRetitle_APersonRenamesTheVersionTheyRead(t *testing.T) {
 
 	var stale *errortypes.Error
 	require.ErrorAs(t, err, &stale)
-	assert.Equal(t, "version", stale.Field)
+	assert.Equal(t, "version", stale.Field())
 	assert.Equal(t, errortypes.ErrVersionMismatch, stale.Code)
 
 	current := h.list(t, h.ctx, thread.ID)

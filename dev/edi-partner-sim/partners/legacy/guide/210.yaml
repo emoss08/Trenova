@@ -1,0 +1,62 @@
+set: "210"
+version: "004010"
+group: IM
+title: "Ashgrove Industrial Supply Freight Invoice (1998)"
+
+segments:
+  ST:
+    name: Transaction Set Header
+    elements:
+      - { pos: 1, name: Transaction Set Identifier Code, type: ID, min: 3, max: 3, usage: M, fixed: "210" }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+  B3:
+    name: Beginning Segment for Carrier's Invoice
+    elements:
+      - { pos: 2, name: Invoice Number, type: AN, min: 1, max: 22, usage: M }
+      - { pos: 3, name: Ashgrove Load Number, type: AN, min: 7, max: 7, usage: M }
+      - { pos: 4, name: Shipment Method of Payment, type: ID, min: 2, max: 2, usage: M, codes: [PP, CC, TP] }
+      - { pos: 6, name: Invoice Date, type: DT, min: 8, max: 8, usage: M }
+      - { pos: 7, name: Net Amount Due, type: N2, min: 1, max: 12, usage: M }
+      - { pos: 11, name: Standard Carrier Alpha Code, type: ID, min: 2, max: 4, usage: M, fixed: TRNV }
+  N9:
+    name: Bill of Lading
+    elements:
+      - { pos: 1, name: Reference Identification Qualifier, type: ID, min: 2, max: 3, usage: M, codes: [BM] }
+      - { pos: 2, name: Reference Identification, type: AN, min: 1, max: 30, usage: M }
+  LX:
+    name: Assigned Number
+    elements:
+      - { pos: 1, name: Assigned Number, type: N0, min: 1, max: 6, usage: M }
+  L5:
+    name: Description
+    elements:
+      - { pos: 1, name: Lading Line Item Number, type: N0, min: 1, max: 3, usage: O }
+      - { pos: 2, name: Lading Description, type: AN, min: 1, max: 50, usage: O }
+  L1:
+    name: Total Charge
+    elements:
+      - { pos: 1, name: Lading Line Item Number, type: N0, min: 1, max: 3, usage: M }
+      - { pos: 4, name: Charge, type: N2, min: 1, max: 12, usage: M }
+  L3:
+    name: Total Weight and Charges
+    elements:
+      - { pos: 5, name: Charge, type: N2, min: 1, max: 12, usage: M }
+  SE:
+    name: Transaction Set Trailer
+    elements:
+      - { pos: 1, name: Number of Included Segments, type: N0, min: 1, max: 10, usage: M }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+
+structure:
+  - { seg: ST, usage: M }
+  - { seg: B3, usage: M }
+  - { seg: N9, usage: O }
+  - loop: "0400"
+    usage: M
+    max: 1
+    body:
+      - { seg: LX, usage: M }
+      - { seg: L5, usage: O }
+      - { seg: L1, usage: M }
+  - { seg: L3, usage: M }
+  - { seg: SE, usage: M }

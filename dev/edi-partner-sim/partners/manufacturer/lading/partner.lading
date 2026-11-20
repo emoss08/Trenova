@@ -1,0 +1,33 @@
+partner kestrel "Kestrel Valve Works"
+
+// Kestrel sends under a mutually defined ID and wants ours back the same way. It tenders from
+// Rockford, Peoria and Joliet and writes every appointment in Central time with its zone code.
+interchange {
+  them ZZ "KESTRELVW"
+  us ZZ "TRENOVA"
+  group "KESTRELVW" <-> "TRENOVA"
+  version 004010
+  separators "*" "~" ">"
+  line ending lf
+  usage test
+}
+
+zone America/Chicago
+currency "USD"
+
+/// Accept Kestrel tenders automatically, without a planner.
+setting autoAccept: Bool = false
+/// Send a decline automatically when a rule declines a tender.
+setting autoDecline: Bool = true
+/// The heaviest load accepted automatically.
+setting maxWeight: Weight = 44_000 lb in 1 lb..80_000 lb
+/// The most stops one Kestrel load may have.
+setting maxStops: Int = 4 in 2..12
+/// The lowest total accepted automatically.
+setting minimumCharge: Money = $450.00 in $0.00..$5_000.00
+/// How long a planner has to answer a tender.
+setting answerWithin: Duration = 2 h in 15 min..24 h
+/// The warmest set point a reefer load may ask for.
+setting maxReeferTemp: Temperature = 60 °F in -20 °F..70 °F
+/// A note sent with every decline that gives no reason.
+setting declineNote: Text = "Call Trenova dispatch at 815-555-0100"

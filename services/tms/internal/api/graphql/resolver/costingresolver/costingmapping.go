@@ -1,6 +1,8 @@
 package costingresolver
 
 import (
+	"fmt"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fuelsurchargemapping"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
@@ -189,40 +191,64 @@ func fleetCostSummaryToModel(summary *costingservice.FleetCostSummary) *gqlmodel
 	}
 }
 
+func costingSaveRequestFromInput(
+	input *gqlmodel.CostingControlSaveInput,
+) (*costingservice.SaveRequest, error) {
+	req := &costingservice.SaveRequest{
+		Categories: make([]*costingservice.CategoryChange, 0, len(input.Categories)),
+	}
+
+	if input.Control != nil {
+		control, err := costingControlFromInput(input.Control)
+		if err != nil {
+			return nil, err
+		}
+		req.Control = control
+	}
+
+	for i, category := range input.Categories {
+		change, err := costCategoryChangeFromInput(category, fmt.Sprintf("categories[%d]", i))
+		if err != nil {
+			return nil, err
+		}
+		req.Categories = append(req.Categories, change)
+	}
+
+	return req, nil
+}
+
 func costingControlFromInput(
 	input *gqlmodel.CostingControlInput,
-	existing *costingcontrol.CostingControl,
 ) (*costingcontrol.CostingControl, error) {
+	glRollingMonths, err := gqlscalar.NarrowInt[int16](
+		"control.glRollingMonths",
+		input.GlRollingMonths,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	entity := &costingcontrol.CostingControl{
-		ID:                   existing.ID,
-		BusinessUnitID:       existing.BusinessUnitID,
-		OrganizationID:       existing.OrganizationID,
 		UseLiveFuelPrice:     input.UseLiveFuelPrice,
 		IncludeDeadheadMiles: input.IncludeDeadheadMiles,
 		GLActualsEnabled:     input.GlActualsEnabled,
-		CreatedAt:            existing.CreatedAt,
+		GLRollingMonths:      glRollingMonths,
 		Version:              int64(input.Version),
 	}
 
 	fuelIndexID, err := gqlid.PulidPtrFromOptionalString(input.FuelIndexID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
-			"fuelIndexId", errortypes.ErrInvalid, "Fuel index ID must be a valid ID")
+			"control.fuelIndexId", errortypes.ErrInvalid, "Fuel index ID must be a valid ID")
 	}
 	entity.FuelIndexID = fuelIndexID
 
 	if entity.MilesPerGallon, err = gqldecimal.DecimalFromString(
 		input.MilesPerGallon,
-		"milesPerGallon",
+		"control.milesPerGallon",
 	); err != nil {
 		return nil, err
 	}
-
-	if input.GlRollingMonths < 1 || input.GlRollingMonths > 12 {
-		return nil, errortypes.NewValidationError(
-			"glRollingMonths", errortypes.ErrInvalid, "GL rolling months must be between 1 and 12")
-	}
-	entity.GLRollingMonths = int16(input.GlRollingMonths)
 
 	if input.PlannedMonthlyMiles != nil {
 		planned := int64(*input.PlannedMonthlyMiles)
@@ -230,55 +256,48 @@ func costingControlFromInput(
 	}
 
 	if entity.TargetMarginPercent, err = gqldecimal.NullDecimalFromStringPtr(
-		input.TargetMarginPercent, "targetMarginPercent"); err != nil {
+		input.TargetMarginPercent, "control.targetMarginPercent"); err != nil {
 		return nil, err
 	}
 
 	return entity, nil
 }
 
-func costCategoryFromUpdateInput(
+func costCategoryChangeFromInput(
 	input *gqlmodel.CostCategoryUpdateInput,
-	existing *costingcontrol.CostCategory,
-) (*costingcontrol.CostCategory, error) {
+	path string,
+) (*costingservice.CategoryChange, error) {
+	id, err := pulid.MustParse(input.ID)
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			path+".id", errortypes.ErrInvalid, "Invalid cost category")
+	}
+
 	rateSource, err := costingcontrol.RateSourceFromString(string(input.RateSource))
 	if err != nil {
 		return nil, errortypes.NewValidationError(
-			"rateSource", errortypes.ErrInvalid, "Rate source is invalid")
+			path+".rateSource", errortypes.ErrInvalid, "Rate source is invalid")
 	}
 
-	entity := &costingcontrol.CostCategory{
-		ID:                   existing.ID,
-		BusinessUnitID:       existing.BusinessUnitID,
-		OrganizationID:       existing.OrganizationID,
-		CostingControlID:     existing.CostingControlID,
-		Category:             existing.Category,
-		Name:                 existing.Name,
-		CostBehavior:         existing.CostBehavior,
-		RateSource:           rateSource,
-		BenchmarkRatePerMile: existing.BenchmarkRatePerMile,
-		IsActive:             input.IsActive,
-		SortOrder:            existing.SortOrder,
-		CreatedAt:            existing.CreatedAt,
-		Version:              int64(input.Version),
-	}
-
-	if entity.OverrideRatePerMile, err = gqldecimal.NullDecimalFromStringPtr(
-		input.OverrideRatePerMile, "overrideRatePerMile"); err != nil {
+	overrideRate, err := gqldecimal.NullDecimalFromStringPtr(
+		input.OverrideRatePerMile,
+		path+".overrideRatePerMile",
+	)
+	if err != nil {
 		return nil, err
 	}
 
-	return entity, nil
-}
-
-func findCostCategory(
-	control *costingcontrol.CostingControl,
-	categoryID pulid.ID,
-) *costingcontrol.CostCategory {
-	for _, category := range control.Categories {
-		if category != nil && category.ID == categoryID {
-			return category
-		}
+	glAccountIDs, err := gqlid.PulidsFromStrings(input.GlAccountIds, path+".glAccountIds")
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	return &costingservice.CategoryChange{
+		ID:                  id,
+		RateSource:          rateSource,
+		OverrideRatePerMile: overrideRate,
+		IsActive:            input.IsActive,
+		GLAccountIDs:        glAccountIDs,
+		Version:             int64(input.Version),
+	}, nil
 }

@@ -188,11 +188,12 @@ runs every map against them as you type; coverage and replay use them.
   in where each as via lookup learn match if then test property given expect vary exists and or
   not true false none`. Every other word the grammar uses (the headers' `partner`, `guide`,
   `map`, `rules`, `flow`, `library`, `from`, `to`, `use`, and `interchange`, `them`, `us`, `group`, `version`, `usage`, `zone`, `currency`, `setting`,
-  `receive`, `respond`, `send`, `expect`, `key`, `acknowledge`, `on`, `create`, `update`, `keep`,
-  `cancel`, `unless`, `apply`, `ignore`, `accept`, `automatically`, `otherwise`, `planner`,
+  `receive`, `respond`, `send`, `expect`, `await`, `key`, `acknowledge`, `on`, `create`, `update`,
+  `keep`, `cancel`, `unless`, `later`, `apply`, `ignore`, `accept`, `automatically`, `otherwise`, `planner`,
   `decides`, `within`, `escalate`, `batch`, `until`, `resend`, `then`, `every`, `required`,
   `unused`, `codes`, `length`, `repeat`, `fixed`, `loop`, `min`, `max`, `severity`, `syntax`,
-  `at`, `code`, `samples`, `file`, `text`, `advance`, `event`, `sent`, `held`, `declined`,
+  `line`, `ending`,
+  `at`, `code`, `samples`, `file`, `text`, `transaction`, `advance`, `event`, `sent`, `held`, `declined`,
   `rejected`, `escalated`, `warned`, `no`) is contextual: it means something only where the
   grammar expects it and is an ordinary name elsewhere.
 - **Text:** `"double quoted"` with `{expr}` interpolation, `{{` for a literal brace and the escapes
@@ -433,7 +434,7 @@ by an inbound map.
 | Field | Type |
 |---|---|
 | `key` | `Text`: the partner's identifier for the load, which every later message quotes |
-| `purpose` | `TenderPurpose`: `Original`, `Change`, `Cancel` |
+| `purpose` | `TenderPurpose`: `Original`, `Change`, `Replace` (the whole tender sent again), `Cancel` |
 | `bol`, `proNumber`, `poNumber` | `Text?` |
 | `customer` | `Customer?` |
 | `serviceType`, `shipmentType`, `rating` | `ServiceType?`, `ShipmentType?`, `RatingTemplate?` |
@@ -445,12 +446,14 @@ by an inbound map.
 | `total`, `freightCharge`, `otherCharges` | `Money?` |
 | `refs` | `[Text: Text]` |
 | `notes` | `[Text]` |
-| `stops` | `[Stop]`: `sequence: Int`, `type: StopType` (`Pickup`, `Delivery`), `location: Location?`, `name: Text?`, `code: Text?`, `address: Address?`, `window: Window`, `weight: Weight?`, `pieces: Int?`, `refs`, `notes` |
-| `commodities` | `[CommodityLine]`: `commodity: Commodity?`, `description: Text`, `weight: Weight?`, `pieces: Int?`, `hazmat: Bool` |
+| `stops` | `[Stop]`: `sequence: Int`, `type: StopType` (`Pickup`, `Delivery`), `location: Location?`, `name: Text?`, `code: Text?`, `address: Address?`, `window: Window`, `weight: Weight?`, `pieces: Int?`, `temperature: { min, max }?`, `refs`, `notes` |
+| `commodities` | `[CommodityLine]`: `commodity: Commodity?`, `description: Text`, `weight: Weight?`, `pieces: Int?`, `temperature: { min, max }?`, `hazmat: Bool` |
 | `charges` | `[Charge]`: `accessorial: Accessorial?`, `code: Text?`, `description: Text?`, `amount: Money` |
 | `custom` | the organisation's shipment custom fields |
 
-`shipmentStatus` and `freightInvoice` carry the load's `custom` fields too.
+`shipmentStatus` and `freightInvoice` carry the load's `custom` fields too. A tender with no
+`temperature` of its own but ranges on its stops or lines becomes a shipment kept where every
+range allows: the warmest minimum and the coldest maximum.
 
 **`tenderResponse`** (990): `key: Text`, `decision: Decision` (`Accept`, `Decline`),
 `reason: Text?` (at most 200 characters), `scac: Text?`, `respondedAt: DateTime`, `refs`.
@@ -471,11 +474,17 @@ by an inbound map.
 | `eta` | `DateTime?` |
 
 **`freightInvoice`** (210): `number: Text`, `date: Date`, `deliveryDate: Date?`, `key: Text?`,
-`bol`, `proNumber: Text?`, `weight: Weight?`, `billTo: Party?` (`name`, `address`), `total: Money`,
+`bol`, `proNumber: Text?`, `weight: Weight?`, `billTo: Party?` (`name`, `address`), `payment:
+Payment?` (the shipment's freight terms, as the tender's `payment` set them), `total: Money`,
 `lines: [InvoiceLine]` (`sequence: Int`, `code: Text?`, `accessorial: Accessorial?`,
 `description: Text?`, `amount: Money`, `rate: Decimal?`, `weight: Weight?`), `shipments:
 [InvoicedShipment]` (`proNumber`, `bol`, `poNumber: Text?`, `deliveryDate: Date?`,
 `amount: Money?`), `refs`.
+
+Every `refs` is keyed by its X12 reference qualifier (element 128): `BM` bill of lading, `CN`
+carrier PRO, `PO` purchase order, so a map can write `each refs as ref { N9 … }` as is. Trenova
+writes none of its own record ids or bookkeeping there (`edipayloadbuild` builds the outbound
+ones); the key the partner knows the load by travels in `key`.
 
 **Records** used across documents: `Address` (`line1: Text`, `line2: Text?`, `city: Text`,
 `state: Text?`, `postal: Text?`, `country: Text?`), `Window` (`start: DateTime`, `end: DateTime?`),
@@ -547,9 +556,17 @@ crosswalk charges: AccessorialCode <-> Code<L108> {
   unpaired in that direction; without it an unpaired value is none.
 - When `A` and `B` are the same type, `via name` reads left to right and `via name.back` right to
   left.
+- **`not sent`** stands for the code side of a pair whose values the partner takes nothing for:
+  `Dispatched, Loaded -> not sent` (or `not sent <- Dispatched` when the enum is on the right).
+  Writing such a value leaves out the item of the `each` it is written in, everything that item
+  wrote with it, and renumbers `index`; when every item of an `each` is left out, the message is
+  not sent at all (the run says `notSent`, and the flow's send is reported with no control
+  number). Read anywhere else, it is none. This is how a partner says "we take no Dispatched
+  status" where its status codes are defined, instead of a rule that rejects.
 - **Checked both ways:** writing an enum through a crosswalk that doesn't cover every variant is
-  an error (`crosswalk-incomplete`); reading an element through one that misses a code the
-  partner's guide allows is a warning (`crosswalk-misses-code`), with a fix that adds the pair.
+  an error (`crosswalk-incomplete`; a `not sent` pair covers its values); reading an element
+  through one that misses a code the partner's guide allows is a warning
+  (`crosswalk-misses-code`), with a fix that adds the pair.
 
 ### The standard library
 
@@ -563,7 +580,7 @@ Every function is also a method on its first argument: `postal.zip5()` is `zip5(
 | Measures | `weight(value, code)`, `length(value, code)`, `volume(value, code)`, `temperature(value, scale)`, `in(measure, unit)` (`weight.in(kg)`), `value(measure, unit)` |
 | Dates and times | `at(date, time, zone)`, `date(text, pattern)`, `time(text, pattern)`, `dateTime(text, pattern, zone)`, `date(dt)`, `time(dt)`, `zone(dt)`, `inZone(dt, zone)`, `zoneCode(dt)` (`CT`, `ET`, `LT`, ...), `zoneFromCode(code)`, `addBusinessDays(date, n)`, `now()` |
 | Lists | `count`, `first`, `last`, `isEmpty`, `find(f)`, `filter(f)`, `map(f)`, `any(f)`, `all(f)`, `sum(f)`, `min(f)`, `max(f)`, `sortBy(f)`, `distinct`, `take(n)`, `drop(n)`, `flatten`, `get(i)` |
-| X12 | `refs(segments)` (an L11 or N9 list as qualifier to value), `address(loop)` (N3 and N4 of a name loop as an `Address`), `party(loop)` (N1, N3, N4 as a `Party`), `elements(segment)` (every element as text) |
+| X12 | `refs(segments)` (an L11 or N9 list as qualifier, in capitals, to value: `bm` reads as `refs["BM"]`), `address(loop)` (N3 and N4 of a name loop as an `Address`), `party(loop)` (N1, N3, N4 as a `Party`), `elements(segment)` (every element as text) |
 | Addresses | `zip5`, `zip9`, `stateCode` (a US or Canadian state or province name or code to its code), `countryCode(text, iso: 2)`, `phone(text)` (E.164) |
 | Checks | `checkDigit(text, "mod10")`, `isDate(text, pattern)`, `isNumber(text)` |
 
@@ -661,7 +678,8 @@ interchange {
   us ZZ "TRNV-ACME"
   group "ACME" <-> "TRENOVA"
   version 004010
-  separators "*" "~" ">" "^"
+  separators "*" "~" ">"
+  line ending crlf
   usage test
 }
 
@@ -676,7 +694,13 @@ setting maxWeight: Weight = 45_000 lb in 1 lb..80_000 lb
 
 - **`interchange`** is the envelope: the partner's and the organisation's ISA qualifier and ID,
   the GS application codes (theirs `<->` ours), the X12 version, the separators Trenova writes,
-  and `usage test` or `usage production` (ISA15). A project is certified before it may be
+  and `usage test` or `usage production` (ISA15). `separators` names four (element, segment,
+  component, repetition) from 004020 and three before it, where ISA11 is `U` and there is no
+  repetition separator; a fourth on a 004010 partner is a warning (`interchange-separators`).
+  `line ending none|lf|crlf|cr` is what Trenova writes after each segment terminator (none
+  when the block says nothing; `interchange-line-ending` for any other word). It shapes the
+  interchange a run writes (`text`), never the transaction alone (`transaction`), which tests
+  compare. A project is certified before it may be
   `production` (see "Versions").
 - **`zone`** is the zone for times that carry none of their own and have no stop location to
   take one from. **`currency`** is the default currency (`partner.currency`).
@@ -723,16 +747,36 @@ expect 997 for every send within 30 min else resend 1 then escalate "ACME has no
 - **`acknowledge with 997|999|none`** is the functional acknowledgment Trenova sends for the
   group the message came in.
 - **`on <purpose> -> action`** for a document with a `purpose`, or a single `-> action` for one
-  without. The actions are:
+  without. A `Replace` with no arm of its own takes the `Change` arm, and a `Change` the
+  `Replace` arm. The actions are:
   - `create`: a new load from the document;
   - `update fields... [keep fields...] [hold when cond "message"]`: apply only the listed fields
     of the document to the existing load, never the kept ones, and hold instead when `cond` holds
     (`current` is the load as it is now);
-  - `cancel [unless state else action]`: cancel, or do `action` when the load is in `state`
-    (`dispatched`, `delivered`, `invoiced`);
+  - `cancel [unless state[, state] [or later] else action]`: cancel, or do `action` when the
+    load is in one of the states named (`dispatched`, `delivered`, `invoiced`); `or later` makes
+    the last one stand for every state after it too (`unless dispatched or later`);
   - `apply`: hand the document to Trenova's normal handling for its set (a 990 to the tender it
     answers, a 214 to the shipment's tracking, a 210 to carrier invoice matching);
   - `hold "message"`, `ignore`.
+- **Guards** follow any action, on its line or the next: `hold when cond "message"` holds instead
+  of acting, and `reject when cond "message"` rejects the transaction in the acknowledgment
+  (with the message) and does nothing else; the first whose condition holds wins. A guard reads
+  the received document under its binder, `current` (the load as it is now, when there is one),
+  `instance` and `sent`:
+
+  ```lading
+  receive 214 as status via statusIn key status.key
+    -> apply reject when not instance.exists "No load {status.key} was tendered to us"
+  receive 210 as invoice via invoiceIn key invoice.key
+    -> apply hold when invoice.total != sent.tender.total "Billed {invoice.total}, tendered {sent.tender.total}"
+  ```
+- **`instance`** is the conversation the message's key belongs to: `instance.exists` is true when
+  it was under way before this message (something was received or sent for the key, or Trenova
+  has its load), and `instance.key` its key. A message the flow rejects leaves a new instance as
+  it was, so a second stray message is rejected too.
+- **`sent`** holds the last document each send clause (and the response) wrote, under its binder:
+  `sent.tender`, `sent.status`, `sent.invoice`, `sent.response`, each none until one is sent.
 - A `reject` from the rules rejects the transaction whatever the action; a `hold` holds after the
   action.
 
@@ -745,12 +789,29 @@ expect 997 for every send within 30 min else resend 1 then escalate "ACME has no
 - the response's document is built by Trenova (`key`, `decision`, `reason`, `respondedAt`) and
   written by the map.
 
-**`send <set> via map on events [where cond] [batch within duration] [until event]`** writes a
-message when something happens in Trenova. The events are `TenderOffered`, `TenderAccepted`,
+**`send <set> via map on events [where cond] [key expr] [batch within duration] [until event]`**
+writes a message when something happens in Trenova; `key` (or the document's `key`) names the
+instance, which a flow Trenova starts takes as its key. The events are `TenderOffered`, `TenderAccepted`,
 `TenderDeclined`, `TenderCancelled`, `Dispatched`, `StopArrived`, `StopDeparted`, `Delivered`,
 `EtaChanged`, `ServiceFailure`, `InvoicePosted` and `InvoiceVoided`. `batch within` gathers the
 events of one instance that land within the window into one message; `until` stops sending once
 that event has been sent.
+
+**Where the status events come from.** Each recorded arrival or departure writes a stop-level
+shipment event (`StopArrived`, `StopDeparted`) in the same transaction as the time
+(`shipmentmoveservice/stopevents.go`), and those own the stop statuses: X3 or X1 on arrival
+(`StopArrived`), AF or CD on departure (`StopDeparted`), and D1 (`Delivered`) when the stop is
+the shipment's last active stop. The move-level event a stop actual causes is tagged
+`fromStopActual` and sends nothing; only a move a dispatcher starts or completes by hand sends a
+214 from the move. A corrected time is `StopArrivalCorrected` or `StopDepartureCorrected` and
+sends nothing: the milestone has already gone out.
+
+**Linked shipments.** Internal EDI lifecycle sync (`internaledilifecycle`) writes the times it
+copies onto a linked shipment through `ReconcileStopActuals`, so the linked shipment records its
+own stop events and its own partners get their 214s. Those events carry
+`ediMirroredFromEventId`, which `internaledistatussync` skips, so a synced time never syncs
+back. Sync adds or corrects times and never clears one the linked shipment already has; a
+refusal from the move leaves the transfer change pending review with the reason.
 
 **One flow per message.** A received set, a response and an event go to the first flow in the
 project that names them, so a second flow that receives the same set, responds with the same set
@@ -762,6 +823,13 @@ or sends on the same event is an error there (`flow-receive-taken`, `flow-respon
 the partner's acknowledgment of everything this flow sends: a missing one is resent up to `n`
 times, then escalated to the exception queue. A rejected one is escalated at once.
 
+**`await 990 within duration [else escalate "message"]`** watches the partner's answer to a tender
+the flow sends: each `send 204` that is not a cancellation starts the clock, a received 990 stops
+it, and a tender left unanswered is escalated once (`message.set`, `message.control` and
+`message.key` name the tender). The flow must `send 204` (`await-without-send`) and `receive 990`
+(`await-without-receive`). Its deadline is the state's `answerDue`, a timer like the others: the
+host's flow clock shifts it with them (`pkg/lading/clock.go`).
+
 **Flows Trenova starts.** A broker tendering to a carrier starts the conversation:
 
 ```lading
@@ -769,8 +837,11 @@ flow carrierTender with swift
 
 send 204 via tenderOut on TenderOffered key tender.key
 receive 990 as response via responseIn key response.key -> apply
-receive 214 as status via statusIn key status.key -> apply
-receive 210 as invoice via invoiceIn key invoice.key -> apply
+receive 214 as status via statusIn key status.key
+  -> apply reject when not instance.exists "Swift sent a status for {status.key}, which we never tendered"
+receive 210 as invoice via invoiceIn key invoice.key
+  -> apply hold when invoice.total != sent.tender.total "Swift billed {invoice.total} against {sent.tender.total}"
+await 990 within 2 h else escalate "Swift has not answered tender {message.key}"
 expect 997 for every send within 30 min else escalate "Swift has not acknowledged"
 ```
 
@@ -803,13 +874,18 @@ test "an arrival writes the right AT7" {
 }
 ```
 
-- **`given file "path"`** reads a sample (inbound); **`given text "..."`** the given text;
+- **`given file "path"`** reads a sample (inbound), and the test runs on every transaction of
+  the map's set in it, each failure naming its transaction; **`given transaction n`** picks the
+  nth instead (from 1); **`given text "..."`** the given text;
   **`given <document> { ... }`** builds an outbound map's input; **`given setting name = value`**,
   **`given lookup Kind("code") = "Label"`** (an unmapped code is `given lookup Kind("code") =
   none`) and **`given now = @...`** fix what the run reads.
 - **`expect cond`** must be true. **`expect x12 contains "..."`** and **`expect x12 == "..."`**
   compare the transaction a map wrote, from ST to SE, without the ISA, GS, GE and IEA around
-  it. **`expect no holds`** (`rejects`,
+  it; what a map writes is read back against the partner's guide as a run does, and an
+  `expect x12` fails, naming the finding, on a message the guide refuses (which also counts as
+  `rejected`). **`expect sent`** and **`expect no sent`** check that a map to X12 wrote a message
+  at all (see `not sent`). **`expect no holds`** (`rejects`,
   `declines`, `warnings`), **`expect held "message"`**, **`expect rejected`**, **`expect
   declined`** and **`expect warned "message"`** check a rules file's outcomes.
 - A test in a map file runs that map; in a rules file, its map and then its rules; in a library,
@@ -834,7 +910,13 @@ test "an unanswered tender escalates" {
 ```
 
 `receive file|text`, `respond accept|decline "reason"`, `event Kind { fields }`, `ack accepted|
-rejected` and `advance duration` are steps. Every message a test sends gets the next control
+rejected` and `advance duration` are steps. `receive file` receives every transaction in the
+file, in order, and each message and event goes to the instance its key names, as the host
+routes them, so a batch of tenders opens one load each. Every message the flow sends is written
+as the host writes it: by its map, then its rules, then read back against the partner's guide.
+One the rules hold or reject, or the guide refuses, is not sent (it shows as `held` or
+`rejected`, and `expect sent` fails naming why); one with nothing the partner takes is not sent
+either. Every message a test sends gets the next control
 number from `0001`, as the partner would see it, so an escalation's `{message.control}` reads as
 it will in production; and the load moves with the events a test raises (`Dispatched` makes it
 dispatched, `Delivered` delivered, `InvoicePosted` invoiced), so a later step meets the state a
@@ -966,7 +1048,7 @@ UTF-16 ranges:
 | `lading.flowStep` | one flow event: the new state and the actions |
 | `lading.replay` | two versions of a map on a batch of inputs, compared |
 | `lading.guide` | a guide compiled to the X12 guide shape |
-| `lading.starter` | the starter project for a partner and its sets |
+| `lading.starter` | the starter project for a partner and its sets: its envelope (separators, `lineEnding`), acknowledgment and `ackWithinSeconds` (1 to 604,800, half an hour by default, written in the largest exact unit: `45 s`, `30 min`, `4 h`) |
 | `lading.catalog` | documents, records, enums, events, lookups and the standard library, with docs |
 
 ## Limits
@@ -983,7 +1065,8 @@ header      = partnerHdr | guideHdr | mapHdr | rulesHdr | flowHdr | libraryHdr
 
 partnerHdr  = "partner" name string
 partnerDecl = "interchange" "{" { ("them"|"us") X12REF string | "group" string "<->" string
-              | "version" NUMBER | "separators" string string string string
+              | "version" NUMBER | "separators" string string string [string]
+              | "line" "ending" ("none"|"lf"|"crlf"|"cr")
               | "usage" ("test"|"production") } "}"
             | "zone" zoneName | "currency" string
             | "setting" name ":" type "=" expr [ "in" expr ".." expr ]
@@ -1016,17 +1099,23 @@ outcome     = "reject" [ "at" expr ] string | "decline" string [ "code" string ]
 
 flowHdr     = "flow" name "with" name uses
 flowDecl    = "receive" SET "as" name { receiveClause }
+receiveArm  = [ "on" TYPE ] "->" action { ("hold" | "reject") "when" expr expr }
+action      = "create" | "apply" | "ignore" | "hold" expr
+            | "update" fields [ "keep" fields ] [ "hold" "when" expr expr ]
+            | "cancel" [ "unless" name {"," name} [ "or" "later" ] "else" action ]
             | "respond" SET "via" name { respondClause }
             | "send" SET "via" name "on" EVENT {"," EVENT} [ "where" expr ] [ "key" expr ]
               [ "batch" "within" expr ] [ "until" EVENT ]
             | "expect" SET "for" "every" "send" "within" expr "else"
               [ "resend" INT "then" ] "escalate" string
+            | "await" SET "within" expr [ "else" "escalate" string ]
 
 libraryHdr  = "library" name uses
 decl        = fnDecl | crosswalk | constDecl
 fnDecl      = "fn" name "(" [ param {"," param} ] ")" "->" type ( "=" expr | block )
 crosswalk   = "crosswalk" name ":" type "<->" type "{" { pair } [ "else" ("->"|"<-") expr ] "}"
-pair        = expr {"," expr} ("<->"|"->"|"<-") expr {"," expr}
+pair        = side ("<->"|"->"|"<-") side
+side        = expr {"," expr} | "not" "sent"
 constDecl   = "const" name "=" expr
 
 expr        = literal | name | path | expr "." name [ "(" args ")" ] | expr "[" expr "]"

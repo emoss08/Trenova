@@ -80,13 +80,13 @@ func TestPlanReview_RefusesWhatTheWriteRefuses(t *testing.T) {
 	_, err := svc.PlanReview(t.Context(), ReviewReject, reviewRequest(inReview, ""))
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "comment", fieldErr.Field)
+	assert.Equal(t, "comment", fieldErr.Field())
 
 	draft := draftAgreement(rateagreement.StatusDraft)
 	svc, _ = serviceFor(t, draft)
 	_, err = svc.PlanReview(t.Context(), ReviewApprove, reviewRequest(draft, "Looks right"))
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "status", fieldErr.Field)
+	assert.Equal(t, "status", fieldErr.Field())
 
 	_, err = svc.PlanReview(t.Context(), Review("Expire"), reviewRequest(draft, ""))
 	require.Error(t, err)

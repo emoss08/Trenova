@@ -35,12 +35,17 @@ type GenerateBatchRequest struct {
 // PeriodBounds aliases the shared settlement period type.
 type PeriodBounds = settlementshared.PeriodBounds
 
-func ResolveCurrentPeriod(control *settlementcontrol.SettlementControl, now int64) PeriodBounds {
+func ResolveCurrentPeriod(
+	control *settlementcontrol.SettlementControl,
+	loc *time.Location,
+	now int64,
+) PeriodBounds {
 	return settlementshared.ResolvePeriod(
 		control.PayPeriodFrequency,
 		control.PeriodEndDayOfWeek,
 		control.PayDelayDays,
 		now,
+		loc,
 	)
 }
 
@@ -57,8 +62,13 @@ func (s *Service) GenerateBatch(
 		return nil, err
 	}
 
+	loc, err := s.Location(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	now := timeutils.NowUnix()
-	bounds, err := ResolveBatchBounds(control, req.PeriodStart, req.PeriodEnd, now)
+	bounds, err := ResolveBatchBounds(control, loc, req.PeriodStart, req.PeriodEnd, now)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +310,11 @@ func (s *Service) PreviewForWorker(
 		return nil, err
 	}
 	if req.PeriodStart == 0 || req.PeriodEnd == 0 {
-		bounds := ResolveCurrentPeriod(control, timeutils.NowUnix())
+		loc, locErr := s.Location(ctx, req.TenantInfo)
+		if locErr != nil {
+			return nil, locErr
+		}
+		bounds := ResolveCurrentPeriod(control, loc, timeutils.NowUnix())
 		req.PeriodStart = bounds.PeriodStart
 		req.PeriodEnd = bounds.PeriodEnd
 		req.PayDate = bounds.PayDate

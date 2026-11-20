@@ -2732,7 +2732,6 @@
   "{0} without a biller": "{0} 個沒有帳務人員",
   "{0} would": "{0}將會",
   "{0} would go through. {1} would be refused: {2}": "{0} 個會完成。{1} 個會被拒絕：{2}",
-  "{0} °F": "{0} °F",
   "{0} · Case": "{0} · 案件",
   "{0} · Desk": "{0} · 工作檯",
   "{0} · IFTA": "{0} · IFTA",
@@ -2787,18 +2786,14 @@
   "{0}; without it the charge is held for review.": "{0}；未寄送時該費用將被扣留待審。",
   "{0}; without it the charge won't bill.": "{0}；未寄送時該費用不會計費。",
   "{0}d {1}h": "{0} 天 {1} 小時",
-  "{0}°F": "{0}°F",
   "{0}–{1} lb": "{0}–{1} 磅",
   "{0}–{1} mi": "{0}–{1} 英里",
   "{0}–{1} of about {2}": "第 {0}–{1} 項，共約 {2} 項",
   "{0}–{1} of {2}+": "第 {0}–{1} 項，共 {2}+ 項",
-  "{0}–{1} °F": "{0}–{1} °F",
   "~{0} changed": "~{0} 項更改",
   "© OpenStreetMap": "© OpenStreetMap",
   "· confirmed {0}": "· 已於 {0} 確認",
   "— for the invoice": "— 針對該發票",
   "— for the shipment": "— 針對該運單",
-  "−{0} removed": "−{0} 項移除",
-  "≤ {0}°F": "≤ {0}°F",
-  "≥ {0}°F": "≥ {0}°F"
+  "−{0} removed": "−{0} 項移除"
 }

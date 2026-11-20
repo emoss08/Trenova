@@ -2,6 +2,7 @@ package holdreasonresolver
 
 import (
 	"context"
+	"math"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -9,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func holdReasonInput() gqlmodel.HoldReasonInput {
@@ -79,7 +82,8 @@ func TestHoldReasonFromInput_MapsTheInputIntoTheCallersTenant(t *testing.T) {
 	input.ExternalMap = map[string]any{"edi": "POD"}
 	input.Version = &version
 
-	entity := holdReasonFromInput(&input, authCtx)
+	entity, err := holdReasonFromInput(&input, authCtx)
+	require.NoError(t, err)
 
 	assert.Equal(t, authCtx.OrganizationID, entity.OrganizationID)
 	assert.Equal(t, authCtx.BusinessUnitID, entity.BusinessUnitID)
@@ -103,10 +107,28 @@ func TestApplyHoldReasonInput_KeepsTheRecordIdentity(t *testing.T) {
 	existing := &holdreason.HoldReason{ID: id, Version: 2, CreatedAt: 1_700_000_000}
 	input := holdReasonInput()
 
-	applyHoldReasonInput(existing, &input)
+	require.NoError(t, applyHoldReasonInput(existing, &input))
 
 	assert.Equal(t, id, existing.ID)
 	assert.Equal(t, int64(2), existing.Version)
 	assert.Equal(t, int64(1_700_000_000), existing.CreatedAt)
 	assert.Equal(t, "MISSING_POD", existing.Code)
+}
+
+func TestApplyHoldReasonInput_RefusesASortOrderThatWouldWrap(t *testing.T) {
+	t.Parallel()
+
+	existing := &holdreason.HoldReason{SortOrder: 5}
+	input := holdReasonInput()
+	input.SortOrder = 4294967311
+
+	err := applyHoldReasonInput(existing, &input)
+
+	var valErr *errortypes.Error
+	require.ErrorAs(t, err, &valErr)
+	assert.Equal(t, "sortOrder", valErr.Field())
+	assert.Equal(t, errortypes.ErrInvalid, valErr.Code)
+	assert.Equal(t, "Must be between {0} and {1}", valErr.Message)
+	assert.Equal(t, []any{int64(math.MinInt32), int64(math.MaxInt32)}, valErr.Args)
+	assert.Equal(t, int32(5), existing.SortOrder)
 }

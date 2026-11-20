@@ -1,0 +1,68 @@
+rules tenderChecks for tenderIn
+  use common
+
+/// One reefer holds one range. When the warmest floor a stop asks for is above the coldest
+/// ceiling another asks for, no setting keeps both, and a planner has to split the run.
+rule "one range the reefer can hold" {
+  hold "Meadowridge's ranges don't overlap: one stop needs {temperature.min} or warmer, another {temperature.max} or colder"
+    when exists temperature.min and exists temperature.max and temperature.min > temperature.max
+}
+
+/// No stop can open before the one ahead of it.
+rule "stops run in order" {
+  require stops.first.window.start <= stops.last.window.start
+    else decline "Delivery is scheduled before pickup"
+}
+
+/// Runs with more drops than we take automatically go to a planner.
+rule "within the drops we run" {
+  require stops.count <= partner.maxStops
+    else hold "{stops.count} stops is more than the {partner.maxStops} we take automatically"
+}
+
+/// Meadowridge sends ZIP+4 on some stores; Trenova keeps five digits.
+rule "Meadowridge sends nine-digit zips" {
+  for stop in stops where (stop.address.postal ?? "").matches(r"^\d{9}$") {
+    fix stop.address.postal <- postal(stop.address.postal ?? "")
+  }
+}
+
+/// Every store receives by appointment; a drop without one is worth a call before dispatch.
+rule "a drop has an appointment" {
+  let open = stops.filter(s => s.type == Delivery and not exists s.refs["AO"])
+  warn "{open.count} drop(s) without a receiving appointment" when not open.isEmpty
+}
+
+/// A rate under the minimum is almost always a keying mistake.
+rule "the rate covers the minimum" {
+  hold "The rate is under the {partner.minimumCharge} minimum" when (total ?? $0.00) < partner.minimumCharge
+}
+
+test "a normal run passes every rule" {
+  given file "samples/tender-original.x12"
+  expect no holds
+  expect no rejects
+  expect no declines
+  expect warned "1 drop(s) without a receiving appointment"
+}
+
+test "a run that mixes frozen and chilled stops is held" {
+  given file "samples/tender-mixed.x12"
+  expect held "Meadowridge's ranges don't overlap: one stop needs 34 °F or warmer, another 0 °F or colder"
+}
+
+test "a frozen run on its own is not held" {
+  given file "samples/tender-frozen.x12"
+  expect no holds
+}
+
+test "a ZIP+4 store keeps five digits" {
+  given file "samples/tender-original.x12"
+  expect stops.last.address.postal == "14206"
+}
+
+test "more drops than the setting is held" {
+  given file "samples/tender-original.x12"
+  given setting maxStops = 5
+  expect held "6 stops is more than the 5 we take automatically"
+}

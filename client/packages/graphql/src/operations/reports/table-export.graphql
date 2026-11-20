@@ -17,3 +17,12 @@ mutation ScheduleTableView($input: ScheduleTableViewInput!) {
     }
   }
 }
+
+mutation ExportCustomerLedger($input: ExportCustomerLedgerInput!) {
+  exportCustomerLedger(input: $input) {
+    definitionId
+    run {
+      id
+    }
+  }
+}

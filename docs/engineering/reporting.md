@@ -406,6 +406,13 @@ contract the browser formats with too
   private definition on the table's root entity (`tableexportservice.Build`: the shown columns
   as dimensions, the table's filters and sort; a search query is refused, and a to-many or
   ungroupable column is skipped and named), then runs or schedules it like any report.
+- **A page's own export** builds its definition in the owning module and hands it to
+  `tableexportservice.ExportDefinition`, which saves it as a private definition and runs it.
+  `exportCustomerLedger` (accounts receivable `export`) is the customer ledger page's: the
+  window's entries in ledger order with debit, credit and a running balance, a running total
+  over a hidden position key plus the opening balance read from the monthly balances
+  (`accountsreceivableservice.CustomerLedgerReport`). Never build a file in the browser from
+  the pages a list has loaded.
 
 ### Maintenance
 

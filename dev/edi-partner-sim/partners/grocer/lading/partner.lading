@@ -1,0 +1,30 @@
+partner meadowridge "Meadowridge Fresh Markets"
+
+// Meadowridge tenders multi-stop reefer runs from its two perishables DCs to its stores. It
+// replaces a tender (05) rather than changing it, cancels late, and sends a temperature range for
+// every commodity class on every stop.
+interchange {
+  them ZZ "MEADOWRIDGE"
+  us ZZ "TRENOVA"
+  group "MEADOWRIDGE" <-> "TRENOVA"
+  version 004010
+  separators "*" "~" ":"
+  line ending lf
+  usage test
+}
+
+zone America/Chicago
+currency "USD"
+
+/// Accept Meadowridge tenders automatically: perishables can't wait for a planner.
+setting autoAccept: Bool = true
+/// Send a decline automatically when a rule declines a tender.
+setting autoDecline: Bool = true
+/// The most stops one Meadowridge run may have.
+setting maxStops: Int = 7 in 2..12
+/// The lowest total accepted automatically.
+setting minimumCharge: Money = $850.00 in $0.00..$5_000.00
+/// How long a planner has to answer a tender that was not accepted automatically.
+setting answerWithin: Duration = 30 min in 15 min..4 h
+/// A note sent with every decline that gives no reason.
+setting declineNote: Text = "No reefer available"

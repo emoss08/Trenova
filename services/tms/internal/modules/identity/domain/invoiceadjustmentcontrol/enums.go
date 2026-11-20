@@ -3,9 +3,8 @@ package invoiceadjustmentcontrol
 type AdjustmentEligibilityPolicy string
 
 const (
-	AdjustmentEligibilityDisallow             = AdjustmentEligibilityPolicy("Disallow")
-	AdjustmentEligibilityAllowWithApproval    = AdjustmentEligibilityPolicy("AllowWithApproval")
-	AdjustmentEligibilityAllowWithoutApproval = AdjustmentEligibilityPolicy("AllowWithoutApproval")
+	AdjustmentEligibilityDisallow          = AdjustmentEligibilityPolicy("Disallow")
+	AdjustmentEligibilityAllowWithApproval = AdjustmentEligibilityPolicy("AllowWithApproval")
 )
 
 type AdjustmentAccountingDatePolicy string
@@ -104,8 +103,7 @@ const (
 func (v AdjustmentEligibilityPolicy) IsValid() bool {
 	switch v {
 	case AdjustmentEligibilityDisallow,
-		AdjustmentEligibilityAllowWithApproval,
-		AdjustmentEligibilityAllowWithoutApproval:
+		AdjustmentEligibilityAllowWithApproval:
 		return true
 	default:
 		return false

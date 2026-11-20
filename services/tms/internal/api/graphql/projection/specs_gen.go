@@ -13654,6 +13654,14 @@ func init() {
 				Name:   "pieces",
 				Column: "pieces",
 			},
+			{
+				Name:   "temperatureMin",
+				Column: "temperature_min",
+			},
+			{
+				Name:   "temperatureMax",
+				Column: "temperature_max",
+			},
 		},
 	}
 
@@ -20730,6 +20738,10 @@ func init() {
 				Column: "logo_url",
 			},
 			{
+				Name:   "iconUrl",
+				Column: "icon_url",
+			},
+			{
 				Name:   "bucketName",
 				Column: "bucket_name",
 			},
@@ -25790,6 +25802,14 @@ func init() {
 				Column: "height_feet",
 			},
 			{
+				Name:   "temperatureMin",
+				Column: "temperature_min",
+			},
+			{
+				Name:   "temperatureMax",
+				Column: "temperature_max",
+			},
+			{
 				Name:   "version",
 				Column: "version",
 			},
@@ -26489,6 +26509,26 @@ func init() {
 				Name:   "newStatus",
 				Column: "metadata",
 			},
+			{
+				Name:   "stopNumber",
+				Column: "metadata",
+			},
+			{
+				Name:   "stopType",
+				Column: "metadata",
+			},
+			{
+				Name:   "locationName",
+				Column: "metadata",
+			},
+			{
+				Name:   "actualAt",
+				Column: "metadata",
+			},
+			{
+				Name:   "previousActualAt",
+				Column: "metadata",
+			},
 		},
 	}
 
@@ -26701,6 +26741,14 @@ func init() {
 			{
 				Name:   "weight",
 				Column: "weight",
+			},
+			{
+				Name:   "temperatureMin",
+				Column: "temperature_min",
+			},
+			{
+				Name:   "temperatureMax",
+				Column: "temperature_max",
 			},
 			{
 				Name:   "scheduledWindowStart",

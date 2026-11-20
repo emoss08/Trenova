@@ -16,8 +16,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/statementtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -140,8 +142,10 @@ type fixture struct {
 	messages    []*statementtemplate.CustomerStatementEmailContext
 	recorded    []*documenttemplateports.RecordGeneratedDocumentRequest
 	control     *billingcontrol.BillingControl
+	adjustments *invoiceadjustmentcontrol.InvoiceAdjustmentControl
 	customers   map[pulid.ID]*customer.Customer
 	tenant      pagination.TenantInfo
+	timezone    string
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -151,6 +155,7 @@ func newFixture(t *testing.T) *fixture {
 		collections: &fakeCollections{},
 		email:       &fakeEmail{},
 		customers:   map[pulid.ID]*customer.Customer{},
+		timezone:    "UTC",
 		statements: &fakeStatements{statement: &customerledgerports.ARCustomerStatement{
 			CustomerName:        "Halstead Grocery",
 			OpeningBalanceMinor: 100_00,
@@ -213,6 +218,10 @@ func newFixture(t *testing.T) *fixture {
 		BuID:   f.control.BusinessUnitID,
 		UserID: pulid.MustNew("usr_"),
 	}
+	f.adjustments = invoiceadjustmentcontrol.NewDefaultInvoiceAdjustmentControl(
+		f.tenant.OrgID,
+		f.tenant.BuID,
+	)
 
 	customers := customerportsmock.NewMockCustomerRepository(t)
 	customers.EXPECT().GetByIDs(mock.Anything, mock.Anything).RunAndReturn(
@@ -228,18 +237,30 @@ func newFixture(t *testing.T) *fixture {
 		Maybe()
 
 	orgs := tenantportsmock.NewMockOrganizationRepository(t)
-	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.Organization{
-		Name:         "Trenova Logistics",
-		Timezone:     "UTC",
-		AddressLine1: "2200 Commerce St",
-		City:         "Dallas",
-		PostalCode:   "75201",
-	}, nil).Maybe()
+	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).RunAndReturn(
+		func(
+			context.Context,
+			tenantports.GetOrganizationByIDRequest,
+		) (*tenant.Organization, error) {
+			return &tenant.Organization{
+				Name:         "Trenova Logistics",
+				Timezone:     f.timezone,
+				AddressLine1: "2200 Commerce St",
+				City:         "Dallas",
+				PostalCode:   "75201",
+			}, nil
+		}).Maybe()
 	users := tenantportsmock.NewMockUserRepository(t)
 	users.EXPECT().GetSystemUser(mock.Anything, mock.Anything).
 		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).Maybe()
 	controls := tenantportsmock.NewMockBillingControlRepository(t)
 	controls.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(f.control, nil).Maybe()
+	adjustments := tenantportsmock.NewMockInvoiceAdjustmentControlRepository(t)
+	adjustments.EXPECT().GetByOrgID(mock.Anything, mock.Anything).
+		RunAndReturn(func(context.Context, pulid.ID) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
+			return f.adjustments, nil
+		}).
+		Maybe()
 
 	templates := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
 	templates.EXPECT().RenderDocument(mock.Anything, mock.Anything).RunAndReturn(
@@ -283,6 +304,7 @@ func newFixture(t *testing.T) *fixture {
 		organizations:   orgs,
 		users:           users,
 		billingControls: controls,
+		adjustments:     adjustments,
 		emailService:    f.email,
 		templates:       templates,
 		l:               zap.NewNop(),
@@ -418,11 +440,11 @@ func TestSend_ChecksTheDates(t *testing.T) {
 	_, err := f.svc.Send(t.Context(), f.sendRequest(cus, 0, future, ""), nil)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "asOfDate", validation.Field)
+	assert.Equal(t, "asOfDate", validation.Field())
 
 	_, err = f.svc.Send(t.Context(), f.sendRequest(cus, 2_000, 1_000, ""), nil)
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "startDate", validation.Field)
+	assert.Equal(t, "startDate", validation.Field())
 
 	_, err = f.svc.Send(
 		t.Context(),
@@ -430,7 +452,7 @@ func TestSend_ChecksTheDates(t *testing.T) {
 		nil,
 	)
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "note", validation.Field)
+	assert.Equal(t, "note", validation.Field())
 
 	assert.Empty(t, f.email.sent)
 }
@@ -465,7 +487,12 @@ func TestRender_ReturnsThePDF(t *testing.T) {
 	assert.Equal(t, pdfBytes, rendered.PDF)
 	assert.Equal(t, "Statement-Halstead Grocery-2026-09-30.pdf", rendered.FileName,
 		"a customer with no code is named in full")
-	assert.Empty(t, f.pdfs[0].PeriodStart, "a statement from the first transaction has no start")
+	assert.Equal(t, "2026-08-30", f.pdfs[0].PeriodStart,
+		"a statement with no start covers the month before its date")
+	assert.Equal(t, []customerstatement.Period{{
+		Start: time.Date(2026, 8, 30, 12, 0, 0, 0, time.UTC).Unix(),
+		End:   end,
+	}}, f.statements.requested)
 	assert.Empty(t, f.email.sent)
 	assert.Empty(t, f.repo.inserted)
 }
@@ -482,6 +509,29 @@ func TestSendMonthly_WaitsForTheStatementDay(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, result.Sent)
 	assert.Empty(t, f.repo.periods, "nothing is read before the day")
+}
+
+func TestRender_ReadsTheMonthBeforeInTheOrganizationsZone(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	f.timezone = "America/Chicago"
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	cus := f.customer("", "ap@halstead.test")
+	end := time.Date(2026, 3, 31, 23, 0, 0, 0, chicago).Unix()
+
+	_, err = f.svc.Render(t.Context(), &customerstatementports.StatementRequest{
+		TenantInfo: f.tenant,
+		CustomerID: cus.ID,
+		AsOfDate:   end,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, []customerstatement.Period{{
+		Start: time.Date(2026, 2, 28, 23, 0, 0, 0, chicago).Unix(),
+		End:   end,
+	}}, f.statements.requested)
 }
 
 func TestSendMonthly_SendsLastMonthOnceToEachCustomer(t *testing.T) {

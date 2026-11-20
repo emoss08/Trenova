@@ -105,9 +105,9 @@ test "an unmapped bill-to waits for a mapping" {
   expect customer == none
 }
 
-test "a replacement reads as a change" {
+test "a replacement reads as a replacement" {
   given file "samples/tender-replace.x12"
-  expect purpose == Change
+  expect purpose == Replace
   expect notes.first == "Acme replaced this tender: every field is re-read"
 }
 
@@ -122,4 +122,22 @@ test "a tender pasted as text is read too" {
 property "everything Acme has tendered still reads" {
   vary file in samples "samples/tender-*.x12"
   expect no rejects
+}
+
+test "every tender in a batched file reads" {
+  given file "samples/tender-batch.x12"
+  expect stops.count == 2
+  expect key.startsWith("AM-4821")
+}
+
+test "one tender of a batched file is picked by its place" {
+  given file "samples/tender-batch.x12"
+  given transaction 2
+  expect key == "AM-48214"
+  expect bol == "BOL-77121"
+}
+
+test "a reference qualifier sent in lowercase reads as its code" {
+  given file "samples/tender-lowercase.x12"
+  expect refs["BM"] == "BOL-77120"
 }

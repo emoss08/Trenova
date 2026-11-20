@@ -122,5 +122,5 @@ func TestSearch_RefusesAKindOfRecordItDoesNotFind(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "entityTypes", validation.Field)
+	assert.Equal(t, "entityTypes", validation.Field())
 }

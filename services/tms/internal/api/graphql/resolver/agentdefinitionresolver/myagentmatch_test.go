@@ -174,7 +174,7 @@ func TestMyAgentMatch_RefusesAnAgentIDThatIsNotOne(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "currentAgentId", validation.Field)
+	assert.Equal(t, "currentAgentId", validation.Field())
 	assert.Equal(t, errortypes.ErrInvalid, validation.Code)
 	assert.Empty(t, recommender.asked)
 }

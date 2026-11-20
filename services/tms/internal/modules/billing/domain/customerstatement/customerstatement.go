@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -44,11 +45,54 @@ func (s *Statement) BeforeCreate(ctx context.Context) error {
 	return nil
 }
 
+const (
+	// MaxPeriodDays is the longest span one statement covers; the balance
+	// before it is carried in as the opening balance.
+	MaxPeriodDays = 366
+	// MaxTransactions is the most entries one statement lists.
+	MaxTransactions = 5000
+
+	secondsPerDay = int64(24 * 60 * 60)
+)
+
 // Period is the span a statement covers, both ends inclusive, in Unix
-// seconds. A zero Start runs from the account's first transaction.
+// seconds.
 type Period struct {
 	Start int64
 	End   int64
+}
+
+// Resolve checks the span and fills a zero Start with the calendar month
+// before End in loc (UTC when nil), clamped to the month's end, so every
+// statement reads a bounded window of the ledger on the monthly cycle.
+func (p Period) Resolve(loc *time.Location) (Period, error) {
+	if p.Start < 0 || p.End < 0 {
+		return p, errortypes.NewValidationError(
+			"startDate", errortypes.ErrInvalid, "Statement dates cannot be negative",
+		)
+	}
+	if p.Start == 0 {
+		if loc == nil {
+			loc = time.UTC
+		}
+		p.Start = max(timeutils.AddMonths(time.Unix(p.End, 0).In(loc), -1).Unix(), 0)
+	}
+	if p.Start > p.End {
+		return p, errortypes.NewValidationError(
+			"startDate",
+			errortypes.ErrInvalid,
+			"Start the statement on or before its statement date",
+		)
+	}
+	if p.End-p.Start > MaxPeriodDays*secondsPerDay {
+		return p, errortypes.NewValidationError(
+			"startDate",
+			errortypes.ErrInvalid,
+			"A statement covers at most {0} days; start it later",
+			MaxPeriodDays,
+		)
+	}
+	return p, nil
 }
 
 // MonthlyPeriod is the calendar month before now in loc, and whether its

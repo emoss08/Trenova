@@ -96,7 +96,7 @@ func TestSummaryRefusesAWindowInTheFutureOrTooFarBack(t *testing.T) {
 		)
 		var validation *errortypes.Error
 		require.ErrorAs(t, err, &validation)
-		assert.Equal(t, "since", validation.Field)
+		assert.Equal(t, "since", validation.Field())
 	}
 	assert.Empty(t, repo.asked)
 }

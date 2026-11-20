@@ -64,20 +64,21 @@ var accountingControlsTable = schema.Table{
 		{Name: "default_escrow_liability_account_id", Quoted: `"default_escrow_liability_account_id"`, Field: "DefaultEscrowLiabilityAccountID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Default Escrow Liability Account ID`, JSON: `defaultEscrowLiabilityAccountId`},
 		{Name: "default_driver_reimbursement_account_id", Quoted: `"default_driver_reimbursement_account_id"`, Field: "DefaultDriverReimbursementAccountID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Default Driver Reimbursement Account ID`, JSON: `defaultDriverReimbursementAccountId`},
 		{Name: "default_escrow_interest_expense_account_id", Quoted: `"default_escrow_interest_expense_account_id"`, Field: "DefaultEscrowInterestExpenseAccountID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Default Escrow Interest Expense Account ID`, JSON: `defaultEscrowInterestExpenseAccountId`},
+		{Name: "default_escrow_adjustment_account_id", Quoted: `"default_escrow_adjustment_account_id"`, Field: "DefaultEscrowAdjustmentAccountID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Default Escrow Adjustment Account ID`, JSON: `defaultEscrowAdjustmentAccountId`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 43},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 44},
 	Returning:    nil,
-	Version:      41,
+	Version:      42,
 	AutoID:       0,
-	AutoCreate:   42,
-	AutoUpdate:   43,
+	AutoCreate:   43,
+	AutoUpdate:   44,
 	IDPrefix:     "ac_",
 	New:          newAccountingControl,
 	NewN:         newNAccountingControl,
@@ -133,6 +134,7 @@ type AccountingControlsTable struct {
 	DefaultEscrowLiabilityAccountID         keelkinds.PulidIDCol
 	DefaultDriverReimbursementAccountID     keelkinds.PulidIDCol
 	DefaultEscrowInterestExpenseAccountID   keelkinds.PulidIDCol
+	DefaultEscrowAdjustmentAccountID        keelkinds.PulidIDCol
 	Version                                 keel.Int64Col
 	CreatedAt                               keel.Int64Col
 	UpdatedAt                               keel.Int64Col
@@ -182,9 +184,10 @@ var AccountingControls = &AccountingControlsTable{
 	DefaultEscrowLiabilityAccountID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 38}}},
 	DefaultDriverReimbursementAccountID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 39}}},
 	DefaultEscrowInterestExpenseAccountID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 40}}},
-	Version:                                 keel.Int64Col{Col: keel.Col{Ref: &accountingControlsRef, Index: 41}},
-	CreatedAt:                               keel.Int64Col{Col: keel.Col{Ref: &accountingControlsRef, Index: 42}},
-	UpdatedAt:                               keel.Int64Col{Col: keel.Col{Ref: &accountingControlsRef, Index: 43}},
+	DefaultEscrowAdjustmentAccountID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 41}}},
+	Version:                                 keel.Int64Col{Col: keel.Col{Ref: &accountingControlsRef, Index: 42}},
+	CreatedAt:                               keel.Int64Col{Col: keel.Col{Ref: &accountingControlsRef, Index: 43}},
+	UpdatedAt:                               keel.Int64Col{Col: keel.Col{Ref: &accountingControlsRef, Index: 44}},
 }
 
 // BuildAccountingControls builds the table of accounting_controls for ref. Generated relation and alias methods call it.
@@ -232,9 +235,10 @@ func BuildAccountingControls(r *keel.Ref) *AccountingControlsTable {
 		DefaultEscrowLiabilityAccountID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 38}}},
 		DefaultDriverReimbursementAccountID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 39}}},
 		DefaultEscrowInterestExpenseAccountID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 40}}},
-		Version:                                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
-		CreatedAt:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
-		UpdatedAt:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
+		DefaultEscrowAdjustmentAccountID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 41}}},
+		Version:                                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
+		CreatedAt:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
+		UpdatedAt:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
 	}
 }
 
@@ -710,10 +714,12 @@ func ptrAccountingControl(p unsafe.Pointer, c int32) any {
 	case 40:
 		return (*string)(unsafe.Pointer(&r.DefaultEscrowInterestExpenseAccountID))
 	case 41:
-		return &r.Version
+		return (*string)(unsafe.Pointer(&r.DefaultEscrowAdjustmentAccountID))
 	case 42:
-		return &r.CreatedAt
+		return &r.Version
 	case 43:
+		return &r.CreatedAt
+	case 44:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -862,10 +868,15 @@ func valueAccountingControl(p unsafe.Pointer, c int32) any {
 		}
 		return string(r.DefaultEscrowInterestExpenseAccountID)
 	case 41:
-		return r.Version
+		if r.DefaultEscrowAdjustmentAccountID == "" {
+			return nil
+		}
+		return string(r.DefaultEscrowAdjustmentAccountID)
 	case 42:
-		return r.CreatedAt
+		return r.Version
 	case 43:
+		return r.CreatedAt
+	case 44:
 		return r.UpdatedAt
 	}
 	return nil

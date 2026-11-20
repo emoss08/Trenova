@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/referencedataguard"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -139,7 +138,7 @@ func (s *Service) tenantLocation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*time.Location, error) {
-	return orgzone.Location(ctx, s.organizations, tenantInfo)
+	return tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
 }
 
 func versionMismatch(entity string) error {

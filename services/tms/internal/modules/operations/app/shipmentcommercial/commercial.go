@@ -503,7 +503,7 @@ func (c *Calculator) syncDetentionCharge(
 	}
 
 	if control.UseDetentionPolicyEngine {
-		return c.syncDetentionFromPolicyEngine(ctx, entity, pass)
+		return c.syncDetentionFromPolicyEngine(ctx, entity, control, pass)
 	}
 
 	if !control.TrackDetentionTime ||
@@ -813,9 +813,15 @@ func ensureGeneratedDetentionCharge(
 func (c *Calculator) syncDetentionFromPolicyEngine(
 	ctx context.Context,
 	entity *shipment.Shipment,
+	control *shipmentcontrol.ShipmentControl,
 	pass *ratingPass,
 ) error {
-	result, err := c.detentionEngine.SyncShipment(ctx, entity)
+	var defaultPolicyID pulid.ID
+	if control.DefaultDetentionPolicyID != nil {
+		defaultPolicyID = *control.DefaultDetentionPolicyID
+	}
+
+	result, err := c.detentionEngine.SyncShipment(ctx, entity, defaultPolicyID)
 	if err != nil {
 		return err
 	}

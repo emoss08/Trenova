@@ -264,7 +264,7 @@ func requireDuplicate(t *testing.T, err error, field string) {
 	require.Error(t, err)
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, field, fieldErr.Field)
+	assert.Equal(t, field, fieldErr.Field())
 	assert.Equal(t, errortypes.ErrDuplicate, fieldErr.Code)
 }
 

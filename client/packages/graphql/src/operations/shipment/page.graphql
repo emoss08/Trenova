@@ -88,6 +88,8 @@ fragment ShipmentStopFields on ShipmentStop {
   sequence
   pieces
   weight
+  temperatureMin
+  temperatureMax
   scheduledWindowStart
   scheduledWindowEnd
   actualArrival
@@ -246,6 +248,8 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   lengthFeet
   widthFeet
   heightFeet
+  temperatureMin
+  temperatureMax
   version
   createdAt
   updatedAt
@@ -648,6 +652,11 @@ fragment ShipmentEventFields on ShipmentEvent {
     stopId
     previousStatus
     newStatus
+    stopNumber
+    stopType
+    locationName
+    actualAt
+    previousActualAt
   }
   ... on ShipmentAssignmentEvent {
     moveId

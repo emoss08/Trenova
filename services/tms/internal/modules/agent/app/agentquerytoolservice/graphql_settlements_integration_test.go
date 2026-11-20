@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -222,6 +223,9 @@ func settlementServices(conn *postgres.Connection, services *agentread.ResolverP
 		Logger: logger, DB: conn, SettlementRepo: settlements, BatchRepo: batches,
 		PayEventRepo: events, AssignmentRepo: assignments, DeductionRepo: deductions,
 		EarningRepo: earnings, PayCodeRepo: codes, AdvanceRepo: advances, EscrowRepo: escrow,
+		Organizations: organizationrepository.New(organizationrepository.Params{
+			DB: conn, Logger: logger, Cache: organizationCacheMiss{},
+		}),
 	})
 	services.DriverSettlementReviewService = driversettlementreviewservice.New(
 		driversettlementreviewservice.Params{

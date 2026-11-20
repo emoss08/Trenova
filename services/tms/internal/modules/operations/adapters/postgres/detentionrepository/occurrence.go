@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
-	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -139,23 +138,30 @@ func (r *occurrenceRepository) GetByID(
 	})
 }
 
-func (r *occurrenceRepository) GetByStop(
+func (r *occurrenceRepository) ListByStops(
 	ctx context.Context,
-	req *detentionports.GetOccurrenceByStopRequest,
-) (*detention.DetentionOccurrence, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*detention.DetentionOccurrence, error) {
-		o := detentiondb.DetentionOccurrences
-		entity, err := o.Where(o.StopID.Eq(req.StopID)).One(ctx, r.db.Keel(ctx))
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil
+	req *detentionports.ListOccurrencesByStopsRequest,
+) ([]*detention.DetentionOccurrence, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
+			if req == nil || len(req.StopIDs) == 0 {
+				return []*detention.DetentionOccurrence{}, nil
 			}
-			r.l.Error("failed to get detention occurrence by stop", zap.Error(err))
-			return nil, err
-		}
 
-		return entity, nil
-	})
+			o := detentiondb.DetentionOccurrences
+			entities, err := o.Where(o.StopID.In(req.StopIDs...)).
+				Limit(len(req.StopIDs)).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list detention occurrences by stop", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
 }
 
 func (r *occurrenceRepository) GetByShipment(
@@ -327,41 +333,28 @@ func (r *occurrenceRepository) ListNoticesDue(
 }
 
 // Upsert writes the occurrence keyed on its stop. Recalculation runs on every
-// shipment save, so this is the hot path and must stay idempotent.
+// shipment save, so this is the hot path: the caller has read the stop's
+// occurrence already and hands its ID and version over, so nothing is read
+// here.
 func (r *occurrenceRepository) Upsert(
 	ctx context.Context,
 	entity *detention.DetentionOccurrence,
 ) (*detention.DetentionOccurrence, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionOccurrence, error) {
-		existing, err := r.GetByStop(ctx, &detentionports.GetOccurrenceByStopRequest{
-			StopID: entity.StopID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		if existing == nil {
-			err = detentiondb.DetentionOccurrences.Create(ctx, r.db.Keel(ctx), entity)
-			if err != nil {
-				r.l.Error(
-					"failed to insert detention occurrence",
-					zap.String("stopId", entity.StopID.String()),
-					zap.Error(err),
-				)
-				return nil, occurrenceErrors.Map(err, entity.ID.String())
-			}
-			return entity, nil
-		}
-
-		entity.ID = existing.ID
-		entity.CreatedAt = existing.CreatedAt
-		entity.Version = existing.Version
-
+	if !entity.ID.IsNil() {
 		return r.Update(ctx, entity)
+	}
+
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionOccurrence, error) {
+		if err := detentiondb.DetentionOccurrences.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to insert detention occurrence",
+				zap.String("stopId", entity.StopID.String()),
+				zap.Error(err),
+			)
+			return nil, occurrenceErrors.Map(err, entity.ID.String())
+		}
+
+		return entity, nil
 	})
 }
 

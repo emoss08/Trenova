@@ -263,11 +263,15 @@ query DeskEdiTransfer($id: ID!) {
         windowCloses
         pieces
         weight
+        temperatureMin
+        temperatureMax
       }
       commodities {
         commodity
         weight
         pieces
+        temperatureMin
+        temperatureMax
       }
       charges {
         freight

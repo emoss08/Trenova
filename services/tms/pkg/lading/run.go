@@ -183,4 +183,5 @@ type RunResult struct {
 	Unmapped     []Unmapped          `json:"unmapped"`
 	Error        *wasmmodule.Message `json:"error"`
 	Steps        uint64              `json:"steps"`
+	NotSent      bool                `json:"notSent,omitempty"`
 }

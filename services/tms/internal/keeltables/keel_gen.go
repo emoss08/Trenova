@@ -436,6 +436,8 @@ func All() []*schema.Table {
 		customerdb.CustomerBillingProfilesSchema(),
 		customerdb.CustomerEmailProfilesSchema(),
 		customerledgerdb.CustomerLedgerEntriesSchema(),
+		customerledgerdb.InvoiceBalancesSchema(),
+		customerledgerdb.MonthlyBalancesSchema(),
 		customerpaymentdb.ApplicationsSchema(),
 		customerpaymentdb.PaymentsSchema(),
 		customerstatementdb.StatementsSchema(),

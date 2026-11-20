@@ -2,9 +2,13 @@ package accountsreceivableservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerstatement"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -18,12 +22,14 @@ type Params struct {
 	Logger        *zap.Logger
 	Repo          customerledgerports.AccountsReceivableRepository
 	AnalyticsRepo customerledgerports.ARAnalyticsRepository
+	Organizations tenantports.OrganizationRepository
 }
 
 type Service struct {
 	l             *zap.Logger
 	repo          customerledgerports.AccountsReceivableRepository
 	analyticsRepo customerledgerports.ARAnalyticsRepository
+	organizations tenantports.OrganizationRepository
 }
 
 var _ customerledgerports.ARSnapshotReader = (*Service)(nil)
@@ -33,21 +39,8 @@ func New(p Params) *Service {
 		l:             p.Logger.Named("service.accounts-receivable"),
 		repo:          p.Repo,
 		analyticsRepo: p.AnalyticsRepo,
+		organizations: p.Organizations,
 	}
-}
-
-func (s *Service) ListCustomerLedger(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	customerID pulid.ID,
-) ([]*customerledgerports.ARLedgerEntry, error) {
-	return s.repo.ListCustomerLedger(
-		ctx,
-		customerledgerports.ListCustomerLedgerRequest{
-			TenantInfo: tenantInfo,
-			CustomerID: customerID,
-		},
-	)
 }
 
 func (s *Service) ListOpenItems(
@@ -79,6 +72,18 @@ func (s *Service) GetCustomerStatement(
 	if asOfDate == 0 {
 		asOfDate = timeutils.NowUnix()
 	}
+	loc := time.UTC
+	if startDate == 0 {
+		var err error
+		loc, err = tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
+		if err != nil {
+			return nil, err
+		}
+	}
+	period, err := customerstatement.Period{Start: startDate, End: asOfDate}.Resolve(loc)
+	if err != nil {
+		return nil, err
+	}
 
 	customerName, err := s.repo.GetCustomerName(
 		ctx,
@@ -91,15 +96,38 @@ func (s *Service) GetCustomerStatement(
 		return nil, err
 	}
 
-	ledger, err := s.repo.ListCustomerLedger(
+	opening, err := s.repo.GetCustomerLedgerBalance(
 		ctx,
-		customerledgerports.ListCustomerLedgerRequest{
+		customerledgerports.GetCustomerLedgerBalanceRequest{
 			TenantInfo: tenantInfo,
 			CustomerID: customerID,
+			Before:     period.Start,
 		},
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	ledger, err := s.repo.ListCustomerLedgerWindow(
+		ctx,
+		customerledgerports.ListCustomerLedgerWindowRequest{
+			TenantInfo: tenantInfo,
+			CustomerID: customerID,
+			From:       period.Start,
+			Through:    period.End,
+			Limit:      customerstatement.MaxTransactions + 1,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(ledger) > customerstatement.MaxTransactions {
+		return nil, errortypes.NewValidationError(
+			"startDate",
+			errortypes.ErrInvalid,
+			"This period has more than {0} transactions; choose a shorter one",
+			customerstatement.MaxTransactions,
+		)
 	}
 
 	openItems, err := s.repo.ListOpenItems(
@@ -127,35 +155,31 @@ func (s *Service) GetCustomerStatement(
 	}
 
 	statement := &customerledgerports.ARCustomerStatement{
-		CustomerID:    customerID,
-		CustomerName:  customerName,
-		StatementDate: asOfDate,
-		StartDate:     startDate,
-		OpenItems:     openItems,
+		CustomerID:          customerID,
+		CustomerName:        customerName,
+		StatementDate:       period.End,
+		StartDate:           period.Start,
+		OpeningBalanceMinor: opening,
+		OpenItems:           openItems,
 	}
 	if aging != nil {
 		statement.Aging = aging.Buckets
 	}
 
-	runningBalance := int64(0)
+	runningBalance := opening
 	transactions := make([]*customerledgerports.ARStatementTransaction, 0, len(ledger))
 	for _, entry := range ledger {
-		if entry == nil || entry.TransactionDate > asOfDate {
+		if entry == nil {
 			continue
 		}
-		if startDate > 0 && entry.TransactionDate < startDate {
-			statement.OpeningBalanceMinor += entry.AmountMinor
-			runningBalance += entry.AmountMinor
-			continue
-		}
-
 		txn := &customerledgerports.ARStatementTransaction{
-			TransactionDate: entry.TransactionDate,
-			EventType:       entry.EventType,
-			Description:     customerledger.EventLabel(entry.EventType),
-			DocumentNumber:  entry.DocumentNumber,
-			SourceObjectID:  entry.SourceObjectID,
-			AmountMinor:     entry.AmountMinor,
+			TransactionDate:     entry.TransactionDate,
+			EventType:           entry.EventType,
+			Description:         customerledger.EventLabel(entry.EventType),
+			DocumentNumber:      entry.DocumentNumber,
+			SourceObjectID:      entry.SourceObjectID,
+			AmountMinor:         entry.AmountMinor,
+			SupersededInvoiceID: entry.SupersededInvoiceID,
 		}
 		if entry.AmountMinor >= 0 {
 			txn.ChargeMinor = entry.AmountMinor

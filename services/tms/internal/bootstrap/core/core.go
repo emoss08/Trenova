@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules"
+	apimodule "github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	accountinginfra "github.com/emoss08/trenova/internal/infrastructure/accounting"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
@@ -78,6 +79,7 @@ func Options() fx.Option {
 		billing.SharedOptions(),
 		settlement.SharedOptions(),
 		agent.SharedOptions(),
+		apimodule.AgentReadModule,
 		turnstream.Module,
 		completionrouter.Module,
 	)

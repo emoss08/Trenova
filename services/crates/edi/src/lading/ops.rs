@@ -197,7 +197,8 @@ fn check_json(program: &Program) -> Json {
                 "group": interchange.group.as_ref().map(|(theirs, ours)| json!({ "theirs": theirs.value, "ours": ours.value })),
                 "version": interchange.version.as_ref().map(|version| version.name.clone()),
                 "usage": interchange.usage.as_ref().map(|usage| usage.name.clone()),
-                "separators": program.partner_separators().iter().map(char::to_string).collect::<Vec<_>>(),
+                "separators": program.partner_separators().iter().take(program.separator_count()).map(char::to_string).collect::<Vec<_>>(),
+                "lineEnding": program.line_ending(),
             })
         });
         json!({
@@ -275,6 +276,11 @@ fn check_json(program: &Program) -> Json {
                             "kind": "expect",
                             "set": expect.set.name,
                             "within": expect.within.as_ref().map_or(DEFAULT_ACK_WITHIN, |within| seconds_of(program, *unit, within)),
+                        }),
+                        super::syntax::ast::FlowDecl::Await(answer) => json!({
+                            "kind": "await",
+                            "set": answer.set.name,
+                            "within": answer.within.as_ref().map_or(0, |within| seconds_of(program, *unit, within)),
                         }),
                     }),
                     _ => None,
@@ -771,11 +777,30 @@ fn partner_request(program: &Program) -> StarterRequest {
                 .map(String::from)
                 .collect(),
         ),
+        line_ending: Some(program.line_ending()),
         usage: interchange
             .and_then(|interchange| interchange.usage.as_ref())
             .map(|usage| usage.name.clone()),
+        ack_within_seconds: ack_within(program),
         ..StarterRequest::default()
     }
+}
+
+/// How long the first flow that expects an acknowledgment waits for it, in seconds.
+fn ack_within(program: &Program) -> Option<u32> {
+    program.flows.values().find_map(|unit| {
+        program.units[*unit]
+            .items()
+            .iter()
+            .find_map(|item| match item {
+                Item::Flow(super::syntax::ast::FlowDecl::Expect(expect)) => expect
+                    .within
+                    .as_ref()
+                    .and_then(|within| u32::try_from(seconds_of(program, *unit, within)).ok())
+                    .filter(|seconds| *seconds > 0),
+                _ => None,
+            })
+    })
 }
 
 fn csv_sample(columns: &[(String, Type)]) -> String {
@@ -1139,6 +1164,64 @@ mod tests {
         assert!(run["error"].is_null(), "{run}");
 
         assert!(call("lading.sample", json!({ "map": "nothing" })).is_null());
+    }
+
+    #[test]
+    fn a_declared_line_ending_reaches_the_manifest_the_samples_and_what_is_written() {
+        let mut input = project();
+        let files = input["project"]["files"].as_array_mut().expect("files");
+        let partner = files
+            .iter_mut()
+            .find(|file| file["path"] == "partner.lading")
+            .expect("partner");
+        let source = partner["source"].as_str().expect("source").replacen(
+            "  usage test",
+            "  line ending crlf\n  usage test",
+            1,
+        );
+        let ending_at = source[..source.find("crlf").expect("crlf")]
+            .encode_utf16()
+            .count();
+        partner["source"] = Json::String(source);
+        let ask = |op: &str, extra: Json| {
+            let mut asked = input.clone();
+            if let (Some(object), Json::Object(more)) = (asked.as_object_mut(), extra) {
+                object.extend(more);
+            }
+            let request = json!({ "op": op, "input": asked }).to_string();
+            let response: Json =
+                serde_json::from_slice(&dispatch(request.as_bytes())).expect("json");
+            response["ok"].clone()
+        };
+        let checked = ask("lading.check", json!({}));
+        assert_eq!(checked["errors"], 0, "{checked}");
+        assert_eq!(
+            checked["partner"]["interchange"]["lineEnding"], "crLf",
+            "{checked}"
+        );
+        let completed = ask(
+            "lading.complete",
+            json!({ "path": "partner.lading", "offset": ending_at }),
+        );
+        assert_eq!(
+            labels(&completed),
+            ["cr", "crlf", "lf", "none"],
+            "{completed}"
+        );
+        let tender = ask("lading.sample", json!({ "map": "tenderIn" }));
+        let content = tender["content"].as_str().expect("content");
+        assert!(content.contains("~\r\nGS*"), "{content:?}");
+        let invoice = ask("lading.sample", json!({ "map": "invoiceOut" }));
+        let document: Json =
+            serde_json::from_str(invoice["content"].as_str().expect("content")).expect("json");
+        let run = ask(
+            "lading.run",
+            json!({ "map": "invoiceOut", "input": { "document": document } }),
+        );
+        let text = run["output"]["text"].as_str().expect("text");
+        assert!(text.contains("~\r\nGS*"), "{text:?}");
+        let transaction = run["output"]["transaction"].as_str().expect("transaction");
+        assert!(!transaction.contains('\n'), "{transaction:?}");
     }
 
     #[test]

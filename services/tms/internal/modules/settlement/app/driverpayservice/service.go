@@ -3,18 +3,23 @@ package driverpayservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementjournal"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -35,7 +40,19 @@ type Params struct {
 	AdvanceRepo       driverpayports.PayAdvanceRepository
 	EscrowRepo        driverpayports.EscrowAccountRepository
 	SettlementControl tenantports.SettlementControlRepository
+	AccountingRepo    tenantports.AccountingControlRepository
+	JournalRepo       journalentryports.JournalPostingRepository
+	FiscalPeriodRepo  fiscalperiodports.FiscalPeriodRepository
+	Generator         seqgen.Generator
 	AuditService      auditports.AuditService
+}
+
+type escrowJournalWriter interface {
+	PostEscrowTransaction(
+		ctx context.Context,
+		account *payescrow.EscrowAccount,
+		transaction *payescrow.EscrowTransaction,
+	) (*pulid.ID, error)
 }
 
 type Service struct {
@@ -49,6 +66,7 @@ type Service struct {
 	advanceRepo       driverpayports.PayAdvanceRepository
 	escrowRepo        driverpayports.EscrowAccountRepository
 	settlementControl tenantports.SettlementControlRepository
+	escrowJournal     escrowJournalWriter
 	auditService      auditports.AuditService
 }
 
@@ -64,7 +82,14 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		advanceRepo:       p.AdvanceRepo,
 		escrowRepo:        p.EscrowRepo,
 		settlementControl: p.SettlementControl,
-		auditService:      p.AuditService,
+		escrowJournal: driversettlementjournal.New(&driversettlementjournal.Params{
+			AccountingRepo:   p.AccountingRepo,
+			PayCodeRepo:      p.PayCodeRepo,
+			JournalRepo:      p.JournalRepo,
+			FiscalPeriodRepo: p.FiscalPeriodRepo,
+			Generator:        p.Generator,
+		}),
+		auditService: p.AuditService,
 	}
 }
 

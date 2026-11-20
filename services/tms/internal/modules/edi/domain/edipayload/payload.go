@@ -13,6 +13,12 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const (
+	RefBillOfLading  = "BM"
+	RefCarrierPRO    = "CN"
+	RefPurchaseOrder = "PO"
+)
+
 type DocumentPayload struct {
 	TransactionSet edidocument.TransactionSet        `json:"transactionSet,omitempty"`
 	PurposeCode    editransfer.LoadTenderPurposeCode `json:"purposeCode,omitempty"`
@@ -34,9 +40,12 @@ type FreightInvoicePayload struct {
 	InvoiceNumber      string                 `json:"invoiceNumber,omitempty"`
 	InvoiceDate        int64                  `json:"invoiceDate,omitempty"`
 	DeliveryDate       int64                  `json:"deliveryDate,omitempty"`
+	Key                string                 `json:"key,omitempty"`
 	ShipmentID         pulid.ID               `json:"shipmentId,omitempty"`
 	BOL                string                 `json:"bol,omitempty"`
 	ProNumber          string                 `json:"proNumber,omitempty"`
+	PONumber           string                 `json:"poNumber,omitempty"`
+	ShipperReference   string                 `json:"shipperReference,omitempty"`
 	Weight             *int64                 `json:"weight,omitempty"`
 	BillToName         string                 `json:"billToName,omitempty"`
 	BillToAddressLine1 string                 `json:"billToAddressLine1,omitempty"`
@@ -46,6 +55,7 @@ type FreightInvoicePayload struct {
 	BillToPostalCode   string                 `json:"billToPostalCode,omitempty"`
 	BillToCountry      string                 `json:"billToCountry,omitempty"`
 	CurrencyCode       string                 `json:"currencyCode,omitempty"`
+	Payment            string                 `json:"payment,omitempty"`
 	TotalAmount        decimal.NullDecimal    `json:"totalAmount"`
 	LineCharges        []FreightInvoiceCharge `json:"lineCharges,omitempty"`
 	ReferenceNumbers   map[string]string      `json:"referenceNumbers,omitempty"`
@@ -88,7 +98,9 @@ type FreightInvoiceCharge struct {
 }
 
 type ShipmentStatusPayload struct {
+	Key                        string                `json:"key,omitempty"`
 	ShipmentID                 pulid.ID              `json:"shipmentId,omitempty"`
+	EventID                    pulid.ID              `json:"eventId,omitempty"`
 	BOL                        string                `json:"bol,omitempty"`
 	ProNumber                  string                `json:"proNumber,omitempty"`
 	ShipperReference           string                `json:"shipperReference,omitempty"`
@@ -125,6 +137,8 @@ type ShipmentStatusPayload struct {
 	ServiceFailureNumber       string                `json:"serviceFailureNumber,omitempty"`
 	ServiceFailureReasonCodeID *pulid.ID             `json:"serviceFailureReasonCodeId,omitempty"`
 	ServiceFailureReasonCode   string                `json:"serviceFailureReasonCode,omitempty"`
+	ServiceFailureStatus       string                `json:"serviceFailureStatus,omitempty"`
+	ServiceFailureTrigger      string                `json:"serviceFailureTrigger,omitempty"`
 	References                 map[string]string     `json:"references,omitempty"`
 	Events                     []ShipmentStatusEvent `json:"events,omitempty"`
 }

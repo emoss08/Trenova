@@ -569,7 +569,8 @@ fn list(
                     let key = interp.read_element(&tree, *index, qualifier);
                     let value = interp.read_element(&tree, *index, value);
                     if !key.is_none() && !value.is_none() {
-                        refs.entry(display(&key)).or_insert(value);
+                        refs.entry(display(&key).trim().to_uppercase())
+                            .or_insert(value);
                     }
                 }
             }

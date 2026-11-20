@@ -398,7 +398,6 @@ func (s *DetentionSeed) policyDefs(refs *detentionRefs) []detentionPolicyDef {
 				Code:                        detentionPolicyStandard,
 				Description:                 "Two hours free, billed in quarter hours at the detention accessorial rate. Applies wherever no negotiated term is on file.",
 				Status:                      detentionpolicy.PolicyStatusActive,
-				IsOrgDefault:                true,
 				Priority:                    0,
 				ClockStartBasis:             detentionpolicy.ClockStartBasisLaterOfArrivalOrAppointment,
 				LateArrivalRule:             detentionpolicy.LateArrivalRuleNoEffect,
@@ -1421,6 +1420,7 @@ func (s *DetentionSeed) createOccurrences(
 	dayAccrued := map[string]decimal.Decimal{}
 	shipmentAccrued := decimal.Zero
 	created := 0
+	defaultPolicyID := standardPolicyID(p.candidates)
 
 	for i, stop := range p.stops {
 		stopDef := p.def.stops[i]
@@ -1436,7 +1436,7 @@ func (s *DetentionSeed) createOccurrences(
 			Timestamp:      *stop.ActualArrival,
 		}
 
-		resolution := detentionengine.ResolvePolicy(p.candidates, &match)
+		resolution := detentionengine.ResolvePolicy(p.candidates, &match, defaultPolicyID)
 		if !resolution.Found() {
 			continue
 		}
@@ -2053,4 +2053,16 @@ func formatDetentionDuration(minutes int32) string {
 		return fmt.Sprintf("%dh", hours)
 	}
 	return fmt.Sprintf("%dh %dm", hours, rem)
+}
+
+// standardPolicyID is the policy the seed names as shipment control's default,
+// so the seeded occurrences resolve the way the live engine will.
+func standardPolicyID(candidates []*detentionpolicy.DetentionPolicy) pulid.ID {
+	for _, policy := range candidates {
+		if policy != nil && policy.Code == detentionPolicyStandard {
+			return policy.ID
+		}
+	}
+
+	return pulid.Nil
 }

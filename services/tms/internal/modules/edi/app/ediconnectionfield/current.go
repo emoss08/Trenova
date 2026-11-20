@@ -1,6 +1,8 @@
 package ediconnectionfield
 
 import (
+	"time"
+
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
@@ -62,7 +64,7 @@ func readManifest(current *Current, manifest *lading.Check) {
 		readInterchange(current.Values, manifest.Partner.Interchange)
 	}
 	readMaps(current, manifest)
-	readAcknowledgments(current.Values, manifest)
+	readAcknowledgments(current, manifest)
 }
 
 func readInterchange(values map[string]string, interchange *lading.Interchange) {
@@ -89,6 +91,7 @@ func readInterchange(values map[string]string, interchange *lading.Interchange) 
 			values[keys[index]] = separator
 		}
 	}
+	values[LineEnding] = lineEndingValue(interchange.LineEnding)
 }
 
 func readMaps(current *Current, manifest *lading.Check) {
@@ -116,10 +119,15 @@ func readMaps(current *Current, manifest *lading.Check) {
 	}
 }
 
-func readAcknowledgments(values map[string]string, manifest *lading.Check) {
+func readAcknowledgments(current *Current, manifest *lading.Check) {
+	values := current.Values
 	for _, flow := range manifest.Flows {
 		for index := range flow.Clauses {
 			clause := &flow.Clauses[index]
+			if clause.Kind == lading.ClauseExpect && clause.Within > 0 {
+				readAckWindow(current, time.Duration(clause.Within)*time.Second)
+				continue
+			}
 			if clause.Kind != lading.ClauseReceive || clause.Set == "" {
 				continue
 			}
@@ -129,6 +137,18 @@ func readAcknowledgments(values map[string]string, manifest *lading.Check) {
 			}
 			set := edidocument.TransactionSet(clause.Set)
 			values[SetField(set, edidocument.DocumentDirectionInbound, SetAttrAck)] = ack
+		}
+	}
+}
+
+func readAckWindow(current *Current, window time.Duration) {
+	for _, set := range SupportedSets {
+		if current.Exchanged[SetKey(set, edidocument.DocumentDirectionOutbound)] {
+			current.Values[SetField(
+				set,
+				edidocument.DocumentDirectionOutbound,
+				SetAttrAckWindow,
+			)] = FormatDuration(window)
 		}
 	}
 }

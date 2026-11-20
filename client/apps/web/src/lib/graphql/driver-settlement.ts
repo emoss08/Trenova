@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import type { SettlementControl } from "@/types/settlement-control";
 import type {
   AddSettlementAdjustmentInput,
   AdjustEscrowAccountInput,
@@ -41,7 +42,6 @@ import type {
   UpdatePayCodeInput,
   UpdateRecurringDeductionInput,
   UpdateRecurringEarningInput,
-  UpdateSettlementControlInput,
   WorkerPayAssignmentsQuery,
   WriteOffPayAdvanceInput,
 } from "@trenova/graphql/generated/graphql";
@@ -808,13 +808,37 @@ export async function bulkDriverSettlementAction(input: BulkSettlementActionInpu
   return data.bulkDriverSettlementAction;
 }
 
-export async function updateSettlementControl(input: UpdateSettlementControlInput) {
+/**
+ * Saves an organization's settlement control and returns it as saved: the server stores the
+ * settings it was sent under a new version.
+ */
+export async function updateSettlementControl(
+  record: SettlementControl,
+): Promise<SettlementControl> {
   const data = await requestGraphQL({
     document: UpdateSettlementControlDocument,
     operationName: "UpdateSettlementControl",
-    variables: { input },
+    variables: {
+      input: {
+        version: record.version,
+        payPeriodFrequency: record.payPeriodFrequency,
+        periodEndDayOfWeek: record.periodEndDayOfWeek,
+        payDelayDays: record.payDelayDays,
+        payTrigger: record.payTrigger,
+        autoGenerateBatches: record.autoGenerateBatches,
+        autoApproveClean: record.autoApproveClean,
+        autoAttachAccruals: record.autoAttachAccruals,
+        requireSeparateApprover: record.requireSeparateApprover,
+        autoPostOnApprove: record.autoPostOnApprove,
+        allowNegativeNet: record.allowNegativeNet,
+        varianceThresholdPct: record.varianceThresholdPct,
+        varianceLookbackWeeks: record.varianceLookbackWeeks,
+        defaultEscrowInterestRate: record.defaultEscrowInterestRate,
+        escrowInterestFrequencyMonths: record.escrowInterestFrequencyMonths,
+      },
+    },
   });
-  return data.updateSettlementControl;
+  return { ...record, version: data.updateSettlementControl.version };
 }
 
 export type UnsettledPayEvent = UnsettledPayEventsQuery["unsettledPayEvents"][number];

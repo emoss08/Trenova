@@ -25,10 +25,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const (
-	serviceFailure214TriggerReference = "serviceFailure214Trigger"
-	serviceFailureEvent               = "ServiceFailure"
-)
+const serviceFailureEvent = "ServiceFailure"
 
 type serviceFailure214Candidate struct {
 	partner *edi.EDIPartner
@@ -391,11 +388,7 @@ func buildServiceFailure214LifecyclePayload(
 	if payload.ShipmentStatus == nil {
 		return payload
 	}
-	if payload.ShipmentStatus.References == nil {
-		payload.ShipmentStatus.References = map[string]string{}
-	}
-	payload.ShipmentStatus.References[serviceFailure214TriggerReference] = string(trigger)
-	payload.ShipmentStatus.References["serviceFailureStatus"] = string(failure.Status)
+	payload.ShipmentStatus.ServiceFailureTrigger = string(trigger)
 	return payload
 }
 

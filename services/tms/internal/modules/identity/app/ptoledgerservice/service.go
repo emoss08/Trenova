@@ -163,28 +163,6 @@ func (s *Service) ResolvePolicy(
 	return &ResolvedPolicy{Assignment: assignment, Policy: assignment.Policy}, nil
 }
 
-func (s *Service) OrgLocation(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) (*time.Location, error) {
-	org, err := s.orgRepo.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if org.Timezone == "" {
-		return time.UTC, nil
-	}
-	loc, err := time.LoadLocation(org.Timezone)
-	if err != nil {
-		s.l.Warn("invalid organization timezone; using UTC",
-			zap.String("timezone", org.Timezone), zap.Error(err))
-		return time.UTC, nil
-	}
-	return loc, nil
-}
-
 type postParams struct {
 	key       ptoledgerports.PTOBalanceKey
 	entry     *pto.WorkerPTOLedgerEntry

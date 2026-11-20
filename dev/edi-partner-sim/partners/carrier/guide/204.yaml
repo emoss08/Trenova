@@ -1,0 +1,115 @@
+set: "204"
+version: "004010"
+group: SM
+title: "Quarrystone Freight Lines Load Tender Requirements 5.1"
+
+segments:
+  ST:
+    name: Transaction Set Header
+    elements:
+      - { pos: 1, name: Transaction Set Identifier Code, type: ID, min: 3, max: 3, usage: M, fixed: "204" }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+  B2:
+    name: Beginning Segment for Shipment Information Transaction
+    elements:
+      - { pos: 2, name: Standard Carrier Alpha Code, type: ID, min: 2, max: 4, usage: M, fixed: QYSF }
+      - { pos: 4, name: Shipment Identification Number, type: AN, min: 1, max: 30, usage: M }
+      - { pos: 6, name: Shipment Method of Payment, type: ID, min: 2, max: 2, usage: M, codes: [PP, CC, TP] }
+  B2A:
+    name: Set Purpose
+    elements:
+      - { pos: 1, name: Transaction Set Purpose Code, type: ID, min: 2, max: 2, usage: M, codes: ["00", "01", "04"] }
+      - { pos: 2, name: Application Type, type: ID, min: 2, max: 2, usage: M, fixed: LT }
+  L11:
+    name: Business Instructions and Reference Number
+    elements:
+      - { pos: 1, name: Reference Identification, type: AN, min: 1, max: 30, usage: M }
+      - { pos: 2, name: Reference Identification Qualifier, type: ID, min: 2, max: 3, usage: M, codes: [BM, PO] }
+  N7:
+    name: Equipment Details
+    elements:
+      - { pos: 2, name: Equipment Number, type: AN, min: 1, max: 10, usage: M }
+      - { pos: 11, name: Equipment Description Code, type: ID, min: 2, max: 2, usage: M, codes: [TF, RT, FT] }
+      - { pos: 15, name: Equipment Length, type: N0, min: 4, max: 5, usage: M }
+  S5:
+    name: Stop Off Details
+    elements:
+      - { pos: 1, name: Stop Sequence Number, type: N0, min: 1, max: 3, usage: M }
+      - { pos: 2, name: Stop Reason Code, type: ID, min: 2, max: 2, usage: M, codes: [LD, UL] }
+      - { pos: 3, name: Weight, type: R, min: 1, max: 10, usage: M }
+      - { pos: 4, name: Weight Unit Code, type: ID, min: 1, max: 1, usage: M, codes: [L] }
+      - { pos: 5, name: Number of Units Shipped, type: R, min: 1, max: 10, usage: M }
+      - { pos: 6, name: Unit or Basis for Measurement Code, type: ID, min: 2, max: 2, usage: M, codes: [PC] }
+  G62:
+    name: Appointment Date and Time
+    elements:
+      - { pos: 1, name: Date Qualifier, type: ID, min: 2, max: 2, usage: M, codes: ["37", "38", "53", "54"] }
+      - { pos: 2, name: Date, type: DT, min: 8, max: 8, usage: M }
+      - { pos: 3, name: Time Qualifier, type: ID, min: 1, max: 2, usage: M, codes: [G, L] }
+      - { pos: 4, name: Time, type: TM, min: 4, max: 4, usage: M }
+      - { pos: 5, name: Time Code, type: ID, min: 2, max: 2, usage: M, codes: [CT, ET, MT, PT] }
+  AT8:
+    name: Stop Weight and Pieces
+    elements:
+      - { pos: 1, name: Weight Qualifier, type: ID, min: 1, max: 2, usage: M, codes: [G] }
+      - { pos: 2, name: Weight Unit Code, type: ID, min: 1, max: 1, usage: M, codes: [L] }
+      - { pos: 3, name: Weight, type: R, min: 1, max: 10, usage: M }
+      - { pos: 4, name: Lading Quantity, type: N0, min: 1, max: 7, usage: M }
+  N1:
+    name: Stop Party
+    elements:
+      - { pos: 1, name: Entity Identifier Code, type: ID, min: 2, max: 3, usage: M, codes: [SH, CN] }
+      - { pos: 2, name: Name, type: AN, min: 1, max: 60, usage: M }
+      - { pos: 3, name: Identification Code Qualifier, type: ID, min: 1, max: 2, usage: O, codes: ["93"] }
+      - { pos: 4, name: Identification Code, type: AN, min: 2, max: 80, usage: O }
+    syntax: [P0304]
+  N3:
+    name: Address Information
+    elements:
+      - { pos: 1, name: Address Information, type: AN, min: 1, max: 55, usage: M }
+      - { pos: 2, name: Address Information, type: AN, min: 1, max: 55, usage: O }
+  N4:
+    name: Geographic Location
+    elements:
+      - { pos: 1, name: City Name, type: AN, min: 2, max: 30, usage: M }
+      - { pos: 2, name: State or Province Code, type: ID, min: 2, max: 2, usage: M }
+      - { pos: 3, name: Postal Code, type: ID, min: 5, max: 9, usage: M }
+      - { pos: 4, name: Country Code, type: ID, min: 2, max: 3, usage: M, codes: [US] }
+  L3:
+    name: Total Weight and Charges
+    elements:
+      - { pos: 1, name: Weight, type: R, min: 1, max: 10, usage: M }
+      - { pos: 2, name: Weight Qualifier, type: ID, min: 1, max: 2, usage: M, codes: [G] }
+      - { pos: 5, name: Tendered Rate, type: N2, min: 1, max: 12, usage: M }
+      - { pos: 11, name: Lading Quantity, type: N0, min: 1, max: 7, usage: M }
+      - { pos: 12, name: Weight Unit Code, type: ID, min: 1, max: 1, usage: M, codes: [L] }
+  SE:
+    name: Transaction Set Trailer
+    elements:
+      - { pos: 1, name: Number of Included Segments, type: N0, min: 1, max: 10, usage: M }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+
+structure:
+  - { seg: ST, usage: M }
+  - { seg: B2, usage: M }
+  - { seg: B2A, usage: M }
+  - { seg: L11, usage: M, max: 5 }
+  - loop: "0200"
+    usage: M
+    body:
+      - { seg: N7, usage: M }
+  - loop: "0300"
+    usage: M
+    max: 12
+    body:
+      - { seg: S5, usage: M }
+      - { seg: G62, usage: M, max: 2 }
+      - { seg: AT8, usage: M }
+      - loop: "0310"
+        usage: M
+        body:
+          - { seg: N1, usage: M }
+          - { seg: N3, usage: M }
+          - { seg: N4, usage: M }
+  - { seg: L3, usage: M }
+  - { seg: SE, usage: M }

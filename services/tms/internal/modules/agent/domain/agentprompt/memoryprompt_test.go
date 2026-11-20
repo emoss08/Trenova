@@ -346,7 +346,7 @@ func TestValidate_BoundsTheMemoryTokenBudget(t *testing.T) {
 	me := errortypes.NewMultiError()
 	d.Validate(me)
 	for _, err := range me.Errors {
-		assert.NotEqual(t, "memoryTokenBudget", err.Field, "no budget is the default")
+		assert.NotEqual(t, "memoryTokenBudget", err.Field(), "no budget is the default")
 	}
 }
 

@@ -105,7 +105,7 @@ func TestToolRuleOverride_Validate(t *testing.T) {
 				return
 			}
 			assert.True(t, multiErr.HasErrors())
-			assert.Equal(t, tt.field, multiErr.Errors[0].Field)
+			assert.Equal(t, tt.field, multiErr.Errors[0].Field())
 		})
 	}
 }

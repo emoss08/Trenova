@@ -202,11 +202,14 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	ledger, err := repo.ListCustomerLedger(
+	ledger, err := repo.ListCustomerLedgerWindow(
 		ctx,
-		customerledgerports.ListCustomerLedgerRequest{
+		customerledgerports.ListCustomerLedgerWindowRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
 			CustomerID: shp.CustomerID,
+			From:       postedAt,
+			Through:    now.Add(24 * time.Hour).Unix(),
+			Limit:      10,
 		},
 	)
 	require.NoError(t, err)

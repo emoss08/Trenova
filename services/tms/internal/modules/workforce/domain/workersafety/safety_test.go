@@ -121,7 +121,7 @@ func TestSafetyEventValidate(t *testing.T) {
 		multiErr := errortypes.NewMultiError()
 		e.Validate(multiErr)
 		require.True(t, multiErr.HasErrors())
-		assert.Equal(t, "inspectionResult", multiErr.Errors[0].Field)
+		assert.Equal(t, "inspectionResult", multiErr.Errors[0].Field())
 
 		c := safetyEvent(
 			workersafety.SafetyEventCitation,
@@ -134,7 +134,7 @@ func TestSafetyEventValidate(t *testing.T) {
 		multiErr = errortypes.NewMultiError()
 		c.Validate(multiErr)
 		require.True(t, multiErr.HasErrors())
-		assert.Equal(t, "inspectionResult", multiErr.Errors[0].Field)
+		assert.Equal(t, "inspectionResult", multiErr.Errors[0].Field())
 	})
 
 	t.Run("closing needs a resolution and money cannot be negative", func(t *testing.T) {

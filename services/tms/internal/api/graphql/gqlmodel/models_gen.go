@@ -3032,6 +3032,15 @@ type CostingControlInput struct {
 	Version              int     `json:"version"`
 }
 
+// One save of the cost model: the control's settings when they changed and each category that
+// changed, written together or not at all. A refusal names a category by its place in
+// `categories`.
+type CostingControlSaveInput struct {
+	// Null leaves the control's settings as they are.
+	Control    *CostingControlInput       `json:"control,omitempty"`
+	Categories []*CostCategoryUpdateInput `json:"categories"`
+}
+
 // Creates the record in the accounting system and maps to it.
 type CreateAccountingReferenceRecordInput struct {
 	MappingID string `json:"mappingId"`
@@ -4346,14 +4355,15 @@ type DetentionOccurrenceDetail struct {
 }
 
 type DetentionPolicy struct {
-	ID                          string                                  `json:"id"`
-	BusinessUnitID              string                                  `json:"businessUnitId"`
-	OrganizationID              string                                  `json:"organizationId"`
-	Name                        string                                  `json:"name"`
-	Code                        string                                  `json:"code"`
-	Description                 string                                  `json:"description"`
-	Status                      detentionpolicy.PolicyStatus            `json:"status"`
-	IsOrgDefault                bool                                    `json:"isOrgDefault"`
+	ID             string                       `json:"id"`
+	BusinessUnitID string                       `json:"businessUnitId"`
+	OrganizationID string                       `json:"organizationId"`
+	Name           string                       `json:"name"`
+	Code           string                       `json:"code"`
+	Description    string                       `json:"description"`
+	Status         detentionpolicy.PolicyStatus `json:"status"`
+	// Whether shipment control names this policy as the organization's default, the one that governs a stop no other policy covers. A default stays active and covers all freight.
+	IsOrganizationDefault       bool                                    `json:"isOrganizationDefault"`
 	Priority                    int                                     `json:"priority"`
 	SpecificityScore            int                                     `json:"specificityScore"`
 	CustomerID                  *string                                 `json:"customerId,omitempty"`
@@ -4428,7 +4438,6 @@ type DetentionPolicyInput struct {
 	Code                        string                                   `json:"code"`
 	Description                 *string                                  `json:"description,omitempty"`
 	Status                      *detentionpolicy.PolicyStatus            `json:"status,omitempty"`
-	IsOrgDefault                *bool                                    `json:"isOrgDefault,omitempty"`
 	Priority                    *int                                     `json:"priority,omitempty"`
 	CustomerID                  *string                                  `json:"customerId,omitempty"`
 	LocationID                  *string                                  `json:"locationId,omitempty"`
@@ -6050,6 +6059,10 @@ type EDITenderCommodity struct {
 	Commodity string `json:"commodity"`
 	Weight    int    `json:"weight"`
 	Pieces    int    `json:"pieces"`
+	// Lowest temperature, in whole degrees Fahrenheit, this line must be kept at.
+	TemperatureMin *int `json:"temperatureMin,omitempty"`
+	// Highest temperature, in whole degrees Fahrenheit, this line must be kept at.
+	TemperatureMax *int `json:"temperatureMax,omitempty"`
 }
 
 type EDITenderStop struct {
@@ -6065,6 +6078,10 @@ type EDITenderStop struct {
 	WindowCloses *int    `json:"windowCloses,omitempty"`
 	Pieces       *int    `json:"pieces,omitempty"`
 	Weight       *int    `json:"weight,omitempty"`
+	// Lowest temperature, in whole degrees Fahrenheit, the tender keeps the freight at from this stop on.
+	TemperatureMin *int `json:"temperatureMin,omitempty"`
+	// Highest temperature, in whole degrees Fahrenheit, the tender keeps the freight at from this stop on.
+	TemperatureMax *int `json:"temperatureMax,omitempty"`
 }
 
 type EDITransferConnection struct {
@@ -6275,6 +6292,19 @@ type EscrowAccountConnection struct {
 type EscrowAccountEdge struct {
 	Node   *payescrow.EscrowAccount `json:"node"`
 	Cursor string                   `json:"cursor"`
+}
+
+// A customer's ledger over a window, to export as a report with its running balance.
+type ExportCustomerLedgerInput struct {
+	// The report's name in the person's reports.
+	Name       string `json:"name"`
+	CustomerID string `json:"customerId"`
+	// The first day exported; the balance starts from what the customer owed before it. Empty starts at the first entry.
+	StartDate *int `json:"startDate,omitempty"`
+	// The last instant exported. Empty is the moment of the export.
+	EndDate *int `json:"endDate,omitempty"`
+	// csv, xlsx or pdf.
+	Format string `json:"format"`
 }
 
 type ExportTableViewInput struct {
@@ -10714,21 +10744,23 @@ type Shipment struct {
 	// The values the shipment's tariff prices with, by input name. Each value is a Tariff wire value.
 	TariffInputs map[string]any `json:"tariffInputs,omitempty"`
 	// The freight the shipment bills, line by line, as its last rating produced it.
-	FreightLines           []*ShipmentFreightLine `json:"freightLines"`
-	TotalChargeAmount      *string                `json:"totalChargeAmount,omitempty"`
-	Pieces                 *int                   `json:"pieces,omitempty"`
-	Weight                 *int                   `json:"weight,omitempty"`
-	TemperatureMin         *int                   `json:"temperatureMin,omitempty"`
-	TemperatureMax         *int                   `json:"temperatureMax,omitempty"`
-	ActualDeliveryDate     *int                   `json:"actualDeliveryDate,omitempty"`
-	ActualShipDate         *int                   `json:"actualShipDate,omitempty"`
-	CanceledAt             *int                   `json:"canceledAt,omitempty"`
-	BillingTransferStatus  *string                `json:"billingTransferStatus,omitempty"`
-	TransferredToBillingAt *int                   `json:"transferredToBillingAt,omitempty"`
-	MarkedReadyToBillAt    *int                   `json:"markedReadyToBillAt,omitempty"`
-	BilledAt               *int                   `json:"billedAt,omitempty"`
-	FuelSurchargeLocked    bool                   `json:"fuelSurchargeLocked"`
-	RatingDetail           *ShipmentRatingDetail  `json:"ratingDetail,omitempty"`
+	FreightLines      []*ShipmentFreightLine `json:"freightLines"`
+	TotalChargeAmount *string                `json:"totalChargeAmount,omitempty"`
+	Pieces            *int                   `json:"pieces,omitempty"`
+	Weight            *int                   `json:"weight,omitempty"`
+	// Lowest temperature, in whole degrees Fahrenheit, of the load. When a stop or commodity has a range this is derived from them: the range every one shares, or the span from the coldest to the warmest bound when they share none.
+	TemperatureMin *int `json:"temperatureMin,omitempty"`
+	// Highest temperature, in whole degrees Fahrenheit, of the load, derived as temperatureMin is.
+	TemperatureMax         *int                  `json:"temperatureMax,omitempty"`
+	ActualDeliveryDate     *int                  `json:"actualDeliveryDate,omitempty"`
+	ActualShipDate         *int                  `json:"actualShipDate,omitempty"`
+	CanceledAt             *int                  `json:"canceledAt,omitempty"`
+	BillingTransferStatus  *string               `json:"billingTransferStatus,omitempty"`
+	TransferredToBillingAt *int                  `json:"transferredToBillingAt,omitempty"`
+	MarkedReadyToBillAt    *int                  `json:"markedReadyToBillAt,omitempty"`
+	BilledAt               *int                  `json:"billedAt,omitempty"`
+	FuelSurchargeLocked    bool                  `json:"fuelSurchargeLocked"`
+	RatingDetail           *ShipmentRatingDetail `json:"ratingDetail,omitempty"`
 	// Whether this shipment still carries the rate its contract applied. It goes
 	// false the moment somebody edits the tariff, its inputs, or one of
 	// the contract's own accessorial charges.
@@ -11393,16 +11425,20 @@ type ShipmentCommentsFilterInput struct {
 }
 
 type ShipmentCommodity struct {
-	ID             *string                  `json:"id,omitempty"`
-	BusinessUnitID string                   `json:"businessUnitId"`
-	OrganizationID string                   `json:"organizationId"`
-	ShipmentID     string                   `json:"shipmentId"`
-	CommodityID    string                   `json:"commodityId"`
-	Pieces         int                      `json:"pieces"`
-	Weight         int                      `json:"weight"`
-	LengthFeet     *float64                 `json:"lengthFeet,omitempty"`
-	WidthFeet      *float64                 `json:"widthFeet,omitempty"`
-	HeightFeet     *float64                 `json:"heightFeet,omitempty"`
+	ID             *string  `json:"id,omitempty"`
+	BusinessUnitID string   `json:"businessUnitId"`
+	OrganizationID string   `json:"organizationId"`
+	ShipmentID     string   `json:"shipmentId"`
+	CommodityID    string   `json:"commodityId"`
+	Pieces         int      `json:"pieces"`
+	Weight         int      `json:"weight"`
+	LengthFeet     *float64 `json:"lengthFeet,omitempty"`
+	WidthFeet      *float64 `json:"widthFeet,omitempty"`
+	HeightFeet     *float64 `json:"heightFeet,omitempty"`
+	// Lowest temperature, in whole degrees Fahrenheit, this line's freight must be kept at.
+	TemperatureMin *int `json:"temperatureMin,omitempty"`
+	// Highest temperature, in whole degrees Fahrenheit, this line's freight must be kept at.
+	TemperatureMax *int                     `json:"temperatureMax,omitempty"`
 	Version        int                      `json:"version"`
 	CreatedAt      int                      `json:"createdAt"`
 	UpdatedAt      int                      `json:"updatedAt"`
@@ -11432,15 +11468,17 @@ type ShipmentCommodityDetail struct {
 }
 
 type ShipmentCommodityInput struct {
-	ID          *string  `json:"id,omitempty"`
-	ShipmentID  *string  `json:"shipmentId,omitempty"`
-	CommodityID string   `json:"commodityId"`
-	Pieces      *int     `json:"pieces,omitempty"`
-	Weight      *int     `json:"weight,omitempty"`
-	LengthFeet  *float64 `json:"lengthFeet,omitempty"`
-	WidthFeet   *float64 `json:"widthFeet,omitempty"`
-	HeightFeet  *float64 `json:"heightFeet,omitempty"`
-	Version     *int     `json:"version,omitempty"`
+	ID             *string  `json:"id,omitempty"`
+	ShipmentID     *string  `json:"shipmentId,omitempty"`
+	CommodityID    string   `json:"commodityId"`
+	Pieces         *int     `json:"pieces,omitempty"`
+	Weight         *int     `json:"weight,omitempty"`
+	LengthFeet     *float64 `json:"lengthFeet,omitempty"`
+	WidthFeet      *float64 `json:"widthFeet,omitempty"`
+	HeightFeet     *float64 `json:"heightFeet,omitempty"`
+	TemperatureMin *int     `json:"temperatureMin,omitempty"`
+	TemperatureMax *int     `json:"temperatureMax,omitempty"`
+	Version        *int     `json:"version,omitempty"`
 }
 
 type ShipmentConnection struct {
@@ -11785,20 +11823,21 @@ type ShipmentInput struct {
 	OtherChargeAmount   *string `json:"otherChargeAmount,omitempty"`
 	FreightChargeAmount *string `json:"freightChargeAmount,omitempty"`
 	// The values the tariff prices with, by input name, as Tariff wire values. Omitted inputs take the template's defaults.
-	TariffInputs           map[string]any `json:"tariffInputs,omitempty"`
-	TotalChargeAmount      *string        `json:"totalChargeAmount,omitempty"`
-	Pieces                 *int           `json:"pieces,omitempty"`
-	Weight                 *int           `json:"weight,omitempty"`
-	TemperatureMin         *int           `json:"temperatureMin,omitempty"`
-	TemperatureMax         *int           `json:"temperatureMax,omitempty"`
-	ActualDeliveryDate     *int           `json:"actualDeliveryDate,omitempty"`
-	ActualShipDate         *int           `json:"actualShipDate,omitempty"`
-	CanceledAt             *int           `json:"canceledAt,omitempty"`
-	BillingTransferStatus  *string        `json:"billingTransferStatus,omitempty"`
-	TransferredToBillingAt *int           `json:"transferredToBillingAt,omitempty"`
-	MarkedReadyToBillAt    *int           `json:"markedReadyToBillAt,omitempty"`
-	BilledAt               *int           `json:"billedAt,omitempty"`
-	FuelSurchargeLocked    *bool          `json:"fuelSurchargeLocked,omitempty"`
+	TariffInputs      map[string]any `json:"tariffInputs,omitempty"`
+	TotalChargeAmount *string        `json:"totalChargeAmount,omitempty"`
+	Pieces            *int           `json:"pieces,omitempty"`
+	Weight            *int           `json:"weight,omitempty"`
+	// Taken as given only when no stop or commodity has a range; otherwise the load's range is derived from theirs.
+	TemperatureMin         *int    `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int    `json:"temperatureMax,omitempty"`
+	ActualDeliveryDate     *int    `json:"actualDeliveryDate,omitempty"`
+	ActualShipDate         *int    `json:"actualShipDate,omitempty"`
+	CanceledAt             *int    `json:"canceledAt,omitempty"`
+	BillingTransferStatus  *string `json:"billingTransferStatus,omitempty"`
+	TransferredToBillingAt *int    `json:"transferredToBillingAt,omitempty"`
+	MarkedReadyToBillAt    *int    `json:"markedReadyToBillAt,omitempty"`
+	BilledAt               *int    `json:"billedAt,omitempty"`
+	FuelSurchargeLocked    *bool   `json:"fuelSurchargeLocked,omitempty"`
 	// Why this shipment is billed at something other than its contract rate. It is
 	// the only rating field a caller may write: everything else the rater owns is
 	// an ordinary field, and everything else the system owns is restored on save.
@@ -11977,8 +12016,8 @@ type ShipmentMove struct {
 	JurisdictionMiles []*shipment.ShipmentMoveJurisdictionMile `json:"jurisdictionMiles"`
 }
 
-// Move and stop progress: MoveStatusChanged, MoveDeparted, MoveArrived and
-// StopCompleted.
+// Move and stop progress: MoveStatusChanged, MoveDeparted, MoveArrived,
+// StopArrived, StopDeparted, StopArrivalCorrected and StopDepartureCorrected.
 type ShipmentMoveEvent struct {
 	ID             string                          `json:"id"`
 	OrganizationID string                          `json:"organizationId"`
@@ -12003,6 +12042,16 @@ type ShipmentMoveEvent struct {
 	PreviousStatus *string `json:"previousStatus,omitempty"`
 	// Move status after the change.
 	NewStatus *string `json:"newStatus,omitempty"`
+	// Position of the stop on its move, counting from 1, for a stop event.
+	StopNumber *int `json:"stopNumber,omitempty"`
+	// Kind of stop, for a stop event.
+	StopType *StopType `json:"stopType,omitempty"`
+	// Name of the stop's location, or its address when the location has no name.
+	LocationName *string `json:"locationName,omitempty"`
+	// Arrival or departure time the stop event recorded.
+	ActualAt *int `json:"actualAt,omitempty"`
+	// Arrival or departure time a correction replaced.
+	PreviousActualAt *int `json:"previousActualAt,omitempty"`
 }
 
 func (ShipmentMoveEvent) IsShipmentEvent()                          {}
@@ -12274,18 +12323,22 @@ type ShipmentStageSummary struct {
 }
 
 type ShipmentStop struct {
-	ID                     *string            `json:"id,omitempty"`
-	BusinessUnitID         string             `json:"businessUnitId"`
-	OrganizationID         string             `json:"organizationId"`
-	ShipmentMoveID         *string            `json:"shipmentMoveId,omitempty"`
-	LocationID             string             `json:"locationId"`
-	Status                 StopStatus         `json:"status"`
-	Type                   StopType           `json:"type"`
-	ScheduleType           StopScheduleType   `json:"scheduleType"`
-	Handling               StopHandling       `json:"handling"`
-	Sequence               int                `json:"sequence"`
-	Pieces                 *int               `json:"pieces,omitempty"`
-	Weight                 *int               `json:"weight,omitempty"`
+	ID             *string          `json:"id,omitempty"`
+	BusinessUnitID string           `json:"businessUnitId"`
+	OrganizationID string           `json:"organizationId"`
+	ShipmentMoveID *string          `json:"shipmentMoveId,omitempty"`
+	LocationID     string           `json:"locationId"`
+	Status         StopStatus       `json:"status"`
+	Type           StopType         `json:"type"`
+	ScheduleType   StopScheduleType `json:"scheduleType"`
+	Handling       StopHandling     `json:"handling"`
+	Sequence       int              `json:"sequence"`
+	Pieces         *int             `json:"pieces,omitempty"`
+	Weight         *int             `json:"weight,omitempty"`
+	// Lowest temperature, in whole degrees Fahrenheit, the freight is kept at from this stop on.
+	TemperatureMin *int `json:"temperatureMin,omitempty"`
+	// Highest temperature, in whole degrees Fahrenheit, the freight is kept at from this stop on.
+	TemperatureMax         *int               `json:"temperatureMax,omitempty"`
 	ScheduledWindowStart   int                `json:"scheduledWindowStart"`
 	ScheduledWindowEnd     *int               `json:"scheduledWindowEnd,omitempty"`
 	ActualArrival          *int               `json:"actualArrival,omitempty"`
@@ -12316,6 +12369,8 @@ type ShipmentStopInput struct {
 	Sequence               *int              `json:"sequence,omitempty"`
 	Pieces                 *int              `json:"pieces,omitempty"`
 	Weight                 *int              `json:"weight,omitempty"`
+	TemperatureMin         *int              `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int              `json:"temperatureMax,omitempty"`
 	ScheduledWindowStart   *int              `json:"scheduledWindowStart,omitempty"`
 	ScheduledWindowEnd     *int              `json:"scheduledWindowEnd,omitempty"`
 	ActualArrival          *int              `json:"actualArrival,omitempty"`
@@ -13456,21 +13511,20 @@ type UpdateBenefitPlanInput struct {
 }
 
 type UpdateCarrierSettlementControlInput struct {
-	Version                   int                                  `json:"version"`
-	PayTrigger                settlementcontrol.PayTrigger         `json:"payTrigger"`
-	PayPeriodFrequency        settlementcontrol.PayPeriodFrequency `json:"payPeriodFrequency"`
-	PeriodEndDayOfWeek        int                                  `json:"periodEndDayOfWeek"`
-	PayDelayDays              int                                  `json:"payDelayDays"`
-	AutoGenerateBatches       bool                                 `json:"autoGenerateBatches"`
-	AutoPostOnApprove         bool                                 `json:"autoPostOnApprove"`
-	RequireSeparateApprover   bool                                 `json:"requireSeparateApprover"`
-	VarianceToleranceMinor    int                                  `json:"varianceToleranceMinor"`
-	AutoMatchInboundInvoices  bool                                 `json:"autoMatchInboundInvoices"`
-	AutoAcceptWithinTolerance bool                                 `json:"autoAcceptWithinTolerance"`
-	// Omitted leaves the current setting as it is.
-	HoldUntilInvoiceMatched                 *bool   `json:"holdUntilInvoiceMatched,omitempty"`
-	DefaultApAccountID                      *string `json:"defaultApAccountId,omitempty"`
-	DefaultPurchasedTransportationAccountID *string `json:"defaultPurchasedTransportationAccountId,omitempty"`
+	Version                                 int                                  `json:"version"`
+	PayTrigger                              settlementcontrol.PayTrigger         `json:"payTrigger"`
+	PayPeriodFrequency                      settlementcontrol.PayPeriodFrequency `json:"payPeriodFrequency"`
+	PeriodEndDayOfWeek                      int                                  `json:"periodEndDayOfWeek"`
+	PayDelayDays                            int                                  `json:"payDelayDays"`
+	AutoGenerateBatches                     bool                                 `json:"autoGenerateBatches"`
+	AutoPostOnApprove                       bool                                 `json:"autoPostOnApprove"`
+	RequireSeparateApprover                 bool                                 `json:"requireSeparateApprover"`
+	VarianceToleranceMinor                  int                                  `json:"varianceToleranceMinor"`
+	AutoMatchInboundInvoices                bool                                 `json:"autoMatchInboundInvoices"`
+	AutoAcceptWithinTolerance               bool                                 `json:"autoAcceptWithinTolerance"`
+	HoldUntilInvoiceMatched                 bool                                 `json:"holdUntilInvoiceMatched"`
+	DefaultApAccountID                      *string                              `json:"defaultApAccountId,omitempty"`
+	DefaultPurchasedTransportationAccountID *string                              `json:"defaultPurchasedTransportationAccountId,omitempty"`
 }
 
 type UpdateDOTRandomDrawEntryInput struct {
@@ -13492,26 +13546,26 @@ type UpdateDOTViolationInput struct {
 }
 
 type UpdateDashControlInput struct {
-	Version                        int                              `json:"version"`
-	RequireLoadAcknowledgment      bool                             `json:"requireLoadAcknowledgment"`
-	AllowLoadRefusals              bool                             `json:"allowLoadRefusals"`
-	AllowStopActions               bool                             `json:"allowStopActions"`
-	AllowLoadDocumentUpload        bool                             `json:"allowLoadDocumentUpload"`
-	AllowLoadComments              bool                             `json:"allowLoadComments"`
-	ShowLoadPay                    bool                             `json:"showLoadPay"`
-	ShowPayEstimates               bool                             `json:"showPayEstimates"`
-	AllowExpenseSubmission         bool                             `json:"allowExpenseSubmission"`
-	RequireExpenseReceipt          bool                             `json:"requireExpenseReceipt"`
-	AllowSettlementDisputes        bool                             `json:"allowSettlementDisputes"`
-	AllowProfileDocumentUpload     bool                             `json:"allowProfileDocumentUpload"`
-	AllowContactInfoEdit           bool                             `json:"allowContactInfoEdit"`
-	AllowPTORequests               bool                             `json:"allowPtoRequests"`
-	SendCredentialReminders        bool                             `json:"sendCredentialReminders"`
-	RequireContactChangeApproval   bool                             `json:"requireContactChangeApproval"`
-	DriverDigestCadence            *dashcontrol.DriverDigestCadence `json:"driverDigestCadence,omitempty"`
-	DriverDigestWeekday            *int                             `json:"driverDigestWeekday,omitempty"`
-	EnableDetentionAlerts          bool                             `json:"enableDetentionAlerts"`
-	DetentionAlertThresholdMinutes int                              `json:"detentionAlertThresholdMinutes"`
+	Version                        int                             `json:"version"`
+	RequireLoadAcknowledgment      bool                            `json:"requireLoadAcknowledgment"`
+	AllowLoadRefusals              bool                            `json:"allowLoadRefusals"`
+	AllowStopActions               bool                            `json:"allowStopActions"`
+	AllowLoadDocumentUpload        bool                            `json:"allowLoadDocumentUpload"`
+	AllowLoadComments              bool                            `json:"allowLoadComments"`
+	ShowLoadPay                    bool                            `json:"showLoadPay"`
+	ShowPayEstimates               bool                            `json:"showPayEstimates"`
+	AllowExpenseSubmission         bool                            `json:"allowExpenseSubmission"`
+	RequireExpenseReceipt          bool                            `json:"requireExpenseReceipt"`
+	AllowSettlementDisputes        bool                            `json:"allowSettlementDisputes"`
+	AllowProfileDocumentUpload     bool                            `json:"allowProfileDocumentUpload"`
+	AllowContactInfoEdit           bool                            `json:"allowContactInfoEdit"`
+	AllowPTORequests               bool                            `json:"allowPtoRequests"`
+	SendCredentialReminders        bool                            `json:"sendCredentialReminders"`
+	RequireContactChangeApproval   bool                            `json:"requireContactChangeApproval"`
+	DriverDigestCadence            dashcontrol.DriverDigestCadence `json:"driverDigestCadence"`
+	DriverDigestWeekday            int                             `json:"driverDigestWeekday"`
+	EnableDetentionAlerts          bool                            `json:"enableDetentionAlerts"`
+	DetentionAlertThresholdMinutes int                             `json:"detentionAlertThresholdMinutes"`
 }
 
 type UpdateEmploymentVerificationInput struct {
@@ -13618,6 +13672,8 @@ type UpdateLeaveCaseInput struct {
 }
 
 type UpdateLeaveControlInput struct {
+	// The version read; a save over a newer one is refused.
+	Version                int                                 `json:"version"`
 	MeasurementMethod      *workerleave.LeaveMeasurementMethod `json:"measurementMethod,omitempty"`
 	EntitlementWeeks       *string                             `json:"entitlementWeeks,omitempty"`
 	MilitaryCaregiverWeeks *string                             `json:"militaryCaregiverWeeks,omitempty"`
@@ -17834,40 +17890,43 @@ func (e ShipmentEventSeverity) MarshalJSON() ([]byte, error) {
 type ShipmentEventType string
 
 const (
-	ShipmentEventTypeShipmentCreated       ShipmentEventType = "ShipmentCreated"
-	ShipmentEventTypeShipmentUpdated       ShipmentEventType = "ShipmentUpdated"
-	ShipmentEventTypeStatusChanged         ShipmentEventType = "StatusChanged"
-	ShipmentEventTypeShipmentCanceled      ShipmentEventType = "ShipmentCanceled"
-	ShipmentEventTypeShipmentUncanceled    ShipmentEventType = "ShipmentUncanceled"
-	ShipmentEventTypeOwnershipTransferred  ShipmentEventType = "OwnershipTransferred"
-	ShipmentEventTypeMoveStatusChanged     ShipmentEventType = "MoveStatusChanged"
-	ShipmentEventTypeMoveDeparted          ShipmentEventType = "MoveDeparted"
-	ShipmentEventTypeMoveArrived           ShipmentEventType = "MoveArrived"
-	ShipmentEventTypeStopCompleted         ShipmentEventType = "StopCompleted"
-	ShipmentEventTypeDriverAssigned        ShipmentEventType = "DriverAssigned"
-	ShipmentEventTypeDriverReassigned      ShipmentEventType = "DriverReassigned"
-	ShipmentEventTypeDriverUnassigned      ShipmentEventType = "DriverUnassigned"
-	ShipmentEventTypeCarrierAssigned       ShipmentEventType = "CarrierAssigned"
-	ShipmentEventTypeCarrierUnassigned     ShipmentEventType = "CarrierUnassigned"
-	ShipmentEventTypeTenderOffered         ShipmentEventType = "TenderOffered"
-	ShipmentEventTypeTenderAccepted        ShipmentEventType = "TenderAccepted"
-	ShipmentEventTypeTenderDeclined        ShipmentEventType = "TenderDeclined"
-	ShipmentEventTypeTenderExpired         ShipmentEventType = "TenderExpired"
-	ShipmentEventTypeTenderWithdrawn       ShipmentEventType = "TenderWithdrawn"
-	ShipmentEventTypeTenderNeedsReview     ShipmentEventType = "TenderNeedsReview"
-	ShipmentEventTypeRoutingGuideExhausted ShipmentEventType = "RoutingGuideExhausted"
-	ShipmentEventTypeTenderLateResponse    ShipmentEventType = "TenderLateResponse"
-	ShipmentEventTypeTenderDeliveryFailed  ShipmentEventType = "TenderDeliveryFailed"
-	ShipmentEventTypeTenderEntrySkipped    ShipmentEventType = "TenderEntrySkipped"
-	ShipmentEventTypeTenderEntryWarned     ShipmentEventType = "TenderEntryWarned"
-	ShipmentEventTypeTenderBounced         ShipmentEventType = "TenderBounced"
-	ShipmentEventTypeTenderCountered       ShipmentEventType = "TenderCountered"
-	ShipmentEventTypeTenderCounterDecided  ShipmentEventType = "TenderCounterDecided"
-	ShipmentEventTypeTenderEscalated       ShipmentEventType = "TenderEscalated"
-	ShipmentEventTypeHoldPlaced            ShipmentEventType = "HoldPlaced"
-	ShipmentEventTypeHoldUpdated           ShipmentEventType = "HoldUpdated"
-	ShipmentEventTypeHoldReleased          ShipmentEventType = "HoldReleased"
-	ShipmentEventTypeCommentPosted         ShipmentEventType = "CommentPosted"
+	ShipmentEventTypeShipmentCreated        ShipmentEventType = "ShipmentCreated"
+	ShipmentEventTypeShipmentUpdated        ShipmentEventType = "ShipmentUpdated"
+	ShipmentEventTypeStatusChanged          ShipmentEventType = "StatusChanged"
+	ShipmentEventTypeShipmentCanceled       ShipmentEventType = "ShipmentCanceled"
+	ShipmentEventTypeShipmentUncanceled     ShipmentEventType = "ShipmentUncanceled"
+	ShipmentEventTypeOwnershipTransferred   ShipmentEventType = "OwnershipTransferred"
+	ShipmentEventTypeMoveStatusChanged      ShipmentEventType = "MoveStatusChanged"
+	ShipmentEventTypeMoveDeparted           ShipmentEventType = "MoveDeparted"
+	ShipmentEventTypeMoveArrived            ShipmentEventType = "MoveArrived"
+	ShipmentEventTypeStopArrived            ShipmentEventType = "StopArrived"
+	ShipmentEventTypeStopDeparted           ShipmentEventType = "StopDeparted"
+	ShipmentEventTypeStopArrivalCorrected   ShipmentEventType = "StopArrivalCorrected"
+	ShipmentEventTypeStopDepartureCorrected ShipmentEventType = "StopDepartureCorrected"
+	ShipmentEventTypeDriverAssigned         ShipmentEventType = "DriverAssigned"
+	ShipmentEventTypeDriverReassigned       ShipmentEventType = "DriverReassigned"
+	ShipmentEventTypeDriverUnassigned       ShipmentEventType = "DriverUnassigned"
+	ShipmentEventTypeCarrierAssigned        ShipmentEventType = "CarrierAssigned"
+	ShipmentEventTypeCarrierUnassigned      ShipmentEventType = "CarrierUnassigned"
+	ShipmentEventTypeTenderOffered          ShipmentEventType = "TenderOffered"
+	ShipmentEventTypeTenderAccepted         ShipmentEventType = "TenderAccepted"
+	ShipmentEventTypeTenderDeclined         ShipmentEventType = "TenderDeclined"
+	ShipmentEventTypeTenderExpired          ShipmentEventType = "TenderExpired"
+	ShipmentEventTypeTenderWithdrawn        ShipmentEventType = "TenderWithdrawn"
+	ShipmentEventTypeTenderNeedsReview      ShipmentEventType = "TenderNeedsReview"
+	ShipmentEventTypeRoutingGuideExhausted  ShipmentEventType = "RoutingGuideExhausted"
+	ShipmentEventTypeTenderLateResponse     ShipmentEventType = "TenderLateResponse"
+	ShipmentEventTypeTenderDeliveryFailed   ShipmentEventType = "TenderDeliveryFailed"
+	ShipmentEventTypeTenderEntrySkipped     ShipmentEventType = "TenderEntrySkipped"
+	ShipmentEventTypeTenderEntryWarned      ShipmentEventType = "TenderEntryWarned"
+	ShipmentEventTypeTenderBounced          ShipmentEventType = "TenderBounced"
+	ShipmentEventTypeTenderCountered        ShipmentEventType = "TenderCountered"
+	ShipmentEventTypeTenderCounterDecided   ShipmentEventType = "TenderCounterDecided"
+	ShipmentEventTypeTenderEscalated        ShipmentEventType = "TenderEscalated"
+	ShipmentEventTypeHoldPlaced             ShipmentEventType = "HoldPlaced"
+	ShipmentEventTypeHoldUpdated            ShipmentEventType = "HoldUpdated"
+	ShipmentEventTypeHoldReleased           ShipmentEventType = "HoldReleased"
+	ShipmentEventTypeCommentPosted          ShipmentEventType = "CommentPosted"
 )
 
 var AllShipmentEventType = []ShipmentEventType{
@@ -17880,7 +17939,10 @@ var AllShipmentEventType = []ShipmentEventType{
 	ShipmentEventTypeMoveStatusChanged,
 	ShipmentEventTypeMoveDeparted,
 	ShipmentEventTypeMoveArrived,
-	ShipmentEventTypeStopCompleted,
+	ShipmentEventTypeStopArrived,
+	ShipmentEventTypeStopDeparted,
+	ShipmentEventTypeStopArrivalCorrected,
+	ShipmentEventTypeStopDepartureCorrected,
 	ShipmentEventTypeDriverAssigned,
 	ShipmentEventTypeDriverReassigned,
 	ShipmentEventTypeDriverUnassigned,
@@ -17909,7 +17971,7 @@ var AllShipmentEventType = []ShipmentEventType{
 
 func (e ShipmentEventType) IsValid() bool {
 	switch e {
-	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeCarrierAssigned, ShipmentEventTypeCarrierUnassigned, ShipmentEventTypeTenderOffered, ShipmentEventTypeTenderAccepted, ShipmentEventTypeTenderDeclined, ShipmentEventTypeTenderExpired, ShipmentEventTypeTenderWithdrawn, ShipmentEventTypeTenderNeedsReview, ShipmentEventTypeRoutingGuideExhausted, ShipmentEventTypeTenderLateResponse, ShipmentEventTypeTenderDeliveryFailed, ShipmentEventTypeTenderEntrySkipped, ShipmentEventTypeTenderEntryWarned, ShipmentEventTypeTenderBounced, ShipmentEventTypeTenderCountered, ShipmentEventTypeTenderCounterDecided, ShipmentEventTypeTenderEscalated, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
+	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopArrived, ShipmentEventTypeStopDeparted, ShipmentEventTypeStopArrivalCorrected, ShipmentEventTypeStopDepartureCorrected, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeCarrierAssigned, ShipmentEventTypeCarrierUnassigned, ShipmentEventTypeTenderOffered, ShipmentEventTypeTenderAccepted, ShipmentEventTypeTenderDeclined, ShipmentEventTypeTenderExpired, ShipmentEventTypeTenderWithdrawn, ShipmentEventTypeTenderNeedsReview, ShipmentEventTypeRoutingGuideExhausted, ShipmentEventTypeTenderLateResponse, ShipmentEventTypeTenderDeliveryFailed, ShipmentEventTypeTenderEntrySkipped, ShipmentEventTypeTenderEntryWarned, ShipmentEventTypeTenderBounced, ShipmentEventTypeTenderCountered, ShipmentEventTypeTenderCounterDecided, ShipmentEventTypeTenderEscalated, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
 		return true
 	}
 	return false

@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -54,20 +56,57 @@ func (h *Handler) ledger(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	entries, err := h.service.ListCustomerLedger(
+	startDate, err := queryInt(c, "startDate")
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	endDate, err := queryInt(c, "endDate")
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	first, err := queryInt(c, "first")
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req := customerledgerports.ARLedgerPageRequest{
+		CustomerID: customerID,
+		StartDate:  startDate,
+		EndDate:    endDate,
+		First:      int(first),
+		After:      c.Query("after"),
+	}
+
+	page, err := h.service.ListCustomerLedger(
 		c.Request.Context(),
 		pagination.TenantInfo{
 			OrgID:  auth.OrganizationID,
 			BuID:   auth.BusinessUnitID,
 			UserID: auth.UserID,
 		},
-		customerID,
+		req,
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	helpers.JSON(c, http.StatusOK, entries)
+	helpers.JSON(c, http.StatusOK, page)
+}
+
+func queryInt(c *gin.Context, name string) (int64, error) {
+	raw := c.Query(name)
+	if raw == "" {
+		return 0, nil
+	}
+	value, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return 0, errortypes.NewValidationError(
+			name, errortypes.ErrInvalidFormat, "Must be a whole number",
+		)
+	}
+	return value, nil
 }
 
 func (h *Handler) statement(c *gin.Context) {

@@ -304,7 +304,7 @@ func TestCreditBilledChargeTurnsAPreviewRefusalIntoAFieldError(t *testing.T) {
 	_, err := f.service.CreditBilledCharge(t.Context(), f.request)
 	require.Error(t, err)
 	fieldErr := refusedField(t, err)
-	assert.Equal(t, refusalField, fieldErr.Field)
+	assert.Equal(t, refusalField, fieldErr.Field())
 	assert.Contains(t, fieldErr.Error(), "INV-20931")
 	assert.Contains(t, fieldErr.Error(), "Supporting documents are required by policy")
 	assert.Empty(t, f.adjustments.submitted)
@@ -320,7 +320,7 @@ func TestCreditBilledChargeTurnsASubmitRefusalIntoAFieldError(t *testing.T) {
 
 	_, err := f.service.CreditBilledCharge(t.Context(), f.request)
 	fieldErr := refusedField(t, err)
-	assert.Equal(t, refusalField, fieldErr.Field)
+	assert.Equal(t, refusalField, fieldErr.Field())
 	assert.Contains(t, fieldErr.Error(), "Only posted invoices may be adjusted")
 }
 
@@ -344,7 +344,7 @@ func TestCreditBilledChargeRefusesWhileTheInvoiceIsADraft(t *testing.T) {
 
 	_, err := f.service.CreditBilledCharge(t.Context(), f.request)
 	fieldErr := refusedField(t, err)
-	assert.Equal(t, refusalField, fieldErr.Field)
+	assert.Equal(t, refusalField, fieldErr.Field())
 	assert.Empty(t, f.adjustments.previewed)
 }
 

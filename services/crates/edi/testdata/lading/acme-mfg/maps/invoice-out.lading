@@ -1,11 +1,12 @@
 map invoiceOut
   from freightInvoice
   to   x12.004010.210
+  use  common
 
 B3 {
   02 <- number
   03 <- key
-  04 <- "PP"
+  04 <- payment via payments ?? "PP"
   06 <- date
   07 <- total
   09 <- deliveryDate
@@ -67,4 +68,9 @@ test "an invoice writes its lines and total" {
   expect x12 contains "N1*BT*Acme Manufacturing Co~"
   expect x12 contains "L1*2***38610****FUE~"
   expect x12 contains "L3*****253110~"
+}
+
+test "an invoice for a collect load says so, as the tender did" {
+  given freightInvoice { number: "INV-1002", date: @2026-03-05, key: "AM-48214", payment: Collect, total: $900.00 }
+  expect x12 contains "B3**INV-1002*AM-48214*CC**20260305*90000"
 }

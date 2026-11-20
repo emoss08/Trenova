@@ -5,12 +5,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type PeriodSchedule struct {
 	Frequency    settlementcontrol.PayPeriodFrequency
 	EndDayOfWeek int
 	PayDelayDays int
+	Location     *time.Location
 }
 
 func ResolveRequestedPeriod(
@@ -24,9 +26,10 @@ func ResolveRequestedPeriod(
 			schedule.EndDayOfWeek,
 			schedule.PayDelayDays,
 			now,
+			schedule.Location,
 		)
 	} else {
-		bounds.PayDate = time.Unix(bounds.PeriodEnd, 0).UTC().
+		bounds.PayDate = time.Unix(bounds.PeriodEnd, 0).In(locationOrUTC(schedule.Location)).
 			AddDate(0, 0, schedule.PayDelayDays).Unix()
 	}
 	if bounds.PeriodEnd <= bounds.PeriodStart {
@@ -46,15 +49,19 @@ type PeriodBounds struct {
 }
 
 // ResolvePeriod computes the current pay period from a settlement control's
-// frequency, period-end weekday, and pay delay. The period end is exclusive:
-// it is the midnight (UTC) after the most recent occurrence of the configured
-// end day.
+// frequency, period-end weekday, and pay delay, in the organization's time
+// zone. The period end is exclusive: it is the local midnight after the most
+// recent occurrence of the configured end day, so a week closes when the
+// organization's day ends, and calendar arithmetic keeps local midnight across
+// daylight saving changes.
 func ResolvePeriod(
 	frequency settlementcontrol.PayPeriodFrequency,
 	endDayOfWeek, payDelayDays int,
 	now int64,
+	loc *time.Location,
 ) PeriodBounds {
-	nowTime := time.Unix(now, 0).UTC()
+	loc = locationOrUTC(loc)
+	nowTime := time.Unix(now, 0).In(loc)
 	endDay := time.Weekday(endDayOfWeek)
 
 	daysBack := int(nowTime.Weekday() - endDay)
@@ -62,26 +69,39 @@ func ResolvePeriod(
 		daysBack += 7
 	}
 	periodEndDate := time.Date(
-		nowTime.Year(), nowTime.Month(), nowTime.Day(),
-		0, 0, 0, 0, time.UTC,
-	).AddDate(0, 0, -daysBack+1)
+		nowTime.Year(), nowTime.Month(), nowTime.Day()-daysBack+1,
+		0, 0, 0, 0, loc,
+	)
 
-	var periodStartDate time.Time
-	switch frequency {
-	case settlementcontrol.PayPeriodFrequencyWeekly:
-		periodStartDate = periodEndDate.AddDate(0, 0, -7)
-	case settlementcontrol.PayPeriodFrequencyBiweekly:
-		periodStartDate = periodEndDate.AddDate(0, 0, -14)
-	case settlementcontrol.PayPeriodFrequencyMonthly:
-		periodStartDate = periodEndDate.AddDate(0, -1, 0)
-	default:
-		periodStartDate = periodEndDate.AddDate(0, 0, -7)
-	}
+	periodStartDate := StepPeriods(frequency, periodEndDate, -1)
 
-	periodEnd := periodEndDate.Unix()
 	return PeriodBounds{
 		PeriodStart: periodStartDate.Unix(),
-		PeriodEnd:   periodEnd,
+		PeriodEnd:   periodEndDate.Unix(),
 		PayDate:     periodEndDate.AddDate(0, 0, payDelayDays).Unix(),
+	}
+}
+
+func locationOrUTC(loc *time.Location) *time.Location {
+	if loc == nil {
+		return time.UTC
+	}
+	return loc
+}
+
+func StepPeriods(
+	frequency settlementcontrol.PayPeriodFrequency,
+	anchor time.Time,
+	periods int,
+) time.Time {
+	switch frequency {
+	case settlementcontrol.PayPeriodFrequencyBiweekly:
+		return anchor.AddDate(0, 0, 14*periods)
+	case settlementcontrol.PayPeriodFrequencyMonthly:
+		return timeutils.AddMonths(anchor, periods)
+	case settlementcontrol.PayPeriodFrequencyWeekly:
+		return anchor.AddDate(0, 0, 7*periods)
+	default:
+		return anchor.AddDate(0, 0, 7*periods)
 	}
 }

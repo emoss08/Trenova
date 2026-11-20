@@ -16,6 +16,7 @@
   "Days your facilities are closed. An occurrence landing on one of these follows the exception policy instead of generating a shipment.": "Días en que sus instalaciones están cerradas. Una ocurrencia que caiga en uno de ellos sigue la política de excepciones en lugar de generar un envío.",
   "Every generated shipment copies this one's stops, commodities, and charges. Changing it does not touch shipments already generated.": "Cada envío generado copia las paradas, mercancías y cargos de este. Cambiarlo no afecta a los envíos ya generados.",
   "Every scheduled occurrence generates a shipment.": "Cada ocurrencia programada genera un envío.",
+  "Exception policy": "Política de excepciones",
   "Failed to generate shipment": "No se pudo generar el envío",
   "Failed to update series status": "No se pudo actualizar el estado de la serie",
   "Generate now": "Generar ahora",

@@ -4,6 +4,7 @@ package reportresolver
 
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	accountsreceivableservice "github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 	reportdashboardservice "github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	reportscheduleservice "github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
@@ -13,11 +14,12 @@ import (
 
 type Deps struct {
 	*resolvercore.Core
-	TableExportService     *tableexportservice.Service
-	ReportingService       *reportingservice.Service
-	ReportViewService      *reportviewservice.Service
-	ReportScheduleService  *reportscheduleservice.Service
-	ReportDashboardService *reportdashboardservice.Service
+	AccountsReceivableService *accountsreceivableservice.Service
+	TableExportService        *tableexportservice.Service
+	ReportingService          *reportingservice.Service
+	ReportViewService         *reportviewservice.Service
+	ReportScheduleService     *reportscheduleservice.Service
+	ReportDashboardService    *reportdashboardservice.Service
 }
 
 type MutationResolver struct{ *Deps }

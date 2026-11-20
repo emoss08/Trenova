@@ -16,10 +16,17 @@ type StopActualPlanner func(
 	move *shipment.ShipmentMove,
 ) ([]stopactual.Change, error)
 
+type StopActualEventOrigin struct {
+	ActorLabel    string
+	CorrelationID string
+	Metadata      map[string]any
+}
+
 type ReconcileStopActualsRequest struct {
 	TenantInfo pagination.TenantInfo
 	MoveID     pulid.ID
 	Plan       StopActualPlanner
+	Origin     *StopActualEventOrigin
 }
 
 type ReconcileStopActualsResult struct {

@@ -1,4 +1,7 @@
 {
+  "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts": "设置承运商的薪资期间、成本计提触发条件、批次自动化、发票比对容差，以及应付账款过账科目",
+  "Configure case formatting rules for data entry across the system": "配置全系统数据录入的大小写格式规则",
+  "Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.": "配置组织在贷记、重新开单、冲销与发票调整审查方面的政策。",
   "Every page in {0} you can open.": "您可以打开的{0}所有页面。",
   "No pages you can open here": "这里没有您可以打开的页面",
   "None of the pages here are open to you. An administrator can grant access or turn this part of Trenova on.": "这里的页面都无法供您打开。管理员可以授予访问权限，或启用 Trenova 的这个区域。"

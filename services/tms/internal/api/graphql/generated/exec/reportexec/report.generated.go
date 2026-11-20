@@ -195,6 +195,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTableExportResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportResult),
 			},
 			{
+				Name:       "exportCustomerLedger",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "TableExportResult",
+				Args:       field_Mutation_exportCustomerLedger_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@report").ExportCustomerLedger(ctx, fc.Args["input"].(gqlmodel.ExportCustomerLedgerInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNTableExportResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTableExportResult),
+			},
+			{
 				Name:       "updateReportDefinition",
 				NonNull:    true,
 				IsResolver: true,
@@ -3074,6 +3087,7 @@ var Shard = &gqlexec.Shard{
 	Inputs: []gqlexec.Input{
 		{Name: "CreateReportScheduleInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateReportScheduleInput)},
 		{Name: "CreateReportViewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputCreateReportViewInput)},
+		{Name: "ExportCustomerLedgerInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputExportCustomerLedgerInput)},
 		{Name: "ExportTableViewInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputExportTableViewInput)},
 		{Name: "ForkCannedReportInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputForkCannedReportInput)},
 		{Name: "ReportDashboardFilterInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReportDashboardFilterInput)},
@@ -3106,6 +3120,7 @@ type MutationResolver interface {
 	CreateReportDefinition(ctx context.Context, input gqlmodel.SaveReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
 	ExportTableView(ctx context.Context, input gqlmodel.ExportTableViewInput) (*gqlmodel.TableExportResult, error)
 	ScheduleTableView(ctx context.Context, input gqlmodel.ScheduleTableViewInput) (*gqlmodel.TableExportResult, error)
+	ExportCustomerLedger(ctx context.Context, input gqlmodel.ExportCustomerLedgerInput) (*gqlmodel.TableExportResult, error)
 	UpdateReportDefinition(ctx context.Context, input gqlmodel.UpdateReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
 	DeleteReportDefinition(ctx context.Context, id string) (bool, error)
 	ForkCannedReport(ctx context.Context, input gqlmodel.ForkCannedReportInput) (*gqlmodel.ReportDefinition, error)
@@ -3189,6 +3204,19 @@ func field_Mutation_scheduleTableView_args(ctx context.Context, ec *gqlexec.Exec
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.ScheduleTableViewInput, error) {
 			return unmarshalNScheduleTableViewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐScheduleTableViewInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func field_Mutation_exportCustomerLedger_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.ExportCustomerLedgerInput, error) {
+			return unmarshalNExportCustomerLedgerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExportCustomerLedgerInput(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -3768,6 +3796,64 @@ func unmarshalInputCreateReportViewInput(ctx context.Context, ec *gqlexec.Exec, 
 		case "format":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("format"))
 			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Format = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputExportCustomerLedgerInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.ExportCustomerLedgerInput, error) {
+	var it gqlmodel.ExportCustomerLedgerInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "customerId", "startDate", "endDate", "format"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "customerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerId"))
+			data, err := unmarshalNID2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerID = data
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "endDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		case "format":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("format"))
+			data, err := unmarshalNString2string(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -5113,6 +5199,11 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNExportCustomerLedgerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExportCustomerLedgerInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ExportCustomerLedgerInput, error) {
+	res, err := unmarshalInputExportCustomerLedgerInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNExportTableViewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐExportTableViewInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.ExportTableViewInput, error) {
 	res, err := unmarshalInputExportTableViewInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5351,6 +5442,14 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

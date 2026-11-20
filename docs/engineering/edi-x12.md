@@ -102,6 +102,49 @@ the starter 204 and 210 use it for every N2 charge, and dates go through `format
 starter element with a numeric X12 type uses the same helpers in `templates/base204.go`
 (`amount`, `repeatAmount`, `date`).
 
+## A flow instance opens only when a step leaves something to keep
+
+`edilading.Flows.Dispatch` steps a key with no instance from an empty state (`{}`, so Lading's
+`instance.exists` is false) and stores the instance only when the step leaves something to keep:
+a received or sent document, a load, a pending send, a batch, a timer, or an action beyond the
+acknowledgment (`opens`, `lading.FlowStarted`). A message the flow rejects or ignores opens
+nothing and links to no instance. The new row goes in with the step's state through
+`CreateInstance` (`CreateOrSkip` on `uq_edi_flow_instances_key`); a delivery that loses that race
+gets `ErrFlowInstanceExists`, reads the winner and steps again from its state, as a version
+conflict on `SaveInstance` does. Never create an instance before its first step.
+
+## Temperatures on a tender
+
+A loadTender's `Stop.temperature` and `CommodityLine.temperature` land on the shipment's stops and
+commodity lines (`temperature_min`/`temperature_max`, whole °F, as the shipment's own), and
+`FromLoadTender` writes them back out. The shipment's range is never typed twice: when any live
+stop or line has a range, `shipmentnormalize.Temperature` derives it on every save
+(`temperaturerange.Load`): the range they all share, or the span from the coldest to the warmest
+bound when they share none (a frozen and a chilled drop), so a multi-temperature load still reads
+as reefer to rating, the dispatch board and quick filters. With no line range the shipment's range
+is taken as entered, and a tender's load-level `temperature` fills it.
+
+## Advancing a flow's clock in development
+
+A Lading flow's timers (a planner's answer window, an acknowledgment wait, a batch) are due
+times stored on its instance and swept each minute (`DispatchDueFlowTimers`). To play a
+conversation without waiting, move one instance's clock forward:
+
+```sh
+trenova edi flows advance --instance edfi_01J... --by 2h      # or --to-due
+trenova edi flows advance --instance edfi_01J... --by 30m --json
+```
+
+It moves every stored time the flow compares against now back by the duration (the instance's
+`wake_at`, and in its state `awaitingResponse`, `responseDue` and each `pending` and `batches`
+`due`; `lading.ShiftFlowState`), records an `advanced` event in the instance's history, and
+wakes that one instance through `DispatchFlowTimer`, the sweep's own path. It prints the status,
+why the flow holds, the next due time, the actions taken and the messages sent; `--json` is
+for the EDI simulator. It finds the instance's tenant under a system scope, then works under
+that tenant's scope. It refuses to run unless `app.env` is `development`, and has no route or
+GraphQL field. A new time field in the Rust `FlowState` that the flow compares against now
+belongs in `ShiftFlowState` too, or an advance leaves it behind.
+
 ## Build and checks
 
 `task rust:wasm-edi` builds the module (profile `wasm`, `-Os`, the shared reproducible build in

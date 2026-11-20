@@ -33,6 +33,7 @@ type PeriodBounds = settlementshared.PeriodBounds
 
 func ResolveCurrentPeriod(
 	control *carriersettlementcontrol.CarrierSettlementControl,
+	loc *time.Location,
 	now int64,
 ) PeriodBounds {
 	return settlementshared.ResolvePeriod(
@@ -40,6 +41,7 @@ func ResolveCurrentPeriod(
 		control.PeriodEndDayOfWeek,
 		control.PayDelayDays,
 		now,
+		loc,
 	)
 }
 
@@ -59,8 +61,13 @@ func (s *Service) GenerateBatch(
 		return nil, err
 	}
 
+	loc, err := s.Location(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	now := timeutils.NowUnix()
-	bounds, err := ResolveBatchBounds(control, req.PeriodStart, req.PeriodEnd, now)
+	bounds, err := ResolveBatchBounds(control, loc, req.PeriodStart, req.PeriodEnd, now)
 	if err != nil {
 		return nil, err
 	}

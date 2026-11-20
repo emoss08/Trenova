@@ -40,11 +40,11 @@ func TestSaveAgentRequest_AccessIsBothFieldsOrNeither(t *testing.T) {
 	var invalid *errortypes.Error
 	_, err = (&saveAgentRequest{AccessMode: &restricted}).toSaveRequest(pulid.Nil, tenant)
 	require.ErrorAs(t, err, &invalid)
-	assert.Equal(t, "accessRoleIds", invalid.Field)
+	assert.Equal(t, "accessRoleIds", invalid.Field())
 
 	_, err = (&saveAgentRequest{AccessRoleIDs: &roles}).toSaveRequest(pulid.Nil, tenant)
 	require.ErrorAs(t, err, &invalid)
-	assert.Equal(t, "accessMode", invalid.Field)
+	assert.Equal(t, "accessMode", invalid.Field())
 }
 
 func TestSaveAgentRequest_CarriesTheMemoryBudget(t *testing.T) {

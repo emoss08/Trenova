@@ -295,6 +295,23 @@ func TestShipmentExceptionKindsFor(t *testing.T) {
 		ShipmentExceptionKindsFor(shipmentevent.TypeCarrierAssigned),
 	)
 	assert.Empty(t, ShipmentExceptionKindsFor(shipmentevent.TypeHoldPlaced))
+	for _, eventType := range []shipmentevent.Type{
+		shipmentevent.TypeStopArrived,
+		shipmentevent.TypeStopDeparted,
+		shipmentevent.TypeStopArrivalCorrected,
+		shipmentevent.TypeStopDepartureCorrected,
+	} {
+		assert.Equal(
+			t,
+			[]watchtower.SourceKind{
+				watchtower.SourceMissedPickup,
+				watchtower.SourceMissedDelivery,
+				watchtower.SourcePodMissing,
+			},
+			ShipmentExceptionKindsFor(eventType),
+			eventType,
+		)
+	}
 }
 
 func TestDescribeMissedStop_ReadsTheSameAcrossSweeps(t *testing.T) {

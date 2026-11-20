@@ -165,6 +165,7 @@ import (
 	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	briefingports "github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	dispatchconsoleports "github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	accountsreceivableservice "github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 	factoringoverviewservice "github.com/emoss08/trenova/internal/modules/billing/app/factoringoverviewservice"
 	customerpaymentports "github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	factoringledgerports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
@@ -323,6 +324,7 @@ type ResolverParams struct {
 	AccountingSyncActions             accountingsyncports.AccountingSyncActionService
 	AccountingSyncReader              accountingsyncports.AccountingSyncReader
 	AccountingSyncSetup               accountingsyncports.AccountingSyncSetupService
+	AccountsReceivableService         *accountsreceivableservice.Service
 	AnalyticsService                  kernelports.AnalyticsService
 	AssignmentService                 assignmentports.AssignmentService
 	BriefingService                   briefingports.BriefingService
@@ -723,8 +725,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskEdiTransfer",
-		Hash:     "sha256:2c4ee84cf1acf4ab1b28f3ed65dbd85da8e7f16188a02cf8fe5644158c606e5d",
-		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfer($id: ID!) { ediTransfer(id: $id) { canAccept transfer { canDecide charges { additional { amount charge method } freight other total } commodities { commodity pieces weight } pieces shipmentTypeLabel stops { address city location pieces postalCode sequence state type weight windowCloses windowOpens } temperatureMax temperatureMin weight ...DeskEdiTransferRowFields } unresolvedMappings { entityType source } } }",
+		Hash:     "sha256:dbdace63813281053bec65c715b8acc24f605d60e274ff131d920bf32c751673",
+		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfer($id: ID!) { ediTransfer(id: $id) { canAccept transfer { canDecide charges { additional { amount charge method } freight other total } commodities { commodity pieces temperatureMax temperatureMin weight } pieces shipmentTypeLabel stops { address city location pieces postalCode sequence state temperatureMax temperatureMin type weight windowCloses windowOpens } temperatureMax temperatureMin weight ...DeskEdiTransferRowFields } unresolvedMappings { entityType source } } }",
 	},
 	{
 		Name:     "DeskEdiCarrierInvoices",
@@ -1611,12 +1613,13 @@ func NewSchema(p ResolverParams) Schema {
 		RecurringShipmentService: p.RecurringShipmentService,
 	}
 	reportDeps := &reportresolver.Deps{
-		Core:                   core,
-		TableExportService:     p.TableExportService,
-		ReportingService:       p.ReportingService,
-		ReportViewService:      p.ReportViewService,
-		ReportScheduleService:  p.ReportScheduleService,
-		ReportDashboardService: p.ReportDashboardService,
+		Core:                      core,
+		AccountsReceivableService: p.AccountsReceivableService,
+		TableExportService:        p.TableExportService,
+		ReportingService:          p.ReportingService,
+		ReportViewService:         p.ReportViewService,
+		ReportScheduleService:     p.ReportScheduleService,
+		ReportDashboardService:    p.ReportDashboardService,
 	}
 	schedulingDeps := &schedulingresolver.Deps{
 		Core:              core,

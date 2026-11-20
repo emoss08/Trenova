@@ -3,7 +3,6 @@ package dispatchmarketservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
@@ -42,7 +41,7 @@ func (s *Service) grid(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (dispatchmarket.Grid, error) {
-	location, err := orgzone.Location(ctx, s.organizations, tenantInfo)
+	location, err := tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
 	if err != nil {
 		return dispatchmarket.Grid{}, err
 	}

@@ -1,0 +1,58 @@
+set: "990"
+version: "004010"
+group: GF
+title: "Test partner 990, v1"
+
+segments:
+  ST:
+    name: Transaction Set Header
+    elements:
+      - { pos: 1, name: Transaction Set Identifier Code, type: ID, min: 3, max: 3, usage: M, codes: ["990"] }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+  B1:
+    name: Beginning Segment for Booking or Pick-up/Delivery
+    elements:
+      - { pos: 1, name: Standard Carrier Alpha Code, type: ID, min: 2, max: 4, usage: M }
+      - { pos: 2, name: Shipment Identification Number, type: AN, min: 1, max: 30, usage: M }
+      - { pos: 3, name: Date, type: DT, min: 8, max: 8, usage: M }
+      - { pos: 4, name: Reservation Action Code, type: ID, min: 1, max: 1, usage: M, codes: [A, D] }
+  N9:
+    name: Reference Identification
+    elements:
+      - { pos: 1, name: Reference Identification Qualifier, type: ID, min: 2, max: 3, usage: M, codes: [CN, BN, PO] }
+      - { pos: 2, name: Reference Identification, type: AN, min: 1, max: 30, usage: X }
+      - { pos: 3, name: Free-form Description, type: AN, min: 1, max: 45, usage: X }
+      - { pos: 4, name: Date, type: DT, min: 8, max: 8, usage: O }
+      - { pos: 5, name: Time, type: TM, min: 4, max: 8, usage: O }
+      - pos: 7
+        name: Reference Identifier
+        usage: O
+        components:
+          - { pos: 1, type: ID, min: 2, max: 3, usage: M }
+          - { pos: 2, type: AN, min: 1, max: 30, usage: M }
+          - { pos: 3, type: ID, min: 2, max: 3, usage: O }
+          - { pos: 4, type: AN, min: 1, max: 30, usage: O }
+    syntax: [R0203]
+  K1:
+    name: Remarks
+    elements:
+      - { pos: 1, name: Free-form Message, type: AN, min: 1, max: 30, usage: X }
+      - { pos: 2, name: Free-form Message, type: AN, min: 1, max: 30, usage: X }
+    syntax: [R0102, E0102]
+  NTE:
+    name: Note
+    elements:
+      - { pos: 2, name: Description, type: AN, min: 1, max: 80, usage: M }
+  SE:
+    name: Transaction Set Trailer
+    elements:
+      - { pos: 1, name: Number of Included Segments, type: N0, min: 1, max: 10, usage: M }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+
+structure:
+  - { seg: ST, usage: M }
+  - { seg: B1, usage: M }
+  - { seg: N9, usage: O, max: 10 }
+  - { seg: K1, usage: O, max: 2 }
+  - { seg: NTE, usage: N }
+  - { seg: SE, usage: M }

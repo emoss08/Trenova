@@ -101,7 +101,6 @@ modules:
       - onplan
       - organizationservice
       - orgstructureservice
-      - orgzone
       - pageaccessservice
       - passwordresetservice
       - permission
@@ -196,6 +195,7 @@ modules:
       - tableconfigurationservice
       - tableexportservice
       - tablelayoutservice
+      - textformatter
       - webpushservice
     job:
       - auditjobs
@@ -242,7 +242,6 @@ modules:
     service:
       - accessorialchargeservice
       - commodityservice
-      - datatransformer
       - documenttypeservice
       - dothazmatreferenceservice
       - exchangerateservice

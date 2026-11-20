@@ -443,6 +443,12 @@ const FREIGHT_INVOICE: &[Field] = &[
         false,
         message!("Who the invoice is addressed to"),
     ),
+    field(
+        "payment",
+        Spec::Enum("Payment"),
+        false,
+        message!("Who pays the freight"),
+    ),
     field("total", Spec::Money, true, message!("The amount due")),
     field(
         "lines",
@@ -521,6 +527,12 @@ const STOP: &[Field] = &[
         message!("The pieces picked up or delivered here"),
     ),
     field(
+        "temperature",
+        Spec::Record("TemperatureRange"),
+        false,
+        message!("The temperature the freight must be kept at from this stop"),
+    ),
+    field(
         "refs",
         Spec::Refs,
         false,
@@ -583,6 +595,12 @@ const COMMODITY_LINE: &[Field] = &[
         message!("Its weight"),
     ),
     field("pieces", Spec::Int, false, message!("How many pieces")),
+    field(
+        "temperature",
+        Spec::Record("TemperatureRange"),
+        false,
+        message!("The temperature this freight must be kept at"),
+    ),
     field(
         "hazmat",
         Spec::Bool,
@@ -836,6 +854,10 @@ pub const ENUMS: &[Enum] = &[
         variants: &[
             ("Original", message!("A new load")),
             ("Change", message!("A change to a load already tendered")),
+            (
+                "Replace",
+                message!("The whole tender sent again in place of the one before"),
+            ),
             ("Cancel", message!("The load is withdrawn")),
         ],
     },
@@ -1126,6 +1148,25 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn stops_and_lines_carry_a_range_an_invoice_its_payment_and_a_tender_may_replace() {
+        for owner in ["Stop", "CommodityLine"] {
+            let field = record(owner)
+                .and_then(|found| found.field("temperature"))
+                .expect(owner);
+            assert_eq!(field.spec, Spec::Record("TemperatureRange"), "{owner}");
+        }
+        let payment = document("freightInvoice")
+            .and_then(|found| found.field("payment"))
+            .expect("payment");
+        assert_eq!(payment.spec, Spec::Enum("Payment"));
+        let purposes = ENUMS
+            .iter()
+            .find(|item| item.name == "TenderPurpose")
+            .expect("purposes");
+        assert!(purposes.variants.iter().any(|(name, _)| *name == "Replace"));
     }
 
     #[test]

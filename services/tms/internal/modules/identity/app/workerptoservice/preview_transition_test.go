@@ -55,10 +55,11 @@ func TestPreviewReject_IsWhatRejectSaves(t *testing.T) {
 		Return(&worker.Worker{ID: current.WorkerID}, nil)
 
 	svc := &Service{
-		db:       dbtest.NopConnection{},
-		realtime: &mocks.NoopRealtimeService{},
-		ledger:   untrackedLedger(),
-		l:        zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(context.Context, *workerptoports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				copied := *current
@@ -115,10 +116,11 @@ func TestPreviewCancel_SaysApprovedDaysGoBack(t *testing.T) {
 	workers.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&worker.Worker{ID: current.WorkerID}, nil)
 	svc := &Service{
-		db:       dbtest.NopConnection{},
-		realtime: &mocks.NoopRealtimeService{},
-		ledger:   untrackedLedger(),
-		l:        zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		realtime:      &mocks.NoopRealtimeService{},
+		ledger:        untrackedLedger(),
+		organizations: utcOrganizations{},
+		l:             zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(context.Context, *workerptoports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				return current, nil

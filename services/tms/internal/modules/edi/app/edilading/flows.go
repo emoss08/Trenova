@@ -70,8 +70,14 @@ type Dispatched struct {
 	Actions  []lading.FlowAction
 }
 
-// Dispatch feeds one event to the flow instance it belongs to, opening the instance on its
-// first event, and returns the actions Trenova takes. The caller carries them out.
+func (d *Dispatched) Opened() bool {
+	return d.Instance != nil && d.Instance.ID.IsNotNil()
+}
+
+// Dispatch feeds one event to the flow instance it belongs to and returns the actions Trenova
+// takes. A key with no instance is stepped from an empty state, and its instance is stored only
+// when the step leaves something to keep: a message the flow rejects or ignores opens nothing.
+// The caller carries the actions out; Dispatched.Opened says whether an instance holds them.
 func (f *Flows) Dispatch(ctx context.Context, req *DispatchRequest) (*Dispatched, error) {
 	if req.Program == nil {
 		program, err := f.runtime.Active(ctx, req.TenantInfo, req.PartnerID)
@@ -91,7 +97,23 @@ func (f *Flows) Dispatch(ctx context.Context, req *DispatchRequest) (*Dispatched
 	if err != nil {
 		return nil, err
 	}
-	instance, err := f.flows.OpenInstance(ctx, &ladingproject.FlowInstance{
+	instance, err := f.flows.GetInstanceByKey(ctx, ladingports.GetFlowInstanceByKeyRequest{
+		TenantInfo: req.TenantInfo,
+		PartnerID:  req.PartnerID,
+		Flow:       req.Flow,
+		Key:        key,
+	})
+	if errortypes.IsNotFoundError(err) {
+		return f.step(ctx, req, unopened(req, key), settings)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return f.step(ctx, req, instance, settings)
+}
+
+func unopened(req *DispatchRequest, key string) *ladingproject.FlowInstance {
+	return &ladingproject.FlowInstance{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		EDIPartnerID:   req.PartnerID,
@@ -99,15 +121,10 @@ func (f *Flows) Dispatch(ctx context.Context, req *DispatchRequest) (*Dispatched
 		VersionID:      req.Program.Version.ID,
 		Flow:           req.Flow,
 		Key:            key,
+		State:          []byte("{}"),
 		Status:         ladingproject.FlowInstanceStatusOpen,
-		ShipmentID:     req.ShipmentID,
-		TransferID:     req.TransferID,
 		LastEventAt:    req.Now.Unix(),
-	})
-	if err != nil {
-		return nil, err
 	}
-	return f.step(ctx, req, instance, settings)
 }
 
 // DispatchTo feeds an event to an instance already open.
@@ -189,6 +206,7 @@ func (f *Flows) step(
 	settings map[string]jsonutils.RawJSON,
 ) (*Dispatched, error) {
 	for attempt := 1; ; attempt++ {
+		opened := instance.ID.IsNotNil()
 		step, err := f.runtime.client.FlowStep(ctx, req.Program.Encoded, &lading.FlowRequest{
 			Flow:     req.Flow,
 			State:    instance.State,
@@ -200,27 +218,82 @@ func (f *Flows) step(
 			return nil, err
 		}
 		if step.Error != nil {
-			f.journal(ctx, instance, req, nil, step.Error)
+			if opened {
+				f.journal(ctx, instance, req, nil, step.Error)
+			}
 			return nil, step.Error.BusinessError()
 		}
+		if !opened && !opens(step) {
+			return &Dispatched{Program: req.Program, Instance: instance, Actions: step.Actions}, nil
+		}
 		apply(instance, req, step)
-		saved, saveErr := f.flows.SaveInstance(ctx, instance)
+		saved, saveErr := f.keep(ctx, instance, opened)
 		if saveErr == nil {
 			f.journal(ctx, saved, req, step.Actions, nil)
 			return &Dispatched{Program: req.Program, Instance: saved, Actions: step.Actions}, nil
 		}
-		if !dberror.IsVersionConflict(saveErr) && !errortypes.IsVersionMismatchError(saveErr) ||
-			attempt == maxStepAttempts {
+		if !raced(saveErr) || attempt == maxStepAttempts {
 			return nil, saveErr
 		}
-		instance, err = f.flows.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
-			TenantInfo: req.TenantInfo,
-			ID:         instance.ID,
-		})
-		if err != nil {
+		if instance, err = f.reload(ctx, req, instance, opened); err != nil {
 			return nil, err
 		}
 	}
+}
+
+func opens(step *lading.FlowStep) bool {
+	if step.Wake != nil || lading.FlowStarted(step.State) {
+		return true
+	}
+	for index := range step.Actions {
+		switch step.Actions[index].Kind {
+		case lading.ActionAcknowledge, lading.ActionIgnore:
+		default:
+			return true
+		}
+	}
+	return false
+}
+
+func raced(err error) bool {
+	return errors.Is(err, ladingports.ErrFlowInstanceExists) ||
+		dberror.IsVersionConflict(err) ||
+		errortypes.IsVersionMismatchError(err)
+}
+
+func (f *Flows) keep(
+	ctx context.Context,
+	instance *ladingproject.FlowInstance,
+	opened bool,
+) (*ladingproject.FlowInstance, error) {
+	if opened {
+		return f.flows.SaveInstance(ctx, instance)
+	}
+	return f.flows.CreateInstance(ctx, instance)
+}
+
+func (f *Flows) reload(
+	ctx context.Context,
+	req *DispatchRequest,
+	instance *ladingproject.FlowInstance,
+	opened bool,
+) (*ladingproject.FlowInstance, error) {
+	if opened {
+		return f.flows.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
+			TenantInfo: req.TenantInfo,
+			ID:         instance.ID,
+		})
+	}
+	stored, err := f.flows.GetInstanceByKey(ctx, ladingports.GetFlowInstanceByKeyRequest{
+		TenantInfo: req.TenantInfo,
+		PartnerID:  instance.EDIPartnerID,
+		Flow:       instance.Flow,
+		Key:        instance.Key,
+	})
+	if errortypes.IsNotFoundError(err) {
+		return unopened(req, instance.Key), nil
+	}
+	return stored, err
 }
 
 func apply(instance *ladingproject.FlowInstance, req *DispatchRequest, step *lading.FlowStep) {

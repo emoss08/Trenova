@@ -224,12 +224,20 @@ type EdiTenderStop {
   windowCloses: Timestamp
   pieces: Int
   weight: Int
+  "Lowest temperature, in whole degrees Fahrenheit, the tender keeps the freight at from this stop on."
+  temperatureMin: Int
+  "Highest temperature, in whole degrees Fahrenheit, the tender keeps the freight at from this stop on."
+  temperatureMax: Int
 }
 
 type EdiTenderCommodity {
   commodity: String!
   weight: Int!
   pieces: Int!
+  "Lowest temperature, in whole degrees Fahrenheit, this line must be kept at."
+  temperatureMin: Int
+  "Highest temperature, in whole degrees Fahrenheit, this line must be kept at."
+  temperatureMax: Int
 }
 
 type EdiTenderCharge {

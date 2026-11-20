@@ -149,6 +149,11 @@ describe("ShipmentEventService", () => {
         stopId: null,
         previousStatus: "Assigned",
         newStatus: "InTransit",
+        stopNumber: null,
+        stopType: null,
+        locationName: null,
+        actualAt: null,
+        previousActualAt: null,
       },
       {
         ...ENVELOPE,

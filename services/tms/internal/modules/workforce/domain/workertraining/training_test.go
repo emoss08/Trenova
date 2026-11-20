@@ -49,7 +49,7 @@ func TestTrainingCourseValidate(t *testing.T) {
 		multiErr := errortypes.NewMultiError()
 		c.Validate(multiErr)
 		require.True(t, multiErr.HasErrors())
-		assert.Equal(t, "contentUrl", multiErr.Errors[0].Field)
+		assert.Equal(t, "contentUrl", multiErr.Errors[0].Field())
 
 		c.ContentURL = "ftp://nope"
 		multiErr = errortypes.NewMultiError()
@@ -69,7 +69,7 @@ func TestTrainingCourseValidate(t *testing.T) {
 		multiErr := errortypes.NewMultiError()
 		c.Validate(multiErr)
 		require.True(t, multiErr.HasErrors())
-		assert.Equal(t, "passingScore", multiErr.Errors[0].Field)
+		assert.Equal(t, "passingScore", multiErr.Errors[0].Field())
 	})
 }
 
@@ -100,7 +100,7 @@ func TestTrainingCourseGradeAndExpiry(t *testing.T) {
 	_, err := c.Grade(decimal.NullDecimal{})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr, "a scored course needs a result")
-	assert.Equal(t, "score", verr.Field)
+	assert.Equal(t, "score", verr.Field())
 
 	passed, err := c.Grade(decimal.NewNullDecimal(decimal.NewFromInt(80)))
 	require.NoError(t, err)

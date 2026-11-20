@@ -27,7 +27,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { DetentionPolicy } from "@trenova/shared/types/detention";
-import { AlertTriangleIcon } from "@trenova/shared/components/icons";
+import { AlertTriangleIcon, Lock01Icon } from "@trenova/shared/components/icons";
 import { useFormContext, useWatch } from "react-hook-form";
 import { DetentionTierEditor } from "./detention-tier-editor";
 import { defineLabels } from "@trenova/shared/i18n/labels";
@@ -60,7 +60,7 @@ export function DetentionPolicyForm() {
 
   const { control } = useFormContext<DetentionPolicy>();
 
-  const isOrgDefault = useWatch({ control, name: "isOrgDefault" });
+  const isOrganizationDefault = useWatch({ control, name: "isOrganizationDefault" });
   const rateSource = useWatch({ control, name: "rateSource" });
   const roundingMode = useWatch({ control, name: "roundingMode" });
   const clockStartBasis = useWatch({ control, name: "clockStartBasis" });
@@ -70,6 +70,17 @@ export function DetentionPolicyForm() {
 
   return (
     <div className="flex flex-col gap-6">
+      {isOrganizationDefault && (
+        <Alert variant="info" size="sm">
+          <Lock01Icon />
+          <AlertTitle>{t("The organization's default detention policy")}</AlertTitle>
+          <AlertDescription>
+            {t(
+              "Shipment Controls names this policy as the fallback for every stop no other policy covers, so it stays active, covers all freight and never lapses. Its status, scope and dates are locked; choose another default in Shipment Controls to change them.",
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
       <FormSection
         title={t("Identity")}
         description={t("How this policy is referenced across billing and audit")}
@@ -97,19 +108,21 @@ export function DetentionPolicyForm() {
               description={t("Short identifier quoted on notices and invoices.")}
             />
           </FormControl>
-          <FormControl>
-            <SelectField
-              control={control}
-              name="status"
-              label={t("Status")}
-              placeholder={t("Select status")}
-              required
-              options={detentionPolicyStatusChoices}
-              description={t(
-                "Only Active policies participate in resolution; Draft lets you build and backtest safely.",
-              )}
-            />
-          </FormControl>
+          <fieldset disabled={isOrganizationDefault} className="contents">
+            <FormControl>
+              <SelectField
+                control={control}
+                name="status"
+                label={t("Status")}
+                placeholder={t("Select status")}
+                required
+                options={detentionPolicyStatusChoices}
+                description={t(
+                  "Only Active policies participate in resolution; Draft lets you build and backtest safely.",
+                )}
+              />
+            </FormControl>
+          </fieldset>
           <FormControl>
             <NumberField
               control={control}
@@ -144,118 +157,104 @@ export function DetentionPolicyForm() {
         )}
       >
         <FormGroup cols={2}>
-          <FormControl cols="full">
-            <SwitchField
-              control={control}
-              name="isOrgDefault"
-              label={t("Organization default")}
-              description={t(
-                "The fallback used when no narrower policy matches. A default cannot target a customer, facility, or type.",
-              )}
-              outlined
-              position="left"
-            />
-          </FormControl>
-
-          {!isOrgDefault && (
-            <>
-              <FormControl>
-                <CustomerAutocompleteField
-                  control={control}
-                  name="customerId"
-                  label={t("Customer")}
-                  placeholder={t("Any customer")}
-                  description={t("Limit this policy to one customer's freight. Specificity +16.")}
-                  clearable
-                />
-              </FormControl>
-              <FormControl>
-                <LocationAutocompleteField
-                  control={control}
-                  name="locationId"
-                  label={t("Facility")}
-                  placeholder={t("Any facility")}
-                  description={t(
-                    "Limit to one facility. Specificity +32 — facility-level terms outrank customer-wide ones.",
-                  )}
-                  clearable
-                />
-              </FormControl>
-              <FormControl>
-                <ShipmentTypeMultiSelectField
-                  control={control}
-                  name="shipmentTypeIds"
-                  label={t("Shipment types")}
-                  placeholder={t("Any shipment type")}
-                  description={t("Only shipments of these types are governed. Specificity +4.")}
-                />
-              </FormControl>
-              <FormControl>
-                <ServiceTypeMultiSelectField
-                  control={control}
-                  name="serviceTypeIds"
-                  label={t("Service types")}
-                  placeholder={t("Any service type")}
-                  description={t("Only these service levels are governed. Specificity +2.")}
-                />
-              </FormControl>
-              <FormControl cols="full">
-                <CommodityMultiSelectField
-                  control={control}
-                  name="commodityIds"
-                  label={t("Commodities")}
-                  placeholder={t("Any commodity")}
-                  description={t(
-                    "Only shipments carrying these commodities are governed. Specificity +8.",
-                  )}
-                />
-              </FormControl>
-              <FormControl cols="full">
-                <MultiCheckboxField
-                  control={control}
-                  name="stopTypes"
-                  label={t("Stop types")}
-                  options={stopTypeChoices}
-                  description={t("Leave all unchecked to govern every stop type. Specificity +1.")}
-                />
-              </FormControl>
-              <FormControl>
-                <AutoCompleteDateField
-                  control={control}
-                  name="effectiveStartDate"
-                  label={t("Effective From")}
-                  placeholder={t("No start date")}
-                  description={t("The policy only governs stops arriving on or after this date.")}
-                  clearable
-                />
-              </FormControl>
-              <FormControl>
-                <AutoCompleteDateField
-                  control={control}
-                  name="effectiveEndDate"
-                  label={t("Expires")}
-                  placeholder={t("No expiration")}
-                  description={t(
-                    "The policy stops governing after this date — set it when a contract term ends.",
-                  )}
-                  clearable
-                />
-              </FormControl>
-            </>
-          )}
-
-          <FormControl cols="full">
-            <SwitchField
-              control={control}
-              name="appointmentStopsOnly"
-              label={t("Appointment stops only")}
-              description={t(
-                "Open (first-come) stops will not accrue detention under this policy.",
-              )}
-              outlined
-              position="left"
-            />
-          </FormControl>
+          <fieldset disabled={isOrganizationDefault} className="contents">
+            <FormControl>
+              <CustomerAutocompleteField
+                control={control}
+                name="customerId"
+                label={t("Customer")}
+                placeholder={t("Any customer")}
+                description={t("Limit this policy to one customer's freight. Specificity +16.")}
+                clearable
+              />
+            </FormControl>
+            <FormControl>
+              <LocationAutocompleteField
+                control={control}
+                name="locationId"
+                label={t("Facility")}
+                placeholder={t("Any facility")}
+                description={t(
+                  "Limit to one facility. Specificity +32 — facility-level terms outrank customer-wide ones.",
+                )}
+                clearable
+              />
+            </FormControl>
+            <FormControl>
+              <ShipmentTypeMultiSelectField
+                control={control}
+                name="shipmentTypeIds"
+                label={t("Shipment types")}
+                placeholder={t("Any shipment type")}
+                description={t("Only shipments of these types are governed. Specificity +4.")}
+              />
+            </FormControl>
+            <FormControl>
+              <ServiceTypeMultiSelectField
+                control={control}
+                name="serviceTypeIds"
+                label={t("Service types")}
+                placeholder={t("Any service type")}
+                description={t("Only these service levels are governed. Specificity +2.")}
+              />
+            </FormControl>
+            <FormControl cols="full">
+              <CommodityMultiSelectField
+                control={control}
+                name="commodityIds"
+                label={t("Commodities")}
+                placeholder={t("Any commodity")}
+                description={t(
+                  "Only shipments carrying these commodities are governed. Specificity +8.",
+                )}
+              />
+            </FormControl>
+            <FormControl cols="full">
+              <MultiCheckboxField
+                control={control}
+                name="stopTypes"
+                label={t("Stop types")}
+                options={stopTypeChoices}
+                description={t("Leave all unchecked to govern every stop type. Specificity +1.")}
+              />
+            </FormControl>
+            <FormControl cols="full">
+              <SwitchField
+                control={control}
+                name="appointmentStopsOnly"
+                label={t("Appointment stops only")}
+                description={t(
+                  "Open (first-come) stops will not accrue detention under this policy.",
+                )}
+                outlined
+                position="left"
+              />
+            </FormControl>
+          </fieldset>
+          <fieldset disabled={isOrganizationDefault} className="contents">
+            <FormControl>
+              <AutoCompleteDateField
+                control={control}
+                name="effectiveStartDate"
+                label={t("Effective From")}
+                placeholder={t("No start date")}
+                description={t("The policy only governs stops arriving on or after this date.")}
+                clearable
+              />
+            </FormControl>
+            <FormControl>
+              <AutoCompleteDateField
+                control={control}
+                name="effectiveEndDate"
+                label={t("Expires")}
+                placeholder={t("No expiration")}
+                description={t(
+                  "The policy stops governing after this date — set it when a contract term ends.",
+                )}
+                clearable
+              />
+            </FormControl>
+          </fieldset>
         </FormGroup>
       </FormSection>
 

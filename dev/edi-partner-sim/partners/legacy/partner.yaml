@@ -1,0 +1,50 @@
+name: legacy
+display: Ashgrove Industrial Supply
+role: shipper
+zone: America/New_York
+
+them:
+  qualifier: "01"
+  id: "071284355"
+  group: "071284355"
+trenova:
+  qualifier: "02"
+  id: TRNV
+  group: TRNV
+  scac: TRNV
+
+envelope:
+  version: "004010"
+  separators:
+    element: "*"
+    segment: "~"
+    component: ">"
+    repetition: ""
+  terminator: crlf
+  squeezedIsa: true
+  usage: T
+
+transport:
+  as2:
+    id: ASHGROVE
+    signed: false
+    encrypted: false
+    compressed: false
+    mdn: async
+
+batching:
+  transactionsPerGroup: 1
+  groupsPerInterchange: 1
+
+acknowledgment:
+  sends: "997"
+  expects: "997"
+  ta1: false
+  delay: 6h
+  reject:
+    when: never
+    sets: []
+  never: 0.15
+
+sends: ["204", "997"]
+receives: ["997", "990", "214", "210"]

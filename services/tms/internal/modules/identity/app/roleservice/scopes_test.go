@@ -175,5 +175,5 @@ func TestSaveRoleConstraint_DynamicSeparationNeedsRoleActivation(t *testing.T) {
 
 	var fieldErr *errortypes.Error
 	require.True(t, errors.As(err, &fieldErr), "expected a field error, got %v", err)
-	assert.Equal(t, "type", fieldErr.Field)
+	assert.Equal(t, "type", fieldErr.Field())
 }

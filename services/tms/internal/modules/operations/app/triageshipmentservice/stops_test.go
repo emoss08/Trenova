@@ -277,7 +277,7 @@ func TestSettleDetentionPassesOnARefusedCredit(t *testing.T) {
 	require.Error(t, err)
 	fieldErr, ok := errors.AsType[*errortypes.Error](err)
 	require.True(t, ok)
-	assert.Equal(t, "decision", fieldErr.Field)
+	assert.Equal(t, "decision", fieldErr.Field())
 	assert.Empty(t, f.decider.waived)
 }
 

@@ -83,7 +83,7 @@ func TestBuild_RefusesAFilterTheReportCannotApplyRatherThanDroppingIt(t *testing
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "fieldFilters[0]", validation.Field)
+	assert.Equal(t, "fieldFilters[0]", validation.Field())
 }
 
 func TestBuild_RefusesASearchItCannotExpress(t *testing.T) {
@@ -94,7 +94,7 @@ func TestBuild_RefusesASearchItCannotExpress(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "query", validation.Field)
+	assert.Equal(t, "query", validation.Field())
 }
 
 func TestBuild_SortsOnlyByColumnsItShows(t *testing.T) {

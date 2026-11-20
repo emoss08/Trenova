@@ -33,5 +33,5 @@ func TestAssistantTurn_Validate_ChecksTraceID(t *testing.T) {
 	multiErr = errortypes.NewMultiError()
 	turn.Validate(multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "traceId", multiErr.Errors[0].Field)
+	assert.Equal(t, "traceId", multiErr.Errors[0].Field())
 }

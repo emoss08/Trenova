@@ -20,9 +20,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -39,7 +42,6 @@ type Service struct {
 	accessorialRepo   accessorialchargeports.AccessorialChargeRepository
 	agreementRepo     rateagreementports.RateAgreementRepository
 	payAssignmentRepo driverpayports.WorkerPayAssignmentRepository
-	payProfileRepo    driverpayports.PayProfileRepository
 	commentRepo       shipmentcommentports.ShipmentCommentRepository
 	watchtower        watchtowerports.WatchtowerProjector
 	publisher         agenteventports.AgentEventPublisher
@@ -157,7 +159,6 @@ type Params struct {
 	AccessorialRepo   accessorialchargeports.AccessorialChargeRepository
 	AgreementRepo     rateagreementports.RateAgreementRepository
 	PayAssignmentRepo driverpayports.WorkerPayAssignmentRepository
-	PayProfileRepo    driverpayports.PayProfileRepository
 	CommentRepo       shipmentcommentports.ShipmentCommentRepository
 	Watchtower        watchtowerports.WatchtowerProjector
 	Publisher         agenteventports.AgentEventPublisher
@@ -176,7 +177,6 @@ func New(p Params) *Service {
 		accessorialRepo:   p.AccessorialRepo,
 		agreementRepo:     p.AgreementRepo,
 		payAssignmentRepo: p.PayAssignmentRepo,
-		payProfileRepo:    p.PayProfileRepo,
 		commentRepo:       p.CommentRepo,
 		watchtower:        p.Watchtower,
 		publisher:         p.Publisher,
@@ -186,6 +186,8 @@ func New(p Params) *Service {
 }
 
 // SyncShipment recomputes every stop's detention for a shipment.
+// defaultPolicyID is the organization's default policy from shipment control,
+// the one that governs a stop no other policy covers.
 //
 // Frozen occurrences are never rewritten: once a charge has been billed,
 // waived, or disputed the customer has seen a number, and silently changing it
@@ -193,6 +195,7 @@ func New(p Params) *Service {
 func (s *Service) SyncShipment(
 	ctx context.Context,
 	entity *shipment.Shipment,
+	defaultPolicyID pulid.ID,
 ) (*SyncShipmentResult, error) {
 	if entity == nil {
 		return &SyncShipmentResult{TotalAmount: decimal.Zero}, nil
@@ -218,115 +221,223 @@ func (s *Service) SyncShipment(
 		TotalAmount: decimal.Zero,
 	}
 
-	commodityIDs := shipmentCommodityIDs(entity)
-	dayAccrued := map[string]decimal.Decimal{}
-	shipmentAccrued := decimal.Zero
 	now := s.now()
 
 	// The contract's own accessorial prices, read once for the whole shipment.
 	prices := s.resolveContractPrices(ctx, entity, tenantInfo, now)
+
+	plan, err := s.planShipment(ctx, entity, tenantInfo, defaultPolicyID, now)
+	if err != nil {
+		return nil, err
+	}
+
+	accessorials, err := s.loadAccessorials(ctx, plan, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	dayAccrued := map[string]decimal.Decimal{}
+	shipmentAccrued := decimal.Zero
+
+	for _, sp := range plan {
+		if sp.policy == nil {
+			result.Skipped++
+			result.Occurrences = append(result.Occurrences, sp.existing)
+			shipmentAccrued = shipmentAccrued.Add(sp.existing.BillableAmount)
+			result.TotalAmount = result.TotalAmount.Add(sp.existing.BillableAmount)
+			continue
+		}
+
+		occurrence, computeErr := s.computeStop(ctx, &computeStopParams{
+			shipment:        entity,
+			move:            sp.move,
+			stop:            sp.stop,
+			existing:        sp.existing,
+			policy:          sp.policy,
+			accessorial:     accessorials[sp.policy.AccessorialChargeID],
+			tenantInfo:      tenantInfo,
+			location:        location,
+			payRate:         sp.payRate,
+			dayAccrued:      dayAccrued,
+			shipmentAccrued: shipmentAccrued,
+			prices:          prices,
+			now:             now,
+		})
+		if errors.Is(computeErr, errStopNotCharged) {
+			continue
+		}
+		if computeErr != nil {
+			log.Error("failed to compute detention for stop",
+				zap.String("stopId", sp.stop.ID.String()), zap.Error(computeErr))
+			return nil, computeErr
+		}
+
+		result.Occurrences = append(result.Occurrences, occurrence)
+		shipmentAccrued = shipmentAccrued.Add(occurrence.BillableAmount)
+		result.TotalAmount = result.TotalAmount.Add(occurrence.BillableAmount)
+	}
+
+	return result, nil
+}
+
+// planShipment decides, before anything is computed, what each billable stop
+// needs: its stored occurrence and, unless that is frozen, the policy that
+// governs it. The occurrences, the candidate policies and the drivers' pay
+// are each one read for the whole shipment, so recalculating costs the same
+// reads however many stops and moves it has.
+func (s *Service) planShipment(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+	defaultPolicyID pulid.ID,
+	now int64,
+) ([]*stopPlan, error) {
+	existing, err := s.loadOccurrences(ctx, entity, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	candidates, err := s.loadResolutionCandidates(ctx, entity, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	payRates := s.loadDriverPayRates(ctx, entity, tenantInfo, now)
+	commodityIDs := shipmentCommodityIDs(entity)
+	plan := make([]*stopPlan, 0, len(existing)+4)
 
 	for _, move := range entity.Moves {
 		if move == nil {
 			continue
 		}
 
-		payRate := s.resolveDriverPayRate(ctx, tenantInfo, move, now)
+		payRate := payRates[movePrimaryWorker(move)]
 
 		for _, stop := range move.Stops {
 			if !stopIsBillable(stop) {
 				continue
 			}
 
-			existing, lookupErr := s.occurrenceRepo.GetByStop(
-				ctx,
-				&detentionports.GetOccurrenceByStopRequest{
-					StopID:     stop.ID,
-					TenantInfo: tenantInfo,
-				},
-			)
-			if lookupErr != nil {
-				return nil, lookupErr
+			sp := &stopPlan{move: move, stop: stop, existing: existing[stop.ID], payRate: payRate}
+			if sp.existing == nil || !sp.existing.IsFrozen() {
+				sp.policy = resolveStopPolicy(&resolveStopParams{
+					shipment:        entity,
+					stop:            stop,
+					commodityIDs:    commodityIDs,
+					candidates:      candidates,
+					defaultPolicyID: defaultPolicyID,
+				})
+				if sp.policy == nil {
+					continue
+				}
 			}
 
-			if existing != nil && existing.IsFrozen() {
-				result.Skipped++
-				result.Occurrences = append(result.Occurrences, existing)
-				shipmentAccrued = shipmentAccrued.Add(existing.BillableAmount)
-				result.TotalAmount = result.TotalAmount.Add(existing.BillableAmount)
-				continue
-			}
-
-			occurrence, computeErr := s.computeStop(ctx, &computeStopParams{
-				shipment:        entity,
-				move:            move,
-				stop:            stop,
-				existing:        existing,
-				tenantInfo:      tenantInfo,
-				commodityIDs:    commodityIDs,
-				location:        location,
-				payRate:         payRate,
-				dayAccrued:      dayAccrued,
-				shipmentAccrued: shipmentAccrued,
-				prices:          prices,
-				now:             now,
-			})
-			if errors.Is(computeErr, errStopNotCharged) {
-				continue
-			}
-			if computeErr != nil {
-				log.Error("failed to compute detention for stop",
-					zap.String("stopId", stop.ID.String()), zap.Error(computeErr))
-				return nil, computeErr
-			}
-
-			result.Occurrences = append(result.Occurrences, occurrence)
-			shipmentAccrued = shipmentAccrued.Add(occurrence.BillableAmount)
-			result.TotalAmount = result.TotalAmount.Add(occurrence.BillableAmount)
+			plan = append(plan, sp)
 		}
 	}
 
-	return result, nil
+	return plan, nil
 }
 
 var errStopNotCharged = errors.New("no detention policy charges this stop")
 
-func (s *Service) computeStop(
+// loadResolutionCandidates reads the policies that could govern any billable
+// stop on the shipment in one query, so recalculating a shipment costs one
+// policy read however many stops it has. Each stop then picks its own from
+// this set in memory.
+func (s *Service) loadResolutionCandidates(
 	ctx context.Context,
-	p *computeStopParams,
-) (*detention.DetentionOccurrence, error) {
-	candidates, err := s.policyRepo.GetResolutionCandidates(
+	entity *shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+) ([]*detentionpolicy.DetentionPolicy, error) {
+	req, ok := resolutionCandidatesRequest(entity, tenantInfo)
+	if !ok {
+		return nil, nil
+	}
+
+	return s.policyRepo.GetResolutionCandidates(ctx, req)
+}
+
+// loadOccurrences reads the stored occurrence of every billable stop on the
+// shipment in one query, keyed by stop.
+func (s *Service) loadOccurrences(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+) (map[pulid.ID]*detention.DetentionOccurrence, error) {
+	stopIDs := billableStopIDs(entity)
+	if len(stopIDs) == 0 {
+		return map[pulid.ID]*detention.DetentionOccurrence{}, nil
+	}
+
+	occurrences, err := s.occurrenceRepo.ListByStops(
 		ctx,
-		&detentionports.GetResolutionCandidatesRequest{
-			TenantInfo: p.tenantInfo,
-			CustomerID: p.shipment.CustomerID,
-			LocationID: p.stop.LocationID,
+		&detentionports.ListOccurrencesByStopsRequest{
+			StopIDs:    stopIDs,
+			TenantInfo: tenantInfo,
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	resolution := detentionengine.ResolvePolicy(candidates, &detentionpolicy.MatchInput{
-		CustomerID:     p.shipment.CustomerID,
-		LocationID:     p.stop.LocationID,
-		ShipmentTypeID: p.shipment.ShipmentTypeID,
-		ServiceTypeID:  p.shipment.ServiceTypeID,
-		CommodityIDs:   p.commodityIDs,
-		StopType:       p.stop.Type,
-		ScheduleType:   p.stop.ScheduleType,
-		Timestamp:      *p.stop.ActualArrival,
-	})
-	if !resolution.Found() {
-		return nil, errStopNotCharged
+	byStop := make(map[pulid.ID]*detention.DetentionOccurrence, len(occurrences))
+	for _, occurrence := range occurrences {
+		if occurrence != nil {
+			byStop[occurrence.StopID] = occurrence
+		}
 	}
 
-	policy := resolution.Policy
+	return byStop, nil
+}
 
-	snapshot, err := s.snapshotPolicy(ctx, p, policy)
+// loadAccessorials reads the accessorial charge of every policy the plan
+// resolved, in one query. A policy whose charge cannot be found fails the
+// recalculation, as reading it alone did.
+func (s *Service) loadAccessorials(
+	ctx context.Context,
+	plan []*stopPlan,
+	tenantInfo pagination.TenantInfo,
+) (map[pulid.ID]*accessorialcharge.AccessorialCharge, error) {
+	ids := planAccessorialIDs(plan)
+	if len(ids) == 0 {
+		return map[pulid.ID]*accessorialcharge.AccessorialCharge{}, nil
+	}
+
+	charges, err := s.accessorialRepo.GetByIDs(
+		ctx,
+		accessorialchargeports.GetAccessorialChargesByIDsRequest{
+			TenantInfo:           tenantInfo,
+			AccessorialChargeIDs: ids,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	byID := make(map[pulid.ID]*accessorialcharge.AccessorialCharge, len(charges))
+	for _, charge := range charges {
+		if charge != nil {
+			byID[charge.ID] = charge
+		}
+	}
+
+	for _, id := range ids {
+		if _, ok := byID[id]; !ok {
+			return nil, errortypes.NewNotFoundError(
+				"The detention policy's accessorial charge was not found within your organization",
+			)
+		}
+	}
+
+	return byID, nil
+}
+
+func (s *Service) computeStop(
+	ctx context.Context,
+	p *computeStopParams,
+) (*detention.DetentionOccurrence, error) {
+	snapshot := snapshotPolicy(p)
 
 	var noticeSentAt *int64
 	if p.existing != nil {
@@ -357,7 +468,7 @@ func (s *Service) computeStop(
 		p.dayAccrued[day] = p.dayAccrued[day].Add(amount)
 	}
 
-	saved, err := s.occurrenceRepo.Upsert(ctx, buildOccurrence(p, policy, &snapshot, &computed))
+	saved, err := s.occurrenceRepo.Upsert(ctx, buildOccurrence(p, &snapshot, &computed))
 	if err != nil {
 		return nil, err
 	}
@@ -378,39 +489,24 @@ func (s *Service) computeStop(
 // snapshotPolicy freezes the governing policy at the contract's price, which
 // wins over the organization default so the rate confirmation and the invoice
 // agree on detention.
-func (s *Service) snapshotPolicy(
-	ctx context.Context,
-	p *computeStopParams,
-	policy *detentionpolicy.DetentionPolicy,
-) (detentionpolicy.PolicySnapshot, error) {
-	accessorial, err := s.accessorialRepo.GetByID(
-		ctx,
-		accessorialchargeports.GetAccessorialChargeByIDRequest{
-			ID:         policy.AccessorialChargeID,
-			TenantInfo: &p.tenantInfo,
-		},
-	)
-	if err != nil {
-		return detentionpolicy.PolicySnapshot{}, err
-	}
+func snapshotPolicy(p *computeStopParams) detentionpolicy.PolicySnapshot {
+	flatRate := p.accessorial.Amount
+	rateUnit := p.accessorial.RateUnit
 
-	flatRate := accessorial.Amount
-	rateUnit := accessorial.RateUnit
-
-	if contractRate, contractUnit, priced := p.prices.priceFor(accessorial); priced {
+	if contractRate, contractUnit, priced := p.prices.priceFor(p.accessorial); priced {
 		flatRate = contractRate
 		rateUnit = contractUnit
 	}
 
 	return detentionpolicy.NewPolicySnapshot(&detentionpolicy.SnapshotInput{
-		Policy:          policy,
+		Policy:          p.policy,
 		StopType:        string(p.stop.Type),
-		FreeMinutes:     policy.FreeMinutesForStopType(p.stop.Type),
-		AccessorialCode: accessorial.Code,
+		FreeMinutes:     p.policy.FreeMinutesForStopType(p.stop.Type),
+		AccessorialCode: p.accessorial.Code,
 		FlatRate:        flatRate,
 		FlatRateUnit:    detentionengine.TierUnitFromAccessorial(rateUnit),
 		CapturedAt:      p.now,
-	}), nil
+	})
 }
 
 // recordRecalculation appends an evidence link whenever a stored amount moves,
@@ -451,49 +547,70 @@ func (s *Service) recordRecalculation(
 	}
 }
 
-// resolveDriverPayRate finds the detention rate the assigned driver is paid, so
-// the AR and AP sides of the same dwell can be compared on one record.
-func (s *Service) resolveDriverPayRate(
+// loadDriverPayRates finds the detention rate each assigned driver is paid,
+// so the AR and AP sides of the same dwell can be compared on one record. The
+// assignments of every primary driver on a move with a billable stop are one
+// read for the whole shipment, keyed by worker. A read that fails is logged
+// and leaves the rates out: the customer's detention does not wait on the
+// driver's pay.
+func (s *Service) loadDriverPayRates(
 	ctx context.Context,
+	entity *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
-	move *shipment.ShipmentMove,
 	asOf int64,
-) decimal.NullDecimal {
-	if move.Assignment == nil || move.Assignment.PrimaryWorkerID == nil ||
-		move.Assignment.PrimaryWorkerID.IsNil() {
-		return decimal.NullDecimal{}
+) map[pulid.ID]decimal.NullDecimal {
+	workerIDs := billableMoveWorkers(entity)
+	if len(workerIDs) == 0 {
+		return nil
 	}
 
-	assignment, err := s.payAssignmentRepo.GetEffectiveForWorker(
+	assignments, err := s.payAssignmentRepo.GetEffectiveForWorkers(
 		ctx,
-		driverpayports.GetWorkerPayAssignmentRequest{
+		driverpayports.GetWorkerPayAssignmentsRequest{
 			TenantInfo: tenantInfo,
-			WorkerID:   *move.Assignment.PrimaryWorkerID,
+			WorkerIDs:  workerIDs,
 			AsOf:       asOf,
 		},
 	)
-	if err != nil || assignment == nil {
-		return decimal.NullDecimal{}
+	if err != nil {
+		s.l.Warn("failed to load driver pay for detention",
+			zap.String("shipmentId", entity.ID.String()),
+			zap.Error(err),
+		)
+
+		return nil
 	}
 
-	profile, err := s.payProfileRepo.GetByID(ctx, driverpayports.GetPayProfileByIDRequest{
-		TenantInfo: tenantInfo,
-		ID:         assignment.PayProfileID,
-	})
-	if err != nil || profile == nil {
-		return decimal.NullDecimal{}
+	rates := make(map[pulid.ID]decimal.NullDecimal, len(assignments))
+	for workerID, assignment := range assignments {
+		if rate, ok := detentionPayRate(assignment); ok {
+			rates[workerID] = decimal.NewNullDecimal(rate)
+		}
 	}
 
-	for _, comp := range profile.Components {
-		if comp == nil || !comp.IsActive {
+	return rates
+}
+
+// detentionPayRate is the rate of the first active detention component on
+// the assignment's profile, after the assignment's own override of it, the
+// rate settlement pays the driver.
+func detentionPayRate(assignment *payassignment.WorkerPayAssignment) (decimal.Decimal, bool) {
+	if assignment == nil || assignment.PayProfile == nil {
+		return decimal.Zero, false
+	}
+
+	for _, comp := range assignment.PayProfile.Components {
+		if comp == nil || !comp.IsActive || comp.Kind != driverpay.ComponentKindDetention {
 			continue
 		}
-		if comp.Kind == driverpay.ComponentKindDetention {
-			return decimal.NewNullDecimal(comp.Rate)
+		if override, ok := assignment.OverrideFor(comp.ID); ok {
+			return override, true
 		}
+
+		return comp.Rate, true
 	}
 
-	return decimal.NullDecimal{}
+	return decimal.Zero, false
 }
 
 // projectToWatchtower puts a running detention clock on the feed and takes

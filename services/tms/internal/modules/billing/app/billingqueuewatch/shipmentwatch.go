@@ -41,7 +41,9 @@ func RechecksOn(eventType shipmentevent.Type) bool {
 	switch eventType {
 	case shipmentevent.TypeShipmentUpdated,
 		shipmentevent.TypeStatusChanged,
-		shipmentevent.TypeStopCompleted,
+		shipmentevent.TypeStopDeparted,
+		shipmentevent.TypeStopArrivalCorrected,
+		shipmentevent.TypeStopDepartureCorrected,
 		shipmentevent.TypeShipmentCanceled,
 		shipmentevent.TypeShipmentUncanceled,
 		shipmentevent.TypeHoldPlaced,
@@ -52,6 +54,7 @@ func RechecksOn(eventType shipmentevent.Type) bool {
 		shipmentevent.TypeMoveStatusChanged,
 		shipmentevent.TypeMoveDeparted,
 		shipmentevent.TypeMoveArrived,
+		shipmentevent.TypeStopArrived,
 		shipmentevent.TypeDriverAssigned,
 		shipmentevent.TypeDriverReassigned,
 		shipmentevent.TypeDriverUnassigned,

@@ -233,6 +233,7 @@
         "ArTopOverdueCustomers",
         "CreateMemo",
         "DeskInvoiceCard",
+        "ExportCustomerLedger",
         "InvoiceArContext",
         "LateChargePreview",
         "ShipmentInvoices"
@@ -2067,10 +2068,9 @@
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "ResolvedCostProfilePage",
+        "SaveCostingControl",
         "ShipmentCheckCalls",
-        "ShipmentProfitability",
-        "UpdateCostCategory",
-        "UpdateCostingControl"
+        "ShipmentProfitability"
       ],
       "rest": [
         {

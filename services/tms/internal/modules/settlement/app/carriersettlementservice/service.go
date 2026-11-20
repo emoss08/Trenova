@@ -36,6 +36,7 @@ type Params struct {
 	LedgerRepo        carriersettlementports.CarrierLedgerRepository
 	InvoiceMatchRepo  carriersettlementports.CarrierInvoiceMatchRepository
 	SettlementControl tenantports.CarrierSettlementControlRepository
+	Organizations     tenantports.OrganizationRepository
 	AccountingRepo    tenantports.AccountingControlRepository
 	Stamper           *exchangeratestamp.Stamper
 	JournalRepo       journalentryports.JournalPostingRepository
@@ -55,6 +56,7 @@ type Service struct {
 	ledgerRepo        carriersettlementports.CarrierLedgerRepository
 	invoiceMatchRepo  carriersettlementports.CarrierInvoiceMatchRepository
 	settlementControl tenantports.CarrierSettlementControlRepository
+	organizations     tenantports.OrganizationRepository
 	stamper           *exchangeratestamp.Stamper
 	generator         seqgen.Generator
 	auditService      auditports.AuditService
@@ -74,6 +76,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		ledgerRepo:        p.LedgerRepo,
 		invoiceMatchRepo:  p.InvoiceMatchRepo,
 		settlementControl: p.SettlementControl,
+		organizations:     p.Organizations,
 		stamper:           p.Stamper,
 		generator:         p.Generator,
 		auditService:      p.AuditService,

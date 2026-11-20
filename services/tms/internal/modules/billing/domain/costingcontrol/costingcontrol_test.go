@@ -71,29 +71,19 @@ func TestCostingControl_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "gl rolling months below 1 rejected",
+			name: "gl rolling months are left to the save rule while GL actuals are off",
 			mutate: func(cc *CostingControl) {
 				cc.GLRollingMonths = 0
 			},
-			wantErr:   true,
-			wantField: "glRollingMonths",
+			wantErr: false,
 		},
 		{
-			name: "gl rolling months above 12 rejected",
-			mutate: func(cc *CostingControl) {
-				cc.GLRollingMonths = 13
-			},
-			wantErr:   true,
-			wantField: "glRollingMonths",
-		},
-		{
-			name: "planned monthly miles must be positive",
+			name: "planned monthly miles are left to the save rule while GL actuals are off",
 			mutate: func(cc *CostingControl) {
 				zero := int64(0)
 				cc.PlannedMonthlyMiles = &zero
 			},
-			wantErr:   true,
-			wantField: "plannedMonthlyMiles",
+			wantErr: false,
 		},
 		{
 			name: "target margin above 100 rejected",

@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
@@ -85,7 +84,7 @@ func (s *RecordSource) Build(ctx context.Context, req *RecordRequest) (rules.Raw
 	if req.Shipment == nil {
 		return nil, record.ErrNoShipment
 	}
-	zone, err := orgzone.Location(ctx, s.organizations, req.TenantInfo)
+	zone, err := tenantports.OrganizationLocation(ctx, s.organizations, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}

@@ -149,10 +149,15 @@ func (r *QueryResolver) BenefitPlans(ctx context.Context, activeOnly *bool, plan
 		return nil, err
 	}
 
+	year, err := gqlscalar.NarrowIntValue[int16]("planYear", planYear)
+	if err != nil {
+		return nil, err
+	}
+
 	return r.BenefitsService.ListPlans(ctx, &driverpayports.ListBenefitPlansRequest{
 		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		ActiveOnly:     gqlscalar.BoolValue(activeOnly),
-		PlanYear:       int16(gqlscalar.IntValue(planYear)), //nolint:gosec // a calendar year
+		PlanYear:       year,
 		IncludePayCode: true,
 	})
 }
@@ -218,11 +223,12 @@ func (r *QueryResolver) BenefitCosts(ctx context.Context, planYear *int) ([]*dri
 		return nil, err
 	}
 
-	rows, err := r.BenefitsService.BenefitCosts(
-		ctx,
-		resolvercore.TenantInfo(authCtx),
-		int16(gqlscalar.IntValue(planYear)), //nolint:gosec // a calendar year
-	)
+	year, err := gqlscalar.NarrowIntValue[int16]("planYear", planYear)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.BenefitsService.BenefitCosts(ctx, resolvercore.TenantInfo(authCtx), year)
 	if err != nil {
 		return nil, err
 	}

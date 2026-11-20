@@ -7,7 +7,7 @@ receive 204 as tender
   on Original -> create
   on Change   -> update stops, commodities, refs, notes keep customer, total
     hold when tender.total != current.total "Acme changed the rate on {tender.key}"
-  on Cancel   -> cancel unless dispatched else hold "Acme cancelled {tender.key} after dispatch"
+  on Cancel   -> cancel unless dispatched or later else hold "Acme cancelled {tender.key} after dispatch"
 
 respond 990 via responseOut
   accept automatically when partner.autoAccept and not held and not declined
@@ -83,6 +83,7 @@ test "an unanswered tender escalates after two hours" {
 }
 
 test "arrivals within five minutes go out as one 214" {
+  given now = @2026-03-03T12:00Z
   receive file "samples/tender-original.x12"
   respond accept
   event StopArrived { key: "AM-48213", bol: "BOL-77120", events: [{ kind: ArrivedPickup, at: @2026-03-03T12:02Z, stop: 1 }] }
@@ -100,6 +101,7 @@ test "an acknowledged status needs nothing more" {
 }
 
 test "a rejected acknowledgment escalates at once" {
+  given now = @2026-03-04T20:00Z
   event Delivered { key: "AM-48213", bol: "BOL-77120", events: [{ kind: Delivered, at: @2026-03-04T19:30Z, stop: 2 }] }
   advance 5 min
   ack rejected
@@ -109,4 +111,41 @@ test "a rejected acknowledgment escalates at once" {
 test "a posted invoice is sent" {
   event InvoicePosted { number: "INV-1001", date: @2026-03-05, key: "AM-48213", total: $2_531.10 }
   expect sent 210
+}
+
+test "a status the rules reject is not sent" {
+  given now = @2026-03-04T12:00Z
+  event Delivered { key: "AM-48213", bol: "BOL-77120", events: [{ kind: Delivered, at: @2026-03-04T19:30Z, stop: 2 }] }
+  expect rejected "A status dated"
+  expect no sent 214
+}
+
+test "an invoice the rules hold is not sent" {
+  event InvoicePosted { number: "INV-1001", date: @2026-03-05, total: $2_531.10 }
+  expect held "Acme pays only an invoice that quotes its load"
+  expect no sent 210
+}
+
+test "a status holding only what Acme takes no code for is not sent" {
+  given now = @2026-03-04T20:00Z
+  event EtaChanged { key: "AM-48213", bol: "BOL-77120", events: [{ kind: AppointmentSet, at: @2026-03-04T19:30Z }] }
+  expect no sent 214
+  advance 2 h
+  expect no escalated
+}
+
+test "a cancellation after delivery is held too" {
+  given now = @2026-03-04T20:00Z
+  receive file "samples/tender-original.x12"
+  respond accept
+  event Delivered { key: "AM-48213", bol: "BOL-77120", events: [{ kind: Delivered, at: @2026-03-04T19:30Z, stop: 2 }] }
+  receive file "samples/tender-cancel.x12"
+  expect held "Acme cancelled AM-48213 after dispatch"
+  expect no cancelled
+}
+
+test "every tender of a batched file opens its own load" {
+  receive file "samples/tender-batch.x12"
+  expect created
+  expect no held
 }

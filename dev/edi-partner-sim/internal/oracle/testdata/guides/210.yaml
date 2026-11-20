@@ -1,0 +1,91 @@
+set: "210"
+version: "004010"
+group: IM
+title: "Test partner 210, v1"
+
+segments:
+  ST:
+    elements:
+      - { pos: 1, type: ID, min: 3, max: 3, usage: M, codes: ["210"] }
+      - { pos: 2, type: AN, min: 4, max: 9, usage: M }
+  B3:
+    name: Beginning Segment for Carrier's Invoice
+    elements:
+      - { pos: 1, name: Shipment Qualifier, type: ID, min: 1, max: 1, usage: O }
+      - { pos: 2, name: Invoice Number, type: AN, min: 1, max: 22, usage: M }
+      - { pos: 3, name: Shipment Identification Number, type: AN, min: 1, max: 30, usage: O }
+      - { pos: 4, name: Shipment Method of Payment, type: ID, min: 2, max: 2, usage: M, codes: [PP, CC, TP] }
+      - { pos: 6, name: Date, type: DT, min: 8, max: 8, usage: M }
+      - { pos: 7, name: Net Amount Due, type: N2, min: 1, max: 12, usage: M }
+      - { pos: 11, name: Standard Carrier Alpha Code, type: ID, min: 2, max: 4, usage: M }
+  C3:
+    elements:
+      - { pos: 1, type: ID, min: 3, max: 3, usage: M, codes: [USD, CAD] }
+  N9:
+    elements:
+      - { pos: 1, type: ID, min: 2, max: 3, usage: M }
+      - { pos: 2, type: AN, min: 1, max: 30, usage: M }
+  N1:
+    elements:
+      - { pos: 1, type: ID, min: 2, max: 3, usage: M, codes: [SH, CN, BT] }
+      - { pos: 2, type: AN, min: 1, max: 60, usage: X }
+      - { pos: 3, type: ID, min: 1, max: 2, usage: X }
+      - { pos: 4, type: AN, min: 2, max: 80, usage: X }
+    syntax: [P0304, R0203]
+  N3:
+    elements:
+      - { pos: 1, type: AN, min: 1, max: 55, usage: M }
+      - { pos: 2, type: AN, min: 1, max: 55, usage: O }
+  N4:
+    elements:
+      - { pos: 1, type: AN, min: 2, max: 30, usage: O }
+      - { pos: 2, type: ID, min: 2, max: 2, usage: O }
+      - { pos: 3, type: ID, min: 3, max: 15, usage: O }
+      - { pos: 4, type: ID, min: 2, max: 3, usage: O }
+  LX:
+    elements:
+      - { pos: 1, type: N0, min: 1, max: 6, usage: M }
+  L5:
+    elements:
+      - { pos: 1, type: N0, min: 1, max: 3, usage: M }
+      - { pos: 2, type: AN, min: 1, max: 50, usage: M }
+  L1:
+    elements:
+      - { pos: 1, type: N0, min: 1, max: 3, usage: M }
+      - { pos: 2, type: R, min: 1, max: 15, usage: X }
+      - { pos: 3, type: ID, min: 2, max: 2, usage: X, codes: [FR, PM, FC] }
+      - { pos: 4, type: N2, min: 1, max: 12, usage: M }
+      - { pos: 8, type: ID, min: 3, max: 3, usage: O, codes: ["400", "405", FUE] }
+    syntax: [P0203]
+  L3:
+    elements:
+      - { pos: 1, type: R, min: 1, max: 10, usage: X }
+      - { pos: 2, type: ID, min: 1, max: 2, usage: X, codes: [G, N] }
+      - { pos: 5, type: N2, min: 1, max: 12, usage: M }
+    syntax: [P0102]
+  SE:
+    elements:
+      - { pos: 1, type: N0, min: 1, max: 10, usage: M }
+      - { pos: 2, type: AN, min: 4, max: 9, usage: M }
+
+structure:
+  - { seg: ST, usage: M }
+  - { seg: B3, usage: M }
+  - { seg: C3, usage: M }
+  - { seg: N9, usage: O, max: 300 }
+  - loop: "0100"
+    usage: O
+    max: 3
+    body:
+      - { seg: N1, usage: M }
+      - { seg: N3, usage: O, max: 2 }
+      - { seg: N4, usage: O }
+  - loop: "0400"
+    usage: M
+    max: 999
+    body:
+      - { seg: LX, usage: M }
+      - { seg: L5, usage: O, max: 30 }
+      - { seg: L1, usage: O, max: 10 }
+  - { seg: L3, usage: M }
+  - { seg: SE, usage: M }

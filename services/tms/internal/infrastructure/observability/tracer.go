@@ -49,7 +49,7 @@ func NewTracerProvider(p TracerProviderParams) (*TracerProvider, error) {
 	aitrace.SetSamplingRate(p.MonitoringConfig.Tracing.GetAISamplingRate())
 
 	if !p.MonitoringConfig.Tracing.Enabled {
-		log.Warn("🟡 Tracing is disabled")
+		log.Info("Tracing is disabled")
 		noopProvider := noop.NewTracerProvider()
 		return &TracerProvider{
 			provider:         nil,

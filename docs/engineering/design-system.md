@@ -715,8 +715,13 @@ hyphen.
   column of values and a list of amounts reads as a price list. Shared fields draw as rows
   inside a section without being told to (`FieldLayoutProvider`; `layout="row"` anywhere
   else): never a label stacked over a wide box, and never two columns of fields, whose
-  descriptions wrap to different heights and leave ragged rows. Dispatch control is the
-  reference. The control pages not yet moved are stacked `Card`s; move one when you touch it.
+  descriptions wrap to different heights and leave ragged rows. Accounting and dispatch
+  control are the reference. The control pages not yet moved are stacked `Card`s; move one
+  when you touch it (see "Moving a control page" below).
+- A settings page is built on the shell, never by hand: `SettingsPage` (header, fill, lazy
+  form, skeleton), `SettingsForm` (the form, optimistic save, `prepare`, tab in the address,
+  refused tab, save dock) and `SettingsPageSkeleton`. A page brings its record, its
+  `<page>-tabs.ts` and one component per tab.
 - A setting that only applies while another is on (the fields under a switch) goes in
   `SettingsNested` under that row: set in on its own ground, opening and closing with it. A
   whole section that depends on one sits in `SettingsReveal`. Neither renders anything closed.
@@ -779,6 +784,40 @@ hyphen.
   (`components/documents/sample-invoice.tsx`), the one drawing of the Ledger invoice template
   in the app: the factoring company page fills in its remit-to, notice and payment box, and
   the organization's branding its logo. Don't draw another invoice.
+
+
+#### Moving a control page
+
+A control page is one record per organization, edited in one form. Moving one off stacked
+`Card`s onto the settings shell is a redesign and a contract audit at once:
+
+1. **Audit the contract first.** Diff the client zod schema field by field against the Go
+   entity (`services/tms/internal/modules/<module>/domain/<entity>/`), every enum against
+   its Go constants and `IsValid`, and read the service's validator for cross-field rules.
+   A field the client lacks is dropped on every save; an enum value it lacks makes a saved
+   record unparseable. Fix both in the schema and `lib/choices.ts`.
+2. **Split by job, not by field type.** One tab per job a person comes to do (posting, close,
+   currency), three to six tabs; a page with one job has one tab and no tab row. Every
+   editable field sits in exactly one tab's `fields`. Hide a tab the organization cannot use
+   (an `OrganizationCapability` or a `PlanFeature`); its values still round-trip.
+3. **Follow the validator in the form.** A row that only matters while another setting
+   allows it goes in `SettingsNested`; `required` is the validator's own condition, and that
+   condition is also written into the zod schema (`superRefine`), because `SettingsForm`
+   validates through the schema and react-hook-form ignores a field's `required` and `rules`
+   under a resolver: the prop draws the mark, the schema refuses the save. A choice
+   the server refuses for the current state is disabled with the reason. Whatever a hidden
+   row must be for the server to accept the save is set in a pure `prepare` function
+   (`<page>-submit.ts`), never in an effect that dirties the form on load. A value derived
+   from another is set in the field's `onValueChange`, not an effect.
+4. **Copy, plain words, no codes.** Labels are short names; descriptions say what changes for
+   the person in one sentence. No ids, enum codes or field names on screen.
+5. **Tests**, under the route's `__tests__/`: every schema field (bar id, version, timestamps
+   and tenant ids) on exactly one tab; tab visibility per capability; each `prepare` rule
+   with exact output; the skeleton per tab; the form's conditional rows and a refused save
+   opening its tab.
+6. **Owed after text changes:** `task i18n`, the locale translations and `task i18n-check`,
+   then `pnpm --filter @trenova/web guide:generate`, and the page's product guide in
+   `docs/product-guide/admin/`.
 
 ### Toasts
 
@@ -920,8 +959,9 @@ open as a grid of table rows and then jump into a layout that shared nothing wit
   its own while its `useQuery` answers draws the skeleton's body, not a spinner, so the
   code load and the data load look identical (`AnalyticsBodySkeleton` inside
   `AnalyticsTabSkeleton`).
-- A tabbed settings page is `SettingsTabsSkeleton`: its tab row and the open tab's sections,
-  one row to a setting (`dispatch-control/skeleton.tsx`). A settings page still on cards is
+- A tabbed settings page is `SettingsPageSkeleton`: its tab row and the open tab's sections,
+  one row to a setting, read from the form's own `use<Page>Tabs()`
+  (`accounting-control/skeleton.tsx`). A settings page still on cards is
   `SettingsFormSkeleton` described with the form's own sections and
   fields. A table inside a larger layout is `DataTableSkeleton` for that part only.
 - The skeleton's root carries `aria-busy` and an `aria-label` naming what loads; the

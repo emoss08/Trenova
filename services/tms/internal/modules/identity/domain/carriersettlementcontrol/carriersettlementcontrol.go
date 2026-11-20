@@ -1,7 +1,7 @@
 package carriersettlementcontrol
 
 import (
-	"context"
+	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
@@ -35,7 +35,7 @@ type CarrierSettlementControl struct {
 	HoldUntilInvoiceMatched                 bool                                 `json:"holdUntilInvoiceMatched"                 keel:"hold_until_invoice_matched"`
 	DefaultAPAccountID                      *pulid.ID                            `json:"defaultApAccountId"                      keel:"default_ap_account_id"`
 	DefaultPurchasedTransportationAccountID *pulid.ID                            `json:"defaultPurchasedTransportationAccountId" keel:"default_purchased_transportation_account_id"`
-	RequireSeparateApprover                 bool                                 `json:"requireSeparateApprover" keel:"require_separate_approver"`
+	RequireSeparateApprover                 bool                                 `json:"requireSeparateApprover"                 keel:"require_separate_approver"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
@@ -43,6 +43,18 @@ type CarrierSettlementControl struct {
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`
+}
+
+func NewDefault(orgID, buID pulid.ID) *CarrierSettlementControl {
+	return &CarrierSettlementControl{
+		OrganizationID:          orgID,
+		BusinessUnitID:          buID,
+		PayTrigger:              settlementcontrol.PayTriggerShipmentDelivered,
+		PayPeriodFrequency:      settlementcontrol.PayPeriodFrequencyWeekly,
+		PeriodEndDayOfWeek:      int(time.Saturday),
+		PayDelayDays:            5,
+		RequireSeparateApprover: true,
+	}
 }
 
 func (sc *CarrierSettlementControl) Validate(multiErr *errortypes.MultiError) {
@@ -82,6 +94,13 @@ func (sc *CarrierSettlementControl) Validate(multiErr *errortypes.MultiError) {
 			"Variance tolerance cannot be negative",
 		)
 	}
+	if sc.AutoAcceptWithinTolerance && !sc.AutoMatchInboundInvoices {
+		multiErr.Add(
+			"autoAcceptWithinTolerance",
+			errortypes.ErrInvalid,
+			"Turn on automatic EDI matching before accepting invoices within tolerance",
+		)
+	}
 }
 
 func (sc *CarrierSettlementControl) GetID() pulid.ID { return sc.ID }
@@ -91,20 +110,3 @@ func (sc *CarrierSettlementControl) GetTableName() string { return "carrier_sett
 func (sc *CarrierSettlementControl) GetOrganizationID() pulid.ID { return sc.OrganizationID }
 
 func (sc *CarrierSettlementControl) GetBusinessUnitID() pulid.ID { return sc.BusinessUnitID }
-
-func (sc *CarrierSettlementControl) BeforeCreate(ctx context.Context) error {
-	if sc.PayTrigger == "" {
-		sc.PayTrigger = settlementcontrol.PayTriggerShipmentDelivered
-	}
-	if sc.PayPeriodFrequency == "" {
-		sc.PayPeriodFrequency = settlementcontrol.PayPeriodFrequencyWeekly
-	}
-	if sc.PeriodEndDayOfWeek == 0 {
-		sc.PeriodEndDayOfWeek = 6
-	}
-	if sc.PayDelayDays == 0 {
-		sc.PayDelayDays = 5
-	}
-
-	return nil
-}

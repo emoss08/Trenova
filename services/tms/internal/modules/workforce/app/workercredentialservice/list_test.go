@@ -183,7 +183,7 @@ func TestList_ReadsSeveralWorkersAtOnce(t *testing.T) {
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "workerIds", verr.Field)
+	assert.Equal(t, "workerIds", verr.Field())
 }
 
 // ListExpiring walks every tenant when handed none, which the nightly sweep

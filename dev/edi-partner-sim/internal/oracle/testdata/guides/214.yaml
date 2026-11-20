@@ -1,0 +1,66 @@
+set: "214"
+version: "004010"
+group: QM
+title: "Test partner 214, v1"
+
+segments:
+  ST:
+    elements:
+      - { pos: 1, type: ID, min: 3, max: 3, usage: M, codes: ["214"] }
+      - { pos: 2, type: AN, min: 4, max: 9, usage: M }
+  B10:
+    name: Beginning Segment for Transportation Carrier Shipment Status Message
+    elements:
+      - { pos: 1, name: Reference Identification, type: AN, min: 1, max: 30, usage: M }
+      - { pos: 2, name: Shipment Identification Number, type: AN, min: 1, max: 30, usage: M }
+      - { pos: 3, name: Standard Carrier Alpha Code, type: ID, min: 2, max: 4, usage: M }
+  L11:
+    elements:
+      - { pos: 1, type: AN, min: 1, max: 30, usage: M }
+      - { pos: 2, type: ID, min: 2, max: 3, usage: M, codes: [SI, BM, PO] }
+  LX:
+    elements:
+      - { pos: 1, type: N0, min: 1, max: 6, usage: M }
+  AT7:
+    name: Shipment Status Details
+    elements:
+      - { pos: 1, name: Shipment Status Code, type: ID, min: 2, max: 2, usage: X, codes: [AF, X3, X1, CD, D1, AG] }
+      - { pos: 2, name: Shipment Status or Appointment Reason Code, type: ID, min: 2, max: 2, usage: X, codes: [NS, AH, AJ] }
+      - { pos: 3, name: Shipment Appointment Status Code, type: ID, min: 2, max: 2, usage: X }
+      - { pos: 4, name: Shipment Status or Appointment Reason Code, type: ID, min: 2, max: 2, usage: X }
+      - { pos: 5, name: Date, type: DT, min: 8, max: 8, usage: O }
+      - { pos: 6, name: Time, type: TM, min: 4, max: 8, usage: X }
+      - { pos: 7, name: Time Code, type: ID, min: 2, max: 2, usage: O, codes: [LT, CT, ET, MT, PT] }
+    syntax: [P0102, P0304, R0103, C0506]
+  MS1:
+    elements:
+      - { pos: 1, type: AN, min: 2, max: 30, usage: X }
+      - { pos: 2, type: ID, min: 2, max: 2, usage: X }
+      - { pos: 3, type: ID, min: 2, max: 3, usage: X }
+    syntax: [L010203]
+  MS2:
+    elements:
+      - { pos: 1, type: ID, min: 2, max: 4, usage: M }
+      - { pos: 2, type: AN, min: 1, max: 10, usage: M }
+  SE:
+    elements:
+      - { pos: 1, type: N0, min: 1, max: 10, usage: M }
+      - { pos: 2, type: AN, min: 4, max: 9, usage: M }
+
+structure:
+  - { seg: ST, usage: M }
+  - { seg: B10, usage: M }
+  - { seg: L11, usage: O, max: 10 }
+  - loop: "0200"
+    usage: M
+    max: 999
+    body:
+      - { seg: LX, usage: M }
+      - loop: "0205"
+        usage: O
+        max: 10
+        body:
+          - { seg: AT7, usage: M }
+          - { seg: MS1, usage: O }
+          - { seg: MS2, usage: O }
+  - { seg: SE, usage: M }

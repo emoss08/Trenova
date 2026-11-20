@@ -1,0 +1,50 @@
+name: acme
+display: Acme Fixture Freight
+role: shipper
+zone: America/Chicago
+
+them:
+  qualifier: ZZ
+  id: ACMESHIP
+  group: ACMESHIP
+trenova:
+  qualifier: ZZ
+  id: TRENOVA
+  group: TRENOVA
+  scac: TRNV
+
+envelope:
+  version: "004010"
+  separators:
+    element: "*"
+    segment: "~"
+    component: ">"
+    repetition: "^"
+  terminator: lf
+  squeezedIsa: false
+  usage: T
+
+transport:
+  as2:
+    id: ACMESHIP
+    signed: false
+    encrypted: false
+    compressed: false
+    mdn: none
+
+batching:
+  transactionsPerGroup: 1
+  groupsPerInterchange: 1
+
+acknowledgment:
+  sends: "997"
+  expects: "997"
+  ta1: false
+  delay: 0s
+  reject:
+    when: errors
+    sets: []
+  never: 0
+
+sends: ["204", "997"]
+receives: ["997", "990", "214", "210"]

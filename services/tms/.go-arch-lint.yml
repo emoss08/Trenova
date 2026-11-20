@@ -774,10 +774,6 @@ deps:
       - workspace-ports
       - pkg
       - infrastructure
-      - accounting-domain # TODO(build-arch): upward import of accounting; needs an inversion port declared in reference (3 imports)
-      - equipment-domain # TODO(build-arch): upward import of equipment; needs an inversion port declared in reference (2 imports)
-      - parties-domain # TODO(build-arch): upward import of parties; needs an inversion port declared in reference (1 imports)
-      - places-domain # TODO(build-arch): upward import of places; needs an inversion port declared in reference (1 imports)
   reference-app:
     mayDependOn:
       - reference-domain
@@ -795,11 +791,7 @@ deps:
       - workspace-contracts
       - pkg
       - infrastructure
-      - accounting-domain # TODO(build-arch): upward import of accounting; needs an inversion port declared in reference (3 imports)
-      - equipment-domain # TODO(build-arch): upward import of equipment; needs an inversion port declared in reference (2 imports)
       - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (2 imports)
-      - parties-domain # TODO(build-arch): upward import of parties; needs an inversion port declared in reference (1 imports)
-      - places-domain # TODO(build-arch): upward import of places; needs an inversion port declared in reference (1 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (9 imports)
   reference-adapters:
     mayDependOn:
@@ -1729,7 +1721,6 @@ deps:
       - documents-contracts
       - pkg
       - infrastructure
-      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (1 imports)
       - operations-app # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (3 imports)
       - operations-domain # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (17 imports)
       - operations-ports # TODO(build-arch): upward import of operations; needs an inversion port declared in rating (15 imports)
@@ -1958,7 +1949,7 @@ deps:
       - edi-app # TODO(build-arch): upward import of edi; needs an inversion port declared in operations (1 imports)
       - edi-domain # TODO(build-arch): upward import of edi; needs an inversion port declared in operations (3 imports)
       - edi-ports # TODO(build-arch): upward import of edi; needs an inversion port declared in operations (3 imports)
-      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (3 imports)
+      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (1 imports)
       - rating-app # TODO(build-arch): imports app of rating; use its ports (rule 6) (5 imports)
       - reference-app # TODO(build-arch): imports app of reference; use its ports (rule 6) (1 imports)
       - settlement-domain # TODO(build-arch): upward import of settlement; needs an inversion port declared in operations (1 imports)
@@ -2977,7 +2968,7 @@ deps:
       - accounting-app # TODO(build-arch): imports app of accounting; use its ports (rule 6) (3 imports)
       - agent-ports # TODO(build-arch): upward import of agent; needs an inversion port declared in settlement (4 imports)
       - edi-app # TODO(build-arch): imports app of edi; use its ports (rule 6) (1 imports)
-      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (7 imports)
+      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (6 imports)
       - workforce-app # TODO(build-arch): imports app of workforce; use its ports (rule 6) (6 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (14 imports)
   settlement-adapters:
@@ -3364,7 +3355,6 @@ deps:
       - settlement-contracts
       - pkg
       - infrastructure
-      - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (3 imports)
       - workspace-app # TODO(build-arch): imports app of workspace; use its ports (rule 6) (1 imports)
       - workspace-jobs # TODO(build-arch): imports jobs of workspace; use its ports (rule 6) (1 imports)
   agent-contracts:

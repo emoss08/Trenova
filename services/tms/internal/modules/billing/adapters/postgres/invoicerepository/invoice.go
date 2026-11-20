@@ -935,7 +935,7 @@ func (r *repository) GetDocumentShareToken(
 		dt := invoicedb.DocumentShareTokens
 		entity, err := dt.AllTenants().
 			Where(dt.TokenHash.Eq(req.TokenHash)).
-			Load(dt.Document()).
+			Load(dt.Document(), dt.Invoice()).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, shareTokenErrors.Map(err, "")

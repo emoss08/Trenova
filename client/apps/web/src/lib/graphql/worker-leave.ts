@@ -22,7 +22,6 @@ import type {
   UpdateLeaveCaseInput,
   UpdateLeaveCaseMutation,
   UpdateLeaveCaseMutationVariables,
-  UpdateLeaveControlInput,
   UpdateLeaveControlMutation,
   UpdateLeaveControlMutationVariables,
   WorkerLeaveFileQuery,
@@ -42,11 +41,11 @@ import {
   WorkerLeaveFileDocument,
 } from "@trenova/graphql/generated/documents/worker-leave/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { LeaveControl } from "@trenova/shared/types/worker-leave";
 
 export type LeaveEntitlement = WorkerLeaveFileQuery["workerLeaveEntitlement"];
 export type LeaveCaseRow = WorkerLeaveFileQuery["workerLeaveCases"][number];
 export type LeaveEntryRow = LeaveCaseRow["entries"][number];
-export type LeaveControlRow = LeaveControlQuery["leaveControl"];
 
 /**
  * A worker's whole leave picture. The balance and the cases travel together
@@ -58,7 +57,6 @@ export type WorkerLeaveFile = {
 };
 
 export const WORKER_LEAVE_KEY = "worker-leave";
-export const LEAVE_CONTROL_KEY = "leave-control";
 
 export async function fetchWorkerLeaveFile(
   workerId: string,
@@ -73,9 +71,7 @@ export async function fetchWorkerLeaveFile(
   return { entitlement: data.workerLeaveEntitlement, cases: data.workerLeaveCases };
 }
 
-export async function fetchLeaveControl(options?: {
-  signal?: AbortSignal;
-}): Promise<LeaveControlRow> {
+export async function fetchLeaveControl(options?: { signal?: AbortSignal }): Promise<LeaveControl> {
   const data = await requestGraphQL<LeaveControlQuery, LeaveControlQueryVariables>({
     document: LeaveControlDocument,
     operationName: "LeaveControl",
@@ -163,14 +159,30 @@ export async function deleteLeaveDay(id: string): Promise<boolean> {
   return data.deleteLeaveDay;
 }
 
-export async function updateLeaveControl(input: UpdateLeaveControlInput) {
+/**
+ * Saves the organisation's leave settings and returns them as saved. It sends the version the
+ * form read, so a save over someone else's newer one is refused as a conflict instead of
+ * silently overwriting it; the server stores the settings under a new version.
+ */
+export async function updateLeaveControl(record: LeaveControl): Promise<LeaveControl> {
   const data = await requestGraphQL<
     UpdateLeaveControlMutation,
     UpdateLeaveControlMutationVariables
   >({
     document: UpdateLeaveControlDocument,
     operationName: "UpdateLeaveControl",
-    variables: { input },
+    variables: {
+      input: {
+        version: record.version,
+        measurementMethod: record.measurementMethod,
+        entitlementWeeks: record.entitlementWeeks,
+        militaryCaregiverWeeks: record.militaryCaregiverWeeks,
+        workweekHours: record.workweekHours,
+        eligibilityMonths: record.eligibilityMonths,
+        eligibilityHours: record.eligibilityHours,
+        certificationDueDays: record.certificationDueDays,
+      },
+    },
   });
-  return data.updateLeaveControl;
+  return { ...record, version: data.updateLeaveControl.version };
 }

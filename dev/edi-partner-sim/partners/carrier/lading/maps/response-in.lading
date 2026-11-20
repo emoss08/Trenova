@@ -1,0 +1,29 @@
+map responseIn
+  from quarrystone.990
+  to   tenderResponse
+  use  common
+
+key         <- B102
+decision    <- B104 via decisions else reject "Quarrystone answered {B102} with no decision"
+scac        <- B101
+respondedAt <- at(B103, none, partner.zone) ?? now()
+reason      <- K101
+
+when N901 == "CN" {
+  refs["CN"] <- N902
+}
+
+test "an acceptance carries Quarrystone's PRO" {
+  given file "samples/response-accept.x12"
+  expect key == "S26036847599"
+  expect decision == Accept
+  expect refs["CN"] == "QY13923586"
+  expect reason == none
+}
+
+test "a decline says why" {
+  given file "samples/response-decline.x12"
+  expect decision == Decline
+  expect reason == "NO DRIVER NEAR THE PICKUP"
+  expect refs["CN"] == none
+}

@@ -28,12 +28,11 @@ func TestLifecycleMessageQuery_MatchesTheLifecycleIdentity(t *testing.T) {
 	assert.Contains(
 		t,
 		sql,
-		`AND (em."payload_snapshot" #>> $3) = $4 AND (em."payload_snapshot" #>> $5) = $6 `+
-			`AND (em."payload_snapshot" #>> $7) = $8`,
+		`AND (em."payload_snapshot" #>> $3) = $4 AND (em."payload_snapshot" #>> $5) = $6`,
 	)
 	assert.Contains(t, sql, `ORDER BY em."generated_at" DESC LIMIT 1`)
 	assert.Contains(t, args, []string{"shipmentStatus", "serviceFailureId"})
-	assert.Contains(t, args, []string{"shipmentStatus", "references", "serviceFailure214Trigger"})
+	assert.Contains(t, args, []string{"shipmentStatus", "serviceFailureTrigger"})
 	assert.Contains(t, args, "sf_1")
 	assert.Contains(t, args, "Reviewed")
 }

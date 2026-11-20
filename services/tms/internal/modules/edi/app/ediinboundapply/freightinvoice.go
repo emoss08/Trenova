@@ -195,7 +195,7 @@ func carrierInvoiceFromPayload(
 		EDIPartnerID:      partner.ID,
 		InboundMessageID:  message.ID,
 		InvoiceNumber:     payload.InvoiceNumber,
-		ShipmentReference: payload.ReferenceNumbers["shipmentId"],
+		ShipmentReference: payload.Key,
 		BOL:               payload.BOL,
 		ProNumber:         payload.ProNumber,
 		BillToName:        payload.BillToName,

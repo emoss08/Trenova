@@ -15,7 +15,10 @@ use super::check::flow::document_binder;
 use super::eval::interp::{Frame, Given, Interp, Outcome, OutcomeKind2};
 use super::eval::json::{from_json, to_json};
 use super::eval::value::{Value, display, instant_rfc3339};
-use super::syntax::ast::{Action, Expr, FlowDecl, Item, Otherwise, Receive, Respond, Send};
+use super::syntax::ast::{
+    Action, AwaitAnswer, Expr, FlowDecl, GuardKind, Item, Otherwise, Receive, ReceiveArm, Respond,
+    Send, Unless,
+};
 use super::types::Type;
 use super::values::ZoneValue;
 
@@ -95,6 +98,23 @@ pub struct FlowState {
     pub finished_sends: Vec<usize>,
     /// How many sends this instance has made, for naming them.
     pub sends: u64,
+    /// The last document sent under each binder (`tender`), which receive arms read as `sent`.
+    pub sent: BTreeMap<String, Json>,
+    /// When the partner's answer to the tender Trenova sent is due, while it is awaited.
+    pub answer_due: Option<i64>,
+    /// The send the awaited answer is for.
+    pub answer_send: String,
+    /// That send's control number, once the host reports it.
+    pub answer_control: String,
+}
+
+impl FlowState {
+    /// Whether the conversation was under way before this event: something was received or
+    /// sent, or Trenova has a load for it. A message that was rejected leaves it as it was.
+    #[must_use]
+    pub fn exists(&self) -> bool {
+        self.sends > 0 || !self.documents.is_empty() || self.load.exists
+    }
 }
 
 /// An event the flow handles.
@@ -132,11 +152,13 @@ pub enum FlowEvent {
         #[serde(default)]
         reason: String,
     },
-    /// The host sent a message the flow asked for.
+    /// The host sent a message the flow asked for, or wrote nothing to send.
     Sent {
         /// The send's identifier.
         id: String,
-        /// Its control number.
+        /// Its control number; empty when the map wrote nothing to send, every item holding a
+        /// value its crosswalk says is not sent.
+        #[serde(default)]
         control: String,
     },
     /// The partner acknowledged a message.
@@ -179,6 +201,9 @@ pub enum FlowAction {
         set: String,
         /// Whether the transaction is rejected in it.
         rejected: bool,
+        /// Why the flow rejected it, when a `reject when` did.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        message: Option<Message>,
     },
     /// Create a load from the document.
     Create {
@@ -372,6 +397,7 @@ pub fn step(
         program,
         unit,
         interp: Interp::new(program, &given, FLOW_STEPS),
+        existed: state.exists(),
         state,
         actions: Vec::new(),
         now,
@@ -387,16 +413,7 @@ pub fn step(
         } => stepper.received(set, document, outcomes, current.as_ref(), load.as_ref()),
         FlowEvent::Trenova { event, document } => stepper.trenova(event, document),
         FlowEvent::Planner { decision, reason } => stepper.planner(decision, reason),
-        FlowEvent::Sent { id, control } => {
-            if let Some(pending) = stepper
-                .state
-                .pending
-                .iter_mut()
-                .find(|pending| pending.id == *id)
-            {
-                pending.control.clone_from(control);
-            }
-        }
+        FlowEvent::Sent { id, control } => stepper.sent(id, control),
         FlowEvent::Ack { control, accepted } => stepper.ack(control, *accepted),
         FlowEvent::Timer => stepper.timer(),
         FlowEvent::Load { load } => stepper.state.load = load.clone(),
@@ -416,6 +433,7 @@ struct Stepper<'p> {
     unit: usize,
     interp: Interp<'p>,
     state: FlowState,
+    existed: bool,
     actions: Vec<FlowAction>,
     now: i64,
     coverage: Vec<(usize, u32)>,
@@ -441,7 +459,71 @@ impl Stepper<'_> {
         }
         frame.bind("declined", Value::Bool(self.state.declined));
         frame.bind("held", Value::Bool(self.state.held));
+        frame.bind("sent", Value::Struct(Rc::new(self.sent_documents())));
+        let mut instance = BTreeMap::new();
+        instance.insert("exists".to_owned(), Value::Bool(self.existed));
+        instance.insert("key".to_owned(), Value::text(&self.state.key));
+        frame.bind("instance", Value::Struct(Rc::new(instance)));
         frame
+    }
+
+    /// The last document sent under each binder a send clause or the response writes from.
+    fn sent_documents(&self) -> BTreeMap<String, Value> {
+        let program = self.program;
+        let mut documents = BTreeMap::new();
+        for clause in clauses(program, self.unit) {
+            let map = match clause {
+                FlowDecl::Send(send) => send.map.as_ref(),
+                FlowDecl::Respond(respond) => respond.map.as_ref(),
+                _ => None,
+            };
+            let Some(name) = map
+                .and_then(|map| program.maps.get(&map.name))
+                .and_then(|info| info.document)
+            else {
+                continue;
+            };
+            let binder = document_binder(name);
+            let value = self
+                .state
+                .sent
+                .get(binder)
+                .and_then(|document| from_json(program, document, &Type::Record(name), "").ok())
+                .unwrap_or(Value::None);
+            documents.insert(binder.to_owned(), value);
+        }
+        documents
+    }
+
+    /// The host reports what it did with a send: its control number, or that nothing was sent.
+    fn sent(&mut self, id: &str, control: &str) {
+        if control.is_empty() {
+            self.state.pending.retain(|pending| pending.id != id);
+            if self.state.answer_send == id {
+                self.state.answer_due = None;
+            }
+            return;
+        }
+        if let Some(pending) = self
+            .state
+            .pending
+            .iter_mut()
+            .find(|pending| pending.id == id)
+        {
+            control.clone_into(&mut pending.control);
+        }
+        if self.state.answer_send == id {
+            control.clone_into(&mut self.state.answer_control);
+        }
+    }
+
+    fn await_clause(&self) -> Option<AwaitAnswer> {
+        clauses(self.program, self.unit)
+            .into_iter()
+            .find_map(|clause| match clause {
+                FlowDecl::Await(answer) => Some(answer.clone()),
+                _ => None,
+            })
     }
 
     fn text(&mut self, frame: &mut Frame, expr: &Expr) -> String {
@@ -486,25 +568,51 @@ impl Stepper<'_> {
             return;
         };
         if let Some(load) = load {
+            self.existed |= load.exists;
             self.state.load = load.clone();
         }
         if let Some(current) = current {
+            self.existed = true;
             self.state
                 .documents
                 .insert("current".to_owned(), current.clone());
         }
-        let rejected = outcomes.iter().any(|outcome| outcome.kind == "reject");
+        let purpose = document
+            .get("purpose")
+            .and_then(Json::as_str)
+            .unwrap_or("Original")
+            .to_owned();
+        let arm = arm_for(&receive, &purpose).cloned();
         let ack = receive
             .acknowledge
             .as_ref()
-            .map_or("997", |ack| ack.name.as_str());
+            .map_or("997", |ack| ack.name.as_str())
+            .to_owned();
+        let mut rejected = outcomes.iter().any(|outcome| outcome.kind == "reject");
+        let mut hold = None;
+        let mut reason = None;
+        if !rejected && let Some(arm) = &arm {
+            match self.guard(&receive, arm, document) {
+                Some((GuardKind::Reject, message)) => {
+                    rejected = true;
+                    reason = Some(written(&message));
+                }
+                Some((GuardKind::Hold, message)) => hold = Some(message),
+                None => {}
+            }
+        }
         if ack != "none" {
             self.actions.push(FlowAction::Acknowledge {
-                set: ack.to_owned(),
+                set: ack,
                 rejected,
+                message: reason,
             });
         }
         if rejected {
+            if let Some(arm) = &arm {
+                self.coverage.push((self.unit, receive.span.start));
+                self.coverage.push((self.unit, arm.span.start));
+            }
             return;
         }
         self.state.declined = outcomes.iter().any(|outcome| outcome.kind == "decline");
@@ -517,6 +625,12 @@ impl Stepper<'_> {
         self.state
             .documents
             .insert(receive.binder.name.clone(), document.clone());
+        if self
+            .await_clause()
+            .is_some_and(|answer| answer.set.name == set)
+        {
+            self.state.answer_due = None;
+        }
         let mut frame = self.frame();
         if let Some(key) = &receive.key {
             let key = self.text(&mut frame, key);
@@ -524,20 +638,6 @@ impl Stepper<'_> {
                 self.state.key = key;
             }
         }
-        let purpose = document
-            .get("purpose")
-            .and_then(Json::as_str)
-            .unwrap_or("Original")
-            .to_owned();
-        let arm = receive
-            .arms
-            .iter()
-            .find(|arm| {
-                arm.purpose
-                    .as_ref()
-                    .is_some_and(|name| name.name == purpose)
-            })
-            .or_else(|| receive.arms.iter().find(|arm| arm.purpose.is_none()));
         let Some(arm) = arm else {
             self.actions.push(FlowAction::Hold {
                 message: Message::with(
@@ -549,8 +649,13 @@ impl Stepper<'_> {
         };
         self.coverage.push((self.unit, receive.span.start));
         self.coverage.push((self.unit, arm.span.start));
-        let action = arm.action.clone();
-        self.act(&mut frame, &action, set, document);
+        if let Some(message) = hold {
+            self.actions.push(FlowAction::Hold {
+                message: written(&message),
+            });
+        } else {
+            self.act(&mut frame, &arm.action, set, document);
+        }
         for outcome in outcomes.iter().filter(|outcome| outcome.kind == "hold") {
             self.actions.push(FlowAction::Hold {
                 message: written(&outcome.message),
@@ -567,6 +672,43 @@ impl Stepper<'_> {
                 self.respond(&mut frame, &respond);
             }
         }
+    }
+
+    /// The first of an arm's guards whose condition holds, with its message. The guards see the
+    /// received document under its binder, what the flow sent (`sent`), the conversation
+    /// (`instance`) and the load as it is now (`current`).
+    fn guard(
+        &mut self,
+        receive: &Receive,
+        arm: &ReceiveArm,
+        document: &Json,
+    ) -> Option<(GuardKind, String)> {
+        if arm.guards.is_empty() {
+            return None;
+        }
+        let program = self.program;
+        let mut frame = self.frame();
+        if let Some(name) = receive
+            .map
+            .as_ref()
+            .and_then(|map| program.maps.get(&map.name))
+            .and_then(|info| info.document)
+            && let Ok(value) = from_json(program, document, &Type::Record(name), "")
+        {
+            frame.bind(&receive.binder.name, value);
+        }
+        if let Some(current) = self.state.documents.get("current").cloned()
+            && let Ok(value) = from_json(program, &current, &Type::Record("loadTender"), "")
+        {
+            frame.bind("current", value);
+        }
+        for guard in &arm.guards {
+            if self.truth(&mut frame, &guard.cond) {
+                let message = self.text(&mut frame, &guard.message);
+                return Some((guard.kind, message));
+            }
+        }
+        None
     }
 
     fn act(&mut self, frame: &mut Frame, action: &Action, set: &str, document: &Json) {
@@ -628,8 +770,8 @@ impl Stepper<'_> {
                     .insert("current".to_owned(), document.clone());
             }
             Action::Cancel { unless, .. } => {
-                if let Some((state, otherwise)) = unless
-                    && self.state.load.state == state.name
+                if let Some((states, otherwise)) = unless
+                    && stops_cancel(states, &self.state.load.state)
                 {
                     let otherwise = otherwise.as_ref().clone();
                     self.act(frame, &otherwise, set, document);
@@ -741,6 +883,28 @@ impl Stepper<'_> {
     fn send(&mut self, set: String, map: String, document: Json) {
         self.state.sends += 1;
         let id = format!("{}-{}", self.state.key, self.state.sends);
+        if let Some(name) = self.program.maps.get(&map).and_then(|info| info.document) {
+            self.state
+                .sent
+                .insert(document_binder(name).to_owned(), document.clone());
+        }
+        if set == "204"
+            && let Some(answer) = self.await_clause()
+        {
+            let cancelled = document.get("purpose").and_then(Json::as_str) == Some("Cancel");
+            if cancelled {
+                self.state.answer_due = None;
+            } else {
+                let mut frame = self.frame();
+                let within = answer
+                    .within
+                    .as_ref()
+                    .map_or(0, |within| self.duration(&mut frame, within));
+                self.state.answer_due = Some(self.now + within);
+                self.state.answer_send.clone_from(&id);
+                self.state.answer_control.clear();
+            }
+        }
         let expect = clauses(self.program, self.unit)
             .into_iter()
             .find_map(|clause| match clause {
@@ -804,6 +968,17 @@ impl Stepper<'_> {
         for (index, send) in sends {
             if self.state.finished_sends.contains(&index) {
                 continue;
+            }
+            if self.state.key.is_empty()
+                && let Some((mut frame, value)) = send_frame(program, self.unit, &send, document)
+            {
+                let key = match &send.key {
+                    Some(key) => self.interp.eval(&mut frame, key).unwrap_or(Value::None),
+                    None => value.field("key"),
+                };
+                if !key.is_none() {
+                    self.state.key = display(&key);
+                }
             }
             if let Some(filter) = &send.filter {
                 let Some((mut frame, _)) = send_frame(program, self.unit, &send, document) else {
@@ -918,6 +1093,30 @@ impl Stepper<'_> {
         }
     }
 
+    /// The escalation of a tender the partner did not answer in time.
+    fn unanswered(&mut self) -> Message {
+        let answer = self.await_clause();
+        let mut frame = self.frame();
+        let mut fields = BTreeMap::new();
+        fields.insert("set".to_owned(), Value::text("204"));
+        fields.insert(
+            "control".to_owned(),
+            Value::text(&self.state.answer_control),
+        );
+        fields.insert("key".to_owned(), Value::text(&self.state.key));
+        frame.bind("message", Value::Struct(Rc::new(fields)));
+        match answer.and_then(|answer| answer.escalate) {
+            Some(escalate) => {
+                let text = self.text(&mut frame, &escalate);
+                written(&text)
+            }
+            None => Message::with(
+                message!("The partner has not answered tender {0}"),
+                [Arg::from(self.state.key.as_str())],
+            ),
+        }
+    }
+
     fn timer(&mut self) {
         if let Some(due) = self.state.response_due
             && due <= self.now
@@ -949,6 +1148,16 @@ impl Stepper<'_> {
                 });
             }
             self.state.escalated = true;
+        }
+        if let Some(due) = self.state.answer_due
+            && due <= self.now
+        {
+            self.state.answer_due = None;
+            if let Some(answer) = self.await_clause() {
+                self.coverage.push((self.unit, answer.span.start));
+            }
+            let message = self.unanswered();
+            self.actions.push(FlowAction::Escalate { message });
         }
         let due: Vec<usize> = self
             .state
@@ -990,10 +1199,49 @@ impl Stepper<'_> {
             .filter(|_| self.state.awaiting_response.is_some() && !self.state.escalated);
         response
             .into_iter()
+            .chain(self.state.answer_due)
             .chain(self.state.batches.iter().map(|batch| batch.due))
             .chain(self.state.pending.iter().map(|pending| pending.due))
             .min()
     }
+}
+
+/// The arm for a purpose: its own; a `Replace` without one takes the `Change` arm and a `Change`
+/// without one the `Replace` arm; and any purpose without one takes the bare `->` arm.
+fn arm_for<'r>(receive: &'r Receive, purpose: &str) -> Option<&'r ReceiveArm> {
+    let named = |wanted: &str| {
+        receive
+            .arms
+            .iter()
+            .find(|arm| arm.purpose.as_ref().is_some_and(|name| name.name == wanted))
+    };
+    named(purpose)
+        .or_else(|| match purpose {
+            "Replace" => named("Change"),
+            "Change" => named("Replace"),
+            _ => None,
+        })
+        .or_else(|| receive.arms.iter().find(|arm| arm.purpose.is_none()))
+}
+
+/// Whether the load's state is one `cancel unless` names: one of its states, or with
+/// `or later`, the last of them or any state after it.
+fn stops_cancel(unless: &Unless, state: &str) -> bool {
+    if unless.states.iter().any(|named| named.name == state) {
+        return true;
+    }
+    let rank = |name: &str| {
+        super::schema::STATES
+            .iter()
+            .position(|(known, _)| *known == name)
+    };
+    unless.or_later
+        && unless
+            .states
+            .last()
+            .and_then(|last| rank(&last.name))
+            .zip(rank(state))
+            .is_some_and(|(last, at)| at >= last)
 }
 
 /// Text a project's author wrote, already in the words they chose, as a message.
@@ -1045,4 +1293,137 @@ pub fn outcome_inputs(outcomes: &[Outcome]) -> Vec<OutcomeInput> {
 #[must_use]
 pub fn document_json(value: &Value) -> Json {
     to_json(value)
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::{FlowAction, FlowEvent, FlowState, Unless, step, stops_cancel};
+    use crate::lading::check::check;
+    use crate::lading::check::corpus::{acme_mfg, acme_mfg_context};
+    use crate::lading::eval::interp::Given;
+    use crate::lading::syntax::ast::Ident;
+    use trenova_module_kit::span::Span;
+
+    fn offered(key: &str) -> FlowEvent {
+        FlowEvent::Trenova {
+            event: "TenderOffered".into(),
+            document: json!({
+                "key": key,
+                "stops": [
+                    { "sequence": 1, "type": "Pickup", "name": "Dock", "window": { "start": { "at": "2026-03-06T12:00:00Z" } } },
+                    { "sequence": 2, "type": "Delivery", "name": "Yard", "window": { "start": { "at": "2026-03-06T21:00:00Z" } } }
+                ]
+            }),
+        }
+    }
+
+    #[test]
+    fn a_tender_trenova_sends_names_the_instance_and_waits_for_its_answer() {
+        let program = check(&acme_mfg(), &acme_mfg_context());
+        let given = Given::default();
+        let sent = step(
+            &program,
+            "backhaul",
+            FlowState::default(),
+            &offered("BH-1"),
+            1_000,
+            &given,
+        );
+        assert_eq!(sent.state.key, "BH-1");
+        assert_eq!(sent.state.answer_due, Some(1_000 + 7_200));
+        assert!(
+            sent.actions
+                .iter()
+                .any(|action| matches!(action, FlowAction::Send { id, .. } if id == "BH-1-1"))
+        );
+        let late = step(
+            &program,
+            "backhaul",
+            sent.state.clone(),
+            &FlowEvent::Timer,
+            1_000 + 7_200,
+            &given,
+        );
+        assert_eq!(late.state.answer_due, None);
+        let escalated: Vec<String> = late
+            .actions
+            .iter()
+            .filter_map(|action| match action {
+                FlowAction::Escalate { message } => Some(message.english()),
+                _ => None,
+            })
+            .collect();
+        assert!(
+            escalated.contains(&"Acme's fleet has not answered backhaul BH-1".to_owned()),
+            "{:?}",
+            late.actions
+        );
+    }
+
+    #[test]
+    fn a_message_for_a_conversation_never_started_is_rejected_by_its_guard() {
+        let program = check(&acme_mfg(), &acme_mfg_context());
+        let status = FlowEvent::Received {
+            set: "214".into(),
+            document: json!({ "key": "BH-9", "events": [] }),
+            outcomes: Vec::new(),
+            current: None,
+            load: None,
+        };
+        let fresh = step(
+            &program,
+            "backhaul",
+            FlowState::default(),
+            &status,
+            0,
+            &Given::default(),
+        );
+        assert!(
+            matches!(
+                fresh.actions.as_slice(),
+                [FlowAction::Acknowledge {
+                    rejected: true,
+                    message: Some(_),
+                    ..
+                }]
+            ),
+            "{:?}",
+            fresh.actions
+        );
+        assert!(!fresh.state.exists(), "a rejected message opens nothing");
+        let known = FlowState {
+            sends: 1,
+            ..FlowState::default()
+        };
+        let applied = step(&program, "backhaul", known, &status, 0, &Given::default());
+        assert!(
+            applied
+                .actions
+                .iter()
+                .any(|action| matches!(action, FlowAction::Apply { .. })),
+            "{:?}",
+            applied.actions
+        );
+    }
+
+    #[test]
+    fn cancel_unless_or_later_covers_every_later_state() {
+        let ident = |name: &str| Ident::new(name, Span::default());
+        let later = Unless {
+            states: vec![ident("dispatched")],
+            or_later: true,
+        };
+        assert!(stops_cancel(&later, "dispatched"));
+        assert!(stops_cancel(&later, "delivered"));
+        assert!(stops_cancel(&later, "invoiced"));
+        assert!(!stops_cancel(&later, "open"));
+        let listed = Unless {
+            states: vec![ident("dispatched"), ident("invoiced")],
+            or_later: false,
+        };
+        assert!(stops_cancel(&listed, "invoiced"));
+        assert!(!stops_cancel(&listed, "delivered"));
+    }
 }

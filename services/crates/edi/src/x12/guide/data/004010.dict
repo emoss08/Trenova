@@ -13,11 +13,10 @@ segment SE | Transaction Set Trailer
   329 AN 4/9 M | Transaction Set Control Number
 
 segment B1 | Beginning Segment for Booking or Pick-up/Delivery
-  140 ID 2/4 M | Standard Carrier Alpha Code
+  140 ID 2/4 O | Standard Carrier Alpha Code
   145 AN 1/30 M | Shipment Identification Number
-  373 DT 8/8 X | Date
-  558 ID 1/1 X | Reservation Action Code
-  rules P0304
+  373 DT 8/8 O | Date
+  558 ID 1/1 O | Reservation Action Code
 
 segment B2 | Beginning Segment for Shipment Information Transaction
   375 ID 2/2 O | Tariff Service Code

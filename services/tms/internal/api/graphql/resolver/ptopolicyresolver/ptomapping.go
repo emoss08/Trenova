@@ -22,6 +22,13 @@ func ptoPolicyFromInput(
 	if err != nil {
 		return nil, err
 	}
+	waitingPeriodDays, err := gqlscalar.NarrowInt[int32](
+		"waitingPeriodDays",
+		input.WaitingPeriodDays,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	entity := &pto.PTOPolicy{
 		ID:                id,
@@ -34,7 +41,7 @@ func ptoPolicyFromInput(
 		IsDefault:         input.IsDefault,
 		YearBasis:         input.YearBasis,
 		CountWeekends:     input.CountWeekends,
-		WaitingPeriodDays: int32(input.WaitingPeriodDays), //nolint:gosec // bounded by validation
+		WaitingPeriodDays: waitingPeriodDays,
 		RequiresApproval:  input.RequiresApproval,
 		EnforceBalance:    input.EnforceBalance,
 		AllowNegative:     input.AllowNegative,
@@ -70,6 +77,13 @@ func ptoPolicyFromInput(
 		if cErr != nil {
 			return nil, cErr
 		}
+		carryoverExpiryDays, eErr := gqlscalar.NarrowIntValue[int32](
+			prefix+"carryoverExpiryDays",
+			ruleInput.CarryoverExpiryDays,
+		)
+		if eErr != nil {
+			return nil, eErr
+		}
 		tiers, tErr := ptoTiersFromInput(prefix, ruleInput.Tiers)
 		if tErr != nil {
 			return nil, tErr
@@ -79,22 +93,18 @@ func ptoPolicyFromInput(
 			onTermination = *ruleInput.OnTermination
 		}
 		entity.Rules = append(entity.Rules, &pto.PTOPolicyRule{
-			OrganizationID:    tenantInfo.OrgID,
-			BusinessUnitID:    tenantInfo.BuID,
-			PTOPolicyID:       id,
-			PTOType:           ruleInput.PTOType,
-			AccrualMethod:     ruleInput.AccrualMethod,
-			AccrualAmountDays: amount,
-			MaxBalanceDays:    maxBalance,
-			CarryoverCapDays:  carryCap,
-			CarryoverExpiryDays: int32(
-				gqlscalar.IntValue(ruleInput.CarryoverExpiryDays),
-			), //nolint:gosec // bounded by validation
-			Tiers:         tiers,
-			OnTermination: onTermination,
-			SortOrder: int32(
-				i,
-			), //nolint:gosec // rule counts are tiny
+			OrganizationID:      tenantInfo.OrgID,
+			BusinessUnitID:      tenantInfo.BuID,
+			PTOPolicyID:         id,
+			PTOType:             ruleInput.PTOType,
+			AccrualMethod:       ruleInput.AccrualMethod,
+			AccrualAmountDays:   amount,
+			MaxBalanceDays:      maxBalance,
+			CarryoverCapDays:    carryCap,
+			CarryoverExpiryDays: carryoverExpiryDays,
+			Tiers:               tiers,
+			OnTermination:       onTermination,
+			SortOrder:           int32(i), //nolint:gosec // rule counts are tiny
 		})
 	}
 
@@ -126,8 +136,12 @@ func ptoTiersFromInput(
 		if err != nil {
 			return nil, err
 		}
+		minMonths, err := gqlscalar.NarrowInt[int32](tierPrefix+"minMonths", tierInput.MinMonths)
+		if err != nil {
+			return nil, err
+		}
 		tiers = append(tiers, pto.PTOAccrualTier{
-			MinMonths:         int32(tierInput.MinMonths), //nolint:gosec // bounded by validation
+			MinMonths:         minMonths,
 			AccrualAmountDays: amount,
 			MaxBalanceDays:    maxBalance,
 		})

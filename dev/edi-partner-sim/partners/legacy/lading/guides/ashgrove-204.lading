@@ -1,0 +1,39 @@
+guide ashgrove.204 from x12.004010.204 "Ashgrove Industrial Supply Load Tender (1998)"
+
+// Ashgrove's guide predates its translator's last upgrade: it lists the segments it sends and
+// says nothing about the case of its codes. Its qualifiers arrive in lowercase, which the base
+// allows, so this guide restricts no code it writes in lowercase and the map reads them upper.
+
+/// Ashgrove's load number, seven digits.
+B2 { 02 required; 04 required length 7..7 }
+L11 max 2
+G62 unused
+MS3 unused
+AT5 unused
+PLD unused
+LH6 unused
+NTE max 1
+
+loop 0100 required max 1
+0100.N1 { 02 required; 04 required }
+loop 0200 required max 1
+0200.N7 { 11 required }
+
+loop 0300 min 2 max 6
+0300.S5 { 03 required; 04 codes "L"; 05 required }
+0300.L11 max 2
+0300.G62 required { 01 codes "37", "38", "53", "54"; 04 required; 05 unused }
+0300.AT8 unused
+0300.NTE max 1
+loop 0300.0310 required
+0300.0310.N1 { 02 required; 04 required }
+0300.0310.N3 required
+0300.0310.N4 required { 03 length 5..5 }
+loop 0300.0320 max 4
+0300.0320.L5 { 01 required; 02 required }
+loop 0300.0350 unused
+loop 0300.0370 unused
+
+L3 required { 01 required; 05 required }
+
+severity segment-count-mismatch error

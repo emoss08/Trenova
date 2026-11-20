@@ -1,17 +1,20 @@
-import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { compareDecimalStrings, decimalPattern } from "@trenova/shared/types/decimal";
 import {
   optionalStringSchema,
   timestampSchema,
   versionSchema,
 } from "@trenova/shared/types/helpers";
+import { z } from "zod";
 
-const decimalNumberSchema = z.coerce.number().finite();
+/** The server keeps the approval amounts as NUMERIC(19, 4). */
+export const ADJUSTMENT_AMOUNT_SCALE = 4;
+/** The server keeps the rerate tolerance as NUMERIC(9, 6). */
+export const RERATE_TOLERANCE_SCALE = 6;
+/** The largest rerate tolerance NUMERIC(9, 6) holds. */
+export const RERATE_TOLERANCE_MAX = "999.999999";
 
-export const adjustmentEligibilityPolicySchema = z.enum([
-  "Disallow",
-  "AllowWithApproval",
-  "AllowWithoutApproval",
-]);
+export const adjustmentEligibilityPolicySchema = z.enum(["Disallow", "AllowWithApproval"]);
 export type AdjustmentEligibilityPolicy = z.infer<typeof adjustmentEligibilityPolicySchema>;
 
 export const adjustmentAccountingDatePolicySchema = z.enum([
@@ -61,6 +64,12 @@ export type SupersededInvoiceVisibilityPolicy = z.infer<
   typeof supersededInvoiceVisibilityPolicySchema
 >;
 
+/**
+ * An organization's invoice adjustment control, as the server sends it. The amounts and the
+ * tolerance stay decimal strings, as the server sends them, so a value is saved exactly as it
+ * was typed. What each must hold depends on the policy that uses it, which the form checks
+ * (`invoiceAdjustmentControlFormSchema`).
+ */
 export const invoiceAdjustmentControlSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,
@@ -76,11 +85,11 @@ export const invoiceAdjustmentControlSchema = z.object({
   closedPeriodAdjustmentPolicy: closedPeriodAdjustmentPolicySchema,
   adjustmentReasonRequirement: requirementPolicySchema,
   standardAdjustmentApprovalPolicy: approvalPolicySchema,
-  standardAdjustmentApprovalThreshold: decimalNumberSchema,
+  standardAdjustmentApprovalThreshold: z.string(),
   writeOffApprovalPolicy: writeOffApprovalPolicySchema,
-  writeOffApprovalThreshold: decimalNumberSchema,
-  requireSeparateApprover: z.boolean().default(false),
-  rerateVarianceTolerancePercent: decimalNumberSchema,
+  writeOffApprovalThreshold: z.string(),
+  requireSeparateApprover: z.boolean(),
+  rerateVarianceTolerancePercent: z.string(),
   replacementInvoiceReviewPolicy: replacementInvoiceReviewPolicySchema,
   customerCreditBalancePolicy: customerCreditBalancePolicySchema,
   overCreditPolicy: overCreditPolicySchema,
@@ -88,3 +97,67 @@ export const invoiceAdjustmentControlSchema = z.object({
 });
 
 export type InvoiceAdjustmentControl = z.infer<typeof invoiceAdjustmentControlSchema>;
+
+/** Whether `value` is a decimal of at most `scale` places that is above zero. */
+export function isPositiveDecimal(value: string, scale: number): boolean {
+  return decimalPattern(scale).test(value.trim()) && compareDecimalStrings(value, "0") > 0;
+}
+
+/** Whether `value` is a decimal of at most `scale` places between zero and `max`. */
+export function isDecimalWithin(value: string, scale: number, max: string): boolean {
+  return (
+    decimalPattern(scale).test(value.trim()) &&
+    compareDecimalStrings(value, "0") >= 0 &&
+    compareDecimalStrings(value, max) <= 0
+  );
+}
+
+/**
+ * The record as the form checks it before a save, following the server's validator: an
+ * approval amount must be above zero while its policy approves above an amount, and the
+ * rerate tolerance must be a percentage the server can keep while replacement invoices are
+ * reviewed on a change in amount. A value the page hides is not checked here; it is sent as
+ * the server requires (`prepareInvoiceAdjustmentControl`).
+ */
+export const invoiceAdjustmentControlFormSchema = invoiceAdjustmentControlSchema.superRefine(
+  (values, ctx) => {
+    if (
+      values.standardAdjustmentApprovalPolicy === approvalPolicySchema.enum.AmountThreshold &&
+      !isPositiveDecimal(values.standardAdjustmentApprovalThreshold, ADJUSTMENT_AMOUNT_SCALE)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["standardAdjustmentApprovalThreshold"],
+        message: translate("Enter an amount above zero"),
+      });
+    }
+
+    if (
+      values.writeOffApprovalPolicy ===
+        writeOffApprovalPolicySchema.enum.RequireApprovalAboveThreshold &&
+      !isPositiveDecimal(values.writeOffApprovalThreshold, ADJUSTMENT_AMOUNT_SCALE)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["writeOffApprovalThreshold"],
+        message: translate("Enter an amount above zero"),
+      });
+    }
+
+    if (
+      values.replacementInvoiceReviewPolicy ===
+        replacementInvoiceReviewPolicySchema.enum.RequireReviewWhenEconomicTermsChange &&
+      !isDecimalWithin(
+        values.rerateVarianceTolerancePercent,
+        RERATE_TOLERANCE_SCALE,
+        RERATE_TOLERANCE_MAX,
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["rerateVarianceTolerancePercent"],
+        message: translate("Enter a percentage from 0 to 999.99"),
+      });
+    }
+  },
+);

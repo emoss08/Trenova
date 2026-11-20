@@ -222,7 +222,7 @@ func TestPreviewAudience_RefusesABadRequest(t *testing.T) {
 	)
 	var invalid *errortypes.Error
 	require.ErrorAs(t, err, &invalid)
-	assert.Equal(t, "accessMode", invalid.Field)
+	assert.Equal(t, "accessMode", invalid.Field())
 
 	tooMany := make([]string, maxPreviewTools+1)
 	for i := range tooMany {
@@ -237,7 +237,7 @@ func TestPreviewAudience_RefusesABadRequest(t *testing.T) {
 		},
 	)
 	require.ErrorAs(t, err, &invalid)
-	assert.Equal(t, "toolNames", invalid.Field)
+	assert.Equal(t, "toolNames", invalid.Field())
 
 	_, err = f.service.PreviewAudience(
 		t.Context(),

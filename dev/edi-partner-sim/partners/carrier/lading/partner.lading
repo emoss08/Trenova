@@ -1,0 +1,19 @@
+partner quarrystone "Quarrystone Freight Lines"
+
+// Quarrystone trades under its SCAC (qualifier 02) and knows Trenova by a mutually defined ID.
+// It writes pipes between elements and a CR LF after every segment.
+interchange {
+  them 02 "QYSF"
+  us ZZ "TRENOVABRK"
+  group "QYSF" <-> "TRENOVA"
+  version 004010
+  separators "|" "~" ":"
+  line ending crlf
+  usage test
+}
+
+zone America/Denver
+currency "USD"
+
+/// How long Quarrystone has to answer a tender with its 990 before a planner hears about it.
+setting answerWithin: Duration = 2 h in 15 min..24 h

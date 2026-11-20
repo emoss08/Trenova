@@ -43,7 +43,7 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 		})
 		var validation *errortypes.Error
 		require.ErrorAs(t, err, &validation)
-		assert.Equal(t, "name", validation.Field)
+		assert.Equal(t, "name", validation.Field())
 	})
 
 	t.Run("an offset list sorts, pages and counts", func(t *testing.T) {

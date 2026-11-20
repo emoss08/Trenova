@@ -18,7 +18,7 @@ func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *location.Location,
 ) (*kernelports.RecordChange[location.Location], error) {
-	if err := s.transformer.TransformLocation(ctx, entity); err != nil {
+	if err := s.formatter.Format(ctx, entity); err != nil {
 		return nil, err
 	}
 	entity.NormalizeGeofence()

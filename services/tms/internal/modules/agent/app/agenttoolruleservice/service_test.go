@@ -236,7 +236,7 @@ func TestSave_RequiresAReasonWhenTheMostFreedomChanges(t *testing.T) {
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "reason", multiErr.Errors[0].Field)
+	assert.Equal(t, "reason", multiErr.Errors[0].Field())
 	assert.Empty(t, f.repo.rows, "nothing is written")
 	assert.Empty(t, f.auditor.changes)
 }
@@ -314,7 +314,7 @@ func TestSave_RefusesLooseningAndUnknownTools(t *testing.T) {
 	})
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "maxTier", multiErr.Errors[0].Field)
+	assert.Equal(t, "maxTier", multiErr.Errors[0].Field())
 
 	_, err = f.save(t, &agenttoolports.SaveToolRuleRequest{ToolName: "no_such_tool", Reason: "x"})
 	require.Error(t, err)

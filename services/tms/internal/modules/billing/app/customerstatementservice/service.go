@@ -73,6 +73,7 @@ type Params struct {
 	Organizations   tenantports.OrganizationRepository
 	Users           tenantports.UserRepository
 	BillingControls tenantports.BillingControlRepository
+	Adjustments     tenantports.InvoiceAdjustmentControlRepository
 	EmailService    emailports.EmailService
 	Templates       documenttemplateports.DocumentTemplateResolver
 	Inliner         documenttemplateports.AssetInliner
@@ -89,6 +90,7 @@ type Service struct {
 	organizations   tenantports.OrganizationRepository
 	users           tenantports.UserRepository
 	billingControls tenantports.BillingControlRepository
+	adjustments     tenantports.InvoiceAdjustmentControlRepository
 	emailService    emailports.EmailService
 	templates       documenttemplateports.DocumentTemplateResolver
 	inliner         documenttemplateports.AssetInliner
@@ -109,6 +111,7 @@ func New(p Params) *Service {
 		organizations:   p.Organizations,
 		users:           p.Users,
 		billingControls: p.BillingControls,
+		adjustments:     p.Adjustments,
 		emailService:    p.EmailService,
 		templates:       p.Templates,
 		inliner:         p.Inliner,
@@ -119,11 +122,12 @@ func New(p Params) *Service {
 
 // issuer is what every statement an organization sends shares.
 type issuer struct {
-	tenant     pagination.TenantInfo
-	org        *tenant.Organization
-	control    *billingcontrol.BillingControl
-	logo       template.URL
-	activityBy pulid.ID
+	tenant        pagination.TenantInfo
+	org           *tenant.Organization
+	control       *billingcontrol.BillingControl
+	logo          template.URL
+	activityBy    pulid.ID
+	showsReplaced bool
 }
 
 // prepared is one customer's statement, drawn up and rendered.
@@ -145,7 +149,7 @@ func (s *Service) Render(
 	ctx context.Context,
 	req *customerstatementports.StatementRequest,
 ) (*customerstatementports.RenderedStatement, error) {
-	period, err := periodOf(req, timeutils.NowUnix())
+	period, err := s.periodOf(ctx, req, timeutils.NowUnix())
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +271,7 @@ func (s *Service) prepareSend(
 		)
 	}
 	now := timeutils.NowUnix()
-	period, err := periodOf(&req.StatementRequest, now)
+	period, err := s.periodOf(ctx, &req.StatementRequest, now)
 	if err != nil {
 		return nil, err
 	}
@@ -463,6 +467,9 @@ func (s *Service) draft(
 	)
 	if err != nil {
 		return nil, err
+	}
+	if !from.showsReplaced {
+		statement = withoutReplacedInvoices(statement)
 	}
 	out := &prepared{
 		customer:  cus,
@@ -688,6 +695,10 @@ func (s *Service) issuer(
 	if err != nil {
 		return nil, err
 	}
+	adjustments, err := s.adjustments.GetByOrgID(ctx, tenantInfo.OrgID)
+	if err != nil {
+		return nil, err
+	}
 	var logo template.URL
 	if inlineLogo {
 		logo, err = documenttemplateports.ResolveLogoDataURI(ctx, s.inliner, org.LogoURL)
@@ -698,7 +709,14 @@ func (s *Service) issuer(
 			logo = ""
 		}
 	}
-	from := &issuer{tenant: tenantInfo, org: org, control: control, logo: logo, activityBy: actorID}
+	from := &issuer{
+		tenant:        tenantInfo,
+		org:           org,
+		control:       control,
+		logo:          logo,
+		activityBy:    actorID,
+		showsReplaced: adjustments.ShowsReplacedInvoicesExternally(),
+	}
 	if from.activityBy.IsNil() {
 		system, sysErr := s.users.GetSystemUser(ctx, "id")
 		if sysErr != nil {
@@ -757,8 +775,10 @@ func (s *Service) loadCustomers(
 }
 
 // periodOf checks the span a person asked for: today when no date is given,
-// never ending in the future, and never starting after it ends.
-func periodOf(
+// never ending in the future, and the bounded span Period.Resolve allows. A
+// missing start reads the month before in the organization's timezone.
+func (s *Service) periodOf(
+	ctx context.Context,
 	req *customerstatementports.StatementRequest,
 	now int64,
 ) (customerstatement.Period, error) {
@@ -766,23 +786,20 @@ func periodOf(
 	if period.End == 0 {
 		period.End = now
 	}
-	switch {
-	case period.Start < 0 || period.End < 0:
-		return period, errortypes.NewValidationError(
-			"startDate", errortypes.ErrInvalid, "Statement dates cannot be negative",
-		)
-	case period.End > now+futureSlack:
+	if period.End > now+futureSlack {
 		return period, errortypes.NewValidationError(
 			"asOfDate", errortypes.ErrInvalid, "A statement cannot be dated in the future",
 		)
-	case period.Start > period.End:
-		return period, errortypes.NewValidationError(
-			"startDate",
-			errortypes.ErrInvalid,
-			"Start the statement on or before its statement date",
-		)
 	}
-	return period, nil
+	loc := time.UTC
+	if period.Start == 0 {
+		var err error
+		loc, err = tenantports.OrganizationLocation(ctx, s.organizations, req.TenantInfo)
+		if err != nil {
+			return period, err
+		}
+	}
+	return period.Resolve(loc)
 }
 
 func pastDueOf(aging customerledgerports.ARAgingBucketTotals) int64 {

@@ -74,7 +74,10 @@ func App(o Options) keelcli.App {
 		Tenants:     env.Tenants,
 		System:      env.System,
 		Extensions:  extensions,
-		Commands:    append([]keelcli.Command{EnableVectorCommand}, o.Commands...),
+		Commands: append(
+			[]keelcli.Command{EnableVectorCommand, provisionRolesCommand(settings)},
+			o.Commands...,
+		),
 	}
 	if o.Development {
 		app.Dirs = migrations.Dirs()

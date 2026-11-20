@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionguide"
@@ -43,7 +44,7 @@ type exchange struct {
 	index        int
 	version      string
 	ack          string
-	window       int
+	window       time.Duration
 	requirements []*ediconnectionguide.Requirement
 }
 
@@ -188,7 +189,7 @@ func (p *planner) buildSet(
 		false,
 	)
 	window := p.resolve(
-		ediconnectionfield.SetField(set, direction, ediconnectionfield.SetAttrAckWindowMinutes),
+		ediconnectionfield.SetField(set, direction, ediconnectionfield.SetAttrAckWindow),
 		nil,
 		false,
 	)
@@ -236,7 +237,7 @@ func (p *planner) buildSet(
 		built.ack = value
 	}
 	if value, ok := usableValue(&window); ok {
-		built.window, _ = strconv.Atoi(value)
+		built.window, _ = ediconnectionfield.ParseDuration(value)
 	}
 	return built, nil
 }
@@ -390,11 +391,16 @@ func (p *planner) starterRequest(exchanges []*exchange) *lading.StarterRequest {
 	if len(separators) == 4 {
 		request.Separators = separators
 	}
+	if ending, ok := p.usable(ediconnectionfield.LineEnding); ok {
+		request.LineEnding = ediconnectionfield.WireLineEnding(ending)
+	}
 	request.Usage = ediconnectionfield.ValueTest
 	if usage, ok := p.usable(ediconnectionfield.UsageIndicator); ok && usage == "P" {
 		request.Usage = ediconnectionfield.ValueProduction
 	}
-	request.Acknowledge, request.AckWithin = p.acknowledgment(exchanges)
+	acknowledge, window := p.acknowledgment(exchanges)
+	request.Acknowledge = acknowledge
+	request.AckWithinSeconds = int64(window / time.Second)
 	for _, exchanged := range exchanges {
 		if !slices.Contains(request.Sets, string(exchanged.set)) {
 			request.Sets = append(request.Sets, string(exchanged.set))
@@ -436,7 +442,9 @@ func roleFor(exchanges []*exchange) string {
 	return lading.RoleCarrier
 }
 
-func (p *planner) acknowledgment(exchanges []*exchange) (acknowledge string, window int) {
+func (p *planner) acknowledgment(
+	exchanges []*exchange,
+) (acknowledge string, window time.Duration) {
 	counts := map[string]int{}
 	for _, exchanged := range exchanges {
 		if exchanged.ack != "" {

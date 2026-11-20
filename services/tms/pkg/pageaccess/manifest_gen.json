@@ -1,5 +1,5 @@
 {
-  "version": "sha256:2b6ef0ca3af88b037a2b7db13a973f88ec3474dd19c1f2a66f3d54c5d904936d",
+  "version": "sha256:fb9359434cb8e7323fa0c020316a39c8f95efb4a0f5cf050ee8fff0dd4088787",
   "screens": [
     {
       "path": "/",
@@ -370,6 +370,7 @@
         "ArTopOverdueCustomers",
         "CreateMemo",
         "DeskInvoiceCard",
+        "ExportCustomerLedger",
         "InvoiceArContext",
         "LateChargePreview",
         "ShipmentInvoices"
@@ -406,6 +407,7 @@
       ],
       "references": [
         "customer",
+        "report",
         "user"
       ],
       "declared": [
@@ -3446,10 +3448,9 @@
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "ResolvedCostProfilePage",
+        "SaveCostingControl",
         "ShipmentCheckCalls",
-        "ShipmentProfitability",
-        "UpdateCostCategory",
-        "UpdateCostingControl"
+        "ShipmentProfitability"
       ],
       "endpoints": [
         {
@@ -41469,6 +41470,18 @@
       "declared": []
     },
     {
+      "name": "ExportCustomerLedger",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "report",
+          "fields": []
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "ExportSettlementBatchCsv",
       "type": "query",
       "reads": [],
@@ -44851,6 +44864,13 @@
       "declared": []
     },
     {
+      "name": "SaveCostingControl",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "SaveFactoringTransport",
       "type": "mutation",
       "reads": [],
@@ -46322,20 +46342,6 @@
     },
     {
       "name": "UpdateCarrierSettlementControl",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "UpdateCostCategory",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "UpdateCostingControl",
       "type": "mutation",
       "reads": [],
       "linked": [],

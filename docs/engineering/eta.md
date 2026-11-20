@@ -99,8 +99,8 @@ The threshold is the customer's `eta_risk_threshold_minutes` when set, else disp
 ## What refreshes it
 
 - `etatrigger` hears shipment events (created, updated, status, canceled and uncanceled, move
-  status, arrived, departed, stop completed, driver and carrier assigned or unassigned, tender
-  accepted) and check calls (the `check_call_observers` group), and calls
+  status, arrived, departed, a stop reached or left or its time corrected, driver and carrier
+  assigned or unassigned, tender accepted) and check calls (the `check_call_observers` group), and calls
   `RefreshRequester.RequestRefresh`.
 - The requester queues the shipment (`work_queue_items`, kind `shipment-eta`) in the caller's
   transaction and, after commit, signals-with-start the tenant's `ShipmentEtaDrainWorkflow` on

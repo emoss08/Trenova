@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -152,20 +153,24 @@ func buildCarrierOfferDocumentPayload(
 	}
 
 	offeredTotal := carrierOfferTotal(offer, move.Distance)
+	key := tender.MovePartnerKey(source.ProNumber, move.Sequence, len(source.Moves))
 	payload := editransfer.LoadTenderPayload{
 		PurposeCode:         editransfer.LoadTenderPurposeOriginal,
-		TenderOfferID:       offer.ID,
 		ShipmentID:          source.ID,
 		BusinessUnitID:      source.BusinessUnitID,
 		OrganizationID:      source.OrganizationID,
+		ProNumber:           key.ProNumber,
+		MoveNumber:          key.Move,
 		BOL:                 source.BOL,
+		Payment:             string(shipmentvocab.FreightTermsPrepaid),
+		Equipment:           edipayloadbuild.EquipmentCode(source),
 		Pieces:              source.Pieces,
 		Weight:              source.Weight,
 		TemperatureMin:      source.TemperatureMin,
 		TemperatureMax:      source.TemperatureMax,
 		FreightChargeAmount: offeredTotal,
 		TotalChargeAmount:   offeredTotal,
-		RatingDetail:        carrierOfferRatingDetail(offer, source),
+		RatingDetail:        carrierOfferRatingDetail(offer),
 		Moves: []editransfer.LoadTenderMove{
 			edipayloadbuild.LoadTenderMoveFromShipmentMove(move),
 		},
@@ -195,20 +200,11 @@ func carrierOfferTotal(offer *tender.TenderOffer, distance *float64) decimal.Nul
 	}
 }
 
-func carrierOfferRatingDetail(
-	offer *tender.TenderOffer,
-	source *shipment.Shipment,
-) map[string]any {
-	detail := map[string]any{
-		"paymentMethod": "PP",
-		"rateMethod":    string(offer.RateMethod),
-		"rate":          offer.Rate.StringFixed(2),
+func carrierOfferRatingDetail(offer *tender.TenderOffer) map[string]any {
+	return map[string]any{
+		"rateMethod": string(offer.RateMethod),
+		"rate":       offer.Rate.StringFixed(2),
 	}
-	if source.TrailerType != nil && source.TrailerType.Code != "" {
-		detail["equipmentType"] = source.TrailerType.Code
-		detail["note"] = "Equipment: " + source.TrailerType.Code
-	}
-	return detail
 }
 
 func carrierOfferSCAC(offer *tender.TenderOffer, channel *carrier.CarrierEDIChannel) string {

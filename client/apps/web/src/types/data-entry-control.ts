@@ -9,6 +9,10 @@ export const caseFormatSchema = z.enum(["AsEntered", "Upper", "Lower", "TitleCas
 
 export type CaseFormat = z.infer<typeof caseFormatSchema>;
 
+export const emailCaseFormatSchema = caseFormatSchema.exclude(["TitleCase"]);
+
+export type EmailCaseFormat = z.infer<typeof emailCaseFormatSchema>;
+
 export const dataEntryControlSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,
@@ -18,7 +22,7 @@ export const dataEntryControlSchema = z.object({
   businessUnitId: optionalStringSchema,
   codeCase: caseFormatSchema,
   nameCase: caseFormatSchema,
-  emailCase: caseFormatSchema,
+  emailCase: emailCaseFormatSchema,
   cityCase: caseFormatSchema,
 });
 

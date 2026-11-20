@@ -54,7 +54,7 @@ func TestEquipmentTypeRepository(t *testing.T) {
 		})
 		var validation *errortypes.Error
 		require.ErrorAs(t, err, &validation)
-		assert.Equal(t, "code", validation.Field)
+		assert.Equal(t, "code", validation.Field())
 		assert.Equal(t, errortypes.ErrDuplicate, validation.Code)
 	})
 

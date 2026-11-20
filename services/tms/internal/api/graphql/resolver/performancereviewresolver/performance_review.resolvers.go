@@ -30,7 +30,10 @@ func (r *MutationResolver) CreatePerformanceReviewTemplate(ctx context.Context, 
 		return nil, err
 	}
 
-	entity := reviewTemplateFromInput(&input, pulid.Nil, resolvercore.TenantInfo(authCtx))
+	entity, err := reviewTemplateFromInput(&input, pulid.Nil, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
 	return r.PerformanceReviewService.CreateTemplate(ctx, entity, authCtx.UserID)
 }
 
@@ -44,7 +47,10 @@ func (r *MutationResolver) UpdatePerformanceReviewTemplate(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
-	entity := reviewTemplateFromInput(&input, templateID, resolvercore.TenantInfo(authCtx))
+	entity, err := reviewTemplateFromInput(&input, templateID, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
 	return r.PerformanceReviewService.UpdateTemplate(ctx, entity, authCtx.UserID)
 }
 

@@ -1,0 +1,17 @@
+name: the happy path against the fake Trenova
+within: 10s
+steps:
+  - send: { set: "204", as: t1 }
+  - expect: { ack: t1 }
+  - expect: { wire: "997", about: t1 }
+  - trenova: { decide: t1, decision: accept }
+  - expect: { wire: "990", about: t1, elements: { B1-04: A } }
+  - expect: { trenova: { shipment: t1, stops: 2, status: New, total: tendered } }
+  - trenova: { dispatch: t1 }
+  - trenova: { deliver: t1 }
+  - expect: { wire: "214", about: t1, statuses: [X3, AF, X1, D1] }
+  - trenova: { invoice: t1 }
+  - expect: { wire: "210", about: t1, total: tendered }
+  - expect: { reconciled: t1 }
+  - expect: { trenova: { shipment: t1, status: Invoiced } }
+  - expect: { wire: "990", about: t1, none: true, within: 300ms }

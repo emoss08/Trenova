@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +23,7 @@ type Params struct {
 	Repo         accessorialchargeports.AccessorialChargeRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Transformer  accessorialchargeports.DataTransformer
+	Formatter    dataentrycontrolports.TextFormatter
 }
 
 type Service struct {
@@ -30,7 +31,7 @@ type Service struct {
 	repo         accessorialchargeports.AccessorialChargeRepository
 	validator    *Validator
 	auditService auditports.AuditService
-	transformer  accessorialchargeports.DataTransformer
+	formatter    dataentrycontrolports.TextFormatter
 }
 
 func New(p Params) *Service {
@@ -39,7 +40,7 @@ func New(p Params) *Service {
 		repo:         p.Repo,
 		validator:    p.Validator,
 		auditService: p.AuditService,
-		transformer:  p.Transformer,
+		formatter:    p.Formatter,
 	}
 }
 
@@ -88,8 +89,8 @@ func (s *Service) Create(
 		zap.String("userID", userID.String()),
 	)
 
-	if err := s.transformer.TransformAccessorialCharge(ctx, entity); err != nil {
-		log.Error("failed to transform accessorial charge", zap.Error(err))
+	if err := s.formatter.Format(ctx, entity); err != nil {
+		log.Error("failed to format accessorial charge", zap.Error(err))
 		return nil, err
 	}
 
@@ -130,8 +131,8 @@ func (s *Service) Update(
 		zap.String("userID", userID.String()),
 	)
 
-	if err := s.transformer.TransformAccessorialCharge(ctx, entity); err != nil {
-		log.Error("failed to transform accessorial charge", zap.Error(err))
+	if err := s.formatter.Format(ctx, entity); err != nil {
+		log.Error("failed to format accessorial charge", zap.Error(err))
 		return nil, err
 	}
 

@@ -1,0 +1,63 @@
+set: "214"
+version: "004010"
+group: QM
+title: "Meadowridge Fresh Markets Shipment Status 4010 v2.3"
+
+segments:
+  ST:
+    name: Transaction Set Header
+    elements:
+      - { pos: 1, name: Transaction Set Identifier Code, type: ID, min: 3, max: 3, usage: M, fixed: "214" }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+  B10:
+    name: Beginning Segment for Transportation Carrier Shipment Status Message
+    elements:
+      - { pos: 1, name: Carrier Reference (PRO), type: AN, min: 1, max: 30, usage: M }
+      - { pos: 2, name: Meadowridge Run Number, type: AN, min: 9, max: 9, usage: M }
+      - { pos: 3, name: Standard Carrier Alpha Code, type: ID, min: 2, max: 4, usage: M, fixed: TRNV }
+  L11:
+    name: Business Instructions and Reference Number
+    elements:
+      - { pos: 1, name: Reference Identification, type: AN, min: 1, max: 30, usage: M }
+      - { pos: 2, name: Reference Identification Qualifier, type: ID, min: 2, max: 3, usage: M, codes: [BM, PO, QN] }
+  LX:
+    name: Assigned Number
+    elements:
+      - { pos: 1, name: Assigned Number, type: N0, min: 1, max: 6, usage: M }
+  AT7:
+    name: Shipment Status Details
+    elements:
+      - { pos: 1, name: Shipment Status Code, type: ID, min: 2, max: 2, usage: M, codes: [X3, AF, X1, D1, CD, AG] }
+      - { pos: 2, name: Shipment Status Reason Code, type: ID, min: 2, max: 2, usage: M }
+      - { pos: 5, name: Date, type: DT, min: 8, max: 8, usage: M }
+      - { pos: 6, name: Time, type: TM, min: 4, max: 4, usage: M }
+      - { pos: 7, name: Time Code, type: ID, min: 2, max: 2, usage: M, codes: [CT, ET, MT, PT] }
+  MS1:
+    name: Equipment, Shipment, or Real Property Location
+    elements:
+      - { pos: 1, name: City Name, type: AN, min: 2, max: 30, usage: M }
+      - { pos: 2, name: State or Province Code, type: ID, min: 2, max: 2, usage: M }
+      - { pos: 3, name: Country Code, type: ID, min: 2, max: 3, usage: O, codes: [US] }
+  SE:
+    name: Transaction Set Trailer
+    elements:
+      - { pos: 1, name: Number of Included Segments, type: N0, min: 1, max: 10, usage: M }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+
+structure:
+  - { seg: ST, usage: M }
+  - { seg: B10, usage: M }
+  - { seg: L11, usage: O, max: 2 }
+  - loop: "0205"
+    usage: M
+    max: 30
+    body:
+      - { seg: LX, usage: M }
+      - loop: "0210"
+        usage: M
+        max: 1
+        body:
+          - { seg: AT7, usage: M }
+          - { seg: MS1, usage: O }
+      - { seg: L11, usage: M }
+  - { seg: SE, usage: M }

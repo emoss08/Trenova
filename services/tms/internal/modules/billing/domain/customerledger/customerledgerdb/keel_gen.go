@@ -610,6 +610,966 @@ func attachCustomerLedgerEntry(p unsafe.Pointer, rel int32, child unsafe.Pointer
 	}
 }
 
+// invoiceBalancesTable is the schema of customerledger.InvoiceBalance.
+var invoiceBalancesTable = schema.Table{
+	Name:   "customer_ledger_invoice_balances",
+	Quoted: `"customer_ledger_invoice_balances"`,
+	Alias:  "clib",
+	Model:  "customerledger.InvoiceBalance",
+	Label:  `Invoice Balance`,
+	Plural: `Invoice Balances`,
+	Columns: []schema.Column{
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Customer ID`, JSON: `customerId`},
+		{Name: "invoice_id", Quoted: `"invoice_id"`, Field: "InvoiceID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Invoice ID`, JSON: `invoiceId`},
+		{Name: "amount_minor", Quoted: `"amount_minor"`, Field: "AmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Amount Minor`, JSON: `amountMinor`},
+	},
+	PK:         []int32{0, 1, 2, 3},
+	Tenant:     []int32{0, 1},
+	Select:     []int32{0, 1, 2, 3, 4},
+	Insert:     []int32{0, 1, 2, 3, 4},
+	Update:     []int32{4},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     -1,
+	AutoCreate: -1,
+	AutoUpdate: -1,
+	IDPrefix:   "",
+	New:        newInvoiceBalance,
+	NewN:       newNInvoiceBalance,
+	Size:       unsafe.Sizeof(customerledger.InvoiceBalance{}),
+	Ptr:        ptrInvoiceBalance,
+	Value:      valueInvoiceBalance,
+}
+
+var invoiceBalancesRef = keel.Ref{Table: &invoiceBalancesTable}
+
+// InvoiceBalancesTable is the table of customerledger.InvoiceBalance.
+type InvoiceBalancesTable struct {
+	keel.TableBase
+	OrganizationID keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	CustomerID     keelkinds.PulidIDCol
+	InvoiceID      keelkinds.PulidIDCol
+	AmountMinor    keel.Int64Col
+}
+
+// InvoiceBalances references the customer_ledger_invoice_balances table.
+var InvoiceBalances = &InvoiceBalancesTable{
+	TableBase:      keel.TableBase{Ref: &invoiceBalancesRef},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceBalancesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceBalancesRef, Index: 1}}},
+	CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceBalancesRef, Index: 2}}},
+	InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceBalancesRef, Index: 3}}},
+	AmountMinor:    keel.Int64Col{Col: keel.Col{Ref: &invoiceBalancesRef, Index: 4}},
+}
+
+// BuildInvoiceBalances builds the table of customer_ledger_invoice_balances for ref. Generated relation and alias methods call it.
+func BuildInvoiceBalances(r *keel.Ref) *InvoiceBalancesTable {
+	return &InvoiceBalancesTable{
+		TableBase:      keel.TableBase{Ref: r},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		AmountMinor:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
+	}
+}
+
+// InvoiceBalancesSchema returns the schema of customer_ledger_invoice_balances.
+func InvoiceBalancesSchema() *schema.Table { return &invoiceBalancesTable }
+
+// As returns a handle that references customer_ledger_invoice_balances under its own alias.
+func (t *InvoiceBalancesTable) As(alias string) *InvoiceBalancesTable {
+	return keel.Alias(t.Ref, alias, BuildInvoiceBalances)
+}
+
+// InvoiceBalancesQuery is a query over customerledger.InvoiceBalance.
+type InvoiceBalancesQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*customerledger.InvoiceBalance] = (*InvoiceBalancesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InvoiceBalancesTable) Query() keel.Query[*customerledger.InvoiceBalance] {
+	return &InvoiceBalancesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InvoiceBalancesQuery.Where.
+func (t *InvoiceBalancesTable) Where(ps ...keel.Pred) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InvoiceBalancesQuery.Pick.
+func (t *InvoiceBalancesTable) Pick(es ...keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InvoiceBalancesQuery.Load.
+func (t *InvoiceBalancesTable) Load(ls ...keel.Loader) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InvoiceBalancesQuery.Omit.
+func (t *InvoiceBalancesTable) Omit(cols ...keel.Column) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InvoiceBalancesQuery.Order.
+func (t *InvoiceBalancesTable) Order(os ...keel.Order) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InvoiceBalancesQuery.Limit.
+func (t *InvoiceBalancesTable) Limit(n int) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InvoiceBalancesQuery.Group.
+func (t *InvoiceBalancesTable) Group(es ...keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InvoiceBalancesQuery.GroupingSets.
+func (t *InvoiceBalancesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InvoiceBalancesQuery.Rollup.
+func (t *InvoiceBalancesTable) Rollup(es ...keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InvoiceBalancesQuery.Cube.
+func (t *InvoiceBalancesTable) Cube(es ...keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InvoiceBalancesQuery.AllTenants.
+func (t *InvoiceBalancesTable) AllTenants() keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InvoiceBalancesQuery.Join.
+func (t *InvoiceBalancesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InvoiceBalancesQuery.LeftJoin.
+func (t *InvoiceBalancesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InvoiceBalancesQuery.LeftJoinLateral.
+func (t *InvoiceBalancesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InvoiceBalancesQuery.JoinLateral.
+func (t *InvoiceBalancesTable) JoinLateral(sub keel.LateralSource) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InvoiceBalancesQuery.Lock.
+func (t *InvoiceBalancesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InvoiceBalancesQuery.DistinctOn.
+func (t *InvoiceBalancesTable) DistinctOn(es ...keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InvoiceBalancesQuery.Cache.
+func (t *InvoiceBalancesTable) Cache(opts ...keel.CacheOption) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InvoiceBalancesQuery.LoadStrategy.
+func (t *InvoiceBalancesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InvoiceBalancesQuery.With.
+func (t *InvoiceBalancesTable) With(ctes ...*keel.CTETable) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InvoiceBalancesQuery.Compute.
+func (t *InvoiceBalancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InvoiceBalancesTable) Create(ctx context.Context, db *keel.DB, row *customerledger.InvoiceBalance) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InvoiceBalancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customerledger.InvoiceBalance) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *InvoiceBalancesTable) Save(ctx context.Context, db *keel.DB, row *customerledger.InvoiceBalance, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InvoiceBalancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *customerledger.InvoiceBalance, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InvoiceBalancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *customerledger.InvoiceBalance) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InvoiceBalancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*customerledger.InvoiceBalance, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InvoiceBalancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customerledger.InvoiceBalance, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InvoiceBalancesTable) Copy(ctx context.Context, db *keel.DB, rows []*customerledger.InvoiceBalance) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InvoiceBalancesQuery) Where(ps ...keel.Pred) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InvoiceBalancesQuery) Pick(es ...keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InvoiceBalancesQuery) Omit(cols ...keel.Column) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InvoiceBalancesQuery) Load(ls ...keel.Loader) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InvoiceBalancesQuery) Order(os ...keel.Order) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InvoiceBalancesQuery) Distinct() keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InvoiceBalancesQuery) Group(es ...keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InvoiceBalancesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InvoiceBalancesQuery) Rollup(es ...keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InvoiceBalancesQuery) Cube(es ...keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InvoiceBalancesQuery) Window(name string, w keel.Window) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InvoiceBalancesQuery) Having(ps ...keel.Pred) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InvoiceBalancesQuery) Limit(n int) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InvoiceBalancesQuery) Offset(n int) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InvoiceBalancesQuery) DistinctOn(es ...keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InvoiceBalancesQuery) AllTenants() keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InvoiceBalancesQuery) CustomPlan() keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InvoiceBalancesQuery) Timeout(d time.Duration) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InvoiceBalancesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InvoiceBalancesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InvoiceBalancesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InvoiceBalancesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InvoiceBalancesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InvoiceBalancesQuery) Cache(opts ...keel.CacheOption) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InvoiceBalancesQuery) With(ctes ...*keel.CTETable) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InvoiceBalancesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InvoiceBalancesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customerledger.InvoiceBalance] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InvoiceBalancesQuery) Clone() keel.Query[*customerledger.InvoiceBalance] {
+	return &InvoiceBalancesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InvoiceBalancesQuery) One(ctx context.Context, db *keel.DB) (*customerledger.InvoiceBalance, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customerledger.InvoiceBalance)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InvoiceBalancesQuery) First(ctx context.Context, db *keel.DB) (*customerledger.InvoiceBalance, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customerledger.InvoiceBalance)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InvoiceBalancesQuery) List(ctx context.Context, db *keel.DB) ([]*customerledger.InvoiceBalance, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerledger.InvoiceBalance)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InvoiceBalancesQuery) All(ctx context.Context, db *keel.DB) ([]*customerledger.InvoiceBalance, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerledger.InvoiceBalance)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InvoiceBalancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customerledger.InvoiceBalance, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customerledger.InvoiceBalance)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InvoiceBalancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customerledger.InvoiceBalance], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customerledger.InvoiceBalance])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InvoiceBalancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customerledger.InvoiceBalance) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customerledger.InvoiceBalance)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newInvoiceBalance() unsafe.Pointer { return unsafe.Pointer(new(customerledger.InvoiceBalance)) }
+
+func newNInvoiceBalance(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]customerledger.InvoiceBalance, n)))
+}
+
+func ptrInvoiceBalance(p unsafe.Pointer, c int32) any {
+	r := (*customerledger.InvoiceBalance)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.CustomerID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.InvoiceID))
+	case 4:
+		return &r.AmountMinor
+	}
+	return nil
+}
+
+func valueInvoiceBalance(p unsafe.Pointer, c int32) any {
+	r := (*customerledger.InvoiceBalance)(p)
+	switch c {
+	case 0:
+		return string(r.OrganizationID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.CustomerID)
+	case 3:
+		return string(r.InvoiceID)
+	case 4:
+		return r.AmountMinor
+	}
+	return nil
+}
+
+// monthlyBalancesTable is the schema of customerledger.MonthlyBalance.
+var monthlyBalancesTable = schema.Table{
+	Name:   "customer_ledger_monthly_balances",
+	Quoted: `"customer_ledger_monthly_balances"`,
+	Alias:  "clmb",
+	Model:  "customerledger.MonthlyBalance",
+	Label:  `Monthly Balance`,
+	Plural: `Monthly Balances`,
+	Columns: []schema.Column{
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Customer ID`, JSON: `customerId`},
+		{Name: "month_start", Quoted: `"month_start"`, Field: "MonthStart", Kind: schema.KindInt64, Flags: schema.FlagPK, Label: `Month Start`, JSON: `monthStart`},
+		{Name: "amount_minor", Quoted: `"amount_minor"`, Field: "AmountMinor", Kind: schema.KindInt64, Flags: 0, Label: `Amount Minor`, JSON: `amountMinor`},
+	},
+	PK:         []int32{0, 1, 2, 3},
+	Tenant:     []int32{0, 1},
+	Select:     []int32{0, 1, 2, 3, 4},
+	Insert:     []int32{0, 1, 2, 3, 4},
+	Update:     []int32{4},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     -1,
+	AutoCreate: -1,
+	AutoUpdate: -1,
+	IDPrefix:   "",
+	New:        newMonthlyBalance,
+	NewN:       newNMonthlyBalance,
+	Size:       unsafe.Sizeof(customerledger.MonthlyBalance{}),
+	Ptr:        ptrMonthlyBalance,
+	Value:      valueMonthlyBalance,
+}
+
+var monthlyBalancesRef = keel.Ref{Table: &monthlyBalancesTable}
+
+// MonthlyBalancesTable is the table of customerledger.MonthlyBalance.
+type MonthlyBalancesTable struct {
+	keel.TableBase
+	OrganizationID keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	CustomerID     keelkinds.PulidIDCol
+	MonthStart     keel.Int64Col
+	AmountMinor    keel.Int64Col
+}
+
+// MonthlyBalances references the customer_ledger_monthly_balances table.
+var MonthlyBalances = &MonthlyBalancesTable{
+	TableBase:      keel.TableBase{Ref: &monthlyBalancesRef},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &monthlyBalancesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &monthlyBalancesRef, Index: 1}}},
+	CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &monthlyBalancesRef, Index: 2}}},
+	MonthStart:     keel.Int64Col{Col: keel.Col{Ref: &monthlyBalancesRef, Index: 3}},
+	AmountMinor:    keel.Int64Col{Col: keel.Col{Ref: &monthlyBalancesRef, Index: 4}},
+}
+
+// BuildMonthlyBalances builds the table of customer_ledger_monthly_balances for ref. Generated relation and alias methods call it.
+func BuildMonthlyBalances(r *keel.Ref) *MonthlyBalancesTable {
+	return &MonthlyBalancesTable{
+		TableBase:      keel.TableBase{Ref: r},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		MonthStart:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
+		AmountMinor:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
+	}
+}
+
+// MonthlyBalancesSchema returns the schema of customer_ledger_monthly_balances.
+func MonthlyBalancesSchema() *schema.Table { return &monthlyBalancesTable }
+
+// As returns a handle that references customer_ledger_monthly_balances under its own alias.
+func (t *MonthlyBalancesTable) As(alias string) *MonthlyBalancesTable {
+	return keel.Alias(t.Ref, alias, BuildMonthlyBalances)
+}
+
+// MonthlyBalancesQuery is a query over customerledger.MonthlyBalance.
+type MonthlyBalancesQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*customerledger.MonthlyBalance] = (*MonthlyBalancesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *MonthlyBalancesTable) Query() keel.Query[*customerledger.MonthlyBalance] {
+	return &MonthlyBalancesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see MonthlyBalancesQuery.Where.
+func (t *MonthlyBalancesTable) Where(ps ...keel.Pred) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see MonthlyBalancesQuery.Pick.
+func (t *MonthlyBalancesTable) Pick(es ...keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see MonthlyBalancesQuery.Load.
+func (t *MonthlyBalancesTable) Load(ls ...keel.Loader) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see MonthlyBalancesQuery.Omit.
+func (t *MonthlyBalancesTable) Omit(cols ...keel.Column) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see MonthlyBalancesQuery.Order.
+func (t *MonthlyBalancesTable) Order(os ...keel.Order) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see MonthlyBalancesQuery.Limit.
+func (t *MonthlyBalancesTable) Limit(n int) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see MonthlyBalancesQuery.Group.
+func (t *MonthlyBalancesTable) Group(es ...keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see MonthlyBalancesQuery.GroupingSets.
+func (t *MonthlyBalancesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see MonthlyBalancesQuery.Rollup.
+func (t *MonthlyBalancesTable) Rollup(es ...keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see MonthlyBalancesQuery.Cube.
+func (t *MonthlyBalancesTable) Cube(es ...keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see MonthlyBalancesQuery.AllTenants.
+func (t *MonthlyBalancesTable) AllTenants() keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see MonthlyBalancesQuery.Join.
+func (t *MonthlyBalancesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see MonthlyBalancesQuery.LeftJoin.
+func (t *MonthlyBalancesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see MonthlyBalancesQuery.LeftJoinLateral.
+func (t *MonthlyBalancesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see MonthlyBalancesQuery.JoinLateral.
+func (t *MonthlyBalancesTable) JoinLateral(sub keel.LateralSource) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see MonthlyBalancesQuery.Lock.
+func (t *MonthlyBalancesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see MonthlyBalancesQuery.DistinctOn.
+func (t *MonthlyBalancesTable) DistinctOn(es ...keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see MonthlyBalancesQuery.Cache.
+func (t *MonthlyBalancesTable) Cache(opts ...keel.CacheOption) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see MonthlyBalancesQuery.LoadStrategy.
+func (t *MonthlyBalancesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see MonthlyBalancesQuery.With.
+func (t *MonthlyBalancesTable) With(ctes ...*keel.CTETable) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see MonthlyBalancesQuery.Compute.
+func (t *MonthlyBalancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *MonthlyBalancesTable) Create(ctx context.Context, db *keel.DB, row *customerledger.MonthlyBalance) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *MonthlyBalancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customerledger.MonthlyBalance) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *MonthlyBalancesTable) Save(ctx context.Context, db *keel.DB, row *customerledger.MonthlyBalance, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *MonthlyBalancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *customerledger.MonthlyBalance, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *MonthlyBalancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *customerledger.MonthlyBalance) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *MonthlyBalancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*customerledger.MonthlyBalance, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *MonthlyBalancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customerledger.MonthlyBalance, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *MonthlyBalancesTable) Copy(ctx context.Context, db *keel.DB, rows []*customerledger.MonthlyBalance) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *MonthlyBalancesQuery) Where(ps ...keel.Pred) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *MonthlyBalancesQuery) Pick(es ...keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *MonthlyBalancesQuery) Omit(cols ...keel.Column) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *MonthlyBalancesQuery) Load(ls ...keel.Loader) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *MonthlyBalancesQuery) Order(os ...keel.Order) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *MonthlyBalancesQuery) Distinct() keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *MonthlyBalancesQuery) Group(es ...keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *MonthlyBalancesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *MonthlyBalancesQuery) Rollup(es ...keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *MonthlyBalancesQuery) Cube(es ...keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *MonthlyBalancesQuery) Window(name string, w keel.Window) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *MonthlyBalancesQuery) Having(ps ...keel.Pred) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *MonthlyBalancesQuery) Limit(n int) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *MonthlyBalancesQuery) Offset(n int) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *MonthlyBalancesQuery) DistinctOn(es ...keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *MonthlyBalancesQuery) AllTenants() keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *MonthlyBalancesQuery) CustomPlan() keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *MonthlyBalancesQuery) Timeout(d time.Duration) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *MonthlyBalancesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *MonthlyBalancesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *MonthlyBalancesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *MonthlyBalancesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *MonthlyBalancesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *MonthlyBalancesQuery) Cache(opts ...keel.CacheOption) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *MonthlyBalancesQuery) With(ctes ...*keel.CTETable) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *MonthlyBalancesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *MonthlyBalancesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customerledger.MonthlyBalance] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *MonthlyBalancesQuery) Clone() keel.Query[*customerledger.MonthlyBalance] {
+	return &MonthlyBalancesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *MonthlyBalancesQuery) One(ctx context.Context, db *keel.DB) (*customerledger.MonthlyBalance, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customerledger.MonthlyBalance)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *MonthlyBalancesQuery) First(ctx context.Context, db *keel.DB) (*customerledger.MonthlyBalance, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customerledger.MonthlyBalance)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *MonthlyBalancesQuery) List(ctx context.Context, db *keel.DB) ([]*customerledger.MonthlyBalance, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerledger.MonthlyBalance)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *MonthlyBalancesQuery) All(ctx context.Context, db *keel.DB) ([]*customerledger.MonthlyBalance, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerledger.MonthlyBalance)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *MonthlyBalancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customerledger.MonthlyBalance, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customerledger.MonthlyBalance)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *MonthlyBalancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customerledger.MonthlyBalance], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customerledger.MonthlyBalance])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *MonthlyBalancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customerledger.MonthlyBalance) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customerledger.MonthlyBalance)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newMonthlyBalance() unsafe.Pointer { return unsafe.Pointer(new(customerledger.MonthlyBalance)) }
+
+func newNMonthlyBalance(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]customerledger.MonthlyBalance, n)))
+}
+
+func ptrMonthlyBalance(p unsafe.Pointer, c int32) any {
+	r := (*customerledger.MonthlyBalance)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.CustomerID))
+	case 3:
+		return &r.MonthStart
+	case 4:
+		return &r.AmountMinor
+	}
+	return nil
+}
+
+func valueMonthlyBalance(p unsafe.Pointer, c int32) any {
+	r := (*customerledger.MonthlyBalance)(p)
+	switch c {
+	case 0:
+		return string(r.OrganizationID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.CustomerID)
+	case 3:
+		return r.MonthStart
+	case 4:
+		return r.AmountMinor
+	}
+	return nil
+}
+
 func init() {
 	customerLedgerEntriesTable.Relations[0].Target = customerdb.CustomersSchema()
 	customerLedgerEntriesTable.Relations[1].Target = invoicedb.InvoicesSchema()

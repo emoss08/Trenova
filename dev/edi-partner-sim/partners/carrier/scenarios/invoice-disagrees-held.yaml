@@ -1,0 +1,7 @@
+name: a 210 that bills more than the tendered rate is held for a person
+steps:
+  - script: { answers: [ { deltaCents: 15000 } ] }
+  - trenova: { tender: c1, rate: "1850.00" }
+  - expect: { wire: "204", about: c1 }
+  - expect: { ack: c1, set: "210", accepted: true }
+  - expect: { flow: c1, status: Held, why: the tender offered }

@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -189,9 +190,12 @@ func (f *inboundFixture) expectActiveVersion(t *testing.T, acknowledge ...string
 	return starter
 }
 
-// expectFlows lets the partner's flow open, step and journal instances.
+// expectFlows lets the partner's flow step, open and journal instances.
 func (f *inboundFixture) expectFlows() {
-	f.flowRepo.EXPECT().OpenInstance(mock.Anything, mock.Anything).
+	f.flowRepo.EXPECT().GetInstanceByKey(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("FlowInstance not found within your organization")).
+		Maybe()
+	f.flowRepo.EXPECT().CreateInstance(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, instance *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error) {
 			instance.ID = pulid.MustNew("edfi_")
 			return instance, nil

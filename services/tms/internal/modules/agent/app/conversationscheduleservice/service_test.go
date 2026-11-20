@@ -585,7 +585,7 @@ func TestPlan_RefusesWhatItCannotKeep(t *testing.T) {
 		_, err := f.service.Plan(t.Context(), f.plan(edit, "Mars/Olympus"))
 		var invalid *errortypes.Error
 		require.ErrorAs(t, err, &invalid)
-		assert.Equal(t, "timezone", invalid.Field)
+		assert.Equal(t, "timezone", invalid.Field())
 	})
 
 	t.Run("a cadence the editor does not offer", func(t *testing.T) {
@@ -827,7 +827,7 @@ func TestEdit_ChangesTheRequestAndCadenceAndFollowsTheTemporalSchedule(t *testin
 	})
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "repeat", multiErr.Errors[0].Field)
+	assert.Equal(t, "repeat", multiErr.Errors[0].Field())
 	assert.Len(t, f.syncer.synced, 2, "a refused edit reaches no Temporal schedule")
 	assert.Equal(t, "15 10 * * 5", f.schedules.rows[created.ID].CronExpression)
 }

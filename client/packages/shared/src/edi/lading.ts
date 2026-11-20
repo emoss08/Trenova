@@ -74,6 +74,7 @@ export type LadingInterchange = {
   version: string | null;
   usage: string | null;
   separators: string[];
+  lineEnding?: "none" | "lf" | "crLf" | "cr";
 };
 
 export type LadingPartner = {
@@ -97,7 +98,7 @@ export type LadingMap = {
 };
 
 export type LadingClause = {
-  kind: "receive" | "respond" | "send" | "expect";
+  kind: "receive" | "respond" | "send" | "expect" | "await";
   set: string;
   binder?: string;
   map?: string | null;
@@ -286,9 +287,10 @@ export type LadingStarterRequest = {
   group?: [string, string];
   version?: string;
   separators?: string[];
+  lineEnding?: "none" | "lf" | "crLf" | "cr";
   usage?: "test" | "production";
   acknowledge?: string;
-  ackWithin?: number;
+  ackWithinSeconds?: number;
   sets?: string[];
 };
 

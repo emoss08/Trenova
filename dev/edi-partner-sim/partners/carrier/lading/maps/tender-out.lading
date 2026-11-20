@@ -1,0 +1,111 @@
+map tenderOut
+  from loadTender
+  to   quarrystone.204
+  use  common
+
+B2 { 02 <- carrierScac, 04 <- key, 06 <- payment via payments ?? "PP" }
+B2A { 01 <- purpose via purposes ?? "00", 02 <- "LT" }
+L11 when exists bol { 01 <- bol, 02 <- "BM" }
+L11 when exists poNumber { 01 <- poNumber, 02 <- "PO" }
+
+0200 {
+  N7 {
+    02 <- "TBD"
+    11 <- equipment via equipment.back
+    15 <- 5300
+  }
+}
+
+0300 <- each stops as stop {
+  S5 {
+    01 <- stop.sequence
+    02 <- stop.type via stopTypes
+    03 <- stop.weight.value(lb)
+    04 <- "L"
+    05 <- stop.pieces
+    06 <- "PC"
+  }
+  G62 {
+    01 <- if stop.type == Pickup then "37" else "53"
+    02 <- stop.window.start
+    03 <- "G"
+    04 <- stop.window.start
+    05 <- stop.window.start.zoneCode()
+  }
+  G62 when exists stop.window.end {
+    01 <- if stop.type == Pickup then "38" else "54"
+    02 <- stop.window.end
+    03 <- "L"
+    04 <- stop.window.end
+    05 <- stop.window.end.zoneCode()
+  }
+  AT8 {
+    01 <- "G"
+    02 <- "L"
+    03 <- stop.weight.value(lb)
+    04 <- stop.pieces
+  }
+  0310 {
+    N1 {
+      01 <- if stop.type == Pickup then "SH" else "CN"
+      02 <- (stop.name ?? stop.location.label ?? "").upper()
+      03 <- if exists stop.code then "93" else none
+      04 <- stop.code
+    }
+    N3 { 01 <- stop.address.line1.upper(), 02 <- stop.address.line2.upper() }
+    N4 {
+      01 <- stop.address.city.upper()
+      02 <- stop.address.state
+      03 <- stop.address.postal
+      04 <- stop.address.country ?? "US"
+    }
+  }
+}
+
+L3 { 01 <- weight.value(lb), 02 <- "G", 05 <- total, 11 <- pieces, 12 <- "L" }
+
+test "a two-stop van load is exactly this 204" {
+  given loadTender {
+    key: "S26030552001"
+    purpose: Original
+    bol: "BOL-552001"
+    poNumber: "PO-7781"
+    equipment: "VAN"
+    weight: 38_000 lb
+    pieces: 22
+    total: $1_850.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Front Range Mill", code: "FRM-1"
+        address: { line1: "4100 Brighton Blvd", city: "Denver", state: "CO", postal: "80216" }
+        window: { start: @2026-03-09T07:00[America/Denver], end: @2026-03-09T09:00[America/Denver] }
+        weight: 38_000 lb, pieces: 22
+      },
+      {
+        sequence: 2, type: Delivery, name: "Prairie Supply"
+        address: { line1: "900 N Broadway", city: "Wichita", state: "KS", postal: "67214" }
+        window: { start: @2026-03-10T08:00[America/Chicago], end: @2026-03-10T10:00[America/Chicago] }
+        weight: 38_000 lb, pieces: 22
+      }
+    ]
+  }
+  expect x12 == "ST|204|0001~B2||QYSF||S26030552001||PP~B2A|00|LT~L11|BOL-552001|BM~L11|PO-7781|PO~N7||TBD|||||||||TF||||5300~S5|1|LD|38000|L|22|PC~G62|37|20260309|G|0700|MT~G62|38|20260309|L|0900|MT~AT8|G|L|38000|22~N1|SH|FRONT RANGE MILL|93|FRM-1~N3|4100 BRIGHTON BLVD~N4|DENVER|CO|80216|US~S5|2|UL|38000|L|22|PC~G62|53|20260310|G|0800|CT~G62|54|20260310|L|1000|CT~AT8|G|L|38000|22~N1|CN|PRAIRIE SUPPLY~N3|900 N BROADWAY~N4|WICHITA|KS|67214|US~L3|38000|G|||185000||||||22|L~SE|22|0001~"
+}
+
+test "a cancelled tender says so in B2A" {
+  given loadTender {
+    key: "S26030552001"
+    purpose: Cancel
+    bol: "BOL-552001"
+    equipment: "FLATBED"
+    weight: 20_000 lb
+    pieces: 4
+    total: $900.00
+    stops: [
+      { sequence: 1, type: Pickup, name: "Front Range Mill", address: { line1: "4100 Brighton Blvd", city: "Denver", state: "CO", postal: "80216" }, window: { start: @2026-03-09T07:00[America/Denver], end: @2026-03-09T09:00[America/Denver] }, weight: 20_000 lb, pieces: 4 },
+      { sequence: 2, type: Delivery, name: "Prairie Supply", address: { line1: "900 N Broadway", city: "Wichita", state: "KS", postal: "67214" }, window: { start: @2026-03-10T08:00[America/Chicago], end: @2026-03-10T10:00[America/Chicago] }, weight: 20_000 lb, pieces: 4 }
+    ]
+  }
+  expect x12 contains "B2A|01|LT~"
+  expect x12 contains "N7||TBD|||||||||FT||||5300~"
+}

@@ -101,7 +101,6 @@ func (s *Engine) validateSettlementPolicy(
 	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch entity.SettlementStatus {
 	case invoice.SettlementStatusPaid:
-		//nolint:exhaustive // only actionable enum states require explicit handling here
 		switch control.PaidInvoiceAdjustmentPolicy {
 		case invoiceadjustmentcontrol.AdjustmentEligibilityDisallow:
 			appendPreviewError(preview, "invoiceId", "Paid invoices cannot be adjusted by policy")
@@ -109,7 +108,6 @@ func (s *Engine) validateSettlementPolicy(
 			preview.RequiresApproval = true
 		}
 	case invoice.SettlementStatusPartiallyPaid:
-		//nolint:exhaustive // only actionable enum states require explicit handling here
 		switch control.PartiallyPaidInvoiceAdjustmentPolicy {
 		case invoiceadjustmentcontrol.AdjustmentEligibilityDisallow:
 			appendPreviewError(
@@ -123,7 +121,6 @@ func (s *Engine) validateSettlementPolicy(
 	}
 
 	if entity.DisputeStatus == invoice.DisputeStatusDisputed {
-		//nolint:exhaustive // only actionable enum states require explicit handling here
 		switch control.DisputedInvoiceAdjustmentPolicy {
 		case invoiceadjustmentcontrol.AdjustmentEligibilityDisallow:
 			appendPreviewError(

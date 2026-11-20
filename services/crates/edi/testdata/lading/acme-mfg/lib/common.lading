@@ -6,12 +6,13 @@ crosswalk stopTypes: Code<S502> <-> StopType {
   "UL", "CU" <-> Delivery
 }
 
-// "05" (replace) is read as a change but never written; anything else reads as an original.
+// "05" is a replacement, which a flow without an on Replace arm handles as a change; anything
+// else reads as an original.
 crosswalk purposes: Code<B2A01> <-> TenderPurpose {
   "00" <-> Original
   "01" <-> Cancel
   "04" <-> Change
-  "05" -> Change
+  "05" <-> Replace
   else -> Original
 }
 
@@ -26,8 +27,8 @@ crosswalk decisions: Code<B104> <-> Decision {
   "D" <-> Decline
 }
 
-// "AJ" (tendered for delivery) is only ever read; we never write it. Anything we don't
-// recognise reads as an exception.
+// "AJ" (tendered for delivery) and "AA" (appointment set) are only ever read: Acme takes no
+// appointment status, so one is never sent. Anything we don't recognise reads as an exception.
 crosswalk statusCodes: Code<AT701> <-> EventKind {
   "X3" <-> ArrivedPickup
   "AF" <-> DepartedPickup
@@ -37,11 +38,12 @@ crosswalk statusCodes: Code<AT701> <-> EventKind {
   "X6" <-> EnRoute
   "AG" <-> EtaChanged
   "SD" <-> Delayed
-  "AA" <-> AppointmentSet
+  "AA" -> AppointmentSet
   "A9" <-> Exception
   "CP" <-> Loaded
   "P1" <-> Dispatched
   "AJ" -> ArrivedDelivery
+  not sent <- AppointmentSet
   else -> Exception
 }
 

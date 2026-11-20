@@ -183,7 +183,7 @@ func TestValidateSettingsUsesTheTypesValidator(t *testing.T) {
 		multiErr,
 	)
 	require.True(t, multiErr.HasErrors())
-	assert.Equal(t, "configuration.searchType", multiErr.Errors[0].Field)
+	assert.Equal(t, "configuration.searchType", multiErr.Errors[0].Field())
 }
 
 func TestConfiguredNeedsTheAPIKey(t *testing.T) {

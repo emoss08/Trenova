@@ -73,7 +73,7 @@ func TestValidatorValidateCreateRejectsOppositeEffectSamePolicyScope(t *testing.
 
 	require.NotNil(t, multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "effect", multiErr.Errors[0].Field)
+	assert.Equal(t, "effect", multiErr.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrDuplicate, multiErr.Errors[0].Code)
 }
 
@@ -114,7 +114,7 @@ func TestValidatorValidateCreateRejectsDuplicatePolicyScope(t *testing.T) {
 
 	require.NotNil(t, multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "resource", multiErr.Errors[0].Field)
+	assert.Equal(t, "resource", multiErr.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrDuplicate, multiErr.Errors[0].Code)
 }
 
@@ -138,7 +138,7 @@ func TestValidatorValidateCreateRejectsDuplicateName(t *testing.T) {
 
 	require.NotNil(t, multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "name", multiErr.Errors[0].Field)
+	assert.Equal(t, "name", multiErr.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrDuplicate, multiErr.Errors[0].Code)
 	require.NotNil(t, uniquenessChecker.req)
 	assert.Equal(t, "access_policies", uniquenessChecker.req.TableName)

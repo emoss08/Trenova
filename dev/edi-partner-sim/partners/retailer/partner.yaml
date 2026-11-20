@@ -1,0 +1,50 @@
+name: retailer
+display: Tamberlane Stores
+role: shipper
+zone: America/Chicago
+
+them:
+  qualifier: "08"
+  id: "0076543210"
+  group: "0076543210"
+trenova:
+  qualifier: "02"
+  id: TRNV
+  group: TRNV
+  scac: TRNV
+
+envelope:
+  version: "004010"
+  versions:
+    "999": 005010X231A1
+  separators:
+    element: "|"
+    segment: "~"
+    component: "^"
+    repetition: "{"
+  terminator: lf
+  squeezedIsa: false
+  usage: T
+
+transport:
+  sftp:
+    fileName: "TMB_{set}_{sender}_{date}{time}_{control}.edi"
+    inbound: /tamberlane/to-carrier
+    outbound: /tamberlane/from-carrier
+
+batching:
+  transactionsPerGroup: 25
+  groupsPerInterchange: 1
+
+acknowledgment:
+  sends: "999"
+  expects: "999"
+  ta1: true
+  delay: 5m
+  reject:
+    when: errors
+    sets: []
+  never: 0
+
+sends: ["204", "999"]
+receives: ["999", "990", "214", "210"]

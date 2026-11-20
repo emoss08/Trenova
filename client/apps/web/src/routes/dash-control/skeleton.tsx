@@ -1,21 +1,32 @@
-import {
-  SettingsFormSkeleton,
-  type SettingsSectionSpec,
-} from "@/components/settings-form-skeleton";
+import { SettingsPageSkeleton } from "@/components/settings/settings-page";
+import type { SettingsSectionSpec } from "@/components/settings-form-skeleton";
+import { useDashControlTabs, type DashControlTab } from "./dash-control-tabs";
 
-const sections: readonly SettingsSectionSpec[] = [
-  { width: "full", switches: "right", cols: 2, fields: [{ kind: "switch", count: 5 }] },
-  { width: "full", switches: "right", cols: 2, fields: [{ kind: "switch", count: 2 }] },
-  { width: "full", switches: "right", cols: 2, fields: [{ kind: "switch", count: 3 }] },
-  { width: "full", switches: "right", cols: 2, fields: [{ kind: "switch", count: 4 }] },
-  {
-    width: "full",
-    switches: "right",
-    cols: 2,
-    fields: ["switch", { kind: "input", count: 2 }, "switch", "input"],
-  },
-];
+const switches = (count: number) => ({ kind: "switch", count }) as const;
 
+/**
+ * Each tab's sections as the form draws them, one row to a setting. Rows that wait on a
+ * switch are drawn closed, as they stand with that switch off, since the outline cannot know
+ * the saved values.
+ */
+const TAB_SECTIONS: Record<DashControlTab, readonly SettingsSectionSpec[]> = {
+  loads: [
+    { title: "sm", description: 1, fields: [switches(1)] },
+    { title: "sm", description: 1, fields: [switches(3)] },
+    { title: "sm", description: 1, fields: [switches(1)] },
+  ],
+  pay: [
+    { title: "sm", description: 1, fields: [switches(1)] },
+    { title: "md", description: 1, fields: [switches(2)] },
+  ],
+  profile: [
+    { title: "sm", description: 1, fields: [switches(2)] },
+    { title: "sm", description: 1, fields: [switches(1)] },
+  ],
+  reminders: [{ title: "md", description: 1, fields: [switches(1)] }],
+};
+
+/** The form's tab row and the open tab's sections, for the tabs this organization sees. */
 export function DashControlSkeleton() {
-  return <SettingsFormSkeleton sections={sections} />;
+  return <SettingsPageSkeleton tabs={useDashControlTabs()} sections={TAB_SECTIONS} />;
 }

@@ -1,0 +1,19 @@
+name: a 214 Ashgrove never acknowledges goes again once, then escalates
+description: >
+  Ashgrove withholds its 997 for the 214 and for the resend. Eight hours after the first, Trenova
+  sends the 214 again; eight hours after that, a planner hears about it.
+steps:
+  - send: { set: "204", as: t1 }
+  - expect: { ack: t1 }
+  - trenova: { decide: t1, decision: accept }
+  - expect: { wire: "990", about: t1 }
+  - acks: { about: t1, set: "214", action: withhold }
+  - acks: { about: t1, set: "214", action: withhold }
+  - trenova: { dispatch: t1 }
+  - trenova: { depart: t1, stop: 1 }
+  - advance: { about: t1, by: 30m }
+  - expect: { wire: "214", about: t1, statuses: [AF] }
+  - advance: { about: t1, by: 8h }
+  - expect: { wire: "214", about: t1, resent: true }
+  - advance: { about: t1, by: 8h }
+  - expect: { flow: t1, status: Escalated, why: has not acknowledged }

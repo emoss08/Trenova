@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -88,7 +87,7 @@ type Service struct {
 	runs        agentruntimeports.AgentRunService
 	runRecords  agentruntimeports.AgentRunRepository
 	readings    recordcaseports.ReadingStarter
-	orgs        orgzone.OrganizationReader
+	orgs        tenantports.OrganizationReader
 	shadow      *agentshadow.Resolver
 	owners      caseownerports.Service
 	subjects    map[recordkind.Kind]subjectReader
@@ -375,7 +374,7 @@ func (s *Service) compose(
 // its location names none, which is the one the tools that move a window
 // read and write it in.
 func (s *Service) site(ctx context.Context, tenant pagination.TenantInfo) *time.Location {
-	loc, err := orgzone.Location(ctx, s.orgs, tenant)
+	loc, err := tenantports.OrganizationLocation(ctx, s.orgs, tenant)
 	if err != nil || loc == nil {
 		return nil
 	}
@@ -389,7 +388,7 @@ func (s *Service) zone(ctx context.Context, req *recordcaseports.CaseRequest) *t
 			return loc
 		}
 	}
-	loc, err := orgzone.Location(ctx, s.orgs, req.TenantInfo)
+	loc, err := tenantports.OrganizationLocation(ctx, s.orgs, req.TenantInfo)
 	if err != nil || loc == nil {
 		return time.UTC
 	}

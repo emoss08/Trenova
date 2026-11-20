@@ -1,0 +1,16 @@
+rules invoiceChecks for invoiceOut
+
+/// Acme matches an invoice to its load by the load number; one without it is never paid.
+rule "an invoice quotes its load" {
+  require exists key else hold "Acme pays only an invoice that quotes its load"
+}
+
+test "an invoice with its load goes out" {
+  given freightInvoice { number: "INV-1001", date: @2026-03-05, key: "AM-48213", total: $2_531.10 }
+  expect no holds
+}
+
+test "an invoice without its load is held" {
+  given freightInvoice { number: "INV-1001", date: @2026-03-05, total: $2_531.10 }
+  expect held "Acme pays only an invoice that quotes its load"
+}

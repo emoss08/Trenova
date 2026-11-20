@@ -1,0 +1,60 @@
+- file: tender-original.x12
+  set: "204"
+  seed: 37
+  control: 501
+  variation: { kind: original }
+- file: tender-duplicate.x12
+  set: "204"
+  seed: 37
+  control: 502
+  variation: { kind: duplicate }
+- file: tender-change.x12
+  set: "204"
+  seed: 37
+  control: 503
+  variation: { kind: change, delta: { ratePercent: 12 } }
+- file: tender-moved.x12
+  set: "204"
+  seed: 37
+  control: 504
+  variation: { kind: change, delta: { move: { stop: 2, by: 24h } } }
+- file: tender-added-stop.x12
+  set: "204"
+  seed: 37
+  control: 505
+  variation: { kind: change, delta: { addStop: true } }
+- file: tender-replace.x12
+  set: "204"
+  seed: 37
+  control: 506
+  variation: { kind: replace }
+- file: tender-cancel.x12
+  set: "204"
+  seed: 37
+  control: 507
+  variation: { kind: cancel }
+- file: tender-backwards.x12
+  set: "204"
+  seed: 31
+  control: 510
+  variation: { kind: original, delta: { move: { stop: 2, by: -96h } } }
+- file: tender-sparse.x12
+  set: "204"
+  seed: 11
+  control: 520
+  variation: { kind: original, sparse: true }
+- file: tender-reefer.x12
+  set: "204"
+  seed: 9
+  control: 530
+  variation: { kind: original }
+- file: tender-two-pickups.x12
+  set: "204"
+  seed: 2
+  control: 540
+  variation: { kind: original }
+- file: tender-heavy.x12
+  set: "204"
+  seed: 29
+  control: 550
+  variation: { kind: original }

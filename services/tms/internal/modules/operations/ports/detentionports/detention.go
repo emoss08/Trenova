@@ -36,17 +36,25 @@ type GetDetentionPoliciesByIDsRequest struct {
 	DetentionPolicyIDs []pulid.ID
 }
 
-// GetResolutionCandidatesRequest loads every policy that could conceivably
-// govern a stop. Scope filtering happens in the resolver rather than in SQL so
-// that non-matching candidates can still be explained back to the user.
+// GetResolutionCandidatesRequest loads, in one read, every policy that could
+// govern any of a shipment's stops: active, scoped to the shipment's customer or
+// to none, scoped to one of the stops' facilities or to none, and in effect at
+// some moment between the first and the last arrival. The rest of the scope is
+// matched per stop by the resolver.
 type GetResolutionCandidatesRequest struct {
-	TenantInfo pagination.TenantInfo
-	CustomerID pulid.ID
-	LocationID pulid.ID
+	TenantInfo  pagination.TenantInfo
+	CustomerID  pulid.ID
+	LocationIDs []pulid.ID
+	ArrivedFrom int64
+	ArrivedTo   int64
 }
 
 type DetentionPolicySelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest
+	// DefaultEligibleOnly narrows the options to the policies shipment control
+	// accepts as the organization default: covering all freight, already in
+	// effect and never lapsing.
+	DefaultEligibleOnly bool
 }
 
 type DetentionPolicyRepository interface {
@@ -110,14 +118,13 @@ type DetentionPolicyCodeExistsRequest struct {
 }
 
 // FindOverlappingDetentionPoliciesRequest finds active policies sharing the
-// exact same scope whose effective windows intersect. Two such policies make
-// resolution ambiguous, so creation is blocked.
+// customer and facility whose effective windows intersect. The validator then
+// blocks the ones that share the whole scope, which make resolution ambiguous.
 type FindOverlappingDetentionPoliciesRequest struct {
 	TenantInfo         pagination.TenantInfo
 	ExcludeID          *pulid.ID
 	CustomerID         *pulid.ID
 	LocationID         *pulid.ID
-	IsOrgDefault       bool
 	EffectiveStartDate *int64
 	EffectiveEndDate   *int64
 }
@@ -146,8 +153,8 @@ type GetOccurrencesByShipmentRequest struct {
 	IncludeEvidence bool
 }
 
-type GetOccurrenceByStopRequest struct {
-	StopID     pulid.ID
+type ListOccurrencesByStopsRequest struct {
+	StopIDs    []pulid.ID
 	TenantInfo pagination.TenantInfo
 }
 
@@ -214,10 +221,13 @@ type DetentionOccurrenceRepository interface {
 		req *GetDetentionOccurrenceByIDRequest,
 	) (*detention.DetentionOccurrence, error)
 
-	GetByStop(
+	// ListByStops returns the stored occurrence of each stop that has one, in
+	// one read, so a recalculation reads a shipment's occurrences once
+	// however many stops it has.
+	ListByStops(
 		ctx context.Context,
-		req *GetOccurrenceByStopRequest,
-	) (*detention.DetentionOccurrence, error)
+		req *ListOccurrencesByStopsRequest,
+	) ([]*detention.DetentionOccurrence, error)
 
 	GetByShipment(
 		ctx context.Context,
@@ -234,6 +244,10 @@ type DetentionOccurrenceRepository interface {
 		req *ListNoticesDueRequest,
 	) ([]*detention.DetentionOccurrence, error)
 
+	// Upsert writes the occurrence of a stop without reading it again: an
+	// entity carrying the stored row's ID, CreatedAt and Version updates that
+	// row, one without an ID is created. The caller has already read the
+	// stop's occurrence with ListByStops.
 	Upsert(
 		ctx context.Context,
 		entity *detention.DetentionOccurrence,

@@ -1,0 +1,17 @@
+rules invoiceChecks for invoiceOut
+
+/// Ashgrove pays an invoice only when it quotes the load number and the BOL.
+rule "an invoice Ashgrove can pay" {
+  require exists key else hold "Ashgrove needs its load number on every invoice"
+  require exists bol else hold "Ashgrove needs the BOL on every invoice"
+}
+
+test "a complete invoice goes out" {
+  given freightInvoice { number: "INV-5001", date: @2026-02-16, key: "1000037", bol: "646458", total: $1_418.75 }
+  expect no holds
+}
+
+test "an invoice without the BOL is held" {
+  given freightInvoice { number: "INV-5001", date: @2026-02-16, key: "1000037", total: $1_418.75 }
+  expect held "Ashgrove needs the BOL on every invoice"
+}

@@ -75,7 +75,7 @@ func TestSystemAccountProtectionRule(t *testing.T) {
 
 		require.True(t, multiErr.HasErrors())
 		assert.Len(t, multiErr.Errors, 1)
-		assert.Equal(t, "isSystem", multiErr.Errors[0].Field)
+		assert.Equal(t, "isSystem", multiErr.Errors[0].Field())
 		assert.Equal(t, errortypes.ErrInvalid, multiErr.Errors[0].Code)
 	})
 }
@@ -115,7 +115,7 @@ func TestBalanceConsistencyRule(t *testing.T) {
 
 		require.True(t, multiErr.HasErrors())
 		assert.Len(t, multiErr.Errors, 1)
-		assert.Equal(t, "debitBalance", multiErr.Errors[0].Field)
+		assert.Equal(t, "debitBalance", multiErr.Errors[0].Field())
 	})
 
 	t.Run("fails with negative credit balance", func(t *testing.T) {
@@ -128,7 +128,7 @@ func TestBalanceConsistencyRule(t *testing.T) {
 
 		require.True(t, multiErr.HasErrors())
 		assert.Len(t, multiErr.Errors, 1)
-		assert.Equal(t, "creditBalance", multiErr.Errors[0].Field)
+		assert.Equal(t, "creditBalance", multiErr.Errors[0].Field())
 	})
 
 	t.Run("fails with both negative balances", func(t *testing.T) {

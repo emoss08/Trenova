@@ -16,7 +16,7 @@ func TestParseIDField_NamesTheFieldOfAMalformedID(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "suggestedAgentId", validation.Field)
+	assert.Equal(t, "suggestedAgentId", validation.Field())
 	assert.Equal(t, errortypes.ErrInvalid, validation.Code)
 }
 

@@ -14,138 +14,155 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func simulatorGuide(t *testing.T) ediconnectiondraftports.SpecDocument {
+func manufacturerGuide(t *testing.T) ediconnectiondraftports.SpecDocument {
 	t.Helper()
 
 	dir, err := os.Getwd()
 	require.NoError(t, err)
 	path := filepath.Join(dir, "..", "..", "..", "..", "..", "..", "..",
-		"dev", "edi-partner-sim", "specs", "simpartner-implementation-guide.txt")
+		"dev", "edi-partner-sim", "specs", "manufacturer-implementation-guide.txt")
 	text, err := os.ReadFile(filepath.Clean(path))
-	require.NoError(t, err, "the partner simulator's guide is the fixture for this test")
+	require.NoError(t, err, "the simulator's manufacturer guide is the fixture for this test")
 	return ediconnectiondraftports.SpecDocument{
 		ID:       pulid.MustNew("doc_"),
-		FileName: "simpartner-implementation-guide.txt",
+		FileName: "manufacturer-implementation-guide.txt",
 		Pages:    []ediconnectiondraftports.SpecPage{{Number: 1, Text: string(text)}},
 	}
 }
 
-func simulatorValues() []ediconnectiondraftports.DraftValueInput {
-	sim := func(field, v, quote string) ediconnectiondraftports.DraftValueInput {
+func manufacturerValues() []ediconnectiondraftports.DraftValueInput {
+	guide := func(field, v, quote string) ediconnectiondraftports.DraftValueInput {
 		return value(field, v, 1, quote)
 	}
+	const (
+		sender   = "Kestrel interchange sender: qualifier ZZ (mutually defined), ID KESTRELVW"
+		receiver = "Carrier interchange receiver: qualifier ZZ (mutually defined), ID TRENOVA"
+		ack      = "Kestrel returns a 997 Functional Acknowledgment for every transaction set it receives."
+		within   = "Kestrel acknowledges within 45 seconds and rejects (AK5 R) any transaction that breaks this guide."
+	)
+	set := func(
+		transactionSet edidocument.TransactionSet,
+		direction edidocument.DocumentDirection,
+		attr string,
+	) string {
+		return ediconnectionfield.SetField(transactionSet, direction, attr)
+	}
+	inbound := edidocument.DocumentDirectionInbound
+	outbound := edidocument.DocumentDirectionOutbound
 	return []ediconnectiondraftports.DraftValueInput{
-		sim(ediconnectionfield.PartnerCode, "SIMPARTNER", "Trading Partner Code: SIMPARTNER"),
-		sim(
+		guide(ediconnectionfield.PartnerCode, "KESTRELVW", "Trading Partner Code: KESTRELVW"),
+		guide(
 			ediconnectionfield.PartnerName,
-			"Trenova Partner Simulator",
-			"Trading Partner Name: Trenova Partner Simulator",
+			"Kestrel Valve Works",
+			"Trading Partner Name: Kestrel Valve Works",
 		),
-		sim(
+		guide(
 			ediconnectionfield.PartnerContactName,
-			"Simulator EDI desk",
-			"EDI Contact: Simulator EDI desk",
+			"Kestrel transportation EDI desk",
+			"EDI Contact: Kestrel transportation EDI desk",
 		),
-		sim(
+		guide(
 			ediconnectionfield.PartnerContactEmail,
-			"sim-edi@partner-sim.example",
-			"Email: sim-edi@partner-sim.example",
+			"edi@kestrel-valve.example",
+			"Email: edi@kestrel-valve.example",
 		),
-		sim(ediconnectionfield.PartnerContactPhone, "+1 312 555 0190", "Phone: +1 312 555 0190"),
-		sim(ediconnectionfield.PartnerTimezone, "Etc/UTC", "UTC (Etc/UTC)"),
-		sim(
+		guide(ediconnectionfield.PartnerContactPhone, "+1 815 555 0142", "Phone: +1 815 555 0142"),
+		guide(
+			ediconnectionfield.PartnerTimezone,
+			"America/Chicago",
+			"US Central time (America/Chicago)",
+		),
+		guide(
 			ediconnectionfield.TransportMethod,
 			"AS2",
-			"The simulator exchanges documents over AS2.",
+			"Kestrel exchanges documents over AS2.",
 		),
-		sim("as2.partnerAs2Id", "SIMPARTNER", "Simulator AS2 Identifier: SIMPARTNER"),
-		sim("as2.localAs2Id", "TRENOVA", "Carrier AS2 Identifier: TRENOVA"),
-		sim("as2.endpointUrl", "http://localhost:9210/as2", "AS2 URL: http://localhost:9210/as2"),
-		sim("as2.mdnMode", "sync", "MDN: synchronous, signed."),
-		sim("as2.signingAlgorithm", "sha256", "Signing algorithm: SHA-256."),
-		sim("as2.encryptionAlgorithm", "aes256-cbc", "Encryption algorithm: AES-256 (CBC)."),
-		sim(
-			ediconnectionfield.PartnerQualifier,
-			"ZZ",
-			"Simulator interchange sender: qualifier ZZ (mutually defined), ID SIMPARTNER",
+		guide("as2.partnerAs2Id", "KESTRELVW", "Kestrel AS2 Identifier: KESTRELVW"),
+		guide("as2.localAs2Id", "TRENOVA", "Carrier AS2 Identifier: TRENOVA"),
+		guide(
+			"as2.endpointUrl",
+			"http://localhost:9210/as2/manufacturer",
+			"AS2 URL: http://localhost:9210/as2/manufacturer",
 		),
-		sim(
-			ediconnectionfield.PartnerID,
-			"SIMPARTNER",
-			"Simulator interchange sender: qualifier ZZ (mutually defined), ID SIMPARTNER",
-		),
-		sim(
-			ediconnectionfield.OurQualifier,
-			"ZZ",
-			"Carrier interchange receiver: qualifier ZZ (mutually defined), ID TRENOVA",
-		),
-		sim(
-			ediconnectionfield.OurID,
-			"TRENOVA",
-			"Carrier interchange receiver: qualifier ZZ (mutually defined), ID TRENOVA",
-		),
-		sim(
+		guide("as2.mdnMode", "sync", "MDN: synchronous, signed."),
+		guide("as2.signingAlgorithm", "sha256", "Signing algorithm: SHA-256."),
+		guide("as2.encryptionAlgorithm", "aes256-cbc", "Encryption algorithm: AES-256 (CBC)."),
+		guide(ediconnectionfield.PartnerQualifier, "ZZ", sender),
+		guide(ediconnectionfield.PartnerID, "KESTRELVW", sender),
+		guide(ediconnectionfield.OurQualifier, "ZZ", receiver),
+		guide(ediconnectionfield.OurID, "TRENOVA", receiver),
+		guide(
 			ediconnectionfield.PartnerGSID,
-			"SIMPARTNER",
-			"GS02 Application Sender Code: SIMPARTNER",
+			"KESTRELVW",
+			"GS02 Application Sender Code: KESTRELVW",
 		),
-		sim(ediconnectionfield.OurGSID, "TRENOVA", "GS03 Application Receiver Code: TRENOVA"),
-		sim(ediconnectionfield.X12Version, "004010", "GS08 Version: 004010"),
-		sim(ediconnectionfield.UsageIndicator, "T", "ISA15 usage indicator: T."),
-		sim(ediconnectionfield.ElementSep, "*", "Element separator: * (asterisk)."),
-		sim(ediconnectionfield.SegmentSep, "~", "Segment terminator: ~ (tilde)."),
-		sim(ediconnectionfield.ComponentSep, ">", "Sub-element separator: > (greater than)."),
-		sim(ediconnectionfield.ControlNumberField(edidocument.ControlNumberKindInterchange), "1",
+		guide(ediconnectionfield.OurGSID, "TRENOVA", "GS03 Application Receiver Code: TRENOVA"),
+		guide(ediconnectionfield.X12Version, "004010", "GS08 Version: 004010"),
+		guide(ediconnectionfield.UsageIndicator, "T", "ISA15 usage indicator: T."),
+		guide(ediconnectionfield.ElementSep, "*", "Element separator: * (asterisk)."),
+		guide(ediconnectionfield.SegmentSep, "~", "Segment terminator: ~ (tilde)."),
+		guide(ediconnectionfield.ComponentSep, ">", "Sub-element separator: > (greater than)."),
+		guide(
+			ediconnectionfield.LineEnding,
+			"line feed",
+			"Kestrel writes a line feed after every segment terminator.",
+		),
+		guide(ediconnectionfield.ControlNumberField(edidocument.ControlNumberKindInterchange), "1",
 			"Carrier interchange control numbers (ISA13) start at 1"),
-		sim(
-			ediconnectionfield.SetField(
-				edidocument.TransactionSet204,
-				edidocument.DocumentDirectionInbound,
-				ediconnectionfield.SetAttrSupported,
-			),
+		guide(
+			set(edidocument.TransactionSet204, inbound, ediconnectionfield.SetAttrSupported),
 			"true",
-			"The simulator sends the 204 Motor Carrier Load Tender to the carrier.",
+			"Kestrel sends the 204 Motor Carrier Load Tender to the carrier.",
 		),
-		sim(
-			ediconnectionfield.SetField(
-				edidocument.TransactionSet990,
-				edidocument.DocumentDirectionOutbound,
-				ediconnectionfield.SetAttrSupported,
-			),
+		guide(
+			set(edidocument.TransactionSet990, outbound, ediconnectionfield.SetAttrSupported),
 			"true",
 			"The carrier answers each tender with a 990 Response to a Load Tender.",
 		),
-		sim(
-			ediconnectionfield.SetField(
-				edidocument.TransactionSet214,
-				edidocument.DocumentDirectionOutbound,
-				ediconnectionfield.SetAttrSupported,
-			),
+		guide(
+			set(edidocument.TransactionSet214, outbound, ediconnectionfield.SetAttrSupported),
 			"true",
 			"The carrier sends the 214 Transportation Carrier Shipment Status Message",
 		),
-		sim(
-			ediconnectionfield.SetField(
-				edidocument.TransactionSet990,
-				edidocument.DocumentDirectionOutbound,
-				ediconnectionfield.SetAttrAck,
-			),
-			"997",
-			"The simulator returns a 997 Functional Acknowledgment for every transaction set it receives.",
+		guide(
+			set(edidocument.TransactionSet210, outbound, ediconnectionfield.SetAttrSupported),
+			"true",
+			"The carrier bills each load with a 210 Motor Carrier Freight Details and Invoice.",
 		),
-		sim(
-			ediconnectionfield.SetField(
-				edidocument.TransactionSet214,
-				edidocument.DocumentDirectionOutbound,
-				ediconnectionfield.SetAttrAck,
-			),
+		guide(
+			set(edidocument.TransactionSet990, outbound, ediconnectionfield.SetAttrAck),
 			"997",
-			"The simulator returns a 997 Functional Acknowledgment for every transaction set it receives.",
+			ack,
+		),
+		guide(
+			set(edidocument.TransactionSet214, outbound, ediconnectionfield.SetAttrAck),
+			"997",
+			ack,
+		),
+		guide(
+			set(edidocument.TransactionSet210, outbound, ediconnectionfield.SetAttrAck),
+			"997",
+			ack,
+		),
+		guide(
+			set(edidocument.TransactionSet990, outbound, ediconnectionfield.SetAttrAckWindow),
+			"45 seconds",
+			within,
+		),
+		guide(
+			set(edidocument.TransactionSet214, outbound, ediconnectionfield.SetAttrAckWindow),
+			"45 seconds",
+			within,
+		),
+		guide(
+			set(edidocument.TransactionSet210, outbound, ediconnectionfield.SetAttrAckWindow),
+			"45 seconds",
+			within,
 		),
 	}
 }
 
-func TestPlan_ThePartnerSimulatorsGuideDraftsAConnectionToTheSimulator(t *testing.T) {
+func TestPlan_TheSimulatorsManufacturerGuideDraftsAConnectionToKestrel(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
@@ -156,8 +173,8 @@ func TestPlan_ThePartnerSimulatorsGuideDraftsAConnectionToTheSimulator(t *testin
 				OrgID: pulid.MustNew("org_"),
 				BuID:  pulid.MustNew("bu_"),
 			},
-			Document: simulatorGuide(t),
-			Values:   simulatorValues(),
+			Document: manufacturerGuide(t),
+			Values:   manufacturerValues(),
 			Requirements: []ediconnectiondraftports.DraftRequirementInput{{
 				TransactionSet: edidocument.TransactionSet204, Direction: edidocument.DocumentDirectionInbound,
 				SegmentID: "L3", Usage: ediconnectiondraftports.RequirementUsageMandatory,
@@ -173,21 +190,41 @@ func TestPlan_ThePartnerSimulatorsGuideDraftsAConnectionToTheSimulator(t *testin
 	require.NotNil(t, draft.Transport)
 	assert.Equal(
 		t,
-		"http://localhost:9210/as2",
+		"http://localhost:9210/as2/manufacturer",
 		valueOf(t, draft.Transport.Fields, "as2.endpointUrl").Value,
 	)
-	assert.Len(t, draft.Sets, 3)
+	lineEnding := valueOf(t, draft.Interchange, ediconnectionfield.LineEnding)
+	assert.Equal(t, ediconnectionfield.LineEndingLF, lineEnding.Value)
+	assert.Equal(t, ediconnectiondraftports.ValueStatusAccepted, lineEnding.Status)
+	assert.Equal(t, 1, lineEnding.Source.Page)
+
+	assert.Len(t, draft.Sets, 4)
+	for _, transactionSet := range []edidocument.TransactionSet{
+		edidocument.TransactionSet990,
+		edidocument.TransactionSet214,
+		edidocument.TransactionSet210,
+	} {
+		sent := setFor(t, draft, transactionSet, edidocument.DocumentDirectionOutbound)
+		window := valueOf(t, sent.Fields, ediconnectionfield.SetField(
+			transactionSet,
+			edidocument.DocumentDirectionOutbound,
+			ediconnectionfield.SetAttrAckWindow,
+		))
+		assert.Equal(t, "45 seconds", window.Value, transactionSet)
+		assert.Equal(t, ediconnectiondraftports.ValueStatusAccepted, window.Status, transactionSet)
+		assert.Equal(t, 1, window.Source.Page, transactionSet)
+	}
 	require.NotNil(t, draft.Project)
 	assert.Zero(t, draft.Project.Errors, draft.Project.Diagnostics)
 
-	require.Len(t, draft.Samples, 1, "the guide carries the tender the simulator sends")
+	require.Len(t, draft.Samples, 1, "the guide carries the tender Kestrel sends")
 	sample := draft.Samples[0]
 	require.True(t, sample.Parsed, sample.Error)
 	assert.Equal(t, edidocument.TransactionSet204, sample.TransactionSet)
 	assert.Equal(t, edidocument.DocumentDirectionInbound, sample.Direction)
 	require.NotEmpty(t, sample.Checks)
 	for _, check := range sample.Checks {
-		assert.True(t, check.Matches, "%s: the guide says %q, the simulator sends %q",
+		assert.True(t, check.Matches, "%s: the guide says %q, Kestrel sends %q",
 			check.Field, check.Expected, check.Found)
 	}
 }

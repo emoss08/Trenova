@@ -3799,7 +3799,7 @@ func unmarshalInputUpdateCarrierSettlementControlInput(ctx context.Context, ec *
 			it.AutoAcceptWithinTolerance = data
 		case "holdUntilInvoiceMatched":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("holdUntilInvoiceMatched"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3902,14 +3902,6 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 func unmarshalNUpdateCarrierSettlementControlInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateCarrierSettlementControlInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateCarrierSettlementControlInput, error) {
 	res, err := unmarshalInputUpdateCarrierSettlementControlInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalBoolean(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOCarrierInvoiceMatchStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋcarriersettlementᚐInvoiceMatchStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*carriersettlement.InvoiceMatchStatus, error) {

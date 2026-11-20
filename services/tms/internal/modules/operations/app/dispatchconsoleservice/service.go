@@ -4,7 +4,6 @@ import (
 	"context"
 	"sort"
 
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -116,7 +115,7 @@ func (s *Service) tenantDayStart(
 	tenantInfo pagination.TenantInfo,
 	now int64,
 ) (int64, error) {
-	location, err := orgzone.Location(ctx, s.organizations, tenantInfo)
+	location, err := tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
 	if err != nil {
 		return 0, err
 	}

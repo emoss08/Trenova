@@ -229,13 +229,6 @@ func (r *MutationResolver) UpdateCarrierSettlementControl(ctx context.Context, i
 	if err != nil {
 		return nil, err
 	}
-	if input.HoldUntilInvoiceMatched == nil {
-		current, currentErr := r.CarrierSettlementWorkspaceService.GetControl(ctx, resolvercore.TenantInfo(authCtx))
-		if currentErr != nil {
-			return nil, currentErr
-		}
-		entity.HoldUntilInvoiceMatched = current.HoldUntilInvoiceMatched
-	}
 	return r.CarrierSettlementWorkspaceService.UpdateControl(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 

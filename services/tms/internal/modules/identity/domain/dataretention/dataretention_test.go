@@ -89,7 +89,7 @@ func TestDataRetention_AIAuditRetentionError_NamesTheField(t *testing.T) {
 	validRetention(120, 30).Validate(multiErr)
 
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "aiAuditRetentionPeriod", multiErr.Errors[0].Field)
+	assert.Equal(t, "aiAuditRetentionPeriod", multiErr.Errors[0].Field())
 }
 
 func TestDataRetention_GetTableName(t *testing.T) {

@@ -2,23 +2,50 @@ package carriersettlementservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 func ResolveBatchBounds(
 	control *carriersettlementcontrol.CarrierSettlementControl,
+	loc *time.Location,
 	periodStart, periodEnd, now int64,
 ) (PeriodBounds, error) {
 	return settlementshared.ResolveRequestedPeriod(settlementshared.PeriodSchedule{
 		Frequency:    control.PayPeriodFrequency,
 		EndDayOfWeek: control.PeriodEndDayOfWeek,
 		PayDelayDays: control.PayDelayDays,
+		Location:     loc,
 	}, periodStart, periodEnd, now)
+}
+
+func (s *Service) Location(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*time.Location, error) {
+	return tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
+}
+
+func (s *Service) CurrentPeriod(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (PeriodBounds, error) {
+	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
+	if err != nil {
+		return PeriodBounds{}, err
+	}
+	loc, err := s.Location(ctx, tenantInfo)
+	if err != nil {
+		return PeriodBounds{}, err
+	}
+	return ResolveCurrentPeriod(control, loc, timeutils.NowUnix()), nil
 }
 
 type BatchPlanRequest struct {
@@ -46,9 +73,15 @@ func (s *Service) PlanBatch(ctx context.Context, req *BatchPlanRequest) (*BatchP
 		return nil, err
 	}
 
+	loc, err := s.Location(ctx, batchReq.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	plan := &BatchPlan{}
 	plan.Bounds, plan.Refusal = ResolveBatchBounds(
 		control,
+		loc,
 		batchReq.PeriodStart,
 		batchReq.PeriodEnd,
 		timeutils.NowUnix(),

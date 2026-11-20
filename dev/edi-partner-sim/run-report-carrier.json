@@ -1,0 +1,41 @@
+{
+  "run": 6,
+  "api": "http://localhost:8080/api/v1",
+  "sim": "http://localhost:9210",
+  "startedAt": "2026-11-20T12:33:16.948292274Z",
+  "took": 0.148,
+  "partners": [
+    {
+      "name": "carrier",
+      "role": "carrier",
+      "provision": {
+        "partner": "carrier",
+        "role": "carrier",
+        "code": "EDISIM-CARRIER",
+        "partnerId": "edip_01M7WF4RPC3F1KQWFXWCR7G6SA",
+        "profileId": "edicp_01M7WF4RQFZWQSKB203BCAFY2M",
+        "transport": "AS2",
+        "inboundUrl": "http://localhost:8080/api/v1/edi/as2/inbound/612677b9feb24fe9b2edd52ee2288c24a722850eef5c4abc84ef545494928324/",
+        "notes": [
+          "created partner EDISIM-CARRIER",
+          "created the AS2 communication profile",
+          "made the AS2 profile the partner's default transport",
+          "Trenova's connection test passed",
+          "gave the simulator the profile's inbound URL and Trenova's certificate"
+        ],
+        "failure": "create the carrier QYSF: POST /api/v1/carriers/ answered 400: Validation Failed: This field is required; [\"stateId\"]: This field is required; [\"remitStateId\"]: This field is required"
+      },
+      "scenarios": [],
+      "failures": [
+        {
+          "step": -1,
+          "source": "provisioning",
+          "rule": "provision",
+          "message": "create the carrier QYSF: POST /api/v1/carriers/ answered 400: Validation Failed: This field is required; [\"stateId\"]: This field is required; [\"remitStateId\"]: This field is required",
+          "replay": "edi-sim run --partner carrier"
+        }
+      ]
+    }
+  ],
+  "failures": 1
+}

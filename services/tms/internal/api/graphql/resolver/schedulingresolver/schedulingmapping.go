@@ -8,17 +8,28 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func shiftTemplateFromInput(
 	input gqlmodel.ShiftTemplateInput,
 	tenant pagination.TenantInfo,
-) *workerschedule.ShiftTemplate {
+) (*workerschedule.ShiftTemplate, error) {
 	status := domaintypes.StatusActive
 	if input.Status != nil {
 		status = *input.Status
+	}
+	startMinute, err := gqlscalar.NarrowInt[int16]("startMinute", input.StartMinute)
+	if err != nil {
+		return nil, err
+	}
+	durationMinutes, err := gqlscalar.NarrowInt[int16]("durationMinutes", input.DurationMinutes)
+	if err != nil {
+		return nil, err
+	}
+	cycleWeeks, err := gqlscalar.NarrowInt[int16]("cycleWeeks", input.CycleWeeks)
+	if err != nil {
+		return nil, err
 	}
 
 	return &workerschedule.ShiftTemplate{
@@ -30,10 +41,10 @@ func shiftTemplateFromInput(
 		Description:     gqlscalar.StringValue(input.Description),
 		Color:           gqlscalar.StringValue(input.Color),
 		DaysOfWeek:      input.DaysOfWeek,
-		StartMinute:     int16(input.StartMinute),     //nolint:gosec // validated 0..1439
-		DurationMinutes: int16(input.DurationMinutes), //nolint:gosec // validated 1..1440
-		CycleWeeks:      int16(input.CycleWeeks),      //nolint:gosec // validated 1..8
-	}
+		StartMinute:     startMinute,
+		DurationMinutes: durationMinutes,
+		CycleWeeks:      cycleWeeks,
+	}, nil
 }
 
 func shiftAssignmentFromInput(
@@ -48,6 +59,13 @@ func shiftAssignmentFromInput(
 	if err != nil {
 		return nil, gqlid.InvalidIDError("shiftTemplateId", "Shift is invalid")
 	}
+	cycleOffsetWeeks, err := gqlscalar.NarrowIntValue[int16](
+		"cycleOffsetWeeks",
+		input.CycleOffsetWeeks,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &workerschedule.WorkerShiftAssignment{
 		OrganizationID:   tenant.OrgID,
@@ -55,7 +73,7 @@ func shiftAssignmentFromInput(
 		WorkerID:         workerID,
 		ShiftTemplateID:  templateID,
 		EffectiveFrom:    int64(input.EffectiveFrom),
-		CycleOffsetWeeks: intutils.SafeToInt16(gqlscalar.IntValue(input.CycleOffsetWeeks)),
+		CycleOffsetWeeks: cycleOffsetWeeks,
 		Notes:            gqlscalar.StringValue(input.Notes),
 	}, nil
 }
@@ -68,12 +86,16 @@ func availabilityPreferenceFromInput(
 	if err != nil {
 		return nil, gqlid.InvalidIDError("workerId", "Worker is invalid")
 	}
+	dayOfWeek, err := gqlscalar.NarrowInt[int16]("dayOfWeek", input.DayOfWeek)
+	if err != nil {
+		return nil, err
+	}
 
 	return &workerschedule.WorkerAvailabilityPreference{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 		WorkerID:       workerID,
-		DayOfWeek:      int16(input.DayOfWeek), //nolint:gosec // validated 0..6
+		DayOfWeek:      dayOfWeek,
 		Preference:     input.Preference,
 		Note:           gqlscalar.StringValue(input.Note),
 	}, nil

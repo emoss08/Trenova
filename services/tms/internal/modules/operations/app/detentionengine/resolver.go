@@ -39,10 +39,13 @@ func (r Resolution) Found() bool { return r.Policy != nil }
 // Precedence is Priority, then specificity, then age. Specificity is derived
 // from which scope dimensions a policy pins, so a facility-specific term
 // automatically beats a customer-wide one without anyone maintaining an
-// ordering by hand.
+// ordering by hand. The organization's default policy, named by shipment
+// control, ranks below every other matching policy whatever its priority: it
+// governs only the stops nothing else covers.
 func ResolvePolicy(
 	candidates []*detentionpolicy.DetentionPolicy,
 	in *detentionpolicy.MatchInput,
+	defaultPolicyID pulid.ID,
 ) Resolution {
 	verdicts := make([]CandidateVerdict, 0, len(candidates))
 	matched := make([]*detentionpolicy.DetentionPolicy, 0, len(candidates))
@@ -62,7 +65,7 @@ func ResolvePolicy(
 
 		if policy.Matches(in) {
 			verdict.Matched = true
-			verdict.Reason = describeScope(policy)
+			verdict.Reason = describeScope(policy, defaultPolicyID)
 			matched = append(matched, policy)
 		} else {
 			verdict.Reason = rejectionReason(policy, in)
@@ -80,7 +83,7 @@ func ResolvePolicy(
 	}
 
 	sort.SliceStable(matched, func(a, b int) bool {
-		return lessSpecific(matched[b], matched[a])
+		return lessSpecific(matched[b], matched[a], defaultPolicyID)
 	})
 
 	winner := matched[0]
@@ -96,12 +99,18 @@ func ResolvePolicy(
 	return Resolution{
 		Policy:      winner,
 		Verdicts:    verdicts,
-		Explanation: explain(winner, matched),
+		Explanation: explain(winner, matched, defaultPolicyID),
 	}
 }
 
 // lessSpecific reports whether a ranks below b under the precedence rules.
-func lessSpecific(a, b *detentionpolicy.DetentionPolicy) bool {
+func lessSpecific(a, b *detentionpolicy.DetentionPolicy, defaultPolicyID pulid.ID) bool {
+	aDefault := isDefault(a, defaultPolicyID)
+	bDefault := isDefault(b, defaultPolicyID)
+	if aDefault != bDefault {
+		return aDefault
+	}
+
 	if a.Priority != b.Priority {
 		return a.Priority < b.Priority
 	}
@@ -137,8 +146,9 @@ func sortVerdicts(verdicts []CandidateVerdict) {
 func explain(
 	winner *detentionpolicy.DetentionPolicy,
 	matched []*detentionpolicy.DetentionPolicy,
+	defaultPolicyID pulid.ID,
 ) string {
-	scope := describeScope(winner)
+	scope := describeScope(winner, defaultPolicyID)
 
 	if len(matched) == 1 {
 		return fmt.Sprintf("%s (%s) is the only policy covering this stop; it applies %s.",
@@ -154,13 +164,17 @@ func explain(
 		winner.Name, winner.Code,
 		len(matched)-1, inflect.Pluralize("policy", "policies", len(matched)-1),
 		scope, winner.Priority, winner.ComputeSpecificity(),
-		runnerUp.Name, runnerUp.Code, describeScope(runnerUp),
+		runnerUp.Name, runnerUp.Code, describeScope(runnerUp, defaultPolicyID),
 		runnerUp.Priority, runnerUp.ComputeSpecificity(),
 	)
 }
 
-func describeScope(policy *detentionpolicy.DetentionPolicy) string {
-	if policy.IsOrgDefault {
+func isDefault(policy *detentionpolicy.DetentionPolicy, defaultPolicyID pulid.ID) bool {
+	return defaultPolicyID.IsNotNil() && policy.ID == defaultPolicyID
+}
+
+func describeScope(policy *detentionpolicy.DetentionPolicy, defaultPolicyID pulid.ID) string {
+	if isDefault(policy, defaultPolicyID) {
 		return "as the organization default"
 	}
 

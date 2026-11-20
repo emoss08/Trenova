@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -138,10 +139,6 @@ func (r *policyRepository) GetByID(
 	)
 }
 
-// GetResolutionCandidates returns every active policy that could apply to a
-// stop: the ones scoped to this customer or facility, plus every unscoped
-// policy. Narrowing further in SQL would hide the near-misses the resolution
-// explainer needs to show.
 func (r *policyRepository) GetByIDs(
 	ctx context.Context,
 	req *detentionports.GetDetentionPoliciesByIDsRequest,
@@ -168,6 +165,11 @@ func (r *policyRepository) GetByIDs(
 	)
 }
 
+// GetResolutionCandidates returns, for a whole shipment, every active policy
+// that could apply to one of its stops: the ones scoped to its customer or to
+// one of its facilities, plus every unscoped policy, in effect at some point
+// between the first and the last arrival. Narrowing further in SQL would hide
+// the near-misses the resolution explainer needs to show.
 func (r *policyRepository) GetResolutionCandidates(
 	ctx context.Context,
 	req *detentionports.GetResolutionCandidatesRequest,
@@ -176,11 +178,16 @@ func (r *policyRepository) GetResolutionCandidates(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*detentionpolicy.DetentionPolicy, error) {
+			if len(req.LocationIDs) == 0 {
+				return []*detentionpolicy.DetentionPolicy{}, nil
+			}
+
 			p := detentionpolicydb.DetentionPolicies
 			entities, err := p.Where(
 				p.Status.Eq(detentionpolicy.PolicyStatusActive),
-				keel.Or(p.CustomerID.IsNull(), p.CustomerID.Eq(req.CustomerID)),
-				keel.Or(p.LocationID.IsNull(), p.LocationID.Eq(req.LocationID)),
+				resolutionScope(req),
+				keel.Or(p.EffectiveStartDate.IsNull(), p.EffectiveStartDate.Lte(req.ArrivedTo)),
+				keel.Or(p.EffectiveEndDate.IsNull(), p.EffectiveEndDate.Gte(req.ArrivedFrom)),
 			).
 				Load(orderedTiers()).
 				Order(p.Priority.Desc(), p.SpecificityScore.Desc(), p.CreatedAt.Asc()).
@@ -192,6 +199,41 @@ func (r *policyRepository) GetResolutionCandidates(
 
 			return entities, nil
 		},
+	)
+}
+
+// resolutionScope spells the customer and facility scope as four exact arms,
+// each an index condition on idx_detention_policies_resolution_scope, so the
+// read touches only the policies that can apply instead of every active one.
+func resolutionScope(req *detentionports.GetResolutionCandidatesRequest) keel.Pred {
+	p := detentionpolicydb.DetentionPolicies
+	anyCustomer := p.CustomerID.IsNull()
+	thisCustomer := p.CustomerID.Eq(req.CustomerID)
+	anyLocation := p.LocationID.IsNull()
+	theseLocations := p.LocationID.In(req.LocationIDs...)
+
+	return keel.Or(
+		keel.And(anyCustomer, anyLocation),
+		keel.And(anyCustomer, theseLocations),
+		keel.And(thisCustomer, anyLocation),
+		keel.And(thisCustomer, theseLocations),
+	)
+}
+
+// defaultEligible narrows to the policies that can be the organization's
+// default: no scope of any kind, already in effect and with no end date, the
+// same rule the shipment control validator enforces. The null customer and
+// facility arms put the read on idx_detention_policies_resolution_scope.
+func defaultEligible(now int64) keel.Pred {
+	p := detentionpolicydb.DetentionPolicies
+
+	return keel.And(
+		p.CustomerID.IsNull(),
+		p.LocationID.IsNull(),
+		p.SpecificityScore.Eq(0),
+		p.AppointmentStopsOnly.Eq(false),
+		p.EffectiveEndDate.IsNull(),
+		keel.Or(p.EffectiveStartDate.IsNull(), p.EffectiveStartDate.Lte(now)),
 	)
 }
 
@@ -347,8 +389,9 @@ func scopeEq(
 	return col.Eq(*id)
 }
 
-// FindOverlapping locates active policies that pin the same scope and whose
-// effective windows intersect. Two of those make resolution a coin flip.
+// FindOverlapping locates active policies that pin the same customer and
+// facility and whose effective windows intersect. The caller compares the rest
+// of the scope, which lives in JSON sets.
 func (r *policyRepository) FindOverlapping(
 	ctx context.Context,
 	req *detentionports.FindOverlappingDetentionPoliciesRequest,
@@ -360,7 +403,6 @@ func (r *policyRepository) FindOverlapping(
 			p := detentionpolicydb.DetentionPolicies
 			preds := []keel.Pred{
 				p.Status.Eq(detentionpolicy.PolicyStatusActive),
-				p.IsOrgDefault.Eq(req.IsOrgDefault),
 				excludeID(p.ID, req.ExcludeID),
 				scopeEq(p.CustomerID, req.CustomerID),
 				scopeEq(p.LocationID, req.LocationID),
@@ -399,7 +441,10 @@ func (r *policyRepository) SelectOptions(
 		func(ctx context.Context) (*pagination.ListResult[*detentionpolicy.DetentionPolicy], error) {
 			p := detentionpolicydb.DetentionPolicies
 			q := p.Pick(p.ID, p.Name, p.Code, p.Description, p.Status, p.BillingFreeMinutes).
-				Where(p.Status.Eq(detentionpolicy.PolicyStatusActive)).
+				Where(
+					p.Status.Eq(detentionpolicy.PolicyStatusActive),
+					keel.When(req.DefaultEligibleOnly, defaultEligible(timeutils.NowUnix())),
+				).
 				Order(p.Name.Asc())
 
 			return listquery.SelectOptions(

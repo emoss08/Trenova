@@ -1,15 +1,27 @@
 package internaledilifecycle
 
 import (
+	"cmp"
 	"context"
+	"errors"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopactual"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+const ActorLabel = "Internal EDI"
+
+var ErrStopActualsUnavailable = errors.New(
+	"internal EDI lifecycle sync has no stop actual reconciler",
 )
 
 type ShipmentRepository interface {
@@ -17,20 +29,31 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *shipmentports.GetShipmentByIDRequest,
 	) (*shipment.Shipment, error)
-	UpdateOperationalLifecycle(
+}
+
+type StopActualReconciler interface {
+	ReconcileStopActuals(
 		ctx context.Context,
-		entity *shipment.Shipment,
-	) (*shipment.Shipment, error)
+		req *shipmentmoveports.ReconcileStopActualsRequest,
+	) (*shipmentmoveports.ReconcileStopActualsResult, error)
 }
 
 type Applier struct {
 	shipmentRepo ShipmentRepository
 	coordinator  *shipmentstate.Coordinator
+	stopActuals  StopActualReconciler
 }
 
 type Params struct {
 	ShipmentRepo ShipmentRepository
 	Coordinator  *shipmentstate.Coordinator
+	StopActuals  StopActualReconciler
+}
+
+type ApplyRequest struct {
+	Plan          *Plan
+	SourceEventID string
+	CorrelationID string
 }
 
 type PrepareRequest struct {
@@ -107,6 +130,7 @@ func New(p Params) *Applier {
 	return &Applier{
 		shipmentRepo: p.ShipmentRepo,
 		coordinator:  coordinator,
+		stopActuals:  p.StopActuals,
 	}
 }
 
@@ -165,12 +189,118 @@ func (a *Applier) PrepareLoaded(req PrepareLoadedRequest) (*Plan, error) {
 	return plan, nil
 }
 
-func (a *Applier) ApplyPrepared(ctx context.Context, plan *Plan) (*shipment.Shipment, error) {
+func (a *Applier) ApplyPrepared(ctx context.Context, req ApplyRequest) (*shipment.Shipment, error) {
+	plan := req.Plan
 	if plan == nil || plan.OppositePrepared == nil {
 		return nil, nil
 	}
+	if a.stopActuals == nil {
+		return nil, ErrStopActualsUnavailable
+	}
 
-	return a.shipmentRepo.UpdateOperationalLifecycle(ctx, plan.OppositePrepared)
+	origin := &shipmentmoveports.StopActualEventOrigin{
+		ActorLabel:    ActorLabel,
+		CorrelationID: req.CorrelationID,
+		Metadata: map[string]any{
+			edisync.InternalEDIMirroredFromEventIDKey: req.SourceEventID,
+			edisync.InternalEDIShipmentLinkIDKey:      plan.Link.ID.String(),
+		},
+	}
+	for _, target := range syncedMoveTargets(plan) {
+		if _, err := a.stopActuals.ReconcileStopActuals(
+			ctx,
+			&shipmentmoveports.ReconcileStopActualsRequest{
+				TenantInfo: plan.OppositeInfo,
+				MoveID:     target.moveID,
+				Plan:       target.plan,
+				Origin:     origin,
+			},
+		); err != nil {
+			return nil, err
+		}
+	}
+
+	return a.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+		ID:         plan.OppositeOriginal.ID,
+		TenantInfo: plan.OppositeInfo,
+		ShipmentOptions: shipmentports.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+}
+
+type moveTarget struct {
+	moveID   pulid.ID
+	sequence int64
+	plan     shipmentmoveports.StopActualPlanner
+}
+
+func syncedMoveTargets(plan *Plan) []moveTarget {
+	original := make(map[pulid.ID]*shipment.Stop)
+	for _, move := range plan.OppositeOriginal.Moves {
+		if move == nil {
+			continue
+		}
+		for _, stop := range move.Stops {
+			if stop != nil {
+				original[stop.ID] = stop
+			}
+		}
+	}
+
+	targets := make([]moveTarget, 0, len(plan.OppositePrepared.Moves))
+	for _, move := range plan.OppositePrepared.Moves {
+		if move == nil {
+			continue
+		}
+		wanted := make(map[pulid.ID]stopactual.Change)
+		for _, stop := range move.Stops {
+			if stop == nil || actualsMatch(stop, original[stop.ID]) {
+				continue
+			}
+			wanted[stop.ID] = stopactual.Change{
+				StopID:    stop.ID,
+				Arrival:   cloneInt64(stop.ActualArrival),
+				Departure: cloneInt64(stop.ActualDeparture),
+			}
+		}
+		if len(wanted) == 0 {
+			continue
+		}
+		targets = append(targets, moveTarget{
+			moveID:   move.ID,
+			sequence: move.Sequence,
+			plan:     planTowards(wanted),
+		})
+	}
+	slices.SortStableFunc(targets, func(left, right moveTarget) int {
+		return cmp.Compare(left.sequence, right.sequence)
+	})
+
+	return targets
+}
+
+func planTowards(wanted map[pulid.ID]stopactual.Change) shipmentmoveports.StopActualPlanner {
+	return func(_ context.Context, move *shipment.ShipmentMove) ([]stopactual.Change, error) {
+		changes := make([]stopactual.Change, 0, len(wanted))
+		for _, stop := range move.ActiveStopsBySequence() {
+			want, ok := wanted[stop.ID]
+			if !ok {
+				continue
+			}
+			change := stopactual.Change{StopID: stop.ID}
+			if want.Arrival != nil && !int64PtrEqual(want.Arrival, stop.ActualArrival) {
+				change.Arrival = cloneInt64(want.Arrival)
+			}
+			if want.Departure != nil && !int64PtrEqual(want.Departure, stop.ActualDeparture) {
+				change.Departure = cloneInt64(want.Departure)
+			}
+			if !change.Empty() {
+				changes = append(changes, change)
+			}
+		}
+		return changes, nil
+	}
 }
 
 func (a *Applier) loadShipments(
@@ -271,7 +401,13 @@ func applyStopActuals(
 			continue
 		}
 
-		if actualsEqual(changedStop.stop, oppositeStop.stop) {
+		arrival := mergedActual(changedStop.stop.ActualArrival, oppositeStop.stop.ActualArrival)
+		departure := mergedActual(
+			changedStop.stop.ActualDeparture,
+			oppositeStop.stop.ActualDeparture,
+		)
+		if int64PtrEqual(arrival, oppositeStop.stop.ActualArrival) &&
+			int64PtrEqual(departure, oppositeStop.stop.ActualDeparture) {
 			continue
 		}
 
@@ -282,12 +418,12 @@ func applyStopActuals(
 			SourceStopID:            changedStop.stop.ID.String(),
 			TargetStopID:            oppositeStop.stop.ID.String(),
 			PreviousActualArrival:   cloneInt64(oppositeStop.stop.ActualArrival),
-			NewActualArrival:        cloneInt64(changedStop.stop.ActualArrival),
+			NewActualArrival:        cloneInt64(arrival),
 			PreviousActualDeparture: cloneInt64(oppositeStop.stop.ActualDeparture),
-			NewActualDeparture:      cloneInt64(changedStop.stop.ActualDeparture),
+			NewActualDeparture:      cloneInt64(departure),
 		}
-		oppositeStop.stop.ActualArrival = cloneInt64(changedStop.stop.ActualArrival)
-		oppositeStop.stop.ActualDeparture = cloneInt64(changedStop.stop.ActualDeparture)
+		oppositeStop.stop.ActualArrival = arrival
+		oppositeStop.stop.ActualDeparture = departure
 		diffs = append(diffs, diff)
 	}
 
@@ -378,13 +514,18 @@ func hasActualSignal(stop *shipment.Stop) bool {
 	return stop != nil && (stop.ActualArrival != nil || stop.ActualDeparture != nil)
 }
 
-func actualsEqual(left *shipment.Stop, right *shipment.Stop) bool {
-	if left == nil || right == nil {
-		return left == right
+func actualsMatch(prepared, original *shipment.Stop) bool {
+	return original != nil &&
+		int64PtrEqual(prepared.ActualArrival, original.ActualArrival) &&
+		int64PtrEqual(prepared.ActualDeparture, original.ActualDeparture)
+}
+
+func mergedActual(changed, opposite *int64) *int64 {
+	if changed == nil {
+		return cloneInt64(opposite)
 	}
 
-	return int64PtrEqual(left.ActualArrival, right.ActualArrival) &&
-		int64PtrEqual(left.ActualDeparture, right.ActualDeparture)
+	return cloneInt64(changed)
 }
 
 func int64PtrEqual(left *int64, right *int64) bool {

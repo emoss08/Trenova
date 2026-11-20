@@ -25,7 +25,6 @@ import {
   acceptCarrierInvoiceMatchWithVariance,
   createCarrierInvoiceMatch,
   fetchCarrierInvoiceMatches,
-  fetchCarrierSettlementControl,
   fetchEdiCarrierInvoices,
   rejectCarrierInvoiceMatch,
   suggestCarrierForEdiInvoice,
@@ -33,6 +32,7 @@ import {
   type EdiCarrierInvoiceRow,
 } from "@/lib/graphql/carrier-settlement";
 import { carrierInvoiceMatchStatusChoices } from "@/lib/choices";
+import { carrierSettlementControl } from "@/lib/queries/carrier-settlement-control";
 import type { CarrierInvoiceMatchVia } from "@trenova/shared/types/carrier-settlement";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { formatSettlementDate } from "@trenova/shared/lib/date";
@@ -128,10 +128,7 @@ export default function MatchingWorkspace() {
     queryFn: ({ signal }) => fetchCarrierInvoiceMatches({ limit: 200 }, { signal }),
   });
 
-  const controlQuery = useQuery({
-    queryKey: ["carrier-settlement-control"],
-    queryFn: ({ signal }) => fetchCarrierSettlementControl({ signal }),
-  });
+  const controlQuery = useQuery({ ...carrierSettlementControl.get() });
 
   const refresh = () => invalidateMatchingQueries(queryClient);
 

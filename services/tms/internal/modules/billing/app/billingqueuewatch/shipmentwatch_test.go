@@ -13,7 +13,9 @@ func TestShipmentChangesThatCanMoveABillRecheckIt(t *testing.T) {
 	for _, eventType := range []shipmentevent.Type{
 		shipmentevent.TypeShipmentUpdated,
 		shipmentevent.TypeStatusChanged,
-		shipmentevent.TypeStopCompleted,
+		shipmentevent.TypeStopDeparted,
+		shipmentevent.TypeStopArrivalCorrected,
+		shipmentevent.TypeStopDepartureCorrected,
 		shipmentevent.TypeShipmentCanceled,
 		shipmentevent.TypeShipmentUncanceled,
 		shipmentevent.TypeHoldPlaced,
@@ -26,6 +28,7 @@ func TestShipmentChangesThatCanMoveABillRecheckIt(t *testing.T) {
 		shipmentevent.TypeTenderOffered,
 		shipmentevent.TypeDriverAssigned,
 		shipmentevent.TypeMoveArrived,
+		shipmentevent.TypeStopArrived,
 	} {
 		assert.False(t, RechecksOn(eventType), eventType)
 	}

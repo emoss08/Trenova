@@ -1,0 +1,69 @@
+library common
+
+// Ashgrove writes its stop reasons, entity codes, payment and reference qualifiers in lowercase.
+// The base guide restricts none of them, so the crosswalks read text and the map upper-cases it;
+// refs() keys references by their qualifier in capitals.
+crosswalk stopTypes: Text <-> StopType {
+  "LD" <-> Pickup
+  "UL" <-> Delivery
+}
+
+crosswalk purposes: Code<B2A01> <-> TenderPurpose {
+  "00" <-> Original
+  "01" <-> Cancel
+  "04" <-> Change
+}
+
+crosswalk payments: Text <-> Payment {
+  "PP" <-> Prepaid
+  "CC" <-> Collect
+  "TP" <-> ThirdParty
+}
+
+crosswalk decisions: Code<B104> <-> Decision {
+  "A" <-> Accept
+  "D" <-> Decline
+}
+
+// Ashgrove takes a departure from its warehouse and a delivery, and no other status: one is
+// never sent.
+crosswalk statusCodes: Code<AT701> <-> EventKind {
+  "AF" <-> DepartedPickup
+  "D1" <-> Delivered
+  not sent <- Dispatched, ArrivedPickup, Loaded, EnRoute, ArrivedDelivery, DepartedDelivery
+  not sent <- Delayed, AppointmentSet, EtaChanged, Exception
+  else -> Exception
+}
+
+crosswalk equipment: Text <-> Text {
+  "TF" <-> "VAN"
+  "FT" <-> "FLATBED"
+}
+
+/// The window a stop gets when Ashgrove sends only its opening time.
+const defaultWindow = 3 h
+
+/// The appointment window from a stop's dates. Ashgrove writes no time code: every time is
+/// Eastern, its own zone, whatever the stop's.
+fn window(dates: [Segment<G62>], zone: Zone) -> Window? {
+  let opens = dates.find(d => d.01 in ["37", "53"])
+  let closes = dates.find(d => d.01 in ["38", "54"])
+  let start = at(opens.02, opens.04, zone)
+  Window {
+    start <- start
+    end   <- at(closes.02, closes.04, zone) ?? (start ?? now()) + defaultWindow
+  }
+}
+
+/// The first reference with a qualifier, whatever case Ashgrove wrote it in.
+fn reference(segments: [Segment<L11>], qualifier: Text) -> Text? =
+  segments.find(s => (s.02 ?? "").upper() == qualifier).01
+
+test "lowercase stop reasons read" {
+  expect "ul".upper() via stopTypes == Delivery
+  expect "ld".upper() via stopTypes == Pickup
+}
+
+test "a collect tender reads" {
+  expect "cc".upper() via payments == Collect
+}

@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dataentrycontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
@@ -112,6 +113,9 @@ func setupWorkerHandlerWithEngines(
 		Realtime:     &mocks.NoopRealtimeService{},
 	})
 
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
+	formatter.EXPECT().Format(mock.Anything, mock.Anything).Return(nil).Maybe()
+
 	service := workerservice.New(workerservice.Params{
 		CredentialService: credentialService,
 		PTOPolicyService:  ptoPolicyService,
@@ -127,6 +131,7 @@ func setupWorkerHandlerWithEngines(
 		Realtime:                  &mocks.NoopRealtimeService{},
 		CustomFieldsValuesService: cfService,
 		PlanFields:                plantest.Keeper(nil),
+		Formatter:                 formatter,
 	})
 
 	cfg := &config.Config{

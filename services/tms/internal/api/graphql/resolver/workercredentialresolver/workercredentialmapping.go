@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -19,7 +18,23 @@ func workerCredentialTypeFromInput(
 	input *gqlmodel.WorkerCredentialTypeInput,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) *workercredential.WorkerCredentialType {
+) (*workercredential.WorkerCredentialType, error) {
+	renewalWindowDays, err := gqlscalar.NarrowInt[int32](
+		"renewalWindowDays",
+		input.RenewalWindowDays,
+	)
+	if err != nil {
+		return nil, err
+	}
+	sortOrder, err := gqlscalar.NarrowIntValue[int32]("sortOrder", input.SortOrder)
+	if err != nil {
+		return nil, err
+	}
+	validityMonths, err := gqlscalar.NarrowIntPtr[int32]("validityMonths", input.ValidityMonths)
+	if err != nil {
+		return nil, err
+	}
+
 	entity := &workercredential.WorkerCredentialType{
 		ID:                     id,
 		OrganizationID:         tenantInfo.OrgID,
@@ -31,20 +46,17 @@ func workerCredentialTypeFromInput(
 		Status:                 input.Status,
 		IsRequired:             input.IsRequired,
 		RequiredForDriverTypes: input.RequiredForDriverTypes,
-		RenewalWindowDays:      intutils.SafeToInt32(input.RenewalWindowDays),
+		RenewalWindowDays:      renewalWindowDays,
 		RequiresNumber:         input.RequiresNumber,
 		RequiresDocument:       input.RequiresDocument,
-		SortOrder:              intutils.SafeToInt32(gqlscalar.IntValue(input.SortOrder)),
+		SortOrder:              sortOrder,
 		Version:                int64(gqlscalar.IntValue(input.Version)),
+		ValidityMonths:         validityMonths,
 	}
 	if entity.RequiredForDriverTypes == nil {
 		entity.RequiredForDriverTypes = []worker.DriverType{}
 	}
-	if input.ValidityMonths != nil {
-		months := intutils.SafeToInt32(*input.ValidityMonths)
-		entity.ValidityMonths = &months
-	}
-	return entity
+	return entity, nil
 }
 
 func workerCredentialFromInput(

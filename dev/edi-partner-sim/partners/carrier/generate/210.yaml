@@ -1,0 +1,44 @@
+set: "210"
+
+segments:
+  - seg: B3
+    el:
+      - ""
+      - "{invoice.number}"
+      - "{tender.key}"
+      - "{tender.payment}"
+      - ""
+      - "{invoice.billed|date}"
+      - "{invoice.total}"
+      - ""
+      - "{invoice.delivered|date}"
+      - "035"
+      - "{scac}"
+  - seg: C3
+    el: [USD]
+  - seg: N9
+    when: tender.bol
+    el: [BM, "{tender.bol}"]
+  - seg: N9
+    when: tender.po
+    el: [PO, "{tender.po}"]
+  - seg: N9
+    el: [CN, "{pro}"]
+  - each: parties
+    as: party
+    body:
+      - seg: N1
+        el: ["{party.role}", "{party.name|trunc:60}"]
+      - seg: N4
+        el: ["{party.city}", "{party.state}", "{party.zip}", "{party.country}"]
+  - each: lines
+    as: line
+    body:
+      - seg: LX
+        el: ["{line.sequence}"]
+      - seg: L5
+        el: ["{line.sequence}", "{line.description}"]
+      - seg: L1
+        el: ["{line.sequence}", "{line.rate|dollars}", "{line.qualifier}", "{line.amount}", "", "", "", "{line.code}"]
+  - seg: L3
+    el: ["{tender.weight}", G, "", "", "{invoice.total}"]

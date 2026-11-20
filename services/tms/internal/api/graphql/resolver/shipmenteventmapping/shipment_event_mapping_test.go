@@ -33,16 +33,23 @@ func TestShipmentEventToModel_MapsOptionalFieldsAndRelations(t *testing.T) {
 		BusinessUnitID: buID,
 		ShipmentID:     shipmentID,
 		StopID:         stopID,
-		Type:           shipmentevent.TypeStopCompleted,
+		Type:           shipmentevent.TypeStopArrivalCorrected,
 		Severity:       shipmentevent.SeveritySuccess,
 		ActorType:      shipmentevent.ActorUser,
 		ActorID:        actorID,
 		ActorLabel:     "Maria Diaz",
-		Summary:        "Stop completed",
-		Metadata:       map[string]any{"stopSequence": float64(2)},
-		OccurredAt:     1_800_000_000,
-		CorrelationID:  "corr-1",
-		Actor:          actor,
+		Summary:        "Stop arrival time corrected",
+		Metadata: map[string]any{
+			"stopSequence":     float64(2),
+			"stopNumber":       float64(3),
+			"stopType":         "SplitDelivery",
+			"locationName":     "Dallas Terminal",
+			"actualAt":         float64(1_800_000_000),
+			"previousActualAt": float64(1_799_990_000),
+		},
+		OccurredAt:    1_800_000_000,
+		CorrelationID: "corr-1",
+		Actor:         actor,
 		Shipment: &shipmentdomain.Shipment{
 			ID:        shipmentID,
 			ProNumber: "SHP-100",
@@ -52,7 +59,7 @@ func TestShipmentEventToModel_MapsOptionalFieldsAndRelations(t *testing.T) {
 	result, err := shipmentEventToModel(event)
 	require.NoError(t, err)
 	model, ok := result.(*gqlmodel.ShipmentMoveEvent)
-	require.True(t, ok, "StopCompleted must map to ShipmentMoveEvent, got %T", result)
+	require.True(t, ok, "StopArrivalCorrected must map to ShipmentMoveEvent, got %T", result)
 
 	assert.Equal(t, eventID.String(), model.ID)
 	assert.Equal(t, orgID.String(), model.OrganizationID)
@@ -62,13 +69,19 @@ func TestShipmentEventToModel_MapsOptionalFieldsAndRelations(t *testing.T) {
 	assert.Equal(t, stopID.String(), *model.StopID)
 	assert.Nil(t, model.PreviousStatus)
 	assert.Nil(t, model.NewStatus)
-	assert.Equal(t, gqlmodel.ShipmentEventTypeStopCompleted, model.Type)
+	assert.Equal(t, gqlmodel.ShipmentEventTypeStopArrivalCorrected, model.Type)
+	require.NotNil(t, model.StopNumber)
+	assert.Equal(t, 3, *model.StopNumber)
+	require.NotNil(t, model.StopType)
+	assert.Equal(t, gqlmodel.StopTypeSplitDelivery, *model.StopType)
+	assert.Equal(t, "Dallas Terminal", *model.LocationName)
+	assert.Equal(t, 1_800_000_000, *model.ActualAt)
+	assert.Equal(t, 1_799_990_000, *model.PreviousActualAt)
 	assert.Equal(t, gqlmodel.ShipmentEventSeveritySuccess, model.Severity)
 	assert.Equal(t, gqlmodel.ShipmentEventActorTypeUser, model.ActorType)
 	assert.Equal(t, actorID.String(), *model.ActorID)
 	assert.Equal(t, "Maria Diaz", model.ActorLabel)
-	assert.Equal(t, "Stop completed", model.Summary)
-	assert.Equal(t, map[string]any{"stopSequence": float64(2)}, model.Metadata)
+	assert.Equal(t, "Stop arrival time corrected", model.Summary)
 	assert.Equal(t, 1_800_000_000, model.OccurredAt)
 	assert.Equal(t, "corr-1", *model.CorrelationID)
 	assert.Same(t, actor, model.Actor)

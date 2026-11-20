@@ -13,6 +13,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/pkg/lading"
+	"github.com/emoss08/trenova/pkg/x12"
 )
 
 type Scope int
@@ -66,15 +68,21 @@ const (
 	SegmentSep       = "separators.segment"
 	ComponentSep     = "separators.component"
 	RepetitionSep    = "separators.repetition"
+	LineEnding       = "separators.lineEnding"
 
-	SetAttrSupported        = "supported"
-	SetAttrVersion          = "version"
-	SetAttrAck              = "ack"
-	SetAttrAckWindowMinutes = "ackWindowMinutes"
+	SetAttrSupported = "supported"
+	SetAttrVersion   = "version"
+	SetAttrAck       = "ack"
+	SetAttrAckWindow = "ackWindow"
 
 	controlNumberAttrStart = "start"
 
 	AckNone = "None"
+
+	LineEndingNone = "None"
+	LineEndingLF   = "LF"
+	LineEndingCRLF = "CRLF"
+	LineEndingCR   = "CR"
 
 	ValueTrue       = "true"
 	ValueFalse      = "false"
@@ -96,7 +104,7 @@ var (
 	versionDigitsRe = regexp.MustCompile(`^\d{4,6}$`)
 	numberRe        = regexp.MustCompile(`\d+`)
 	durationRe      = regexp.MustCompile(
-		`(?i)(\d+(?:\.\d+)?)\s*(minutes?|mins?|hours?|hrs?|days?|business days?)`,
+		`(?i)(\d+(?:\.\d+)?)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|business days?)\b`,
 	)
 	countryRe       = regexp.MustCompile(`^[A-Z]{2}$`)
 	externalMethods = []edi.ConnectionMethod{
@@ -368,6 +376,26 @@ func spelledSeparators() map[string][]string {
 	return spelled
 }
 
+var wireLineEndings = map[string]x12.LineEnding{
+	LineEndingNone: x12.LineEndingNone,
+	LineEndingLF:   x12.LineEndingLF,
+	LineEndingCRLF: x12.LineEndingCRLF,
+	LineEndingCR:   x12.LineEndingCR,
+}
+
+func WireLineEnding(value string) x12.LineEnding {
+	return wireLineEndings[value]
+}
+
+func lineEndingValue(ending x12.LineEnding) string {
+	for value, wire := range wireLineEndings {
+		if wire == ending {
+			return value
+		}
+	}
+	return LineEndingNone
+}
+
 func normalizeURL(value string) (string, error) {
 	value = strings.TrimSpace(value)
 	parsed, err := url.Parse(value)
@@ -399,55 +427,78 @@ func normalizePath(value string) (string, error) {
 	return value, nil
 }
 
-func normalizeMinutes(value string) (string, error) {
-	value = strings.TrimSpace(value)
-	if minutes, err := strconv.Atoi(value); err == nil {
-		if minutes < 1 || minutes > 60*24*30 {
-			return "", errors.New("must be between 1 minute and 30 days")
-		}
-		return strconv.Itoa(minutes), nil
+func normalizeDuration(value string) (string, error) {
+	found := durations(value)
+	if len(found) != 1 {
+		return "", errors.New("must be one duration with its unit, such as 45 seconds or 4 hours")
 	}
-	durations := durationMinutes(value)
-	if len(durations) != 1 {
-		return "", errors.New("must be a number of minutes")
+	if found[0] < time.Second || found[0] > lading.MaxAckWithin {
+		return "", errors.New("must be between 1 second and 7 days")
 	}
-	return normalizeMinutes(strconv.Itoa(durations[0]))
+	return FormatDuration(found[0]), nil
 }
 
-func durationMinutes(text string) []int {
+func ParseDuration(value string) (time.Duration, bool) {
+	normalized, err := normalizeDuration(value)
+	if err != nil {
+		return 0, false
+	}
+	return durations(normalized)[0], true
+}
+
+func FormatDuration(duration time.Duration) string {
+	units := []struct {
+		size time.Duration
+		name string
+	}{
+		{24 * time.Hour, "day"},
+		{time.Hour, "hour"},
+		{time.Minute, "minute"},
+		{time.Second, "second"},
+	}
+	duration = duration.Truncate(time.Second)
+	for _, unit := range units {
+		if duration%unit.size != 0 {
+			continue
+		}
+		count := int64(duration / unit.size)
+		if count == 1 {
+			return "1 " + unit.name
+		}
+		return strconv.FormatInt(count, 10) + " " + unit.name + "s"
+	}
+	return "0 seconds"
+}
+
+func durations(text string) []time.Duration {
 	matches := durationRe.FindAllStringSubmatch(text, -1)
-	out := make([]int, 0, len(matches))
+	out := make([]time.Duration, 0, len(matches))
 	for _, match := range matches {
 		amount, err := strconv.ParseFloat(match[1], 64)
 		if err != nil {
 			continue
 		}
 		unit := strings.ToLower(match[2])
+		size := time.Second
 		switch {
 		case strings.HasPrefix(unit, "min"):
+			size = time.Minute
 		case strings.HasPrefix(unit, "h"):
-			amount *= 60
-		case strings.HasPrefix(unit, "business"):
-			amount *= 60 * 24
-		case strings.HasPrefix(unit, "day"):
-			amount *= 60 * 24
+			size = time.Hour
+		case strings.HasPrefix(unit, "business"), strings.HasPrefix(unit, "day"):
+			size = 24 * time.Hour
 		}
-		out = append(out, int(amount))
+		out = append(out, time.Duration(amount*float64(size)).Round(time.Second))
 	}
 	return out
 }
 
-func matchesMinutes(value, quote string) bool {
-	minutes, err := strconv.Atoi(value)
-	if err != nil {
+func matchesDuration(value, quote string) bool {
+	duration, ok := ParseDuration(value)
+	if !ok {
 		return false
 	}
-	for _, found := range durationMinutes(quote) {
-		if found == minutes {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(durations(quote), duration)
 }
 
 func normalizeControlNumber(value string) (string, error) {

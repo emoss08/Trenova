@@ -1,3 +1,4 @@
+import { temperatureLabel } from "@trenova/shared/lib/temperature";
 import { formatList, formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
@@ -15,7 +16,6 @@ import {
   marginGauge,
   punctualityLabel,
   stopTypeLabel,
-  temperatureLabel,
   windowLabel,
   type Charges,
   type EtaReading,

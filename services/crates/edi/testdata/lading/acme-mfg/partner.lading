@@ -7,7 +7,7 @@ interchange {
   us ZZ "TRNVLOGISTICS"
   group "ACMEMFG" <-> "TRENOVA"
   version 004010
-  separators "*" "~" ">" "^"
+  separators "*" "~" ">"
   usage test
 }
 

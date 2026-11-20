@@ -57,7 +57,7 @@ func NewRegistry(cfg *monitoringconfig.Config, logger *zap.Logger) (*Registry, e
 	enabled := cfg.Metrics.Enabled
 
 	if !enabled {
-		logger.Warn("Metrics collection is disabled")
+		logger.Info("Metrics collection is disabled")
 		dberror.SetConcurrencyObserver(nil)
 		return &Registry{
 			enabled:         false,

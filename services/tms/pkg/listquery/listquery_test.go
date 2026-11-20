@@ -703,7 +703,7 @@ func TestKeysetOrder_RefusesWhatAKeysetCannotOrderBy(t *testing.T) {
 
 			var validation *errortypes.Error
 			require.ErrorAs(t, err, &validation)
-			assert.Equal(t, tc.field, validation.Field)
+			assert.Equal(t, tc.field, validation.Field())
 		})
 	}
 }

@@ -298,6 +298,11 @@ const detentionPolicySelectOptionsGraphQL = {
   resource: "DETENTION_POLICY",
 } satisfies GraphQLSelectOptionsConfig;
 
+const defaultDetentionPolicySelectOptionsGraphQL = {
+  ...detentionPolicySelectOptionsGraphQL,
+  filters: { defaultEligibleOnly: true },
+} satisfies GraphQLSelectOptionsConfig;
+
 const shiftTemplateSelectOptionsGraphQL = {
   resource: "SHIFT_TEMPLATE",
 } satisfies GraphQLSelectOptionsConfig;
@@ -1982,13 +1987,24 @@ export function EquipmentTypeMultiSelectField<T extends FieldValues>({
 }
 
 export function DetentionPolicyAutocompleteField<T extends FieldValues>({
+  defaultEligibleOnly,
   ...props
-}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T> & {
+  /**
+   * Narrows the picker, on the server, to the policies shipment control accepts as the
+   * organization default: active, covering all freight, already in effect and never ending.
+   */
+  defaultEligibleOnly?: boolean;
+}) {
   const t = useT();
 
   return (
     <AutocompleteField<GraphQLSelectOption, T>
-      graphql={detentionPolicySelectOptionsGraphQL}
+      graphql={
+        defaultEligibleOnly
+          ? defaultDetentionPolicySelectOptionsGraphQL
+          : detentionPolicySelectOptionsGraphQL
+      }
       popoutLink="/detention/configuration-files/detention-policies"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label}

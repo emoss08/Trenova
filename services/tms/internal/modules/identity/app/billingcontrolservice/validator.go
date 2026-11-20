@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -15,7 +17,7 @@ type Validator struct {
 	validator tenantedvalidation.EntityValidator[*billingcontrol.BillingControl]
 }
 
-func NewValidator() *Validator {
+func NewValidator(features platformcatalogports.FeatureGate) *Validator {
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*billingcontrol.BillingControl]().
 			WithModelName("BillingControl").
@@ -23,8 +25,42 @@ func NewValidator() *Validator {
 			WithCustomRule(createInvoiceAutomationRule()).
 			WithCustomRule(createRequirementEnforcementRule()).
 			WithCustomRule(createRateValidationRule()).
+			WithCustomRule(createQueueAutoApproveRule(features)).
 			Build(),
 	}
+}
+
+func createQueueAutoApproveRule(
+	features platformcatalogports.FeatureGate,
+) validationframework.Rule[*billingcontrol.BillingControl] {
+	return validationframework.NewRule[*billingcontrol.BillingControl](
+		"queue_auto_approve",
+	).
+		OnUpdate().
+		WithStage(validationframework.StageBusinessRules).
+		WithValidation(func(
+			ctx context.Context,
+			entity *billingcontrol.BillingControl,
+			_ *validationframework.Context,
+			multiErr *errortypes.MultiError,
+		) error {
+			if entity.QueueAutoApproveMode != billingcontrol.QueueAutoApproveModeWhenAgentAgrees {
+				return nil
+			}
+			onPlan, err := tenantports.QueueReviewOnPlan(ctx, features)
+			if err != nil {
+				return err
+			}
+			if !onPlan {
+				multiErr.Add(
+					"queueAutoApproveMode",
+					errortypes.ErrInvalid,
+					"Your plan does not include Nova's review of the billing queue, so items cannot wait for Nova to agree",
+				)
+			}
+
+			return nil
+		})
 }
 
 func createTransferAutomationRule() validationframework.Rule[*billingcontrol.BillingControl] {

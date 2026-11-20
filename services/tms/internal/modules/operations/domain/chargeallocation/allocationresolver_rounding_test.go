@@ -45,7 +45,7 @@ func TestResolveShares_SubCentAmountRowsMustAddUpInCents(t *testing.T) {
 
 	var typed *errortypes.Error
 	require.True(t, errors.As(err, &typed))
-	assert.Equal(t, "freightAllocations", typed.Field)
+	assert.Equal(t, "freightAllocations", typed.Field())
 	assert.Equal(t, "Amount allocations for this charge must add up to {0}", typed.Message)
 	assert.Equal(t, []any{"0.01"}, typed.Args)
 }

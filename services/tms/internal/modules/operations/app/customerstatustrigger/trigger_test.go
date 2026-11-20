@@ -67,7 +67,10 @@ func TestTrigger_EvaluatesStopAndStatusChangesForNotifyingOrganizations(t *testi
 
 	arrived := event(shipmentevent.TypeMoveArrived, notifying)
 	require.NoError(t, trigger.OnShipmentEvent(t.Context(), arrived))
-	require.NoError(t, trigger.OnShipmentEvent(t.Context(), event(shipmentevent.TypeCommentPosted, notifying)))
+	require.NoError(
+		t,
+		trigger.OnShipmentEvent(t.Context(), event(shipmentevent.TypeCommentPosted, notifying)),
+	)
 
 	assert.Equal(t, []pulid.ID{arrived.ShipmentID}, requester.requested)
 }
@@ -77,7 +80,10 @@ func TestTrigger_SkipsOrganizationsWithoutRules(t *testing.T) {
 	trigger, requester := newTrigger(facts)
 	quiet := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	require.NoError(t, trigger.OnShipmentEvent(t.Context(), event(shipmentevent.TypeMoveDeparted, quiet)))
+	require.NoError(
+		t,
+		trigger.OnShipmentEvent(t.Context(), event(shipmentevent.TypeMoveDeparted, quiet)),
+	)
 	trigger.StopEtasRefreshed(t.Context(), quiet, []pulid.ID{pulid.MustNew("shp_")})
 
 	assert.Empty(t, requester.requested)
@@ -96,7 +102,19 @@ func TestTrigger_EtaRefreshesAskForEachShipment(t *testing.T) {
 func TestTrigger_WhenTheAnswerCannotBeReadItEvaluates(t *testing.T) {
 	trigger, requester := newTrigger(&fakeFacts{err: errors.New("database unavailable")})
 
-	require.NoError(t, trigger.OnShipmentEvent(t.Context(), event(shipmentevent.TypeStatusChanged, notifying)))
+	require.NoError(
+		t,
+		trigger.OnShipmentEvent(t.Context(), event(shipmentevent.TypeStatusChanged, notifying)),
+	)
 
 	assert.Len(t, requester.requested, 1)
+}
+
+func TestEvaluates_StopProgressButNotCorrections(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, Evaluates(shipmentevent.TypeStopArrived))
+	assert.True(t, Evaluates(shipmentevent.TypeStopDeparted))
+	assert.False(t, Evaluates(shipmentevent.TypeStopArrivalCorrected))
+	assert.False(t, Evaluates(shipmentevent.TypeStopDepartureCorrected))
 }

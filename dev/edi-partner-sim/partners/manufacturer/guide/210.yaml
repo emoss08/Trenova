@@ -1,0 +1,97 @@
+set: "210"
+version: "004010"
+group: IM
+title: "Kestrel Valve Works Freight Invoice Guide 2.1"
+
+segments:
+  ST:
+    name: Transaction Set Header
+    elements:
+      - { pos: 1, name: Transaction Set Identifier Code, type: ID, min: 3, max: 3, usage: M, fixed: "210" }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+  B3:
+    name: Beginning Segment for Carrier's Invoice
+    elements:
+      - { pos: 2, name: Invoice Number, type: AN, min: 1, max: 22, usage: M }
+      - { pos: 3, name: Kestrel Load Number, type: AN, min: 10, max: 10, usage: M }
+      - { pos: 4, name: Shipment Method of Payment, type: ID, min: 2, max: 2, usage: M, codes: [PP, TP] }
+      - { pos: 6, name: Invoice Date, type: DT, min: 8, max: 8, usage: M }
+      - { pos: 7, name: Net Amount Due, type: N2, min: 1, max: 12, usage: M }
+      - { pos: 9, name: Delivery Date, type: DT, min: 8, max: 8, usage: O }
+      - { pos: 10, name: Date/Time Qualifier, type: ID, min: 3, max: 3, usage: X, codes: ["035"] }
+      - { pos: 11, name: Standard Carrier Alpha Code, type: ID, min: 2, max: 4, usage: M, fixed: TRNV }
+    syntax: [P0910]
+  N9:
+    name: Reference Identification
+    elements:
+      - { pos: 1, name: Reference Identification Qualifier, type: ID, min: 2, max: 3, usage: M, codes: [BM, PO] }
+      - { pos: 2, name: Reference Identification, type: AN, min: 1, max: 30, usage: M }
+  N1:
+    name: Bill-To Name
+    elements:
+      - { pos: 1, name: Entity Identifier Code, type: ID, min: 2, max: 3, usage: M, codes: [BT] }
+      - { pos: 2, name: Name, type: AN, min: 1, max: 60, usage: M }
+  N3:
+    name: Address Information
+    elements:
+      - { pos: 1, name: Address Information, type: AN, min: 1, max: 55, usage: M }
+      - { pos: 2, name: Address Information, type: AN, min: 1, max: 55, usage: O }
+  N4:
+    name: Geographic Location
+    elements:
+      - { pos: 1, name: City Name, type: AN, min: 2, max: 30, usage: O }
+      - { pos: 2, name: State or Province Code, type: ID, min: 2, max: 2, usage: O }
+      - { pos: 3, name: Postal Code, type: ID, min: 3, max: 15, usage: O }
+      - { pos: 4, name: Country Code, type: ID, min: 2, max: 3, usage: O, codes: [US] }
+  LX:
+    name: Assigned Number
+    elements:
+      - { pos: 1, name: Assigned Number, type: N0, min: 1, max: 6, usage: M }
+  L5:
+    name: Description, Marks and Numbers
+    elements:
+      - { pos: 1, name: Lading Line Item Number, type: N0, min: 1, max: 3, usage: O }
+      - { pos: 2, name: Lading Description, type: AN, min: 1, max: 50, usage: O }
+  L1:
+    name: Rate and Charges
+    elements:
+      - { pos: 1, name: Lading Line Item Number, type: N0, min: 1, max: 3, usage: M }
+      - { pos: 2, name: Freight Rate, type: R, min: 1, max: 9, usage: X }
+      - { pos: 3, name: Rate/Value Qualifier, type: ID, min: 2, max: 2, usage: X, codes: [PM] }
+      - { pos: 4, name: Charge, type: N2, min: 1, max: 12, usage: M }
+      - { pos: 8, name: Special Charge or Allowance Code, type: ID, min: 3, max: 3, usage: O }
+    syntax: [P0203]
+  L3:
+    name: Total Weight and Charges
+    elements:
+      - { pos: 1, name: Weight, type: R, min: 1, max: 10, usage: X }
+      - { pos: 2, name: Weight Qualifier, type: ID, min: 1, max: 2, usage: X, codes: [G] }
+      - { pos: 5, name: Charge, type: N2, min: 1, max: 12, usage: M }
+      - { pos: 12, name: Weight Unit Code, type: ID, min: 1, max: 1, usage: O, codes: [L] }
+    syntax: [P0102]
+  SE:
+    name: Transaction Set Trailer
+    elements:
+      - { pos: 1, name: Number of Included Segments, type: N0, min: 1, max: 10, usage: M }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+
+structure:
+  - { seg: ST, usage: M }
+  - { seg: B3, usage: M }
+  - { seg: N9, usage: O, max: 4 }
+  - loop: "0100"
+    usage: M
+    max: 1
+    body:
+      - { seg: N1, usage: M }
+      - { seg: N3, usage: O }
+      - { seg: N4, usage: O }
+  - loop: "0400"
+    usage: M
+    max: 999
+    body:
+      - { seg: LX, usage: M }
+      - { seg: L5, usage: O }
+      - { seg: L1, usage: M }
+  - { seg: L3, usage: M }
+  - { seg: SE, usage: M }

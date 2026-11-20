@@ -3,6 +3,7 @@ package shipment
 import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/temperaturerange"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -26,6 +27,8 @@ type ShipmentCommodity struct {
 	LengthFeet     *float64 `json:"lengthFeet"     keel:"length_feet"`
 	WidthFeet      *float64 `json:"widthFeet"      keel:"width_feet"`
 	HeightFeet     *float64 `json:"heightFeet"     keel:"height_feet"`
+	TemperatureMin *int16   `json:"temperatureMin" keel:"temperature_min,dimension"`
+	TemperatureMax *int16   `json:"temperatureMax" keel:"temperature_max,dimension"`
 	Version        int64    `json:"version"        keel:"version,version"`
 	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
 	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
@@ -54,6 +57,15 @@ func (sc *ShipmentCommodity) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Commodity ID is required"),
 		),
 	))
+	line := temperaturerange.Of(sc.TemperatureMin, sc.TemperatureMax)
+	line.Validate(multiErr)
+	if sc.Commodity != nil {
+		line.ValidateWithin(
+			temperaturerange.FromDegrees(sc.Commodity.MinTemperature, sc.Commodity.MaxTemperature),
+			sc.Commodity.Name,
+			multiErr,
+		)
+	}
 }
 
 func (sc *ShipmentCommodity) GetID() pulid.ID {

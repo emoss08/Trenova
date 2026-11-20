@@ -8,7 +8,7 @@ related:
 ---
 
 ## What it's for
-Flow instances lists each load, tender and invoice a partner's Lading flow is following: which flow, the partner's key for it, whether it is open, held, escalated or closed, why it waits and its next deadline. A flow holds an instance for a planner when the partner's rules say so (a changed rate, a missing stop), and escalates it when an answer or acknowledgment does not arrive in time.
+Flow instances lists each load, tender and invoice a partner's Lading flow is following: which flow, the partner's key for it, whether it is open, held, escalated or closed, why it waits and its next deadline. A flow holds an instance for a planner when the partner's rules or the flow say so (a changed rate, a missing stop, an invoice that disagrees with the tendered rate), and escalates it when an answer or acknowledgment does not arrive in time. A message about a load the partner was never tendered can be rejected in the acknowledgment instead; it adds no row to Flow instances.
 
 EDI coordinators and planners use it to find tenders waiting on a person and release them once the cause is fixed.
 

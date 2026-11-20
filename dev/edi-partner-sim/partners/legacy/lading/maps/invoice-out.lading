@@ -1,0 +1,52 @@
+map invoiceOut
+  from freightInvoice
+  to   ashgrove.210
+  use  common
+
+B3 {
+  02 <- number
+  03 <- key
+  04 <- payment via payments ?? "PP"
+  06 <- date
+  07 <- total
+  11 <- org.scac
+}
+N9 when exists bol { 01 <- "BM", 02 <- bol }
+
+// Ashgrove's payables screen holds one charge: the invoice goes out as one line for the total.
+0400 {
+  LX { 01 <- 1 }
+  L5 { 01 <- 1, 02 <- "FREIGHT CHARGES" }
+  L1 { 01 <- 1, 04 <- total }
+}
+
+L3 { 05 <- total }
+
+test "an invoice of several lines goes out as one total" {
+  given freightInvoice {
+    number: "INV-5001"
+    date: @2026-02-16
+    key: "1000037"
+    bol: "646458"
+    total: $1_493.75
+    lines: [
+      { sequence: 1, description: "Linehaul", amount: $1_418.75 },
+      { sequence: 2, code: "SOC", description: "Stop-off", amount: $50.00 },
+      { sequence: 3, code: "FUE", description: "Fuel", amount: $25.00 }
+    ]
+  }
+  expect x12 == "ST*210*0001~B3**INV-5001*1000037*PP**20260216*149375****TRNV~N9*BM*646458~LX*1~L5*1*FREIGHT CHARGES~L1*1***149375~L3*****149375~SE*8*0001~"
+}
+
+test "a collect load is billed collect, as Ashgrove tendered it" {
+  given freightInvoice {
+    number: "INV-5002"
+    date: @2026-02-16
+    key: "1000038"
+    bol: "646459"
+    payment: Collect
+    total: $900.00
+    lines: [{ sequence: 1, code: "400", description: "Linehaul", amount: $900.00 }]
+  }
+  expect x12 contains "B3**INV-5002*1000038*CC**20260216*90000"
+}

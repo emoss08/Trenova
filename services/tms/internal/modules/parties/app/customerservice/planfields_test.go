@@ -71,7 +71,7 @@ func TestPlanUpdate_ABaseOnlyUpdateKeepsTheStoredAddOnSettings(t *testing.T) {
 	deps.svc.planFields = onPlan(plantest.BaseOnly())
 	stored := storedCustomer(newTestEntity())
 	entity := sentBack(stored)
-	deps.transformer.On("TransformCustomer", mock.Anything, entity).Return(nil)
+	deps.formatter.On("Format", mock.Anything, entity).Return(nil)
 	deps.repo.EXPECT().GetByID(
 		mock.Anything,
 		mock.MatchedBy(func(req customerports.GetCustomerByIDRequest) bool {
@@ -107,7 +107,7 @@ func TestPlanUpdate_WithTheAddOnsTheUpdateWritesTheSentSettings(t *testing.T) {
 	stored := storedCustomer(newTestEntity())
 	entity := sentBack(stored)
 	entity.BillingProfile.CreditStatus = customer.CreditStatusActive
-	deps.transformer.On("TransformCustomer", mock.Anything, entity).Return(nil)
+	deps.formatter.On("Format", mock.Anything, entity).Return(nil)
 	deps.repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(stored, nil)
 
 	change, err := deps.svc.PlanUpdate(t.Context(), entity)
@@ -138,7 +138,7 @@ func TestPlanCreate_ABaseOnlyCreateTakesTheBillingProfileDefaults(t *testing.T) 
 	entity.BillingProfile.CreditStatus = customer.CreditStatusHold
 	entity.BillingProfile.FactoringCompanyID = &factor
 	entity.BillingProfile.SendStatements = false
-	deps.transformer.On("TransformCustomer", mock.Anything, entity).Return(nil)
+	deps.formatter.On("Format", mock.Anything, entity).Return(nil)
 
 	planned, err := deps.svc.PlanCreate(t.Context(), entity)
 	require.NoError(t, err)

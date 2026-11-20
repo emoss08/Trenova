@@ -209,9 +209,9 @@ func acmeValues() []ediconnectiondraftports.DraftValueInput {
 			ediconnectionfield.SetField(
 				edidocument.TransactionSet990,
 				edidocument.DocumentDirectionOutbound,
-				ediconnectionfield.SetAttrAckWindowMinutes,
+				ediconnectionfield.SetAttrAckWindow,
 			),
-			"240",
+			"4 hours",
 			4,
 			"Acme expects a 997 Functional Acknowledgment for every 990, 214 and 210 within 4 hours.",
 		),
@@ -434,10 +434,10 @@ func TestPlan_DraftsAWholeNewConnectionFromTheSpec(t *testing.T) {
 		ediconnectionfield.SetField(
 			edidocument.TransactionSet990,
 			edidocument.DocumentDirectionOutbound,
-			ediconnectionfield.SetAttrAckWindowMinutes,
+			ediconnectionfield.SetAttrAckWindow,
 		),
 	)
-	assert.Equal(t, "240", window.Value, "4 hours")
+	assert.Equal(t, "4 hours", window.Value)
 
 	require.NotNil(t, draft.Transport)
 	assert.Equal(t, ediconnectiondraftports.ChangeKindAdd, draft.Transport.Change)
@@ -825,18 +825,18 @@ func acmeVersion(t *testing.T, projectID pulid.ID) *ladingproject.LadingVersion 
 	t.Helper()
 	client := lading.Default()
 	starter, err := client.Starter(t.Context(), &lading.StarterRequest{
-		Name:        "ACMERETAIL",
-		Label:       "Acme Retail Group",
-		Role:        lading.RoleCarrier,
-		Zone:        "America/Chicago",
-		Version:     "004010",
-		Them:        &[2]string{"01", "007912345"},
-		Us:          &[2]string{"02", "TRNV"},
-		Group:       &[2]string{"ACMERETAIL", "TRNV"},
-		Usage:       ediconnectionfield.ValueTest,
-		Acknowledge: "997",
-		AckWithin:   240,
-		Sets:        []string{"204", "214"},
+		Name:             "ACMERETAIL",
+		Label:            "Acme Retail Group",
+		Role:             lading.RoleCarrier,
+		Zone:             "America/Chicago",
+		Version:          "004010",
+		Them:             &[2]string{"01", "007912345"},
+		Us:               &[2]string{"02", "TRNV"},
+		Group:            &[2]string{"ACMERETAIL", "TRNV"},
+		Usage:            ediconnectionfield.ValueTest,
+		Acknowledge:      "997",
+		AckWithinSeconds: 4 * 60 * 60,
+		Sets:             []string{"204", "214"},
 	})
 	require.NoError(t, err)
 	encoded, err := lading.Encode(

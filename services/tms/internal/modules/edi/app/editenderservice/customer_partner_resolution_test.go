@@ -223,6 +223,7 @@ func TestService_SubmitLoadTenderResolvesPartnerFromShipmentCustomer(t *testing.
 		profileRepo:    profileRepo,
 		transferRepo:   transferRepo,
 		shipmentSvc:    shipmentSvc,
+		payload:        edipayloadbuild.New(edipayloadbuild.Params{ShipmentSvc: shipmentSvc}),
 		tenderMapping: editendermapping.New(editendermapping.Params{
 			MappingProfileRepo: mappingProfileRepo,
 		}),
@@ -310,6 +311,7 @@ func TestService_SubmitLoadTenderFailsWhenCustomerHasNoPartner(t *testing.T) {
 		l:           zap.NewNop(),
 		partnerRepo: partnerRepo,
 		shipmentSvc: shipmentSvc,
+		payload:     edipayloadbuild.New(edipayloadbuild.Params{ShipmentSvc: shipmentSvc}),
 		outbound: edioutbound.New(edioutbound.Params{
 			Logger:      zap.NewNop(),
 			PartnerRepo: partnerRepo,

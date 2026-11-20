@@ -1,6 +1,5 @@
+import { SettingsPage } from "@/components/settings/settings-page";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
 import { CarrierSettlementControlSkeleton } from "./skeleton";
 
@@ -12,17 +11,12 @@ export function CarrierSettlementControlPage() {
   const t = useT();
 
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: t("Carrier settlement control"),
-        description: t(
-          "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts",
-        ),
-      }}
+    <SettingsPage
+      title={t("Carrier settlement control")}
+      description={t("When carriers are paid, how their invoices are matched, and where pay posts")}
+      skeleton={<CarrierSettlementControlSkeleton />}
     >
-      <LazyComponent fallback={<CarrierSettlementControlSkeleton />}>
-        <CarrierSettlementControlForm />
-      </LazyComponent>
-    </PageLayout>
+      <CarrierSettlementControlForm />
+    </SettingsPage>
   );
 }

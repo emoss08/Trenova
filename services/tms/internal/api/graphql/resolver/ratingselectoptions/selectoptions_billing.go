@@ -177,7 +177,8 @@ func (r *Sources) DetentionPolicy(
 	result, err := r.DetentionPolicyService.SelectOptions(
 		ctx,
 		&detentionports.DetentionPolicySelectOptionsRequest{
-			SelectQueryRequest: req.SelectQuery,
+			SelectQueryRequest:  req.SelectQuery,
+			DefaultEligibleOnly: selectoption.BoolFilter(req.Filters, "defaultEligibleOnly"),
 		},
 	)
 	if err != nil {

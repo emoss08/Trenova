@@ -1,0 +1,8 @@
+name: a tender no one answers escalates after two hours
+steps:
+  - send: { set: "204", as: t1 }
+  - expect: { ack: t1 }
+  - expect: { flow: t1, status: Open }
+  - advance: { about: t1, by: 2h }
+  - expect: { flow: t1, status: Escalated, why: needs an answer }
+  - expect: { wire: "990", about: t1, none: true, within: 30s }

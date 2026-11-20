@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/temperaturerange"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,6 +29,8 @@ type Stop struct {
 	Sequence               int64                          `json:"sequence"               keel:"sequence,dimension"`
 	Pieces                 *int64                         `json:"pieces"                 keel:"pieces,format=count"`
 	Weight                 *int64                         `json:"weight"                 keel:"weight,format=weight"`
+	TemperatureMin         *int16                         `json:"temperatureMin"         keel:"temperature_min,dimension"`
+	TemperatureMax         *int16                         `json:"temperatureMax"         keel:"temperature_max,dimension"`
 	ScheduledWindowStart   int64                          `json:"scheduledWindowStart"   keel:"scheduled_window_start,type=epoch"`
 	ScheduledWindowEnd     *int64                         `json:"scheduledWindowEnd"     keel:"scheduled_window_end,type=epoch"`
 	ActualArrival          *int64                         `json:"actualArrival"          keel:"actual_arrival,type=epoch"`
@@ -176,6 +179,7 @@ func (s *Stop) Validate(multiErr *errortypes.MultiError) {
 				Error("Address line cannot be longer than 200 characters"),
 		),
 	))
+	temperaturerange.Of(s.TemperatureMin, s.TemperatureMax).Validate(multiErr)
 }
 
 func (Stop) Constraints() []keel.Constraint {

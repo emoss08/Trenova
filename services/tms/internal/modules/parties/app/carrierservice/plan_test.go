@@ -1,10 +1,14 @@
 package carrierservice
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dataentrycontrolportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,6 +28,49 @@ func TestPlanCreate_RefusesWhatCreateRefusesAndWritesNothing(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	deps.repo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestPlanCreate_FormatsTheCarrierWithTheTenantsSettings(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTest(t)
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
+	deps.svc.formatter = formatter
+	entity := newCreateEntity()
+	formatter.EXPECT().
+		Format(mock.Anything, entity).
+		Run(func(_ context.Context, target dataentrycontrol.TextFormattable) {
+			target.ApplyTextFormat(dataentrycontrol.TextFormat{
+				CodeCase: dataentrycontrol.CaseFormatUpper,
+				NameCase: dataentrycontrol.CaseFormatUpper,
+			})
+		}).
+		Return(nil).
+		Once()
+	entity.Code = "swft 01"
+	entity.Name = "swift transport"
+
+	planned, err := deps.svc.PlanCreate(t.Context(), entity)
+
+	require.NoError(t, err)
+	assert.Equal(t, "SWFT01", planned.Code)
+	assert.Equal(t, "SWIFT TRANSPORT", planned.Name)
+}
+
+func TestPlanCreate_StopsWhenFormattingFails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTest(t)
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
+	deps.svc.formatter = formatter
+	entity := newCreateEntity()
+	formatErr := errors.New("format failed")
+	formatter.EXPECT().Format(mock.Anything, entity).Return(formatErr).Once()
+
+	planned, err := deps.svc.PlanCreate(t.Context(), entity)
+
+	require.ErrorIs(t, err, formatErr)
+	assert.Nil(t, planned)
 }
 
 func TestPlanUpdate_ReturnsTheStoredCarrierBesideTheChange(t *testing.T) {
@@ -51,13 +98,19 @@ func TestPlanBulkUpdateStatus_RefusesACarrierThatIsNotHere(t *testing.T) {
 		[]*carrier.Carrier{entity}, nil,
 	)
 
-	_, err := deps.svc.PlanBulkUpdateStatus(t.Context(), &carrierports.BulkUpdateCarrierStatusRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		CarrierIDs: []pulid.ID{entity.ID, pulid.MustNew("car_")},
-		Status:     carrier.StatusInactive,
-	})
+	_, err := deps.svc.PlanBulkUpdateStatus(
+		t.Context(),
+		&carrierports.BulkUpdateCarrierStatusRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			CarrierIDs: []pulid.ID{entity.ID, pulid.MustNew("car_")},
+			Status:     carrier.StatusInactive,
+		},
+	)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "carrierIds", multiErr.Errors[0].Field)
+	assert.Equal(t, "carrierIds", multiErr.Errors[0].Field())
 	deps.repo.AssertNotCalled(t, "BulkUpdateStatus", mock.Anything, mock.Anything)
 }

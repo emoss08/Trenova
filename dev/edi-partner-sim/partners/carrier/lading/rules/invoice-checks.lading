@@ -1,0 +1,20 @@
+rules invoiceChecks for invoiceIn
+  use common
+
+/// An invoice whose lines don't add up to what it asks for is checked by a person.
+rule "the lines add up to the total" {
+  let billed = lines.sum(l => l.amount)
+  require billed == total
+    else hold "Quarrystone invoice {number} lines add to {billed}, not its total {total}"
+}
+
+test "an invoice for the tendered rate passes" {
+  given file "samples/invoice-matching.x12"
+  expect no holds
+  expect no rejects
+}
+
+test "an invoice whose lines do not add up is held" {
+  given file "samples/invoice-misfooted.x12"
+  expect held "Quarrystone invoice QYF6203622 lines add to"
+}

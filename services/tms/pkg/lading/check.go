@@ -2,6 +2,7 @@ package lading
 
 import (
 	"github.com/emoss08/trenova/pkg/wasmmodule"
+	"github.com/emoss08/trenova/pkg/x12"
 	"github.com/emoss08/trenova/shared/jsonutils"
 )
 
@@ -55,12 +56,13 @@ type GroupCodes struct {
 }
 
 type Interchange struct {
-	Them       *Party      `json:"them"`
-	Us         *Party      `json:"us"`
-	Group      *GroupCodes `json:"group"`
-	Version    string      `json:"version"`
-	Usage      string      `json:"usage"`
-	Separators []string    `json:"separators"`
+	Them       *Party         `json:"them"`
+	Us         *Party         `json:"us"`
+	Group      *GroupCodes    `json:"group"`
+	Version    string         `json:"version"`
+	Usage      string         `json:"usage"`
+	Separators []string       `json:"separators"`
+	LineEnding x12.LineEnding `json:"lineEnding"`
 }
 
 type Setting struct {

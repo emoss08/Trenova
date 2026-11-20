@@ -101,9 +101,12 @@ func employmentVerificationUpdateRequest(
 		DocumentID:                    documentID,
 		UserID:                        userID,
 	}
-	if input.AccidentCount != nil {
-		count := int32(*input.AccidentCount)
-		req.AccidentCount = &count
+	if err = gqlscalar.ApplyIntPtr(
+		"accidentCount",
+		input.AccidentCount,
+		&req.AccidentCount,
+	); err != nil {
+		return nil, err
 	}
 
 	return req, nil

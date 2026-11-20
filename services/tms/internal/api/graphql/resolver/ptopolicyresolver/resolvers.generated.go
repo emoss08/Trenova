@@ -5,15 +5,17 @@ package ptopolicyresolver
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	ptoledgerservice "github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	ptopolicyservice "github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	PtoPolicyService *ptopolicyservice.Service
-	PtoLedgerService *ptoledgerservice.Service
-	WorkflowStarter  kernelports.WorkflowStarter
+	OrganizationService tenantports.OrganizationService
+	PtoPolicyService    *ptopolicyservice.Service
+	PtoLedgerService    *ptoledgerservice.Service
+	WorkflowStarter     kernelports.WorkflowStarter
 }
 
 type MutationResolver struct{ *Deps }

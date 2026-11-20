@@ -63,6 +63,7 @@ type ActivitiesParams struct {
 	DrugAlcoholRepo workerdotports.WorkerDrugAlcoholRepository
 	DrugAlcohol     *workerdrugalcoholservice.Service
 	DashControlRepo tenantports.DashControlRepository
+	Organizations   tenantports.OrganizationRepository
 	Notifications   *notificationservice.Service
 	DriverNotify    *drivernotificationservice.Service
 	// Watchtower puts a driver whose papers are running out on the feed.
@@ -83,6 +84,7 @@ type Activities struct {
 	safety          *workersafetyservice.Service
 	drugAlcohol     *workerdrugalcoholservice.Service
 	dashControlRepo tenantports.DashControlRepository
+	organizations   tenantports.OrganizationReader
 	notifications   *notificationservice.Service
 	driverNotify    *drivernotificationservice.Service
 	watchtower      watchtowerports.WatchtowerProjector
@@ -101,6 +103,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		safety:          p.Safety,
 		drugAlcohol:     p.DrugAlcohol,
 		dashControlRepo: p.DashControlRepo,
+		organizations:   p.Organizations,
 		notifications:   p.Notifications,
 		driverNotify:    p.DriverNotify,
 		watchtower:      p.Watchtower,

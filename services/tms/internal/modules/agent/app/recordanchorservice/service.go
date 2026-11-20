@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -74,7 +73,7 @@ type kindReader func(ctx context.Context, read *kindRead) (map[pulid.ID]*agenttu
 
 type Service struct {
 	logger      *zap.Logger
-	orgs        orgzone.OrganizationReader
+	orgs        tenantports.OrganizationReader
 	permissions permissionports.PermissionEngine
 	readers     map[recordkind.Kind]kindReader
 	now         func() int64
@@ -180,7 +179,7 @@ func (s *Service) timezone(ctx context.Context, req *recordanchorports.RecordAnc
 	if req.Timezone != "" {
 		return req.Timezone
 	}
-	zone, err := orgzone.Location(ctx, s.orgs, req.TenantInfo)
+	zone, err := tenantports.OrganizationLocation(ctx, s.orgs, req.TenantInfo)
 	if err != nil {
 		s.logger.Debug("records in play are read in UTC", zap.Error(err))
 		return ""

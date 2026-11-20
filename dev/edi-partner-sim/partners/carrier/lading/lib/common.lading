@@ -1,0 +1,55 @@
+library common
+
+/// Quarrystone's SCAC: every tender names it and every answer, status and invoice quotes it.
+const carrierScac = "QYSF"
+
+crosswalk stopTypes: Code<S502> <-> StopType {
+  "LD" <-> Pickup
+  "UL" <-> Delivery
+}
+
+crosswalk purposes: Code<B2A01> <-> TenderPurpose {
+  "00" <-> Original
+  "01" <-> Cancel
+  "04" <-> Change
+  "04" <- Replace
+}
+
+crosswalk payments: Code<B206> <-> Payment {
+  "PP" <-> Prepaid
+  "CC" <-> Collect
+  "TP" <-> ThirdParty
+}
+
+crosswalk decisions: Code<B104> <-> Decision {
+  "A" <-> Accept
+  "D" <-> Decline
+}
+
+// Quarrystone reports five statuses; anything else it might send reads as an exception.
+crosswalk statusCodes: Code<AT701> <-> EventKind {
+  "X3" -> ArrivedPickup
+  "AF" -> DepartedPickup
+  "X1" -> ArrivedDelivery
+  "D1" -> Delivered
+  "SD" -> Delayed
+  else -> Exception
+}
+
+// Quarrystone's equipment codes against Trenova's: read right to left with `via equipment.back`.
+crosswalk equipment: Text <-> Text {
+  "TF" <-> "VAN"
+  "RT" <-> "REEFER"
+  "FT" <-> "FLATBED"
+}
+
+test "equipment reads both ways" {
+  expect "VAN" via equipment.back == "TF"
+  expect "RT" via equipment == "REEFER"
+  expect "TANKER" via equipment.back == none
+}
+
+test "an unknown status reads as an exception" {
+  expect "X6" via statusCodes == Exception
+  expect "SD" via statusCodes == Delayed
+}

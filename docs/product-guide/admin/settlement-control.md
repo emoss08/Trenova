@@ -10,52 +10,63 @@ related:
 
 ## What it's for
 Settlement control holds the organization's rules for driver settlements. The page is one settings
-form in four cards: **Pay period** (how often drivers are settled and when pay accrues), **Workflow
-automation** (automatic batches, approval and posting), **Exception detection** (flagging
-settlements that differ from a driver's recent history) and **Escrow interest** (interest on
-owner-operator escrow).
+form, saved once, in three tabs: **Pay period** (when each period ends, when it is paid and when a
+move's pay counts toward it), **Review & approval** (which settlements are flagged for review and
+what approving one does) and **Advances & escrow** (how pay advances are recovered and the interest
+owner-operators earn on escrow).
 
 Payroll and settlement managers use it to set the settlement cycle and decide how much of it runs
 without manual review.
 
 ## Tasks
 
-### Set the pay period and pay trigger
-Keywords: weekly pay, biweekly, pay date, pay on delivery
+### Set the pay period and when pay is earned
+Keywords: weekly pay, biweekly, pay date, pay on delivery, pay trigger
 1. Open [Settlement control](/admin/settlement-control).
-2. In **Pay period**, choose the **Frequency** (**Weekly**, **Biweekly** or **Monthly**) and the
-   **Period end day**.
-3. Enter the **Pay Delay (days)** between the period end and the pay date.
-4. Choose the **Pay trigger**, the milestone at which driver pay accrues: **Move completed**,
-   **Shipment delivered**, **POD received (ready to invoice)** or **Shipment invoiced**.
-5. Select **Save changes**.
-
-### Automate settlement batches and approval
-Keywords: auto approve, auto post, auto batch, carry forward
-1. Open [Settlement control](/admin/settlement-control).
-2. In **Workflow automation**, turn on the steps to automate: **Auto-generate batches**,
-   **Auto-approve clean settlements**, **Auto-attach new pay to open drafts** and **Auto-post on
-   approval**.
-3. Turn on **Allow negative net (carry forward)** to carry a negative balance to the next
-   settlement instead of capping deductions.
-4. Select **Save changes**.
+2. On **Pay period**, under **Schedule**, choose the **Pay period** (**Weekly**, **Biweekly** or
+   **Monthly**) and the **Last day of the period**.
+3. Enter the **Pay delay**, the days between the end of a period and its pay date (0 to 30).
+   A period ends at midnight in your organization's time zone on its last day.
+4. Turn on **Generate settlements when a period ends** to have each period's settlement batch
+   drafted without anyone starting it.
+5. Under **Earning pay**, choose when **Pay is earned**: **Move completed**, **Shipment
+   delivered**, **POD received (ready to invoice)** or **Shipment invoiced**.
+6. Turn on **Add new pay to open drafts** so pay a driver earns after their draft settlement was
+   made joins it.
+7. Select **Save changes**.
 
 ### Flag unusual settlements
 Keywords: variance, exception, pay anomaly
-1. Open [Settlement control](/admin/settlement-control).
-2. In **Exception detection**, set the **Variance threshold** percentage and the **Lookback
-   (settlements)** count used for the driver's trailing average.
-3. Select **Save changes**.
+1. Open [Settlement control](/admin/settlement-control) and select **Review & approval**.
+2. Under **Exceptions**, set **Flag a change in net pay over**, the percentage a settlement's net
+   pay may move from the driver's average before it is flagged, up to 999.9999. Enter 0 to stop
+   flagging.
+3. While the check is on, set **Average over**, how many of the driver's previous settlements make
+   up the average (1 to 52).
+4. Select **Save changes**.
 
-### Set escrow interest
-Keywords: escrow, owner operator, 376.12
-1. Open [Settlement control](/admin/settlement-control).
-2. In **Escrow interest**, enter the **Default annual interest rate** and the **Accrual Frequency
-   (months)** (1 to 3).
-3. Select **Save changes**.
+### Automate approval and posting
+Keywords: auto approve, auto post, separate approver
+1. Open [Settlement control](/admin/settlement-control) and select **Review & approval**.
+2. Under **Approval**, turn on **Approve clean settlements automatically** to approve settlements
+   with no exceptions without review.
+3. Turn **Require a separate approver** off if one person both submits and approves settlements.
+4. Turn on **Post to the ledger on approval** to post a settlement to the general ledger as it is
+   approved.
+5. Select **Save changes**.
+
+### Recover advances and set escrow interest
+Keywords: escrow, owner operator, 376.12, carry forward, advance recovery
+1. Open [Settlement control](/admin/settlement-control) and select **Advances & escrow**.
+2. Turn on **Recover advances in full** to take an advance in full even when it is more than a
+   settlement's net pay, carrying the shortfall to the next settlement. Off, recovery stops at zero
+   net pay.
+3. Under **Escrow interest**, enter the **Yearly interest rate** new escrow accounts start with,
+   and choose how often to **Pay interest**: **Monthly**, **Every two months** or **Quarterly**.
+4. Select **Save changes**.
 
 ## Notes
 The page is only available to organizations with asset operations turned on. Opening it needs read
-access to settlement control; saving needs update access. The default interest rate applies to new
-escrow accounts unless an account overrides it; see
-[Escrow accounts](/payroll/escrow-accounts).
+access to settlement control; saving needs update access. A save the server refuses opens the tab
+holding the setting to fix. The yearly interest rate applies to new escrow accounts unless an
+account sets its own; see [Escrow accounts](/payroll/escrow-accounts).

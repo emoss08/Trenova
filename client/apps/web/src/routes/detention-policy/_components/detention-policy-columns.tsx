@@ -40,11 +40,11 @@ export function getColumns(t: TranslateFn): ColumnDef<DetentionPolicyRow>[] {
       accessorKey: "name",
       header: t("Name"),
       cell: ({ row }) => (
-        <div className="flex items-center gap-1.5">
-          <span className="font-medium">{row.original.name}</span>
-          {row.original.isOrgDefault && (
-            <Badge variant="neutral" appearance="outline" className="text-2xs">
-              {t("Org default")}
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate font-medium">{row.original.name}</span>
+          {row.original.isOrganizationDefault && (
+            <Badge variant="brand" dot>
+              {t("Organization default")}
             </Badge>
           )}
         </div>

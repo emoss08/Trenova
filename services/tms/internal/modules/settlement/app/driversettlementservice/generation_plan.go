@@ -2,8 +2,10 @@ package driversettlementservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
@@ -14,13 +16,22 @@ import (
 
 func ResolveBatchBounds(
 	control *settlementcontrol.SettlementControl,
+	loc *time.Location,
 	periodStart, periodEnd, now int64,
 ) (PeriodBounds, error) {
 	return settlementshared.ResolveRequestedPeriod(settlementshared.PeriodSchedule{
 		Frequency:    control.PayPeriodFrequency,
 		EndDayOfWeek: control.PeriodEndDayOfWeek,
 		PayDelayDays: control.PayDelayDays,
+		Location:     loc,
 	}, periodStart, periodEnd, now)
+}
+
+func (s *Service) Location(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*time.Location, error) {
+	return tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
 }
 
 func (s *Service) CurrentPeriod(
@@ -31,7 +42,11 @@ func (s *Service) CurrentPeriod(
 	if err != nil {
 		return PeriodBounds{}, err
 	}
-	return ResolveCurrentPeriod(control, timeutils.NowUnix()), nil
+	loc, err := s.Location(ctx, tenantInfo)
+	if err != nil {
+		return PeriodBounds{}, err
+	}
+	return ResolveCurrentPeriod(control, loc, timeutils.NowUnix()), nil
 }
 
 func (s *Service) openBatchForPeriod(
@@ -150,9 +165,15 @@ func (s *Service) PlanBatch(ctx context.Context, req *GenerateBatchRequest) (*Ba
 		return nil, err
 	}
 
+	loc, err := s.Location(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	plan := &BatchPlan{AutoApprove: control.AutoApproveClean}
 	plan.Bounds, plan.Refusal = ResolveBatchBounds(
 		control,
+		loc,
 		req.PeriodStart,
 		req.PeriodEnd,
 		timeutils.NowUnix(),

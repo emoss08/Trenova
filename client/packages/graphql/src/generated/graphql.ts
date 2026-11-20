@@ -3005,6 +3005,17 @@ export type CostingControlInput = {
 };
 
 /**
+ * One save of the cost model: the control's settings when they changed and each category that
+ * changed, written together or not at all. A refusal names a category by its place in
+ * `categories`.
+ */
+export type CostingControlSaveInput = {
+  categories: Array<CostCategoryUpdateInput>;
+  /** Null leaves the control's settings as they are. */
+  control?: CostingControlInput | null | undefined;
+};
+
+/**
  * Who the cover extends to. It is on the enrollment rather than the plan because
  * the same plan costs different amounts depending on how many people it covers.
  */
@@ -4000,7 +4011,6 @@ export type DetentionPolicyInput = {
   description?: string | null | undefined;
   effectiveEndDate?: number | null | undefined;
   effectiveStartDate?: number | null | undefined;
-  isOrgDefault?: boolean | null | undefined;
   lateArrivalGraceMinutes?: number | null | undefined;
   lateArrivalRule?: DetentionLateArrivalRule | null | undefined;
   layoverAccessorialChargeId?: string | number | null | undefined;
@@ -4667,6 +4677,19 @@ export type EtaVerdict =
   | 'Late'
   | 'OnTime'
   | 'Unknown';
+
+/** A customer's ledger over a window, to export as a report with its running balance. */
+export type ExportCustomerLedgerInput = {
+  customerId: string | number;
+  /** The last instant exported. Empty is the moment of the export. */
+  endDate?: number | null | undefined;
+  /** csv, xlsx or pdf. */
+  format: string;
+  /** The report's name in the person's reports. */
+  name: string;
+  /** The first day exported; the balance starts from what the customer owed before it. Empty starts at the first entry. */
+  startDate?: number | null | undefined;
+};
 
 export type ExportTableViewInput = {
   /** csv, xlsx or pdf. */
@@ -8338,6 +8361,8 @@ export type ShipmentCommodityInput = {
   lengthFeet?: number | null | undefined;
   pieces?: number | null | undefined;
   shipmentId?: string | number | null | undefined;
+  temperatureMax?: number | null | undefined;
+  temperatureMin?: number | null | undefined;
   version?: number | null | undefined;
   weight?: number | null | undefined;
   widthFeet?: number | null | undefined;
@@ -8391,7 +8416,10 @@ export type ShipmentEventType =
   | 'ShipmentUncanceled'
   | 'ShipmentUpdated'
   | 'StatusChanged'
-  | 'StopCompleted'
+  | 'StopArrivalCorrected'
+  | 'StopArrived'
+  | 'StopDeparted'
+  | 'StopDepartureCorrected'
   | 'TenderAccepted'
   | 'TenderBounced'
   | 'TenderCounterDecided'
@@ -8470,6 +8498,7 @@ export type ShipmentInput = {
   /** The values the tariff prices with, by input name, as Tariff wire values. Omitted inputs take the template's defaults. */
   tariffInputs?: unknown;
   temperatureMax?: number | null | undefined;
+  /** Taken as given only when no stop or commodity has a range; otherwise the load's range is derived from theirs. */
   temperatureMin?: number | null | undefined;
   tenderStatus?: ShipmentTenderStatus | null | undefined;
   totalChargeAmount?: string | null | undefined;
@@ -8586,6 +8615,8 @@ export type ShipmentStopInput = {
   sequence?: number | null | undefined;
   shipmentMoveId?: string | number | null | undefined;
   status?: StopStatus | null | undefined;
+  temperatureMax?: number | null | undefined;
+  temperatureMin?: number | null | undefined;
   type?: StopType | null | undefined;
   version?: number | null | undefined;
   weight?: number | null | undefined;
@@ -9322,8 +9353,7 @@ export type UpdateCarrierSettlementControlInput = {
   autoPostOnApprove: boolean;
   defaultApAccountId?: string | number | null | undefined;
   defaultPurchasedTransportationAccountId?: string | number | null | undefined;
-  /** Omitted leaves the current setting as it is. */
-  holdUntilInvoiceMatched?: boolean | null | undefined;
+  holdUntilInvoiceMatched: boolean;
   payDelayDays: number;
   payPeriodFrequency: PayPeriodFrequency;
   payTrigger: SettlementPayTrigger;
@@ -9362,8 +9392,8 @@ export type UpdateDashControlInput = {
   allowSettlementDisputes: boolean;
   allowStopActions: boolean;
   detentionAlertThresholdMinutes: number;
-  driverDigestCadence?: DriverDigestCadence | null | undefined;
-  driverDigestWeekday?: number | null | undefined;
+  driverDigestCadence: DriverDigestCadence;
+  driverDigestWeekday: number;
   enableDetentionAlerts: boolean;
   requireContactChangeApproval: boolean;
   requireExpenseReceipt: boolean;
@@ -9484,6 +9514,8 @@ export type UpdateLeaveControlInput = {
   entitlementWeeks?: string | null | undefined;
   measurementMethod?: LeaveMeasurementMethod | null | undefined;
   militaryCaregiverWeeks?: string | null | undefined;
+  /** The version read; a save over a newer one is refused. */
+  version: number;
   workweekHours?: string | null | undefined;
 };
 
@@ -10914,10 +10946,14 @@ export type ArOpenItemsQuery = { arOpenItems: Array<{ invoiceId: string, custome
 
 export type ArCustomerLedgerQueryVariables = Exact<{
   customerId: string | number;
+  startDate?: number | null | undefined;
+  endDate?: number | null | undefined;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
 }>;
 
 
-export type ArCustomerLedgerQuery = { arCustomerLedger: Array<{ customerId: string, transactionDate: number, eventType: string, documentNumber: string, sourceObjectType: string, sourceObjectId: string, amountMinor: number, relatedInvoiceId: string | null }> };
+export type ArCustomerLedgerQuery = { arCustomerLedger: { openingBalanceMinor: number, hasNextPage: boolean, endCursor: string | null, entries: Array<{ customerId: string, transactionDate: number, eventType: string, documentNumber: string, sourceObjectType: string, sourceObjectId: string, amountMinor: number, relatedInvoiceId: string | null, runningBalanceMinor: number }> } };
 
 export type ArCustomerStatementQueryVariables = Exact<{
   customerId: string | number;
@@ -13683,19 +13719,12 @@ export type ResolvedCostProfilePageQueryVariables = Exact<{
 
 export type ResolvedCostProfilePageQuery = { resolvedCostProfile: { totalCpm: string, variableCpm: string, fixedCpm: string, targetMarginPercent: string | null, includeDeadheadMiles: boolean, asOfDate: string, fuel: { pricePerGallon: string | null, priceDate: string, fuelIndexId: string | null, milesPerGallon: string, source: EffectiveRateSource } | null, categories: Array<{ category: CostCategoryType, name: string, costBehavior: CostBehavior, ratePerMile: string, effectiveSource: EffectiveRateSource }>, glWindow: { fromDate: number, toDate: number, fleetMiles: number, hasPostings: boolean } | null } };
 
-export type UpdateCostingControlMutationVariables = Exact<{
-  input: CostingControlInput;
+export type SaveCostingControlMutationVariables = Exact<{
+  input: CostingControlSaveInput;
 }>;
 
 
-export type UpdateCostingControlMutation = { updateCostingControl: { id: string, version: number } };
-
-export type UpdateCostCategoryMutationVariables = Exact<{
-  input: CostCategoryUpdateInput;
-}>;
-
-
-export type UpdateCostCategoryMutation = { updateCostCategory: { id: string, version: number } };
+export type SaveCostingControlMutation = { saveCostingControl: { id: string, version: number } };
 
 export type CustomFieldFormFieldsQueryVariables = Exact<{
   resourceType: string;
@@ -13981,7 +14010,7 @@ export type SendDetentionNoticeMutation = { sendDetentionNotice: { ' $fragmentRe
 
 export type DetentionPolicyTierFieldsFragment = { id: string | null, fromMinute: number, toMinute: number | null, rate: string, rateUnit: DetentionTierRateUnit, label: string, sortOrder: number } & { ' $fragmentName'?: 'DetentionPolicyTierFieldsFragment' };
 
-export type DetentionPolicyRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, code: string, description: string, status: DetentionPolicyStatus, isOrgDefault: boolean, priority: number, specificityScore: number, customerId: string | null, locationId: string | null, shipmentTypeIds: Array<string>, serviceTypeIds: Array<string>, commodityIds: Array<string>, stopTypes: Array<StopType>, appointmentStopsOnly: boolean, effectiveStartDate: number | null, effectiveEndDate: number | null, clockStartBasis: DetentionClockStartBasis, lateArrivalRule: DetentionLateArrivalRule, lateArrivalGraceMinutes: number, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, payFreeMinutes: number | null, minimumBillableMinutes: number, billingIncrementMinutes: number, roundingMode: DetentionRoundingMode, rateSource: DetentionRateSource, accessorialChargeId: string, maxBillableMinutesPerStop: number | null, maxChargePerStop: string | null, maxChargePerDay: string | null, maxChargePerShipment: string | null, dayBoundaryMode: DetentionCapScope, convertToLayoverAtMinutes: number | null, layoverAccessorialChargeId: string | null, notificationRequirement: DetentionNotificationRequirement, notificationLeadMinutes: number, notificationDeadlineMinutes: number, unnotifiedBehavior: DetentionUnnotifiedBehavior, autoSendNotice: boolean, attachNoticePdf: boolean, sendDepartureSummary: boolean, requireApprovalOverAmount: string | null, autoApproveUnderAmount: string | null, currency: string, comments: string, version: number, createdAt: number, updatedAt: number, tiers: Array<{ ' $fragmentRefs'?: { 'DetentionPolicyTierFieldsFragment': DetentionPolicyTierFieldsFragment } }> } & { ' $fragmentName'?: 'DetentionPolicyRowFieldsFragment' };
+export type DetentionPolicyRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, code: string, description: string, status: DetentionPolicyStatus, isOrganizationDefault: boolean, priority: number, specificityScore: number, customerId: string | null, locationId: string | null, shipmentTypeIds: Array<string>, serviceTypeIds: Array<string>, commodityIds: Array<string>, stopTypes: Array<StopType>, appointmentStopsOnly: boolean, effectiveStartDate: number | null, effectiveEndDate: number | null, clockStartBasis: DetentionClockStartBasis, lateArrivalRule: DetentionLateArrivalRule, lateArrivalGraceMinutes: number, billingFreeMinutes: number, pickupFreeMinutes: number | null, deliveryFreeMinutes: number | null, payFreeMinutes: number | null, minimumBillableMinutes: number, billingIncrementMinutes: number, roundingMode: DetentionRoundingMode, rateSource: DetentionRateSource, accessorialChargeId: string, maxBillableMinutesPerStop: number | null, maxChargePerStop: string | null, maxChargePerDay: string | null, maxChargePerShipment: string | null, dayBoundaryMode: DetentionCapScope, convertToLayoverAtMinutes: number | null, layoverAccessorialChargeId: string | null, notificationRequirement: DetentionNotificationRequirement, notificationLeadMinutes: number, notificationDeadlineMinutes: number, unnotifiedBehavior: DetentionUnnotifiedBehavior, autoSendNotice: boolean, attachNoticePdf: boolean, sendDepartureSummary: boolean, requireApprovalOverAmount: string | null, autoApproveUnderAmount: string | null, currency: string, comments: string, version: number, createdAt: number, updatedAt: number, tiers: Array<{ ' $fragmentRefs'?: { 'DetentionPolicyTierFieldsFragment': DetentionPolicyTierFieldsFragment } }> } & { ' $fragmentName'?: 'DetentionPolicyRowFieldsFragment' };
 
 export type DetentionPolicyTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -15155,7 +15184,7 @@ export type DeskEdiTransferQueryVariables = Exact<{
 
 
 export type DeskEdiTransferQuery = { ediTransfer: { canAccept: boolean, transfer: (
-      { shipmentTypeLabel: string | null, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, canDecide: boolean, stops: Array<{ sequence: number, type: string, location: string | null, address: string | null, city: string | null, state: string | null, postalCode: string | null, windowOpens: number | null, windowCloses: number | null, pieces: number | null, weight: number | null }>, commodities: Array<{ commodity: string, weight: number, pieces: number }>, charges: { freight: string | null, other: string | null, total: string | null, additional: Array<{ charge: string, method: string | null, amount: string }> } | null }
+      { shipmentTypeLabel: string | null, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, canDecide: boolean, stops: Array<{ sequence: number, type: string, location: string | null, address: string | null, city: string | null, state: string | null, postalCode: string | null, windowOpens: number | null, windowCloses: number | null, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null }>, commodities: Array<{ commodity: string, weight: number, pieces: number, temperatureMin: number | null, temperatureMax: number | null }>, charges: { freight: string | null, other: string | null, total: string | null, additional: Array<{ charge: string, method: string | null, amount: string }> } | null }
       & { ' $fragmentRefs'?: { 'DeskEdiTransferRowFieldsFragment': DeskEdiTransferRowFieldsFragment } }
     ), unresolvedMappings: Array<{ entityType: EdiMappingEntityType, source: string }> } };
 
@@ -19036,6 +19065,13 @@ export type ScheduleTableViewMutationVariables = Exact<{
 
 export type ScheduleTableViewMutation = { scheduleTableView: { definitionId: string, skippedColumns: Array<string>, schedule: { id: string } | null } };
 
+export type ExportCustomerLedgerMutationVariables = Exact<{
+  input: ExportCustomerLedgerInput;
+}>;
+
+
+export type ExportCustomerLedgerMutation = { exportCustomerLedger: { definitionId: string, run: { id: string } | null } };
+
 export type ReportViewFieldsFragment = { id: string, definitionId: string, ownerId: string, name: string, description: string | null, params: unknown, shared: boolean, pinned: boolean, format: string | null, lastRunAt: number | null, runCount: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportViewFieldsFragment' };
 
 export type ReportViewsQueryVariables = Exact<{
@@ -19571,7 +19607,7 @@ export type ShipmentTrailerFieldsFragment = { id: string, code: string, equipmen
 
 export type ShipmentAssignmentFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentMoveId: string | null, primaryWorkerId: string | null, tractorId: string | null, trailerId: string | null, secondaryWorkerId: string | null, status: AssignmentStatus, archivedAt: number | null, version: number, createdAt: number, updatedAt: number, tractor: { ' $fragmentRefs'?: { 'ShipmentTractorFieldsFragment': ShipmentTractorFieldsFragment } } | null, trailer: { ' $fragmentRefs'?: { 'ShipmentTrailerFieldsFragment': ShipmentTrailerFieldsFragment } } | null, primaryWorker: { ' $fragmentRefs'?: { 'ShipmentWorkerFieldsFragment': ShipmentWorkerFieldsFragment } } | null, secondaryWorker: { ' $fragmentRefs'?: { 'ShipmentWorkerFieldsFragment': ShipmentWorkerFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentAssignmentFieldsFragment' };
 
-export type ShipmentStopFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentMoveId: string | null, locationId: string, status: StopStatus, type: StopType, scheduleType: StopScheduleType, handling: StopHandling, sequence: number, pieces: number | null, weight: number | null, scheduledWindowStart: number, scheduledWindowEnd: number | null, actualArrival: number | null, actualDeparture: number | null, countLateOverride: boolean | null, countDetentionOverride: boolean | null, addressLine: string, version: number, createdAt: number, updatedAt: number, location: { ' $fragmentRefs'?: { 'ShipmentLocationFieldsFragment': ShipmentLocationFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentStopFieldsFragment' };
+export type ShipmentStopFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentMoveId: string | null, locationId: string, status: StopStatus, type: StopType, scheduleType: StopScheduleType, handling: StopHandling, sequence: number, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, scheduledWindowStart: number, scheduledWindowEnd: number | null, actualArrival: number | null, actualDeparture: number | null, countLateOverride: boolean | null, countDetentionOverride: boolean | null, addressLine: string, version: number, createdAt: number, updatedAt: number, location: { ' $fragmentRefs'?: { 'ShipmentLocationFieldsFragment': ShipmentLocationFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentStopFieldsFragment' };
 
 export type ShipmentMoveFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string | null, status: MoveStatus, loaded: boolean, sequence: number, distance: number | null, distanceSource: string | null, distanceProvider: string | null, distanceCalculatedAt: number | null, distanceRouteSignature: string | null, distanceDataVersion: string | null, distanceRoutingType: string | null, distanceUnits: string | null, distanceMetadata: unknown, version: number, createdAt: number, updatedAt: number, coverageType: MoveCoverageType, stops: Array<{ ' $fragmentRefs'?: { 'ShipmentStopFieldsFragment': ShipmentStopFieldsFragment } }>, assignment: { ' $fragmentRefs'?: { 'ShipmentAssignmentFieldsFragment': ShipmentAssignmentFieldsFragment } } | null, carrierAssignment: { ' $fragmentRefs'?: { 'ShipmentCarrierAssignmentFieldsFragment': ShipmentCarrierAssignmentFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentMoveFieldsFragment' };
 
@@ -19581,7 +19617,7 @@ export type ChargeAllocationFieldsFragment = { id: string, organizationId: strin
 
 export type ShipmentAdditionalChargeFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, accessorialChargeId: string, isSystemGenerated: boolean, method: string, amount: string, unit: number, fuelSurchargeProgramId: string | null, fuelSurchargeDetail: unknown, isDetention: boolean | null, isTariff: boolean, label: string, quantity: string | null, rate: string | null, rateUnit: string, version: number, createdAt: number, updatedAt: number, accessorialCharge: { id: string, businessUnitId: string, organizationId: string, code: string, description: string, status: EntityStatus, method: string, rateUnit: string, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentAdditionalChargeFieldsFragment' };
 
-export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, commodityId: string, pieces: number, weight: number, lengthFeet: number | null, widthFeet: number | null, heightFeet: number | null, version: number, createdAt: number, updatedAt: number, commodity: { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: string, loadingInstructions: string, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentCommodityFieldsFragment' };
+export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, commodityId: string, pieces: number, weight: number, lengthFeet: number | null, widthFeet: number | null, heightFeet: number | null, temperatureMin: number | null, temperatureMax: number | null, version: number, createdAt: number, updatedAt: number, commodity: { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: string, loadingInstructions: string, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentCommodityFieldsFragment' };
 
 export type ShipmentRatingDetailFieldsFragment = { formulaTemplateId: string | null, formulaTemplateName: string | null, ratedAt: number, versionNumber: number | null, refusal: string | null, inputs: unknown, rateQuoteId: string, agreementId: string, agreementName: string, ruleId: string, ruleLabel: string, source: string, explanation: string, awaitingReview: boolean | null, bill: { currency: string, notes: Array<string>, reviews: Array<string>, freightTotal: string, accessorialTotal: string, total: string, lines: Array<{ kind: string, label: string, code: string, quantity: string | null, quantityUnit: string, rate: string | null, rateUnit: string, amount: string, on: string, limit: { kind: string, computed: string } | null }>, exchange: { currency: string, rate: string } | null } | null, choices: Array<{ label: string, kind: string, currency: string, chosen: string | null, options: Array<{ label: string, status: string, subtotal: string | null, refusal: string | null }> }> | null, skipped: Array<{ code: string, source: string }> | null, reviewApproval: { reviews: Array<string>, approvedById: string, approvedAt: number, approvedBy: { id: string, name: string } | null } | null } & { ' $fragmentName'?: 'ShipmentRatingDetailFieldsFragment' };
 
@@ -19607,7 +19643,7 @@ type ShipmentEventFields_ShipmentHoldEvent_Fragment = { __typename: 'ShipmentHol
 
 type ShipmentEventFields_ShipmentLifecycleEvent_Fragment = { __typename: 'ShipmentLifecycleEvent', proNumber: string | null, previousStatus: string | null, newStatus: string | null, reason: string | null, id: string, organizationId: string, businessUnitId: string, shipmentId: string, type: ShipmentEventType, severity: ShipmentEventSeverity, actorType: ShipmentEventActorType, actorId: string | null, actorLabel: string, summary: string, metadata: unknown, occurredAt: number, correlationId: string | null, actor: { id: string, name: string, profilePicUrl: string, thumbnailUrl: string } | null, shipment: { id: string | null, proNumber: string | null } | null } & { ' $fragmentName'?: 'ShipmentEventFields_ShipmentLifecycleEvent_Fragment' };
 
-type ShipmentEventFields_ShipmentMoveEvent_Fragment = { __typename: 'ShipmentMoveEvent', moveId: string | null, stopId: string | null, previousStatus: string | null, newStatus: string | null, id: string, organizationId: string, businessUnitId: string, shipmentId: string, type: ShipmentEventType, severity: ShipmentEventSeverity, actorType: ShipmentEventActorType, actorId: string | null, actorLabel: string, summary: string, metadata: unknown, occurredAt: number, correlationId: string | null, actor: { id: string, name: string, profilePicUrl: string, thumbnailUrl: string } | null, shipment: { id: string | null, proNumber: string | null } | null } & { ' $fragmentName'?: 'ShipmentEventFields_ShipmentMoveEvent_Fragment' };
+type ShipmentEventFields_ShipmentMoveEvent_Fragment = { __typename: 'ShipmentMoveEvent', moveId: string | null, stopId: string | null, previousStatus: string | null, newStatus: string | null, stopNumber: number | null, stopType: StopType | null, locationName: string | null, actualAt: number | null, previousActualAt: number | null, id: string, organizationId: string, businessUnitId: string, shipmentId: string, type: ShipmentEventType, severity: ShipmentEventSeverity, actorType: ShipmentEventActorType, actorId: string | null, actorLabel: string, summary: string, metadata: unknown, occurredAt: number, correlationId: string | null, actor: { id: string, name: string, profilePicUrl: string, thumbnailUrl: string } | null, shipment: { id: string | null, proNumber: string | null } | null } & { ' $fragmentName'?: 'ShipmentEventFields_ShipmentMoveEvent_Fragment' };
 
 type ShipmentEventFields_ShipmentOwnershipEvent_Fragment = { __typename: 'ShipmentOwnershipEvent', proNumber: string | null, previousOwnerId: string | null, newOwnerId: string | null, id: string, organizationId: string, businessUnitId: string, shipmentId: string, type: ShipmentEventType, severity: ShipmentEventSeverity, actorType: ShipmentEventActorType, actorId: string | null, actorLabel: string, summary: string, metadata: unknown, occurredAt: number, correlationId: string | null, actor: { id: string, name: string, profilePicUrl: string, thumbnailUrl: string } | null, shipment: { id: string | null, proNumber: string | null } | null } & { ' $fragmentName'?: 'ShipmentEventFields_ShipmentOwnershipEvent_Fragment' };
 
@@ -21671,7 +21707,7 @@ export { CarrierContactFieldsFragmentDoc, CarrierInsurancePolicyFieldsFragmentDo
 export { CommandPaletteCustomerPreviewDocument } from "./documents/command-palette/operations";
 export { CreateCommodityDocument, UpdateCommodityDocument, PatchCommodityDocument, BulkUpdateCommodityStatusDocument } from "./documents/commodity/mutations";
 export { CommodityTableRowFieldsFragmentDoc, CommodityTableDocument } from "./documents/commodity/table";
-export { CostingControlPageDocument, ResolvedCostProfilePageDocument, UpdateCostingControlDocument, UpdateCostCategoryDocument } from "./documents/cost-control/operations";
+export { CostingControlPageDocument, ResolvedCostProfilePageDocument, SaveCostingControlDocument } from "./documents/cost-control/operations";
 export { CustomFieldFormFieldsDocument, CustomFieldResourceTypesDocument } from "./documents/custom-field/form";
 export { CustomFieldDefinitionTableRowFieldsFragmentDoc, CustomFieldDefinitionTableDocument } from "./documents/custom-field/table";
 export { DeskCustomerPaymentsDocument } from "./documents/customer-payment/desk";
@@ -21809,7 +21845,7 @@ export { DeskReportRunsDocument, DeskReportSchedulesDocument, DeskReportRunCardD
 export { ReportPreviewFieldsFragmentDoc, PreviewReportDocument, DrillThroughReportDocument } from "./documents/reports/preview";
 export { ReportRunFieldsFragmentDoc, ReportRunsTableDocument, ReportRunByIdDocument, RunReportDocument, CancelReportRunDocument } from "./documents/reports/runs";
 export { ReportScheduleFieldsFragmentDoc, ReportSchedulesDocument, CreateReportScheduleDocument, UpdateReportScheduleDocument, DeleteReportScheduleDocument } from "./documents/reports/schedules";
-export { ExportTableViewDocument, ScheduleTableViewDocument } from "./documents/reports/table-export";
+export { ExportTableViewDocument, ScheduleTableViewDocument, ExportCustomerLedgerDocument } from "./documents/reports/table-export";
 export { ReportViewFieldsFragmentDoc, ReportViewsDocument, CreateReportViewDocument, UpdateReportViewDocument, DeleteReportViewDocument } from "./documents/reports/views";
 export { RoleTableRowFieldsFragmentDoc, RoleTableDocument } from "./documents/role/table";
 export { RoutingGuideEntryFieldsFragmentDoc, RoutingGuideRowFieldsFragmentDoc, RoutingGuideTableDocument, RoutingGuideOptionsDocument, MatchRoutingGuideDocument } from "./documents/routing-guide/table";

@@ -332,8 +332,23 @@ impl Checker<'_> {
         }
         if !interchange.separators.is_empty() {
             let mut seen = BTreeSet::new();
-            if interchange.separators.len() != 4 {
-                self.report(
+            let repeats = interchange
+                .version
+                .as_ref()
+                .is_none_or(|version| version.name.as_str() >= "004020");
+            match (interchange.separators.len(), repeats) {
+                (4, true) | (3, false) => {}
+                (4, false) => self.report(
+                    unit,
+                    Diagnostic::warning(
+                        "interchange-separators",
+                        interchange.separators[3].span,
+                        Message::new(message!(
+                            "Before 004020 an interchange has no repetition separator (ISA11 is U), so this one is never written: name three, element, segment and component"
+                        )),
+                    ),
+                ),
+                (_, true) => self.report(
                     unit,
                     Diagnostic::error(
                         "interchange-separators",
@@ -342,7 +357,17 @@ impl Checker<'_> {
                             "separators names four: element, segment, component and repetition"
                         )),
                     ),
-                );
+                ),
+                (_, false) => self.report(
+                    unit,
+                    Diagnostic::error(
+                        "interchange-separators",
+                        span,
+                        Message::new(message!(
+                            "separators names three before 004020: element, segment and component"
+                        )),
+                    ),
+                ),
             }
             for separator in &interchange.separators {
                 let mut chars = separator.value.chars();
@@ -361,6 +386,20 @@ impl Checker<'_> {
                     );
                 }
             }
+        }
+        if let Some(ending) = &interchange.line_ending
+            && crate::lading::check::line_ending_named(&ending.name).is_none()
+        {
+            self.report(
+                unit,
+                Diagnostic::error(
+                    "interchange-line-ending",
+                    ending.span,
+                    Message::new(message!(
+                        "line ending is none, lf, crlf or cr: what follows each segment terminator"
+                    )),
+                ),
+            );
         }
         if let Some(usage) = &interchange.usage
             && !matches!(usage.name.as_str(), "test" | "production")

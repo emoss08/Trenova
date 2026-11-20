@@ -1,8 +1,10 @@
 import type {
+  ExportCustomerLedgerInput,
   ExportTableViewInput,
   ScheduleTableViewInput,
 } from "@trenova/graphql/generated/graphql";
 import {
+  ExportCustomerLedgerDocument,
   ExportTableViewDocument,
   ScheduleTableViewDocument,
 } from "@trenova/graphql/generated/documents/reports/table-export";
@@ -31,4 +33,15 @@ export async function scheduleTableView(
     variables: { input },
   });
   return data.scheduleTableView;
+}
+
+export async function exportCustomerLedger(
+  input: ExportCustomerLedgerInput,
+): Promise<{ definitionId: string }> {
+  const data = await requestGraphQL({
+    document: ExportCustomerLedgerDocument,
+    operationName: "ExportCustomerLedger",
+    variables: { input },
+  });
+  return data.exportCustomerLedger;
 }

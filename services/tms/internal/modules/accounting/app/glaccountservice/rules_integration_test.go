@@ -105,7 +105,7 @@ func TestParentAccountActiveRule(t *testing.T) {
 	t.Run("fails when parent not found", func(t *testing.T) {
 		multiErr := f.run(t, rule, f.draft("2002", pulid.MustNew("gla_")), validationframework.ModeCreate)
 		require.True(t, multiErr.HasErrors())
-		assert.Equal(t, "parentId", multiErr.Errors[0].Field)
+		assert.Equal(t, "parentId", multiErr.Errors[0].Field())
 	})
 
 	t.Run("fails when parent is inactive", func(t *testing.T) {
@@ -149,7 +149,7 @@ func TestCircularReferenceRule(t *testing.T) {
 		entity.ParentID = entity.ID
 		multiErr := f.run(t, rule, entity, validationframework.ModeCreate)
 		require.True(t, multiErr.HasErrors())
-		assert.Equal(t, "parentId", multiErr.Errors[0].Field)
+		assert.Equal(t, "parentId", multiErr.Errors[0].Field())
 	})
 
 	t.Run("passes with a parent chain that ends", func(t *testing.T) {
@@ -205,7 +205,7 @@ func TestDeactivationProtectionRule(t *testing.T) {
 		account.Status = domaintypes.StatusInactive
 		multiErr := f.run(t, rule, account, validationframework.ModeUpdate)
 		require.True(t, multiErr.HasErrors())
-		assert.Equal(t, "status", multiErr.Errors[0].Field)
+		assert.Equal(t, "status", multiErr.Errors[0].Field())
 	})
 
 	t.Run("fails deactivation with non-zero balance", func(t *testing.T) {
@@ -214,6 +214,6 @@ func TestDeactivationProtectionRule(t *testing.T) {
 		account.CurrentBalance = 500
 		multiErr := f.run(t, rule, account, validationframework.ModeUpdate)
 		require.True(t, multiErr.HasErrors())
-		assert.Equal(t, "currentBalance", multiErr.Errors[0].Field)
+		assert.Equal(t, "currentBalance", multiErr.Errors[0].Field())
 	})
 }

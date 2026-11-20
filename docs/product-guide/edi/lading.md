@@ -53,6 +53,7 @@ Keywords: run EDI map, test X12, preview mapping
 Keywords: EDI tests, certify readiness, coverage
 1. In the studio, open the **Tests** tab and select **Run the tests**.
 2. Select a failing test to open it. Lines no test reached are marked in the editor, and **Sent by the partner, read by no map** lists elements the samples carry that nothing reads.
+3. Read why a test that expects a message sent failed: tests write each message the way Trenova sends it, so one the partner's rules hold or reject, or that its guide refuses, is not sent. A sample holding several transactions is read whole: a map test checks every transaction in it, and a flow test receives each one.
 
 ### Release a version
 Keywords: certify EDI, activate map, go live, replay, shadow

@@ -1,0 +1,16 @@
+name: Trenova tenders a load out, the carrier accepts, reports and bills the tendered rate
+description: >
+  Trenova is the broker. It creates a shipment and tenders it to Quarrystone by EDI; the 204 must
+  pass Quarrystone's guide. Quarrystone accepts with a 990, reports its stops with 214s and bills
+  with a 210 for the tendered rate, and Trenova acknowledges each of them.
+within: 4m
+steps:
+  - script: { answers: [ {} ] }
+  - trenova: { tender: c1, rate: "1850.00" }
+  - expect: { wire: "204", about: c1 }
+  - expect: { ack: c1, set: "990", accepted: true }
+  - expect: { ack: c1, set: "214", accepted: true }
+  - expect: { ack: c1, set: "210", accepted: true }
+  - expect: { wire: "997", about: c1, count: 3 }
+  - expect: { reconciled: c1, within: 5m }
+  - expect: { trenova: { shipment: c1, stops: 2 } }

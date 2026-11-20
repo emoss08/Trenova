@@ -51,6 +51,7 @@ func envelopeOf(program *edilading.Program) edidocument.X12EnvelopeSettings {
 		envelope.ComponentSeparator = interchange.Separators[2]
 		envelope.RepetitionSeparator = interchange.Separators[3]
 	}
+	envelope.LineEnding = string(interchange.LineEnding)
 	return envelope
 }
 

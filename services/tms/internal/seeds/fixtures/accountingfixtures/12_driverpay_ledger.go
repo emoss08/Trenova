@@ -31,6 +31,7 @@ const (
 	ledgerAccountSettlementPayable = "2120"
 	ledgerAccountDriverAdvances    = "1140"
 	ledgerAccountEscrowLiability   = "2150"
+	ledgerAccountEscrowAdjustment  = "6960"
 )
 
 type DriverPayLedgerSeed struct {
@@ -117,6 +118,12 @@ func (s *DriverPayLedgerSeed) ensureLedgerAccounts(
 				description: "Driver maintenance escrow balances held on behalf of owner-operators per 49 CFR 376.12(k)",
 				category:    "Liability",
 			},
+			{
+				code:        ledgerAccountEscrowAdjustment,
+				name:        "Driver Escrow Adjustments",
+				description: "Manual corrections to owner-operator escrow balances, kept apart from purchased transportation so they reconcile per 49 CFR 376.12(k)",
+				category:    "Expense",
+			},
 		},
 	})
 	if err != nil {
@@ -157,24 +164,31 @@ func (s *DriverPayLedgerSeed) configureAccountingControl(
 		}
 		return fmt.Errorf("get accounting control: %w", err)
 	}
-	if !control.DefaultDriverPayExpenseAccountID.IsNil() {
+	ac := accountingcontroldb.AccountingControls
+	assignments := make([]keel.Assignment, 0, 7)
+	if control.DefaultDriverPayExpenseAccountID.IsNil() {
+		assignments = append(assignments,
+			ac.DefaultDriverPayExpenseAccountID.To(accounts[ledgerAccountDriverPayExpense]),
+			ac.DefaultPurchasedTransportationAccountID.To(accounts[ledgerAccountPurchasedTrans]),
+			ac.DefaultSettlementsPayableAccountID.To(accounts[ledgerAccountSettlementPayable]),
+			ac.DefaultDriverAdvanceAccountID.To(accounts[ledgerAccountDriverAdvances]),
+			ac.DefaultEscrowLiabilityAccountID.To(accounts[ledgerAccountEscrowLiability]),
+			ac.DefaultDriverReimbursementAccountID.To(accounts[ledgerAccountDriverBenefits]),
+		)
+	}
+	if control.DefaultEscrowAdjustmentAccountID.IsNil() {
+		assignments = append(assignments,
+			ac.DefaultEscrowAdjustmentAccountID.To(accounts[ledgerAccountEscrowAdjustment]),
+		)
+	}
+	if len(assignments) == 0 {
 		return nil
 	}
 
-	ac := accountingcontroldb.AccountingControls
 	if _, err = ac.AllTenants().Where(
 		ac.OrganizationID.Eq(orgID),
 		ac.BusinessUnitID.Eq(buID),
-	).Update(
-		ctx,
-		db,
-		ac.DefaultDriverPayExpenseAccountID.To(accounts[ledgerAccountDriverPayExpense]),
-		ac.DefaultPurchasedTransportationAccountID.To(accounts[ledgerAccountPurchasedTrans]),
-		ac.DefaultSettlementsPayableAccountID.To(accounts[ledgerAccountSettlementPayable]),
-		ac.DefaultDriverAdvanceAccountID.To(accounts[ledgerAccountDriverAdvances]),
-		ac.DefaultEscrowLiabilityAccountID.To(accounts[ledgerAccountEscrowLiability]),
-		ac.DefaultDriverReimbursementAccountID.To(accounts[ledgerAccountDriverBenefits]),
-	); err != nil {
+	).Update(ctx, db, assignments...); err != nil {
 		return fmt.Errorf("update accounting control: %w", err)
 	}
 

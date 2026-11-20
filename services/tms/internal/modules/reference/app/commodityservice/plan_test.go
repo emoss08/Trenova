@@ -14,14 +14,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPlanUpdate_TransformsAndReturnsTheStoredRecordBesideTheChange(t *testing.T) {
+func TestPlanUpdate_FormatsAndReturnsTheStoredRecordBesideTheChange(t *testing.T) {
 	t.Parallel()
 
 	deps := setupTest(t)
 	entity := newTestEntity()
 	stored := *entity
 	stored.Name = "Old Name"
-	deps.transformer.On("TransformCommodity", mock.Anything, entity).Return(nil)
+	deps.formatter.On("Format", mock.Anything, entity).Return(nil)
 	deps.repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&stored, nil)
 
 	change, err := deps.svc.PlanUpdate(t.Context(), entity)
@@ -40,11 +40,17 @@ func TestPlanBulkUpdateStatus_RefusesAStatusAndARecordItDoesNotKnow(t *testing.T
 		[]*commodity.Commodity{entity}, nil,
 	)
 
-	_, err := deps.svc.PlanBulkUpdateStatus(t.Context(), &commodityports.BulkUpdateCommodityStatusRequest{
-		TenantInfo:   pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		CommodityIDs: []pulid.ID{entity.ID, pulid.MustNew("com_")},
-		Status:       domaintypes.Status("Retired"),
-	})
+	_, err := deps.svc.PlanBulkUpdateStatus(
+		t.Context(),
+		&commodityports.BulkUpdateCommodityStatusRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			CommodityIDs: []pulid.ID{entity.ID, pulid.MustNew("com_")},
+			Status:       domaintypes.Status("Retired"),
+		},
+	)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	fields := make([]string, 0, len(multiErr.Errors))

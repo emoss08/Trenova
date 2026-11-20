@@ -1,0 +1,419 @@
+{
+  "run": 8,
+  "api": "http://localhost:8080/api/v1",
+  "sim": "http://localhost:9210",
+  "startedAt": "2026-11-20T12:39:56.070144721Z",
+  "took": 349.303,
+  "partners": [
+    {
+      "name": "grocer",
+      "role": "shipper",
+      "provision": {
+        "partner": "grocer",
+        "role": "shipper",
+        "code": "EDISIM-GROCER",
+        "partnerId": "edip_01M7WFGYF6EJDZA9BA76CZ4MSA",
+        "profileId": "edicp_01M7WFGYGEG5FW3Z6D19ETHZFC",
+        "transport": "AS2",
+        "inboundUrl": "http://localhost:8080/api/v1/edi/as2/inbound/2ff9e71a27174c41b6fdb140603be264716eba2f83894195a16a65d778a7f31b/",
+        "projectId": "ldp_01M7WFGYMXER0W1FM4MFVGBN9R",
+        "versionId": "ldv_01M7WFGYN47XX0PNW095D009AX",
+        "versionNumber": 1,
+        "customerId": "cus_01M7WFGYJRGEMHCWT8S6PJNE1F",
+        "customerLabel": "Meadowridge Fresh Markets (EDI Simulator) - SIMGROCER",
+        "readiness": {
+          "errors": 0,
+          "failing": 0,
+          "tests": 40,
+          "uncoveredFlowClauses": 0,
+          "ready": true
+        },
+        "notes": [
+          "created partner EDISIM-GROCER",
+          "created the AS2 communication profile",
+          "made the AS2 profile the partner's default transport",
+          "Trenova's connection test passed",
+          "gave the simulator the profile's inbound URL and Trenova's certificate",
+          "created customer Meadowridge Fresh Markets (EDI Simulator) to bill the partner's tenders",
+          "created the Lading project",
+          "reusing draft 1",
+          "saved 14 files and 9 samples to draft 1",
+          "tested version 1: 40 tests, 0 failing, 0 errors, 0 uncovered flow clauses",
+          "certified version 1",
+          "activated version 1"
+        ]
+      },
+      "scenarios": [
+        {
+          "name": "a cancellation after dispatch is held for the truck-ordered-not-used bill",
+          "file": "partners/grocer/scenarios/cancel-after-dispatch.yaml",
+          "slug": "cancel-after-dispatch",
+          "seed": 8000,
+          "status": "failed",
+          "startedAt": "2026-11-20T12:39:57.588697964Z",
+          "took": 177.239,
+          "steps": [
+            {
+              "index": 0,
+              "kind": "send",
+              "text": "send 204 original as t1",
+              "status": "passed",
+              "note": "1 interchange(s), key MF1008001",
+              "at": 0.004,
+              "took": 0.052,
+              "ended": "2026-11-20T12:39:57.644345362Z",
+              "keys": [
+                "MF1008001"
+              ],
+              "matches": [
+                {
+                  "messageId": "grocer-000059",
+                  "key": "MF1008001"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "passed",
+              "note": "ack A",
+              "at": 0.059,
+              "took": 0.316,
+              "ended": "2026-11-20T12:39:57.963275298Z",
+              "keys": [
+                "MF1008001"
+              ],
+              "matches": [
+                {
+                  "messageId": "grocer-000062",
+                  "key": "MF1008001"
+                }
+              ]
+            },
+            {
+              "index": 2,
+              "kind": "expect",
+              "text": "expect wire 990 about t1",
+              "status": "passed",
+              "note": "990 0001",
+              "at": 0.375,
+              "took": 0.000,
+              "ended": "2026-11-20T12:39:57.964431605Z",
+              "keys": [
+                "MF1008001"
+              ],
+              "matches": [
+                {
+                  "messageId": "grocer-000060",
+                  "groupControl": "1",
+                  "control": "0001",
+                  "key": "MF1008001"
+                }
+              ]
+            },
+            {
+              "index": 3,
+              "kind": "trenova",
+              "text": "trenova dispatch t1",
+              "status": "failed",
+              "why": "the conversation has no shipment (key MF1008001): timed out after 3m0s",
+              "at": 0.376,
+              "took": 176.861,
+              "ended": "2026-11-20T12:42:54.810429441Z",
+              "keys": [
+                "MF1008001"
+              ],
+              "events": [
+                {
+                  "key": "MF1008001",
+                  "at": "2026-11-20T12:42:54.810428654Z",
+                  "label": "trenova dispatch t1",
+                  "tone": "bad"
+                }
+              ]
+            },
+            {
+              "index": 4,
+              "kind": "send",
+              "text": "send 204 cancel of t1",
+              "status": "skipped",
+              "at": 177.239,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 5,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "skipped",
+              "at": 177.239,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 6,
+              "kind": "expect",
+              "text": "expect flow t1 held \"after dispatch\"",
+              "status": "skipped",
+              "at": 177.239,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 7,
+              "kind": "expect",
+              "text": "expect shipment t1 assigned",
+              "status": "skipped",
+              "at": 177.239,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            }
+          ],
+          "conversations": [
+            {
+              "name": "t1",
+              "key": "MF1008001",
+              "seed": 8001,
+              "flowInstanceId": "edfi_01M7WFH02PRD68344KWZ235MV8",
+              "transferId": "edilt_01M7WFH0359NZM3B0PV08Q5Q5Y",
+              "milestones": {
+                "ack": 0.370,
+                "answer": 0.302
+              },
+              "wire": [
+                {
+                  "messageId": "grocer-000059",
+                  "from": "partner",
+                  "purpose": "document",
+                  "sets": [
+                    "204"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T12:39:57.594744215Z",
+                  "variation": "original",
+                  "ack": "received",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*MEADOWRIDGE    *ZZ*TRENOVA        *260607*1105*^*00401*095451591*0*T*:~\nGS*SM*MEADOWRIDGE*TRENOVA*20260607*1105*95275978*X*004010~\nST*204*0001~\nB2**TRNV**MF1008001**PP~\nB2A*00*LT~\nL11*5813431386*BM~\nL11*R2158282*PO~\nN1*BT*MEADOWRIDGE FRESH MARKETS TRANSPORTATION*93*MRF-AP~\nN3*300 FIELDSTONE PKWY~\nN4*DES MOINES*IA*50313*US~\nN7**TBD*********RT****5300~\nS5*1*LD*23150*L*20*PL~\nL11*PK765135*P8~\nG62*37*20260607*G*0500*CT~\nG62*38*20260607*L*0700*CT~\nAT8*G*L*23150*20~\nN1*SH*MEADOWRIDGE PERISHABLES DC*93*MRF-DC01~\nN3*4800 NE 14TH ST~\nN4*DES MOINES*IA*50313*US~\nL5*1*DAIRY*0401*Z~\nAT8*G*L*4200*3~\nL5*2*PAPER GOODS*4818*Z~\nAT8*G*L*7046*3~\nL5*3*PAPER GOODS*4818*Z~\nAT8*G*L*3492*3~\nL5*4*DAIRY*0401*Z~\nAT8*G*L*3395*6~\nL5*5*CUT FLOWERS*0603*Z~\nAT8*G*L*5017*5~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*33*38~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*34*40~\nS5*2*UL*6054*L*7*PL~\nL11*809397*AO~\nG62*53*20260607*G*1200*CT~\nG62*54*20260607*L*1400*CT~\nAT8*G*L*6054*7~\nN1*CN*MEADOWRIDGE EXPRESS MINNEAPOLIS*93*MRS-0127~\nN3*6385 OAK AVE~\nN4*MINNEAPOLIS*MN*55413*US~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*33*38~\nS5*3*UL*2881*L*6*PL~\nL11*714316*AO~\nG62*53*20260608*G*0700*CT~\nG62*54*20260608*L*0900*CT~\nAT8*G*L*2881*6~\nN1*CN*MEADOWRIDGE EXPRESS MADISON*93*MRS-0124~\nN3*9844 OAK WAY~\nN4*MADISON*WI*53704*US~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*33*38~\nS5*4*UL*5776*L*2*PL~\nL11*301828*AO~\nG62*53*20260608*G*1600*CT~\nG62*54*20260608*L*1800*CT~\nAT8*G*L*5776*2~\nN1*CN*MEADOWRIDGE EXPRESS TOLEDO*93*MRS-0136~\nN3*9109 RIVER AVE~\nN4*TOLEDO*OH*436071195*US~\nG61*IC*RECEIVING*TE*4195556254~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*34*40~\nS5*5*UL*8439*L*5*PL~\nL11*126420*AO~\nG62*53*20260609*G*0800*CT~\nG62*54*20260609*L*1000*CT~\nAT8*G*L*8439*5~\nNTE*DEL*LUMPER PAID BY CARRIER~\nN1*CN*MEADOWRIDGE EXPRESS BIRMINGHAM*93*MRS-0102~\nN3*5475 FOUNDRY BLVD~\nN4*BIRMINGHAM*AL*35211*US~\nG61*IC*RECEIVING*TE*2055557780~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*33*38~\nL3*23150*G*2.84*PM*479580******20*L~\nSE*76*0001~\nGE*1*95275978~\nIEA*1*095451591~\n"
+                },
+                {
+                  "messageId": "grocer-000060",
+                  "from": "trenova",
+                  "purpose": "document",
+                  "sets": [
+                    "990"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T12:39:57.894219579Z",
+                  "accepted": true,
+                  "ack": "sent",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*MEADOWRIDGE    *261120*0639*U*00401*000000001*0*T*:~\nGS*GF*TRENOVA*MEADOWRIDGE*20261120*0639*1*X*004010~\nST*990*0001~\nB1*TRNV*MF1008001*20261120*A~\nSE*3*0001~\nGE*1*1~\nIEA*1*000000001~\n"
+                },
+                {
+                  "messageId": "grocer-000061",
+                  "from": "partner",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T12:39:57.894380867Z",
+                  "x12": "ISA*00*          *00*          *ZZ*MEADOWRIDGE    *ZZ*TRENOVA        *261120*0639*^*00401*095451592*0*T*:~\nGS*FA*MEADOWRIDGE*TRENOVA*20261120*0639*95275979*X*004010~\nST*997*0001~\nAK1*GF*1~\nAK2*990*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0001~\nGE*1*95275979~\nIEA*1*095451592~\n"
+                },
+                {
+                  "messageId": "grocer-000062",
+                  "from": "trenova",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T12:39:57.962308583Z",
+                  "accepted": true,
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*MEADOWRIDGE    *261120*1239*U*00401*000000001*0*T*\u003e~\nGS*FA*TRENOVA*MEADOWRIDGE*20261120*1239*1*X*004010~\nST*997*0001~\nAK1*SM*95275978~\nAK2*204*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0001~\nGE*1*1~\nIEA*1*000000001~\n"
+                }
+              ],
+              "states": [
+                {
+                  "step": 7,
+                  "at": "2m57.228s",
+                  "flowStatus": "Open"
+                },
+                {
+                  "step": 7,
+                  "at": "2m57.239s",
+                  "flowStatus": "Open"
+                }
+              ]
+            }
+          ],
+          "failures": [
+            {
+              "step": 3,
+              "source": "harness",
+              "rule": "step",
+              "message": "the conversation has no shipment (key MF1008001): timed out after 3m0s",
+              "replay": "edi-sim run --partner grocer --scenario cancel-after-dispatch --run 8"
+            }
+          ],
+          "replay": "edi-sim run --partner grocer --scenario cancel-after-dispatch --run 8"
+        },
+        {
+          "name": "a cancellation before dispatch cancels the run",
+          "file": "partners/grocer/scenarios/cancel-before-dispatch.yaml",
+          "slug": "cancel-before-dispatch",
+          "seed": 8040,
+          "status": "failed",
+          "startedAt": "2026-11-20T12:42:54.822515886Z",
+          "took": 170.534,
+          "steps": [
+            {
+              "index": 0,
+              "kind": "send",
+              "text": "send 204 original as t1",
+              "status": "passed",
+              "note": "1 interchange(s), key MF1008041",
+              "at": 0.001,
+              "took": 0.046,
+              "ended": "2026-11-20T12:42:54.869514434Z",
+              "keys": [
+                "MF1008041"
+              ],
+              "matches": [
+                {
+                  "messageId": "grocer-000063",
+                  "key": "MF1008041"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "passed",
+              "note": "ack A",
+              "at": 0.048,
+              "took": 1.080,
+              "ended": "2026-11-20T12:42:55.950459248Z",
+              "keys": [
+                "MF1008041"
+              ],
+              "matches": [
+                {
+                  "messageId": "grocer-000064",
+                  "key": "MF1008041"
+                }
+              ]
+            },
+            {
+              "index": 2,
+              "kind": "expect",
+              "text": "expect wire 990 about t1",
+              "status": "failed",
+              "why": "no 990 about MF1008041 reached the partner within 3m0s",
+              "at": 1.129,
+              "took": 169.404,
+              "ended": "2026-11-20T12:45:45.341015938Z",
+              "keys": [
+                "MF1008041"
+              ],
+              "events": [
+                {
+                  "key": "MF1008041",
+                  "at": "2026-11-20T12:45:45.340802472Z",
+                  "label": "No 990 reached Meadowridge Fresh Markets",
+                  "detail": "within 3m",
+                  "tone": "bad"
+                }
+              ]
+            },
+            {
+              "index": 3,
+              "kind": "send",
+              "text": "send 204 cancel of t1",
+              "status": "skipped",
+              "at": 170.534,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 4,
+              "kind": "expect",
+              "text": "expect 997 for t1",
+              "status": "skipped",
+              "at": 170.534,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            },
+            {
+              "index": 5,
+              "kind": "expect",
+              "text": "expect shipment t1 canceled",
+              "status": "skipped",
+              "at": 170.534,
+              "took": 0.000,
+              "ended": "0001-01-01T00:00:00Z"
+            }
+          ],
+          "conversations": [
+            {
+              "name": "t1",
+              "key": "MF1008041",
+              "seed": 8041,
+              "milestones": {
+                "ack": 1.126
+              },
+              "wire": [
+                {
+                  "messageId": "grocer-000063",
+                  "from": "partner",
+                  "purpose": "document",
+                  "sets": [
+                    "204"
+                  ],
+                  "state": "delivered",
+                  "at": "2026-11-20T12:42:54.825431996Z",
+                  "variation": "original",
+                  "ack": "received",
+                  "ackCode": "A",
+                  "x12": "ISA*00*          *00*          *ZZ*MEADOWRIDGE    *ZZ*TRENOVA        *260613*0650*^*00401*095451593*0*T*:~\nGS*SM*MEADOWRIDGE*TRENOVA*20260613*0650*95275980*X*004010~\nST*204*0001~\nB2**TRNV**MF1008041**PP~\nB2A*00*LT~\nL11*5134419674*BM~\nL11*R8426389*PO~\nNTE*LOI*CONTINUOUS RUN REQUIRED~\nN1*BT*MEADOWRIDGE FRESH MARKETS TRANSPORTATION*93*MRF-AP~\nN3*300 FIELDSTONE PKWY~\nN4*DES MOINES*IA*50313*US~\nN7**TBD*********RT****5300~\nS5*1*LD*15320*L*24*PL~\nL11*PK572659*P8~\nG62*37*20260613*G*0600*CT~\nG62*38*20260613*L*0800*CT~\nAT8*G*L*15320*24~\nN1*SH*MEADOWRIDGE PERISHABLES DC*93*MRF-DC01~\nN3*4800 NE 14TH ST~\nN4*DES MOINES*IA*50313*US~\nL5*1*FROZEN VEGETABLES*0710F*Z~\nAT8*G*L*3780*7~\nL5*2*CUT FLOWERS*0603*Z~\nAT8*G*L*2417*4~\nL5*3*DELI MEATS*1601*Z~\nAT8*G*L*5661*9~\nL5*4*FROZEN BAKERY*1905F*Z~\nAT8*G*L*3462*4~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*-10*0~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*34*40~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*33*36~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*-5*5~\nS5*2*UL*2691*L*2*PL~\nL11*766435*AO~\nG62*53*20260613*G*1400*CT~\nG62*54*20260613*L*1600*CT~\nAT8*G*L*2691*2~\nNTE*DEL*LUMPER PAID BY CARRIER~\nN1*CN*FIELDSTONE FOODS SAINT LOUIS*93*MRS-0233~\nN3*397 OAK WAY~\nN4*SAINT LOUIS*MO*63147*US~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*-10*0~\nS5*3*UL*4455*L*2*PL~\nL11*688126*AO~\nG62*53*20260614*G*0700*CT~\nG62*54*20260614*L*0900*CT~\nAT8*G*L*4455*2~\nN1*CN*FIELDSTONE FOODS GRAND RAPIDS*93*MRS-0217~\nN3*8536 WAREHOUSE ST~\nN4*GRAND RAPIDS*MI*495484587*US~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*34*40~\nS5*4*UL*2446*L*9*PL~\nL11*392922*AO~\nG62*53*20260614*G*1200*CT~\nG62*54*20260614*L*1400*CT~\nAT8*G*L*2446*9~\nN1*CN*MEADOWRIDGE MARKET TOLEDO*93*MRS-0036~\nN3*6788 LAKE CT~\nN4*TOLEDO*OH*43607*US~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*33*36~\nS5*5*UL*4192*L*3*PL~\nL11*822208*AO~\nG62*53*20260615*G*0700*CT~\nG62*54*20260615*L*0900*CT~\nAT8*G*L*4192*3~\nN1*CN*MEADOWRIDGE EXPRESS YORK*93*MRS-0139~\nN3*5944 HARBOR ST~\nN4*YORK*PA*17406*US~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*-5*5~\nS5*6*UL*1536*L*8*PL~\nL11*997319*AO~\nG62*53*20260617*G*0700*CT~\nG62*54*20260617*L*0900*CT~\nAT8*G*L*1536*8~\nN1*CN*FIELDSTONE FOODS DENVER*93*MRS-0212~\nN3*3286 HARBOR AVE~\nN4*DENVER*CO*80216*US~\nG61*IC*RECEIVING*TE*3035550853~\nN7**TBD*********RT~\nMEA*TE*TMP**FA*-10*0~\nL3*15320*G*2.98*PM*962912******24*L~\nSE*88*0001~\nGE*1*95275980~\nIEA*1*095451593~\n"
+                },
+                {
+                  "messageId": "grocer-000064",
+                  "from": "trenova",
+                  "purpose": "ack",
+                  "sets": [
+                    "997"
+                  ],
+                  "state": "received",
+                  "at": "2026-11-20T12:42:55.949715464Z",
+                  "accepted": true,
+                  "x12": "ISA*00*          *00*          *ZZ*TRENOVA        *ZZ*MEADOWRIDGE    *261120*1242*U*00401*000000002*0*T*\u003e~\nGS*FA*TRENOVA*MEADOWRIDGE*20261120*1242*2*X*004010~\nST*997*0002~\nAK1*SM*95275980~\nAK2*204*0001~\nAK5*A~\nAK9*A*1*1*1~\nSE*6*0002~\nGE*1*2~\nIEA*1*000000002~\n"
+                }
+              ],
+              "states": [
+                {
+                  "step": 5,
+                  "at": "2m50.534s",
+                  "error": "trenova at http://localhost:8080/api/v1: Get \"http://localhost:8080/api/v1/edi/flows/instances/?limit=100\u0026partnerId=edip_01M7WFGYF6EJDZA9BA76CZ4MSA\u0026query=MF1008041\": terminated signal received"
+                }
+              ]
+            }
+          ],
+          "failures": [
+            {
+              "step": 2,
+              "source": "expectation",
+              "rule": "wire 990",
+              "message": "no 990 about MF1008041 reached the partner within 3m0s",
+              "replay": "edi-sim run --partner grocer --scenario cancel-before-dispatch --run 8"
+            }
+          ],
+          "replay": "edi-sim run --partner grocer --scenario cancel-before-dispatch --run 8"
+        }
+      ]
+    }
+  ],
+  "failures": 2
+}

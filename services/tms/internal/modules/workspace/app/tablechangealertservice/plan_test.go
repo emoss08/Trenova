@@ -54,7 +54,7 @@ func TestPlanUpdateSubscription_ReadsOnlyTheCallersOwnAndChecksTheAllowlist(t *t
 	_, err := svc.PlanUpdateSubscription(t.Context(), &edited)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "tableName", multiErr.Errors[0].Field)
+	assert.Equal(t, "tableName", multiErr.Errors[0].Field())
 	subs.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
 }
 

@@ -183,6 +183,17 @@ input CostCategoryUpdateInput {
   version: Int!
 }
 
+"""
+One save of the cost model: the control's settings when they changed and each category that
+changed, written together or not at all. A refusal names a category by its place in
+`categories`.
+"""
+input CostingControlSaveInput {
+  "Null leaves the control's settings as they are."
+  control: CostingControlInput
+  categories: [CostCategoryUpdateInput!]!
+}
+
 extend type Query {
   costingControl: CostingControl!
   resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
@@ -195,6 +206,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  updateCostingControl(input: CostingControlInput!): CostingControl!
-  updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
+  saveCostingControl(input: CostingControlSaveInput!): CostingControl!
 }

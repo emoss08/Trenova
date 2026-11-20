@@ -202,7 +202,7 @@ func TestRecordMine_Refuses(t *testing.T) {
 			var multi *errortypes.MultiError
 			if errors.As(err, &multi) {
 				require.NotEmpty(t, multi.Errors)
-				assert.Equal(t, tc.field, multi.Errors[0].Field)
+				assert.Equal(t, tc.field, multi.Errors[0].Field())
 			} else {
 				assert.Equal(t, tc.field, fieldOf(t, err))
 			}

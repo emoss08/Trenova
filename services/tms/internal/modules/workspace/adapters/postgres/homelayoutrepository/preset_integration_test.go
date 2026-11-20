@@ -131,7 +131,7 @@ func TestCreatePresetKeepsTheIncumbentWhenTheInsertFails(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "name", validation.Field)
+	assert.Equal(t, "name", validation.Field())
 	assert.True(t, f.stored(t, incumbent.ID).IsOrgDefault)
 }
 

@@ -443,6 +443,7 @@ func (r *repository) buildAutoOrder(
 		EnteredByID:    entity.EnteredByID,
 		Status:         order.StatusConfirmed,
 		OrderNumber:    orderNumber,
+		PONumber:       entity.OrderPONumber,
 		CurrencyCode:   "USD",
 		TotalAmount:    entity.TotalChargeAmount,
 	}, nil
@@ -480,31 +481,6 @@ func (r *repository) Update(
 
 			return r.commodityRepository.SyncForShipment(ctx, entity)
 		}()
-		if err != nil {
-			return nil, busy(err, entity.ID)
-		}
-
-		return entity, nil
-	})
-}
-
-func (r *repository) UpdateOperationalLifecycle(
-	ctx context.Context,
-	entity *shipment.Shipment,
-) (*shipment.Shipment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := shipmentdb.Shipments
-		err := sp.Save(
-			ctx,
-			r.db.Keel(ctx),
-			entity,
-			sp.Status,
-			sp.ActualShipDate,
-			sp.ActualDeliveryDate,
-		)
-		if err == nil {
-			err = r.moveRepository.SyncForShipment(ctx, entity)
-		}
 		if err != nil {
 			return nil, busy(err, entity.ID)
 		}

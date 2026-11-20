@@ -19,7 +19,6 @@ import type {
   AcknowledgeMyTrainingMutation,
   AcknowledgeMyTrainingMutationVariables,
   MyExpensesQuery,
-  DashControlQuery,
   MyLoadPayEstimateQuery,
   MyPortalFeaturesQuery,
   MyPtoBalancesQuery,
@@ -53,7 +52,6 @@ import type {
   RespondToMyAssignmentInput,
   ReviewDriverExpenseInput,
   SubmitMyExpenseInput,
-  UpdateDashControlInput,
   UpdateMyContactInfoInput,
   CreateSettlementDisputeInput,
   InviteWorkerToPortalInput,
@@ -82,7 +80,6 @@ import {
 } from "@trenova/graphql/generated/documents/benefits/operations";
 import {
   CancelMyExpenseDocument,
-  DashControlDocument,
   CancelMyPtoDocument,
   CreateMyLoadCommentDocument,
   DriverExpenseDetailDocument,
@@ -109,7 +106,6 @@ import {
   RespondToMyAssignmentDocument,
   ReviewDriverExpenseDocument,
   SubmitMyExpenseDocument,
-  UpdateDashControlDocument,
   UpdateMyContactInfoDocument,
   CreateSettlementDisputeDocument,
   InviteWorkerToPortalDocument,
@@ -212,7 +208,6 @@ export type PortalExpense = MyExpensesQuery["myExpenses"][number];
 export type PortalPayEstimate = MyLoadPayEstimateQuery["myLoadPayEstimate"];
 export type PortalYtdPay = MyYtdPayQuery["myYtdPay"];
 export type PortalFeatures = MyPortalFeaturesQuery["myPortalFeatures"];
-export type DashControl = DashControlQuery["dashControl"];
 export type DriverExpenseRow = NonNullable<
   DriverExpenseTableQuery["driverExpenses"]["edges"]
 >[number]["node"];
@@ -847,24 +842,6 @@ export async function fetchMyPortalFeatures(options?: { signal?: AbortSignal }) 
     signal: options?.signal,
   });
   return data.myPortalFeatures;
-}
-
-export async function fetchDashControl(options?: { signal?: AbortSignal }) {
-  const data = await requestGraphQL({
-    document: DashControlDocument,
-    operationName: "DashControl",
-    signal: options?.signal,
-  });
-  return data.dashControl;
-}
-
-export async function updateDashControl(input: UpdateDashControlInput) {
-  const data = await requestGraphQL({
-    document: UpdateDashControlDocument,
-    operationName: "UpdateDashControl",
-    variables: { input },
-  });
-  return data.updateDashControl;
 }
 
 export type MyHosState = NonNullable<MyHosStateQuery["myHosState"]>;

@@ -1,4 +1,4 @@
-import { cleanup, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FormFieldStub, PageLayoutStub, renderAccountingPage } from "@/test/accounting-page-mocks";
 import { CustomerLedgerPage } from "../page";
@@ -22,7 +22,12 @@ vi.mock("../_components/customer-snapshot-header", () => ({
 }));
 
 beforeEach(() => {
-  mocks.fetchArCustomerLedger.mockResolvedValue([]);
+  mocks.fetchArCustomerLedger.mockResolvedValue({
+    openingBalanceMinor: 0,
+    entries: [],
+    hasNextPage: false,
+    endCursor: null,
+  });
   mocks.fetchArCustomerProfile.mockResolvedValue(null);
 });
 
@@ -45,5 +50,26 @@ describe("customer ledger empty states", () => {
     expect(await screen.findByText("No activity yet")).toBeInTheDocument();
     expect(screen.getByText(/first invoice or payment/)).toBeInTheDocument();
     expect(screen.queryByText("Pick a customer")).not.toBeInTheDocument();
+  });
+
+  it("reads the ledger a page at a time from the first page", async () => {
+    renderAccountingPage(<CustomerLedgerPage />, ["/ledger?customerId=cus_1"]);
+
+    await screen.findByText("No activity yet");
+    expect(mocks.fetchArCustomerLedger).toHaveBeenCalledTimes(1);
+    expect(mocks.fetchArCustomerLedger).toHaveBeenCalledWith(
+      "cus_1",
+      { first: 100, after: null },
+      { signal: expect.any(AbortSignal) },
+    );
+  });
+
+  it("exports on the server even before any entry has loaded", async () => {
+    renderAccountingPage(<CustomerLedgerPage />, ["/ledger?customerId=cus_1"]);
+
+    await screen.findByText("No activity yet");
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+
+    expect(await screen.findByText("Export ledger")).toBeInTheDocument();
   });
 });

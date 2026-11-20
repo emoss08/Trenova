@@ -1,0 +1,71 @@
+library common
+
+crosswalk stopTypes: Code<S502> <-> StopType {
+  "LD" <-> Pickup
+  "UL" <-> Delivery
+}
+
+// Meadowridge never changes a tender in place: a 05 replaces the whole run.
+crosswalk purposes: Code<B2A01> <-> TenderPurpose {
+  "00" <-> Original
+  "01" <-> Cancel
+  "05" <-> Replace
+}
+
+crosswalk payments: Code<B206> <-> Payment {
+  "PP" <-> Prepaid
+  else <- "PP"
+}
+
+crosswalk decisions: Code<B104> <-> Decision {
+  "A" <-> Accept
+  "D" <-> Decline
+}
+
+// Meadowridge's 214 guide takes six status codes. It takes no other status: one is never sent.
+crosswalk statusCodes: Code<AT701> <-> EventKind {
+  "X3" <-> ArrivedPickup
+  "AF" <-> DepartedPickup
+  "X1" <-> ArrivedDelivery
+  "D1" <-> Delivered
+  "CD" <-> DepartedDelivery
+  "AG" <-> EtaChanged
+  not sent <- Dispatched, Loaded, EnRoute, Delayed, AppointmentSet, Exception
+  else -> Exception
+}
+
+crosswalk equipment: Text <-> Text {
+  "RT" <-> "REEFER"
+}
+
+/// The charge codes Meadowridge's 210 guide takes.
+const chargeCodes = ["SOC", "LUM", "FUE", "DET"]
+
+/// Trenova codes every linehaul line 400; Meadowridge takes the linehaul with no charge code.
+const linehaulCode = "400"
+
+/// The time codes of the four US zones, the only ones the partner's guides take.
+const usZones = ["CT", "ET", "MT", "PT"]
+
+/// The appointment window from a stop's dates: 37 or 53 opens it, 38 or 54 closes it.
+fn window(dates: [Segment<G62>], zone: Zone) -> Window? {
+  let opens = dates.find(d => d.01 in ["37", "53"])
+  let closes = dates.find(d => d.01 in ["38", "54"])
+  let start = at(opens.02, opens.04, zoneFromCode(opens.05 ?? "") ?? zone)
+  Window {
+    start <- start
+    end   <- at(closes.02, closes.04, zoneFromCode(closes.05 ?? "") ?? zone) ?? (start ?? now()) + 2 h
+  }
+}
+
+/// The first reference with a qualifier.
+fn reference(segments: [Segment<L11>], qualifier: Text) -> Text? =
+  segments.find(s => s.02 == qualifier).01
+
+/// Meadowridge sends ZIP+4 on some stores; Trenova keeps five digits.
+fn postal(code: Text) -> Text? = if code.matches(r"^\d{9}$") then code.zip5() else code
+
+test "a replacement reads as a replacement" {
+  expect "05" via purposes == Replace
+  expect "04" via purposes == none
+}

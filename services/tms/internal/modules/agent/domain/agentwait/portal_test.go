@@ -53,7 +53,7 @@ func TestAPortalRunWaitNamesItsRunAndWatchesIt(t *testing.T) {
 	multiErr = errortypes.NewMultiError()
 	missing.Validate(multiErr)
 	require.True(t, multiErr.HasErrors())
-	assert.Equal(t, "portalRunId", multiErr.Errors[0].Field)
+	assert.Equal(t, "portalRunId", multiErr.Errors[0].Field())
 }
 
 func TestOnlyAPortalRunsAnswerIsOutsideText(t *testing.T) {

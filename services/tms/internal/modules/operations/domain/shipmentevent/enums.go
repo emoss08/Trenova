@@ -14,7 +14,10 @@ const (
 	TypeMoveDeparted      = Type("MoveDeparted")
 	TypeMoveArrived       = Type("MoveArrived")
 
-	TypeStopCompleted = Type("StopCompleted")
+	TypeStopArrived            = Type("StopArrived")
+	TypeStopDeparted           = Type("StopDeparted")
+	TypeStopArrivalCorrected   = Type("StopArrivalCorrected")
+	TypeStopDepartureCorrected = Type("StopDepartureCorrected")
 
 	TypeDriverAssigned   = Type("DriverAssigned")
 	TypeDriverReassigned = Type("DriverReassigned")
@@ -75,7 +78,10 @@ var AllTypes = []Type{
 	TypeMoveStatusChanged,
 	TypeMoveDeparted,
 	TypeMoveArrived,
-	TypeStopCompleted,
+	TypeStopArrived,
+	TypeStopDeparted,
+	TypeStopArrivalCorrected,
+	TypeStopDepartureCorrected,
 	TypeDriverAssigned,
 	TypeDriverReassigned,
 	TypeDriverUnassigned,

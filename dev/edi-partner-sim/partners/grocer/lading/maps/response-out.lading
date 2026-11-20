@@ -1,0 +1,29 @@
+map responseOut
+  from tenderResponse
+  to   meadowridge.990
+  use  common
+
+B1 {
+  01 <- scac ?? org.scac
+  02 <- key
+  03 <- respondedAt
+  04 <- decision via decisions
+}
+N9 when exists reason { 01 <- "ZZ", 02 <- reason.truncate(30) }
+N9 when decision == Decline and not exists reason { 01 <- "ZZ", 02 <- partner.declineNote.truncate(30) }
+
+test "an acceptance writes exactly this 990" {
+  given tenderResponse { key: "MF1000008", decision: Accept, respondedAt: @2026-06-09T09:00[America/Chicago] }
+  expect x12 == "ST*990*0001~B1*TRNV*MF1000008*20260609*A~SE*3*0001~"
+}
+
+test "a decline without a reason carries the default note" {
+  given tenderResponse { key: "MF1000008", decision: Decline, respondedAt: @2026-06-09T09:00[America/Chicago] }
+  expect x12 contains "N9*ZZ*No reefer available~"
+}
+
+property "every decision writes a reservation code" {
+  vary decision in Decision
+  given tenderResponse { key: "MF1000001", decision: decision, respondedAt: @2026-06-09T14:30Z }
+  expect x12 contains "B1*TRNV*MF1000001*20260609*"
+}

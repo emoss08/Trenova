@@ -25,6 +25,9 @@ use crate::x12::guide::compiled::NodeKind;
 pub enum Halt {
     /// The budget of steps ran out.
     Budget,
+    /// A map writing X12 read a value its crosswalk says is not sent: the item it is in, or the
+    /// whole message, is left out.
+    NotSent,
 }
 
 /// The result of evaluating.
@@ -251,6 +254,8 @@ pub struct Interp<'p> {
     consts: BTreeMap<(usize, String), Value>,
     partner: Value,
     org: Value,
+    /// Whether a map is writing X12, where a value that is not sent leaves its item out.
+    pub writing: bool,
 }
 
 /// The default step budget of a map run.
@@ -274,6 +279,7 @@ impl<'p> Interp<'p> {
             consts: BTreeMap::new(),
             partner: Value::None,
             org: Value::None,
+            writing: false,
         };
         interp.partner = interp.partner_value();
         interp.org = interp.org_value();
@@ -352,6 +358,17 @@ impl<'p> Interp<'p> {
     #[must_use]
     pub fn partner(&self) -> &Value {
         &self.partner
+    }
+
+    /// How many traces are being collected.
+    #[must_use]
+    pub fn trace_depth(&self) -> usize {
+        self.trace.len()
+    }
+
+    /// Drops the traces begun after `depth`.
+    pub fn truncate_trace(&mut self, depth: usize) {
+        self.trace.truncate(depth);
     }
 
     /// Starts collecting where a value comes from.
@@ -1017,6 +1034,7 @@ impl<'p> Interp<'p> {
                 if equal(&candidate_value, value) {
                     return match to.first() {
                         Some(first) => self.eval(&mut crosswalk_frame, first),
+                        None if self.writing => Err(Halt::NotSent),
                         None => Ok(Value::None),
                     };
                 }

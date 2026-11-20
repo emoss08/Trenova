@@ -155,6 +155,8 @@ func (r *repository) updateCommodity(
 		sc.LengthFeet.ToExpr(keel.Val(commodity.LengthFeet)),
 		sc.WidthFeet.ToExpr(keel.Val(commodity.WidthFeet)),
 		sc.HeightFeet.ToExpr(keel.Val(commodity.HeightFeet)),
+		sc.TemperatureMin.ToExpr(keel.Val(commodity.TemperatureMin)),
+		sc.TemperatureMax.ToExpr(keel.Val(commodity.TemperatureMax)),
 	)
 	if err != nil {
 		return fmt.Errorf(

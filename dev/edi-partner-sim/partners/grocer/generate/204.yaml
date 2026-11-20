@@ -1,0 +1,135 @@
+set: "204"
+
+purposes:
+  original: "00"
+  duplicate: "00"
+  replace: "05"
+  cancel: "01"
+
+load:
+  start: "2026-06-01"
+  days: 30
+  number: { prefix: "MF", digits: 7 }
+  bol: { prefix: "5", digits: 9 }
+  po: { prefix: "R", digits: 7, chance: 0.6 }
+  pickupRef: { prefix: "PK", digits: 6, chance: 0.8 }
+  appointment: { prefix: "", digits: 6, chance: 0.95 }
+  payment:
+    - { code: PP, weight: 1 }
+  stops: { min: 4, max: 7, extraPickup: 0 }
+  origins:
+    - { code: MRF-DC01, name: MEADOWRIDGE PERISHABLES DC, street: 4800 NE 14TH ST, city: DES MOINES, state: IA }
+    - { code: MRF-DC02, name: MEADOWRIDGE EASTERN DC, street: 6301 W MINNESOTA ST, city: INDIANAPOLIS, state: IN }
+  billTo: { code: MRF-AP, name: MEADOWRIDGE FRESH MARKETS TRANSPORTATION, street: 300 FIELDSTONE PKWY, city: DES MOINES, state: IA, zip: "50313" }
+  consignees:
+    code: MRS-
+    names:
+      - MEADOWRIDGE MARKET
+      - MEADOWRIDGE EXPRESS
+      - FIELDSTONE FOODS
+  equipment:
+    - { code: RT, weight: 1, lengthFt: 53 }
+  weight: { min: 14000, max: 42000 }
+  pieces: { min: 10, max: 26 }
+  lines: { min: 2, max: 5 }
+  commodities:
+    - { description: FRESH PRODUCE, code: "0710", temperature: { min: 34, max: 38 } }
+    - { description: DAIRY, code: "0401", temperature: { min: 33, max: 38 } }
+    - { description: DELI MEATS, code: "1601", temperature: { min: 33, max: 36 } }
+    - { description: CUT FLOWERS, code: "0603", temperature: { min: 34, max: 40 } }
+    - { description: FROZEN VEGETABLES, code: "0710F", temperature: { min: -10, max: 0 } }
+    - { description: ICE CREAM, code: "2105", temperature: { min: -20, max: -10 } }
+    - { description: FROZEN BAKERY, code: "1905F", temperature: { min: -5, max: 5 } }
+    - { description: PAPER GOODS, code: "4818" }
+  hazmat: 0
+  temperatureMix: 0.12
+  rate: { perMileCents: { min: 280, max: 420 }, minimumCents: 85000, stopOffCents: 6500 }
+  window: { leadDays: { min: 0, max: 1 }, pickupHours: { min: 2, max: 10 }, hours: 2, mph: 48, dwellHours: 1 }
+  zip4: 0.3
+  contact: 0.5
+  notes:
+    chance: 0.4
+    load: [PRECOOL TRAILER BEFORE LOADING, CONTINUOUS RUN REQUIRED, DOWNLOAD REEFER TEMP RECORDER AT EACH STOP]
+    delivery: [BACK DOOR RECEIVING ONLY, LUMPER PAID BY CARRIER, STORE CLOSES TO RECEIVING AT 1400]
+
+segments:
+  - seg: B2
+    el: ["", "{scac}", "", "{load.number}", "", "{load.payment}"]
+  - seg: B2A
+    el: ["{purpose}", LT]
+  - seg: L11
+    el: ["{load.bol}", BM]
+  - seg: L11
+    when: load.po
+    optional: true
+    el: ["{load.po}", PO]
+  - seg: NTE
+    when: load.note
+    optional: true
+    el: [LOI, "{load.note}"]
+  - body:
+      - seg: N1
+        el: [BT, "{billTo.name}", "93", "{billTo.code}"]
+      - seg: N3
+        el: ["{billTo.street}"]
+      - seg: N4
+        el: ["{billTo.city}", "{billTo.state}", "{billTo.zip}", "{billTo.country}"]
+  - seg: N7
+    el: ["", TBD, "", "", "", "", "", "", "", "", "{equipment.code}", "", "", "", "{equipment.lengthFt}00"]
+  - each: stops
+    as: stop
+    body:
+      - seg: S5
+        el: ["{stop.sequence}", "{stop.kind|map:pickup=LD,delivery=UL}", "{stop.weight}", L, "{stop.pieces}", PL]
+      - seg: L11
+        when: stop.pickupRef
+        el: ["{stop.pickupRef}", P8]
+      - seg: L11
+        when: stop.appointment
+        el: ["{stop.appointment}", AO]
+      - seg: G62
+        el:
+          - "{stop.kind|map:pickup=37,delivery=53}"
+          - "{stop.window.start|date}"
+          - G
+          - "{stop.window.start|time}"
+          - "{stop.window.start|zone}"
+      - seg: G62
+        el:
+          - "{stop.kind|map:pickup=38,delivery=54}"
+          - "{stop.window.end|date}"
+          - L
+          - "{stop.window.end|time}"
+          - "{stop.window.end|zone}"
+      - seg: AT8
+        el: [G, L, "{stop.weight}", "{stop.pieces}"]
+      - seg: NTE
+        when: stop.note
+        optional: true
+        el: [DEL, "{stop.note}"]
+      - seg: N1
+        el: ["{stop.kind|map:pickup=SH,delivery=CN}", "{stop.party.name}", "93", "{stop.party.code}"]
+      - seg: N3
+        el: ["{stop.party.street}"]
+      - seg: N4
+        el: ["{stop.party.city}", "{stop.party.state}", "{stop.party.zip}", "{stop.party.country}"]
+      - seg: G61
+        when: stop.party.contact
+        optional: true
+        el: [IC, "{stop.party.contact}", TE, "{stop.party.phone}"]
+      - each: stop.lines
+        as: line
+        body:
+          - seg: L5
+            el: ["{line.number}", "{line.description}", "{line.code}", Z]
+          - seg: AT8
+            el: [G, L, "{line.weight}", "{line.pieces}"]
+      - each: stop.temperatures
+        as: temp
+        body:
+          - seg: N7
+            el: ["", TBD, "", "", "", "", "", "", "", "", RT]
+          - seg: MEA
+            el: [TE, TMP, "", FA, "{temp.min}", "{temp.max}"]
+  - seg: L3
+    el: ["{load.weight}", G, "{load.rate|dollars}", PM, "{load.total}", "", "", "", "", "", "{load.pieces}", L]

@@ -46,16 +46,34 @@ query ArOpenItems($customerId: ID, $asOfDate: Timestamp) {
   }
 }
 
-query ArCustomerLedger($customerId: ID!) {
-  arCustomerLedger(customerId: $customerId) {
-    customerId
-    transactionDate
-    eventType
-    documentNumber
-    sourceObjectType
-    sourceObjectId
-    amountMinor
-    relatedInvoiceId
+query ArCustomerLedger(
+  $customerId: ID!
+  $startDate: Timestamp
+  $endDate: Timestamp
+  $first: Int
+  $after: String
+) {
+  arCustomerLedger(
+    customerId: $customerId
+    startDate: $startDate
+    endDate: $endDate
+    first: $first
+    after: $after
+  ) {
+    openingBalanceMinor
+    hasNextPage
+    endCursor
+    entries {
+      customerId
+      transactionDate
+      eventType
+      documentNumber
+      sourceObjectType
+      sourceObjectId
+      amountMinor
+      relatedInvoiceId
+      runningBalanceMinor
+    }
   }
 }
 

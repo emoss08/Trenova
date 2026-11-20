@@ -32,7 +32,10 @@ func (r *MutationResolver) CreateWorkerCredentialType(ctx context.Context, input
 		return nil, err
 	}
 
-	entity := workerCredentialTypeFromInput(&input, pulid.Nil, resolvercore.TenantInfo(authCtx))
+	entity, err := workerCredentialTypeFromInput(&input, pulid.Nil, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
 	return r.WorkerCredentialService.CreateType(ctx, entity, authCtx.UserID)
 }
 
@@ -47,7 +50,10 @@ func (r *MutationResolver) UpdateWorkerCredentialType(ctx context.Context, id st
 		return nil, err
 	}
 
-	entity := workerCredentialTypeFromInput(&input, typeID, resolvercore.TenantInfo(authCtx))
+	entity, err := workerCredentialTypeFromInput(&input, typeID, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
 	return r.WorkerCredentialService.UpdateType(ctx, entity, authCtx.UserID)
 }
 

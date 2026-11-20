@@ -48,7 +48,7 @@ func TestMultiError(t *testing.T) {
 		me.Add("email", errortypes.ErrInvalidFormat, "invalid email")
 		assert.True(t, me.HasErrors())
 		assert.Len(t, me.Errors, 1)
-		assert.Equal(t, "email", me.Errors[0].Field)
+		assert.Equal(t, "email", me.Errors[0].Field())
 	})
 
 	t.Run("WithPrefix", func(t *testing.T) {
@@ -56,7 +56,7 @@ func TestMultiError(t *testing.T) {
 		child := me.WithPrefix("user")
 		child.Add("email", errortypes.ErrInvalidFormat, "invalid email")
 
-		assert.Equal(t, "user.email", me.Errors[0].Field)
+		assert.Equal(t, "user.email", me.Errors[0].Field())
 	})
 
 	t.Run("WithIndex", func(t *testing.T) {
@@ -64,7 +64,7 @@ func TestMultiError(t *testing.T) {
 		child := me.WithIndex("items", 0)
 		child.Add("name", errortypes.ErrRequired, "required")
 
-		assert.Equal(t, "items[0].name", me.Errors[0].Field)
+		assert.Equal(t, "items[0].name", me.Errors[0].Field())
 	})
 
 	t.Run("Nested Prefixes", func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestMultiError(t *testing.T) {
 		level3 := level2.WithIndex("phones", 0)
 
 		level3.Add("number", errortypes.ErrInvalidFormat, "invalid phone number")
-		assert.Equal(t, "user.address.phones[0].number", me.Errors[0].Field)
+		assert.Equal(t, "user.address.phones[0].number", me.Errors[0].Field())
 	})
 
 	t.Run("Error String", func(t *testing.T) {
@@ -306,8 +306,8 @@ func TestFromOzzoErrors(t *testing.T) {
 		errortypes.FromOzzoErrors(ozzoErrors, me)
 
 		assert.Len(t, me.Errors, 2)
-		assert.Contains(t, []string{"email", "password"}, me.Errors[0].Field)
-		assert.Contains(t, []string{"email", "password"}, me.Errors[1].Field)
+		assert.Contains(t, []string{"email", "password"}, me.Errors[0].Field())
+		assert.Contains(t, []string{"email", "password"}, me.Errors[1].Field())
 	})
 
 	t.Run("With Prefix", func(t *testing.T) {
@@ -321,7 +321,7 @@ func TestFromOzzoErrors(t *testing.T) {
 
 		require.True(t, me.HasErrors(), "MultiError should have errors")
 		require.NotEmpty(t, me.Errors, "Errors slice should not be empty")
-		assert.Equal(t, "user.email", me.Errors[0].Field)
+		assert.Equal(t, "user.email", me.Errors[0].Field())
 	})
 
 	t.Run("Nested Prefixes", func(t *testing.T) {
@@ -336,7 +336,7 @@ func TestFromOzzoErrors(t *testing.T) {
 
 		require.True(t, me.HasErrors(), "MultiError should have errors")
 		require.NotEmpty(t, me.Errors, "Errors slice should not be empty")
-		assert.Equal(t, "user.address.street", me.Errors[0].Field)
+		assert.Equal(t, "user.address.street", me.Errors[0].Field())
 	})
 }
 
@@ -422,7 +422,7 @@ func TestMultiError_AddOzzoError(t *testing.T) {
 		result := me.AddOzzoError(ozzoErr)
 		assert.True(t, result)
 		assert.True(t, me.HasErrors())
-		assert.Equal(t, "email", me.Errors[0].Field)
+		assert.Equal(t, "email", me.Errors[0].Field())
 	})
 
 	t.Run("Non-Validation Error", func(t *testing.T) {
@@ -437,7 +437,7 @@ func TestMultiError_AddOzzoError(t *testing.T) {
 		child := me.WithPrefix("user")
 		ozzoErr := val.Errors{"email": val.ErrRequired}
 		child.AddOzzoError(ozzoErr)
-		assert.Equal(t, "user.email", me.Errors[0].Field)
+		assert.Equal(t, "user.email", me.Errors[0].Field())
 	})
 
 	t.Run("Multiple Fields", func(t *testing.T) {
@@ -764,7 +764,7 @@ func TestMultiError_AddError(t *testing.T) {
 		}
 		me.AddError(e)
 		assert.True(t, me.HasErrors())
-		assert.Equal(t, "email", me.Errors[0].Field)
+		assert.Equal(t, "email", me.Errors[0].Field())
 	})
 
 	t.Run("respects limit via AddError", func(t *testing.T) {
@@ -782,7 +782,7 @@ func TestMultiError_AddError(t *testing.T) {
 		child.AddError(
 			&errortypes.Error{Field: "city", Code: errortypes.ErrRequired, Message: "required"},
 		)
-		assert.Equal(t, "address.city", me.Errors[0].Field)
+		assert.Equal(t, "address.city", me.Errors[0].Field())
 	})
 
 	t.Run("empty field with prefix", func(t *testing.T) {
@@ -792,7 +792,7 @@ func TestMultiError_AddError(t *testing.T) {
 		child.AddError(
 			&errortypes.Error{Field: "", Code: errortypes.ErrRequired, Message: "required"},
 		)
-		assert.Equal(t, "", me.Errors[0].Field)
+		assert.Equal(t, "", me.Errors[0].Field())
 	})
 }
 
@@ -848,7 +848,7 @@ func TestMultiError_AddWithPriority(t *testing.T) {
 		me := errortypes.NewMultiError()
 		child := me.WithPrefix("item")
 		child.AddWithPriority("", errortypes.ErrInvalid, "invalid item", errortypes.PriorityHigh)
-		assert.Equal(t, "item", me.Errors[0].Field)
+		assert.Equal(t, "item", me.Errors[0].Field())
 	})
 }
 

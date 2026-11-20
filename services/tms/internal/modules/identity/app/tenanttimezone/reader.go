@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,7 +24,7 @@ type Params struct {
 }
 
 type Reader struct {
-	organizations orgzone.OrganizationReader
+	organizations tenantports.OrganizationReader
 	users         userReader
 }
 

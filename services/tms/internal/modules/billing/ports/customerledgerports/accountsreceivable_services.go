@@ -5,15 +5,16 @@ import (
 )
 
 type ARStatementTransaction struct {
-	TransactionDate     int64  `json:"transactionDate"`
-	EventType           string `json:"eventType"`
-	Description         string `json:"description"`
-	DocumentNumber      string `json:"documentNumber"`
-	SourceObjectID      string `json:"sourceObjectId"`
-	AmountMinor         int64  `json:"amountMinor"`
-	ChargeMinor         int64  `json:"chargeMinor"`
-	PaymentMinor        int64  `json:"paymentMinor"`
-	RunningBalanceMinor int64  `json:"runningBalanceMinor"`
+	TransactionDate     int64    `json:"transactionDate"`
+	EventType           string   `json:"eventType"`
+	Description         string   `json:"description"`
+	DocumentNumber      string   `json:"documentNumber"`
+	SourceObjectID      string   `json:"sourceObjectId"`
+	AmountMinor         int64    `json:"amountMinor"`
+	ChargeMinor         int64    `json:"chargeMinor"`
+	PaymentMinor        int64    `json:"paymentMinor"`
+	RunningBalanceMinor int64    `json:"runningBalanceMinor"`
+	SupersededInvoiceID pulid.ID `json:"-"`
 }
 
 type ARCustomerStatement struct {

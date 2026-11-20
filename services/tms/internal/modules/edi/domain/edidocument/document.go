@@ -22,6 +22,7 @@ type X12EnvelopeSettings struct {
 	SegmentTerminator            string `json:"segmentTerminator"`
 	ComponentSeparator           string `json:"componentSeparator"`
 	RepetitionSeparator          string `json:"repetitionSeparator"`
+	LineEnding                   string `json:"lineEnding,omitempty"`
 }
 
 func DefaultX12EnvelopeSettings() X12EnvelopeSettings {

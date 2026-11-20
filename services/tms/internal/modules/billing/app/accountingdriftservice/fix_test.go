@@ -356,7 +356,7 @@ func TestFixRefusesADirectionTheFindingDoesNotOffer(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "direction", validation.Field)
+	assert.Equal(t, "direction", validation.Field())
 }
 
 func TestPreviewSaysWhatTheFixDoesAndWritesNothing(t *testing.T) {
@@ -411,7 +411,7 @@ func TestDismissNeedsANote(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "note", validation.Field)
+	assert.Equal(t, "note", validation.Field())
 
 	_, err = h.svc.PreviewDismiss(t.Context(), &accountingdriftports.DismissAccountingDriftRequest{
 		TenantInfo: h.tenant,
@@ -419,7 +419,7 @@ func TestDismissNeedsANote(t *testing.T) {
 		Note:       "",
 	}, h.person())
 	require.ErrorAs(t, err, &validation, "the preview asks for the note too")
-	assert.Equal(t, "note", validation.Field)
+	assert.Equal(t, "note", validation.Field())
 }
 
 func TestAPersonMayDismissAnyFinding(t *testing.T) {

@@ -20,7 +20,7 @@ Keywords: new detention policy, set free time, detention rate
 1. Open [Detention policies](/detention/configuration-files/detention-policies).
 2. Select **New detention policy**.
 3. On **Terms**, fill in **Name**, **Code**, **Status** and optionally **Priority** and **Description**.
-4. Under **Scope**, decide where the policy applies: turn on **Organization default** for the fallback policy, or narrow it by **Customer**, **Facility**, **Shipment types**, **Service types**, **Commodities** and **Stop types**, with optional **Effective From** and **Expires** dates.
+4. Under **Scope**, decide where the policy applies: leave it open to cover all freight, or narrow it by **Customer**, **Facility**, **Shipment types**, **Service types**, **Commodities** and **Stop types**, with optional **Effective From** and **Expires** dates.
 5. Under **The clock**, choose **Clock starts at**, what happens **If the driver arrives late**, and the **Free time** (with optional **Pickup override**, **Delivery override** and **Driver pay free time**), plus **Minimum billable**, **Rounding** and **Increment**.
 6. Under **Rate**, pick the **Rate source**: **Flat accessorial rate** (then choose the **Accessorial charge**) or **Graduated tiers** (select **Add tier** for each rung, with **From**, **To**, **Rate** and **Unit**).
 7. Set any **Ceilings**, the **Customer notice** rules and the **Approval** thresholds, then select **Save**.
@@ -41,8 +41,10 @@ Keywords: replay detention, what would we have billed, revenue impact
 Keywords: edit detention terms, deactivate policy
 1. Open [Detention policies](/detention/configuration-files/detention-policies) and select the policy's row.
 2. Change the terms, or set **Status** to **Inactive** to stop using it, then select **Save**.
+   The organization's default policy, chosen in [Shipment controls](/admin/shipment-controls),
+   must stay active and cover all freight, and cannot be deleted: choose another default first.
 
 ## Notes
 Viewing the page needs read access to detention policies; **New detention policy** only appears for people who can create them.
 
-New policies start as drafts. When more than one policy could apply to a stop, the more specific one wins (the **Specificity** column), and **Priority** breaks ties. If **Notice requirement** is **Required to bill**, detention on a stop where the customer was not notified in time follows the **If the notice is missed** setting.
+New policies start as drafts. When more than one policy could apply to a stop, the one with the higher **Priority** wins, then the more specific one (the **Specificity** column). The organization's default policy, chosen in [Shipment controls](/admin/shipment-controls), governs only the stops no other active policy covers, whatever its priority. If **Notice requirement** is **Required to bill**, detention on a stop where the customer was not notified in time follows the **If the notice is missed** setting.

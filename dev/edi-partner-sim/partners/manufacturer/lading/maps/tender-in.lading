@@ -1,0 +1,125 @@
+map tenderIn
+  from kestrel.204
+  to   loadTender
+  use  common
+
+key      <- B204 else reject "The tender has no Kestrel load number"
+purpose  <- B2A01 via purposes else reject "Kestrel sent purpose {B2A01}, which its guide does not define"
+payment  <- B206 via payments
+bol      <- reference(L11, "BM")
+poNumber <- reference(L11, "PO")
+refs     <- refs(L11)
+notes    <- NTE.map(n => n.02)
+
+// The bill-to party; a code we have no mapping for waits for someone to map it, with the
+// party's name and address as the suggestion.
+let billTo = 0100[N101 == "BT"]
+customer <- lookup Customer(billTo.N104) learn party(billTo)
+
+let trailer = 0200.N7
+equipment <- trailer.11 via equipment
+  else hold "Kestrel asked for equipment we don't run: {trailer.11 ?? "none"}"
+
+// A reefer load carries its set point in N7-13; Kestrel holds it to one temperature.
+when exists trailer.13 {
+  temperature <- {
+    min: temperature(decimal(trailer.13), "F")
+    max: temperature(decimal(trailer.13), "F")
+  }
+}
+
+weight        <- weight(L301, L312 ?? "L") else warn "Kestrel sent no total weight"
+pieces        <- L311
+total         <- money(L305, partner.currency)
+freightCharge <- total
+
+stops <- each 0300 as stop {
+  let party = stop.0310
+  sequence <- stop.S501
+  type     <- stop.S502 via stopTypes else reject "Stop {stop.S501} has no type"
+  location <- lookup Location(party.N104) learn address(party)
+  code     <- party.N104
+  name     <- party.N102.titleCase()
+  address  <- address(party)
+  window   <- window(stop.G62, location.zone ?? partner.zone)
+    else reject "Stop {stop.S501} has no appointment"
+  weight <- weight(stop.S503, stop.S504)
+  pieces <- int(stop.S505)
+  refs   <- refs(stop.L11)
+  notes  <- if exists stop.NTE.02 then [stop.NTE.02 ?? ""] else []
+}
+
+commodities <- each 0300.map(s => s.0320).flatten as line {
+  commodity   <- lookup Commodity(line.L503)
+  description <- line.L502.titleCase()
+  weight      <- weight(line.AT8.03, line.AT8.02)
+  pieces      <- line.AT8.04
+  hazmat      <- exists line.0325.LH1
+}
+
+test "Kestrel's standard tender becomes a two-stop load" {
+  given file "samples/tender-original.x12"
+  given lookup Customer("KVW-AP") = "Kestrel Valve Works"
+  given lookup Location("KVW-RFD1") = "Kestrel Plant 1"
+  given lookup Location("KVC-0327") = "Tri-State Waterworks Minneapolis"
+  expect key == "KVW-100037"
+  expect purpose == Original
+  expect payment == Prepaid
+  expect bol == "8100798987"
+  expect poNumber == "4589684109"
+  expect stops.count == 2
+  expect stops.first.type == Pickup
+  expect stops.last.type == Delivery
+  expect stops.last.address.city == "MINNEAPOLIS"
+  expect stops.first.window.start == @2026-04-26T07:00[America/Chicago]
+  expect stops.last.window.end == @2026-04-26T18:00[America/Chicago]
+  expect total == $1_029.41
+  expect weight == 38_290 lb
+  expect pieces == 20
+  expect equipment == "VAN"
+  expect temperature == none
+  expect commodities.count == 2
+  expect commodities.count(c => c.hazmat) == 1
+  expect no rejects
+  expect no holds
+}
+
+test "an unmapped bill-to waits for a mapping" {
+  given file "samples/tender-original.x12"
+  given lookup Customer("KVW-AP") = none
+  expect customer == none
+}
+
+test "a reefer tender carries its set point" {
+  given file "samples/tender-reefer.x12"
+  expect equipment == "REEFER"
+  expect temperature.min == 55 °F
+  expect stops.count == 3
+  expect stops.last.address.postal == "802162580"
+}
+
+test "a tender from two plants has two pickups" {
+  given file "samples/tender-two-pickups.x12"
+  expect stops.count == 4
+  expect stops.filter(s => s.type == Pickup).count == 2
+  expect commodities.count == 6
+}
+
+test "a replacement reads as a replacement" {
+  given file "samples/tender-replace.x12"
+  expect purpose == Replace
+  expect key == "KVW-100037"
+}
+
+test "a tender with only what the guide requires reads" {
+  given file "samples/tender-sparse.x12"
+  expect poNumber == none
+  expect notes.isEmpty
+  expect payment == ThirdParty
+  expect no rejects
+}
+
+property "everything Kestrel has tendered still reads" {
+  vary file in samples "samples/tender-*.x12"
+  expect no rejects
+}

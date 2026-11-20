@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const (
@@ -72,8 +73,9 @@ func (c *Checker) CheckIntegrity(
 		return nil, err
 	}
 	found := make([]*keel.DynResult, len(groups))
+	now := timeutils.NowUnix()
 	for i, group := range groups {
-		q, qErr := referenceQuery(ctx, group, req)
+		q, qErr := referenceQuery(ctx, group, req, now)
 		if qErr != nil {
 			return nil, qErr
 		}
@@ -181,6 +183,8 @@ func groupKey(table, column string, conditions []validationframework.Condition) 
 	for _, condition := range conditions {
 		b.WriteByte(0)
 		b.WriteString(condition.Column)
+		b.WriteByte(0)
+		b.WriteString(string(condition.Op))
 		b.WriteByte('=')
 		fmt.Fprint(&b, condition.Value)
 	}
@@ -192,6 +196,7 @@ func referenceQuery(
 	ctx context.Context,
 	group *referenceGroup,
 	req *validationframework.IntegrityRequest,
+	now int64,
 ) (*keel.DynQuery, error) {
 	q := keel.DynFrom(group.table)
 	if group.table.Column(group.column) < 0 {
@@ -215,12 +220,38 @@ func referenceQuery(
 				condition.Column,
 			)
 		}
-		preds = append(preds, q.Path(condition.Column).Eq(condition.Value))
+		pred, condErr := conditionPredicate(q, condition, now)
+		if condErr != nil {
+			return nil, condErr
+		}
+		preds = append(preds, pred)
 	}
 
 	return scoped(ctx, q.Where(preds...)).
 		Select(q.Path(group.column)).
 		Limit(len(group.ids)), nil
+}
+
+func conditionPredicate(
+	q *keel.DynQuery,
+	condition validationframework.Condition,
+	now int64,
+) (keel.DynExpr, error) {
+	column := q.Path(condition.Column)
+	switch condition.Op {
+	case validationframework.ConditionEq:
+		return column.Eq(condition.Value), nil
+	case validationframework.ConditionIsNull:
+		return column.IsNull(), nil
+	case validationframework.ConditionNullOrNotAfterNow:
+		return column.IsNull().Or(column.Lte(now)), nil
+	default:
+		return keel.DynExpr{}, fmt.Errorf(
+			"integritycheck: unknown condition %q on %s",
+			condition.Op,
+			condition.Column,
+		)
+	}
 }
 
 func markFound(found *keel.DynResult, group *referenceGroup, exists []bool) {

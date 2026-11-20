@@ -357,7 +357,7 @@ func TestCustomersRefusesAStageItDoesNotKnow(t *testing.T) {
 	})
 	var invalid *errortypes.Error
 	require.ErrorAs(t, err, &invalid)
-	assert.Equal(t, "stage", invalid.Field)
+	assert.Equal(t, "stage", invalid.Field())
 	assert.Empty(t, repo.customers)
 
 	filter := &pagination.QueryOptions{TenantInfo: tenant, Query: "acme"}
@@ -384,7 +384,7 @@ func TestAgreementActivityRefusesAMissingAgreement(t *testing.T) {
 	})
 	var invalid *errortypes.Error
 	require.ErrorAs(t, err, &invalid)
-	assert.Equal(t, "agreementId", invalid.Field)
+	assert.Equal(t, "agreementId", invalid.Field())
 	assert.Empty(t, repo.activity, "nothing is read without an agreement")
 }
 

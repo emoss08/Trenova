@@ -16,7 +16,7 @@ func (s *Service) PlanCreate(
 	ctx context.Context,
 	entity *commodity.Commodity,
 ) (*commodity.Commodity, error) {
-	if err := s.transformer.TransformCommodity(ctx, entity); err != nil {
+	if err := s.formatter.Format(ctx, entity); err != nil {
 		return nil, err
 	}
 
@@ -31,7 +31,7 @@ func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *commodity.Commodity,
 ) (*kernelports.RecordChange[commodity.Commodity], error) {
-	if err := s.transformer.TransformCommodity(ctx, entity); err != nil {
+	if err := s.formatter.Format(ctx, entity); err != nil {
 		return nil, err
 	}
 

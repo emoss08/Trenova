@@ -12,11 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
@@ -94,9 +96,24 @@ func TestNonRecourseFactoredInvoicesLeaveCollectionsAndCreditExposure(t *testing
 	require.NoError(t, err)
 	assert.Equal(t, int64(10000+20000), exposure[env.customerID])
 
+	assert.Equal(t, env.wholeLedgerExposure(t), exposure[env.customerID])
+
 	nonRecourse.NonRecourse = false
 	_, err = env.factors.Update(env.ctx, nonRecourse)
 	require.NoError(t, err)
+
+	exposure, err = env.ledger.SumCustomerBalances(
+		env.ctx,
+		customerledgerports.SumCustomerBalancesRequest{
+			TenantInfo:                 env.tenantInfo,
+			CustomerIDs:                []pulid.ID{env.customerID},
+			ExcludeNonRecourseFactored: true,
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, int64(10000+20000+40000-5000), exposure[env.customerID],
+		"an invoice whose factor takes recourse again counts at once")
+	assert.Equal(t, env.wholeLedgerExposure(t), exposure[env.customerID])
 
 	row, err = repo.GetWorklistRow(env.ctx, collectionports.GetAccountRequest{
 		TenantInfo: env.tenantInfo,
@@ -144,6 +161,24 @@ func TestStampedAgreementDecidesRecourse(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, kept.TotalAmountMinor, exposure[env.customerID])
+	assert.Equal(t, env.wholeLedgerExposure(t), exposure[env.customerID])
+}
+
+func (e *nonRecourseEnv) wholeLedgerExposure(t *testing.T) int64 {
+	t.Helper()
+	cle := customerledgerdb.CustomerLedgerEntries
+	inv := invoicedb.Invoices.As("inv")
+	total, err := keel.IntoOne[int64](e.ctx, e.db, cle.
+		Pick(keel.NumericOf(cle.AmountMinor.Sum()).Coalesce(0)).
+		Where(
+			cle.CustomerID.Eq(e.customerID),
+			keel.Not(keel.Exists(inv.Where(
+				inv.ID.EqCol(receivablesql.LedgerInvoiceID(cle)),
+				receivablesql.SoldWithoutRecourse(inv),
+			))),
+		))
+	require.NoError(t, err)
+	return total
 }
 
 func (e *nonRecourseEnv) agreeWith(

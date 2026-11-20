@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -203,6 +204,42 @@ func TestAdjustEscrowAccount_AppliesTransactionAndUpdatesBalance(t *testing.T) {
 	assert.Equal(t, account.OrganizationID, appended.OrganizationID)
 	assert.EqualValues(t, 3_000, updated.BalanceMinor)
 	assert.Len(t, audit.logged, 1)
+
+	journal, ok := svc.escrowJournal.(*fakeEscrowJournal)
+	require.True(t, ok)
+	require.Len(t, journal.posted, 1)
+	assert.Same(t, appended, journal.posted[0])
+	assert.True(t, appended.ID.IsNotNil())
+}
+
+func TestAdjustEscrowAccount_JournalRefusalFailsTheAdjustment(t *testing.T) {
+	t.Parallel()
+	svc, audit := newTestService()
+
+	account := activeEscrowAccount(5_000)
+	svc.escrowRepo = &fakeEscrowRepo{
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
+			return account, nil
+		},
+		appendTransaction: func(_ context.Context, entity *payescrow.EscrowTransaction) (*payescrow.EscrowTransaction, error) {
+			return entity, nil
+		},
+	}
+	refusal := errortypes.NewValidationError(
+		"accountingControl",
+		errortypes.ErrRequired,
+		"An escrow adjustment account must be configured to post escrow adjustments",
+	)
+	svc.escrowJournal = &fakeEscrowJournal{err: refusal}
+
+	updated, err := svc.AdjustEscrowAccount(t.Context(), &EscrowAdjustmentRequest{
+		AccountID:   account.ID,
+		AmountMinor: 1_000,
+		Description: "lump sum deposit",
+	}, testActor())
+	require.ErrorIs(t, err, refusal)
+	assert.Nil(t, updated)
+	assert.Empty(t, audit.logged)
 }
 
 func TestCloseEscrowAccount_RejectsAlreadyClosedAccount(t *testing.T) {
@@ -263,6 +300,50 @@ func TestCloseEscrowAccount_RefundsRemainingBalance(t *testing.T) {
 	require.NotNil(t, updated.ClosedDate)
 	assert.EqualValues(t, 0, updated.BalanceMinor)
 	assert.Len(t, audit.logged, 1)
+
+	journal, ok := svc.escrowJournal.(*fakeEscrowJournal)
+	require.True(t, ok)
+	require.Len(t, journal.posted, 1)
+	assert.Same(t, appended, journal.posted[0])
+	assert.True(t, appended.ID.IsNotNil())
+}
+
+func TestCloseEscrowAccount_JournalRefusalKeepsTheAccountOpen(t *testing.T) {
+	t.Parallel()
+	svc, audit := newTestService()
+
+	account := activeEscrowAccount(75_000)
+	updateCalls := 0
+	svc.escrowRepo = &fakeEscrowRepo{
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
+			return account, nil
+		},
+		appendTransaction: func(_ context.Context, entity *payescrow.EscrowTransaction) (*payescrow.EscrowTransaction, error) {
+			return entity, nil
+		},
+		update: func(_ context.Context, entity *payescrow.EscrowAccount) (*payescrow.EscrowAccount, error) {
+			updateCalls++
+			return entity, nil
+		},
+	}
+	refusal := errortypes.NewValidationError(
+		"accountingControl",
+		errortypes.ErrRequired,
+		"A default cash account must be configured to post escrow refunds",
+	)
+	svc.escrowJournal = &fakeEscrowJournal{err: refusal}
+
+	updated, err := svc.CloseEscrowAccount(
+		t.Context(),
+		pagination.TenantInfo{},
+		account.ID,
+		testActor(),
+	)
+	require.ErrorIs(t, err, refusal)
+	assert.Nil(t, updated)
+	assert.Equal(t, 0, updateCalls)
+	assert.Equal(t, payescrow.EscrowAccountStatusActive, account.Status)
+	assert.Empty(t, audit.logged)
 }
 
 func TestCloseEscrowAccount_ZeroBalanceSkipsRefund(t *testing.T) {
@@ -294,6 +375,9 @@ func TestCloseEscrowAccount_ZeroBalanceSkipsRefund(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 0, appendCalls)
 	assert.Equal(t, payescrow.EscrowAccountStatusClosed, updated.Status)
+	journal, ok := svc.escrowJournal.(*fakeEscrowJournal)
+	require.True(t, ok)
+	assert.Empty(t, journal.posted)
 }
 
 func TestAccrueEscrowInterest_SkipsIneligibleAccounts(t *testing.T) {
@@ -376,6 +460,44 @@ func TestAccrueEscrowInterest_AccruesOneYearOfInterest(t *testing.T) {
 	assert.EqualValues(t, 1_050_000, updated.BalanceMinor)
 	require.NotNil(t, updated.LastInterestAccrualDate)
 	assert.Greater(t, *updated.LastInterestAccrualDate, oneYearAgo)
+
+	journal, ok := svc.escrowJournal.(*fakeEscrowJournal)
+	require.True(t, ok)
+	require.Len(t, journal.posted, 1)
+	assert.Same(t, appended, journal.posted[0])
+	assert.True(t, appended.ID.IsNotNil())
+}
+
+func TestAccrueEscrowInterest_JournalRefusalFailsTheAccrual(t *testing.T) {
+	t.Parallel()
+	svc, _ := newTestService()
+
+	oneYearAgo := time.Now().Add(-365 * 24 * time.Hour).Unix()
+	account := activeEscrowAccount(1_000_000)
+	account.AnnualInterestRate = decimal.NewFromInt(5)
+	account.LastInterestAccrualDate = &oneYearAgo
+
+	svc.escrowRepo = &fakeEscrowRepo{
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
+			return account, nil
+		},
+		update: func(_ context.Context, entity *payescrow.EscrowAccount) (*payescrow.EscrowAccount, error) {
+			return entity, nil
+		},
+		appendTransaction: func(_ context.Context, entity *payescrow.EscrowTransaction) (*payescrow.EscrowTransaction, error) {
+			return entity, nil
+		},
+	}
+	refusal := errortypes.NewValidationError(
+		"accountingControl",
+		errortypes.ErrRequired,
+		"An escrow interest expense account must be configured to post escrow interest",
+	)
+	svc.escrowJournal = &fakeEscrowJournal{err: refusal}
+
+	updated, err := svc.AccrueEscrowInterest(t.Context(), pagination.TenantInfo{}, account.ID)
+	require.ErrorIs(t, err, refusal)
+	assert.Nil(t, updated)
 }
 
 func TestAccrueEscrowInterest_TinyElapsedOnlyAdvancesAccrualDate(t *testing.T) {
@@ -405,6 +527,9 @@ func TestAccrueEscrowInterest_TinyElapsedOnlyAdvancesAccrualDate(t *testing.T) {
 	updated, err := svc.AccrueEscrowInterest(t.Context(), pagination.TenantInfo{}, account.ID)
 	require.NoError(t, err)
 	assert.Equal(t, 0, appendCalls)
+	journal, ok := svc.escrowJournal.(*fakeEscrowJournal)
+	require.True(t, ok)
+	assert.Empty(t, journal.posted)
 	assert.EqualValues(t, 1_000, updated.BalanceMinor)
 	require.NotNil(t, updated.LastInterestAccrualDate)
 	assert.GreaterOrEqual(t, *updated.LastInterestAccrualDate, justNow)

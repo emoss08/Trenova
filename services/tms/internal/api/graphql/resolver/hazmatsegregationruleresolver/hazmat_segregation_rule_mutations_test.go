@@ -142,5 +142,5 @@ func TestApplyHazmatSegregationRuleInput_NamesAMalformedMaterial(t *testing.T) {
 
 	var valErr *errortypes.Error
 	require.ErrorAs(t, err, &valErr)
-	assert.Equal(t, "hazmatBId", valErr.Field)
+	assert.Equal(t, "hazmatBId", valErr.Field())
 }

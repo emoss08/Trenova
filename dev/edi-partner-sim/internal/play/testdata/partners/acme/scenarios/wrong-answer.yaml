@@ -1,0 +1,7 @@
+name: a declined tender fails an expectation of acceptance
+within: 10s
+steps:
+  - send: { set: "204", as: t1 }
+  - trenova: { decide: t1, decision: decline }
+  - expect: { wire: "990", about: t1, elements: { B1-04: A } }
+  - expect: { flow: t1, status: Closed }

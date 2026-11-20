@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"go.uber.org/fx"
@@ -24,7 +24,7 @@ type Params struct {
 	Repo         hazardousmaterialports.HazardousMaterialRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Transformer  accessorialchargeports.DataTransformer
+	Formatter    dataentrycontrolports.TextFormatter
 }
 
 type Service struct {
@@ -32,7 +32,7 @@ type Service struct {
 	repo         hazardousmaterialports.HazardousMaterialRepository
 	validator    *Validator
 	auditService auditports.AuditService
-	transformer  accessorialchargeports.DataTransformer
+	formatter    dataentrycontrolports.TextFormatter
 }
 
 func New(p Params) *Service {
@@ -41,7 +41,7 @@ func New(p Params) *Service {
 		repo:         p.Repo,
 		validator:    p.Validator,
 		auditService: p.AuditService,
-		transformer:  p.Transformer,
+		formatter:    p.Formatter,
 	}
 }
 

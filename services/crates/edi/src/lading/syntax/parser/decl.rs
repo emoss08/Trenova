@@ -159,12 +159,26 @@ impl Parser<'_> {
                     continue;
                 }
                 let pair_start = self.token().span.start;
-                let left_values = self.pair_side();
+                let left_values = self.not_sent_or_side();
                 let Some(direction) = self.direction() else {
                     self.skip_line();
                     continue;
                 };
-                let right_values = self.pair_side();
+                let right_values = self.not_sent_or_side();
+                let not_sent_wrong = match (left_values.is_empty(), right_values.is_empty()) {
+                    (true, true) => true,
+                    (true, false) => direction != Direction::Backward,
+                    (false, true) => direction != Direction::Forward,
+                    (false, false) => false,
+                };
+                if not_sent_wrong {
+                    self.error_at(
+                        self.since(pair_start),
+                        Message::new(message!(
+                            "not sent names what is never written: Dispatched -> not sent, or not sent <- Dispatched"
+                        )),
+                    );
+                }
                 pairs.push(Pair {
                     left: left_values,
                     direction,
@@ -197,6 +211,16 @@ impl Parser<'_> {
             self.error_here(Message::new(message!("Expected <->, -> or <-")));
             None
         }
+    }
+
+    /// A pair's side, or nothing for `not sent`: the values on the other side are never written.
+    fn not_sent_or_side(&mut self) -> Vec<Expr> {
+        if self.at_word("not") && self.word_at(1, "sent") {
+            self.eat_word("not");
+            self.eat_word("sent");
+            return Vec::new();
+        }
+        self.pair_side()
     }
 
     fn pair_side(&mut self) -> Vec<Expr> {
@@ -338,6 +362,7 @@ impl Parser<'_> {
             group: None,
             version: None,
             separators: Vec::new(),
+            line_ending: None,
             usage: None,
             span: self.token().span,
         };
@@ -374,11 +399,14 @@ impl Parser<'_> {
                         block.separators.push(text);
                     }
                 }
+            } else if self.eat_word("line").is_some() {
+                self.expect_word("ending");
+                block.line_ending = self.name("none, lf, crlf or cr");
             } else if self.eat_word("usage").is_some() {
                 block.usage = self.name("test or production");
             } else {
                 self.error_here(Message::new(message!(
-                    "Expected them, us, group, version, separators or usage"
+                    "Expected them, us, group, version, separators, line ending or usage"
                 )));
                 self.skip_line();
                 continue;

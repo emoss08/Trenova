@@ -1,0 +1,30 @@
+partner tamberlane "Tamberlane Stores"
+
+// Tamberlane sends under its UCC communications ID and addresses Trenova by SCAC. It batches up
+// to 25 tenders in one SFTP file, writes "|" between elements, and answers everything Trenova
+// sends with a 5010 999 that rejects the transaction on any breach of its guides.
+interchange {
+  them 08 "0076543210"
+  us 02 "TRNV"
+  group "0076543210" <-> "TRNV"
+  version 004010
+  separators "|" "~" "^"
+  line ending lf
+  usage test
+}
+
+zone America/Chicago
+currency "USD"
+
+/// Accept Tamberlane tenders automatically, without a planner.
+setting autoAccept: Bool = false
+/// Send a decline automatically when a rule declines a tender.
+setting autoDecline: Bool = true
+/// Tamberlane's gross limit for a 53 ft van; anything heavier goes to a planner.
+setting maxWeight: Weight = 43_500 lb in 1 lb..80_000 lb
+/// The lowest total accepted automatically.
+setting minimumCharge: Money = $600.00 in $0.00..$5_000.00
+/// How long Tamberlane waits for a 990 before it re-tenders the load to another carrier.
+setting answerWithin: Duration = 1 h in 15 min..4 h
+/// The reason sent with a decline that gives none.
+setting declineNote: Text = "Capacity not available"

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,6 +23,7 @@ type Params struct {
 	Repo         factoringcompanyports.FactoringCompanyRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
+	Formatter    dataentrycontrolports.TextFormatter
 }
 
 type Service struct {
@@ -29,6 +31,7 @@ type Service struct {
 	repo         factoringcompanyports.FactoringCompanyRepository
 	validator    *Validator
 	auditService auditports.AuditService
+	formatter    dataentrycontrolports.TextFormatter
 }
 
 func New(p Params) *Service {
@@ -37,6 +40,7 @@ func New(p Params) *Service {
 		repo:         p.Repo,
 		validator:    p.Validator,
 		auditService: p.AuditService,
+		formatter:    p.Formatter,
 	}
 }
 
@@ -79,6 +83,11 @@ func (s *Service) Create(
 		zap.String("userID", userID.String()),
 	)
 
+	if err := s.formatter.Format(ctx, entity); err != nil {
+		log.Error("failed to format factoring company", zap.Error(err))
+		return nil, err
+	}
+
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -115,6 +124,11 @@ func (s *Service) Update(
 		zap.String("operation", "Update"),
 		zap.String("userID", userID.String()),
 	)
+
+	if err := s.formatter.Format(ctx, entity); err != nil {
+		log.Error("failed to format factoring company", zap.Error(err))
+		return nil, err
+	}
 
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr

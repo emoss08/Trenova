@@ -6,15 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/jsonutils"
-	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -23,6 +19,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
+	DB           kernelports.Transactor
 	Repo         costingcontrolports.CostingControlRepository
 	ActualsRepo  costingcontrolports.CostingActualsRepository
 	PriceRepo    fuelsurchargeports.FuelIndexPriceRepository
@@ -34,6 +31,7 @@ type Params struct {
 
 type Service struct {
 	l            *zap.Logger
+	db           kernelports.Transactor
 	repo         costingcontrolports.CostingControlRepository
 	actualsRepo  costingcontrolports.CostingActualsRepository
 	priceRepo    fuelsurchargeports.FuelIndexPriceRepository
@@ -47,6 +45,7 @@ type Service struct {
 func New(p Params) *Service { //nolint:gocritic // stable API shape
 	return &Service{
 		l:            p.Logger.Named("service.costing"),
+		db:           p.DB,
 		repo:         p.Repo,
 		actualsRepo:  p.ActualsRepo,
 		priceRepo:    p.PriceRepo,
@@ -63,114 +62,4 @@ func (s *Service) Get(
 	req *costingcontrolports.GetCostingControlRequest,
 ) (*costingcontrol.CostingControl, error) {
 	return s.repo.GetByOrgID(ctx, req)
-}
-
-func (s *Service) Update(
-	ctx context.Context,
-	entity *costingcontrol.CostingControl,
-	actor *permissionports.RequestActor,
-) (*costingcontrol.CostingControl, error) {
-	userID := actor.UserID
-	log := s.l.With(
-		zap.String("operation", "Update"),
-		zap.String("orgID", entity.OrganizationID.String()),
-	)
-
-	original, err := s.repo.GetByOrgID(ctx, &costingcontrolports.GetCostingControlRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-	})
-	if err != nil {
-		log.Error("failed to get original costing control", zap.Error(err))
-		return nil, err
-	}
-	entity.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
-
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	updatedEntity, err := s.repo.Update(ctx, entity)
-	if err != nil {
-		log.Error("failed to update costing control", zap.Error(err))
-		return nil, err
-	}
-
-	if err = s.auditService.LogAction(ctx,
-		&auditports.LogActionParams{
-			Resource:       permission.ResourceCostingControl,
-			ResourceID:     updatedEntity.GetID().String(),
-			Operation:      permission.OpUpdate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(updatedEntity),
-			PreviousState:  jsonutils.MustToJSON(original),
-			OrganizationID: updatedEntity.OrganizationID,
-			BusinessUnitID: updatedEntity.BusinessUnitID,
-		},
-		auditservice.WithComment("Costing control updated"),
-		auditservice.WithDiff(original, updatedEntity),
-		auditservice.WithCritical(),
-	); err != nil {
-		log.Error("failed to log audit action", zap.Error(err))
-	}
-
-	return updatedEntity, nil
-}
-
-type UpdateCategoryParams struct {
-	Category     *costingcontrol.CostCategory
-	GLAccountIDs []pulid.ID
-	TenantInfo   pagination.TenantInfo
-	UserID       pulid.ID
-}
-
-func (s *Service) UpdateCategory(
-	ctx context.Context,
-	params *UpdateCategoryParams,
-) (*costingcontrol.CostCategory, error) {
-	log := s.l.With(
-		zap.String("operation", "UpdateCategory"),
-		zap.String("categoryID", params.Category.ID.String()),
-	)
-
-	if multiErr := s.validator.ValidateCategoryUpdate(ctx, params.Category); multiErr != nil {
-		return nil, multiErr
-	}
-
-	updatedCategory, err := s.repo.UpdateCategory(ctx, params.Category)
-	if err != nil {
-		log.Error("failed to update cost category", zap.Error(err))
-		return nil, err
-	}
-
-	if err = s.repo.ReplaceCategoryGLAccounts(
-		ctx,
-		&costingcontrolports.ReplaceCategoryGLAccountsRequest{
-			TenantInfo:     params.TenantInfo,
-			CostCategoryID: updatedCategory.ID,
-			GLAccountIDs:   params.GLAccountIDs,
-		},
-	); err != nil {
-		log.Error("failed to replace cost category GL accounts", zap.Error(err))
-		return nil, err
-	}
-
-	if err = s.auditService.LogAction(ctx,
-		&auditports.LogActionParams{
-			Resource:       permission.ResourceCostingControl,
-			ResourceID:     updatedCategory.GetID().String(),
-			Operation:      permission.OpUpdate,
-			UserID:         params.UserID,
-			CurrentState:   jsonutils.MustToJSON(updatedCategory),
-			OrganizationID: updatedCategory.OrganizationID,
-			BusinessUnitID: updatedCategory.BusinessUnitID,
-		},
-		auditservice.WithComment("Cost category updated"),
-	); err != nil {
-		log.Error("failed to log audit action", zap.Error(err))
-	}
-
-	return updatedCategory, nil
 }

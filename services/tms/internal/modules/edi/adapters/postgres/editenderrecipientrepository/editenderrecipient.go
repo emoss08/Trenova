@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange/editenderchangedb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -87,15 +87,17 @@ func (r *repository) GetActiveExternalRecipientByShipmentReference(
 		r.db,
 		func(ctx context.Context) (*editenderchange.TenderRecipient, error) {
 			tr := editenderchangedb.TenderRecipients
+			sh := shipmentdb.Shipments
 			entity, err := tr.Where(
 				tr.SourceOrganizationID.Eq(req.TenantInfo.OrgID),
 				tr.EDIPartnerID.Eq(req.PartnerID),
 				tr.RecipientKind.Eq(editenderchange.TenderRecipientKindExternal),
 				tr.Status.Eq(editenderchange.TenderRecipientStatusActive),
 				keel.Or(
-					tr.SourceShipmentID.Eq(pulid.ID(req.Reference)),
+					tr.SourceShipmentID.InQuery(
+						sh.Pick(sh.ID).Where(sh.ProNumber.Eq(req.Reference)),
+					),
 					tr.LatestBaselinePayload.Text("bol").Eq(req.Reference),
-					tr.LatestBaselinePayload.Text("shipmentId").Eq(req.Reference),
 				),
 			).
 				Order(tr.CreatedAt.Desc()).

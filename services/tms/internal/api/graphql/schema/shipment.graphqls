@@ -250,7 +250,9 @@ type Shipment {
   totalChargeAmount: Decimal
   pieces: Int
   weight: Int
+  "Lowest temperature, in whole degrees Fahrenheit, of the load. When a stop or commodity has a range this is derived from them: the range every one shares, or the span from the coldest to the warmest bound when they share none."
   temperatureMin: Int
+  "Highest temperature, in whole degrees Fahrenheit, of the load, derived as temperatureMin is."
   temperatureMax: Int
   actualDeliveryDate: Timestamp
   actualShipDate: Timestamp
@@ -687,6 +689,10 @@ type ShipmentStop {
   sequence: Int!
   pieces: Int
   weight: Int
+  "Lowest temperature, in whole degrees Fahrenheit, the freight is kept at from this stop on."
+  temperatureMin: Int
+  "Highest temperature, in whole degrees Fahrenheit, the freight is kept at from this stop on."
+  temperatureMax: Int
   scheduledWindowStart: Timestamp!
   scheduledWindowEnd: Timestamp
   actualArrival: Timestamp
@@ -773,6 +779,10 @@ type ShipmentCommodity {
   lengthFeet: Float
   widthFeet: Float
   heightFeet: Float
+  "Lowest temperature, in whole degrees Fahrenheit, this line's freight must be kept at."
+  temperatureMin: Int
+  "Highest temperature, in whole degrees Fahrenheit, this line's freight must be kept at."
+  temperatureMax: Int
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -1334,7 +1344,10 @@ enum ShipmentEventType {
   MoveStatusChanged
   MoveDeparted
   MoveArrived
-  StopCompleted
+  StopArrived
+  StopDeparted
+  StopArrivalCorrected
+  StopDepartureCorrected
   DriverAssigned
   DriverReassigned
   DriverUnassigned
@@ -1465,8 +1478,8 @@ type ShipmentOwnershipEvent implements ShipmentEvent {
 }
 
 """
-Move and stop progress: MoveStatusChanged, MoveDeparted, MoveArrived and
-StopCompleted.
+Move and stop progress: MoveStatusChanged, MoveDeparted, MoveArrived,
+StopArrived, StopDeparted, StopArrivalCorrected and StopDepartureCorrected.
 """
 type ShipmentMoveEvent implements ShipmentEvent {
   id: ID!
@@ -1492,6 +1505,16 @@ type ShipmentMoveEvent implements ShipmentEvent {
   previousStatus: String
   "Move status after the change."
   newStatus: String
+  "Position of the stop on its move, counting from 1, for a stop event."
+  stopNumber: Int
+  "Kind of stop, for a stop event."
+  stopType: StopType
+  "Name of the stop's location, or its address when the location has no name."
+  locationName: String
+  "Arrival or departure time the stop event recorded."
+  actualAt: Timestamp
+  "Arrival or departure time a correction replaced."
+  previousActualAt: Timestamp
 }
 
 """
@@ -1786,6 +1809,7 @@ input ShipmentInput {
   totalChargeAmount: Decimal = "0"
   pieces: Int
   weight: Int
+  "Taken as given only when no stop or commodity has a range; otherwise the load's range is derived from theirs."
   temperatureMin: Int
   temperatureMax: Int
   actualDeliveryDate: Timestamp
@@ -1845,6 +1869,8 @@ input ShipmentStopInput {
   sequence: Int = 0
   pieces: Int
   weight: Int
+  temperatureMin: Int
+  temperatureMax: Int
   scheduledWindowStart: Timestamp = 0
   scheduledWindowEnd: Timestamp
   actualArrival: Timestamp
@@ -1891,6 +1917,8 @@ input ShipmentCommodityInput {
   lengthFeet: Float
   widthFeet: Float
   heightFeet: Float
+  temperatureMin: Int
+  temperatureMax: Int
   version: Int
 }
 

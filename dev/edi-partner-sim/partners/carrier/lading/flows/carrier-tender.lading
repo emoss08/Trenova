@@ -1,0 +1,404 @@
+flow carrierTender with quarrystone
+
+// Trenova is the broker: it tenders to Quarrystone and Quarrystone answers, reports and bills.
+// Every answer, status and invoice is about a load Trenova tendered; one about any other load is
+// rejected in the 997.
+send 204 via tenderOut on TenderOffered, TenderCancelled key tender.key
+
+// A decline hands the 990 to the tender it answers, which frees the load for another carrier.
+receive 990 as response
+  via responseIn
+  key response.key
+  acknowledge with 997
+  -> apply reject when not instance.exists "Quarrystone answered {response.key}, which is not a load Trenova tendered to it"
+
+receive 214 as status
+  via statusIn, rules statusChecks
+  key status.key
+  acknowledge with 997
+  -> apply reject when not instance.exists "Quarrystone sent a status for {status.key}, which is not a load Trenova tendered to it"
+
+// An invoice for the tendered rate goes to carrier invoice matching; one for any other total
+// waits for a person.
+receive 210 as invoice
+  via invoiceIn, rules invoiceChecks
+  key invoice.key ?? invoice.number
+  acknowledge with 997
+  -> apply reject when not instance.exists "Quarrystone invoice {invoice.number} is for {invoice.key ?? invoice.number}, which is not a load Trenova tendered to it"
+    hold when invoice.total != sent.tender.total "Quarrystone invoice {invoice.number} bills {invoice.total}; the tender offered {sent.tender.total}"
+
+// Quarrystone answers a tender with its 990 within the window, or a planner hears about it.
+await 990 within partner.answerWithin else escalate "Quarrystone has not answered tender {message.key}"
+
+// Every message is acknowledged within 30 minutes: it goes again once, then a planner hears.
+expect 997 for every send within 30 min else resend 1 then escalate "Quarrystone has not acknowledged {message.set} {message.control}"
+
+test "an offered load is tendered to Quarrystone" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  expect sent 204
+}
+
+test "a cancelled load is withdrawn from Quarrystone" {
+  event TenderCancelled {
+    key: "S26036847599"
+    purpose: Cancel
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  expect sent 204
+}
+
+test "an acceptance is applied and acknowledged" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  receive file "samples/response-accept.x12"
+  expect applied
+  expect sent 997
+  expect no held
+}
+
+test "a decline is applied, which frees the load" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  receive file "samples/response-decline.x12"
+  expect applied
+  expect no rejected
+}
+
+test "a pickup, a delay and a delivery move the stops" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  receive file "samples/status-arrived.x12"
+  receive file "samples/status-delayed.x12"
+  receive file "samples/status-delivered.x12"
+  expect applied
+  expect no held
+  expect no rejected
+}
+
+test "a status for a load Trenova never tendered is rejected, not applied" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  receive file "samples/status-stray.x12"
+  expect rejected "Quarrystone sent a status for QY14371067, which is not a load Trenova tendered to it"
+  expect no applied
+}
+
+test "an invoice for the tendered rate is applied for matching" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  receive file "samples/invoice-matching.x12"
+  expect applied
+  expect no held
+}
+
+test "an invoice over the tendered rate is held for a person" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  receive file "samples/invoice-over.x12"
+  expect held "Quarrystone invoice QYF1620362 bills $1,355.00; the tender offered $1,180.00"
+  expect no applied
+}
+
+test "an invoice for a load Trenova never tendered is rejected" {
+  receive file "samples/invoice-matching.x12"
+  expect rejected "Quarrystone invoice QYF1620362 is for S26036847599, which is not a load Trenova tendered to it"
+}
+
+test "an invoice whose lines do not add up is held" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  receive file "samples/invoice-misfooted.x12"
+  expect held "Quarrystone invoice QYF6203622 lines add to"
+}
+
+test "a tender Quarrystone does not answer in time escalates with its load" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  ack accepted
+  advance 2 h
+  expect escalated "Quarrystone has not answered tender S26036847599"
+}
+
+test "an answered tender does not escalate" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  ack accepted
+  receive file "samples/response-accept.x12"
+  advance 3 h
+  expect no escalated
+}
+
+test "an unacknowledged tender is sent again, then escalated" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  advance 30 min
+  expect no escalated "Quarrystone has not acknowledged"
+  advance 30 min
+  expect escalated "Quarrystone has not acknowledged 204 0001"
+}
+
+test "a rejected acknowledgment escalates at once" {
+  event TenderOffered {
+    key: "S26036847599"
+    bol: "BOL-734378"
+    equipment: "VAN"
+    weight: 38_870 lb
+    pieces: 15
+    total: $1_180.00
+    stops: [
+      {
+        sequence: 1, type: Pickup, name: "Rio Grande Fasteners", code: "RGF-1"
+        address: { line1: "3301 Princeton Dr NE", city: "Albuquerque", state: "NM", postal: "87107" }
+        window: { start: @2026-03-16T07:00[America/Denver], end: @2026-03-16T09:00[America/Denver] }
+        weight: 38_870 lb, pieces: 15
+      },
+      {
+        sequence: 2, type: Delivery, name: "Big Muddy Distribution", code: "BMD-7"
+        address: { line1: "4800 Gateway Dr", city: "Omaha", state: "NE", postal: "68110" }
+        window: { start: @2026-03-19T13:00[America/Chicago], end: @2026-03-19T15:00[America/Chicago] }
+        weight: 38_870 lb, pieces: 15
+      }
+    ]
+  }
+  ack rejected
+  expect escalated "The partner rejected 204 0001"
+}

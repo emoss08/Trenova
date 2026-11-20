@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type WorkspaceSummary struct {
@@ -40,14 +39,13 @@ func (s *Service) GetWorkspaceSummary(
 	tenantInfo pagination.TenantInfo,
 	periodStart, periodEnd int64,
 ) (*WorkspaceSummary, error) {
-	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
 	bounds := driversettlementservice.PeriodBounds{PeriodStart: periodStart, PeriodEnd: periodEnd}
 	if bounds.PeriodStart == 0 || bounds.PeriodEnd == 0 {
-		bounds = driversettlementservice.ResolveCurrentPeriod(control, timeutils.NowUnix())
+		current, err := s.settlements.CurrentPeriod(ctx, tenantInfo)
+		if err != nil {
+			return nil, err
+		}
+		bounds = current
 	}
 
 	counts, err := s.settlementRepo.GetWorkspaceCounts(
@@ -106,14 +104,13 @@ func (s *Service) ListUnsettledWorkers(
 	tenantInfo pagination.TenantInfo,
 	periodStart, periodEnd int64,
 ) ([]*driversettlementports.UnsettledWorkerSummary, error) {
-	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
 	bounds := driversettlementservice.PeriodBounds{PeriodStart: periodStart, PeriodEnd: periodEnd}
 	if bounds.PeriodStart == 0 || bounds.PeriodEnd == 0 {
-		bounds = driversettlementservice.ResolveCurrentPeriod(control, timeutils.NowUnix())
+		current, err := s.settlements.CurrentPeriod(ctx, tenantInfo)
+		if err != nil {
+			return nil, err
+		}
+		bounds = current
 	}
 
 	return s.payEventRepo.ListUnsettledWorkerSummaries(

@@ -213,7 +213,7 @@ func TestRecordStopActual_RefusesAUnixTimeOrAnOffset(t *testing.T) {
 		require.Error(t, err, occurredAt)
 		var fieldErr *errortypes.Error
 		require.ErrorAs(t, err, &fieldErr)
-		assert.Equal(t, "occurredAt", fieldErr.Field)
+		assert.Equal(t, "occurredAt", fieldErr.Field())
 		assert.Nil(t, moves.recorded, "nothing is recorded at a guessed time")
 	}
 }

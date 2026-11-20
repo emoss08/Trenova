@@ -1,0 +1,14 @@
+guide ashgrove.210 from x12.004010.210 "Ashgrove Industrial Supply Freight Invoice (1998)"
+
+/// Ashgrove's payables screen holds one charge per invoice: the total.
+B3 { 02 required; 03 required length 7..7; 04 codes "PP", "CC", "TP"; 06 required; 07 required; 11 required }
+N9 max 1 { 01 codes "BM" }
+C3 unused
+ITD unused
+loop 0100 unused
+loop 0200 unused
+loop 0300 unused
+loop 0400 required
+0400.L5 max 1
+0400.L1 required max 1 { 01 required; 04 required }
+L3 { 05 required }

@@ -60,25 +60,36 @@ func (s *Service) planTenderChanges(
 	oldPayload := edipayloadbuild.BuildTenderPayload(original)
 	newPayload := edipayloadbuild.BuildTenderPayload(updated)
 	newPayload.PurposeCode = editransfer.LoadTenderPurposeChange
-	newHash := editenderrecipient.PayloadHash(&newPayload)
-	if editenderrecipient.PayloadHash(&oldPayload) == newHash {
+	if original.OrderID == updated.OrderID &&
+		editenderrecipient.PayloadHash(&oldPayload) == editenderrecipient.PayloadHash(&newPayload) {
 		return nil, nil //nolint:nilnil // a nil plan means the update sends no 204 change
 	}
 
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  updated.OrganizationID,
+		BuID:   updated.BusinessUnitID,
+		UserID: actorUserID(actor),
+	}
 	recipients, err := s.tenderRecipientRepo.ListActiveTenderRecipientsForSourceShipment(
 		ctx,
 		editenderports.ListEDITenderRecipientsForSourceShipmentRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  updated.OrganizationID,
-				BuID:   updated.BusinessUnitID,
-				UserID: actorUserID(actor),
-			},
+			TenantInfo:       tenantInfo,
 			SourceShipmentID: updated.ID,
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
+	if len(recipients) > 0 {
+		if newPayload.PONumber, err = s.payload.PurchaseOrder(
+			ctx,
+			tenantInfo,
+			updated.OrderID,
+		); err != nil {
+			return nil, err
+		}
+	}
+	newHash := editenderrecipient.PayloadHash(&newPayload)
 
 	plan := &tenderChangePlan{
 		payload:    &newPayload,

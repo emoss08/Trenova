@@ -161,7 +161,7 @@ func TestApplyCommodityInput_NamesAMalformedHazardousMaterial(t *testing.T) {
 
 	var valErr *errortypes.Error
 	require.ErrorAs(t, err, &valErr)
-	assert.Equal(t, "hazardousMaterialId", valErr.Field)
+	assert.Equal(t, "hazardousMaterialId", valErr.Field())
 }
 
 func TestApplyCommodityPatch_ChangesOnlyTheFieldsItCarries(t *testing.T) {

@@ -363,11 +363,10 @@ func (s *Service) generateDisputeSettlement(
 	workerID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
+	bounds, err := s.settlements.CurrentPeriod(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	bounds := driversettlementservice.ResolveCurrentPeriod(control, timeutils.NowUnix())
 	settlement, err := s.settlements.GenerateOffCycle(
 		ctx,
 		&driversettlementservice.GenerateForWorkerRequest{

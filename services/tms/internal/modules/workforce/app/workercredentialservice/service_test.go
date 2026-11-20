@@ -503,7 +503,7 @@ func TestVerify_RequiresDocumentWhenTypeDemandsIt(t *testing.T) {
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "documentId", verr.Field)
+	assert.Equal(t, "documentId", verr.Field())
 
 	docID := pulid.MustNew("doc_")
 	h.docRepo.EXPECT().
@@ -569,7 +569,7 @@ func TestAttachDocument_RejectsForeignDocument(t *testing.T) {
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "documentId", verr.Field)
+	assert.Equal(t, "documentId", verr.Field())
 }
 
 func TestUpdate_ClearsVerificationWhenFactsChange(t *testing.T) {
@@ -670,7 +670,7 @@ func TestArchiveType_GuardsMirroredAndHeldTypes(t *testing.T) {
 	})
 	var verr *errortypes.Error
 	require.ErrorAs(t, err, &verr)
-	assert.Equal(t, "status", verr.Field)
+	assert.Equal(t, "status", verr.Field())
 
 	_, err = h.svc.Create(t.Context(), &workercredentialservice.CreateRequest{
 		Entity: h.credential(h.forklift, 1_950_000_000),

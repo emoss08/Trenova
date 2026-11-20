@@ -95,6 +95,6 @@ func TestGetShipmentBillingRules_RefusesMoreCustomersThanAShipmentBills(t *testi
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "customerIds", validation.Field)
+	assert.Equal(t, "customerIds", validation.Field())
 	repo.AssertNotCalled(t, "GetShipmentBillingProfiles", mock.Anything, mock.Anything)
 }

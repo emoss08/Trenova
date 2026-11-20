@@ -753,6 +753,19 @@ input ScheduleTableViewInput {
   emailInline: Boolean
 }
 
+"A customer's ledger over a window, to export as a report with its running balance."
+input ExportCustomerLedgerInput {
+  "The report's name in the person's reports."
+  name: String!
+  customerId: ID!
+  "The first day exported; the balance starts from what the customer owed before it. Empty starts at the first entry."
+  startDate: Timestamp
+  "The last instant exported. Empty is the moment of the export."
+  endDate: Timestamp
+  "csv, xlsx or pdf."
+  format: String!
+}
+
 type TableExportResult {
   "The report the view was saved as; it lives in the person's reports."
   definitionId: ID!
@@ -768,6 +781,8 @@ extend type Mutation {
   exportTableView(input: ExportTableViewInput!): TableExportResult!
   "Saves a table's view as a report and sends it on a schedule."
   scheduleTableView(input: ScheduleTableViewInput!): TableExportResult!
+  "Saves a customer's ledger over a window as a report and builds the file in the background, every entry in the window with its running balance."
+  exportCustomerLedger(input: ExportCustomerLedgerInput!): TableExportResult!
   updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
   deleteReportDefinition(id: ID!): Boolean!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!

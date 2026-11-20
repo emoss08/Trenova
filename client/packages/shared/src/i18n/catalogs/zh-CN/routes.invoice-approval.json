@@ -18,7 +18,6 @@
   "Search invoice, customer, reason...": "搜索发票、客户、原因...",
   "The approval queue could not be read. Check your connection and reload the page.": "无法读取审批队列。请检查网络连接并重新加载页面。",
   "This adjustment could not be read. It may have been decided by someone else; refresh the queue to see what is still waiting.": "无法读取此调整。它可能已由其他人处理；请刷新队列查看仍在等待的项目。",
-  "Unapplied credit": "未冲抵贷项",
   "Why is this adjustment being rejected?": "为何拒绝这笔调整？",
   "Write-Off": "冲销"
 }

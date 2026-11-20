@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dataentrycontrolportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -22,15 +23,18 @@ import (
 )
 
 type testDeps struct {
-	repo  *carrierportsmock.MockCarrierRepository
-	audit *auditportsmock.MockAuditService
-	svc   *Service
+	repo      *carrierportsmock.MockCarrierRepository
+	audit     *auditportsmock.MockAuditService
+	formatter *dataentrycontrolportsmock.MockTextFormatter
+	svc       *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	repo := carrierportsmock.NewMockCarrierRepository(t)
 	auditSvc := auditportsmock.NewMockAuditService(t)
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
+	formatter.EXPECT().Format(mock.Anything, mock.Anything).Return(nil).Maybe()
 	svc := &Service{
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
@@ -38,8 +42,9 @@ func setupTest(t *testing.T) *testDeps {
 		validator:    NewTestValidator(),
 		auditService: auditSvc,
 		realtime:     &mocks.NoopRealtimeService{},
+		formatter:    formatter,
 	}
-	return &testDeps{repo: repo, audit: auditSvc, svc: svc}
+	return &testDeps{repo: repo, audit: auditSvc, formatter: formatter, svc: svc}
 }
 
 func newTestEntity() *carrier.Carrier {
@@ -148,7 +153,9 @@ func TestServiceUpdate(t *testing.T) {
 			})).
 			Return(&original, nil)
 		deps.repo.EXPECT().Update(mock.Anything, entity).Return(entity, nil)
-		deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		deps.audit.EXPECT().
+			LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil)
 
 		updated, err := deps.svc.Update(
 			t.Context(),

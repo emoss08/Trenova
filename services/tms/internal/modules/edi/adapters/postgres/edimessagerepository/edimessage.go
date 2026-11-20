@@ -239,12 +239,11 @@ func serviceFailure214Lifecycle(m *edimessagedb.EDIMessagesTable, failureID stri
 		m.TransactionSet.Eq(edidocument.TransactionSet214),
 		m.Direction.Eq(edidocument.DocumentDirectionOutbound),
 		m.PayloadSnapshot.Text("shipmentStatus", "serviceFailureId").Eq(failureID),
-		m.PayloadSnapshot.Text("shipmentStatus", "references", "serviceFailureId").Eq(failureID),
 	}
 }
 
 func serviceFailure214Trigger(m *edimessagedb.EDIMessagesTable) keel.StringExpr {
-	return m.PayloadSnapshot.Text("shipmentStatus", "references", "serviceFailure214Trigger")
+	return m.PayloadSnapshot.Text("shipmentStatus", "serviceFailureTrigger")
 }
 
 func serviceFailure214LatestFor(alias, failureID, trigger string) keel.StringExpr {

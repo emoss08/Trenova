@@ -41,7 +41,7 @@ type ReceiveAS2MessageRequest struct {
 	To                             string
 	MessageID                      string
 	ContentType                    string
-	TransferEncoding               string
+	EntityHeaders                  textproto.MIMEHeader
 	DispositionNotificationTo      string
 	DispositionNotificationOptions string
 	ReceiptDeliveryOption          string
@@ -132,7 +132,7 @@ func (s *Service) receiveAS2Message(
 		DecryptionKey:         cfg.DecryptionKey,
 		PartnerCertificate:    cfg.PartnerSigningCertificate,
 		MICAlgorithm:          micAlgorithmFromOptions(req.DispositionNotificationOptions),
-		TransferEncoding:      req.TransferEncoding,
+		EntityHeaders:         req.EntityHeaders,
 		RequireSignature:      cfg.RequireSignedInbound,
 		RequireEncryption:     cfg.RequireEncryptedInbound,
 		MaxDecompressedBytes:  s.maxFileBytes,
@@ -274,7 +274,7 @@ func (s *Service) RefuseAS2Message(
 
 func (s *Service) unknownPairFailure(req *ReceiveAS2MessageRequest) error {
 	_, err := as2.ParseMessage(req.ContentType, req.Body, &as2.ParseMessageOptions{
-		TransferEncoding:     req.TransferEncoding,
+		EntityHeaders:        req.EntityHeaders,
 		MaxDecompressedBytes: s.maxFileBytes,
 	})
 	if err != nil {

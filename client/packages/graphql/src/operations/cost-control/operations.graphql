@@ -74,15 +74,8 @@ query ResolvedCostProfilePage($asOfDate: String) {
   }
 }
 
-mutation UpdateCostingControl($input: CostingControlInput!) {
-  updateCostingControl(input: $input) {
-    id
-    version
-  }
-}
-
-mutation UpdateCostCategory($input: CostCategoryUpdateInput!) {
-  updateCostCategory(input: $input) {
+mutation SaveCostingControl($input: CostingControlSaveInput!) {
+  saveCostingControl(input: $input) {
     id
     version
   }

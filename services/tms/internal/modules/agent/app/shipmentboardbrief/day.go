@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -17,10 +17,10 @@ type Day struct {
 
 func Today(
 	ctx context.Context,
-	organizations orgzone.OrganizationReader,
+	organizations tenantports.OrganizationReader,
 	tenantInfo pagination.TenantInfo,
 ) (Day, error) {
-	location, err := orgzone.Location(ctx, organizations, tenantInfo)
+	location, err := tenantports.OrganizationLocation(ctx, organizations, tenantInfo)
 	if err != nil {
 		return Day{}, err
 	}

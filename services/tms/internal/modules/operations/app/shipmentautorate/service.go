@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteffects"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentnormalize"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -54,6 +55,7 @@ func (s *Service) PreviewContractRate(
 		return nil, err
 	}
 
+	shipmentnormalize.Temperature(entity)
 	s.effects.ApplyShipmentEnvelope(ctx, entity)
 
 	if _, err := s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {

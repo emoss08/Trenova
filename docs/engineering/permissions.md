@@ -511,7 +511,7 @@ its carrier assignment's pay) is not gated: each figure is the working number of
 | Surface | Withheld without the group | How |
 |---|---|---|
 | Rate agreements and versions | `marginFloorPercent`, `maxPayPercentOfSell` | `@protected`, `WithholdFields`/`KeepFields`, catalog |
-| Costing control (`costingControl`, `resolvedCostProfile`) | `targetMarginPercent` | `@protected`, `costingcontrol.WithholdFields`/`KeepFields` in `costingservice.Update` |
+| Costing control (`costingControl`, `resolvedCostProfile`) | `targetMarginPercent` | `@protected`, `costingcontrol.WithholdFields`/`KeepFields` in `costingservice.Save` |
 | Shipment profitability (`shipmentProfitability`, `Shipment.profitabilityEstimate`) | the whole payload: revenue, cost, profit, margin, break-even | `@protected` on the field that returns it; the client does not ask |
 | Fleet cost summary | `avgMarginPercent`, `unprofitableCount`, `totalRevenue` | `@protected` |
 | Shipment analytics (`/analytics?page=shipment`, Home KPIs) | `avgMarginPct`, `unprofitableCount` | `shipmentprovider/access.go`, and `@protected` on the GraphQL card |

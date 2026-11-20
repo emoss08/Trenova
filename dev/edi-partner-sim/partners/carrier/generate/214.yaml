@@ -1,0 +1,28 @@
+set: "214"
+
+segments:
+  - seg: B10
+    el: ["{pro}", "{key}", "{scac}"]
+  - seg: L11
+    when: tender.bol
+    el: ["{tender.bol}", BM]
+  - seg: L11
+    when: tender.po
+    el: ["{tender.po}", PO]
+  - seg: LX
+    el: ["1"]
+  - seg: AT7
+    el:
+      - "{event.code}"
+      - "{event.reason}"
+      - ""
+      - ""
+      - "{event.at|date}"
+      - "{event.at|time}"
+      - "{event.at|zone}"
+  - seg: MS1
+    el: ["{event.city}", "{event.state}", "{event.country}"]
+  - seg: MS2
+    el: ["{scac}", "{trailer}"]
+  - seg: L11
+    el: ["{event.stop}", QN]

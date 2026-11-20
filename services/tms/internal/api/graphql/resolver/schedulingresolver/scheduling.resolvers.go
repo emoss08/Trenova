@@ -29,8 +29,13 @@ func (r *MutationResolver) CreateShiftTemplate(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
+	entity, err := shiftTemplateFromInput(input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
 	return r.SchedulingService.CreateTemplate(ctx, &schedulingservice.CreateTemplateRequest{
-		Entity:     shiftTemplateFromInput(input, resolvercore.TenantInfo(authCtx)),
+		Entity:     entity,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 	})
@@ -47,7 +52,10 @@ func (r *MutationResolver) UpdateShiftTemplate(ctx context.Context, id string, i
 		return nil, gqlid.InvalidIDError("id", "Shift is invalid")
 	}
 
-	entity := shiftTemplateFromInput(input, resolvercore.TenantInfo(authCtx))
+	entity, err := shiftTemplateFromInput(input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
 	entity.ID = templateID
 
 	return r.SchedulingService.UpdateTemplate(ctx, &schedulingservice.UpdateTemplateRequest{

@@ -15,8 +15,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func dueInstance() ladingports.DueFlowInstance {
-	return ladingports.DueFlowInstance{
+func dueInstance() ladingports.FlowInstanceRef {
+	return ladingports.FlowInstanceRef{
 		ID:             pulid.MustNew("efi_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
@@ -29,7 +29,7 @@ func dueInstance() ladingports.DueFlowInstance {
 func TestDispatchDueFlowTimersLeavesFailuresOutOfLaterPages(t *testing.T) {
 	t.Parallel()
 
-	failing := make([]ladingports.DueFlowInstance, dueFlowPage)
+	failing := make([]ladingports.FlowInstanceRef, dueFlowPage)
 	for i := range failing {
 		failing[i] = dueInstance()
 	}
@@ -46,7 +46,7 @@ func TestDispatchDueFlowTimersLeavesFailuresOutOfLaterPages(t *testing.T) {
 		ListDueInstances(mock.Anything, mock.MatchedBy(func(req *ladingports.ListDueFlowInstancesRequest) bool {
 			return len(req.Exclude) == dueFlowPage
 		})).
-		Return([]ladingports.DueFlowInstance{behind}, nil).Once()
+		Return([]ladingports.FlowInstanceRef{behind}, nil).Once()
 	repo.EXPECT().
 		GetInstance(mock.Anything, mock.MatchedBy(func(req ladingports.GetFlowInstanceRequest) bool {
 			return req.ID != behind.ID

@@ -5346,6 +5346,24 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
 			},
 			{
+				Name:     "temperatureMin",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentCommodity)
+					return obj.TemperatureMin, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "temperatureMax",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentCommodity)
+					return obj.TemperatureMax, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
 				ChildErr: errNoChild2,
@@ -8152,6 +8170,51 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
+			{
+				Name:     "stopNumber",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentMoveEvent)
+					return obj.StopNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "stopType",
+				ChildErr: errNoChild40,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentMoveEvent)
+					return obj.StopType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOStopType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopType),
+			},
+			{
+				Name:     "locationName",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentMoveEvent)
+					return obj.LocationName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "actualAt",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentMoveEvent)
+					return obj.ActualAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "previousActualAt",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentMoveEvent)
+					return obj.PreviousActualAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
 		}},
 		{Object: "ShipmentMoveJurisdictionMile", Fields: []*gqlexec.Field{
 			{
@@ -9201,7 +9264,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild40,
+				ChildErr: errNoChild41,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Status, nil
@@ -9211,7 +9274,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild41,
+				ChildErr: errNoChild40,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Type, nil
@@ -9263,6 +9326,24 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Weight, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "temperatureMin",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentStop)
+					return obj.TemperatureMin, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "temperatureMax",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentStop)
+					return obj.TemperatureMax, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
@@ -10587,8 +10668,8 @@ var (
 	errNoChild37 = errors.New("field of type HoldSeverity does not have child fields")
 	errNoChild38 = errors.New("field of type MoveStatus does not have child fields")
 	errNoChild39 = errors.New("field of type MoveCoverageType does not have child fields")
-	errNoChild40 = errors.New("field of type StopStatus does not have child fields")
-	errNoChild41 = errors.New("field of type StopType does not have child fields")
+	errNoChild40 = errors.New("field of type StopType does not have child fields")
+	errNoChild41 = errors.New("field of type StopStatus does not have child fields")
 	errNoChild42 = errors.New("field of type StopScheduleType does not have child fields")
 	errNoChild43 = errors.New("field of type StopHandling does not have child fields")
 	errNoChild44 = errors.New("field of type TrackingEventSource does not have child fields")
@@ -12008,7 +12089,7 @@ func unmarshalInputShipmentCommodityInput(ctx context.Context, ec *gqlexec.Exec,
 		asMap["weight"] = 0
 	}
 
-	fieldsInOrder := [...]string{"id", "shipmentId", "commodityId", "pieces", "weight", "lengthFeet", "widthFeet", "heightFeet", "version"}
+	fieldsInOrder := [...]string{"id", "shipmentId", "commodityId", "pieces", "weight", "lengthFeet", "widthFeet", "heightFeet", "temperatureMin", "temperatureMax", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12071,6 +12152,20 @@ func unmarshalInputShipmentCommodityInput(ctx context.Context, ec *gqlexec.Exec,
 				return it, err
 			}
 			it.HeightFeet = data
+		case "temperatureMin":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("temperatureMin"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TemperatureMin = data
+		case "temperatureMax":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("temperatureMax"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TemperatureMax = data
 		case "version":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
 			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
@@ -12978,7 +13073,7 @@ func unmarshalInputShipmentStopInput(ctx context.Context, ec *gqlexec.Exec, obj 
 		asMap["scheduledWindowStart"] = 0
 	}
 
-	fieldsInOrder := [...]string{"id", "shipmentMoveId", "locationId", "status", "type", "scheduleType", "handling", "sequence", "pieces", "weight", "scheduledWindowStart", "scheduledWindowEnd", "actualArrival", "actualDeparture", "countLateOverride", "countDetentionOverride", "addressLine", "version"}
+	fieldsInOrder := [...]string{"id", "shipmentMoveId", "locationId", "status", "type", "scheduleType", "handling", "sequence", "pieces", "weight", "temperatureMin", "temperatureMax", "scheduledWindowStart", "scheduledWindowEnd", "actualArrival", "actualDeparture", "countLateOverride", "countDetentionOverride", "addressLine", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -13055,6 +13150,20 @@ func unmarshalInputShipmentStopInput(ctx context.Context, ec *gqlexec.Exec, obj 
 				return it, err
 			}
 			it.Weight = data
+		case "temperatureMin":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("temperatureMin"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TemperatureMin = data
+		case "temperatureMax":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("temperatureMax"))
+			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.TemperatureMax = data
 		case "scheduledWindowStart":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scheduledWindowStart"))
 			data, err := unmarshalOTimestamp2ᚖint(ctx, ec, v)
@@ -15403,6 +15512,13 @@ func marshalOShipmentUnassignedAnalytics2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ShipmentUnassignedAnalytics", v)
+}
+
+func marshalOStopType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.StopType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

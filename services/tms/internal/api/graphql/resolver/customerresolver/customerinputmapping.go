@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/shared/intutils"
 )
 
 func customerFromInput(
@@ -48,8 +47,18 @@ func applyCustomerInput(entity *customer.Customer, input *gqlmodel.CustomerInput
 	entity.DOTNumber = gqlscalar.StringValue(input.DOTNumber)
 	entity.MCNumber = gqlscalar.StringValue(input.McNumber)
 	entity.BrokerVettingEnabled = input.BrokerVettingEnabled
-	entity.CheckCallIntervalHours = int16Ptr(input.CheckCallIntervalHours)
-	entity.EtaRiskThresholdMinutes = int16Ptr(input.EtaRiskThresholdMinutes)
+	if entity.CheckCallIntervalHours, err = gqlscalar.NarrowIntPtr[int16](
+		"checkCallIntervalHours",
+		input.CheckCallIntervalHours,
+	); err != nil {
+		return err
+	}
+	if entity.EtaRiskThresholdMinutes, err = gqlscalar.NarrowIntPtr[int16](
+		"etaRiskThresholdMinutes",
+		input.EtaRiskThresholdMinutes,
+	); err != nil {
+		return err
+	}
 	entity.AllowConsolidation = input.AllowConsolidation
 	entity.ExclusiveConsolidation = input.ExclusiveConsolidation
 	entity.ConsolidationPriority = input.ConsolidationPriority
@@ -77,7 +86,12 @@ func applyCustomerInput(entity *customer.Customer, input *gqlmodel.CustomerInput
 		if entity.TrackingProfile == nil {
 			entity.TrackingProfile = &trackingprofile.Profile{}
 		}
-		applyTrackingProfileInput(entity.TrackingProfile, input.TrackingProfile)
+		if err = applyTrackingProfileInput(
+			entity.TrackingProfile,
+			input.TrackingProfile,
+		); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -94,14 +108,16 @@ func applyBillingProfileInput(
 		return err
 	}
 
+	if err := applyBillingProfileCounts(profile, input); err != nil {
+		return err
+	}
+
 	profile.InvoiceDelivery = input.InvoiceDelivery
 	profile.BillingCycle = input.BillingCycle
-	profile.BillingCycleAnchorDay = intutils.SafeToInt16(input.BillingCycleAnchorDay)
 	profile.BillingCycleTimezone = input.BillingCycleTimezone
 	profile.SplitBy = input.SplitBy
 	profile.SectionBy = input.SectionBy
 	profile.InvoiceDetail = input.InvoiceDetail
-	profile.MaxShipmentsPerInvoice = intutils.SafeToInt16(input.MaxShipmentsPerInvoice)
 	profile.PaymentTerm = input.PaymentTerm
 	profile.HasBillingControlOverrides = input.HasBillingControlOverrides
 	profile.CreditStatus = input.CreditStatus
@@ -115,9 +131,7 @@ func applyBillingProfileInput(
 	profile.EDIInvoiceEnabled = input.EDIInvoiceEnabled
 	profile.InvoiceNumberFormat = input.InvoiceNumberFormat
 	profile.CustomerInvoicePrefix = gqlscalar.StringValue(input.CustomerInvoicePrefix)
-	profile.InvoiceCopies = intutils.SafeToInt16(input.InvoiceCopies)
 	profile.ApplyLateCharges = input.ApplyLateCharges
-	profile.GracePeriodDays = intutils.SafeToInt16(input.GracePeriodDays)
 	profile.TaxExempt = input.TaxExempt
 	profile.TaxExemptNumber = gqlscalar.StringValue(input.TaxExemptNumber)
 	profile.EnforceCustomerBillingReq = input.EnforceCustomerBillingReq
@@ -136,6 +150,37 @@ func applyBillingProfileInput(
 	profile.FuelSurchargeMode = input.FuelSurchargeMode
 
 	return nil
+}
+
+func applyBillingProfileCounts(
+	profile *customer.CustomerBillingProfile,
+	input *gqlmodel.CustomerBillingProfileInput,
+) error {
+	var err error
+	if profile.BillingCycleAnchorDay, err = gqlscalar.NarrowInt[int16](
+		"billingProfile.billingCycleAnchorDay",
+		input.BillingCycleAnchorDay,
+	); err != nil {
+		return err
+	}
+	if profile.MaxShipmentsPerInvoice, err = gqlscalar.NarrowInt[int16](
+		"billingProfile.maxShipmentsPerInvoice",
+		input.MaxShipmentsPerInvoice,
+	); err != nil {
+		return err
+	}
+	if profile.InvoiceCopies, err = gqlscalar.NarrowInt[int16](
+		"billingProfile.invoiceCopies",
+		input.InvoiceCopies,
+	); err != nil {
+		return err
+	}
+	profile.GracePeriodDays, err = gqlscalar.NarrowInt[int16](
+		"billingProfile.gracePeriodDays",
+		input.GracePeriodDays,
+	)
+
+	return err
 }
 
 func applyBillingProfileAmounts(
@@ -245,27 +290,23 @@ func applyEmailProfileInput(
 func applyTrackingProfileInput(
 	profile *trackingprofile.Profile,
 	input *gqlmodel.CustomerTrackingProfileInput,
-) {
+) error {
+	linkTTLDays, err := gqlscalar.NarrowInt[int16]("trackingProfile.linkTtlDays", input.LinkTTLDays)
+	if err != nil {
+		return err
+	}
+
 	profile.LinkEnabled = input.LinkEnabled
 	profile.VisibleFields = input.VisibleFields
-	profile.LinkTTLDays = clampLinkTTLDays(input.LinkTTLDays)
+	profile.LinkTTLDays = linkTTLDays
 	profile.NotifyPickedUp = input.NotifyPickedUp
 	profile.NotifyDelayed = input.NotifyDelayed
 	profile.NotifyDelivered = input.NotifyDelivered
 	profile.NotifyPodReady = input.NotifyPodReady
 	profile.IncludeLink = input.IncludeLink
 	profile.Recipients = gqlscalar.StringValue(input.Recipients)
-}
 
-func clampLinkTTLDays(days int) int16 {
-	switch {
-	case days < 0:
-		return 0
-	case days > int(trackingprofile.MaxLinkTTLDays)+1:
-		return trackingprofile.MaxLinkTTLDays + 1
-	default:
-		return int16(days)
-	}
+	return nil
 }
 
 func applyCustomerPatch(entity *customer.Customer, input *gqlmodel.CustomerPatchInput) error {
@@ -284,10 +325,20 @@ func applyCustomerPatch(entity *customer.Customer, input *gqlmodel.CustomerPatch
 		entity.StateID = stateID
 	}
 	if raw, ok := input.CheckCallIntervalHours.ValueOK(); ok {
-		entity.CheckCallIntervalHours = int16Ptr(raw)
+		if entity.CheckCallIntervalHours, err = gqlscalar.NarrowIntPtr[int16](
+			"checkCallIntervalHours",
+			raw,
+		); err != nil {
+			return err
+		}
 	}
 	if raw, ok := input.EtaRiskThresholdMinutes.ValueOK(); ok {
-		entity.EtaRiskThresholdMinutes = int16Ptr(raw)
+		if entity.EtaRiskThresholdMinutes, err = gqlscalar.NarrowIntPtr[int16](
+			"etaRiskThresholdMinutes",
+			raw,
+		); err != nil {
+			return err
+		}
 	}
 	gqlscalar.ApplyClearable(input.AddressLine2, &entity.AddressLine2)
 	gqlscalar.ApplyNullable(input.Longitude, &entity.Longitude)
@@ -380,13 +431,4 @@ func applyCustomerPatchRequired(
 	}
 
 	return gqlscalar.ApplyRequiredInt("version", "Version", input.Version, &entity.Version)
-}
-
-func int16Ptr(value *int) *int16 {
-	if value == nil {
-		return nil
-	}
-	converted := intutils.SafeToInt16(*value)
-
-	return &converted
 }

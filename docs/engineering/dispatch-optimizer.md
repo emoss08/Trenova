@@ -142,7 +142,7 @@ driver at zero) into `dispatch_market_values` by where and when each driver beco
 web mercator tiles at zoom 8 (`orb/maptile`) by four-hour slot of the week on the
 organization's own clock (`dispatchmarket.Grid`, Monday 00:00 first), the same slots the
 freight forecast uses; the week a value belongs to turns over at the organization's Monday
-too. `dispatchmarketservice` reads the time zone through `orgzone.Location` and fails the
+too. `dispatchmarketservice` reads the time zone through `tenantports.OrganizationLocation` and fails the
 read or the record rather than file a value under a clock it could not read. A slot keeps the mean of the current week and an exponential moving average of past
 weekly means (weight `max(1/(weeks+1), 0.2)`), so how often the plan runs does not change
 the estimate, and a replayed plan (same `observed_at`) folds nothing. `BuildSnapshot` reads

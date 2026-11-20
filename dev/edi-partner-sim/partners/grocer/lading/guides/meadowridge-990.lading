@@ -1,0 +1,7 @@
+guide meadowridge.990 from x12.004010.990 "Meadowridge Fresh Markets Tender Response 4010 v2.3"
+
+/// Meadowridge matches a response to its run by the run number alone.
+B1 { 01 required; 02 required length 9..9; 03 required; 04 required codes "A", "D" }
+N9 { 01 codes "ZZ"; 02 required }
+G62 unused
+K1 unused

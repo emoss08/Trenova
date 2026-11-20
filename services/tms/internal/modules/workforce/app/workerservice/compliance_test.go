@@ -213,7 +213,7 @@ func TestAgeComplianceRule(t *testing.T) {
 
 		assert.True(t, multiErr.HasErrors())
 		assert.Len(t, multiErr.Errors, 1)
-		assert.Equal(t, "profile.dob", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.dob", multiErr.Errors[0].Field())
 		dcRepo.AssertExpectations(t)
 	})
 
@@ -350,7 +350,7 @@ func TestCDLComplianceRule(t *testing.T) {
 
 		assert.True(t, multiErr.HasErrors())
 		assert.Len(t, multiErr.Errors, 1)
-		assert.Equal(t, "profile.licenseExpiry", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.licenseExpiry", multiErr.Errors[0].Field())
 		dcRepo.AssertExpectations(t)
 	})
 
@@ -471,7 +471,7 @@ func TestMedicalCertComplianceRule(t *testing.T) {
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
-		assert.Equal(t, "profile.medicalCardExpiry", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.medicalCardExpiry", multiErr.Errors[0].Field())
 		dcRepo.AssertExpectations(t)
 	})
 
@@ -488,7 +488,7 @@ func TestMedicalCertComplianceRule(t *testing.T) {
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
-		assert.Equal(t, "profile.physicalDueDate", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.physicalDueDate", multiErr.Errors[0].Field())
 		dcRepo.AssertExpectations(t)
 	})
 
@@ -627,7 +627,7 @@ func TestMVRComplianceRule(t *testing.T) {
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
-		assert.Equal(t, "profile.lastMvrCheck", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.lastMvrCheck", multiErr.Errors[0].Field())
 		dcRepo.AssertExpectations(t)
 	})
 
@@ -644,7 +644,7 @@ func TestMVRComplianceRule(t *testing.T) {
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
-		assert.Equal(t, "profile.mvrDueDate", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.mvrDueDate", multiErr.Errors[0].Field())
 		dcRepo.AssertExpectations(t)
 	})
 
@@ -798,7 +798,7 @@ func TestDrugTestComplianceRule(t *testing.T) {
 		})
 
 		require.True(t, multiErr.HasErrors())
-		assert.Equal(t, "profile.drugAlcoholStatus", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.drugAlcoholStatus", multiErr.Errors[0].Field())
 		assert.Contains(t, multiErr.Errors[0].Message, "pre-employment drug test")
 	})
 
@@ -837,7 +837,7 @@ func TestDrugTestComplianceRule(t *testing.T) {
 		})
 
 		require.True(t, multiErr.HasErrors())
-		assert.Equal(t, "profile.nextClearinghouseQueryDue", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.nextClearinghouseQueryDue", multiErr.Errors[0].Field())
 	})
 
 	t.Run("a query still in date is not flagged", func(t *testing.T) {
@@ -957,7 +957,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
-		assert.Equal(t, "profile.hazmatExpiry", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.hazmatExpiry", multiErr.Errors[0].Field())
 		dcRepo.AssertExpectations(t)
 	})
 
@@ -975,7 +975,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
-		assert.Equal(t, "profile.hazmatExpiry", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.hazmatExpiry", multiErr.Errors[0].Field())
 		dcRepo.AssertExpectations(t)
 	})
 
@@ -993,7 +993,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
-		assert.Equal(t, "profile.hazmatExpiry", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.hazmatExpiry", multiErr.Errors[0].Field())
 		dcRepo.AssertExpectations(t)
 	})
 
@@ -1011,7 +1011,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
-		assert.Equal(t, "profile.hazmatExpiry", multiErr.Errors[0].Field)
+		assert.Equal(t, "profile.hazmatExpiry", multiErr.Errors[0].Field())
 		dcRepo.AssertExpectations(t)
 	})
 

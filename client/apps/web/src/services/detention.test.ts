@@ -12,7 +12,6 @@ function policy(overrides: Partial<DetentionPolicy> = {}): DetentionPolicy {
     code: "DET-STD",
     description: "",
     status: "Active",
-    isOrgDefault: true,
     priority: 0,
     specificityScore: 0,
     customerId: null,
@@ -68,6 +67,24 @@ describe("toDetentionPolicyInput", () => {
     );
 
     expect(input.tiers).toBeNull();
+  });
+
+  // The organization's default policy is chosen on shipment control, not flagged on a policy:
+  // the server reports it on the policy, and the form never sends it back.
+  it("sends an unscoped policy with no default flag", () => {
+    const input = toDetentionPolicyInput(policy({ isOrganizationDefault: true }));
+
+    expect(input).not.toHaveProperty("isOrgDefault");
+    expect(input).not.toHaveProperty("isOrganizationDefault");
+    expect(input).toMatchObject({
+      customerId: null,
+      locationId: null,
+      shipmentTypeIds: null,
+      serviceTypeIds: null,
+      commodityIds: null,
+      stopTypes: null,
+      appointmentStopsOnly: false,
+    });
   });
 
   it("maps a rate ladder in order with a fallback sort order", () => {

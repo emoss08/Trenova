@@ -1,0 +1,83 @@
+set: "997"
+version: "004010"
+group: FA
+title: "Meadowridge Fresh Markets Functional Acknowledgment v2.3"
+
+segments:
+  ST:
+    name: Transaction Set Header
+    elements:
+      - { pos: 1, name: Transaction Set Identifier Code, type: ID, min: 3, max: 3, usage: M, fixed: "997" }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+  AK1:
+    name: Functional Group Response Header
+    elements:
+      - { pos: 1, name: Functional Identifier Code, type: ID, min: 2, max: 2, usage: M, codes: [SM] }
+      - { pos: 2, name: Group Control Number, type: N0, min: 1, max: 9, usage: M }
+  AK2:
+    name: Transaction Set Response Header
+    elements:
+      - { pos: 1, name: Transaction Set Identifier Code, type: ID, min: 3, max: 3, usage: M, codes: ["204"] }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+  AK3:
+    name: Data Segment Note
+    elements:
+      - { pos: 1, name: Segment ID Code, type: ID, min: 2, max: 3, usage: M }
+      - { pos: 2, name: Segment Position in Transaction Set, type: N0, min: 1, max: 6, usage: M }
+      - { pos: 3, name: Loop Identifier Code, type: AN, min: 1, max: 6, usage: O }
+      - { pos: 4, name: Segment Syntax Error Code, type: ID, min: 1, max: 3, usage: O, codes: ["1", "2", "3", "4", "5", "6", "7", "8"] }
+  AK4:
+    name: Data Element Note
+    elements:
+      - pos: 1
+        name: Position in Segment
+        type: AN
+        min: 1
+        max: 5
+        usage: M
+        components:
+          - { pos: 1, name: Element Position in Segment, type: N0, min: 1, max: 2, usage: M }
+          - { pos: 2, name: Component Data Element Position in Composite, type: N0, min: 1, max: 2, usage: O }
+      - { pos: 2, name: Data Element Reference Number, type: N0, min: 1, max: 4, usage: O }
+      - { pos: 3, name: Data Element Syntax Error Code, type: ID, min: 1, max: 3, usage: M, codes: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "12", "13"] }
+      - { pos: 4, name: Copy of Bad Data Element, type: AN, min: 1, max: 99, usage: O }
+  AK5:
+    name: Transaction Set Response Trailer
+    elements:
+      - { pos: 1, name: Transaction Set Acknowledgment Code, type: ID, min: 1, max: 1, usage: M, codes: [A, E, R] }
+      - { pos: 2, name: Transaction Set Syntax Error Code, type: ID, min: 1, max: 3, usage: O }
+      - { pos: 3, name: Transaction Set Syntax Error Code, type: ID, min: 1, max: 3, usage: O }
+      - { pos: 4, name: Transaction Set Syntax Error Code, type: ID, min: 1, max: 3, usage: O }
+      - { pos: 5, name: Transaction Set Syntax Error Code, type: ID, min: 1, max: 3, usage: O }
+      - { pos: 6, name: Transaction Set Syntax Error Code, type: ID, min: 1, max: 3, usage: O }
+  AK9:
+    name: Functional Group Response Trailer
+    elements:
+      - { pos: 1, name: Functional Group Acknowledge Code, type: ID, min: 1, max: 1, usage: M, codes: [A, E, P, R] }
+      - { pos: 2, name: Number of Transaction Sets Included, type: N0, min: 1, max: 6, usage: M }
+      - { pos: 3, name: Number of Received Transaction Sets, type: N0, min: 1, max: 6, usage: M }
+      - { pos: 4, name: Number of Accepted Transaction Sets, type: N0, min: 1, max: 6, usage: M }
+      - { pos: 5, name: Functional Group Syntax Error Code, type: ID, min: 1, max: 3, usage: O }
+  SE:
+    name: Transaction Set Trailer
+    elements:
+      - { pos: 1, name: Number of Included Segments, type: N0, min: 1, max: 10, usage: M }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+
+structure:
+  - { seg: ST, usage: M }
+  - { seg: AK1, usage: M }
+  - loop: AK2
+    usage: O
+    max: 999999
+    body:
+      - { seg: AK2, usage: M }
+      - loop: AK3
+        usage: O
+        max: 999999
+        body:
+          - { seg: AK3, usage: M }
+          - { seg: AK4, usage: O, max: 99 }
+      - { seg: AK5, usage: M }
+  - { seg: AK9, usage: M }
+  - { seg: SE, usage: M }

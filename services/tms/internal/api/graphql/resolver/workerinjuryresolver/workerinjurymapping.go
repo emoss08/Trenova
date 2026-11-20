@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -41,6 +40,15 @@ func injuryFromInput(
 		)
 	}
 
+	daysAway, err := gqlscalar.NarrowIntValue[int32]("daysAway", input.DaysAway)
+	if err != nil {
+		return nil, err
+	}
+	daysRestricted, err := gqlscalar.NarrowIntValue[int32]("daysRestricted", input.DaysRestricted)
+	if err != nil {
+		return nil, err
+	}
+
 	entity := &workerinjury.WorkerInjury{
 		OrganizationID:   tenantInfo.OrgID,
 		BusinessUnitID:   tenantInfo.BuID,
@@ -52,8 +60,8 @@ func injuryFromInput(
 		Location:         gqlscalar.StringValue(input.Location),
 		BodyPart:         gqlscalar.StringValue(input.BodyPart),
 		HarmfulAgent:     gqlscalar.StringValue(input.HarmfulAgent),
-		DaysAway:         intutils.SafeToInt32(gqlscalar.IntValue(input.DaysAway)),
-		DaysRestricted:   intutils.SafeToInt32(gqlscalar.IntValue(input.DaysRestricted)),
+		DaysAway:         daysAway,
+		DaysRestricted:   daysRestricted,
 		PrivacyCase:      gqlscalar.BoolValue(input.PrivacyCase),
 		ClaimNumber:      gqlscalar.StringValue(input.ClaimNumber),
 		ClaimCarrier:     gqlscalar.StringValue(input.ClaimCarrier),
@@ -133,13 +141,15 @@ func injuryUpdateRequest(
 		Notes:            input.Notes,
 		UserID:           userID,
 	}
-	if input.DaysAway != nil {
-		days := int32(*input.DaysAway)
-		req.DaysAway = &days
+	if err = gqlscalar.ApplyIntPtr("daysAway", input.DaysAway, &req.DaysAway); err != nil {
+		return nil, err
 	}
-	if input.DaysRestricted != nil {
-		days := int32(*input.DaysRestricted)
-		req.DaysRestricted = &days
+	if err = gqlscalar.ApplyIntPtr(
+		"daysRestricted",
+		input.DaysRestricted,
+		&req.DaysRestricted,
+	); err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -149,10 +159,15 @@ func oshaSummaryRequest(
 	input *gqlmodel.SaveOSHASummaryInput,
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
-) *workerinjuryservice.SaveSummaryRequest {
+) (*workerinjuryservice.SaveSummaryRequest, error) {
+	year, err := gqlscalar.NarrowInt[int16]("year", input.Year)
+	if err != nil {
+		return nil, err
+	}
+
 	req := &workerinjuryservice.SaveSummaryRequest{
 		TenantInfo:          tenantInfo,
-		Year:                int16(input.Year),
+		Year:                year,
 		NAICSCode:           input.NaicsCode,
 		ExecutiveName:       input.ExecutiveName,
 		ExecutiveTitle:      input.ExecutiveTitle,
@@ -164,14 +179,14 @@ func oshaSummaryRequest(
 		Notes:               input.Notes,
 		UserID:              userID,
 	}
-	if input.AverageEmployees != nil {
-		count := int32(*input.AverageEmployees)
-		req.AverageEmployees = &count
+	if err = gqlscalar.ApplyIntPtr(
+		"averageEmployees",
+		input.AverageEmployees,
+		&req.AverageEmployees,
+	); err != nil {
+		return nil, err
 	}
-	if input.TotalHoursWorked != nil {
-		hours := int64(*input.TotalHoursWorked)
-		req.TotalHoursWorked = &hours
-	}
+	req.TotalHoursWorked = gqlscalar.Int64Ptr(input.TotalHoursWorked)
 
-	return req
+	return req, nil
 }

@@ -1,0 +1,11 @@
+set: "990"
+
+segments:
+  - seg: B1
+    el: ["{scac}", "{tender.key}", "{respondedAt|date}", "{decision}"]
+  - seg: N9
+    when: pro
+    el: [CN, "{pro}"]
+  - seg: K1
+    when: reason
+    el: ["{reason|upper|trunc:30}"]

@@ -21,28 +21,33 @@ func (r *Deps) TotalCompensationFor(
 	planYear *int,
 	includePay bool,
 ) (*benefitsservice.TotalCompensation, error) {
-	year := gqlscalar.IntValue(planYear)
+	year, err := gqlscalar.NarrowIntValue[int16]("planYear", planYear)
+	if err != nil {
+		return nil, err
+	}
 	if year <= 0 {
-		year = timeutils.YearOfUnix(timeutils.NowUnix())
+		year = int16(
+			timeutils.YearOfUnix(timeutils.NowUnix()),
+		) //nolint:gosec // the current calendar year
 	}
 
 	req := &benefitsservice.TotalCompensationRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
-		PlanYear:   int16(year), //nolint:gosec // a calendar year
+		PlanYear:   year,
 	}
 
 	// Year-to-date pay is the settlement area's answer, not this one's. A
 	// failure to read it is not a reason to refuse the whole statement — the
 	// benefits half is still true — so it is left at zero.
 	if includePay && r.DriverSettlementService != nil {
-		summaries, err := r.DriverSettlementWorkspaceService.GetYTDPaySummaries(
+		summaries, payErr := r.DriverSettlementWorkspaceService.GetYTDPaySummaries(
 			ctx,
 			tenantInfo,
-			year,
+			int(year),
 			"",
 		)
-		if err == nil {
+		if payErr == nil {
 			for _, summary := range summaries {
 				if summary != nil && summary.WorkerID == workerID {
 					req.GrossPayMinor = summary.GrossEarningsMinor

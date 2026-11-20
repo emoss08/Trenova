@@ -607,7 +607,7 @@ func TestChange_RefusesWhatItCannotKeep(t *testing.T) {
 			schedule.Change(tt.edit, multiErr)
 
 			require.Len(t, multiErr.Errors, 1)
-			assert.Equal(t, tt.field, multiErr.Errors[0].Field)
+			assert.Equal(t, tt.field, multiErr.Errors[0].Field())
 			assert.Equal(t, before.Prompt, schedule.Prompt)
 			assert.Equal(t, before.Cadence, schedule.Cadence)
 			assert.Equal(t, before.CronExpression, schedule.CronExpression)
@@ -696,6 +696,6 @@ func TestParseRequestKeepsAManyLineRequestAndRefusesASecondSchedule(t *testing.T
 	_, err = ParseRequest("every day at 8, unbilled loads\nevery weekday at 7:30am CT, what's blocking?")
 	var invalid *errortypes.Error
 	require.ErrorAs(t, err, &invalid)
-	assert.Equal(t, "content", invalid.Field)
+	assert.Equal(t, "content", invalid.Field())
 	assert.Contains(t, invalid.Error(), "every weekday at 7:30am CT, what's blocking?")
 }

@@ -58,7 +58,7 @@ func TestCheckSubsets_AnApproverMayNotAddARecord(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	assert.Contains(t, err.Error(), "shp_z")
-	assert.Equal(t, "shipmentIds", multiErr.Errors[0].Field)
+	assert.Equal(t, "shipmentIds", multiErr.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrForbidden, multiErr.Errors[0].Code)
 }
 

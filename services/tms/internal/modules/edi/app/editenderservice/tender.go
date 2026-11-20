@@ -3,7 +3,6 @@ package editenderservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/edipayloadbuild"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
@@ -145,7 +144,10 @@ func (s *Service) PlanLoadTender(
 		return nil, err
 	}
 
-	payload := edipayloadbuild.BuildTenderPayload(sourceShipment)
+	payload, err := s.payload.TenderPayload(ctx, req.TenantInfo, sourceShipment)
+	if err != nil {
+		return nil, err
+	}
 	preview, err := s.tenderMapping.BuildMappingPreview(ctx, targetPartner, &payload)
 	if err != nil {
 		return nil, err

@@ -1,0 +1,27 @@
+partner ashgrove "Ashgrove Industrial Supply"
+
+// Ashgrove's EDI runs on a translator older than most of its staff. It sends under its DUNS
+// number, addresses Trenova by SCAC, squeezes the ISA, ends lines with CRLF, writes several codes
+// in lowercase, resends a tender byte for byte under the same control number, sometimes sends a
+// change before the original, and acknowledges hours late or not at all.
+interchange {
+  them 01 "071284355"
+  us 02 "TRNV"
+  group "071284355" <-> "TRNV"
+  version 004010
+  separators "*" "~" ">"
+  line ending crlf
+  usage test
+}
+
+zone America/New_York
+currency "USD"
+
+/// Accept Ashgrove tenders automatically, without a planner.
+setting autoAccept: Bool = false
+/// Send a decline automatically when a rule declines a tender.
+setting autoDecline: Bool = true
+/// The lowest total accepted automatically.
+setting minimumCharge: Money = $350.00 in $0.00..$5_000.00
+/// How long a planner has to answer a tender.
+setting answerWithin: Duration = 4 h in 15 min..24 h

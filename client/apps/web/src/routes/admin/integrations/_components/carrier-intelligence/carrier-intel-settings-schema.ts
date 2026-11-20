@@ -1,4 +1,5 @@
 import { isSectionCovered } from "@/lib/carrier-intelligence";
+import { mapFieldErrorPaths } from "@/lib/form-errors";
 import type {
   CarrierIntelControl,
   CarrierIntelRuleDefinition,
@@ -17,7 +18,6 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { isRecord, parseCommaSeparatedList } from "@trenova/shared/lib/utils";
 import { compareDecimalStrings, isDecimalString } from "@trenova/shared/types/decimal";
-import { fieldPathSchema } from "@trenova/shared/types/errors";
 import { z } from "zod";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
@@ -549,32 +549,7 @@ export function remapRuleFieldPath(
 }
 
 export function remapRuleFieldErrors(error: unknown, rules: readonly { code: string }[]): unknown {
-  if (!(error instanceof GraphQLRequestError) || error.getFieldErrors().length === 0) {
-    return error;
-  }
-
-  return new GraphQLRequestError({
-    kind: error.kind,
-    message: error.message,
-    status: error.status,
-    graphQLErrors: error.graphQLErrors.map((graphQLError) => {
-      if (!Array.isArray(graphQLError.errors)) {
-        return graphQLError;
-      }
-      const errors = graphQLError.errors.map((entry: unknown) => {
-        if (!isRecord(entry)) {
-          return entry;
-        }
-        const path = fieldPathSchema.safeParse(entry.path);
-        return path.success ? { ...entry, path: remapRuleFieldPath(path.data, rules) } : entry;
-      });
-      return {
-        ...graphQLError,
-        errors,
-        extensions: { ...graphQLError.extensions, errors },
-      };
-    }),
-  });
+  return mapFieldErrorPaths(error, (path) => remapRuleFieldPath(path, rules));
 }
 
 export type CarrierIntelSettingsTab = "rules" | "monitoring" | "spend";

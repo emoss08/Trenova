@@ -132,6 +132,7 @@ func (s *Service) GetControl(
 // is optional so a caller can change one without restating the rest.
 type UpdateControlRequest struct {
 	TenantInfo             pagination.TenantInfo
+	Version                int64
 	MeasurementMethod      *workerleave.LeaveMeasurementMethod
 	EntitlementWeeks       *decimal.Decimal
 	MilitaryCaregiverWeeks *decimal.Decimal
@@ -153,6 +154,7 @@ func (s *Service) UpdateControl(
 
 	previous := *entity
 	applyControlUpdate(entity, req)
+	entity.Version = req.Version
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -172,12 +174,55 @@ func (s *Service) UpdateControl(
 		tenant:     req.TenantInfo,
 		current:    updated,
 		previous:   &previous,
-		comment: "Leave is now measured by " +
-			strings.ToLower(updated.MeasurementMethod.Label()),
+		comment:    controlAuditComment(&previous, updated),
 	})
 	s.publish(ctx, req.TenantInfo, realtimeControl, permission.OpUpdate, updated.ID, req.UserID)
 
 	return updated, nil
+}
+
+func controlAuditComment(previous, current *workerleave.LeaveControl) string {
+	changed := make([]string, 0, 6)
+	if !previous.EntitlementWeeks.Equal(current.EntitlementWeeks) {
+		changed = append(changed, "the entitlement weeks")
+	}
+	if !previous.MilitaryCaregiverWeeks.Equal(current.MilitaryCaregiverWeeks) {
+		changed = append(changed, "the military caregiver weeks")
+	}
+	if !previous.WorkweekHours.Equal(current.WorkweekHours) {
+		changed = append(changed, "the workweek hours")
+	}
+	if previous.EligibilityMonths != current.EligibilityMonths {
+		changed = append(changed, "the months of service to qualify")
+	}
+	if previous.EligibilityHours != current.EligibilityHours {
+		changed = append(changed, "the hours worked to qualify")
+	}
+	if previous.CertificationDueDays != current.CertificationDueDays {
+		changed = append(changed, "the days to return a certification")
+	}
+
+	methodChanged := previous.MeasurementMethod != current.MeasurementMethod
+	switch {
+	case methodChanged && len(changed) == 0:
+		return "Leave is now measured by " + strings.ToLower(current.MeasurementMethod.Label())
+	case methodChanged:
+		return "Leave is now measured by " +
+			strings.ToLower(current.MeasurementMethod.Label()) +
+			", and " + joinChanges(changed) + " changed"
+	case len(changed) == 0:
+		return "Leave settings saved with no changes"
+	default:
+		return "Leave settings updated: " + joinChanges(changed) + " changed"
+	}
+}
+
+func joinChanges(changed []string) string {
+	if len(changed) == 1 {
+		return changed[0]
+	}
+
+	return strings.Join(changed[:len(changed)-1], ", ") + " and " + changed[len(changed)-1]
 }
 
 func applyControlUpdate(entity *workerleave.LeaveControl, req *UpdateControlRequest) {

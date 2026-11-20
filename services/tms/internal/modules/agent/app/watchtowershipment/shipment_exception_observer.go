@@ -57,7 +57,10 @@ func ShipmentExceptionKindsFor(eventType shipmentevent.Type) []watchtower.Source
 		return ShipmentExceptionKinds()
 	case shipmentevent.TypeMoveArrived,
 		shipmentevent.TypeMoveDeparted,
-		shipmentevent.TypeStopCompleted:
+		shipmentevent.TypeStopArrived,
+		shipmentevent.TypeStopDeparted,
+		shipmentevent.TypeStopArrivalCorrected,
+		shipmentevent.TypeStopDepartureCorrected:
 		return []watchtower.SourceKind{
 			watchtower.SourceMissedPickup,
 			watchtower.SourceMissedDelivery,

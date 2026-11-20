@@ -547,6 +547,16 @@ mod tests {
     ];
 
     #[test]
+    fn a_line_ending_clause_keeps_its_place_in_the_interchange() {
+        let source = "partner acme \"ACME\"\n\ninterchange {\n    version 004010\n  line   ending crlf\n  usage test\n}\n";
+        let formatted = format(source).expect("formats");
+        assert!(
+            formatted.contains("  version 004010\n  line ending crlf\n  usage test\n"),
+            "{formatted}"
+        );
+    }
+
+    #[test]
     fn formatting_is_idempotent_over_the_corpus() {
         for source in CORPUS {
             let once = format(source).expect("formats");

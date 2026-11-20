@@ -1,0 +1,47 @@
+map statusIn
+  from quarrystone.214
+  to   shipmentStatus
+  use  common
+
+key       <- B1002
+proNumber <- B1001
+bol       <- L11[02 == "BM"].01
+refs      <- refs(L11)
+
+events <- each 0205 as item {
+  let status = item.0210.first
+  kind      <- status.AT701 via statusCodes else Exception
+  reason    <- status.AT702
+  at        <- at(status.AT705, status.AT706, zoneFromCode(status.AT707 ?? "") ?? partner.zone)
+    else reject "Status {item.LX01} has no date"
+  local     <- not exists zoneFromCode(status.AT707 ?? "")
+  stop      <- int(item.L11[02 == "QN"].01)
+  city      <- status.MS101.titleCase()
+  state     <- status.MS102
+  country   <- status.MS103
+  equipment <- status.MS202
+}
+
+test "an arrival at the shipper names the stop and the trailer" {
+  given file "samples/status-arrived.x12"
+  expect events.count == 1
+  expect events.first.kind == ArrivedPickup
+  expect events.first.stop == 1
+  expect events.first.city == "Albuquerque"
+  expect events.first.equipment == "QY29156"
+  expect events.first.at == @2026-04-01T06:14[America/Denver]
+  expect bol == "BOL-734378"
+}
+
+test "a delay carries its cause" {
+  given file "samples/status-delayed.x12"
+  expect events.first.kind == Delayed
+  expect events.first.reason == "AF"
+}
+
+test "a delivery is the last stop's" {
+  given file "samples/status-delivered.x12"
+  expect events.first.kind == Delivered
+  expect events.first.stop == 4
+  expect events.first.at == @2026-04-04T10:31[America/Chicago]
+}

@@ -8,14 +8,38 @@ import (
 )
 
 type ARLedgerEntry struct {
-	CustomerID       pulid.ID `json:"customerId"`
-	TransactionDate  int64    `json:"transactionDate"`
-	EventType        string   `json:"eventType"`
-	DocumentNumber   string   `json:"documentNumber"`
-	SourceObjectType string   `json:"sourceObjectType"`
-	SourceObjectID   string   `json:"sourceObjectId"`
-	AmountMinor      int64    `json:"amountMinor"`
-	RelatedInvoiceID pulid.ID `json:"relatedInvoiceId"`
+	CustomerID          pulid.ID         `json:"customerId"`
+	TransactionDate     int64            `json:"transactionDate"`
+	EventType           string           `json:"eventType"`
+	DocumentNumber      string           `json:"documentNumber"`
+	SourceObjectType    string           `json:"sourceObjectType"`
+	SourceObjectID      string           `json:"sourceObjectId"`
+	AmountMinor         int64            `json:"amountMinor"`
+	RelatedInvoiceID    pulid.ID         `json:"relatedInvoiceId"`
+	RunningBalanceMinor int64            `json:"runningBalanceMinor"`
+	SupersededInvoiceID pulid.ID         `json:"-"`
+	Position            ARLedgerPosition `json:"-"`
+}
+
+type ARLedgerPosition struct {
+	TransactionDate int64
+	LineNumber      int64
+	ID              pulid.ID
+}
+
+type ARLedgerPage struct {
+	OpeningBalanceMinor int64            `json:"openingBalanceMinor"`
+	Entries             []*ARLedgerEntry `json:"entries"`
+	HasNextPage         bool             `json:"hasNextPage"`
+	EndCursor           string           `json:"endCursor,omitempty"`
+}
+
+type ARLedgerPageRequest struct {
+	CustomerID pulid.ID `json:"customerId"`
+	StartDate  int64    `json:"startDate"`
+	EndDate    int64    `json:"endDate"`
+	First      int      `json:"first"`
+	After      string   `json:"after"`
 }
 
 type ARAgingBucketTotals struct {
@@ -55,9 +79,19 @@ type AROpenItem struct {
 	FactoringCompany   string   `json:"factoringCompany,omitempty"`
 }
 
-type ListCustomerLedgerRequest struct {
+type GetCustomerLedgerBalanceRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	CustomerID pulid.ID              `json:"customerId"`
+	Before     int64                 `json:"before"`
+}
+
+type ListCustomerLedgerWindowRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	CustomerID pulid.ID              `json:"customerId"`
+	From       int64                 `json:"from"`
+	Through    int64                 `json:"through"`
+	After      *ARLedgerPosition     `json:"after"`
+	Limit      int                   `json:"limit"`
 }
 
 type ListARAgingRequest struct {
@@ -83,9 +117,13 @@ type GetARCustomerAgingRequest struct {
 }
 
 type AccountsReceivableRepository interface {
-	ListCustomerLedger(
+	GetCustomerLedgerBalance(
 		ctx context.Context,
-		req ListCustomerLedgerRequest,
+		req GetCustomerLedgerBalanceRequest,
+	) (int64, error)
+	ListCustomerLedgerWindow(
+		ctx context.Context,
+		req ListCustomerLedgerWindowRequest,
 	) ([]*ARLedgerEntry, error)
 	ListARAging(
 		ctx context.Context,

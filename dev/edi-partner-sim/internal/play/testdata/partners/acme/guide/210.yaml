@@ -1,0 +1,24 @@
+set: "210"
+version: "004010"
+group: IM
+title: Acme fixture 210
+segments:
+  ST:
+    elements:
+      - { pos: 1, type: ID, min: 3, max: 3, usage: M, fixed: "210" }
+      - { pos: 2, type: AN, min: 4, max: 9, usage: M }
+  B3:
+    elements:
+      - { pos: 2, type: AN, min: 1, max: 22, usage: M }
+      - { pos: 3, type: AN, min: 1, max: 30, usage: M }
+      - { pos: 4, type: ID, min: 2, max: 2, usage: M, codes: [PP, TP] }
+      - { pos: 6, type: DT, min: 8, max: 8, usage: M }
+      - { pos: 7, type: N2, min: 1, max: 12, usage: M }
+  SE:
+    elements:
+      - { pos: 1, type: N0, min: 1, max: 10, usage: M }
+      - { pos: 2, type: AN, min: 4, max: 9, usage: M }
+structure:
+  - { seg: ST, usage: M }
+  - { seg: B3, usage: M }
+  - { seg: SE, usage: M }

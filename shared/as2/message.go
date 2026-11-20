@@ -42,6 +42,8 @@ const (
 	smimeTypeCompressedData = "compressed-data"
 )
 
+var entityHeaderKeys = []string{"Content-Transfer-Encoding", "Content-Disposition"}
+
 var (
 	ErrMissingPayload       = errors.New("as2: payload is required")
 	ErrMissingIdentifiers   = errors.New("as2: AS2-From and AS2-To identifiers are required")
@@ -105,23 +107,17 @@ func BuildMessage(opts *BuildMessageOptions) (*BuiltMessage, error) {
 	if fileName == "" {
 		fileName = "payload.edi"
 	}
-	contentType := contentTypeEDIX12
-	entity := buildEntity(textproto.MIMEHeader{
-		"Content-Type": {contentType},
+	content := buildEntity(textproto.MIMEHeader{
+		"Content-Type": {contentTypeEDIX12},
 		"Content-Disposition": {
 			mime.FormatMediaType("attachment", map[string]string{"filename": fileName}),
 		},
 		"Content-Transfer-Encoding": {"binary"},
-	}, canonicalizeCRLF(opts.Payload))
+	}, opts.Payload)
 
-	micAlgorithm := smime.NormalizeAlgorithm(opts.MICAlgorithm, MICAlgorithmSHA256)
-	mic, err := ComputeMIC(entity, micAlgorithm)
-	if err != nil {
-		return nil, err
-	}
-
+	entity := content
 	if opts.Compress {
-		compressed, compressErr := smime.Compress(entity)
+		compressed, compressErr := smime.Compress(content)
 		if compressErr != nil {
 			return nil, compressErr
 		}
@@ -131,7 +127,21 @@ func BuildMessage(opts *BuildMessageOptions) (*BuiltMessage, error) {
 		)
 	}
 
-	if opts.SigningCertificate != nil && opts.SigningKey != nil {
+	signed := opts.SigningCertificate != nil && opts.SigningKey != nil
+	micContent := content
+	switch {
+	case signed:
+		micContent = entity
+	case opts.EncryptionCertificate == nil && !opts.Compress:
+		micContent = opts.Payload
+	}
+	micAlgorithm := smime.NormalizeAlgorithm(opts.MICAlgorithm, MICAlgorithmSHA256)
+	mic, err := ComputeMIC(micContent, micAlgorithm)
+	if err != nil {
+		return nil, err
+	}
+
+	if signed {
 		entity, err = buildSignedEntity(entity, opts)
 		if err != nil {
 			return nil, err
@@ -171,8 +181,8 @@ func BuildMessage(opts *BuildMessageOptions) (*BuiltMessage, error) {
 	if opts.Subject != "" {
 		built.Headers.Set(HeaderSubject, opts.Subject)
 	}
-	if cte := headers.Get("Content-Transfer-Encoding"); cte != "" {
-		built.Headers.Set("Content-Transfer-Encoding", cte)
+	for key, values := range EntityHeaders(headers) {
+		built.Headers[key] = values
 	}
 	if opts.RequestMDN {
 		built.Headers.Set(HeaderDispositionNotificationTo, opts.From)
@@ -197,7 +207,7 @@ type ParseMessageOptions struct {
 	DecryptionKey         crypto.PrivateKey
 	PartnerCertificate    *x509.Certificate
 	MICAlgorithm          string
-	TransferEncoding      string
+	EntityHeaders         map[string][]string
 	RequireSignature      bool
 	RequireEncryption     bool
 	MaxDecompressedBytes  int64
@@ -231,10 +241,8 @@ func ParseMessage(
 	result := &ParsedMessage{}
 	currentType := contentType
 	currentBody := body
-	currentHeaders := textproto.MIMEHeader{}
-	if opts.TransferEncoding != "" {
-		currentHeaders.Set("Content-Transfer-Encoding", opts.TransferEncoding)
-	}
+	var currentEntity []byte
+	currentHeaders := EntityHeaders(opts.EntityHeaders)
 
 	for range 8 {
 		mediaType, params, err := mime.ParseMediaType(currentType)
@@ -263,6 +271,7 @@ func ParseMessage(
 				return nil, fmt.Errorf("%w: %w", ErrDecryptionFailed, decryptErr)
 			}
 			result.Encrypted = true
+			currentEntity = plaintext
 			currentHeaders, currentBody, err = splitEntity(plaintext)
 			if err != nil {
 				return nil, err
@@ -285,6 +294,7 @@ func ParseMessage(
 			if err != nil {
 				return nil, err
 			}
+			currentEntity = contentPart
 			currentHeaders, currentBody, err = splitEntity(contentPart)
 			if err != nil {
 				return nil, err
@@ -308,6 +318,7 @@ func ParseMessage(
 			if err != nil {
 				return nil, err
 			}
+			currentEntity = content
 			currentHeaders, currentBody, err = splitEntity(content)
 			if err != nil {
 				return nil, err
@@ -324,6 +335,7 @@ func ParseMessage(
 				return nil, fmt.Errorf("%w: %w", ErrDecompressionFailed, decompressErr)
 			}
 			result.Compressed = true
+			currentEntity = decompressed
 			currentHeaders, currentBody, err = splitEntity(decompressed)
 			if err != nil {
 				return nil, err
@@ -342,8 +354,12 @@ func ParseMessage(
 			)
 			result.FileName = entityFileName(currentHeaders)
 			if result.MIC == "" {
+				micContent := currentEntity
+				if micContent == nil {
+					micContent = currentBody
+				}
 				mic, micErr := ComputeMIC(
-					buildEntity(currentHeaders, currentBody),
+					micContent,
 					smime.NormalizeAlgorithm(opts.MICAlgorithm, MICAlgorithmSHA256),
 				)
 				if micErr != nil {
@@ -355,6 +371,16 @@ func ParseMessage(
 		}
 	}
 	return nil, errors.New("as2: message exceeds the maximum S/MIME nesting depth")
+}
+
+func EntityHeaders(headers map[string][]string) textproto.MIMEHeader {
+	entity := textproto.MIMEHeader{}
+	for _, key := range entityHeaderKeys {
+		if values := textproto.MIMEHeader(headers).Values(key); len(values) > 0 {
+			entity[key] = slices.Clone(values)
+		}
+	}
+	return entity
 }
 
 func NewMessageID() string {
@@ -570,11 +596,6 @@ func encodeBase64(content []byte) []byte {
 	return buffer.Bytes()
 }
 
-func canonicalizeCRLF(content []byte) []byte {
-	normalized := bytes.ReplaceAll(content, []byte("\r\n"), []byte("\n"))
-	return bytes.ReplaceAll(normalized, []byte("\n"), []byte("\r\n"))
-}
-
 func pkcs7MIMEHeader(smimeType, fileName string) textproto.MIMEHeader {
 	return textproto.MIMEHeader{
 		"Content-Type": {mime.FormatMediaType(contentTypePKCS7MIME, map[string]string{
@@ -608,10 +629,12 @@ func sortedHeaderKeys(headers textproto.MIMEHeader) []string {
 			keys = append(keys, key)
 		}
 	}
+	rest := make([]string, 0, len(headers))
 	for key := range headers {
 		if !slices.Contains(order, key) {
-			keys = append(keys, key)
+			rest = append(rest, key)
 		}
 	}
-	return keys
+	slices.Sort(rest)
+	return append(keys, rest...)
 }

@@ -1,6 +1,5 @@
+import { SettingsPage } from "@/components/settings/settings-page";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
 import { InvoiceAdjustmentControlSkeleton } from "./skeleton";
 
@@ -12,17 +11,12 @@ export function InvoiceAdjustmentControlPage() {
   const t = useT();
 
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: t("Invoice adjustment controls"),
-        description: t(
-          "Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.",
-        ),
-      }}
+    <SettingsPage
+      title={t("Invoice adjustment controls")}
+      description={t("Set the rules for credits, rebills and write-offs on invoices.")}
+      skeleton={<InvoiceAdjustmentControlSkeleton />}
     >
-      <LazyComponent fallback={<InvoiceAdjustmentControlSkeleton />}>
-        <InvoiceAdjustmentControlForm />
-      </LazyComponent>
-    </PageLayout>
+      <InvoiceAdjustmentControlForm />
+    </SettingsPage>
   );
 }

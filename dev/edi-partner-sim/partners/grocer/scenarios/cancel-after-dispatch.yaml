@@ -1,0 +1,10 @@
+name: a cancellation after dispatch is held for the truck-ordered-not-used bill
+steps:
+  - send: { set: "204", as: t1 }
+  - expect: { ack: t1 }
+  - expect: { wire: "990", about: t1 }
+  - trenova: { dispatch: t1 }
+  - send: { set: "204", variation: cancel, of: t1 }
+  - expect: { ack: t1 }
+  - expect: { flow: t1, status: Held, why: after dispatch }
+  - expect: { trenova: { shipment: t1, status: Assigned } }

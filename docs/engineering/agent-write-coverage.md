@@ -86,14 +86,14 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 104 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 246 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 245 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 43 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 109 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 49 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 55 |
-| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
+| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 11 |
 
 ## Totals
 
@@ -104,14 +104,14 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Covered by a tool | 447 |
 | Exempt | 700 |
 | — Security | 104 |
-| — Configuration | 246 |
+| — Configuration | 245 |
 | — User preference | 43 |
 | — Infrastructure | 49 |
 | — Agent administration | 109 |
 | — Counterparty | 35 |
 | — Read-only | 49 |
 | — Attestation | 55 |
-| — Duplicate | 10 |
+| — Duplicate | 11 |
 | **Pending** | **4** |
 | Total | 1151 |
 
@@ -174,7 +174,7 @@ The writes no tool performs yet, and what the tool would do.
 | checkcall | 3 | 3 | 0 | 0 |
 | collection | 4 | 4 | 0 | 0 |
 | commodity | 4 | 4 | 0 | 0 |
-| costing | 2 | 0 | 2 | 0 |
+| costing | 1 | 0 | 1 | 0 |
 | customer | 4 | 4 | 0 | 0 |
 | customerpayment | 5 | 5 | 0 | 0 |
 | customerstatement | 1 | 1 | 0 | 0 |
@@ -268,7 +268,7 @@ The writes no tool performs yet, and what the tool would do.
 | realtime | 4 | 0 | 4 | 0 |
 | recordshare | 2 | 1 | 1 | 0 |
 | recurringshipment | 5 | 4 | 1 | 0 |
-| report | 19 | 13 | 6 | 0 |
+| report | 20 | 13 | 7 | 0 |
 | role | 11 | 0 | 11 | 0 |
 | routingguide | 3 | 0 | 3 | 0 |
 | scheduling | 7 | 5 | 2 | 0 |
@@ -838,8 +838,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation updateCostCategory` | Exempt, configuration: Cost categories define the costing model every margin is computed with. |
-| `mutation updateCostingControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
+| `mutation saveCostingControl` | Exempt, configuration: The organization's cost model, its settings and categories saved together; every margin is computed with it. |
 
 ### customer
 
@@ -1895,6 +1894,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation deleteReportDefinition` | Tool: `report_delete` |
 | `mutation deleteReportSchedule` | Tool: `report_delete_schedule` |
 | `mutation deleteReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
+| `mutation exportCustomerLedger` | Exempt, duplicate: Saves a customer's ledger window through createReportDefinition and runs it through runReport; those writes are listed under report. |
 | `mutation exportTableView` | Exempt, duplicate: Saves a table's view through createReportDefinition and runs it through runReport; those writes are listed under report. |
 | `mutation forkCannedReport` | Tool: `report_fork` |
 | `mutation resetCannedFork` | Tool: `report_reset_fork` |

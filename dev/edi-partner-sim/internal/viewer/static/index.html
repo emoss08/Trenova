@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EDI Sim Run Viewer</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231d7a72'/%3E%3Cpath d='M4 3v10M12 3v10' stroke='%23fff' stroke-width='1.4'/%3E%3Cpath d='M4 6l7 2M12 10l-7 2' stroke='%23fff' stroke-width='1.2' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="viewer.css">
+<script src="ladder.js" defer></script>
+<script src="inspector.js" defer></script>
+<script src="viewer.js" defer></script>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <h1>edi-sim run</h1>
+    <span class="run" id="run"></span>
+    <span class="conn" id="conn" role="status" hidden><i class="dot hold"></i><span id="connText">Lost the simulator's event stream · reconnecting</span></span>
+    <div class="tally" id="tally"></div>
+  </div>
+  <div class="grid">
+    <section class="pane" aria-label="Partners">
+      <header><h2>Partners</h2></header>
+      <div class="scroll"><ul class="list" id="partners"></ul></div>
+    </section>
+    <section class="pane" aria-label="Conversations">
+      <header><h2>Conversations</h2><span class="meta" id="convMeta"></span></header>
+      <div class="scroll"><ul class="list" id="convs"></ul></div>
+    </section>
+    <section class="pane" aria-label="Conversation">
+      <header><h2 id="ladderTitle">Conversation</h2><span class="meta" id="ladderMeta"></span></header>
+      <div class="scroll ladder-wrap" id="ladderWrap">
+        <div class="lanes">
+          <div class="lane-h p" id="laneP"></div>
+          <div class="lane-h t" id="laneT">Trenova</div>
+          <div class="lane-h x">Expected</div>
+        </div>
+        <svg class="ladder" id="ladder" role="list" aria-label="Messages in time order"></svg>
+        <p class="empty" id="ladderEmpty" hidden></p>
+      </div>
+    </section>
+    <section class="pane insp" aria-label="Message">
+      <header><h2>Message</h2><span class="meta" id="inspMeta"></span></header>
+      <div class="scroll" id="insp"></div>
+    </section>
+  </div>
+</div>
+</body>
+</html>

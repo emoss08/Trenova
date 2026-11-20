@@ -57,16 +57,16 @@ func TestCheckRefusal_PlacesEachErrorOnItsField(t *testing.T) {
 	require.Len(t, multiErr.Errors, 3, "warnings never refuse")
 
 	source := multiErr.Errors[0]
-	assert.Equal(t, "candidate.source", source.Field)
+	assert.Equal(t, "candidate.source", source.Field())
 	require.NotNil(t, source.Range)
 	assert.Equal(t, errortypes.SourceRange{From: 40, To: 46}, *source.Range)
 
 	value := multiErr.Errors[1]
-	assert.Equal(t, "rules[0].inputs.agreement.breaks[2].rate", value.Field)
+	assert.Equal(t, "rules[0].inputs.agreement.breaks[2].rate", value.Field())
 	assert.Nil(t, value.Range)
 
 	library := multiErr.Errors[2]
-	assert.Equal(t, "candidate.source", library.Field)
+	assert.Equal(t, "candidate.source", library.Field())
 	assert.Nil(t, library.Range, "a range in a library's source is not a range in this source")
 	assert.Equal(t, "In org.accessorials: There is no `fee`", library.Error())
 
@@ -88,7 +88,7 @@ func TestCheckRefusal_NotOKWithoutAnErrorStillRefuses(t *testing.T) {
 	err := tarifferrors.CheckRefusal(&rules.TariffCheck{OK: false}, tarifferrors.CheckFields{})
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "source", multiErr.Errors[0].Field)
+	assert.Equal(t, "source", multiErr.Errors[0].Field())
 }
 
 func TestEvaluationAndRefusal_CarryTheirRange(t *testing.T) {
@@ -99,7 +99,7 @@ func TestEvaluationAndRefusal_CarryTheirRange(t *testing.T) {
 		Message: wasmmodule.Message{Template: "The amount passed {0} digits", Args: []any{int64(28)}},
 		Range:   &rules.TariffRange{From: 5, To: 9},
 	})
-	assert.Equal(t, "formulaTemplateId", evaluation.Field)
+	assert.Equal(t, "formulaTemplateId", evaluation.Field())
 	assert.Equal(t, errortypes.SourceRange{From: 5, To: 9}, *evaluation.Range)
 	var typed *tarifferrors.EvaluationError
 	require.ErrorAs(t, evaluation.Internal, &typed)

@@ -10,10 +10,10 @@ related:
 
 ## What it's for
 Carrier settlement control holds the organization's rules for paying carriers on brokered freight.
-The page is one settings form in four cards: **Pay period** (how often carriers are settled and when
-carrier cost accrues), **Workflow automation** (automatic batches and posting), **Invoice matching**
-(how carrier invoices are compared to the buy rate) and **Posting accounts** (the GL accounts
-settlements post to).
+The page is one settings form in three tabs, saved together: **Pay period** (when each period ends,
+when carriers are paid and when a carrier's cost counts), **Invoice matching** (how carrier invoices
+are checked against the buy rate, and whether pay waits for a match) and **Approval & posting** (who
+approves a settlement, whether approval posts it, and the ledger accounts it posts to).
 
 Carrier payables and brokerage finance staff use it.
 
@@ -21,48 +21,48 @@ Carrier payables and brokerage finance staff use it.
 
 ### Set the carrier pay period
 Keywords: carrier pay cycle, pay date, cost accrual trigger
-1. Open [Carrier settlement control](/admin/carrier-settlement-control).
-2. In **Pay period**, choose the **Frequency** and **Period end day**, and enter the **Pay Delay
-   (days)**.
-3. Choose the **Pay trigger**, the shipment milestone at which carrier cost accrues.
-4. Select **Save changes**.
-
-### Automate batches and posting
-Keywords: auto batch, auto post
-1. Open [Carrier settlement control](/admin/carrier-settlement-control).
-2. In **Workflow automation**, turn on **Auto-generate batches** to create a batch when each pay
-   period closes, and **Auto-post on approval** to post a settlement to the ledger as soon as it is
-   approved.
-3. Select **Save changes**.
+1. Open [Carrier settlement control](/admin/carrier-settlement-control). It opens on **Pay period**.
+2. Under **Schedule**, choose the **Pay period** and the **Last day of the period**, and enter the
+   **Pay delay** in days (0 to 30).
+3. Turn on **Generate settlements when a period ends** to have a batch drafted for each period.
+4. Under **Carrier cost**, choose when **Cost counts**: when the carrier's own leg is completed, when
+   the shipment is delivered, when it is ready to invoice or when the customer has been invoiced.
+5. Select **Save changes**.
 
 ### Match carrier invoices automatically
 Keywords: invoice matching, variance tolerance, EDI 210, auto accept
-1. Open [Carrier settlement control](/admin/carrier-settlement-control).
-2. In **Invoice matching**, enter the **Variance tolerance** in USD.
-3. Turn on **Auto-match inbound invoices** to match inbound EDI 210 invoices to their carrier
-   assignment.
-4. Turn on **Auto-accept within tolerance** to resolve matched invoices within the tolerance without
-   review. It requires auto-match.
+1. Open [Carrier settlement control](/admin/carrier-settlement-control) and select the **Invoice
+   matching** tab.
+2. Enter the **Variance tolerance**: an invoice within this amount of the buy rate matches, and a
+   larger gap waits for review.
+3. Turn on **Match EDI invoices as they arrive** to match invoices carriers send by EDI to their load.
+4. Under it, turn on **Accept matches within the tolerance** to accept those matches without review.
 5. Select **Save changes**.
 
 ### Hold carrier pay until the invoice is matched
 Keywords: pay on invoice, hold settlement, three-way match, unmatched invoice, freight audit hold
-1. Open [Carrier settlement control](/admin/carrier-settlement-control).
-2. In **Invoice matching**, turn on **Hold pay until the invoice is matched**.
+1. Open [Carrier settlement control](/admin/carrier-settlement-control) and select the **Invoice
+   matching** tab.
+2. Under **Paying on a matched invoice**, turn on **Hold pay until the invoice is matched**.
 3. Select **Save changes**.
 
-### Set the posting accounts
-Keywords: AP account, purchased transportation account
-1. Open [Carrier settlement control](/admin/carrier-settlement-control).
-2. In **Posting accounts**, choose the **Accounts payable account** and the **Purchased
+### Set approval and the posting accounts
+Keywords: separate approver, auto post, AP account, purchased transportation account
+1. Open [Carrier settlement control](/admin/carrier-settlement-control) and select the **Approval &
+   posting** tab.
+2. Under **Approval**, choose whether to **Require a separate approver** and whether to **Post to the
+   ledger on approval**.
+3. Under **Ledger accounts**, choose the **Accounts payable account** and the **Purchased
    transportation account**.
-3. Select **Save changes**.
+4. Select **Save changes**.
 
 ## Notes
 The page is only available to organizations with brokerage features turned on. Opening it needs
-read access to carrier settlement control; saving needs update access. A blank posting account falls
-back to the defaults on [Accounting controls](/admin/accounting-control). Invoices outside the
-tolerance still land in the review workspace. With **Hold pay until the invoice is matched** on, a load's carrier cost stays out of
-settlements until its carrier invoice match is resolved and is picked up by the next settlement after
-that; a settlement that already holds cost for an unmatched load cannot be approved until the match
-is resolved or the settlement is recalculated.
+read access to carrier settlement control; saving needs update access. A save the server refuses
+opens the tab holding the setting to fix and marks it. **Match EDI invoices as they arrive** appears
+only when the plan includes EDI. A blank ledger account falls back to the defaults on
+[Accounting controls](/admin/accounting-control). Invoices outside the tolerance still land in the
+review workspace. With **Hold pay until the invoice is matched** on, a load's carrier cost stays out
+of settlements until its carrier invoice match is resolved and is picked up by the next settlement
+after that; a settlement that already holds cost for an unmatched load cannot be approved until the
+match is resolved or the settlement is recalculated.

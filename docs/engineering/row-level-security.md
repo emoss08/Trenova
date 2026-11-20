@@ -338,7 +338,10 @@ mode, so switch roles and enforcement together.
    `database.user`, so run it with the new role's name and password in the
    environment:
    `TRENOVA_DATABASE_USER=trenova_app TRENOVA_DATABASE_PASSWORD=<app> trenova db rls provision-roles`
-   (with `database.system` set to the system role).
+   (with `database.system` set to the system role). The database tool runs the same
+   command, `trenova-db provision-roles`, connected as `database.migrator`. In development,
+   `task db-roles` runs it after `task db-migrate` on a new database, with the roles taken
+   from `config/config.yaml`.
 4. Deploy in `observe`, still connected as the existing role, and exercise
    sign-in, the main pages, public links, webhooks and a full day of schedules.
    Each unscoped call site is logged once at warn with its two calling frames.

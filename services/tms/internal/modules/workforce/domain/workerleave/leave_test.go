@@ -313,14 +313,149 @@ func TestLeaveControl_Validate(t *testing.T) {
 	control.Validate(multiErr)
 	assert.False(t, multiErr.HasErrors(), multiErr.Error())
 
-	// The statute is a floor: an employer may be more generous but cannot offer
-	// less than twelve weeks and call it FMLA.
-	stingy := workerleave.DefaultLeaveControl()
-	stingy.EntitlementWeeks = decimal.NewFromInt(8)
+	generous := workerleave.DefaultLeaveControl()
+	generous.EntitlementWeeks = decimal.NewFromInt(52)
+	generous.MilitaryCaregiverWeeks = decimal.NewFromInt(52)
+	generous.WorkweekHours = decimal.NewFromInt(168)
+	generous.EligibilityMonths = 0
+	generous.EligibilityHours = 0
+	generous.CertificationDueDays = 15
 	multiErr = errortypes.NewMultiError()
-	stingy.Validate(multiErr)
-	require.True(t, multiErr.HasErrors())
-	assert.Contains(t, multiErr.Error(), "at least twelve weeks")
+	generous.Validate(multiErr)
+	assert.False(t, multiErr.HasErrors(), multiErr.Error())
+
+	tests := []struct {
+		name    string
+		change  func(*workerleave.LeaveControl)
+		field   string
+		message string
+	}{
+		{
+			name: "an entitlement under the statute",
+			change: func(c *workerleave.LeaveControl) {
+				c.EntitlementWeeks = decimal.NewFromInt(8)
+			},
+			field:   "entitlementWeeks",
+			message: "FMLA entitles an eligible employee to at least twelve weeks",
+		},
+		{
+			name: "an entitlement longer than a year",
+			change: func(c *workerleave.LeaveControl) {
+				c.EntitlementWeeks = decimal.NewFromInt(53)
+			},
+			field:   "entitlementWeeks",
+			message: "Leave cannot be more than 52 weeks a year",
+		},
+		{
+			name: "an entitlement past the column's scale",
+			change: func(c *workerleave.LeaveControl) {
+				c.EntitlementWeeks = decimal.RequireFromString("12.125")
+			},
+			field:   "entitlementWeeks",
+			message: "Enter a number with at most two decimals",
+		},
+		{
+			name: "caregiver leave under twenty-six weeks",
+			change: func(c *workerleave.LeaveControl) {
+				c.MilitaryCaregiverWeeks = decimal.NewFromInt(20)
+			},
+			field:   "militaryCaregiverWeeks",
+			message: "Military caregiver leave is at least twenty-six weeks",
+		},
+		{
+			name: "caregiver leave longer than a year",
+			change: func(c *workerleave.LeaveControl) {
+				c.MilitaryCaregiverWeeks = decimal.NewFromInt(60)
+			},
+			field:   "militaryCaregiverWeeks",
+			message: "Leave cannot be more than 52 weeks a year",
+		},
+		{
+			name: "caregiver leave shorter than the ordinary entitlement",
+			change: func(c *workerleave.LeaveControl) {
+				c.EntitlementWeeks = decimal.NewFromInt(30)
+				c.MilitaryCaregiverWeeks = decimal.RequireFromString("29.5")
+			},
+			field:   "militaryCaregiverWeeks",
+			message: "Military caregiver leave cannot be shorter than the ordinary entitlement",
+		},
+		{
+			name:    "a workweek of no hours",
+			change:  func(c *workerleave.LeaveControl) { c.WorkweekHours = decimal.Zero },
+			field:   "workweekHours",
+			message: "A workweek must be more than zero hours",
+		},
+		{
+			name: "a workweek longer than a week",
+			change: func(c *workerleave.LeaveControl) {
+				c.WorkweekHours = decimal.NewFromInt(169)
+			},
+			field:   "workweekHours",
+			message: "A workweek cannot be more than 168 hours",
+		},
+		{
+			name: "a workweek that would overflow the column",
+			change: func(c *workerleave.LeaveControl) {
+				c.WorkweekHours = decimal.NewFromInt(1000)
+			},
+			field:   "workweekHours",
+			message: "A workweek cannot be more than 168 hours",
+		},
+		{
+			name: "a workweek past the column's scale",
+			change: func(c *workerleave.LeaveControl) {
+				c.WorkweekHours = decimal.RequireFromString("0.001")
+			},
+			field:   "workweekHours",
+			message: "Enter a number with at most two decimals",
+		},
+		{
+			name:    "negative months of service",
+			change:  func(c *workerleave.LeaveControl) { c.EligibilityMonths = -1 },
+			field:   "eligibilityMonths",
+			message: "Months of service cannot be negative",
+		},
+		{
+			name:    "more than ten years of service",
+			change:  func(c *workerleave.LeaveControl) { c.EligibilityMonths = 121 },
+			field:   "eligibilityMonths",
+			message: "Months of service cannot be more than 120",
+		},
+		{
+			name:    "negative hours worked",
+			change:  func(c *workerleave.LeaveControl) { c.EligibilityHours = -1 },
+			field:   "eligibilityHours",
+			message: "Hours worked cannot be negative",
+		},
+		{
+			name:    "more hours than a year holds",
+			change:  func(c *workerleave.LeaveControl) { c.EligibilityHours = 8761 },
+			field:   "eligibilityHours",
+			message: "A year holds at most 8,760 hours",
+		},
+		{
+			name:    "under fifteen days to return a certification",
+			change:  func(c *workerleave.LeaveControl) { c.CertificationDueDays = 14 },
+			field:   "certificationDueDays",
+			message: "The employee must be given at least fifteen days (29 CFR 825.305(b))",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			control := workerleave.DefaultLeaveControl()
+			tt.change(control)
+			multiErr := errortypes.NewMultiError()
+			control.Validate(multiErr)
+
+			require.Len(t, multiErr.Errors, 1, multiErr.Error())
+			assert.Equal(t, tt.field, multiErr.Errors[0].Path.String())
+			assert.Equal(t, errortypes.ErrInvalid, multiErr.Errors[0].Code)
+			assert.Equal(t, tt.message, multiErr.Errors[0].Message)
+		})
+	}
 }
 
 func TestWorkerLeaveCase_Validate(t *testing.T) {

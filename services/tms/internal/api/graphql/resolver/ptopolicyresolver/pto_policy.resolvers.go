@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/jobs/ptojobs/ptocontract"
@@ -498,7 +499,7 @@ func (r *QueryResolver) WorkerPTOAvailability(ctx context.Context, input gqlmode
 	}
 
 	info := resolvercore.TenantInfo(authCtx)
-	loc, err := r.PtoLedgerService.OrgLocation(ctx, info)
+	loc, err := tenantports.OrganizationLocation(ctx, r.OrganizationService, info)
 	if err != nil {
 		return nil, err
 	}

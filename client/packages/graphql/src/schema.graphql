@@ -2151,9 +2151,23 @@ type ARLedgerEntry {
   documentNumber: String!
   eventType: String!
   relatedInvoiceId: ID
+  """The customer's balance after this entry."""
+  runningBalanceMinor: Int!
   sourceObjectId: String!
   sourceObjectType: String!
   transactionDate: Timestamp!
+}
+
+"""
+A page of a customer's ledger between two dates, oldest first. The first page
+opens on the balance carried in from before the start date; each later page
+opens on the balance the page before it ended on.
+"""
+type ARLedgerPage {
+  endCursor: String
+  entries: [ARLedgerEntry!]!
+  hasNextPage: Boolean!
+  openingBalanceMinor: Int!
 }
 
 type ARMonthlyCollectionPoint {
@@ -11438,6 +11452,17 @@ input CostingControlInput {
 }
 
 """
+One save of the cost model: the control's settings when they changed and each category that
+changed, written together or not at all. A refusal names a category by its place in
+`categories`.
+"""
+input CostingControlSaveInput {
+  categories: [CostCategoryUpdateInput!]!
+  """Null leaves the control's settings as they are."""
+  control: CostingControlInput
+}
+
+"""
 Who the cover extends to. It is on the enrollment rather than the plan because
 the same plan costs different amounts depending on how many people it covers.
 """
@@ -14433,7 +14458,10 @@ type DetentionPolicy {
   effectiveEndDate: Timestamp
   effectiveStartDate: Timestamp
   id: ID!
-  isOrgDefault: Boolean!
+  """
+  Whether shipment control names this policy as the organization's default, the one that governs a stop no other policy covers. A default stays active and covers all freight.
+  """
+  isOrganizationDefault: Boolean!
   lateArrivalGraceMinutes: Int!
   lateArrivalRule: DetentionLateArrivalRule!
   layoverAccessorialChargeId: ID
@@ -14512,7 +14540,6 @@ input DetentionPolicyInput {
   description: String
   effectiveEndDate: Timestamp
   effectiveStartDate: Timestamp
-  isOrgDefault: Boolean = false
   lateArrivalGraceMinutes: Int = 0
   lateArrivalRule: DetentionLateArrivalRule = NoEffect
   layoverAccessorialChargeId: ID
@@ -17473,6 +17500,14 @@ type EdiTenderCharges {
 type EdiTenderCommodity {
   commodity: String!
   pieces: Int!
+  """
+  Highest temperature, in whole degrees Fahrenheit, this line must be kept at.
+  """
+  temperatureMax: Int
+  """
+  Lowest temperature, in whole degrees Fahrenheit, this line must be kept at.
+  """
+  temperatureMin: Int
   weight: Int!
 }
 
@@ -17485,6 +17520,14 @@ type EdiTenderStop {
   postalCode: String
   sequence: Int!
   state: String
+  """
+  Highest temperature, in whole degrees Fahrenheit, the tender keeps the freight at from this stop on.
+  """
+  temperatureMax: Int
+  """
+  Lowest temperature, in whole degrees Fahrenheit, the tender keeps the freight at from this stop on.
+  """
+  temperatureMin: Int
   type: String!
   weight: Int
   windowCloses: Timestamp
@@ -18007,6 +18050,23 @@ enum EtaVerdict {
   Late
   OnTime
   Unknown
+}
+
+"""
+A customer's ledger over a window, to export as a report with its running balance.
+"""
+input ExportCustomerLedgerInput {
+  customerId: ID!
+  """The last instant exported. Empty is the moment of the export."""
+  endDate: Timestamp
+  """csv, xlsx or pdf."""
+  format: String!
+  """The report's name in the person's reports."""
+  name: String!
+  """
+  The first day exported; the balance starts from what the customer owed before it. Empty starts at the first entry.
+  """
+  startDate: Timestamp
 }
 
 input ExportTableViewInput {
@@ -25023,6 +25083,10 @@ type Mutation {
   endWorkerShiftAssignment(effectiveTo: Timestamp!, id: ID!): WorkerShiftAssignment!
   enrollBenefit(input: EnrollBenefitInput!): WorkerBenefitEnrollment!
   """
+  Saves a customer's ledger over a window as a report and builds the file in the background, every entry in the window with its running balance.
+  """
+  exportCustomerLedger(input: ExportCustomerLedgerInput!): TableExportResult!
+  """
   Saves a table's view as a report and runs it in the background, with no row limit beyond the report's own.
   """
   exportTableView(input: ExportTableViewInput!): TableExportResult!
@@ -25492,6 +25556,7 @@ type Mutation {
   Holds a tool lower than its declared rule for this organization, or returns it to the declared rule.
   """
   saveAgentToolRule(input: AgentToolRuleInput!, name: String!, version: Int!): AgentToolRuleSaved!
+  saveCostingControl(input: CostingControlSaveInput!): CostingControl!
   saveFactoringTransport(input: SaveFactoringTransportInput!): FactoringTransport!
   """
   Saves what a person wrote as the message's draft. documentIds replaces the draft's files; leaving it out keeps them.
@@ -25718,8 +25783,6 @@ type Mutation {
   updateCarrierIntelControl(input: CarrierIntelControlPatchInput!): CarrierIntelControl!
   updateCarrierSettlementControl(input: UpdateCarrierSettlementControlInput!): CarrierSettlementControl!
   updateCommodity(id: ID!, input: CommodityInput!): Commodity!
-  updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
-  updateCostingControl(input: CostingControlInput!): CostingControl!
   updateCustomer(id: ID!, input: CustomerInput!): Customer!
   """Updates the org's Dash feature toggles (back office)."""
   updateDashControl(input: UpdateDashControlInput!): DashControl!
@@ -28213,7 +28276,7 @@ type Query {
   arAgingTrend(weeks: Int): [ARAgingTrendPoint!]!
   arCashFlowForecast(futureWeeks: Int, pastWeeks: Int): [ARCashFlowPoint!]!
   arCollectionsWorklist(limit: Int): [ARCollectionsWorklistItem!]!
-  arCustomerLedger(customerId: ID!): [ARLedgerEntry!]!
+  arCustomerLedger(after: String, customerId: ID!, endDate: Timestamp, first: Int, startDate: Timestamp): ARLedgerPage!
   arCustomerProfile(customerId: ID!): ARCustomerProfile!
   arCustomerStatement(asOfDate: Timestamp, customerId: ID!, startDate: Timestamp): ARCustomerStatement!
   arDashboardKpis: ARDashboardKPIs!
@@ -32564,7 +32627,13 @@ type Shipment {
   The values the shipment's tariff prices with, by input name. Each value is a Tariff wire value.
   """
   tariffInputs: JSON
+  """
+  Highest temperature, in whole degrees Fahrenheit, of the load, derived as temperatureMin is.
+  """
   temperatureMax: Int
+  """
+  Lowest temperature, in whole degrees Fahrenheit, of the load. When a stop or commodity has a range this is derived from them: the range every one shares, or the span from the coldest to the warmest bound when they share none.
+  """
   temperatureMin: Int
   tenderStatus: ShipmentTenderStatus
   totalChargeAmount: Decimal
@@ -33273,6 +33342,14 @@ type ShipmentCommodity {
   organizationId: ID!
   pieces: Int!
   shipmentId: ID!
+  """
+  Highest temperature, in whole degrees Fahrenheit, this line's freight must be kept at.
+  """
+  temperatureMax: Int
+  """
+  Lowest temperature, in whole degrees Fahrenheit, this line's freight must be kept at.
+  """
+  temperatureMin: Int
   updatedAt: Timestamp!
   version: Int!
   weight: Int!
@@ -33308,6 +33385,8 @@ input ShipmentCommodityInput {
   lengthFeet: Float
   pieces: Int = 1
   shipmentId: ID
+  temperatureMax: Int
+  temperatureMin: Int
   version: Int
   weight: Int = 0
   widthFeet: Float
@@ -33636,7 +33715,10 @@ enum ShipmentEventType {
   ShipmentUncanceled
   ShipmentUpdated
   StatusChanged
-  StopCompleted
+  StopArrivalCorrected
+  StopArrived
+  StopDeparted
+  StopDepartureCorrected
   TenderAccepted
   TenderBounced
   TenderCounterDecided
@@ -33795,6 +33877,9 @@ input ShipmentInput {
   """
   tariffInputs: JSON
   temperatureMax: Int
+  """
+  Taken as given only when no stop or commodity has a range; otherwise the load's range is derived from theirs.
+  """
   temperatureMin: Int
   tenderStatus: ShipmentTenderStatus
   totalChargeAmount: Decimal = "0"
@@ -33957,17 +34042,23 @@ type ShipmentMove {
 }
 
 """
-Move and stop progress: MoveStatusChanged, MoveDeparted, MoveArrived and
-StopCompleted.
+Move and stop progress: MoveStatusChanged, MoveDeparted, MoveArrived,
+StopArrived, StopDeparted, StopArrivalCorrected and StopDepartureCorrected.
 """
 type ShipmentMoveEvent implements ShipmentEvent {
   actor: User
   actorId: ID
   actorLabel: String!
   actorType: ShipmentEventActorType!
+  """Arrival or departure time the stop event recorded."""
+  actualAt: Timestamp
   businessUnitId: ID!
   correlationId: String
   id: ID!
+  """
+  Name of the stop's location, or its address when the location has no name.
+  """
+  locationName: String
   metadata: JSON!
   """Move the event refers to."""
   moveId: ID
@@ -33975,6 +34066,8 @@ type ShipmentMoveEvent implements ShipmentEvent {
   newStatus: String
   occurredAt: Timestamp!
   organizationId: ID!
+  """Arrival or departure time a correction replaced."""
+  previousActualAt: Timestamp
   """Move status before the change."""
   previousStatus: String
   severity: ShipmentEventSeverity!
@@ -33982,6 +34075,10 @@ type ShipmentMoveEvent implements ShipmentEvent {
   shipmentId: ID!
   """Stop the event refers to, when the event is stop-scoped."""
   stopId: ID
+  """Position of the stop on its move, counting from 1, for a stop event."""
+  stopNumber: Int
+  """Kind of stop, for a stop event."""
+  stopType: StopType
   summary: String!
   type: ShipmentEventType!
 }
@@ -34324,6 +34421,14 @@ type ShipmentStop {
   sequence: Int!
   shipmentMoveId: ID
   status: StopStatus!
+  """
+  Highest temperature, in whole degrees Fahrenheit, the freight is kept at from this stop on.
+  """
+  temperatureMax: Int
+  """
+  Lowest temperature, in whole degrees Fahrenheit, the freight is kept at from this stop on.
+  """
+  temperatureMin: Int
   type: StopType!
   updatedAt: Timestamp!
   version: Int!
@@ -34352,6 +34457,8 @@ input ShipmentStopInput {
   sequence: Int = 0
   shipmentMoveId: ID
   status: StopStatus = New
+  temperatureMax: Int
+  temperatureMin: Int
   type: StopType = Pickup
   version: Int
   weight: Int
@@ -36901,8 +37008,7 @@ input UpdateCarrierSettlementControlInput {
   autoPostOnApprove: Boolean!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
-  """Omitted leaves the current setting as it is."""
-  holdUntilInvoiceMatched: Boolean
+  holdUntilInvoiceMatched: Boolean!
   payDelayDays: Int!
   payPeriodFrequency: PayPeriodFrequency!
   payTrigger: SettlementPayTrigger!
@@ -36941,8 +37047,8 @@ input UpdateDashControlInput {
   allowSettlementDisputes: Boolean!
   allowStopActions: Boolean!
   detentionAlertThresholdMinutes: Int!
-  driverDigestCadence: DriverDigestCadence
-  driverDigestWeekday: Int
+  driverDigestCadence: DriverDigestCadence!
+  driverDigestWeekday: Int!
   enableDetentionAlerts: Boolean!
   requireContactChangeApproval: Boolean!
   requireExpenseReceipt: Boolean!
@@ -37063,6 +37169,8 @@ input UpdateLeaveControlInput {
   entitlementWeeks: Decimal
   measurementMethod: LeaveMeasurementMethod
   militaryCaregiverWeeks: Decimal
+  """The version read; a save over a newer one is refused."""
+  version: Int!
   workweekHours: Decimal
 }
 

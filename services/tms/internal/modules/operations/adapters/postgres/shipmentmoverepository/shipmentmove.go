@@ -708,6 +708,8 @@ func (r *repository) updateStop(
 		st.Sequence,
 		st.Pieces,
 		st.Weight,
+		st.TemperatureMin,
+		st.TemperatureMax,
 		st.ScheduledWindowStart,
 		st.ScheduledWindowEnd,
 		st.ActualArrival,

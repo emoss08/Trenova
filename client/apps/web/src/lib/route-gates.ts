@@ -5,17 +5,22 @@ import {
   resolveOnboardingRedirect,
 } from "@/lib/onboarding-gate";
 import { webSignInPaths } from "@/lib/sign-in-paths";
+import { redirect } from "@tanstack/react-router";
 import {
   gates,
   requireGuest,
   requireSession,
   type RouteGate,
+  type RouteGateContext,
 } from "@trenova/shared/lib/router/gates";
-import { redirect } from "@tanstack/react-router";
 
 // A cloud organization that has not finished the welcome wizard is sent to it from every
 // signed-in page; the wizard's own path is exempt, so this cannot loop.
-const onboardingRedirect: RouteGate = async ({ location }) => {
+const onboardingRedirect: RouteGate = async ({
+  location,
+}: {
+  location: RouteGateContext["location"];
+}) => {
   const target = await resolveOnboardingRedirect(location.pathname);
   if (target) {
     throw redirect({ href: target });

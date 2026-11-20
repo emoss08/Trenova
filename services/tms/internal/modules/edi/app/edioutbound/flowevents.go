@@ -24,30 +24,29 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	flowShipmentEvents = []shipmentevent.Type{
-		shipmentevent.TypeStatusChanged,
-		shipmentevent.TypeShipmentCanceled,
-		shipmentevent.TypeShipmentUncanceled,
-		shipmentevent.TypeMoveArrived,
-		shipmentevent.TypeMoveDeparted,
-		shipmentevent.TypeStopCompleted,
-	}
-	statusShipmentEvents = []shipmentevent.Type{
-		shipmentevent.TypeMoveArrived,
-		shipmentevent.TypeMoveDeparted,
-		shipmentevent.TypeStopCompleted,
-	}
-)
+var flowShipmentEvents = []shipmentevent.Type{
+	shipmentevent.TypeStatusChanged,
+	shipmentevent.TypeShipmentCanceled,
+	shipmentevent.TypeShipmentUncanceled,
+	shipmentevent.TypeMoveArrived,
+	shipmentevent.TypeMoveDeparted,
+	shipmentevent.TypeStopArrived,
+	shipmentevent.TypeStopDeparted,
+}
 
-// FlowShipmentEvent is whether a shipment event concerns the partners' flows: one that moves the
-// load, or one a flow may answer with a status.
 func FlowShipmentEvent(eventType shipmentevent.Type) bool {
 	return slices.Contains(flowShipmentEvents, eventType)
 }
 
-func statusShipmentEvent(eventType shipmentevent.Type) bool {
-	return slices.Contains(statusShipmentEvents, eventType)
+func statusShipmentEvent(event *shipmentevent.Event) bool {
+	//nolint:exhaustive // Only arrivals and departures answer with a status.
+	switch event.Type {
+	case shipmentevent.TypeStopArrived, shipmentevent.TypeStopDeparted:
+		return true
+	case shipmentevent.TypeMoveArrived, shipmentevent.TypeMoveDeparted:
+		return !event.FromStopActual()
+	}
+	return false
 }
 
 // HasShipmentFlows is whether any partner's flow follows the shipment.
@@ -105,7 +104,7 @@ func (s *Service) NotifyShipmentEvent(ctx context.Context, req *NotifyShipmentEv
 		if err = s.tellLoad(ctx, req.TenantInfo, instance, load); err != nil {
 			failures = append(failures, err)
 		}
-		if !statusShipmentEvent(event.Type) || notified[instance.EDIPartnerID] {
+		if !statusShipmentEvent(event) || notified[instance.EDIPartnerID] {
 			continue
 		}
 		notified[instance.EDIPartnerID] = true

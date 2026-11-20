@@ -236,6 +236,8 @@ const stopBaseSchema = z.object({
   sequence: z.number().int().nonnegative().default(0),
   pieces: nullableIntegerSchema,
   weight: nullableIntegerSchema,
+  temperatureMin: nullableIntegerSchema,
+  temperatureMax: nullableIntegerSchema,
   scheduledWindowStart: z.number().int().nonnegative().default(0),
   scheduledWindowEnd: nullableIntegerSchema,
   actualArrival: nullableIntegerSchema,
@@ -671,6 +673,8 @@ const shipmentCommodityBaseSchema = z.object({
   lengthFeet: decimalStringSchema,
   widthFeet: decimalStringSchema,
   heightFeet: decimalStringSchema,
+  temperatureMin: nullableIntegerSchema,
+  temperatureMax: nullableIntegerSchema,
 });
 
 /**

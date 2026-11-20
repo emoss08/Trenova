@@ -1,5 +1,7 @@
 import { type RichTags, translateRich } from "@trenova/shared/i18n/rich";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { formatUnixDateTime } from "@trenova/shared/lib/date";
+import { stopTypeLabel } from "@trenova/shared/lib/stop-type";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import type {
@@ -157,18 +159,73 @@ function renderMove(event: ShipmentMoveEvent, ctx: RenderContext): RenderedEvent
         actorHandle: ctx.actorHandle,
       };
     }
-    case "StopCompleted":
+    case "StopArrived":
       return {
         headline: translateRich(
-          "<actor>{0}</actor> completed a stop on <target/>",
+          "<actor>{0}</actor> arrived at {1} on <target/>",
           ctx.tags,
           ctx.actor,
+          stopPlace(event),
         ),
+        detail: stopDetail(event),
+        actorHandle: ctx.actorHandle,
+      };
+    case "StopDeparted":
+      return {
+        headline: translateRich(
+          "<actor>{0}</actor> left {1} on <target/>",
+          ctx.tags,
+          ctx.actor,
+          stopPlace(event),
+        ),
+        detail: stopDetail(event),
+        actorHandle: ctx.actorHandle,
+      };
+    case "StopArrivalCorrected":
+      return {
+        headline: translateRich(
+          "<actor>{0}</actor> corrected the arrival time at {1} on <target/>",
+          ctx.tags,
+          ctx.actor,
+          stopPlace(event),
+        ),
+        detail: correctionDetail(event),
+        actorHandle: ctx.actorHandle,
+      };
+    case "StopDepartureCorrected":
+      return {
+        headline: translateRich(
+          "<actor>{0}</actor> corrected the departure time from {1} on <target/>",
+          ctx.tags,
+          ctx.actor,
+          stopPlace(event),
+        ),
+        detail: correctionDetail(event),
         actorHandle: ctx.actorHandle,
       };
     default:
       return fallback(event, ctx);
   }
+}
+
+function stopPlace(event: ShipmentMoveEvent): string {
+  const name = present(event.locationName);
+  if (name) return name;
+  if (event.stopNumber !== undefined) return translate("stop {0}", event.stopNumber);
+  return translate("a stop");
+}
+
+function stopDetail(event: ShipmentMoveEvent): string | undefined {
+  if (event.stopNumber === undefined) return undefined;
+  if (!event.stopType) return translate("Stop {0}", event.stopNumber);
+  return translate("Stop {0} · {1}", event.stopNumber, stopTypeLabel(event.stopType));
+}
+
+function correctionDetail(event: ShipmentMoveEvent): string | undefined {
+  if (event.actualAt === undefined) return undefined;
+  const actual = formatUnixDateTime(event.actualAt);
+  if (event.previousActualAt === undefined) return translate("Now {0}", actual);
+  return translate("Was {0}, now {1}", formatUnixDateTime(event.previousActualAt), actual);
 }
 
 function renderAssignment(event: ShipmentAssignmentEvent, ctx: RenderContext): RenderedEvent {

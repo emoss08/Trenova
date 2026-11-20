@@ -7,7 +7,6 @@ package workerinjuryresolver
 
 import (
 	"context"
-	"math"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
@@ -75,10 +74,12 @@ func (r *MutationResolver) SaveOshaSummary(ctx context.Context, input gqlmodel.S
 		return nil, err
 	}
 
-	return r.WorkerInjuryService.SaveSummary(
-		ctx,
-		oshaSummaryRequest(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID),
-	)
+	req, err := oshaSummaryRequest(&input, resolvercore.TenantInfo(authCtx), authCtx.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WorkerInjuryService.SaveSummary(ctx, req)
 }
 
 func (r *MutationResolver) CertifyOshaSummary(ctx context.Context, year int) (*workerinjury.OSHAAnnualSummary, error) {
@@ -87,10 +88,15 @@ func (r *MutationResolver) CertifyOshaSummary(ctx context.Context, year int) (*w
 		return nil, err
 	}
 
+	summaryYear, err := gqlscalar.NarrowInt[int16]("year", year)
+	if err != nil {
+		return nil, err
+	}
+
 	return r.WorkerInjuryService.CertifySummary(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
-		int16(year),
+		summaryYear,
 		authCtx.UserID,
 	)
 }
@@ -101,10 +107,15 @@ func (r *MutationResolver) UncertifyOshaSummary(ctx context.Context, year int) (
 		return nil, err
 	}
 
+	summaryYear, err := gqlscalar.NarrowInt[int16]("year", year)
+	if err != nil {
+		return nil, err
+	}
+
 	return r.WorkerInjuryService.UncertifySummary(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
-		int16(year),
+		summaryYear,
 		authCtx.UserID,
 	)
 }
@@ -143,18 +154,14 @@ func (r *QueryResolver) WorkerInjuries(ctx context.Context, workerID *string, ca
 	if err != nil {
 		return nil, err
 	}
-	year := gqlscalar.IntValue(caseYear)
-	if year < 0 || year > math.MaxInt16 {
-		return nil, errortypes.NewValidationError(
-			"caseYear",
-			errortypes.ErrInvalid,
-			"Case year is invalid",
-		)
+	year, err := gqlscalar.NarrowIntValue[int16]("caseYear", caseYear)
+	if err != nil {
+		return nil, err
 	}
 	return r.WorkerInjuryService.ListInjuries(ctx, &workersafetyports.ListWorkerInjuriesRequest{
 		TenantInfo:      resolvercore.TenantInfo(authCtx),
 		WorkerID:        id,
-		CaseYear:        int16(year),
+		CaseYear:        year,
 		RecordableOnly:  gqlscalar.BoolValue(recordableOnly),
 		OpenOnly:        gqlscalar.BoolValue(openOnly),
 		IncludeWorker:   true,
@@ -183,7 +190,12 @@ func (r *QueryResolver) OshaLog(ctx context.Context, year *int) (*workerinjuryse
 		return nil, err
 	}
 
-	return r.WorkerInjuryService.Log(ctx, resolvercore.TenantInfo(authCtx), int16(gqlscalar.IntValue(year)))
+	logYear, err := gqlscalar.NarrowIntValue[int16]("year", year)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WorkerInjuryService.Log(ctx, resolvercore.TenantInfo(authCtx), logYear)
 }
 
 func (r *QueryResolver) OshaSummaries(ctx context.Context) ([]*workerinjury.OSHAAnnualSummary, error) {

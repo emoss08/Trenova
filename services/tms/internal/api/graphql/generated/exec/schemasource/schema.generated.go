@@ -1637,6 +1637,20 @@ type ARLedgerEntry {
   sourceObjectId: String!
   amountMinor: Int!
   relatedInvoiceId: ID
+  "The customer's balance after this entry."
+  runningBalanceMinor: Int!
+}
+
+"""
+A page of a customer's ledger between two dates, oldest first. The first page
+opens on the balance carried in from before the start date; each later page
+opens on the balance the page before it ended on.
+"""
+type ARLedgerPage {
+  openingBalanceMinor: Int!
+  entries: [ARLedgerEntry!]!
+  hasNextPage: Boolean!
+  endCursor: String
 }
 
 type ARStatementTransaction {
@@ -1887,7 +1901,13 @@ extend type Query {
   accountingBriefing: AccountingBriefing!
   arAgingSummary(asOfDate: Timestamp): ARAgingSummary!
   arOpenItems(customerId: ID, asOfDate: Timestamp): [AROpenItem!]!
-  arCustomerLedger(customerId: ID!): [ARLedgerEntry!]!
+  arCustomerLedger(
+    customerId: ID!
+    startDate: Timestamp
+    endDate: Timestamp
+    first: Int
+    after: String
+  ): ARLedgerPage!
   arCustomerStatement(customerId: ID!, startDate: Timestamp, asOfDate: Timestamp): ARCustomerStatement!
   arDashboardKpis: ARDashboardKPIs!
   arDsoTrend(weeks: Int): [ARDSOTrendPoint!]!
@@ -10781,8 +10801,7 @@ input UpdateCarrierSettlementControlInput {
   varianceToleranceMinor: Int!
   autoMatchInboundInvoices: Boolean!
   autoAcceptWithinTolerance: Boolean!
-  "Omitted leaves the current setting as it is."
-  holdUntilInvoiceMatched: Boolean
+  holdUntilInvoiceMatched: Boolean!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
 }
@@ -11310,6 +11329,17 @@ input CostCategoryUpdateInput {
   version: Int!
 }
 
+"""
+One save of the cost model: the control's settings when they changed and each category that
+changed, written together or not at all. A refusal names a category by its place in
+` + "`" + `categories` + "`" + `.
+"""
+input CostingControlSaveInput {
+  "Null leaves the control's settings as they are."
+  control: CostingControlInput
+  categories: [CostCategoryUpdateInput!]!
+}
+
 extend type Query {
   costingControl: CostingControl!
   resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
@@ -11322,8 +11352,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  updateCostingControl(input: CostingControlInput!): CostingControl!
-  updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
+  saveCostingControl(input: CostingControlSaveInput!): CostingControl!
 }
 `, BuiltIn: false},
 	{Name: "../schema/custom_field_definition.graphqls", Input: `enum FieldType {
@@ -13582,7 +13611,8 @@ type DetentionPolicy {
   code: String!
   description: String!
   status: DetentionPolicyStatus!
-  isOrgDefault: Boolean!
+  "Whether shipment control names this policy as the organization's default, the one that governs a stop no other policy covers. A default stays active and covers all freight."
+  isOrganizationDefault: Boolean!
   priority: Int!
   specificityScore: Int!
   customerId: ID
@@ -13657,7 +13687,6 @@ input DetentionPolicyInput {
   code: String!
   description: String
   status: DetentionPolicyStatus = Draft
-  isOrgDefault: Boolean = false
   priority: Int = 0
   customerId: ID
   locationId: ID
@@ -16334,8 +16363,8 @@ input UpdateDashControlInput {
   allowPtoRequests: Boolean!
   sendCredentialReminders: Boolean!
   requireContactChangeApproval: Boolean!
-  driverDigestCadence: DriverDigestCadence
-  driverDigestWeekday: Int
+  driverDigestCadence: DriverDigestCadence!
+  driverDigestWeekday: Int!
   enableDetentionAlerts: Boolean!
   detentionAlertThresholdMinutes: Int!
 }
@@ -18277,12 +18306,20 @@ type EdiTenderStop {
   windowCloses: Timestamp
   pieces: Int
   weight: Int
+  "Lowest temperature, in whole degrees Fahrenheit, the tender keeps the freight at from this stop on."
+  temperatureMin: Int
+  "Highest temperature, in whole degrees Fahrenheit, the tender keeps the freight at from this stop on."
+  temperatureMax: Int
 }
 
 type EdiTenderCommodity {
   commodity: String!
   weight: Int!
   pieces: Int!
+  "Lowest temperature, in whole degrees Fahrenheit, this line must be kept at."
+  temperatureMin: Int
+  "Highest temperature, in whole degrees Fahrenheit, this line must be kept at."
+  temperatureMax: Int
 }
 
 type EdiTenderCharge {
@@ -28638,6 +28675,19 @@ input ScheduleTableViewInput {
   emailInline: Boolean
 }
 
+"A customer's ledger over a window, to export as a report with its running balance."
+input ExportCustomerLedgerInput {
+  "The report's name in the person's reports."
+  name: String!
+  customerId: ID!
+  "The first day exported; the balance starts from what the customer owed before it. Empty starts at the first entry."
+  startDate: Timestamp
+  "The last instant exported. Empty is the moment of the export."
+  endDate: Timestamp
+  "csv, xlsx or pdf."
+  format: String!
+}
+
 type TableExportResult {
   "The report the view was saved as; it lives in the person's reports."
   definitionId: ID!
@@ -28653,6 +28703,8 @@ extend type Mutation {
   exportTableView(input: ExportTableViewInput!): TableExportResult!
   "Saves a table's view as a report and sends it on a schedule."
   scheduleTableView(input: ScheduleTableViewInput!): TableExportResult!
+  "Saves a customer's ledger over a window as a report and builds the file in the background, every entry in the window with its running balance."
+  exportCustomerLedger(input: ExportCustomerLedgerInput!): TableExportResult!
   updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
   deleteReportDefinition(id: ID!): Boolean!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
@@ -30054,7 +30106,9 @@ type Shipment {
   totalChargeAmount: Decimal
   pieces: Int
   weight: Int
+  "Lowest temperature, in whole degrees Fahrenheit, of the load. When a stop or commodity has a range this is derived from them: the range every one shares, or the span from the coldest to the warmest bound when they share none."
   temperatureMin: Int
+  "Highest temperature, in whole degrees Fahrenheit, of the load, derived as temperatureMin is."
   temperatureMax: Int
   actualDeliveryDate: Timestamp
   actualShipDate: Timestamp
@@ -30491,6 +30545,10 @@ type ShipmentStop {
   sequence: Int!
   pieces: Int
   weight: Int
+  "Lowest temperature, in whole degrees Fahrenheit, the freight is kept at from this stop on."
+  temperatureMin: Int
+  "Highest temperature, in whole degrees Fahrenheit, the freight is kept at from this stop on."
+  temperatureMax: Int
   scheduledWindowStart: Timestamp!
   scheduledWindowEnd: Timestamp
   actualArrival: Timestamp
@@ -30577,6 +30635,10 @@ type ShipmentCommodity {
   lengthFeet: Float
   widthFeet: Float
   heightFeet: Float
+  "Lowest temperature, in whole degrees Fahrenheit, this line's freight must be kept at."
+  temperatureMin: Int
+  "Highest temperature, in whole degrees Fahrenheit, this line's freight must be kept at."
+  temperatureMax: Int
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -31138,7 +31200,10 @@ enum ShipmentEventType {
   MoveStatusChanged
   MoveDeparted
   MoveArrived
-  StopCompleted
+  StopArrived
+  StopDeparted
+  StopArrivalCorrected
+  StopDepartureCorrected
   DriverAssigned
   DriverReassigned
   DriverUnassigned
@@ -31269,8 +31334,8 @@ type ShipmentOwnershipEvent implements ShipmentEvent {
 }
 
 """
-Move and stop progress: MoveStatusChanged, MoveDeparted, MoveArrived and
-StopCompleted.
+Move and stop progress: MoveStatusChanged, MoveDeparted, MoveArrived,
+StopArrived, StopDeparted, StopArrivalCorrected and StopDepartureCorrected.
 """
 type ShipmentMoveEvent implements ShipmentEvent {
   id: ID!
@@ -31296,6 +31361,16 @@ type ShipmentMoveEvent implements ShipmentEvent {
   previousStatus: String
   "Move status after the change."
   newStatus: String
+  "Position of the stop on its move, counting from 1, for a stop event."
+  stopNumber: Int
+  "Kind of stop, for a stop event."
+  stopType: StopType
+  "Name of the stop's location, or its address when the location has no name."
+  locationName: String
+  "Arrival or departure time the stop event recorded."
+  actualAt: Timestamp
+  "Arrival or departure time a correction replaced."
+  previousActualAt: Timestamp
 }
 
 """
@@ -31590,6 +31665,7 @@ input ShipmentInput {
   totalChargeAmount: Decimal = "0"
   pieces: Int
   weight: Int
+  "Taken as given only when no stop or commodity has a range; otherwise the load's range is derived from theirs."
   temperatureMin: Int
   temperatureMax: Int
   actualDeliveryDate: Timestamp
@@ -31649,6 +31725,8 @@ input ShipmentStopInput {
   sequence: Int = 0
   pieces: Int
   weight: Int
+  temperatureMin: Int
+  temperatureMax: Int
   scheduledWindowStart: Timestamp = 0
   scheduledWindowEnd: Timestamp
   actualArrival: Timestamp
@@ -31695,6 +31773,8 @@ input ShipmentCommodityInput {
   lengthFeet: Float
   widthFeet: Float
   heightFeet: Float
+  temperatureMin: Int
+  temperatureMax: Int
   version: Int
 }
 
@@ -37456,6 +37536,8 @@ input UpdateLeaveDayInput {
 }
 
 input UpdateLeaveControlInput {
+  "The version read; a save over a newer one is refused."
+  version: Int!
   measurementMethod: LeaveMeasurementMethod
   entitlementWeeks: Decimal
   militaryCaregiverWeeks: Decimal

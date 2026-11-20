@@ -254,7 +254,7 @@ func TestOrderChargeShareFor(t *testing.T) {
 		require.Error(t, err)
 		var typed *errortypes.Error
 		require.True(t, errors.As(err, &typed))
-		assert.Equal(t, "charges[0].allocations", typed.Field)
+		assert.Equal(t, "charges[0].allocations", typed.Field())
 	})
 }
 
@@ -339,6 +339,6 @@ func TestPayerSharesForLegs(t *testing.T) {
 	require.Error(t, err)
 	var typed *errortypes.Error
 	require.True(t, errors.As(err, &typed))
-	assert.Equal(t, "shipmentIds", typed.Field)
+	assert.Equal(t, "shipmentIds", typed.Field())
 	assert.Equal(t, errortypes.ErrInvalidOperation, typed.Code)
 }

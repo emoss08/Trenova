@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -15,11 +14,6 @@ import (
 )
 
 const rlsGeneratedKeyBytes = 48
-
-var errRLSMigratorRole = errors.New(
-	"database.migrator must name a different role from database.user so the application role " +
-		"does not own the tables it is isolated from",
-)
 
 var dbRLSCmd = &cobra.Command{
 	Use:   "rls",
@@ -83,31 +77,17 @@ func runRLSGenerateKey(_ *cobra.Command, _ []string) error {
 }
 
 func runRLSProvisionRoles(_ *cobra.Command, _ []string) error {
-	if !cfg.Database.Migrator.Configured() ||
-		strings.EqualFold(
-			strings.TrimSpace(cfg.Database.Migrator.User),
-			strings.TrimSpace(cfg.Database.User),
-		) {
-		return errRLSMigratorRole
-	}
-
 	maint, err := openDB(context.Background())
 	if err != nil {
 		return fmt.Errorf("open the database: %w", err)
 	}
 	defer maint.Close()
 
-	ctx := context.Background()
-	roles, err := postgres.ProvisionRLSRoles(ctx, maint, postgres.ProvisionRLSRolesParams{
-		App: postgres.RLSLoginRole{
-			User:     cfg.Database.User,
-			Password: cfg.Database.Password,
-		},
-		System: postgres.RLSLoginRole{
-			User:     cfg.Database.System.User,
-			Password: cfg.Database.System.Password,
-		},
-	})
+	roles, err := postgres.ProvisionConfiguredRLSRoles(
+		context.Background(),
+		maint,
+		&cfg.Database,
+	)
 	if err != nil {
 		return err
 	}

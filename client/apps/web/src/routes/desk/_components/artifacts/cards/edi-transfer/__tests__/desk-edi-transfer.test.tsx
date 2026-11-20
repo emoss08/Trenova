@@ -181,7 +181,7 @@ describe("DeskEdiTransfer", () => {
 
     const freight = section("Freight and rate");
     expect(within(freight).getByText("Frozen poultry")).toBeInTheDocument();
-    expect(within(freight).getByText("34–38 °F")).toBeInTheDocument();
+    expect(within(freight).getByText("34–38°F")).toBeInTheDocument();
     expect(within(freight).getByText("Fuel surcharge")).toBeInTheDocument();
     expect(within(freight).getByText("Total").nextSibling).toHaveTextContent(money("2880"));
     expect(asked("/edi/transfers/edilt_acme_88240/mapping-preview/")).toBe(false);

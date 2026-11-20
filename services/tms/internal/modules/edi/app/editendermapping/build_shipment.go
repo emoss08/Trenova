@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -111,15 +112,20 @@ func (s *Service) BuildTargetShipment(
 		)
 	}
 
+	shipmentTypeID, ok := MappedID(
+		mappings,
+		edi.MappingEntityTypeShipmentType,
+		payload.ShipmentTypeID,
+	)
+	if !ok {
+		return nil, fmt.Errorf("shipment type mapping is missing for %s", payload.ShipmentTypeID)
+	}
+
 	target := &shipment.Shipment{
-		BusinessUnitID: businessUnitID,
-		OrganizationID: transfer.TargetOrganizationID,
-		ServiceTypeID:  serviceTypeID,
-		ShipmentTypeID: OptionalMappedID(
-			mappings,
-			edi.MappingEntityTypeShipmentType,
-			payload.ShipmentTypeID,
-		),
+		BusinessUnitID:      businessUnitID,
+		OrganizationID:      transfer.TargetOrganizationID,
+		ServiceTypeID:       serviceTypeID,
+		ShipmentTypeID:      shipmentTypeID,
 		CustomerID:          customerID,
 		EnteredByID:         approverID,
 		FormulaTemplateID:   TenderedTemplate(&payload, formulaTemplateID),
@@ -128,6 +134,8 @@ func (s *Service) BuildTargetShipment(
 		EntryMethod:         shipmentvocab.EntryMethodEDI,
 		BOL:                 payload.BOL,
 		ExternalReference:   externalShipmentReference(payload.RatingDetail),
+		OrderPONumber:       purchaseOrder(payload.PONumber),
+		FreightTerms:        shipmentvocab.FreightTerms(payload.Payment),
 		Pieces:              payload.Pieces,
 		Weight:              payload.Weight,
 		TemperatureMin:      payload.TemperatureMin,
@@ -170,6 +178,8 @@ func (s *Service) BuildTargetShipment(
 				Sequence:             stop.Sequence,
 				Pieces:               stop.Pieces,
 				Weight:               stop.Weight,
+				TemperatureMin:       stop.TemperatureMin,
+				TemperatureMax:       stop.TemperatureMax,
 				ScheduledWindowStart: stop.ScheduledWindowStart,
 				ScheduledWindowEnd:   stop.ScheduledWindowEnd,
 				AddressLine:          stop.AddressLine,
@@ -193,6 +203,8 @@ func (s *Service) BuildTargetShipment(
 			CommodityID:    commodityID,
 			Weight:         commodity.Weight,
 			Pieces:         commodity.Pieces,
+			TemperatureMin: commodity.TemperatureMin,
+			TemperatureMax: commodity.TemperatureMax,
 		})
 	}
 
@@ -227,6 +239,10 @@ func externalShipmentReference(ratingDetail map[string]any) string {
 		strings.TrimSpace(reference),
 		shipment.MaxExternalReferenceLength,
 	)
+}
+
+func purchaseOrder(poNumber string) string {
+	return stringutils.TruncateRunes(strings.TrimSpace(poNumber), order.MaxPONumberLength)
 }
 
 func TenderedTemplate(payload *editransfer.LoadTenderPayload, mapped pulid.ID) pulid.ID {

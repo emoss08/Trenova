@@ -1579,13 +1579,20 @@ func unmarshalInputUpdateLeaveControlInput(ctx context.Context, ec *gqlexec.Exec
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"measurementMethod", "entitlementWeeks", "militaryCaregiverWeeks", "workweekHours", "eligibilityMonths", "eligibilityHours", "certificationDueDays"}
+	fieldsInOrder := [...]string{"version", "measurementMethod", "entitlementWeeks", "militaryCaregiverWeeks", "workweekHours", "eligibilityMonths", "eligibilityHours", "certificationDueDays"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
 		case "measurementMethod":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("measurementMethod"))
 			data, err := unmarshalOLeaveMeasurementMethod2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerleaveᚐLeaveMeasurementMethod(ctx, ec, v)
@@ -1715,6 +1722,11 @@ func unmarshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, v any) (str
 
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

@@ -71,7 +71,6 @@ export function toDetentionPolicyInput(data: DetentionPolicy): DetentionPolicyIn
     code: data.code,
     description: data.description ?? "",
     status: data.status,
-    isOrgDefault: data.isOrgDefault,
     priority: data.priority,
     customerId: data.customerId || null,
     locationId: data.locationId || null,

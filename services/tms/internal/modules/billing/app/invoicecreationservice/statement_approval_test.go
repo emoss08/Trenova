@@ -258,7 +258,7 @@ func TestExplicitInvoicingStillDemandsAReason(t *testing.T) {
 	require.Error(t, err)
 	var validationErr *errortypes.Error
 	require.ErrorAs(t, err, &validationErr)
-	assert.Equal(t, "offCycleReason", validationErr.Field)
+	assert.Equal(t, "offCycleReason", validationErr.Field())
 }
 
 func TestExplicitInvoicingProceedsWithAReason(t *testing.T) {

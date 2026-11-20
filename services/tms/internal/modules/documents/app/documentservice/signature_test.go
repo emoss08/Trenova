@@ -223,7 +223,7 @@ func TestSetSignatureRefusesAStaleVersion(t *testing.T) {
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
 	assert.Equal(t, errortypes.ErrVersionMismatch, validation.Code)
-	assert.Equal(t, "version", validation.Field)
+	assert.Equal(t, "version", validation.Field())
 	h.repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
 	h.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 }

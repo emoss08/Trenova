@@ -292,7 +292,7 @@ func TestResolveShares_AmountRowsMustAddUpToTheCharge(t *testing.T) {
 
 	var typed *errortypes.Error
 	require.True(t, errors.As(err, &typed))
-	assert.Equal(t, "additionalCharges[0].allocations", typed.Field)
+	assert.Equal(t, "additionalCharges[0].allocations", typed.Field())
 	require.Len(t, typed.Args, 1)
 	assert.Equal(t, "100.00", typed.Args[0])
 }
@@ -327,7 +327,7 @@ func TestResolveShares_MixedMethodsOnOneChargeAreRefused(t *testing.T) {
 
 	var typed *errortypes.Error
 	require.True(t, errors.As(err, &typed))
-	assert.Equal(t, "freightAllocations", typed.Field)
+	assert.Equal(t, "freightAllocations", typed.Field())
 }
 
 func TestResolveShares_OrdersTheDefaultPayerFirstThenByID(t *testing.T) {
@@ -498,7 +498,7 @@ func TestResolveOrderChargeShares_BadAllocationNamesTheCharge(t *testing.T) {
 
 	var typed *errortypes.Error
 	require.True(t, errors.As(err, &typed))
-	assert.Equal(t, "charges[0].allocations", typed.Field)
+	assert.Equal(t, "charges[0].allocations", typed.Field())
 }
 
 func TestValidateAllocations(t *testing.T) {

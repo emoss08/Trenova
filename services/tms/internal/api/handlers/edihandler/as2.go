@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/shared/as2"
 	"github.com/gin-gonic/gin"
 )
 
@@ -67,7 +68,7 @@ func (h *Handler) as2Request(c *gin.Context) (*ediinboundas2.ReceiveAS2MessageRe
 		To:                             c.GetHeader("AS2-To"),
 		MessageID:                      c.GetHeader("Message-ID"),
 		ContentType:                    c.GetHeader("Content-Type"),
-		TransferEncoding:               c.GetHeader("Content-Transfer-Encoding"),
+		EntityHeaders:                  as2.EntityHeaders(c.Request.Header),
 		DispositionNotificationTo:      c.GetHeader("Disposition-Notification-To"),
 		DispositionNotificationOptions: c.GetHeader("Disposition-Notification-Options"),
 		ReceiptDeliveryOption:          c.GetHeader("Receipt-Delivery-Option"),

@@ -24,6 +24,11 @@ or runtime and [generated-artifacts.md](../generated-artifacts.md) before changi
   entity, so the repository's full-row save keeps them. Write `applyXInput`/`applyXPatch` in
   the resolver package with `gqlscalar.ApplyRequired`, `ApplyClearable` and `ApplyNullable`
   (`customerresolver/customerinputmapping.go`); mappergen then leaves the type alone.
+- A GraphQL `Int` is a 64-bit Go `int`. Narrow it to an `int32`/`int16` column only through
+  `gqlscalar.NarrowInt`, `NarrowIntValue`, `NarrowIntPtr`, `ApplyInt`, `ApplyIntPtr` or
+  `ApplyRequiredInt`, naming the input path (`tiers[1].fromMinute`): an out-of-range value is a
+  field error ("Must be between {0} and {1}"), never a plain cast (which wraps past
+  validation) and never a clamp. Domain ranges stay in the domain validator.
 - `projection.yml` must resolve every field to a column, a relation or a declared virtual.
 - Every field a client reads is either on the entity's row, batched through a loader, or
   computed from those. A field that costs a query per row is a defect.

@@ -6344,6 +6344,8 @@ var shipmentCommoditiesTable = schema.Table{
 		{Name: "length_feet", Quoted: `"length_feet"`, Field: "LengthFeet", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Length Feet`, JSON: `lengthFeet`, Report: &reportMeasureFloat},
 		{Name: "width_feet", Quoted: `"width_feet"`, Field: "WidthFeet", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Width Feet`, JSON: `widthFeet`, Report: &reportMeasureFloat},
 		{Name: "height_feet", Quoted: `"height_feet"`, Field: "HeightFeet", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Height Feet`, JSON: `heightFeet`, Report: &reportMeasureFloat},
+		{Name: "temperature_min", Quoted: `"temperature_min"`, Field: "TemperatureMin", Kind: schema.KindInt16, Flags: schema.FlagNullable, Label: `Temperature Min`, JSON: `temperatureMin`, Report: &reportDimInteger},
+		{Name: "temperature_max", Quoted: `"temperature_max"`, Field: "TemperatureMax", Kind: schema.KindInt16, Flags: schema.FlagNullable, Label: `Temperature Max`, JSON: `temperatureMax`, Report: &reportDimInteger},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
@@ -6354,14 +6356,14 @@ var shipmentCommoditiesTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2, 3, 4},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{5, 6, 7, 8, 9, 12},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:     []int32{5, 6, 7, 8, 9, 10, 11, 14},
 	Returning:  nil,
-	Version:    10,
+	Version:    12,
 	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
+	AutoCreate: 13,
+	AutoUpdate: 14,
 	IDPrefix:   "sc_",
 	New:        newShipmentCommodity,
 	NewN:       newNShipmentCommodity,
@@ -6386,6 +6388,8 @@ type ShipmentCommoditiesTable struct {
 	LengthFeet     keel.Float64Col
 	WidthFeet      keel.Float64Col
 	HeightFeet     keel.Float64Col
+	TemperatureMin keel.Int16Col
+	TemperatureMax keel.Int16Col
 	Version        keel.Int64Col
 	CreatedAt      keel.Int64Col
 	UpdatedAt      keel.Int64Col
@@ -6404,9 +6408,11 @@ var ShipmentCommodities = &ShipmentCommoditiesTable{
 	LengthFeet:     keel.Float64Col{Col: keel.Col{Ref: &shipmentCommoditiesRef, Index: 7}},
 	WidthFeet:      keel.Float64Col{Col: keel.Col{Ref: &shipmentCommoditiesRef, Index: 8}},
 	HeightFeet:     keel.Float64Col{Col: keel.Col{Ref: &shipmentCommoditiesRef, Index: 9}},
-	Version:        keel.Int64Col{Col: keel.Col{Ref: &shipmentCommoditiesRef, Index: 10}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &shipmentCommoditiesRef, Index: 11}},
-	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &shipmentCommoditiesRef, Index: 12}},
+	TemperatureMin: keel.Int16Col{Col: keel.Col{Ref: &shipmentCommoditiesRef, Index: 10}},
+	TemperatureMax: keel.Int16Col{Col: keel.Col{Ref: &shipmentCommoditiesRef, Index: 11}},
+	Version:        keel.Int64Col{Col: keel.Col{Ref: &shipmentCommoditiesRef, Index: 12}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &shipmentCommoditiesRef, Index: 13}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &shipmentCommoditiesRef, Index: 14}},
 }
 
 // BuildShipmentCommodities builds the table of shipment_commodities for ref. Generated relation and alias methods call it.
@@ -6423,9 +6429,11 @@ func BuildShipmentCommodities(r *keel.Ref) *ShipmentCommoditiesTable {
 		LengthFeet:     keel.Float64Col{Col: keel.Col{Ref: r, Index: 7}},
 		WidthFeet:      keel.Float64Col{Col: keel.Col{Ref: r, Index: 8}},
 		HeightFeet:     keel.Float64Col{Col: keel.Col{Ref: r, Index: 9}},
-		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		TemperatureMin: keel.Int16Col{Col: keel.Col{Ref: r, Index: 10}},
+		TemperatureMax: keel.Int16Col{Col: keel.Col{Ref: r, Index: 11}},
+		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 	}
 }
 
@@ -6847,10 +6855,14 @@ func ptrShipmentCommodity(p unsafe.Pointer, c int32) any {
 	case 9:
 		return &r.HeightFeet
 	case 10:
-		return &r.Version
+		return &r.TemperatureMin
 	case 11:
-		return &r.CreatedAt
+		return &r.TemperatureMax
 	case 12:
+		return &r.Version
+	case 13:
+		return &r.CreatedAt
+	case 14:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -6889,10 +6901,20 @@ func valueShipmentCommodity(p unsafe.Pointer, c int32) any {
 		}
 		return *r.HeightFeet
 	case 10:
-		return r.Version
+		if r.TemperatureMin == nil {
+			return nil
+		}
+		return *r.TemperatureMin
 	case 11:
-		return r.CreatedAt
+		if r.TemperatureMax == nil {
+			return nil
+		}
+		return *r.TemperatureMax
 	case 12:
+		return r.Version
+	case 13:
+		return r.CreatedAt
+	case 14:
 		return r.UpdatedAt
 	}
 	return nil
@@ -8257,6 +8279,8 @@ var stopsTable = schema.Table{
 		{Name: "sequence", Quoted: `"sequence"`, Field: "Sequence", Kind: schema.KindInt64, Flags: 0, Label: `Sequence`, JSON: `sequence`, Report: &reportDimInteger},
 		{Name: "pieces", Quoted: `"pieces"`, Field: "Pieces", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Pieces`, JSON: `pieces`, Report: &reportMeasureIntegerCount},
 		{Name: "weight", Quoted: `"weight"`, Field: "Weight", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Weight`, JSON: `weight`, Report: &reportMeasureIntegerWeight},
+		{Name: "temperature_min", Quoted: `"temperature_min"`, Field: "TemperatureMin", Kind: schema.KindInt16, Flags: schema.FlagNullable, Label: `Temperature Min`, JSON: `temperatureMin`, Report: &reportDimInteger},
+		{Name: "temperature_max", Quoted: `"temperature_max"`, Field: "TemperatureMax", Kind: schema.KindInt16, Flags: schema.FlagNullable, Label: `Temperature Max`, JSON: `temperatureMax`, Report: &reportDimInteger},
 		{Name: "scheduled_window_start", Quoted: `"scheduled_window_start"`, Field: "ScheduledWindowStart", Kind: schema.KindInt64, Flags: 0, Label: `Scheduled Window Start`, JSON: `scheduledWindowStart`, Report: &reportDimEpoch},
 		{Name: "scheduled_window_end", Quoted: `"scheduled_window_end"`, Field: "ScheduledWindowEnd", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Scheduled Window End`, JSON: `scheduledWindowEnd`, Report: &reportDimEpoch},
 		{Name: "actual_arrival", Quoted: `"actual_arrival"`, Field: "ActualArrival", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Actual Arrival`, JSON: `actualArrival`, Report: &reportDimEpoch},
@@ -8273,14 +8297,14 @@ var stopsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
 	Returning:    nil,
-	Version:      19,
+	Version:      21,
 	AutoID:       0,
-	AutoCreate:   20,
-	AutoUpdate:   21,
+	AutoCreate:   22,
+	AutoUpdate:   23,
 	IDPrefix:     "stp_",
 	New:          newStop,
 	NewN:         newNStop,
@@ -8309,6 +8333,8 @@ type StopsTable struct {
 	Sequence               keel.Int64Col
 	Pieces                 keel.Int64Col
 	Weight                 keel.Int64Col
+	TemperatureMin         keel.Int16Col
+	TemperatureMax         keel.Int16Col
 	ScheduledWindowStart   keel.Int64Col
 	ScheduledWindowEnd     keel.Int64Col
 	ActualArrival          keel.Int64Col
@@ -8336,16 +8362,18 @@ var Stops = &StopsTable{
 	Sequence:               keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 9}},
 	Pieces:                 keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 10}},
 	Weight:                 keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 11}},
-	ScheduledWindowStart:   keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 12}},
-	ScheduledWindowEnd:     keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 13}},
-	ActualArrival:          keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 14}},
-	ActualDeparture:        keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 15}},
-	CountLateOverride:      keel.BoolCol{Col: keel.Col{Ref: &stopsRef, Index: 16}},
-	CountDetentionOverride: keel.BoolCol{Col: keel.Col{Ref: &stopsRef, Index: 17}},
-	AddressLine:            keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 18}},
-	Version:                keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 19}},
-	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 20}},
-	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 21}},
+	TemperatureMin:         keel.Int16Col{Col: keel.Col{Ref: &stopsRef, Index: 12}},
+	TemperatureMax:         keel.Int16Col{Col: keel.Col{Ref: &stopsRef, Index: 13}},
+	ScheduledWindowStart:   keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 14}},
+	ScheduledWindowEnd:     keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 15}},
+	ActualArrival:          keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 16}},
+	ActualDeparture:        keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 17}},
+	CountLateOverride:      keel.BoolCol{Col: keel.Col{Ref: &stopsRef, Index: 18}},
+	CountDetentionOverride: keel.BoolCol{Col: keel.Col{Ref: &stopsRef, Index: 19}},
+	AddressLine:            keel.StringCol{Col: keel.Col{Ref: &stopsRef, Index: 20}},
+	Version:                keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 21}},
+	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 22}},
+	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &stopsRef, Index: 23}},
 }
 
 // BuildStops builds the table of stops for ref. Generated relation and alias methods call it.
@@ -8364,16 +8392,18 @@ func BuildStops(r *keel.Ref) *StopsTable {
 		Sequence:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		Pieces:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		Weight:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		ScheduledWindowStart:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		ScheduledWindowEnd:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		ActualArrival:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		ActualDeparture:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		CountLateOverride:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
-		CountDetentionOverride: keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
-		AddressLine:            keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
-		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		TemperatureMin:         keel.Int16Col{Col: keel.Col{Ref: r, Index: 12}},
+		TemperatureMax:         keel.Int16Col{Col: keel.Col{Ref: r, Index: 13}},
+		ScheduledWindowStart:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		ScheduledWindowEnd:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		ActualArrival:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		ActualDeparture:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		CountLateOverride:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 18}},
+		CountDetentionOverride: keel.BoolCol{Col: keel.Col{Ref: r, Index: 19}},
+		AddressLine:            keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
+		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
+		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 	}
 }
 
@@ -8792,24 +8822,28 @@ func ptrStop(p unsafe.Pointer, c int32) any {
 	case 11:
 		return &r.Weight
 	case 12:
-		return &r.ScheduledWindowStart
+		return &r.TemperatureMin
 	case 13:
-		return &r.ScheduledWindowEnd
+		return &r.TemperatureMax
 	case 14:
-		return &r.ActualArrival
+		return &r.ScheduledWindowStart
 	case 15:
-		return &r.ActualDeparture
+		return &r.ScheduledWindowEnd
 	case 16:
-		return &r.CountLateOverride
+		return &r.ActualArrival
 	case 17:
-		return &r.CountDetentionOverride
+		return &r.ActualDeparture
 	case 18:
-		return &r.AddressLine
+		return &r.CountLateOverride
 	case 19:
-		return &r.Version
+		return &r.CountDetentionOverride
 	case 20:
-		return &r.CreatedAt
+		return &r.AddressLine
 	case 21:
+		return &r.Version
+	case 22:
+		return &r.CreatedAt
+	case 23:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -8849,42 +8883,52 @@ func valueStop(p unsafe.Pointer, c int32) any {
 		}
 		return *r.Weight
 	case 12:
-		return r.ScheduledWindowStart
+		if r.TemperatureMin == nil {
+			return nil
+		}
+		return *r.TemperatureMin
 	case 13:
+		if r.TemperatureMax == nil {
+			return nil
+		}
+		return *r.TemperatureMax
+	case 14:
+		return r.ScheduledWindowStart
+	case 15:
 		if r.ScheduledWindowEnd == nil {
 			return nil
 		}
 		return *r.ScheduledWindowEnd
-	case 14:
+	case 16:
 		if r.ActualArrival == nil {
 			return nil
 		}
 		return *r.ActualArrival
-	case 15:
+	case 17:
 		if r.ActualDeparture == nil {
 			return nil
 		}
 		return *r.ActualDeparture
-	case 16:
+	case 18:
 		if r.CountLateOverride == nil {
 			return nil
 		}
 		return *r.CountLateOverride
-	case 17:
+	case 19:
 		if r.CountDetentionOverride == nil {
 			return nil
 		}
 		return *r.CountDetentionOverride
-	case 18:
+	case 20:
 		if r.AddressLine == "" {
 			return nil
 		}
 		return r.AddressLine
-	case 19:
-		return r.Version
-	case 20:
-		return r.CreatedAt
 	case 21:
+		return r.Version
+	case 22:
+		return r.CreatedAt
+	case 23:
 		return r.UpdatedAt
 	}
 	return nil

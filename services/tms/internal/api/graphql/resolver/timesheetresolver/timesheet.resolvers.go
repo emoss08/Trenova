@@ -43,10 +43,15 @@ func (r *MutationResolver) ClockOut(ctx context.Context, input gqlmodel.ClockInp
 		return nil, err
 	}
 
+	breakMinutes, err := gqlscalar.NarrowIntValue[int32]("breakMinutes", input.BreakMinutes)
+	if err != nil {
+		return nil, err
+	}
+
 	return r.TimesheetService.ClockOut(ctx, &timesheetservice.ClockRequest{
 		WorkerID:     workerID,
 		At:           gqlscalar.Int64Value(input.At),
-		BreakMinutes: int32(gqlscalar.IntValue(input.BreakMinutes)), //nolint:gosec // validated on the entry
+		BreakMinutes: breakMinutes,
 		Note:         gqlscalar.StringValue(input.Note),
 		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		UserID:       authCtx.UserID,
@@ -63,13 +68,17 @@ func (r *MutationResolver) RecordTimeEntry(ctx context.Context, input gqlmodel.R
 	if err != nil {
 		return nil, gqlid.InvalidIDError("id", "Entry is invalid")
 	}
+	breakMinutes, err := gqlscalar.NarrowIntValue[int32]("breakMinutes", input.BreakMinutes)
+	if err != nil {
+		return nil, err
+	}
 
 	return r.TimesheetService.RecordEntry(ctx, &timesheetservice.RecordEntryRequest{
 		ID:           entryID,
 		WorkerID:     workerID,
 		ClockedInAt:  int64(input.ClockedInAt),
 		ClockedOutAt: int64(input.ClockedOutAt),
-		BreakMinutes: int32(gqlscalar.IntValue(input.BreakMinutes)), //nolint:gosec // validated on the entry
+		BreakMinutes: breakMinutes,
 		PayCodeID:    mustOptionalID(input.PayCodeID),
 		Note:         gqlscalar.StringValue(input.Note),
 		Reason:       input.Reason,

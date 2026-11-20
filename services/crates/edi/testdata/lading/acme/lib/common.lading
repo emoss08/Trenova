@@ -9,7 +9,7 @@ crosswalk purposes: Code<B2A01> <-> TenderPurpose {
   "00" <-> Original
   "01" <-> Cancel
   "04" <-> Change
-  "05" -> Change
+  "05" <-> Replace
 }
 
 /// The appointment window from a stop's dates.

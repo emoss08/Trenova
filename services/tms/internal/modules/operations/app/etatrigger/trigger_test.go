@@ -70,7 +70,10 @@ func TestCheckCallRecorded_RequestsRefresh(t *testing.T) {
 func TestRefreshes(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, Refreshes(shipmentevent.TypeStopCompleted))
+	assert.True(t, Refreshes(shipmentevent.TypeStopArrived))
+	assert.True(t, Refreshes(shipmentevent.TypeStopDeparted))
+	assert.True(t, Refreshes(shipmentevent.TypeStopArrivalCorrected))
+	assert.True(t, Refreshes(shipmentevent.TypeStopDepartureCorrected))
 	assert.True(t, Refreshes(shipmentevent.TypeDriverAssigned))
 	assert.False(t, Refreshes(shipmentevent.TypeHoldPlaced))
 }

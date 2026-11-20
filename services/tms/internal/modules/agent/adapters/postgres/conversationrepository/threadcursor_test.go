@@ -49,7 +49,7 @@ func TestThreadCursorReadsOnlyForThePersonItWasIssuedTo(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "cursor", validation.Field)
+	assert.Equal(t, "cursor", validation.Field())
 }
 
 func TestThreadCursorRejectsWhatNoPageHandedOut(t *testing.T) {
@@ -71,7 +71,7 @@ func TestThreadCursorRejectsWhatNoPageHandedOut(t *testing.T) {
 
 		var validation *errortypes.Error
 		require.ErrorAs(t, err, &validation, bad)
-		assert.Equal(t, "cursor", validation.Field, bad)
+		assert.Equal(t, "cursor", validation.Field(), bad)
 		assert.Equal(t, errortypes.ErrInvalidFormat, validation.Code, bad)
 	}
 }

@@ -1,0 +1,70 @@
+rules invoiceChecks for invoiceOut
+  use common
+
+/// Meadowridge pays an invoice only when it quotes the run number, the BOL and the bill-to.
+rule "an invoice Meadowridge can pay" {
+  require exists key else hold "Meadowridge needs its run number on every invoice"
+  require exists bol else hold "Meadowridge needs the BOL on every invoice"
+  require exists billTo else hold "Meadowridge needs the bill-to on every invoice"
+}
+
+/// A charge code outside Meadowridge's four would come back rejected in its 997.
+rule "only charges Meadowridge pays" {
+  for line in lines where (line.code ?? linehaulCode) != linehaulCode {
+    require (line.code ?? "") in chargeCodes
+      else hold "Meadowridge pays no {line.code ?? ""} charge: change the code or take the line off"
+  }
+}
+
+/// An invoice with no lines would reach Meadowridge's guide with no 0400 loop.
+rule "an invoice has lines" {
+  require not lines.isEmpty else reject "An invoice to Meadowridge needs at least one line"
+}
+
+test "linehaul, stop-offs and a lumper go out" {
+  given freightInvoice {
+    number: "INV-4001"
+    date: @2026-06-12
+    key: "MF1000008"
+    bol: "5861735303"
+    total: $6_301.86
+    billTo: { name: "Meadowridge Fresh Markets Transportation" }
+    lines: [
+      { sequence: 1, description: "Linehaul", amount: $5_906.86 },
+      { sequence: 2, code: "SOC", description: "Stop-off charges", amount: $325.00 },
+      { sequence: 3, code: "LUM", description: "Lumper", amount: $70.00 }
+    ]
+  }
+  expect no holds
+  expect no rejects
+}
+
+test "Trenova's linehaul code is the linehaul, not a charge" {
+  given freightInvoice {
+    number: "INV-4002"
+    date: @2026-06-12
+    key: "MF1000008"
+    bol: "5861735303"
+    total: $5_906.86
+    billTo: { name: "Meadowridge Fresh Markets Transportation" }
+    lines: [{ sequence: 1, code: "400", description: "Linehaul", amount: $5_906.86 }]
+  }
+  expect no holds
+  expect no rejects
+}
+
+test "a charge Meadowridge does not pay is held" {
+  given freightInvoice {
+    number: "INV-4001"
+    date: @2026-06-12
+    key: "MF1000008"
+    bol: "5861735303"
+    total: $6_001.86
+    billTo: { name: "Meadowridge Fresh Markets Transportation" }
+    lines: [
+      { sequence: 1, description: "Linehaul", amount: $5_906.86 },
+      { sequence: 2, code: "TON", description: "Truck ordered not used", amount: $95.00 }
+    ]
+  }
+  expect held "Meadowridge pays no TON charge: change the code or take the line off"
+}

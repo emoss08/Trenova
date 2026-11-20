@@ -220,7 +220,7 @@ func TestReplacingCellsRefusesOverlappingPostalRanges(t *testing.T) {
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "cells[1].d0Key", multiErr.Errors[0].Field)
+	assert.Equal(t, "cells[1].d0Key", multiErr.Errors[0].Field())
 }
 
 func submitted(matrix *ratematrix.RateMatrix, submitter pulid.ID) *ratematrix.RateMatrix {
@@ -304,7 +304,7 @@ func TestNobodyPublishesADraftTheyWroteOrSubmitted(t *testing.T) {
 			})
 			var validation *errortypes.Error
 			require.ErrorAs(t, err, &validation)
-			assert.Equal(t, "approvedById", validation.Field)
+			assert.Equal(t, "approvedById", validation.Field())
 		})
 	}
 }
@@ -356,7 +356,7 @@ func TestSubmitRefusesADraftThatMatchesThePublishedVersion(t *testing.T) {
 	})
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "hasDraftChanges", multiErr.Errors[0].Field)
+	assert.Equal(t, "hasDraftChanges", multiErr.Errors[0].Field())
 }
 
 func TestSubmitRefusesCellsThatNoLongerFitTheAxes(t *testing.T) {
@@ -375,7 +375,7 @@ func TestSubmitRefusesCellsThatNoLongerFitTheAxes(t *testing.T) {
 	})
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "cells", multiErr.Errors[0].Field)
+	assert.Equal(t, "cells", multiErr.Errors[0].Field())
 }
 
 func TestUpdateRefusesANewCodeOncePublished(t *testing.T) {
@@ -393,7 +393,7 @@ func TestUpdateRefusesANewCodeOncePublished(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "code", validation.Field)
+	assert.Equal(t, "code", validation.Field())
 }
 
 func TestDeleteRefusesAPublishedMatrix(t *testing.T) {
@@ -430,7 +430,7 @@ func TestArchiveAsksBeforeArchivingAPinnedMatrix(t *testing.T) {
 	})
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "confirmInUse", validation.Field)
+	assert.Equal(t, "confirmInUse", validation.Field())
 
 	expectHeaderSave(deps)
 	archived, err := deps.svc.Archive(t.Context(), &ArchiveRequest{

@@ -4,24 +4,10 @@ import (
 	"context"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
@@ -215,96 +201,4 @@ func (f *FailingPermissionEngine) Check(
 	}
 
 	return f.AllowAllPermissionEngine.Check(ctx, req)
-}
-
-var _ accessorialchargeports.DataTransformer = (*NoopDataTransformer)(nil)
-
-type NoopDataTransformer struct{}
-
-func (n *NoopDataTransformer) TransformAccessorialCharge(
-	_ context.Context,
-	_ *accessorialcharge.AccessorialCharge,
-) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformFleetCode(_ context.Context, _ *fleetcode.FleetCode) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformEquipmentType(
-	_ context.Context,
-	_ *equipmenttype.EquipmentType,
-) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformServiceType(
-	_ context.Context,
-	_ *servicetype.ServiceType,
-) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformShipmentType(
-	_ context.Context,
-	_ *shipmenttype.ShipmentType,
-) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformHazardousMaterial(
-	_ context.Context,
-	_ *hazardousmaterial.HazardousMaterial,
-) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformCommodity(
-	_ context.Context,
-	_ *commodity.Commodity,
-) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformCustomer(
-	_ context.Context,
-	_ *customer.Customer,
-) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformAccountType(
-	_ context.Context,
-	_ *accounttype.AccountType,
-) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformGLAccount(
-	_ context.Context,
-	_ *glaccount.GLAccount,
-) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformFiscalYear(
-	_ context.Context,
-	_ *fiscalyear.FiscalYear,
-) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformLocation(
-	_ context.Context,
-	_ *location.Location,
-) error {
-	return nil
-}
-
-func (n *NoopDataTransformer) TransformDocumentType(
-	_ context.Context,
-	_ *documenttype.DocumentType,
-) error {
-	return nil
 }

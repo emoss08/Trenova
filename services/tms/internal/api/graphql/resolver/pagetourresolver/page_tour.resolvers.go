@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/pagetourservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagetour"
@@ -20,10 +21,15 @@ func (r *MutationResolver) RecordMyPageTour(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
+	tourVersion, err := gqlscalar.NarrowInt[int32]("tourVersion", input.TourVersion)
+	if err != nil {
+		return nil, err
+	}
+
 	view, err := r.PageTourService.Record(ctx, &pagetourservice.RecordRequest{
 		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		Tour:        input.Tour,
-		TourVersion: tourVersionOf(input.TourVersion),
+		TourVersion: tourVersion,
 		Outcome:     pagetour.Outcome(input.Outcome),
 	})
 	if err != nil {

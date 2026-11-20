@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -33,6 +34,7 @@ type Params struct {
 	DB           kernelports.Transactor
 	Sync         accountingsyncports.AccountingSyncEnqueuer
 	Features     platformcatalogports.FeatureGate
+	Formatter    dataentrycontrolports.TextFormatter
 }
 
 type Service struct {
@@ -45,6 +47,7 @@ type Service struct {
 	db           kernelports.Transactor
 	sync         accountingsyncports.AccountingSyncEnqueuer
 	features     platformcatalogports.FeatureGate
+	formatter    dataentrycontrolports.TextFormatter
 }
 
 func New(p Params) *Service {
@@ -57,6 +60,7 @@ func New(p Params) *Service {
 		db:           p.DB,
 		sync:         p.Sync,
 		features:     p.Features,
+		formatter:    p.Formatter,
 	}
 }
 

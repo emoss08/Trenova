@@ -1,6 +1,5 @@
+import { SettingsPage } from "@/components/settings/settings-page";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy } from "react";
 import { AccountingControlSkeleton } from "./skeleton";
 
@@ -10,15 +9,12 @@ export function AccountingControlPage() {
   const t = useT();
 
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: t("Accounting control"),
-        description: t("Configure and manage your accounting control settings"),
-      }}
+    <SettingsPage
+      title={t("Accounting control")}
+      description={t("Configure and manage your accounting control settings")}
+      skeleton={<AccountingControlSkeleton />}
     >
-      <LazyComponent fallback={<AccountingControlSkeleton />}>
-        <AccountingControlForm />
-      </LazyComponent>
-    </PageLayout>
+      <AccountingControlForm />
+    </SettingsPage>
   );
 }

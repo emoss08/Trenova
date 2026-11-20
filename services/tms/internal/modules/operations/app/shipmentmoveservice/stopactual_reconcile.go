@@ -35,6 +35,7 @@ func (s *service) ReconcileStopActuals(
 			return err
 		}
 		previousStatus = move.Status
+		before := snapshotStopActuals(move)
 
 		touched, changes, err := settleStopActuals(txCtx, move, req.Plan)
 		if err != nil {
@@ -62,6 +63,15 @@ func (s *service) ReconcileStopActuals(
 				return err
 			}
 		}
+		if err = s.recordStopActualEvents(
+			txCtx,
+			req.TenantInfo,
+			move,
+			before,
+			req.Origin,
+		); err != nil {
+			return err
+		}
 
 		result.Move, err = s.applyDerivedMoveStatus(
 			txCtx,
@@ -83,13 +93,13 @@ func (s *service) ReconcileStopActuals(
 	}
 
 	if len(result.Changes) > 0 {
-		s.announceStopActuals(
-			ctx,
-			req.TenantInfo,
-			result.Move,
-			previousStatus,
-			recordedActions(req, result.Changes),
-		)
+		s.announceStopActuals(ctx, stopActualAnnouncement{
+			tenantInfo:     req.TenantInfo,
+			move:           result.Move,
+			previousStatus: previousStatus,
+			recorded:       recordedActions(req, result.Changes),
+			origin:         req.Origin,
+		})
 	}
 
 	return result, nil

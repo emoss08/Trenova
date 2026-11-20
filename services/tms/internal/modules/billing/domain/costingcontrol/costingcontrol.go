@@ -66,19 +66,6 @@ func (cc *CostingControl) Validate(multiErr *errortypes.MultiError) {
 				),
 			),
 		),
-		validation.Field(&cc.GLRollingMonths,
-			validation.Required.Error("GL rolling months is required"),
-			validation.Min(1).Error("GL rolling months must be at least 1"),
-			validation.Max(12).Error("GL rolling months must be 12 or less"),
-		),
-		validation.Field(&cc.PlannedMonthlyMiles,
-			validation.By(func(any) error {
-				if cc.PlannedMonthlyMiles != nil && *cc.PlannedMonthlyMiles < 1 {
-					return errors.New("Planned monthly miles must be greater than 0")
-				}
-				return nil
-			}),
-		),
 		validation.Field(&cc.TargetMarginPercent,
 			validation.By(func(any) error {
 				if !cc.TargetMarginPercent.Valid {

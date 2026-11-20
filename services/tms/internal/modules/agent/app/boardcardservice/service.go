@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -110,7 +109,7 @@ type Service struct {
 	analytics     analyticsReader
 	receivables   receivablesReader
 	activity      activityReader
-	organizations orgzone.OrganizationReader
+	organizations tenantports.OrganizationReader
 	attention     deskattentionports.DeskAttentionService
 	plan          planFeatures
 	now           func() time.Time
@@ -202,7 +201,7 @@ func (s *Service) Card(
 }
 
 func (s *Service) Location(ctx context.Context, tenant pagination.TenantInfo) *time.Location {
-	location, err := orgzone.Location(ctx, s.organizations, tenant)
+	location, err := tenantports.OrganizationLocation(ctx, s.organizations, tenant)
 	if err != nil {
 		s.l.Warn("the organization's time zone could not be read", zap.Error(err))
 		return time.UTC

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -1536,18 +1537,22 @@ func (s *DriverPaySeed) resolvePeriod(
 				"get settlement control: %w", err,
 			)
 		}
-		control = &settlementcontrol.SettlementControl{
-			PayPeriodFrequency:            settlementcontrol.PayPeriodFrequencyWeekly,
-			PeriodEndDayOfWeek:            6,
-			PayDelayDays:                  5,
-			PayTrigger:                    settlementcontrol.PayTriggerShipmentDelivered,
-			VarianceThresholdPct:          decimal.RequireFromString("25"),
-			VarianceLookbackWeeks:         8,
-			EscrowInterestFrequencyMonths: 3,
-		}
+		control = settlementcontrol.NewDefault(refs.orgID, refs.buID)
 	}
 
-	return driversettlementservice.ResolveCurrentPeriod(control, timeutils.NowUnix()), nil
+	o := tenantdb.Organizations
+	org, err := o.AllTenants().Pick(o.ID, o.Timezone).Where(o.ID.Eq(refs.orgID)).First(ctx, db)
+	if err != nil {
+		return driversettlementservice.PeriodBounds{}, fmt.Errorf(
+			"get organization timezone: %w", err,
+		)
+	}
+
+	return driversettlementservice.ResolveCurrentPeriod(
+		control,
+		timeutils.LoadLocation(org.Timezone),
+		timeutils.NowUnix(),
+	), nil
 }
 
 func (s *DriverPaySeed) loadWorkerProfiles(

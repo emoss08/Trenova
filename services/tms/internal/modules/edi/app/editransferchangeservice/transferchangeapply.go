@@ -128,15 +128,7 @@ func (s *Service) applyApprovedLifecycleTransferChange(
 		return err
 	}
 
-	applier := s.lifecycleApplier
-	if applier == nil {
-		applier = internaledilifecycle.New(internaledilifecycle.Params{
-			ShipmentRepo: s.shipmentRepo,
-			Coordinator:  s.coordinator,
-		})
-	}
-
-	plan, err := applier.Prepare(ctx, internaledilifecycle.PrepareRequest{
+	plan, err := s.lifecycleApplier.Prepare(ctx, internaledilifecycle.PrepareRequest{
 		Link:      link,
 		Direction: change.Direction,
 	})
@@ -153,7 +145,10 @@ func (s *Service) applyApprovedLifecycleTransferChange(
 		)
 	}
 
-	updated, err := applier.ApplyPrepared(ctx, plan)
+	updated, err := s.lifecycleApplier.ApplyPrepared(ctx, internaledilifecycle.ApplyRequest{
+		Plan:          plan,
+		SourceEventID: transferChangePayloadString(change.Payload, "sourceEventId"),
+	})
 	if err != nil {
 		return err
 	}
@@ -285,7 +280,7 @@ func buildApprovedTransferChangeEvent(
 		Type:           eventType,
 		Severity:       transferChangeSeverityForStatus(ctx.nextStatus),
 		ActorType:      shipmentevent.ActorEDI,
-		ActorLabel:     "Internal EDI",
+		ActorLabel:     internaledilifecycle.ActorLabel,
 		Summary:        summary,
 		Metadata:       metadata,
 		OccurredAt:     occurredAt,
@@ -305,7 +300,7 @@ func buildApprovedLifecycleTransferChangeEvent(
 		Type:           shipmentevent.TypeStatusChanged,
 		Severity:       transferChangeSeverityForStatus(updated.Status),
 		ActorType:      shipmentevent.ActorEDI,
-		ActorLabel:     "Internal EDI",
+		ActorLabel:     internaledilifecycle.ActorLabel,
 		Summary:        "Lifecycle synced from internal EDI 214",
 		Metadata: map[string]any{
 			"proNumber":              updated.ProNumber,

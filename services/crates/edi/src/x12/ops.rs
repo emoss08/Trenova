@@ -172,4 +172,19 @@ mod tests {
         assert_eq!(transaction["status"], "accepted", "{reading}");
         assert_eq!(reading["ok"]["segments"][1]["elements"][1], "SHIP-1");
     }
+
+    #[test]
+    fn a_990_answers_with_or_without_its_date_as_the_standard_allows() {
+        for text in [
+            "ST*990*0001~B1*SIML*SHIP-1**A~SE*3*0001~",
+            "ST*990*0001~B1**SHIP-1*20260107~SE*3*0001~",
+            "ST*990*0001~B1**SHIP-1~SE*3*0001~",
+        ] {
+            let request =
+                serde_json::json!({"op": "x12.read", "input": {"text": text, "fragment": true}});
+            let reading = call(&request.to_string());
+            let transaction = &reading["ok"]["interchanges"][0]["groups"][0]["transactions"][0];
+            assert_eq!(transaction["status"], "accepted", "{text}: {reading}");
+        }
+    }
 }

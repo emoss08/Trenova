@@ -64,7 +64,6 @@ func Options() fx.Option {
 		// scraped too. Off, it opens no port and cannot collide with the API's.
 		apimodule.WorkerMonitoringServerModule,
 		apimodule.WorkerPprofServerModule,
-		apimodule.AgentReadWorkerModule,
 		modulesinfra.DoclingModule,
 		temporaljobs.WorkerModule,
 		agentjobs.WorkerModule,
@@ -76,7 +75,6 @@ func Options() fx.Option {
 
 func UnscheduledOptions() fx.Option {
 	return fx.Options(
-		apimodule.AgentReadWorkerModule,
 		modulesinfra.DoclingModule,
 		temporaljobs.UnscheduledWorkerModule,
 	)
@@ -90,7 +88,13 @@ type RunParams struct {
 }
 
 func Run(base fx.Option, queues []string) {
-	opts := []fx.Option{config.FxLogger(), schemaversion.Module, base, Options(), fx.Invoke(logLifecycle)}
+	opts := []fx.Option{
+		config.FxLogger(),
+		schemaversion.Module,
+		base,
+		Options(),
+		fx.Invoke(logLifecycle),
+	}
 	if len(queues) > 0 {
 		opts = append(opts, fx.Decorate(func(*registry.QueueFilter) *registry.QueueFilter {
 			return &registry.QueueFilter{Queues: queues}

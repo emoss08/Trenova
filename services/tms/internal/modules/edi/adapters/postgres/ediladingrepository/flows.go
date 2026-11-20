@@ -73,39 +73,29 @@ func (r *flows) GetInstanceByKey(
 	})
 }
 
-// OpenInstance returns the instance for the partner, flow and key, creating it when it does not
-// exist: two messages for the same key that arrive together open one instance.
-func (r *flows) OpenInstance(
+func (r *flows) CreateInstance(
 	ctx context.Context,
 	instance *ladingproject.FlowInstance,
 ) (*ladingproject.FlowInstance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ladingproject.FlowInstance, error) {
-		db := r.db.Keel(ctx)
 		i := ladingprojectdb.FlowInstances
-		if len(instance.State) == 0 {
-			instance.State = []byte("{}")
-		}
-		if _, err := i.CreateOrSkip(
+		created, err := i.CreateOrSkip(
 			ctx,
-			db,
+			r.db.Keel(ctx),
 			[]*ladingproject.FlowInstance{instance},
 			i.OrganizationID,
 			i.BusinessUnitID,
 			i.EDIPartnerID,
 			i.Flow,
 			i.Key,
-		); err != nil {
-			return nil, instanceErrors.Map(err, instance.Key)
-		}
-		opened, err := i.Where(
-			i.EDIPartnerID.Eq(instance.EDIPartnerID),
-			i.Flow.Eq(instance.Flow),
-			i.Key.Eq(instance.Key),
-		).One(ctx, db)
+		)
 		if err != nil {
 			return nil, instanceErrors.Map(err, instance.Key)
 		}
-		return opened, nil
+		if created == 0 {
+			return nil, ladingports.ErrFlowInstanceExists
+		}
+		return instance, nil
 	})
 }
 

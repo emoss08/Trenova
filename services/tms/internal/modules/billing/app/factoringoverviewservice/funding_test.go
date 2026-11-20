@@ -82,7 +82,7 @@ func TestPreviewFundingRefusesTermsOutsideTheirBounds(t *testing.T) {
 			var multi *errortypes.MultiError
 			require.ErrorAs(t, err, &multi)
 			require.NotEmpty(t, multi.Errors)
-			assert.Equal(t, tt.field, multi.Errors[0].Field)
+			assert.Equal(t, tt.field, multi.Errors[0].Field())
 		})
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,15 +47,22 @@ func (f *fakeRepo) GetControl(
 	_ context.Context,
 	_ pagination.TenantInfo,
 ) (*workerleave.LeaveControl, error) {
-	return f.control, nil
+	read := *f.control
+	return &read, nil
 }
 
 func (f *fakeRepo) UpdateControl(
 	_ context.Context,
 	entity *workerleave.LeaveControl,
 ) (*workerleave.LeaveControl, error) {
-	f.control = entity
-	return entity, nil
+	if entity.Version != f.control.Version {
+		return nil, dberror.CreateVersionMismatchError("LeaveControl", entity.ID.String())
+	}
+	saved := *entity
+	saved.Version++
+	f.control = &saved
+	read := saved
+	return &read, nil
 }
 
 func (f *fakeRepo) ListCases(
@@ -564,4 +572,72 @@ func TestUpdateControl_ChangesTheMeasurementMethod(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, workerleave.MeasureCalendarYear, entitlement.Method)
 	assert.Equal(t, at(2026, time.January, 1), entitlement.Window.From)
+}
+
+func TestUpdateControl_SavesUnderTheVersionRead(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+
+	weeks := decimal.NewFromInt(16)
+	updated, err := h.svc.UpdateControl(t.Context(), &workerleaveservice.UpdateControlRequest{
+		TenantInfo:       h.tenant,
+		Version:          0,
+		EntitlementWeeks: &weeks,
+		UserID:           h.userID,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, int64(1), updated.Version)
+	assert.True(t, decimal.NewFromInt(16).Equal(updated.EntitlementWeeks))
+	assert.Equal(t, int64(1), h.repo.control.Version)
+}
+
+func TestUpdateControl_RefusesASaveOverANewerVersion(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+
+	first := decimal.NewFromInt(16)
+	_, err := h.svc.UpdateControl(t.Context(), &workerleaveservice.UpdateControlRequest{
+		TenantInfo:       h.tenant,
+		Version:          0,
+		EntitlementWeeks: &first,
+		UserID:           h.userID,
+	})
+	require.NoError(t, err)
+
+	second := decimal.NewFromInt(20)
+	_, err = h.svc.UpdateControl(t.Context(), &workerleaveservice.UpdateControlRequest{
+		TenantInfo:       h.tenant,
+		Version:          0,
+		EntitlementWeeks: &second,
+		UserID:           h.userID,
+	})
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsVersionMismatchError(err))
+	assert.True(t, decimal.NewFromInt(16).Equal(h.repo.control.EntitlementWeeks))
+	assert.Equal(t, int64(1), h.repo.control.Version)
+}
+
+func TestUpdateControl_RefusesCaregiverLeaveShorterThanTheEntitlement(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+
+	weeks := decimal.NewFromInt(30)
+	_, err := h.svc.UpdateControl(t.Context(), &workerleaveservice.UpdateControlRequest{
+		TenantInfo:       h.tenant,
+		EntitlementWeeks: &weeks,
+		UserID:           h.userID,
+	})
+
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, "militaryCaregiverWeeks", multiErr.Errors[0].Path.String())
+	assert.Equal(
+		t,
+		"Military caregiver leave cannot be shorter than the ordinary entitlement",
+		multiErr.Errors[0].Message,
+	)
+	assert.Equal(t, int64(0), h.repo.control.Version)
 }

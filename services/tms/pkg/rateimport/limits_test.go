@@ -110,7 +110,7 @@ func TestValidationError_NamesTheLimitAFileWentPast(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, mapped, &validation)
-	assert.Equal(t, "file", validation.Field)
+	assert.Equal(t, "file", validation.Field())
 	assert.Equal(t, []any{10}, validation.Args)
 	assert.Contains(t, validation.Message, "more than {0} rows")
 

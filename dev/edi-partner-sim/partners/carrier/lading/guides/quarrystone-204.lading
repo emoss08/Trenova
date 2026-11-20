@@ -1,0 +1,43 @@
+guide quarrystone.204 from x12.004010.204 "Quarrystone Freight Lines Load Tender Requirements 5.1"
+
+/// Quarrystone books a load against its own SCAC, the shipper's BOL and the equipment named.
+B2 { 01 unused; 02 fixed "QYSF"; 04 required; 06 required codes "PP", "CC", "TP" }
+B2A { 01 codes "00", "01", "04"; 02 fixed "LT" }
+L11 required max 5 { 02 codes "BM", "PO" }
+G62 unused
+MS3 unused
+AT5 unused
+PLD unused
+LH6 unused
+NTE unused
+
+loop 0100 unused
+loop 0200 required max 1
+0200.N7 { 02 required; 11 required codes "TF", "RT", "FT"; 15 required }
+0200.N7A unused
+0200.MEA unused
+0200.M7 unused
+
+/// Every stop carries its weight, its pieces and both ends of its appointment window.
+loop 0300 min 2 max 12
+0300.S5 { 02 codes "LD", "UL"; 03 required; 04 codes "L"; 05 required; 06 codes "PC" }
+0300.L11 unused
+0300.G62 required { 01 codes "37", "38", "53", "54"; 03 codes "G", "L"; 04 required length 4..4; 05 required codes "CT", "ET", "MT", "PT" }
+0300.AT8 required { 01 codes "G"; 02 codes "L"; 03 required; 04 required }
+0300.LAD unused
+0300.AT5 unused
+0300.PLD unused
+0300.NTE unused
+loop 0300.0310 required
+0300.0310.N1 { 01 codes "SH", "CN"; 02 required }
+0300.0310.N2 unused
+0300.0310.N3 required
+0300.0310.N4 required { 01 required; 02 required; 03 required length 5..9; 04 codes "US" }
+0300.0310.G61 unused
+loop 0300.0320 unused
+loop 0300.0350 unused
+loop 0300.0370 unused
+
+L3 required { 01 required; 02 codes "G"; 05 required; 11 required; 12 codes "L" }
+
+severity invalid-code error

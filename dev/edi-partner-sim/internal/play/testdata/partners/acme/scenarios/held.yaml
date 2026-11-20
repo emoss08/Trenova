@@ -1,0 +1,10 @@
+name: a rate change is held and released
+within: 10s
+steps:
+  - send: { set: "204", as: t1 }
+  - expect: { ack: t1 }
+  - send: { set: "204", variation: change, of: t1, delta: { ratePercent: 12 } }
+  - expect: { ack: t1 }
+  - expect: { flow: t1, status: Held, why: changed the rate }
+  - trenova: { release: t1 }
+  - expect: { flow: t1, status: Open, count: 1 }

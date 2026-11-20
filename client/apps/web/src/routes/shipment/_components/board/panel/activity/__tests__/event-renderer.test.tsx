@@ -266,23 +266,71 @@ describe("renderEvent", () => {
     );
   });
 
-  it("renders move arrival and stop completion", () => {
+  it("renders move arrival and a stop the driver reached and left", () => {
     const arrived = renderEvent(moveEvent({ type: "MoveArrived" }));
-    const stop = renderEvent(moveEvent({ type: "StopCompleted", stopId: "stp_1" }));
+    const atStop = renderEvent(
+      moveEvent({
+        type: "StopArrived",
+        stopId: "stp_1",
+        stopNumber: 2,
+        stopType: "SplitDelivery",
+        locationName: "Dallas Terminal",
+      }),
+    );
+    const leftStop = renderEvent(
+      moveEvent({ type: "StopDeparted", stopId: "stp_1", stopNumber: 2 }),
+    );
 
     render(
       <div>
         <div data-testid="arrived">{arrived.headline}</div>
-        <div data-testid="stop">{stop.headline}</div>
+        <div data-testid="at-stop">{atStop.headline}</div>
+        <div data-testid="at-stop-detail">{atStop.detail}</div>
+        <div data-testid="left-stop">{leftStop.headline}</div>
+        <div data-testid="left-stop-detail">{leftStop.detail}</div>
       </div>,
     );
 
     expect(screen.getByTestId("arrived").textContent).toBe(
       "System Administrator completed a move on #PRO-2026-1042",
     );
-    expect(screen.getByTestId("stop").textContent).toBe(
-      "System Administrator completed a stop on #PRO-2026-1042",
+    expect(screen.getByTestId("at-stop").textContent).toBe(
+      "System Administrator arrived at Dallas Terminal on #PRO-2026-1042",
     );
+    expect(screen.getByTestId("at-stop-detail").textContent).toBe("Stop 2 · Split Delivery");
+    expect(screen.getByTestId("left-stop").textContent).toBe(
+      "System Administrator left stop 2 on #PRO-2026-1042",
+    );
+    expect(screen.getByTestId("left-stop-detail").textContent).toBe("Stop 2");
+  });
+
+  it("renders a corrected stop time with the time it replaced", () => {
+    const corrected = renderEvent(
+      moveEvent({
+        type: "StopArrivalCorrected",
+        locationName: "Dallas Terminal",
+        actualAt: 1_800_000_000,
+        previousActualAt: 1_799_990_000,
+      }),
+    );
+    const departure = renderEvent(moveEvent({ type: "StopDepartureCorrected" }));
+
+    render(
+      <div>
+        <div data-testid="corrected">{corrected.headline}</div>
+        <div data-testid="corrected-detail">{corrected.detail}</div>
+        <div data-testid="departure">{departure.headline}</div>
+      </div>,
+    );
+
+    expect(screen.getByTestId("corrected").textContent).toBe(
+      "System Administrator corrected the arrival time at Dallas Terminal on #PRO-2026-1042",
+    );
+    expect(screen.getByTestId("corrected-detail").textContent).toMatch(/^Was .+, now .+$/);
+    expect(screen.getByTestId("departure").textContent).toBe(
+      "System Administrator corrected the departure time from a stop on #PRO-2026-1042",
+    );
+    expect(departure.detail).toBeUndefined();
   });
 
   it("falls back to a shipment without pro number", () => {

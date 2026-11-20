@@ -500,7 +500,7 @@ pub const FUNCTIONS: &[Function] = &[
         "refs",
         Receiver::X12,
         "refs(segments: [Segment]) -> [Text: Text]",
-        message!("L11 or N9 segments as qualifier to reference number"),
+        message!("L11 or N9 segments as qualifier, in capitals, to reference number"),
     ),
     f(
         "address",

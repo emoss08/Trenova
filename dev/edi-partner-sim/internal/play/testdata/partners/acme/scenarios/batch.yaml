@@ -1,0 +1,7 @@
+name: three tenders in one send are three conversations
+within: 10s
+steps:
+  - send: { set: "204", as: b, count: 3 }
+  - expect: { ack: b }
+  - trenova: { decide: b, decision: accept }
+  - expect: { wire: "990", about: b, elements: { B1-04: A } }

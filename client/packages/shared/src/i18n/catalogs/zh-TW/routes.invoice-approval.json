@@ -18,7 +18,6 @@
   "Search invoice, customer, reason...": "搜尋發票、客戶、原因...",
   "The approval queue could not be read. Check your connection and reload the page.": "無法讀取審核佇列。請檢查網路連線並重新載入頁面。",
   "This adjustment could not be read. It may have been decided by someone else; refresh the queue to see what is still waiting.": "無法讀取此調整。它可能已由其他人處理；請重新整理佇列查看仍在等待的項目。",
-  "Unapplied credit": "未沖抵貸項",
   "Why is this adjustment being rejected?": "為何拒絕這筆調整？",
   "Write-Off": "沖銷"
 }

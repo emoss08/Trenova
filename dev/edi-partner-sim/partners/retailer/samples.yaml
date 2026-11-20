@@ -1,0 +1,41 @@
+- file: tender-original.x12
+  set: "204"
+  seed: 4
+  control: 601
+  variation: { kind: original }
+- file: tender-change.x12
+  set: "204"
+  seed: 4
+  control: 602
+  variation: { kind: change, delta: { ratePercent: 8 } }
+- file: tender-moved.x12
+  set: "204"
+  seed: 4
+  control: 603
+  variation: { kind: change, delta: { move: { stop: 0, by: 24h } } }
+- file: tender-cancel.x12
+  set: "204"
+  seed: 4
+  control: 604
+  variation: { kind: cancel }
+- file: tender-batch.x12
+  set: "204"
+  seed: 13
+  with: [14, 15]
+  control: 610
+  variation: { kind: original }
+- file: tender-heavy.x12
+  set: "204"
+  seed: 24
+  control: 620
+  variation: { kind: original }
+- file: tender-backwards.x12
+  set: "204"
+  seed: 2
+  control: 630
+  variation: { kind: original, delta: { move: { stop: 2, by: -96h } } }
+- file: tender-sparse.x12
+  set: "204"
+  seed: 16
+  control: 640
+  variation: { kind: original, sparse: true }

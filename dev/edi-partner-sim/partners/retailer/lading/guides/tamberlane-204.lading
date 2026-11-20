@@ -1,0 +1,53 @@
+guide tamberlane.204 from x12.004010.204 "Tamberlane Stores Motor Carrier Load Tender 4010 rev 7"
+
+/// Tamberlane's shipment ID, TS and eight digits; every 990, 214 and 210 must quote it.
+B2 { 01 unused; 02 required; 03 unused; 04 required length 10..10; 06 codes "PP" }
+B2A { 01 codes "00", "01", "04"; 02 required fixed "LT" }
+L11 max 2 { 02 codes "BM", "PO" }
+G62 unused
+MS3 unused
+AT5 unused
+PLD unused
+LH6 unused
+NTE max 1 { 01 codes "LOI" }
+
+loop 0100 required max 1
+0100.N1 { 01 codes "BT"; 03 fixed "92"; 04 required }
+0100.N2 unused
+0100.N3 required
+0100.N4 required { 04 codes "US" }
+0100.L11 unused
+0100.G61 unused
+loop 0200 required max 1
+0200.N7 { 02 fixed "TBD"; 11 required codes "TF"; 15 required }
+0200.N7A unused
+0200.MEA unused
+0200.M7 unused
+
+loop 0300 min 2 max 5
+0300.S5 { 02 codes "LD", "UL"; 03 required; 04 codes "L"; 05 required; 06 codes "CA" }
+0300.L11 max 2 { 02 codes "P8", "AO" }
+0300.G62 required { 01 codes "37", "38", "53", "54"; 03 codes "G", "L"; 04 required; 05 required codes "CT", "ET", "MT", "PT" }
+0300.AT8 required { 01 codes "G"; 02 codes "L" }
+0300.LAD unused
+0300.AT5 unused
+0300.PLD unused
+0300.NTE max 1 { 01 codes "DEL" }
+loop 0300.0310 required
+0300.0310.N1 { 01 codes "SF", "ST"; 03 fixed "92"; 04 required }
+0300.0310.N2 unused
+0300.0310.N3 required
+0300.0310.N4 required { 03 length 5..5; 04 codes "US" }
+0300.0310.G61 max 1 { 01 codes "IC"; 03 codes "TE" }
+loop 0300.0320 max 4
+0300.0320.L5 { 01 required; 02 required; 03 required; 04 codes "Z" }
+0300.0320.AT8 required
+loop 0300.0320.0325 max 1
+0300.0320.0325.LH1 { 01 codes "CA"; 03 required }
+loop 0300.0350 unused
+loop 0300.0370 unused
+
+L3 required { 01 required; 02 codes "G"; 03 required; 04 codes "PM"; 05 required; 11 required; 12 codes "L" }
+
+severity invalid-code error
+severity segment-count-mismatch error

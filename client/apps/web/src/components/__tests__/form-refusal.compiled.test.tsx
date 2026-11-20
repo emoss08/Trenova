@@ -183,3 +183,60 @@ describe("a save the server refused", () => {
     expect(screen.queryByText("This change could not be saved")).not.toBeInTheDocument();
   });
 });
+
+// A server that refuses one entry of a list names it (`autoPostSourceEvents[1]`). A group of
+// checkboxes shows every error under its name, so that one lands on the group, not only in
+// the alert, and the field reads as invalid to the page that opens the tab holding it.
+const ENTRY_REFUSAL = new ApiRequestError(400, {
+  type: "https://api.trenova.app/problems/validation-error",
+  title: "Validation Failed",
+  status: 400,
+  detail: "Duplicate journal source event",
+  instance: "/api/v1/accounting-controls/",
+  code: "INVALID",
+  errors: [
+    {
+      path: ["autoPostSourceEvents", 1],
+      message: "Duplicate journal source event",
+      code: "DUPLICATE",
+      location: "body",
+    },
+  ],
+} as ConstructorParameters<typeof ApiRequestError>[1]);
+
+function ResolvedControlForm() {
+  const form = useForm<Control>({
+    defaultValues: {
+      journalPostingMode: "Automatic",
+      autoPostSourceEvents: ["InvoicePosted", "InvoicePosted"],
+      defaultExpenseAccountId: "",
+    },
+    resolver: async (values) => ({ values, errors: {} }),
+  });
+  remember(form);
+
+  return (
+    <FormProvider {...form}>
+      <Form onSubmit={form.handleSubmit(vi.fn())}>
+        <MultiCheckboxField
+          control={form.control}
+          name="autoPostSourceEvents"
+          label="Auto-post source events"
+          options={EVENTS}
+          emptyAs="array"
+        />
+      </Form>
+    </FormProvider>
+  );
+}
+
+describe("a save refused for one entry of a list", () => {
+  it("puts the entry's message on the group of checkboxes and marks the list invalid", async () => {
+    render(<ResolvedControlForm />);
+    act(() => handleMutationError({ error: ENTRY_REFUSAL, form: held }));
+
+    const events = screen.getByRole("group", { name: "Auto-post source events" }).parentElement!;
+    expect(await within(events).findByText("Duplicate journal source event")).toBeInTheDocument();
+    expect(held.getFieldState("autoPostSourceEvents").invalid).toBe(true);
+  });
+});

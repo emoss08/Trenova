@@ -163,7 +163,7 @@ func TestCreateMailbox_RefusesASecretInTheWrongScheme(t *testing.T) {
 
 			var validation *errortypes.Error
 			require.ErrorAs(t, err, &validation)
-			assert.Equal(t, "signingSecret", validation.Field)
+			assert.Equal(t, "signingSecret", validation.Field())
 			assert.Nil(
 				t,
 				repo.stored,
@@ -184,7 +184,7 @@ func TestCreateMailbox_ReportsATakenAddressOnTheAddressField(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "address", validation.Field)
+	assert.Equal(t, "address", validation.Field())
 }
 
 func seededAdminMailbox(t *testing.T) (*adminMailboxRepo, *permissionports.RequestActor) {
@@ -345,7 +345,7 @@ func TestCreateMailbox_RefusesAnAPIKeyTheProviderDoesNotIssue(t *testing.T) {
 
 			var validation *errortypes.Error
 			require.ErrorAs(t, err, &validation)
-			assert.Equal(t, "apiKey", validation.Field)
+			assert.Equal(t, "apiKey", validation.Field())
 			assert.Nil(t, repo.stored, "nothing is created with a key that would never work")
 		})
 	}

@@ -1,0 +1,29 @@
+map statusOut
+  from shipmentStatus
+  to   ashgrove.214
+  use  common
+
+B10 { 01 <- proNumber ?? key, 02 <- key, 03 <- org.scac }
+L11 when exists bol { 01 <- bol, 02 <- "BM" }
+
+// Ashgrove's guide has no time code: every time goes out in its own Eastern clock.
+0205 <- each events as event {
+  LX { 01 <- index + 1 }
+  0210 {
+    AT7 {
+      01 <- event.kind via statusCodes
+      02 <- "NS"
+      05 <- event.at.inZone(partner.zone)
+      06 <- event.at.inZone(partner.zone)
+    }
+  }
+}
+
+test "a delivery goes out in Eastern time with no time code" {
+  given shipmentStatus {
+    key: "1000037"
+    bol: "646458"
+    events: [{ kind: Delivered, at: @2026-02-13T08:40[America/Chicago], stop: 3, city: "Peoria", state: "IL" }]
+  }
+  expect x12 == "ST*214*0001~B10*1000037*1000037*TRNV~L11*646458*BM~LX*1~AT7*D1*NS***20260213*0940~SE*6*0001~"
+}

@@ -1,106 +1,90 @@
 package sim
 
 import (
+	"fmt"
 	"os"
-	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
+
+	"github.com/emoss08/trenova/edi-partner-sim/internal/partner"
 )
 
-const specPath = "../../specs/simpartner-implementation-guide.txt"
+const specPath = "../../specs/manufacturer-implementation-guide.txt"
 
-func segmentIDs(x12 string) []string {
-	segments := strings.Split(strings.TrimSpace(x12), "~")
-	ids := make([]string, 0, len(segments))
-	for _, segment := range segments {
-		segment = strings.TrimSpace(segment)
-		if segment == "" {
-			continue
-		}
-		ids = append(ids, strings.SplitN(segment, "*", 2)[0])
-	}
-	return ids
-}
-
-func specSample(t *testing.T, spec string) string {
+func readSpec(t *testing.T) string {
 	t.Helper()
+	raw, err := os.ReadFile(specPath)
+	if err != nil {
+		t.Fatalf("read the manufacturer's guide: %v", err)
+	}
+	return string(raw)
+}
+
+func TestTheGuidesSampleIsTheTenderTheManufacturerSends(t *testing.T) {
+	t.Parallel()
+
+	spec := readSpec(t)
 	start := strings.Index(spec, "ISA*")
-	end := strings.Index(spec, "IEA*")
-	if start < 0 || end < start {
-		t.Fatalf("the guide has no sample interchange")
+	if start < 0 {
+		t.Fatal("the guide has no sample interchange")
 	}
-	closing := strings.Index(spec[end:], "~")
-	if closing < 0 {
-		t.Fatalf("the sample's IEA is not terminated")
-	}
-	lines := strings.Split(spec[start:end+closing+1], "\n")
-	for index := range lines {
-		lines[index] = strings.TrimSpace(lines[index])
-	}
-	return strings.Join(lines, "")
-}
-
-func TestSpecSampleIsTheTenderTheSimulatorSends(t *testing.T) {
-	t.Parallel()
-
-	raw, err := os.ReadFile(filepath.Clean(specPath))
+	definition := openDefinitions(t, []string{"manufacturer"})[0]
+	written, _, err := definition.Interchange(
+		"204", 37, partner.Variation{Kind: partner.KindOriginal},
+		partner.Controls{Interchange: partner.NewCounter(501), Group: partner.NewCounter(501)},
+	)
 	if err != nil {
-		t.Fatalf("read the simulator's guide: %v", err)
+		t.Fatalf("write the tender: %v", err)
 	}
-	spec := string(raw)
-	sample := specSample(t, spec)
-
-	envelope, err := ParseX12Envelope(sample)
-	if err != nil {
-		t.Fatalf("the guide's sample does not parse: %v", err)
-	}
-	want := X12Envelope{
-		SenderQualifier:          "ZZ",
-		SenderID:                 "SIMPARTNER",
-		ReceiverQualifier:        "ZZ",
-		ReceiverID:               "TRENOVA",
-		InterchangeControlNumber: "000000501",
-		FunctionalGroupID:        "SM",
-		GroupControlNumber:       "501",
-		TransactionSet:           "204",
-		TransactionControlNumber: transactionControlNumber,
-	}
-	if *envelope != want {
-		t.Fatalf("the guide's sample envelope is %+v, want %+v", *envelope, want)
-	}
-
-	sent := BuildLoadTender204(BuildLoadTenderInput{
-		SenderID:      "SIMPARTNER",
-		ReceiverID:    "TRENOVA",
-		ControlNumber: 501,
-		ShipmentID:    "SIM000501",
-	})
-	if got, wantIDs := segmentIDs(sample), segmentIDs(sent); !slices.Equal(got, wantIDs) {
-		t.Fatalf("the guide's sample segments are %v, the simulator sends %v", got, wantIDs)
-	}
-	if !strings.Contains(sample, "B2**SIML**SIM000501**PP~") {
-		t.Fatalf("the guide's sample B2 is not the simulator's")
+	if got := spec[start:]; got != string(written.Bytes) {
+		t.Fatalf("the guide's sample is not what the manufacturer sends:\n%s\nwant:\n%s",
+			got, written.Bytes)
 	}
 }
 
-func TestSpecNamesTheSimulatorsDefaultsAndNoSecret(t *testing.T) {
+func TestTheGuideStatesTheManufacturersSettingsAndNoSecret(t *testing.T) {
 	t.Parallel()
 
-	raw, err := os.ReadFile(filepath.Clean(specPath))
-	if err != nil {
-		t.Fatalf("read the simulator's guide: %v", err)
-	}
-	spec := string(raw)
+	spec := readSpec(t)
+	definition := openDefinitions(t, []string{"manufacturer"})[0]
+	p := &definition.Partner
+	h := newHarness(t, setup{partners: []string{"manufacturer"}, options: func(o *Options) {
+		o.PublicURL = defaultPublicURL
+		o.SFTPListen = "127.0.0.1:0"
+		o.SFTPRoot = t.TempDir()
+	}})
+	info := h.sim.info(h.peerOf("manufacturer"))
 	for _, value := range []string{
-		"SIMPARTNER", "TRENOVA", "http://localhost:9210/as2", "localhost", "9222", "trenova",
-		"997", "004010", "SIM-SHIP", "SIM-CONS",
+		"Trading Partner Name: " + p.Display,
+		"(" + p.Zone + ")",
+		"AS2 Identifier: " + p.Transport.AS2.ID,
+		"Carrier AS2 Identifier: " + p.Trenova.ID,
+		"AS2 URL: " + info.AS2.URL,
+		"MDN: synchronous, signed.",
+		"Compression: none.",
+		defaultPublicURL + "/control/manufacturer",
+		"user " + info.SFTP.Username + ".",
+		info.SFTP.InboundDirectory, info.SFTP.OutboundDirectory,
+		"qualifier " + p.Them.Qualifier + " (mutually defined), ID " + p.Them.ID,
+		"qualifier " + p.Trenova.Qualifier + " (mutually defined), ID " + p.Trenova.ID,
+		"GS02 Application Sender Code: " + p.Them.Group,
+		"GS03 Application Receiver Code: " + p.Trenova.Group,
+		"GS08 Version: " + p.Envelope.Version,
+		"ISA15 usage indicator: " + p.Envelope.Usage + ".",
+		"B2-02 Standard Carrier Alpha Code is " + p.Trenova.SCAC + ".",
+		"returns a " + string(p.Acknowledgment.Sends) + " Functional Acknowledgment",
+		fmt.Sprintf("within %d seconds", int(p.Acknowledgment.Delay.Seconds())),
+		"port 9222",
 	} {
 		if !strings.Contains(spec, value) {
 			t.Errorf("the guide does not state %q", value)
 		}
 	}
+	if !p.Transport.AS2.Signed || !p.Transport.AS2.Encrypted || p.Transport.AS2.Compressed ||
+		p.Transport.AS2.MDN != mdnSync {
+		t.Errorf("partner.yaml's AS2 settings no longer match the guide: %+v", p.Transport.AS2)
+	}
 	if strings.Contains(spec, "BEGIN") || strings.Contains(strings.ToLower(spec), "password:") {
-		t.Errorf("the guide carries a key or a password; it must only say where to get them")
+		t.Error("the guide carries a key or a password; it must only say where to get them")
 	}
 }

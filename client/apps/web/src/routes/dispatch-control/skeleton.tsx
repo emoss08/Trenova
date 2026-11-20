@@ -1,18 +1,6 @@
-import { useSettingsTab } from "@/components/settings/settings-tab";
-import {
-  SettingsTabsSkeleton,
-  type SettingsSectionSpec,
-} from "@/components/settings-form-skeleton";
-import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
-import {
-  hasOrganizationCapability,
-  OrganizationCapability,
-} from "@trenova/shared/types/organization-capability";
-import {
-  dispatchControlTabs,
-  useDispatchControlPlan,
-  type DispatchControlTab,
-} from "./dispatch-control-tabs";
+import { SettingsPageSkeleton } from "@/components/settings/settings-page";
+import type { SettingsSectionSpec } from "@/components/settings-form-skeleton";
+import { useDispatchControlTabs, type DispatchControlTab } from "./dispatch-control-tabs";
 
 const figures = (count: number) => ({ kind: "input", count, narrow: true }) as const;
 const choice = { kind: "input", narrow: false } as const;
@@ -61,19 +49,5 @@ const TAB_SECTIONS: Record<DispatchControlTab, readonly SettingsSectionSpec[]> =
  * organization, as in the form: a fleet's planning tabs, a brokerage's carrier tenders.
  */
 export function DispatchControlSkeleton() {
-  const capabilities = useOrgCapabilities();
-  const plan = useDispatchControlPlan();
-  const tabs = dispatchControlTabs({
-    runsAssets: hasOrganizationCapability(capabilities, OrganizationCapability.AssetOperations),
-    brokers: hasOrganizationCapability(capabilities, OrganizationCapability.Brokerage),
-    plan,
-  });
-  const [openTab] = useSettingsTab(tabs);
-
-  return (
-    <SettingsTabsSkeleton
-      tabs={tabs.length}
-      sections={TAB_SECTIONS[openTab as DispatchControlTab] ?? []}
-    />
-  );
+  return <SettingsPageSkeleton tabs={useDispatchControlTabs()} sections={TAB_SECTIONS} />;
 }

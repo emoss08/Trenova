@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -312,23 +313,23 @@ func (_c *MockFlowRepository_GetSendMessage_Call) RunAndReturn(run func(ctx cont
 }
 
 // ListDueInstances provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) ListDueInstances(ctx context.Context, req *ladingports.ListDueFlowInstancesRequest) ([]ladingports.DueFlowInstance, error) {
+func (_mock *MockFlowRepository) ListDueInstances(ctx context.Context, req *ladingports.ListDueFlowInstancesRequest) ([]ladingports.FlowInstanceRef, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListDueInstances")
 	}
 
-	var r0 []ladingports.DueFlowInstance
+	var r0 []ladingports.FlowInstanceRef
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListDueFlowInstancesRequest) ([]ladingports.DueFlowInstance, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListDueFlowInstancesRequest) ([]ladingports.FlowInstanceRef, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListDueFlowInstancesRequest) []ladingports.DueFlowInstance); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListDueFlowInstancesRequest) []ladingports.FlowInstanceRef); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]ladingports.DueFlowInstance)
+			r0 = ret.Get(0).([]ladingports.FlowInstanceRef)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingports.ListDueFlowInstancesRequest) error); ok {
@@ -369,12 +370,12 @@ func (_c *MockFlowRepository_ListDueInstances_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockFlowRepository_ListDueInstances_Call) Return(dueFlowInstances []ladingports.DueFlowInstance, err error) *MockFlowRepository_ListDueInstances_Call {
-	_c.Call.Return(dueFlowInstances, err)
+func (_c *MockFlowRepository_ListDueInstances_Call) Return(flowInstanceRefs []ladingports.FlowInstanceRef, err error) *MockFlowRepository_ListDueInstances_Call {
+	_c.Call.Return(flowInstanceRefs, err)
 	return _c
 }
 
-func (_c *MockFlowRepository_ListDueInstances_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.ListDueFlowInstancesRequest) ([]ladingports.DueFlowInstance, error)) *MockFlowRepository_ListDueInstances_Call {
+func (_c *MockFlowRepository_ListDueInstances_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.ListDueFlowInstancesRequest) ([]ladingports.FlowInstanceRef, error)) *MockFlowRepository_ListDueInstances_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -651,12 +652,78 @@ func (_c *MockFlowRepository_ListOpenInstances_Call) RunAndReturn(run func(ctx c
 	return _c
 }
 
-// OpenInstance provides a mock function for the type MockFlowRepository
-func (_mock *MockFlowRepository) OpenInstance(ctx context.Context, instance *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error) {
+// LocateInstance provides a mock function for the type MockFlowRepository
+func (_mock *MockFlowRepository) LocateInstance(ctx context.Context, id pulid.ID) (ladingports.FlowInstanceRef, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for LocateInstance")
+	}
+
+	var r0 ladingports.FlowInstanceRef
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (ladingports.FlowInstanceRef, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) ladingports.FlowInstanceRef); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Get(0).(ladingports.FlowInstanceRef)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFlowRepository_LocateInstance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LocateInstance'
+type MockFlowRepository_LocateInstance_Call struct {
+	*mock.Call
+}
+
+// LocateInstance is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id pulid.ID
+func (_e *MockFlowRepository_Expecter) LocateInstance(ctx any, id any) *MockFlowRepository_LocateInstance_Call {
+	return &MockFlowRepository_LocateInstance_Call{Call: _e.mock.On("LocateInstance", ctx, id)}
+}
+
+func (_c *MockFlowRepository_LocateInstance_Call) Run(run func(ctx context.Context, id pulid.ID)) *MockFlowRepository_LocateInstance_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFlowRepository_LocateInstance_Call) Return(flowInstanceRef ladingports.FlowInstanceRef, err error) *MockFlowRepository_LocateInstance_Call {
+	_c.Call.Return(flowInstanceRef, err)
+	return _c
+}
+
+func (_c *MockFlowRepository_LocateInstance_Call) RunAndReturn(run func(ctx context.Context, id pulid.ID) (ladingports.FlowInstanceRef, error)) *MockFlowRepository_LocateInstance_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateInstance provides a mock function for the type MockFlowRepository
+func (_mock *MockFlowRepository) CreateInstance(ctx context.Context, instance *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error) {
 	ret := _mock.Called(ctx, instance)
 
 	if len(ret) == 0 {
-		panic("no return value specified for OpenInstance")
+		panic("no return value specified for CreateInstance")
 	}
 
 	var r0 *ladingproject.FlowInstance
@@ -679,19 +746,19 @@ func (_mock *MockFlowRepository) OpenInstance(ctx context.Context, instance *lad
 	return r0, r1
 }
 
-// MockFlowRepository_OpenInstance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OpenInstance'
-type MockFlowRepository_OpenInstance_Call struct {
+// MockFlowRepository_CreateInstance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInstance'
+type MockFlowRepository_CreateInstance_Call struct {
 	*mock.Call
 }
 
-// OpenInstance is a helper method to define mock.On call
+// CreateInstance is a helper method to define mock.On call
 //   - ctx context.Context
 //   - instance *ladingproject.FlowInstance
-func (_e *MockFlowRepository_Expecter) OpenInstance(ctx any, instance any) *MockFlowRepository_OpenInstance_Call {
-	return &MockFlowRepository_OpenInstance_Call{Call: _e.mock.On("OpenInstance", ctx, instance)}
+func (_e *MockFlowRepository_Expecter) CreateInstance(ctx any, instance any) *MockFlowRepository_CreateInstance_Call {
+	return &MockFlowRepository_CreateInstance_Call{Call: _e.mock.On("CreateInstance", ctx, instance)}
 }
 
-func (_c *MockFlowRepository_OpenInstance_Call) Run(run func(ctx context.Context, instance *ladingproject.FlowInstance)) *MockFlowRepository_OpenInstance_Call {
+func (_c *MockFlowRepository_CreateInstance_Call) Run(run func(ctx context.Context, instance *ladingproject.FlowInstance)) *MockFlowRepository_CreateInstance_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -709,12 +776,12 @@ func (_c *MockFlowRepository_OpenInstance_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockFlowRepository_OpenInstance_Call) Return(flowInstance *ladingproject.FlowInstance, err error) *MockFlowRepository_OpenInstance_Call {
+func (_c *MockFlowRepository_CreateInstance_Call) Return(flowInstance *ladingproject.FlowInstance, err error) *MockFlowRepository_CreateInstance_Call {
 	_c.Call.Return(flowInstance, err)
 	return _c
 }
 
-func (_c *MockFlowRepository_OpenInstance_Call) RunAndReturn(run func(ctx context.Context, instance *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error)) *MockFlowRepository_OpenInstance_Call {
+func (_c *MockFlowRepository_CreateInstance_Call) RunAndReturn(run func(ctx context.Context, instance *ladingproject.FlowInstance) (*ladingproject.FlowInstance, error)) *MockFlowRepository_CreateInstance_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -286,6 +286,6 @@ func TestTrailerRepository(t *testing.T) {
 		_, err = repo.Create(a.Ctx, duplicate)
 		var validation *errortypes.Error
 		require.ErrorAs(t, err, &validation)
-		assert.Equal(t, "code", validation.Field)
+		assert.Equal(t, "code", validation.Field())
 	})
 }

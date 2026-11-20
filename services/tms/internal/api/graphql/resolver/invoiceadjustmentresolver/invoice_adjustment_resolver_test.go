@@ -221,7 +221,7 @@ func TestQueryResolver_InvoiceAdjustmentApprovals_RejectsMalformedInputBeforeQue
 
 			var validationErr *errortypes.Error
 			require.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, tt.field, validationErr.Field)
+			assert.Equal(t, tt.field, validationErr.Field())
 		})
 	}
 }
@@ -332,7 +332,7 @@ func TestMutationResolver_InvoiceAdjustmentDecisions_RejectMalformedIDs(t *testi
 	for _, err := range []error{approveErr, rejectErr, getErr} {
 		var validationErr *errortypes.Error
 		require.ErrorAs(t, err, &validationErr)
-		assert.Equal(t, "adjustmentId", validationErr.Field)
+		assert.Equal(t, "adjustmentId", validationErr.Field())
 	}
 }
 

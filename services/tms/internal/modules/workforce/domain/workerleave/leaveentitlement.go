@@ -86,7 +86,7 @@ type LeaveControl struct {
 	// WorkweekHours is what a week of entitlement is worth. Intermittent leave
 	// is taken in hours (29 CFR 825.205), so weeks only become a usable balance
 	// once there is a week's length to convert them with.
-	WorkweekHours decimal.Decimal `json:"workweekHours" keel:"workweek_hours"`
+	WorkweekHours decimal.Decimal `json:"workweekHours"          keel:"workweek_hours"`
 
 	EligibilityMonths    int32 `json:"eligibilityMonths"    keel:"eligibility_months"`
 	EligibilityHours     int32 `json:"eligibilityHours"     keel:"eligibility_hours"`
@@ -111,6 +111,45 @@ func DefaultLeaveControl() *LeaveControl {
 	}
 }
 
+const (
+	leaveControlDecimalPlaces = 2
+	maxEligibilityMonths      = 120
+	maxEligibilityHours       = 8760
+	minCertificationDueDays   = 15
+)
+
+var (
+	minEntitlementWeeks       = decimal.NewFromInt(12)
+	minMilitaryCaregiverWeeks = decimal.NewFromInt(26)
+	maxLeaveWeeks             = decimal.NewFromInt(52)
+	minWorkweekHours          = decimal.New(1, -leaveControlDecimalPlaces)
+	maxWorkweekHours          = decimal.NewFromInt(168)
+)
+
+type decimalBounds struct {
+	field      string
+	value      decimal.Decimal
+	floor      decimal.Decimal
+	floorError string
+	ceiling    decimal.Decimal
+	ceilError  string
+}
+
+func (b decimalBounds) check(multiErr *errortypes.MultiError) bool {
+	switch {
+	case !b.value.Equal(b.value.Round(leaveControlDecimalPlaces)):
+		multiErr.Add(b.field, errortypes.ErrInvalid, "Enter a number with at most two decimals")
+	case b.value.LessThan(b.floor):
+		multiErr.Add(b.field, errortypes.ErrInvalid, b.floorError)
+	case b.value.GreaterThan(b.ceiling):
+		multiErr.Add(b.field, errortypes.ErrInvalid, b.ceilError)
+	default:
+		return true
+	}
+
+	return false
+}
+
 func (c *LeaveControl) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(c,
 		validation.Field(&c.MeasurementMethod,
@@ -121,41 +160,68 @@ func (c *LeaveControl) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 
-	if !c.EntitlementWeeks.IsPositive() {
-		multiErr.Add(
-			"entitlementWeeks",
-			errortypes.ErrInvalid,
-			"The entitlement must be more than zero weeks",
-		)
-	}
-	if !c.MilitaryCaregiverWeeks.IsPositive() {
+	entitlementValid := decimalBounds{
+		field:      "entitlementWeeks",
+		value:      c.EntitlementWeeks,
+		floor:      minEntitlementWeeks,
+		floorError: "FMLA entitles an eligible employee to at least twelve weeks",
+		ceiling:    maxLeaveWeeks,
+		ceilError:  "Leave cannot be more than 52 weeks a year",
+	}.check(multiErr)
+	caregiverValid := decimalBounds{
+		field:      "militaryCaregiverWeeks",
+		value:      c.MilitaryCaregiverWeeks,
+		floor:      minMilitaryCaregiverWeeks,
+		floorError: "Military caregiver leave is at least twenty-six weeks",
+		ceiling:    maxLeaveWeeks,
+		ceilError:  "Leave cannot be more than 52 weeks a year",
+	}.check(multiErr)
+	if entitlementValid && caregiverValid &&
+		c.MilitaryCaregiverWeeks.LessThan(c.EntitlementWeeks) {
 		multiErr.Add(
 			"militaryCaregiverWeeks",
 			errortypes.ErrInvalid,
-			"The military caregiver entitlement must be more than zero weeks",
+			"Military caregiver leave cannot be shorter than the ordinary entitlement",
 		)
 	}
-	if !c.WorkweekHours.IsPositive() {
+	decimalBounds{
+		field:      "workweekHours",
+		value:      c.WorkweekHours,
+		floor:      minWorkweekHours,
+		floorError: "A workweek must be more than zero hours",
+		ceiling:    maxWorkweekHours,
+		ceilError:  "A workweek cannot be more than 168 hours",
+	}.check(multiErr)
+
+	switch {
+	case c.EligibilityMonths < 0:
 		multiErr.Add(
-			"workweekHours",
+			"eligibilityMonths",
 			errortypes.ErrInvalid,
-			"A workweek must be more than zero hours",
+			"Months of service cannot be negative",
+		)
+	case c.EligibilityMonths > maxEligibilityMonths:
+		multiErr.Add(
+			"eligibilityMonths",
+			errortypes.ErrInvalid,
+			"Months of service cannot be more than 120",
 		)
 	}
-	if c.CertificationDueDays <= 0 {
+	switch {
+	case c.EligibilityHours < 0:
+		multiErr.Add("eligibilityHours", errortypes.ErrInvalid, "Hours worked cannot be negative")
+	case c.EligibilityHours > maxEligibilityHours:
+		multiErr.Add(
+			"eligibilityHours",
+			errortypes.ErrInvalid,
+			"A year holds at most 8,760 hours",
+		)
+	}
+	if c.CertificationDueDays < minCertificationDueDays {
 		multiErr.Add(
 			"certificationDueDays",
 			errortypes.ErrInvalid,
-			"Certification must be given at least a day",
-		)
-	}
-	// The statute is a floor, not a target: an employer may be more generous
-	// but cannot offer less than twelve weeks and call it FMLA.
-	if c.EntitlementWeeks.LessThan(decimal.NewFromInt(12)) {
-		multiErr.Add(
-			"entitlementWeeks",
-			errortypes.ErrInvalid,
-			"FMLA entitles an eligible employee to at least twelve weeks (29 CFR 825.200(a))",
+			"The employee must be given at least fifteen days (29 CFR 825.305(b))",
 		)
 	}
 }

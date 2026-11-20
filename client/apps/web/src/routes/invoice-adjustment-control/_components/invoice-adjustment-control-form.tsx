@@ -1,373 +1,48 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { NumberField } from "@/components/fields/number-field";
-import { SelectField } from "@/components/fields/select-field";
-import { SwitchField } from "@/components/fields/switch-field";
-import { FormSaveDock } from "@/components/form-save-dock";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@trenova/shared/components/ui/card";
-import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
-import {
-  adjustmentAccountingDatePolicyChoices,
-  adjustmentEligibilityPolicyChoices,
-  approvalPolicyChoices,
-  closedPeriodAdjustmentPolicyChoices,
-  customerCreditBalancePolicyChoices,
-  overCreditPolicyChoices,
-  replacementInvoiceReviewPolicyChoices,
-  requirementPolicyChoices,
-  supersededInvoiceVisibilityPolicyChoices,
-  writeOffApprovalPolicyChoices,
-} from "@/lib/choices";
+import { SettingsForm } from "@/components/settings/settings-form";
 import { invoiceAdjustmentControl } from "@/lib/queries/invoice-adjustment-control";
 import { invoiceAdjustmentControlService } from "@/services/invoice-adjustment-control";
 import {
+  invoiceAdjustmentControlFormSchema,
   type InvoiceAdjustmentControl,
-  invoiceAdjustmentControlSchema,
 } from "@/types/invoice-adjustment-control";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
-import { FormProvider, type Resolver, useForm, useFormContext, useWatch } from "react-hook-form";
+import { prepareInvoiceAdjustmentControl } from "../invoice-adjustment-control-submit";
+import {
+  useInvoiceAdjustmentControlTabs,
+  type InvoiceAdjustmentControlTab,
+} from "../invoice-adjustment-control-tabs";
+import { ApprovalTab } from "./approval-tab";
+import { CreditsTab } from "./credits-tab";
+import { EligibilityTab } from "./eligibility-tab";
 
+/**
+ * Invoice adjustment control: one form, saved once, split into a tab for each job a person
+ * comes here to do: which invoices can be adjusted, who approves, and how credits and
+ * rebills land.
+ */
 export default function InvoiceAdjustmentControlForm() {
-  const t = useT();
-
-  const { data } = useSuspenseQuery({
-    ...invoiceAdjustmentControl.get(),
-  });
-
-  const form = useForm<InvoiceAdjustmentControl>({
-    resolver: zodResolver(invoiceAdjustmentControlSchema) as Resolver<InvoiceAdjustmentControl>,
-    defaultValues: data,
-  });
-
-  const { handleSubmit, reset } = form;
-
-  const { mutateAsync } = useOptimisticMutation<
-    InvoiceAdjustmentControl,
-    InvoiceAdjustmentControl,
-    unknown,
-    InvoiceAdjustmentControl
-  >({
-    queryKey: invoiceAdjustmentControl.get._def,
-    mutationFn: async (values: InvoiceAdjustmentControl) =>
-      invoiceAdjustmentControlService.update(values),
-    resourceName: "Invoice Adjustment Control",
-    resetForm: reset,
-    form,
-    invalidateQueries: [invoiceAdjustmentControl.get._def],
-  });
-
-  const onSubmit = useCallback(
-    async (values: InvoiceAdjustmentControl) => {
-      await mutateAsync(values);
-    },
-    [mutateAsync],
-  );
+  const { data } = useSuspenseQuery({ ...invoiceAdjustmentControl.get() });
+  const tabs = useInvoiceAdjustmentControlTabs();
 
   return (
-    <FormProvider {...form}>
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-4 pb-14">
-          <EligibilityCard />
-          <DocumentationCard />
-          <ApprovalCard />
-          <CreditAndVisibilityCard />
-          <FormSaveDock saveButtonContent={t("Save changes")} />
-        </div>
-      </Form>
-    </FormProvider>
-  );
-}
-
-function EligibilityCard() {
-  const t = useT();
-
-  const { control } = useFormContext<InvoiceAdjustmentControl>();
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Eligibility policy")}</CardTitle>
-        <CardDescription>
-          {t(
-            "Define which invoice states may be adjusted and how accounting dates are assigned when credits, rebills, or related adjustments are created.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="partiallyPaidInvoiceAdjustmentPolicy"
-              label={t("Partially paid invoice adjustment policy")}
-              description={t(
-                "Controls whether partially paid invoices can be adjusted and whether approval is required.",
-              )}
-              options={adjustmentEligibilityPolicyChoices}
-              required
-            />
-          </FormControl>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="paidInvoiceAdjustmentPolicy"
-              label={t("Paid invoice adjustment policy")}
-              description={t(
-                "Controls whether fully paid invoices may be adjusted through the formal adjustment workflow.",
-              )}
-              options={adjustmentEligibilityPolicyChoices}
-              required
-            />
-          </FormControl>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="disputedInvoiceAdjustmentPolicy"
-              label={t("Disputed invoice adjustment policy")}
-              description={t(
-                "Controls whether disputed invoices can be adjusted and whether approval is required.",
-              )}
-              options={adjustmentEligibilityPolicyChoices}
-              required
-            />
-          </FormControl>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="adjustmentAccountingDatePolicy"
-              label={t("Adjustment accounting date policy")}
-              description={t(
-                "Defines whether adjustments use the original invoice accounting date when open or always book in the next open period.",
-              )}
-              options={adjustmentAccountingDatePolicyChoices}
-              required
-            />
-          </FormControl>
-          <FormControl className="max-w-[520px]">
-            <SelectField
-              control={control}
-              name="closedPeriodAdjustmentPolicy"
-              label={t("Closed period adjustment policy")}
-              description={t(
-                "Defines whether closed-period adjustments are disallowed, require reopen, or must post in the next open period with approval.",
-              )}
-              options={closedPeriodAdjustmentPolicyChoices}
-              required
-            />
-          </FormControl>
-          <FormControl className="max-w-[420px]">
-            <NumberField
-              control={control}
-              name="rerateVarianceTolerancePercent"
-              label={t("Rerate variance tolerance percent")}
-              description={t(
-                "Tolerance percentage used when comparing rerated replacement invoice economics to the superseded invoice.",
-              )}
-              required
-            />
-          </FormControl>
-          <FormControl className="max-w-[520px]">
-            <SelectField
-              control={control}
-              name="replacementInvoiceReviewPolicy"
-              label={t("Replacement invoice review policy")}
-              description={t(
-                "Defines when a replacement invoice must be reviewed after a credit and rebill workflow changes economic terms.",
-              )}
-              options={replacementInvoiceReviewPolicyChoices}
-              required
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function DocumentationCard() {
-  const t = useT();
-
-  const { control } = useFormContext<InvoiceAdjustmentControl>();
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Documentation requirements")}</CardTitle>
-        <CardDescription>
-          {t(
-            "Define the minimum supporting documentation and business justification required before an adjustment can be completed.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="adjustmentReasonRequirement"
-              label={t("Adjustment reason requirement")}
-              description={t(
-                "Determines whether a structured reason is mandatory before an adjustment can be completed.",
-              )}
-              options={requirementPolicyChoices}
-              required
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ApprovalCard() {
-  const t = useT();
-
-  const { control } = useFormContext<InvoiceAdjustmentControl>();
-  const standardApprovalPolicy = useWatch({ control, name: "standardAdjustmentApprovalPolicy" });
-  const writeOffApprovalPolicy = useWatch({ control, name: "writeOffApprovalPolicy" });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Approval policy")}</CardTitle>
-        <CardDescription>
-          {t(
-            "Define which adjustments require approval and where amount thresholds apply for standard adjustments and write-offs.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="standardAdjustmentApprovalPolicy"
-              label={t("Standard adjustment approval policy")}
-              description={t(
-                "Defines whether standard invoice adjustments require approval always, never, or only above a configured threshold.",
-              )}
-              options={approvalPolicyChoices}
-              required
-            />
-          </FormControl>
-          {standardApprovalPolicy === "AmountThreshold" && (
-            <FormControl className="max-w-[420px]">
-              <NumberField
-                control={control}
-                name="standardAdjustmentApprovalThreshold"
-                label={t("Standard adjustment approval threshold")}
-                description={t(
-                  "Adjustment amount above which approval is required when the standard approval policy uses an amount threshold.",
-                )}
-                required
-              />
-            </FormControl>
-          )}
-          <FormControl className="max-w-[520px]">
-            <SelectField
-              control={control}
-              name="writeOffApprovalPolicy"
-              label={t("Write-off approval policy")}
-              description={t(
-                "Defines whether write-offs are disallowed, always require approval, or require approval only above a threshold.",
-              )}
-              options={writeOffApprovalPolicyChoices}
-              required
-            />
-          </FormControl>
-          {writeOffApprovalPolicy === "RequireApprovalAboveThreshold" && (
-            <FormControl className="max-w-[420px]">
-              <NumberField
-                control={control}
-                name="writeOffApprovalThreshold"
-                label={t("Write-off approval threshold")}
-                description={t(
-                  "Write-off amount above which approval is required when the write-off approval policy uses an amount threshold.",
-                )}
-                required
-              />
-            </FormControl>
-          )}
-          <FormControl className="max-w-[520px]">
-            <SwitchField
-              control={control}
-              name="requireSeparateApprover"
-              label={t("Require a separate approver")}
-              description={t(
-                "Whoever submits an adjustment or raises a credit memo that needs approval cannot approve or post it themselves. Leave this off if one person handles billing.",
-              )}
-              position="left"
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CreditAndVisibilityCard() {
-  const t = useT();
-
-  const { control } = useFormContext<InvoiceAdjustmentControl>();
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Credit and visibility")}</CardTitle>
-        <CardDescription>
-          {t(
-            "Define whether unapplied customer credits are allowed, whether over-crediting can occur, and what external users may see after invoice replacement.",
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="customerCreditBalancePolicy"
-              label={t("Customer credit balance policy")}
-              description={t(
-                "Defines whether invoice adjustments may leave an unapplied customer credit balance.",
-              )}
-              options={customerCreditBalancePolicyChoices}
-              required
-            />
-          </FormControl>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="overCreditPolicy"
-              label={t("Over-credit policy")}
-              description={t(
-                "Controls unapplied customer-credit outcomes caused by payment state and does not permit credit beyond true eligible invoice line or item scope.",
-              )}
-              options={overCreditPolicyChoices}
-              required
-            />
-          </FormControl>
-          <FormControl className="max-w-[520px]">
-            <SelectField
-              control={control}
-              name="supersededInvoiceVisibilityPolicy"
-              label={t("Superseded invoice visibility policy")}
-              description={t(
-                "Defines whether external customer-facing views show only the current invoice or also expose superseded invoices with status.",
-              )}
-              options={supersededInvoiceVisibilityPolicyChoices}
-              required
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
+    <SettingsForm<InvoiceAdjustmentControl, InvoiceAdjustmentControlTab>
+      values={data}
+      schema={invoiceAdjustmentControlFormSchema}
+      queryKey={invoiceAdjustmentControl.get._def}
+      save={(values) => invoiceAdjustmentControlService.update(values)}
+      resourceName="Invoice Adjustment Control"
+      prepare={prepareInvoiceAdjustmentControl}
+      tabs={tabs}
+      content={(tab) => {
+        switch (tab) {
+          case "eligibility":
+            return <EligibilityTab />;
+          case "approval":
+            return <ApprovalTab />;
+          case "credits":
+            return <CreditsTab />;
+        }
+      }}
+    />
   );
 }

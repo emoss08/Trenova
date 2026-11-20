@@ -319,3 +319,107 @@ func TestASweepWaitsOutTheGraceAfterABounce(t *testing.T) {
 	require.Len(t, tenders, 1)
 	assert.Equal(t, int16(1), tenders[0].BounceCount)
 }
+
+func (h *harness) ediPartner(t *testing.T, code string) pulid.ID {
+	t.Helper()
+	id := pulid.MustNew("edip_")
+	_, err := keel.Exec(
+		h.ctx,
+		h.db,
+		`INSERT INTO edi_partners (id, business_unit_id, organization_id, code, name) VALUES ($1, $2, $3, $4, $5)`,
+		id.String(),
+		h.tenant.BuID.String(),
+		h.tenant.OrgID.String(),
+		code,
+		"Partner "+code,
+	)
+	require.NoError(t, err)
+	return id
+}
+
+func (h *harness) ediTender(
+	t *testing.T,
+	partnerID pulid.ID,
+	statuses ...tender.OfferStatus,
+) *tender.Tender {
+	t.Helper()
+	sentAt := h.now - 600
+	entity := &tender.Tender{
+		OrganizationID: h.tenant.OrgID,
+		BusinessUnitID: h.tenant.BuID,
+		ShipmentID:     h.graph.Shipment.ID,
+		ShipmentMoveID: h.graph.Moves[0].ID,
+		Mode:           tender.ModeSpotSequential,
+		Status:         tender.StatusActive,
+	}
+	for idx, status := range statuses {
+		entity.Offers = append(entity.Offers, &tender.TenderOffer{
+			CarrierID:       h.carrier(t, "E"+string(rune('A'+idx))),
+			Rank:            int16(idx + 1),
+			RateMethod:      shipmentvocab.CarrierRateMethodFlat,
+			Rate:            decimal.NewFromInt(int64(1500 + 100*idx)),
+			OfferTTLSeconds: 3600,
+			Channel:         tender.ChannelEDI,
+			EDIPartnerID:    &partnerID,
+			Status:          status,
+			SentAt:          &sentAt,
+		})
+	}
+	created, err := h.repo.Create(h.ctx, entity)
+	require.NoError(t, err)
+	return created
+}
+
+func TestAPartnersReplyFindsTheOfferByTheShipmentsNumber(t *testing.T) {
+	h := newHarness(t)
+	partnerID := h.ediPartner(t, "QYSF")
+	entity := h.ediTender(t, partnerID, tender.OfferStatusSent)
+	offerID := entity.Offers[0].ID
+
+	found, err := h.repo.GetOfferForPartnerKey(h.ctx, tenderports.GetOfferForPartnerKeyRequest{
+		TenantInfo: h.tenant,
+		PartnerID:  partnerID,
+		Keys:       tender.ParsePartnerKeys("PRO-TENDER"),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, offerID, found.ID)
+	require.NotNil(t, found.Tender)
+	assert.Equal(t, h.graph.Shipment.ID, found.Tender.ShipmentID)
+
+	found, err = h.repo.GetOfferForPartnerKey(h.ctx, tenderports.GetOfferForPartnerKeyRequest{
+		TenantInfo: h.tenant,
+		PartnerID:  partnerID,
+		Keys:       tender.ParsePartnerKeys("PRO-TENDER-1"),
+	})
+	require.NoError(t, err, "a move key names the shipment's first move")
+	assert.Equal(t, offerID, found.ID)
+
+	_, err = h.repo.GetOfferForPartnerKey(h.ctx, tenderports.GetOfferForPartnerKeyRequest{
+		TenantInfo: h.tenant,
+		PartnerID:  partnerID,
+		Keys:       tender.ParsePartnerKeys("PRO-TENDER-2"),
+	})
+	require.Error(t, err, "the shipment has no second move")
+
+	_, err = h.repo.GetOfferForPartnerKey(h.ctx, tenderports.GetOfferForPartnerKeyRequest{
+		TenantInfo: h.tenant,
+		PartnerID:  partnerID,
+		Keys:       tender.ParsePartnerKeys("PRO-TENDER"),
+		Statuses:   []tender.OfferStatus{tender.OfferStatusAccepted},
+	})
+	require.Error(t, err, "the offer is not accepted")
+
+	_, err = h.repo.GetOfferForPartnerKey(h.ctx, tenderports.GetOfferForPartnerKeyRequest{
+		TenantInfo: h.tenant,
+		PartnerID:  h.ediPartner(t, "OTHR"),
+		Keys:       tender.ParsePartnerKeys("PRO-TENDER"),
+	})
+	require.Error(t, err, "another partner's reply does not reach this offer")
+
+	_, err = h.repo.GetOfferForPartnerKey(h.ctx, tenderports.GetOfferForPartnerKeyRequest{
+		TenantInfo: h.tenant,
+		PartnerID:  partnerID,
+		Keys:       tender.ParsePartnerKeys(h.graph.Shipment.ID.String(), offerID.String()),
+	})
+	require.Error(t, err, "Trenova's record ids are not keys")
+}

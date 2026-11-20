@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -18,15 +19,17 @@ import (
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	Repo         detentionports.DetentionPolicyRepository
-	Validator    *Validator
-	AuditService auditports.AuditService
+	Logger              *zap.Logger
+	Repo                detentionports.DetentionPolicyRepository
+	ShipmentControlRepo tenantports.ShipmentControlRepository
+	Validator           *Validator
+	AuditService        auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
 	repo         detentionports.DetentionPolicyRepository
+	controls     tenantports.ShipmentControlRepository
 	validator    *Validator
 	auditService auditports.AuditService
 }
@@ -35,6 +38,7 @@ func New(p Params) *Service {
 	return &Service{
 		l:            p.Logger.Named("service.detention-policy"),
 		repo:         p.Repo,
+		controls:     p.ShipmentControlRepo,
 		validator:    p.Validator,
 		auditService: p.AuditService,
 	}
@@ -52,6 +56,16 @@ func (s *Service) ListConnection(
 	req *detentionports.ListDetentionPolicyConnectionRequest,
 ) (*pagination.CursorListResult[*detentionpolicy.DetentionPolicy], error) {
 	return s.repo.ListConnection(ctx, req)
+}
+
+// DefaultPolicyID names the organization's default detention policy, read
+// once from shipment control so a list can mark its row without a read per
+// policy. It is nil when the organization has named none.
+func (s *Service) DefaultPolicyID(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (pulid.ID, error) {
+	return organizationDefaultID(ctx, s.controls, tenantInfo)
 }
 
 func (s *Service) GetByID(
@@ -178,6 +192,10 @@ func (s *Service) Delete(
 	existing, err := s.repo.GetByID(ctx, req)
 	if err != nil {
 		log.Error("failed to get detention policy for delete", zap.Error(err))
+		return err
+	}
+
+	if err = s.validator.ValidateDelete(ctx, existing); err != nil {
 		return err
 	}
 

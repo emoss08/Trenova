@@ -27,7 +27,7 @@ func (s *Service) PlanCreate(
 		return nil, err
 	}
 
-	if err := s.transformer.TransformCustomer(ctx, entity); err != nil {
+	if err := s.formatter.Format(ctx, entity); err != nil {
 		return nil, err
 	}
 
@@ -65,7 +65,7 @@ func (s *Service) PlanUpdate(
 		return nil, err
 	}
 
-	if err = s.transformer.TransformCustomer(ctx, entity); err != nil {
+	if err = s.formatter.Format(ctx, entity); err != nil {
 		return nil, err
 	}
 

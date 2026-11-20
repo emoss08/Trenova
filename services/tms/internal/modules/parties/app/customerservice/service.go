@@ -12,9 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
-	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -34,7 +34,7 @@ type Params struct {
 	Validator    *Validator
 	AuditService auditports.AuditService
 	Realtime     realtimeports.RealtimeService
-	Transformer  accessorialchargeports.DataTransformer
+	Formatter    dataentrycontrolports.TextFormatter
 	DB           kernelports.Transactor
 	Sync         accountingsyncports.AccountingSyncEnqueuer
 	Credit       customerports.CreditReviewer
@@ -48,7 +48,7 @@ type Service struct {
 	validator    *Validator
 	auditService auditports.AuditService
 	realtime     realtimeports.RealtimeService
-	transformer  accessorialchargeports.DataTransformer
+	formatter    dataentrycontrolports.TextFormatter
 	db           kernelports.Transactor
 	sync         accountingsyncports.AccountingSyncEnqueuer
 	credit       customerports.CreditReviewer
@@ -63,7 +63,7 @@ func New(p Params) *Service {
 		validator:    p.Validator,
 		auditService: p.AuditService,
 		realtime:     p.Realtime,
-		transformer:  p.Transformer,
+		formatter:    p.Formatter,
 		db:           p.DB,
 		sync:         p.Sync,
 		credit:       p.Credit,

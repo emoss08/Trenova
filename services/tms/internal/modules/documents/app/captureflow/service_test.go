@@ -974,7 +974,7 @@ func TestRequestsOnlyDriveYourOwnDevice(t *testing.T) {
 	require.Error(t, err)
 	var validation *errortypes.Error
 	require.True(t, errors.As(err, &validation))
-	assert.Equal(t, "deviceId", validation.Field)
+	assert.Equal(t, "deviceId", validation.Field())
 }
 
 func TestRetentionExpiresAndPurges(t *testing.T) {

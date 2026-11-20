@@ -2732,7 +2732,6 @@
   "{0} without a biller": "{0} sin facturador",
   "{0} would": "{0} haría lo siguiente",
   "{0} would go through. {1} would be refused: {2}": "{0} se completarían. {1} se rechazarían: {2}",
-  "{0} °F": "{0} °F",
   "{0} · Case": "{0} · Caso",
   "{0} · Desk": "{0} · Escritorio",
   "{0} · IFTA": "{0} · IFTA",
@@ -2787,18 +2786,14 @@
   "{0}; without it the charge is held for review.": "{0}; sin él, el cargo queda retenido para revisión.",
   "{0}; without it the charge won't bill.": "{0}; sin él, el cargo no se facturará.",
   "{0}d {1}h": "{0} d {1} h",
-  "{0}°F": "{0} °F",
   "{0}–{1} lb": "{0}–{1} lb",
   "{0}–{1} mi": "{0}–{1} mi",
   "{0}–{1} of about {2}": "{0}–{1} de unos {2}",
   "{0}–{1} of {2}+": "{0}–{1} de {2}+",
-  "{0}–{1} °F": "{0}–{1} °F",
   "~{0} changed": "~{0} cambiados",
   "© OpenStreetMap": "© OpenStreetMap",
   "· confirmed {0}": "· confirmado {0}",
   "— for the invoice": "— para la factura",
   "— for the shipment": "— para el envío",
-  "−{0} removed": "−{0} eliminados",
-  "≤ {0}°F": "≤ {0} °F",
-  "≥ {0}°F": "≥ {0} °F"
+  "−{0} removed": "−{0} eliminados"
 }

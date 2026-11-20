@@ -2,22 +2,27 @@ package internaledistatussync
 
 import (
 	"context"
+	"maps"
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopactual"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/orderportsmock"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -82,7 +87,7 @@ func TestObserverDuplicateExecutionIsIdempotent(t *testing.T) {
 	require.Empty(t, fixture.transferRepo.created)
 }
 
-func TestObserverAutoAppliesLifecycleActualsThroughCoordinator(t *testing.T) {
+func TestObserverAutoAppliesLifecycleActualsThroughStopActuals(t *testing.T) {
 	t.Parallel()
 
 	fixture := newObserverFixture(t)
@@ -99,16 +104,20 @@ func TestObserverAutoAppliesLifecycleActualsThroughCoordinator(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Empty(t, fixture.shipmentRepo.updates)
-	require.Len(t, fixture.shipmentRepo.lifecycleUpdates, 1)
-	updated := fixture.shipmentRepo.lifecycleUpdates[0]
-	require.Equal(t, shipmentvocab.StatusInTransit, updated.Status)
-	require.Equal(t, shipmentvocab.MoveStatusInTransit, updated.Moves[0].Status)
-	require.Equal(t, shipmentvocab.StopStatusCompleted, updated.Moves[0].Stops[0].Status)
-	require.Equal(t, shipmentvocab.StopStatusNew, updated.Moves[0].Stops[1].Status)
-	require.Equal(t, arrival, *updated.Moves[0].Stops[0].ActualArrival)
-	require.Equal(t, departure, *updated.Moves[0].Stops[0].ActualDeparture)
-	require.Equal(t, departure, *updated.ActualShipDate)
-	require.Nil(t, updated.ActualDeliveryDate)
+	require.Len(t, fixture.stopActuals.calls, 1)
+	call := fixture.stopActuals.calls[0]
+	require.Equal(t, fixture.source.Moves[0].ID, call.req.MoveID)
+	require.Equal(t, fixture.link.SourceOrganizationID, call.req.TenantInfo.OrgID)
+	require.Equal(t, []stopactual.Change{{
+		StopID:    fixture.source.Moves[0].Stops[0].ID,
+		Arrival:   &arrival,
+		Departure: &departure,
+	}}, call.applied)
+	synced := fixture.source.Moves[0].Stops[0]
+	require.Equal(t, shipmentvocab.StopStatusCompleted, synced.Status)
+	require.Equal(t, arrival, *synced.ActualArrival)
+	require.Equal(t, departure, *synced.ActualDeparture)
+	require.Equal(t, shipmentvocab.StopStatusNew, fixture.source.Moves[0].Stops[1].Status)
 	require.Len(t, fixture.transferRepo.created, 1)
 	change := fixture.transferRepo.created[0]
 	require.Equal(t, edisync.TransferChangeTypeShipmentLifecycle214, change.ChangeType)
@@ -137,7 +146,7 @@ func TestObserverManualReviewLifecycleDoesNotMutateShipment(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.Empty(t, fixture.shipmentRepo.lifecycleUpdates)
+	require.Empty(t, fixture.stopActuals.calls)
 	require.Empty(t, fixture.eventRepo.inserted)
 	require.Len(t, fixture.transferRepo.created, 1)
 	require.Equal(
@@ -167,7 +176,7 @@ func TestObserverLifecycleMappingConflictCreatesPendingReview(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.Empty(t, fixture.shipmentRepo.lifecycleUpdates)
+	require.Empty(t, fixture.stopActuals.calls)
 	require.Empty(t, fixture.eventRepo.inserted)
 	require.Len(t, fixture.transferRepo.created, 1)
 	change := fixture.transferRepo.created[0]
@@ -428,6 +437,7 @@ type observerFixture struct {
 	transferRepo *fakeTransferChangeRepository
 	eventRepo    *fakeShipmentEventRepository
 	realtime     *fakeRealtimeService
+	stopActuals  *fakeStopActuals
 }
 
 func newObserverFixture(t *testing.T) *observerFixture {
@@ -473,6 +483,7 @@ func newObserverFixture(t *testing.T) *observerFixture {
 	transferRepo := &fakeTransferChangeRepository{existing: map[string]*edisync.TransferChange{}}
 	eventRepo := &fakeShipmentEventRepository{}
 	realtime := &fakeRealtimeService{}
+	stopActuals := &fakeStopActuals{shipments: shipmentRepo.shipments}
 
 	derivation := orderportsmock.NewMockOrderDerivationService(t)
 	derivation.EXPECT().
@@ -489,10 +500,12 @@ func newObserverFixture(t *testing.T) *observerFixture {
 		transferRepo: transferRepo,
 		eventRepo:    eventRepo,
 		realtime:     realtime,
+		stopActuals:  stopActuals,
 	}
+	coordinator := shipmentstate.NewCoordinatorWithClock(func() int64 { return 2_000 })
 	fixture.observer = &Observer{
 		l:                  zap.NewNop(),
-		db:                 dbtest.NopConnection{},
+		db:                 rollbackDB{transfers: transferRepo},
 		shipmentRepo:       shipmentRepo,
 		shipmentEventRepo:  eventRepo,
 		shipmentLinkRepo:   linkRepo,
@@ -504,11 +517,9 @@ func newObserverFixture(t *testing.T) *observerFixture {
 			Logger:   zap.NewNop(),
 		}),
 		orderDerivation: derivation,
-		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
-			ShipmentRepo: shipmentRepo,
-			Coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 2_000 }),
-		}),
+		coordinator:     coordinator,
 	}
+	fixture.observer.SetStopActuals(stopActuals)
 	return fixture
 }
 
@@ -619,10 +630,9 @@ func (f *observerFixture) idempotencyKey(
 }
 
 type fakeShipmentRepository struct {
-	shipments        map[pulid.ID]*shipment.Shipment
-	updates          []*shipmentports.UpdateShipmentStatusRequest
-	lifecycleUpdates []*shipment.Shipment
-	cancels          []*shipmentports.CancelShipmentRequest
+	shipments map[pulid.ID]*shipment.Shipment
+	updates   []*shipmentports.UpdateShipmentStatusRequest
+	cancels   []*shipmentports.CancelShipmentRequest
 }
 
 func (r *fakeShipmentRepository) GetByID(
@@ -639,16 +649,6 @@ func (r *fakeShipmentRepository) UpdateStatus(
 	r.updates = append(r.updates, req)
 	entity := r.shipments[req.ShipmentID]
 	entity.Status = req.Status
-	entity.Version++
-	return entity, nil
-}
-
-func (r *fakeShipmentRepository) UpdateOperationalLifecycle(
-	_ context.Context,
-	entity *shipment.Shipment,
-) (*shipment.Shipment, error) {
-	r.lifecycleUpdates = append(r.lifecycleUpdates, entity)
-	r.shipments[entity.ID] = entity
 	entity.Version++
 	return entity, nil
 }
@@ -730,5 +730,288 @@ func (s *fakeRealtimeService) PublishResourceInvalidation(
 	req *realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	s.published = append(s.published, req)
+	return nil
+}
+
+func TestStopActualEventsSyncTheLinkedShipmentsLifecycle(t *testing.T) {
+	t.Parallel()
+
+	for _, eventType := range []shipmentevent.Type{
+		shipmentevent.TypeStopArrived,
+		shipmentevent.TypeStopDeparted,
+		shipmentevent.TypeStopArrivalCorrected,
+		shipmentevent.TypeStopDepartureCorrected,
+	} {
+		event := &shipmentevent.Event{Type: eventType}
+		require.True(t, isLifecycleCandidate(event), eventType)
+		require.True(t, eventCanSync(event), eventType)
+	}
+}
+
+func TestObserverSyncedArrivalReconcilesTheLinkedStopOnce(t *testing.T) {
+	t.Parallel()
+
+	fixture := newObserverFixture(t)
+	fixture.installLifecycleStops()
+	arrival := int64(1_000)
+	fixture.source.Moves[0].Stops[0].ActualArrival = &arrival
+	event := stopEvent(fixture, fixture.source, shipmentevent.TypeStopArrived)
+
+	require.NoError(t, fixture.observer.OnShipmentEvent(t.Context(), event))
+
+	require.Len(t, fixture.stopActuals.calls, 1)
+	call := fixture.stopActuals.calls[0]
+	linked := fixture.target.Moves[0].Stops[0]
+	require.Equal(t, fixture.target.Moves[0].ID, call.req.MoveID)
+	require.Equal(t, fixture.link.TargetOrganizationID, call.req.TenantInfo.OrgID)
+	require.Equal(t, fixture.link.BusinessUnitID, call.req.TenantInfo.BuID)
+	require.Nil(t, call.before[linked.ID].arrival)
+	require.Equal(t, []stopactual.Change{{StopID: linked.ID, Arrival: &arrival}}, call.applied)
+	require.Equal(t, arrival, *linked.ActualArrival)
+	require.Equal(t, shipmentvocab.StopStatusInTransit, linked.Status)
+	require.NotNil(t, call.req.Origin)
+	require.Equal(t, internaledilifecycle.ActorLabel, call.req.Origin.ActorLabel)
+	require.Equal(t, event.CorrelationID, call.req.Origin.CorrelationID)
+	require.Equal(
+		t,
+		event.ID.String(),
+		call.req.Origin.Metadata[edisync.InternalEDIMirroredFromEventIDKey],
+	)
+	require.Equal(
+		t,
+		fixture.link.ID.String(),
+		call.req.Origin.Metadata[edisync.InternalEDIShipmentLinkIDKey],
+	)
+	require.Len(t, fixture.transferRepo.created, 1)
+	change := fixture.transferRepo.created[0]
+	require.Equal(t, edisync.TransferChangeTypeShipmentLifecycle214, change.ChangeType)
+	require.Equal(t, edisync.TransferChangeStatusApplied, change.Status)
+	require.Len(t, fixture.eventRepo.inserted, 1)
+
+	require.NoError(t, fixture.observer.OnShipmentEvent(t.Context(), event))
+	require.NoError(t, fixture.observer.OnShipmentEvent(
+		t.Context(),
+		stopEvent(fixture, fixture.source, shipmentevent.TypeStopArrived),
+	))
+
+	require.Len(t, fixture.stopActuals.calls, 1, "a repeated sync reconciles nothing")
+	require.Len(t, fixture.transferRepo.created, 1, "and records no second change")
+	require.Len(t, fixture.eventRepo.inserted, 1)
+}
+
+func TestObserverSyncedCorrectionReconcilesTheCorrectedTime(t *testing.T) {
+	t.Parallel()
+
+	fixture := newObserverFixture(t)
+	fixture.installLifecycleStops()
+	first := int64(1_000)
+	fixture.source.Moves[0].Stops[0].ActualArrival = &first
+	require.NoError(t, fixture.observer.OnShipmentEvent(
+		t.Context(),
+		stopEvent(fixture, fixture.source, shipmentevent.TypeStopArrived),
+	))
+
+	corrected := int64(1_200)
+	fixture.source.Moves[0].Stops[0].ActualArrival = &corrected
+	require.NoError(t, fixture.observer.OnShipmentEvent(
+		t.Context(),
+		stopEvent(fixture, fixture.source, shipmentevent.TypeStopArrivalCorrected),
+	))
+
+	require.Len(t, fixture.stopActuals.calls, 2)
+	call := fixture.stopActuals.calls[1]
+	linked := fixture.target.Moves[0].Stops[0]
+	require.Equal(t, first, *call.before[linked.ID].arrival)
+	require.Equal(t, []stopactual.Change{{StopID: linked.ID, Arrival: &corrected}}, call.applied)
+	require.Equal(t, corrected, *linked.ActualArrival)
+	require.Len(t, fixture.transferRepo.created, 2)
+}
+
+func TestObserverDoesNotEchoSyncedStopEventsBack(t *testing.T) {
+	t.Parallel()
+
+	fixture := newObserverFixture(t)
+	fixture.installLifecycleStops()
+	arrival := int64(1_000)
+	fixture.source.Moves[0].Stops[0].ActualArrival = &arrival
+	require.NoError(t, fixture.observer.OnShipmentEvent(
+		t.Context(),
+		stopEvent(fixture, fixture.source, shipmentevent.TypeStopArrived),
+	))
+	require.Len(t, fixture.stopActuals.calls, 1)
+	origin := fixture.stopActuals.calls[0].req.Origin
+	linkCalls := fixture.linkRepo.calls
+
+	echo := stopEvent(fixture, fixture.target, shipmentevent.TypeStopArrived)
+	echo.ActorLabel = origin.ActorLabel
+	maps.Copy(echo.Metadata, origin.Metadata)
+	require.NoError(t, fixture.observer.OnShipmentEvent(t.Context(), echo))
+
+	require.Equal(t, linkCalls, fixture.linkRepo.calls, "a synced stop event is not synced back")
+	require.Len(t, fixture.stopActuals.calls, 1)
+	require.Len(t, fixture.transferRepo.created, 1)
+
+	require.NoError(t, fixture.observer.OnShipmentEvent(
+		t.Context(),
+		stopEvent(fixture, fixture.target, shipmentevent.TypeStopArrived),
+	))
+
+	require.Len(t, fixture.stopActuals.calls, 1, "an untagged stop event finds nothing to sync")
+	require.Len(t, fixture.transferRepo.created, 1)
+	require.Equal(t, arrival, *fixture.source.Moves[0].Stops[0].ActualArrival)
+}
+
+func TestObserverDoesNotClearTimesTheLinkedShipmentAlreadyHas(t *testing.T) {
+	t.Parallel()
+
+	fixture := newObserverFixture(t)
+	fixture.installLifecycleStops()
+	arrival := int64(1_000)
+	departure := int64(1_100)
+	fixture.source.Moves[0].Stops[0].ActualArrival = &arrival
+	linked := fixture.target.Moves[0].Stops[0]
+	linkedArrival := arrival
+	linked.ActualArrival = &linkedArrival
+	linked.ActualDeparture = &departure
+
+	require.NoError(t, fixture.observer.OnShipmentEvent(
+		t.Context(),
+		stopEvent(fixture, fixture.source, shipmentevent.TypeStopArrived),
+	))
+
+	require.Empty(t, fixture.stopActuals.calls)
+	require.Empty(t, fixture.transferRepo.created)
+	require.Equal(t, departure, *linked.ActualDeparture)
+}
+
+func TestObserverRefusedStopActualsBecomeAPendingConflict(t *testing.T) {
+	t.Parallel()
+
+	fixture := newObserverFixture(t)
+	fixture.installLifecycleStops()
+	arrival := int64(1_000)
+	fixture.source.Moves[0].Stops[0].ActualArrival = &arrival
+	fixture.stopActuals.err = errortypes.NewBusinessError("This load has been canceled")
+
+	require.NoError(t, fixture.observer.OnShipmentEvent(
+		t.Context(),
+		stopEvent(fixture, fixture.source, shipmentevent.TypeStopArrived),
+	))
+
+	require.Empty(t, fixture.eventRepo.inserted)
+	require.Nil(t, fixture.target.Moves[0].Stops[0].ActualArrival)
+	require.Len(t, fixture.transferRepo.created, 1)
+	change := fixture.transferRepo.created[0]
+	require.Equal(t, edisync.TransferChangeTypeShipmentLifecycle214, change.ChangeType)
+	require.Equal(t, edisync.TransferChangeStatusPendingReview, change.Status)
+	require.Equal(t, edisync.TransferChangeConflictConflict, change.ConflictStatus)
+	require.Contains(t, change.ConflictReason, "This load has been canceled")
+	require.Nil(t, change.AppliedAt)
+}
+
+func stopEvent(
+	fixture *observerFixture,
+	entity *shipment.Shipment,
+	eventType shipmentevent.Type,
+) *shipmentevent.Event {
+	move := entity.Moves[0]
+	event := &shipmentevent.Event{
+		ID:             pulid.MustNew("se_"),
+		OrganizationID: entity.OrganizationID,
+		BusinessUnitID: entity.BusinessUnitID,
+		ShipmentID:     entity.ID,
+		MoveID:         move.ID,
+		StopID:         move.Stops[0].ID,
+		Type:           eventType,
+		Summary:        "Arrived at stop",
+		Metadata:       map[string]any{},
+		OccurredAt:     1780418506,
+		CorrelationID:  pulid.MustNew("corr_").String(),
+	}
+	fixture.event = event
+	return event
+}
+
+type rollbackDB struct {
+	transfers *fakeTransferChangeRepository
+}
+
+func (d rollbackDB) Transact(
+	ctx context.Context,
+	_ kernelports.TxOptions,
+	fn func(context.Context) error,
+) error {
+	existing := maps.Clone(d.transfers.existing)
+	created := slices.Clone(d.transfers.created)
+	if err := fn(ctx); err != nil {
+		d.transfers.existing = existing
+		d.transfers.created = created
+		return err
+	}
+	return nil
+}
+
+type stopTimes struct {
+	arrival   *int64
+	departure *int64
+}
+
+type stopActualsCall struct {
+	req     *shipmentmoveports.ReconcileStopActualsRequest
+	before  map[pulid.ID]stopTimes
+	applied []stopactual.Change
+}
+
+type fakeStopActuals struct {
+	shipments map[pulid.ID]*shipment.Shipment
+	calls     []stopActualsCall
+	err       error
+}
+
+func (f *fakeStopActuals) ReconcileStopActuals(
+	ctx context.Context,
+	req *shipmentmoveports.ReconcileStopActualsRequest,
+) (*shipmentmoveports.ReconcileStopActualsResult, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	move := f.move(req.MoveID)
+	if move == nil {
+		return nil, errortypes.NewNotFoundError("Move not found")
+	}
+
+	call := stopActualsCall{req: req, before: make(map[pulid.ID]stopTimes, len(move.Stops))}
+	for _, stop := range move.Stops {
+		call.before[stop.ID] = stopTimes{
+			arrival:   stop.ActualArrival,
+			departure: stop.ActualDeparture,
+		}
+	}
+	for range len(move.Stops) + 1 {
+		changes, err := req.Plan(ctx, move)
+		if err != nil {
+			return nil, err
+		}
+		if len(changes) == 0 {
+			break
+		}
+		if _, err = stopactual.Apply(move, changes); err != nil {
+			return nil, err
+		}
+		call.applied = append(call.applied, changes...)
+	}
+	f.calls = append(f.calls, call)
+
+	return &shipmentmoveports.ReconcileStopActualsResult{Move: move, Changes: call.applied}, nil
+}
+
+func (f *fakeStopActuals) move(id pulid.ID) *shipment.ShipmentMove {
+	for _, entity := range f.shipments {
+		for _, move := range entity.Moves {
+			if move.ID == id {
+				return move
+			}
+		}
+	}
 	return nil
 }

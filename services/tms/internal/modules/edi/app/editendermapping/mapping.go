@@ -49,18 +49,6 @@ func MappedID(
 	return target, ok && target.IsNotNil()
 }
 
-func OptionalMappedID(
-	index map[edi.MappingEntityType]map[pulid.ID]pulid.ID,
-	entityType edi.MappingEntityType,
-	sourceID pulid.ID,
-) pulid.ID {
-	target, ok := MappedID(index, entityType, sourceID)
-	if !ok {
-		return pulid.Nil
-	}
-	return target
-}
-
 func flattenRequiredIDs(required map[edi.MappingEntityType][]pulid.ID) []pulid.ID {
 	total := 0
 	for _, ids := range required {

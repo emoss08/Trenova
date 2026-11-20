@@ -47,12 +47,14 @@ import {
   isCapabilitySectionVisible,
 } from "@trenova/shared/lib/capability";
 import { describeCommodityDimensions } from "@trenova/shared/lib/permit";
+import { TemperatureRangeFields } from "./temperature-range-fields";
 import { cn, findDuplicateIds } from "@trenova/shared/lib/utils";
 import type {
   ResolvedModeProfile,
   Shipment,
   ShipmentCommodity,
 } from "@trenova/shared/types/shipment";
+import { temperatureLabel, temperatureOf } from "@trenova/shared/lib/temperature";
 import { useState } from "react";
 import {
   useFieldArray,
@@ -224,6 +226,10 @@ function CommodityDialog({
             />
           </FormControl>
         </FormGroup>
+        <TemperatureRangeFields
+          prefix={`commodities.${index}`}
+          description={t("The range this commodity is kept at when it differs from the load")}
+        />
         <CapabilityFields descriptors={dimensionDescriptors} profile={profile} cols={3} />
         {showDimensions && <CapabilityExplainer profile={profile} field="commodities" />}
         {checkFailed && (
@@ -304,6 +310,7 @@ function CommodityRow({
   const commodity = line?.commodity;
   const name = commodity?.name || "—";
   const messages = errors ? fieldErrorMessages(errors) : [];
+  const temperature = temperatureLabel(temperatureOf(line), t);
   const invalid = messages.length > 0;
   const flags = [
     commodity?.hazardousMaterialId
@@ -362,6 +369,11 @@ function CommodityRow({
             ))}
           </span>
         )}
+        {temperature ? (
+          <span className="text-muted-foreground text-2xs shrink-0 tabular-nums">
+            {temperature}
+          </span>
+        ) : null}
       </div>
       <span className="text-muted-foreground col-span-2 truncate text-xs tabular-nums">
         {formatNumber(line?.pieces ?? 0)}

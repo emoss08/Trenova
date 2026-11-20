@@ -14,12 +14,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopactual"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/orderportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentmoveportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -137,7 +140,7 @@ func TestService_ApplyTransferChange_StatusRegressionAppliesLinkedShipmentStatus
 	require.Equal(t, edisync.TransferChangeStatusApplied, updated.Status)
 }
 
-func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughCoordinator(t *testing.T) {
+func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughStopActuals(t *testing.T) {
 	t.Parallel()
 
 	fixture := newTransferChangeApplyFixture(t, edisync.TransferChangeDirectionTargetToSource)
@@ -156,20 +159,45 @@ func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughCoordinator(t
 	fixture.expectLoadPendingChange(change)
 	fixture.expectLoadLink(3)
 	fixture.expectLoadShipments()
-	fixture.shipmentRepo.EXPECT().
-		UpdateOperationalLifecycle(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
-			return entity.ID == fixture.link.SourceShipmentID &&
-				entity.Status == shipmentvocab.StatusInTransit &&
-				entity.Moves[0].Status == shipmentvocab.MoveStatusInTransit &&
-				entity.Moves[0].Stops[0].Status == shipmentvocab.StopStatusCompleted &&
-				entity.Moves[0].Stops[0].ActualArrival != nil &&
-				*entity.Moves[0].Stops[0].ActualArrival == arrival &&
-				entity.ActualShipDate != nil &&
-				*entity.ActualShipDate == departure
-		})).
-		RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
-			return entity, nil
+	sourceMove := fixture.source.Moves[0]
+	var applied []stopactual.Change
+	fixture.moves.EXPECT().
+		ReconcileStopActuals(
+			mock.Anything,
+			mock.MatchedBy(func(req *shipmentmoveports.ReconcileStopActualsRequest) bool {
+				return req.MoveID == sourceMove.ID &&
+					req.TenantInfo.OrgID == fixture.link.SourceOrganizationID &&
+					req.Origin != nil &&
+					req.Origin.Metadata[edisync.InternalEDIMirroredFromEventIDKey] ==
+						change.Payload["sourceEventId"] &&
+					req.Origin.Metadata[edisync.InternalEDIShipmentLinkIDKey] ==
+						fixture.link.ID.String()
+			}),
+		).
+		RunAndReturn(func(
+			ctx context.Context,
+			req *shipmentmoveports.ReconcileStopActualsRequest,
+		) (*shipmentmoveports.ReconcileStopActualsResult, error) {
+			changes, err := req.Plan(ctx, sourceMove)
+			if err != nil {
+				return nil, err
+			}
+			if _, err = stopactual.Apply(sourceMove, changes); err != nil {
+				return nil, err
+			}
+			applied = changes
+			return &shipmentmoveports.ReconcileStopActualsResult{
+				Move:    sourceMove,
+				Changes: changes,
+			}, nil
 		}).
+		Once()
+	fixture.shipmentRepo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
+			return req.ID == fixture.link.SourceShipmentID &&
+				req.TenantInfo.OrgID == fixture.link.SourceOrganizationID
+		})).
+		Return(fixture.source, nil).
 		Once()
 	fixture.expectInsertMirroredEvent(shipmentevent.TypeStatusChanged)
 	fixture.expectUpdateReviewedChange(edisync.TransferChangeStatusApplied)
@@ -185,6 +213,12 @@ func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughCoordinator(t
 
 	require.NoError(t, err)
 	require.Equal(t, edisync.TransferChangeStatusApplied, updated.Status)
+	require.Equal(t, []stopactual.Change{{
+		StopID:    sourceMove.Stops[0].ID,
+		Arrival:   &arrival,
+		Departure: &departure,
+	}}, applied)
+	require.Equal(t, shipmentvocab.StopStatusCompleted, sourceMove.Stops[0].Status)
 }
 
 type transferChangeApplyFixture struct {
@@ -198,6 +232,7 @@ type transferChangeApplyFixture struct {
 	shipmentLinkRepo   *editenderportsmock.MockEDIShipmentLinkRepository
 	shipmentRepo       *shipmentportsmock.MockShipmentRepository
 	eventRepo          *shipmenteventportsmock.MockShipmentEventRepository
+	moves              *shipmentmoveportsmock.MockShipmentMoveService
 }
 
 func newTransferChangeApplyFixture(
@@ -250,6 +285,7 @@ func newTransferChangeApplyFixture(
 		shipmentLinkRepo:   editenderportsmock.NewMockEDIShipmentLinkRepository(t),
 		shipmentRepo:       shipmentportsmock.NewMockShipmentRepository(t),
 		eventRepo:          shipmenteventportsmock.NewMockShipmentEventRepository(t),
+		moves:              shipmentmoveportsmock.NewMockShipmentMoveService(t),
 	}
 	orderDerivation := orderportsmock.NewMockOrderDerivationService(t)
 	orderDerivation.EXPECT().
@@ -262,14 +298,14 @@ func newTransferChangeApplyFixture(
 		shipmentLinkRepo:   fixture.shipmentLinkRepo,
 		shipmentRepo:       fixture.shipmentRepo,
 		shipmentEventRepo:  fixture.eventRepo,
-		coordinator:        shipmentstate.NewCoordinatorWithClock(func() int64 { return 2_000 }),
 		shipments:          quietShipments(t),
 		orderDerivation:    orderDerivation,
+		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
+			ShipmentRepo: fixture.shipmentRepo,
+			Coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 2_000 }),
+			StopActuals:  fixture.moves,
+		}),
 	}
-	fixture.service.lifecycleApplier = internaledilifecycle.New(internaledilifecycle.Params{
-		ShipmentRepo: fixture.shipmentRepo,
-		Coordinator:  fixture.service.coordinator,
-	})
 	return fixture
 }
 

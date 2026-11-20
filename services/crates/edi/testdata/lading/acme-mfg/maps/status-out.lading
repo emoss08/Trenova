@@ -33,8 +33,34 @@ test "an arrival at the consignee writes the AT7 and MS1" {
   expect x12 contains "LX*1~AT7*X1*NS***20260304*1352*ET~MS1*COLUMBUS*OH*US~L11*2*QN~"
 }
 
-property "every event writes a status code" {
-  vary kind in EventKind
+test "an appointment is never sent to Acme" {
+  given shipmentStatus { key: "AM-1", events: [{ kind: AppointmentSet, at: @2026-03-04T14:30Z }] }
+  expect no sent
+}
+
+test "an appointment in a batch is left out and the rest are numbered in order" {
+  given shipmentStatus {
+    key: "AM-1"
+    events: [
+      { kind: ArrivedPickup, at: @2026-03-04T14:30Z },
+      { kind: AppointmentSet, at: @2026-03-04T14:40Z },
+      { kind: DepartedPickup, at: @2026-03-04T15:30Z }
+    ]
+  }
+  expect sent
+  expect x12 contains "LX*1~AT7*X3*NS***20260304*1430*UT~LX*2~AT7*AF*NS***20260304*1530*UT~"
+}
+
+property "every event Acme takes writes a status code" {
+  vary kind in [Dispatched, ArrivedPickup, Loaded, DepartedPickup, EnRoute, ArrivedDelivery, Delivered, DepartedDelivery, Delayed, EtaChanged, Exception]
   given shipmentStatus { key: "AM-1", events: [{ kind: kind, at: @2026-03-04T14:30Z }] }
   expect x12 contains "AT7*"
+}
+
+test "a country Acme's guide does not take is refused" {
+  given shipmentStatus {
+    key: "AM-1"
+    events: [{ kind: ArrivedPickup, at: @2026-03-04T14:30Z, city: "Monterrey", state: "NL", country: "MX" }]
+  }
+  expect rejected
 }

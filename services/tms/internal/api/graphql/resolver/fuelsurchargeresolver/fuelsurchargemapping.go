@@ -1,6 +1,8 @@
 package fuelsurchargeresolver
 
 import (
+	"strconv"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fuelsurchargemapping"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
@@ -12,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -277,14 +278,22 @@ func fuelSurchargeProgramFromInput(
 	if input.RateRounding != nil {
 		entity.RateRounding = *input.RateRounding
 	}
-	if input.RatePrecision != nil {
-		entity.RatePrecision = intutils.SafeToInt16(*input.RatePrecision)
+	if err = gqlscalar.ApplyInt(
+		"ratePrecision",
+		input.RatePrecision,
+		&entity.RatePrecision,
+	); err != nil {
+		return nil, err
 	}
 	if input.DateBasis != nil {
 		entity.DateBasis = *input.DateBasis
 	}
-	if input.PriceEffectiveDay != nil {
-		entity.PriceEffectiveDay = intutils.SafeToInt16(*input.PriceEffectiveDay)
+	if err = gqlscalar.ApplyInt(
+		"priceEffectiveDay",
+		input.PriceEffectiveDay,
+		&entity.PriceEffectiveDay,
+	); err != nil {
+		return nil, err
 	}
 	if input.MissingPriceFallback != nil {
 		entity.MissingPriceFallback = *input.MissingPriceFallback
@@ -372,8 +381,12 @@ func fuelSurchargeProgramFromInput(
 				BusinessUnitID: tenantInfo.BuID,
 				SortOrder:      int32(idx),
 			}
-			if rowInput.SortOrder != nil {
-				row.SortOrder = intutils.SafeToInt32(*rowInput.SortOrder)
+			if err = gqlscalar.ApplyInt(
+				"tableRows["+strconv.Itoa(idx)+"].sortOrder",
+				rowInput.SortOrder,
+				&row.SortOrder,
+			); err != nil {
+				return nil, err
 			}
 			if row.PriceMin, err = gqldecimal.NullDecimalFromStringPtr(
 				rowInput.PriceMin,

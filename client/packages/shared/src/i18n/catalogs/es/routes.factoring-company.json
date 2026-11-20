@@ -31,7 +31,6 @@
   "Business days from sent to funded for the last schedules": "Días hábiles entre el envío y la financiación de las últimas relaciones",
   "Business days from submission to funding.": "Días hábiles desde el envío hasta el desembolso.",
   "Cancelled before it was funded": "Cancelada antes de financiarse",
-  "Cash account": "Cuenta de caja",
   "Changes from v{0}": "Cambios respecto a la v{0}",
   "Chargeback window": "Plazo de devolución",
   "Chargeback window cannot be longer than 730 days": "El plazo de devolución no puede superar los 730 días",

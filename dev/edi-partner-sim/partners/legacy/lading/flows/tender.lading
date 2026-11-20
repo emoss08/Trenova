@@ -1,0 +1,127 @@
+flow tender with ashgrove
+  use common
+
+receive 204 as tender
+  via tenderIn, rules tenderChecks
+  key tender.key
+  acknowledge with 997
+  on Original -> create
+  on Change   -> update stops, commodities, refs, notes keep customer, total
+    hold when tender.total != current.total "Ashgrove changed the rate on {tender.key}"
+  on Cancel   -> cancel unless dispatched or later else hold "Ashgrove cancelled {tender.key} after dispatch"
+
+respond 990 via responseOut
+  accept automatically when partner.autoAccept and not held and not declined
+  decline automatically when declined and partner.autoDecline
+  otherwise planner decides within partner.answerWithin else escalate "Ashgrove tender {tender.key} needs an answer"
+
+// A departure from a customer's dock has no code in Ashgrove's guide: statusCodes never sends it.
+send 214 via statusOut on StopDeparted, Delivered
+  where exists status.bol
+  batch within 30 min
+  until Delivered
+
+send 210 via invoiceOut on InvoicePosted key invoice.key ?? invoice.number
+
+// Ashgrove acknowledges six hours late on a good day and not at all on a bad one.
+expect 997 for every send within 8 h else resend 1 then escalate "Ashgrove has not acknowledged {message.set} {message.control}"
+
+test "a new tender becomes a load and is acknowledged" {
+  receive file "samples/tender-original.x12"
+  expect created
+  expect sent 997
+}
+
+test "an exact resend under the same control number is held, not created twice" {
+  receive file "samples/tender-original.x12"
+  receive file "samples/tender-resend.x12"
+  expect held "A load already exists for this tender"
+}
+
+test "a change that arrives before its original has no load to update" {
+  receive file "samples/tender-change.x12"
+  expect held "There is no load to update"
+  expect no created
+}
+
+test "the original after an early change still creates the load" {
+  receive file "samples/tender-change.x12"
+  receive file "samples/tender-original.x12"
+  expect created
+}
+
+test "a moved delivery at the same rate updates the load" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  receive file "samples/tender-change.x12"
+  expect updated
+  expect no held
+}
+
+test "a change to the rate is held for a planner" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  receive file "samples/tender-rate-change.x12"
+  expect held "Ashgrove changed the rate on 1000037"
+}
+
+test "a cancellation before dispatch cancels the load" {
+  receive file "samples/tender-original.x12"
+  receive file "samples/tender-cancel.x12"
+  expect cancelled
+}
+
+test "a cancellation after dispatch is held" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  event Dispatched { key: "1000037", bol: "646458", events: [{ kind: Dispatched, at: @2026-02-12T11:00Z }] }
+  receive file "samples/tender-cancel.x12"
+  expect held "Ashgrove cancelled 1000037 after dispatch"
+}
+
+test "a planner's decline is answered with a 990" {
+  receive file "samples/tender-original.x12"
+  respond decline "No flatbed in York"
+  expect sent 990 decline
+}
+
+test "an unanswered tender escalates after four hours" {
+  receive file "samples/tender-original.x12"
+  advance 4 h
+  expect escalated "Ashgrove tender 1000037 needs an answer"
+}
+
+test "a 997 six hours late needs nothing more" {
+  event Delivered { key: "1000037", bol: "646458", events: [{ kind: Delivered, at: @2026-02-13T14:40Z }] }
+  advance 30 min
+  expect sent 214
+  advance 6 h
+  ack accepted
+  advance 12 h
+  expect no escalated
+}
+
+test "a 997 that never comes is resent once, then escalated" {
+  event Delivered { key: "1000037", bol: "646458", events: [{ kind: Delivered, at: @2026-02-13T14:40Z }] }
+  advance 30 min
+  advance 8 h
+  advance 8 h
+  expect escalated "Ashgrove has not acknowledged 214 0001"
+}
+
+test "a departure from the warehouse goes out" {
+  event StopDeparted { key: "1000037", bol: "646458", events: [{ kind: DepartedPickup, at: @2026-02-12T13:10Z, stop: 1 }] }
+  advance 30 min
+  expect sent 214
+}
+
+test "a departure from a customer's dock is not sent" {
+  event StopDeparted { key: "1000037", bol: "646458", events: [{ kind: DepartedDelivery, at: @2026-02-13T15:10Z, stop: 2 }] }
+  advance 30 min
+  expect no sent 214
+}
+
+test "a posted invoice is sent" {
+  event InvoicePosted { number: "INV-5001", date: @2026-02-16, key: "1000037", bol: "646458", total: $1_418.75 }
+  expect sent 210
+}

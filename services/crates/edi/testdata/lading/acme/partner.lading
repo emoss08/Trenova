@@ -5,7 +5,7 @@ interchange {
   us ZZ "TRNV-ACME"
   group "ACME" <-> "TRENOVA"
   version 004010
-  separators "*" "~" ">" "^"
+  separators "*" "~" ">"
   usage test
 }
 

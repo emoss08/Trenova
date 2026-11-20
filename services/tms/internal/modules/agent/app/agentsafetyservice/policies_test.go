@@ -378,7 +378,7 @@ func TestListToolPoliciesRejectsABadCursorAndBadFilters(t *testing.T) {
 	})
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "after", validation.Field)
+	assert.Equal(t, "after", validation.Field())
 }
 
 func TestListToolPoliciesPastTheLastRuleIsAnEmptyPage(t *testing.T) {

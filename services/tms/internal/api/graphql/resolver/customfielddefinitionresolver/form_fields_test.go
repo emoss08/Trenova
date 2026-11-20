@@ -91,7 +91,7 @@ func TestCustomFieldFormFields_RefusesAResourceTypeWithoutCustomFields(t *testin
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "resourceType", validation.Field)
+	assert.Equal(t, "resourceType", validation.Field())
 	assert.Nil(t, engine.Request)
 	repo.AssertNotCalled(t, "GetActiveByResourceType", mock.Anything, mock.Anything)
 }

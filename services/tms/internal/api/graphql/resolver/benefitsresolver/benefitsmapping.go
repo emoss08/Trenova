@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -37,6 +36,17 @@ func benefitPlanFromInput(
 			"Pay code is invalid",
 		)
 	}
+	planYear, err := gqlscalar.NarrowInt[int16]("planYear", f.planYear)
+	if err != nil {
+		return nil, err
+	}
+	waitingPeriodDays, err := gqlscalar.NarrowIntValue[int32](
+		"waitingPeriodDays",
+		f.waitingPeriodDays,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	entity := &paybenefit.BenefitPlan{
 		OrganizationID:    tenantInfo.OrgID,
@@ -48,10 +58,10 @@ func benefitPlanFromInput(
 		Carrier:           gqlscalar.StringValue(f.carrier),
 		PolicyNumber:      gqlscalar.StringValue(f.policyNumber),
 		PayCodeID:         payCodeID,
-		PlanYear:          int16(f.planYear), //nolint:gosec // a calendar year
+		PlanYear:          planYear,
 		EmployeeCostMinor: int64(f.employeeCostMinor),
 		EmployerCostMinor: int64(f.employerCostMinor),
-		WaitingPeriodDays: intutils.SafeToInt32(gqlscalar.IntValue(f.waitingPeriodDays)),
+		WaitingPeriodDays: waitingPeriodDays,
 	}
 	if f.status != nil {
 		entity.Status = *f.status

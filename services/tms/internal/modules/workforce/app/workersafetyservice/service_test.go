@@ -299,7 +299,7 @@ func TestCreateEvent_DefaultsExpiryAndScrubsKindSpecificFields(t *testing.T) {
 	)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr, "an inspection needs a result")
-	assert.Equal(t, "inspectionResult", multiErr.Errors[0].Field)
+	assert.Equal(t, "inspectionResult", multiErr.Errors[0].Field())
 
 	oos, err := h.svc.CreateEvent(
 		context.Background(),
@@ -334,7 +334,7 @@ func TestCloseAndDeleteEvent(t *testing.T) {
 	})
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr, "closing needs a resolution")
-	assert.Equal(t, "resolution", multiErr.Errors[0].Field)
+	assert.Equal(t, "resolution", multiErr.Errors[0].Field())
 
 	closed, err := h.svc.CloseEvent(context.Background(), &workersafetyservice.EventStatusRequest{
 		ID: created.ID, TenantInfo: h.tenant, Resolution: "Coached; dock procedure reviewed", UserID: h.userID,
@@ -389,7 +389,7 @@ func TestIssueAction_ClimbsTheLadderAndRecordsEmployment(t *testing.T) {
 	})
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr, "a suspension needs its length")
-	assert.Equal(t, "suspensionDays", multiErr.Errors[0].Field)
+	assert.Equal(t, "suspensionDays", multiErr.Errors[0].Field())
 
 	days := int32(3)
 	suspension, err := h.svc.IssueAction(

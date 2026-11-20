@@ -23,7 +23,6 @@ type Params struct {
 	DisputeRepo         driversettlementports.SettlementDisputeRepository
 	ExpenseRepo         driverpayports.DriverExpenseRepository
 	PayCodeRepo         driverpayports.PayCodeRepository
-	SettlementControl   tenantports.SettlementControlRepository
 	DashControlRepo     tenantports.DashControlRepository
 	AuditService        auditports.AuditService
 	DriverNotify        *drivernotificationservice.Service
@@ -38,7 +37,6 @@ type Service struct {
 	disputeRepo         driversettlementports.SettlementDisputeRepository
 	expenseRepo         driverpayports.DriverExpenseRepository
 	payCodeRepo         driverpayports.PayCodeRepository
-	settlementControl   tenantports.SettlementControlRepository
 	dashControlRepo     tenantports.DashControlRepository
 	auditService        auditports.AuditService
 	driverNotify        *drivernotificationservice.Service
@@ -55,7 +53,6 @@ func New(p Params) *Service {
 		disputeRepo:         p.DisputeRepo,
 		expenseRepo:         p.ExpenseRepo,
 		payCodeRepo:         p.PayCodeRepo,
-		settlementControl:   p.SettlementControl,
 		dashControlRepo:     p.DashControlRepo,
 		auditService:        p.AuditService,
 		driverNotify:        p.DriverNotify,

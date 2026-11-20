@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/shopspring/decimal"
@@ -365,4 +366,30 @@ func TestScheduleExpiresCarriedDaysAfterTheCarryoverWasPosted(t *testing.T) {
 	in.LookbackMonths = 3
 	assert.Equal(t, []string{"C:2027", "A:2027"}, keys(Schedule(in)),
 		"last year's expiry does not hold back this year's carryover")
+}
+
+func TestPayPeriodEndsStepMonthlyPeriodsByTheCalendar(t *testing.T) {
+	t.Parallel()
+
+	loc, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+
+	from := time.Date(2026, time.January, 30, 12, 0, 0, 0, loc)
+	horizon := time.Date(2026, time.May, 31, 0, 0, 0, 0, loc)
+	ends := payPeriodEnds(&PayPeriodSpec{
+		Frequency:    settlementcontrol.PayPeriodFrequencyMonthly,
+		EndDayOfWeek: int(time.Friday),
+	}, from, horizon, loc)
+
+	got := make([]string, 0, len(ends))
+	for _, end := range ends {
+		got = append(got, end.Format(time.RFC3339))
+	}
+	assert.Equal(t, []string{
+		"2026-01-31T00:00:00-06:00",
+		"2026-02-28T00:00:00-06:00",
+		"2026-03-31T00:00:00-05:00",
+		"2026-04-30T00:00:00-05:00",
+		"2026-05-31T00:00:00-05:00",
+	}, got)
 }

@@ -83,7 +83,10 @@ type FieldWrapperProps = {
    * (`FieldLayoutProvider`), and stacks anywhere else.
    */
   layout?: FieldLayout;
-  /** How wide the control is in a row: `compact` for a figure, `regular` for a choice. */
+  /**
+   * How wide the control is in a row: `compact` for a figure, `regular` for a choice, `wide`
+   * for text written out (a textarea).
+   */
   controlSize?: SettingControlSize;
   /** The form field's name; inside a form it registers the field and its label. */
   name?: string;
@@ -119,12 +122,13 @@ export function useFieldLayout(layout?: FieldLayout): FieldLayout {
   return layout ?? inherited ?? "stacked";
 }
 
-export type SettingControlSize = "auto" | "compact" | "regular";
+export type SettingControlSize = "auto" | "compact" | "regular" | "wide";
 
 const SETTING_CONTROL_WIDTH: Record<SettingControlSize, string> = {
   auto: "",
   compact: "w-34",
   regular: "w-52",
+  wide: "w-80 max-w-1/2",
 };
 
 /** The type of a row's description: a size up from a stacked field's, on a reading measure. */

@@ -77,7 +77,7 @@ services:
                 reservations:
                     memory: 128M
         healthcheck:
-            test: ["CMD", "wget", "-q", "--spider", "http://localhost:5540/api/health/"]
+            test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:5540/api/health/"]
             interval: 30s
             timeout: 10s
             retries: 5

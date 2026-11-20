@@ -1,0 +1,42 @@
+rules invoiceChecks for invoiceOut
+
+/// Tamberlane pays only an invoice that quotes the shipment ID, the BOL and the store PO.
+rule "an invoice Tamberlane can pay" {
+  require exists key else hold "Tamberlane needs its shipment ID on every invoice"
+  require exists bol else hold "Tamberlane needs the BOL on every invoice"
+  require exists refs["PO"] else hold "Tamberlane needs the PO on every invoice"
+  require exists billTo else hold "Tamberlane needs the bill-to on every invoice"
+}
+
+/// An invoice with no lines would reach Tamberlane's guide with no 0400 loop.
+rule "an invoice has lines" {
+  require not lines.isEmpty else reject "An invoice to Tamberlane needs at least one line"
+}
+
+test "a complete invoice goes out" {
+  given freightInvoice {
+    number: "INV-3001"
+    date: @2026-06-05
+    key: "TS10000004"
+    bol: "0719744701"
+    total: $3_713.35
+    billTo: { name: "Tamberlane Stores Freight Payable" }
+    lines: [{ sequence: 1, description: "Linehaul", amount: $3_713.35 }]
+    refs: ["PO": "8978300638"]
+  }
+  expect no holds
+  expect no rejects
+}
+
+test "an invoice without the PO is held" {
+  given freightInvoice {
+    number: "INV-3001"
+    date: @2026-06-05
+    key: "TS10000004"
+    bol: "0719744701"
+    total: $3_713.35
+    billTo: { name: "Tamberlane Stores Freight Payable" }
+    lines: [{ sequence: 1, description: "Linehaul", amount: $3_713.35 }]
+  }
+  expect held "Tamberlane needs the PO on every invoice"
+}

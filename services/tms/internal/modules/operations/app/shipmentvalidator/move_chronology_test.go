@@ -74,7 +74,7 @@ func TestMoveChronology_RefusesAnUpdateThatRetimesAStopIntoTheNextOnesWindow(t *
 
 	require.NotNil(t, multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "moves[1].stops[0].scheduledWindowEnd", multiErr.Errors[0].Field)
+	assert.Equal(t, "moves[1].stops[0].scheduledWindowEnd", multiErr.Errors[0].Field())
 }
 
 func TestMoveChronology_ChecksAStopAddedBetweenTwoStoredStops(t *testing.T) {

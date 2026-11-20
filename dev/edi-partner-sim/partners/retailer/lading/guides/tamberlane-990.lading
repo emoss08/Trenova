@@ -1,0 +1,7 @@
+guide tamberlane.990 from x12.004010.990 "Tamberlane Stores Response to a Load Tender 4010 rev 7"
+
+/// Tamberlane matches a 990 to its tender by the shipment ID and rejects one that names no date.
+B1 { 01 required; 02 required length 10..10; 03 required; 04 required codes "A", "D" }
+N9 unused
+G62 unused
+K1 { 01 required }

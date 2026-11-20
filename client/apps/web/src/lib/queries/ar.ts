@@ -16,6 +16,7 @@ import {
 } from "@/lib/graphql/accounts-receivable";
 import type { LateChargeAssessmentInput } from "@trenova/graphql/generated/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
+import { infiniteQueryOptions } from "@tanstack/react-query";
 
 export const ar = createQueryKeys("ar", {
   agingSummary: (asOfDate?: number) => ({
@@ -26,10 +27,7 @@ export const ar = createQueryKeys("ar", {
     queryKey: ["openItems", options],
     queryFn: async ({ signal }) => fetchArOpenItems(options, { signal }),
   }),
-  customerLedger: (customerId: string) => ({
-    queryKey: ["customerLedger", customerId],
-    queryFn: async ({ signal }) => fetchArCustomerLedger(customerId, { signal }),
-  }),
+  customerLedger: (customerId: string) => [customerId],
   customerStatement: (customerId: string, options?: { startDate?: number; asOfDate?: number }) => ({
     queryKey: ["customerStatement", customerId, options],
     queryFn: async ({ signal }) => fetchArCustomerStatement(customerId, options, { signal }),
@@ -75,3 +73,20 @@ export const ar = createQueryKeys("ar", {
     queryFn: async ({ signal }) => fetchLateChargePreview(input, { signal }),
   }),
 });
+
+export const CUSTOMER_LEDGER_PAGE_SIZE = 100;
+
+/** A customer's ledger, oldest first, a page at a time; each entry carries its running balance. */
+export function customerLedgerPages(customerId: string) {
+  return infiniteQueryOptions({
+    queryKey: ar.customerLedger(customerId).queryKey,
+    queryFn: ({ pageParam, signal }) =>
+      fetchArCustomerLedger(
+        customerId,
+        { first: CUSTOMER_LEDGER_PAGE_SIZE, after: pageParam },
+        { signal },
+      ),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => (last.hasNextPage && last.endCursor ? last.endCursor : undefined),
+  });
+}

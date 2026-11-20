@@ -245,9 +245,11 @@ export type CreateLadingProjectRequest = {
   them?: [string, string];
   us?: [string, string];
   group?: [string, string];
+  separators?: string[];
+  lineEnding?: "none" | "lf" | "crLf" | "cr";
   usage?: "test" | "production";
   acknowledge?: string;
-  ackWithin?: number;
+  ackWithinSeconds?: number;
 };
 
 export type SaveLadingDraftRequest = {

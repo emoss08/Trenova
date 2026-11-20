@@ -1,0 +1,7 @@
+name: a tender the carrier never answers escalates after two hours
+steps:
+  - script: { answers: [ { silent: true } ] }
+  - trenova: { tender: c1 }
+  - expect: { wire: "204", about: c1 }
+  - advance: { about: c1, by: 2h }
+  - expect: { flow: c1, status: Escalated, why: has not answered }

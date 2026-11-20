@@ -22,7 +22,7 @@ func requirePasswordFieldError(t *testing.T, err error) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "password", multiErr.Errors[0].Field)
+	assert.Equal(t, "password", multiErr.Errors[0].Field())
 }
 
 func TestAcceptInvitationRefusesAWeakPasswordBeforeLookingUpTheToken(t *testing.T) {

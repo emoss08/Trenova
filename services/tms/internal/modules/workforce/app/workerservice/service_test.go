@@ -18,12 +18,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dataentrycontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -51,6 +53,7 @@ type testDeps struct {
 	valueRepo *customfieldportsmock.MockCustomFieldValueRepository
 	defRepo   *customfieldportsmock.MockCustomFieldDefinitionRepository
 	cacheRepo *customerportsmock.MockWorkerCacheRepository
+	formatter *dataentrycontrolportsmock.MockTextFormatter
 	svc       *Service
 }
 
@@ -84,6 +87,8 @@ func setupTest(t *testing.T) *testDeps {
 	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
 	defRepo := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
 	cacheRepo := customerportsmock.NewMockWorkerCacheRepository(t)
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
+	formatter.EXPECT().Format(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	logger := zap.NewNop()
 
@@ -119,6 +124,7 @@ func setupTest(t *testing.T) *testDeps {
 			Repo:   noCredentialTypes{},
 		}),
 		planFields: plantest.Keeper(nil),
+		formatter:  formatter,
 	}
 	return &testDeps{
 		repo:      repo,
@@ -126,6 +132,7 @@ func setupTest(t *testing.T) *testDeps {
 		valueRepo: valueRepo,
 		defRepo:   defRepo,
 		cacheRepo: cacheRepo,
+		formatter: formatter,
 		svc:       svc,
 	}
 }
@@ -906,7 +913,7 @@ func TestUpdate(t *testing.T) {
 		assert.Nil(t, result)
 		var multiErr *errortypes.MultiError
 		require.ErrorAs(t, err, &multiErr)
-		assert.Equal(t, "status", multiErr.Errors[0].Field)
+		assert.Equal(t, "status", multiErr.Errors[0].Field())
 		deps.repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
 	})
 
@@ -991,6 +998,122 @@ func TestUpdate(t *testing.T) {
 		assert.Nil(t, result)
 		deps.repo.AssertNotCalled(t, "Update")
 	})
+}
+
+func upperTextFormat(_ context.Context, target dataentrycontrol.TextFormattable) {
+	target.ApplyTextFormat(dataentrycontrol.TextFormat{
+		NameCase:  dataentrycontrol.CaseFormatUpper,
+		EmailCase: dataentrycontrol.CaseFormatLower,
+		CityCase:  dataentrycontrol.CaseFormatUpper,
+	})
+}
+
+func TestCreateFormatsTheWorkerBeforeSaving(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTest(t)
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
+	deps.svc.formatter = formatter
+	entity := newCreateWorker()
+	entity.FirstName = " jane "
+	entity.LastName = "smith"
+	entity.City = "portland"
+	entity.Email = "Jane.Smith@Example.COM"
+	entity.EmergencyContactName = "john  smith"
+	formatter.EXPECT().Format(mock.Anything, entity).Run(upperTextFormat).Return(nil).Once()
+
+	var saved worker.Worker
+	deps.repo.EXPECT().
+		Create(mock.Anything, entity).
+		RunAndReturn(func(_ context.Context, w *worker.Worker) (*worker.Worker, error) {
+			saved = *w
+			w.ID = pulid.MustNew("wrk_")
+			return w, nil
+		}).
+		Once()
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	_, err := deps.svc.Create(
+		t.Context(),
+		entity,
+		internaltestutil.NewSessionActor(
+			pulid.MustNew("usr_"),
+			entity.OrganizationID,
+			entity.BusinessUnitID,
+		),
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, "JANE", saved.FirstName)
+	assert.Equal(t, "SMITH", saved.LastName)
+	assert.Equal(t, "PORTLAND", saved.City)
+	assert.Equal(t, "jane.smith@example.com", saved.Email)
+	assert.Equal(t, "JOHN SMITH", saved.EmergencyContactName)
+}
+
+func TestUpdateFormatsTheWorkerBeforeSaving(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTest(t)
+	deps.svc.fields = fixedFieldAccess(protectedfield.AllGroups())
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
+	deps.svc.formatter = formatter
+	entity := newTestWorker()
+	entity.FirstName = "jonathan"
+	entity.City = "salem"
+	entity.Email = "Jon@Example.com"
+
+	original := newTestWorker()
+	original.ID = entity.ID
+	original.OrganizationID = entity.OrganizationID
+	original.BusinessUnitID = entity.BusinessUnitID
+
+	formatter.EXPECT().Format(mock.Anything, entity).Run(upperTextFormat).Return(nil).Once()
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
+	deps.repo.On("Update", mock.Anything, mock.MatchedBy(func(w *worker.Worker) bool {
+		return w.FirstName == "JONATHAN" &&
+			w.City == "SALEM" &&
+			w.Email == "jon@example.com"
+	})).Return(entity, nil)
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	_, err := deps.svc.Update(
+		t.Context(),
+		entity,
+		internaltestutil.NewSessionActor(
+			pulid.MustNew("usr_"),
+			entity.OrganizationID,
+			entity.BusinessUnitID,
+		),
+	)
+
+	require.NoError(t, err)
+	deps.repo.AssertExpectations(t)
+}
+
+func TestCreateStopsWhenFormattingFails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTest(t)
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
+	deps.svc.formatter = formatter
+	entity := newCreateWorker()
+	formatErr := errors.New("format failed")
+	formatter.EXPECT().Format(mock.Anything, entity).Return(formatErr).Once()
+
+	result, err := deps.svc.Create(
+		t.Context(),
+		entity,
+		internaltestutil.NewSessionActor(
+			pulid.MustNew("usr_"),
+			entity.OrganizationID,
+			entity.BusinessUnitID,
+		),
+	)
+
+	require.ErrorIs(t, err, formatErr)
+	assert.Nil(t, result)
+	deps.repo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
 }
 
 func TestNew(t *testing.T) {

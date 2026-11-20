@@ -234,6 +234,12 @@ impl Builder<'_> {
                 expect.span,
                 expect.set.span,
             ),
+            FlowDecl::Await(answer) => self.symbol(
+                format!("await {}", answer.set.name),
+                "await",
+                answer.span,
+                answer.set.span,
+            ),
         }
     }
 

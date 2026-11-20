@@ -42,6 +42,7 @@ func (s *service) RecordStopActual(
 			return err
 		}
 		previousStatus = move.Status
+		before := snapshotStopActuals(move)
 
 		plan, err := s.planStopActual(txCtx, req, move)
 		if err != nil {
@@ -49,6 +50,9 @@ func (s *service) RecordStopActual(
 		}
 
 		if _, err = s.repo.UpdateStopActuals(txCtx, req.TenantInfo, plan.stop); err != nil {
+			return err
+		}
+		if err = s.recordStopActualEvents(txCtx, req.TenantInfo, move, before, nil); err != nil {
 			return err
 		}
 
@@ -72,30 +76,43 @@ func (s *service) RecordStopActual(
 	if departure := req.Departure(); departure != nil {
 		recorded = append(recorded, departure)
 	}
-	s.announceStopActuals(ctx, req.TenantInfo, updatedMove, previousStatus, recorded)
+	s.announceStopActuals(ctx, stopActualAnnouncement{
+		tenantInfo:     req.TenantInfo,
+		move:           updatedMove,
+		previousStatus: previousStatus,
+		recorded:       recorded,
+	})
 
 	return updatedMove, nil
 }
 
-func (s *service) announceStopActuals(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	move *shipment.ShipmentMove,
-	previousStatus shipmentvocab.MoveStatus,
-	recorded []*shipmentmoveports.RecordStopActualRequest,
-) {
+type stopActualAnnouncement struct {
+	tenantInfo     pagination.TenantInfo
+	move           *shipment.ShipmentMove
+	previousStatus shipmentvocab.MoveStatus
+	recorded       []*shipmentmoveports.RecordStopActualRequest
+	origin         *shipmentmoveports.StopActualEventOrigin
+}
+
+func (s *service) announceStopActuals(ctx context.Context, a stopActualAnnouncement) {
+	tenantInfo, move, previousStatus := a.tenantInfo, a.move, a.previousStatus
 	kernelports.AfterCommit(ctx, func(committed context.Context) {
 		if move != nil && previousStatus != move.Status {
-			s.recordMoveEvent(committed, shipmenteventservice.BuildMoveStatusChanged(
-				tenantRefForMoveTenant(tenantInfo),
-				move,
-				previousStatus,
-				actorForMoveTenant(tenantInfo),
+			s.recordMoveEvent(committed, withEventOrigin(
+				shipmenteventservice.MarkFromStopActual(
+					shipmenteventservice.BuildMoveStatusChanged(
+						tenantRefForMoveTenant(tenantInfo),
+						move,
+						previousStatus,
+						actorForMoveTenant(tenantInfo),
+					),
+				),
+				a.origin,
 			))
 			s.evaluateServiceFailuresAfterMoveStatus(committed, move.ShipmentID, tenantInfo)
 			s.notifyMoveObservers(committed, tenantInfo, move, previousStatus)
 		}
-		for _, action := range recorded {
+		for _, action := range a.recorded {
 			if action.Action == shipmentmoveports.StopActualActionDepart && move != nil {
 				s.flagDetentionCandidate(committed, action, move)
 			}

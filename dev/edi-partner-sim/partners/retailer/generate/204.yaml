@@ -1,0 +1,137 @@
+set: "204"
+
+purposes:
+  original: "00"
+  change: "04"
+  cancel: "01"
+
+load:
+  start: "2026-05-04"
+  days: 45
+  number: { prefix: "TS", digits: 8 }
+  bol: { prefix: "07", digits: 8 }
+  po: { prefix: "8", digits: 9, chance: 0.9 }
+  pickupRef: { prefix: "W", digits: 6, chance: 0.5 }
+  appointment: { prefix: "", digits: 8 }
+  payment:
+    - { code: PP, weight: 1 }
+  stops: { min: 2, max: 4, extraPickup: 0 }
+  origins:
+    - { code: TS-DC6012, name: TAMBERLANE DC 6012, street: 21000 W LARAWAY RD, city: JOLIET, state: IL }
+    - { code: TS-DC6031, name: TAMBERLANE DC 6031, street: 4400 ALUM CREEK DR, city: COLUMBUS, state: OH }
+    - { code: TS-DC6054, name: TAMBERLANE DC 6054, street: 9800 WALLISVILLE RD, city: HOUSTON, state: TX }
+  billTo: { code: TS-FRTPAY, name: TAMBERLANE STORES FREIGHT PAYABLE, street: 1 TAMBERLANE PLZ, city: MINNEAPOLIS, state: MN, zip: "55413" }
+  consignees:
+    code: TSS-
+    names:
+      - TAMBERLANE STORE
+      - TAMBERLANE OUTLET
+      - TAMBERLANE HOME CENTER
+  equipment:
+    - { code: TF, weight: 1, lengthFt: 53 }
+  weight: { min: 9000, max: 46000 }
+  pieces: { min: 8, max: 30 }
+  lines: { min: 1, max: 4 }
+  commodities:
+    - { description: GENERAL MERCHANDISE, code: "FAK100" }
+    - { description: HOUSEWARES, code: "FAK110" }
+    - { description: SMALL APPLIANCES, code: "FAK125" }
+    - { description: LAWN AND GARDEN SUPPLIES, code: "FAK150" }
+    - { description: SEASONAL DECOR, code: "FAK175" }
+    - description: AEROSOL PAINT
+      code: "FAK200"
+      hazmat: { un: UN1950, class: "2.1", name: AEROSOLS FLAMMABLE }
+  hazmat: 0.1
+  rate: { perMileCents: { min: 240, max: 360 }, minimumCents: 60000, stopOffCents: 10000 }
+  window: { leadDays: { min: 1, max: 4 }, pickupHours: { min: 4, max: 12 }, hours: 1, mph: 50, dwellHours: 1 }
+  zip4: 0
+  contact: 0.2
+  notes:
+    chance: 0.2
+    load: [LOAD LOCKS REQUIRED, NO DOUBLE STACKING, TRAILER MUST BE SWEPT]
+    delivery: [STORE RECEIVING 0500-1100, CALL STORE 1 HOUR OUT]
+
+segments:
+  - seg: B2
+    el: ["", "{scac}", "", "{load.number}", "", "{load.payment}"]
+  - seg: B2A
+    el: ["{purpose}", LT]
+  - seg: L11
+    el: ["{load.bol}", BM]
+  - seg: L11
+    when: load.po
+    optional: true
+    el: ["{load.po}", PO]
+  - seg: NTE
+    when: load.note
+    optional: true
+    el: [LOI, "{load.note}"]
+  - body:
+      - seg: N1
+        el: [BT, "{billTo.name}", "92", "{billTo.code}"]
+      - seg: N3
+        el: ["{billTo.street}"]
+      - seg: N4
+        el: ["{billTo.city}", "{billTo.state}", "{billTo.zip}", "{billTo.country}"]
+  - seg: N7
+    el: ["", TBD, "", "", "", "", "", "", "", "", "{equipment.code}", "", "", "", "{equipment.lengthFt}00"]
+  - each: stops
+    as: stop
+    body:
+      - seg: S5
+        el: ["{stop.sequence}", "{stop.kind|map:pickup=LD,delivery=UL}", "{stop.weight}", L, "{stop.pieces}", CA]
+      - seg: L11
+        when: stop.pickupRef
+        optional: true
+        el: ["{stop.pickupRef}", P8]
+      - seg: L11
+        when: stop.appointment
+        el: ["{stop.appointment}", AO]
+      - seg: G62
+        el:
+          - "{stop.kind|map:pickup=37,delivery=53}"
+          - "{stop.window.start|date}"
+          - G
+          - "{stop.window.start|time}"
+          - "{stop.window.start|zone}"
+      - seg: G62
+        el:
+          - "{stop.kind|map:pickup=38,delivery=54}"
+          - "{stop.window.end|date}"
+          - L
+          - "{stop.window.end|time}"
+          - "{stop.window.end|zone}"
+      - seg: AT8
+        el: [G, L, "{stop.weight}", "{stop.pieces}"]
+      - seg: NTE
+        when: stop.note
+        optional: true
+        el: [DEL, "{stop.note}"]
+      - seg: N1
+        el: ["{stop.kind|map:pickup=SF,delivery=ST}", "{stop.party.name}", "92", "{stop.party.code}"]
+      - seg: N3
+        el: ["{stop.party.street}"]
+      - seg: N4
+        el: ["{stop.party.city}", "{stop.party.state}", "{stop.party.zip}", "{stop.party.country}"]
+      - seg: G61
+        when: stop.party.contact
+        optional: true
+        el: [IC, "{stop.party.contact}", TE, "{stop.party.phone}"]
+      - each: stop.lines
+        as: line
+        body:
+          - seg: L5
+            el: ["{line.number}", "{line.description}", "{line.code}", Z]
+          - seg: AT8
+            el: [G, L, "{line.weight}", "{line.pieces}"]
+          - seg: LH1
+            when: line.hazmat
+            el: [CA, "{line.pieces}", "{line.hazmat.un}"]
+          - seg: LH2
+            when: line.hazmat
+            el: ["{line.hazmat.class}"]
+          - seg: LH3
+            when: line.hazmat
+            el: ["{line.hazmat.name|trunc:25}", D]
+  - seg: L3
+    el: ["{load.weight}", G, "{load.rate|dollars}", PM, "{load.total}", "", "", "", "", "", "{load.pieces}", L]

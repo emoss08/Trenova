@@ -118,7 +118,7 @@ func TestApprovalQueue_RefusesCursorsFromAnotherList(t *testing.T) {
 
 			var validationErr *errortypes.Error
 			require.ErrorAs(t, err, &validationErr)
-			assert.Equal(t, "after", validationErr.Field)
+			assert.Equal(t, "after", validationErr.Field())
 		})
 	}
 }

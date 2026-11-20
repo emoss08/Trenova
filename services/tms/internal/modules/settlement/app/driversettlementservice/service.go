@@ -46,6 +46,7 @@ type Params struct {
 	AdvanceRepo       driverpayports.PayAdvanceRepository
 	EscrowRepo        driverpayports.EscrowAccountRepository
 	SettlementControl tenantports.SettlementControlRepository
+	Organizations     tenantports.OrganizationRepository
 	AccountingRepo    tenantports.AccountingControlRepository
 	Stamper           *exchangeratestamp.Stamper
 	JournalRepo       journalentryports.JournalPostingRepository
@@ -68,6 +69,7 @@ type Service struct {
 	advanceRepo       driverpayports.PayAdvanceRepository
 	escrowRepo        driverpayports.EscrowAccountRepository
 	settlementControl tenantports.SettlementControlRepository
+	organizations     tenantports.OrganizationRepository
 	stamper           *exchangeratestamp.Stamper
 	generator         seqgen.Generator
 	auditService      auditports.AuditService
@@ -90,6 +92,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		advanceRepo:       p.AdvanceRepo,
 		escrowRepo:        p.EscrowRepo,
 		settlementControl: p.SettlementControl,
+		organizations:     p.Organizations,
 		stamper:           p.Stamper,
 		generator:         p.Generator,
 		auditService:      p.AuditService,

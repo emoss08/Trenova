@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentnormalize"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -245,14 +246,15 @@ func shipmentDraftFreightProperties() map[string]any {
 		),
 		changepreview.FieldWeight: toolparams.IntegerProperty("Pounds.", 0, 10_000_000),
 		"temperatureMin": toolparams.IntegerProperty(
-			"Fahrenheit, for reefer freight.",
+			"Fahrenheit, for reefer freight kept at one range. When a stop or commodity "+
+				"has its own range the load's is derived from those; leave this out.",
 			-100,
-			200,
+			150,
 		),
 		"temperatureMax": toolparams.IntegerProperty(
-			"Fahrenheit, for reefer freight.",
+			"Fahrenheit, for reefer freight kept at one range.",
 			-100,
-			200,
+			150,
 		),
 		"moves": map[string]any{
 			toolschema.KeyType: toolschema.TypeArray,
@@ -339,6 +341,17 @@ func stopDraftSchema() map[string]any {
 				10_000_000,
 			),
 			"addressLine": toolparams.StringProperty("A dock or suite note for the stop.", 200),
+			"temperatureMin": toolparams.IntegerProperty(
+				"Fahrenheit the freight is kept at from this stop on, for a multi-temperature "+
+					"load whose drops differ.",
+				-100,
+				150,
+			),
+			"temperatureMax": toolparams.IntegerProperty(
+				"Fahrenheit, with temperatureMin.",
+				-100,
+				150,
+			),
 		},
 		toolschema.KeyRequired: []string{
 			changepreview.FieldLocationID,
@@ -363,6 +376,16 @@ func commodityDraftSchema() map[string]any {
 				1_000_000,
 			),
 			changepreview.FieldWeight: toolparams.IntegerProperty("Pounds of it.", 0, 10_000_000),
+			"temperatureMin": toolparams.IntegerProperty(
+				"Fahrenheit this line must be kept at, when it differs from the rest of the load.",
+				-100,
+				150,
+			),
+			"temperatureMax": toolparams.IntegerProperty(
+				"Fahrenheit, with temperatureMin.",
+				-100,
+				150,
+			),
 		},
 		toolschema.KeyRequired:             []string{"commodityId"},
 		toolschema.KeyAdditionalProperties: false,
@@ -602,7 +625,8 @@ func (t *UpdateShipmentTool) Recipe() []string {
 func (t *UpdateShipmentTool) Description() string {
 	return "Change the details of a saved shipment: the customer, service type, shipment " +
 		"type, equipment types, BOL, pieces, weight or temperature range. Send only " +
-		"the fields to change. Stops, moves, rates and status are not changed here: " +
+		"the fields to change. A load whose stops or commodities carry their own " +
+		"temperatures takes its range from them and refuses one here. Stops, moves, rates and status are not changed here: " +
 		"shipment_reschedule_stop moves an appointment, shipment_add_charge adds an accessorial, " +
 		"and the move, hold and cancel tools do the rest."
 }
@@ -786,6 +810,9 @@ func applyShipmentPatch(entity *shipment.Shipment, patch *shipmentPatch) error {
 	if err := placeholderTemperatures(entity, patch); err != nil {
 		return err
 	}
+	if err := derivedTemperatures(entity, patch); err != nil {
+		return err
+	}
 	if patch.TemperatureMin != nil {
 		entity.TemperatureMin = patch.TemperatureMin
 	}
@@ -812,6 +839,16 @@ func placeholderTemperatures(entity *shipment.Shipment, patch *shipmentPatch) er
 	}
 
 	return nil
+}
+
+func derivedTemperatures(entity *shipment.Shipment, patch *shipmentPatch) error {
+	if patch.TemperatureMin == nil && patch.TemperatureMax == nil ||
+		len(shipmentnormalize.LineTemperatures(entity)) == 0 {
+		return nil
+	}
+	return errortypes.NewValidationError("temperatureMin", errortypes.ErrInvalid,
+		"This load's temperature comes from the ranges on its stops and commodities, so "+
+			"it cannot be set here. Change those ranges on the shipment instead")
 }
 
 func (t *UpdateShipmentTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {

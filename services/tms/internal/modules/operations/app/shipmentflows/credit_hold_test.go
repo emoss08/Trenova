@@ -53,7 +53,7 @@ func TestRefuseCreditHold_RefusesANewShipmentForAHeldPayer(t *testing.T) {
 	require.Error(t, err)
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "customerId", fieldErr.Field)
+	assert.Equal(t, "customerId", fieldErr.Field())
 	assert.Equal(t,
 		"Acme Logistics is on credit hold: Open receivables of 15000.00 USD are over the credit "+
 			"limit of 10000.00 USD. Accounts receivable has to lift the hold before new shipments "+
@@ -83,7 +83,7 @@ func TestRefuseCreditHold_NamesTheBillToWhenAThirdPartyPays(t *testing.T) {
 
 	var fieldErr *errortypes.Error
 	require.ErrorAs(t, err, &fieldErr)
-	assert.Equal(t, "billToCustomerId", fieldErr.Field)
+	assert.Equal(t, "billToCustomerId", fieldErr.Field())
 }
 
 func TestRefuseCreditHold_LetsAnExistingShipmentForTheSamePayerBeWorked(t *testing.T) {

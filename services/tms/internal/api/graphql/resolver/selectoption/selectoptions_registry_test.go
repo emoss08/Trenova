@@ -1,9 +1,11 @@
 package selectoption
 
 import (
+	"math"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -106,18 +108,35 @@ func TestSelectOptionInt16Filter(t *testing.T) {
 
 	// GraphQL JSON scalars decode numbers as float64, so that is the shape the
 	// planYear filter actually arrives in.
-	assert.Equal(
-		t,
-		int16(2026),
-		Int16Filter(map[string]any{"planYear": 2026.0}, "planYear"),
-	)
-	assert.Equal(
-		t,
-		int16(2026),
-		Int16Filter(map[string]any{"planYear": "2026"}, "planYear"),
-	)
-	assert.Equal(t, int16(0), Int16Filter(map[string]any{"planYear": true}, "planYear"))
-	assert.Equal(t, int16(0), Int16Filter(map[string]any{}, "planYear"))
+	for _, value := range []any{2026.0, 2026, int64(2026), "2026"} {
+		year, err := Int16Filter(map[string]any{"planYear": value}, "planYear")
+		require.NoError(t, err)
+		assert.Equal(t, int16(2026), year)
+	}
+
+	for _, value := range []any{true, "soon"} {
+		year, err := Int16Filter(map[string]any{"planYear": value}, "planYear")
+		require.NoError(t, err)
+		assert.Equal(t, int16(0), year)
+	}
+
+	year, err := Int16Filter(map[string]any{}, "planYear")
+	require.NoError(t, err)
+	assert.Equal(t, int16(0), year)
+}
+
+func TestSelectOptionInt16Filter_RefusesAYearThatWouldWrap(t *testing.T) {
+	t.Parallel()
+
+	for _, value := range []any{67_562.0, math.MaxInt16 + 1, int64(math.MinInt16 - 1), "40000"} {
+		_, err := Int16Filter(map[string]any{"planYear": value}, "planYear")
+
+		var valErr *errortypes.Error
+		require.ErrorAs(t, err, &valErr, "%v", value)
+		assert.Equal(t, "filters.planYear", valErr.Field())
+		assert.Equal(t, "Must be between {0} and {1}", valErr.Message)
+		assert.Equal(t, []any{int64(math.MinInt16), int64(math.MaxInt16)}, valErr.Args)
+	}
 }
 
 type orderedItemsEntity struct {

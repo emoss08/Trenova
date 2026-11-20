@@ -371,11 +371,16 @@ func (r *MutationResolver) SetMyAvailability(ctx context.Context, input gqlmodel
 		return nil, err
 	}
 
+	dayOfWeek, err := gqlscalar.NarrowInt[int16]("dayOfWeek", input.DayOfWeek)
+	if err != nil {
+		return nil, err
+	}
+
 	return r.DriverPortalRecordsService.SetMyAvailability(
 		ctx,
 		resolvercore.TenantInfo(authCtx),
 		&driverportalrecordsservice.SetMyAvailabilityRequest{
-			DayOfWeek:  int16(input.DayOfWeek), //nolint:gosec // validated 0..6
+			DayOfWeek:  dayOfWeek,
 			Preference: input.Preference,
 			Note:       gqlscalar.StringValue(input.Note),
 		},
@@ -534,6 +539,17 @@ func (r *MutationResolver) UpdateDashControl(ctx context.Context, input gqlmodel
 	if err != nil {
 		return nil, err
 	}
+	digestWeekday, err := gqlscalar.NarrowInt[int16]("driverDigestWeekday", input.DriverDigestWeekday)
+	if err != nil {
+		return nil, err
+	}
+	alertThreshold, err := gqlscalar.NarrowInt[int16](
+		"detentionAlertThresholdMinutes",
+		input.DetentionAlertThresholdMinutes,
+	)
+	if err != nil {
+		return nil, err
+	}
 	ti := resolvercore.TenantInfo(authCtx)
 	entity := &dashcontrol.DashControl{
 		OrganizationID:                 ti.OrgID,
@@ -554,15 +570,10 @@ func (r *MutationResolver) UpdateDashControl(ctx context.Context, input gqlmodel
 		AllowPtoRequests:               input.AllowPTORequests,
 		SendCredentialReminders:        input.SendCredentialReminders,
 		RequireContactChangeApproval:   input.RequireContactChangeApproval,
-		DriverDigestCadence:            dashcontrol.DigestImmediate,
+		DriverDigestCadence:            input.DriverDigestCadence,
+		DriverDigestWeekday:            digestWeekday,
 		EnableDetentionAlerts:          input.EnableDetentionAlerts,
-		DetentionAlertThresholdMinutes: int16(input.DetentionAlertThresholdMinutes),
-	}
-	if input.DriverDigestCadence != nil {
-		entity.DriverDigestCadence = *input.DriverDigestCadence
-	}
-	if input.DriverDigestWeekday != nil {
-		entity.DriverDigestWeekday = int16(*input.DriverDigestWeekday)
+		DetentionAlertThresholdMinutes: alertThreshold,
 	}
 	return r.DashControlService.Update(ctx, entity, authCtx.UserID)
 }

@@ -53,13 +53,17 @@ type stopDraft struct {
 	ScheduledWindowEnd   string `json:"scheduledWindowEnd"`
 	Pieces               *int64 `json:"pieces"`
 	Weight               *int64 `json:"weight"`
+	TemperatureMin       *int16 `json:"temperatureMin"`
+	TemperatureMax       *int16 `json:"temperatureMax"`
 	AddressLine          string `json:"addressLine"`
 }
 
 type commodityDraft struct {
-	CommodityID string `json:"commodityId"`
-	Pieces      *int64 `json:"pieces"`
-	Weight      *int64 `json:"weight"`
+	CommodityID    string `json:"commodityId"`
+	Pieces         *int64 `json:"pieces"`
+	Weight         *int64 `json:"weight"`
+	TemperatureMin *int16 `json:"temperatureMin"`
+	TemperatureMax *int16 `json:"temperatureMax"`
 }
 
 type chargeLineDraft struct {
@@ -270,6 +274,8 @@ func buildStop(draft *stopDraft, b stopBuild) *shipment.Stop {
 		Sequence:       int64(b.position),
 		Pieces:         draft.Pieces,
 		Weight:         draft.Weight,
+		TemperatureMin: draft.TemperatureMin,
+		TemperatureMax: draft.TemperatureMax,
 		AddressLine:    strings.TrimSpace(draft.AddressLine),
 	}
 	if stop.ScheduleType == "" {
@@ -318,7 +324,9 @@ func (d *ShipmentDraft) buildCommodities(entity *shipment.Shipment, read draftRe
 			CommodityID: read.requiredID(
 				fmt.Sprintf("commodities[%d].commodityId", idx), draft.CommodityID,
 			),
-			Pieces: 1,
+			Pieces:         1,
+			TemperatureMin: draft.TemperatureMin,
+			TemperatureMax: draft.TemperatureMax,
 		}
 		if draft.Pieces != nil {
 			line.Pieces = *draft.Pieces

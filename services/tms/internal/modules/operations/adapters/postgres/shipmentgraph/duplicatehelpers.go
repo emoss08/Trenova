@@ -279,6 +279,8 @@ func duplicateStops(
 			Sequence:             sourceStop.Sequence,
 			Pieces:               intutils.ClonePointer(sourceStop.Pieces),
 			Weight:               intutils.ClonePointer(sourceStop.Weight),
+			TemperatureMin:       intutils.ClonePointer(sourceStop.TemperatureMin),
+			TemperatureMax:       intutils.ClonePointer(sourceStop.TemperatureMax),
 			ScheduledWindowStart: scheduledWindowStart,
 			ScheduledWindowEnd:   scheduledWindowEnd,
 			AddressLine:          sourceStop.AddressLine,
@@ -351,6 +353,8 @@ func duplicateShipmentCommodities(
 			CommodityID:    sourceCommodity.CommodityID,
 			Weight:         sourceCommodity.Weight,
 			Pieces:         sourceCommodity.Pieces,
+			TemperatureMin: intutils.ClonePointer(sourceCommodity.TemperatureMin),
+			TemperatureMax: intutils.ClonePointer(sourceCommodity.TemperatureMax),
 		})
 	}
 

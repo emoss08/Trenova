@@ -130,26 +130,30 @@ func accrualAt(
 // payPeriodEnds lists the pay-period closing dates (exclusive end, midnight)
 // strictly after `from` and not after `horizon`, walking the settlement
 // calendar forward from the period that contains `from`.
-func payPeriodEnds(spec *PayPeriodSpec, from, horizon time.Time) []time.Time {
+func payPeriodEnds(
+	spec *PayPeriodSpec,
+	from, horizon time.Time,
+	loc *time.Location,
+) []time.Time {
 	if spec == nil || !spec.Frequency.IsValid() {
 		return nil
 	}
 	ends := make([]time.Time, 0, 32)
-	bounds := settlementshared.ResolvePeriod(spec.Frequency, spec.EndDayOfWeek, 0, from.Unix())
-	end := time.Unix(bounds.PeriodEnd, 0).UTC()
-	for i := 0; i < maxPayPeriodsPerRun && !end.After(horizon); i++ {
+	bounds := settlementshared.ResolvePeriod(
+		spec.Frequency,
+		spec.EndDayOfWeek,
+		0,
+		from.Unix(),
+		loc,
+	)
+	first := time.Unix(bounds.PeriodEnd, 0).In(loc)
+	for i := 0; i < maxPayPeriodsPerRun; i++ {
+		end := settlementshared.StepPeriods(spec.Frequency, first, i)
+		if end.After(horizon) {
+			break
+		}
 		if end.After(from) {
 			ends = append(ends, end)
-		}
-		switch spec.Frequency {
-		case settlementcontrol.PayPeriodFrequencyWeekly:
-			end = end.AddDate(0, 0, 7)
-		case settlementcontrol.PayPeriodFrequencyBiweekly:
-			end = end.AddDate(0, 0, 14)
-		case settlementcontrol.PayPeriodFrequencyMonthly:
-			end = end.AddDate(0, 1, 0)
-		default:
-			end = end.AddDate(0, 0, 7)
 		}
 	}
 	return ends
@@ -268,7 +272,7 @@ func Schedule(in CalcInput) []PlannedEntry {
 
 	if in.Rule.AccrualMethod == pto.PTOAccrualMethodPerPayPeriod && in.Rule.Accrues() {
 		from := maxTime(eligibleFrom.AddDate(0, 0, -1), floor)
-		for _, end := range payPeriodEnds(in.PayPeriod, from, horizon) {
+		for _, end := range payPeriodEnds(in.PayPeriod, from, horizon, loc) {
 			key := periodKeyPayPeriod + end.Format("2006-01-02")
 			if key <= in.LastAccrualKey {
 				continue

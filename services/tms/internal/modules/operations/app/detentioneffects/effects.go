@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -89,7 +88,7 @@ func (s *Effects) TenantLocation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*time.Location, error) {
-	return orgzone.Location(ctx, s.organizations, tenantInfo)
+	return tenantports.OrganizationLocation(ctx, s.organizations, tenantInfo)
 }
 
 // PublishBillingHoldChange refreshes the billing queue when an occurrence

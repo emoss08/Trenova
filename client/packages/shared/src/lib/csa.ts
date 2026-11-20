@@ -133,16 +133,6 @@ export function trendDirection(values: number[]): "up" | "down" | "flat" {
  */
 export const CSA_SEVERITY_WEIGHTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
-export const DIGEST_CADENCE_LABELS: Record<string, string> = defineLabels({
-  Immediate: "One notice per obligation",
-  Daily: "Daily round-up",
-  Weekly: "Weekly round-up",
-});
-
-export function digestCadenceLabel(value: string): string {
-  return DIGEST_CADENCE_LABELS[value] ?? value;
-}
-
 export const WEEKDAY_LABELS = [
   "Sunday",
   "Monday",

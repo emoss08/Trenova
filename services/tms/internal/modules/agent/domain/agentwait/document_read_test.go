@@ -62,5 +62,5 @@ func TestADocumentReadWaitNamesItsFileAndWatchesIt(t *testing.T) {
 	multiErr = errortypes.NewMultiError()
 	missing.Validate(multiErr)
 	require.True(t, multiErr.HasErrors())
-	assert.Equal(t, "documentId", multiErr.Errors[0].Field)
+	assert.Equal(t, "documentId", multiErr.Errors[0].Field())
 }

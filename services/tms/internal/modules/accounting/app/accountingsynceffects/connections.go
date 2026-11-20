@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -55,16 +54,7 @@ func (e *Effects) OrgLocation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*time.Location, error) {
-	org, err := e.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if org == nil {
-		return time.UTC, nil
-	}
-	return timeutils.LoadLocation(org.Timezone), nil
+	return tenantports.OrganizationLocation(ctx, e.organizations, tenantInfo)
 }
 
 func (e *Effects) RedatesToNextOpen(

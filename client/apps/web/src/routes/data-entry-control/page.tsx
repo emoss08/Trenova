@@ -1,6 +1,5 @@
+import { SettingsPage } from "@/components/settings/settings-page";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
 import { DataEntryControlSkeleton } from "./skeleton";
 
@@ -10,15 +9,12 @@ export function DataEntryControlPage() {
   const t = useT();
 
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: t("Data entry control"),
-        description: t("Configure case formatting rules for data entry across the system"),
-      }}
+    <SettingsPage
+      title={t("Data entry control")}
+      description={t("Set how entered text is capitalized across the system")}
+      skeleton={<DataEntryControlSkeleton />}
     >
-      <LazyComponent fallback={<DataEntryControlSkeleton />}>
-        <DataEntryControlForm />
-      </LazyComponent>
-    </PageLayout>
+      <DataEntryControlForm />
+    </SettingsPage>
   );
 }

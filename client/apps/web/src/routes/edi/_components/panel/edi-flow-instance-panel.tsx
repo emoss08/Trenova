@@ -13,6 +13,12 @@ import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  FLOW_ACTION_LABELS,
+  FLOW_EVENT_LABELS,
+  FLOW_LOAD_STATE_LABELS,
+  flowLabel,
+} from "./edi-flow-labels";
 import { DetailField, DetailSection, EDIEmptyState, EDIPartnerRef } from "./edi-panel-primitives";
 
 const RELEASABLE = new Set(["Held", "Escalated"]);
@@ -81,7 +87,11 @@ export function FlowInstancePanel({
             <EDIPartnerRef partner={row.partner} />
           </DetailField>
           <DetailField label={t("Load")}>
-            {summary ? (summary.load.exists ? summary.load.state : t("No load yet")) : "—"}
+            {summary
+              ? summary.load.exists
+                ? flowLabel(FLOW_LOAD_STATE_LABELS, summary.load.state, t("Unknown"))
+                : t("No load yet")
+              : "—"}
           </DetailField>
           <DetailField label={t("Next deadline")}>
             {row.wakeAt ? formatToUserTimezone(row.wakeAt) : "—"}
@@ -127,7 +137,9 @@ export function FlowInstancePanel({
               {detail.events.map((event) => (
                 <li key={event.id} className="flex flex-col gap-1 rounded-md border p-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium">{event.kind}</span>
+                    <span className="font-medium">
+                      {flowLabel(FLOW_EVENT_LABELS, event.kind, t("Other event"))}
+                    </span>
                     <span className="text-muted-foreground">
                       {formatToUserTimezone(event.createdAt)}
                     </span>
@@ -139,9 +151,14 @@ export function FlowInstancePanel({
                           // oxlint-disable-next-line react/no-array-index-key -- an event's actions have no id and never reorder
                           key={index}
                           variant="neutral"
-                          appearance="outline"
                         >
-                          {action.set ? `${action.kind} ${action.set}` : action.kind}
+                          {action.set
+                            ? t(
+                                "{0} {1}",
+                                flowLabel(FLOW_ACTION_LABELS, action.kind, t("Other action")),
+                                action.set,
+                              )
+                            : flowLabel(FLOW_ACTION_LABELS, action.kind, t("Other action"))}
                         </Badge>
                       ))}
                     </div>

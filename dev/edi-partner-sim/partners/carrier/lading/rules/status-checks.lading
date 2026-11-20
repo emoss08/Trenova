@@ -1,0 +1,16 @@
+rules statusChecks for statusIn
+  use common
+
+/// A delay without a cause can't be charged to anyone; a planner asks Quarrystone.
+rule "a delay names its cause" {
+  for event in events where event.kind == Delayed {
+    require (event.reason ?? "NS") != "NS"
+      else hold "Quarrystone reported a delay on {key} without a cause"
+  }
+}
+
+test "a status for a tendered load passes" {
+  given file "samples/status-delivered.x12"
+  expect no rejects
+  expect no holds
+}

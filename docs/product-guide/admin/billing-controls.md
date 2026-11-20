@@ -10,84 +10,101 @@ related:
 ---
 
 ## What it's for
-Billing control holds the organization-wide rules for billing. The page is one settings form in
-five cards: **Invoice defaults** (what invoices show and the fallback payment term, terms and
-footer), **Automation policy** (how shipments move into billing and whether invoices are drafted and
-posted automatically), **Exception policy** (how missing billing requirements and rate variances are
-handled), **Rating policy** (what happens to a shipment no rate agreement covers) and **Late
-charges** (whether the nightly late-charge run raises debit memos).
+Billing control holds the organization-wide rules for billing. The page is one settings form,
+saved once, in five tabs: **Invoices** (the fallback payment term, terms and footer, and what
+invoices show), **Automation** (how shipments move into billing, whether invoices are drafted and
+posted for you, and whether the billing queue approves clean items on its own), **Exceptions**
+(what a failed billing requirement or rate check does, and where reviews go), **Rating** (what
+happens to a shipment no rate agreement covers) and **Collections** (late charges, payment
+reminders and monthly statements). A save that is refused opens the tab holding the setting to fix
+and marks it.
 
-Unless the unrated shipment disposition is to zero the rate and flag it for review, a shipment that
+Unless **When no rate applies** is set to zero the rate and flag it for review, a shipment that
 nothing can price is refused wherever it is entered: the shipment form, the API, an agent, or a
 copy of another shipment. Choose a rating method on the shipment, or set a fallback formula
 template here. Minimums, maximums and rounding are not set here or on an agreement: each tariff
 writes them in its own source.
 
-Billing managers and finance leads use it. A warning at the top of the page notes that these
-settings affect revenue processing and invoicing, and should change only after review.
+Billing managers and finance leads use it. These settings affect revenue processing and
+invoicing, so change them only after review.
 
 ## Tasks
 
 ### Set invoice defaults
 Keywords: payment terms, invoice footer, due date on invoice, net 30
-1. Open [Billing controls](/admin/billing-controls).
-2. In **Invoice defaults**, turn **Show due date on invoice** and **Show balance due on invoice**
-   on or off.
-3. Choose the **Default payment term** and fill in **Default invoice terms** and **Default invoice
-   footer**. These apply when a customer's billing profile does not set its own.
+1. Open [Billing controls](/admin/billing-controls) on the **Invoices** tab.
+2. Under **Terms**, choose the **Payment term** and fill in **Invoice terms**. These apply when a
+   customer's billing profile does not set its own.
+3. Under **On the invoice**, turn **Show the due date** and **Show the balance due** on or off, and
+   fill in the **Footer**.
 4. Select **Save changes**.
 
 ### Automate the billing queue and invoice drafts
-Keywords: auto transfer, auto invoice, ready to bill, auto post invoices
-1. Open [Billing controls](/admin/billing-controls).
-2. In **Automation policy**, set **Ready-to-bill assignment mode** and **Billing queue transfer
-   mode**. With **Automatic when ready**, also set the **Billing queue transfer schedule** and
-   **Billing queue transfer batch size**.
-3. Set **Invoice draft creation mode**. With **Automatic when transferred**, also set the **Auto
-   invoice batch size** and whether to **Notify on auto invoice creation**.
-4. Set **Invoice posting mode** to **Manual review required** or **Automatic when no blocking
-   exceptions**.
-5. Select **Save changes**.
+Keywords: auto transfer, auto invoice, ready to bill, auto post invoices, auto approve
+1. Open [Billing controls](/admin/billing-controls) and select the **Automation** tab.
+2. Under **Ready to bill**, set **Mark ready to bill** and **Move to the billing queue**. With
+   **Automatic when ready**, also set **How often** and **Shipments per run**.
+3. Under **Drafts and posting**, set **Create invoice drafts**. With **Automatic when
+   transferred**, also set **Drafts per run** and whether to **Notify when drafts are created**.
+4. Set **Post invoices** to **Manual review required** or **Automatic when no blocking
+   exceptions**. Invoices can post on their own only while drafts are created on their own, so
+   making drafts by hand again puts posting back to review.
+5. Under **Queue approval**, choose whether the queue may **Approve on its own**, and optionally
+   cap it with **Only up to this amount**. On a plan with Nova's review, **Nova reviews each item**
+   turns that review on and **When the checks clear and Nova agrees** can be chosen. If the plan
+   later loses Nova's review, that choice reads as **Off** and every item waits for a biller.
+6. Select **Save changes**.
 
 ### Decide how billing exceptions are handled
 Keywords: rate variance, billing requirements, block billing, review routing
-1. Open [Billing controls](/admin/billing-controls).
-2. In **Exception policy**, set **Shipment billing requirement enforcement** and **Rate validation
-   enforcement** to **Ignore**, **Warn**, **Require review** or **Block**.
-3. If either uses **Require review**, choose the **Billing exception disposition**: **Route to
-   billing review** or **Return to operations**.
-4. Set the **Rate variance tolerance percent** and the **Rate variance auto resolution mode**, and
-   turn on **Notify on billing exceptions** if wanted.
+1. Open [Billing controls](/admin/billing-controls) and select the **Exceptions** tab.
+2. Under **Checks**, set **Billing requirements** and **Rate validation** to **Ignore**, **Warn**,
+   **Require review** or **Block**.
+3. With rate validation at **Require review**, choose whether to **Skip review for small
+   differences**. With **Bypass review within tolerance**, set the **Tolerance** as a percentage of
+   the rate.
+4. Under **Review**, choose where a shipment waiting on review goes with **Send for review to**:
+   **Route to billing review** or **Return to operations**. It is offered unless both checks block,
+   since a customer that validates its rates raises rate validation to review. Turn on **Notify
+   on exceptions** if wanted.
 5. Select **Save changes**.
 
 ### Handle shipments with no rate agreement
 Keywords: unrated shipments, fallback formula, margin floor, rate override reason
-1. Open [Billing controls](/admin/billing-controls).
-2. In **Rating policy**, choose the **Unrated shipment disposition**: **Fall back to formula
+1. Open [Billing controls](/admin/billing-controls) and select the **Rating** tab.
+2. Under **Unrated shipments**, choose **When no rate applies**: **Fall back to formula
    template**, **Zero the rate and flag for review** or **Block the save**.
 3. For the fallback, optionally pick a **Fallback formula template**. It runs with the defaults its tariff declares, since no contract supplies its inputs; a tariff with an input that has no default refuses to rate such a shipment and says which input is missing.
-4. Turn on **Require rate override reason** and **Enforce margin floor** as needed.
+4. Under **Rate changes**, turn on **Require a reason for rate overrides** and **Enforce margin
+   floors** as needed.
 5. Select **Save changes**.
+
+The fallback formula template and margin floors are offered on plans that include rating.
 
 ### Turn on automatic late charges
 Keywords: late fees, overdue invoices, debit memo, finance charges
-1. Open [Billing controls](/admin/billing-controls).
-2. In **Late charges**, set **Assessment mode** to **Disabled**, **Preview only** or **Automatic**.
+1. Open [Billing controls](/admin/billing-controls) and select the **Collections** tab.
+2. Under **Late charges**, set **Assess late charges** to **Disabled**, **Preview only** or
+   **Automatic**.
 3. Set the **Minimum late charge**; customers whose charges for a run add up to less are skipped.
 4. Select **Save changes**.
 
+Raised late charges post the way invoices do: while **Post invoices** is **Manual review
+required**, the memos the nightly run raises wait for someone to post them, and the tab says so
+with a link to **Automation**.
+
 ### Email customers payment reminders
 Keywords: dunning, overdue reminder, past due email, collection letter
-1. Open [Billing controls](/admin/billing-controls).
-2. In **Payment reminders**, turn on **Send payment reminders**.
-3. In **Remind on days past due**, list the days to send on, such as 1, 15, 30. The last one is
-   sent as the final reminder.
+1. Open [Billing controls](/admin/billing-controls) and select the **Collections** tab.
+2. Under **Payment reminders**, turn on **Send payment reminders**.
+3. In **Remind on days past due**, list up to six days from 1 to 365, such as 1, 15, 30. The last
+   one is sent as the final reminder.
 4. Select **Save changes**.
 
 ### Email customers a monthly statement
 Keywords: monthly statement, statement of account, account summary email, AR statement
-1. Open [Billing controls](/admin/billing-controls).
-2. In **Monthly statements**, turn on **Send monthly statements**.
+1. Open [Billing controls](/admin/billing-controls) and select the **Collections** tab.
+2. Under **Monthly statements**, turn on **Send monthly statements**.
 3. Set the **Day of the month to send**, from 1 to 28.
 4. Select **Save changes**.
 

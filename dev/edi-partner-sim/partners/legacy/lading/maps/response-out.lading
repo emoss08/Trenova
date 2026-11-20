@@ -1,0 +1,26 @@
+map responseOut
+  from tenderResponse
+  to   ashgrove.990
+  use  common
+
+B1 {
+  01 <- scac ?? org.scac
+  02 <- key
+  03 <- respondedAt.inZone(partner.zone)
+  04 <- decision via decisions
+}
+
+test "an acceptance writes exactly this 990" {
+  given tenderResponse { key: "1000037", decision: Accept, respondedAt: @2026-02-08T10:05[America/New_York] }
+  expect x12 == "ST*990*0001~B1*TRNV*1000037*20260208*A~SE*3*0001~"
+}
+
+test "a decline's reason has nowhere to go" {
+  given tenderResponse { key: "1000037", decision: Decline, reason: "No flatbed in York", respondedAt: @2026-02-08T10:05[America/New_York] }
+  expect x12 == "ST*990*0001~B1*TRNV*1000037*20260208*D~SE*3*0001~"
+}
+
+test "a late-evening Central answer is dated in Ashgrove's Eastern day" {
+  given tenderResponse { key: "1000037", decision: Accept, respondedAt: @2026-02-08T23:30[America/Chicago] }
+  expect x12 contains "B1*TRNV*1000037*20260209*A~"
+}

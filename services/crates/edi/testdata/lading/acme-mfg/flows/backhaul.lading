@@ -10,17 +10,21 @@ receive 990 as response
   acknowledge with 997
   -> apply
 
+// A status for a load Trenova never tendered to the fleet is refused in the 997.
 receive 214 as status
   via statusIn
   key status.key
   acknowledge with 997
-  -> apply
+  -> apply reject when not instance.exists "Trenova tendered no backhaul {status.key} to Acme's fleet"
 
+// An invoice that bills what the tender offered is matched; any other total waits for a person.
 receive 210 as invoice
   via invoiceIn
   key invoice.key ?? invoice.number
   acknowledge with none
-  -> hold "Backhaul invoices from Acme's fleet are checked by hand"
+  -> apply hold when invoice.total != sent.tender.total "Acme's fleet billed {invoice.total} for {invoice.key ?? invoice.number}; the tender offered {sent.tender.total}"
+
+await 990 within 2 h else escalate "Acme's fleet has not answered backhaul {message.key}"
 
 expect 997 for every send within 1 h else escalate "Acme's fleet has not acknowledged {message.set} {message.control}"
 
@@ -36,20 +40,75 @@ test "an offered backhaul is tendered to the fleet" {
 }
 
 test "the fleet's answer, statuses and invoice are handled" {
+  event TenderOffered {
+    key: "BH-7001"
+    total: $860.00
+    stops: [
+      { sequence: 1, type: Pickup, name: "Toledo Steel", window: { start: @2026-03-06T07:00[America/New_York] } },
+      { sequence: 2, type: Delivery, name: "Akron Yard", window: { start: @2026-03-06T16:00[America/New_York] } }
+    ]
+  }
   receive file "samples/backhaul-response.x12"
   expect applied
   receive file "samples/backhaul-status.x12"
-  expect applied
+  expect no rejected
   receive file "samples/backhaul-invoice.x12"
-  expect held "Backhaul invoices from Acme's fleet are checked by hand"
+  expect no held
+}
+
+test "an invoice that disagrees with the tender is held" {
+  event TenderOffered {
+    key: "BH-7001"
+    total: $800.00
+    stops: [
+      { sequence: 1, type: Pickup, name: "Toledo Steel", window: { start: @2026-03-06T07:00[America/New_York] } },
+      { sequence: 2, type: Delivery, name: "Akron Yard", window: { start: @2026-03-06T16:00[America/New_York] } }
+    ]
+  }
+  receive file "samples/backhaul-invoice.x12"
+  expect held "Acme's fleet billed $860.00 for BH-7001; the tender offered $800.00"
+  expect no applied
+}
+
+test "a status for a load never tendered is rejected" {
+  receive file "samples/backhaul-status.x12"
+  expect rejected "Trenova tendered no backhaul BH-7001 to Acme's fleet"
+  expect no applied
+}
+
+test "a tender the fleet does not answer in time escalates with its key" {
+  event TenderOffered {
+    key: "BH-7004"
+    stops: [
+      { sequence: 1, type: Pickup, name: "Toledo Steel", window: { start: @2026-03-06T07:00[America/New_York] } },
+      { sequence: 2, type: Delivery, name: "Akron Yard", window: { start: @2026-03-06T16:00[America/New_York] } }
+    ]
+  }
+  ack accepted
+  advance 2 h
+  expect escalated "Acme's fleet has not answered backhaul BH-7004"
+}
+
+test "a tender the fleet answers in time does not escalate" {
+  event TenderOffered {
+    key: "BH-7001"
+    stops: [
+      { sequence: 1, type: Pickup, name: "Toledo Steel", window: { start: @2026-03-06T07:00[America/New_York] } },
+      { sequence: 2, type: Delivery, name: "Akron Yard", window: { start: @2026-03-06T16:00[America/New_York] } }
+    ]
+  }
+  ack accepted
+  receive file "samples/backhaul-response.x12"
+  advance 3 h
+  expect no escalated
 }
 
 test "an unacknowledged backhaul tender escalates" {
   event TenderOffered {
     key: "BH-7002"
     stops: [
-      { sequence: 1, type: Pickup, window: { start: @2026-03-06T07:00[America/New_York] } },
-      { sequence: 2, type: Delivery, window: { start: @2026-03-06T16:00[America/New_York] } }
+      { sequence: 1, type: Pickup, name: "Toledo Steel", window: { start: @2026-03-06T07:00[America/New_York] } },
+      { sequence: 2, type: Delivery, name: "Akron Yard", window: { start: @2026-03-06T16:00[America/New_York] } }
     ]
   }
   advance 1 h

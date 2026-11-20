@@ -44,6 +44,10 @@ Keywords: refund escrow, driver leaving, terminate escrow
 ## Notes
 Needs read access to escrow accounts to open the page; the other actions need the matching permissions. The page is only available when the organization has the Asset operations capability.
 
+Each interest accrual also posts a journal entry on its date: a debit to the escrow interest expense account and a credit to the escrow liability account set in [Accounting control](/admin/accounting-control). Interest does not accrue until both accounts are set.
+
+Each adjustment posts a journal entry on its date against the escrow adjustment account and the escrow liability account set in [Accounting control](/admin/accounting-control): a deposit debits the escrow adjustment account and credits the escrow liability account, and applying funds out does the reverse. Adjustments never post to purchased transportation, so a correction stays visible and reconcilable on its own account and does not change owner-operator pay or cost per mile. An adjustment is refused until both accounts are set.
+
 Closing cannot be undone. Closed accounts stop accepting contributions and accruing interest. Adjustment descriptions are recorded permanently on the ledger.
 
 A driver's escrow balance also appears in the right rail of the [Workspace](/payroll/workspace), where **View ledger** opens this page.

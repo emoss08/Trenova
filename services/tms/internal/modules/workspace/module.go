@@ -64,6 +64,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablelayoutservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/textformatter"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/webpushservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -148,6 +149,7 @@ func SharedOptions() fx.Option {
 			webpushservice.New,
 			googlemapsservice.NewAutoCompleteService,
 			dataentrycontrolservice.New,
+			textformatter.New,
 			notificationservice.New,
 			supportaccessnotice.New,
 			plannotice.New,

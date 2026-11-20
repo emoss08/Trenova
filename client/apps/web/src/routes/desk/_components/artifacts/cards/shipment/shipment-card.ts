@@ -657,20 +657,6 @@ export function freightOf(
   };
 }
 
-/** "34–38°F", "≥ 34°F", "≤ 38°F"; one figure when both ends meet; "" with neither. */
-export function temperatureLabel(
-  range: { min: number | null; max: number | null },
-  t: TranslateFn,
-): string {
-  const { min, max } = range;
-  if (min !== null && max !== null) {
-    return min === max ? t("{0}°F", min) : t("{0}–{1}°F", min, max);
-  }
-  if (min !== null) return t("≥ {0}°F", min);
-  if (max !== null) return t("≤ {0}°F", max);
-  return "";
-}
-
 export type ChargeLine = {
   key: string;
   label: string;

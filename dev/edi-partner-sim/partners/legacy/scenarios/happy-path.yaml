@@ -1,0 +1,16 @@
+name: a squeezed-ISA tender is read, accepted, delivered and invoiced
+description: >
+  Ashgrove writes a squeezed ISA with CRLF terminators and acknowledges six hours late, if at
+  all, so this conversation judges what Trenova sends and never waits on Ashgrove's 997s.
+within: 3m
+steps:
+  - send: { set: "204", as: t1 }
+  - expect: { ack: t1, accepted: true }
+  - trenova: { decide: t1, decision: accept }
+  - expect: { wire: "990", about: t1, elements: { B1-04: A } }
+  - trenova: { dispatch: t1 }
+  - trenova: { deliver: t1 }
+  - advance: { about: t1, by: 30m }
+  - expect: { wire: "214", about: t1, statuses: [AF, D1] }
+  - trenova: { invoice: t1 }
+  - expect: { wire: "210", about: t1, total: tendered }

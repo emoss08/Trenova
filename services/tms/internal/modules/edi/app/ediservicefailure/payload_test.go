@@ -35,10 +35,12 @@ func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
 	)
 	require.Equal(t, "A3", payload.ShipmentStatus.StatusCode)
 	require.Equal(t, "CA", payload.ShipmentStatus.StatusReasonCode)
-	require.Equal(
+	require.Equal(t, "Reviewed", payload.ShipmentStatus.ServiceFailureTrigger)
+	require.Equal(t, "Reviewed", payload.ShipmentStatus.ServiceFailureStatus)
+	require.Empty(
 		t,
-		"Reviewed",
-		payload.ShipmentStatus.References[serviceFailure214TriggerReference],
+		payload.ShipmentStatus.References,
+		"the trigger and the failure's status are Trenova's bookkeeping, not references a partner reads",
 	)
 
 	base.X12StatusCodeOverride = " sd "

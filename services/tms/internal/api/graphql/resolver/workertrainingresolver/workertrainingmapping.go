@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -26,43 +25,60 @@ func trainingCourseFromInput(
 	if err != nil {
 		return nil, err
 	}
+	durationMinutes, err := gqlscalar.NarrowInt[int32]("durationMinutes", input.DurationMinutes)
+	if err != nil {
+		return nil, err
+	}
+	renewalWindowDays, err := gqlscalar.NarrowInt[int32](
+		"renewalWindowDays",
+		input.RenewalWindowDays,
+	)
+	if err != nil {
+		return nil, err
+	}
+	dueDaysAfterAssignment, err := gqlscalar.NarrowInt[int32](
+		"dueDaysAfterAssignment",
+		input.DueDaysAfterAssignment,
+	)
+	if err != nil {
+		return nil, err
+	}
+	sortOrder, err := gqlscalar.NarrowIntValue[int32]("sortOrder", input.SortOrder)
+	if err != nil {
+		return nil, err
+	}
+	validityMonths, err := gqlscalar.NarrowIntPtr[int32]("validityMonths", input.ValidityMonths)
+	if err != nil {
+		return nil, err
+	}
 
 	entity := &workertraining.TrainingCourse{
-		ID:             id,
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		Code:           strings.TrimSpace(input.Code),
-		Name:           strings.TrimSpace(input.Name),
-		Description:    strings.TrimSpace(gqlscalar.StringValue(input.Description)),
-		Category:       input.Category,
-		Status:         input.Status,
-		Delivery:       input.Delivery,
-		ContentURL:     strings.TrimSpace(gqlscalar.StringValue(input.ContentURL)),
-		DurationMinutes: int32(
-			input.DurationMinutes,
-		), //nolint:gosec // bounded by validation
-		PassingScore: passingScore,
-		RenewalWindowDays: int32(
-			input.RenewalWindowDays,
-		), //nolint:gosec // bounded by validation
-		IsRequired:             input.IsRequired,
-		RequiredForDriverTypes: input.RequiredForDriverTypes,
-		DueDaysAfterAssignment: int32(
-			input.DueDaysAfterAssignment,
-		), //nolint:gosec // bounded by validation
+		ID:                      id,
+		OrganizationID:          tenantInfo.OrgID,
+		BusinessUnitID:          tenantInfo.BuID,
+		Code:                    strings.TrimSpace(input.Code),
+		Name:                    strings.TrimSpace(input.Name),
+		Description:             strings.TrimSpace(gqlscalar.StringValue(input.Description)),
+		Category:                input.Category,
+		Status:                  input.Status,
+		Delivery:                input.Delivery,
+		ContentURL:              strings.TrimSpace(gqlscalar.StringValue(input.ContentURL)),
+		DurationMinutes:         durationMinutes,
+		PassingScore:            passingScore,
+		RenewalWindowDays:       renewalWindowDays,
+		IsRequired:              input.IsRequired,
+		RequiredForDriverTypes:  input.RequiredForDriverTypes,
+		DueDaysAfterAssignment:  dueDaysAfterAssignment,
 		RequiresAcknowledgement: input.RequiresAcknowledgement,
-		SortOrder:               intutils.SafeToInt32(gqlscalar.IntValue(input.SortOrder)),
+		SortOrder:               sortOrder,
 		Version:                 int64(gqlscalar.IntValue(input.Version)),
+		ValidityMonths:          validityMonths,
 	}
 	if entity.RequiredForDriverTypes == nil {
 		entity.RequiredForDriverTypes = []worker.DriverType{}
 	}
 	if !entity.IsRequired {
 		entity.RequiredForDriverTypes = []worker.DriverType{}
-	}
-	if input.ValidityMonths != nil {
-		months := int32(*input.ValidityMonths) //nolint:gosec // bounded by validation
-		entity.ValidityMonths = &months
 	}
 	return entity, nil
 }

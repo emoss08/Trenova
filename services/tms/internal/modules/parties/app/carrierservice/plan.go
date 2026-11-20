@@ -15,6 +15,10 @@ func (s *Service) PlanCreate(
 	ctx context.Context,
 	entity *carrier.Carrier,
 ) (*carrier.Carrier, error) {
+	if err := s.formatter.Format(ctx, entity); err != nil {
+		return nil, err
+	}
+
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
@@ -26,6 +30,10 @@ func (s *Service) PlanUpdate(
 	ctx context.Context,
 	entity *carrier.Carrier,
 ) (*kernelports.RecordChange[carrier.Carrier], error) {
+	if err := s.formatter.Format(ctx, entity); err != nil {
+		return nil, err
+	}
+
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}

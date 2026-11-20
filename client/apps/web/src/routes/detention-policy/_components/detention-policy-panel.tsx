@@ -18,7 +18,7 @@ const DEFAULT_POLICY: Partial<DetentionPolicy> = {
   code: "",
   description: "",
   status: "Draft",
-  isOrgDefault: false,
+  isOrganizationDefault: false,
   priority: 0,
   specificityScore: 0,
   customerId: null,

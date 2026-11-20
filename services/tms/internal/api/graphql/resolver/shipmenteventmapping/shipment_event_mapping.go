@@ -59,7 +59,10 @@ func shipmentEventToModel(event *shipmentevent.Event) (gqlmodel.ShipmentEvent, e
 	case shipmentevent.TypeMoveStatusChanged,
 		shipmentevent.TypeMoveDeparted,
 		shipmentevent.TypeMoveArrived,
-		shipmentevent.TypeStopCompleted:
+		shipmentevent.TypeStopArrived,
+		shipmentevent.TypeStopDeparted,
+		shipmentevent.TypeStopArrivalCorrected,
+		shipmentevent.TypeStopDepartureCorrected:
 		return envelope.move(), nil
 	case shipmentevent.TypeDriverAssigned,
 		shipmentevent.TypeDriverReassigned,
@@ -187,7 +190,26 @@ func (e shipmentEventEnvelope) move() *gqlmodel.ShipmentMoveEvent {
 		StopID:         gqlid.IDPtr(e.event.StopID),
 		PreviousStatus: e.str("previousStatus"),
 		NewStatus:      e.str("newStatus"),
+		StopNumber:     intutils.IntPtrValue(e.metadata[shipmentevent.MetadataStopNumber]),
+		StopType:       e.stopType(),
+		LocationName:   e.str(shipmentevent.MetadataLocationName),
+		ActualAt:       intutils.IntPtrValue(e.metadata[shipmentevent.MetadataActualAt]),
+		PreviousActualAt: intutils.IntPtrValue(
+			e.metadata[shipmentevent.MetadataPreviousActualAt],
+		),
 	}
+}
+
+func (e shipmentEventEnvelope) stopType() *gqlmodel.StopType {
+	value := e.str(shipmentevent.MetadataStopType)
+	if value == nil {
+		return nil
+	}
+	stopType := gqlmodel.StopType(*value)
+	if !stopType.IsValid() {
+		return nil
+	}
+	return &stopType
 }
 
 func (e shipmentEventEnvelope) assignment() *gqlmodel.ShipmentAssignmentEvent {

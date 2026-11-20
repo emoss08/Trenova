@@ -60,8 +60,10 @@ func (r *repository) GetOrCreate(
 			AllowContactInfoEdit:           true,
 			AllowPtoRequests:               true,
 			SendCredentialReminders:        true,
+			DriverDigestCadence:            dashcontrol.DigestImmediate,
+			DriverDigestWeekday:            dashcontrol.DefaultDriverDigestWeekday,
 			EnableDetentionAlerts:          true,
-			DetentionAlertThresholdMinutes: 120,
+			DetentionAlertThresholdMinutes: dashcontrol.DefaultDetentionAlertMinutes,
 		}
 	}
 
@@ -119,6 +121,8 @@ func (r *repository) Update(
 			dc.AllowPtoRequests,
 			dc.SendCredentialReminders,
 			dc.RequireContactChangeApproval,
+			dc.DriverDigestCadence,
+			dc.DriverDigestWeekday,
 			dc.EnableDetentionAlerts,
 			dc.DetentionAlertThresholdMinutes,
 		); err != nil {

@@ -33,7 +33,6 @@ var detentionPoliciesTable = schema.Table{
 		{Name: "code", Quoted: `"code"`, Field: "Code", Kind: schema.KindString, Flags: 0, Label: `Code`, JSON: `code`},
 		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumPolicyStatus[:]},
-		{Name: "is_org_default", Quoted: `"is_org_default"`, Field: "IsOrgDefault", Kind: schema.KindBool, Flags: 0, Label: `Is Org Default`, JSON: `isOrgDefault`},
 		{Name: "priority", Quoted: `"priority"`, Field: "Priority", Kind: schema.KindInt16, Flags: 0, Label: `Priority`, JSON: `priority`},
 		{Name: "specificity_score", Quoted: `"specificity_score"`, Field: "SpecificityScore", Kind: schema.KindInt32, Flags: 0, Label: `Specificity Score`, JSON: `specificityScore`},
 		{Name: "customer_id", Quoted: `"customer_id"`, Field: "CustomerID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Customer ID`, JSON: `customerId`},
@@ -82,19 +81,19 @@ var detentionPoliciesTable = schema.Table{
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
 	},
 	Relations: []schema.Relation{
-		{Name: "AccessorialCharge", Alias: "ac", Kind: schema.BelongsTo, Local: []int32{30}, Remote: []int32{0}, Label: `Accessorial Charge`, JSON: `accessorialCharge`},
+		{Name: "AccessorialCharge", Alias: "ac", Kind: schema.BelongsTo, Local: []int32{29}, Remote: []int32{0}, Label: `Accessorial Charge`, JSON: `accessorialCharge`},
 		{Name: "Tiers", Alias: "t", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Tiers`, JSON: `tiers`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 51},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 50},
 	Returning:    nil,
-	Version:      49,
+	Version:      48,
 	AutoID:       0,
-	AutoCreate:   50,
-	AutoUpdate:   51,
+	AutoCreate:   49,
+	AutoUpdate:   50,
 	IDPrefix:     "dtp_",
 	New:          newDetentionPolicy,
 	NewN:         newNDetentionPolicy,
@@ -118,7 +117,6 @@ type DetentionPoliciesTable struct {
 	Code                        keel.StringCol
 	Description                 keel.StringCol
 	Status                      PolicyStatusCol
-	IsOrgDefault                keel.BoolCol
 	Priority                    keel.Int16Col
 	SpecificityScore            keel.Int32Col
 	CustomerID                  keelkinds.PulidIDCol
@@ -177,53 +175,52 @@ var DetentionPolicies = &DetentionPoliciesTable{
 	Code:                        keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 4}},
 	Description:                 keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 5}},
 	Status:                      PolicyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 6}}},
-	IsOrgDefault:                keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 7}},
-	Priority:                    keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 8}},
-	SpecificityScore:            keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 9}},
-	CustomerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 10}}},
-	LocationID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 11}}},
-	ShipmentTypeIDs:             keel.JSONBCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 12}},
-	ServiceTypeIDs:              keel.JSONBCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 13}},
-	CommodityIDs:                keel.JSONBCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 14}},
-	StopTypes:                   keel.JSONBCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 15}},
-	AppointmentStopsOnly:        keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 16}},
-	EffectiveStartDate:          keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 17}},
-	EffectiveEndDate:            keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 18}},
-	ClockStartBasis:             ClockStartBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 19}}},
-	LateArrivalRule:             LateArrivalRuleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 20}}},
-	LateArrivalGraceMinutes:     keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 21}},
-	BillingFreeMinutes:          keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 22}},
-	PickupFreeMinutes:           keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 23}},
-	DeliveryFreeMinutes:         keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 24}},
-	PayFreeMinutes:              keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 25}},
-	MinimumBillableMinutes:      keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 26}},
-	BillingIncrementMinutes:     keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 27}},
-	RoundingMode:                RoundingModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 28}}},
-	RateSource:                  RateSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 29}}},
-	AccessorialChargeID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 30}}},
-	MaxBillableMinutesPerStop:   keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 31}},
-	MaxChargePerStop:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 32}}},
-	MaxChargePerDay:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 33}}},
-	MaxChargePerShipment:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 34}}},
-	DayBoundaryMode:             CapScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 35}}},
-	ConvertToLayoverAtMinutes:   keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 36}},
-	LayoverAccessorialChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 37}}},
-	NotificationRequirement:     NotificationRequirementCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 38}}},
-	NotificationLeadMinutes:     keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 39}},
-	NotificationDeadlineMinutes: keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 40}},
-	UnnotifiedBehavior:          UnnotifiedBehaviorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 41}}},
-	AutoSendNotice:              keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 42}},
-	AttachNoticePDF:             keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 43}},
-	SendDepartureSummary:        keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 44}},
-	RequireApprovalOverAmount:   keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 45}}},
-	AutoApproveUnderAmount:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 46}}},
-	Currency:                    keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 47}},
-	Comments:                    keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 48}},
-	Version:                     keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 49}},
-	CreatedAt:                   keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 50}},
-	UpdatedAt:                   keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 51}},
-	SearchVector:                keel.TSVectorCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 52}},
-	Rank:                        keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 53}},
+	Priority:                    keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 7}},
+	SpecificityScore:            keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 8}},
+	CustomerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 9}}},
+	LocationID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 10}}},
+	ShipmentTypeIDs:             keel.JSONBCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 11}},
+	ServiceTypeIDs:              keel.JSONBCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 12}},
+	CommodityIDs:                keel.JSONBCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 13}},
+	StopTypes:                   keel.JSONBCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 14}},
+	AppointmentStopsOnly:        keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 15}},
+	EffectiveStartDate:          keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 16}},
+	EffectiveEndDate:            keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 17}},
+	ClockStartBasis:             ClockStartBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 18}}},
+	LateArrivalRule:             LateArrivalRuleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 19}}},
+	LateArrivalGraceMinutes:     keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 20}},
+	BillingFreeMinutes:          keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 21}},
+	PickupFreeMinutes:           keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 22}},
+	DeliveryFreeMinutes:         keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 23}},
+	PayFreeMinutes:              keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 24}},
+	MinimumBillableMinutes:      keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 25}},
+	BillingIncrementMinutes:     keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 26}},
+	RoundingMode:                RoundingModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 27}}},
+	RateSource:                  RateSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 28}}},
+	AccessorialChargeID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 29}}},
+	MaxBillableMinutesPerStop:   keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 30}},
+	MaxChargePerStop:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 31}}},
+	MaxChargePerDay:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 32}}},
+	MaxChargePerShipment:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 33}}},
+	DayBoundaryMode:             CapScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 34}}},
+	ConvertToLayoverAtMinutes:   keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 35}},
+	LayoverAccessorialChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 36}}},
+	NotificationRequirement:     NotificationRequirementCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 37}}},
+	NotificationLeadMinutes:     keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 38}},
+	NotificationDeadlineMinutes: keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 39}},
+	UnnotifiedBehavior:          UnnotifiedBehaviorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 40}}},
+	AutoSendNotice:              keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 41}},
+	AttachNoticePDF:             keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 42}},
+	SendDepartureSummary:        keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 43}},
+	RequireApprovalOverAmount:   keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 44}}},
+	AutoApproveUnderAmount:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 45}}},
+	Currency:                    keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 46}},
+	Comments:                    keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 47}},
+	Version:                     keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 48}},
+	CreatedAt:                   keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 49}},
+	UpdatedAt:                   keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 50}},
+	SearchVector:                keel.TSVectorCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 51}},
+	Rank:                        keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 52}},
 }
 
 // BuildDetentionPolicies builds the table of detention_policies for ref. Generated relation and alias methods call it.
@@ -237,53 +234,52 @@ func BuildDetentionPolicies(r *keel.Ref) *DetentionPoliciesTable {
 		Code:                        keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Status:                      PolicyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		IsOrgDefault:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		Priority:                    keel.Int16Col{Col: keel.Col{Ref: r, Index: 8}},
-		SpecificityScore:            keel.Int32Col{Col: keel.Col{Ref: r, Index: 9}},
-		CustomerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		LocationID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		ShipmentTypeIDs:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
-		ServiceTypeIDs:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 13}},
-		CommodityIDs:                keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
-		StopTypes:                   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
-		AppointmentStopsOnly:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
-		EffectiveStartDate:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		EffectiveEndDate:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		ClockStartBasis:             ClockStartBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		LateArrivalRule:             LateArrivalRuleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
-		LateArrivalGraceMinutes:     keel.Int16Col{Col: keel.Col{Ref: r, Index: 21}},
-		BillingFreeMinutes:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 22}},
-		PickupFreeMinutes:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 23}},
-		DeliveryFreeMinutes:         keel.Int32Col{Col: keel.Col{Ref: r, Index: 24}},
-		PayFreeMinutes:              keel.Int32Col{Col: keel.Col{Ref: r, Index: 25}},
-		MinimumBillableMinutes:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 26}},
-		BillingIncrementMinutes:     keel.Int16Col{Col: keel.Col{Ref: r, Index: 27}},
-		RoundingMode:                RoundingModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
-		RateSource:                  RateSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
-		AccessorialChargeID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
-		MaxBillableMinutesPerStop:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 31}},
-		MaxChargePerStop:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 32}}},
-		MaxChargePerDay:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 33}}},
-		MaxChargePerShipment:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 34}}},
-		DayBoundaryMode:             CapScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 35}}},
-		ConvertToLayoverAtMinutes:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 36}},
-		LayoverAccessorialChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
-		NotificationRequirement:     NotificationRequirementCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 38}}},
-		NotificationLeadMinutes:     keel.Int16Col{Col: keel.Col{Ref: r, Index: 39}},
-		NotificationDeadlineMinutes: keel.Int16Col{Col: keel.Col{Ref: r, Index: 40}},
-		UnnotifiedBehavior:          UnnotifiedBehaviorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 41}}},
-		AutoSendNotice:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 42}},
-		AttachNoticePDF:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 43}},
-		SendDepartureSummary:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 44}},
-		RequireApprovalOverAmount:   keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 45}}},
-		AutoApproveUnderAmount:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 46}}},
-		Currency:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 47}},
-		Comments:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 48}},
-		Version:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
-		CreatedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
-		UpdatedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 51}},
-		SearchVector:                keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 52}},
-		Rank:                        keel.StringCol{Col: keel.Col{Ref: r, Index: 53}},
+		Priority:                    keel.Int16Col{Col: keel.Col{Ref: r, Index: 7}},
+		SpecificityScore:            keel.Int32Col{Col: keel.Col{Ref: r, Index: 8}},
+		CustomerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		LocationID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ShipmentTypeIDs:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
+		ServiceTypeIDs:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
+		CommodityIDs:                keel.JSONBCol{Col: keel.Col{Ref: r, Index: 13}},
+		StopTypes:                   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
+		AppointmentStopsOnly:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
+		EffectiveStartDate:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		EffectiveEndDate:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		ClockStartBasis:             ClockStartBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		LateArrivalRule:             LateArrivalRuleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		LateArrivalGraceMinutes:     keel.Int16Col{Col: keel.Col{Ref: r, Index: 20}},
+		BillingFreeMinutes:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 21}},
+		PickupFreeMinutes:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 22}},
+		DeliveryFreeMinutes:         keel.Int32Col{Col: keel.Col{Ref: r, Index: 23}},
+		PayFreeMinutes:              keel.Int32Col{Col: keel.Col{Ref: r, Index: 24}},
+		MinimumBillableMinutes:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 25}},
+		BillingIncrementMinutes:     keel.Int16Col{Col: keel.Col{Ref: r, Index: 26}},
+		RoundingMode:                RoundingModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		RateSource:                  RateSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		AccessorialChargeID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		MaxBillableMinutesPerStop:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 30}},
+		MaxChargePerStop:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 31}}},
+		MaxChargePerDay:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 32}}},
+		MaxChargePerShipment:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 33}}},
+		DayBoundaryMode:             CapScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 34}}},
+		ConvertToLayoverAtMinutes:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 35}},
+		LayoverAccessorialChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 36}}},
+		NotificationRequirement:     NotificationRequirementCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
+		NotificationLeadMinutes:     keel.Int16Col{Col: keel.Col{Ref: r, Index: 38}},
+		NotificationDeadlineMinutes: keel.Int16Col{Col: keel.Col{Ref: r, Index: 39}},
+		UnnotifiedBehavior:          UnnotifiedBehaviorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 40}}},
+		AutoSendNotice:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 41}},
+		AttachNoticePDF:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 42}},
+		SendDepartureSummary:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 43}},
+		RequireApprovalOverAmount:   keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 44}}},
+		AutoApproveUnderAmount:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 45}}},
+		Currency:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 46}},
+		Comments:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 47}},
+		Version:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 48}},
+		CreatedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
+		UpdatedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
+		SearchVector:                keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 51}},
+		Rank:                        keel.StringCol{Col: keel.Col{Ref: r, Index: 52}},
 	}
 }
 
@@ -699,98 +695,96 @@ func ptrDetentionPolicy(p unsafe.Pointer, c int32) any {
 	case 6:
 		return (*string)(unsafe.Pointer(&r.Status))
 	case 7:
-		return &r.IsOrgDefault
-	case 8:
 		return &r.Priority
-	case 9:
+	case 8:
 		return &r.SpecificityScore
-	case 10:
+	case 9:
 		return (**string)(unsafe.Pointer(&r.CustomerID))
-	case 11:
+	case 10:
 		return (**string)(unsafe.Pointer(&r.LocationID))
-	case 12:
+	case 11:
 		return &r.ShipmentTypeIDs
-	case 13:
+	case 12:
 		return &r.ServiceTypeIDs
-	case 14:
+	case 13:
 		return &r.CommodityIDs
-	case 15:
+	case 14:
 		return &r.StopTypes
-	case 16:
+	case 15:
 		return &r.AppointmentStopsOnly
-	case 17:
+	case 16:
 		return &r.EffectiveStartDate
-	case 18:
+	case 17:
 		return &r.EffectiveEndDate
-	case 19:
+	case 18:
 		return (*string)(unsafe.Pointer(&r.ClockStartBasis))
-	case 20:
+	case 19:
 		return (*string)(unsafe.Pointer(&r.LateArrivalRule))
-	case 21:
+	case 20:
 		return &r.LateArrivalGraceMinutes
-	case 22:
+	case 21:
 		return &r.BillingFreeMinutes
-	case 23:
+	case 22:
 		return &r.PickupFreeMinutes
-	case 24:
+	case 23:
 		return &r.DeliveryFreeMinutes
-	case 25:
+	case 24:
 		return &r.PayFreeMinutes
-	case 26:
+	case 25:
 		return &r.MinimumBillableMinutes
-	case 27:
+	case 26:
 		return &r.BillingIncrementMinutes
-	case 28:
+	case 27:
 		return (*string)(unsafe.Pointer(&r.RoundingMode))
-	case 29:
+	case 28:
 		return (*string)(unsafe.Pointer(&r.RateSource))
-	case 30:
+	case 29:
 		return (*string)(unsafe.Pointer(&r.AccessorialChargeID))
-	case 31:
+	case 30:
 		return &r.MaxBillableMinutesPerStop
-	case 32:
+	case 31:
 		return &r.MaxChargePerStop
-	case 33:
+	case 32:
 		return &r.MaxChargePerDay
-	case 34:
+	case 33:
 		return &r.MaxChargePerShipment
-	case 35:
+	case 34:
 		return (*string)(unsafe.Pointer(&r.DayBoundaryMode))
-	case 36:
+	case 35:
 		return &r.ConvertToLayoverAtMinutes
-	case 37:
+	case 36:
 		return (**string)(unsafe.Pointer(&r.LayoverAccessorialChargeID))
-	case 38:
+	case 37:
 		return (*string)(unsafe.Pointer(&r.NotificationRequirement))
-	case 39:
+	case 38:
 		return &r.NotificationLeadMinutes
-	case 40:
+	case 39:
 		return &r.NotificationDeadlineMinutes
-	case 41:
+	case 40:
 		return (*string)(unsafe.Pointer(&r.UnnotifiedBehavior))
-	case 42:
+	case 41:
 		return &r.AutoSendNotice
-	case 43:
+	case 42:
 		return &r.AttachNoticePDF
-	case 44:
+	case 43:
 		return &r.SendDepartureSummary
-	case 45:
+	case 44:
 		return &r.RequireApprovalOverAmount
-	case 46:
+	case 45:
 		return &r.AutoApproveUnderAmount
-	case 47:
+	case 46:
 		return &r.Currency
-	case 48:
+	case 47:
 		return &r.Comments
-	case 49:
+	case 48:
 		return &r.Version
-	case 50:
+	case 49:
 		return &r.CreatedAt
-	case 51:
+	case 50:
 		return &r.UpdatedAt
-	case 52:
+	case 51:
 		return &r.SearchVector
-	case 53:
+	case 52:
 		return &r.Rank
 	}
 	return nil
@@ -817,143 +811,141 @@ func valueDetentionPolicy(p unsafe.Pointer, c int32) any {
 	case 6:
 		return string(r.Status)
 	case 7:
-		return r.IsOrgDefault
-	case 8:
 		return r.Priority
-	case 9:
+	case 8:
 		return r.SpecificityScore
-	case 10:
+	case 9:
 		if r.CustomerID == nil {
 			return nil
 		}
 		return string(*r.CustomerID)
-	case 11:
+	case 10:
 		if r.LocationID == nil {
 			return nil
 		}
 		return string(*r.LocationID)
-	case 12:
+	case 11:
 		if r.ShipmentTypeIDs == nil {
 			return nil
 		}
 		return r.ShipmentTypeIDs
-	case 13:
+	case 12:
 		if r.ServiceTypeIDs == nil {
 			return nil
 		}
 		return r.ServiceTypeIDs
-	case 14:
+	case 13:
 		if r.CommodityIDs == nil {
 			return nil
 		}
 		return r.CommodityIDs
-	case 15:
+	case 14:
 		if r.StopTypes == nil {
 			return nil
 		}
 		return r.StopTypes
-	case 16:
+	case 15:
 		return r.AppointmentStopsOnly
-	case 17:
+	case 16:
 		if r.EffectiveStartDate == nil {
 			return nil
 		}
 		return *r.EffectiveStartDate
-	case 18:
+	case 17:
 		if r.EffectiveEndDate == nil {
 			return nil
 		}
 		return *r.EffectiveEndDate
-	case 19:
+	case 18:
 		return string(r.ClockStartBasis)
-	case 20:
+	case 19:
 		return string(r.LateArrivalRule)
-	case 21:
+	case 20:
 		return r.LateArrivalGraceMinutes
-	case 22:
+	case 21:
 		return r.BillingFreeMinutes
-	case 23:
+	case 22:
 		if r.PickupFreeMinutes == nil {
 			return nil
 		}
 		return *r.PickupFreeMinutes
-	case 24:
+	case 23:
 		if r.DeliveryFreeMinutes == nil {
 			return nil
 		}
 		return *r.DeliveryFreeMinutes
-	case 25:
+	case 24:
 		if r.PayFreeMinutes == nil {
 			return nil
 		}
 		return *r.PayFreeMinutes
-	case 26:
+	case 25:
 		return r.MinimumBillableMinutes
-	case 27:
+	case 26:
 		return r.BillingIncrementMinutes
-	case 28:
+	case 27:
 		return string(r.RoundingMode)
-	case 29:
+	case 28:
 		return string(r.RateSource)
-	case 30:
+	case 29:
 		return string(r.AccessorialChargeID)
-	case 31:
+	case 30:
 		if r.MaxBillableMinutesPerStop == nil {
 			return nil
 		}
 		return *r.MaxBillableMinutesPerStop
-	case 32:
+	case 31:
 		return r.MaxChargePerStop
-	case 33:
+	case 32:
 		return r.MaxChargePerDay
-	case 34:
+	case 33:
 		return r.MaxChargePerShipment
-	case 35:
+	case 34:
 		return string(r.DayBoundaryMode)
-	case 36:
+	case 35:
 		if r.ConvertToLayoverAtMinutes == nil {
 			return nil
 		}
 		return *r.ConvertToLayoverAtMinutes
-	case 37:
+	case 36:
 		if r.LayoverAccessorialChargeID == nil {
 			return nil
 		}
 		return string(*r.LayoverAccessorialChargeID)
-	case 38:
+	case 37:
 		return string(r.NotificationRequirement)
-	case 39:
+	case 38:
 		return r.NotificationLeadMinutes
-	case 40:
+	case 39:
 		return r.NotificationDeadlineMinutes
-	case 41:
+	case 40:
 		return string(r.UnnotifiedBehavior)
-	case 42:
+	case 41:
 		return r.AutoSendNotice
-	case 43:
+	case 42:
 		return r.AttachNoticePDF
-	case 44:
+	case 43:
 		return r.SendDepartureSummary
-	case 45:
+	case 44:
 		return r.RequireApprovalOverAmount
-	case 46:
+	case 45:
 		return r.AutoApproveUnderAmount
-	case 47:
+	case 46:
 		return r.Currency
-	case 48:
+	case 47:
 		if r.Comments == "" {
 			return nil
 		}
 		return r.Comments
-	case 49:
+	case 48:
 		return r.Version
-	case 50:
+	case 49:
 		return r.CreatedAt
-	case 51:
+	case 50:
 		return r.UpdatedAt
-	case 52:
+	case 51:
 		return r.SearchVector
-	case 53:
+	case 52:
 		return r.Rank
 	}
 	return nil

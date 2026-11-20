@@ -66,7 +66,12 @@ func (r *MutationResolver) CreateHoldReason(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
-	return r.HoldReasonService.Create(ctx, holdReasonFromInput(&input, authCtx), authCtx.UserID)
+	entity, err := holdReasonFromInput(&input, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.HoldReasonService.Create(ctx, entity, authCtx.UserID)
 }
 
 func (r *MutationResolver) UpdateHoldReason(ctx context.Context, id string, input gqlmodel.HoldReasonInput) (*holdreason.HoldReason, error) {
@@ -88,7 +93,9 @@ func (r *MutationResolver) UpdateHoldReason(ctx context.Context, id string, inpu
 		return nil, err
 	}
 
-	applyHoldReasonInput(existing, &input)
+	if err = applyHoldReasonInput(existing, &input); err != nil {
+		return nil, err
+	}
 
 	return r.HoldReasonService.Update(ctx, existing, authCtx.UserID)
 }

@@ -139,6 +139,8 @@ const (
 	JournalSourceEventDriverSettlementPosted   = JournalSourceEventType("DriverSettlementPosted")
 	JournalSourceEventDriverSettlementVoided   = JournalSourceEventType("DriverSettlementVoided")
 	JournalSourceEventEscrowInterestAccrued    = JournalSourceEventType("EscrowInterestAccrued")
+	JournalSourceEventEscrowAdjusted           = JournalSourceEventType("EscrowAdjusted")
+	JournalSourceEventEscrowRefunded           = JournalSourceEventType("EscrowRefunded")
 	JournalSourceEventCarrierSettlementPosted  = JournalSourceEventType("CarrierSettlementPosted")
 	JournalSourceEventCarrierSettlementVoided  = JournalSourceEventType("CarrierSettlementVoided")
 	JournalSourceEventCarrierSettlementPaid    = JournalSourceEventType("CarrierSettlementPaid")
@@ -170,6 +172,8 @@ func (j JournalSourceEventType) IsValid() bool {
 		JournalSourceEventDriverSettlementPosted,
 		JournalSourceEventDriverSettlementVoided,
 		JournalSourceEventEscrowInterestAccrued,
+		JournalSourceEventEscrowAdjusted,
+		JournalSourceEventEscrowRefunded,
 		JournalSourceEventCarrierSettlementPosted,
 		JournalSourceEventCarrierSettlementVoided,
 		JournalSourceEventCarrierSettlementPaid,
@@ -195,6 +199,8 @@ var journalSourceEventDescriptions = map[JournalSourceEventType]string{
 	JournalSourceEventDriverSettlementPosted:      "Trigger on posted driver settlement",
 	JournalSourceEventDriverSettlementVoided:      "Trigger on voided driver settlement",
 	JournalSourceEventEscrowInterestAccrued:       "Trigger on accrued escrow interest",
+	JournalSourceEventEscrowAdjusted:              "Trigger on manual escrow adjustment",
+	JournalSourceEventEscrowRefunded:              "Trigger on escrow refund at account closure",
 	JournalSourceEventCarrierSettlementPosted:     "Trigger on posted carrier settlement",
 	JournalSourceEventCarrierSettlementVoided:     "Trigger on voided carrier settlement",
 	JournalSourceEventCarrierSettlementPaid:       "Trigger on paid carrier settlement",

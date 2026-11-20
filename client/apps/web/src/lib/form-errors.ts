@@ -1,3 +1,7 @@
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
+import { isRecord } from "@trenova/shared/lib/utils";
+import { fieldPathSchema, type FieldPath } from "@trenova/shared/types/errors";
+
 type RegisteredField = { _f?: unknown };
 
 // Structural rather than Control<T>: react-hook-form's Control carries an invariant
@@ -153,4 +157,32 @@ export function refusedFieldMessages(
         .map((error) => error.message),
     ),
   ];
+}
+
+/**
+ * A refused GraphQL request with each field error's path passed through `map`, for a form
+ * that holds its values in another shape than the server's input (a list the server
+ * addresses by code, a subset of rows sent in another order). Anything else, and a refusal
+ * with no field errors, comes back as it is.
+ */
+export function mapFieldErrorPaths(error: unknown, map: (path: FieldPath) => FieldPath): unknown {
+  if (!(error instanceof GraphQLRequestError) || error.getFieldErrors().length === 0) {
+    return error;
+  }
+
+  return new GraphQLRequestError({
+    kind: error.kind,
+    message: error.message,
+    status: error.status,
+    retryAfter: error.retryAfter,
+    graphQLErrors: error.graphQLErrors.map((graphQLError) => {
+      if (!Array.isArray(graphQLError.errors)) return graphQLError;
+      const errors = graphQLError.errors.map((entry: unknown) => {
+        if (!isRecord(entry)) return entry;
+        const path = fieldPathSchema.safeParse(entry.path);
+        return path.success ? { ...entry, path: map(path.data) } : entry;
+      });
+      return { ...graphQLError, errors, extensions: { ...graphQLError.extensions, errors } };
+    }),
+  });
 }

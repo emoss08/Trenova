@@ -38,16 +38,7 @@ func (s *Service) location(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (*time.Location, error) {
-	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
-		TenantInfo: tenant,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if org == nil {
-		return time.UTC, nil
-	}
-	return timeutils.LoadLocation(org.Timezone), nil
+	return tenantports.OrganizationLocation(ctx, s.organizations, tenant)
 }
 
 func (s *Service) openRead(

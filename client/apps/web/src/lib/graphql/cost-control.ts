@@ -1,14 +1,12 @@
 import type {
-  CostCategoryUpdateInput,
-  CostingControlInput,
   CostingControlPageQuery,
+  CostingControlSaveInput,
   ResolvedCostProfilePageQuery,
 } from "@trenova/graphql/generated/graphql";
 import {
   CostingControlPageDocument,
   ResolvedCostProfilePageDocument,
-  UpdateCostCategoryDocument,
-  UpdateCostingControlDocument,
+  SaveCostingControlDocument,
 } from "@trenova/graphql/generated/documents/cost-control/operations";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
@@ -41,20 +39,12 @@ export async function getResolvedCostProfileGraphQL(
   return data.resolvedCostProfile;
 }
 
-export async function updateCostingControlGraphQL(input: CostingControlInput) {
+/** Saves the control's settings and the changed categories together, or none of them. */
+export async function saveCostingControlGraphQL(input: CostingControlSaveInput) {
   const data = await requestGraphQL({
-    document: UpdateCostingControlDocument,
-    operationName: "UpdateCostingControl",
+    document: SaveCostingControlDocument,
+    operationName: "SaveCostingControl",
     variables: { input },
   });
-  return data.updateCostingControl;
-}
-
-export async function updateCostCategoryGraphQL(input: CostCategoryUpdateInput) {
-  const data = await requestGraphQL({
-    document: UpdateCostCategoryDocument,
-    operationName: "UpdateCostCategory",
-    variables: { input },
-  });
-  return data.updateCostCategory;
+  return data.saveCostingControl;
 }

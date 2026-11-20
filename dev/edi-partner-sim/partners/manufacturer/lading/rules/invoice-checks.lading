@@ -1,0 +1,39 @@
+rules invoiceChecks for invoiceOut
+
+/// Kestrel pays an invoice only when it quotes the load number, the BOL and the bill-to.
+rule "an invoice Kestrel can pay" {
+  require exists key else hold "Kestrel needs its load number on every invoice"
+  require exists bol else hold "Kestrel needs the BOL on every invoice"
+  require exists billTo else hold "Kestrel needs the bill-to on every invoice"
+}
+
+/// An invoice with no lines would reach Kestrel's guide with no 0400 loop.
+rule "an invoice has lines" {
+  require not lines.isEmpty else reject "An invoice to Kestrel needs at least one line"
+}
+
+test "a complete invoice goes out" {
+  given freightInvoice {
+    number: "INV-2001"
+    date: @2026-04-28
+    key: "KVW-100037"
+    bol: "8100798987"
+    total: $1_029.41
+    billTo: { name: "Kestrel Valve Works Accounts Payable" }
+    lines: [{ sequence: 1, description: "Linehaul", amount: $1_029.41 }]
+  }
+  expect no holds
+  expect no rejects
+}
+
+test "an invoice without the BOL is held" {
+  given freightInvoice {
+    number: "INV-2001"
+    date: @2026-04-28
+    key: "KVW-100037"
+    total: $1_029.41
+    billTo: { name: "Kestrel Valve Works Accounts Payable" }
+    lines: [{ sequence: 1, description: "Linehaul", amount: $1_029.41 }]
+  }
+  expect held "Kestrel needs the BOL on every invoice"
+}

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dataentrycontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/equipmenttypeportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,25 +29,25 @@ func newTestValidator() *Validator {
 }
 
 type testDeps struct {
-	repo        *equipmenttypeportsmock.MockEquipmentTypeRepository
-	audit       *auditportsmock.MockAuditService
-	transformer *accessorialchargeportsmock.MockDataTransformer
-	svc         *Service
+	repo      *equipmenttypeportsmock.MockEquipmentTypeRepository
+	audit     *auditportsmock.MockAuditService
+	formatter *dataentrycontrolportsmock.MockTextFormatter
+	svc       *Service
 }
 
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	auditSvc := auditportsmock.NewMockAuditService(t)
-	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
 	svc := &Service{
 		l:            zap.NewNop(),
 		repo:         repo,
 		validator:    newTestValidator(),
 		auditService: auditSvc,
-		transformer:  transformer,
+		formatter:    formatter,
 	}
-	return &testDeps{repo: repo, audit: auditSvc, transformer: transformer, svc: svc}
+	return &testDeps{repo: repo, audit: auditSvc, formatter: formatter, svc: svc}
 }
 
 func newTestEntity() *equipmenttype.EquipmentType {
@@ -85,7 +85,7 @@ func TestCreate_Success(t *testing.T) {
 	created.BusinessUnitID = entity.BusinessUnitID
 	created.OrganizationID = entity.OrganizationID
 
-	deps.transformer.On("TransformEquipmentType", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(created, nil)
 	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -98,7 +98,7 @@ func TestCreate_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, created.ID, result.ID)
 	assert.Equal(t, created.Code, result.Code)
-	deps.transformer.AssertExpectations(t)
+	deps.formatter.AssertExpectations(t)
 	deps.repo.AssertExpectations(t)
 	deps.audit.AssertExpectations(t)
 }
@@ -116,7 +116,7 @@ func TestUpdate_Success(t *testing.T) {
 	original.BusinessUnitID = entity.BusinessUnitID
 	original.Code = "OLD"
 
-	deps.transformer.On("TransformEquipmentType", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(entity, nil)
 	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -130,7 +130,7 @@ func TestUpdate_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, entity.ID, result.ID)
 	assert.Equal(t, entity.Code, result.Code)
-	deps.transformer.AssertExpectations(t)
+	deps.formatter.AssertExpectations(t)
 	deps.repo.AssertExpectations(t)
 	deps.audit.AssertExpectations(t)
 }
@@ -258,15 +258,15 @@ func TestBulkUpdateStatus_BulkUpdateError(t *testing.T) {
 	assert.Equal(t, bulkErr, err)
 }
 
-func TestCreate_TransformError(t *testing.T) {
+func TestCreate_FormatError(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	ctx := t.Context()
 	entity := newCreateEntity()
 	userID := pulid.MustNew("usr_")
-	transformErr := errors.New("transform failed")
+	formatErr := errors.New("format failed")
 
-	deps.transformer.On("TransformEquipmentType", mock.Anything, mock.Anything).Return(transformErr)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(formatErr)
 
 	result, err := deps.svc.Create(
 		ctx,
@@ -276,7 +276,7 @@ func TestCreate_TransformError(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Equal(t, transformErr, err)
+	assert.Equal(t, formatErr, err)
 	deps.repo.AssertNotCalled(t, "Create")
 }
 
@@ -287,7 +287,7 @@ func TestCreate_ValidationError(t *testing.T) {
 	entity := newTestEntity()
 	userID := pulid.MustNew("usr_")
 
-	deps.transformer.On("TransformEquipmentType", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Create(
 		ctx,
@@ -308,7 +308,7 @@ func TestCreate_RepoError(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	repoErr := errors.New("create failed")
 
-	deps.transformer.On("TransformEquipmentType", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(nil, repoErr)
 
 	result, err := deps.svc.Create(
@@ -322,15 +322,15 @@ func TestCreate_RepoError(t *testing.T) {
 	assert.Equal(t, repoErr, err)
 }
 
-func TestUpdate_TransformError(t *testing.T) {
+func TestUpdate_FormatError(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	ctx := t.Context()
 	entity := newTestEntity()
 	userID := pulid.MustNew("usr_")
-	transformErr := errors.New("transform failed")
+	formatErr := errors.New("format failed")
 
-	deps.transformer.On("TransformEquipmentType", mock.Anything, mock.Anything).Return(transformErr)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(formatErr)
 
 	result, err := deps.svc.Update(
 		ctx,
@@ -340,7 +340,7 @@ func TestUpdate_TransformError(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.Equal(t, transformErr, err)
+	assert.Equal(t, formatErr, err)
 	deps.repo.AssertNotCalled(t, "GetByID")
 }
 
@@ -352,7 +352,7 @@ func TestUpdate_GetByIDError(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	notFoundErr := errors.New("not found")
 
-	deps.transformer.On("TransformEquipmentType", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(nil, notFoundErr)
 
 	result, err := deps.svc.Update(
@@ -380,7 +380,7 @@ func TestUpdate_RepoError(t *testing.T) {
 	original.OrganizationID = entity.OrganizationID
 	original.BusinessUnitID = entity.BusinessUnitID
 
-	deps.transformer.On("TransformEquipmentType", mock.Anything, mock.Anything).Return(nil)
+	deps.formatter.On("Format", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(nil, updateErr)
 
@@ -504,7 +504,7 @@ func TestNew(t *testing.T) {
 
 	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	auditSvc := auditportsmock.NewMockAuditService(t)
-	transformer := accessorialchargeportsmock.NewMockDataTransformer(t)
+	formatter := dataentrycontrolportsmock.NewMockTextFormatter(t)
 	validator := newTestValidator()
 
 	svc := New(Params{
@@ -512,7 +512,7 @@ func TestNew(t *testing.T) {
 		Repo:         repo,
 		Validator:    validator,
 		AuditService: auditSvc,
-		Transformer:  transformer,
+		Formatter:    formatter,
 	})
 
 	require.NotNil(t, svc)

@@ -1,0 +1,120 @@
+flow tender with meadowridge
+
+receive 204 as tender
+  via tenderIn, rules tenderChecks
+  key tender.key
+  acknowledge with 997
+  on Original -> create
+  on Replace  -> update stops, commodities, refs, notes, temperature, weight, pieces keep customer, total
+    hold when tender.total != current.total "Meadowridge replaced {tender.key} at a new rate"
+  on Cancel   -> cancel unless dispatched or later else hold "Meadowridge cancelled {tender.key} after dispatch: stop the truck and bill the truck-ordered-not-used"
+
+respond 990 via responseOut
+  accept automatically when partner.autoAccept and not held and not declined
+  decline automatically when declined and partner.autoDecline
+  otherwise planner decides within partner.answerWithin else escalate "Meadowridge run {tender.key} needs an answer"
+
+send 214 via statusOut on StopArrived, StopDeparted, Delivered
+  where exists status.bol
+  batch within 10 min
+  until Delivered
+
+send 210 via invoiceOut on InvoicePosted key invoice.key ?? invoice.number
+
+expect 997 for every send within 1 h else resend 2 then escalate "Meadowridge has not acknowledged {message.set} {message.control}"
+
+test "a new run is created and accepted at once" {
+  receive file "samples/tender-original.x12"
+  expect created
+  expect sent 997
+  expect sent 990 accept
+}
+
+test "the same run sent again is held, not created twice" {
+  receive file "samples/tender-original.x12"
+  receive file "samples/tender-duplicate.x12"
+  expect held "A load already exists for this tender"
+}
+
+test "a replacement at the same rate updates the run" {
+  receive file "samples/tender-original.x12"
+  receive file "samples/tender-replace.x12"
+  expect updated
+  expect no held
+}
+
+test "a replacement at a new rate is held" {
+  receive file "samples/tender-original.x12"
+  receive file "samples/tender-replace-rate.x12"
+  expect held "Meadowridge replaced MF1000008 at a new rate"
+}
+
+test "a replacement that adds a drop changes the rate and is held" {
+  receive file "samples/tender-original.x12"
+  receive file "samples/tender-replace-added-stop.x12"
+  expect held "Meadowridge replaced MF1000008 at a new rate"
+}
+
+test "a cancellation before dispatch cancels the run" {
+  receive file "samples/tender-original.x12"
+  receive file "samples/tender-cancel.x12"
+  expect cancelled
+}
+
+test "a cancellation after dispatch is held for the truck-ordered-not-used" {
+  receive file "samples/tender-original.x12"
+  event Dispatched { key: "MF1000008", bol: "5861735303", events: [{ kind: Dispatched, at: @2026-06-09T06:30Z }] }
+  receive file "samples/tender-cancel.x12"
+  expect held "Meadowridge cancelled MF1000008 after dispatch: stop the truck and bill the truck-ordered-not-used"
+  expect no cancelled
+}
+
+test "a run with crossing ranges waits for a planner" {
+  receive file "samples/tender-mixed.x12"
+  expect created
+  expect no sent 990
+  advance 30 min
+  expect escalated "Meadowridge run MF1000007 needs an answer"
+}
+
+test "a planner's decline is answered with a 990" {
+  receive file "samples/tender-mixed.x12"
+  respond decline "Can't run frozen and chilled together"
+  expect sent 990 decline
+}
+
+test "a drop's statuses within ten minutes go out as one 214" {
+  receive file "samples/tender-original.x12"
+  event StopArrived { key: "MF1000008", bol: "5861735303", events: [{ kind: ArrivedDelivery, at: @2026-06-09T14:05Z, stop: 2 }] }
+  event Delivered { key: "MF1000008", bol: "5861735303", events: [{ kind: Delivered, at: @2026-06-09T14:12Z, stop: 2 }] }
+  advance 10 min
+  expect sent 214
+}
+
+test "a departure goes out" {
+  event StopDeparted { key: "MF1000008", bol: "5861735303", events: [{ kind: DepartedDelivery, at: @2026-06-09T15:05Z, stop: 2 }] }
+  advance 10 min
+  expect sent 214
+}
+
+test "an unacknowledged status is resent twice, then escalated" {
+  event Delivered { key: "MF1000008", bol: "5861735303", events: [{ kind: Delivered, at: @2026-06-09T14:12Z, stop: 2 }] }
+  advance 10 min
+  advance 1 h
+  advance 1 h
+  advance 1 h
+  expect escalated "Meadowridge has not acknowledged 214 0001"
+}
+
+test "a posted invoice is sent" {
+  event InvoicePosted {
+    number: "INV-4001"
+    date: @2026-06-12
+    key: "MF1000008"
+    bol: "5861735303"
+    total: $5_906.86
+    billTo: { name: "Meadowridge Fresh Markets Transportation" }
+    lines: [{ sequence: 1, description: "Linehaul", amount: $5_906.86 }]
+  }
+  expect sent 210
+}

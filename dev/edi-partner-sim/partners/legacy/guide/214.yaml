@@ -1,0 +1,54 @@
+set: "214"
+version: "004010"
+group: QM
+title: "Ashgrove Industrial Supply Shipment Status (1998)"
+
+segments:
+  ST:
+    name: Transaction Set Header
+    elements:
+      - { pos: 1, name: Transaction Set Identifier Code, type: ID, min: 3, max: 3, usage: M, fixed: "214" }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+  B10:
+    name: Beginning Segment for Transportation Carrier Shipment Status Message
+    elements:
+      - { pos: 1, name: Carrier Reference (PRO), type: AN, min: 1, max: 30, usage: M }
+      - { pos: 2, name: Ashgrove Load Number, type: AN, min: 7, max: 7, usage: M }
+      - { pos: 3, name: Standard Carrier Alpha Code, type: ID, min: 2, max: 4, usage: M, fixed: TRNV }
+  L11:
+    name: Bill of Lading
+    elements:
+      - { pos: 1, name: Reference Identification, type: AN, min: 1, max: 30, usage: M }
+      - { pos: 2, name: Reference Identification Qualifier, type: ID, min: 2, max: 3, usage: M, codes: [BM] }
+  LX:
+    name: Assigned Number
+    elements:
+      - { pos: 1, name: Assigned Number, type: N0, min: 1, max: 6, usage: M }
+  AT7:
+    name: Shipment Status Details
+    elements:
+      - { pos: 1, name: Shipment Status Code, type: ID, min: 2, max: 2, usage: M, codes: [AF, D1] }
+      - { pos: 2, name: Shipment Status Reason Code, type: ID, min: 2, max: 2, usage: M, codes: [NS] }
+      - { pos: 5, name: Date (Eastern), type: DT, min: 8, max: 8, usage: M }
+      - { pos: 6, name: Time (Eastern), type: TM, min: 4, max: 4, usage: M }
+  SE:
+    name: Transaction Set Trailer
+    elements:
+      - { pos: 1, name: Number of Included Segments, type: N0, min: 1, max: 10, usage: M }
+      - { pos: 2, name: Transaction Set Control Number, type: AN, min: 4, max: 9, usage: M }
+
+structure:
+  - { seg: ST, usage: M }
+  - { seg: B10, usage: M }
+  - { seg: L11, usage: O }
+  - loop: "0205"
+    usage: M
+    max: 5
+    body:
+      - { seg: LX, usage: M }
+      - loop: "0210"
+        usage: M
+        max: 1
+        body:
+          - { seg: AT7, usage: M }
+  - { seg: SE, usage: M }

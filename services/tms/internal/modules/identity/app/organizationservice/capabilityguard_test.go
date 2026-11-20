@@ -18,7 +18,7 @@ func capabilityErrorMessage(t *testing.T, err error, field string) string {
 	multiErr := new(errortypes.MultiError)
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, field, multiErr.Errors[0].Field)
+	assert.Equal(t, field, multiErr.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrResourceInUse, multiErr.Errors[0].Code)
 
 	return multiErr.Errors[0].Error()

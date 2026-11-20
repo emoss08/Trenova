@@ -313,7 +313,7 @@ func TestRateReportsAMistypedInputAgainstTheInputs(t *testing.T) {
 	var validation *errortypes.Error
 	if errortypes.IsError(err) {
 		require.ErrorAs(t, err, &validation)
-		assert.Equal(t, "inputs", validation.Field)
+		assert.Equal(t, "inputs", validation.Field())
 		return
 	}
 	assert.True(t, errortypes.IsBusinessError(err), "%v", err)
@@ -392,7 +392,7 @@ func TestRateRefusesAStoredValueOutsideTheConstraintOnTheInputs(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "inputs", validation.Field)
+	assert.Equal(t, "inputs", validation.Field())
 	assert.Equal(t,
 		"`rate` must be from $0.50/mi to $15.00/mi; $40.00/mi is outside it",
 		errortypes.LocalizedText(t.Context(), err),

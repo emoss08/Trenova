@@ -1,0 +1,7 @@
+guide kestrel.990 from x12.004010.990 "Kestrel Valve Works Tender Response Guide 4.2"
+
+/// Kestrel matches a response to its tender by the load number alone.
+B1 { 01 required; 02 required length 10..10; 03 required; 04 required codes "A", "D" }
+N9 { 01 codes "ZZ"; 02 required length 1..30 }
+G62 unused
+K1 unused

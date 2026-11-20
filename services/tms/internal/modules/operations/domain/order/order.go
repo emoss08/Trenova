@@ -73,7 +73,8 @@ func (o *Order) Validate(multiErr *errortypes.MultiError) {
 				Error("Currency code must be a 3-letter ISO 4217 code"),
 		),
 		validation.Field(&o.PONumber,
-			validation.Length(0, 100).Error("PO number must be at most 100 characters"),
+			validation.Length(0, MaxPONumberLength).
+				Error("PO number must be at most 100 characters"),
 		),
 		validation.Field(&o.BOL,
 			validation.Length(0, 100).Error("BOL must be at most 100 characters"),
@@ -86,6 +87,8 @@ func (o *Order) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 }
+
+const MaxPONumberLength = 100
 
 var currencyCodePattern = regexp.MustCompile(`^[A-Z]{3}$`)
 

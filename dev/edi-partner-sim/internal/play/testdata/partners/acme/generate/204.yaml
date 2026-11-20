@@ -1,0 +1,149 @@
+set: "204"
+
+purposes:
+  original: "00"
+  duplicate: "00"
+  change: "04"
+  replace: "05"
+  cancel: "01"
+
+load:
+  start: "2026-03-02"
+  days: 60
+  number: { prefix: "ACM", digits: 6 }
+  bol: { prefix: "8100", digits: 6 }
+  po: { prefix: "45", digits: 8, chance: 0.85 }
+  pickupRef: { prefix: "R", digits: 7, chance: 0.6 }
+  appointment: { prefix: "APT", digits: 6, chance: 0.7 }
+  payment:
+    - { code: PP, weight: 9 }
+    - { code: TP, weight: 1 }
+  stops: { min: 2, max: 4, extraPickup: 0.2 }
+  origins:
+    - { code: KVW-RFD1, name: KESTREL VALVE WORKS PLANT 1, street: 2750 SANDY HOLLOW RD, city: ROCKFORD, state: IL }
+    - { code: KVW-PEO2, name: KESTREL VALVE WORKS PLANT 2, street: 1840 SW ADAMS ST, city: PEORIA, state: IL }
+    - { code: KVW-JOL3, name: KESTREL FINISHED GOODS DC, street: 3300 CHANNAHON RD, city: JOLIET, state: IL }
+  billTo: { code: KVW-AP, name: KESTREL VALVE WORKS ACCOUNTS PAYABLE, street: 500 E STATE ST, city: ROCKFORD, state: IL, zip: "61104" }
+  consignees:
+    code: KVC-
+    names:
+      - MIDLAND FLUID SUPPLY
+      - ALLIED PROCESS EQUIPMENT
+      - CORNERSTONE PIPE AND VALVE
+      - TRI-STATE WATERWORKS
+      - HEARTLAND MECHANICAL
+      - PRAIRIE INDUSTRIAL SUPPLY
+  equipment:
+    - { code: TF, weight: 8, lengthFt: 53 }
+    - { code: FT, weight: 2, lengthFt: 48 }
+    - { code: RT, weight: 1, lengthFt: 53, reefer: { min: 40, max: 55 } }
+  weight: { min: 6000, max: 44000 }
+  pieces: { min: 6, max: 26 }
+  lines: { min: 1, max: 3 }
+  commodities:
+    - { description: CAST IRON GATE VALVES, code: "88240" }
+    - { description: BRASS BALL VALVES, code: "88250" }
+    - { description: BUTTERFLY VALVE ASSEMBLIES, code: "88260" }
+    - { description: PIPE FLANGES AND FITTINGS, code: "51140" }
+    - { description: ACTUATOR KITS, code: "61700" }
+    - { description: THREAD SEALANT ADHESIVE, code: "04610" }
+    - description: CORROSION INHIBITOR
+      code: "48580"
+      hazmat: { un: UN1760, class: "8", name: CORROSIVE LIQUID NOS }
+    - description: VALVE COATING ENAMEL
+      code: "149980"
+      hazmat: { un: UN1263, class: "3", name: PAINT }
+  hazmat: 0.2
+  rate: { perMileCents: { min: 215, max: 340 }, minimumCents: 45000, stopOffCents: 7500 }
+  window: { leadDays: { min: 0, max: 3 }, pickupHours: { min: 6, max: 14 }, hours: 2, mph: 47, dwellHours: 1 }
+  zip4: 0.5
+  contact: 0.4
+  notes:
+    chance: 0.35
+    load: [CALL DISPATCH 30 MINUTES OUT, DRIVER MUST HAVE STEEL TOE BOOTS, TARPS REQUIRED ON FLATBED]
+    delivery: [DELIVER TO DOOR 14, LIFTGATE NOT AVAILABLE, RECEIVING CLOSES AT 1500]
+
+segments:
+  - seg: B2
+    el: ["", "{scac}", "", "{load.number}", "", "{load.payment}"]
+  - seg: B2A
+    el: ["{purpose}", LT]
+  - seg: L11
+    el: ["{load.bol}", BM]
+  - seg: L11
+    when: load.po
+    optional: true
+    el: ["{load.po}", PO]
+  - seg: NTE
+    when: load.note
+    optional: true
+    el: [LOI, "{load.note}"]
+  - body:
+      - seg: N1
+        el: [BT, "{billTo.name}", "93", "{billTo.code}"]
+      - seg: N3
+        el: ["{billTo.street}"]
+      - seg: N4
+        el: ["{billTo.city}", "{billTo.state}", "{billTo.zip}", "{billTo.country}"]
+  - seg: N7
+    el: ["", TBD, "", "", "", "", "", "", "", "", "{equipment.code}", "", "{equipment.temp|zpad:4}", "", "{equipment.lengthFt}00"]
+  - each: stops
+    as: stop
+    body:
+      - seg: S5
+        el: ["{stop.sequence}", "{stop.kind|map:pickup=LD,delivery=UL}", "{stop.weight}", L, "{stop.pieces}", PC]
+      - seg: L11
+        when: stop.pickupRef
+        el: ["{stop.pickupRef}", P8]
+      - seg: L11
+        when: stop.appointment
+        optional: true
+        el: ["{stop.appointment}", AO]
+      - seg: G62
+        el:
+          - "{stop.kind|map:pickup=37,delivery=53}"
+          - "{stop.window.start|date}"
+          - G
+          - "{stop.window.start|time}"
+          - "{stop.window.start|zone}"
+      - seg: G62
+        el:
+          - "{stop.kind|map:pickup=38,delivery=54}"
+          - "{stop.window.end|date}"
+          - L
+          - "{stop.window.end|time}"
+          - "{stop.window.end|zone}"
+      - seg: AT8
+        el: [G, L, "{stop.weight}", "{stop.pieces}"]
+      - seg: NTE
+        when: stop.note
+        optional: true
+        el: [DEL, "{stop.note}"]
+      - seg: N1
+        el: ["{stop.kind|map:pickup=SH,delivery=CN}", "{stop.party.name}", "93", "{stop.party.code}"]
+      - seg: N3
+        el: ["{stop.party.street}"]
+      - seg: N4
+        el: ["{stop.party.city}", "{stop.party.state}", "{stop.party.zip}", "{stop.party.country}"]
+      - seg: G61
+        when: stop.party.contact
+        optional: true
+        el: [IC, "{stop.party.contact}", TE, "{stop.party.phone}"]
+      - each: stop.lines
+        as: line
+        body:
+          - seg: L5
+            el: ["{line.number}", "{line.description}", "{line.code}", N]
+          - seg: AT8
+            el: [G, L, "{line.weight}", "{line.pieces}"]
+          - seg: LH1
+            when: line.hazmat
+            el: [PC, "{line.pieces}", "{line.hazmat.un}"]
+          - seg: LH2
+            when: line.hazmat
+            el: ["{line.hazmat.class}"]
+          - seg: LH3
+            when: line.hazmat
+            el: ["{line.hazmat.name|trunc:25}", D]
+  - seg: L3
+    el: ["{load.weight}", G, "{load.rate|dollars}", PM, "{load.total}", "", "", "", "", "", "{load.pieces}", L]

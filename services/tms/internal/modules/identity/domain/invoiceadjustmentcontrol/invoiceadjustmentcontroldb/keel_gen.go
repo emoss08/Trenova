@@ -656,7 +656,6 @@ var enumAdjustmentAccountingDatePolicy = [...]schema.EnumValue{
 var enumAdjustmentEligibilityPolicy = [...]schema.EnumValue{
 	{Value: `Disallow`, Label: `Adjustment Eligibility Disallow`},
 	{Value: `AllowWithApproval`, Label: `Adjustment Eligibility Allow With Approval`},
-	{Value: `AllowWithoutApproval`, Label: `Adjustment Eligibility Allow Without Approval`},
 }
 
 var enumApprovalPolicy = [...]schema.EnumValue{

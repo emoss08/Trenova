@@ -99,7 +99,7 @@ func TestCreateReportsADuplicateEmailAsAFieldError(t *testing.T) {
 	multiErr, ok := errors.AsType[*errortypes.MultiError](err)
 	require.True(t, ok, "expected a field error, got %v", err)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "emailAddress", multiErr.Errors[0].Field)
+	assert.Equal(t, "emailAddress", multiErr.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrDuplicate, multiErr.Errors[0].Code)
 }
 

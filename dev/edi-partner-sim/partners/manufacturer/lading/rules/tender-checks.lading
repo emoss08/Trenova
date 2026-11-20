@@ -1,0 +1,97 @@
+rules tenderChecks for tenderIn
+  use common
+
+/// No stop can open before the one ahead of it.
+rule "stops run in order" {
+  require stops.first.window.start <= stops.last.window.start
+    else decline "Delivery is scheduled before pickup" code "A13"
+}
+
+/// Loads over the automatic limits go to a planner instead of being accepted.
+rule "within what we haul automatically" {
+  require (weight ?? 0 lb) <= partner.maxWeight
+    else hold "Over {partner.maxWeight}: a planner decides"
+  require stops.count <= partner.maxStops
+    else hold "{stops.count} stops is more than the {partner.maxStops} we take automatically"
+}
+
+/// Every delivery needs a postal code for routing.
+rule "a consignee has a postal code" {
+  for stop in stops where stop.type == Delivery {
+    require exists stop.address.postal
+      else reject at stop.address.postal "The consignee at stop {stop.sequence} has no postal code"
+  }
+}
+
+/// Kestrel sends ZIP+4 on about half its consignees; Trenova keeps five digits.
+rule "Kestrel sends nine-digit zips" {
+  for stop in stops where (stop.address.postal ?? "").matches(r"^\d{9}$") {
+    fix stop.address.postal <- postal(stop.address.postal ?? "")
+  }
+}
+
+/// Hazmat needs a planner's eyes on placards and the driver's endorsement.
+rule "hazmat needs eyes" {
+  let hazardous = commodities.filter(c => c.hazmat ?? false)
+  warn "{hazardous.count} hazmat line(s) on board: check placards" when not hazardous.isEmpty
+}
+
+/// A reefer load warmer than we run is a planner's call.
+rule "a reefer set point we run" {
+  hold "Kestrel asked for a reefer above {partner.maxReeferTemp}"
+    when exists temperature and temperature.max > partner.maxReeferTemp
+}
+
+/// A rate under the minimum is almost always a keying mistake.
+rule "the rate covers the minimum" {
+  hold "The rate is under the {partner.minimumCharge} minimum" when (total ?? $0.00) < partner.minimumCharge
+}
+
+test "a normal tender passes every rule" {
+  given file "samples/tender-original.x12"
+  expect no holds
+  expect no rejects
+  expect no declines
+  expect warned "1 hazmat line(s) on board: check placards"
+}
+
+test "a ZIP+4 consignee keeps five digits" {
+  given file "samples/tender-reefer.x12"
+  expect stops.last.address.postal == "80216"
+  expect no warnings
+}
+
+test "a reefer warmer than we run is held" {
+  given file "samples/tender-reefer.x12"
+  given setting maxReeferTemp = 50 °F
+  expect held "Kestrel asked for a reefer above 50 °F"
+}
+
+test "a heavy load is held under a lighter limit" {
+  given file "samples/tender-heavy.x12"
+  given setting maxWeight = 40_000 lb
+  expect held "Over 40,000 lb: a planner decides"
+}
+
+test "a heavy load within the limit goes through" {
+  given file "samples/tender-heavy.x12"
+  expect no holds
+}
+
+test "a delivery before its pickup is declined" {
+  given file "samples/tender-backwards.x12"
+  expect declined
+}
+
+test "four stops pass and a lower limit holds them" {
+  given file "samples/tender-two-pickups.x12"
+  given setting maxStops = 3
+  expect held "4 stops is more than the 3 we take automatically"
+}
+
+property "any limit at or above the load's weight lets it through" {
+  vary limit in 38_290 lb..80_000 lb
+  given file "samples/tender-original.x12"
+  given setting maxWeight = limit
+  expect no holds
+}

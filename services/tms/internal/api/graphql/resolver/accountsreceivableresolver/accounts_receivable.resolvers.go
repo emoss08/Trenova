@@ -68,7 +68,7 @@ func (r *QueryResolver) ArOpenItems(ctx context.Context, customerID *string, asO
 	)
 }
 
-func (r *QueryResolver) ArCustomerLedger(ctx context.Context, customerID string) ([]*customerledgerports.ARLedgerEntry, error) {
+func (r *QueryResolver) ArCustomerLedger(ctx context.Context, customerID string, startDate *int, endDate *int, first *int, after *string) (*customerledgerports.ARLedgerPage, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceAccountsReceivable,
@@ -83,7 +83,17 @@ func (r *QueryResolver) ArCustomerLedger(ctx context.Context, customerID string)
 		return nil, err
 	}
 
-	return r.AccountsReceivableService.ListCustomerLedger(ctx, resolvercore.TenantInfo(authCtx), custID)
+	return r.AccountsReceivableService.ListCustomerLedger(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		customerledgerports.ARLedgerPageRequest{
+			CustomerID: custID,
+			StartDate:  int64(gqlscalar.DerefInt(startDate)),
+			EndDate:    int64(gqlscalar.DerefInt(endDate)),
+			First:      gqlscalar.DerefInt(first),
+			After:      gqlscalar.DerefString(after),
+		},
+	)
 }
 
 func (r *QueryResolver) ArCustomerStatement(ctx context.Context, customerID string, startDate *int, asOfDate *int) (*customerledgerports.ARCustomerStatement, error) {

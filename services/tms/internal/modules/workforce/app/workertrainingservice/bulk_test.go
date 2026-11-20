@@ -229,7 +229,7 @@ func TestBulkAssign_RejectsEmptySelections(t *testing.T) {
 			require.Error(t, err)
 			var multiErr *errortypes.MultiError
 			require.ErrorAs(t, err, &multiErr)
-			assert.Equal(t, tt.field, multiErr.Errors[0].Field)
+			assert.Equal(t, tt.field, multiErr.Errors[0].Field())
 		})
 	}
 }
@@ -255,5 +255,5 @@ func TestBulkAssign_RefusesOversizedRuns(t *testing.T) {
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "workerIds", multiErr.Errors[0].Field)
+	assert.Equal(t, "workerIds", multiErr.Errors[0].Field())
 }

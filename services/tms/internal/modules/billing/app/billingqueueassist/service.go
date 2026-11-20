@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
@@ -38,6 +39,7 @@ type Params struct {
 	Batches      llmports.TaskBatcher
 	Generator    billingqueueports.NovaGenerator
 	Briefs       billingqueueports.BriefRequester
+	Features     platformcatalogports.FeatureGate
 }
 
 type Service struct {
@@ -55,6 +57,7 @@ type Service struct {
 	batches      llmports.TaskBatcher
 	generator    billingqueueports.NovaGenerator
 	briefs       billingqueueports.BriefRequester
+	features     platformcatalogports.FeatureGate
 }
 
 var _ billingqueueports.BillingQueueAssistService = (*Service)(nil)
@@ -76,6 +79,7 @@ func New(p Params) billingqueueports.BillingQueueAssistService {
 		batches:      p.Batches,
 		generator:    p.Generator,
 		briefs:       p.Briefs,
+		features:     p.Features,
 	}
 }
 
@@ -116,6 +120,11 @@ func (s *Service) AutoApprove(
 	if err != nil {
 		return nil, err
 	}
+	onPlan, err := tenantports.QueueReviewOnPlan(ctx, s.features)
+	if err != nil {
+		return nil, err
+	}
+	control.ApplyQueueReviewPlan(onPlan)
 	if control.QueueAutoApproveMode == "" ||
 		control.QueueAutoApproveMode == billingcontrol.QueueAutoApproveModeOff {
 		return &billingqueueports.AutoApproveOutcome{Reason: "Auto-approve is off"}, nil

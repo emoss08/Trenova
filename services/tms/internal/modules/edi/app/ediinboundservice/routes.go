@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -186,18 +185,12 @@ func (s *Service) routeTenderResponse(
 	)
 }
 
-const tenderOfferReferencePrefix = "tof_"
-
 type tenderOfferRouteOutcome struct {
 	handled  bool
 	warnings []string
 	err      error
 }
 
-// routeTenderOfferResponse answers a carrier-tendering 990 by matching the
-// echoed tof_ reference to one offer and funneling the response through the
-// tender workflow. Legacy org-to-org 990s carry no tof_ reference and fall
-// through untouched.
 func (s *Service) routeTenderOfferResponse(
 	ctx context.Context,
 	file *ediinboundfile.EDIInboundFile,
@@ -205,38 +198,15 @@ func (s *Service) routeTenderOfferResponse(
 	transaction *parsedTransaction,
 	details *tenderResponseDetails,
 ) tenderOfferRouteOutcome {
-	offerID := tenderOfferReference(details)
-	if offerID.IsNil() {
-		return tenderOfferRouteOutcome{}
-	}
-	tenantInfo := pagination.TenantInfo{
-		OrgID: file.OrganizationID,
-		BuID:  file.BusinessUnitID,
-	}
-	offer, err := s.tenderRepo.GetOfferByID(ctx, tenderports.GetTenderOfferByIDRequest{
-		TenantInfo:    tenantInfo,
-		OfferID:       offerID,
-		IncludeTender: true,
-	})
+	references := make([]string, 0, len(details.references)+1)
+	references = append(references, details.shipmentRef)
+	references = append(references, details.references...)
+	offer, err := s.resolvePartnerOffer(ctx, file, partner, references)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return tenderOfferRouteOutcome{warnings: []string{fmt.Sprintf(
-				"tender response %s/%s references unknown tender offer %s",
-				transaction.set,
-				transaction.controlNumber,
-				offerID,
-			)}}
+			return tenderOfferRouteOutcome{}
 		}
 		return tenderOfferRouteOutcome{handled: true, err: err}
-	}
-	if offer.EDIPartnerID == nil || *offer.EDIPartnerID != partner.ID {
-		return tenderOfferRouteOutcome{handled: true, warnings: []string{fmt.Sprintf(
-			"tender response %s/%s references tender offer %s that was not tendered to partner %s",
-			transaction.set,
-			transaction.controlNumber,
-			offer.ID,
-			partner.Code,
-		)}}
 	}
 
 	var action tender.ResponseAction
@@ -249,24 +219,24 @@ func (s *Service) routeTenderOfferResponse(
 		declineReason = stringutils.FirstNonEmpty(details.remarks, details.reservationCode)
 	case details.reservationCode == "":
 		return tenderOfferRouteOutcome{handled: true, warnings: []string{fmt.Sprintf(
-			"tender response %s/%s for offer %s carries no reservation code; response not applied",
+			"tender response %s/%s for %s carries no reservation code; response not applied",
 			transaction.set,
 			transaction.controlNumber,
-			offer.ID,
+			details.shipmentRef,
 		)}}
 	default:
 		return tenderOfferRouteOutcome{handled: true, warnings: []string{
 			fmt.Sprintf(
-				"tender response %s/%s for offer %s carries unknown reservation code %q; response not applied",
+				"tender response %s/%s for %s carries unknown reservation code %q; response not applied",
 				transaction.set,
 				transaction.controlNumber,
-				offer.ID,
+				details.shipmentRef,
 				details.reservationCode,
 			),
 		}}
 	}
 	err = s.tenderResponses.RecordResponse(ctx, &tenderports.TenderResponseRequest{
-		TenantInfo:    tenantInfo,
+		TenantInfo:    inboundFileTenant(file),
 		OfferID:       offer.ID,
 		Action:        action,
 		Source:        tender.ResponseSourceEDI,
@@ -281,22 +251,14 @@ func (s *Service) routeTenderOfferResponse(
 				zap.Error(err),
 			)
 			return tenderOfferRouteOutcome{handled: true, warnings: []string{fmt.Sprintf(
-				"tender response for offer %s was not applied: %s",
-				offer.ID,
+				"tender response for %s was not applied: %s",
+				details.shipmentRef,
 				err.Error(),
 			)}}
 		}
 		return tenderOfferRouteOutcome{handled: true, err: err}
 	}
 	return tenderOfferRouteOutcome{handled: true}
-}
-
-func tenderOfferReference(details *tenderResponseDetails) pulid.ID {
-	candidates := make([]string, 0, len(details.references)+1)
-	candidates = append(candidates, details.shipmentRef)
-	candidates = append(candidates, details.references...)
-	offerID, _ := splitTenderOfferCandidates(candidates)
-	return offerID
 }
 
 func (s *Service) routeShipmentStatus(
@@ -448,7 +410,7 @@ func (s *Service) freightInvoiceRecipient(
 	payload *edipayload.FreightInvoicePayload,
 ) (*editenderchange.TenderRecipient, []string, error) {
 	references := stringutils.NonEmptyStrings(
-		payload.ReferenceNumbers["shipmentId"],
+		payload.Key,
 		payload.BOL,
 		payload.ProNumber,
 	)

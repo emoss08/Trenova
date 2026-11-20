@@ -57,6 +57,13 @@ func checklistTemplateFromInput(
 				"Document type is invalid",
 			)
 		}
+		dueOffsetDays, err := gqlscalar.NarrowInt[int32](
+			"items["+strconv.Itoa(i)+"].dueOffsetDays",
+			item.DueOffsetDays,
+		)
+		if err != nil {
+			return nil, err
+		}
 		entity.Items = append(entity.Items, &workerchecklist.WorkerChecklistTemplateItem{
 			OrganizationID:   tenantInfo.OrgID,
 			BusinessUnitID:   tenantInfo.BuID,
@@ -64,7 +71,7 @@ func checklistTemplateFromInput(
 			Description:      strings.TrimSpace(gqlscalar.StringValue(item.Description)),
 			Kind:             item.Kind,
 			Required:         item.Required,
-			DueOffsetDays:    int32(item.DueOffsetDays), //nolint:gosec // bounded by validation
+			DueOffsetDays:    dueOffsetDays,
 			Owner:            item.Owner,
 			CredentialTypeID: credentialTypeID,
 			DocumentTypeID:   documentTypeID,

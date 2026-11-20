@@ -572,7 +572,7 @@ func TestAssignToMove_RejectsDriverNotInOrganization(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "primaryWorkerId", multiErr.Errors[0].Field)
+	assert.Equal(t, "primaryWorkerId", multiErr.Errors[0].Field())
 }
 
 func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing.T) {

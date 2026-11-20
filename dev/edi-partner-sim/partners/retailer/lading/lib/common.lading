@@ -1,0 +1,70 @@
+library common
+
+crosswalk stopTypes: Code<S502> <-> StopType {
+  "LD" <-> Pickup
+  "UL" <-> Delivery
+}
+
+// Tamberlane changes a tender (04) and never replaces one.
+crosswalk purposes: Code<B2A01> <-> TenderPurpose {
+  "00" <-> Original
+  "01" <-> Cancel
+  "04" <-> Change
+}
+
+crosswalk payments: Code<B206> <-> Payment {
+  "PP" <-> Prepaid
+  else <- "PP"
+}
+
+crosswalk decisions: Code<B104> <-> Decision {
+  "A" <-> Accept
+  "D" <-> Decline
+}
+
+// Tamberlane's 214 guide takes six status codes. It takes no other status: one is never sent.
+crosswalk statusCodes: Code<AT701> <-> EventKind {
+  "X3" <-> ArrivedPickup
+  "AF" <-> DepartedPickup
+  "X1" <-> ArrivedDelivery
+  "D1" <-> Delivered
+  "AG" <-> EtaChanged
+  "SD" <-> Delayed
+  not sent <- Dispatched, Loaded, EnRoute, DepartedDelivery, AppointmentSet, Exception
+  else -> Exception
+}
+
+crosswalk equipment: Text <-> Text {
+  "TF" <-> "VAN"
+}
+
+/// The status reason codes Tamberlane's 214 guide takes.
+const reasonCodes = ["NS", "AJ", "AO", "AM", "AH", "B1"]
+
+/// The time codes of the four US zones, the only ones the partner's guides take.
+const usZones = ["CT", "ET", "MT", "PT"]
+
+/// The appointment window from a stop's dates: 37 or 53 opens it, 38 or 54 closes it, each time
+/// with its zone code.
+fn window(dates: [Segment<G62>], zone: Zone) -> Window? {
+  let opens = dates.find(d => d.01 in ["37", "53"])
+  let closes = dates.find(d => d.01 in ["38", "54"])
+  let start = at(opens.02, opens.04, zoneFromCode(opens.05 ?? "") ?? zone)
+  Window {
+    start <- start
+    end   <- at(closes.02, closes.04, zoneFromCode(closes.05 ?? "") ?? zone) ?? (start ?? now()) + 1 h
+  }
+}
+
+/// The first reference with a qualifier.
+fn reference(segments: [Segment<L11>], qualifier: Text) -> Text? =
+  segments.find(s => s.02 == qualifier).01
+
+test "a replacement code is not Tamberlane's" {
+  expect "05" via purposes == none
+}
+
+test "every status Tamberlane takes reads back" {
+  expect "SD" via statusCodes == Delayed
+  expect Delayed via statusCodes == "SD"
+}

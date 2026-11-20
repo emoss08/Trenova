@@ -164,21 +164,23 @@ var graphQLHandlerModule = fx.Module("api-graphql-handler", fx.Provide(
 	graphqlapi.New,
 ))
 
+// GraphQLModule is the API's GraphQL server. The loaders, extensions and
+// agent read executor it runs on come from AgentReadModule, which every
+// process takes through core.Options.
 var GraphQLModule = fx.Module(
 	"api-graphql",
-	graphQLLoaderModule,
-	graphQLExtensionModule,
 	graphQLResolverModule,
 	graphQLServerModule,
 	graphQLHandlerModule,
-	agentReadModule,
 )
 
-// AgentReadWorkerModule is what the worker needs to run agent tools' reads:
-// the loaders, the extensions every executor runs and the read executor,
-// and not the API's resolver root, server or handler.
-var AgentReadWorkerModule = fx.Module(
-	"worker-graphql-agent-read",
+// AgentReadModule is what any process needs to run agent tools' reads: the
+// loaders, the extensions every executor runs and the read executor, and not
+// the API's resolver root, server or handler. Agent tools are built in every
+// process (the tool catalog is part of the shared graph), so this belongs to
+// core.Options rather than to each process's own options.
+var AgentReadModule = fx.Module(
+	"graphql-agent-read",
 	graphQLLoaderModule,
 	graphQLExtensionModule,
 	agentReadModule,

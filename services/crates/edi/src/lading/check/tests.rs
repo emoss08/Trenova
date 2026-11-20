@@ -280,6 +280,18 @@ impl Checker<'_> {
                 }
                 self.sample(env, path);
             }
+            TestStep::GivenTransaction(index, at) => {
+                if !reads_message {
+                    self.wrong_step(
+                        env,
+                        span,
+                        message!("given transaction picks a transaction of a message a map reads"),
+                    );
+                }
+                if *index == 0 {
+                    self.wrong_step(env, *at, message!("Transactions count from 1"));
+                }
+            }
             TestStep::GivenText(text) => {
                 if !reads_message {
                     self.wrong_step(
@@ -557,6 +569,8 @@ impl Checker<'_> {
             )
         } else if subject == Subject::Guide {
             matches!(what, "rejects" | "rejected" | "warnings" | "warned")
+        } else if matches!(subject, Subject::Outbound(_)) {
+            matches!(what, "held" | "rejected" | "declined" | "warned" | "sent") || plural
         } else {
             matches!(what, "held" | "rejected" | "declined" | "warned") || plural
         };
@@ -569,7 +583,7 @@ impl Checker<'_> {
                     if flow {
                         Message::with(message!("A flow test does not check {0}: sent, held, escalated, created, updated, cancelled, applied or ignored"), [Arg::from(what)])
                     } else {
-                        Message::with(message!("Here a test checks held, rejected, declined, warned, or no holds, rejects, declines, warnings; not {0}"), [Arg::from(what)])
+                        Message::with(message!("Here a test checks held, rejected, declined, warned, sent (a map to X12), or no holds, rejects, declines, warnings; not {0}"), [Arg::from(what)])
                     },
                 ),
             );

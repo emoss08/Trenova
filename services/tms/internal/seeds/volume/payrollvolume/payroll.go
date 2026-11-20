@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -227,15 +228,7 @@ func (g *payrollPhase) payLoadSetup(ctx context.Context) (*paySetup, error) {
 	case err != nil:
 		return nil, fmt.Errorf("load settlement control: %w", err)
 	case control == nil:
-		control = &settlementcontrol.SettlementControl{
-			PayPeriodFrequency:            settlementcontrol.PayPeriodFrequencyWeekly,
-			PeriodEndDayOfWeek:            6,
-			PayDelayDays:                  5,
-			VarianceThresholdPct:          decimal.NewFromInt(25),
-			VarianceLookbackWeeks:         8,
-			PayTrigger:                    settlementcontrol.PayTriggerShipmentDelivered,
-			EscrowInterestFrequencyMonths: 3,
-		}
+		control = settlementcontrol.NewDefault(g.Refs.OrgID, g.Refs.BuID)
 	}
 	setup.control = control
 
@@ -1312,41 +1305,29 @@ func (g *payrollPhase) payPlanExpenses(setup *paySetup, workers map[pulid.ID]*pa
 
 // -- Periods --
 
-func payResolvePeriod(control *settlementcontrol.SettlementControl, now int64) payPeriod {
-	at := time.Unix(now, 0).UTC()
-	endDay := time.Weekday(control.PeriodEndDayOfWeek)
-	daysBack := int(at.Weekday() - endDay)
-	if daysBack < 0 {
-		daysBack += 7
-	}
-	end := time.Date(at.Year(), at.Month(), at.Day(), 0, 0, 0, 0, time.UTC).
-		AddDate(0, 0, -daysBack+1)
-	return payPeriod{
-		start:   payStepBack(control.PayPeriodFrequency, end).Unix(),
-		end:     end.Unix(),
-		payDate: end.AddDate(0, 0, control.PayDelayDays).Unix(),
-	}
-}
-
-func payStepBack(frequency settlementcontrol.PayPeriodFrequency, end time.Time) time.Time {
-	switch frequency {
-	case settlementcontrol.PayPeriodFrequencyBiweekly:
-		return end.AddDate(0, 0, -14)
-	case settlementcontrol.PayPeriodFrequencyMonthly:
-		return end.AddDate(0, -1, 0)
-	default:
-		return end.AddDate(0, 0, -7)
-	}
+func payResolvePeriod(
+	control *settlementcontrol.SettlementControl,
+	now int64,
+	loc *time.Location,
+) payPeriod {
+	bounds := settlementshared.ResolvePeriod(
+		control.PayPeriodFrequency,
+		control.PeriodEndDayOfWeek,
+		control.PayDelayDays,
+		now,
+		loc,
+	)
+	return payPeriod{start: bounds.PeriodStart, end: bounds.PeriodEnd, payDate: bounds.PayDate}
 }
 
 func (g *payrollPhase) payPeriods(control *settlementcontrol.SettlementControl) []payPeriod {
-	current := payResolvePeriod(control, volumegen.Unix(g.Now))
+	current := payResolvePeriod(control, volumegen.Unix(g.Now), g.Refs.Timezone)
 	periods := []payPeriod{current}
 	floor := volumegen.Unix(g.Start) - 30*payDay
 	for p := current; p.start > floor; {
-		end := time.Unix(p.start, 0).UTC()
+		end := time.Unix(p.start, 0).In(g.Refs.Timezone)
 		p = payPeriod{
-			start:   payStepBack(control.PayPeriodFrequency, end).Unix(),
+			start:   settlementshared.StepPeriods(control.PayPeriodFrequency, end, -1).Unix(),
 			end:     end.Unix(),
 			payDate: end.AddDate(0, 0, control.PayDelayDays).Unix(),
 		}

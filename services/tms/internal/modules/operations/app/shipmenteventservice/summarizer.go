@@ -478,3 +478,83 @@ func pulidPtrString(p *pulid.ID) string {
 	}
 	return p.String()
 }
+
+type StopActualRef struct {
+	Type             shipmentevent.Type
+	ShipmentID       pulid.ID
+	MoveID           pulid.ID
+	Stop             *shipment.Stop
+	Number           int
+	ActualAt         int64
+	PreviousActualAt *int64
+}
+
+func BuildStopActual(
+	tenant TenantRef,
+	ref StopActualRef,
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	severity, summary := classifyStopActual(ref.Type)
+	metadata := map[string]any{
+		shipmentevent.MetadataStopNumber:   ref.Number,
+		shipmentevent.MetadataStopSequence: ref.Stop.Sequence,
+		shipmentevent.MetadataStopType:     string(ref.Stop.Type),
+		shipmentevent.MetadataActualAt:     ref.ActualAt,
+	}
+	if name := stopLocationName(ref.Stop); name != "" {
+		metadata[shipmentevent.MetadataLocationName] = name
+	}
+	occurredAt := ref.ActualAt
+	if ref.PreviousActualAt != nil {
+		metadata[shipmentevent.MetadataPreviousActualAt] = *ref.PreviousActualAt
+		occurredAt = 0
+	}
+	return &shipmenteventports.RecordShipmentEventParams{
+		OrganizationID: tenant.OrganizationID,
+		BusinessUnitID: tenant.BusinessUnitID,
+		ShipmentID:     ref.ShipmentID,
+		MoveID:         ref.MoveID,
+		StopID:         ref.Stop.ID,
+		Type:           ref.Type,
+		Severity:       severity,
+		Summary:        summary,
+		Metadata:       metadata,
+		Actor:          actor,
+		OccurredAt:     occurredAt,
+	}
+}
+
+func classifyStopActual(eventType shipmentevent.Type) (shipmentevent.Severity, string) {
+	//nolint:exhaustive // Only the stop actual kinds reach here.
+	switch eventType {
+	case shipmentevent.TypeStopArrived:
+		return shipmentevent.SeverityInfo, "Arrived at stop"
+	case shipmentevent.TypeStopDeparted:
+		return shipmentevent.SeverityBrand, "Departed stop"
+	case shipmentevent.TypeStopArrivalCorrected:
+		return shipmentevent.SeverityMuted, "Stop arrival time corrected"
+	case shipmentevent.TypeStopDepartureCorrected:
+		return shipmentevent.SeverityMuted, "Stop departure time corrected"
+	}
+	return shipmentevent.SeverityMuted, "Stop updated"
+}
+
+func stopLocationName(stop *shipment.Stop) string {
+	if stop.Location != nil && stop.Location.Name != "" {
+		return stop.Location.Name
+	}
+	return stop.AddressLine
+}
+
+func MarkFromStopActual(
+	params *shipmenteventports.RecordShipmentEventParams,
+) *shipmenteventports.RecordShipmentEventParams {
+	if params == nil {
+		return nil
+	}
+	if params.Metadata == nil {
+		params.Metadata = map[string]any{}
+	}
+	params.Metadata[shipmentevent.MetadataFromStopActual] = true
+	return params
+}

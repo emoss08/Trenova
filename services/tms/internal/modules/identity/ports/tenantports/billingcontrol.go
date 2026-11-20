@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -30,4 +31,17 @@ type BillingControlRepository interface {
 	// ListMonthlyStatements lists, across every organization, the billing
 	// controls that email customers a statement each month.
 	ListMonthlyStatements(ctx context.Context) ([]*billingcontrol.BillingControl, error)
+}
+
+func QueueReviewOnPlan(
+	ctx context.Context,
+	features platformcatalogports.FeatureGate,
+) (bool, error) {
+	for _, feature := range billingcontrol.QueueReviewFeatures() {
+		enabled, err := features.Enabled(ctx, feature)
+		if err != nil || !enabled {
+			return false, err
+		}
+	}
+	return true, nil
 }

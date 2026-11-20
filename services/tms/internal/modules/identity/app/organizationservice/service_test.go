@@ -498,7 +498,7 @@ func TestUpdate_RepoUniqueConstraintNameMapped(t *testing.T) {
 			var multiErr *errortypes.MultiError
 			require.True(t, errors.As(err, &multiErr))
 			require.NotEmpty(t, multiErr.Errors)
-			assert.Equal(t, tt.field, multiErr.Errors[0].Field)
+			assert.Equal(t, tt.field, multiErr.Errors[0].Field())
 			assert.Equal(t, errortypes.ErrDuplicate, multiErr.Errors[0].Code)
 			deps.repo.AssertExpectations(t)
 		})

@@ -53,7 +53,7 @@ func TestByTypeRefusesWhatIsNotAnAccountingSystem(t *testing.T) {
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "integrationType", validation.Field)
+	assert.Equal(t, "integrationType", validation.Field())
 	assert.Empty(t, repo.asks)
 }
 

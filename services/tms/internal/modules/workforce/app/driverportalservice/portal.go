@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
@@ -24,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type LoadScope string
@@ -473,11 +471,10 @@ func (s *Service) MyPeriodSummary(
 		return nil, err
 	}
 
-	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
+	bounds, err := s.settlements.CurrentPeriod(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	bounds := driversettlementservice.ResolveCurrentPeriod(control, timeutils.NowUnix())
 
 	totals, err := s.payEventRepo.GetAccruedTotalsForWorker(
 		ctx,

@@ -1,0 +1,74 @@
+rules tenderChecks for tenderIn
+  use common
+
+/// A delivery scheduled before its pickup is a window Tamberlane keyed backwards; it is
+/// declined, as its guide asks, rather than accepted and missed.
+rule "stops run in order" {
+  require stops.first.window.start <= stops.last.window.start
+    else decline "Delivery is scheduled before pickup"
+}
+
+/// Over Tamberlane's gross limit for a van, a planner decides.
+rule "within the van's gross limit" {
+  require (weight ?? 0 lb) <= partner.maxWeight
+    else hold "Over {partner.maxWeight}: a planner decides"
+}
+
+/// Every store receives by appointment; Tamberlane sends the store's number in L11 AO.
+rule "every store delivery has an appointment" {
+  for stop in stops where stop.type == Delivery {
+    require exists stop.refs["AO"]
+      else hold "Store stop {stop.sequence} has no receiving appointment"
+  }
+}
+
+/// Every delivery needs a postal code for routing.
+rule "a store has a postal code" {
+  for stop in stops where stop.type == Delivery {
+    require exists stop.address.postal
+      else reject at stop.address.postal "The store at stop {stop.sequence} has no postal code"
+  }
+}
+
+/// Hazmat needs a planner's eyes on placards and the driver's endorsement.
+rule "hazmat needs eyes" {
+  let hazardous = commodities.filter(c => c.hazmat ?? false)
+  warn "{hazardous.count} hazmat line(s) on board: check placards" when not hazardous.isEmpty
+}
+
+/// A rate under the minimum is almost always a keying mistake.
+rule "the rate covers the minimum" {
+  hold "The rate is under the {partner.minimumCharge} minimum" when (total ?? $0.00) < partner.minimumCharge
+}
+
+test "a normal tender passes every rule" {
+  given file "samples/tender-original.x12"
+  expect no holds
+  expect no rejects
+  expect no declines
+  expect warned "1 hazmat line(s) on board: check placards"
+}
+
+test "a load over the van's limit is held" {
+  given file "samples/tender-heavy.x12"
+  expect held "Over 43,500 lb: a planner decides"
+  expect no declines
+}
+
+test "a heavy load under a raised limit goes through" {
+  given file "samples/tender-heavy.x12"
+  given setting maxWeight = 46_000 lb
+  expect no holds
+}
+
+test "a backwards window is declined" {
+  given file "samples/tender-backwards.x12"
+  expect declined
+}
+
+property "any limit at or above the load's weight lets it through" {
+  vary limit in 27_290 lb..80_000 lb
+  given file "samples/tender-original.x12"
+  given setting maxWeight = limit
+  expect no holds
+}

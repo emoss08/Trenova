@@ -284,16 +284,7 @@ func (e *Enqueuer) location(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*time.Location, error) {
-	org, err := e.orgs.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if org == nil {
-		return time.UTC, nil
-	}
-	return timeutils.LoadLocation(org.Timezone), nil
+	return tenantports.OrganizationLocation(ctx, e.orgs, tenantInfo)
 }
 
 // Destinations is where Enqueue would queue the record: the connections that

@@ -1373,7 +1373,7 @@ impl Checker<'_> {
                 self.expect_type(env, index, &Type::Text);
                 value.as_ref().clone().optional()
             }
-            Type::Segment(_) | Type::SegmentId(_) => {
+            Type::Segment(_) | Type::SegmentId(_) | Type::Loop(_) => {
                 let saved = env.filter.replace(target.unwrapped().clone());
                 self.condition(env, index);
                 env.filter = saved;
