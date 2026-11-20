@@ -94,7 +94,7 @@ func (f *filter) Keep(
 		ctx,
 		"find which of a page of organizations a shared server's plans entitle to background work",
 	)
-	held, err := dbtx.Read(ctx, f.db, func(ctx context.Context) ([]string, error) {
+	return dbtx.Read(ctx, f.db, func(ctx context.Context) ([]pulid.ID, error) {
 		s := managedfeaturesdb.States
 		held, err := keel.Into[string](
 			ctx,
@@ -104,23 +104,19 @@ func (f *filter) Keep(
 		if err != nil {
 			return nil, fmt.Errorf("read the entitled organizations: %w", err)
 		}
-		return held, nil
-	})
-	if err != nil {
-		return nil, err
-	}
 
-	entitled := make(map[string]struct{}, len(held))
-	for _, key := range held {
-		entitled[key] = struct{}{}
-	}
-	kept := make([]pulid.ID, 0, len(organizations))
-	for _, organization := range organizations {
-		if _, ok := entitled[organization.String()]; ok {
-			kept = append(kept, organization)
+		entitled := make(map[string]struct{}, len(held))
+		for _, key := range held {
+			entitled[key] = struct{}{}
 		}
-	}
-	return kept, nil
+		kept := make([]pulid.ID, 0, len(organizations))
+		for _, organization := range organizations {
+			if _, ok := entitled[organization.String()]; ok {
+				kept = append(kept, organization)
+			}
+		}
+		return kept, nil
+	})
 }
 
 func (f *filter) instanceAnswer(ctx context.Context, need entitlement.Need) (keel.Pred, error) {
