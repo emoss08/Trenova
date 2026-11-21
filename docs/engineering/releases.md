@@ -171,12 +171,48 @@ release Job would run without a change to what it runs. `helm.yml`'s k3d install
 twice: once changing the Job (it runs) and once changing nothing (the Job and the API's generation
 stay).
 
+## Imaging's inputs are a crate closure
+
+The imaging worker is the hour-long build, and it lives in the Rust workspace beside crates that
+change every day (`trenova-edi`, `trenova-rules`, `trenova-scripts`, `trenova-module-kit`) and that
+it does not use. Its inputs are therefore not the workspace but `trenova-imaging`'s dependency
+closure: the crate's manifest and `src/`, the workspace crates it depends on through normal and
+build dependencies (today `trenova-imaging-core`, `trenova-proto`, `trenova-sandbox`,
+`trenova-service-kit`), `services/proto/` and `services/.cargo/` (which `trenova-proto`'s build
+script reads), and the workspace's `Cargo.toml`, `Cargo.lock` and `rust-toolchain.toml`.
+
+Cargo cannot load a workspace whose members are missing, so the other members stay in the build
+context as `contextOnly` paths, each with the reason it is there: in the context, never an input.
+So are the worker's `tests/` (the `runtime` target builds the binary alone; Cargo needs the
+declared test file to load the manifest), its `fuzz/` (excluded from the workspace) and
+`services/vendor/` (the workspace's `[patch.crates-io]`, which only `trenova-scripts` uses).
+
+Dev-dependencies are left out of the closure: the release runs `cargo build --release -p
+trenova-imaging`, which never compiles a test, bench or example. Two checks keep the list honest:
+
+- `release.py check-inputs` (`helm.yml`): every tracked file the image's allowlist dockerignore lets
+  into the context is an input or under a `contextOnly` path; a `contextOnly` path exists, has a
+  `why`, overlaps no input and is let in.
+- `release.py check-cargo` (`rust.yml`, where cargo runs): `cargo metadata --format-version 1
+  --locked` piped in; the local crates of `trenova-imaging`'s closure must be exactly the crates the
+  entry lists (each crate's manifest and every target the release compiles), and no crate outside
+  it may be listed.
+
+**When a crate joins or leaves the closure** (a new `trenova-*` dependency of the worker or of one
+of its dependencies), `rust.yml` fails until the entry agrees: move the crate's directory from
+`contextOnly` to `inputs`, or back. A new workspace member that imaging does not use goes under
+`contextOnly` with the same reason as the others, or `helm.yml` fails. `Cargo.lock` stays an input
+of the whole worker, so a dependency bump of any crate still rebuilds imaging; narrowing that needs
+the lockfile's own closure, which no check reads yet.
+
 ## Adding an image
 
 1. Add it to `deploy/release/images.yaml`: repository, Dockerfile, context, target, platforms,
    build arguments and every input. An image whose Dockerfile copies its whole context needs an
-   allowlist `<Dockerfile>.dockerignore` (`*`, then `!path` for each thing it reads); its inputs
-   are exactly those paths.
+   allowlist `<Dockerfile>.dockerignore` (`*`, then `!path` for each thing it reads); every file
+   it lets in is an input or, when the build needs it present but it does not decide what the
+   image is, a `contextOnly` path with its `why`. An image built from a Cargo package names it
+   (`cargo: {workspace, package}`) so `check-cargo` holds its inputs to the package's closure.
 2. Run the check and the tests:
 
    ```bash
@@ -185,8 +221,11 @@ stay).
    ```
 
    `check-inputs` (CI, in `helm.yml`) fails when a Dockerfile copies a path its entry does not
-   list, a dockerignore lets in a path that is not an input, an input does not exist, or a
-   workflow the release runs builds a Dockerfile the list does not name. Never add a
+   list, a dockerignore lets in a file that is neither an input nor `contextOnly`, an input or
+   `contextOnly` path does not exist, a `contextOnly` path has no `why`, or a workflow the release
+   runs builds a Dockerfile the list does not name. For a Cargo-built image, also run
+   `cargo metadata --format-version 1 --locked --manifest-path services/Cargo.toml | python3
+   tools/release/release.py check-cargo` where cargo is installed (`rust.yml` does). Never add a
    `docker/build-push-action` step to `release.yml`: the `build` matrix builds every entry.
 3. If the chart runs it, name it in `values.yaml` with its repository and an empty tag, and it
    renders from the manifest like the others. Tell the control plane's maintainers the new name and

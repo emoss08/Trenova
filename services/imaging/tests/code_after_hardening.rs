@@ -183,7 +183,6 @@ mod linux {
         fn jobs(&self, heif: bool) -> Vec<(&'static str, WorkerJob, Vec<u8>)> {
             const PDF: &str = "application/pdf";
             const WEBP: &str = "image/webp";
-            const HEIC: &str = "image/heic";
             let mut jobs = vec![
                 job(
                     "probe a PDF with its text profile",
@@ -264,28 +263,33 @@ mod linux {
                 ),
             ];
             if heif {
-                jobs.extend([
-                    job(
-                        "probe a HEIC image",
-                        Operation::Probe(ProbeHeader {
-                            document: Some(document(HEIC, &self.heic)),
-                            text_profile: false,
-                        }),
-                        &[(HEIC, &self.heic)],
-                    ),
-                    job(
-                        "render a HEIC image",
-                        Operation::Render(render(HEIC, &self.heic, fit(240, 0), ImageFormat::Webp)),
-                        &[(HEIC, &self.heic)],
-                    ),
-                    job(
-                        "normalize a HEIC image to PNG",
-                        Operation::NormalizeImage(normalize(HEIC, &self.heic, ImageFormat::Png)),
-                        &[(HEIC, &self.heic)],
-                    ),
-                ]);
+                jobs.extend(self.heif_jobs());
             }
             jobs
+        }
+
+        fn heif_jobs(&self) -> Vec<(&'static str, WorkerJob, Vec<u8>)> {
+            const HEIC: &str = "image/heic";
+            vec![
+                job(
+                    "probe a HEIC image",
+                    Operation::Probe(ProbeHeader {
+                        document: Some(document(HEIC, &self.heic)),
+                        text_profile: false,
+                    }),
+                    &[(HEIC, &self.heic)],
+                ),
+                job(
+                    "render a HEIC image",
+                    Operation::Render(render(HEIC, &self.heic, fit(240, 0), ImageFormat::Webp)),
+                    &[(HEIC, &self.heic)],
+                ),
+                job(
+                    "normalize a HEIC image to PNG",
+                    Operation::NormalizeImage(normalize(HEIC, &self.heic, ImageFormat::Png)),
+                    &[(HEIC, &self.heic)],
+                ),
+            ]
         }
     }
 

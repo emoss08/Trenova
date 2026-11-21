@@ -35,6 +35,7 @@ from __future__ import annotations
 import argparse
 import base64
 import dataclasses
+import fnmatch
 import json
 import os
 import re
@@ -90,6 +91,9 @@ class Image:
     depends_on: tuple[str, ...] = ()
     lagging: bool = False
     inputs: tuple[str, ...] = ()
+    context_only: tuple[tuple[str, str], ...] = ()
+    cargo_workspace: str = ""
+    cargo_package: str = ""
     pinned: str = ""
 
     @property
@@ -110,7 +114,7 @@ def load_images(text: str) -> dict[str, Image]:
             raise ReleaseError(f"{IMAGES_FILE}: {name} is not a mapping")
         known = {
             "repository", "dockerfile", "context", "target", "platforms", "buildArgs",
-            "imageArgs", "dependsOn", "lagging", "inputs", "pinned",
+            "imageArgs", "dependsOn", "lagging", "inputs", "contextOnly", "cargo", "pinned",
         }
         unknown = set(entry) - known
         if unknown:
@@ -135,6 +139,23 @@ def load_images(text: str) -> dict[str, Image]:
             raise ReleaseError(f"{IMAGES_FILE}: {name} has no inputs")
         if not _covered(entry["dockerfile"], inputs):
             raise ReleaseError(f"{IMAGES_FILE}: {name} does not list its Dockerfile as an input")
+        context_only = []
+        for item in entry.get("contextOnly") or []:
+            path = item.get("path") if isinstance(item, dict) else None
+            why = item.get("why") if isinstance(item, dict) else None
+            if not isinstance(path, str) or not path:
+                raise ReleaseError(f"{IMAGES_FILE}: {name} has a contextOnly entry without a path")
+            if not isinstance(why, str) or not why.strip():
+                raise ReleaseError(f"{IMAGES_FILE}: {name}: contextOnly {path} gives no reason (why)")
+            if set(item) - {"path", "why"}:
+                raise ReleaseError(f"{IMAGES_FILE}: {name}: contextOnly {path} has unknown keys")
+            context_only.append((path, why.strip()))
+        cargo = entry.get("cargo") or {}
+        if cargo and (
+            not isinstance(cargo, dict) or set(cargo) != {"workspace", "package"}
+            or not all(isinstance(v, str) and v for v in cargo.values())
+        ):
+            raise ReleaseError(f"{IMAGES_FILE}: {name}: cargo names its workspace and package")
         images[name] = Image(
             name=name,
             repository=repository,
@@ -147,6 +168,9 @@ def load_images(text: str) -> dict[str, Image]:
             depends_on=tuple(entry.get("dependsOn") or ()),
             lagging=bool(entry.get("lagging")),
             inputs=tuple(inputs),
+            context_only=tuple(context_only),
+            cargo_workspace=cargo.get("workspace", "") if cargo else "",
+            cargo_package=cargo.get("package", "") if cargo else "",
         )
     for image in images.values():
         for dep in set(image.depends_on) | {v for _, v in image.image_args}:
@@ -205,6 +229,9 @@ class LocalGit:
 
     def show(self, ref: str, path: str) -> str:
         return self._run("show", f"{ref}:{path}")
+
+    def tracked(self, path: str) -> list[str]:
+        return [f for f in self._run("ls-files", "-z", "--", path).split("\0") if f]
 
 
 class GHCR:
@@ -823,27 +850,58 @@ def _ignore_file(image: Image, exists: Callable[[str], bool]) -> str:
     return shared if exists(shared) else ""
 
 
-def _allowlist(ignore_text: str) -> list[str] | None:
-    """The paths an allowlist dockerignore (`*`, then `!path` lines) lets in;
-    None when it is not one."""
+def _allowlist(ignore_text: str) -> tuple[list[str], list[str]] | None:
+    """What an allowlist dockerignore (`*`, then `!path` lines) lets in, and
+    the patterns it then leaves out again; None when it is not one."""
     lines = [line.strip() for line in ignore_text.splitlines()]
     lines = [line for line in lines if line and not line.startswith("#")]
     if not lines or lines[0] != "*":
         return None
-    return [line[1:] for line in lines if line.startswith("!")]
+    allowed = [line[1:] for line in lines[1:] if line.startswith("!")]
+    left_out = [line for line in lines[1:] if not line.startswith("!")]
+    return allowed, left_out
+
+
+def _left_out(relative: str, patterns: Iterable[str]) -> bool:
+    """Whether a dockerignore pattern (`name`, `a/b`, `**/x`) leaves a path,
+    relative to the context, out of it."""
+    parts = relative.split("/")
+    for pattern in patterns:
+        pattern = pattern.strip("/")
+        anywhere = pattern.startswith("**/")
+        tail = pattern[3:] if anywhere else pattern
+        width = tail.count("/") + 1
+        starts = range(len(parts)) if anywhere else range(1)
+        if any(fnmatch.fnmatchcase("/".join(parts[i:i + width]), tail) for i in starts):
+            return True
+    return False
+
+
+def _overlaps(a: str, b: str) -> bool:
+    return _covered(a.rstrip("/"), [b]) or _covered(b.rstrip("/"), [a])
 
 
 def check_image_inputs(
-    image: Image, read: Callable[[str], str], exists: Callable[[str], bool]
+    image: Image,
+    read: Callable[[str], str],
+    exists: Callable[[str], bool],
+    tracked: Callable[[str], list[str]],
 ) -> list[str]:
     problems: list[str] = []
     for given in image.inputs:
         if not exists(given.rstrip("/")):
             problems.append(f"{image.name}: input {given} does not exist")
+    for path, _ in image.context_only:
+        if not exists(path.rstrip("/")):
+            problems.append(f"{image.name}: contextOnly {path} does not exist")
+        for given in image.inputs:
+            if _overlaps(path, given):
+                problems.append(f"{image.name}: contextOnly {path} overlaps input {given}")
     ignore = _ignore_file(image, exists)
     if ignore and ignore not in image.inputs:
         problems.append(f"{image.name}: {ignore} decides its build context and is not an input")
     context = os.path.normpath(image.context)
+    whole = False
     for source in copied_sources(read(image.dockerfile)):
         if any(ch in source for ch in "$*?["):
             problems.append(
@@ -852,34 +910,68 @@ def check_image_inputs(
             continue
         path = _in_context(image.context, source)
         if path != context:
-            if not _covered(path, image.inputs):
+            declared = image.inputs + tuple(p for p, _ in image.context_only)
+            if not _covered(path, declared):
                 problems.append(
-                    f"{image.name}: {image.dockerfile} copies {path}, which is not an input"
+                    f"{image.name}: {image.dockerfile} copies {path}, which is neither an "
+                    "input nor a contextOnly path"
                 )
             continue
+        if whole:
+            continue
+        whole = True
         # The whole context: only an allowlist dockerignore makes what it
-        # reads exact, and then every path it lets in is an input and every
-        # input under the context is let in.
-        allowed = _allowlist(read(ignore)) if ignore else None
-        if allowed is None:
+        # reads exact. Then every file it lets in is an input or a declared
+        # context-only path, and every input and context-only path under the
+        # context is let in.
+        allowlist = _allowlist(read(ignore)) if ignore else None
+        if allowlist is None:
             problems.append(
                 f"{image.name}: {image.dockerfile} copies its whole context ({image.context}); "
                 f"give it {image.dockerfile}.dockerignore starting from `*` that lets in what it reads"
             )
             continue
-        let_in = {_in_context(image.context, a) for a in allowed}
-        declared = {
-            given.rstrip("/")
-            for given in image.inputs
-            if context != "." and _covered(given.rstrip("/"), [context + "/"])
-        }
-        for missing in sorted(let_in - declared):
+        allowed, left_out = allowlist
+        let_in = [_in_context(image.context, a) + "/" for a in allowed]
+        inside = [context + "/"] if context != "." else []
+        for given in image.inputs:
+            if inside and _covered(given.rstrip("/"), inside) and not _covered(given.rstrip("/"), let_in):
+                problems.append(f"{image.name}: input {given} is not let in by {ignore}")
+        context_only = [p for p, _ in image.context_only]
+        for given in context_only:
+            if not _covered(given.rstrip("/"), let_in):
+                problems.append(f"{image.name}: contextOnly {given} is not let in by {ignore}")
+        unaccounted: set[str] = set()
+        for file in tracked(image.context):
+            relative = os.path.relpath(file, context) if context != "." else file
+            if not _covered(file, let_in) or _left_out(relative, left_out):
+                continue
+            if _covered(file, image.inputs) or _covered(file, context_only):
+                continue
+            unaccounted.add(_first_unaccounted(file, let_in))
+        for path in sorted(unaccounted):
             problems.append(
-                f"{image.name}: {ignore} lets {missing} into the build and it is not an input"
+                f"{image.name}: {ignore} lets {path} into the build and it is neither an input "
+                "nor a contextOnly path"
             )
-        for extra in sorted(declared - let_in):
-            problems.append(f"{image.name}: input {extra} is not let in by {ignore}")
+    if image.context_only and not whole:
+        problems.append(
+            f"{image.name}: contextOnly is only for an image that copies its whole context"
+        )
     return problems
+
+
+def _first_unaccounted(file: str, let_in: list[str]) -> str:
+    """The admitted path a stray file is reported under: the allowlist entry
+    itself when it is a file, else the file's first directory below it."""
+    for entry in let_in:
+        base = entry.rstrip("/")
+        if file == base:
+            return file
+        if file.startswith(base + "/"):
+            rest = file[len(base) + 1:].split("/")
+            return f"{base}/{rest[0]}" + ("/" if len(rest) > 1 else "")
+    return file
 
 
 BUILD_STEP = "docker/build-push-action"
@@ -925,7 +1017,12 @@ def composite_dockerfiles(action_text: str) -> list[str]:
     ]
 
 
-def check_inputs(images: dict[str, Image], read: Callable[[str], str], exists: Callable[[str], bool]) -> list[str]:
+def check_inputs(
+    images: dict[str, Image],
+    read: Callable[[str], str],
+    exists: Callable[[str], bool],
+    tracked: Callable[[str], list[str]],
+) -> list[str]:
     problems: list[str] = []
     for image in images.values():
         if not image.built:
@@ -933,7 +1030,7 @@ def check_inputs(images: dict[str, Image], read: Callable[[str], str], exists: C
         if not exists(image.dockerfile):
             problems.append(f"{image.name}: {image.dockerfile} does not exist")
             continue
-        problems += check_image_inputs(image, read, exists)
+        problems += check_image_inputs(image, read, exists, tracked)
     dockerfiles = {i.dockerfile.removeprefix("./") for i in images.values() if i.built}
     for path in release_workflows(read):
         text = read(path)
@@ -943,6 +1040,87 @@ def check_inputs(images: dict[str, Image], read: Callable[[str], str], exists: C
                 continue
             if file.removeprefix("./") not in dockerfiles:
                 problems.append(f"{path} builds {file}, which {IMAGES_FILE} does not list")
+    return problems
+
+
+# Cargo closures --------------------------------------------------------------------
+
+# Kinds of target a release build compiles; tests, benches and examples are not.
+BUILT_TARGETS = {"lib", "rlib", "dylib", "cdylib", "staticlib", "proc-macro", "bin", "custom-build"}
+
+
+def cargo_closure(metadata: dict[str, Any], package: str) -> list[dict[str, Any]]:
+    """The local (path) packages `package` is built from: itself and every path
+    package reachable through normal and build dependencies, on any target.
+    Dev-dependencies are left out: the release builds the binary alone
+    (`cargo build --release -p <package>`), which never compiles a test,
+    bench or example, so a crate only they use cannot change the image."""
+    packages = {p["id"]: p for p in metadata["packages"]}
+    roots = [p["id"] for p in metadata["packages"]
+             if p["name"] == package and p["id"] in metadata["workspace_members"]]
+    if len(roots) != 1:
+        raise ReleaseError(f"cargo metadata: {package} is not one workspace member")
+    nodes = {n["id"]: n for n in (metadata.get("resolve") or {}).get("nodes") or []}
+    if not nodes:
+        raise ReleaseError("cargo metadata: no dependency graph (was it run with --no-deps?)")
+    seen, queue = set(), [roots[0]]
+    while queue:
+        current = queue.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        for dep in nodes[current].get("deps") or []:
+            kinds = {k.get("kind") for k in dep.get("dep_kinds") or [{"kind": None}]}
+            if kinds & {None, "build"}:
+                queue.append(dep["pkg"])
+    return sorted(
+        (packages[i] for i in seen if packages[i].get("source") is None),
+        key=lambda p: p["name"],
+    )
+
+
+def check_cargo(images: dict[str, Image], metadata: dict[str, Any]) -> list[str]:
+    """Every image built from a Cargo package lists exactly the local crates
+    of its closure as inputs: each crate's manifest and the directory of every
+    target the release compiles, and no other local crate's manifest."""
+    problems: list[str] = []
+    root = metadata["workspace_root"]
+    for image in images.values():
+        if not image.cargo_package:
+            continue
+        workspace = image.cargo_workspace
+
+        def where(path: str, workspace: str = workspace) -> str:
+            return os.path.normpath(os.path.join(workspace, os.path.relpath(path, root)))
+
+        closure = cargo_closure(metadata, image.cargo_package)
+        names = {p["name"] for p in closure}
+        for crate in closure:
+            manifest = where(crate["manifest_path"])
+            if not _covered(manifest, image.inputs):
+                problems.append(
+                    f"{image.name}: {crate['name']} ({os.path.dirname(manifest)}) is in the "
+                    f"closure of {image.cargo_package} and is not an input"
+                )
+                continue
+            for target in crate.get("targets") or []:
+                if not set(target.get("kind") or []) & BUILT_TARGETS:
+                    continue
+                source = where(target["src_path"])
+                if not _covered(source, image.inputs):
+                    problems.append(
+                        f"{image.name}: {crate['name']}'s {target['name']} target "
+                        f"({source}) is not an input"
+                    )
+        for crate in metadata["packages"]:
+            if crate.get("source") is not None or crate["name"] in names:
+                continue
+            manifest = where(crate["manifest_path"])
+            if _covered(manifest, image.inputs):
+                problems.append(
+                    f"{image.name}: {crate['name']} ({os.path.dirname(manifest)}) is an input, "
+                    f"and {image.cargo_package} does not depend on it"
+                )
     return problems
 
 
@@ -1002,6 +1180,11 @@ def main(argv: list[str] | None = None) -> int:
     p_pin.add_argument("--charts", default=str(ROOT / "deploy" / "helm"))
     p_pin.add_argument("--previous", default="")
     p_pin.add_argument("--refresh", action="store_true")
+    p_cargo = sub.add_parser("check-cargo")
+    p_cargo.add_argument(
+        "--metadata", default="-",
+        help="`cargo metadata --format-version 1 --locked` output (- for stdin)",
+    )
     p_validate = sub.add_parser("validate")
     p_validate.add_argument("file")
     args = parser.parse_args(argv)
@@ -1012,11 +1195,20 @@ def main(argv: list[str] | None = None) -> int:
                 read_images(),
                 lambda p: (ROOT / p).read_text(),
                 lambda p: (ROOT / p).exists(),
+                LocalGit().tracked,
             )
             for problem in problems:
                 print(f"::error::{problem}")
             if not problems:
                 print(f"{IMAGES_FILE}: every image's inputs are what its Dockerfile reads")
+            return 1 if problems else 0
+        if args.command == "check-cargo":
+            text = sys.stdin.read() if args.metadata == "-" else Path(args.metadata).read_text()
+            problems = check_cargo(read_images(), json.loads(text))
+            for problem in problems:
+                print(f"::error::{problem}")
+            if not problems:
+                print(f"{IMAGES_FILE}: every Cargo-built image lists exactly its crate closure")
             return 1 if problems else 0
         if args.command == "plan":
             result = plan(

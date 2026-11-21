@@ -3,7 +3,9 @@
     python3 -m unittest discover -s tools/release -v
 """
 
+import contextlib
 import copy
+import io
 import json
 import sys
 import tempfile
@@ -475,30 +477,51 @@ class ChartsTest(unittest.TestCase):
 
 
 class InputsTest(unittest.TestCase):
-    def files(self, extra=None):
+    def files(self, extra=None, drop=()):
         files = {
             "deploy/Dockerfile.a": "FROM x AS b\nCOPY --from=b /x /y\nCOPY a/go.mod \\\n  a/go.sum ./\nCOPY a/ ./a/\n",
             ".dockerignore": ".git\n",
-            "a": "", "a/go.mod": "", "a/go.sum": "",
+            "a/go.mod": "", "a/go.sum": "", "a/main.go": "",
+            # A Cargo workspace whose image is built from one member's closure.
             "deploy/Dockerfile.w": "COPY . .\nCOPY vendor/ vendor/\n",
-            "deploy/Dockerfile.w.dockerignore": "# allowlist\n*\n!src\n!vendor\n**/target\n",
-            "w/src": "", "w/vendor": "",
+            "deploy/Dockerfile.w.dockerignore": "# allowlist\n*\n!app\n!crates\n!vendor\n!Cargo.toml\n**/target\n",
+            "w/Cargo.toml": "", "w/app/Cargo.toml": "", "w/app/src/main.rs": "",
+            "w/app/tests/t.rs": "", "w/crates/core/Cargo.toml": "", "w/crates/core/src/lib.rs": "",
+            "w/crates/core/target/debug/x": "", "w/crates/edi/Cargo.toml": "",
+            "w/crates/edi/src/lib.rs": "", "w/vendor/m/Cargo.toml": "", "w/README.md": "",
             ".github/workflows/release.yml": "jobs:\n  b:\n    steps:\n      - uses: docker/build-push-action@x\n        with:\n          file: ${{ steps.p.outputs.dockerfile }}\n",
         }
         files.update(extra or {})
+        for path in drop:
+            files.pop(path)
         return files
 
     def check(self, images_yaml, files):
         images = r.load_images(images_yaml)
-        return r.check_inputs(images, lambda p: files[p], lambda p: p in files)
+        return r.check_inputs(
+            images,
+            lambda p: files[p],
+            lambda p: p in files or any(f.startswith(p + "/") for f in files),
+            lambda prefix: [f for f in files if f.startswith(prefix.rstrip("/") + "/")],
+        )
 
     GOOD = """images:
   a: {repository: r/a, dockerfile: deploy/Dockerfile.a, context: ., platforms: [x], inputs: [a/, deploy/Dockerfile.a, .dockerignore]}
-  w: {repository: r/w, dockerfile: deploy/Dockerfile.w, context: w, platforms: [x], inputs: [w/src, w/vendor, deploy/Dockerfile.w, deploy/Dockerfile.w.dockerignore]}
+  w:
+    repository: r/w
+    dockerfile: deploy/Dockerfile.w
+    context: w
+    platforms: [x]
+    inputs: [w/Cargo.toml, w/app/Cargo.toml, w/app/src/, w/crates/core/, deploy/Dockerfile.w, deploy/Dockerfile.w.dockerignore]
+    contextOnly:
+      - {path: w/app/tests/, why: test targets the release never compiles}
+      - {path: w/crates/edi/, why: a member outside the closure}
+      - {path: w/vendor/, why: the patch Cargo resolves}
 """
 
     def test_the_real_tree(self):
-        problems = r.check_inputs(IMAGES, lambda p: (ROOT / p).read_text(), lambda p: (ROOT / p).exists())
+        problems = r.check_inputs(IMAGES, lambda p: (ROOT / p).read_text(),
+                                  lambda p: (ROOT / p).exists(), r.LocalGit().tracked)
         self.assertEqual(problems, [])
 
     def test_exact_inputs_pass(self):
@@ -507,7 +530,8 @@ class InputsTest(unittest.TestCase):
     def test_a_copied_path_that_is_not_an_input(self):
         files = self.files({"deploy/Dockerfile.a": "COPY a/ ./a/\nCOPY b/x.txt /x\n", "b/x.txt": ""})
         problems = self.check(self.GOOD, files)
-        self.assertEqual(problems, ["a: deploy/Dockerfile.a copies b/x.txt, which is not an input"])
+        self.assertEqual(problems, [
+            "a: deploy/Dockerfile.a copies b/x.txt, which is neither an input nor a contextOnly path"])
 
     def test_the_dockerignore_is_an_input(self):
         images = self.GOOD.replace(", .dockerignore]", "]")
@@ -518,13 +542,57 @@ class InputsTest(unittest.TestCase):
         files = self.files({"deploy/Dockerfile.w.dockerignore": "target\n"})
         self.assertTrue(any("copies its whole context" in p for p in self.check(self.GOOD, files)))
 
+    def test_every_admitted_file_is_an_input_or_context_only(self):
+        files = self.files({"w/crates/rules/src/lib.rs": "", "w/app/build.rs": ""})
+        problems = self.check(self.GOOD, files)
+        self.assertEqual(sorted(problems), [
+            "w: deploy/Dockerfile.w.dockerignore lets w/app/build.rs into the build and it is "
+            "neither an input nor a contextOnly path",
+            "w: deploy/Dockerfile.w.dockerignore lets w/crates/rules/ into the build and it is "
+            "neither an input nor a contextOnly path",
+        ])
+
+    def test_what_the_dockerignore_leaves_out_or_never_lets_in_is_not_asked_about(self):
+        files = self.files({"w/crates/edi/target/release/y": "", "w/notes.txt": ""})
+        self.assertEqual(self.check(self.GOOD, files), [])
+
     def test_the_allowlist_and_the_inputs_agree(self):
-        files = self.files({"deploy/Dockerfile.w.dockerignore": "*\n!src\n!vendor\n!scripts\n", "w/scripts": ""})
-        self.assertIn("w: deploy/Dockerfile.w.dockerignore lets w/scripts into the build and it is not an input",
-                      self.check(self.GOOD, files))
-        files = self.files({"deploy/Dockerfile.w.dockerignore": "*\n!src\n"})
-        self.assertIn("w: input w/vendor is not let in by deploy/Dockerfile.w.dockerignore",
-                      self.check(self.GOOD, files))
+        files = self.files({"deploy/Dockerfile.w.dockerignore": "*\n!app\n!vendor\n!Cargo.toml\n"})
+        problems = self.check(self.GOOD, files)
+        self.assertIn("w: input w/crates/core/ is not let in by deploy/Dockerfile.w.dockerignore", problems)
+        self.assertIn("w: contextOnly w/crates/edi/ is not let in by deploy/Dockerfile.w.dockerignore", problems)
+
+    def test_a_context_only_path_must_exist(self):
+        files = self.files(drop=["w/crates/edi/Cargo.toml", "w/crates/edi/src/lib.rs"])
+        self.assertIn("w: contextOnly w/crates/edi/ does not exist", self.check(self.GOOD, files))
+
+    def test_a_context_only_path_needs_a_reason(self):
+        for bad in ("{path: w/vendor/}", "{path: w/vendor/, why: ' '}"):
+            images = self.GOOD.replace("{path: w/vendor/, why: the patch Cargo resolves}", bad)
+            with self.assertRaisesRegex(r.ReleaseError, "gives no reason"):
+                r.load_images(images)
+
+    def test_a_context_only_path_is_not_also_an_input(self):
+        images = self.GOOD.replace("{path: w/vendor/, why: the patch Cargo resolves}",
+                                   "{path: w/app/src/main.rs, why: overlapping}")
+        problems = self.check(images, self.files())
+        self.assertIn("w: contextOnly w/app/src/main.rs overlaps input w/app/src/", problems)
+
+    def test_an_explicit_copy_of_a_context_only_path_is_declared(self):
+        images = self.GOOD.replace("      - {path: w/vendor/, why: the patch Cargo resolves}\n", "")
+        problems = self.check(images, self.files())
+        self.assertIn("w: deploy/Dockerfile.w copies w/vendor, which is neither an input nor a "
+                      "contextOnly path", problems)
+
+    def test_context_only_needs_a_whole_context_copy(self):
+        images = self.GOOD.replace(
+            "inputs: [a/, deploy/Dockerfile.a, .dockerignore]}",
+            "inputs: [a/go.mod, a/go.sum, deploy/Dockerfile.a, .dockerignore], "
+            "contextOnly: [{path: a/main.go, why: x}]}",
+        )
+        files = self.files({"deploy/Dockerfile.a": "COPY a/go.mod a/go.sum ./\n"})
+        self.assertIn("a: contextOnly is only for an image that copies its whole context",
+                      self.check(images, files))
 
     def test_a_workflow_building_an_unlisted_image(self):
         files = self.files({".github/workflows/release.yml": (
@@ -546,6 +614,111 @@ class InputsTest(unittest.TestCase):
     def test_the_list_must_name_the_dockerfile(self):
         with self.assertRaisesRegex(r.ReleaseError, "Dockerfile"):
             r.load_images(self.GOOD.replace("inputs: [a/, deploy/Dockerfile.a, .dockerignore]", "inputs: [a/]"))
+
+
+def package(name, directory, member=True, source=None, targets=(("lib", "src/lib.rs"),)):
+    return {
+        "name": name, "id": f"{name} 0.1.0 (path+file://{directory})", "source": source,
+        "manifest_path": f"{directory}/Cargo.toml",
+        "targets": [{"name": name, "kind": [kind], "src_path": f"{directory}/{path}"}
+                    for kind, path in targets],
+        "_member": member,
+    }
+
+
+def metadata():
+    """A workspace at /ws (the repository's w/): app depends on core and,
+    through it, on gen as a build dependency; on bench as a dev dependency
+    only; edi depends on the vendored monty; serde comes from crates.io."""
+    pkgs = [
+        package("app", "/ws/app", targets=(("bin", "src/main.rs"), ("test", "tests/t.rs"))),
+        package("core", "/ws/crates/core"),
+        package("gen", "/ws/crates/gen", targets=(("lib", "src/lib.rs"), ("custom-build", "build.rs"))),
+        package("bench", "/ws/crates/bench"),
+        package("edi", "/ws/crates/edi"),
+        package("monty", "/ws/vendor/monty", member=False),
+        package("serde", "/home/x/.cargo/registry/serde", member=False,
+                source="registry+https://example.invalid/crates.io-index"),
+    ]
+    ids = {p["name"]: p["id"] for p in pkgs}
+
+    def dep(name, *kinds):
+        return {"name": name, "pkg": ids[name],
+                "dep_kinds": [{"kind": k, "target": None} for k in kinds]}
+
+    graph = {
+        "app": [dep("core", None), dep("bench", "dev"), dep("serde", None)],
+        "core": [dep("gen", "build"), dep("serde", None)],
+        "gen": [], "bench": [], "edi": [dep("monty", None)], "monty": [], "serde": [],
+    }
+    return {
+        "packages": [{k: v for k, v in p.items() if k != "_member"} for p in pkgs],
+        "workspace_members": [p["id"] for p in pkgs if p["_member"]],
+        "workspace_root": "/ws",
+        "resolve": {"root": None, "nodes": [{"id": ids[n], "deps": d} for n, d in graph.items()]},
+    }
+
+
+CARGO_IMAGE = """images:
+  w:
+    repository: r/w
+    dockerfile: deploy/Dockerfile.w
+    context: w
+    platforms: [x]
+    cargo: {workspace: w, package: app}
+    inputs: [w/app/Cargo.toml, w/app/src/, w/crates/core/, w/crates/gen/, deploy/Dockerfile.w]
+"""
+
+
+class CargoTest(unittest.TestCase):
+    def test_the_closure_is_normal_and_build_dependencies(self):
+        names = [p["name"] for p in r.cargo_closure(metadata(), "app")]
+        self.assertEqual(names, ["app", "core", "gen"],
+                         "bench is a dev-dependency, edi and monty are not reachable, serde is not local")
+
+    def test_exact_inputs_pass(self):
+        self.assertEqual(r.check_cargo(r.load_images(CARGO_IMAGE), metadata()), [])
+
+    def test_a_crate_of_the_closure_that_is_not_an_input(self):
+        images = r.load_images(CARGO_IMAGE.replace("w/crates/gen/, ", ""))
+        self.assertEqual(r.check_cargo(images, metadata()),
+                         ["w: gen (w/crates/gen) is in the closure of app and is not an input"])
+
+    def test_an_input_crate_outside_the_closure(self):
+        images = r.load_images(CARGO_IMAGE.replace("w/crates/gen/, ", "w/crates/gen/, w/crates/edi/, "))
+        self.assertEqual(r.check_cargo(images, metadata()),
+                         ["w: edi (w/crates/edi) is an input, and app does not depend on it"])
+
+    def test_a_dev_dependency_is_not_an_input(self):
+        images = r.load_images(CARGO_IMAGE.replace("w/crates/gen/, ", "w/crates/gen/, w/crates/bench/, "))
+        self.assertIn("w: bench (w/crates/bench) is an input, and app does not depend on it",
+                      r.check_cargo(images, metadata()))
+
+    def test_every_built_target_is_an_input(self):
+        images = r.load_images(CARGO_IMAGE.replace("w/app/src/, ", ""))
+        self.assertEqual(r.check_cargo(images, metadata()),
+                         ["w: app's app target (w/app/src/main.rs) is not an input"])
+
+    def test_metadata_without_a_graph_or_the_package(self):
+        bare = metadata()
+        del bare["resolve"]
+        with self.assertRaisesRegex(r.ReleaseError, "no-deps"):
+            r.check_cargo(r.load_images(CARGO_IMAGE), bare)
+        with self.assertRaisesRegex(r.ReleaseError, "not one workspace member"):
+            r.cargo_closure(metadata(), "nothing")
+
+    def test_the_command_reads_the_metadata(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".json") as f:
+            json.dump(metadata(), f)
+            f.flush()
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                code = r.main(["check-cargo", "--metadata", f.name])
+            self.assertEqual(code, 1, "the real list names trenova-imaging, which this workspace lacks")
+            self.assertIn("trenova-imaging is not one workspace member", out.getvalue())
+
+    def test_the_real_entry_names_its_package(self):
+        self.assertEqual((IMAGES["imaging"].cargo_workspace, IMAGES["imaging"].cargo_package),
+                         ("services", "trenova-imaging"))
 
 
 if __name__ == "__main__":

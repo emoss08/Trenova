@@ -28,6 +28,9 @@ on:
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
+      # The imaging image's inputs, checked against its crate closure.
+      - "deploy/release/images.yaml"
+      - "tools/release/release.py"
       # The crate checks every Tariff example in these two docs.
       - "docs/engineering/formula-language.md"
       - "docs/engineering/tariff-cheat-sheet.md"
@@ -54,6 +57,9 @@ on:
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
+      # The imaging image's inputs, checked against its crate closure.
+      - "deploy/release/images.yaml"
+      - "tools/release/release.py"
       # The crate checks every Tariff example in these two docs.
       - "docs/engineering/formula-language.md"
       - "docs/engineering/tariff-cheat-sheet.md"
@@ -110,6 +116,14 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked
+      # The imaging image's inputs in deploy/release/images.yaml are exactly
+      # trenova-imaging's workspace dependency closure, so a release rebuilds it
+      # only when a crate it is built from changed (docs/engineering/releases.md).
+      - name: The imaging image's inputs are its crate closure
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          cargo metadata --format-version 1 --locked | python3 ../tools/release/release.py check-cargo
       # Neither needs the toolchain above, so they run even when a step above failed.
       - name: services and desktop/capture pin the same channel
         if: ${{ !cancelled() }}

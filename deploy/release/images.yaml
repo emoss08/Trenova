@@ -23,7 +23,14 @@
 #               every path the Dockerfile copies. `python3
 #               tools/release/release.py check-inputs` (CI, helm.yml) fails
 #               when a Dockerfile copies a path its entry does not list.
-#   pinned      not built here: the path in deploy/helm/trenova/values.yaml of
+#   contextOnly paths the build context must hold that do not decide what the
+#               image is, each with its `why`: never inputs. With an
+#               allowlist dockerignore, every file it lets in is an input or
+#               under one of these.
+#   cargo       {workspace, package}: the image is that Cargo package's
+#               binary; `release.py check-cargo` (CI, rust.yml) holds its
+#               inputs to the package's crate closure
+#   pinned    not built here: the path in deploy/helm/trenova/values.yaml of
 #               the {repository, tag} the chart pins; the release records the
 #               tag's digest
 #
@@ -70,6 +77,12 @@ images:
       - deploy/Caddyfile
       - .dockerignore
 
+  # The imaging worker's inputs are its crate's dependency closure, not the
+  # whole Rust workspace: a change to trenova-edi or trenova-rules must not
+  # rebuild it. The Rust workflow checks the crates listed here against
+  # `cargo metadata` (release.py check-cargo); the other workspace members are
+  # in the build context only because Cargo cannot load the workspace without
+  # them.
   imaging:
     repository: ghcr.io/emoss08/trenova/imaging
     dockerfile: deploy/Dockerfile.imaging
@@ -78,17 +91,42 @@ images:
     platforms: [linux/amd64, linux/arm64]
     buildArgs:
       CARGO_BUILD_JOBS: "4"
+    cargo:
+      workspace: services
+      package: trenova-imaging
     inputs:
-      - services/imaging/
-      - services/crates/
+      # trenova-imaging, without its tests (below).
+      - services/imaging/Cargo.toml
+      - services/imaging/src/
+      # Its workspace dependencies, normal and build, to the end of the chain.
+      - services/crates/imaging-core/
+      - services/crates/proto/
+      - services/crates/sandbox/
+      - services/crates/service-kit/
+      # trenova-proto's build.rs compiles these; .cargo/config.toml tells it where.
       - services/proto/
-      - services/vendor/
       - services/.cargo/
+      # What every member's build reads.
       - services/Cargo.toml
       - services/Cargo.lock
       - services/rust-toolchain.toml
       - deploy/Dockerfile.imaging
       - deploy/Dockerfile.imaging.dockerignore
+    contextOnly:
+      - path: services/imaging/tests/
+        why: test targets; the runtime target builds the binary alone, and Cargo needs the declared [[test]] file to load the manifest
+      - path: services/imaging/fuzz/
+        why: excluded from the workspace (services/Cargo.toml) and never built
+      - path: services/crates/edi/
+        why: a workspace member Cargo must load; not in trenova-imaging's closure
+      - path: services/crates/module-kit/
+        why: a workspace member Cargo must load; not in trenova-imaging's closure
+      - path: services/crates/rules/
+        why: a workspace member Cargo must load; not in trenova-imaging's closure
+      - path: services/crates/scripts/
+        why: a workspace member Cargo must load; not in trenova-imaging's closure
+      - path: services/vendor/
+        why: the workspace's [patch.crates-io] points at it, so the Dockerfile copies it for Cargo to resolve; only trenova-scripts uses monty
 
   # The Managed Trenova operator (services/operator, its own module), and the
   # tenant agent a shared server runs, built from the same module.
