@@ -146,3 +146,60 @@ func (t Template) Description() string {
 
 	assert.Equal(t, []string{"Billing assistant", "Dispatch assistant"}, messages)
 }
+
+func TestFixedMessageConstructorsAreReadInTheirBodies(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	files := map[string]string{
+		"tenant/user.go": `package tenant
+
+func NewUnavailableUsernameError() *errortypes.Error {
+	return errortypes.NewValidationError(
+		"username",
+		errortypes.ErrDuplicate,
+		"This username can't be used. Choose a different one.",
+	)
+}
+
+func UsernameTakenError() *errortypes.Error {
+	return NewUnavailableUsernameError()
+}
+`,
+		"errortypes/plan.go": `package errortypes
+
+func NewSuspendedError(manageURL string) *PlanRestrictionError {
+	return &PlanRestrictionError{BaseError: BaseError{Message: suspended.Message}}
+}
+
+var suspended = BaseError{Message: "This account is suspended."}
+`,
+		"planservice/standing.go": `package planservice
+
+func check() error {
+	return errortypes.NewSuspendedError(url)
+}
+`,
+	}
+	for name, src := range files {
+		path := filepath.Join(root, name)
+		require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+		require.NoError(t, os.WriteFile(path, []byte(src), 0o644))
+	}
+	e := &extractor{repoRoot: root, fset: token.NewFileSet(), unknown: map[string][]string{}}
+	require.NoError(t, e.walkDir(root))
+
+	messages := make([]string, 0, len(e.entries))
+	for _, entry := range e.entries {
+		messages = append(messages, entry.Message)
+	}
+	assert.ElementsMatch(
+		t,
+		[]string{
+			"This username can't be used. Choose a different one.",
+			"This account is suspended.",
+		},
+		messages,
+	)
+	assert.Empty(t, e.unknown, "a constructor with a fixed message is recognised, not reported")
+}

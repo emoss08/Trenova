@@ -1,3 +1,21 @@
 {
-  "Choose a method": "選擇方式"
+  "An employee can take two years' leave back to back across the turn of the year.": "員工可以在年度交替前後連續使用兩個年度的假期。",
+  "At least fifteen calendar days under the FMLA.": "依 FMLA，至少十五個日曆日。",
+  "At least twelve weeks under the FMLA; more is allowed.": "依 FMLA，至少十二週；可以更多。",
+  "Changing it is a change of policy that employees get sixty days' notice of.": "變更此項屬於政策變更，須提前六十天通知員工。",
+  "Checked on each case by hand; 1,250 hours under the FMLA.": "逐案人工核查；FMLA 規定為 1,250 小時。",
+  "Choose a method": "選擇方式",
+  "Counted from the hire date; twelve months under the FMLA.": "自到職日期起算；FMLA 規定為十二個月。",
+  "Hours in the prior year": "上一年度的工時",
+  "How long an employee has to return a medical certification once it is requested.": "被要求提供醫療證明後，員工須在多長時間內繳回。",
+  "How much leave an eligible employee gets in each leave year.": "符合條件的員工在每個請假年度可享有的假期。",
+  "Leave policy": "請假政策",
+  "Leave to care for a seriously injured service member; at least twenty-six weeks.": "照護重傷軍人的假期；至少二十六週。",
+  "Leave year": "請假年度",
+  "Measured as": "計算方式",
+  "The twelve months each employee's leave is counted in, the same for everyone.": "計算每位員工假期的十二個月期間，所有人相同。",
+  "Time to return it": "繳回期限",
+  "What a week of leave is worth when leave is taken a few hours at a time.": "按小時零星請假時，一週假期折合多少時數。",
+  "What an employee must have worked before they qualify for leave.": "員工須達到的工作年資和時數，才符合請假資格。",
+  "Workweek": "工作週"
 }

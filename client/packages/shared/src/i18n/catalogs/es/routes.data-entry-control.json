@@ -1,3 +1,14 @@
 {
-  "Data entry control": "Control de introducción de datos"
+  "Applies to the city on workers, customers, carriers (including the remit-to city), factoring companies and locations.": "Se aplica a la ciudad de trabajadores, clientes, transportistas (incluida la ciudad de pago), empresas de factoraje y ubicaciones.",
+  "Applies to the codes of customers, carriers, factoring companies, locations, fleet codes, equipment types, service and shipment types, accessorials, hazardous materials, document types, account types and GL accounts.": "Se aplica a los códigos de clientes, transportistas, empresas de factoraje, ubicaciones, códigos de flota, tipos de equipo, tipos de servicio y de envío, cargos accesorios, materiales peligrosos, tipos de documento, tipos de cuenta y cuentas contables.",
+  "Applies to the names of workers and their emergency contacts, customers, carriers and their contacts, factoring companies, locations, commodities, hazardous materials, document types, account types, GL accounts and fiscal years.": "Se aplica a los nombres de trabajadores y sus contactos de emergencia, clientes, transportistas y sus contactos, empresas de factoraje, ubicaciones, mercancías, materiales peligrosos, tipos de documento, tipos de cuenta, cuentas contables y ejercicios fiscales.",
+  "Applies to worker, carrier, carrier contact and factoring company emails and to customer status update and billing email recipients, never to sign-in emails.": "Se aplica a los correos de trabajadores, transportistas, contactos de transportistas y empresas de factoraje, y a los destinatarios de correos de actualización de estado y de facturación de clientes; nunca a los correos de inicio de sesión.",
+  "Case formatting": "Formato de mayúsculas y minúsculas",
+  "Cities": "Ciudades",
+  "Codes": "Códigos",
+  "Data entry control": "Control de introducción de datos",
+  "Email addresses": "Direcciones de correo electrónico",
+  "How entered text is capitalized when a record is saved.": "Cómo se escriben en mayúsculas o minúsculas los textos ingresados al guardar un registro.",
+  "Names": "Nombres",
+  "Set how entered text is capitalized across the system": "Establezca cómo se escriben en mayúsculas o minúsculas los textos ingresados en todo el sistema"
 }

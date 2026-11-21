@@ -1,0 +1,10 @@
+{
+  "Archive each active shared-server tenant once a night, off-peak, and prune its archives past retention": "每晚在非高峰时段为共享服务器上的每个活跃租户归档一次，并清理超过保留期限的归档",
+  "Archive every active shared-server tenant once a night and prune its old nightly archives": "每晚为共享服务器上的每个活跃租户归档一次，并清理其旧的夜间归档",
+  "Delete a removed shared-server tenant's rows, documents, search documents and cache keys, then report it removed": "删除共享服务器上已移除租户的数据行、文档、搜索文档和缓存键，然后报告其已移除",
+  "Make a shared-server tenant from an archive taken on another server": "依据在其他服务器上生成的归档，创建共享服务器租户",
+  "Restore a suspended shared-server tenant from one of its archives": "依据其某个归档还原共享服务器上已暂停的租户",
+  "Sign a suspended shared-server tenant's people out": "将共享服务器上已暂停租户的所有人员登出",
+  "Take a shared-server tenant's archive to the location the control plane named": "将共享服务器租户的归档送到控制平面指定的位置",
+  "nightly tenant archive": "租户夜间归档"
+}

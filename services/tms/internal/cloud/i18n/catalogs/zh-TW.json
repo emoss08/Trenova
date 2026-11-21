@@ -1,0 +1,10 @@
+{
+  "Archive each active shared-server tenant once a night, off-peak, and prune its archives past retention": "每晚在離峰時段為共用伺服器上的每個使用中租戶封存一次，並清除超過保留期限的封存",
+  "Archive every active shared-server tenant once a night and prune its old nightly archives": "每晚為共用伺服器上的每個使用中租戶封存一次，並清除其舊的夜間封存",
+  "Delete a removed shared-server tenant's rows, documents, search documents and cache keys, then report it removed": "刪除共用伺服器上已移除租戶的資料列、文件、搜尋文件和快取鍵，然後回報其已移除",
+  "Make a shared-server tenant from an archive taken on another server": "依據在其他伺服器上產生的封存，建立共用伺服器租戶",
+  "Restore a suspended shared-server tenant from one of its archives": "依據其某個封存還原共用伺服器上已暫停的租戶",
+  "Sign a suspended shared-server tenant's people out": "將共用伺服器上已暫停租戶的所有人員登出",
+  "Take a shared-server tenant's archive to the location the control plane named": "將共用伺服器租戶的封存送到控制平面指定的位置",
+  "nightly tenant archive": "租戶夜間封存"
+}

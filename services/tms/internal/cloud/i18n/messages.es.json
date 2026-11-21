@@ -1,0 +1,10 @@
+{
+  "Archive each active shared-server tenant once a night, off-peak, and prune its archives past retention": "Archivar cada inquilino activo del servidor compartido una vez por noche, fuera de las horas pico, y depurar sus archivos que superen el período de retención",
+  "Archive every active shared-server tenant once a night and prune its old nightly archives": "Archivar cada inquilino activo del servidor compartido una vez por noche y depurar sus archivos nocturnos antiguos",
+  "Delete a removed shared-server tenant's rows, documents, search documents and cache keys, then report it removed": "Eliminar las filas, los documentos, los documentos de búsqueda y las claves de caché de un inquilino retirado del servidor compartido, y luego informar que se retiró",
+  "Make a shared-server tenant from an archive taken on another server": "Crear un inquilino del servidor compartido a partir de un archivo tomado en otro servidor",
+  "Restore a suspended shared-server tenant from one of its archives": "Restaurar un inquilino suspendido del servidor compartido a partir de uno de sus archivos",
+  "Sign a suspended shared-server tenant's people out": "Cerrar la sesión de las personas de un inquilino suspendido del servidor compartido",
+  "Take a shared-server tenant's archive to the location the control plane named": "Llevar el archivo de un inquilino del servidor compartido a la ubicación que indicó el plano de control",
+  "nightly tenant archive": "archivo nocturno de inquilinos"
+}

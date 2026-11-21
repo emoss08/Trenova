@@ -2,6 +2,7 @@ package emailservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -22,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/remedy"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -391,6 +393,33 @@ func TestInvitationsThroughTheTrenovaSenderAreRateLimitedPerOrganization(t *test
 	assert.Equal(t, 12*time.Minute, retryAfter)
 	assert.Contains(t, err.Error(), "invitations")
 	assert.Empty(t, r.sentMessages())
+}
+
+func TestTheTrenovaSenderSaysHowManyMinutesToWaitInWholeWords(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		retryAfter time.Duration
+		want       string
+	}{
+		{
+			retryAfter: 20 * time.Second,
+			want: "This organization has sent as many invitations as it may in an hour. " +
+				"Try again in 1 minute, or add an email profile in the email settings.",
+		},
+		{
+			retryAfter: 11*time.Minute + time.Second,
+			want: "This organization has sent as many invitations as it may in an hour. " +
+				"Try again in 12 minutes, or add an email profile in the email settings.",
+		},
+	}
+	for _, tt := range tests {
+		err := (&Service{}).overBudget(budgetInvitations, tt.retryAfter)
+
+		limit, ok := errors.AsType[*errortypes.RateLimitError](err)
+		require.True(t, ok)
+		assert.Equal(t, tt.want, i18n.Translate(i18n.EN, limit.Message, limit.Args...))
+	}
 }
 
 func TestTheTrenovaSenderIsRateLimitedPerInstance(t *testing.T) {

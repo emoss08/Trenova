@@ -138,13 +138,18 @@ call, so `NewBusinessError(...)` and `errortypes.NewBusinessError(...)` both mat
 come from the real signatures in `pkg/errortypes/errors.go`; note `NewRateLimitError` puts
 its message *second*, behind a field name.
 
-**`noMessage` — recognised, but nothing to translate.** Three kinds live here: containers
-that only match the `New*Error` name shape (`NewMultiError`, the Prometheus `NewError`);
-constructors taking structured identifiers that compose their own text (the formula and
-seeder errors, `NewRequestTooLargeError`); and Temporal control-plane errors, which drive
-workflow retry decisions and reach operators through job history, never a translated
-end-user surface. Moving one into `messageArgs` is the only edit needed if that judgement
-changes.
+**`noMessage` — recognised, but no message at the call site.** Four kinds live here:
+containers that only match the `New*Error` name shape (`NewMultiError`, the Prometheus
+`NewError`); constructors taking structured identifiers that compose their own text (the
+formula and seeder errors, `NewRequestTooLargeError`); Temporal control-plane errors, which
+drive workflow retry decisions and reach operators through job history, never a translated
+end-user surface; and constructors that carry one fixed message in their own body
+(`NewDuplicateUsernameError`, `NewUnavailableEmailAddressError`, `NewSuspendedError`,
+`NewPlanRestrictionError`). The last kind is translated: its text is read where it is
+written, as the literal of the `NewValidationError` call inside it or the `Message:` field of
+the `BaseError` it builds, so keep that text a literal there and never pass it in through a
+constant or a parameter. Moving one into `messageArgs` is the only edit needed if a
+constructor starts taking its message as an argument.
 
 **`rules.Message{Template: "..."}` is a message.** A Go-authored message that travels as a
 `rules.Message` (the formula preview's `timeout` and `negativeCharge` errors, the

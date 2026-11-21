@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -199,7 +198,8 @@ func (s *Service) overBudget(budget trenovaBudget, retryAfter time.Duration) err
 		return errortypes.NewRateLimitError(
 			"to",
 			"This organization has sent as many invitations as it may in an hour. "+
-				"Try again in {0} minutes, or add an email profile in the email settings.",
+				"Try again in {0, plural, one {# minute} other {# minutes}}, or add an email profile "+
+				"in the email settings.",
 			minutes,
 		).WithRetryAfter(retryAfter)
 	}
@@ -208,7 +208,8 @@ func (s *Service) overBudget(budget trenovaBudget, retryAfter time.Duration) err
 		return errortypes.NewRateLimitError(
 			"to",
 			"This organization has sent as much email through Trenova as it may in an hour. "+
-				"Try again in {0} minutes, or add an email profile in the email settings.",
+				"Try again in {0, plural, one {# minute} other {# minutes}}, or add an email profile "+
+				"in the email settings.",
 			minutes,
 		).WithRetryAfter(retryAfter)
 	}
@@ -216,13 +217,14 @@ func (s *Service) overBudget(budget trenovaBudget, retryAfter time.Duration) err
 	return errortypes.NewRateLimitError(
 		"to",
 		"Email Trenova sends for this instance has reached its hourly limit. "+
-			"Try again in {0} minutes, or add an email profile in the email settings.",
+			"Try again in {0, plural, one {# minute} other {# minutes}}, or add an email profile "+
+			"in the email settings.",
 		minutes,
 	).WithRetryAfter(retryAfter)
 }
 
-func retryMinutes(d time.Duration) string {
-	return strconv.Itoa(int(math.Max(1, math.Ceil(d.Minutes()))))
+func retryMinutes(d time.Duration) int {
+	return int(math.Max(1, math.Ceil(d.Minutes())))
 }
 
 func notIn(addresses, members []string) []string {

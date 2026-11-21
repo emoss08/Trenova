@@ -1,3 +1,14 @@
 {
-  "Data entry control": "数据录入控制"
+  "Applies to the city on workers, customers, carriers (including the remit-to city), factoring companies and locations.": "适用于员工、客户、承运商（包括收款城市）、保理公司和地点的城市。",
+  "Applies to the codes of customers, carriers, factoring companies, locations, fleet codes, equipment types, service and shipment types, accessorials, hazardous materials, document types, account types and GL accounts.": "适用于客户、承运商、保理公司、地点、车队代码、设备类型、服务和运单类型、附加费、危险品、文档类型、科目类型和总账科目的代码。",
+  "Applies to the names of workers and their emergency contacts, customers, carriers and their contacts, factoring companies, locations, commodities, hazardous materials, document types, account types, GL accounts and fiscal years.": "适用于员工及其紧急联系人、客户、承运商及其联系人、保理公司、地点、货品、危险品、文档类型、科目类型、总账科目和会计年度的名称。",
+  "Applies to worker, carrier, carrier contact and factoring company emails and to customer status update and billing email recipients, never to sign-in emails.": "适用于员工、承运商、承运商联系人和保理公司的电子邮件，以及客户状态更新和账务邮件的收件人，绝不适用于登录用的电子邮件。",
+  "Case formatting": "大小写格式",
+  "Cities": "城市",
+  "Codes": "代码",
+  "Data entry control": "数据录入控制",
+  "Email addresses": "电子邮件地址",
+  "How entered text is capitalized when a record is saved.": "保存记录时，输入文字的大小写处理方式。",
+  "Names": "名称",
+  "Set how entered text is capitalized across the system": "设置整个系统中输入文字的大小写处理方式"
 }

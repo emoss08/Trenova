@@ -108,6 +108,8 @@ var noMessage = map[string]struct{}{
 	"NewContinueAsNewError":             {},
 	"NewDuplicateEmailAddressError":     {},
 	"NewDuplicateUsernameError":         {},
+	"NewUnavailableEmailAddressError":   {},
+	"NewUnavailableUsernameError":       {},
 	"NewNoOrganizationMembershipsError": {},
 	"NewSessionContextStaleError":       {},
 	"NewCSRFTokenInvalidError":          {},
@@ -115,6 +117,7 @@ var noMessage = map[string]struct{}{
 	"NewQuotaExceededError":             {},
 	"NewPlanRestrictionError":           {},
 	"NewFeatureRestrictionError":        {},
+	"NewSuspendedError":                 {},
 	"NewPlanRefusalError":               {},
 }
 
