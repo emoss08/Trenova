@@ -14,21 +14,27 @@
     <a href="https://discord.gg/XDBqyvrryq">Discord</a>
   </p>
   <p>
-    <a href="https://github.com/emoss08/trenova/actions/workflows/test-tms.yml"><img src="https://github.com/emoss08/trenova/actions/workflows/test-tms.yml/badge.svg" alt="TMS tests"></a>
-    <a href="https://github.com/emoss08/trenova/actions/workflows/test-client.yml"><img src="https://github.com/emoss08/trenova/actions/workflows/test-client.yml/badge.svg" alt="Client tests"></a>
     <a href="https://github.com/emoss08/trenova/releases"><img src="https://img.shields.io/github/v/release/emoss08/trenova?include_prereleases" alt="Latest release"></a>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-FSL--1.1--ALv2-blue" alt="License: FSL-1.1-ALv2"></a>
   </p>
 </div>
 
 > [!IMPORTANT]
-> Trenova is pre-release software under active development. It is not yet suitable for production use. Follow [releases](https://github.com/emoss08/trenova/releases) or join the [waitlist](https://trenova.app/waitlist/) for updates.
+> Trenova is in closed beta. Self-hosted releases are pre-release software under active development. Follow [releases](https://github.com/emoss08/trenova/releases) or join the [waitlist](https://trenova.app/waitlist/) for updates.
 
 Trenova is a transportation management system for small and mid-sized over-the-road carriers in
 the United States. It covers the full order-to-cash cycle at a flat price, with no per-seat fees,
 for carriers priced out of enterprise platforms. The source is public under the Fair Source
 [Functional Source License](https://fsl.software/), so you can read it, audit it and run it
 yourself.
+
+<p align="center">
+  <img src=".github/readme/desk.webp" alt="The Desk: Dispatch desk answers which Dallas loads are late and why, as a live board with the six late shipments, the revenue on them and what holds each one." width="100%">
+</p>
+<p align="center">
+  <img src=".github/readme/shipments.webp" alt="The shipment board: a summary Nova wrote of the day, drivers ready with their hours of service, and every shipment grouped by what needs attention." width="49%">
+  <img src=".github/readme/freight-outlook.webp" alt="The Freight Outlook: where loads will outrun drivers over the next day, area by area, and what moving a truck first is worth." width="49%">
+</p>
 
 ## Features
 
