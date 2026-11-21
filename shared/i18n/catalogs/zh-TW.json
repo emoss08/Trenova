@@ -13224,6 +13224,7 @@
   "Your organization is already running as many reports as it can at once; try again shortly": "您的組織目前同時執行的報表已達上限；請稍後再試",
   "Your organization requires a reason when a shipment is not billed at its contract rate": "當運單未依合約費率開立帳單時，您的組織要求填寫原因",
   "Your organization requires this notification": "貴組織要求接收此通知",
+  "Your organization's document storage is full at {0}, the most your plan can hold. Delete documents you no longer need, or move to a larger plan from your Trenova account, to keep uploading.": "您組織的文件儲存空間已滿，已達 {0}，即您的方案所能容納的上限。如需繼續上傳，請刪除不再需要的文件，或在您的 Trenova 帳戶中升級到更高的方案。",
   "Your organization's name, as the recipient knows it.": "貴組織的名稱，以收件者熟悉的形式呈現。",
   "Your organization, as the party assigning its invoices.": "您的組織，即轉讓其發票的一方。",
   "Your organization, as the seller of the invoices. Required: the factor needs to know whose invoices these are.": "您的組織，即發票的賣方。必填：承購公司需要知道這些發票屬於誰。",

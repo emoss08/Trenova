@@ -13224,6 +13224,7 @@
   "Your organization is already running as many reports as it can at once; try again shortly": "Su organización ya está ejecutando el máximo de informes simultáneos; vuelva a intentarlo en breve",
   "Your organization requires a reason when a shipment is not billed at its contract rate": "Su organización exige un motivo cuando un envío no se factura a su tarifa contractual",
   "Your organization requires this notification": "Tu organización exige esta notificación",
+  "Your organization's document storage is full at {0}, the most your plan can hold. Delete documents you no longer need, or move to a larger plan from your Trenova account, to keep uploading.": "El almacenamiento de documentos de su organización está lleno: alcanzó {0}, el máximo que admite su plan. Para seguir subiendo documentos, elimine los que ya no necesite o cambie a un plan mayor desde su cuenta de Trenova.",
   "Your organization's name, as the recipient knows it.": "El nombre de su organización, tal como lo conoce el destinatario.",
   "Your organization, as the party assigning its invoices.": "Su organización, como la parte que cede sus facturas.",
   "Your organization, as the seller of the invoices. Required: the factor needs to know whose invoices these are.": "Su organización, como vendedora de las facturas. Obligatorio: la empresa de factoraje necesita saber de quién son estas facturas.",

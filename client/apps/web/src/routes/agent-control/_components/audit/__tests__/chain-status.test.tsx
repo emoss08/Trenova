@@ -250,9 +250,17 @@ describe("ChainStatusHeader", () => {
     expect(screen.getByText("intact")).toHaveClass("t-k");
     expect(
       screen.getByText(
-        "Some rows came from an archive whose signatures the system that made them verified before they were moved, as the archive states. They were linked into this chain again here, and every row verifies.",
-      ).closest('[role="status"]'),
+        /through #1,204; some rows were imported after being verified at their source, as their archive states\./,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen
+        .getByText(
+          "Some rows were imported. The system that made them verified their signatures before the move, as their archive states. They were linked into this chain again here, and every row verifies.",
+        )
+        .closest('[role="status"]'),
     ).not.toBeNull();
+    expect(screen.queryByText(/no longer configured/)).toBeNull();
     expect(screen.queryByText("Verified")).toBeNull();
     expect(screen.queryByText(/not verified at their source/)).toBeNull();
   });

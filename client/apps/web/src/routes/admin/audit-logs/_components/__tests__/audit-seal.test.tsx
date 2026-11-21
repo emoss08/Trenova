@@ -88,6 +88,16 @@ describe("AuditSealChip", () => {
     expect(screen.queryByText("Sealed · verified 14 minutes ago")).toBeNull();
   });
 
+  it("keeps the missing signing key in view when imported history was verified at its source", async () => {
+    mocks.status.mockResolvedValue(
+      chainStatus({ signed: false, lastVerificationStatus: "ImportedSourceVerified" }),
+    );
+    renderWithClient(<AuditSealChip />);
+
+    expect(await screen.findByText("Sealed without a signing key")).toBeInTheDocument();
+    expect(screen.queryByText("Sealed · imported history verified at its source")).toBeNull();
+  });
+
   it("warns when seals are not signed with a key", async () => {
     mocks.status.mockResolvedValue(chainStatus({ signed: false }));
     renderWithClient(<AuditSealChip />);
@@ -127,7 +137,9 @@ describe("AuditSealAlert", () => {
   });
 
   it("raises nothing for imported history its source verified", async () => {
-    mocks.status.mockResolvedValue(chainStatus({ lastVerificationStatus: "ImportedSourceVerified" }));
+    mocks.status.mockResolvedValue(
+      chainStatus({ lastVerificationStatus: "ImportedSourceVerified" }),
+    );
     const { container } = render(
       <QueryClientProvider client={new QueryClient()}>
         <AuditSealAlert />

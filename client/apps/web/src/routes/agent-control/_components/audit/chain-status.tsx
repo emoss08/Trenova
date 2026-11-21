@@ -163,7 +163,7 @@ export function ChainStatusHeader() {
       {status.lastVerificationStatus === "ImportedSourceVerified" && (
         <Callout tone="i">
           {t(
-            "Some rows came from an archive whose signatures the system that made them verified before they were moved, as the archive states. They were linked into this chain again here, and every row verifies.",
+            "Some rows were imported. The system that made them verified their signatures before the move, as their archive states. They were linked into this chain again here, and every row verifies.",
           )}
         </Callout>
       )}
@@ -204,45 +204,7 @@ function ChainSentence({ status, pending }: { status: AIAuditChainStatus; pendin
           )}{" "}
       {when === null || status.lastVerificationStatus === null
         ? t("It has not been checked yet.")
-        : status.lastVerificationStatus === "Verified"
-          ? rt(
-              "It was last checked {0} and is <k>intact</k> through #{1}.",
-              { k: (children) => <b className="t-k">{children}</b> },
-              when,
-              status.lastVerifiedSeq.toLocaleString(),
-            )
-          : status.lastVerificationStatus === "Mismatch"
-            ? status.failedSeq != null
-              ? rt(
-                  "It was last checked {0} and <d>no longer matches</d> at #{1}.",
-                  { d: (children) => <b className="t-d">{children}</b> },
-                  when,
-                  status.failedSeq.toLocaleString(),
-                )
-              : rt(
-                  "It was last checked {0} and <d>no longer matches</d>.",
-                  { d: (children) => <b className="t-d">{children}</b> },
-                  when,
-                )
-            : status.lastVerificationStatus === "ImportedSourceVerified"
-              ? rt(
-                  "It was last checked {0} and is <k>intact</k> through #{1}; some rows were imported and verified where they were made, as their archive states.",
-                  { k: (children) => <b className="t-k">{children}</b> },
-                  when,
-                  status.lastVerifiedSeq.toLocaleString(),
-                )
-              : status.lastVerificationStatus === "ImportedUnverified"
-                ? rt(
-                    "It was last checked {0}: every row verifies through #{1}, and <w>some were imported without being verified at their source</w>.",
-                    { w: (children) => <b className="t-w">{children}</b> },
-                    when,
-                    status.lastVerifiedSeq.toLocaleString(),
-                  )
-                : rt(
-                    "It was last checked {0} and <w>could not be checked</w> past a key that is no longer configured.",
-                    { w: (children) => <b className="t-w">{children}</b> },
-                    when,
-                  )}{" "}
+        : checkedSentence(rt, status, status.lastVerificationStatus, when)}{" "}
       {unsealed > 0
         ? t(
             "{0, plural, one {The newest row is sealed at the next check.} other {The # newest rows are sealed at the next check.}}",
@@ -251,6 +213,62 @@ function ChainSentence({ status, pending }: { status: AIAuditChainStatus; pendin
         : t("Every row is sealed.")}
     </>
   );
+}
+
+/** What the last check found, one sentence per state, so no state reads as another's. */
+function checkedSentence(
+  rt: ReturnType<typeof useRichT>,
+  status: AIAuditChainStatus,
+  verification: NonNullable<AIAuditChainStatus["lastVerificationStatus"]>,
+  when: string,
+): ReactNode {
+  const ok = (children: ReactNode) => <b className="t-k">{children}</b>;
+  const warn = (children: ReactNode) => <b className="t-w">{children}</b>;
+  const danger = (children: ReactNode) => <b className="t-d">{children}</b>;
+  const through = status.lastVerifiedSeq.toLocaleString();
+
+  switch (verification) {
+    case "Verified":
+      return rt(
+        "It was last checked {0} and is <k>intact</k> through #{1}.",
+        { k: ok },
+        when,
+        through,
+      );
+    case "ImportedSourceVerified":
+      return rt(
+        "It was last checked {0} and is <k>intact</k> through #{1}; some rows were imported after being verified at their source, as their archive states.",
+        { k: ok },
+        when,
+        through,
+      );
+    case "ImportedUnverified":
+      return rt(
+        "It was last checked {0}: every row verifies through #{1}, and <w>some were imported without being verified at their source</w>.",
+        { w: warn },
+        when,
+        through,
+      );
+    case "Mismatch":
+      return status.failedSeq != null
+        ? rt(
+            "It was last checked {0} and <d>no longer matches</d> at #{1}.",
+            { d: danger },
+            when,
+            status.failedSeq.toLocaleString(),
+          )
+        : rt("It was last checked {0} and <d>no longer matches</d>.", { d: danger }, when);
+    case "KeyMissing":
+      return rt(
+        "It was last checked {0} and <w>could not be checked</w> past a key that is no longer configured.",
+        { w: warn },
+        when,
+      );
+    default: {
+      const unhandled: never = verification;
+      return unhandled;
+    }
+  }
 }
 
 function lastVerifiedSub(

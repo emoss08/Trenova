@@ -72,7 +72,7 @@ export function AuditSealChip() {
   } else if (data.lastVerificationStatus === "ImportedUnverified") {
     tone = "warning";
     label = t("Sealed · imported history not verified at its source");
-  } else if (data.lastVerificationStatus === "ImportedSourceVerified") {
+  } else if (data.lastVerificationStatus === "ImportedSourceVerified" && data.signed) {
     label = t("Sealed · imported history verified at its source");
   }
   const Icon = TONE_ICON[tone];
@@ -103,7 +103,7 @@ export function AuditSealChip() {
         {data.lastVerificationStatus === "ImportedSourceVerified" && (
           <p className="mt-1.5">
             {t(
-              "Part of this history was imported. The system that made it verified its seals before it was moved, as its archive states; it was sealed again here, and every seal verifies.",
+              "Some entries were imported. The system that made them verified their seals before the move, as their archive states. They were sealed again here, and every seal verifies.",
             )}
           </p>
         )}

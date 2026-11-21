@@ -131714,6 +131714,15 @@
       "routes/agent-control"
     ]
   },
+  "Imported, verified at its source": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Importing the same statement again will record this row afresh.": {
     "sites": 1,
     "scope": [
@@ -139532,6 +139541,15 @@
     ]
   },
   "It was last checked {0} and is <k>intact</k> through #{1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "It was last checked {0} and is <k>intact</k> through #{1}; some rows were imported after being verified at their source, as their archive states.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -247380,6 +247398,15 @@
       "routes/admin"
     ]
   },
+  "Sealed · imported history verified at its source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Sealed · not verified yet": {
     "sites": 1,
     "scope": [
@@ -263786,6 +263813,15 @@
       "routes/admin"
     ]
   },
+  "Some entries were imported. The system that made them verified their seals before the move, as their archive states. They were sealed again here, and every seal verifies.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Some items could not be indexed; they are listed below": {
     "sites": 1,
     "scope": [
@@ -263859,6 +263895,15 @@
     ]
   },
   "Some rows came from an archive whose original signatures could not be checked on the system that made them. They were linked into this chain again here, and every row verifies.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Some rows were imported. The system that made them verified their signatures before the move, as their archive states. They were linked into this chain again here, and every row verifies.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -345553,6 +345598,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Your organization's document storage is full at {0}, the most your plan can hold. Delete documents you no longer need, or move to a larger plan from your Trenova account, to keep uploading.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Your organization's name, as the recipient knows it.": {
