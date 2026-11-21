@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Selection diffs against the merge-base with the target branch,
           # which a shallow clone does not contain.
@@ -62,7 +62,7 @@ jobs:
           r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
 
       - name: Restore coverage index
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: /home/runner/.cache/assay
           key: assay-index-${{ runner.os }}-${{ github.event.pull_request.base.sha }}
