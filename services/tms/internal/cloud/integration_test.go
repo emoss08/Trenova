@@ -749,8 +749,17 @@ func TestRemovalDeletesEveryRowAndObjectOfTheTenantAndNothingOfAnother(t *testin
 		r.objects.keys[family.Key(b.OrganizationID, "x", "1.pdf")] = true
 	}
 
+	for _, held := range []*cloudtenant.Tenant{a, b} {
+		_, err := keel.Exec(r.ctx, r.admin, `
+INSERT INTO auth_events (id, organization_id, business_unit_id, provider, outcome)
+VALUES ($1, $2, $3, 'password', 'success')`,
+			pulid.MustNew("aue_").String(), held.OrganizationID.String(), held.BusinessUnitID.String())
+		require.NoError(t, err)
+	}
+
 	beforeA, beforeB := r.remaining(t, a), r.remaining(t, b)
 	assert.Positive(t, beforeA["user_organization_memberships"])
+	assert.Positive(t, beforeA["auth_events"], "tenant A has a sign-in history to remove")
 	assert.Equal(t, int64(1), beforeA["organizations"])
 	namingB := r.naming(t, b.OrganizationID)
 

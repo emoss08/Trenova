@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -582,7 +583,7 @@ func (r *repository) DeleteOrganization(
 			result.Deleted = true
 			return result, nil
 		case referenceViolation(err) || protectedByRule(err):
-			result.BlockedBy = dberror.ExtractConstraintName(err)
+			result.BlockedBy = r.blocked("organization", tenant, err)
 			return result, nil
 		default:
 			return nil, fmt.Errorf("delete the tenant's organization: %w", err)
@@ -628,12 +629,30 @@ func (r *repository) DeleteBusinessUnit(
 			result.Deleted = true
 			return result, nil
 		case referenceViolation(err) || protectedByRule(err):
-			result.BlockedBy = dberror.ExtractConstraintName(err)
+			result.BlockedBy = r.blocked("business unit", tenant, err)
 			return result, nil
 		default:
 			return nil, fmt.Errorf("delete the tenant's business unit: %w", err)
 		}
 	})
+}
+
+func (r *repository) blocked(what string, tenant dbscope.Tenant, err error) string {
+	by := dberror.ExtractConstraintName(err)
+	if by == "" {
+		var refusal *pgconn.PgError
+		if errors.As(err, &refusal) {
+			by = refusal.Message
+		}
+	}
+	r.l.Warn(
+		"the database refuses to delete a removed tenant's "+what,
+		zap.String("organizationId", tenant.OrganizationID.String()),
+		zap.String("businessUnitId", tenant.BusinessUnitID.String()),
+		zap.String("blockedBy", by),
+		zap.Error(err),
+	)
+	return by
 }
 
 func (r *repository) Remaining(
