@@ -1992,6 +1992,12 @@ type SharedRestoreReport struct {
 	// CommandId The `restore` command's `id`.
 	CommandId openapi_types.UUID `json:"commandId"`
 
+	// Note Optional, and only with `done`: one line a staff member should know about a restore that
+	// succeeded (for example that part of the tenant's audit history was restored as it was and
+	// does not verify, or was signed again and marked as imported). Shown to Trenova staff with
+	// the restore, never to the customer. Ignored with `failed`, where `reason` says why.
+	Note *string `json:"note,omitempty"`
+
 	// Reason Present when `failed`: one line a staff member can read, starting with whether the
 	// tenant's data was untouched ("Nothing was changed: ...") or partly deleted ("The tenant
 	// is incomplete: ...").
@@ -2871,6 +2877,20 @@ type TenantArchiveManifest struct {
 
 	// TotalSizeBytes Every part's `sizeBytes` together (the manifest itself not counted).
 	TotalSizeBytes int64 `json:"totalSizeBytes"`
+
+	// Trails Optional within `formatVersion` 1: a server MAY write it when it takes an archive. The
+	// source's own statement about the tenant's audit chains the archive carries, one entry per
+	// trail (`audit`, the tenant's audit trail; `aiAudit`, its AI audit trail), each absent when
+	// the archive carries none of it. It is carried inside the manifest whose digest the control
+	// plane pins and verifies, so it is exactly as trustworthy as the archive itself, and no more.
+	// A reader that imports the archive MAY record a trail's imported history as verified at its
+	// source, as the archive states, when that trail's `verified` is true and its own structural
+	// checks of what arrived agree with `links` and `sealedThrough`; when the trail is absent or
+	// `verified` is false, the reader treats that history as not verified at its source. The
+	// control plane does not interpret it: it refuses a manifest whose `trails` is not this shape
+	// or names `trails`, or a key inside it, twice or in another case, and a re-wrap keeps it
+	// unchanged.
+	Trails *TenantArchiveTrails `json:"trails,omitempty"`
 }
 
 // TenantArchiveManifestFormatVersion The archive format's version. A reader refuses a version it does not know.
@@ -2921,6 +2941,35 @@ type TenantArchiveTable struct {
 
 // TenantArchiveTableEncoding `pg_copy_binary_zstd`: PostgreSQL `COPY ... TO STDOUT (FORMAT binary)` of the tenant's rows, compressed with zstd.
 type TenantArchiveTableEncoding string
+
+// TenantArchiveTrail defines model for TenantArchiveTrail.
+type TenantArchiveTrail struct {
+	// Links How many links of the chain the archive carries.
+	Links int64 `json:"links"`
+
+	// SealedThrough The moment up to which the source sealed the tenant's trail before the snapshot.
+	SealedThrough time.Time `json:"sealedThrough"`
+
+	// Verified The source verified its own chain for this tenant, end to end, at that moment.
+	Verified bool `json:"verified"`
+}
+
+// TenantArchiveTrails Optional within `formatVersion` 1: a server MAY write it when it takes an archive. The
+// source's own statement about the tenant's audit chains the archive carries, one entry per
+// trail (`audit`, the tenant's audit trail; `aiAudit`, its AI audit trail), each absent when
+// the archive carries none of it. It is carried inside the manifest whose digest the control
+// plane pins and verifies, so it is exactly as trustworthy as the archive itself, and no more.
+// A reader that imports the archive MAY record a trail's imported history as verified at its
+// source, as the archive states, when that trail's `verified` is true and its own structural
+// checks of what arrived agree with `links` and `sealedThrough`; when the trail is absent or
+// `verified` is false, the reader treats that history as not verified at its source. The
+// control plane does not interpret it: it refuses a manifest whose `trails` is not this shape
+// or names `trails`, or a key inside it, twice or in another case, and a re-wrap keeps it
+// unchanged.
+type TenantArchiveTrails struct {
+	AiAudit *TenantArchiveTrail `json:"aiAudit,omitempty"`
+	Audit   *TenantArchiveTrail `json:"audit,omitempty"`
+}
 
 // UsageAck defines model for UsageAck.
 type UsageAck struct {

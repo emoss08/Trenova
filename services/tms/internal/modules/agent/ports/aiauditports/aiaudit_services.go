@@ -152,3 +152,23 @@ type AIAuditService interface {
 	// sweep may delete before: rows after it may not be in the trail yet.
 	SourcePruneHorizon(ctx context.Context, source aiaudit.Source) (int64, error)
 }
+
+type TrailCheck struct {
+	Status   aiaudit.VerificationStatus
+	FirstSeq int64
+	LastSeq  int64
+	LastHash string
+	Links    int64
+}
+
+func (c *TrailCheck) Verified() bool {
+	return c != nil && c.Status == aiaudit.VerificationVerified
+}
+
+type TrailVerifier interface {
+	VerifyThrough(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		throughSeq int64,
+	) (*TrailCheck, error)
+}

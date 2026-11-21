@@ -213,4 +213,5 @@ func TestARestoringTenantIsReportedSuspendedWithItsRestore(t *testing.T) {
 	require.NotNil(t, status.LastRestore)
 	assert.Equal(t, cloudtenant.RestoreFailed, status.LastRestore.State)
 	assert.Equal(t, tenant.LastRestoreReason, status.LastRestore.Reason)
+	assert.Empty(t, status.LastRestore.Note)
 }

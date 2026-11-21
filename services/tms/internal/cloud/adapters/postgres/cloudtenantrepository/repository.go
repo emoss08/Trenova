@@ -93,6 +93,7 @@ func (r *repository) Save(ctx context.Context, tenant *cloudtenant.Tenant) error
 				t.LastRestoreState,
 				t.LastRestoreAt,
 				t.LastRestoreReason,
+				t.LastRestoreNote,
 				t.ImportedAt,
 				t.RefusedRevision,
 				t.RefusedCode,

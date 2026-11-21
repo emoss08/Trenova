@@ -347,13 +347,15 @@ func newEngine(
 			Endpoint:    endpoint,
 			Development: cfg.App.IsDevelopment() || cfg.App.IsTest(),
 		}),
-		Storage:   storage,
-		Secrets:   deps.Secrets,
-		Blobs:     deps.Blobs,
-		Envelopes: deps.Envelopes,
-		App:       &cfg.App,
-		Clock:     func() int64 { return time.Now().Unix() },
-		Logger:    deps.Logger,
+		AuditTrail: importOnly{},
+		AITrail:    importOnlyAI{},
+		Storage:    storage,
+		Secrets:    deps.Secrets,
+		Blobs:      deps.Blobs,
+		Envelopes:  deps.Envelopes,
+		App:        &cfg.App,
+		Clock:      func() int64 { return time.Now().Unix() },
+		Logger:     deps.Logger,
 	}), nil
 }
 

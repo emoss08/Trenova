@@ -240,6 +240,23 @@ describe("ChainStatusHeader", () => {
     expect(screen.queryByText(/no longer configured/)).toBeNull();
   });
 
+  it("says imported rows were verified where they were made, as their archive states, without a warning", async () => {
+    fetchAIAuditChainStatus.mockResolvedValue(
+      chainStatus({ lastVerificationStatus: "ImportedSourceVerified", lastVerifiedSeq: 1_204 }),
+    );
+    renderStrip();
+
+    expect(await screen.findByText("Imported, verified at its source")).toBeInTheDocument();
+    expect(screen.getByText("intact")).toHaveClass("t-k");
+    expect(
+      screen.getByText(
+        "Some rows came from an archive whose signatures the system that made them verified before they were moved, as the archive states. They were linked into this chain again here, and every row verifies.",
+      ).closest('[role="status"]'),
+    ).not.toBeNull();
+    expect(screen.queryByText("Verified")).toBeNull();
+    expect(screen.queryByText(/not verified at their source/)).toBeNull();
+  });
+
   it("asks for a missing key back", async () => {
     fetchAIAuditChainStatus.mockResolvedValue(
       chainStatus({ lastVerificationStatus: "KeyMissing" }),

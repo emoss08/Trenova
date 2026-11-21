@@ -635,8 +635,10 @@ written under the prefix (never `export.tar`).
   (`public.<table>`), `rows`, `key`, `sizeBytes`, `sha256`, `encoding`}, `documents[]` {`key`,
   `sizeBytes`, `sha256`, `contentType` (optional: the object's stored `Content-Type`, absent when
   it is `application/octet-stream`)}, `totalSizeBytes`, `contentSha256` (SHA-256 of `<sha256>  <key>\n` for each
-  part, tables first), `purpose`, `encryption` (every purpose but `export`) and `omitted` (exports
-  only). Sizes and digests are of the stored bytes. An archive's SHA-256 (`lastArchive.sha256`,
+  part, tables first), `purpose`, `encryption` (every purpose but `export`), `omitted` (exports
+  only) and `trails` (optional, never on an export: `{audit?, aiAudit?}`, each `{sealedThrough,
+  verified, links}`, written once with exactly these names and left out rather than null; see
+  "Audit seals and the AI audit chain"). Sizes and digests are of the stored bytes. An archive's SHA-256 (`lastArchive.sha256`,
   `expectSha256`) is the SHA-256 of `manifest.json`'s bytes, which name every part's digest.
 - **Encryption** (`aes256gcm_stream_v1`): a fresh 32-byte data key per archive, wrapped with
   AES-256-GCM under the server's current archive key (12-byte random nonce ‖ ciphertext ‖ tag,
@@ -737,26 +739,80 @@ unpeppered SHA-256 or bcrypt and keep working.
 (`aiAudit.chain`), which never leave an install. Inside the load transaction, after the counts and
 foreign keys are checked and before it commits, the archive load first verifies each chain as it
 arrived, then signs it again under the destination's active chain key
-(`tenantcopyrepository/trails.go`). **A chain this server signs says truthfully what it could verify
-about what it imported:**
+(`tenantcopyrepository/trails.go`). **What a destination says about imported history is exactly
+what was established: verified here; verified at its source, as its archive states; or not
+verified.**
+
+- **The source states what it verified.** An archive of purpose `final`, `move` or `nightly`
+  carries the manifest's optional `trails` {`audit`, `aiAudit`}, each `{sealedThrough, verified,
+  links}` and left out when the tenant has none of that trail (an `export` carries none: it is
+  never loaded). Inside the snapshot, the export reads each chain's first and last link and, when
+  audit entries lie after the last seal (the hourly sealer leaves up to about seventy minutes
+  unsealed), seals them in the archive with one seal signed by the source's key, from the last
+  seal's end through `sealedThrough` (the snapshot's moment, past every entry and AI row it holds),
+  and carries the chain head moved to it (`tenantcopyrepository/snapshottrails.go`: the seal and
+  head go into the archive through two session temporary tables that the `COPY` of `audit_seals`
+  and `audit_chain_heads` reads beside the tenant's rows). That seal is never written into the live
+  chain: a live seal through "now" would race audit writes still in flight (an entry is dated
+  before its transaction commits, which is why the hourly sealer keeps a ten-minute lag) and the
+  source's own chain would then report entries added to a sealed hour. The live chain is untouched,
+  so the hourly sealer can never seal a window twice. The AI chain has no unsealed tail: every row
+  is linked and signed when it is appended, and a source row not yet projected is carried as its
+  own table and projected natively by the destination. While the tables stream, the source walks
+  each chain with its own verifiers (`auditintegrity.Verifier.VerifyThrough` and
+  `aiauditverify.Verifier.VerifyThrough`, through the ports `auditports.TrailVerifier` and
+  `aiauditports.TrailVerifier`), from the oldest retained link through the snapshot's last one;
+  `verified` is true only when that walk passed and ended on the snapshot's first and last link and
+  hash with the same count (links are append-only, so this binds the walk to the rows the archive
+  carries). The walk streams: the audit walk reads 200 seals a page and, for each, runs one digest
+  query over its window's entries (each entry read and hashed once, in PostgreSQL); the AI walk
+  reads 1,000 rows a page and recomputes each row's hash. A million audit entries cost a million row
+  reads and SHA-256s in the database plus one HMAC per seal (24 a day); a million AI rows cost 1,000
+  page reads and a million canonical encodings and HMACs. Memory is one page. It runs on the pool
+  beside the table stream, inside the archive's budget, and the activity heartbeats while it waits.
+  A walk that cannot run fails the archive (it is retried); a chain that does not verify is stated
+  as `verified: false`.
+- **The statement is as trustworthy as the archive, and no more.** Anyone holding an archive key
+  can write `verified: true`, which is why the state's words say "as its archive states". A
+  statement never upgrades history to `Verified`, and it is believed only when this server cannot
+  verify the chain itself (the source's key is not held here) and its own key-free checks of what
+  arrived agree: the number of links equals `links`; every link names the hash of the one before it
+  and an unsigned link's SHA-256 recomputes (a break is `not_verified`, never attested); audit
+  seals are contiguous (each window starts where the one before ended); the last seal ends at
+  `sealedThrough`, no audit entry is dated at or after it and the chain head names the last seal
+  (no unsealed tail); no AI row was recorded at or after `sealedThrough`, every AI checkpoint holds
+  its row's hash and the AI head names the last row. Anything short of that (`attestationRefused`:
+  `absent`, `not_verified_at_source`, `links`, `broken`, `windows`, `sealed_through`, `dated_after`,
+  `unsealed_tail`, `checkpoints`) leaves the history "imported, not verified at its source".
+  `attestation_integration_test.go` takes each mismatch, a forged `verified: true` (believed as the
+  archive's statement, never as `Verified`) and a forged statement over a chain that breaks.
 
 - The source check of each chain is `verified` (every link verifies under a key this server holds
   and links to the one before it), `not_verifiable` (a link names a key this server does not hold,
   or, on an import, is unsigned) or `not_verified` (a link does not verify under a key this server
   holds, or breaks the chain). It is recorded in `TrailResult` and the provenance entry with
-  `brokenAt`, `keyMissing`, `unsigned`, the number of links and how many were marked.
-- A link signed again from a chain that was not `verified` carries hash version 3 (signed here) or
-  4 (plain SHA-256 on an install without a key): imported, not verified at its source
-  (`audit.SealHashVersionImported`, `aiaudit.HashVersionImported`). The version is part of what
-  each hash covers, so stripping the mark breaks the chain; a link that already carried it keeps
-  it through later moves. A `verified` chain is signed again as ordinary links.
-- The verifications report a chain that holds such links and otherwise verifies as
-  `ImportedUnverified`, never `Verified`, and leave the detail empty: the status is the whole fact,
+  `brokenAt`, `keyMissing`, `unsigned`, the number of links, how many were marked either way, what
+  was `established` (`verified_here`, `verified_at_source`, `not_verified`), the `attestation` it
+  relied on (`sealedThrough`, `verified`, `links` and the manifest's SHA-256) and, when it was not
+  believed, why (`attestationRefused`).
+- Each link signed again carries the origin its hash covers (`audit.Origin`, `aiaudit.Origin`):
+  hash version 1 or 2 (signed here, or plain SHA-256 on an install without a key) for a chain
+  verified here; 5 or 6 for one verified at its source as its archive states
+  (`SealHashVersionSourceVerified`, `HashVersionSourceVerified`); 3 or 4 for one not verified at its
+  source (`SealHashVersionImported`, `HashVersionImported`). The version is part of what each hash
+  covers, so stripping the mark breaks the chain; a link keeps the weakest mark it ever carried
+  through later moves.
+- The verifications report a chain that otherwise verifies as `ImportedUnverified` when it holds a
+  link marked 3 or 4, else as `ImportedSourceVerified` when it holds one marked 5 or 6, never as
+  `Verified`, and leave the detail empty: the status is the whole fact,
   and the client says it in a translated sentence (a stored English detail would reach every
   language untranslated). It is not an alarm (no critical audit entry or notice). Broken and missing-key states take precedence. The
   audit log page's seal chip and banner, AI Control's chain status, its rail item and the AI audit
-  export's `chain.hashVersions` legend (each row carries `hash_version`) show it. The audit
-  verification finds the marked seals through the partial index `idx_audit_seals_imported`.
+  export's `chain.hashVersions` legend (each row carries `hash_version`) show it: the first in
+  warning words, the second neutrally (the seal chip reads as sealed, "imported history verified at
+  its source", with a quiet note that the system that made it verified it before it was moved). The
+  audit verification finds the marked seals through the partial indexes
+  `idx_audit_seals_imported` and `idx_audit_seals_source_verified`.
 - Entries the source never sealed (written after its last seal) are sealed in the same
   transaction by one seal marked as imported, from the last imported seal's end (or the first entry)
   to the moment of the load, and the head's `sealed_through` moves there, so the hourly sealer never
@@ -782,11 +838,14 @@ about what it imported:**
 - A **restore** keeps a `verified` chain as it is (`kept`); one that names a key this install does
   not hold is signed again and marked; one that does not verify is not signed again (`broken`,
   with the sequence), so the verification reports the break it was carrying instead of hiding it.
-  Either case is the restore's outcome too: `lastRestore.reason` on a done restore says, in one
-  line, which chain was marked or restored broken and how many unsealed entries were sealed as
-  imported (the control plane's contract carries a reason only for a failed restore, so the agent
-  reports a done restore without it; the TMS keeps it on the tenant and in the `restored` ledger
-  event, and the activity logs it at warn). An **import** always signs again, as ordinary links
+  A chain whose key is not held here is attested like an import's when its archive's statement
+  holds. Every case but `kept` is the restore's outcome too: `lastRestore.note` on a done restore
+  (`cloud_tenants.last_restore_note`, kept apart from `reason`, which only a failed restore
+  carries) says, in one printable line of at most 500 characters, which chain was marked, attested
+  or restored broken and how many unsealed entries were sealed as imported; the tenant agent
+  reports it as the contract's `SharedRestoreReport.note` (only with `done`, clipped to 500
+  characters and stripped of anything not printable), and the TMS keeps it in the `restored`
+  ledger event and the activity logs it at warn. An **import** always signs again, as ordinary links
   only when the chain verified under a key this server holds (a move between servers that share a
   chain key).
 - One provenance entry is written in the same transaction: `audit_entries` action
@@ -803,13 +862,14 @@ about what it imported:**
 
 The round-trip test signs a trail on the source under one key, imports it into a database with
 another, runs `auditintegrity.Verifier` and `aiauditverify.Verifier` there (both
-`ImportedUnverified`), changes one imported audit entry and one AI row (`Broken`, `Mismatch`),
-restores onto that server (signed again and marked, `ImportedUnverified`) and restores onto the
-source (signatures kept, `Verified`). `trails_integration_test.go` holds the rest: a genuine archive
-into a server holding the source key (`Verified`), rows altered after sealing (`Broken`), seals a
-forger made again under an unknown key (`ImportedUnverified`, and `Broken` once the mark is
-stripped), a planted provenance row (inside the marked windows), a restore with the key missing
-(marked, with its note) and an archive dated after the load (refused).
+`ImportedSourceVerified`, from the archive's statement), changes one imported audit entry and one
+AI row (`Broken`, `Mismatch`), restores onto that server (signed again and attested,
+`ImportedSourceVerified`) and restores onto the source (signatures kept, `Verified`).
+`trails_integration_test.go` holds the rest: a genuine archive into a server holding the source key
+(`Verified`), rows altered after sealing (`Broken`), seals a forger made again under an unknown key
+(the source states it could not verify them: `ImportedUnverified`, and `Broken` once the mark is
+stripped), a planted provenance row (inside the attested windows), a restore with the key missing
+(attested, with its note) and an archive dated after the load (refused).
 
 **An export** (purpose `export`, the customer's copy) is not encrypted and leaves out
 `mfa_recovery_codes`, `mfa_authenticators`, `scim_tokens` and every column that is a credential:

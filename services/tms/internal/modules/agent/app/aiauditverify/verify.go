@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -166,16 +167,81 @@ func (v *Verifier) walk(
 		return v.verifyFullyPruned(ctx, tenantInfo, head, result)
 	}
 
+	cursor, ended, err := v.walkRange(ctx, result, first, head.LastSeq, heartbeat)
+	if err != nil {
+		return nil, err
+	}
+	if ended {
+		return result, nil
+	}
+
+	if result.VerifiedSeq != head.LastSeq || cursor.expectedPrev != head.LastHash {
+		return fail(result, head.LastSeq, "the chain head does not name the chain's last row"), nil
+	}
+	result.Status = cursor.origin.Status()
+
+	return result, nil
+}
+
+func (v *Verifier) VerifyThrough(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	throughSeq int64,
+) (*aiauditports.TrailCheck, error) {
+	ctx = dbscope.WithValidTenant(ctx, dbscope.Tenant{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+	})
+	first, found, err := v.ledger.FirstSeq(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if !found || throughSeq < first {
+		return &aiauditports.TrailCheck{Status: aiaudit.VerificationVerified}, nil
+	}
+	result := &VerifyResult{TenantInfo: tenantInfo, Status: aiaudit.VerificationVerified}
+	cursor, ended, err := v.walkRange(ctx, result, first, throughSeq, nil)
+	if err != nil {
+		return nil, err
+	}
+	check := &aiauditports.TrailCheck{
+		Status:   result.Status,
+		FirstSeq: first,
+		LastSeq:  result.VerifiedSeq,
+		LastHash: cursor.expectedPrev,
+		Links:    result.Rows,
+	}
+	if !ended && result.VerifiedSeq != throughSeq {
+		check.Status = aiaudit.VerificationMismatch
+	}
+	if check.Status != aiaudit.VerificationVerified {
+		v.l.Warn("an archive's AI audit chain does not verify at its source",
+			zap.String("organizationId", tenantInfo.OrgID.String()),
+			zap.String("status", string(check.Status)),
+			zap.String("detail", result.Detail))
+	}
+
+	return check, nil
+}
+
+func (v *Verifier) walkRange(
+	ctx context.Context,
+	result *VerifyResult,
+	first, last int64,
+	heartbeat aiauditheartbeat.Heartbeat,
+) (*chainCursor, bool, error) {
+	tenantInfo := result.TenantInfo
 	expectedPrev, anchorErr := v.anchor(ctx, tenantInfo, first)
 	if anchorErr != "" {
-		return fail(result, first, anchorErr), nil
+		fail(result, first, anchorErr)
+		return &chainCursor{}, true, nil
 	}
 
 	cursor := &chainCursor{expectedPrev: expectedPrev, expectedSeq: first}
 	after := first - 1
-	for after < head.LastSeq {
-		if err = ctx.Err(); err != nil {
-			return nil, err
+	for after < last {
+		if err := ctx.Err(); err != nil {
+			return nil, false, err
 		}
 
 		rows, listErr := v.ledger.ListChainRange(ctx, aiauditports.ListAIAuditChainRangeRequest{
@@ -184,44 +250,34 @@ func (v *Verifier) walk(
 			Limit:      verifyPageSize,
 		})
 		if listErr != nil {
-			return nil, listErr
+			return nil, false, listErr
 		}
 		if len(rows) == 0 {
-			return fail(
-				result,
-				cursor.expectedSeq,
-				"rows are missing from the end of the chain",
-			), nil
+			fail(result, cursor.expectedSeq, "rows are missing from the end of the chain")
+			return cursor, true, nil
 		}
 
 		seals, sealErr := v.pageSeals(ctx, tenantInfo, rows[0].Seq, rows[len(rows)-1].Seq)
 		if sealErr != nil {
-			return nil, sealErr
+			return nil, false, sealErr
 		}
 
-		if v.verifyPage(result, cursor, rows, seals, head.LastSeq) {
-			return result, nil
+		if v.verifyPage(result, cursor, rows, seals, last) {
+			return cursor, true, nil
 		}
 
 		after = rows[len(rows)-1].Seq
 		aiauditheartbeat.Beat(heartbeat, tenantInfo.OrgID.String(), after)
 	}
 
-	if result.VerifiedSeq != head.LastSeq || cursor.expectedPrev != head.LastHash {
-		return fail(result, head.LastSeq, "the chain head does not name the chain's last row"), nil
-	}
-	if cursor.imported {
-		result.Status = aiaudit.VerificationImported
-	}
-
-	return result, nil
+	return cursor, false, nil
 }
 
 type chainCursor struct {
 	expectedPrev string
 	expectedSeq  int64
 	signedFrom   int64
-	imported     bool
+	origin       aiaudit.Origin
 }
 
 func (v *Verifier) verifyPage(
@@ -242,9 +298,7 @@ func (v *Verifier) verifyPage(
 		if cursor.signedFrom == 0 && row.Keyed() {
 			cursor.signedFrom = row.Seq
 		}
-		if row.Imported() {
-			cursor.imported = true
-		}
+		cursor.origin = cursor.origin.Weaker(row.Origin())
 		cursor.expectedPrev = row.Hash
 		cursor.expectedSeq = row.Seq + 1
 		result.VerifiedSeq = row.Seq

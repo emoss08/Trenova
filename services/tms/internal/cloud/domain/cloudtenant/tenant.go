@@ -44,6 +44,7 @@ type Tenant struct {
 	LastRestoreState     string   `json:"lastRestoreState"     keel:"last_restore_state,nullzero"`
 	LastRestoreAt        int64    `json:"lastRestoreAt"        keel:"last_restore_at,nullzero"`
 	LastRestoreReason    string   `json:"lastRestoreReason"    keel:"last_restore_reason,nullzero"`
+	LastRestoreNote      string   `json:"lastRestoreNote"      keel:"last_restore_note,nullzero"`
 	ImportedAt           int64    `json:"importedAt"           keel:"imported_at,nullzero"`
 	RefusedRevision      int64    `json:"refusedRevision"      keel:"refused_revision,nullzero"`
 	RefusedCode          string   `json:"refusedCode"          keel:"refused_code,nullzero"`
@@ -131,6 +132,7 @@ type Restore struct {
 	State     string    `json:"state"`
 	At        time.Time `json:"at"`
 	Reason    string    `json:"reason,omitempty"`
+	Note      string    `json:"note,omitempty"`
 }
 
 const (
@@ -205,6 +207,7 @@ func (t *Tenant) Status(admin *Administrator) *Status {
 			State:     t.LastRestoreState,
 			At:        time.Unix(t.LastRestoreAt, 0).UTC(),
 			Reason:    t.LastRestoreReason,
+			Note:      t.LastRestoreNote,
 		}
 	}
 	return out

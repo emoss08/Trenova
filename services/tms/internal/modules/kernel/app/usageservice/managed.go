@@ -48,14 +48,16 @@ func (p *ManagedUsageProvider) CheckLimit(
 		return nil, err
 	}
 	return &platformcatalogports.UsageLimitCheckResult{
-		MeterKey:  req.MeterKey,
-		Allowed:   d.Allowed,
-		Reason:    managedReason(&d),
-		Limit:     d.Limit,
-		Used:      d.Used,
-		Remaining: d.Remaining(),
-		Plan:      PlanManaged,
-		CheckedAt: checkedAt,
+		MeterKey:   req.MeterKey,
+		Allowed:    d.Allowed,
+		Reason:     managedReason(&d),
+		Limit:      d.Limit,
+		Used:       d.Used,
+		Remaining:  d.Remaining(),
+		Ceiling:    d.Ceiling,
+		CeilingHit: d.CeilingReached(),
+		Plan:       PlanManaged,
+		CheckedAt:  checkedAt,
 	}, nil
 }
 

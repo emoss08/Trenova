@@ -74,6 +74,20 @@ describe("AuditSealChip", () => {
     ).toBeInTheDocument();
   });
 
+  it("reads as sealed when imported history was verified at its source, and never as plainly verified", async () => {
+    mocks.status.mockResolvedValue(
+      chainStatus({
+        lastVerificationStatus: "ImportedSourceVerified",
+        lastVerifiedAt: 1_800_000_000 - 14 * 60,
+      }),
+    );
+    renderWithClient(<AuditSealChip />);
+
+    const chip = await screen.findByText("Sealed · imported history verified at its source");
+    expect(chip).toHaveClass("bg-success-subtle");
+    expect(screen.queryByText("Sealed · verified 14 minutes ago")).toBeNull();
+  });
+
   it("warns when seals are not signed with a key", async () => {
     mocks.status.mockResolvedValue(chainStatus({ signed: false }));
     renderWithClient(<AuditSealChip />);
@@ -110,6 +124,18 @@ describe("AuditSealAlert", () => {
         "Some entries came from an archive whose original seals could not be checked on the system that made them. They were sealed again here, and every seal verifies.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("raises nothing for imported history its source verified", async () => {
+    mocks.status.mockResolvedValue(chainStatus({ lastVerificationStatus: "ImportedSourceVerified" }));
+    const { container } = render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AuditSealAlert />
+      </QueryClientProvider>,
+    );
+    await vi.waitFor(() => expect(mocks.status).toHaveBeenCalled());
+
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("stays out of the way while the seals verify", async () => {

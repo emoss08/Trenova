@@ -54,8 +54,13 @@ func decide(s *State, meter platformcatalog.MeterKey, level *int64, requested in
 	if !ok {
 		return d
 	}
+	relayed := m.Quantity
 	if level != nil {
 		m.Quantity = *level
+	}
+	stoppedAtCeiling := m.Stopped && m.Ceiling > 0 && relayed >= m.Ceiling
+	if stoppedAtCeiling && level != nil {
+		m.Stopped = false
 	}
 	d.Managed = true
 	d.Limit = m.Allowance
@@ -66,6 +71,8 @@ func decide(s *State, meter platformcatalog.MeterKey, level *int64, requested in
 	switch {
 	case !s.HasWindow():
 		d.Allowed, d.Reason = false, ReasonNoWindow
+	case m.Stopped && stoppedAtCeiling:
+		d.Allowed, d.Reason = false, ReasonCeiling
 	case m.Stopped:
 		d.Allowed, d.Reason = false, ReasonStopped
 	case m.Ceiling > 0 && requested > 0 && m.Quantity+requested > m.Ceiling:

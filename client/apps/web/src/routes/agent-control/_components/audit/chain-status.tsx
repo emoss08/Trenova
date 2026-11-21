@@ -160,6 +160,13 @@ export function ChainStatusHeader() {
           )}
         </Callout>
       )}
+      {status.lastVerificationStatus === "ImportedSourceVerified" && (
+        <Callout tone="i">
+          {t(
+            "Some rows came from an archive whose signatures the system that made them verified before they were moved, as the archive states. They were linked into this chain again here, and every row verifies.",
+          )}
+        </Callout>
+      )}
       {status.lastVerificationStatus === "KeyMissing" && (
         <Callout tone="w">
           {t(
@@ -217,18 +224,25 @@ function ChainSentence({ status, pending }: { status: AIAuditChainStatus; pendin
                   { d: (children) => <b className="t-d">{children}</b> },
                   when,
                 )
-            : status.lastVerificationStatus === "ImportedUnverified"
+            : status.lastVerificationStatus === "ImportedSourceVerified"
               ? rt(
-                  "It was last checked {0}: every row verifies through #{1}, and <w>some were imported without being verified at their source</w>.",
-                  { w: (children) => <b className="t-w">{children}</b> },
+                  "It was last checked {0} and is <k>intact</k> through #{1}; some rows were imported and verified where they were made, as their archive states.",
+                  { k: (children) => <b className="t-k">{children}</b> },
                   when,
                   status.lastVerifiedSeq.toLocaleString(),
                 )
-              : rt(
-                  "It was last checked {0} and <w>could not be checked</w> past a key that is no longer configured.",
-                  { w: (children) => <b className="t-w">{children}</b> },
-                  when,
-                )}{" "}
+              : status.lastVerificationStatus === "ImportedUnverified"
+                ? rt(
+                    "It was last checked {0}: every row verifies through #{1}, and <w>some were imported without being verified at their source</w>.",
+                    { w: (children) => <b className="t-w">{children}</b> },
+                    when,
+                    status.lastVerifiedSeq.toLocaleString(),
+                  )
+                : rt(
+                    "It was last checked {0} and <w>could not be checked</w> past a key that is no longer configured.",
+                    { w: (children) => <b className="t-w">{children}</b> },
+                    when,
+                  )}{" "}
       {unsealed > 0
         ? t(
             "{0, plural, one {The newest row is sealed at the next check.} other {The # newest rows are sealed at the next check.}}",

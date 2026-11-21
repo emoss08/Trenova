@@ -218,7 +218,9 @@ export function buildRailItems(
             ? t("Signing key missing")
             : verification === "ImportedUnverified"
               ? t("Imported, not verified at its source")
-              : "",
+              : verification === "ImportedSourceVerified"
+                ? t("Imported, verified at its source")
+                : "",
       attention: verification === "Mismatch" || verification === "KeyMissing",
       children: [
         { view: "trail", label: t("Trail") },

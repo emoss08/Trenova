@@ -5838,6 +5838,7 @@ enum AIAuditVerificationStatus {
   Mismatch
   KeyMissing
   ImportedUnverified
+  ImportedSourceVerified
 }
 
 """
@@ -7408,6 +7409,7 @@ enum AuditVerificationStatus {
   Broken
   KeyMissing
   ImportedUnverified
+  ImportedSourceVerified
 }
 
 type AuditChainStatus {

@@ -172,6 +172,8 @@ DELETE FROM audit_chain_heads WHERE organization_id = '`+org+`'; END $$`)
 			require.NoError(t, err)
 			assert.Equal(t, archiveports.SourceNotVerifiable, result.Trails.AuditSeals.Source)
 			assert.True(t, result.Trails.AuditSeals.KeyMissing)
+			assert.Equal(t, archiveports.AttestationNotVerified, result.Trails.AuditSeals.Refused,
+				"the source could not verify seals made under a key it does not hold, and said so")
 			assert.Equal(t, result.Trails.AuditSeals.Links, result.Trails.AuditSeals.Marked)
 			assert.Equal(t, []string{"0"}, held.query(t,
 				`SELECT count(*)::text FROM audit_seals WHERE organization_id = $1
@@ -199,8 +201,8 @@ UPDATE audit_seals SET hash_version = 1 WHERE organization_id = '`+org+`' AND ha
                      AND e."timestamp" >= s.from_ts AND e."timestamp" < s.to_ts
                  WHERE e.organization_id = $1 AND e.comment = $2`,
 				org, plantedComment)
-			assert.Equal(t, []string{"3"}, covered,
-				"the planted row lies inside the imported history, sealed as not verified")
+			assert.Equal(t, []string{"5"}, covered,
+				"the planted row lies inside the imported history, sealed as its archive states")
 			own := stranger.query(t,
 				`SELECT metadata->'archive'->>'manifestSha256' FROM audit_entries e
                  WHERE e.organization_id = $1 AND e.action = $2 AND e.comment <> $3
@@ -210,8 +212,8 @@ UPDATE audit_seals SET hash_version = 1 WHERE organization_id = '`+org+`' AND ha
 			assert.Equal(t, []string{withPlanted}, own,
 				"only the row this load wrote lies after the imported history")
 			status := verifyTrails(t, stranger, r.facts.tenant)
-			assert.Equal(t, audit.VerificationImported, status.audit)
-			assert.Equal(t, aiaudit.VerificationImported, status.ai)
+			assert.Equal(t, audit.VerificationSourceVerified, status.audit)
+			assert.Equal(t, aiaudit.VerificationSourceVerified, status.ai)
 			r.clear(t, stranger)
 		})
 
@@ -221,13 +223,15 @@ UPDATE audit_seals SET hash_version = 1 WHERE organization_id = '`+org+`' AND ha
 			require.NoError(t, err)
 			assert.Equal(t, archiveports.ChainResealed, result.Trails.AuditSeals.Outcome)
 			assert.True(t, result.Trails.AuditSeals.KeyMissing)
-			assert.Positive(t, result.Trails.AuditSeals.Marked)
+			assert.Positive(t, result.Trails.AuditSeals.Attested)
+			assert.Zero(t, result.Trails.AuditSeals.Marked)
 			note := result.Trails.RestoreNote()
-			assert.Contains(t, note, "names a key this server does not hold")
+			assert.Contains(t, note, "marked as verified at their source, as the archive states")
 			assert.LessOrEqual(t, len(note), 500)
+			assert.NotContains(t, note, "\n")
 			status := verifyTrails(t, stranger, r.facts.tenant)
-			assert.Equal(t, audit.VerificationImported, status.audit)
-			assert.Equal(t, aiaudit.VerificationImported, status.ai)
+			assert.Equal(t, audit.VerificationSourceVerified, status.audit)
+			assert.Equal(t, aiaudit.VerificationSourceVerified, status.ai)
 			r.clear(t, stranger)
 		})
 

@@ -137,6 +137,7 @@ describe("auditOutcomeAttrs", () => {
     expect(verificationTone("Verified")).toBe("success");
     expect(verificationTone("KeyMissing")).toBe("warning");
     expect(verificationTone("ImportedUnverified")).toBe("warning");
+    expect(verificationTone("ImportedSourceVerified")).toBe("success");
     expect(verificationTone("Mismatch")).toBe("danger");
     expect(verificationTone(null)).toBe("muted");
   });

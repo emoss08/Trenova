@@ -86,6 +86,7 @@ enum AIAuditVerificationStatus {
   Mismatch
   KeyMissing
   ImportedUnverified
+  ImportedSourceVerified
 }
 
 """

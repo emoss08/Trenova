@@ -9,22 +9,51 @@ import (
 type VerificationStatus string
 
 const (
-	VerificationVerified   = VerificationStatus("Verified")
-	VerificationBroken     = VerificationStatus("Broken")
-	VerificationKeyMissing = VerificationStatus("KeyMissing")
-	VerificationImported   = VerificationStatus("ImportedUnverified")
+	VerificationVerified       = VerificationStatus("Verified")
+	VerificationBroken         = VerificationStatus("Broken")
+	VerificationKeyMissing     = VerificationStatus("KeyMissing")
+	VerificationImported       = VerificationStatus("ImportedUnverified")
+	VerificationSourceVerified = VerificationStatus("ImportedSourceVerified")
 )
 
 const (
-	SealHashVersionSigned           int16 = 1
-	SealHashVersionUnsigned         int16 = 2
-	SealHashVersionImported         int16 = 3
-	SealHashVersionImportedUnsigned int16 = 4
-	SealWindowSeconds                     = int64(3600)
+	SealHashVersionSigned                 int16 = 1
+	SealHashVersionUnsigned               int16 = 2
+	SealHashVersionImported               int16 = 3
+	SealHashVersionImportedUnsigned       int16 = 4
+	SealHashVersionSourceVerified         int16 = 5
+	SealHashVersionSourceVerifiedUnsigned int16 = 6
+	SealWindowSeconds                           = int64(3600)
 )
 
+type Origin int8
+
+const (
+	OriginHere Origin = iota
+	OriginSourceVerified
+	OriginUnverified
+)
+
+func (o Origin) Weaker(other Origin) Origin {
+	return max(o, other)
+}
+
+func (o Origin) Status() VerificationStatus {
+	switch o {
+	case OriginUnverified:
+		return VerificationImported
+	case OriginSourceVerified:
+		return VerificationSourceVerified
+	case OriginHere:
+		return VerificationVerified
+	default:
+		return VerificationVerified
+	}
+}
+
 func (s VerificationStatus) Holds() bool {
-	return s == VerificationVerified || s == VerificationImported
+	return s == VerificationVerified || s == VerificationImported ||
+		s == VerificationSourceVerified
 }
 
 type ChainHead struct {

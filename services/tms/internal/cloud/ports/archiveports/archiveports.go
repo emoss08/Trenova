@@ -57,6 +57,7 @@ type Snapshot interface {
 	CopyOut(ctx context.Context, table *archiveplan.PlannedTable, dst io.Writer) error
 	References(ctx context.Context) ([]Reference, error)
 	Outside(ctx context.Context) ([]Dangling, error)
+	Trails() *TrailFacts
 	Close(ctx context.Context)
 }
 
@@ -64,6 +65,25 @@ type SnapshotRequest struct {
 	Tenant   dbscope.Tenant
 	Purpose  tenantarchive.Purpose
 	Envelope map[string][]string
+	At       int64
+}
+
+type ChainFacts struct {
+	Links         int64
+	FirstSeq      int64
+	LastSeq       int64
+	LastHash      string
+	SealedHere    int64
+	SealedThrough int64
+}
+
+func (c *ChainFacts) Held() int64 {
+	return c.Links - c.SealedHere
+}
+
+type TrailFacts struct {
+	Audit   *ChainFacts
+	AIAudit *ChainFacts
 }
 
 type TrailRequest struct {
@@ -90,15 +110,47 @@ const (
 	SourceNotVerifiable = SourceCheck("not_verifiable")
 )
 
+type Established string
+
+const (
+	EstablishedHere        = Established("verified_here")
+	EstablishedAtSource    = Established("verified_at_source")
+	EstablishedNotVerified = Established("not_verified")
+)
+
+type AttestationRefusal string
+
+const (
+	AttestationAbsent        = AttestationRefusal("absent")
+	AttestationNotVerified   = AttestationRefusal("not_verified_at_source")
+	AttestationLinks         = AttestationRefusal("links")
+	AttestationBroken        = AttestationRefusal("broken")
+	AttestationWindows       = AttestationRefusal("windows")
+	AttestationSealedThrough = AttestationRefusal("sealed_through")
+	AttestationDatedAfter    = AttestationRefusal("dated_after")
+	AttestationUnsealedTail  = AttestationRefusal("unsealed_tail")
+	AttestationCheckpoints   = AttestationRefusal("checkpoints")
+)
+
+type Attestation struct {
+	SealedThrough int64 `json:"sealedThrough"`
+	Verified      bool  `json:"verified"`
+	Links         int64 `json:"links"`
+}
+
 type ChainResult struct {
-	Outcome    ChainOutcome `json:"outcome"`
-	Links      int64        `json:"links"`
-	KeyID      string       `json:"keyId,omitempty"`
-	BrokenAt   int64        `json:"brokenAt,omitempty"`
-	Source     SourceCheck  `json:"source,omitempty"`
-	KeyMissing bool         `json:"keyMissing,omitempty"`
-	Unsigned   bool         `json:"unsigned,omitempty"`
-	Marked     int64        `json:"marked,omitempty"`
+	Outcome     ChainOutcome       `json:"outcome"`
+	Links       int64              `json:"links"`
+	KeyID       string             `json:"keyId,omitempty"`
+	BrokenAt    int64              `json:"brokenAt,omitempty"`
+	Source      SourceCheck        `json:"source,omitempty"`
+	Established Established        `json:"established,omitempty"`
+	KeyMissing  bool               `json:"keyMissing,omitempty"`
+	Unsigned    bool               `json:"unsigned,omitempty"`
+	Marked      int64              `json:"marked,omitempty"`
+	Attested    int64              `json:"attested,omitempty"`
+	Attestation *Attestation       `json:"attestation,omitempty"`
+	Refused     AttestationRefusal `json:"attestationRefused,omitempty"`
 }
 
 func (c *ChainResult) Unverified() bool {
@@ -141,6 +193,12 @@ func (r *TrailResult) RestoreNote() string {
 				"the %s names a key this server does not hold, so its %d links were signed again here and are marked as not verified at their source",
 				chain.name,
 				chain.result.Marked,
+			))
+		case chain.result.Attested > 0:
+			notes = append(notes, fmt.Sprintf(
+				"the %s names a key this server does not hold, so its %d links were signed again here and are marked as verified at their source, as the archive states",
+				chain.name,
+				chain.result.Attested,
 			))
 		}
 	}

@@ -244,3 +244,22 @@ func TestSecretsFailures(t *testing.T) {
 		})
 	}
 }
+
+func TestRetryAfterReadsSecondsOrADateAndIsCapped(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 11, 21, 12, 0, 0, 0, time.UTC)
+	cases := map[string]time.Duration{
+		"120":                           2 * time.Minute,
+		" 7 ":                           7 * time.Second,
+		"86400":                         time.Hour,
+		"0":                             time.Minute,
+		"":                              time.Minute,
+		"soon":                          time.Minute,
+		"Sat, 21 Nov 2026 12:05:00 GMT": 5 * time.Minute,
+		"Sat, 21 Nov 2026 11:00:00 GMT": time.Second,
+		"Sun, 22 Nov 2026 12:00:00 GMT": time.Hour,
+	}
+	for header, want := range cases {
+		require.Equal(t, want, controlplane.RetryAfter(header, now), header)
+	}
+}

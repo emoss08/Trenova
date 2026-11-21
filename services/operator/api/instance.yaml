@@ -55,7 +55,8 @@ info:
     part first and the manifest last, as one object; an archive without one is a partial write the
     control plane shows as incomplete and never restores, imports or delivers. Never write
     anything else under an archive's prefix, and never write `export.tar` there: the control
-    plane writes it under a customer export's archive. An archive's SHA-256 (`lastArchive.sha256`,
+    plane assembles a customer's export in its region's vault, never in a server's bucket. An
+    archive's SHA-256 (`lastArchive.sha256`,
     a command's `expectSha256`) is the lowercase hex SHA-256 of `manifest.json`'s exact bytes; the
     manifest in turn holds every part's SHA-256, so the one digest proves the whole archive.
 
@@ -2895,6 +2896,14 @@ components:
             Present when `failed`: one line a staff member can read, starting with whether the
             tenant's data was untouched ("Nothing was changed: ...") or partly deleted ("The tenant
             is incomplete: ...").
+        note:
+          type: string
+          maxLength: 500
+          description: |
+            Optional, and only with `done`: one line a staff member should know about a restore that
+            succeeded (for example that part of the tenant's audit history was restored as it was and
+            does not verify, or was signed again and marked as imported). Shown to Trenova staff with
+            the restore, never to the customer. Ignored with `failed`, where `reason` says why.
 
     SharedCommandFailure:
       type: object
@@ -2985,6 +2994,8 @@ components:
             secret rather than the customer's data, each once.
           items:
             $ref: "#/components/schemas/TenantArchiveOmission"
+        trails:
+          $ref: "#/components/schemas/TenantArchiveTrails"
 
     TenantArchiveEncryption:
       type: object
@@ -3018,6 +3029,44 @@ components:
             nonce followed by the ciphertext and tag, standard base64 with padding; additional data
             the archive's `instanceId` (canonical text form), so a data key never unwraps for
             another tenant's archive.
+
+    TenantArchiveTrails:
+      type: object
+      description: |
+        Optional within `formatVersion` 1: a server MAY write it when it takes an archive. The
+        source's own statement about the tenant's audit chains the archive carries, one entry per
+        trail (`audit`, the tenant's audit trail; `aiAudit`, its AI audit trail), each absent when
+        the archive carries none of it. It is carried inside the manifest whose digest the control
+        plane pins and verifies, so it is exactly as trustworthy as the archive itself, and no more.
+        A reader that imports the archive MAY record a trail's imported history as verified at its
+        source, as the archive states, when that trail's `verified` is true and its own structural
+        checks of what arrived agree with `links` and `sealedThrough`; when the trail is absent or
+        `verified` is false, the reader treats that history as not verified at its source. The
+        control plane does not interpret it: it refuses a manifest whose `trails` is not this shape
+        or names `trails`, or a key inside it, twice or in another case, and a re-wrap keeps it
+        unchanged.
+      properties:
+        audit:
+          $ref: "#/components/schemas/TenantArchiveTrail"
+        aiAudit:
+          $ref: "#/components/schemas/TenantArchiveTrail"
+
+    TenantArchiveTrail:
+      type: object
+      required: [sealedThrough, verified, links]
+      properties:
+        sealedThrough:
+          type: string
+          format: date-time
+          description: The moment up to which the source sealed the tenant's trail before the snapshot.
+        verified:
+          type: boolean
+          description: The source verified its own chain for this tenant, end to end, at that moment.
+        links:
+          type: integer
+          format: int64
+          minimum: 0
+          description: How many links of the chain the archive carries.
 
     TenantArchiveOmission:
       type: object

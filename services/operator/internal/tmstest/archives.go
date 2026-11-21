@@ -167,11 +167,15 @@ func (s *Server) FailNightly(instanceID, commandID, code, reason string) {
 }
 
 func (s *Server) FinishRestore(commandID string, at time.Time, reason string) {
+	s.FinishRestoreNoted(commandID, at, reason, "")
+}
+
+func (s *Server) FinishRestoreNoted(commandID string, at time.Time, reason, note string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	c := s.tenants.commands[commandID]
 	status := s.tenants.statuses[c.instance]
-	restore := &tms.TenantRestore{CommandID: c.id, State: "done", At: at}
+	restore := &tms.TenantRestore{CommandID: c.id, State: "done", At: at, Note: note}
 	c.state = "done"
 	status.State = "suspended"
 	if reason != "" {

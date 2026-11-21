@@ -368,6 +368,8 @@ export function verificationLabel(
       return t("Key missing");
     case "ImportedUnverified":
       return t("Imported, not verified at its source");
+    case "ImportedSourceVerified":
+      return t("Imported, verified at its source");
     case null:
       return t("Not yet verified");
   }
@@ -418,6 +420,7 @@ export function isSealed(
 export function verificationTone(status: AiAuditVerificationStatus | null): Tone {
   switch (status) {
     case "Verified":
+    case "ImportedSourceVerified":
       return "success";
     case "Mismatch":
       return "danger";

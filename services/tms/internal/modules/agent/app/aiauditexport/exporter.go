@@ -250,6 +250,8 @@ var hashVersions = map[string]string{
 	"2": "linked with plain SHA-256: no chain key was configured",
 	"3": "signed here with the chain key named in hash_key_id; imported from an archive whose own signatures could not be checked where they were made",
 	"4": "linked with plain SHA-256; imported from an archive whose own signatures could not be checked where they were made",
+	"5": "signed here with the chain key named in hash_key_id; imported from an archive that states the system that made it verified its signatures before it was moved",
+	"6": "linked with plain SHA-256; imported from an archive that states the system that made it verified its signatures before it was moved",
 }
 
 func (x *Exporter) header(spec *ExportSpec, stats *ExportStats) *exportHeader {

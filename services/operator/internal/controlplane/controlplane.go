@@ -233,12 +233,12 @@ func failure(res *http.Response, problems ...*instanceapi.Problem) error {
 	case http.StatusTooManyRequests:
 		return &RetryLaterError{
 			Reason:     "rate limited",
-			RetryAfter: retryAfter(res.Header.Get("Retry-After")),
+			RetryAfter: RetryAfter(res.Header.Get("Retry-After"), time.Now()),
 		}
 	case http.StatusServiceUnavailable:
 		return &RetryLaterError{
-			Reason:     "the desired spec is not ready",
-			RetryAfter: retryAfter(res.Header.Get("Retry-After")),
+			Reason:     "unavailable for now",
+			RetryAfter: RetryAfter(res.Header.Get("Retry-After"), time.Now()),
 		}
 	}
 	pe := &ProblemError{Status: res.StatusCode}
@@ -257,10 +257,25 @@ func failure(res *http.Response, problems ...*instanceapi.Problem) error {
 	return pe
 }
 
-func retryAfter(h string) time.Duration {
-	secs, err := strconv.Atoi(strings.TrimSpace(h))
-	if err != nil || secs <= 0 {
-		return time.Minute
+const (
+	defaultRetryAfter = time.Minute
+	maxRetryAfter     = time.Hour
+)
+
+func RetryAfter(h string, now time.Time) time.Duration {
+	h = strings.TrimSpace(h)
+	if secs, err := strconv.ParseInt(h, 10, 64); err == nil {
+		if secs <= 0 {
+			return defaultRetryAfter
+		}
+		if secs > int64(maxRetryAfter/time.Second) {
+			return maxRetryAfter
+		}
+		return time.Duration(secs) * time.Second
 	}
-	return time.Duration(secs) * time.Second
+	at, err := http.ParseTime(h)
+	if err != nil {
+		return defaultRetryAfter
+	}
+	return min(max(at.Sub(now), time.Second), maxRetryAfter)
 }

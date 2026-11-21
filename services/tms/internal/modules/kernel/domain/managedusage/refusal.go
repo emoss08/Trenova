@@ -1,6 +1,9 @@
 package managedusage
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -21,6 +24,10 @@ var allowanceRefusals = map[platformcatalog.MeterKey]errortypes.BaseError{
 
 var ceilingRefusal = errortypes.BaseError{
 	Message: "Your plan allows at most {0} of this in a billing period, and this period has reached it. Move to a larger plan from your Trenova account to keep going.",
+}
+
+var storageCeilingRefusal = errortypes.BaseError{
+	Message: "Your organization's document storage is full at {0}, the most your plan can hold. Delete documents you no longer need, or move to a larger plan from your Trenova account, to keep uploading.",
 }
 
 func Refusal(
@@ -46,9 +53,29 @@ func CeilingRefusal(
 	plan string,
 ) *errortypes.QuotaExceededError {
 	err := errortypes.NewQuotaExceededError(string(meter), ceiling, used, plan)
+	if meter == platformcatalog.MeterDocumentStorageBytes {
+		err.Message = storageCeilingRefusal.Message
+		err.Args = []any{DecimalBytes(ceiling)}
+		return err
+	}
 	err.Message = ceilingRefusal.Message
 	err.Args = []any{ceiling}
 	return err
+}
+
+func DecimalBytes(n int64) string {
+	units := []string{"bytes", "KB", "MB", "GB", "TB", "PB"}
+	value, unit := float64(n), 0
+	for value >= 1000 && unit < len(units)-1 {
+		value /= 1000
+		unit++
+	}
+	if unit == 0 {
+		return strconv.FormatInt(n, 10) + " bytes"
+	}
+	text := strconv.FormatFloat(value, 'f', 1, 64)
+	text = strings.TrimSuffix(text, ".0")
+	return text + " " + units[unit]
 }
 
 func NearStorageAllowance(m Meter) bool {

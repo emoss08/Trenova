@@ -72,6 +72,8 @@ export function AuditSealChip() {
   } else if (data.lastVerificationStatus === "ImportedUnverified") {
     tone = "warning";
     label = t("Sealed · imported history not verified at its source");
+  } else if (data.lastVerificationStatus === "ImportedSourceVerified") {
+    label = t("Sealed · imported history verified at its source");
   }
   const Icon = TONE_ICON[tone];
 
@@ -98,6 +100,13 @@ export function AuditSealChip() {
               sealedThrough,
             )
           : t("Entries are sealed every hour; nothing has been sealed yet.")}
+        {data.lastVerificationStatus === "ImportedSourceVerified" && (
+          <p className="mt-1.5">
+            {t(
+              "Part of this history was imported. The system that made it verified its seals before it was moved, as its archive states; it was sealed again here, and every seal verifies.",
+            )}
+          </p>
+        )}
       </TooltipContent>
     </Tooltip>
   );

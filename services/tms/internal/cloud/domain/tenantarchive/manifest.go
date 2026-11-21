@@ -78,6 +78,17 @@ type Omission struct {
 	Reason string `json:"reason"`
 }
 
+type TrailAttestation struct {
+	SealedThrough time.Time `json:"sealedThrough"`
+	Verified      bool      `json:"verified"`
+	Links         int64     `json:"links"`
+}
+
+type Trails struct {
+	Audit   *TrailAttestation `json:"audit,omitempty"`
+	AIAudit *TrailAttestation `json:"aiAudit,omitempty"`
+}
+
 type Manifest struct {
 	FormatVersion    int         `json:"formatVersion"`
 	SchemaVersion    string      `json:"schemaVersion"`
@@ -92,6 +103,7 @@ type Manifest struct {
 	Purpose          Purpose     `json:"purpose,omitempty"`
 	Encryption       *Encryption `json:"encryption,omitempty"`
 	Omitted          []Omission  `json:"omitted,omitempty"`
+	Trails           *Trails     `json:"trails,omitempty"`
 }
 
 func (m *Manifest) Encode() ([]byte, error) {
@@ -145,6 +157,7 @@ func (m *Manifest) Check() error {
 	m.checkTables(found)
 	m.checkDocuments(found)
 	m.checkTotals(found)
+	m.checkTrails(found)
 	if len(*found) == 0 {
 		return nil
 	}
@@ -257,6 +270,36 @@ func (m *Manifest) checkTotals(p *problems) {
 	if total != m.TotalSizeBytes {
 		p.addf("totalSizeBytes is not the parts' sizes together")
 	}
+}
+
+func (m *Manifest) checkTrails(p *problems) {
+	if m.Trails == nil {
+		return
+	}
+	if !m.Purpose.Importable() {
+		p.addf("only an archive that can be loaded states what its source verified of its trails")
+		return
+	}
+	for _, trail := range []*TrailAttestation{m.Trails.Audit, m.Trails.AIAudit} {
+		if trail != nil && (trail.SealedThrough.IsZero() || trail.Links < 0) {
+			p.addf("a trail attestation needs the moment it was sealed through and its links")
+			return
+		}
+	}
+}
+
+func (m *Manifest) AuditAttestation() *TrailAttestation {
+	if m.Trails == nil {
+		return nil
+	}
+	return m.Trails.Audit
+}
+
+func (m *Manifest) AIAuditAttestation() *TrailAttestation {
+	if m.Trails == nil {
+		return nil
+	}
+	return m.Trails.AIAudit
 }
 
 func (m *Manifest) Table(name string) (*Table, bool) {

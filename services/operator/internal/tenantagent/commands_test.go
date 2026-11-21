@@ -266,6 +266,56 @@ func TestARestoreIsReportedDoneOrFailedWithWhetherTheTenantWasTouched(t *testing
 	assert.Equal(t, 1, r.tms.CommandPosts(refused.String()), "a refused restore is not sent again")
 }
 
+func TestAFinishedRestoresNoteReachesStaffAsOnePrintableLineAndNeverAsAReason(t *testing.T) {
+	r := newRig(t)
+	id := uuid.New()
+	prefix := "tenants/" + id.String() + "/nightly/2026-11-19/"
+	location := "s3://" + archiveBucket + "/" + prefix
+	long := strings.Repeat("x", 700)
+	cases := []struct {
+		name   string
+		reason string
+		note   string
+		want   *string
+	}{
+		{name: "no note"},
+		{
+			name: "a note on a done restore",
+			note: "Restored, but the audit log was marked.\nSecond\tline\x00.",
+			want: ptr("Restored, but the audit log was marked. Second line ."),
+		},
+		{name: "a long note", note: long, want: ptr(strings.Repeat("x", 499) + "…")},
+		{name: "a failed restore", reason: "The tenant is incomplete: the load failed", note: "kept"},
+	}
+	for i, tc := range cases {
+		cmd := uuid.New()
+		entry := tenant(id, int64(i+1), instanceapi.SharedTenantSuspended)
+		entry.Commands = []instanceapi.SharedTenantCommand{restoreCommand(cmd, location)}
+		r.cp.SetSharedTenants([]instanceapi.SharedTenant{entry})
+		r.cp.SetSharedStorage(storage(readTarget(id, cmd, instanceapi.TargetRestore, prefix)))
+		r.iterate(t)
+		r.iterate(t)
+		r.tms.FinishRestoreNoted(cmd.String(), r.clock.Now(), tc.reason, tc.note)
+		r.iterate(t)
+		restore := r.reported(t, id).LastRestore
+		require.NotNil(t, restore, tc.name)
+		if tc.reason != "" {
+			assert.Equal(t, instanceapi.RestoreFailed, restore.State, tc.name)
+			assert.Nil(t, restore.Note, "a failed restore carries no note: %s", tc.name)
+			require.NotNil(t, restore.Reason)
+			assert.NotContains(t, *restore.Reason, "kept")
+			continue
+		}
+		assert.Equal(t, instanceapi.RestoreDone, restore.State, tc.name)
+		assert.Nil(t, restore.Reason, "a note is never put in the reason: %s", tc.name)
+		assert.Equal(t, tc.want, restore.Note, tc.name)
+	}
+}
+
+func ptr(s string) *string {
+	return &s
+}
+
 func TestATenantIsMadeFromAnArchiveOnItsFirstEntryOnly(t *testing.T) {
 	r := newRig(t)
 	id, cmd := uuid.New(), uuid.New()

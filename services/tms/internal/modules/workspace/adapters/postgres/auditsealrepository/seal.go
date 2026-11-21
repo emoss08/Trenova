@@ -18,8 +18,12 @@ import (
 	"go.uber.org/zap"
 )
 
-const importedThroughSQL = `SELECT COALESCE(max(seq), 0)::bigint FROM audit_seals
-WHERE organization_id = $1 AND business_unit_id = $2 AND hash_version IN (3, 4)`
+const weakestOriginSQL = `SELECT CASE
+    WHEN EXISTS (SELECT 1 FROM audit_seals WHERE organization_id = $1 AND business_unit_id = $2
+        AND hash_version IN (3, 4)) THEN 2
+    WHEN EXISTS (SELECT 1 FROM audit_seals WHERE organization_id = $1 AND business_unit_id = $2
+        AND hash_version IN (5, 6)) THEN 1
+    ELSE 0 END::smallint`
 
 type Params struct {
 	fx.In
@@ -179,26 +183,26 @@ func (r *repository) RecordVerification(ctx context.Context, head *audit.ChainHe
 	})
 }
 
-func (r *repository) ImportedThrough(
+func (r *repository) WeakestOrigin(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (int64, error) {
+) (audit.Origin, error) {
 	ctx = tenantContext(ctx, auditports.TenantKey{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 	})
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		seq, err := keel.QueryValue[int64](
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (audit.Origin, error) {
+		origin, err := keel.QueryValue[int8](
 			ctx,
 			r.db.Keel(ctx),
-			importedThroughSQL,
+			weakestOriginSQL,
 			tenant.OrgID.String(),
 			tenant.BuID.String(),
 		)
 		if err != nil {
-			return 0, fmt.Errorf("read the imported audit seals: %w", err)
+			return audit.OriginHere, fmt.Errorf("read the imported audit seals: %w", err)
 		}
-		return seq, nil
+		return audit.Origin(origin), nil
 	})
 }
 

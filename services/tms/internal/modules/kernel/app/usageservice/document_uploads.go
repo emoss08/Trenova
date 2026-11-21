@@ -111,6 +111,14 @@ func CheckDocumentBytesLimit(
 }
 
 func LimitError(result *platformcatalogports.UsageLimitCheckResult, requested int64) error {
+	if result.Plan == PlanManaged && result.CeilingHit {
+		return managedusage.CeilingRefusal(
+			result.MeterKey,
+			result.Ceiling,
+			result.Used,
+			result.Plan,
+		)
+	}
 	if result.Reason == ReasonQuotaExceeded && result.Plan == PlanManaged {
 		return managedusage.Refusal(
 			result.MeterKey,

@@ -56,10 +56,18 @@ TTL. `managedusageports.Gate.Decide` and `State` take the scope; `ManagedQuotaGu
 - no state yet, or a meter the state does not name: not limited (a fresh instance works before
   its first relay, and the control plane decides which meters it sells);
 - no open window: every named meter stops (unpaid, or the subscription ended);
-- `stopped`: the meter stops;
+- `stopped`: the meter stops, except that a level meter the control plane stopped at its ceiling
+  (the relayed level at or above `ceiling`) is decided on its live level against the ceiling, since
+  the control plane stops it exactly while the current level is there: freeing storage lets uploads
+  through at once instead of at the next relay. A counted meter stopped at its ceiling refuses with
+  `ReasonCeiling`; any other stop is honoured whatever the level;
 - a ceiling (`ceiling` > 0), when the requested quantity would cross it: the action stops whatever
   the overage setting (`ReasonCeiling`, refused with `managedusage.CeilingRefusal`, which names the
-  ceiling and no price). A ceiling is 0 for none or at least the allowance;
+  ceiling and no price). A ceiling is 0 for none or at least the allowance. Storage is a level, not
+  a count per billing period, so its ceiling refusal has its own sentence ("Your organization's
+  document storage is full at {0}…", the ceiling in decimal units, `managedusage.DecimalBytes`).
+  `UsageLimitCheckResult` carries `ceiling` and `ceilingHit`, so the upload checks
+  (`usageservice.CheckDocumentBytesLimit`) raise the same refusal as `QuotaGuard`;
 - a hard cap, or overage not billed: the action stops when the requested quantity would cross the
   allowance, so one large batch cannot overrun it between two reports.
 
@@ -415,8 +423,8 @@ The state (`PUT /managed/v1/state`) names each app meter the subscription sells,
 
 - `overage` is whether the customer turned overage on; it applies to every meter without
   `hardCap`.
-- `stopped` is a kill switch (unpaid, suspended), never the allowance: the instance decides the
-  allowance itself. For a level meter the instance uses its live level, so `stopped` set because
+- `stopped` is a kill switch (unpaid, suspended, or a level at its ceiling), never the allowance:
+  the instance decides the allowance itself. For a level meter the instance uses its live level, so `stopped` set because
   the cycle's maximum crossed the allowance would keep refusing after the customer deleted
   documents.
 - The units are `count` and `bytes`; `cents` is refused (no app meter is priced in money).

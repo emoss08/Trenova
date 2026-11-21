@@ -60,7 +60,27 @@ type SealRepository interface {
 	) ([]*audit.Seal, error)
 	RecordVerification(ctx context.Context, head *audit.ChainHead) error
 	DeleteSealsBefore(ctx context.Context, before int64) (int64, error)
-	ImportedThrough(ctx context.Context, tenant pagination.TenantInfo) (int64, error)
+	WeakestOrigin(ctx context.Context, tenant pagination.TenantInfo) (audit.Origin, error)
+}
+
+type TrailCheck struct {
+	Status   audit.VerificationStatus
+	FirstSeq int64
+	LastSeq  int64
+	LastHash string
+	Links    int64
+}
+
+func (c *TrailCheck) Verified() bool {
+	return c != nil && c.Status == audit.VerificationVerified
+}
+
+type TrailVerifier interface {
+	VerifyThrough(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		throughSeq int64,
+	) (*TrailCheck, error)
 }
 
 type ExportRepository interface {

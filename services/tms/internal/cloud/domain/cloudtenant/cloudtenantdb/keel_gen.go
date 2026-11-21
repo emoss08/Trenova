@@ -537,6 +537,7 @@ var tenantsTable = schema.Table{
 		{Name: "last_restore_state", Quoted: `"last_restore_state"`, Field: "LastRestoreState", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Restore State`, JSON: `lastRestoreState`},
 		{Name: "last_restore_at", Quoted: `"last_restore_at"`, Field: "LastRestoreAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Last Restore At`, JSON: `lastRestoreAt`},
 		{Name: "last_restore_reason", Quoted: `"last_restore_reason"`, Field: "LastRestoreReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Restore Reason`, JSON: `lastRestoreReason`},
+		{Name: "last_restore_note", Quoted: `"last_restore_note"`, Field: "LastRestoreNote", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Restore Note`, JSON: `lastRestoreNote`},
 		{Name: "imported_at", Quoted: `"imported_at"`, Field: "ImportedAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Imported At`, JSON: `importedAt`},
 		{Name: "refused_revision", Quoted: `"refused_revision"`, Field: "RefusedRevision", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Refused Revision`, JSON: `refusedRevision`},
 		{Name: "refused_code", Quoted: `"refused_code"`, Field: "RefusedCode", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Refused Code`, JSON: `refusedCode`},
@@ -548,9 +549,9 @@ var tenantsTable = schema.Table{
 	},
 	PK:         []int32{0},
 	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
 	Returning:  nil,
 	Version:    -1,
 	AutoID:     -1,
@@ -589,6 +590,7 @@ type TenantsTable struct {
 	LastRestoreState     keel.StringCol
 	LastRestoreAt        keel.Int64Col
 	LastRestoreReason    keel.StringCol
+	LastRestoreNote      keel.StringCol
 	ImportedAt           keel.Int64Col
 	RefusedRevision      keel.Int64Col
 	RefusedCode          keel.StringCol
@@ -622,14 +624,15 @@ var Tenants = &TenantsTable{
 	LastRestoreState:     keel.StringCol{Col: keel.Col{Ref: &tenantsRef, Index: 17}},
 	LastRestoreAt:        keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 18}},
 	LastRestoreReason:    keel.StringCol{Col: keel.Col{Ref: &tenantsRef, Index: 19}},
-	ImportedAt:           keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 20}},
-	RefusedRevision:      keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 21}},
-	RefusedCode:          keel.StringCol{Col: keel.Col{Ref: &tenantsRef, Index: 22}},
-	RefusedReason:        keel.StringCol{Col: keel.Col{Ref: &tenantsRef, Index: 23}},
-	RemovalStartedAt:     keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 24}},
-	RemovedAt:            keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 25}},
-	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 26}},
-	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 27}},
+	LastRestoreNote:      keel.StringCol{Col: keel.Col{Ref: &tenantsRef, Index: 20}},
+	ImportedAt:           keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 21}},
+	RefusedRevision:      keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 22}},
+	RefusedCode:          keel.StringCol{Col: keel.Col{Ref: &tenantsRef, Index: 23}},
+	RefusedReason:        keel.StringCol{Col: keel.Col{Ref: &tenantsRef, Index: 24}},
+	RemovalStartedAt:     keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 25}},
+	RemovedAt:            keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 26}},
+	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 27}},
+	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &tenantsRef, Index: 28}},
 }
 
 // BuildTenants builds the table of cloud_tenants for ref. Generated relation and alias methods call it.
@@ -656,14 +659,15 @@ func BuildTenants(r *keel.Ref) *TenantsTable {
 		LastRestoreState:     keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		LastRestoreAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		LastRestoreReason:    keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		ImportedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		RefusedRevision:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		RefusedCode:          keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
-		RefusedReason:        keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		RemovalStartedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		RemovedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
-		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
-		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
+		LastRestoreNote:      keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
+		ImportedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		RefusedRevision:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
+		RefusedCode:          keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
+		RefusedReason:        keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
+		RemovalStartedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
+		RemovedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
+		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 	}
 }
 
@@ -1093,20 +1097,22 @@ func ptrTenant(p unsafe.Pointer, c int32) any {
 	case 19:
 		return &r.LastRestoreReason
 	case 20:
-		return &r.ImportedAt
+		return &r.LastRestoreNote
 	case 21:
-		return &r.RefusedRevision
+		return &r.ImportedAt
 	case 22:
-		return &r.RefusedCode
+		return &r.RefusedRevision
 	case 23:
-		return &r.RefusedReason
+		return &r.RefusedCode
 	case 24:
-		return &r.RemovalStartedAt
+		return &r.RefusedReason
 	case 25:
-		return &r.RemovedAt
+		return &r.RemovalStartedAt
 	case 26:
-		return &r.CreatedAt
+		return &r.RemovedAt
 	case 27:
+		return &r.CreatedAt
+	case 28:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -1198,38 +1204,43 @@ func valueTenant(p unsafe.Pointer, c int32) any {
 		}
 		return r.LastRestoreReason
 	case 20:
+		if r.LastRestoreNote == "" {
+			return nil
+		}
+		return r.LastRestoreNote
+	case 21:
 		if r.ImportedAt == 0 {
 			return nil
 		}
 		return r.ImportedAt
-	case 21:
+	case 22:
 		if r.RefusedRevision == 0 {
 			return nil
 		}
 		return r.RefusedRevision
-	case 22:
+	case 23:
 		if r.RefusedCode == "" {
 			return nil
 		}
 		return r.RefusedCode
-	case 23:
+	case 24:
 		if r.RefusedReason == "" {
 			return nil
 		}
 		return r.RefusedReason
-	case 24:
+	case 25:
 		if r.RemovalStartedAt == 0 {
 			return nil
 		}
 		return r.RemovalStartedAt
-	case 25:
+	case 26:
 		if r.RemovedAt == 0 {
 			return nil
 		}
 		return r.RemovedAt
-	case 26:
-		return r.CreatedAt
 	case 27:
+		return r.CreatedAt
+	case 28:
 		return r.UpdatedAt
 	}
 	return nil

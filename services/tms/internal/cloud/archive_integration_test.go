@@ -233,8 +233,21 @@ func newInstallWithChain(
 
 func (in *install) engineWith(buckets archiveports.Buckets) *archiveengine.Engine {
 	return archiveengine.New(archiveengine.Params{
-		Rows:      in.rows,
-		Buckets:   buckets,
+		Rows:    in.rows,
+		Buckets: buckets,
+		AuditTrail: auditintegrity.NewVerifier(&auditintegrity.VerifierParams{
+			Seals:   in.auditSeals(),
+			Keyring: auditintegrity.NewKeyring(in.chain),
+			Metrics: metricstest.Disabled(),
+			Logger:  zap.NewNop(),
+		}),
+		AITrail: aiauditverify.New(&aiauditverify.Params{
+			Ledger:   in.aiLedger(),
+			Keyring:  in.aiKeyring(),
+			Notifier: &aiaudittest.FakeNotifier{},
+			Audit:    &aiaudittest.FakeAudit{},
+			Logger:   zap.NewNop(),
+		}),
 		Storage:   in.store,
 		Secrets:   encryptionservice.NewSecretCipher(in.cipher),
 		Blobs:     encryptionservice.NewBlobCipher(in.cipher),
@@ -1071,13 +1084,24 @@ SELECT $1, $2, $3, 'another-name', 'another@stranger.test', 'Another', 'x', 'Act
 			assert.Equal(t, archiveports.SourceNotVerifiable, result.Trails.AuditSeals.Source,
 				"another server's key is not held here")
 			assert.True(t, result.Trails.AuditSeals.KeyMissing)
-			assert.Equal(t, result.Trails.AuditSeals.Links, result.Trails.AuditSeals.Marked)
-			assert.Equal(t, result.Trails.AIAudit.Links, result.Trails.AIAudit.Marked)
+			require.NotNil(t, final.Manifest.Trails, "a final archive states what its source verified")
+			require.NotNil(t, final.Manifest.Trails.Audit)
+			require.NotNil(t, final.Manifest.Trails.AIAudit)
+			assert.True(t, final.Manifest.Trails.Audit.Verified)
+			assert.True(t, final.Manifest.Trails.AIAudit.Verified)
+			assert.Equal(t, result.Trails.AuditSeals.Links, final.Manifest.Trails.Audit.Links)
+			assert.Equal(t, result.Trails.AIAudit.Links, final.Manifest.Trails.AIAudit.Links)
+			assert.Equal(t, archiveports.EstablishedAtSource, result.Trails.AuditSeals.Established)
+			assert.Equal(t, archiveports.EstablishedAtSource, result.Trails.AIAudit.Established)
+			assert.Equal(t, result.Trails.AuditSeals.Links, result.Trails.AuditSeals.Attested)
+			assert.Equal(t, result.Trails.AIAudit.Links, result.Trails.AIAudit.Attested)
+			assert.Zero(t, result.Trails.AuditSeals.Marked)
+			assert.Zero(t, result.Trails.AIAudit.Marked)
 			assert.Nil(t, result.Trails.Tail, "the source sealed everything it archived")
 			status := verifyTrails(t, dst, facts.tenant)
-			assert.Equal(t, audit.VerificationImported, status.audit,
-				"history this server could not verify is never reported as verified")
-			assert.Equal(t, aiaudit.VerificationImported, status.ai)
+			assert.Equal(t, audit.VerificationSourceVerified, status.audit,
+				"history this server could not verify itself is said as its archive states it, never as verified here")
+			assert.Equal(t, aiaudit.VerificationSourceVerified, status.ai)
 			org := facts.tenant.OrganizationID.String()
 			assert.Equal(t, []string{"0"}, dst.query(t,
 				`SELECT count(*)::text FROM audit_seals WHERE organization_id = $1
@@ -1240,9 +1264,9 @@ WHERE organization_id = '`+org+`' AND source_key = 'usage:archive:0:1'; END $$`)
 		assert.Equal(t, withProvenance(before, 1), dst.counts(t, facts.tenant))
 		assert.Equal(t, strangerBefore, dst.counts(t, strangerTenant))
 		status := verifyTrails(t, dst, facts.tenant)
-		assert.Equal(t, audit.VerificationImported, status.audit,
-			"a restore onto a server that does not hold the trail's key marks it as not verified at its source")
-		assert.Equal(t, aiaudit.VerificationImported, status.ai)
+		assert.Equal(t, audit.VerificationSourceVerified, status.audit,
+			"a restore onto a server that does not hold the trail's key relies on the archive's statement and says so")
+		assert.Equal(t, aiaudit.VerificationSourceVerified, status.ai)
 		assert.Equal(
 			t,
 			[]string{"2"},

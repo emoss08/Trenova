@@ -22,9 +22,11 @@ const (
 	// HashVersionUnsigned is a plain SHA-256 chain, written when no key is
 	// configured. It still shows a row changed by mistake, but not one
 	// rewritten by somebody able to recompute the chain.
-	HashVersionUnsigned         int16 = 2
-	HashVersionImported         int16 = 3
-	HashVersionImportedUnsigned int16 = 4
+	HashVersionUnsigned               int16 = 2
+	HashVersionImported               int16 = 3
+	HashVersionImportedUnsigned       int16 = 4
+	HashVersionSourceVerified         int16 = 5
+	HashVersionSourceVerifiedUnsigned int16 = 6
 
 	chainDomain = "trenova.ai-audit/v1"
 	costScale   = 6
@@ -218,12 +220,12 @@ func CanonicalBytes(e *AIAuditEvent) ([]byte, error) {
 func ComputeHash(e *AIAuditEvent, key *ChainKey) (string, error) {
 	var mac hash.Hash
 	switch e.HashVersion {
-	case HashVersionSigned, HashVersionImported:
+	case HashVersionSigned, HashVersionImported, HashVersionSourceVerified:
 		if key == nil || len(key.Secret) == 0 || key.ID != e.HashKeyID {
 			return "", ErrChainKeyRequired
 		}
 		mac = hmac.New(sha256.New, key.Secret)
-	case HashVersionUnsigned, HashVersionImportedUnsigned:
+	case HashVersionUnsigned, HashVersionImportedUnsigned, HashVersionSourceVerifiedUnsigned:
 		mac = sha256.New()
 	default:
 		return "", fmt.Errorf("%w: %d", ErrUnknownHashVer, e.HashVersion)
@@ -254,27 +256,23 @@ func writeHeader(mac hash.Hash, e *AIAuditEvent) {
 // Seal links a row to the one before it and signs it: with the key when one
 // is given, as an unsigned SHA-256 link when it is nil.
 func Seal(e *AIAuditEvent, prevHash string, key *ChainKey) error {
-	return seal(e, prevHash, key, false)
+	return SealFrom(e, prevHash, key, OriginHere)
 }
 
-func SealImported(e *AIAuditEvent, prevHash string, key *ChainKey) error {
-	return seal(e, prevHash, key, true)
+var eventVersions = map[Origin][2]int16{
+	OriginHere:           {HashVersionSigned, HashVersionUnsigned},
+	OriginSourceVerified: {HashVersionSourceVerified, HashVersionSourceVerifiedUnsigned},
+	OriginUnverified:     {HashVersionImported, HashVersionImportedUnsigned},
 }
 
-func seal(e *AIAuditEvent, prevHash string, key *ChainKey, imported bool) error {
+func SealFrom(e *AIAuditEvent, prevHash string, key *ChainKey, origin Origin) error {
 	e.PrevHash = prevHash
-	switch {
-	case key != nil && imported:
-		e.HashVersion = HashVersionImported
+	versions := eventVersions[origin]
+	if key != nil {
+		e.HashVersion = versions[0]
 		e.HashKeyID = key.ID
-	case key != nil:
-		e.HashVersion = HashVersionSigned
-		e.HashKeyID = key.ID
-	case imported:
-		e.HashVersion = HashVersionImportedUnsigned
-		e.HashKeyID = ""
-	default:
-		e.HashVersion = HashVersionUnsigned
+	} else {
+		e.HashVersion = versions[1]
 		e.HashKeyID = ""
 	}
 
@@ -288,11 +286,23 @@ func seal(e *AIAuditEvent, prevHash string, key *ChainKey, imported bool) error 
 }
 
 func (e *AIAuditEvent) Keyed() bool {
-	return e.HashVersion == HashVersionSigned || e.HashVersion == HashVersionImported
+	switch e.HashVersion {
+	case HashVersionSigned, HashVersionImported, HashVersionSourceVerified:
+		return true
+	default:
+		return false
+	}
 }
 
-func (e *AIAuditEvent) Imported() bool {
-	return e.HashVersion == HashVersionImported || e.HashVersion == HashVersionImportedUnsigned
+func (e *AIAuditEvent) Origin() Origin {
+	switch e.HashVersion {
+	case HashVersionImported, HashVersionImportedUnsigned:
+		return OriginUnverified
+	case HashVersionSourceVerified, HashVersionSourceVerifiedUnsigned:
+		return OriginSourceVerified
+	default:
+		return OriginHere
+	}
 }
 
 // VerifyHash reports whether a row still hashes to what it recorded.

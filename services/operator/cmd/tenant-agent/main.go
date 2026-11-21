@@ -116,8 +116,9 @@ func run(ctx context.Context, cfg *config, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	paced := tenantagent.NewPacedControlPlane(cp, cfg.poll, nil)
 	agent, err := tenantagent.New(&tenantagent.Params{
-		ControlPlane: cp,
+		ControlPlane: paced,
 		TMS:          tmsClient,
 		Credentials:  creds,
 		Escrow:       escrowed,
@@ -126,7 +127,7 @@ func run(ctx context.Context, cfg *config, logger *slog.Logger) error {
 			ControlPlane: cp,
 			Logger:       logger,
 		}),
-		Usage:       usage.NewShared(usage.SharedParams{ControlPlane: cp, TMS: tmsClient}),
+		Usage:       usage.NewShared(usage.SharedParams{ControlPlane: paced, TMS: tmsClient}),
 		EmailEvents: events,
 		SupportKeys: supportkeys.New(tmsClient, logger),
 		Version:     cfg.version,

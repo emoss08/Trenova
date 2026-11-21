@@ -11,42 +11,48 @@ import (
 
 const sealDomain = "trenova.audit-seal/v1"
 
+var sealVersions = map[Origin][2]int16{
+	OriginHere:           {SealHashVersionSigned, SealHashVersionUnsigned},
+	OriginSourceVerified: {SealHashVersionSourceVerified, SealHashVersionSourceVerifiedUnsigned},
+	OriginUnverified:     {SealHashVersionImported, SealHashVersionImportedUnsigned},
+}
+
 func (s *Seal) Sign(keyID string, secret []byte) {
-	s.sign(keyID, secret, false)
+	s.SignFrom(OriginHere, keyID, secret)
 }
 
-func (s *Seal) SignImported(keyID string, secret []byte) {
-	s.sign(keyID, secret, true)
-}
-
-func (s *Seal) sign(keyID string, secret []byte, imported bool) {
-	switch {
-	case keyID != "" && imported:
+func (s *Seal) SignFrom(origin Origin, keyID string, secret []byte) {
+	versions := sealVersions[origin]
+	if keyID != "" {
 		s.HashKeyID = keyID
-		s.HashVersion = SealHashVersionImported
-	case keyID != "":
-		s.HashKeyID = keyID
-		s.HashVersion = SealHashVersionSigned
-	case imported:
+		s.HashVersion = versions[0]
+	} else {
 		s.HashKeyID = ""
-		s.HashVersion = SealHashVersionImportedUnsigned
-		secret = nil
-	default:
-		s.HashKeyID = ""
-		s.HashVersion = SealHashVersionUnsigned
+		s.HashVersion = versions[1]
 		secret = nil
 	}
 	s.Hash = s.ComputeHash(secret)
 }
 
 func (s *Seal) Unsigned() bool {
-	return s.HashVersion == SealHashVersionUnsigned ||
-		s.HashVersion == SealHashVersionImportedUnsigned
+	switch s.HashVersion {
+	case SealHashVersionUnsigned, SealHashVersionImportedUnsigned,
+		SealHashVersionSourceVerifiedUnsigned:
+		return true
+	default:
+		return false
+	}
 }
 
-func (s *Seal) Imported() bool {
-	return s.HashVersion == SealHashVersionImported ||
-		s.HashVersion == SealHashVersionImportedUnsigned
+func (s *Seal) Origin() Origin {
+	switch s.HashVersion {
+	case SealHashVersionImported, SealHashVersionImportedUnsigned:
+		return OriginUnverified
+	case SealHashVersionSourceVerified, SealHashVersionSourceVerifiedUnsigned:
+		return OriginSourceVerified
+	default:
+		return OriginHere
+	}
 }
 
 func (s *Seal) ComputeHash(secret []byte) string {

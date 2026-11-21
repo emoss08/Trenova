@@ -132,3 +132,31 @@ func TestAnUploadAtTheStorageLimitIsAllowedWhenOverageIsOn(t *testing.T) {
 		usageservice.DocumentBytesUsageParams{Bytes: 1},
 	))
 }
+
+func TestAnUploadAtTheStorageCeilingIsRefusedWithTheStorageSentence(t *testing.T) {
+	t.Parallel()
+
+	gate := &fakeGate{state: &managedusage.State{
+		WindowStart: 1,
+		WindowEnd:   2,
+		Overage:     true,
+		Meters: []managedusage.Meter{{
+			Meter:     platformcatalog.MeterDocumentStorageBytes,
+			Unit:      managedusage.UnitBytes,
+			Quantity:  250_000_000_000,
+			Allowance: 25_000_000_000,
+			Ceiling:   250_000_000_000,
+			Stopped:   true,
+		}},
+	}}
+	p := usageservice.NewManagedUsageProvider(gate, managedscope.NewResolver(false))
+
+	err := usageservice.CheckDocumentBytesLimit(t.Context(), p, usageservice.DocumentBytesUsageParams{
+		Bytes: 1_000,
+	})
+	var quota *errortypes.QuotaExceededError
+	require.ErrorAs(t, err, &quota)
+	assert.Contains(t, quota.Message, "document storage is full at {0}")
+	assert.Equal(t, []any{"250 GB"}, quota.Args)
+	assert.Equal(t, int64(250_000_000_000), quota.Limit)
+}

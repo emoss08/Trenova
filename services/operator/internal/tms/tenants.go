@@ -37,6 +37,7 @@ type TenantRestore struct {
 	State     string    `json:"state"`
 	At        time.Time `json:"at"`
 	Reason    string    `json:"reason,omitempty"`
+	Note      string    `json:"note,omitempty"`
 }
 
 type TenantCommandFailure struct {

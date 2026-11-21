@@ -56,6 +56,7 @@ type Components struct {
 	Service   aiauditports.AIAuditService
 	Projector *aiauditprojector.Projector
 	Verifier  *aiauditverify.Verifier
+	Trails    aiauditports.TrailVerifier
 	Exports   *aiauditexport.Exports
 	Retention *aiauditretention.Retention
 	Keyring   *aiauditkeyring.Keyring
@@ -123,6 +124,7 @@ func New(p Params) Components {
 		}),
 		Projector: projector,
 		Verifier:  verifier,
+		Trails:    verifier,
 		Exports:   exports,
 		Retention: aiauditretention.New(&aiauditretention.Params{
 			Ledger:    p.Ledger,

@@ -26,12 +26,20 @@ type Components struct {
 	Keyring  *Keyring
 	Sealer   *Sealer
 	Verifier *Verifier
+	Trails   auditports.TrailVerifier
 	Status   *Status
 }
 
 //nolint:gocritic // fx.In parameter structs are passed by value
 func New(p Params) Components {
 	keyring := NewKeyring(p.Config)
+	verifier := NewVerifier(&VerifierParams{
+		Seals:     p.Seals,
+		Retention: p.Retention,
+		Keyring:   keyring,
+		Metrics:   p.Metrics,
+		Logger:    p.Logger,
+	})
 	return Components{
 		Keyring: keyring,
 		Sealer: NewSealer(&SealerParams{
@@ -41,13 +49,8 @@ func New(p Params) Components {
 			Metrics: p.Metrics,
 			Logger:  p.Logger,
 		}),
-		Verifier: NewVerifier(&VerifierParams{
-			Seals:     p.Seals,
-			Retention: p.Retention,
-			Keyring:   keyring,
-			Metrics:   p.Metrics,
-			Logger:    p.Logger,
-		}),
-		Status: NewStatus(p.Seals, keyring),
+		Verifier: verifier,
+		Trails:   verifier,
+		Status:   NewStatus(p.Seals, keyring),
 	}
 }

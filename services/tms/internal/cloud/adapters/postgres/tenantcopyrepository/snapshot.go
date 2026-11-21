@@ -16,11 +16,14 @@ const (
 )
 
 type snapshot struct {
-	conn    *pgx.Conn
-	tx      pgx.Tx
-	plan    *archiveplan.Plan
-	tenant  dbscope.Tenant
-	orgName string
+	repo       *repository
+	conn       *pgx.Conn
+	tx         pgx.Tx
+	plan       *archiveplan.Plan
+	tenant     dbscope.Tenant
+	orgName    string
+	trails     *archiveports.TrailFacts
+	sealedTail bool
 }
 
 func (r *repository) OpenSnapshot(
@@ -31,15 +34,26 @@ func (r *repository) OpenSnapshot(
 	if err != nil {
 		return nil, err
 	}
-	s := &snapshot{conn: conn, tenant: req.Tenant}
+	s := &snapshot{repo: r, conn: conn, tenant: req.Tenant}
 	if err = s.open(ctx, req); err != nil {
 		s.Close(ctx)
 		return nil, err
+	}
+	if req.Purpose.Importable() {
+		if err = s.readTrails(ctx, req.At); err != nil {
+			s.Close(ctx)
+			return nil, err
+		}
 	}
 	return s, nil
 }
 
 func (s *snapshot) open(ctx context.Context, req *archiveports.SnapshotRequest) error {
+	if req.Purpose.Importable() {
+		if err := prepareTrailTables(ctx, s.conn); err != nil {
+			return err
+		}
+	}
 	tx, err := s.conn.BeginTx(ctx, pgx.TxOptions{
 		IsoLevel:   pgx.RepeatableRead,
 		AccessMode: pgx.ReadOnly,
@@ -96,12 +110,16 @@ func (s *snapshot) OrganizationName() string {
 	return s.orgName
 }
 
+func (s *snapshot) Trails() *archiveports.TrailFacts {
+	return s.trails
+}
+
 func (s *snapshot) CopyOut(
 	ctx context.Context,
 	table *archiveplan.PlannedTable,
 	dst io.Writer,
 ) error {
-	if _, err := s.tx.Conn().PgConn().CopyTo(ctx, dst, table.CopyOut(s.tenant)); err != nil {
+	if _, err := s.tx.Conn().PgConn().CopyTo(ctx, dst, s.copyOutQuery(table)); err != nil {
 		return fmt.Errorf("copy %s out: %w", table.Name, err)
 	}
 	return nil

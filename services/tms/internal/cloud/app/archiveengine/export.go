@@ -35,13 +35,14 @@ type ExportResult struct {
 }
 
 type exportRun struct {
-	e        *Engine
-	req      *ExportRequest
-	bucket   archiveports.Bucket
-	key      *archivecrypt.DataKey
-	manifest *tenantarchive.Manifest
-	natural  map[string]map[string]string
-	progress tenantcommand.Progress
+	e         *Engine
+	req       *ExportRequest
+	bucket    archiveports.Bucket
+	key       *archivecrypt.DataKey
+	manifest  *tenantarchive.Manifest
+	natural   map[string]map[string]string
+	progress  tenantcommand.Progress
+	attesting *attestation
 }
 
 func (e *Engine) Export(ctx context.Context, req *ExportRequest) (*ExportResult, error) {
@@ -52,6 +53,8 @@ func (e *Engine) Export(ctx context.Context, req *ExportRequest) (*ExportResult,
 	if err != nil {
 		return nil, err
 	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	run := &exportRun{
 		e:       e,
 		req:     req,
@@ -110,11 +113,15 @@ func (r *exportRun) tables(ctx context.Context) error {
 		Tenant:   r.req.Tenant,
 		Purpose:  r.req.Purpose,
 		Envelope: r.e.registry.tables(),
+		At:       r.e.clock(),
 	})
 	if err != nil {
 		return err
 	}
 	defer snap.Close(ctx)
+	if r.req.Purpose.Importable() {
+		r.attesting = r.e.startAttesting(ctx, r.req.Tenant, snap.Trails())
+	}
 
 	outside, err := snap.Outside(ctx)
 	if err != nil {
@@ -278,6 +285,13 @@ func (r *exportRun) upload(
 func (r *exportRun) finish(ctx context.Context) (*ExportResult, error) {
 	r.progress.Phase = tenantcommand.PhaseManifest
 	r.req.Progress.report(&r.progress)
+	if r.attesting != nil {
+		trails, err := r.attesting.wait(ctx, r.req.Beat)
+		if err != nil {
+			return nil, err
+		}
+		r.manifest.Trails = trails
+	}
 	r.manifest.Seal()
 	body, err := r.manifest.Encode()
 	if err != nil {

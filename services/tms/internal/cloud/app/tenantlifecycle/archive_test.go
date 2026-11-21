@@ -177,8 +177,9 @@ func TestARestoreHoldsTheTenantSuspendedAndReportsHowItEnded(t *testing.T) {
 	req.CommandID = second
 	_, err = r.svc.StartRestore(t.Context(), instanceA, req)
 	require.NoError(t, err)
+	note := "Restored, but the audit log names a key this server does not hold."
 	require.NoError(t, r.svc.FinishRestore(t.Context(), &tenantlifecycle.RestoreResult{
-		CommandID: second, SHA256: strings.Repeat("b", 64),
+		CommandID: second, SHA256: strings.Repeat("b", 64), Note: note,
 	}))
 	held = r.tenants.rows[instanceA]
 	assert.Equal(
@@ -188,6 +189,12 @@ func TestARestoreHoldsTheTenantSuspendedAndReportsHowItEnded(t *testing.T) {
 		"the control plane resumes it, not the restore",
 	)
 	assert.Equal(t, cloudtenant.RestoreDone, held.LastRestoreState)
+	assert.Empty(t, held.LastRestoreReason, "a finished restore has no reason, only its note")
+	assert.Equal(t, note, held.LastRestoreNote)
+	reported := held.Status(nil).LastRestore
+	require.NotNil(t, reported)
+	assert.Equal(t, note, reported.Note)
+	assert.Empty(t, reported.Reason)
 }
 
 func TestAnImportMakesTheTenantFromTheArchiveInsteadOfBootstrapping(t *testing.T) {

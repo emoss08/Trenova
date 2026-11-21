@@ -22,15 +22,17 @@ type UsageLimitCheckRequest struct {
 }
 
 type UsageLimitCheckResult struct {
-	MeterKey  platformcatalog.MeterKey `json:"meterKey"`
-	Allowed   bool                     `json:"allowed"`
-	Reason    string                   `json:"reason,omitempty"`
-	Limit     int64                    `json:"limit,omitempty"`
-	Used      int64                    `json:"used,omitempty"`
-	Remaining int64                    `json:"remaining,omitempty"`
-	Plan      string                   `json:"plan,omitempty"`
-	CheckedAt int64                    `json:"checkedAt"`
-	FailOpen  bool                     `json:"failOpen"`
+	MeterKey   platformcatalog.MeterKey `json:"meterKey"`
+	Allowed    bool                     `json:"allowed"`
+	Reason     string                   `json:"reason,omitempty"`
+	Limit      int64                    `json:"limit,omitempty"`
+	Used       int64                    `json:"used,omitempty"`
+	Remaining  int64                    `json:"remaining,omitempty"`
+	Ceiling    int64                    `json:"ceiling,omitempty"`
+	CeilingHit bool                     `json:"ceilingHit,omitempty"`
+	Plan       string                   `json:"plan,omitempty"`
+	CheckedAt  int64                    `json:"checkedAt"`
+	FailOpen   bool                     `json:"failOpen"`
 }
 
 type UsageRecordRequest struct {

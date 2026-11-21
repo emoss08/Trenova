@@ -93,16 +93,15 @@ func (v *Verifier) VerifyTenant(ctx context.Context, head *audit.ChainHead) (*au
 	})
 	policy := v.retentionFor(ctx, tenant)
 
-	status, failedSeq, detail, err := v.walk(ctx, tenant, policy, head.LastVerifiedSeq, head.LastSeq)
+	walked, err := v.walk(ctx, tenant, policy, head.LastVerifiedSeq, head.LastSeq)
 	if err != nil {
 		return nil, err
 	}
 
 	rollingFrom := head.VerifyCursorSeq
-	if status == audit.VerificationVerified && rollingFrom < head.LastVerifiedSeq {
+	if walked.status == audit.VerificationVerified && rollingFrom < head.LastVerifiedSeq {
 		rollingTo := min(head.LastVerifiedSeq, rollingFrom+rollingVerifyPerRun)
-		status, failedSeq, detail, err = v.walk(ctx, tenant, policy, rollingFrom, rollingTo)
-		if err != nil {
+		if walked, err = v.walk(ctx, tenant, policy, rollingFrom, rollingTo); err != nil {
 			return nil, err
 		}
 		head.VerifyCursorSeq = rollingTo
@@ -111,24 +110,24 @@ func (v *Verifier) VerifyTenant(ctx context.Context, head *audit.ChainHead) (*au
 		}
 	}
 
-	importedThrough := int64(0)
+	status := walked.status
 	if status == audit.VerificationVerified {
-		if importedThrough, err = v.seals.ImportedThrough(ctx, tenant); err != nil {
-			return nil, err
+		origin, originErr := v.seals.WeakestOrigin(ctx, tenant)
+		if originErr != nil {
+			return nil, originErr
 		}
+		status = origin.Status()
 	}
 
 	now := v.now().Unix()
 	head.LastVerifiedAt = &now
 	head.LastVerificationStatus = status
-	head.LastVerificationDetail = truncate(detail, verificationDetailMax)
+	head.LastVerificationDetail = truncate(walked.detail, verificationDetailMax)
 	head.LastVerificationFailedSeq = nil
-	if status == audit.VerificationVerified {
+	if walked.status == audit.VerificationVerified {
 		head.LastVerifiedSeq = head.LastSeq
-		if importedThrough > 0 {
-			head.LastVerificationStatus = audit.VerificationImported
-		}
 	} else {
+		failedSeq := walked.failedSeq
 		head.LastVerificationFailedSeq = &failedSeq
 	}
 	v.metrics.Audit.RecordVerification(string(head.LastVerificationStatus))
@@ -139,65 +138,154 @@ func (v *Verifier) VerifyTenant(ctx context.Context, head *audit.ChainHead) (*au
 	return head, nil
 }
 
+func (v *Verifier) VerifyThrough(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	throughSeq int64,
+) (*auditports.TrailCheck, error) {
+	ctx = dbscope.WithValidTenant(ctx, dbscope.Tenant{
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+	})
+	first, err := v.seals.ListSeals(ctx, tenant, 0, 1)
+	if err != nil {
+		return nil, err
+	}
+	if len(first) == 0 || throughSeq < first[0].Seq {
+		return &auditports.TrailCheck{Status: audit.VerificationVerified}, nil
+	}
+	policy := v.retentionFor(ctx, tenant)
+	oldest := first[0]
+	check := &auditports.TrailCheck{FirstSeq: oldest.Seq}
+	from := int64(0)
+	if oldest.Seq > 1 {
+		if failed, detail, oerr := v.checkSeal(ctx, oldest, policy); oerr != nil {
+			return nil, oerr
+		} else if failed != "" {
+			check.Status = failed
+			v.l.Warn("an archive's audit chain does not verify at its source",
+				zap.String("organizationId", tenant.OrgID.String()),
+				zap.String("detail", detail))
+			return check, nil
+		}
+		from = oldest.Seq
+		check.Links = 1
+	}
+	walked, err := v.walk(ctx, tenant, policy, from, throughSeq)
+	if err != nil {
+		return nil, err
+	}
+	check.Status = walked.status
+	check.LastSeq = walked.lastSeq
+	check.LastHash = walked.lastHash
+	check.Links += walked.links
+	if walked.status != audit.VerificationVerified {
+		v.l.Warn("an archive's audit chain does not verify at its source",
+			zap.String("organizationId", tenant.OrgID.String()),
+			zap.Int64("seq", walked.failedSeq),
+			zap.String("detail", walked.detail))
+	}
+	return check, nil
+}
+
+type walkResult struct {
+	status    audit.VerificationStatus
+	failedSeq int64
+	detail    string
+	lastSeq   int64
+	lastHash  string
+	links     int64
+}
+
+func (w *walkResult) fail(
+	status audit.VerificationStatus,
+	seq int64,
+	detail string,
+) *walkResult {
+	w.status, w.failedSeq, w.detail = status, seq, detail
+	return w
+}
+
 func (v *Verifier) walk(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	policy *dataretention.DataRetention,
 	fromSeq, toSeq int64,
-) (audit.VerificationStatus, int64, string, error) {
+) (*walkResult, error) {
+	out := &walkResult{status: audit.VerificationVerified, lastSeq: fromSeq}
 	prevHash := ""
 	after := fromSeq
 	if fromSeq > 0 {
 		anchor, err := v.seals.ListSeals(ctx, tenant, fromSeq-1, 1)
 		if err != nil {
-			return "", 0, "", err
+			return nil, err
 		}
 		if len(anchor) == 1 && anchor[0].Seq == fromSeq {
 			prevHash = anchor[0].Hash
 		}
 	}
+	out.lastHash = prevHash
 
 	for after < toSeq {
 		page, err := v.seals.ListSeals(ctx, tenant, after, verifyPageSize)
 		if err != nil {
-			return "", 0, "", err
+			return nil, err
 		}
 		if len(page) == 0 {
-			return audit.VerificationBroken, after + 1,
-				fmt.Sprintf("seal %d is missing", after+1), nil
+			return out.fail(audit.VerificationBroken, after+1,
+				fmt.Sprintf("seal %d is missing", after+1)), nil
 		}
 		for _, seal := range page {
 			if seal.Seq > toSeq {
-				return audit.VerificationVerified, 0, "", nil
+				return out, nil
 			}
 			if seal.Seq != after+1 {
-				return audit.VerificationBroken, after + 1,
-					fmt.Sprintf("seal %d is missing", after+1), nil
+				return out.fail(audit.VerificationBroken, after+1,
+					fmt.Sprintf("seal %d is missing", after+1)), nil
 			}
 			if (after > 0 || fromSeq == 0) && seal.PrevHash != prevHash {
-				return audit.VerificationBroken, seal.Seq,
-					fmt.Sprintf("seal %d does not follow the seal before it", seal.Seq), nil
+				return out.fail(audit.VerificationBroken, seal.Seq,
+					fmt.Sprintf("seal %d does not follow the seal before it", seal.Seq)), nil
 			}
-			ok, keyMissing := v.keyring.Check(seal)
-			if keyMissing {
-				return audit.VerificationKeyMissing, seal.Seq,
-					fmt.Sprintf("seal %d was signed with key %q, which is not configured", seal.Seq, seal.HashKeyID), nil
+			failed, detail, checkErr := v.checkSeal(ctx, seal, policy)
+			if checkErr != nil {
+				return nil, checkErr
 			}
-			if !ok {
-				return audit.VerificationBroken, seal.Seq,
-					fmt.Sprintf("seal %d has been altered", seal.Seq), nil
-			}
-			if detail, intact, checkErr := v.checkEntries(ctx, seal, policy); checkErr != nil {
-				return "", 0, "", checkErr
-			} else if !intact {
-				return audit.VerificationBroken, seal.Seq, detail, nil
+			if failed != "" {
+				return out.fail(failed, seal.Seq, detail), nil
 			}
 			prevHash = seal.Hash
 			after = seal.Seq
+			out.lastSeq, out.lastHash = seal.Seq, seal.Hash
+			out.links++
 		}
 	}
 
-	return audit.VerificationVerified, 0, "", nil
+	return out, nil
+}
+
+func (v *Verifier) checkSeal(
+	ctx context.Context,
+	seal *audit.Seal,
+	policy *dataretention.DataRetention,
+) (audit.VerificationStatus, string, error) {
+	ok, keyMissing := v.keyring.Check(seal)
+	if keyMissing {
+		return audit.VerificationKeyMissing, fmt.Sprintf(
+			"seal %d was signed with key %q, which is not configured", seal.Seq, seal.HashKeyID,
+		), nil
+	}
+	if !ok {
+		return audit.VerificationBroken, fmt.Sprintf("seal %d has been altered", seal.Seq), nil
+	}
+	detail, intact, err := v.checkEntries(ctx, seal, policy)
+	if err != nil {
+		return "", "", err
+	}
+	if !intact {
+		return audit.VerificationBroken, detail, nil
+	}
+	return "", "", nil
 }
 
 func (v *Verifier) checkEntries(

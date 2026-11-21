@@ -1244,7 +1244,20 @@ and the agent enrols again from the bundle) and renews at two thirds of its life
 the operator does with its Secret. A 401 makes it read the bundle again (`Recover`).
 
 **The loop** (`tenantagent.Agent`), every `--poll` (15 s) with a fifth of jitter, never overlapping
-(one goroutine), and exponential backoff up to 5 minutes while iterations fail:
+(one goroutine), and exponential backoff up to 5 minutes while iterations fail. Every shared-server
+operation goes through `tenantagent.PacedControlPlane`: a 429 or 503 holds that operation (the
+tenants list, the status report, the storage read, the usage report) until its `Retry-After`
+(seconds or an HTTP date, `controlplane.RetryAfter`, a minute when absent, at most an hour) and
+never for less than the poll, while the others carry on; a held operation sends nothing. The
+cadence stays inside the control plane's limits (status 600 an hour, usage 120 an hour per server)
+whatever the number of tenants, because one report carries them all: a status report goes out when
+it changed, at most once an iteration (about 270 an hour at the shortest jittered poll of 13.5 s,
+for example while an archive's progress moves), and once a minute (60 an hour) when nothing
+changed; the usage relay runs every 15 minutes and sends its two hours of readings in chunks of
+5,000; a tenant has at most its four metered meters × two hours = 8 readings, so up to 625 tenants
+take one request a relay: 100 tenants are four usage requests an hour. A done restore's `note` from the TMS is reported as
+`SharedRestoreReport.note`, as one printable line of at most 500 characters, never in `reason`
+and never with a failed restore.
 
 1. renew the certificate when due; make sure the escrowed secrets are on disk
    (`escrowfile`, `--secrets-dir`, one 0600 file per key: `encryptionKey`, `rlsScopeKeyId`,

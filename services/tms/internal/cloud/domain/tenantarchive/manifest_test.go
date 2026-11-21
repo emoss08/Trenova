@@ -175,3 +175,47 @@ func TestADocumentsContentTypeIsOptionalAndDefaultsToOctetStream(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, m.Documents[0].ContentType, decoded.Documents[0].ContentType)
 }
+
+func TestATrailStatementIsWrittenOnceWithTheContractsNamesAndOmittedWhenAbsent(t *testing.T) {
+	t.Parallel()
+
+	m := manifest()
+	body, err := m.Encode()
+	require.NoError(t, err)
+	assert.NotContains(t, string(body), "trails", "an archive without a statement writes none")
+
+	sealed := time.Date(2026, 11, 20, 6, 59, 1, 0, time.UTC)
+	m.Trails = &tenantarchive.Trails{
+		Audit: &tenantarchive.TrailAttestation{SealedThrough: sealed, Verified: true, Links: 12},
+	}
+	require.NoError(t, m.Check())
+	body, err = m.Encode()
+	require.NoError(t, err)
+	assert.Contains(t, string(body),
+		`"trails":{"audit":{"sealedThrough":"2026-11-20T06:59:01Z","verified":true,"links":12}}`)
+	assert.Equal(t, 1, strings.Count(string(body), `"trails"`))
+	assert.NotContains(t, string(body), "aiAudit", "a trail the archive does not carry is left out")
+
+	decoded, err := tenantarchive.DecodeManifest(body)
+	require.NoError(t, err)
+	require.NotNil(t, decoded.AuditAttestation())
+	assert.Nil(t, decoded.AIAuditAttestation())
+	assert.True(t, decoded.AuditAttestation().SealedThrough.Equal(sealed))
+}
+
+func TestATrailStatementIsRefusedOnAnExportOrWithoutItsMoment(t *testing.T) {
+	t.Parallel()
+
+	m := manifest()
+	m.Trails = &tenantarchive.Trails{AIAudit: &tenantarchive.TrailAttestation{Links: 3}}
+	assert.ErrorContains(t, m.Check(), "a trail attestation needs")
+
+	m.Trails.AIAudit.SealedThrough = time.Date(2026, 11, 20, 7, 0, 0, 0, time.UTC)
+	m.Trails.AIAudit.Links = -1
+	assert.ErrorContains(t, m.Check(), "a trail attestation needs")
+
+	m.Trails.AIAudit.Links = 3
+	m.Purpose = tenantarchive.PurposeExport
+	m.Encryption = nil
+	assert.ErrorContains(t, m.Check(), "only an archive that can be loaded")
+}

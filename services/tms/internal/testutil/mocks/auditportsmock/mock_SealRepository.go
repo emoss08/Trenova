@@ -123,23 +123,23 @@ func (_c *MockSealRepository_AppendSeal_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
-// ImportedThrough provides a mock function for the type MockSealRepository
-func (_mock *MockSealRepository) ImportedThrough(ctx context.Context, tenant pagination.TenantInfo) (int64, error) {
+// WeakestOrigin provides a mock function for the type MockSealRepository
+func (_mock *MockSealRepository) WeakestOrigin(ctx context.Context, tenant pagination.TenantInfo) (audit.Origin, error) {
 	ret := _mock.Called(ctx, tenant)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ImportedThrough")
+		panic("no return value specified for WeakestOrigin")
 	}
 
-	var r0 int64
+	var r0 audit.Origin
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (audit.Origin, error)); ok {
 		return returnFunc(ctx, tenant)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) audit.Origin); ok {
 		r0 = returnFunc(ctx, tenant)
 	} else {
-		r0 = ret.Get(0).(int64)
+		r0 = ret.Get(0).(audit.Origin)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
 		r1 = returnFunc(ctx, tenant)
@@ -149,19 +149,19 @@ func (_mock *MockSealRepository) ImportedThrough(ctx context.Context, tenant pag
 	return r0, r1
 }
 
-// MockSealRepository_ImportedThrough_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ImportedThrough'
-type MockSealRepository_ImportedThrough_Call struct {
+// MockSealRepository_WeakestOrigin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WeakestOrigin'
+type MockSealRepository_WeakestOrigin_Call struct {
 	*mock.Call
 }
 
-// ImportedThrough is a helper method to define mock.On call
+// WeakestOrigin is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tenant pagination.TenantInfo
-func (_e *MockSealRepository_Expecter) ImportedThrough(ctx any, tenant any) *MockSealRepository_ImportedThrough_Call {
-	return &MockSealRepository_ImportedThrough_Call{Call: _e.mock.On("ImportedThrough", ctx, tenant)}
+func (_e *MockSealRepository_Expecter) WeakestOrigin(ctx any, tenant any) *MockSealRepository_WeakestOrigin_Call {
+	return &MockSealRepository_WeakestOrigin_Call{Call: _e.mock.On("WeakestOrigin", ctx, tenant)}
 }
 
-func (_c *MockSealRepository_ImportedThrough_Call) Run(run func(ctx context.Context, tenant pagination.TenantInfo)) *MockSealRepository_ImportedThrough_Call {
+func (_c *MockSealRepository_WeakestOrigin_Call) Run(run func(ctx context.Context, tenant pagination.TenantInfo)) *MockSealRepository_WeakestOrigin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -179,12 +179,12 @@ func (_c *MockSealRepository_ImportedThrough_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockSealRepository_ImportedThrough_Call) Return(n int64, err error) *MockSealRepository_ImportedThrough_Call {
-	_c.Call.Return(n, err)
+func (_c *MockSealRepository_WeakestOrigin_Call) Return(origin audit.Origin, err error) *MockSealRepository_WeakestOrigin_Call {
+	_c.Call.Return(origin, err)
 	return _c
 }
 
-func (_c *MockSealRepository_ImportedThrough_Call) RunAndReturn(run func(ctx context.Context, tenant pagination.TenantInfo) (int64, error)) *MockSealRepository_ImportedThrough_Call {
+func (_c *MockSealRepository_WeakestOrigin_Call) RunAndReturn(run func(ctx context.Context, tenant pagination.TenantInfo) (audit.Origin, error)) *MockSealRepository_WeakestOrigin_Call {
 	_c.Call.Return(run)
 	return _c
 }

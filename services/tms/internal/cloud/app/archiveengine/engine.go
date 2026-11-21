@@ -13,8 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
 	"github.com/emoss08/trenova/internal/cloud/ports/archiveports"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -36,41 +38,47 @@ var (
 type Params struct {
 	fx.In
 
-	Rows      archiveports.Rows
-	Buckets   archiveports.Buckets
-	Storage   kernelports.Client
-	Secrets   kernelports.SecretCipher
-	Blobs     kernelports.BlobCipher
-	Envelopes *kernelports.EnvelopeSources
-	App       *appconfig.Config
-	Clock     timeutils.Clock
-	Logger    *zap.Logger
+	Rows       archiveports.Rows
+	Buckets    archiveports.Buckets
+	AuditTrail auditports.TrailVerifier
+	AITrail    aiauditports.TrailVerifier
+	Storage    kernelports.Client
+	Secrets    kernelports.SecretCipher
+	Blobs      kernelports.BlobCipher
+	Envelopes  *kernelports.EnvelopeSources
+	App        *appconfig.Config
+	Clock      timeutils.Clock
+	Logger     *zap.Logger
 }
 
 type Engine struct {
-	rows     archiveports.Rows
-	buckets  archiveports.Buckets
-	storage  kernelports.Client
-	secrets  kernelports.SecretCipher
-	blobs    kernelports.BlobCipher
-	registry *registry
-	release  string
-	clock    timeutils.Clock
-	l        *zap.Logger
+	rows       archiveports.Rows
+	buckets    archiveports.Buckets
+	auditTrail auditports.TrailVerifier
+	aiTrail    aiauditports.TrailVerifier
+	storage    kernelports.Client
+	secrets    kernelports.SecretCipher
+	blobs      kernelports.BlobCipher
+	registry   *registry
+	release    string
+	clock      timeutils.Clock
+	l          *zap.Logger
 }
 
 //nolint:gocritic // this is dependency injection
 func New(p Params) *Engine {
 	return &Engine{
-		rows:     p.Rows,
-		buckets:  p.Buckets,
-		storage:  p.Storage,
-		secrets:  p.Secrets,
-		blobs:    p.Blobs,
-		registry: newRegistry(p.Envelopes),
-		release:  p.App.Version,
-		clock:    p.Clock,
-		l:        p.Logger.Named("cloud.tenant-archive"),
+		rows:       p.Rows,
+		buckets:    p.Buckets,
+		auditTrail: p.AuditTrail,
+		aiTrail:    p.AITrail,
+		storage:    p.Storage,
+		secrets:    p.Secrets,
+		blobs:      p.Blobs,
+		registry:   newRegistry(p.Envelopes),
+		release:    p.App.Version,
+		clock:      p.Clock,
+		l:          p.Logger.Named("cloud.tenant-archive"),
 	}
 }
 

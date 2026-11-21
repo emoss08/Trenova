@@ -321,6 +321,10 @@ describe("buildRailItems", () => {
       status: "Imported, not verified at its source",
       attention: false,
     });
+    expect(audit("ImportedSourceVerified")).toMatchObject({
+      status: "Imported, verified at its source",
+      attention: false,
+    });
   });
 
   // Retrieval sits beside Memory: both are what agents read back, and the

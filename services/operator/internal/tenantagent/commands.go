@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/google/uuid"
 
@@ -433,7 +434,8 @@ func restoreReport(r *tms.TenantRestore) *instanceapi.SharedRestoreReport {
 		State:     instanceapi.SharedRestoreReportState(r.State),
 		At:        r.At.UTC(),
 	}
-	if r.State == string(instanceapi.RestoreFailed) {
+	switch instanceapi.SharedRestoreReportState(r.State) {
+	case instanceapi.RestoreFailed:
 		reason := r.Reason
 		if !strings.HasPrefix(reason, restoreUntouched) &&
 			!strings.HasPrefix(reason, restoreIncomplete) {
@@ -441,6 +443,20 @@ func restoreReport(r *tms.TenantRestore) *instanceapi.SharedRestoreReport {
 		}
 		reason = clip(reason)
 		out.Reason = &reason
+	case instanceapi.RestoreDone:
+		if note := printableLine(r.Note); note != "" {
+			note = clip(note)
+			out.Note = &note
+		}
 	}
 	return out
+}
+
+func printableLine(s string) string {
+	return strings.Join(strings.Fields(strings.Map(func(r rune) rune {
+		if unicode.IsPrint(r) {
+			return r
+		}
+		return ' '
+	}, s)), " ")
 }

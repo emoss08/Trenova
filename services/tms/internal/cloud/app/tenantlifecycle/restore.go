@@ -94,6 +94,7 @@ func (s *Service) markRestoring(
 	t.LastRestoreState = cloudtenant.RestoreRunning
 	t.LastRestoreAt = now
 	t.LastRestoreReason = ""
+	t.LastRestoreNote = ""
 	t.UpdatedAt = now
 	if err := s.tenants.Save(ctx, t); err != nil {
 		return err
@@ -151,7 +152,8 @@ func (s *Service) FinishRestore(ctx context.Context, result *RestoreResult) erro
 		t.State = state
 		t.LastRestoreState = cloudtenant.RestoreDone
 		t.LastRestoreAt = now
-		t.LastRestoreReason = result.Note
+		t.LastRestoreReason = ""
+		t.LastRestoreNote = result.Note
 		t.UpdatedAt = now
 		if err = s.tenants.Save(ctx, t); err != nil {
 			return err
@@ -226,6 +228,7 @@ func (s *Service) FailRestore(
 		t.LastRestoreState = cloudtenant.RestoreFailed
 		t.LastRestoreAt = now
 		t.LastRestoreReason = cloudtenant.Invalid(t.Desired.Revision, prefix+refusal.Reason).Reason
+		t.LastRestoreNote = ""
 		t.UpdatedAt = now
 		if err = s.tenants.Save(ctx, t); err != nil {
 			return err

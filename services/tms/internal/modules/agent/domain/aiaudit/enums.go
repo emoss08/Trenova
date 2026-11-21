@@ -230,9 +230,35 @@ const (
 	VerificationMismatch = VerificationStatus("Mismatch")
 	// VerificationKeyMissing is a chain holding rows signed with a key that is
 	// no longer configured, so they cannot be checked.
-	VerificationKeyMissing = VerificationStatus("KeyMissing")
-	VerificationImported   = VerificationStatus("ImportedUnverified")
+	VerificationKeyMissing     = VerificationStatus("KeyMissing")
+	VerificationImported       = VerificationStatus("ImportedUnverified")
+	VerificationSourceVerified = VerificationStatus("ImportedSourceVerified")
 )
+
+type Origin int8
+
+const (
+	OriginHere Origin = iota
+	OriginSourceVerified
+	OriginUnverified
+)
+
+func (o Origin) Weaker(other Origin) Origin {
+	return max(o, other)
+}
+
+func (o Origin) Status() VerificationStatus {
+	switch o {
+	case OriginUnverified:
+		return VerificationImported
+	case OriginSourceVerified:
+		return VerificationSourceVerified
+	case OriginHere:
+		return VerificationVerified
+	default:
+		return VerificationVerified
+	}
+}
 
 func AllVerificationStatuses() []VerificationStatus {
 	return []VerificationStatus{
@@ -240,17 +266,19 @@ func AllVerificationStatuses() []VerificationStatus {
 		VerificationMismatch,
 		VerificationKeyMissing,
 		VerificationImported,
+		VerificationSourceVerified,
 	}
 }
 
 func (s VerificationStatus) Holds() bool {
-	return s == VerificationVerified || s == VerificationImported
+	return s == VerificationVerified || s == VerificationImported ||
+		s == VerificationSourceVerified
 }
 
 func (s VerificationStatus) IsValid() bool {
 	switch s {
 	case VerificationVerified, VerificationMismatch, VerificationKeyMissing,
-		VerificationImported:
+		VerificationImported, VerificationSourceVerified:
 		return true
 	default:
 		return false
