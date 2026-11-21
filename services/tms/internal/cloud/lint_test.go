@@ -34,6 +34,7 @@ var systemScopeAllowed = map[string]string{
 	"internal/cloud/adapters/postgres/tenantpurgerepository/repository.go:repository.DeleteOrganization":  "delete a removed tenant's organization and its managed scope rows, whose cascade removes the append-only audit rows no direct delete may touch",
 	"internal/cloud/adapters/postgres/tenantpurgerepository/repository.go:repository.DeleteBusinessUnit":  "delete a removed tenant's business unit once nothing of the tenant references it",
 	"internal/cloud/adapters/postgres/tenantpurgerepository/repository.go:repository.Remaining":           "count what is left of one removed tenant in every table the catalog names, to prove its removal complete",
+	"internal/cloud/adapters/postgres/tenantpurgerepository/crosstenant.go:repository.crossTenantReferences": "count rows of other business units that refer to one removed tenant's records, before anything is deleted; every statement names the tenant and returns only counts",
 	"internal/cloud/adapters/postgres/cloudcommandrepository/repository.go:repository.Get":                "read one archive, restore or import command by its id: control plane metadata in a global table",
 	"internal/cloud/adapters/postgres/cloudcommandrepository/repository.go:repository.Create":             "record a command idempotently by its id: control plane metadata in a global table",
 	"internal/cloud/adapters/postgres/cloudcommandrepository/repository.go:repository.Save":               "record a command's state and erase its sealed access when it settles",

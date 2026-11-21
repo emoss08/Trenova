@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"sync"
 
@@ -15,10 +16,12 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
 	"github.com/emoss08/trenova/internal/cloud/ports/archiveports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/sourcegraph/conc/pool"
+	"go.uber.org/zap"
 )
 
 type ImportRequest struct {
@@ -57,6 +60,8 @@ type importRun struct {
 	mapping  map[string]map[string]string
 	sealed   map[string]kernelports.SecretPurpose
 	progress tenantcommand.Progress
+	writtenM sync.Mutex
+	written  []string
 }
 
 type found struct {
@@ -239,6 +244,7 @@ func partRefusal(name string, err error) error {
 		return err
 	}
 	if errors.Is(err, archivestream.ErrStoredBytesChanged) ||
+		errors.Is(err, archivestream.ErrExpandsTooFar) ||
 		errors.Is(err, archivecrypt.ErrTampered) ||
 		errors.Is(err, copybinary.ErrShape) ||
 		errors.Is(err, io.ErrUnexpectedEOF) ||
@@ -263,8 +269,25 @@ func (r *importRun) checkTenant() error {
 		return tenantarchive.Refuse(tenantarchive.RefusalInstance,
 			"the archive holds another organization than the tenant being restored")
 	default:
-		return nil
+		return r.checkDocumentOwners()
 	}
+}
+
+func (r *importRun) checkDocumentOwners() error {
+	for i := range r.manifest.Documents {
+		object, _ := tenantarchive.ObjectKey(r.manifest.Documents[i].Key)
+		if _, ok := objectkey.Rebase(object, r.found.tenant.OrganizationID); !ok {
+			return tenantarchive.Refuse(tenantarchive.RefusalManifest, fmt.Sprintf(
+				"document %d is not stored under the tenant's own keys", i+1))
+		}
+	}
+	return nil
+}
+
+func (r *importRun) wrote(key string) {
+	r.writtenM.Lock()
+	defer r.writtenM.Unlock()
+	r.written = append(r.written, key)
 }
 
 func (r *importRun) checkDocuments(ctx context.Context) error {
@@ -312,9 +335,21 @@ func (r *importRun) load(ctx context.Context) (*ImportResult, error) {
 }
 
 func (r *importRun) discardObjects(ctx context.Context) {
-	if err := r.e.clearObjects(context.WithoutCancel(ctx), r.found.tenant); err != nil {
+	ctx = context.WithoutCancel(ctx)
+	r.writtenM.Lock()
+	written := slices.Clone(r.written)
+	r.writtenM.Unlock()
+	failed := 0
+	for _, key := range written {
+		if err := r.e.storage.Delete(ctx, key); err != nil &&
+			!errors.Is(err, kernelports.ErrObjectNotFound) {
+			failed++
+		}
+	}
+	if failed > 0 {
 		r.e.l.Error(
-			"cannot remove the documents of an import that did not complete; the next attempt removes them first",
+			"cannot remove every document an import that did not complete wrote; the next attempt removes them first",
+			zap.Int("left", failed),
 		)
 	}
 }
@@ -539,7 +574,7 @@ func (r *importRun) verify(ctx context.Context, load archiveports.Load) error {
 	if len(dangling) > 0 {
 		names := make([]string, 0, len(dangling))
 		for _, d := range dangling {
-			names = append(names, d.Table+" through "+d.Constraint)
+			names = append(names, fmt.Sprintf("%s.%s (%d rows)", d.Table, d.Columns, d.Rows))
 		}
 		return tenantarchive.Refuse(
 			tenantarchive.RefusalReference,

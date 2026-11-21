@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var sharedArchive = managedconfig.Archive{AllowedEndpoints: []string{".r2.cloudflarestorage.com"}}
+
 func TestValidate(t *testing.T) {
 	t.Parallel()
 
@@ -34,6 +36,7 @@ func TestValidate(t *testing.T) {
 				Enabled: true,
 				Token:   token,
 				Tenancy: managedconfig.TenancyShared,
+				Archive: sharedArchive,
 			},
 		},
 		{
@@ -41,6 +44,27 @@ func TestValidate(t *testing.T) {
 			cfg:             managedconfig.Config{Tenancy: managedconfig.TenancyShared},
 			withoutInstance: true,
 			err:             managedconfig.ErrSharedTenancyNotManaged,
+		},
+		{
+			name: "a shared server that names no archive endpoints",
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Tenancy: managedconfig.TenancyShared,
+			},
+			withoutInstance: true,
+			err:             managedconfig.ErrArchiveEndpointsRequired,
+		},
+		{
+			name: "an archive endpoint that is not a host",
+			cfg: managedconfig.Config{
+				Enabled: true,
+				Token:   token,
+				Tenancy: managedconfig.TenancyShared,
+				Archive: managedconfig.Archive{AllowedEndpoints: []string{"https://x.example/"}},
+			},
+			withoutInstance: true,
+			err:             managedconfig.ErrArchiveEndpointsInvalid,
 		},
 		{
 			name: "a tenancy that is neither",
@@ -63,6 +87,7 @@ func TestValidate(t *testing.T) {
 				Enabled: true,
 				Token:   token,
 				Tenancy: managedconfig.TenancyShared,
+				Archive: sharedArchive,
 			},
 			withoutInstance: true,
 		},
@@ -73,6 +98,7 @@ func TestValidate(t *testing.T) {
 				Token:      token,
 				Tenancy:    managedconfig.TenancyShared,
 				InstanceID: "server-1",
+				Archive:    sharedArchive,
 			},
 			err: managedconfig.ErrInstanceIDInvalid,
 		},

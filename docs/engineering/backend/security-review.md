@@ -125,6 +125,30 @@ a value proving access: a token looked up by hash, a realm the webhook verified.
 [row-level-security.md](../row-level-security.md). A use that exists for a sweep or at startup takes
 no input from a caller; keep it that way.
 
+## Background work has a tenant's own actor
+
+Work that acts for nobody is written under the system actor of the business unit it works in
+(`UserRepository.SystemActorID(ctx, businessUnitID)`), never an install-wide user found by name:
+on a shared server that user would be one tenant's row named by every other tenant's records. A
+sweep over many tenants resolves the actor per tenant inside its loop. Nothing a person can set (a
+username, an address) ever decides who the system actor is; reserved names are refused in one
+place (`tenant.IsReservedUsername`, `IsReservedEmailAddress`).
+
+## An id from input is the caller's to prove
+
+A foreign key checks that a row exists, not that it is the caller's: row-level security does not
+apply to it. An id that arrives in a request, a tool call, an import or an EDI mapping is looked up
+in the caller's tenant before it is written (a validator `WithReferenceCheck`, or a scoped
+`GetByID`, as `assignmentservice.ensureParties` does), or the row would name two tenants. The
+removal purge refuses to touch such a row and the nightly archive names it.
+
+## Object keys come from the registry
+
+Every object a tenant writes is under one of its families in `kernel/domain/objectkey`, so the
+removal and the archive find all of it; `TestEveryObjectKeyIsBuiltByTheRegistry` fails on a key
+built in place. A key that arrives from outside (an archive manifest) is accepted only under the
+tenant's own prefixes (`objectkey.Rebase`).
+
 ## An archive carries one tenant and no install secret
 
 A tenant archive (`internal/cloud`, [shared-tenancy.md](../shared-tenancy.md#the-tenant-archive))

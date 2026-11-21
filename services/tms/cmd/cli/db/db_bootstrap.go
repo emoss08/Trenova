@@ -350,9 +350,8 @@ func newInstanceBootstrapService(
 			DB:     deps.conn,
 			Logger: deps.logger,
 		}),
-		Auditor:      auditor,
-		SystemConfig: &deps.cfg.System,
-		Logger:       deps.logger,
+		Auditor: auditor,
+		Logger:  deps.logger,
 	})
 }
 
@@ -512,8 +511,5 @@ func printBootstrapCreated(
 			"Sign in at %s with that email address and password.\n",
 			appCfg.GetWebBaseURL(),
 		)
-	}
-	if result.SystemUserCreated {
-		fmt.Fprintln(out, "  Also created the system account background work runs as.")
 	}
 }

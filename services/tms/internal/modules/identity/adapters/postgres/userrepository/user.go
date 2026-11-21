@@ -2,6 +2,7 @@ package userrepository
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/supportaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -34,7 +36,7 @@ const (
 	membershipScopeReason     = "read the memberships row-level security shows a person: their own in every organization and everyone's in the organization they are working in"
 	emailScopeReason          = "resolve a sign-in email before any tenant is known"
 	loginScopeReason          = "load the user an identity provider subject is linked to before a session exists"
-	systemUserScopeReason     = "resolve the instance system user, which belongs to the default organization, as the actor for any tenant"
+	systemActorScopeReason    = "resolve the system actor of the one business unit the caller names, before or outside that tenant's transaction"
 	listMembershipsReason     = "list a user's memberships across the organizations of one business unit"
 	replaceMembershipsReason  = "replace a user's memberships across the organizations of one business unit in one transaction"
 	membershipLockTimeout     = 250 * time.Millisecond
@@ -42,7 +44,12 @@ const (
 	organizationsOutsideScope = "organizations must belong to the current business unit"
 )
 
-var userErrors = dberror.Mapping{Entity: "User"}
+var (
+	userErrors                = dberror.Mapping{Entity: "User"}
+	ErrSystemActorNeedsTenant = errors.New(
+		"the system actor is resolved for one business unit, and none was given",
+	)
+)
 
 type Params struct {
 	fx.In
@@ -69,11 +76,11 @@ func New(p Params) tenantports.UserRepository {
 	}
 }
 
-func tenantUsers(orgID pulid.ID) keel.Query[*tenant.User] {
+func tenantUsers(ctx context.Context, orgID pulid.ID) keel.Query[*tenant.User] {
 	u := tenantdb.Users
 	return u.Where(
 		u.CurrentOrganizationID.Eq(orgID),
-		u.Username.Ne(tenant.SystemUsername),
+		tenantbootstrap.NotSystemActor(ctx),
 		keel.Not(u.ID.Text().HasPrefix(supportaccess.PrincipalIDPrefix)),
 	)
 }
@@ -174,7 +181,7 @@ func (ur *repository) List(
 			return listquery.List(
 				ctx,
 				ur.db.Keel(ctx),
-				tenantUsers(req.Filter.TenantInfo.OrgID),
+				tenantUsers(ctx, req.Filter.TenantInfo.OrgID),
 				&listquery.Request[tenant.User]{
 					Filter: req.Filter,
 					Shape: func(q keel.Query[*tenant.User]) keel.Query[*tenant.User] {
@@ -210,7 +217,7 @@ func (ur *repository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				ur.db.Keel(ctx),
-				tenantUsers(req.Filter.TenantInfo.OrgID),
+				tenantUsers(ctx, req.Filter.TenantInfo.OrgID),
 				&listquery.Request[tenant.User]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
@@ -269,7 +276,7 @@ func (ur *repository) SelectOptions(
 		ur.db,
 		func(ctx context.Context) (*pagination.ListResult[*tenant.User], error) {
 			u := tenantdb.Users
-			q := tenantUsers(req.TenantInfo.OrgID).
+			q := tenantUsers(ctx, req.TenantInfo.OrgID).
 				Pick(
 					u.ID,
 					u.Name,
@@ -304,7 +311,10 @@ func (ur *repository) FindByEmail(ctx context.Context, emailAddress string) (*te
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
 		u := tenantdb.Users
 		user, err := u.AllTenants().
-			Where(u.EmailAddress.Lower().Eq(strings.ToLower(emailAddress))).
+			Where(
+				u.EmailAddress.Lower().Eq(strings.ToLower(emailAddress)),
+				tenantbootstrap.NotSystemActor(ctx),
+			).
 			One(ctx, ur.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
@@ -326,7 +336,9 @@ func (ur *repository) FindByIDForLogin(ctx context.Context, userID pulid.ID) (*t
 	ctx = dbscope.WithSystem(ctx, loginScopeReason)
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
 		u := tenantdb.Users
-		user, err := u.AllTenants().Where(u.ID.Eq(userID)).One(ctx, ur.db.Keel(ctx))
+		user, err := u.AllTenants().
+			Where(u.ID.Eq(userID), tenantbootstrap.NotSystemActor(ctx)).
+			One(ctx, ur.db.Keel(ctx))
 		if err != nil {
 			return nil, userErrors.Map(err, userID.String())
 		}
@@ -752,22 +764,31 @@ func (ur *repository) BulkUpdateStatus(
 	})
 }
 
-func (ur *repository) GetSystemUser(ctx context.Context, columns ...string) (*tenant.User, error) {
-	ctx = dbscope.WithSystem(ctx, systemUserScopeReason)
-	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
-		u := tenantdb.Users
-		q, err := listquery.Pick(u.AllTenants(), columns)
-		if err != nil {
-			return nil, err
-		}
+func (ur *repository) SystemActorID(
+	ctx context.Context,
+	businessUnitID pulid.ID,
+) (pulid.ID, error) {
+	if businessUnitID.IsNil() {
+		return pulid.Nil, ErrSystemActorNeedsTenant
+	}
 
-		user, err := q.Where(u.Username.Lower().Eq(strings.ToLower(tenant.SystemUsername))).
+	ctx = dbscope.WithSystem(ctx, systemActorScopeReason)
+	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (pulid.ID, error) {
+		sa := tenantdb.SystemActors
+		actor, err := sa.AllTenants().
+			Pick(sa.UserID).
+			Where(sa.BusinessUnitID.Eq(businessUnitID)).
 			One(ctx, ur.db.Keel(ctx))
 		if err != nil {
-			return nil, userErrors.Map(err, tenant.SystemUsername)
+			return pulid.Nil, dberror.Mapping{
+				Entity: "System actor",
+			}.Map(
+				err,
+				businessUnitID.String(),
+			)
 		}
 
-		return user, nil
+		return actor.UserID, nil
 	})
 }
 

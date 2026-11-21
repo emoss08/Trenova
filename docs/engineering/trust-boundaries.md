@@ -52,7 +52,8 @@ is the only thing that narrows the query.
 |---|---|---|
 | Customer shipment tracking, carrier tracking | a token looked up by its hash | Customer tracking (the invalid-link error) |
 | Tender offer, rate confirmation | a token looked up by its hash | Carrier brokerage (the invalid-link error) |
-| Invoice share, password reset, Capture pairing | a token looked up by its hash | base |
+| Invoice share | a token looked up by its hash, then the token's tenant bound | Billing, asked for that tenant: a suspended organization or one with no plan has no features, base included (the unknown-link not-found, the same message for an unknown, expired or revoked link) |
+| Password reset, Capture pairing | a token looked up by its hash | base (a reset answers alike for every address; a paired device's every call goes through the suspension guard) |
 | Driver portal invitation | a token looked up by its hash | Driver portal (`PLAN_RESTRICTED`) |
 | Telematics webhooks | the provider's signature, then a realm or account the tenant verified | Samsara (401, as for an unknown token) |
 | Accounting webhooks | the provider's signature, then a realm the tenant verified | Accounting (200, as for an unknown realm: acknowledged and dropped) |
@@ -65,8 +66,24 @@ is the only thing that narrows the query.
 | Trenova support entry (`POST /api/v1/support/enter`) | the control plane's signature with a key the operator (or, on a shared server, the tenant agent) delivered, this instance as audience (on a shared server: an active tenant's instance whose organization is the assertion's `org`, checked after the replay ledger), at most a minute's life, an assertion id never used before, then the one live grant for that staff address and organization: one lookup under the system scope, then the grant's tenant. Every refusal looks the same to the caller, and the browser provenance guard lets this one path through because it carries no cookie | not a plan feature: managed mode only, unrouted (404) when `managed.enabled` is off |
 
 Each route group names its feature where it is registered, through `middleware.FeatureGuard`
-([backend/api.md](backend/api.md)); `TestEveryRouteWithoutASessionDeclaresItsFeature` keeps
-this table honest. The signed-in driver app (`/portal/` and the `My…` roots) needs the Driver
+([backend/api.md](backend/api.md)), or checks it at the service entry once the request names its
+tenant; `TestEveryRouteWithoutASessionDeclaresItsFeature` keeps this table honest and refuses a way
+in excused as "a base feature": a way in that resolves a tenant asks that tenant's plan, because a
+suspended tenant has none. Presigned object URLs are minted only for signed-in sessions behind
+the suspension guard and last `storage.presignedUrlExpiry` (15 minutes by default; exports and
+report downloads 60 seconds), so a suspension ends every session at once and leaves at most that
+window on links handed out before it.
+
+**What a shared server's identity model reveals.** Email addresses and usernames are unique across
+the server, because sign-in finds a person before it knows their company. Creating a person, a
+SCIM or SSO account, a driver portal account or a tenant with an address or username somebody on
+the server holds is refused with the same status (400) and the same generic wording as any other
+unusable value, never naming the holder, and reserved names answer exactly like taken ones. What
+cannot be hidden is that the value is unusable: a tenant administrator can learn that someone
+somewhere on the server holds an address. Each organization may make at most 300 such checks an
+hour (burst 60, `userservice.identityProbePolicy`, through the shared rate limiter), which bounds
+probing to a few thousand addresses a day; the model would have to change (per-tenant identities)
+to remove it, and that is not planned. The signed-in driver app (`/portal/` and the `My…` roots) needs the Driver
 portal feature too: the guard on its REST group and `driverportalservice.ResolveWorker` answer
 `PLAN_RESTRICTED`.
 

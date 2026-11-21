@@ -230,7 +230,7 @@ func importArchive(
 	}
 	report(StateImporting, "")
 
-	engine, err := newEngine(conn, deps)
+	engine, err := newEngine(conn, deps, access.Location.Endpoint)
 	if err != nil {
 		return err
 	}
@@ -329,7 +329,11 @@ func emptyInstall(ctx context.Context, db *keel.DB) (bool, error) {
 	return !held, nil
 }
 
-func newEngine(conn *postgres.Connection, deps *Deps) (*archiveengine.Engine, error) {
+func newEngine(
+	conn *postgres.Connection,
+	deps *Deps,
+	endpoint string,
+) (*archiveengine.Engine, error) {
 	cfg := deps.Config
 	storage, err := minio.New(minio.Params{StorageConfig: &cfg.Storage, Logger: deps.Logger})
 	if err != nil {
@@ -339,13 +343,15 @@ func newEngine(conn *postgres.Connection, deps *Deps) (*archiveengine.Engine, er
 		Rows: tenantcopyrepository.New(tenantcopyrepository.Params{
 			DB: conn, App: &cfg.App, Database: &cfg.Database, AIAudit: &cfg.AIAudit,
 		}),
-		Buckets:   archivebucket.New(),
+		Buckets: archivebucket.ForConfiguredEndpoint(archivebucket.ConfiguredEndpoint{
+			Endpoint:    endpoint,
+			Development: cfg.App.IsDevelopment() || cfg.App.IsTest(),
+		}),
 		Storage:   storage,
 		Secrets:   deps.Secrets,
 		Blobs:     deps.Blobs,
 		Envelopes: deps.Envelopes,
 		App:       &cfg.App,
-		Reporting: &cfg.Reporting,
 		Clock:     func() int64 { return time.Now().Unix() },
 		Logger:    deps.Logger,
 	}), nil
@@ -381,12 +387,11 @@ func finalize(
 		AdminEmail:       strings.ToLower(people[0].Email),
 	}
 	if err = deps.Finalize(ctx, conn, &instancebootstrapports.FinalizeInstanceBootstrapRequest{
-		OrganizationID:     result.Tenant.OrganizationID,
-		BusinessUnitID:     result.Tenant.BusinessUnitID,
-		AdminUserID:        result.Owner,
-		Inputs:             inputs.Normalize(),
-		SystemUserPassword: deps.Config.System.SystemUserPassword,
-		Now:                time.Now().Unix(),
+		OrganizationID: result.Tenant.OrganizationID,
+		BusinessUnitID: result.Tenant.BusinessUnitID,
+		AdminUserID:    result.Owner,
+		Inputs:         inputs.Normalize(),
+		Now:            time.Now().Unix(),
 	}); err != nil {
 		return fmt.Errorf("record the instance as set up from the archive: %w", err)
 	}

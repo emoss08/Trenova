@@ -198,14 +198,14 @@ func (s *Service) systemActor(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) (*permissionports.RequestActor, error) {
-	user, err := s.users.GetSystemUser(ctx, "id")
+	user, err := s.users.SystemActorID(ctx, tenant.BuID)
 	if err != nil {
 		return nil, err
 	}
 	return &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeSystem,
-		PrincipalID:    user.ID,
-		UserID:         user.ID,
+		PrincipalID:    user,
+		UserID:         user,
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 	}, nil

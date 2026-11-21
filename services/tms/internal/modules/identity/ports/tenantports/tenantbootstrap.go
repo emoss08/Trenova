@@ -22,6 +22,7 @@ type BootstrapTenantResult struct {
 	Organization *tenant.Organization
 	Owner        *tenant.User
 	AdminRoleID  pulid.ID
+	SystemActor  pulid.ID
 }
 
 type TenantBootstrapRepository interface {

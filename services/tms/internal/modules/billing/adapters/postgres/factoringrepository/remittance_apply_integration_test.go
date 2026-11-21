@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringremittanceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
@@ -63,6 +65,7 @@ func TestRemittanceAppliesThroughTheLedgerInOneTransaction(t *testing.T) {
 	}
 	svc := factoringremittanceservice.NewRemittanceService(
 		factoringremittanceservice.RemittanceParams{
+			Slots:       heavyslotstest.Unbounded(),
 			DB:          conn,
 			Remittances: remittances,
 			Submissions: e.submissions,

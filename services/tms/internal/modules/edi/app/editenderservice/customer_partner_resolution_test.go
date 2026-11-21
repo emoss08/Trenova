@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -55,8 +54,8 @@ func tenderableShipments(t *testing.T) *editendershipment.Service {
 	t.Helper()
 	users := tenantportsmock.NewMockUserRepository(t)
 	users.EXPECT().
-		GetSystemUser(mock.Anything, mock.Anything).
-		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+		SystemActorID(mock.Anything, mock.Anything).
+		Return(pulid.MustNew("usr_"), nil).
 		Maybe()
 	comments := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	comments.EXPECT().

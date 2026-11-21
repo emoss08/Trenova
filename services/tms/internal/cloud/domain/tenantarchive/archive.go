@@ -99,7 +99,9 @@ func (l *Location) Check(instanceID string) error {
 
 func (l *Location) CheckUnder(root string) error {
 	if strings.TrimSpace(l.Endpoint) == "" || len(l.Endpoint) > maxEndpointLength ||
-		strings.ContainsAny(l.Endpoint, " \t\r\n") || len(l.Region) > maxRegionLength ||
+		strings.ContainsAny(l.Endpoint, " \t\r\n@?#") ||
+		strings.HasPrefix(strings.ToLower(strings.TrimSpace(l.Endpoint)), "http://") ||
+		len(l.Region) > maxRegionLength ||
 		!bucketPattern.MatchString(l.Bucket) || len(l.Bucket) > maxBucketLength {
 		return ErrLocationInvalid
 	}

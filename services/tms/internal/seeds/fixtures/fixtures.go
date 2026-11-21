@@ -229,7 +229,7 @@ var OutboundChannels = Seeds.Add(seed.Seed{
 var SystemAccount = Seeds.Add(seed.Seed{
 	Name:        "system_account",
 	Kind:        seed.Fixture,
-	Description: "The system user background work runs as, with the configured password",
+	Description: "The business unit's system actor background work is written under",
 	After:       []*seed.Seed{AdminAccount},
 	Run:         tenantfixtures.RunSystemAccount,
 })

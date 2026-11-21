@@ -845,14 +845,14 @@ func (a *Activities) unattendedActor(
 	tenant pagination.TenantInfo,
 	definition *agentdefinition.Definition,
 ) (*permissionports.RequestActor, error) {
-	system, err := a.users.GetSystemUser(ctx, "id")
+	system, err := a.users.SystemActorID(ctx, tenant.BuID)
 	if err != nil {
 		return nil, temporaltype.NewRetryableError("Failed to get system user", err).
 			ToTemporalError()
 	}
 
 	actor := agentActorFor(tenant, definition)
-	actor.UserID = system.ID
+	actor.UserID = system
 
 	return actor, nil
 }

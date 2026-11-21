@@ -123,10 +123,7 @@ func (r *exportRun) tables(ctx context.Context) error {
 	if len(outside) > 0 {
 		names := make([]string, 0, len(outside))
 		for _, d := range outside {
-			names = append(
-				names,
-				fmt.Sprintf("%s (%d rows through %s)", d.Table, d.Rows, d.Constraint),
-			)
+			names = append(names, fmt.Sprintf("%s.%s (%d rows)", d.Table, d.Columns, d.Rows))
 		}
 		return tenantarchive.Refuse(
 			tenantarchive.RefusalTenant,

@@ -415,6 +415,7 @@ func (r *portalAccessRepository) ensureEmailAvailable(ctx context.Context, email
 	if err != nil {
 		return fmt.Errorf("check portal user email: %w", err)
 	}
+	exists = exists || tenant.IsReservedEmailAddress(email)
 	if exists && r.shared {
 		return errortypes.NewValidationError(
 			"email",
@@ -436,6 +437,9 @@ func (r *portalAccessRepository) usernameTaken(
 	ctx context.Context,
 	candidate string,
 ) (bool, error) {
+	if tenant.IsReservedUsername(candidate) {
+		return true, nil
+	}
 	ctx = dbscope.WithSystem(ctx, usernameTakenScopeReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		u := tenantdb.Users

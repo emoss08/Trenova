@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
 	"github.com/emoss08/trenova/internal/cloud/jobs/tenantjobs/tenantjobscontract"
 	"github.com/emoss08/trenova/internal/cloud/ports/cloudtenantports"
-	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -25,7 +25,16 @@ const (
 	errorNotRemoving    = "CloudTenantNotRemoving"
 	errorRowsRemain     = "CloudTenantRowsRemain"
 	errorNoPrefixDelete = "CloudTenantStorageCannotDeletePrefix"
+	errorCrossTenant    = "CloudTenantCrossTenantReference"
 )
+
+func refuseCrossTenant[T any](out T, err error) (T, error) {
+	var cross *cloudtenantports.CrossTenantReferencesError
+	if errors.As(err, &cross) {
+		return out, temporal.NewNonRetryableApplicationError(cross.Error(), errorCrossTenant, err)
+	}
+	return out, err
+}
 
 type ActivitiesParams struct {
 	fx.In
@@ -35,7 +44,6 @@ type ActivitiesParams struct {
 	Keys      cloudtenantports.KeyPurge
 	Search    cloudtenantports.SearchPurge
 	Storage   kernelports.Client
-	Reporting *reportingconfig.Config
 	Slots     kernelports.HeavyJobSlots
 	Logger    *zap.Logger
 }
@@ -46,7 +54,6 @@ type Activities struct {
 	keys      cloudtenantports.KeyPurge
 	search    cloudtenantports.SearchPurge
 	storage   kernelports.Client
-	reporting *reportingconfig.Config
 	slots     kernelports.HeavyJobSlots
 	l         *zap.Logger
 }
@@ -59,7 +66,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		keys:      p.Keys,
 		search:    p.Search,
 		storage:   p.Storage,
-		reporting: p.Reporting,
 		slots:     p.Slots,
 		l:         p.Logger.Named("cloud.tenant-jobs"),
 	}
@@ -117,12 +123,12 @@ func (a *Activities) PurgeRowsActivity(
 	defer release()
 	beat := heartbeat(ctx)
 	beat()
-	return a.purge.PurgeRows(ctx, &cloudtenantports.PurgeRowsRequest{
+	return refuseCrossTenant(a.purge.PurgeRows(ctx, &cloudtenantports.PurgeRowsRequest{
 		Tenant:     payload.Tenant(),
 		BatchSize:  purgeBatchSize,
 		MaxBatches: purgeMaxBatches,
 		Beat:       beat,
-	})
+	}))
 }
 
 func (a *Activities) holdSlot(ctx context.Context) (func(), error) {
@@ -142,14 +148,14 @@ func (a *Activities) DeleteOrganizationActivity(
 		return nil, err
 	}
 	defer release()
-	return a.purge.DeleteOrganization(ctx, payload.Tenant())
+	return refuseCrossTenant(a.purge.DeleteOrganization(ctx, payload.Tenant()))
 }
 
 func (a *Activities) DeleteBusinessUnitActivity(
 	ctx context.Context,
 	payload *tenantjobscontract.TenantPayload,
 ) (*cloudtenantports.DeleteResult, error) {
-	return a.purge.DeleteBusinessUnit(ctx, payload.Tenant())
+	return refuseCrossTenant(a.purge.DeleteBusinessUnit(ctx, payload.Tenant()))
 }
 
 type StoresResult struct {
@@ -194,7 +200,7 @@ func (a *Activities) PurgeStoresActivity(
 		payload.OrganizationID.String(),
 		payload.BusinessUnitID.String(),
 	} {
-		n, kerr := a.keys.DeleteMatching(ctx, fragment)
+		n, kerr := a.keys.DeleteMatching(ctx, fragment, heartbeat(ctx))
 		if kerr != nil {
 			return nil, fmt.Errorf("delete the tenant's cache keys: %w", kerr)
 		}
@@ -204,12 +210,7 @@ func (a *Activities) PurgeStoresActivity(
 }
 
 func (a *Activities) prefixes(payload *tenantjobscontract.TenantPayload) []string {
-	org := payload.OrganizationID.String() + "/"
-	prefixes := []string{org}
-	if artifacts := strings.Trim(a.reporting.GetArtifactPrefix(), "/"); artifacts != "" {
-		prefixes = append(prefixes, artifacts+"/"+org)
-	}
-	return prefixes
+	return objectkey.Prefixes(payload.OrganizationID)
 }
 
 func (a *Activities) VerifyRemovedActivity(

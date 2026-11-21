@@ -28,7 +28,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
@@ -45,7 +44,6 @@ type Config struct {
 	Logging             loggingconfig.Config             `mapstructure:"logging"             validate:"required"`
 	Temporal            temporalconfig.Config            `mapstructure:"temporal"            validate:"required"`
 	Storage             storageconfig.Config             `mapstructure:"storage"             validate:"required"`
-	System              systemconfig.Config              `mapstructure:"system"              validate:"required"`
 	Realtime            realtimeconfig.Config            `mapstructure:"realtime"`
 	Search              searchconfig.Config              `mapstructure:"search"`
 	AI                  aiconfig.Config                  `mapstructure:"ai"`

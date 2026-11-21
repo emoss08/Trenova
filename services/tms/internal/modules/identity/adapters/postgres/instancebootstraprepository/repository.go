@@ -7,10 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap/instancebootstrapdb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -66,7 +64,7 @@ func (r *repository) GetState(
 
 			u := tenantdb.Users
 			count, err := u.AllTenants().
-				Where(u.Username.Lower().Ne(tenant.SystemUsername)).
+				Where(tenantbootstrap.NotSystemActor(ctx)).
 				Count(ctx, db)
 			if err != nil {
 				return nil, fmt.Errorf("count users: %w", err)
@@ -105,21 +103,6 @@ func (r *repository) Finalize(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*instancebootstrapports.FinalizeInstanceBootstrapResult, error) {
-			scope := tenantscope.Scope{
-				OrganizationID: req.OrganizationID,
-				BusinessUnitID: req.BusinessUnitID,
-				Now:            req.Now,
-			}
-
-			systemUserID, created, err := tenantbootstrap.EnsureSystemUser(
-				ctx,
-				r.db.Keel(ctx),
-				tenantbootstrap.SystemUserParams{Scope: scope, Password: req.SystemUserPassword},
-			)
-			if err != nil {
-				return nil, err
-			}
-
 			record := &instancebootstrap.InstanceBootstrap{
 				BusinessUnitID: req.BusinessUnitID,
 				OrganizationID: req.OrganizationID,
@@ -128,7 +111,7 @@ func (r *repository) Finalize(
 				CompletedAt:    req.Now,
 				CreatedAt:      req.Now,
 			}
-			if err = instancebootstrapdb.InstanceBootstraps.Create(
+			if err := instancebootstrapdb.InstanceBootstraps.Create(
 				ctx,
 				r.db.Keel(ctx),
 				record,
@@ -137,11 +120,7 @@ func (r *repository) Finalize(
 				return nil, fmt.Errorf("record instance bootstrap: %w", err)
 			}
 
-			return &instancebootstrapports.FinalizeInstanceBootstrapResult{
-				Record:            record,
-				SystemUserID:      systemUserID,
-				SystemUserCreated: created,
-			}, nil
+			return &instancebootstrapports.FinalizeInstanceBootstrapResult{Record: record}, nil
 		},
 	)
 }

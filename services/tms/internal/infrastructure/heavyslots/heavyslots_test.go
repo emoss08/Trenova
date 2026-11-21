@@ -2,6 +2,7 @@ package heavyslots_test
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -175,4 +176,40 @@ func TestTryHold_SkipsWhenNoSlotIsFree(t *testing.T) {
 	again, ok := gate.TryHold(ctx, kernelports.HeavyJobPDF)
 	assert.True(t, ok, "releasing twice frees one slot, once")
 	again()
+}
+
+type unreachableStore struct{}
+
+func (unreachableStore) Acquire(context.Context, slotstore.Claim) (bool, error) {
+	return false, errors.New("redis: connection refused")
+}
+
+func (unreachableStore) Refresh(context.Context, slotstore.Claim) (bool, error) {
+	return false, errors.New("redis: connection refused")
+}
+
+func (unreachableStore) Release(context.Context, slotstore.Claim) error {
+	return errors.New("redis: connection refused")
+}
+
+func TestHold_WithoutRedisStillBoundsEachOrganizationInThisProcess(t *testing.T) {
+	gate := heavyslots.NewGate(unreachableStore{}, limits(), true, nil, zap.NewNop())
+	busy := tenantCtx(t, pulid.MustNew("org_"))
+
+	first, err := gate.Hold(busy, kernelports.HeavyJobPDF)
+	require.NoError(t, err)
+	_, err = gate.Hold(busy, kernelports.HeavyJobPDF)
+	require.Error(t, err, "one organization holds its one slot even while Redis is down")
+	assert.True(t, errortypes.IsRateLimitError(err))
+
+	other, err := gate.Hold(tenantCtx(t, pulid.MustNew("org_")), kernelports.HeavyJobPDF)
+	require.NoError(t, err, "another organization still gets its own")
+	_, ok := gate.TryHold(tenantCtx(t, pulid.MustNew("org_")), kernelports.HeavyJobPDF)
+	assert.False(t, ok, "the instance bound of two holds in this process too")
+
+	first()
+	again, err := gate.Hold(busy, kernelports.HeavyJobPDF)
+	require.NoError(t, err, "a released local slot is free again")
+	again()
+	other()
 }

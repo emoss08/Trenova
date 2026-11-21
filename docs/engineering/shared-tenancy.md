@@ -322,8 +322,8 @@ lapses:
 |---|---|---|---|
 | `pdf` | 2 | 4 | `gotenberg.Client.Render` (every PDF the renderer draws) |
 | `extraction` | 1 | 1 | document conversion in `documentextractionjobs` |
-| `export` | 1 | 4 | report runs, audit exports, AI audit exports |
-| `import` | 1 | 4 | rate sheet upload, fuel card statement staging |
+| `export` | 1 | 4 | report runs, audit exports, AI audit exports, dashboard spreadsheet exports |
+| `import` | 1 | 4 | rate sheet upload, fuel card statement staging, factoring remittance staging |
 | `preview` | 1 | 4 | invoice packet page previews; warming ahead takes only a free slot |
 | `removal` | 1 | 1 | a removed shared-server tenant's batched deletes, cascade and store deletes (`tenantjobs`) |
 | `archive` | 1 | 2 | a tenant archive's export, nightly archive, restore load or import (`archivejobs`) |
@@ -349,7 +349,10 @@ a provider an organization owns has its own bound only.
 `slotstore.Store` is the one Redis slot mechanism: a sorted set per bound scored by lapse time,
 claimed in every bound or none by one script. Provider slots and heavy-job slots both use it; a
 new bounded resource claims from it rather than adding another. When Redis cannot be reached a
-heavy job runs without a slot rather than failing every job.
+heavy job holds a slot of its own process under the same bounds (per organization and the
+instance total, counted per replica), so an outage neither fails every job nor lets one tenant
+take the server. The request limit and the GraphQL cost budget fall back the same way, to the
+in-process limiter (`security.rateLimit.failureMode: local`, the default).
 
 ## Tenant lifecycle (`internal/cloud`)
 
@@ -410,9 +413,10 @@ so two concurrent applies of the same tenant serialise and the second finds the 
   can be applied clears it.
 - **First time**: in the same transaction, `tenantbootstraprepository.Bootstrap` makes the business
   unit, organization (placeholders the organization setup gate asks the administrator to finish,
-  exactly as the dedicated bootstrap does: `instancebootstrap.Inputs.Organization`), the first
-  administrator with an unusable password (`Inputs.Administrator`), the Organization Administrator
-  role and its grant, and the reference data. The organization quota is admitted under the new
+  exactly as the dedicated bootstrap does: `instancebootstrap.Inputs.Organization`), the business
+  unit's system actor (see below), the first administrator with an unusable password
+  (`Inputs.Administrator`), the Organization Administrator role and its grant, and the reference
+  data. The organization quota is admitted under the new
   organization's own scope (its ids are chosen before the insert), not the server's. The singleton
   `instance_bootstraps` record is never written on a shared server.
 - **Every applied revision** writes the scope's plan through `managedfeaturesports.Writer`
@@ -443,6 +447,24 @@ so two concurrent applies of the same tenant serialise and the second finds the 
   `CloudTenantRemovalWorkflow` (`cloud-tenant-removal/<instance>`, reuse policy "allow duplicate
   failed only") starts; every later apply of a removing tenant starts it again, which is a no-op
   while it runs. `Service.Remove` is the same step for the archive work to call.
+
+**The system actor.** Background work that acts for nobody in particular (automatic transfers,
+period close, EDI comments, unattended agents, statements and reminders, the journal repair) is
+written under the system actor of the business unit it works in:
+`UserRepository.SystemActorID(ctx, businessUnitID)`, one primary-key read of `system_actors`
+(business unit → users row), which fails with no business unit rather than answering for the
+server. The row is made by `tenantbootstrap.EnsureSystemActor` inside `tenantbootstrap.Bootstrap`
+for every tenant, dedicated and shared alike, and is chosen by that table, never by a username a
+person can pick. It has an unusable password, a username `system-<13 characters of the business
+unit id>` and an address under `system.trenova.invalid`; `FindByEmail` and `FindByIDForLogin` (every
+sign-in, SSO link, MFA, invite and password reset lookup), the SCIM email lookup, people lists and
+the instance bootstrap's user count leave it out (`tenantbootstrap.NotSystemActor`), it holds no
+membership or role and is not a seat. `system_actors` is append-only for the tenant role.
+Reserved usernames and addresses (`tenant.IsReservedUsername`, `tenant.IsReservedEmailAddress`:
+`system`, `trenova`, `support`, `root`, the system actor and support principal shapes, any address
+under `.invalid`, whatever the letter case) are refused for a person by `FindIdentityConflicts`
+(the user validator, SCIM, SSO and the driver portal) and skipped by every username generator, so
+a first administrator whose address is `system@…` becomes `system-2`.
 
 Every lifecycle change is audited through `permissionports.SecurityAuditor` after the transaction
 commits (`user.created`, `role.created`, `role.assigned` when the tenant is made;
@@ -475,7 +497,7 @@ removals never delete at once; the purge heartbeats after every batch.
 | Append-only audit rows (`audit_entries`, the AI audit ledger) | their triggers refuse a direct delete (insufficient privilege, raise or integrity error) | left to the organization's `ON DELETE CASCADE`, which `audit_entries`' trigger allows from inside another trigger; a table whose rows survive the cascade fails the verification below rather than being skipped |
 | The scope's managed state | `scope_key` = the organization id | `managed_feature_states`, `managed_feature_changes`, `managed_usage_states` rows deleted with the organization |
 | The organization, then the business unit | by id | deleted once nothing restricts them |
-| Documents and other objects | key prefix `<organization id>/` (documents, thumbnails, renders, extraction output, message files) and `<reporting.artifactPrefix>/<organization id>/` (report runs) | `kernelports.PrefixDeleter.DeletePrefix` |
+| Documents and other objects | every family of the object key registry (`kernel/domain/objectkey`): `<organization id>/` (documents, thumbnails, renders, extraction output, message files, avatars, logos, email attachments), `reports/<organization id>/` (report runs), `capture/<organization id>/` (captured pages), `audit-exports/<organization id>/` and `ai-audit-exports/<organization id>/` | `kernelports.PrefixDeleter.DeletePrefix` over `objectkey.Prefixes` |
 | Search documents | every Meilisearch index whose filterable attributes include `organization_id` | `DeleteDocumentsByFilter organization_id = "<id>"` (GTC also deletes them as the rows go) |
 | Redis keys | `SCAN MATCH *<organization id>*` and `*<business unit id>*` (the GTC entity caches `cache:<entity>:<org>:<bu>:<id>` and `cache:organization:<org>`, and any other key that names the tenant) | `UNLINK`; pulids are unique, so no other tenant's key matches; sessions are keyed by session and user and are ended in the first step |
 | Temporal | per-record schedules (agents, conversation schedules, quality runs) | their modules' hourly reconcilers remove a schedule whose record is gone; work already started for the tenant fails to find its rows, and the entitlement backstop refuses scheduled activities of a tenant with no plan |
@@ -485,8 +507,25 @@ removals never delete at once; the purge heartbeats after every batch.
 `edi_load_tender_transfers` source and target, `edi_partners.internal_organization_id`,
 `edi_tender_recipients.recipient_organization_id`, `edi_tender_changes.source_organization_id`,
 `users.current_organization_id`, and `user_organization_memberships` with its user) is held to the
-row's own business unit by a composite foreign key, a check or a trigger (migration
-`20261231023600`). A shared server gives every tenant its own business unit, so in-network EDI and
+row's own business unit by a composite foreign key to `organizations(id, business_unit_id)` or a
+check that names both (migration `20261231023600`; `users.current_organization_id` by
+`20261231023720`, `ON DELETE NO ACTION`, so an organization still somebody's current one is never
+deleted and never takes a user with it). The catalog test in
+`internal/cloud/boundaries_integration_test.go` accepts nothing weaker.
+
+**Nothing of another tenant is touched.** A foreign key that names a record by id alone is not held
+to the row's tenant (foreign-key checks ignore row-level security), so a write path that took
+another tenant's id without looking it up would leave a row that names two tenants. Before it
+deletes anything, and again before the organization's and business unit's cascades, the purge
+counts, for every foreign key from a tenant table to a table of the tenant (and to
+`organizations` and `business_units`) whose columns do not carry the tenant, the child rows of
+another business unit that refer to a row of the removed tenant (one batched statement per 40
+keys, the parent's tenant index first). Any count above zero stops the removal, the restore's
+purge included, with `CrossTenantReferencesError`: a non-retryable
+`CloudTenantCrossTenantReference` naming each table, column and count, never a row; nothing of
+either tenant was changed. The purge's own reference deletes and nulls carry the child row's
+business unit too. `internal/cloud/crosstenant_integration_test.go` plants such a reference in
+every key the schema allows and proves the removal changes nothing of either tenant. A shared server gives every tenant its own business unit, so in-network EDI and
 memberships connect organizations of one company and never two tenants: a removal deletes every
 row that names the tenant, and no other tenant has a row to keep or rewrite. The removal
 integration test runs on the full seeded company and checks every `*organization_id` column of
@@ -550,7 +589,9 @@ archive taken before a removal. The format is the control plane's `TenantArchive
 Under `tenants/<instanceId>/archives/<commandId>/` (commanded) or
 `tenants/<instanceId>/nightly/<YYYY-MM-DD>/` (nightly): one part per table,
 `tables/<NNNN>-<table>.copy.zst` in load order; one part per document, `documents/<the object's
-key>` (the key as stored, `<organizationId>/…` or `<reports prefix>/<organizationId>/…`); and
+key>` (the key as stored under a carried family of the object key registry: `<organizationId>/…`,
+`reports/<organizationId>/…` or `capture/<organizationId>/…`; expiring audit and AI audit exports
+are not carried, and neither are their rows); and
 `manifest.json`, written last. An archive without a manifest is incomplete. Nothing else is
 written under the prefix (never `export.tar`).
 
@@ -594,7 +635,12 @@ table whose tenant columns name its parties; both are held to one business unit)
 carries one business unit with exactly one organization; a unit holding another organization is
 refused. Because every reference to another organization carries the row's business unit (see
 "No row names two tenants" above), an archive never holds another tenant's row, and an import has
-no counterparty to find or clear.
+no counterparty to find or clear. A row that refers out of the tenant through a key that names a
+record by id alone refuses the export with reason `tenant`, naming each table, column and count;
+the nightly run records the refusal on its command and counts it in
+`trenova_tenancy_archive_refusals_total{purpose,code}`, so the nightly archive of every tenant is
+also the server-wide check that no row names two tenants, and a final or move archive refused this
+way leaves the tenant with no final archive, which blocks its removal.
 
 | Kind | Tables | How |
 |---|---|---|
@@ -603,7 +649,7 @@ no counterparty to find or clear.
 | Rebuilt by the rollup refresh | every table `keel_rollup_state` names | not carried; the loaded rows' triggers leave `keel_rollup_dirty` marks for the organization and the `rollup-refresh` schedule rebuilds them |
 | Rebuilt elsewhere | Meilisearch documents, Redis entity caches | GTC indexes the loaded rows from the WAL; a new tenant has no cache, and a restore's purge deletes the old keys |
 | Carried, refreshed later | AI embeddings and index entries | carried; the plan write after an import (`Replacement.Gained`) starts the organization's retrieval sweep |
-| Not carried | `instance_bootstraps`, `support_log_requests`, `support_access_grants`, `work_queue_items`, `password_reset_tokens`, `capture_pairings`, `document_upload_sessions`, `ai_analytics_refresh_state`, `watchtower_cursors` | install bookkeeping, sign-in links and in-flight work; each kind's sweep finds its work again from the records |
+| Not carried | `instance_bootstraps`, `support_log_requests`, `support_access_grants`, `work_queue_items`, `password_reset_tokens`, `capture_pairings`, `document_upload_sessions`, `ai_analytics_refresh_state`, `watchtower_cursors`, `audit_exports`, `ai_audit_exports` | install bookkeeping, sign-in links, in-flight work and downloads that expire within days; each kind's sweep finds its work again from the records, and an export is made again from the carried trail |
 | Not carried, global | `cloud_tenants`, `cloud_tenant_commands`, the scoped managed state (`managed_feature_states`, `managed_feature_changes`, `managed_usage_states`) | the destination's control plane entry writes the plan |
 
 **Documents' metadata.** Each object's stored `Content-Type` goes in its manifest entry
@@ -725,7 +771,13 @@ SHA-256, authentication, zstd, the binary row shape, the row count); the archive
 business unit are not on the server and no table holds rows of them; every primary key of a table
 whose key has no tenant column (`users`, `organizations`, …) is checked in batches of 1,000; every
 address and username is free (case-insensitive; the refusal names nobody); the login slug is free;
-every natural key resolves; every document part matches. Then the audit partitions the archive's
+every natural key resolves; every document's key is a clean key under one of the archive's
+organization's carried prefixes (`objectkey.Rebase`), and every document part matches. Each
+object is written to the key rebuilt from the tenant's own prefix and the archived suffix, and
+the keys written are tracked: a failed import deletes exactly those. A part may decompress to at
+most 1,024 times its stored size plus 64 MiB and never past 256 GiB
+(`archivestream.ErrExpandsTooFar`); the binary COPY reader checks every count and length before it
+reads and allocates a field only as the bytes arrive. Then the audit partitions the archive's
 audit trail needs are made (`audit_partitions.ensure_partitions` runs as its owner for the roles
 that bypass row-level security), the documents are written (sealed again where they were sealed),
 and the rows load in **one transaction**: parents first, each table's binary rows copied into a
@@ -789,6 +841,13 @@ exists.
 | `GET /managed/v1/tenants/{instanceId}/restores/{commandId}`, `…/imports/{commandId}` | | `200` the command |
 | `PUT /managed/v1/tenants/{instanceId}` | the entry, plus `importTarget` (`kind import`, `access read`) when its first entry carries an `import` command | as before |
 | `PUT /managed/v1/tenants/archive-storage` | `{endpoint, region, bucket, accessKeyId, secretAccessKey, sessionToken?, expiresAt?, archiveKeys}` | `200 {expiresAt}` |
+
+The target's endpoint must be an `https` URL or a bare host; the archive bucket adapter
+(`archivebucket`) refuses, with reason `location`, a host outside `managed.archive.allowedEndpoints`
+(a host, or a suffix such as `.r2.cloudflarestorage.com`; required on a shared server, empty on a
+dedicated instance means any public host) and any literal loopback, private, link-local or metadata
+address, and its dialer re-checks every resolved address (`httpsafe.DialControl`, no proxy), so a
+name that resolves inside the server is never reached. `trenova db import-archive` on a dedicated instance reads the backups bucket the operator configured (`--endpoint`, the chart's `backup.endpointURL`): that trusted endpoint is its whole allow-list (`archivebucket.ForConfiguredEndpoint`), it must be https, and private addresses are refused unless `app.env` is development or test.
 
 Every start is idempotent by command id (a repeat answers the same command; the id reused for
 another tenant or kind is `409`); `409` also answers a tenant whose state does not allow the

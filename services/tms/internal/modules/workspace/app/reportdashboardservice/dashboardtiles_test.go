@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
@@ -161,6 +163,7 @@ func tileTestService(
 		dashboardRepo: &stubDashboardRepo{dashboard: dashboard},
 		defRepo:       stored,
 		engine:        engine,
+		slots:         heavyslotstest.Unbounded(),
 	}
 }
 

@@ -32,15 +32,19 @@ func (a *Activities) AutomaticTransferSweepActivity(
 		return result, nil
 	}
 
-	system, err := a.users.GetSystemUser(ctx, "id")
-	if err != nil {
-		return nil, err
-	}
-
 	now := timeutils.NowUnix()
 	for _, control := range controls {
 		activity.RecordHeartbeat(ctx, control.OrganizationID.String())
 		result.Organizations++
+
+		system, systemErr := a.users.SystemActorID(ctx, control.BusinessUnitID)
+		if systemErr != nil {
+			result.Failed++
+			a.l.Error("failed to resolve the system actor for an automatic billing transfer",
+				zap.String("organizationId", control.OrganizationID.String()),
+				zap.Error(systemErr))
+			continue
+		}
 
 		tenantCtx := dbscope.WithTenant(ctx, dbscope.Tenant{
 			OrganizationID: control.OrganizationID,
@@ -50,7 +54,7 @@ func (a *Activities) AutomaticTransferSweepActivity(
 			tenantCtx,
 			&billingtransferservice.AutomaticRunRequest{
 				Control:      control,
-				SystemUserID: system.ID,
+				SystemUserID: system,
 				Now:          now,
 			},
 		)

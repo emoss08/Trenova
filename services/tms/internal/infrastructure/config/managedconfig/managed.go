@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -53,6 +54,16 @@ var (
 	ErrArchiveNightlyInvalid = errors.New(
 		"managed.archive.nightlyAt must be a UTC time of day as HH:MM",
 	)
+	ErrArchiveEndpointsRequired = errors.New(
+		"managed.archive.allowedEndpoints must name the object storage hosts a shared server may reach, such as .r2.cloudflarestorage.com",
+	)
+	ErrArchiveEndpointsInvalid = errors.New(
+		"managed.archive.allowedEndpoints must each be a host name, or a host suffix that starts with a dot",
+	)
+
+	archiveEndpointPattern = regexp.MustCompile(
+		`^\.?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`,
+	)
 	ErrSupportURLInvalid = fmt.Errorf(
 		"managed.supportUrl and managed.newSupportRequestUrl must each be empty or an http or https URL with a host, no user information, fragment or space, at most %d characters",
 		maxSupportURLLen,
@@ -80,10 +91,46 @@ type Config struct {
 }
 
 type Archive struct {
-	NightlyAt   string        `mapstructure:"nightlyAt"`
-	WindowHours int           `mapstructure:"windowHours" validate:"omitempty,min=1,max=20"`
-	Concurrency int           `mapstructure:"concurrency" validate:"omitempty,min=1,max=16"`
-	MaxDuration time.Duration `mapstructure:"maxDuration"`
+	NightlyAt        string        `mapstructure:"nightlyAt"`
+	WindowHours      int           `mapstructure:"windowHours"      validate:"omitempty,min=1,max=20"`
+	Concurrency      int           `mapstructure:"concurrency"      validate:"omitempty,min=1,max=16"`
+	MaxDuration      time.Duration `mapstructure:"maxDuration"`
+	AllowedEndpoints []string      `mapstructure:"allowedEndpoints"`
+}
+
+func (a *Archive) EndpointAllowed(host string) bool {
+	host = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(host)), ".")
+	if host == "" {
+		return false
+	}
+	if len(a.AllowedEndpoints) == 0 {
+		return true
+	}
+	for _, entry := range a.AllowedEndpoints {
+		entry = strings.ToLower(strings.TrimSpace(entry))
+		if suffix, ok := strings.CutPrefix(entry, "."); ok {
+			if strings.HasSuffix(host, "."+suffix) {
+				return true
+			}
+			continue
+		}
+		if host == entry {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *Archive) validateEndpoints(shared bool) error {
+	if shared && len(a.AllowedEndpoints) == 0 {
+		return ErrArchiveEndpointsRequired
+	}
+	for _, entry := range a.AllowedEndpoints {
+		if !archiveEndpointPattern.MatchString(strings.ToLower(strings.TrimSpace(entry))) {
+			return ErrArchiveEndpointsInvalid
+		}
+	}
+	return nil
 }
 
 type Support struct {
@@ -98,20 +145,21 @@ type Embedding struct {
 
 func Defaults() map[string]any {
 	return map[string]any{
-		"enabled":              false,
-		"tenancy":              string(TenancyDedicated),
-		"instanceId":           "",
-		"host":                 defaultHost,
-		"port":                 defaultPort,
-		"token":                "",
-		"embedding.url":        "",
-		"embedding.model":      "",
-		"supportUrl":           "",
-		"newSupportRequestUrl": "",
-		"archive.nightlyAt":    defaultNightlyAt,
-		"archive.windowHours":  defaultWindowHours,
-		"archive.concurrency":  defaultArchiveConcurrency,
-		"archive.maxDuration":  defaultArchiveDuration,
+		"enabled":                  false,
+		"tenancy":                  string(TenancyDedicated),
+		"instanceId":               "",
+		"host":                     defaultHost,
+		"port":                     defaultPort,
+		"token":                    "",
+		"embedding.url":            "",
+		"embedding.model":          "",
+		"supportUrl":               "",
+		"newSupportRequestUrl":     "",
+		"archive.nightlyAt":        defaultNightlyAt,
+		"archive.windowHours":      defaultWindowHours,
+		"archive.concurrency":      defaultArchiveConcurrency,
+		"archive.maxDuration":      defaultArchiveDuration,
+		"archive.allowedEndpoints": []string{},
 	}
 }
 
@@ -217,6 +265,9 @@ func (c *Config) Validate() error {
 		if _, err := time.Parse("15:04", at); err != nil {
 			return ErrArchiveNightlyInvalid
 		}
+	}
+	if err := c.Archive.validateEndpoints(c.Tenancy == TenancyShared); err != nil {
+		return err
 	}
 	return c.Embedding.validate()
 }

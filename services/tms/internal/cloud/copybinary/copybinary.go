@@ -203,8 +203,8 @@ func (s *stream) readRow(row *Row) error {
 		if row.size > MaxRow {
 			return ErrRowTooLarge
 		}
-		field := make([]byte, length)
-		if _, err := io.ReadFull(s.in, field); err != nil {
+		field, err := io.ReadAll(io.LimitReader(s.in, int64(length)))
+		if err != nil || len(field) != int(length) {
 			return ErrShape
 		}
 		row.Fields[i], row.null[i] = field, false

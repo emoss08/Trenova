@@ -13,18 +13,15 @@ type InstanceBootstrapState struct {
 }
 
 type FinalizeInstanceBootstrapRequest struct {
-	OrganizationID     pulid.ID
-	BusinessUnitID     pulid.ID
-	AdminUserID        pulid.ID
-	Inputs             instancebootstrap.Inputs
-	SystemUserPassword string
-	Now                int64
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	AdminUserID    pulid.ID
+	Inputs         instancebootstrap.Inputs
+	Now            int64
 }
 
 type FinalizeInstanceBootstrapResult struct {
-	Record            *instancebootstrap.InstanceBootstrap
-	SystemUserID      pulid.ID
-	SystemUserCreated bool
+	Record *instancebootstrap.InstanceBootstrap
 }
 
 type InstanceBootstrapRepository interface {

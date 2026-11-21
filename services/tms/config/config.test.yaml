@@ -45,9 +45,6 @@ storage:
   bucket: trenova-test
   autoCreateBucket: true
 
-system:
-  systemUserPassword: test-system-password
-
 temporal:
   namespace: test
 

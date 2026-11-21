@@ -737,6 +737,7 @@ func All() []*schema.Table {
 		supportaccessdb.GrantsSchema(),
 		supportaccessdb.AssertionUsesSchema(),
 		supportlogdb.LogRequestsSchema(),
+		tenantdb.SystemActorsSchema(),
 		systememaildb.SendersSchema(),
 		tableconfigurationdb.TableConfigurationsSchema(),
 		tablelayoutdb.TableLayoutsSchema(),

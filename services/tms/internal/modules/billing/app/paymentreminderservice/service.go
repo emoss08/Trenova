@@ -508,11 +508,11 @@ func (s *Service) senderFor(
 		from.remittance = strings.TrimSpace(control.DefaultInvoiceTerms)
 	}
 	if from.activityBy.IsNil() {
-		system, sysErr := s.users.GetSystemUser(ctx, "id")
+		system, sysErr := s.users.SystemActorID(ctx, tenantInfo.BuID)
 		if sysErr != nil {
 			return nil, sysErr
 		}
-		from.activityBy = system.ID
+		from.activityBy = system
 	}
 	return from, nil
 }

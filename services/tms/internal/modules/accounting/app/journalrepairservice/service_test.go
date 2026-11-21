@@ -3,13 +3,13 @@ package journalrepairservice
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -84,22 +84,51 @@ func paidWithoutSnapshot(orgID pulid.ID, number string) *driversettlementports.D
 	}}
 }
 
-func TestRepairRequiresAnActor(t *testing.T) {
-	repo := &pagedRepo{}
-	svc := New(&Deps{Repo: repo, Now: func() int64 { return 1 }})
+type actorsByBusinessUnit struct {
+	err  error
+	asks []pulid.ID
+}
+
+func (a *actorsByBusinessUnit) SystemActorID(_ context.Context, businessUnitID pulid.ID) (pulid.ID, error) {
+	a.asks = append(a.asks, businessUnitID)
+	if a.err != nil {
+		return pulid.Nil, a.err
+	}
+	return pulid.ID("usr_" + strings.TrimPrefix(businessUnitID.String(), "bu_")), nil
+}
+
+func TestRepairWritesEachRecordAsItsOwnBusinessUnitsSystemActor(t *testing.T) {
+	orgID := pulid.MustNew("org_")
+	first := paidWithoutSnapshot(orgID, "STL-1")
+	second := paidWithoutSnapshot(orgID, "STL-2")
+	second.Settlement.BusinessUnitID = pulid.MustNew("bu_")
+	repo := &pagedRepo{payments: [][]*driversettlementports.DriverPaymentRepair{{first, second}}}
+	actors := &actorsByBusinessUnit{}
+	svc := New(&Deps{Repo: repo, Actors: actors, Controls: &controlReader{
+		control: &accountingcontrol.AccountingControl{OrganizationID: orgID},
+	}, Now: func() int64 { return 1 }})
 
 	_, err := svc.Repair(t.Context(), &Request{DryRun: true})
 
-	require.Error(t, err)
-	assert.True(t, errortypes.IsError(err))
-	assert.Zero(t, repo.memoCalls)
+	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{first.Settlement.BusinessUnitID, second.Settlement.BusinessUnitID}, actors.asks)
+}
+
+func TestRepairStopsWhenABusinessUnitHasNoSystemActor(t *testing.T) {
+	orgID := pulid.MustNew("org_")
+	repo := &pagedRepo{payments: [][]*driversettlementports.DriverPaymentRepair{{paidWithoutSnapshot(orgID, "STL-1")}}}
+	svc := New(&Deps{Repo: repo, Actors: &actorsByBusinessUnit{err: errors.New("no system actor")}, Now: func() int64 { return 1 }})
+
+	_, err := svc.Repair(t.Context(), &Request{DryRun: true})
+
+	require.ErrorContains(t, err, "no system actor")
 }
 
 func TestRepairAbortsOnAnUnexpectedRepositoryError(t *testing.T) {
 	repo := &pagedRepo{memoErr: errors.New("connection reset")}
-	svc := New(&Deps{Repo: repo, Now: func() int64 { return 1 }})
+	svc := New(&Deps{Repo: repo, Actors: &actorsByBusinessUnit{}, Now: func() int64 { return 1 }})
 
-	_, err := svc.Repair(t.Context(), &Request{ActorID: pulid.MustNew("usr_"), DryRun: true})
+	_, err := svc.Repair(t.Context(), &Request{DryRun: true})
 
 	require.ErrorContains(t, err, "connection reset")
 }
@@ -113,11 +142,10 @@ func TestRepairSkipsARecordItCannotJournalAndPagesOn(t *testing.T) {
 		OrganizationID:       orgID,
 		DefaultCashAccountID: pulid.MustNew("gla_"),
 	}}
-	svc := New(&Deps{Repo: repo, Controls: controls, Now: func() int64 { return 1 }})
+	svc := New(&Deps{Repo: repo, Actors: &actorsByBusinessUnit{}, Controls: controls, Now: func() int64 { return 1 }})
 
 	report, err := svc.Repair(t.Context(), &Request{
 		OrganizationID: orgID,
-		ActorID:        pulid.MustNew("usr_"),
 		DryRun:         true,
 		BatchSize:      1,
 	})
@@ -144,9 +172,9 @@ func TestRepairLinksAnExistingPaymentJournalWithoutWritingInDryRun(t *testing.T)
 	linked := paidWithoutSnapshot(orgID, "STL-9")
 	linked.JournalBatchID = pulid.MustNew("jb_")
 	repo := &pagedRepo{payments: [][]*driversettlementports.DriverPaymentRepair{{linked}}}
-	svc := New(&Deps{Repo: repo, Now: func() int64 { return 1 }})
+	svc := New(&Deps{Repo: repo, Actors: &actorsByBusinessUnit{}, Now: func() int64 { return 1 }})
 
-	report, err := svc.Repair(t.Context(), &Request{ActorID: pulid.MustNew("usr_"), DryRun: true})
+	report, err := svc.Repair(t.Context(), &Request{DryRun: true})
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, report.PaymentsLinked)
@@ -160,9 +188,9 @@ func TestRepairReportsAMemoWhoseAdjustmentIsMissingAndPagesPastIt(t *testing.T) 
 	repo := &pagedRepo{memos: [][]*driversettlementports.AdjustmentMemoRepair{
 		{{Memo: orphan, SourceMissing: true}},
 	}}
-	svc := New(&Deps{Repo: repo, Now: func() int64 { return 1 }})
+	svc := New(&Deps{Repo: repo, Actors: &actorsByBusinessUnit{}, Now: func() int64 { return 1 }})
 
-	report, err := svc.Repair(t.Context(), &Request{ActorID: pulid.MustNew("usr_"), DryRun: true})
+	report, err := svc.Repair(t.Context(), &Request{DryRun: true})
 
 	require.NoError(t, err)
 	assert.Zero(t, report.CreditMemosJournaled)

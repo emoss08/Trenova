@@ -1767,6 +1767,470 @@ func beforeCreateOrganizationMembership(ctx context.Context, p unsafe.Pointer) e
 	return (*tenant.OrganizationMembership)(p).BeforeCreate(ctx)
 }
 
+// systemActorsTable is the schema of tenant.SystemActor.
+var systemActorsTable = schema.Table{
+	Name:   "system_actors",
+	Quoted: `"system_actors"`,
+	Alias:  "sa",
+	Model:  "tenant.SystemActor",
+	Label:  `System Actor`,
+	Plural: `System Actors`,
+	Columns: []schema.Column{
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: 0, Label: `User ID`, JSON: `userId`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+	},
+	PK:         []int32{0},
+	Tenant:     []int32{0},
+	Select:     []int32{0, 1, 2},
+	Insert:     []int32{0, 1, 2},
+	Update:     []int32{1},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     -1,
+	AutoCreate: 2,
+	AutoUpdate: -1,
+	IDPrefix:   "",
+	New:        newSystemActor,
+	NewN:       newNSystemActor,
+	Size:       unsafe.Sizeof(tenant.SystemActor{}),
+	Ptr:        ptrSystemActor,
+	Value:      valueSystemActor,
+}
+
+var systemActorsRef = keel.Ref{Table: &systemActorsTable}
+
+// SystemActorsTable is the table of tenant.SystemActor.
+type SystemActorsTable struct {
+	keel.TableBase
+	BusinessUnitID keelkinds.PulidIDCol
+	UserID         keelkinds.PulidIDCol
+	CreatedAt      keel.Int64Col
+}
+
+// SystemActors references the system_actors table.
+var SystemActors = &SystemActorsTable{
+	TableBase:      keel.TableBase{Ref: &systemActorsRef},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &systemActorsRef, Index: 0}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &systemActorsRef, Index: 1}}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &systemActorsRef, Index: 2}},
+}
+
+// BuildSystemActors builds the table of system_actors for ref. Generated relation and alias methods call it.
+func BuildSystemActors(r *keel.Ref) *SystemActorsTable {
+	return &SystemActorsTable{
+		TableBase:      keel.TableBase{Ref: r},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
+	}
+}
+
+// SystemActorsSchema returns the schema of system_actors.
+func SystemActorsSchema() *schema.Table { return &systemActorsTable }
+
+// As returns a handle that references system_actors under its own alias.
+func (t *SystemActorsTable) As(alias string) *SystemActorsTable {
+	return keel.Alias(t.Ref, alias, BuildSystemActors)
+}
+
+// SystemActorsQuery is a query over tenant.SystemActor.
+type SystemActorsQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*tenant.SystemActor] = (*SystemActorsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SystemActorsTable) Query() keel.Query[*tenant.SystemActor] {
+	return &SystemActorsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SystemActorsQuery.Where.
+func (t *SystemActorsTable) Where(ps ...keel.Pred) keel.Query[*tenant.SystemActor] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SystemActorsQuery.Pick.
+func (t *SystemActorsTable) Pick(es ...keel.Expr) keel.Query[*tenant.SystemActor] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SystemActorsQuery.Load.
+func (t *SystemActorsTable) Load(ls ...keel.Loader) keel.Query[*tenant.SystemActor] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SystemActorsQuery.Omit.
+func (t *SystemActorsTable) Omit(cols ...keel.Column) keel.Query[*tenant.SystemActor] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SystemActorsQuery.Order.
+func (t *SystemActorsTable) Order(os ...keel.Order) keel.Query[*tenant.SystemActor] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SystemActorsQuery.Limit.
+func (t *SystemActorsTable) Limit(n int) keel.Query[*tenant.SystemActor] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SystemActorsQuery.Group.
+func (t *SystemActorsTable) Group(es ...keel.Expr) keel.Query[*tenant.SystemActor] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SystemActorsQuery.GroupingSets.
+func (t *SystemActorsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*tenant.SystemActor] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SystemActorsQuery.Rollup.
+func (t *SystemActorsTable) Rollup(es ...keel.Expr) keel.Query[*tenant.SystemActor] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SystemActorsQuery.Cube.
+func (t *SystemActorsTable) Cube(es ...keel.Expr) keel.Query[*tenant.SystemActor] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SystemActorsQuery.AllTenants.
+func (t *SystemActorsTable) AllTenants() keel.Query[*tenant.SystemActor] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SystemActorsQuery.Join.
+func (t *SystemActorsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tenant.SystemActor] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SystemActorsQuery.LeftJoin.
+func (t *SystemActorsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tenant.SystemActor] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SystemActorsQuery.LeftJoinLateral.
+func (t *SystemActorsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*tenant.SystemActor] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SystemActorsQuery.JoinLateral.
+func (t *SystemActorsTable) JoinLateral(sub keel.LateralSource) keel.Query[*tenant.SystemActor] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SystemActorsQuery.Lock.
+func (t *SystemActorsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*tenant.SystemActor] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SystemActorsQuery.DistinctOn.
+func (t *SystemActorsTable) DistinctOn(es ...keel.Expr) keel.Query[*tenant.SystemActor] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SystemActorsQuery.Cache.
+func (t *SystemActorsTable) Cache(opts ...keel.CacheOption) keel.Query[*tenant.SystemActor] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SystemActorsQuery.LoadStrategy.
+func (t *SystemActorsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*tenant.SystemActor] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SystemActorsQuery.With.
+func (t *SystemActorsTable) With(ctes ...*keel.CTETable) keel.Query[*tenant.SystemActor] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SystemActorsQuery.Compute.
+func (t *SystemActorsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*tenant.SystemActor] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SystemActorsTable) Create(ctx context.Context, db *keel.DB, row *tenant.SystemActor) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SystemActorsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*tenant.SystemActor) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *SystemActorsTable) Save(ctx context.Context, db *keel.DB, row *tenant.SystemActor, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SystemActorsTable) SaveExcept(ctx context.Context, db *keel.DB, row *tenant.SystemActor, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SystemActorsTable) DeleteRow(ctx context.Context, db *keel.DB, row *tenant.SystemActor) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SystemActorsTable) Upsert(ctx context.Context, db *keel.DB, rows []*tenant.SystemActor, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SystemActorsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*tenant.SystemActor, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SystemActorsTable) Copy(ctx context.Context, db *keel.DB, rows []*tenant.SystemActor) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SystemActorsQuery) Where(ps ...keel.Pred) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SystemActorsQuery) Pick(es ...keel.Expr) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SystemActorsQuery) Omit(cols ...keel.Column) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SystemActorsQuery) Load(ls ...keel.Loader) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SystemActorsQuery) Order(os ...keel.Order) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SystemActorsQuery) Distinct() keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SystemActorsQuery) Group(es ...keel.Expr) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SystemActorsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SystemActorsQuery) Rollup(es ...keel.Expr) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SystemActorsQuery) Cube(es ...keel.Expr) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SystemActorsQuery) Window(name string, w keel.Window) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SystemActorsQuery) Having(ps ...keel.Pred) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SystemActorsQuery) Limit(n int) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SystemActorsQuery) Offset(n int) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SystemActorsQuery) DistinctOn(es ...keel.Expr) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SystemActorsQuery) AllTenants() keel.Query[*tenant.SystemActor] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SystemActorsQuery) CustomPlan() keel.Query[*tenant.SystemActor] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SystemActorsQuery) Timeout(d time.Duration) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SystemActorsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SystemActorsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SystemActorsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SystemActorsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SystemActorsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SystemActorsQuery) Cache(opts ...keel.CacheOption) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SystemActorsQuery) With(ctes ...*keel.CTETable) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SystemActorsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SystemActorsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*tenant.SystemActor] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SystemActorsQuery) Clone() keel.Query[*tenant.SystemActor] {
+	return &SystemActorsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SystemActorsQuery) One(ctx context.Context, db *keel.DB) (*tenant.SystemActor, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*tenant.SystemActor)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SystemActorsQuery) First(ctx context.Context, db *keel.DB) (*tenant.SystemActor, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*tenant.SystemActor)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SystemActorsQuery) List(ctx context.Context, db *keel.DB) ([]*tenant.SystemActor, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tenant.SystemActor)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SystemActorsQuery) All(ctx context.Context, db *keel.DB) ([]*tenant.SystemActor, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tenant.SystemActor)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SystemActorsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*tenant.SystemActor, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*tenant.SystemActor)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SystemActorsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*tenant.SystemActor], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*tenant.SystemActor])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SystemActorsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*tenant.SystemActor) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*tenant.SystemActor)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newSystemActor() unsafe.Pointer { return unsafe.Pointer(new(tenant.SystemActor)) }
+
+func newNSystemActor(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]tenant.SystemActor, n)))
+}
+
+func ptrSystemActor(p unsafe.Pointer, c int32) any {
+	r := (*tenant.SystemActor)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.UserID))
+	case 2:
+		return &r.CreatedAt
+	}
+	return nil
+}
+
+func valueSystemActor(p unsafe.Pointer, c int32) any {
+	r := (*tenant.SystemActor)(p)
+	switch c {
+	case 0:
+		return string(r.BusinessUnitID)
+	case 1:
+		return string(r.UserID)
+	case 2:
+		return r.CreatedAt
+	}
+	return nil
+}
+
 // usersTable is the schema of tenant.User.
 var usersTable = schema.Table{
 	Name:        "users",

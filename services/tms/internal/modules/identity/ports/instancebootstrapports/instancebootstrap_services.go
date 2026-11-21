@@ -28,15 +28,14 @@ type InstanceBootstrapRequest struct {
 }
 
 type InstanceBootstrapResult struct {
-	Status            InstanceBootstrapStatus
-	OrganizationID    pulid.ID
-	BusinessUnitID    pulid.ID
-	AdminUserID       pulid.ID
-	AdminUsername     string
-	AdminEmail        string
-	LoginSlug         string
-	SystemUserCreated bool
-	CompletedAt       int64
+	Status         InstanceBootstrapStatus
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	AdminUserID    pulid.ID
+	AdminUsername  string
+	AdminEmail     string
+	LoginSlug      string
+	CompletedAt    int64
 }
 
 type InstanceBootstrapService interface {

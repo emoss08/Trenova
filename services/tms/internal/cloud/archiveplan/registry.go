@@ -21,6 +21,8 @@ var notCarried = map[string]string{
 	"document_upload_sessions":   "uploads in progress",
 	"ai_analytics_refresh_state": "a refresh cursor; the refresh starts over for the organization",
 	"watchtower_cursors":         "projector cursors; the projector catches up from the records",
+	"audit_exports":              "audit log downloads that expire within days; the audit trail they were made from is carried and a new export is made from it",
+	"ai_audit_exports":           "AI audit downloads that expire within days; the ledger they were made from is carried and a new export is made from it",
 }
 
 var twoParty = map[string][2]string{

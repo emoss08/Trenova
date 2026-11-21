@@ -218,3 +218,48 @@ func TestHoldingQueryAsksEachTableOnceAndBindsBothTenantValues(t *testing.T) {
 	require.Len(t, held, 1)
 	assert.Equal(t, "users", held[0].Name)
 }
+
+func TestOnlyKeysThatCanNameAnotherTenantAreCheckedForInboundReferences(t *testing.T) {
+	t.Parallel()
+
+	tables := []tenantTable{
+		{Name: "shipments", HasOrg: true, HasBU: true},
+		{Name: "users", HasBU: true},
+		{Name: "comments", HasOrg: true},
+		{Name: "memberships", HasOrg: true, HasBU: true},
+	}
+	plan := buildPlan(&planInput{
+		Tables:    tables,
+		AllTables: tables,
+		ForeignKeys: []*foreignKey{
+			{Name: "fk_shipments_created_by", ChildTable: "shipments", ParentTable: "users",
+				ChildColumns: []string{"created_by_id"}, ParentColumns: []string{"id"}},
+			{Name: "fk_comments_user", ChildTable: "comments", ParentTable: "users",
+				ChildColumns: []string{"user_id"}, ParentColumns: []string{"id"}},
+			{Name: "fk_memberships_user", ChildTable: "memberships", ParentTable: "users",
+				ChildColumns:  []string{"user_id", "business_unit_id"},
+				ParentColumns: []string{"id", "business_unit_id"}},
+			{Name: "fk_shipments_org", ChildTable: "shipments", ParentTable: "organizations",
+				ChildColumns: []string{"organization_id"}, ParentColumns: []string{"id"}},
+			{Name: "fk_users_current_org", ChildTable: "users", ParentTable: "organizations",
+				ChildColumns: []string{"current_organization_id"}, ParentColumns: []string{"id"}},
+		},
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		ExclusiveBU:    true,
+	})
+
+	names := make([]string, 0)
+	for _, ref := range plan.inboundReferences() {
+		names = append(names, ref.fk.Name)
+	}
+	assert.Equal(t, []string{"fk_comments_user", "fk_shipments_created_by", "fk_users_current_org"}, names)
+
+	queries := plan.CrossTenantQueries()
+	require.Len(t, queries, 1)
+	assert.Contains(t, queries[0], `c."business_unit_id" = $2`)
+	assert.Contains(t, queries[0], `c."organization_id" IN (SELECT o."id" FROM "organizations" o WHERE o."business_unit_id" = $2)`)
+	assert.Contains(t, queries[0], `p."id" = $1`, "an organization parent is the removed one")
+	assert.Contains(t, queries[0], `p."business_unit_id" = $2`, "a unit table's parent rows are the tenant's")
+	assert.True(t, strings.Contains(queries[0], "$1::text IS NULL"), "both parameters are always used")
+}

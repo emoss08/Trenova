@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,4 +38,29 @@ func TestExportDashboard_NeedsTheExportOperationOnEveryTile(t *testing.T) {
 	access, ok := previews[0].Request.Policy.(*reportaccess.Access)
 	require.True(t, ok)
 	assert.Equal(t, reportaccess.ModeExport, access.Mode(), "an export decides access as an export")
+}
+
+func TestExportDashboard_WaitsForAnExportSlotBeforeRunningAnyTile(t *testing.T) {
+	t.Parallel()
+
+	dashboard := dashboardWith([]report.DashboardTile{{
+		ID:           "t1",
+		Kind:         report.TileKindTable,
+		DefinitionID: tileDefID,
+	}}, nil)
+	svc := tileTestService(t, dashboard, map[pulid.ID]*report.ReportDefinition{
+		tileDefID: sharedDefinition("shipment", nil),
+	})
+	svc.slots = &heavyslotstest.Gate{Busy: true}
+	engine, ok := svc.engine.(*reportingtest.Engine)
+	require.True(t, ok)
+
+	_, err := svc.ExportDashboard(t.Context(), &ExportDashboardRequest{
+		Request:     tileRequest(),
+		DashboardID: pulid.MustNew("rdash_"),
+	})
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsRateLimitError(err), "a busy server answers 429: %v", err)
+	assert.Empty(t, engine.Recorded("preview"), "no tile runs without a slot")
 }

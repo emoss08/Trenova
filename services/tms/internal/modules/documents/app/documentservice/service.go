@@ -12,6 +12,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -325,8 +327,8 @@ func (s *Service) storeUpload(
 	req := in.req
 	processingProfile := in.processingProfile
 	contentType := fileutils.MediaType(resolvedContentType(in.fileName, in.contentType))
-	storagePath := fileutils.GenerateStoragePath(
-		req.TenantInfo.OrgID.String(),
+	storagePath := objectkey.Organization.NewKey(
+		req.TenantInfo.OrgID,
 		req.ResourceType,
 		in.fileName,
 	)

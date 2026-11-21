@@ -148,7 +148,7 @@ func (a *Activities) CloseExpiredPeriodsActivity(
 
 	activity.RecordHeartbeat(ctx, fmt.Sprintf("Closing %d expired periods", len(periods)))
 
-	systemUser, err := a.userRepo.GetSystemUser(ctx, "id")
+	systemUser, err := a.userRepo.SystemActorID(ctx, payload.BusinessUnitID)
 	if err != nil {
 		logger.Error("Failed to get system user", "error", err)
 		return nil, temporaltype.NewRetryableError("Failed to get system user", err).
@@ -162,7 +162,7 @@ func (a *Activities) CloseExpiredPeriodsActivity(
 				OrgID: payload.OrganizationID,
 				BuID:  payload.BusinessUnitID,
 			},
-		}, systemUser.ID)
+		}, systemUser)
 
 		if closeErr != nil {
 			logger.Error("Failed to close period",

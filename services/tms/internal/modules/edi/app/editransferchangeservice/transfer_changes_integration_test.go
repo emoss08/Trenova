@@ -13,13 +13,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,10 +29,6 @@ func TestRejectTransferChange_CommentsOnBothOrganizationsShipmentsUnderRowLevelS
 ) {
 	tender := editest.SeedInternalTender(t)
 	admin := tender.Admin
-	seedtest.NewUser(tender.Source.Info.OrgID, tender.Source.Info.BuID).
-		WithUsername(tenant.SystemUsername).
-		WithEmail("system@example.com").
-		Build(t, tender.Ctx, admin)
 
 	transfer := tender.NewTransfer(t, editransfer.TransferStatusApproved)
 	received := testutil.CreateShipmentGraph(

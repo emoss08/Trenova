@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
@@ -32,7 +34,6 @@ import (
 
 const (
 	downloadURLExpiry   = 60 * time.Second
-	exportKeyPrefix     = "ai-audit-exports/"
 	staleExportAge      = 6 * time.Hour
 	cleanupBatchSize    = 100
 	exportNoticeSource  = "aiauditservice.Exports"
@@ -318,8 +319,10 @@ func (x *Exports) write(
 		return nil, "", err
 	}
 
-	key := exportKeyPrefix + export.OrganizationID.String() + "/" + export.ID.String() + "." +
-		export.Format.Extension()
+	key := objectkey.AIAuditExports.Key(
+		export.OrganizationID,
+		export.ID.String()+"."+export.Format.Extension(),
+	)
 	pipe := uploadpipe.Open(ctx, x.storage, uploadpipe.Params{
 		Key:         key,
 		ContentType: export.Format.ContentType(),

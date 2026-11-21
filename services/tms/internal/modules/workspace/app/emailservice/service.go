@@ -13,6 +13,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -709,8 +711,8 @@ func (s *Service) persistAttachment(
 	objectKey := strings.TrimSpace(attachment.ObjectKey)
 	sizeBytes := attachment.SizeBytes
 	if len(attachment.Content) > 0 {
-		objectKey = fileutils.GenerateStoragePath(
-			msg.OrganizationID.String(),
+		objectKey = objectkey.Organization.NewKey(
+			msg.OrganizationID,
 			"email-attachments/"+msg.ID.String(),
 			fileName,
 		)

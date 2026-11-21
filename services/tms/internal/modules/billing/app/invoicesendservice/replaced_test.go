@@ -12,8 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/entitlementservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -129,7 +132,8 @@ func TestDownloadSharedDocument_RefusesAReplacedInvoiceCustomersNoLongerSee(t *t
 
 	documents := &sharedDocumentContent{}
 	svc := &Service{
-		repo: sharedReplacedInvoice(t),
+		repo:     sharedReplacedInvoice(t),
+		features: entitlementservice.NewAllowAll(),
 		adjustmentRepo: adjustmentControls(
 			t,
 			invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicyShowCurrentOnlyExternally,
@@ -167,7 +171,8 @@ func TestDownloadSharedDocument_ServesAReplacedInvoiceCustomersStillSee(t *testi
 		Once()
 	documents := &sharedDocumentContent{}
 	svc := &Service{
-		repo: repo,
+		repo:     repo,
+		features: entitlementservice.NewAllowAll(),
 		adjustmentRepo: adjustmentControls(
 			t,
 			invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicyShowCurrentAndSupersededExternally,
@@ -184,4 +189,44 @@ func TestDownloadSharedDocument_ServesAReplacedInvoiceCustomersStillSee(t *testi
 	assert.Equal(t, "INV-1.pdf", result.FileName)
 	assert.Equal(t, []byte("%PDF"), result.Body)
 	assert.Equal(t, 1, documents.reads)
+}
+
+type planWithout struct {
+	feature platformcatalog.FeatureKey
+	tenants []dbscope.Tenant
+}
+
+func (p *planWithout) Enabled(ctx context.Context, feature platformcatalog.FeatureKey) (bool, error) {
+	tenant, _ := dbscope.TenantFrom(ctx)
+	p.tenants = append(p.tenants, tenant)
+	return feature != p.feature, nil
+}
+
+func (p *planWithout) EnabledAnywhere(context.Context, platformcatalog.FeatureKey) (bool, error) {
+	return true, nil
+}
+
+func TestDownloadSharedDocument_AnswersASuspendedOrganizationAsAnUnknownLink(t *testing.T) {
+	t.Parallel()
+
+	unknown := invoiceportsmock.NewMockInvoiceRepository(t)
+	unknown.EXPECT().GetDocumentShareToken(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("Document share token not found")).
+		Once()
+	_, unknownErr := (&Service{repo: unknown, features: entitlementservice.NewAllowAll()}).
+		DownloadSharedDocument(t.Context(), &invoiceports.DownloadInvoiceDocumentRequest{Token: "nope"})
+
+	documents := &sharedDocumentContent{}
+	plan := &planWithout{feature: platformcatalog.FeatureBilling}
+	repo := sharedReplacedInvoice(t)
+	_, err := (&Service{repo: repo, features: plan, documentService: documents}).
+		DownloadSharedDocument(t.Context(), &invoiceports.DownloadInvoiceDocumentRequest{Token: "token"})
+
+	require.Error(t, unknownErr)
+	require.Error(t, err)
+	assert.Equal(t, unknownErr.Error(), err.Error(), "nothing tells a suspended tenant from an unknown link")
+	assert.Equal(t, errortypes.IsNotFoundError(unknownErr), errortypes.IsNotFoundError(err))
+	assert.Zero(t, documents.reads, "nothing of the document is read")
+	require.Len(t, plan.tenants, 1)
+	assert.False(t, plan.tenants[0].OrganizationID.IsNil(), "the plan is asked for the link's tenant")
 }

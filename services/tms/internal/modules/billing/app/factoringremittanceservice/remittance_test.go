@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/heavyslotstest"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -471,6 +473,7 @@ func newRemittanceHarness(t *testing.T) *remittanceHarness {
 		},
 	)
 	h.svc = NewRemittanceService(RemittanceParams{
+		Slots:       heavyslotstest.Unbounded(),
 		DB:          factoringservicetest.FakeTx{},
 		Remittances: h.remittances,
 		Submissions: &fakeRemitSubmissions{ledger: h.ledger},

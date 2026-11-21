@@ -85,6 +85,28 @@ func TestNoRowOfOneTenantCanNameAnotherTenant(t *testing.T) {
 		},
 	)
 
+	t.Run("a user's current organization is one of the user's business unit", func(t *testing.T) {
+		refused(t, "fk_users_current_organization",
+			`UPDATE users SET current_organization_id = $1 WHERE id = $2`,
+			otherOrg, source.UserID.String())
+		spare := seedtest.NewOrganization(source.BuID, elsewhere.State.ID).
+			WithName("Spare Organization").
+			WithScacCode("SPRX").
+			WithDOTNumber("998877").
+			WithBucketName("spare-organization").
+			Build(t, tender.Ctx, tender.Admin)
+		person := seedtest.NewUser(spare.ID, source.BuID).
+			WithUsername("spareperson").
+			WithEmail("spare.person@example.com").
+			Build(t, tender.Ctx, tender.Admin)
+		refused(t, "fk_users_current_organization",
+			`DELETE FROM organizations WHERE id = $1`, spare.ID.String())
+		users, err := keel.QueryValue[int64](tender.Ctx, tender.Admin,
+			`SELECT count(*) FROM users WHERE id = $1`, person.ID.String())
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), users, "the user is never deleted with an organization")
+	})
+
 	t.Run("every reference to another organization carries its business unit", func(t *testing.T) {
 		loose, err := keel.QueryAll(tender.Ctx, tender.Admin, pgx.RowTo[string], `
 SELECT c.relname || '.' || a.attname
@@ -96,27 +118,23 @@ WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') AND NOT c.relispartition
   AND NOT EXISTS (SELECT 1 FROM trenova_rls.global_tables g WHERE g.table_name = c.relname)
   AND NOT EXISTS (
       SELECT 1 FROM pg_catalog.pg_constraint pc
-      WHERE pc.conrelid = c.oid AND pc.contype IN ('f', 'c')
+      WHERE pc.conrelid = c.oid AND pc.contype = 'f'
         AND a.attnum = ANY(pc.conkey)
-        AND (
-            pc.contype = 'c'
-            OR EXISTS (
-                SELECT 1 FROM pg_catalog.pg_attribute b
-                WHERE b.attrelid = c.oid AND b.attnum = ANY(pc.conkey)
-                  AND b.attname LIKE '%business_unit_id'
-            )
+        AND EXISTS (
+            SELECT 1 FROM pg_catalog.pg_attribute b
+            WHERE b.attrelid = c.oid AND b.attnum = ANY(pc.conkey)
+              AND b.attname LIKE '%business_unit_id'
         )
   )
   AND NOT EXISTS (
       SELECT 1 FROM pg_catalog.pg_constraint pc
       WHERE pc.conrelid = c.oid AND pc.contype = 'c'
+        AND a.attnum = ANY(pc.conkey)
         AND pg_get_constraintdef(pc.oid) LIKE '%business_unit_id%'
   )
 ORDER BY 1`)
 		require.NoError(t, err)
-		assert.Equal(t, []string{"users.current_organization_id"}, loose,
-			"a user's current organization is held to the user's business unit by "+
-				"trigger_check_user_organization_business_unit; every other column naming an "+
-				"organization is held by a composite key or a check")
+		assert.Empty(t, loose, "a column naming an organization is held to the row's business "+
+			"unit by a composite foreign key that carries it or a check that names both")
 	})
 }

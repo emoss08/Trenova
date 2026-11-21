@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/ports/archiveports"
 	"github.com/emoss08/trenova/internal/cloud/ports/cloudtenantports"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,6 +42,7 @@ type ActivitiesParams struct {
 	Buckets   archiveports.Buckets
 	Slots     kernelports.HeavyJobSlots
 	Managed   *managedconfig.Config
+	Metrics   *metrics.Registry
 	Clock     timeutils.Clock
 	Logger    *zap.Logger
 }
@@ -50,6 +53,7 @@ type Activities struct {
 	buckets   archiveports.Buckets
 	slots     kernelports.HeavyJobSlots
 	managed   *managedconfig.Config
+	metrics   *platformmetrics.Tenancy
 	clock     timeutils.Clock
 	l         *zap.Logger
 }
@@ -61,6 +65,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		buckets:   p.Buckets,
 		slots:     p.Slots,
 		managed:   p.Managed,
+		metrics:   metrics.TenancyFrom(p.Metrics),
 		clock:     p.Clock,
 		l:         p.Logger.Named("cloud.archive-jobs"),
 	}
@@ -157,6 +162,7 @@ func (a *Activities) RunArchiveActivity(
 		Beat:     heartbeat(ctx),
 	})
 	if refusal, ok := tenantarchive.RefusalOf(err); ok {
+		a.metrics.RecordArchiveRefusal(cmd.Purpose, string(refusal.Code))
 		return a.fail(ctx, cmd.CommandID, refusal, a.lifecycle.FailCommand)
 	}
 	if err != nil {

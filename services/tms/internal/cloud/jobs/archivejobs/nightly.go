@@ -123,6 +123,7 @@ func (a *Activities) nightly(
 		Beat:       heartbeat(ctx),
 	})
 	if refusal, ok := tenantarchive.RefusalOf(err); ok {
+		a.metrics.RecordArchiveRefusal(string(tenantarchive.PurposeNightly), string(refusal.Code))
 		_, ferr := a.fail(ctx, commandID, refusal, a.lifecycle.FailCommand)
 		return ferr
 	}

@@ -3,7 +3,6 @@ package userrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -12,16 +11,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTenantUsersExcludesTheSystemUserAndOtherOrganizations(t *testing.T) {
+func TestTenantUsersExcludesTheSystemActorAndOtherOrganizations(t *testing.T) {
 	t.Parallel()
 
-	sql, args := keeltest.Render(t, tenantUsers(keeltest.TestOrganizationID).Limit(10))
+	ctx := dbscope.WithTenant(t.Context(), dbscope.Tenant{
+		OrganizationID: keeltest.TestOrganizationID,
+		BusinessUnitID: keeltest.TestBusinessUnitID,
+	})
+	sql, args := keeltest.Render(t, tenantUsers(ctx, keeltest.TestOrganizationID).Limit(10))
 
 	assert.Contains(t, sql, `"current_organization_id" = `)
-	assert.Contains(t, sql, `"username" <> `)
+	assert.Contains(t, sql, `NOT (EXISTS (SELECT`)
+	assert.Contains(t, sql, `"system_actors"`)
 	assert.Contains(t, sql, `"business_unit_id" = `)
 	assert.Contains(t, args, string(keeltest.TestOrganizationID))
-	assert.Contains(t, args, tenant.SystemUsername)
 }
 
 func TestMembershipReadScopeMirrorsRowLevelSecurity(t *testing.T) {

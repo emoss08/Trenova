@@ -88,7 +88,7 @@ func TestApplyMakesATenantOnceAndAnswersItsState(t *testing.T) {
 		[]cloudtenant.EventKind{cloudtenant.EventCreated, cloudtenant.EventApplied},
 		r.tenants.kinds(),
 	)
-	assert.Len(t, r.audit.Changes(), 3, "the administrator, the role and its grant are audited")
+	assert.Len(t, r.audit.Changes(), 4, "the administrator, the role, its grant and the system actor are audited")
 	for _, change := range r.audit.Changes() {
 		assert.Equal(t, instanceA, change.Metadata["controlPlaneInstanceId"])
 	}

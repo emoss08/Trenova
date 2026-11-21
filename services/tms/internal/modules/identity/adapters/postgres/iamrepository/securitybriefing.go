@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey/apikeydb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -50,7 +51,7 @@ func memberQuery(ctx context.Context, scope memberScope) keel.Query[*tenant.User
 		m.BusinessUnitID.Eq(scope.TenantInfo.BuID),
 		keel.Or(m.ExpiresAt.IsNull(), m.ExpiresAt.Gt(scope.Now)),
 		u.Status.Eq(domaintypes.StatusActive),
-		u.Username.Ne(tenant.SystemUsername),
+		tenantbootstrap.NotSystemActor(ctx),
 	)
 }
 

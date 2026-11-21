@@ -206,7 +206,9 @@ func (p *Plan) referenceQueries(
 			parentWhere = " AND " + parent.Where("p", tenant)
 		}
 		parts = append(parts, "SELECT "+QuoteLiteral(fk.Name)+"::text AS constraint_name, "+
-			QuoteLiteral(fk.Child)+"::text AS table_name, count(*)::bigint AS row_count FROM "+
+			QuoteLiteral(fk.Child)+"::text AS table_name, "+
+			QuoteLiteral(strings.Join(fk.ChildColumns, ", "))+"::text AS column_names, "+
+			"count(*)::bigint AS row_count FROM "+
 			Qualified(fk.Child)+" c WHERE "+child.Where("c", tenant)+" AND "+
 			notNull(fk.ChildColumns, "c")+" AND NOT EXISTS (SELECT 1 FROM "+Qualified(fk.Parent)+
 			" p WHERE "+matches(fk)+parentWhere+")")

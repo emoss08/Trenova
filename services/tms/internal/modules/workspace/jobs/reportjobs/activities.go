@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"time"
+
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
 
 	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/keel/analytics/ir"
@@ -422,12 +425,11 @@ func (a *Activities) ExecuteAndRenderActivity(
 	}, heartbeatEveryRows, digest)
 
 	attempt := activity.GetInfo(ctx).Attempt
-	artifactKey := fmt.Sprintf("%s/%s/%s/%d/report.%s",
-		a.cfg.GetArtifactPrefix(),
+	artifactKey := objectkey.Reports.Key(
 		prepared.OrganizationID,
-		prepared.RunID,
-		attempt,
-		prepared.Format.Extension(),
+		prepared.RunID.String(),
+		strconv.FormatInt(int64(attempt), 10),
+		"report."+prepared.Format.Extension(),
 	)
 
 	result, err := a.renderToStorage(

@@ -67,18 +67,16 @@ func TestCreateUser_LinksAMemberTheOrganizationAlreadyHas(t *testing.T) {
 	assert.Equal(t, []pulid.ID{h.dir.ID}, h.requester.requested)
 }
 
-func TestCreateUser_NeverLinksTheSystemUser(t *testing.T) {
+func TestCreateUser_NeverLinksTheSystemActor(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.repo.member = &tenant.User{
-		ID:           pulid.MustNew("usr_"),
-		Username:     tenant.SystemUsername,
-		EmailAddress: "system@example.com",
-		Status:       domaintypes.StatusActive,
-	}
+	actor := tenant.NewSystemActorUser(h.dir.BusinessUnitID, h.dir.OrganizationID)
+	actor.ID = pulid.MustNew("usr_")
+	actor.Status = domaintypes.StatusActive
+	h.repo.member = actor
 
-	_, err := h.svc.CreateUser(t.Context(), h.dir, newUserResource("system@example.com"))
+	_, err := h.svc.CreateUser(t.Context(), h.dir, newUserResource(actor.EmailAddress))
 
 	scimErr, ok := scimproto.AsError(err)
 	require.True(t, ok)

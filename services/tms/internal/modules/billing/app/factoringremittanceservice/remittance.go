@@ -51,6 +51,7 @@ type RemittanceParams struct {
 	Audit       auditports.AuditService
 	Realtime    realtimeports.RealtimeService
 	SheetLimits rateimport.Limits
+	Slots       kernelports.HeavyJobSlots
 	Logger      *zap.Logger
 }
 
@@ -67,6 +68,7 @@ type RemittanceService struct {
 	events      agenteventports.AgentEventPublisher
 	rec         factoringaction.Recorder
 	sheetLimits rateimport.Limits
+	slots       kernelports.HeavyJobSlots
 	l           *zap.Logger
 	now         func() int64
 }
@@ -87,6 +89,7 @@ func NewRemittanceService(p RemittanceParams) factoringremittanceports.Remittanc
 		nova:        p.Nova,
 		starter:     p.Starter,
 		sheetLimits: p.SheetLimits,
+		slots:       p.Slots,
 		events:      p.Events,
 		rec:         factoringaction.Recorder{Audit: p.Audit, Realtime: p.Realtime, Logger: l},
 		l:           l,

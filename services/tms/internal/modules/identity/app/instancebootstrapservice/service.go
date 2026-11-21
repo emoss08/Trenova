@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -43,37 +42,31 @@ var (
 type Params struct {
 	fx.In
 
-	DB           kernelports.Transactor
-	Tenants      tenantports.TenantBootstrapRepository
-	Repo         instancebootstrapports.InstanceBootstrapRepository
-	Auditor      permissionports.SecurityAuditor
-	SystemConfig *systemconfig.Config
-	Logger       *zap.Logger
+	DB      kernelports.Transactor
+	Tenants tenantports.TenantBootstrapRepository
+	Repo    instancebootstrapports.InstanceBootstrapRepository
+	Auditor permissionports.SecurityAuditor
+	Logger  *zap.Logger
 }
 
 type Service struct {
-	db                 kernelports.Transactor
-	tenants            tenantports.TenantBootstrapRepository
-	repo               instancebootstrapports.InstanceBootstrapRepository
-	auditor            permissionports.SecurityAuditor
-	systemUserPassword string
-	now                func() int64
-	l                  *zap.Logger
+	db      kernelports.Transactor
+	tenants tenantports.TenantBootstrapRepository
+	repo    instancebootstrapports.InstanceBootstrapRepository
+	auditor permissionports.SecurityAuditor
+	now     func() int64
+	l       *zap.Logger
 }
 
 //nolint:gocritic // this is dependency injection
 func New(p Params) *Service {
-	var systemUserPassword string
-	systemUserPassword = p.SystemConfig.SystemUserPassword
-
 	return &Service{
-		db:                 p.DB,
-		tenants:            p.Tenants,
-		repo:               p.Repo,
-		auditor:            p.Auditor,
-		systemUserPassword: systemUserPassword,
-		now:                timeutils.NowUnix,
-		l:                  p.Logger.Named("service.instance-bootstrap"),
+		db:      p.DB,
+		tenants: p.Tenants,
+		repo:    p.Repo,
+		auditor: p.Auditor,
+		now:     timeutils.NowUnix,
+		l:       p.Logger.Named("service.instance-bootstrap"),
 	}
 }
 
@@ -164,19 +157,17 @@ func (s *Service) Bootstrap(
 		zap.String("organizationId", out.tenant.Organization.ID.String()),
 		zap.String("businessUnitId", out.tenant.BusinessUnit.ID.String()),
 		zap.String("userId", out.tenant.Owner.ID.String()),
-		zap.Bool("systemUserCreated", out.finalized.SystemUserCreated),
 	)
 
 	return &instancebootstrapports.InstanceBootstrapResult{
-		Status:            instancebootstrapports.InstanceBootstrapCreated,
-		OrganizationID:    out.tenant.Organization.ID,
-		BusinessUnitID:    out.tenant.BusinessUnit.ID,
-		AdminUserID:       out.tenant.Owner.ID,
-		AdminUsername:     out.tenant.Owner.Username,
-		AdminEmail:        out.tenant.Owner.EmailAddress,
-		LoginSlug:         out.tenant.Organization.LoginSlug,
-		SystemUserCreated: out.finalized.SystemUserCreated,
-		CompletedAt:       out.record.CompletedAt,
+		Status:         instancebootstrapports.InstanceBootstrapCreated,
+		OrganizationID: out.tenant.Organization.ID,
+		BusinessUnitID: out.tenant.BusinessUnit.ID,
+		AdminUserID:    out.tenant.Owner.ID,
+		AdminUsername:  out.tenant.Owner.Username,
+		AdminEmail:     out.tenant.Owner.EmailAddress,
+		LoginSlug:      out.tenant.Organization.LoginSlug,
+		CompletedAt:    out.record.CompletedAt,
 	}, nil
 }
 
@@ -211,12 +202,11 @@ func (s *Service) create(
 	}
 
 	finalized, err := s.repo.Finalize(ctx, &instancebootstrapports.FinalizeInstanceBootstrapRequest{
-		OrganizationID:     result.Organization.ID,
-		BusinessUnitID:     result.BusinessUnit.ID,
-		AdminUserID:        result.Owner.ID,
-		Inputs:             *inputs,
-		SystemUserPassword: s.systemUserPassword,
-		Now:                now,
+		OrganizationID: result.Organization.ID,
+		BusinessUnitID: result.BusinessUnit.ID,
+		AdminUserID:    result.Owner.ID,
+		Inputs:         *inputs,
+		Now:            now,
 	})
 	if err != nil {
 		return nil, err
@@ -309,20 +299,16 @@ func (s *Service) audit(ctx context.Context, out *created) {
 		Metadata: metadata,
 	})
 
-	if !out.finalized.SystemUserCreated {
-		return
-	}
-
 	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
 		Resource:       permission.ResourceUser,
-		ResourceID:     out.finalized.SystemUserID.String(),
+		ResourceID:     out.tenant.SystemActor.String(),
 		Operation:      permission.OpCreate,
 		Actor:          actor,
 		OrganizationID: org.ID,
 		BusinessUnitID: org.BusinessUnitID,
 		After: map[string]any{
-			keyUserID:         out.finalized.SystemUserID.String(),
-			"username":        tenant.SystemUsername,
+			keyUserID:         out.tenant.SystemActor.String(),
+			"username":        tenant.SystemActorUsername(org.BusinessUnitID),
 			keyOrganizationID: org.ID.String(),
 		},
 		Comment:  "Instance bootstrap created the system account background work runs as",

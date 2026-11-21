@@ -2,12 +2,19 @@ package archivebucket
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
+
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/shared/httpsafe"
+	"go.uber.org/fx"
 
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
 	"github.com/emoss08/trenova/internal/cloud/ports/archiveports"
@@ -17,14 +24,80 @@ import (
 
 const PartSize = 16 << 20
 
-var ErrEndpoint = errors.New(
-	"the archive endpoint must be a host or an http or https URL with a host and no path",
+const (
+	dialTimeout      = 10 * time.Second
+	dialKeepAlive    = 30 * time.Second
+	handshakeTimeout = 10 * time.Second
+	headerTimeout    = 60 * time.Second
+	idleTimeout      = 90 * time.Second
+	maxIdle          = 16
 )
 
-type Buckets struct{}
+var ErrEndpoint = errors.New(
+	"the archive endpoint must be a host or an https URL with a host and no path",
+)
 
-func New() archiveports.Buckets {
-	return Buckets{}
+type Params struct {
+	fx.In
+
+	Managed *managedconfig.Config
+}
+
+type Buckets struct {
+	allowed   func(host string) bool
+	insecure  bool
+	policy    httpsafe.Policy
+	transport http.RoundTripper
+}
+
+func New(p Params) archiveports.Buckets {
+	return Buckets{
+		allowed:   p.Managed.Archive.EndpointAllowed,
+		transport: guardedTransport(httpsafe.Policy{}),
+	}
+}
+
+type ConfiguredEndpoint struct {
+	Endpoint    string
+	Development bool
+}
+
+func ForConfiguredEndpoint(c ConfiguredEndpoint) archiveports.Buckets {
+	want, _, err := endpointHost(c.Endpoint, c.Development)
+	policy := httpsafe.Policy{AllowPrivateNetworks: c.Development}
+	return Buckets{
+		allowed: func(host string) bool {
+			return err == nil && strings.EqualFold(strings.TrimSuffix(host, "."), hostName(want))
+		},
+		insecure:  c.Development,
+		policy:    policy,
+		transport: guardedTransport(policy),
+	}
+}
+
+func guardedTransport(policy httpsafe.Policy) *http.Transport {
+	dialer := &net.Dialer{
+		Timeout:   dialTimeout,
+		KeepAlive: dialKeepAlive,
+		Control:   httpsafe.DialControl(policy),
+	}
+	return &http.Transport{
+		Proxy:                 nil,
+		DialContext:           dialer.DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          maxIdle,
+		IdleConnTimeout:       idleTimeout,
+		TLSHandshakeTimeout:   handshakeTimeout,
+		ResponseHeaderTimeout: headerTimeout,
+		TLSClientConfig:       &tls.Config{MinVersion: tls.VersionTLS12},
+	}
+}
+
+func hostName(host string) string {
+	if name, _, err := net.SplitHostPort(host); err == nil {
+		return strings.Trim(name, "[]")
+	}
+	return strings.Trim(host, "[]")
 }
 
 type bucket struct {
@@ -32,19 +105,25 @@ type bucket struct {
 	name   string
 }
 
-func (Buckets) Open(
+func (b Buckets) Open(
 	location *tenantarchive.Location,
 	creds *tenantarchive.Credentials,
 ) (archiveports.Bucket, error) {
-	host, secure, err := endpoint(location.Endpoint)
+	host, secure, err := endpointHost(location.Endpoint, b.insecure)
 	if err != nil {
-		return nil, err
+		return nil, tenantarchive.Refuse(tenantarchive.RefusalLocation, err.Error())
+	}
+	name := hostName(host)
+	if httpsafe.ValidateHost(name, b.policy) != nil || !b.allowed(name) {
+		return nil, tenantarchive.Refuse(tenantarchive.RefusalLocation,
+			"the archive endpoint is not an object store this server may reach")
 	}
 	client, err := minio.New(host, &minio.Options{
 		Creds:        credentials.NewStaticV4(creds.AccessKey, creds.SecretKey, creds.SessionToken),
 		Secure:       secure,
 		Region:       location.Region,
 		BucketLookup: minio.BucketLookupAuto,
+		Transport:    b.transport,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("open the archive location: %w", err)
@@ -52,23 +131,23 @@ func (Buckets) Open(
 	return &bucket{client: client, name: location.Bucket}, nil
 }
 
-func endpoint(raw string) (host string, secure bool, err error) {
+func endpointHost(raw string, insecure bool) (host string, secure bool, err error) {
 	raw = strings.TrimSpace(raw)
 	if !strings.Contains(raw, "://") {
-		if raw == "" || strings.Contains(raw, "/") {
+		if raw == "" || strings.ContainsAny(raw, "/@?#") {
 			return "", false, ErrEndpoint
 		}
 		return raw, true, nil
 	}
 	u, err := url.Parse(raw)
-	if err != nil || u.Host == "" || (u.Path != "" && u.Path != "/") || u.RawQuery != "" ||
-		u.User != nil {
+	if err != nil || u.Host == "" || (u.Path != "" && u.Path != "/") ||
+		u.RawQuery != "" || u.Fragment != "" || u.User != nil {
 		return "", false, ErrEndpoint
 	}
-	switch u.Scheme {
-	case "https":
+	switch {
+	case u.Scheme == "https":
 		return u.Host, true, nil
-	case "http":
+	case u.Scheme == "http" && insecure:
 		return u.Host, false, nil
 	default:
 		return "", false, ErrEndpoint

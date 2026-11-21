@@ -67,8 +67,6 @@ storage:
   accessKey: "test"
   secretKey: "test"
   bucket: "test"
-system:
-  systemUserPassword: "test-system-password"
 imaging:
   endpoint: "dns:///imaging:50051"
   serverName: "imaging"

@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -221,5 +223,10 @@ func (Content) Constraints() []keel.Constraint {
 }
 
 func RawObjectKey(organizationID, documentID pulid.ID) string {
-	return organizationID.String() + "/document-extraction/" + documentID.String() + "/docling.json.gz"
+	return objectkey.Organization.Key(
+		organizationID,
+		"document-extraction",
+		documentID.String(),
+		"docling.json.gz",
+	)
 }

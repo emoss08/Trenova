@@ -31,7 +31,6 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/ports/cloudtenantports"
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aiauditrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditkeyring"
@@ -42,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditsealrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
@@ -226,7 +226,6 @@ func (in *install) engineWith(buckets archiveports.Buckets) *archiveengine.Engin
 		Blobs:     encryptionservice.NewBlobCipher(in.cipher),
 		Envelopes: envelopes.Sources(true),
 		App:       &appconfig.Config{Version: "2026.11.0-test"},
-		Reporting: &reportingconfig.Config{},
 		Clock:     func() int64 { return time.Now().Unix() },
 		Logger:    zap.NewNop(),
 	})
@@ -559,6 +558,17 @@ VALUES ($1, $2, $3, $4, 2)`,
 	plainKey := facts.tenant.OrganizationID.String() + "/exports/notes.txt"
 	facts.objects[plainKey] = []byte("plain object of the tenant")
 	src.store.PutTyped(plainKey, "text/plain; charset=utf-8", facts.objects[plainKey])
+	captureKey := objectkey.Capture.Key(
+		facts.tenant.OrganizationID,
+		"bat_archive",
+		"0001-0123456789abcdef.pdf",
+	)
+	facts.objects[captureKey] = []byte("a captured page of the tenant")
+	src.store.PutTyped(captureKey, "application/pdf", facts.objects[captureKey])
+	src.store.Put(
+		objectkey.AuditExports.Key(facts.tenant.OrganizationID, "aex_archive.csv"),
+		[]byte("an audit export that expires"),
+	)
 	writeTrails(t, src, facts.tenant)
 	facts.otherBlob = []byte(
 		"an object of the other tenant: " + facts.other.OrganizationID.String(),
@@ -825,6 +835,26 @@ func TestATenantArchiveCarriesOneTenantWholeToAnotherServerAndBack(t *testing.T)
 		assert.Equal(t, tenantarchive.RefusalSchema, refusalOf(t, err), "another schema version")
 		assert.Contains(t, err.Error(), "20200101000000")
 
+		forged := dst.buckets.clone()
+		elsewhere := *final.Manifest
+		elsewhere.Documents = slices.Clone(final.Manifest.Documents)
+		require.NotEmpty(t, elsewhere.Documents)
+		elsewhere.Documents[0].Key = tenantarchive.DocumentPart(
+			objectkey.Organization.Key(facts.other.OrganizationID, "documents", "x.pdf"),
+		)
+		elsewhere.ContentSHA256 = elsewhere.ContentDigest()
+		forgedBody, ferr := elsewhere.Encode()
+		require.NoError(t, ferr)
+		forged.objects[prefix+tenantarchive.ManifestName] = forgedBody
+		_, err = dst.engineWith(forged).
+			Import(dst.ctx, request(keys, tenantarchive.ManifestSHA256(forgedBody)))
+		assert.Equal(t, tenantarchive.RefusalManifest, refusalOf(t, err),
+			"a document outside the tenant's keys")
+		for _, key := range dst.store.Keys() {
+			assert.NotContains(t, key, facts.other.OrganizationID.String(), key)
+		}
+		nothingWritten(t)
+
 		_, err = dst.engine.Import(dst.ctx, &archiveengine.ImportRequest{
 			InstanceID: "6e2b4d2f-9d2a-4b4a-8b54-6c1e8d5f3a21", ExpectSHA256: final.SHA256,
 			Access: access(prefix, keys),
@@ -1047,6 +1077,14 @@ SELECT $1, $2, $3, 'another-name', 'another@stranger.test', 'Another', 'x', 'Act
 			key, _ := tenantarchive.ObjectKey(doc.Key)
 			types[key] = doc.ContentType
 		}
+		capture := objectkey.Capture.Prefix(facts.tenant.OrganizationID)
+		carriedCapture := false
+		for key := range types {
+			assert.False(t, strings.HasPrefix(key, objectkey.AuditExports.Prefix(facts.tenant.OrganizationID)),
+				"an expiring audit export is not carried: %s", key)
+			carriedCapture = carriedCapture || strings.HasPrefix(key, capture)
+		}
+		assert.True(t, carriedCapture, "captured pages are carried")
 		seen := map[string]bool{}
 		for key := range facts.objects {
 			want := src.store.ContentType(key)

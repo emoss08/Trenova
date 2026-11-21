@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -163,8 +162,8 @@ func (f *tenderedCarrierFixture) acceptedOffer() *tender.TenderOffer {
 
 func (f *tenderedCarrierFixture) expectSystemUser() {
 	f.userRepo.EXPECT().
-		GetSystemUser(mock.Anything, mock.Anything).
-		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil)
+		SystemActorID(mock.Anything, mock.Anything).
+		Return(pulid.MustNew("usr_"), nil)
 }
 
 func rawShipmentStatus214(statusCode string) string {
@@ -385,8 +384,8 @@ func TestRouteShipmentStatus_OfferBusinessErrorBecomesWarning(t *testing.T) {
 	fixture.tenderRepo.acceptedOffer = offer
 	fixture.expectRecipientMiss()
 	fixture.userRepo.EXPECT().
-		GetSystemUser(mock.Anything, mock.Anything).
-		Return(nil, errortypes.NewBusinessError("system user is unavailable")).
+		SystemActorID(mock.Anything, mock.Anything).
+		Return(pulid.Nil, errortypes.NewBusinessError("system user is unavailable")).
 		Once()
 
 	transaction, details := parse214Transaction(t, rawShipmentStatus214("AF"))

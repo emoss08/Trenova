@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -25,18 +24,16 @@ import (
 )
 
 const (
-	testPassword           = "Tr4ck-the-l0ads-north!"
-	testSystemUserPassword = "system-user-password"
-	testNow                = int64(1_790_000_000)
+	testPassword = "Tr4ck-the-l0ads-north!"
+	testNow      = int64(1_790_000_000)
 )
 
 type fakeRepo struct {
-	state        *instancebootstrapports.InstanceBootstrapState
-	stateErr     error
-	finalizeReq  *instancebootstrapports.FinalizeInstanceBootstrapRequest
-	finalizeErr  error
-	systemCreate bool
-	getCalls     int
+	state       *instancebootstrapports.InstanceBootstrapState
+	stateErr    error
+	finalizeReq *instancebootstrapports.FinalizeInstanceBootstrapRequest
+	finalizeErr error
+	getCalls    int
 }
 
 func (f *fakeRepo) GetState(
@@ -74,8 +71,6 @@ func (f *fakeRepo) Finalize(
 			Inputs:         req.Inputs,
 			CompletedAt:    req.Now,
 		},
-		SystemUserID:      pulid.MustNew("usr_"),
-		SystemUserCreated: f.systemCreate,
 	}, nil
 }
 
@@ -90,17 +85,16 @@ func newDeps(t *testing.T, state *instancebootstrapports.InstanceBootstrapState)
 	t.Helper()
 
 	d := &deps{
-		repo:    &fakeRepo{state: state, systemCreate: true},
+		repo:    &fakeRepo{state: state},
 		tenants: tenantportsmock.NewMockTenantBootstrapRepository(t),
 		auditor: &securityaudittest.Recorder{},
 	}
 	d.svc = New(Params{
-		DB:           dbtest.NopConnection{},
-		Tenants:      d.tenants,
-		Repo:         d.repo,
-		Auditor:      d.auditor,
-		SystemConfig: &systemconfig.Config{SystemUserPassword: testSystemUserPassword},
-		Logger:       zap.NewNop(),
+		DB:      dbtest.NopConnection{},
+		Tenants: d.tenants,
+		Repo:    d.repo,
+		Auditor: d.auditor,
+		Logger:  zap.NewNop(),
 	})
 	d.svc.now = func() int64 { return testNow }
 
@@ -162,6 +156,7 @@ func expectBootstrap(d *deps) *tenantports.BootstrapTenantRequest {
 				Organization: org,
 				Owner:        owner,
 				AdminRoleID:  pulid.MustNew("rol_"),
+				SystemActor:  pulid.MustNew("usr_"),
 			}, nil
 		},
 	)
@@ -286,7 +281,6 @@ func TestBootstrapCreatesTheOrganizationAndAdministrator(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, instancebootstrapports.InstanceBootstrapCreated, result.Status)
-	assert.True(t, result.SystemUserCreated)
 	assert.Equal(t, "dana.whitfield", result.AdminUsername)
 	assert.Equal(t, "dana.whitfield@acme.example", result.AdminEmail)
 	assert.Equal(t, "acme-freight", result.LoginSlug)
@@ -310,7 +304,6 @@ func TestBootstrapCreatesTheOrganizationAndAdministrator(t *testing.T) {
 	assert.False(t, captured.Owner.AwaitingAccountSetup())
 
 	require.NotNil(t, d.repo.finalizeReq)
-	assert.Equal(t, testSystemUserPassword, d.repo.finalizeReq.SystemUserPassword)
 	assert.Equal(t, result.AdminUserID, d.repo.finalizeReq.AdminUserID)
 	assert.Equal(t, validInputs().Normalize(), d.repo.finalizeReq.Inputs)
 
@@ -324,27 +317,13 @@ func TestBootstrapCreatesTheOrganizationAndAdministrator(t *testing.T) {
 	assert.Equal(t, permission.ResourceRole, changes[2].Resource)
 	assert.Equal(t, permission.OpAssign, changes[2].Operation)
 	assert.Equal(t, permission.ResourceUser, changes[3].Resource)
+	assert.NotEqual(t, result.AdminUserID.String(), changes[3].ResourceID, "the system actor's creation is audited")
+	assert.NotEmpty(t, changes[3].ResourceID)
 	for _, change := range changes {
 		assert.Equal(t, permissionports.SystemAuditActor(), change.Actor)
 		assert.Equal(t, result.OrganizationID, change.OrganizationID)
 		assert.Equal(t, auditSource, change.Metadata["source"])
 	}
-}
-
-func TestBootstrapSkipsTheSystemUserAuditWhenItAlreadyExisted(t *testing.T) {
-	t.Parallel()
-
-	d := newDeps(t, emptyState())
-	d.repo.systemCreate = false
-	expectBootstrap(d)
-
-	result, err := d.svc.Bootstrap(t.Context(), &instancebootstrapports.InstanceBootstrapRequest{
-		Inputs:   *validInputs(),
-		Password: testPassword,
-	})
-	require.NoError(t, err)
-	assert.False(t, result.SystemUserCreated)
-	assert.Len(t, d.auditor.Changes(), 3)
 }
 
 func TestBootstrapIsANoOpForIdenticalInputsAfterCompletion(t *testing.T) {

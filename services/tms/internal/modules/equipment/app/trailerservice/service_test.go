@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -521,8 +520,8 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 
 	systemUserID := pulid.MustNew("usr_")
 	deps.userRepo.EXPECT().
-		GetSystemUser(mock.Anything, mock.Anything).
-		Return(&tenant.User{ID: systemUserID}, nil).
+		SystemActorID(mock.Anything, mock.Anything).
+		Return(systemUserID, nil).
 		Once()
 
 	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)

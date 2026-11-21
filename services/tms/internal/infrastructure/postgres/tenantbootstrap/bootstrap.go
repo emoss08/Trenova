@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
 )
@@ -47,6 +48,7 @@ type BootstrapResult struct {
 	Owner        *tenant.User
 	Membership   *tenant.OrganizationMembership
 	AdminRole    *rbac.Role
+	SystemActor  pulid.ID
 }
 
 func Bootstrap(ctx context.Context, db *keel.DB, params BootstrapParams) (*BootstrapResult, error) {
@@ -74,6 +76,11 @@ func Bootstrap(ctx context.Context, db *keel.DB, params BootstrapParams) (*Boots
 		return nil, err
 	}
 	if err = CreateSequences(ctx, db, scope); err != nil {
+		return nil, err
+	}
+
+	systemActor, _, err := EnsureSystemActor(ctx, db, scope)
+	if err != nil {
 		return nil, err
 	}
 
@@ -106,6 +113,7 @@ func Bootstrap(ctx context.Context, db *keel.DB, params BootstrapParams) (*Boots
 		Owner:        owner,
 		Membership:   membership,
 		AdminRole:    role,
+		SystemActor:  systemActor,
 	}, nil
 }
 
@@ -218,6 +226,9 @@ func AvailableUsername(ctx context.Context, db *keel.DB, base string) (string, e
 	}
 
 	return firstAvailable(ctx, base, maxUsernameLength, func(candidate string) (bool, error) {
+		if tenant.IsReservedUsername(candidate) {
+			return true, nil
+		}
 		u := tenantdb.Users
 		return tenantscope.Scoped(
 			ctx,

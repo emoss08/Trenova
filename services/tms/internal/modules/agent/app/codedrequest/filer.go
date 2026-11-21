@@ -120,7 +120,7 @@ func (f *Filer) with(
 		return nil, nil //nolint:nilnil // an agent that is off files nothing
 	}
 
-	system, err := f.users.GetSystemUser(ctx, "id")
+	system, err := f.users.SystemActorID(ctx, tenant.BuID)
 	if err != nil {
 		return nil, fmt.Errorf("read the system user: %w", err)
 	}
@@ -145,7 +145,7 @@ func (f *Filer) with(
 			PrincipalID:    definition.ID,
 			OrganizationID: tenant.OrgID,
 			BusinessUnitID: tenant.BuID,
-			UserID:         system.ID,
+			UserID:         system,
 		},
 		shadow: verdict.Shadow(),
 	}, nil

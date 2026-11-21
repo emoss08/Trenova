@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
@@ -42,6 +43,7 @@ type Params struct {
 	Realtime         realtimeports.RealtimeService
 	AppConfig        *appconfig.Config
 	Packets          *invoicepacket.Assembler
+	Features         platformcatalogports.FeatureGate
 }
 
 // Service emails invoices and serves their shared documents.
@@ -55,6 +57,7 @@ type Service struct {
 	emailSenders     emailports.EmailSenderResolver
 	emailService     emailports.EmailService
 	factoringRepo    factoringcompanyports.FactoringCompanyRepository
+	features         platformcatalogports.FeatureGate
 	l                *zap.Logger
 	organizationRepo tenantports.OrganizationRepository
 	packets          *invoicepacket.Assembler
@@ -81,6 +84,7 @@ func New(p Params) *Service {
 		emailSenders:     p.EmailSenders,
 		emailService:     p.EmailService,
 		factoringRepo:    p.FactoringRepo,
+		features:         p.Features,
 		l:                l,
 		organizationRepo: p.OrganizationRepo,
 		packets:          p.Packets,

@@ -4,18 +4,10 @@ import (
 	"fmt"
 	"mime"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/google/uuid"
 )
-
-func GenerateStoragePath(orgID, resourceType, filename string) string {
-	ext := filepath.Ext(filename)
-	uniqueID := uuid.New().String()
-	return fmt.Sprintf("%s/%s/%s%s", orgID, resourceType, uniqueID, strings.ToLower(ext))
-}
 
 func ContentDisposition(disposition, filename string) string {
 	normalizedDisposition := strings.ToLower(strings.TrimSpace(disposition))

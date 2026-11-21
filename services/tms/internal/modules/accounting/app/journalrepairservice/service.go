@@ -35,7 +35,12 @@ type Deps struct {
 	Numbers  journalposting.Numberer
 	Policy   invoiceledger.Policy
 	Features platformcatalogports.FeatureGate
+	Actors   SystemActors
 	Now      func() int64
+}
+
+type SystemActors interface {
+	SystemActorID(ctx context.Context, businessUnitID pulid.ID) (pulid.ID, error)
 }
 
 type Service struct {
@@ -44,7 +49,6 @@ type Service struct {
 
 type Request struct {
 	OrganizationID pulid.ID
-	ActorID        pulid.ID
 	DryRun         bool
 	BatchSize      int
 }
@@ -70,14 +74,6 @@ func New(deps *Deps) *Service {
 }
 
 func (s *Service) Repair(ctx context.Context, req *Request) (*Report, error) {
-	if req.ActorID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"actorId",
-			errortypes.ErrRequired,
-			"The repair needs a user to record as the author of the journals",
-		)
-	}
-
 	report := &Report{}
 	controls := make(map[pulid.ID]*accountingcontrol.AccountingControl)
 	if err := s.repairCreditMemos(ctx, req, report); err != nil {
@@ -137,11 +133,15 @@ func (s *Service) repairCreditMemos(ctx context.Context, req *Request, report *R
 				})
 				continue
 			}
+			actor, actorErr := s.deps.Actors.SystemActorID(ctx, candidate.Memo.BusinessUnitID)
+			if actorErr != nil {
+				return actorErr
+			}
 			ledgerReq := invoiceledger.CreditMemoRequest(
 				candidate.Kind,
 				candidate.Memo,
 				candidate.SourceInvoiceID,
-				req.ActorID,
+				actor,
 			)
 			ledgerReq.Now = s.deps.Now()
 			ledgerReq.LedgerOnly = ledgerReq.LedgerOnly || candidate.Journaled
@@ -150,7 +150,7 @@ func (s *Service) repairCreditMemos(ctx context.Context, req *Request, report *R
 				ctx,
 				candidate.Memo.OrganizationID,
 				candidate.Memo.BusinessUnitID,
-				req.ActorID,
+				actor,
 			)
 			err = s.inTx(memoCtx, req.DryRun, func(txCtx context.Context) error {
 				if req.DryRun {
@@ -206,14 +206,18 @@ func (s *Service) repairDriverPayments(
 		for _, candidate := range batch {
 			settlement := candidate.Settlement
 			after = settlement.ID
+			actor, actorErr := s.deps.Actors.SystemActorID(ctx, settlement.BusinessUnitID)
+			if actorErr != nil {
+				return actorErr
+			}
 			paymentCtx := tenantScope(
 				ctx,
 				settlement.OrganizationID,
 				settlement.BusinessUnitID,
-				req.ActorID,
+				actor,
 			)
 			err = s.inTx(paymentCtx, req.DryRun, func(txCtx context.Context) error {
-				return s.repairDriverPayment(txCtx, req, candidate, controls)
+				return s.repairDriverPayment(txCtx, req, candidate, actor, controls)
 			})
 			if err != nil {
 				if err = report.skip(err, Skip{
@@ -239,6 +243,7 @@ func (s *Service) repairDriverPayment(
 	ctx context.Context,
 	req *Request,
 	candidate *driversettlementports.DriverPaymentRepair,
+	actor pulid.ID,
 	controls map[pulid.ID]*accountingcontrol.AccountingControl,
 ) error {
 	settlement := candidate.Settlement
@@ -256,7 +261,7 @@ func (s *Service) repairDriverPayment(
 	journal, err := driversettlementjournal.PaymentJournal(
 		settlement,
 		control,
-		req.ActorID,
+		actor,
 		*settlement.PaidAt,
 		s.deps.Now(),
 	)

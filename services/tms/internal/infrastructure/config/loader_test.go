@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -201,9 +200,6 @@ func newValidConfig() *Config {
 			AccessKey: "minioadmin",
 			SecretKey: "minioadmin",
 			Bucket:    "trenova",
-		},
-		System: systemconfig.Config{
-			SystemUserPassword: "test-system-password",
 		},
 	}
 }
@@ -1275,7 +1271,6 @@ func TestTestConfigFileLoads(t *testing.T) {
 	require.NotNil(t, cfg)
 	assert.Equal(t, appconfig.EnvTest, cfg.App.Env)
 	assert.Equal(t, "trenova", cfg.App.Name)
-	assert.Equal(t, "test-system-password", cfg.System.SystemUserPassword)
 	assert.False(t, cfg.Temporal.Security.EnableEncryption)
 	assert.Empty(t, cfg.Temporal.Security.EncryptionKeyID)
 	assert.Equal(t, 168*time.Hour, cfg.Audit.GetExportTTL())

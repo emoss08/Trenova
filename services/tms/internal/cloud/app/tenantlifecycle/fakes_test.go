@@ -204,6 +204,7 @@ func (b *bootstrapper) Bootstrap(
 		Organization: req.Organization,
 		Owner:        req.Owner,
 		AdminRoleID:  pulid.MustNew("rol_"),
+		SystemActor:  pulid.MustNew("usr_"),
 	}, nil
 }
 

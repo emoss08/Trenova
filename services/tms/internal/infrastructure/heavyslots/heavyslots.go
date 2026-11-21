@@ -47,10 +47,42 @@ type Params struct {
 
 type Gate struct {
 	store         Store
+	local         *localSlots
 	limits        *tenantlimitsconfig.Config
 	organizations bool
 	metrics       *platformmetrics.Tenancy
 	l             *zap.Logger
+}
+
+type localSlots struct {
+	mu   sync.Mutex
+	held map[string]int
+}
+
+func (l *localSlots) acquire(bounds []slotstore.Bound) (func(), bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for _, bound := range bounds {
+		if l.held[bound.Key] >= bound.Limit {
+			return nil, false
+		}
+	}
+	for _, bound := range bounds {
+		l.held[bound.Key]++
+	}
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			l.mu.Lock()
+			defer l.mu.Unlock()
+			for _, bound := range bounds {
+				l.held[bound.Key]--
+				if l.held[bound.Key] <= 0 {
+					delete(l.held, bound.Key)
+				}
+			}
+		})
+	}, true
 }
 
 var _ kernelports.HeavyJobSlots = (*Gate)(nil)
@@ -74,6 +106,7 @@ func NewGate(
 ) *Gate {
 	return &Gate{
 		store:         store,
+		local:         &localSlots{held: map[string]int{}},
 		limits:        limits,
 		organizations: organizations,
 		metrics:       tenancy,
@@ -103,7 +136,11 @@ func (g *Gate) TryHold(ctx context.Context, job kernelports.HeavyJob) (func(), b
 	claim := g.claim(ctx, job)
 	acquired, err := g.acquire(ctx, claim)
 	if err != nil {
-		return g.failOpen(job, err), true
+		release, ok := g.fallback(job, claim, err)
+		if !ok {
+			g.metrics.RecordSlotWait(string(job), g.scope(claim))
+		}
+		return release, ok
 	}
 	if !acquired {
 		g.metrics.RecordSlotWait(string(job), g.scope(claim))
@@ -122,9 +159,10 @@ func (g *Gate) Hold(ctx context.Context, job kernelports.HeavyJob) (func(), erro
 	for {
 		acquired, err := g.acquire(ctx, claim)
 		if err != nil {
-			return g.failOpen(job, err), nil
-		}
-		if acquired {
+			if release, ok := g.fallback(job, claim, err); ok {
+				return release, nil
+			}
+		} else if acquired {
 			return g.hold(ctx, claim), nil
 		}
 		if !waited {
@@ -183,10 +221,14 @@ func (g *Gate) acquire(ctx context.Context, claim slotstore.Claim) (bool, error)
 	return g.store.Acquire(storeCtx, claim)
 }
 
-func (g *Gate) failOpen(job kernelports.HeavyJob, err error) func() {
-	g.l.Warn("could not claim a heavy job slot; running without one",
+func (g *Gate) fallback(
+	job kernelports.HeavyJob,
+	claim slotstore.Claim,
+	err error,
+) (func(), bool) {
+	g.l.Warn("could not reach the shared heavy job slots; holding one of this process's own",
 		zap.String("job", string(job)), zap.Error(err))
-	return func() {}
+	return g.local.acquire(claim.Bounds)
 }
 
 func (g *Gate) hold(ctx context.Context, claim slotstore.Claim) func() {

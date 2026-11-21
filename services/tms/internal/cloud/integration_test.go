@@ -61,6 +61,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedfeaturesservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedscope"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
@@ -202,7 +203,7 @@ type purgedKeys struct {
 	fragments []string
 }
 
-func (k *purgedKeys) DeleteMatching(_ context.Context, fragment string) (int64, error) {
+func (k *purgedKeys) DeleteMatching(_ context.Context, fragment string, _ func()) (int64, error) {
 	k.fragments = append(k.fragments, fragment)
 	return 1, nil
 }
@@ -557,7 +558,8 @@ func TestASecondTenantSeesNoneOfTheFirstsRowsAndHasItsOwnPlan(t *testing.T) {
 		require.NoError(t, err)
 		return n
 	}
-	assert.Equal(t, int64(1), countUsers(scopeOf(a), a.OrganizationID))
+	assert.Equal(t, int64(2), countUsers(scopeOf(a), a.OrganizationID),
+		"the first administrator and the tenant's own system actor")
 	assert.Equal(t, int64(0), countUsers(scopeOf(b), a.OrganizationID),
 		"row-level security hides the first tenant's people from the second")
 
@@ -721,12 +723,9 @@ func TestRemovalDeletesEveryRowAndObjectOfTheTenantAndNothingOfAnother(t *testin
 	r.purgeAll(t, made, true)
 	a = r.tenant(t, instanceA)
 	assert.Positive(t, r.remaining(t, a)["shipments"], "tenant A holds the whole seeded company")
-	for _, key := range []string{
-		a.OrganizationID.String() + "/documents/1.pdf",
-		"reports/" + a.OrganizationID.String() + "/run/1/report.pdf",
-		b.OrganizationID.String() + "/documents/1.pdf",
-	} {
-		r.objects.keys[key] = true
+	for _, family := range objectkey.Families() {
+		r.objects.keys[family.Key(a.OrganizationID, "x", "1.pdf")] = true
+		r.objects.keys[family.Key(b.OrganizationID, "x", "1.pdf")] = true
 	}
 
 	beforeA, beforeB := r.remaining(t, a), r.remaining(t, b)
@@ -754,7 +753,6 @@ func TestRemovalDeletesEveryRowAndObjectOfTheTenantAndNothingOfAnother(t *testin
 		Keys:      r.keys,
 		Search:    r.search,
 		Storage:   r.objects,
-		Reporting: &reportingconfig.Config{},
 		Slots:     heavyslotstest.Unbounded(),
 		Logger:    zap.NewNop(),
 	}))
@@ -781,9 +779,13 @@ func TestRemovalDeletesEveryRowAndObjectOfTheTenantAndNothingOfAnother(t *testin
 	})
 	require.NoError(t, err, "the other tenant's organization still reads through its repository")
 	assert.Equal(t, b.OrganizationID, survivor.ID)
-	assert.Equal(t, 0, r.objects.count(a.OrganizationID.String()+"/"))
-	assert.Equal(t, 0, r.objects.count("reports/"+a.OrganizationID.String()+"/"))
-	assert.Equal(t, 1, r.objects.count(b.OrganizationID.String()+"/"))
+	for key := range r.objects.keys {
+		assert.NotContains(t, key, a.OrganizationID.String(), "no object of the removed tenant is left")
+		assert.NotContains(t, key, a.BusinessUnitID.String(), "no object of the removed tenant is left")
+	}
+	for _, family := range objectkey.Families() {
+		assert.Equal(t, 1, r.objects.count(family.Prefix(b.OrganizationID)), family.Name)
+	}
 	assert.Equal(t, []pulid.ID{a.OrganizationID}, r.search.organizations)
 	assert.ElementsMatch(
 		t,

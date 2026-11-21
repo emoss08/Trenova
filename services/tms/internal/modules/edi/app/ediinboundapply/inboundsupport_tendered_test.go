@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -71,8 +70,8 @@ func TestRecordTenderedShipmentStatus_WritesCommentAndEvent(t *testing.T) {
 	}
 
 	userRepo.EXPECT().
-		GetSystemUser(mock.Anything, mock.Anything).
-		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+		SystemActorID(mock.Anything, mock.Anything).
+		Return(pulid.MustNew("usr_"), nil).
 		Once()
 	var recordedComment *shipment.ShipmentComment
 	commentRepo.EXPECT().
@@ -168,8 +167,8 @@ func TestRecordTenderedShipmentStatus_EventInsertFailureIsNonFatal(t *testing.T)
 	}
 
 	userRepo.EXPECT().
-		GetSystemUser(mock.Anything, mock.Anything).
-		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+		SystemActorID(mock.Anything, mock.Anything).
+		Return(pulid.MustNew("usr_"), nil).
 		Once()
 	commentRepo.EXPECT().
 		Create(mock.Anything, mock.Anything).
@@ -207,8 +206,8 @@ func quietShipments(t *testing.T) *editendershipment.Service {
 	t.Helper()
 	users := tenantportsmock.NewMockUserRepository(t)
 	users.EXPECT().
-		GetSystemUser(mock.Anything, mock.Anything).
-		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+		SystemActorID(mock.Anything, mock.Anything).
+		Return(pulid.MustNew("usr_"), nil).
 		Maybe()
 	comments := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	comments.EXPECT().

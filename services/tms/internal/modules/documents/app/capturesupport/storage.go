@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,7 +23,11 @@ const (
 // pageKey names a page's object. The checksum is in the name so a different
 // page claiming the same sequence can never overwrite the one already there.
 func PageKey(orgID, batchID pulid.ID, sequence int, checksum string) string {
-	return fmt.Sprintf("capture/%s/%s/%04d-%s.pdf", orgID, batchID, sequence, checksum[:16])
+	return objectkey.Capture.Key(
+		orgID,
+		batchID.String(),
+		fmt.Sprintf("%04d-%s.pdf", sequence, checksum[:16]),
+	)
 }
 
 func ThumbnailKey(pageStoragePath string) string {

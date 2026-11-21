@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"go.uber.org/zap"
@@ -85,6 +86,22 @@ func (s *Service) auditCreated(
 			keyOrganizationID: org.ID.String(),
 		},
 		Comment:  "The Trenova control plane granted the first administrator the Organization Administrator role",
+		Metadata: metadata,
+	})
+	s.auditor.RecordChange(ctx, &permissionports.SecurityChange{
+		Resource:       permission.ResourceUser,
+		ResourceID:     created.SystemActor.String(),
+		Operation:      permission.OpCreate,
+		Action:         "user.created",
+		Actor:          actor,
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
+		After: map[string]any{
+			keyUserID:         created.SystemActor.String(),
+			"username":        tenant.SystemActorUsername(org.BusinessUnitID),
+			keyOrganizationID: org.ID.String(),
+		},
+		Comment:  "The Trenova control plane created the system actor background work is written under",
 		Metadata: metadata,
 	})
 	s.l.Info("made a shared-server tenant",

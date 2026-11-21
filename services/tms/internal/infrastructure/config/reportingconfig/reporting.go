@@ -25,7 +25,6 @@ type Config struct {
 	MaxConcurrentStatementsPerOrg int               `mapstructure:"maxConcurrentStatementsPerOrg" validate:"min=0,max=64"`
 	ArtifactRetention             time.Duration     `mapstructure:"artifactRetention"`
 	ResultCache                   ResultCacheConfig `mapstructure:"resultCache"`
-	ArtifactPrefix                string            `mapstructure:"artifactPrefix"`
 	CSVIncludeBOM                 bool              `mapstructure:"csvIncludeBom"`
 	ExplainCostLimit              float64           `mapstructure:"explainCostLimit"              validate:"min=0"`
 	ExplainRowLimit               float64           `mapstructure:"explainRowLimit"               validate:"min=0"`
@@ -188,13 +187,6 @@ func (c *ResultCacheConfig) GetTTL() time.Duration {
 
 func (c *ResultCacheConfig) SharedEnabled() bool {
 	return c.Enabled && c.Shared.Enabled
-}
-
-func (c *Config) GetArtifactPrefix() string {
-	if c.ArtifactPrefix == "" {
-		return "reports"
-	}
-	return c.ArtifactPrefix
 }
 
 func (c *Config) GetExplainCostLimit() float64 {

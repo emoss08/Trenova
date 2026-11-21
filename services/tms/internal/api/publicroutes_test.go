@@ -25,13 +25,15 @@ var publicSetups = []string{"setupRoutes", "setupPublicRoutes"}
 
 var baseWaysIn = map[string]string{
 	"publicConfigHandler.RegisterPublicRoutes": "the client's configuration before sign-in; it names no tenant",
-	"versionHandler.RegisterPublicRoutes":      "the build the server runs",
-	"emailHandler.RegisterPublicRoutes": "delivery events for mail the organization sent; " +
-		"sending email is Administration, a base feature",
-	"invoiceHandler.RegisterPublicRoutes": "an invoice's view link; invoices are Billing, a base feature",
-	"captureHandler.RegisterPublicRoutes": "pairing a scanner; Capture files documents, a base feature",
-	"captureHandler.RegisterDeviceRoutes": "a paired scanner, authenticated by its device token; " +
-		"documents are a base feature",
+	"versionHandler.RegisterPublicRoutes":      "the build the server runs; it names no tenant",
+	"emailHandler.RegisterPublicRoutes": "delivery events for mail the organization already sent; " +
+		"they only add suppressions, which protect the shared sender for every tenant, so a " +
+		"suspended tenant's bounces are still recorded",
+	"captureHandler.RegisterPublicRoutes": "pairing names no tenant until a signed-in person " +
+		"approves it; a refresh renews a device whose every call goes through the device group's " +
+		"suspension guard",
+	"captureHandler.RegisterDeviceRoutes": "a paired scanner, authenticated by its device token, " +
+		"behind the same suspension guard and plan admission as a session",
 	"supportEntryHandler.RegisterPublicRoutes": "Trenova staff entering under a grant; not a plan " +
 		"feature but managed mode, and the handler registers nothing when managed.enabled is off",
 }
@@ -73,6 +75,9 @@ var entryGated = map[string]entryCheck{
 	},
 	"tenderPublicHandler.RegisterPublicRoutes": {
 		"internal/modules/operations/app/tenderresponse", "FeatureCarrierBrokerage",
+	},
+	"invoiceHandler.RegisterPublicRoutes": {
+		"internal/modules/billing/app/invoicesendservice", "FeatureBilling",
 	},
 	"rateConfirmationPublicHandler.RegisterPublicRoutes": {
 		"internal/modules/rating/app/rateconfirmationservice", "FeatureCarrierBrokerage",
@@ -137,8 +142,11 @@ func TestEveryRouteWithoutASessionDeclaresItsFeature(t *testing.T) {
 		}
 	}
 
-	for name := range baseWaysIn {
+	for name, reason := range baseWaysIn {
 		assert.True(t, seen[name], "%s is listed as base but registers no public routes", name)
+		assert.NotContains(t, reason, "base feature",
+			"%s: a suspended tenant or one with no plan has no features, base included, so a way "+
+				"in that resolves a tenant checks its plan at the service entry (entryGated)", name)
 	}
 	for name := range entryGated {
 		assert.True(

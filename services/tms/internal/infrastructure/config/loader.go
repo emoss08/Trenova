@@ -130,6 +130,9 @@ var retiredSections = map[string]string{
 		"aiMaxRetries is ai.maxRetries, aiMaxInputChars is ai.maxInputChars, " +
 		"aiExtractionMaxTokens is ai.extractionMaxTokens, and the OCR keys " +
 		"are gone because Docling reads scans",
+	"system": "the system user's password is gone: each business unit's system actor has no " +
+		"password and never signs in, so remove the section and TRENOVA_SYSTEM_SYSTEMUSERPASSWORD",
+	"reporting.artifactPrefix": "report artifacts are always stored under reports/<organization>/",
 }
 
 func (l *Loader) decode() (*Config, error) {
@@ -392,7 +395,6 @@ func validateProductionSecurity(config *Config) error {
 		config.Storage.ValidateProduction,
 		config.ContentScan.ValidateProduction,
 		config.AIAudit.ValidateProduction,
-		config.System.ValidateProduction,
 		config.Search.ValidateProduction,
 		config.Renderer.ValidateProduction,
 		config.Temporal.ValidateProduction,

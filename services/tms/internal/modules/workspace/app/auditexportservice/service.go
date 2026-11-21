@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config/auditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -36,7 +38,6 @@ import (
 
 const (
 	ExportWorkflowName = "AuditExportWorkflow"
-	exportKeyPrefix    = "audit-exports/"
 	exportPageSize     = 1000
 	maxExportRows      = 2_000_000
 	maxExportBytes     = 2 << 30
@@ -276,8 +277,10 @@ func (s *Service) write(
 	export *audit.Export,
 	heartbeat func(string),
 ) (*writeStats, string, error) {
-	key := exportKeyPrefix + export.OrganizationID.String() + "/" + export.ID.String() + "." +
-		export.Format.Extension()
+	key := objectkey.AuditExports.Key(
+		export.OrganizationID,
+		export.ID.String()+"."+export.Format.Extension(),
+	)
 	pipe := uploadpipe.Open(ctx, s.storage, uploadpipe.Params{
 		Key:         key,
 		ContentType: export.Format.ContentType(),

@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -55,6 +56,12 @@ func (s *Service) ExportDashboard(
 	if err != nil {
 		return nil, err
 	}
+
+	release, err := s.slots.Hold(ctx, kernelports.HeavyJobExport)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 
 	tiles, err := s.ResolveDashboardTiles(ctx, &ResolveDashboardTilesRequest{
 		Request:      req.Request,

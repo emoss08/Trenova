@@ -90,12 +90,6 @@ func repairJournals(
 ) (*journalrepairservice.Report, error) {
 	logger := zap.NewNop()
 
-	systemUser, err := userrepository.New(userrepository.Params{DB: conn, Logger: logger}).
-		GetSystemUser(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load the system user: %w", err)
-	}
-
 	service := journalrepairservice.New(&journalrepairservice.Deps{
 		DB: conn,
 		Repo: journalrepairrepository.New(
@@ -126,12 +120,12 @@ func repairJournals(
 			accountingcontrolpolicyservice.Params{Logger: logger},
 		),
 		Features: entitlementservice.NewAllowAll(),
+		Actors:   userrepository.New(userrepository.Params{DB: conn, Logger: logger}),
 		Now:      timeutils.NowUnix,
 	})
 
 	report, err := service.Repair(ctx, &journalrepairservice.Request{
 		OrganizationID: orgID,
-		ActorID:        systemUser.ID,
 		DryRun:         preview,
 	})
 	if err != nil {

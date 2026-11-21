@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,17 +29,27 @@ func (s *Service) DownloadSharedDocument(
 			TokenHash: tokenHash,
 		},
 	)
+	if errortypes.IsNotFoundError(err) {
+		return nil, shareUnavailable()
+	}
 	if err != nil {
 		return nil, err
 	}
 	now := timeutils.NowUnix()
 	if share.RevokedAt != nil || share.ExpiresAt <= now {
-		return nil, errortypes.NewNotFoundError("Document link is no longer available")
+		return nil, shareUnavailable()
 	}
 	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
 		OrganizationID: share.OrganizationID,
 		BusinessUnitID: share.BusinessUnitID,
 	})
+	entitled, err := s.features.Enabled(ctx, platformcatalog.FeatureBilling)
+	if err != nil {
+		return nil, err
+	}
+	if !entitled {
+		return nil, shareUnavailable()
+	}
 	if share.Invoice != nil {
 		replaced, hiddenErr := s.hiddenAsReplaced(ctx, share.Invoice)
 		if hiddenErr != nil {
@@ -80,6 +91,10 @@ func (s *Service) DownloadSharedDocument(
 		),
 		Body: body,
 	}, nil
+}
+
+func shareUnavailable() error {
+	return errortypes.NewNotFoundError("Document link is no longer available")
 }
 
 func newShareToken() (raw, hash string, err error) {

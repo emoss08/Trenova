@@ -3062,7 +3062,7 @@ A run nobody is in has two identities, kept apart on purpose.
   read) names no user either, so row-level security shows the run nothing the
   system user's own rows or memberships would.
 - **Attribution is the system user's.** The same actor carries the instance's
-  system user (`UserRepository.GetSystemUser`, the `system` account) as its
+  system actor of the run's business unit (`UserRepository.SystemActorID`) as its
   `UserID`, so a record the run creates or changes names that account in its
   created-by and updated-by columns instead of nobody, and a service that
   refused a write it had no user to attribute to (a shipment comment, a hold)

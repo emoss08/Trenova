@@ -711,8 +711,8 @@ func TestOpenReplay_ABackgroundCaseIsAnsweredFromWhatItsRunWasGiven(t *testing.T
 		Result: map[string]any{"status": "Delivered", "eta": "2026-03-05 09:30 UTC (in 2 days)"},
 	}}
 	caseEvaluation(w, evalCase)
-	w.users.On("GetSystemUser", mock.Anything, []string{"id"}).
-		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+	w.users.On("SystemActorID", mock.Anything, mock.Anything).
+		Return(pulid.MustNew("usr_"), nil).
 		Once()
 
 	opened, err := w.activities.openReplay(t.Context(), w.payload)
@@ -740,8 +740,8 @@ func TestOpenReplay_ABackgroundCaseWithNothingRecordedReadsTheRecordsAsOfNow(t *
 	evalCase := backgroundCase(w)
 	evalCase.AskedAt = &started
 	caseEvaluation(w, evalCase)
-	w.users.On("GetSystemUser", mock.Anything, []string{"id"}).
-		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+	w.users.On("SystemActorID", mock.Anything, mock.Anything).
+		Return(pulid.MustNew("usr_"), nil).
 		Once()
 
 	opened, err := w.activities.openReplay(t.Context(), w.payload)
@@ -762,8 +762,8 @@ func TestOpenReplay_ABackgroundCaseReplaysAsTheAgentAttributedToTheSystemUser(t 
 	evalCase.History = nil
 	caseEvaluation(w, evalCase)
 	system := pulid.MustNew("usr_")
-	w.users.On("GetSystemUser", mock.Anything, []string{"id"}).
-		Return(&tenant.User{ID: system}, nil).
+	w.users.On("SystemActorID", mock.Anything, mock.Anything).
+		Return(system, nil).
 		Once()
 
 	opened, err := w.activities.openReplay(t.Context(), w.payload)

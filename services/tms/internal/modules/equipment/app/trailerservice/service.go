@@ -456,14 +456,14 @@ func (s *Service) Locate( //nolint:gocognit // legacy workflow
 		if err != nil {
 			return err
 		}
-		systemUser, err := s.userRepo.GetSystemUser(txCtx, "id")
+		systemUser, err := s.userRepo.SystemActorID(txCtx, req.TenantInfo.BuID)
 		if err != nil {
 			return err
 		}
 		if err = s.createLocateComment(
 			txCtx,
 			req,
-			systemUser.ID,
+			systemUser,
 			trailerEntity,
 			previousShipment,
 			current.CurrentLocationID,

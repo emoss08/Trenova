@@ -304,9 +304,6 @@ reporting:
     shared:
       enabled: false # copies tenant report rows into Redis
 
-system:
-  systemUserPassword: change-me # from .env
-
 update:
   # Shows administrators when a newer Trenova release is published on GitHub.
   enabled: true

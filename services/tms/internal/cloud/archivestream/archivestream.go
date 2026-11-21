@@ -15,11 +15,51 @@ import (
 const (
 	EncoderWindow = 4 << 20
 	DecoderWindow = 8 << 20
+	MaxExpansion  = 1024
+	MaxPlainBytes = 256 << 30
+	expansionRoom = 64 << 20
 )
 
-var ErrStoredBytesChanged = errors.New(
-	"the part's stored bytes do not match the manifest's SHA-256: the archive was changed or cut short",
+var (
+	ErrStoredBytesChanged = errors.New(
+		"the part's stored bytes do not match the manifest's SHA-256: the archive was changed or cut short",
+	)
+	ErrExpandsTooFar = errors.New(
+		"the part decompresses to more than an archive part may hold",
+	)
 )
+
+type expansionLimit struct {
+	src  io.Reader
+	left int64
+}
+
+func (l *expansionLimit) Read(p []byte) (int, error) {
+	if l.left <= 0 {
+		var probe [1]byte
+		n, err := l.src.Read(probe[:])
+		if n > 0 {
+			return 0, ErrExpandsTooFar
+		}
+		return 0, err
+	}
+	if int64(len(p)) > l.left {
+		p = p[:l.left]
+	}
+	n, err := l.src.Read(p)
+	l.left -= int64(n)
+	return n, err
+}
+
+func plainLimit(stored int64) int64 {
+	if stored < 0 {
+		stored = 0
+	}
+	if stored > (MaxPlainBytes-expansionRoom)/MaxExpansion {
+		return MaxPlainBytes
+	}
+	return stored*MaxExpansion + expansionRoom
+}
 
 type Options struct {
 	Part     string
@@ -161,7 +201,7 @@ func NewReader(src io.Reader, expect Sum, opts *Options) (*Reader, error) {
 			return nil, fmt.Errorf("start decompressing %s: %w", opts.Part, err)
 		}
 		r.decoder = decoder
-		next = decoder
+		next = &expansionLimit{src: decoder, left: plainLimit(expect.Bytes)}
 	}
 	r.head = next
 	return r, nil

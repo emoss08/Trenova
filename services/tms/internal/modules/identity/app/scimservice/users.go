@@ -203,7 +203,8 @@ func (s *Service) provisionUser(
 }
 
 func linkable(user *tenant.User) bool {
-	return user.Username != tenant.SystemUsername && !supportaccess.IsPrincipalID(user.ID)
+	return !supportaccess.IsPrincipalID(user.ID) && !tenant.IsReservedUsername(user.Username) &&
+		!tenant.IsReservedEmailAddress(user.EmailAddress)
 }
 
 func newLink(

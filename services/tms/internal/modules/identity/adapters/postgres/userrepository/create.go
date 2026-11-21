@@ -106,8 +106,10 @@ func (ur *repository) FindIdentityConflicts(
 				return conflicts, err
 			}
 
-			conflicts.EmailAddress = req.EmailAddress != "" && row.EmailAddress
-			conflicts.Username = req.Username != "" && row.Username
+			conflicts.EmailAddress = req.EmailAddress != "" &&
+				(row.EmailAddress || tenant.IsReservedEmailAddress(req.EmailAddress))
+			conflicts.Username = req.Username != "" &&
+				(row.Username || tenant.IsReservedUsername(req.Username))
 
 			return conflicts, nil
 		},

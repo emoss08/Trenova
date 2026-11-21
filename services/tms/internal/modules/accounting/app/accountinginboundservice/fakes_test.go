@@ -543,8 +543,8 @@ type fakeUsers struct {
 	system *tenant.User
 }
 
-func (f *fakeUsers) GetSystemUser(context.Context, ...string) (*tenant.User, error) {
-	return f.system, nil
+func (f *fakeUsers) SystemActorID(context.Context, pulid.ID) (pulid.ID, error) {
+	return f.system.ID, nil
 }
 
 type postedPayment struct {

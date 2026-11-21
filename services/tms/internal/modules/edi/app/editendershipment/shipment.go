@@ -44,7 +44,7 @@ func (s *Service) CreateSystemComment(
 	comment string,
 	metadata map[string]any,
 ) error {
-	systemUser, err := s.userRepo.GetSystemUser(ctx, "id")
+	systemUser, err := s.userRepo.SystemActorID(ctx, tenantInfo.BuID)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (s *Service) CreateSystemComment(
 		ShipmentID:       shipmentID,
 		OrganizationID:   tenantInfo.OrgID,
 		BusinessUnitID:   tenantInfo.BuID,
-		UserID:           systemUser.ID,
+		UserID:           systemUser,
 		Comment:          comment,
 		Type:             shipmentvocab.CommentTypeStatusUpdate,
 		Visibility:       shipmentvocab.CommentVisibilityOperations,

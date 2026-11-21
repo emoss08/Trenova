@@ -7,6 +7,8 @@ import (
 	"mime/multipart"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
@@ -467,8 +469,8 @@ func (s *Service) UploadProfilePicture(
 	}
 
 	contentType := fileHeader.Header.Get("Content-Type")
-	key := fileutils.GenerateStoragePath(
-		tenantInfo.OrgID.String(),
+	key := objectkey.Organization.NewKey(
+		tenantInfo.OrgID,
 		"user/profile-picture",
 		fileHeader.Filename,
 	)

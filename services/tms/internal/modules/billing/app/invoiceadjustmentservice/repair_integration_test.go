@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -62,7 +63,7 @@ func TestJournalRepairRestoresAdjustmentCreditMemoJournals(t *testing.T) {
 	require.Empty(t, h.customerLedgerLines(t, writeOff.CreditMemoInvoiceID))
 
 	repair := h.repairService()
-	request := &journalrepairservice.Request{OrganizationID: h.orgID, ActorID: h.userID}
+	request := &journalrepairservice.Request{OrganizationID: h.orgID}
 
 	settlementID, netPay := h.seededPaidSettlement(t)
 
@@ -157,7 +158,6 @@ func TestJournalRepairRestoresAdjustmentCreditMemoJournals(t *testing.T) {
 
 	otherOrg, err := repair.Repair(ctx, &journalrepairservice.Request{
 		OrganizationID: pulid.MustNew("org_"),
-		ActorID:        h.userID,
 		DryRun:         true,
 	})
 	require.NoError(t, err)
@@ -298,6 +298,7 @@ func (h *integrationHarness) repairService() *journalrepairservice.Service {
 		Policy: accountingcontrolpolicyservice.New(
 			accountingcontrolpolicyservice.Params{Logger: logger},
 		),
+		Actors:   userrepository.New(userrepository.Params{DB: h.conn, Logger: logger}),
 		Features: plantest.AllFeatures(),
 		Now:      func() int64 { return 1_800_000_000 },
 	})

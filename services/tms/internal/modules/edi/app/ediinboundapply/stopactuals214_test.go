@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/editendershipment"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -53,8 +52,8 @@ func newStopActuals214Fixture(t *testing.T) *stopActuals214Fixture {
 	tracking := trackingeventportsmock.NewMockTrackingEventService(t)
 
 	userRepo.EXPECT().
-		GetSystemUser(mock.Anything, mock.Anything).
-		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+		SystemActorID(mock.Anything, mock.Anything).
+		Return(pulid.MustNew("usr_"), nil).
 		Maybe()
 	commentRepo.EXPECT().
 		Create(mock.Anything, mock.Anything).

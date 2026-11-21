@@ -145,6 +145,7 @@ func (r *repository) Bootstrap(
 				Organization: result.Organization,
 				Owner:        result.Owner,
 				AdminRoleID:  result.AdminRole.ID,
+				SystemActor:  result.SystemActor,
 			}, nil
 		},
 	)

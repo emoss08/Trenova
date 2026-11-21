@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/bytedance/sonic"
 )
 
@@ -234,7 +236,7 @@ func (m *Manifest) checkDocuments(p *problems) {
 
 func (d *Document) wellFormed() bool {
 	object, ok := ObjectKey(d.Key)
-	return ok && object != "" && d.SizeBytes >= 0 && sha256Pattern.MatchString(d.SHA256) &&
+	return ok && objectkey.Clean(object) && d.SizeBytes >= 0 && sha256Pattern.MatchString(d.SHA256) &&
 		len(d.Key) <= maxDocumentKey && !strings.Contains(d.Key, "..") &&
 		(d.ContentType == "" ||
 			(len(d.ContentType) <= maxContentType && contentTypePattern.MatchString(d.ContentType))) &&

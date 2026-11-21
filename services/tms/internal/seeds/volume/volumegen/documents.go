@@ -3,8 +3,9 @@ package volumegen
 import (
 	"path"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -25,7 +26,7 @@ func (g *Generator) DocumentRow(
 	size int64,
 ) *document.Document {
 	id := IDAt("doc_", at)
-	storagePath := fileutils.GenerateStoragePath(g.Refs.OrgID.String(), resourceType, fileName)
+	storagePath := objectkey.Organization.NewKey(g.Refs.OrgID, resourceType, fileName)
 	return &document.Document{
 		ID:                  id,
 		OrganizationID:      g.Refs.OrgID,

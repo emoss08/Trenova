@@ -31,7 +31,7 @@ func New(p Params) cloudtenantports.KeyPurge {
 	return &purge{client: p.Client}
 }
 
-func (p *purge) DeleteMatching(ctx context.Context, fragment string) (int64, error) {
+func (p *purge) DeleteMatching(ctx context.Context, fragment string, beat func()) (int64, error) {
 	if len(fragment) < 20 || strings.ContainsAny(fragment, "*?[]\\") {
 		return 0, ErrFragmentTooShort
 	}
@@ -52,6 +52,7 @@ func (p *purge) DeleteMatching(ctx context.Context, fragment string) (int64, err
 			}
 			deleted += n
 		}
+		beat()
 		if next == 0 {
 			return deleted, nil
 		}

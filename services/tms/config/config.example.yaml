@@ -594,6 +594,11 @@ managed:
     windowHours: 4
     concurrency: 2
     maxDuration: 3h
+    # Object storage hosts an archive, restore or import may reach: a host, or a suffix that
+    # starts with a dot. Required on a shared server; the archive endpoint must be https and
+    # the dial refuses loopback, private, link-local and metadata addresses whatever is listed.
+    allowedEndpoints:
+      - .r2.cloudflarestorage.com
 
 # Limits that keep one organization from crowding the others on a server many organizations
 # share. Each is bounded per organization with an instance cap behind it. A switch is auto,

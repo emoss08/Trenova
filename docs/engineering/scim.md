@@ -52,7 +52,7 @@ groups it pushed. Another directory's people answer 404.
   of the directory's organization (`scimrepository.FindMember`, under the tenant scope, so a
   person of another organization is never found), and otherwise creates the account with a
   membership in that organization only. An email or username taken elsewhere is a 409. The
-  instance's system user is never linked. A created account has an unusable password and no
+  business unit's system actor is never linked. A created account has an unusable password and no
   invitation: people sign in through SSO or reset their password.
 - **Profile changes** (name, email, title, phone, timezone) apply only when the person belongs to
   no other organization. Otherwise they are withheld and a `withheld` provisioning record says so,

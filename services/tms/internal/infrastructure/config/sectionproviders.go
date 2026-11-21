@@ -28,7 +28,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenantlimitsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
@@ -47,7 +46,6 @@ var SectionProviders = fx.Provide(
 	func(c *Config) *loggingconfig.Config { return &c.Logging },
 	func(c *Config) *temporalconfig.Config { return &c.Temporal },
 	func(c *Config) *storageconfig.Config { return &c.Storage },
-	func(c *Config) *systemconfig.Config { return &c.System },
 	func(c *Config) *realtimeconfig.Config { return &c.Realtime },
 	func(c *Config) *searchconfig.Config { return &c.Search },
 	func(c *Config) *aiconfig.Config { return &c.AI },

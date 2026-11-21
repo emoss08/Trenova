@@ -19,6 +19,7 @@ type Tenancy struct {
 	entitlementRefusals *prometheus.CounterVec
 	limitRefusals       *prometheus.CounterVec
 	slotWaits           *prometheus.CounterVec
+	archiveRefusals     *prometheus.CounterVec
 }
 
 func NewTenancy(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *Tenancy {
@@ -54,7 +55,16 @@ func NewTenancy(registry *prometheus.Registry, logger *zap.Logger, enabled bool)
 		},
 		[]string{rollupLabelKind, "scope"},
 	)
-	m.MustRegister(m.entitlementRefusals, m.limitRefusals, m.slotWaits)
+	m.archiveRefusals = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metricbase.Namespace,
+			Subsystem: tenancySubsystem,
+			Name:      "archive_refusals_total",
+			Help:      "Tenant archives refused, by purpose and refusal code; code tenant on a nightly archive is a row that refers to another tenant",
+		},
+		[]string{"purpose", "code"},
+	)
+	m.MustRegister(m.entitlementRefusals, m.limitRefusals, m.slotWaits, m.archiveRefusals)
 	return m
 }
 
@@ -82,4 +92,11 @@ func (m *Tenancy) RecordSlotWait(kind, scope string) {
 		return
 	}
 	m.IfEnabled(func() { m.slotWaits.WithLabelValues(kind, scope).Inc() })
+}
+
+func (m *Tenancy) RecordArchiveRefusal(purpose, code string) {
+	if m == nil {
+		return
+	}
+	m.IfEnabled(func() { m.archiveRefusals.WithLabelValues(purpose, code).Inc() })
 }

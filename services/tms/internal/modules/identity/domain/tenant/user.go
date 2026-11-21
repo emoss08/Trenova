@@ -56,10 +56,7 @@ var (
 	_ validationframework.Entity     = (*User)(nil)
 )
 
-const (
-	UserIDPrefix   = "usr_"
-	SystemUsername = "system"
-)
+const UserIDPrefix = "usr_"
 
 type User struct {
 	keel.Table `keel:"users"`

@@ -66,6 +66,12 @@ managed:
   # Who may reach port 8090, as NetworkPolicy peers: the operator's namespace.
   # Required while enabled; the chart refuses to open the port to everyone.
   from: []
+  archive:
+    # Object storage hosts a tenant archive, restore or import may reach: a host, or a
+    # suffix that starts with a dot (.r2.cloudflarestorage.com). Required when
+    # tms.config.managed.tenancy is shared. A dedicated instance's own import reads only the
+    # backup endpoint the operator configured and needs none.
+    allowedEndpoints: []
 
 # Applied to every pod the chart makes.
 imagePullSecrets: []
@@ -89,7 +95,6 @@ secrets:
   #                            without it, so back it up apart from the cluster
   #   encryptionRetiredKeys    optional; keys rotated out, still able to decrypt
   #   mfaRecoveryCodePepper    32+ characters
-  #   systemUserPassword
   #   redisPassword            letters and digits only (it is put in URLs)
   #   meiliMasterKey
   #   rlsScopeKeyId            1-32 of [A-Za-z0-9_-]

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,8 +34,8 @@ func TestUnattendedActor_NamesTheSystemUserAndStaysAnAgent(t *testing.T) {
 
 	activities, users := actorActivities(t)
 	system := pulid.MustNew("usr_")
-	users.On("GetSystemUser", mock.Anything, []string{"id"}).
-		Return(&tenant.User{ID: system}, nil).
+	users.On("SystemActorID", mock.Anything, mock.Anything).
+		Return(system, nil).
 		Once()
 	scope := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	definition := &agentdefinition.Definition{ID: pulid.MustNew("agdef_"), Name: "Dispatch Agent"}
@@ -79,8 +78,8 @@ func TestUnattendedActor_AMissingSystemUserFailsTheAttemptRetryably(t *testing.T
 	t.Parallel()
 
 	activities, users := actorActivities(t)
-	users.On("GetSystemUser", mock.Anything, []string{"id"}).
-		Return(nil, errors.New("connection refused")).
+	users.On("SystemActorID", mock.Anything, mock.Anything).
+		Return(pulid.Nil, errors.New("connection refused")).
 		Once()
 
 	actor, err := activities.unattendedActor(
@@ -127,8 +126,8 @@ func TestRecordProposals_AnAutomaticWriteIsExecutedByTheSystemUser(t *testing.T)
 
 	users := tenantportsmock.NewMockUserRepository(t)
 	system := pulid.MustNew("usr_")
-	users.On("GetSystemUser", mock.Anything, []string{"id"}).
-		Return(&tenant.User{ID: system}, nil).
+	users.On("SystemActorID", mock.Anything, mock.Anything).
+		Return(system, nil).
 		Once()
 	store := &createdProposals{}
 	activities := &Activities{

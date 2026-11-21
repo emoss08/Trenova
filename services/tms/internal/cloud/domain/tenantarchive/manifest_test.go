@@ -94,6 +94,27 @@ func TestAManifestThatDisagreesWithItselfIsRefused(t *testing.T) {
 	}
 }
 
+func TestADocumentKeyThatIsNotACleanObjectKeyIsRefused(t *testing.T) {
+	t.Parallel()
+
+	for _, key := range []string{
+		"documents/org_1//x.pdf",
+		"documents/org_1/a\\b.pdf",
+		"documents//org_1/x.pdf",
+		"documents/org_1/x/",
+		"documents/org_1/./x.pdf",
+		"documents/org_1/x\x00.pdf",
+		"documents/",
+	} {
+		m := manifest()
+		m.Documents[0].Key = key
+		m.Seal()
+		refusal, ok := tenantarchive.RefusalOf(m.Check())
+		require.True(t, ok, "%q", key)
+		assert.Equal(t, tenantarchive.RefusalManifest, refusal.Code, "%q", key)
+	}
+}
+
 func TestAccessNeedsOneCurrentKeyToWriteAndNoneForAnExport(t *testing.T) {
 	t.Parallel()
 

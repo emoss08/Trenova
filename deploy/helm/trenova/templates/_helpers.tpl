@@ -293,7 +293,6 @@ release Job's steps. Secrets only; everything else is in the rendered config. */
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SECURITY_ENCRYPTION_KEY" "secret" $escrow "key" "encryptionKey") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS" "secret" $app "key" "encryptionRetiredKeys" "optional" true) }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER" "secret" $escrow "key" "mfaRecoveryCodePepper") }}
-{{ include "trenova.secretEnv" (dict "name" "TRENOVA_SYSTEM_SYSTEMUSERPASSWORD" "secret" $app "key" "systemUserPassword") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_RENDERER_GOTENBERGPASSWORD" "secret" $app "key" "gotenbergPassword") }}
 {{- if .Values.docling.enabled }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DOCUMENTCONVERSION_APIKEY" "secret" $app "key" "doclingApiKey") }}

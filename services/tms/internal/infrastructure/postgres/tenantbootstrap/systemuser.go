@@ -4,72 +4,57 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const (
-	SystemUserName     = "System Account"
-	SystemUserEmail    = "system@trenova.app"
-	systemUserTimezone = "America/Los_Angeles"
-)
-
-var ErrSystemUserPasswordRequired = errors.New(
-	"tenant bootstrap: the system user password must be set in config (system.systemUserPassword)",
-)
-
-type SystemUserParams struct {
-	Scope    tenantscope.Scope
-	Password string
-}
-
-func EnsureSystemUser(
+func EnsureSystemActor(
 	ctx context.Context,
 	db *keel.DB,
-	params SystemUserParams,
+	scope tenantscope.Scope,
 ) (pulid.ID, bool, error) {
-	u := tenantdb.Users
-	existing, err := tenantscope.Scoped(ctx, u.Pick(u.ID).Where(u.Username.Lower().Eq(tenant.SystemUsername))).
-		First(ctx, db)
+	sa := tenantdb.SystemActors
+	existing, err := tenantscope.Scoped(
+		ctx,
+		sa.Pick(sa.UserID).Where(sa.BusinessUnitID.Eq(scope.BusinessUnitID)),
+	).First(ctx, db)
 	switch {
 	case err == nil:
-		return existing.ID, false, nil
+		return existing.UserID, false, nil
 	case !errors.Is(err, keel.ErrNotFound):
-		return pulid.Nil, false, fmt.Errorf("check system user: %w", err)
+		return pulid.Nil, false, fmt.Errorf("check system actor: %w", err)
 	}
 
-	if strings.TrimSpace(params.Password) == "" {
-		return pulid.Nil, false, ErrSystemUserPasswordRequired
-	}
-
-	now := params.Scope.NowUnix()
-	user := &tenant.User{
-		BusinessUnitID:        params.Scope.BusinessUnitID,
-		CurrentOrganizationID: params.Scope.OrganizationID,
-		Name:                  SystemUserName,
-		Username:              tenant.SystemUsername,
-		EmailAddress:          SystemUserEmail,
-		Status:                domaintypes.StatusActive,
-		Timezone:              systemUserTimezone,
-		CreatedAt:             now,
-		UpdatedAt:             now,
-	}
-
-	hashed, err := user.GeneratePassword(params.Password)
+	user := tenant.NewSystemActorUser(scope.BusinessUnitID, scope.OrganizationID)
+	password, err := user.GenerateUnusablePassword()
 	if err != nil {
-		return pulid.Nil, false, fmt.Errorf("hash system user password: %w", err)
+		return pulid.Nil, false, fmt.Errorf("hash the system actor's unusable password: %w", err)
 	}
-	user.Password = hashed
+	user.Password = password
+	now := scope.NowUnix()
+	user.CreatedAt = now
+	user.UpdatedAt = now
 
-	if err = u.Create(ctx, db, user); err != nil {
-		return pulid.Nil, false, fmt.Errorf("create system user: %w", err)
+	if err = tenantdb.Users.Create(ctx, db, user); err != nil {
+		return pulid.Nil, false, fmt.Errorf("create system actor: %w", err)
+	}
+	if err = sa.Create(ctx, db, &tenant.SystemActor{
+		BusinessUnitID: scope.BusinessUnitID,
+		UserID:         user.ID,
+		CreatedAt:      now,
+	}); err != nil {
+		return pulid.Nil, false, fmt.Errorf("record system actor: %w", err)
 	}
 
 	return user.ID, true, nil
+}
+
+func NotSystemActor(ctx context.Context) keel.Pred {
+	u := tenantdb.Users
+	sa := tenantdb.SystemActors
+	return keel.Not(keel.Exists(tenantscope.Scoped(ctx, sa.Where(sa.UserID.EqCol(u.ID)))))
 }

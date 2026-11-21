@@ -56,10 +56,13 @@ type purgePlan struct {
 	byTable     map[string]purgeTarget
 	constraints map[string]*foreignKey
 	dependents  map[string][]*foreignKey
+	foreignKeys []*foreignKey
+	tables      map[string]tenantTable
 }
 
 type planInput struct {
 	Tables         []tenantTable
+	AllTables      []tenantTable
 	ForeignKeys    []*foreignKey
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
@@ -71,6 +74,11 @@ func buildPlan(in *planInput) *purgePlan {
 		byTable:     make(map[string]purgeTarget, len(in.Tables)),
 		constraints: make(map[string]*foreignKey, len(in.ForeignKeys)),
 		dependents:  make(map[string][]*foreignKey),
+		foreignKeys: in.ForeignKeys,
+		tables:      make(map[string]tenantTable, len(in.AllTables)),
+	}
+	for _, t := range in.AllTables {
+		plan.tables[t.Name] = t
 	}
 
 	for _, target := range targetsOf(in) {

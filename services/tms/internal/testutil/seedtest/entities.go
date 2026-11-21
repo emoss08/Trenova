@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -114,6 +116,12 @@ func (b *OrganizationBuilder) Build(
 
 	err := tenantdb.Organizations.Create(systemContext(ctx), db, b.org)
 	require.NoError(t, err, "failed to insert test organization")
+
+	_, _, err = tenantbootstrap.EnsureSystemActor(systemContext(ctx), db, tenantscope.Scope{
+		OrganizationID: b.org.ID,
+		BusinessUnitID: b.org.BusinessUnitID,
+	})
+	require.NoError(t, err, "failed to make the test business unit's system actor")
 
 	return b.org
 }

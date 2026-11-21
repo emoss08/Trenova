@@ -88,7 +88,6 @@ empty one fails validation instead of running with a default. */ -}}
   "contentScan" $contentScan
   "portal" (dict "baseUrl" (printf "%s/dash" $origin))
   "reporting" (dict "deliveryLinkBaseUrl" $origin)
-  "system" (dict "systemUserPassword" "")
   "imaging" (dict
     "endpoint" (printf "dns:///%s:50051" $imaging)
     "serverName" $imaging
@@ -108,6 +107,13 @@ empty one fails validation instead of running with a default. */ -}}
 {{- end }}
 {{- with .Values.managed.newSupportRequestUrl }}
 {{- $_ := set $managed "newSupportRequestUrl" . -}}
+{{- end }}
+{{- $tenancy := dig "managed" "tenancy" "dedicated" (.Values.tms.config | default dict) }}
+{{- if and (eq $tenancy "shared") (not .Values.managed.archive.allowedEndpoints) }}
+{{- fail "managed.archive.allowedEndpoints must name the object storage hosts a shared server may reach, such as .r2.cloudflarestorage.com" }}
+{{- end }}
+{{- with .Values.managed.archive.allowedEndpoints }}
+{{- $_ := set $managed "archive" (dict "allowedEndpoints" .) -}}
 {{- end }}
 {{- if .Values.embedding.enabled }}
 {{- $_ := set $managed "embedding" (dict

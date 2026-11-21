@@ -409,10 +409,6 @@ func TestListConnectionHidesTheSystemUserAndOtherOrganizations(t *testing.T) {
 		WithUsername("elsewhere").
 		WithEmail("elsewhere@example.com").
 		Build(t, f.ctx, f.db)
-	seedtest.NewUser(f.data.Organization.ID, f.data.BusinessUnit.ID).
-		WithUsername(tenant.SystemUsername).
-		WithEmail("system@example.com").
-		Build(t, f.ctx, f.db)
 
 	firstCursor, err := pagination.NewCursorInfo(1, "")
 	require.NoError(t, err)
@@ -556,10 +552,6 @@ func TestUpdateLastLoginAtKeepsTheVersion(t *testing.T) {
 
 func TestSystemScopedLookups(t *testing.T) {
 	f := newUserFixture(t)
-	system := seedtest.NewUser(f.data.Organization.ID, f.data.BusinessUnit.ID).
-		WithUsername(tenant.SystemUsername).
-		WithEmail("system@example.com").
-		Build(t, f.ctx, f.db)
 
 	byEmail, err := f.repo.FindByEmail(context.Background(), f.data.User.EmailAddress)
 	require.NoError(t, err)
@@ -573,8 +565,62 @@ func TestSystemScopedLookups(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, f.data.User.EmailAddress, byID.EmailAddress)
 
-	sys, err := f.repo.GetSystemUser(context.Background(), "id")
+}
+
+func TestTheSystemActorBelongsToItsOwnBusinessUnitAndNeverSignsIn(t *testing.T) {
+	f := newUserFixture(t)
+	other := seedtest.SeedAdditionalTenant(t, f.ctx, f.db, "SA")
+	impostor := seedtest.NewUser(other.Organization.ID, other.BusinessUnit.ID).
+		WithUsername("System").
+		WithEmail("system@other.example.com").
+		Build(t, f.ctx, f.db)
+
+	mine, err := f.repo.SystemActorID(context.Background(), f.data.BusinessUnit.ID)
 	require.NoError(t, err)
-	assert.Equal(t, system.ID, sys.ID)
-	assert.Empty(t, sys.EmailAddress)
+	theirs, err := f.repo.SystemActorID(context.Background(), other.BusinessUnit.ID)
+	require.NoError(t, err)
+
+	assert.NotEqual(t, mine, theirs)
+	assert.NotEqual(t, impostor.ID, theirs)
+	assert.NotEqual(t, impostor.ID, mine)
+
+	actor := tenant.NewSystemActorUser(f.data.BusinessUnit.ID, f.data.Organization.ID)
+	_, err = f.repo.FindByEmail(context.Background(), actor.EmailAddress)
+	require.Error(t, err, "the system actor's address must never resolve for a sign-in")
+	_, err = f.repo.FindByIDForLogin(context.Background(), mine)
+	require.Error(t, err, "the system actor must never load for a session")
+
+	byEmail, err := f.repo.FindByEmail(context.Background(), impostor.EmailAddress)
+	require.NoError(t, err, "a person named system is an ordinary person")
+	assert.Equal(t, impostor.ID, byEmail.ID)
+
+	_, err = f.repo.SystemActorID(context.Background(), "")
+	require.ErrorIs(t, err, ErrSystemActorNeedsTenant)
+}
+
+func TestReservedNamesAreNeverFreeForAPerson(t *testing.T) {
+	f := newUserFixture(t)
+
+	for _, name := range []string{"system", "SYSTEM", "Support", tenant.SystemActorUsername(f.data.BusinessUnit.ID)} {
+		conflicts, err := f.repo.FindIdentityConflicts(
+			context.Background(),
+			tenantports.UserIdentityConflictsRequest{Username: name},
+		)
+		require.NoError(t, err)
+		assert.True(t, conflicts.Username, name)
+	}
+
+	conflicts, err := f.repo.FindIdentityConflicts(context.Background(), tenantports.UserIdentityConflictsRequest{
+		Username:     "systems-team",
+		EmailAddress: "dispatch@acme.example.com",
+	})
+	require.NoError(t, err)
+	assert.False(t, conflicts.Username)
+	assert.False(t, conflicts.EmailAddress)
+
+	conflicts, err = f.repo.FindIdentityConflicts(context.Background(), tenantports.UserIdentityConflictsRequest{
+		EmailAddress: "anyone@system.trenova.invalid",
+	})
+	require.NoError(t, err)
+	assert.True(t, conflicts.EmailAddress)
 }

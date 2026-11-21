@@ -3,7 +3,6 @@ package archiveengine
 import (
 	"errors"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/bytedance/sonic"
@@ -14,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
 	"github.com/emoss08/trenova/internal/cloud/ports/archiveports"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -44,37 +43,34 @@ type Params struct {
 	Blobs     kernelports.BlobCipher
 	Envelopes *kernelports.EnvelopeSources
 	App       *appconfig.Config
-	Reporting *reportingconfig.Config
 	Clock     timeutils.Clock
 	Logger    *zap.Logger
 }
 
 type Engine struct {
-	rows      archiveports.Rows
-	buckets   archiveports.Buckets
-	storage   kernelports.Client
-	secrets   kernelports.SecretCipher
-	blobs     kernelports.BlobCipher
-	registry  *registry
-	release   string
-	reporting *reportingconfig.Config
-	clock     timeutils.Clock
-	l         *zap.Logger
+	rows     archiveports.Rows
+	buckets  archiveports.Buckets
+	storage  kernelports.Client
+	secrets  kernelports.SecretCipher
+	blobs    kernelports.BlobCipher
+	registry *registry
+	release  string
+	clock    timeutils.Clock
+	l        *zap.Logger
 }
 
 //nolint:gocritic // this is dependency injection
 func New(p Params) *Engine {
 	return &Engine{
-		rows:      p.Rows,
-		buckets:   p.Buckets,
-		storage:   p.Storage,
-		secrets:   p.Secrets,
-		blobs:     p.Blobs,
-		registry:  newRegistry(p.Envelopes),
-		release:   p.App.Version,
-		reporting: p.Reporting,
-		clock:     p.Clock,
-		l:         p.Logger.Named("cloud.tenant-archive"),
+		rows:     p.Rows,
+		buckets:  p.Buckets,
+		storage:  p.Storage,
+		secrets:  p.Secrets,
+		blobs:    p.Blobs,
+		registry: newRegistry(p.Envelopes),
+		release:  p.App.Version,
+		clock:    p.Clock,
+		l:        p.Logger.Named("cloud.tenant-archive"),
 	}
 }
 
@@ -87,12 +83,7 @@ func (r Reporter) report(p *tenantcommand.Progress) {
 }
 
 func (e *Engine) prefixes(tenant dbscope.Tenant) []string {
-	org := tenant.OrganizationID.String() + "/"
-	out := []string{org}
-	if artifacts := strings.Trim(e.reporting.GetArtifactPrefix(), "/"); artifacts != "" {
-		out = append(out, artifacts+"/"+org)
-	}
-	return out
+	return objectkey.CarriedPrefixes(tenant.OrganizationID)
 }
 
 func (e *Engine) now() time.Time {

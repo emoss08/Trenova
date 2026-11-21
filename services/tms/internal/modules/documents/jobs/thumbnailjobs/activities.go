@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
@@ -265,10 +267,11 @@ func (a *Activities) uploadThumbnail(
 	logger := activity.GetLogger(ctx)
 	a.heartbeat(ctx, "uploading thumbnail")
 
-	previewPath := fmt.Sprintf("%s/thumbnails/%s/%s_thumb.webp",
-		payload.OrganizationID.String(),
+	previewPath := objectkey.Organization.Key(
+		payload.OrganizationID,
+		"thumbnails",
 		payload.ResourceType,
-		uuid.New().String(),
+		uuid.New().String()+"_thumb.webp",
 	)
 
 	if _, err := storedobject.Write(ctx, a.storage, a.encryption, &storedobject.WriteRequest{

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/scim"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/scim/scimdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -133,6 +134,7 @@ func (r *repository) FindMember(ctx context.Context, emailAddress string) (*tena
 		user, err := u.Where(
 			u.BusinessUnitID.Eq(tenantScope.BusinessUnitID),
 			u.EmailAddress.Lower().Eq(strings.ToLower(emailAddress)),
+			tenantbootstrap.NotSystemActor(ctx),
 			keel.Or(
 				u.CurrentOrganizationID.Eq(tenantScope.OrganizationID),
 				keel.Exists(m.Where(

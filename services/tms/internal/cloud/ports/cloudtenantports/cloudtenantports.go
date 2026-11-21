@@ -3,6 +3,8 @@ package cloudtenantports
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/cloud/domain/cloudtenant"
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
@@ -105,6 +107,26 @@ type TableCount struct {
 	Rows  int64  `json:"rows"  db:"row_count"`
 }
 
+type CrossTenantReference struct {
+	Constraint string `json:"constraint" db:"constraint_name"`
+	Table      string `json:"table"      db:"table_name"`
+	Columns    string `json:"columns"    db:"column_names"`
+	Rows       int64  `json:"rows"       db:"row_count"`
+}
+
+type CrossTenantReferencesError struct {
+	References []CrossTenantReference
+}
+
+func (e *CrossTenantReferencesError) Error() string {
+	parts := make([]string, 0, len(e.References))
+	for _, ref := range e.References {
+		parts = append(parts, fmt.Sprintf("%s.%s (%d rows)", ref.Table, ref.Columns, ref.Rows))
+	}
+	return "rows of another tenant refer to this tenant's records, so nothing of either was " +
+		"changed: " + strings.Join(parts, ", ")
+}
+
 type Purge interface {
 	PurgeRows(ctx context.Context, req *PurgeRowsRequest) (*PurgeRowsResult, error)
 	DeleteOrganization(ctx context.Context, tenant dbscope.Tenant) (*DeleteResult, error)
@@ -113,7 +135,7 @@ type Purge interface {
 }
 
 type KeyPurge interface {
-	DeleteMatching(ctx context.Context, fragment string) (int64, error)
+	DeleteMatching(ctx context.Context, fragment string, beat func()) (int64, error)
 }
 
 type SearchPurge interface {

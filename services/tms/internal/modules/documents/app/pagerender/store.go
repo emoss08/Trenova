@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
@@ -58,7 +60,7 @@ func New(p Params) *Store {
 type Source func(ctx context.Context) (kernelports.ImagingSource, error)
 
 func Prefix(doc *document.Document) string {
-	return fmt.Sprintf("%s/renders/%s/", doc.OrganizationID, doc.ID)
+	return objectkey.Organization.Key(doc.OrganizationID, "renders", doc.ID.String()) + "/"
 }
 
 func Key(doc *document.Document, page int) string {

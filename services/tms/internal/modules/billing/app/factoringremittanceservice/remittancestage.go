@@ -316,6 +316,11 @@ func (s *RemittanceService) prepare(
 	if staging.Format == factoringremittance.RemittanceFormatPdf {
 		return s.preparePdf(ctx, rem, doc, wait)
 	}
+	release, err := s.slots.Hold(ctx, kernelports.HeavyJobImport)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 	data, err := s.readDocument(ctx, rem, doc.ID)
 	if err != nil {
 		return nil, err

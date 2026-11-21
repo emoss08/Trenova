@@ -150,8 +150,8 @@ func newFixture(t *testing.T) *fixture {
 	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&tenant.Organization{Name: "Trenova Logistics", Timezone: "UTC"}, nil).Maybe()
 	users := tenantportsmock.NewMockUserRepository(t)
-	users.EXPECT().GetSystemUser(mock.Anything, mock.Anything).
-		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).Maybe()
+	users.EXPECT().SystemActorID(mock.Anything, mock.Anything).
+		Return(pulid.MustNew("usr_"), nil).Maybe()
 	controls := tenantportsmock.NewMockBillingControlRepository(t)
 	controls.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(f.control, nil).Maybe()
 

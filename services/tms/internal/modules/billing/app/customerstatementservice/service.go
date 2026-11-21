@@ -718,11 +718,11 @@ func (s *Service) issuer(
 		showsReplaced: adjustments.ShowsReplacedInvoicesExternally(),
 	}
 	if from.activityBy.IsNil() {
-		system, sysErr := s.users.GetSystemUser(ctx, "id")
+		system, sysErr := s.users.SystemActorID(ctx, tenantInfo.BuID)
 		if sysErr != nil {
 			return nil, sysErr
 		}
-		from.activityBy = system.ID
+		from.activityBy = system
 	}
 	return from, nil
 }

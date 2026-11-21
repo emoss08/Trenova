@@ -9,18 +9,13 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/keeltables"
 	"github.com/emoss08/trenova/internal/seeds/reference"
 	"github.com/emoss08/trenova/internal/seeds/seedenv"
 )
 
-const (
-	SystemUserPassword = "test-system-password"
-
-	keyLength = 16
-)
+const keyLength = 16
 
 type Template struct {
 	Name  string
@@ -30,7 +25,7 @@ type Template struct {
 var referenceTemplate = Template{Name: "reference", Seeds: reference.Seeds}
 
 func testConfig() *config.Config {
-	return &config.Config{System: systemconfig.Config{SystemUserPassword: SystemUserPassword}}
+	return &config.Config{}
 }
 
 func seedOptions() seed.Options {

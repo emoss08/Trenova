@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -16,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
-	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/webhooksig"
 	"go.temporal.io/api/enums/v1"
@@ -378,8 +379,8 @@ func (s *Service) storeRawBody(
 		return ""
 	}
 
-	key := fileutils.GenerateStoragePath(
-		mailbox.OrganizationID.String(),
+	key := objectkey.Organization.NewKey(
+		mailbox.OrganizationID,
 		"inbound-messages/"+mailbox.ID.String(),
 		providerMessageID+".html",
 	)

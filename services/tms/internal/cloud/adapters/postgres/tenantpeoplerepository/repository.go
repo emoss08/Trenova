@@ -117,6 +117,9 @@ func (r *repository) Facts(
 }
 
 func (r *repository) EmailTaken(ctx context.Context, email string) (bool, error) {
+	if tenant.IsReservedEmailAddress(email) {
+		return true, nil
+	}
 	ctx = dbscope.WithSystem(ctx, emailReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		u := tenantdb.Users

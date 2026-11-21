@@ -197,8 +197,8 @@ values `init-env.sh` wrote to `.env`, and creates:
   types, document templates, sequences and the other defaults a new organization gets;
 - its first administrator, holding the **Organization Administrator** role, who signs in
   with `TRENOVA_BOOTSTRAP_ADMIN_EMAIL` and the password you chose or were shown;
-- the internal system account background work runs as (password
-  `TRENOVA_SYSTEM_SYSTEMUSERPASSWORD`, which nobody signs in with).
+- the business unit's system actor, the account background work is written under, which has
+  no password anyone knows and is refused at every sign-in.
 
 Each of these is recorded in the audit trail as a critical entry. The password must have at
 least 12 characters, must not be a common password and must not contain the email address;

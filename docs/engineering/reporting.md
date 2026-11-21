@@ -370,7 +370,7 @@ The workflow:
    finalizes, on a disconnected context, so a run never stays `queued` or `running`.
 4. A scheduled run then delivers (below). A delivery failure never fails the run.
 
-The artifact is `<artifactPrefix>/<orgID>/<runID>/<attempt>/report.<ext>` and the sidecar is the
+The artifact is `reports/<orgID>/<runID>/<attempt>/report.<ext>` (`objectkey.Reports`) and the sidecar is the
 same key plus `.rows.json`. Each upload is capped near `maxArtifactBytes` (1 GiB).
 
 | Format | Renderer |

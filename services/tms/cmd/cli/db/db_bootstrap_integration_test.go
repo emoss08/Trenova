@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -30,16 +29,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	integrationAdminPassword  = "Tr4ck-the-l0ads-north!"
-	integrationSystemPassword = "integration-system-password"
-)
+const integrationAdminPassword = "Tr4ck-the-l0ads-north!"
 
 func productionSeedConfig() *config.Config {
-	return &config.Config{
-		App:    appconfig.Config{Env: appconfig.EnvProduction},
-		System: systemconfig.Config{SystemUserPassword: integrationSystemPassword},
-	}
+	return &config.Config{App: appconfig.Config{Env: appconfig.EnvProduction}}
 }
 
 func integrationBootstrapDeps(
@@ -187,10 +180,11 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 		orgID.String(),
 	))
 
-	systemUser, err := users.GetSystemUser(ctx)
+	systemActor, err := users.SystemActorID(ctx, admin.BusinessUnitID)
 	require.NoError(t, err)
-	require.NoError(t, systemUser.VerifyCredentials(integrationSystemPassword))
-	assert.Equal(t, orgID, systemUser.CurrentOrganizationID)
+	assert.Equal(t, int64(1), countRows(t, ctx, db,
+		"SELECT count(*) FROM users WHERE id = $1 AND current_organization_id = $2",
+		systemActor.String(), orgID.String()))
 
 	assert.Positive(t, countRows(t, ctx, db,
 		"SELECT count(*) FROM tca_allowlisted_tables WHERE organization_id = $1", orgID.String()))

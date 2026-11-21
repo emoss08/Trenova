@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/cloud/archivestream"
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantarchive"
 	"github.com/emoss08/trenova/internal/cloud/domain/tenantcommand"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -159,14 +160,19 @@ type documentLoad struct {
 }
 
 func (d *documentLoad) put(ctx context.Context, doc *tenantarchive.Document) error {
-	objectKey, _ := tenantarchive.ObjectKey(doc.Key)
+	archived, _ := tenantarchive.ObjectKey(doc.Key)
+	objectKey, owned := objectkey.Rebase(archived, d.tenant.OrganizationID)
+	if !owned {
+		return tenantarchive.Refuse(tenantarchive.RefusalManifest,
+			"the archive's part "+doc.Key+" is not stored under the tenant's own keys")
+	}
 	reader, closeReader, err := d.run.part(ctx, doc.Key,
 		archivestream.Sum{Bytes: doc.SizeBytes, SHA256: doc.SHA256}, false)
 	if err != nil {
 		return err
 	}
 	defer closeReader()
-	purpose, sealed := d.run.sealed[objectKey]
+	purpose, sealed := d.run.sealed[archived]
 	if !sealed {
 		return d.upload(ctx, &kernelports.UploadParams{
 			Key: objectKey, ContentType: doc.StoredContentType(), Size: -1, Body: reader,
@@ -200,6 +206,7 @@ func (d *documentLoad) put(ctx context.Context, doc *tenantarchive.Document) err
 }
 
 func (d *documentLoad) upload(ctx context.Context, params *kernelports.UploadParams) error {
+	d.run.wrote(params.Key)
 	if _, err := d.e.storage.Upload(ctx, params); err != nil {
 		return fmt.Errorf("write the document %s: %w", params.Key, err)
 	}

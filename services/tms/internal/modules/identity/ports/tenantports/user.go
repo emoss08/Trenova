@@ -146,6 +146,6 @@ type UserRepository interface {
 		ctx context.Context,
 		req GetUsersByIDsRequest,
 	) ([]*tenant.User, error)
-	GetSystemUser(ctx context.Context, columns ...string) (*tenant.User, error)
+	SystemActorID(ctx context.Context, businessUnitID pulid.ID) (pulid.ID, error)
 	GetTenantMember(ctx context.Context, req GetTenantMemberRequest) (*tenant.User, error)
 }

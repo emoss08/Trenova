@@ -585,83 +585,6 @@ func (_c *MockUserRepository_GetOrganizations_Call) RunAndReturn(run func(ctx co
 	return _c
 }
 
-// GetSystemUser provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) GetSystemUser(ctx context.Context, columns ...string) (*tenant.User, error) {
-	var tmpRet mock.Arguments
-	if len(columns) > 0 {
-		tmpRet = _mock.Called(ctx, columns)
-	} else {
-		tmpRet = _mock.Called(ctx)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSystemUser")
-	}
-
-	var r0 *tenant.User
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) (*tenant.User, error)); ok {
-		return returnFunc(ctx, columns...)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) *tenant.User); ok {
-		r0 = returnFunc(ctx, columns...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.User)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...string) error); ok {
-		r1 = returnFunc(ctx, columns...)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockUserRepository_GetSystemUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSystemUser'
-type MockUserRepository_GetSystemUser_Call struct {
-	*mock.Call
-}
-
-// GetSystemUser is a helper method to define mock.On call
-//   - ctx context.Context
-//   - columns ...string
-func (_e *MockUserRepository_Expecter) GetSystemUser(ctx any, columns ...any) *MockUserRepository_GetSystemUser_Call {
-	return &MockUserRepository_GetSystemUser_Call{Call: _e.mock.On("GetSystemUser",
-		append([]any{ctx}, columns...)...)}
-}
-
-func (_c *MockUserRepository_GetSystemUser_Call) Run(run func(ctx context.Context, columns ...string)) *MockUserRepository_GetSystemUser_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []string
-		var variadicArgs []string
-		if len(args) > 1 {
-			variadicArgs = args[1].([]string)
-		}
-		arg1 = variadicArgs
-		run(
-			arg0,
-			arg1...,
-		)
-	})
-	return _c
-}
-
-func (_c *MockUserRepository_GetSystemUser_Call) Return(user *tenant.User, err error) *MockUserRepository_GetSystemUser_Call {
-	_c.Call.Return(user, err)
-	return _c
-}
-
-func (_c *MockUserRepository_GetSystemUser_Call) RunAndReturn(run func(ctx context.Context, columns ...string) (*tenant.User, error)) *MockUserRepository_GetSystemUser_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetUserOrganizationSummaries provides a mock function for the type MockUserRepository
 func (_mock *MockUserRepository) GetUserOrganizationSummaries(ctx context.Context, userID pulid.ID) ([]tenantports.OrgSummary, error) {
 	ret := _mock.Called(ctx, userID)
@@ -1455,6 +1378,72 @@ func (_c *MockUserRepository_GetTenantMember_Call) Return(user *tenant.User, err
 }
 
 func (_c *MockUserRepository_GetTenantMember_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetTenantMemberRequest) (*tenant.User, error)) *MockUserRepository_GetTenantMember_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SystemActorID provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) SystemActorID(ctx context.Context, businessUnitID pulid.ID) (pulid.ID, error) {
+	ret := _mock.Called(ctx, businessUnitID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SystemActorID")
+	}
+
+	var r0 pulid.ID
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (pulid.ID, error)); ok {
+		return returnFunc(ctx, businessUnitID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) pulid.ID); ok {
+		r0 = returnFunc(ctx, businessUnitID)
+	} else {
+		r0 = ret.Get(0).(pulid.ID)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, businessUnitID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserRepository_SystemActorID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SystemActorID'
+type MockUserRepository_SystemActorID_Call struct {
+	*mock.Call
+}
+
+// SystemActorID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - businessUnitID pulid.ID
+func (_e *MockUserRepository_Expecter) SystemActorID(ctx any, businessUnitID any) *MockUserRepository_SystemActorID_Call {
+	return &MockUserRepository_SystemActorID_Call{Call: _e.mock.On("SystemActorID", ctx, businessUnitID)}
+}
+
+func (_c *MockUserRepository_SystemActorID_Call) Run(run func(ctx context.Context, businessUnitID pulid.ID)) *MockUserRepository_SystemActorID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_SystemActorID_Call) Return(iD pulid.ID, err error) *MockUserRepository_SystemActorID_Call {
+	_c.Call.Return(iD, err)
+	return _c
+}
+
+func (_c *MockUserRepository_SystemActorID_Call) RunAndReturn(run func(ctx context.Context, businessUnitID pulid.ID) (pulid.ID, error)) *MockUserRepository_SystemActorID_Call {
 	_c.Call.Return(run)
 	return _c
 }

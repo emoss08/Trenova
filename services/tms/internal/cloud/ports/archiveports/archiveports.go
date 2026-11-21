@@ -27,6 +27,7 @@ type Buckets interface {
 type Dangling struct {
 	Constraint string `json:"constraint" db:"constraint_name"`
 	Table      string `json:"table"      db:"table_name"`
+	Columns    string `json:"columns"    db:"column_names"`
 	Rows       int64  `json:"rows"       db:"row_count"`
 }
 

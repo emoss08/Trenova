@@ -8,6 +8,8 @@ import (
 	"mime/multipart"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
@@ -224,8 +226,8 @@ func (s *service) UploadBrandImage(
 	}
 
 	contentType := req.File.Header.Get("Content-Type")
-	key := fileutils.GenerateStoragePath(
-		req.OrganizationID.String(),
+	key := objectkey.Organization.NewKey(
+		req.OrganizationID,
 		"organization/"+string(req.Image),
 		req.File.Filename,
 	)

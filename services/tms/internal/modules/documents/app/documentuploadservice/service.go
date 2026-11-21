@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/objectkey"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
@@ -32,7 +34,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
-	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -145,8 +146,8 @@ func (s *Service) CreateSession(
 		OriginalName:      req.FileName,
 		ContentType:       req.ContentType,
 		FileSize:          req.FileSize,
-		StoragePath: fileutils.GenerateStoragePath(
-			req.TenantInfo.OrgID.String(),
+		StoragePath: objectkey.Organization.NewKey(
+			req.TenantInfo.OrgID,
 			req.ResourceType,
 			req.FileName,
 		),

@@ -133,9 +133,13 @@ func (r *repository) PurgeRows(
 	if err != nil {
 		return nil, err
 	}
+	if err = r.refuseCrossTenantReferences(ctx, plan, req.Tenant); err != nil {
+		return nil, err
+	}
 	run := &purgeRun{
 		repo:       r,
 		plan:       plan,
+		tenant:     req.Tenant,
 		batchSize:  clampBatchSize(req.BatchSize),
 		maxBatches: req.MaxBatches,
 		deleted:    make(map[string]int64),
@@ -147,6 +151,14 @@ func (r *repository) PurgeRows(
 		run.maxBatches = defaultMaxBatches
 	}
 	return run.execute(ctx)
+}
+
+func (r *repository) refuseInbound(ctx context.Context, tenant dbscope.Tenant) error {
+	plan, err := r.loadPlan(ctx, tenant)
+	if err != nil {
+		return err
+	}
+	return r.refuseCrossTenantReferences(ctx, plan, tenant)
 }
 
 func (r *repository) loadPlan(ctx context.Context, tenant dbscope.Tenant) (*purgePlan, error) {
@@ -192,6 +204,7 @@ func (r *repository) loadPlan(ctx context.Context, tenant dbscope.Tenant) (*purg
 		}
 		return buildPlan(&planInput{
 			Tables:         holdingTables(tables, holding),
+			AllTables:      tables,
 			ForeignKeys:    fks,
 			OrganizationID: tenant.OrganizationID,
 			BusinessUnitID: tenant.BusinessUnitID,
@@ -203,6 +216,7 @@ func (r *repository) loadPlan(ctx context.Context, tenant dbscope.Tenant) (*purg
 type purgeRun struct {
 	repo       *repository
 	plan       *purgePlan
+	tenant     dbscope.Tenant
 	batchSize  int
 	maxBatches int
 	batches    int
@@ -254,7 +268,7 @@ func (p *purgeRun) clearDependents(ctx context.Context, target purgeTarget) erro
 	for _, fk := range p.plan.dependents[target.Table] {
 		for p.batches < p.maxBatches {
 			p.batches++
-			affected, err := p.repo.deleteReferencing(ctx, fk, target, p.batchSize)
+			affected, err := p.repo.deleteReferencing(ctx, p.reference(fk, target), p.batchSize)
 			if err != nil {
 				if protectedByRule(err) || referenceViolation(err) {
 					break
@@ -352,7 +366,7 @@ func (p *purgeRun) resolveReference(
 		return p.detach(ctx, fk, target)
 	}
 
-	affected, err := p.repo.deleteReferencing(ctx, fk, target, p.batchSize)
+	affected, err := p.repo.deleteReferencing(ctx, p.reference(fk, target), p.batchSize)
 	if err != nil {
 		if referenceViolation(err) || protectedByRule(err) {
 			return false, nil
@@ -376,7 +390,7 @@ func (p *purgeRun) detach(
 	detached := false
 	for p.batches < p.maxBatches {
 		p.batches++
-		affected, err := p.repo.nullReferencing(ctx, fk, target, p.batchSize)
+		affected, err := p.repo.nullReferencing(ctx, p.reference(fk, target), p.batchSize)
 		if err != nil {
 			if keel.IsNotNull(err) || protectedByRule(err) ||
 				referenceViolation(err) {
@@ -448,29 +462,59 @@ func (r *repository) deleteAll(ctx context.Context, target purgeTarget) (int64, 
 	return r.exec(ctx, sql, target.Value.String())
 }
 
+type referencing struct {
+	fk     *foreignKey
+	target purgeTarget
+	child  tenantTable
+	tenant dbscope.Tenant
+}
+
+func (p *purgeRun) reference(fk *foreignKey, target purgeTarget) *referencing {
+	return &referencing{
+		fk:     fk,
+		target: target,
+		child:  p.plan.tables[fk.ChildTable],
+		tenant: p.tenant,
+	}
+}
+
+func (ref *referencing) childRows(limit int) (query string, args []any) {
+	fk := ref.fk
+	args = []any{ref.target.Value.String(), limit}
+	where := "(" + joinedColumns(fk.ChildColumns, "c") + ") IN (SELECT " +
+		joinedColumns(fk.ParentColumns, "p") + " FROM " + quoteIdent(fk.ParentTable) +
+		" p WHERE p." + quoteIdent(ref.target.Column) + " = $1)"
+	if own := ref.child.belongs("c"); own != "" {
+		where += " AND " + strings.NewReplacer("$1", "$3", "$2", "$4").Replace(own)
+		args = append(args, ref.tenant.OrganizationID.String(), ref.tenant.BusinessUnitID.String())
+		if !strings.Contains(own, "$1") {
+			where += " AND $3::text IS NOT NULL"
+		}
+	}
+	return "SELECT c.tableoid, c.ctid FROM " + quoteIdent(fk.ChildTable) + " c WHERE " + where +
+		" LIMIT $2", args
+}
+
 func (r *repository) deleteReferencing(
 	ctx context.Context,
-	fk *foreignKey,
-	target purgeTarget,
+	ref *referencing,
 	limit int,
 ) (int64, error) {
+	fk := ref.fk
 	if len(fk.ChildColumns) == 0 || len(fk.ChildColumns) != len(fk.ParentColumns) {
 		return 0, nil
 	}
-	child := quoteIdent(fk.ChildTable)
-	sql := "DELETE FROM " + child + " WHERE (tableoid, ctid) IN (SELECT c.tableoid, c.ctid FROM " +
-		child + " c WHERE (" + joinedColumns(fk.ChildColumns, "c") + ") IN (SELECT " +
-		joinedColumns(fk.ParentColumns, "p") + " FROM " + quoteIdent(fk.ParentTable) +
-		" p WHERE p." + quoteIdent(target.Column) + " = $1) LIMIT $2)"
-	return r.exec(ctx, sql, target.Value.String(), limit)
+	rows, args := ref.childRows(limit)
+	sql := "DELETE FROM " + quoteIdent(fk.ChildTable) + " WHERE (tableoid, ctid) IN (" + rows + ")"
+	return r.exec(ctx, sql, args...)
 }
 
 func (r *repository) nullReferencing(
 	ctx context.Context,
-	fk *foreignKey,
-	target purgeTarget,
+	ref *referencing,
 	limit int,
 ) (int64, error) {
+	fk := ref.fk
 	own := make([]string, 0, len(fk.ChildColumns))
 	for _, c := range fk.ChildColumns {
 		if c != organizationColumn && c != businessUnitColumn {
@@ -480,16 +524,10 @@ func (r *repository) nullReferencing(
 	if len(own) == 0 || len(fk.ChildColumns) != len(fk.ParentColumns) {
 		return 0, nil
 	}
-	child := quoteIdent(fk.ChildTable)
-	sql := "UPDATE " + child + " SET " + strings.Join(own, ", ") +
-		" WHERE (tableoid, ctid) IN (SELECT c.tableoid, c.ctid FROM " + child + " c WHERE (" +
-		joinedColumns(
-			fk.ChildColumns,
-			"c",
-		) + ") IN (SELECT " + joinedColumns(fk.ParentColumns, "p") +
-		" FROM " + quoteIdent(fk.ParentTable) + " p WHERE p." + quoteIdent(target.Column) +
-		" = $1) LIMIT $2)"
-	return r.exec(ctx, sql, target.Value.String(), limit)
+	rows, args := ref.childRows(limit)
+	sql := "UPDATE " + quoteIdent(fk.ChildTable) + " SET " + strings.Join(own, ", ") +
+		" WHERE (tableoid, ctid) IN (" + rows + ")"
+	return r.exec(ctx, sql, args...)
 }
 
 func (r *repository) exec(ctx context.Context, sql string, args ...any) (int64, error) {
@@ -509,6 +547,9 @@ func (r *repository) DeleteOrganization(
 ) (*cloudtenantports.DeleteResult, error) {
 	if !tenant.Valid() {
 		return nil, ErrTenantRequired
+	}
+	if err := r.refuseInbound(ctx, tenant); err != nil {
+		return nil, err
 	}
 	ctx = dbscope.WithSystem(ctx, organizationReason)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*cloudtenantports.DeleteResult, error) {
@@ -555,6 +596,9 @@ func (r *repository) DeleteBusinessUnit(
 ) (*cloudtenantports.DeleteResult, error) {
 	if !tenant.Valid() {
 		return nil, ErrTenantRequired
+	}
+	if err := r.refuseInbound(ctx, tenant); err != nil {
+		return nil, err
 	}
 	ctx = dbscope.WithSystem(ctx, unitReason)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*cloudtenantports.DeleteResult, error) {

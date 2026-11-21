@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
-	"github.com/emoss08/trenova/internal/seeds/seedenv"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -154,9 +153,9 @@ func RunSystemAccount(ctx context.Context, r *seed.Run) error {
 		return err
 	}
 
-	_, created, err := tenantbootstrap.EnsureSystemUser(ctx, r.DB, tenantbootstrap.SystemUserParams{
-		Scope:    tenantscope.Scope{OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID},
-		Password: seedenv.Config(ctx).System.SystemUserPassword,
+	_, created, err := tenantbootstrap.EnsureSystemActor(ctx, r.DB, tenantscope.Scope{
+		OrganizationID: org.ID,
+		BusinessUnitID: org.BusinessUnitID,
 	})
 	if created {
 		r.Count(1)
