@@ -30,6 +30,7 @@ func SharedOptions() fx.Option {
 			tenantpurgerepository.New,
 			tenantkeys.New,
 			tenantsearch.New,
+			archivebucket.New,
 			tenantlifecycle.New,
 			liveSupportGrants,
 		),
@@ -47,7 +48,6 @@ func ArchiveOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			tenantcopyrepository.New,
-			archivebucket.New,
 			archiveengine.New,
 		),
 	)
