@@ -112,7 +112,7 @@ func (Host) CPUCount(ctx context.Context) (int, error) {
 	return cpu.CountsWithContext(ctx, true)
 }
 
-func (Host) Memory(ctx context.Context) (uint64, uint64, error) {
+func (Host) Memory(ctx context.Context) (used, total uint64, err error) {
 	v, err := mem.VirtualMemoryWithContext(ctx)
 	if err != nil {
 		return 0, 0, err
@@ -120,7 +120,7 @@ func (Host) Memory(ctx context.Context) (uint64, uint64, error) {
 	return v.Total - v.Available, v.Total, nil
 }
 
-func (Host) Disk(ctx context.Context, path string) (uint64, uint64, error) {
+func (Host) Disk(ctx context.Context, path string) (used, total uint64, err error) {
 	u, err := disk.UsageWithContext(ctx, path)
 	if err != nil {
 		return 0, 0, err

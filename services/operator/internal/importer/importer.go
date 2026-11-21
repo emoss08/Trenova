@@ -88,11 +88,11 @@ func (i *Importer) Prepare(
 	spec *instanceapi.InstanceSpec,
 	storage *values.Storage,
 ) (values.Import, error) {
-	rec, err := i.record(ctx)
+	rec, found, err := i.record(ctx)
 	if err != nil {
 		return values.Import{}, err
 	}
-	imported := rec != nil && rec.state == instanceapi.ImportDone
+	imported := found && rec.state == instanceapi.ImportDone
 	if spec.Import == nil {
 		if err = i.dropKeys(ctx); err != nil {
 			return values.Import{}, err
@@ -102,7 +102,7 @@ func (i *Importer) Prepare(
 	if err = values.CheckImport(spec.Import, storage); err != nil {
 		return values.Import{}, err
 	}
-	if rec != nil && rec.id == spec.Import.Id.String() {
+	if found && rec.id == spec.Import.Id.String() {
 		if err = i.dropKeys(ctx); err != nil {
 			return values.Import{}, err
 		}
@@ -121,48 +121,51 @@ func (i *Importer) Prepare(
 }
 
 func (i *Importer) Imported(ctx context.Context) (bool, error) {
-	rec, err := i.record(ctx)
+	rec, found, err := i.record(ctx)
 	if err != nil {
 		return false, err
 	}
-	return rec != nil && rec.state == instanceapi.ImportDone, nil
+	return found && rec.state == instanceapi.ImportDone, nil
 }
 
 func (i *Importer) Observe(
 	ctx context.Context,
 	spec *instanceapi.InstanceSpec,
 	revision int,
-) (*instanceapi.ImportStatus, error) {
+) (status *instanceapi.ImportStatus, reported bool, err error) {
 	if spec.Import == nil {
-		return nil, nil
+		return nil, false, nil
 	}
 	id := spec.Import.Id.String()
-	rec, err := i.record(ctx)
+	rec, found, err := i.record(ctx)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	if rec != nil && rec.id == id {
-		return rec.status(), nil
+	if found && rec.id == id {
+		return rec.status(), true, nil
 	}
 	job, err := i.kube.BatchV1().Jobs(i.namespace).
 		Get(ctx, values.ReleaseJob(i.release, revision), metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		return nil, nil
+		return nil, false, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("read the release Job: %w", err)
+		return nil, false, fmt.Errorf("read the release Job: %w", err)
 	}
 	if job.Annotations[labelImport] != id {
-		return nil, nil
+		return nil, false, nil
 	}
 	outcome, settled, err := i.outcome(ctx, job, id)
-	if err != nil || !settled {
-		return outcome, err
+	if err != nil {
+		return nil, false, err
+	}
+	if !settled {
+		return outcome, true, nil
 	}
 	if err = i.settle(ctx, outcome); err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return outcome, nil
+	return outcome, true, nil
 }
 
 func (i *Importer) outcome(
@@ -312,14 +315,14 @@ func (i *Importer) settle(ctx context.Context, status *instanceapi.ImportStatus)
 	return i.dropKeys(ctx)
 }
 
-func (i *Importer) record(ctx context.Context) (*record, error) {
+func (i *Importer) record(ctx context.Context) (rec *record, found bool, err error) {
 	cm, err := i.kube.CoreV1().ConfigMaps(i.namespace).
 		Get(ctx, values.ImportRecord(i.release), metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		return nil, nil
+		return nil, false, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("read the import record: %w", err)
+		return nil, false, fmt.Errorf("read the import record: %w", err)
 	}
 	at, _ := time.Parse(time.RFC3339, cm.Data[keyAt])
 	return &record{
@@ -327,7 +330,7 @@ func (i *Importer) record(ctx context.Context) (*record, error) {
 		state:  instanceapi.ImportStatusState(cm.Data[keyState]),
 		at:     at,
 		reason: cm.Data[keyReason],
-	}, nil
+	}, true, nil
 }
 
 func (i *Importer) ensureKeys(ctx context.Context, spec *instanceapi.SpecImport) error {

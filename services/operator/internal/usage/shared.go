@@ -71,6 +71,46 @@ func (r *SharedRelay) Run(
 	}
 
 	var result SharedResult
+	readings := r.mapReadings(held, mappings, &result)
+	result.Readings = len(readings)
+
+	var ack instanceapi.SharedUsageAck
+	refused := make(map[string]struct{})
+	for _, chunk := range chunks(readings, MaxSharedReadings) {
+		ack, err = r.cp.ReportSharedUsage(ctx, instanceapi.SharedUsageReport{Readings: chunk})
+		if err != nil {
+			return result, err
+		}
+		for _, e := range ack.Refused {
+			refused[e.InstanceId.String()] = struct{}{}
+		}
+	}
+	for id := range refused {
+		result.RefusedByCP = append(result.RefusedByCP, id)
+	}
+	slices.Sort(result.RefusedByCP)
+
+	answers := answersFor(ack.Tenants, mappings, &result)
+	result.TenantsMapped = len(answers)
+	if len(answers) == 0 {
+		return result, nil
+	}
+	answer, err := r.tms.PutTenantUsage(ctx, answers)
+	if err != nil {
+		return result, fmt.Errorf("write the tenants' usage answers to the TMS: %w", err)
+	}
+	result.Answered = answer.Applied
+	for _, e := range answer.Refused {
+		result.RefusedByTMS = append(result.RefusedByTMS, e.InstanceID)
+	}
+	return result, nil
+}
+
+func (r *SharedRelay) mapReadings(
+	held []tms.TenantReadings,
+	mappings map[uuid.UUID]mapping,
+	result *SharedResult,
+) []instanceapi.SharedUsageReading {
 	readings := make([]instanceapi.SharedUsageReading, 0)
 	for _, t := range held {
 		id, perr := uuid.Parse(t.InstanceID)
@@ -90,26 +130,16 @@ func (r *SharedRelay) Run(
 			})
 		}
 	}
-	result.Readings = len(readings)
+	return readings
+}
 
-	var ack instanceapi.SharedUsageAck
-	refused := make(map[string]struct{})
-	for _, chunk := range chunks(readings, MaxSharedReadings) {
-		ack, err = r.cp.ReportSharedUsage(ctx, instanceapi.SharedUsageReport{Readings: chunk})
-		if err != nil {
-			return result, err
-		}
-		for _, e := range ack.Refused {
-			refused[e.InstanceId.String()] = struct{}{}
-		}
-	}
-	for id := range refused {
-		result.RefusedByCP = append(result.RefusedByCP, id)
-	}
-	slices.Sort(result.RefusedByCP)
-
-	answers := make([]tms.TenantUsage, 0, len(ack.Tenants))
-	for _, t := range ack.Tenants {
+func answersFor(
+	tenants []instanceapi.SharedTenantUsage,
+	mappings map[uuid.UUID]mapping,
+	result *SharedResult,
+) []tms.TenantUsage {
+	answers := make([]tms.TenantUsage, 0, len(tenants))
+	for _, t := range tenants {
 		result.TenantsHeard++
 		m, placed := mappings[t.InstanceId]
 		if !placed {
@@ -129,19 +159,7 @@ func (r *SharedRelay) Run(
 			Meters:     meters,
 		})
 	}
-	result.TenantsMapped = len(answers)
-	if len(answers) == 0 {
-		return result, nil
-	}
-	answer, err := r.tms.PutTenantUsage(ctx, answers)
-	if err != nil {
-		return result, fmt.Errorf("write the tenants' usage answers to the TMS: %w", err)
-	}
-	result.Answered = answer.Applied
-	for _, e := range answer.Refused {
-		result.RefusedByTMS = append(result.RefusedByTMS, e.InstanceID)
-	}
-	return result, nil
+	return answers
 }
 
 func asReadings(in []tms.TenantReading) []tms.Reading {

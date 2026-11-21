@@ -60,8 +60,9 @@ func TestTheKeysLiveOnlyInTheirSecretUntilTheImportSettlesAndNeverInALog(t *test
 	require.NoError(t, err)
 	assert.Contains(t, string(secret.Data[values.ImportKeysKey]), keyFixture)
 
-	status, err := imp.Observe(t.Context(), s, 1)
+	status, reported, err := imp.Observe(t.Context(), s, 1)
 	require.NoError(t, err)
+	assert.False(t, reported)
 	assert.Nil(t, status, "nothing is reported before the release Job exists")
 
 	_, err = kube.BatchV1().Jobs("trenova").Create(t.Context(), &batchv1.Job{
@@ -74,8 +75,9 @@ func TestTheKeysLiveOnlyInTheirSecretUntilTheImportSettlesAndNeverInALog(t *test
 		}}},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
-	status, err = imp.Observe(t.Context(), s, 1)
+	status, reported, err = imp.Observe(t.Context(), s, 1)
 	require.NoError(t, err)
+	require.True(t, reported)
 	require.NotNil(t, status)
 	assert.Equal(t, instanceapi.ImportDone, status.State)
 	_, err = kube.CoreV1().

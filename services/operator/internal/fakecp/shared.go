@@ -171,7 +171,8 @@ func (s *Server) listSharedTenants(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) placed(id uuid.UUID) bool {
-	for _, t := range s.shared.tenants {
+	for i := range s.shared.tenants {
+		t := &s.shared.tenants[i]
 		if t.InstanceId == id {
 			return true
 		}
@@ -232,7 +233,8 @@ func (s *Server) reportSharedUsage(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	}
-	for _, t := range s.shared.tenants {
+	for i := range s.shared.tenants {
+		t := &s.shared.tenants[i]
 		answer, ok := s.shared.answers[t.InstanceId]
 		if !ok {
 			answer = instanceapi.SharedTenantUsage{

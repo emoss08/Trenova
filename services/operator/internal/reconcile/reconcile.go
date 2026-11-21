@@ -148,7 +148,7 @@ type Imports interface {
 		ctx context.Context,
 		spec *instanceapi.InstanceSpec,
 		revision int,
-	) (*instanceapi.ImportStatus, error)
+	) (status *instanceapi.ImportStatus, reported bool, err error)
 }
 
 type Operator interface {
@@ -512,9 +512,12 @@ func (l *Loop) importStatus(ctx context.Context) *instanceapi.ImportStatus {
 	if l.desired.Spec.Import == nil {
 		return nil
 	}
-	status, err := l.imports.Observe(ctx, &l.desired.Spec, l.helmRev)
+	status, reported, err := l.imports.Observe(ctx, &l.desired.Spec, l.helmRev)
 	if err != nil {
 		l.logger.Warn("cannot read where the import stands; the report leaves it out", "error", err)
+		return nil
+	}
+	if !reported {
 		return nil
 	}
 	return status

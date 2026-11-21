@@ -18,10 +18,10 @@ type emailEventState struct {
 	listings int
 }
 
-func (s *Server) QueueEmailEvent(event instanceapi.EmailEvent) {
+func (s *Server) QueueEmailEvent(event *instanceapi.EmailEvent) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.emailEvents.queued = append(s.emailEvents.queued, event)
+	s.emailEvents.queued = append(s.emailEvents.queued, *event)
 }
 
 func (s *Server) QueuedEmailEvents() []instanceapi.EmailEvent {

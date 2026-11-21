@@ -49,7 +49,7 @@ func (t ArchiveTarget) String() string {
 	return "archive target " + t.Kind + " " + t.CommandID + " at s3://" + t.Bucket + "/" + t.Prefix
 }
 
-func (t ArchiveTarget) GoString() string {
+func (t ArchiveTarget) GoString() string { //nolint:gocritic // hugeParam: a value receiver, so %#v on a value prints this and never the secret fields
 	return t.String()
 }
 
@@ -80,7 +80,7 @@ func (g NightlyGrant) String() string {
 	return "nightly archive grant for s3://" + g.Bucket
 }
 
-func (g NightlyGrant) GoString() string {
+func (g NightlyGrant) GoString() string { //nolint:gocritic // hugeParam: a value receiver, so %#v on a value prints this and never the secret fields
 	return g.String()
 }
 
@@ -106,7 +106,7 @@ type TenantCommand struct {
 	Reason     string          `json:"reason,omitempty"`
 }
 
-func (c TenantCommand) Settled() bool {
+func (c *TenantCommand) Settled() bool {
 	return c.State == "done" || c.State == "failed"
 }
 

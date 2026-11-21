@@ -100,7 +100,7 @@ func (a *Agent) forgetUnlisted(desired *instanceapi.SharedTenantList) {
 	}
 }
 
-func settled(c command, held *tms.TenantStatus, refused map[string]refusal) bool {
+func settled(c *command, held *tms.TenantStatus, refused map[string]refusal) bool {
 	if _, ok := refused[c.id]; ok {
 		return true
 	}
@@ -147,7 +147,7 @@ func (a *Agent) pendingImport(
 		if _, refused := a.refusals[c.id]; refused && held.AppliedRevision == nil {
 			return nil, true, nil
 		}
-		if settled(c, held, a.refusals) {
+		if settled(&c, held, a.refusals) {
 			continue
 		}
 		_, gerr := a.p.TMS.TenantCommand(ctx, entry.InstanceId.String(), c.kind, c.id)
@@ -167,31 +167,31 @@ func (a *Agent) nextCommand(
 	ctx context.Context,
 	entry *instanceapi.SharedTenant,
 	held *tms.TenantStatus,
-) (*command, error) {
+) (next *command, found bool, err error) {
 	if !holdsLifecycle(entry, held) {
-		return nil, nil
+		return nil, false, nil
 	}
 	id := entry.InstanceId.String()
 	for _, c := range commandsOf(entry) {
-		if c.kind == tms.CommandImport || settled(c, held, a.refusals) {
+		if c.kind == tms.CommandImport || settled(&c, held, a.refusals) {
 			continue
 		}
-		got, err := a.p.TMS.TenantCommand(ctx, id, c.kind, c.id)
+		got, gerr := a.p.TMS.TenantCommand(ctx, id, c.kind, c.id)
 		switch {
-		case errors.Is(err, tms.ErrCommandNotFound):
-			return &c, nil
-		case err != nil:
-			return nil, err
+		case errors.Is(gerr, tms.ErrCommandNotFound):
+			return &c, true, nil
+		case gerr != nil:
+			return nil, false, gerr
 		case got.Settled():
 			continue
 		default:
 			a.p.Logger.Debug("a tenant command is running",
 				"instanceId", id, "command", c.id, "kind", c.kind,
 				"phase", got.Progress.Phase, "bytes", got.Progress.Bytes)
-			return nil, nil
+			return nil, false, nil
 		}
 	}
-	return nil, nil
+	return nil, false, nil
 }
 
 func (a *Agent) storageDue(wanted []targetKey, commandsListed bool) bool {
@@ -230,8 +230,9 @@ func (a *Agent) targets(
 			"instanceId", w.InstanceId, "command", w.CommandId, "reason", w.Reason)
 	}
 	out := make(map[targetKey]instanceapi.SharedArchiveTarget, len(storage.Archives))
-	for _, t := range storage.Archives {
-		out[targetKey{instance: t.InstanceId.String(), command: t.CommandId.String()}] = t
+	for i := range storage.Archives {
+		t := &storage.Archives[i]
+		out[targetKey{instance: t.InstanceId.String(), command: t.CommandId.String()}] = *t
 	}
 	a.deliverNightly(ctx, storage.Archives)
 	return out
@@ -240,7 +241,7 @@ func (a *Agent) targets(
 func (a *Agent) targetFor(
 	targets map[targetKey]instanceapi.SharedArchiveTarget,
 	instanceID uuid.UUID,
-	c command,
+	c *command,
 ) (*tms.ArchiveTarget, bool) {
 	t, ok := targets[targetKey{instance: instanceID.String(), command: c.id}]
 	if !ok {
@@ -263,7 +264,7 @@ func (a *Agent) targetFor(
 	return convertTarget(&t), true
 }
 
-func mismatch(t *instanceapi.SharedArchiveTarget, instanceID uuid.UUID, c command) string {
+func mismatch(t *instanceapi.SharedArchiveTarget, instanceID uuid.UUID, c *command) string {
 	keys := t.ArchiveKeys != nil && len(*t.ArchiveKeys) > 0
 	switch {
 	case t.InstanceId != instanceID || t.CommandId.String() != c.id:
@@ -278,14 +279,17 @@ func mismatch(t *instanceapi.SharedArchiveTarget, instanceID uuid.UUID, c comman
 		return "its prefix is not the command's archive"
 	case c.kind != tms.CommandArchive && !samePlace(t.Bucket, t.Prefix, c.location):
 		return "its prefix is not the archive the command names"
-	case c.kind == tms.CommandArchive && c.purpose == string(instanceapi.SharedArchiveExport) && keys:
+	case c.exports() && keys:
 		return "an export is written without archive keys"
-	case !(c.kind == tms.CommandArchive && c.purpose == string(instanceapi.SharedArchiveExport)) &&
-		!keys:
+	case !c.exports() && !keys:
 		return "it carries no archive keys"
 	default:
 		return ""
 	}
+}
+
+func (c *command) exports() bool {
+	return c.kind == tms.CommandArchive && c.purpose == string(instanceapi.SharedArchiveExport)
 }
 
 func samePlace(bucket, prefix, location string) bool {
@@ -390,8 +394,9 @@ func (a *Agent) startAll(
 	targets map[targetKey]instanceapi.SharedArchiveTarget,
 ) error {
 	var errs []error
-	for _, s := range starts {
-		target, ok := a.targetFor(targets, s.instance, s.cmd)
+	for i := range starts {
+		s := &starts[i]
+		target, ok := a.targetFor(targets, s.instance, &s.cmd)
 		if !ok {
 			continue
 		}
@@ -402,7 +407,7 @@ func (a *Agent) startAll(
 	return errors.Join(errs...)
 }
 
-func (a *Agent) startOne(ctx context.Context, s start, target *tms.ArchiveTarget) error {
+func (a *Agent) startOne(ctx context.Context, s *start, target *tms.ArchiveTarget) error {
 	id := s.instance.String()
 	var err error
 	switch s.cmd.kind {
@@ -417,10 +422,10 @@ func (a *Agent) startOne(ctx context.Context, s start, target *tms.ArchiveTarget
 	default:
 		return nil
 	}
-	return a.started(id, s.cmd, err)
+	return a.started(id, &s.cmd, err)
 }
 
-func (a *Agent) started(instanceID string, c command, err error) error {
+func (a *Agent) started(instanceID string, c *command, err error) error {
 	if err == nil {
 		a.p.Logger.Info("a tenant command was started",
 			"instanceId", instanceID, "command", c.id, "kind", c.kind, "purpose", c.purpose)
@@ -460,7 +465,7 @@ func (a *Agent) reportCommands(
 		failures = append(failures, instanceapi.SharedCommandFailure{
 			CommandId: parsed,
 			Kind:      instanceapi.SharedCommandFailureKind(kind),
-			Reason:    clip(reason, maxMessage),
+			Reason:    clip(reason),
 		})
 	}
 	for _, c := range commandsOf(entry) {
@@ -471,8 +476,7 @@ func (a *Agent) reportCommands(
 		if c.kind == tms.CommandRestore {
 			if parsed, err := uuid.Parse(c.id); err == nil {
 				reason := clip(
-					restoreUntouched+"the server refused to start the restore: "+r.reason,
-					maxMessage,
+					restoreUntouched + "the server refused to start the restore: " + r.reason,
 				)
 				out.LastRestore = &instanceapi.SharedRestoreReport{
 					CommandId: parsed,
@@ -513,7 +517,7 @@ func restoreReport(r *tms.TenantRestore) *instanceapi.SharedRestoreReport {
 			!strings.HasPrefix(reason, restoreIncomplete) {
 			reason = restoreIncomplete + reason
 		}
-		reason = clip(reason, maxMessage)
+		reason = clip(reason)
 		out.Reason = &reason
 	}
 	return out

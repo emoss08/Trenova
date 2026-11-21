@@ -116,7 +116,7 @@ func run(ctx context.Context, cfg *config, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	agent, err := tenantagent.New(tenantagent.Params{
+	agent, err := tenantagent.New(&tenantagent.Params{
 		ControlPlane: cp,
 		TMS:          tmsClient,
 		Credentials:  creds,

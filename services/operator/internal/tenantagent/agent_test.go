@@ -124,7 +124,7 @@ func newRig(t *testing.T) *rig {
 
 	c := &clock{now: time.Date(2026, 11, 20, 14, 10, 0, 0, time.UTC)}
 	build := func() *tenantagent.Agent {
-		agent, berr := tenantagent.New(tenantagent.Params{
+		agent, berr := tenantagent.New(&tenantagent.Params{
 			ControlPlane: lazy,
 			TMS:          client,
 			Credentials:  creds,

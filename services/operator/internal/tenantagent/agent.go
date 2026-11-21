@@ -137,7 +137,8 @@ type Agent struct {
 	lastErr      error
 }
 
-func New(p Params) (*Agent, error) {
+func New(params *Params) (*Agent, error) {
+	p := *params
 	switch {
 	case p.ControlPlane == nil, p.TMS == nil, p.Credentials == nil, p.Escrow == nil,
 		p.SystemEmail == nil, p.Usage == nil, p.EmailEvents == nil, p.SupportKeys == nil,
@@ -207,7 +208,8 @@ func jitter(d time.Duration) time.Duration {
 	if spread <= 0 {
 		return d
 	}
-	return d - time.Duration(spread/2) + time.Duration(rand.Int64N(spread))
+	offset := rand.Int64N(spread) //nolint:gosec // G404: scheduling jitter, not a secret
+	return d - time.Duration(spread/2) + time.Duration(offset)
 }
 
 func (a *Agent) Healthy() error {
@@ -364,7 +366,7 @@ func (a *Agent) converge(
 		}
 		sum := sha256.Sum256(body)
 		digest := hex.EncodeToString(sum[:])
-		if needsApply(entry, status, a.sent[entry.InstanceId] == digest) {
+		if needsApply(entry, &status, a.sent[entry.InstanceId] == digest) {
 			pending, blocked, perr := a.pendingImport(ctx, entry, &status)
 			if perr != nil {
 				failed = append(failed, fmt.Errorf("tenant %s: %w", id, perr))
@@ -378,12 +380,12 @@ func (a *Agent) converge(
 			}
 			plans = append(plans, plan{entry: entry, body: body, digest: digest, target: pending})
 		}
-		next, nerr := a.nextCommand(ctx, entry, &status)
+		next, found, nerr := a.nextCommand(ctx, entry, &status)
 		if nerr != nil {
 			failed = append(failed, fmt.Errorf("tenant %s: %w", id, nerr))
 			continue
 		}
-		if next != nil {
+		if found {
 			wanted = append(wanted, targetKey{instance: id, command: next.id})
 			starts = append(starts, start{instance: entry.InstanceId, cmd: *next})
 		}
@@ -415,7 +417,7 @@ func (a *Agent) apply(
 	ready := make([]plan, 0, len(plans))
 	for _, pl := range plans {
 		if pl.target != nil {
-			target, ok := a.targetFor(targets, pl.entry.InstanceId, *pl.target)
+			target, ok := a.targetFor(targets, pl.entry.InstanceId, pl.target)
 			if !ok {
 				a.p.Logger.Info("a tenant made from an archive waits for its archive's location",
 					"instanceId", pl.entry.InstanceId, "command", pl.target.id)
@@ -474,7 +476,7 @@ func (a *Agent) apply(
 	return len(ready), errors.Join(failed...)
 }
 
-func needsApply(entry *instanceapi.SharedTenant, held tms.TenantStatus, sent bool) bool {
+func needsApply(entry *instanceapi.SharedTenant, held *tms.TenantStatus, sent bool) bool {
 	if held.InstanceID == "" || !sent {
 		return true
 	}
@@ -505,7 +507,7 @@ func (a *Agent) report(
 		report.Version = &version
 	}
 	if tmsErr != nil {
-		message := clip("the TMS's managed listener cannot be read: "+tmsErr.Error(), maxMessage)
+		message := clip("the TMS's managed listener cannot be read: " + tmsErr.Error())
 		report.Message = &message
 		report.Components[0].Message = &message
 	}
@@ -594,16 +596,16 @@ func (a *Agent) statusOf(id uuid.UUID, s *tms.TenantStatus) instanceapi.SharedTe
 		out.Refused = &instanceapi.SharedTenantRefusal{
 			Revision: s.Refused.Revision,
 			Code:     instanceapi.SharedTenantRefusalCode(s.Refused.Code),
-			Reason:   clip(s.Refused.Reason, maxMessage),
+			Reason:   clip(s.Refused.Reason),
 		}
 	}
 	return out
 }
 
-func clip(s string, n int) string {
+func clip(s string) string {
 	runes := []rune(s)
-	if len(runes) <= n {
+	if len(runes) <= maxMessage {
 		return s
 	}
-	return string(runes[:n-1]) + "…"
+	return string(runes[:maxMessage-1]) + "…"
 }

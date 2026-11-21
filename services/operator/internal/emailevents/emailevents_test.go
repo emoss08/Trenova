@@ -68,7 +68,7 @@ func (r *rig) queue(n int) []uuid.UUID {
 	for range n {
 		id := uuid.New()
 		ids = append(ids, id)
-		r.cp.QueueEmailEvent(instanceapi.EmailEvent{
+		r.cp.QueueEmailEvent(&instanceapi.EmailEvent{
 			Id:       id,
 			Provider: instanceapi.EmailEventPostmark,
 			Payload: `{"RecordType":"Bounce","ID":883953,"Type":"HardBounce",` +

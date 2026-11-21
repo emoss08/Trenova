@@ -41,7 +41,7 @@ func (f *fakeEmailEvents) fail(err error) {
 }
 
 func queueEmailEvent(w *world) {
-	w.cp.QueueEmailEvent(instanceapi.EmailEvent{
+	w.cp.QueueEmailEvent(&instanceapi.EmailEvent{
 		Id:         uuid.New(),
 		Provider:   instanceapi.EmailEventResend,
 		Payload:    `{"type":"email.bounced"}`,
